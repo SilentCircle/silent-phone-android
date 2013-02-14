@@ -1,0 +1,413 @@
+<!--
+Copyright © 2004-2012 Tivi LTD,www.tiviphone.com. All rights reserved.
+Copyright © 2012-2013, Silent Circle, LLC. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+    * Any redistribution, use, or modification is done solely for personal 
+      benefit and not for any commercial purpose or for monetary gain
+    * Redistributions of source code must retain the above copyright
+      notice, this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above copyright
+      notice, this list of conditions and the following disclaimer in the
+      documentation and/or other materials provided with the distribution.
+    * Neither the name Silent Circle nor the
+      names of its contributors may be used to endorse or promote products
+      derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL SILENT CIRCLE, LLC BE LIABLE FOR ANY
+DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-->
+
+<!--
+IMPORTANT NOTE:
+Most EditText fields have a 'android:tag' attribute. The content of the tag must match the
+corresponding field name that the Web Service interface uses to define which field is requiered or not.
+
+Keep the tag fields in synch with the interface specifications.
+-->
+
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:tools="http://schemas.android.com/tools"
+	android:layout_width="match_parent"
+	android:layout_height="match_parent"
+	android:orientation="vertical"
+	tools:context=".MainActivity" >
+
+	<TextView
+		android:id="@+id/ProvisioningInfoText"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:layout_alignParentLeft="true"
+		android:layout_marginLeft="@dimen/provisioning_left_margin"
+		android:layout_marginRight="3dp"
+		android:layout_marginTop="8dp"
+		android:layout_toLeftOf="@+id/ProvisioningStepInfo"
+		android:text="@string/provisioning_vertu_welcome"
+		android:textColor="@color/v_blue"
+		android:textSize="20sp" />
+
+	<TextView
+		android:id="@+id/ProvisioningStepInfo"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_alignBaseline="@+id/ProvisioningInfoText"
+		android:layout_alignParentRight="true"
+		android:layout_marginRight="@dimen/provisioning_right_margin"
+		android:textColor="@color/solid_gray"
+		android:textSize="14sp" />
+
+	<ScrollView
+		xmlns:android="http://schemas.android.com/apk/res/android"
+		xmlns:tools="http://schemas.android.com/tools"
+		android:id="@+id/ProvisioningScrollFrameLayout"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:layout_above="@+id/ProvisioningButtons"
+		android:layout_below="@+id/ProvisioningInfoText"
+        android:layout_marginLeft="@dimen/provisioning_left_margin"
+        android:layout_marginRight="@dimen/provisioning_right_margin"
+		android:baselineAligned="false"
+		android:focusable="false"
+		android:orientation="vertical"
+		android:visibility="visible" >
+
+		<FrameLayout
+			xmlns:android="http://schemas.android.com/apk/res/android"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content">
+
+			<RelativeLayout
+				xmlns:android="http://schemas.android.com/apk/res/android"
+				xmlns:tools="http://schemas.android.com/tools"
+				android:id="@+id/ProvisioningUserFields"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:orientation="vertical"
+				android:visibility="invisible" >
+
+				<EditText
+					android:id="@+id/ProvisioningUsernameInput"
+					android:layout_width="match_parent"
+					android:layout_height="wrap_content"
+					android:layout_below="@+id/ProvisioningInfoText"
+					android:layout_marginTop="@dimen/provisioning_top_margin"
+					android:hint="@string/provisioning_username_hint"
+					android:imeOptions="actionNext"
+					android:inputType="text"
+					android:singleLine="true"
+					android:tag="username"
+					android:textSize="16sp" />
+
+				<EditText
+					android:id="@+id/ProvisioningPasswordInput"
+					android:layout_width="match_parent"
+					android:layout_height="wrap_content"
+					android:layout_below="@+id/ProvisioningUsernameInput"
+					android:layout_marginTop="@dimen/provisioning_top_margin"
+					android:hint="@string/provisioning_password_hint"
+					android:imeOptions="actionNext"
+					android:inputType="textPassword"
+					android:singleLine="true"
+					android:tag="password"
+					android:textSize="16sp" />
+				<!--
+				<EditText
+					android:id="@+id/ProvisioningPasswordInput2"
+					android:layout_width="match_parent"
+					android:layout_height="wrap_content"
+					android:layout_below="@+id/ProvisioningPasswordInput"
+					android:layout_marginTop="3dp"
+					android:hint="@string/provisioning_password_hint2"
+                    android:scrollHorizontally="true"
+					android:imeOptions="actionNext"
+					android:inputType="textPassword"
+					android:singleLine="true"
+					android:tag="password2"
+					android:textColor="@android:color/white"
+					android:textSize="16sp" />
+				-->
+
+				<TextView
+					android:id="@+id/ProvisioningPasswordStrength"
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:layout_alignParentRight="true"
+					android:layout_below="@+id/ProvisioningPasswordInput"
+					android:layout_marginTop="3dp"
+					android:background="@null"
+					android:textColor="@android:color/white"
+					android:textSize="14sp" />
+
+				<CheckBox
+					android:id="@+id/ProvisioningPasswordShow"
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:layout_below="@+id/ProvisioningPasswordStrength"
+					android:layout_centerHorizontal="true"
+					android:layout_marginTop="10dp"
+					android:onClick="showPasswordCheck"
+					android:text="@string/provisioning_show_pw" />
+
+				<EditText
+					android:id="@+id/ProvisioningEmailInput"
+					android:layout_width="match_parent"
+					android:layout_height="wrap_content"
+					android:layout_below="@+id/ProvisioningPasswordShow"
+					android:layout_marginTop="@dimen/provisioning_top_margin"
+					android:hint="@string/provisioning_email_hint"
+					android:imeOptions="actionNext"
+					android:inputType="textEmailAddress"
+					android:singleLine="true"
+					android:tag="email_address"
+					android:textSize="16sp" />
+
+				<TextView
+					android:id="@+id/ProvisioningEmailInfo"
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:layout_alignParentLeft="true"
+					android:layout_below="@+id/ProvisioningEmailInput"
+					android:layout_marginTop="3dp"
+					android:background="@null"
+					android:text="@string/provisioning_email_info"
+					android:textSize="14sp" />
+
+				<EditText
+					android:id="@+id/ProvisioningFirstNameInput"
+					android:layout_width="match_parent"
+					android:layout_height="wrap_content"
+					android:layout_below="@+id/ProvisioningEmailInfo"
+					android:layout_marginTop="@dimen/provisioning_top_margin"
+					android:hint="@string/provisioning_firstname_hint"
+					android:imeOptions="actionNext"
+					android:inputType="text"
+					android:singleLine="true"
+					android:tag="first_name"
+					android:textSize="16sp" />
+
+				<EditText
+					android:id="@+id/ProvisioningLastNameInput"
+					android:layout_width="match_parent"
+					android:layout_height="wrap_content"
+					android:layout_below="@+id/ProvisioningFirstNameInput"
+					android:layout_marginTop="@dimen/provisioning_top_margin"
+					android:hint="@string/provisioning_lastname_hint"
+					android:imeOptions="actionDone"
+					android:inputType="text"
+					android:singleLine="true"
+					android:tag="last_name"
+					android:textSize="16sp" />
+			</RelativeLayout>
+
+			<RelativeLayout
+				xmlns:android="http://schemas.android.com/apk/res/android"
+				android:id="@+id/ProvisioningCodeLayout"
+				android:layout_width="match_parent"
+				android:layout_height="match_parent"
+				android:orientation="vertical"
+				android:visibility="invisible" >
+
+				<TextView
+					android:id="@+id/ProvisioningGetCode"
+					android:layout_width="match_parent"
+					android:layout_height="wrap_content"
+					android:layout_alignParentLeft="true"
+					android:layout_marginTop="@dimen/provisioning_top_margin"
+					android:background="@null"
+					android:gravity="center_horizontal"
+					android:text="@string/provisioning_get_activation_code"
+					android:textSize="16sp" />
+
+				<EditText
+					android:id="@+id/ProvisioningCodeInput"
+					android:layout_width="match_parent"
+					android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/provisioning_top_margin"
+					android:layout_below="@+id/ProvisioningGetCode"
+                    android:ellipsize="end"
+					android:gravity="center_vertical"
+					android:hint="@string/provisioning_code"
+					android:inputType="textCapCharacters|textNoSuggestions"
+					android:singleLine="true"
+					android:tag="provisioning_code"
+					android:textSize="25sp"
+					android:visibility="visible" />
+			</RelativeLayout>
+
+			<RelativeLayout
+				xmlns:android="http://schemas.android.com/apk/res/android"
+				android:id="@+id/ProvisioningSpinnerLayout"
+				android:layout_width="match_parent"
+				android:layout_height="match_parent"
+				android:orientation="vertical"
+				android:visibility="invisible" >
+
+				<ProgressBar
+					android:id="@+id/ProvisioningProgressBar"
+					style="?android:attr/progressBarStyleLarge"
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:layout_centerHorizontal="true"
+					android:layout_centerVertical="true" />
+			</RelativeLayout>
+
+			<RelativeLayout
+				xmlns:android="http://schemas.android.com/apk/res/android"
+				android:id="@+id/ProvisioningCheckboxLayout"
+				android:layout_width="match_parent"
+				android:layout_height="match_parent"
+				android:orientation="vertical"
+				android:visibility="invisible" >
+
+				<CheckedTextView
+					android:id="@+id/ProvisioningCheckBoxTC"
+					android:layout_width="match_parent"
+					android:layout_height="wrap_content"
+					android:layout_alignParentLeft="true"
+					android:layout_marginTop="15dp"
+					android:checkMark="?android:attr/listChoiceIndicatorMultiple"
+					android:checked="false"
+					android:clickable="true"
+					android:focusable="true"
+					android:onClick="termsAndConditionsCheck"
+					android:text="@string/provisioning_privacy_tc"
+					android:textSize="16sp" />
+
+				<CheckedTextView
+					android:id="@+id/ProvisioningCheckBoxNews"
+					android:layout_width="match_parent"
+					android:layout_height="wrap_content"
+					android:layout_alignParentLeft="true"
+					android:layout_below="@+id/ProvisioningCheckBoxTC"
+					android:layout_marginTop="@dimen/provisioning_top_margin"
+					android:checkMark="?android:attr/listChoiceIndicatorMultiple"
+					android:checked="false"
+					android:clickable="true"
+					android:focusable="true"
+					android:text="@string/provisioning_get_news"
+					android:textSize="16sp"
+					android:visibility="invisible" />
+			</RelativeLayout>
+
+			<RelativeLayout
+				xmlns:android="http://schemas.android.com/apk/res/android"
+				android:id="@+id/ProvisioningWelcomeLayout"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:orientation="vertical"
+				android:visibility="invisible" >
+
+				<TextView
+					android:id="@+id/ProvisioningWelcomeText"
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:layout_alignParentLeft="true"
+					android:layout_marginTop="@dimen/provisioning_top_margin"
+					android:background="@null"
+					android:text="@string/provisioning_welcome_long"
+					android:textSize="16sp" />
+
+				<!-- Use absolute PX measurement to avoid scaling of the logo and have a good screen layout -->
+
+				<ImageView
+					android:id="@+id/ProvisioningWelcomeImg"
+					android:layout_width="200px"
+					android:layout_height="200px"
+					android:layout_below="@+id/ProvisioningWelcomeText"
+					android:layout_centerHorizontal="true"
+					android:layout_marginTop="@dimen/provisioning_top_margin"
+					android:contentDescription="@string/silent_circle"
+					android:src="@drawable/sc_logo_big" />
+
+				<Button
+					android:id="@+id/ProvisioningRegisterButton"
+					android:layout_width="match_parent"
+					android:layout_height="wrap_content"
+					android:layout_alignParentLeft="true"
+					android:layout_below="@+id/ProvisioningWelcomeImg"
+					android:layout_marginTop="@dimen/provisioning_top_margin"
+					android:gravity="center_horizontal|center_vertical"
+					android:onClick="provisioningNewAccount"
+					android:text="@string/provisioning_new_account"
+					android:textSize="18.0sp" />
+
+				<Button
+					android:id="@+id/ProvisioningNormalButton"
+					android:layout_width="match_parent"
+					android:layout_height="wrap_content"
+					android:layout_alignParentLeft="true"
+					android:layout_below="@+id/ProvisioningRegisterButton"
+					android:layout_marginTop="10dp"
+					android:gravity="center_horizontal|center_vertical"
+					android:onClick="provisioningExistingAccount"
+					android:text="@string/provisioning_existing_account"
+					android:textSize="18.0sp" />
+			</RelativeLayout>
+		</FrameLayout>
+	</ScrollView>
+
+	<RelativeLayout
+		android:id="@+id/ProvisioningButtons"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:layout_alignParentBottom="true"
+		android:layout_marginBottom="10dp"
+		android:layout_marginLeft="@dimen/provisioning_left_margin"
+		android:layout_marginRight="@dimen/provisioning_right_margin"
+		android:layout_marginTop="10dp"
+		android:orientation="vertical" >
+
+		<Button
+			android:id="@+id/ProvisioningAnchorDummy"
+			android:layout_width="20dp"
+			android:layout_height="wrap_content"
+			android:layout_centerHorizontal="true"
+			android:background="@null"
+			android:enabled="false"
+			android:gravity="center_horizontal|center_vertical"
+			android:textSize="18.0sp"
+			android:visibility="invisible" />
+
+		<Button
+			android:id="@+id/ProvisioningCancel"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_alignParentLeft="true"
+			android:layout_alignTop="@+id/ProvisioningAnchorDummy"
+			android:layout_toLeftOf="@+id/ProvisioningAnchorDummy"
+			android:enabled="false"
+			android:gravity="center_horizontal|center_vertical"
+			android:onClick="provisioningCancel"
+			android:paddingBottom="6dp"
+			android:paddingTop="6dp"
+			android:text="@string/back"
+			android:textSize="18.0sp"
+			android:visibility="invisible" />
+
+		<Button
+			android:id="@+id/ProvisioningOK"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_alignParentRight="true"
+			android:layout_alignTop="@+id/ProvisioningCancel"
+			android:layout_toRightOf="@+id/ProvisioningAnchorDummy"
+			android:enabled="false"
+			android:gravity="center_horizontal|center_vertical"
+			android:onClick="provisioningOk"
+			android:paddingBottom="6dp"
+			android:paddingTop="6dp"
+			android:text="@string/next"
+			android:textSize="18.0sp"
+			android:visibility="invisible" />
+	</RelativeLayout>
+
+</RelativeLayout>

@@ -1,0 +1,289 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+Copyright © 2004-2012 Tivi LTD,www.tiviphone.com. All rights reserved.
+Copyright © 2012-2013, Silent Circle, LLC. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+    * Any redistribution, use, or modification is done solely for personal 
+      benefit and not for any commercial purpose or for monetary gain
+    * Redistributions of source code must retain the above copyright
+      notice, this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above copyright
+      notice, this list of conditions and the following disclaimer in the
+      documentation and/or other materials provided with the distribution.
+    * Neither the name Silent Circle nor the
+      names of its contributors may be used to endorse or promote products
+      derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL SILENT CIRCLE, LLC BE LIABLE FOR ANY
+DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-->
+ 
+<resources>
+
+	<!-- Common used string for call screen, start screen  etc. -->
+	<string name="app_name">Silent Phone</string>
+	<string name="silent_circle">SilentCircle</string>
+	<string name="menu_settings">Menu</string>
+	<string name="call_mgr_button">Anruf\nManager</string>
+	<string name="hangup_call">Beenden</string>
+	<string name="dismiss_call">Ablehnen</string>
+	<string name="answer_call">Abheben</string>
+	<string name="close_dialog">Schließen</string>
+	<string name="cancel_dialog">Abbrechen</string>
+	<string name="confirm_dialog">Bestätigen</string>
+	<string name="provision_later">Später</string>
+	<string name="prepare_antenna">Vorbereiten &#8230;</string> <!-- &#8230: code for elipsis -->
+	<string name="to_server_only">bis Server</string>
+	<string name="error_code">Fehlercode: </string>		
+    <string name="accept_video">Annehmen</string>
+    <string name="audio_only">Video aus</string>
+    <string name="mute_video">Video stumm</string>
+    <string name="verify_button">Prüfen</string>
+    <string name="verify_infotext_top">Bitte mit Partner vergleichen</string>
+    <string name="verify_infotext_bottom">und hier eine Partnerkennung eintragen</string>
+    <string name="next">Weiter</string>
+    <string name="back">Zurück</string>
+    <string name="login">Anmelden</string>
+    <string name="logout">Abmelden</string>
+    <string name="exit">Beenden</string>
+    <string name="settings">Einstellungen</string>
+    
+    <!-- Strings for the crypto panel -->
+    <string name="crypto_peer_name">Partner name</string>
+	<string name="crypto_peer_client">ZRTP Partnerprogramm</string>
+	<string name="crypto_peer_client_id">ZRTP Programm ID</string>
+	<string name="crypto_peer_client_proto">Protokol Version</string>
+    <string name="crypto_crypto_components">Sicherheitskomponenten</string>
+	<string name="crypto_crypto_components_tls">TLS Verschlüsselung:</string>
+	<string name="crypto_crypto_components_zhash">ZRTP Hash:</string>
+	<string name="crypto_crypto_components_pk">Schlüsselaustasuch:</string>
+	<string name="crypto_crypto_components_cipher">Übertragungsverschlüsselung:</string>
+	<string name="crypto_crypto_components_hash">Hash:</string>
+	<string name="crypto_crypto_components_sauth">SRTP Authentifizierung:</string>
+	<string name="crypto_shared_secrets">Gemeinsame ZRTP Daten</string>
+    <string name="crypto_shared_secrets_rs1">RS1</string> 
+    <string name="crypto_shared_secrets_rs2">RS2</string>
+    <string name="crypto_shared_secrets_aux">AUX</string>
+    <string name="crypto_shared_secrets_pbx">PBX</string>
+    
+    <!-- strings for the call manager -->
+    <string name="call_mng_conference">Konferenz</string>
+    <string name="call_mng_private">Privat</string>
+    <string name="call_mng_in_out">Ankommend, abgehend</string>
+    
+    <!-- strings for the incall dial pad -->
+    <string name="dialog_dial_hide">Ausblenden</string>
+    
+    <!-- string for the Info dialog -->
+    <string name="info_header_line">Programm- und Geräteinformation</string>
+    <string name="info_own_number">Eigene SilentPhone Rufnummer:</string>
+    <string name="info_build_number">SilentPhone Programmstand:</string>
+    <string name="info_device_info">Geräteinformation:</string>
+    <string name="info_device_class">Geräteklassifikation:</string>
+    
+    <!-- strings for the ZRTP warning/error panel -->
+    <string name="zrtp_we_header">ZRTP Sicherheitsnachrichten</string>
+    <string name="zrtp_we_error">ZRTP Fehler</string>
+    <string name="zrtp_we_warn">ZRTP Warnung</string>
+    
+    <!-- Strings for the provisioning activity and messages -->
+    <string name="provisioning_infotext">Erstellen Ihrer Benutzerkennung</string>
+    <string name="provisioning_vertu_welcome">Willkommen bei SilentCircle in Zusammarbeit mit Vertu</string>
+    <string name="provisioning_stepinfo_1">Schritt 1 von 2</string>
+    <string name="provisioning_stepinfo_2">Schritt 2 von 2</string>
+    <string name="provisioning_username">Bitte einen Kurznamen eingeben</string>
+    <string name="provisioning_username_hint">Kurzname</string>
+    <string name="provisioning_password">Passwort für SilentPhone (zweimal)</string>
+    <string name="provisioning_password_hint">Passwort</string>
+    <string name="provisioning_password_hint2">Passwort (zum Vergleich)</string>
+    <string name="provisioning_firstname">Vorname</string>
+    <string name="provisioning_firstname_hint">Ihr Vorname</string>
+    <string name="provisioning_lastname">Nachname</string>
+    <string name="provisioning_lastname_hint">Ihr Nachname</string>
+    <string name="provisioning_email_info">Notwendig zur Wiederherstellung Ihres Nutzernames oder Passwortes.</string>
+    <string name="provisioning_email_hint">E-mail Adresse</string>
+    <string name="provisioning_code">Aktivierungscode eingeben</string>
+    <string name="provisioning_no_network">Netzwerk nicht verfügbar: </string>
+    <string name="provisioning_no_data">Kein Einrichtungsdaten vorhanden</string>
+    <string name="provisioning_wrong_format">Falsches Datenformat: </string>
+    <string name="provisioning_error">Fehler während des Einrichtens ihrer Kennung</string>
+    <string name="provisioning_info">Information</string>
+    <string name="provisioning_user_req">Ein Kurzname ist erforderlich. Bitte prüfen.</string>
+    <string name="provisioning_psn_invalid">Keine korrekte Seriennummer gefunden!</string>
+    <string name="provisioning_password_req">Ein Passwort ist erforderlich. Bitte prüfen.</string>
+    <string name="provisioning_password_match">Die Passwörter stimmen nicht überein. Bitte prüfen.</string>
+    <string name="provisioning_firstname_req">Ihr Vorname ist erforderlich. Bitte prüfen.</string>
+    <string name="provisioning_lastname_req">Ihr Nachname ist erforderlich. Bitte prüfen.</string>
+    <string name="provisioning_email_req">Ihre E-mail Adresse ist erforderlich. Bitte prüfen.</string>
+    <string name="provisioning_already_registered">Gerät ist bereits registriert.</string>
+    <string name="provisioning_pwstrength_weak">Passwortgüte: SCHWACH</string>
+    <string name="provisioning_pwstrength_good">Passwortgüte: GUT</string>
+    <string name="provisioning_pwstrength_strong">Passwortgüte: STARK</string>
+    <string name="provisioning_show_pw">Passwort anzeigen</string>
+    <string name="provisioning_privacy_tc">Ich habe die Datenschutzregeln und die Geschäftsbedingungen von www.silentcircle.com gelesen und akzeptiert</string>
+    <string name="provisioning_get_news">Ich möchte über exclusive Dienste und Neuigkeiten informiert werden</string>
+    <string name="provisioning_welcome_long">Als Vertu Kunde können sie SilentCircles abhörsichere Kommunikationsdieste 12 Monate kostenfrei nutzen.</string>
+    <string name="provisioning_new_account">Neue Benutzerkennung anlegen</string>
+    <string name="provisioning_existing_account">Bestehende Kennung verwenden</string>
+    <string name="provisioning_check_tc">Bitte akzeptieren Sie die Geschäftsbedingungen</string>
+    <string name="provisioning_create">Erstellen</string>
+    <string name="provisioning_get_activation_code">Verwenden Sie bitte Ihre Kennung bei\nwww.silentcircle.com\num den Aktivierungscode zu bekommen.</string>
+    
+    <!-- Strings for the key generation and messages -->
+    <string name="key_generation_info">Erzeuge Schlüssel, bitte etwas Geduld.</string>
+    <string name="key_generation_error">Fehler während Schlüsselerzeugung.</string>
+    <string name="key_generation_missing_key">Gespeicherter Schlüssel wurde nicht gefunden.</string>
+    <string name="key_generation_wrong_key">Falscher Schlüssel ausgewählt.</string>
+    <string name="key_generation_error_key">Schlüssel kann nicht gelesen oder ausgewertet werden.</string>
+    <string name="key_generation_storage_fail">Erzeugter Schlüssel kann nicht gespeichert werden.</string>
+    <string name="key_generation_error_key_generation">Schlüssel kann nicht erzeugt werden: </string>
+    <string name="key_generation_error_not_rsa_key">Schlüssel ist kein RSA Schlüssel.</string>
+    
+    <!-- Strings for the thanks dialog -->
+    <string name="thanks_top_line">Danke. Ihre SilentCircle Telefonnummer ist</string>
+    <string name="thanks_bottom_line">Zum Verwalten Ihres SilentCircle Benutzerkontos öffnen Sie im Browser bitte\nwww.silentcircle.com</string>
+    
+    <!-- Explanation of SAS code/words -->
+    <string name="sas_explanation">Vergleichen Sie diesen Authentifizierungscode mündlich mit ihrem Gesprächspartner. Stimmen die Codes nicht überein, könnte ein Abhörmaßnahme aktiv sein.</string>
+    
+    <!-- Description of image buttons -->
+    <string name="caller_image">Bild des Anrufers</string>
+    <string name="signal_strength">Signalqualität</string>
+    <string name="country_flag">Landesflagge</string>
+    <string name="mute_image_button">Audio stumm</string>
+    <string name="incall_dial_image_button">Wählen während des Gesprächs</string>
+    <string name="speaker_image_button">Lautsprechen ein/aus</string>
+    <string name="add_call_image_button">Einen weiteres Gespräch hinzufügen</string>
+    <string name="add_video_image_button">Videoanruf starten</string>
+    <string name="dial_image_button">Wählen</string>
+    <string name="contacts_image_button">Öffne Adressbuch</string>
+    <string name="recent_image_button">Zeige Liste der letzten Anrufe</string>
+    <string name="backspace_image_button">Lösche letztes Zeichen</string>
+    <string name="end_call_image_button">Auflegen</string>
+    <string name="answer_call_image_button">Anheben</string>
+    <string name="video_audio_mute">Audio stumm</string>
+    <string name="video_switch_camera">Kameras umschalten</string>
+    
+    <string name="crypto_padlock">Schloß zeigt den Sicherheitsstatu</string>
+    
+    <!--
+         String describing the image on ImageButton one
+
+        Note: AccessibilityServices use this attribute to announce what the view represents.
+              This is especially valuable for views without textual representation like ImageView.
+	-->
+	<string name="description_image_button_one">Eins</string>
+
+	<!--
+         String describing the image on ImageButton two
+
+        Note: AccessibilityServices use this attribute to announce what the view represents.
+              This is especially valuable for views without textual representation like ImageView.
+	-->
+	<string name="description_image_button_two">Zwei</string>
+
+	<!--
+         String describing the image on ImageButton three
+
+        Note: AccessibilityServices use this attribute to announce what the view represents.
+              This is especially valuable for views without textual representation like ImageView.
+	-->
+	<string name="description_image_button_three">Drei</string>
+
+	<!--
+         String describing the image on ImageButton four
+
+        Note: AccessibilityServices use this attribute to announce what the view represents.
+              This is especially valuable for views without textual representation like ImageView.
+	-->
+	<string name="description_image_button_four">Vier</string>
+
+	<!--
+         String describing the image on ImageButton five
+
+        Note: AccessibilityServices use this attribute to announce what the view represents.
+              This is especially valuable for views without textual representation like ImageView.
+	-->
+	<string name="description_image_button_five">Fünf</string>
+
+	<!--
+         String describing the image on ImageButton six
+
+        Note: AccessibilityServices use this attribute to announce what the view represents.
+              This is especially valuable for views without textual representation like ImageView.
+	-->
+	<string name="description_image_button_six">Sechs</string>
+
+	<!--
+         String describing the image on ImageButton seven
+
+        Note: AccessibilityServices use this attribute to announce what the view represents.
+              This is especially valuable for views without textual representation like ImageView.
+	-->
+	<string name="description_image_button_seven">Sieben</string>
+
+	<!--
+         String describing the image on ImageButton eight
+
+        Note: AccessibilityServices use this attribute to announce what the view represents.
+              This is especially valuable for views without textual representation like ImageView.
+	-->
+	<string name="description_image_button_eight">Acht</string>
+
+	<!--
+         String describing the image on ImageButton nine
+
+        Note: AccessibilityServices use this attribute to announce what the view represents.
+              This is especially valuable for views without textual representation like ImageView.
+	-->
+	<string name="description_image_button_nine">Neun</string>
+
+	<!--
+         String describing the image on ImageButton star
+
+        Note: AccessibilityServices use this attribute to announce what the view represents.
+              This is especially valuable for views without textual representation like ImageView.
+	-->
+	<string name="description_image_button_star">Stern</string>
+
+	<!--
+         String describing the image on ImageButton zero
+
+        Note: AccessibilityServices use this attribute to announce what the view represents.
+              This is especially valuable for views without textual representation like ImageView.
+	-->
+	<string name="description_image_button_zero">Null</string>
+
+	<!--
+         String describing the image on ImageButton pound
+
+        Note: AccessibilityServices use this attribute to announce what the view represents.
+              This is especially valuable for views without textual representation like ImageView.
+	-->
+	<string name="description_image_button_pound">Kreuz</string>
+
+	<!--
+         String describing the Dial ImageButton
+
+         Used by AccessibilityService to announce the purpose of the button.
+	-->
+	<string name="description_dial_button">Wählen</string>
+
+	<!--
+         String describing the Delete/Backspace ImageButton
+
+         Used by AccessibilityService to announce the purpose of the button.
+	-->
+	<string name="description_delete_button">Löschen</string>
+
+</resources>

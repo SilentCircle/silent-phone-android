@@ -1,0 +1,194 @@
+<!--
+Copyright © 2004-2012 Tivi LTD,www.tiviphone.com. All rights reserved.
+Copyright © 2012-2013, Silent Circle, LLC. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+    * Any redistribution, use, or modification is done solely for personal 
+      benefit and not for any commercial purpose or for monetary gain
+    * Redistributions of source code must retain the above copyright
+      notice, this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above copyright
+      notice, this list of conditions and the following disclaimer in the
+      documentation and/or other materials provided with the distribution.
+    * Neither the name Silent Circle nor the
+      names of its contributors may be used to endorse or promote products
+      derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL SILENT CIRCLE, LLC BE LIABLE FOR ANY
+DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-->
+ 
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:id="@+id/VideoOverlayLayout"
+	android:layout_width="match_parent"
+	android:layout_height="match_parent"
+	android:keepScreenOn="true"
+	android:background="#ff404040"
+	android:orientation="horizontal" >
+
+	<View
+		android:id="@+id/VideoDivider"
+		android:layout_width="fill_parent"
+		android:layout_height="2dip"
+		android:layout_above="@+id/VideoSurfacePreview"
+		android:layout_marginBottom="3dp"
+		android:background="@null" />
+
+	<TextView
+		android:id="@+id/VideoAudioOnly"
+		style="@style/ButtonStyleGray"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_alignParentLeft="true"
+		android:layout_below="@+id/VideoDivider"
+		android:layout_marginLeft="10dp"
+		android:layout_marginTop="30dp"
+		android:clickable="true"
+		android:gravity="center_horizontal|center_vertical"
+		android:onClick="videoAudioOnlyButton"
+		android:paddingBottom="5dp"
+		android:paddingTop="5dp"
+		android:minEms="5"
+		android:text="@string/audio_only"
+		android:textColor="@android:color/white"
+		android:textSize="15.0sp" />
+
+	<SurfaceView
+        android:id="@+id/VideoSurfacePreview"
+        android:layout_width="72dp"
+        android:layout_height="94dp"
+        android:layout_above="@+id/VideoDivider2"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="5dp" />
+
+	
+	<TextView
+		android:id="@+id/VideoMuteCamera"
+		style="@style/ButtonStyleGray"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_alignTop="@+id/VideoAudioOnly"
+		android:layout_alignParentRight="true"
+        android:layout_marginRight="10dp"
+		android:clickable="true"
+		android:gravity="center_horizontal|center_vertical"
+		android:paddingBottom="5dp"
+		android:paddingTop="5dp"
+        android:minEms="5"
+		android:text="@string/mute_video"
+		android:textColor="@android:color/white"
+		android:textSize="15.0sp" />
+
+	<View
+		android:id="@+id/VideoDivider2"
+		android:layout_width="fill_parent"
+		android:layout_height="2dip"
+		android:layout_above="@+id/VideoAccept"
+		android:layout_marginBottom="3dp"
+		android:background="#FFFFFFFF" />
+
+	<!-- Accept video offer button, visible when video starts -->
+
+	<TextView
+		android:id="@+id/VideoAccept"
+		style="@style/ButtonStyleGreen"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_alignParentBottom="true"
+		android:layout_alignParentLeft="true"
+		android:layout_marginBottom="5dp"
+		android:layout_marginLeft="10dp"
+		android:clickable="true"
+		android:gravity="center_horizontal|center_vertical"
+		android:onClick="videoAcceptButton"
+		android:paddingBottom="5dp"
+		android:paddingTop="5dp"
+		android:text="@string/accept_video"
+		android:textColor="@android:color/white"
+		android:textSize="15.0sp" />
+
+	<!-- Mute audio button, visible after video started, replaces Accept video button -->
+
+	<ImageButton
+		android:id="@+id/VideoAudioMute"
+		style="@style/DialpadButtonStyle"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_alignParentBottom="true"
+		android:layout_alignParentLeft="true"
+		android:layout_marginBottom="5dp"
+		android:layout_marginLeft="10dp"
+		android:paddingBottom="0dp"
+		android:paddingTop="0dp"
+		android:contentDescription="@string/video_audio_mute"
+		android:src="@drawable/ico_mute_small"
+		android:visibility="invisible" />
+
+	<!-- Decline video offer button, visible when video starts -->
+
+	<TextView
+		android:id="@+id/VideoDecline"
+		style="@style/ButtonStyleRed"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_alignParentRight="true"
+		android:layout_alignTop="@+id/VideoAccept"
+		android:layout_marginBottom="5dp"
+		android:layout_marginRight="10dp"
+		android:clickable="true"
+		android:gravity="center_horizontal|center_vertical"
+		android:onClick="videoDeclineButton"
+		android:paddingBottom="5dp"
+		android:paddingTop="5dp"
+		android:text="@string/dismiss_call"
+		android:textColor="@android:color/white"
+		android:textSize="15.0sp" />
+
+	<!-- Switch cameras if possible, visible after video started, replaces Decline video button -->
+
+	<ImageButton
+		android:id="@+id/VideoSwitchCamera"
+		style="@style/DialpadButtonStyle"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_alignParentRight="true"
+		android:layout_alignTop="@+id/VideoAccept"
+		android:layout_marginBottom="5dp"
+		android:layout_marginRight="10dp"
+		android:onClick="videoSwitchCameraButton"
+		android:paddingBottom="5dp"
+		android:paddingTop="5dp"
+        android:contentDescription="@string/video_switch_camera"
+		android:src="@drawable/ico_switch_camera"
+		android:visibility="invisible" />
+
+	<!-- Hangup call, visible after video started -->
+
+	<TextView
+		android:id="@+id/VideoEndCall"
+		style="@style/ButtonStyleRed"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_alignTop="@+id/VideoAccept"
+		android:layout_centerHorizontal="true"
+		android:layout_marginBottom="5dp"
+		android:clickable="true"
+		android:gravity="center_horizontal|center_vertical"
+		android:onClick="videoEndCallButton"
+		android:paddingBottom="5dp"
+		android:paddingTop="5dp"
+		android:text="@string/hangup_call"
+		android:textColor="@android:color/white"
+		android:textSize="15.0sp"
+		android:visibility="invisible" />
+
+</RelativeLayout>
