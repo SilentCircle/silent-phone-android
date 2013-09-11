@@ -16,7 +16,7 @@ To compile and build SilentPhone you require a full Android development
 environment that includes the Android Java SDK and the Android NDK (Native
 Development Kit). Because SilentPhone shall support Android API 10
 (Gingerbread 2.3.x) make sure you also download and install the necessary SDK
-modules. Furthermore I recommend to use the Eclipse Android SDK extensions.
+modules. Furthermore, I recommend that you use the Eclipse Android SDK extensions.
 
 
 ### Directory structure
@@ -95,7 +95,7 @@ directories.
     NDK build files.
 
 
-### Building the SilentPhone client from exising Git repository
+### Building the SilentPhone client from the existing Git repository
 
 SilentPhone's Git repository contains all necessary shared libraries to build
 the required shared library and to install it. After cloning the repository
@@ -112,7 +112,7 @@ libraries also into the Git repository. This saves the extra build step.
 
 ### Building the shared libraries
 
-After you built the library once it's usually not necessary to re-build it,
+After you've built the library once it's usually not necessary to re-build it,
 except you need to fix a problem inside the library code.
 
 The directory `scandroid/jni` contains the build files to compile and link the
