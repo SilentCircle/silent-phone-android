@@ -31,11 +31,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	android:layout_width="fill_parent"
 	android:layout_height="fill_parent"
 	android:layout_gravity="center_horizontal"
-	android:background="@drawable/bg_main" >
+	android:background="@color/silent_black_translucent" >
 
 	<!-- The ZRTP peername if it exists -->
 	<TextView
 	   	android:id="@+id/CryptoPeerName"
+        style="@style/TextAppearanceTranslucent"
 	   	android:layout_width="fill_parent"
 	   	android:layout_height="wrap_content"
 	   	android:layout_alignParentTop="true"
@@ -43,7 +44,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	   	android:layout_marginTop="5dp"
 	   	android:gravity="center_horizontal|center_vertical"
 	   	android:text="@string/crypto_peer_name"
-	   	android:textColor="@android:color/white"
 	   	android:textSize="16.0sp" />
 
 	<!-- The padlock -->
@@ -61,13 +61,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     <!-- The ZRTP SAS string if it exists -->
     <TextView
         android:id="@+id/CryptoSasText"
+        style="@style/TextAppearanceTranslucent"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@+id/CryptoPeerName"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="5dp"
         android:gravity="center_horizontal|center_vertical"
-        android:textColor="@android:color/white"
         android:textSize="12.0sp" />
 
     <!-- ZRTP peer client info layout -->
@@ -82,56 +82,52 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 		android:layout_marginLeft="0dp"
 		android:layout_marginTop="8dp"
 		android:text="@string/crypto_peer_client"
-		android:textColor="@android:color/white"
+		android:textColor="@color/silent_white"
 		android:textSize="16.0sp" />
 
 	<!-- first line, client id -->
 	<TextView
 		android:id="@+id/CryptoPeerClientId"
+        style="@style/TextAppearanceTranslucent"
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
 		android:layout_alignLeft="@+id/CryptoPeerClient"
 		android:layout_below="@+id/CryptoPeerClient"
 		android:layout_marginTop="5dp"
 		android:layout_marginLeft="5dp"
-		android:background="@null"
 		android:text="@string/crypto_peer_client_id"
-		android:textColor="@android:color/white"
 		android:textSize="12.0sp" />
 
 	<TextView
 		android:id="@+id/CryptoPeerClientIdInfo"
+        style="@style/TextAppearanceTranslucent"
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
 		android:layout_alignParentRight="true"
 		android:layout_alignTop="@+id/CryptoPeerClientId"
 		android:layout_below="@+id/CryptoPeerClient"
         android:layout_marginRight="5dp"
-		android:background="@null"
-		android:textColor="@android:color/white"
 		android:textSize="12.0sp" />
 
 	<!-- second line, protocol version -->
 	<TextView
 		android:id="@+id/CryptoPeerClientProto"
+        style="@style/TextAppearanceTranslucent"
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
 		android:layout_alignLeft="@+id/CryptoPeerClientId"
 		android:layout_below="@+id/CryptoPeerClientId"
 		android:layout_marginTop="3dp"
-		android:background="@null"
 		android:text="@string/crypto_peer_client_proto"
-		android:textColor="@android:color/white"
 		android:textSize="12.0sp" />
 
 	<TextView
 		android:id="@+id/CryptoPeerClientProtoInfo"
+        style="@style/TextAppearanceTranslucent"
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
 		android:layout_alignTop="@+id/CryptoPeerClientProto"
 		android:layout_alignRight="@+id/CryptoPeerClientIdInfo"
-		android:background="@null"
-		android:textColor="@android:color/white"
 		android:textSize="12.0sp" />
 
 	<!-- Crypto components info layout -->
@@ -145,146 +141,134 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 		android:layout_alignParentTop="false"
 		android:layout_below="@+id/CryptoPeerClientProto"
 		android:layout_marginTop="20dp"
+        android:textColor="@color/silent_white"
 		android:text="@string/crypto_crypto_components"
-		android:textColor="@android:color/white"
 		android:textSize="16.0sp" />
 
 	<!-- first line, TLS info -->
     <TextView
         android:id="@+id/CryptoCryptoComponentsTls"
+        style="@style/TextAppearanceTranslucent"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignLeft="@+id/CryptoPeerClientId"
         android:layout_below="@+id/CryptoCryptoComponents"
         android:layout_marginTop="5dp"
-        android:background="@null"
         android:text="@string/crypto_crypto_components_tls"
-        android:textColor="@android:color/white"
         android:textSize="12.0sp" />
 
     <TextView
         android:id="@+id/CryptoCryptoComponentsTlsInfo"
+        style="@style/TextAppearanceTranslucent"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignTop="@+id/CryptoCryptoComponentsTls"
         android:layout_alignRight="@+id/CryptoPeerClientIdInfo"
-        android:background="@null"
-        android:textColor="@android:color/white"
         android:textSize="12.0sp" />
 
     <!-- second line, ZRTP hash info -->
     <TextView
         android:id="@+id/CryptoCryptoComponentsZhash"
+        style="@style/TextAppearanceTranslucent"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignLeft="@+id/CryptoPeerClientId"
         android:layout_below="@+id/CryptoCryptoComponentsTls"
         android:layout_marginTop="3dp"
-        android:background="@null"
         android:text="@string/crypto_crypto_components_zhash"
-        android:textColor="@android:color/white"
         android:textSize="12.0sp" />
 
     <TextView
         android:id="@+id/CryptoCryptoComponentsZhashInfo"
+        style="@style/TextAppearanceTranslucent"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignTop="@+id/CryptoCryptoComponentsZhash"
         android:layout_alignRight="@+id/CryptoPeerClientIdInfo"
-        android:background="@null"
-        android:textColor="@android:color/white"
         android:textSize="12.0sp" />
 
     <!-- third line, key exchange info -->
     <TextView
         android:id="@+id/CryptoCryptoComponentsPk"
+        style="@style/TextAppearanceTranslucent"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignLeft="@+id/CryptoPeerClientId"
         android:layout_below="@+id/CryptoCryptoComponentsZhash"
         android:layout_marginTop="3dp"
-        android:background="@null"
         android:text="@string/crypto_crypto_components_pk"
-        android:textColor="@android:color/white"
         android:textSize="12.0sp" />
 
     <TextView
         android:id="@+id/CryptoCryptoComponentsPkInfo"
+        style="@style/TextAppearanceTranslucent"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignTop="@+id/CryptoCryptoComponentsPk"
         android:layout_alignRight="@+id/CryptoPeerClientIdInfo"
-        android:background="@null"
-        android:textColor="@android:color/white"
         android:textSize="12.0sp" />
 
     <!-- fourth line, cipher info -->
     <TextView
         android:id="@+id/CryptoCryptoComponentsCipher"
+        style="@style/TextAppearanceTranslucent"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignLeft="@+id/CryptoPeerClientId"
         android:layout_below="@+id/CryptoCryptoComponentsPk"
         android:layout_marginTop="3dp"
-        android:background="@null"
         android:text="@string/crypto_crypto_components_cipher"
-        android:textColor="@android:color/white"
         android:textSize="12.0sp" />
 
     <TextView
         android:id="@+id/CryptoCryptoComponentsCipherInfo"
+        style="@style/TextAppearanceTranslucent"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignTop="@+id/CryptoCryptoComponentsCipher"
         android:layout_alignRight="@+id/CryptoPeerClientIdInfo"
-        android:background="@null"
-        android:textColor="@android:color/white"
         android:textSize="12.0sp" />
 
     <!-- fifth line, hash info -->
     <TextView
         android:id="@+id/CryptoCryptoComponentsHash"
+        style="@style/TextAppearanceTranslucent"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignLeft="@+id/CryptoPeerClientId"
         android:layout_below="@+id/CryptoCryptoComponentsCipher"
         android:layout_marginTop="3dp"
-        android:background="@null"
         android:text="@string/crypto_crypto_components_hash"
-        android:textColor="@android:color/white"
         android:textSize="12.0sp" />
 
     <TextView
         android:id="@+id/CryptoCryptoComponentsHashInfo"
+        style="@style/TextAppearanceTranslucent"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignTop="@+id/CryptoCryptoComponentsHash"
         android:layout_alignRight="@+id/CryptoPeerClientIdInfo"
-        android:background="@null"
-        android:textColor="@android:color/white"
         android:textSize="12.0sp" />
 
     <!-- sixth line, SRTP auth tag info -->
     <TextView
         android:id="@+id/CryptoCryptoComponentsSauth"
+        style="@style/TextAppearanceTranslucent"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignLeft="@+id/CryptoPeerClientId"
         android:layout_below="@+id/CryptoCryptoComponentsHash"
         android:layout_marginTop="3dp"
-        android:background="@null"
         android:text="@string/crypto_crypto_components_sauth"
-        android:textColor="@android:color/white"
         android:textSize="12.0sp" />
 
     <TextView
         android:id="@+id/CryptoCryptoComponentsSauthInfo"
+        style="@style/TextAppearanceTranslucent"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignTop="@+id/CryptoCryptoComponentsSauth"
         android:layout_alignRight="@+id/CryptoPeerClientIdInfo"
-        android:background="@null"
-        android:textColor="@android:color/white"
         android:textSize="12.0sp" />
 
     
@@ -300,20 +284,19 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 		android:layout_below="@+id/CryptoCryptoComponentsSauth"
 		android:layout_marginTop="20dp"
 		android:text="@string/crypto_shared_secrets"
-		android:textColor="@android:color/white"
+        android:textColor="@color/silent_white"
 		android:textSize="16.0sp" />
 
     <!-- RS1 text and light -->
     <TextView
         android:id="@+id/CryptoSharedSecretsRs1"
+        style="@style/TextAppearanceTranslucent"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignLeft="@+id/CryptoPeerClientId"
         android:layout_below="@+id/CryptoSharedSecrets"
         android:layout_marginTop="5dp"
-        android:background="@null"
         android:text="@string/crypto_shared_secrets_rs1"
-        android:textColor="@android:color/white"
         android:textSize="12.0sp" />
     
     <TextView
@@ -331,14 +314,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     <!-- RS2 text and light -->
     <TextView
         android:id="@+id/CryptoSharedSecretsRs2"
+        style="@style/TextAppearanceTranslucent"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignTop="@+id/CryptoSharedSecretsRs1"
         android:layout_toRightOf="@+id/CryptoSharedSecretsRs1"
         android:layout_marginLeft="10dp"
-        android:background="@null"
         android:text="@string/crypto_shared_secrets_rs2"
-        android:textColor="@android:color/white"
         android:textSize="12.0sp" />
 
     <TextView
@@ -356,14 +338,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     <!-- AUX text and light -->
     <TextView
         android:id="@+id/CryptoSharedSecretsAux"
+        style="@style/TextAppearanceTranslucent"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignTop="@+id/CryptoSharedSecretsRs1"
         android:layout_toRightOf="@+id/CryptoSharedSecretsRs2"
         android:layout_marginLeft="10dp"
-        android:background="@null"
         android:text="@string/crypto_shared_secrets_aux"
-        android:textColor="@android:color/white"
         android:textSize="12.0sp" />
     
     <TextView
@@ -381,14 +362,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     <!-- PBX text and light -->
     <TextView
         android:id="@+id/CryptoSharedSecretsPbx"
+        style="@style/TextAppearanceTranslucent"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignTop="@+id/CryptoSharedSecretsRs1"
         android:layout_toRightOf="@+id/CryptoSharedSecretsAux"
         android:layout_marginLeft="10dp"
-        android:background="@null"
         android:text="@string/crypto_shared_secrets_pbx"
-        android:textColor="@android:color/white"
         android:textSize="12.0sp" />
     
     <TextView

@@ -29,13 +29,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 -->
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
 
-	<item android:state_pressed="true">
-		<shape>
-			<gradient android:angle="270" android:endColor="#c0000080" android:startColor="#c00000f0" />
+	<item android:state_pressed="true"><shape>
+			<gradient android:angle="270" android:endColor="#e0000080" android:startColor="#e00000f0" />
 
-			<padding android:bottom="3dp" android:left="5dp" android:right="5dp" android:top="3dp" />
-		</shape>	
-	</item>
+			<padding android:left="5dp" android:right="5dp" />
+			<!-- <padding android:bottom="3dp" android:left="5dp" android:right="5dp" android:top="3dp" /> -->
+		</shape></item>
 
 	<!--
      Check if we need a special focus color    
@@ -59,20 +58,20 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     </item>
 	-->
 
-	<item>
-		<shape>
-			<gradient android:angle="270" android:endColor="#c0101010" android:startColor="#c0707070" />
+	<item><shape>
+			<gradient android:angle="270" android:endColor="@color/dial_button_end" android:startColor="@color/dial_button_start" />
 
-			<padding android:bottom="3dp" android:left="5dp" android:right="5dp" android:top="3dp" />
-<!--
-     If we like wounded cornes and/or strokes around the button
+			<!-- <padding android:bottom="3dp" android:left="5dp" android:right="5dp" android:top="3dp" /> -->
+			<padding android:left="5dp" android:right="5dp" />
+
+			<!--
+            If we like wounded cornes and/or strokes around the button
             <stroke
                 android:width="1dp"
-                android:color="#000000" />
-             <corners
-                android:radius="1dp" /> 
--->
-		</shape>	
-	</item>
+                android:color="#ff000000" />
+            <corners
+                android:radius="0dp" /> 
+			-->
+		</shape></item>
 
 </selector>

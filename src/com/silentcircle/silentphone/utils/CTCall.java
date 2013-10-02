@@ -28,10 +28,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 package com.silentcircle.silentphone.utils;
 
-import java.io.InputStream;
-
-import com.silentcircle.silentphone.TiviPhoneService;
-
 import android.content.ContentUris;
 import android.content.Context;
 import android.database.Cursor;
@@ -39,6 +35,12 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.provider.ContactsContract;
+
+import com.silentcircle.silentcontacts.ScContactsContract.PhoneLookup;
+import com.silentcircle.silentcontacts.ScContactsContract.RawContacts;
+import com.silentcircle.silentphone.TiviPhoneService;
+
+import java.io.InputStream;
 
 public class CTCall {
 
@@ -101,16 +103,38 @@ public class CTCall {
         customRingtoneUri = null;
     }
 
-    public void fillDataFromContacts(Context ctx) {
-        if (contactsDataChecked || ctx == null)
+    public void fillDataFromContacts(TiviPhoneService service) {
+        if (contactsDataChecked || service == null)
             return;
-        
-        Uri lookupUri = Uri.withAppendedPath(ContactsContract.PhoneLookup.CONTENT_FILTER_URI, bufPeer.toString());
+
+        Context ctx = service.getBaseContext();
+        Uri lookupUri;
+        Uri contentUri;
+        String phoneLookUpId;
+        String ringtoneIdx;
+        String displayNameIdx;
+        boolean hasSilentContacts = false;
+
+        if (service.hasSilentContacts()) {
+            lookupUri = Uri.withAppendedPath(PhoneLookup.CONTENT_FILTER_URI, bufPeer.toString());
+            displayNameIdx = RawContacts.DISPLAY_NAME;
+            phoneLookUpId = PhoneLookup._ID;
+            contentUri = RawContacts.CONTENT_URI;
+            ringtoneIdx = PhoneLookup.CUSTOM_RINGTONE;
+            hasSilentContacts = true;
+        }
+        else {
+            lookupUri = Uri.withAppendedPath(ContactsContract.PhoneLookup.CONTENT_FILTER_URI, bufPeer.toString());
+            displayNameIdx = ContactsContract.Contacts.DISPLAY_NAME;
+            phoneLookUpId = ContactsContract.PhoneLookup._ID;
+            contentUri = ContactsContract.Contacts.CONTENT_URI;
+            ringtoneIdx = ContactsContract.PhoneLookup.CUSTOM_RINGTONE;
+        }
         Cursor c = ctx.getContentResolver().query(lookupUri, null, null, null, null);
         if (c != null) {
             if (c.moveToFirst()) {
                 
-                int idx = c.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME);
+                int idx = c.getColumnIndex(displayNameIdx);
                 if (idx != -1) {
                     String name = c.getString(idx);
                     if (name != null && name.length() > 0)
@@ -118,20 +142,22 @@ public class CTCall {
                 }
 
                 // Check for a small photo
-                idx = c.getColumnIndex(ContactsContract.PhoneLookup._ID);
+                idx = c.getColumnIndex(phoneLookUpId);
                 if (idx != -1) {
-                    String contactId = c.getString(idx);
-                    if (contactId != null) {
+                    long contactId = c.getLong(idx);
+                    if (contactId != 0) {
                         // Get photo of contactId as input stream:
-                        Uri uri = ContentUris.withAppendedId(ContactsContract.Contacts.CONTENT_URI, Long.parseLong(contactId));
-                        InputStream input = ContactsContract.Contacts.openContactPhotoInputStream(ctx.getContentResolver(), uri);
+                        Uri uri = ContentUris.withAppendedId(contentUri, contactId);                        
+                        InputStream input = hasSilentContacts ?
+                                RawContacts.openContactPhotoInputStream(ctx.getContentResolver(), uri):
+                                ContactsContract.Contacts.openContactPhotoInputStream(ctx.getContentResolver(), uri);
                         if (input != null)
                             image = BitmapFactory.decodeStream(input);
                     }
 
                 }
 
-                idx =  c.getColumnIndex(ContactsContract.PhoneLookup.CUSTOM_RINGTONE);
+                idx =  c.getColumnIndex(ringtoneIdx);
                 if (idx != -1) {
                     String customRing = c.getString(idx);
                     if (customRing != null)
@@ -165,15 +191,7 @@ public class CTCall {
         if (!iInUse) {
             return;
         }
-        String name = s;
-        if (name.startsWith("sip:") || name.startsWith("sips:" )) {
-            int idx = name.indexOf(':');
-            name = name.substring(idx+1);
-            idx = name.indexOf('@');
-            if (idx > 0)
-                name = name.substring(0, idx);
-        }
-        bufPeer.setText(name);
+        bufPeer.setText(Utilities.removeSipParts(s));
     }
 
     public CTStringBuffer zrtpWarning = new CTStringBuffer(256);
@@ -279,6 +297,4 @@ public class CTCall {
     public Bitmap image;
 
     public Uri customRingtoneUri;
-
-    
 };

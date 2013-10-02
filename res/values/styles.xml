@@ -28,10 +28,10 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 -->
 
-<resources>
+<resources xmlns:android="http://schemas.android.com/apk/res/android">
 
 	<!-- Base application theme is the default theme. -->
-	<style name="Theme" parent="android:Theme.Black"></style>
+	<style name="AppTheme" parent="@style/Theme.Sherlock"></style>
 
 	<!--
          A theme that has a translucent background.  Here we explicitly specify
@@ -70,22 +70,37 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
         <item name="android:background">@drawable/text_selector</item>
     </style>
 	
+    <style name="TextAppearanceTranslucent">
+    	<item name="android:background">@color/silent_black_translucent</item>
+    	<item name="android:textColor">@color/silent_white</item>
+    </style>
+
     <!-- Dialed digits: Inherits genric text style and sets the text size -->
 	<style name="DigitsTextAppearance" parent="@style/TextAppearance">
 		<item name="android:textSize">@dimen/dialpad_digits_text_size</item>
 	</style>
 
 	<style name="DialpadButtonStyle">
-		<item name="android:layout_width">0dip</item>
-		<item name="android:layout_height">match_parent</item>
-		<item name="android:layout_weight">1</item>
+		<item name="android:layout_width">wrap_content</item>
+		<item name="android:layout_height">wrap_content</item>
+ 		<item name="android:layout_weight">1</item>
 		<item name="android:soundEffectsEnabled">false</item>
-		<item name="android:background">@drawable/dial_button_custom</item>
+     	<item name="android:background">@drawable/dial_button_custom</item>
 		<!-- <item name="android:background">@android:color/transparent</item> -->
-		<!-- <item name="android:background">?android:attr/selectableItemBackground</item> -->
+		<!-- <item name="android:background">?attr/selectableItemBackground</item> -->
 	</style>
 
-	<style name="ButtonStyleGreen">
+    <style name="IncallButtonStyle">
+        <item name="android:layout_width">0dip</item>
+        <item name="android:layout_height">match_parent</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:soundEffectsEnabled">false</item>
+        <item name="android:background">@drawable/incall_button_custom</item>
+        <!-- <item name="android:background">@android:color/transparent</item> -->
+        <!-- <item name="android:background">?attr/selectableItemBackground</item> -->
+    </style>
+
+    <style name="ButtonStyleGreen">
 		<item name="android:layout_width">0dip</item>
 		<item name="android:layout_height">match_parent</item>
 		<item name="android:soundEffectsEnabled">true</item>

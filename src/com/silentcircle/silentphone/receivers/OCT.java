@@ -1,10 +1,30 @@
-
-// ---LICENSE_BEGIN---
 /*
- * Copyright © 2012, Silent Circle
- * All rights reserved.
- */
-// ---LICENSE_END---
+Copyright © 2012-2013, Silent Circle, LLC.  All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+    * Any redistribution, use, or modification is done solely for personal 
+      benefit and not for any commercial purpose or for monetary gain
+    * Redistributions of source code must retain the above copyright
+      notice, this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above copyright
+      notice, this list of conditions and the following disclaimer in the
+      documentation and/or other materials provided with the distribution.
+    * Neither the name Silent Circle nor the
+      names of its contributors may be used to endorse or promote products
+      derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL SILENT CIRCLE, LLC BE LIABLE FOR ANY
+DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
 
 package com.silentcircle.silentphone.receivers;
 
@@ -14,6 +34,7 @@ import android.content.Intent;
 import android.util.Log;
 
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.preference.PreferenceManager;
 
 //import com.tivi.tiviphone.utils.TCall;
@@ -36,14 +57,15 @@ public class OCT extends BroadcastReceiver {
    public static final String call_to_timestamp = "call_to_timestamp";
    
    public static final int STORED_NR_LIFETIME = 3000;// 3 sec
-   
+
+   private static String SILENT_CALL_ACTION = "com.silentcircle.silentphone.action.NEW_OUTGOING_CALL";
+
    public static String getCallToNumber(Context context){
       
       SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
       
       long storedTS = prefs.getLong(call_to_timestamp,0);
       long ts = Utilities.get_time_ms();
-      //TODO prefs.edit().putString(call_to, "").commit();
       long d = ts - storedTS;
       
       if(d > STORED_NR_LIFETIME || d < -STORED_NR_LIFETIME)
@@ -83,7 +105,8 @@ public class OCT extends BroadcastReceiver {
       i.setData(intent.getData());
       i.putExtra("dst_number", number);
 
-      i.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP|Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
+      i.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP|Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_CLEAR_TOP|
+              Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
       
       context.startActivity(i);	     
    }
@@ -98,13 +121,13 @@ public class OCT extends BroadcastReceiver {
              return;
          }
 
-         if(number.startsWith(prefix_check) && number.length() >= prefix_check.length() + 4){
+         if(number.startsWith(prefix_check) && number.length() >= prefix_check.length() + 4) {
             startTivi(context,number.substring(prefix_check.length()),intent);
             setResultData(null);
             return;
          }
          
-         if(number.startsWith(prefix_add) && number.length() >= prefix_check.length() + 4){
+         if(number.startsWith(prefix_add) && number.length() >= prefix_add.length() + 4) {
             startTivi(context,number.substring(prefix_add.length()),intent);
             setResultData(null);
             return;

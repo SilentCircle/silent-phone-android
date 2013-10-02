@@ -37,13 +37,13 @@ public class TWake {
     PowerManager.WakeLock wl = null;
     boolean bIsActive;
 
-    public TWake(Context cnt) {
+    public TWake(Context cnt, String tag) {
         PowerManager pm = (PowerManager) cnt.getSystemService(Context.POWER_SERVICE);
-        wl = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "Tivi online");
+        wl = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, tag);
         bIsActive = false;
     }
 
-    public void start() {
+    synchronized public void start() {
         if (bIsActive)
             return;
         if (!wl.isHeld()) {
@@ -52,7 +52,7 @@ public class TWake {
         bIsActive = true;
     }
 
-    public void stop() {
+    synchronized public void stop() {
         if (wl.isHeld()) {
             wl.release();
         }

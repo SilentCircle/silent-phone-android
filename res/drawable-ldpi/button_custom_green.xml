@@ -31,7 +31,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 	<item android:state_pressed="true">
 		<shape>
-			<gradient android:angle="270" android:endColor="#c0000080" android:startColor="#c00000f0" />
+			<gradient android:angle="270" android:endColor="#f8000080" android:startColor="#f80000f0" />
 
 			<padding android:bottom="3dp" android:left="5dp" android:right="5dp" android:top="3dp" />
 			<corners android:radius="6dp" />
@@ -40,7 +40,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 	<item>
 		<shape>
-			<gradient android:angle="270" android:endColor="#c0004000" android:startColor="#c000f000" />
+			<gradient android:angle="270" android:endColor="#f8004000" android:startColor="#f800f000" />
 
 			<padding android:bottom="3dp" android:left="5dp" android:right="5dp" android:top="3dp" />
 <!--

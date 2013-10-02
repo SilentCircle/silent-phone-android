@@ -1,0 +1,574 @@
+2:93:af:Afghanistan::
+3:355:al:Albania::
+3:213:dz:Algeria::
+3:684:as:American Samoa::
+3:376:ad:Andorra::
+3:244:ao:Angola::
+1:1264:ai:Anguilla::
+3:6721:aq:Antarctica::
+1:1268:ag:Antigua & Barbuda::
+2:54:ar:Argentina::
+3:374:am:Armenia::
+3:297:aw:Aruba::
+2:61:au:Australia::
+2:43:at:Austria::
+3:994:az:Azerbaijan::
+1:1242:bs:Bahamas::
+3:973:bh:Bahrain::
+3:880:bd:Bangladesh::
+1:1246:bb:Barbados::
+3:375:by:Belarus::
+2:32:be:Belgium::
+3:501:bz:Belize::
+3:229:bj:Benin::
+1:1441:bm:Bermuda::
+3:975:bt:Bhutan::
+3:591:bo:Bolivia::
+3:387:ba:Bosnia & Herzegovina::
+3:381:rs:Serbia::
+3:382:me:Montenegro::
+3:267:bw:Botswana::
+2:55:br:Brazil::
+3:673:bn:Brunei Darussalam::
+3:359:bg:Bulgaria::
+3:226:bf:Burkina Faso::
+3:257:bi:Burundi::
+3:855:kh:Cambodia::
+3:237:cm:Cameroon::
+1:1403:ca:Canada:Alberta:
+1:1587:ca:Canada:Alberta:
+1:1780:ca:Canada:Alberta:
+1:1587:ca:Canada:Alberta:
+1:1604:ca:Canada:British Columbia:
+1:1778:ca:Canada:British Columbia:
+1:1250:ca:Canada:British Columbia:
+1:1204:ca:Canada:Manitoba:
+1:1506:ca:Canada:New Brunswick:
+1:1709:ca:Canada:Newfoundland:
+1:1867:ca:Canada:Northwest Territories:
+1:1902:ca:Canada:Nova Scotia:
+1:1905:ca:Canada:Ontario:
+1:1289:ca:Canada:Ontario:
+1:1519:ca:Canada:Ontario:
+1:1226:ca:Canada:Ontario:
+1:1705:ca:Canada:Ontario:
+1:1249:ca:Canada:Ontario:
+1:1613:ca:Canada:Ontario:
+1:1343:ca:Canada:Ontario:
+1:1807:ca:Canada:Ontario:
+1:1416:ca:Canada:Ontario:
+1:1647:ca:Canada:Ontario:
+1:1902:ca:Canada::
+1:1418:ca:Canada::
+1:1581:ca:Canada:Quebec:
+1:1450:ca:Canada::
+1:1579:ca:Canada:Quebec:
+1:1514:ca:Canada::
+1:1438:ca:Canada:Quebec:
+1:1819:ca:Canada:Quebec:
+1:1306:ca:Canada:Saskatchewan:
+1:1867:ca:Canada:Yukon Territory:
+3:238:cv:Cape Verde::
+1:1345:ky:Cayman Islands::
+3:236:cf:Central African Republic::
+3:235:td:Chad::
+2:56:cl:Chile::
+2:86:cn:China::
+2:61891006:cx:Christmas Island::
+2:61891010:cc:Cocos Islands::
+2:57:co:Colombia::
+4:2697:km:Comoros::
+3:242:cg:Congo::
+3:682:ck:Cook Islands::
+3:506:cr:Costa Rica::
+3:225:ci:Cote d'Ivoire::
+3:385:hr:Croatia::
+2:53:cu:Cuba::
+3:357:cy:Cyprus::
+3:420:cz:Czech Republic::
+2:45:dk:Denmark::
+3:253:dj:Djibouti::
+1:1767:dm:Dominica::
+1:1809:do:Dominican Republic::
+3:670:tl:East Timor::
+3:593:ec:Ecuador::
+2:20:eg:Egypt::
+3:503:sv:El Salvador::
+3:224:gn:Guinea::
+3:240:gq:Equatorial Guinea::
+3:291:er:Eritrea::
+3:372:ee:Estonia::
+3:251:et:Ethiopia::
+3:500:fk:Falkland islands::
+3:298:fo:Faroe Islands::
+3:679:fj:Fiji::
+3:358:fi:Finland::
+2:33:fr:France::
+3:594:gf:French Guiana::
+3:689:pf:French Polynesia::
+3:241:ga:Gabon::
+3:220:gm:Gambia::
+3:995:ge:Georgia::
+2:49:de:Germany::
+3:233:gh:Ghana::
+3:350:gi:Gibraltar::
+2:30:gr:Greece::
+3:299:gl:Greenland::
+1:1473:gd:Grenada::
+3:590:gp:Guadeloupe::
+1:1671:gu:Guam::
+3:502:gt:Guatemala::
+3:245:gw:Guinea-Bissau::
+3:592:gy:Guyana::
+3:509:ht:Haiti::
+3:504:hn:Honduras::
+3:852:hk:Hong Kong::
+2:36:hu:Hungary::
+3:354:is:Iceland::
+2:91:in:India::
+2:62:id:Indonesia::
+2:98:ir:Iran::
+3:964:iq:Iraq::
+3:353:ie:Ireland::
+3:970:il:Israel::
+2:39:it:Italy::
+1:1876:jm:Jamaica::
+2:81:jp:Japan::
+2:82:kr:Korea::
+3:850:kp:North Korea::
+3:962:jo:Jordan::
+1:7676:kz:Kazakhstan::
+1:7715:kz:Kazakhstan::
+1:7721:kz:Kazakhstan::
+1:7725:kz:Kazakhstan::
+1:7711:kz:Kazakhstan::
+1:7710:kz:Kazakhstan::
+1:7727:kz:Kazakhstan::
+1:7721:kz:Kazakhstan::
+1:7728:kz:Kazakhstan::
+1:7721:kz:Kazakhstan::
+1:7729:kz:Kazakhstan::
+1:7714:kz:Kazakhstan::
+1:7726:kz:Kazakhstan::
+1:7713:kz:Kazakhstan::
+1:7727:kz:Kazakhstan::
+1:7721:kz:Kazakhstan::
+1:7717:kz:Kazakhstan::
+1:7718:kz:Kazakhstan::
+1:7712:kz:Kazakhstan::
+1:7715:kz:Kazakhstan::
+3:254:ke:Kenya::
+3:686:ki:Kiribati::
+3:965:kw:Kuwait::
+3:996:kg:Kyrgyzstan::
+3:856:la:Lao::
+3:371:lv:Latvia::
+3:961:lb:Lebanon::
+3:266:ls:Lesotho::
+3:231:lr:Liberia::
+3:218:ly:Libya::
+3:423:li:Liechtenstein::
+3:370:lt:Lithuania::
+3:352:lu:Luxembourg::
+3:853:mo:Macau::
+3:389:mk:Macedonia::
+3:261:mg:Madagascar::
+3:265:mw:Malawi::
+2:60:my:Malaysia::
+3:960:mv:Maldives::
+3:223:ml:Mali::
+3:356:mt:Malta::
+3:692:mh:Marshall Islands::
+3:596:mq:Martinique::
+3:222:mr:Mauritania::
+3:230:mu:Mauritius::
+3:269:yt:Mayotte::
+2:52:mx:Mexico::
+3:691:fm:Micronesia::
+3:373:md:Moldova::
+3:377:mc:Monaco::
+3:976:mn:Mongolia::
+1:1664:ms:Montserrat::
+3:212:ma:Morocco::
+3:258:mz:Mozambique::
+2:95:mm:Myanmar::
+3:264:na:Namibia::
+3:674:nr:Nauru::
+3:977:np:Nepal::
+2:31:nl:Netherlands::
+3:599:an:Netherlands Antilles::
+3:687:nc:New Caledonia::
+2:64:nz:New Zealand::
+3:505:ni:Nicaragua::
+3:227:ne:Niger::
+3:234:ng:Nigeria::
+3:683:nu:Niue::
+3:6723:nf:Norfolk island::
+1:1670:mp:Northern Mariana Islands::
+2:47:no:Norway::
+3:968:om:Oman::
+2:92:pk:Pakistan::
+3:680:pw:Palau::
+3:507:pa:Panama::
+3:675:pg:Papua New Guinea::
+3:595:py:Paraguay::
+2:51:pe:Peru::
+2:63:ph:Philippines::
+2:48:pl:Poland::
+3:351:pt:Portugal::
+1:1787:pr:Puerto Rico::
+3:974:qa:Qatar::
+3:262:re:Reunion::
+2:40:ro:Romania::
+1:7:ru:Russia::
+3:250:rw:Rwanda::
+3:290:sh:St. Helena::
+1:1869:kn:St. Kitts & Nevis::
+1:1758:lc:St. Lucia::
+3:508:pm:St. Pierre & Miquelon::
+1:1784:vc:St. Vincent & the Grenadines::
+3:685:ws:Samoa::
+3:378:sm:San Marino::
+3:239:st:Sao Tome & Principe::
+3:966:sa:Saudi Arabia::
+3:221:sn:Senegal::
+3:248:sc:Seychelles::
+3:232:sl:Sierra Leone::
+2:65:sg:Singapore::
+3:421:sk:Slovakia::
+3:386:si:Slovenia::
+3:677:sb:Solomon Islands::
+3:252:so:Somalia::
+2:27:za:South Africa::
+2:34:es:Spain::
+2:94:lk:Sri Lanka::
+3:249:sd:Sudan::
+3:597:sr:Suriname::
+3:268:sz:Swaziland::
+2:46:se:Sweden::
+2:41:ch:Switzerland::
+3:963:sy:Syria::
+3:886:tw:Taiwan::
+3:992:tj:Tajikistan::
+3:255:tz:Tanzania::
+2:66:th:Thailand::
+3:228:tg:Togo::
+3:690:tk:Tokelau::
+3:676:to:Tonga::
+1:1868:tt:Trinidad & Tobago::
+3:216:tn:Tunisia::
+2:90:tr:Turkey::
+3:993:tm:Turkmenistan::
+1:1649:tc:Turks & Caicos::
+3:688:tv:Tuvalu::
+3:256:ug:Uganda::
+3:380:ua:Ukraine::
+3:971:ae:United Arab Emirates::
+2:44:gb:United Kingdom::
+3:598:uy:Uruguay::
+3:998:uz:Uzbekistan::
+3:678:vu:Vanuatu::
+3:379:va:Vatican::
+2:58:ve:Venezuela::
+2:84:vn:Vietnam::
+1:1284:vg:British Virgin Islands::
+1:1340:vi:US Virgin Islands::
+3:681:wf:Wallis & Futuna::
+3:246:x1:Diego Garcia::
+3:967:ye:Yemen::
+3:243:cd:Dem.Rep. Congo::
+3:260:zm:Zambia::
+3:263:zw:Zimbabwe::
+1:1:us:USA::
+1:1800:us:USA:Toll free: 
+1:1877:us:USA:Toll free:
+1:1888:us:USA:Toll free: 
+1:1866:us:USA:Toll free:
+1:1779:us:USA:Chicago, IL:
+1:1202:us:USA:Washington, DC:
+1:1205:us:USA:Alabama:
+1:1251:us:USA:Alabama:
+1:1256:us:USA:Alabama:
+1:1334:us:USA:Alabama:
+1:1938:us:USA:Alabama:
+1:1406:us:USA:Montana:
+1:1907:us:USA:Alaska:
+1:1252:us:USA:North Carolina:
+1:1336:us:USA:North Carolina:
+1:1704:us:USA:North Carolina:
+1:1828:us:USA:North Carolina:
+1:1910:us:USA:North Carolina:
+1:1919:us:USA:North Carolina:
+1:1980:us:USA:North Carolina:
+1:1480:us:USA:Arizona:
+1:1520:us:USA:Arizona:
+1:1602:us:USA:Arizona:
+1:1623:us:USA:Arizona:
+1:1928:us:USA:Arizona:
+1:1701:us:USA:North Dakota:
+1:1479:us:USA:Arkansas:
+1:1501:us:USA:Arkansas:
+1:1870:us:USA:Arkansas:
+1:1308:us:USA:Nebraska:
+1:1402:us:USA:Nebraska:
+1:1531:us:USA:Nebraska:
+1:1209:us:USA:California:
+1:1213:us:USA:California:
+1:1310:us:USA:California:
+1:1323:us:USA:California:
+1:1408:us:USA:California:
+1:1415:us:USA:California:
+1:1424:us:USA:California:
+1:1442:us:USA:California:
+1:1510:us:USA:California:
+1:1530:us:USA:California:
+1:1559:us:USA:California:
+1:1562:us:USA:California:
+1:1619:us:USA:California:
+1:1626:us:USA:California:
+1:1650:us:USA:California:
+1:1657:us:USA:California:
+1:1661:us:USA:California:
+1:1707:us:USA:California:
+1:1714:us:USA:California:
+1:1760:us:USA:California:
+1:1805:us:USA:California:
+1:1818:us:USA:California:
+1:1831:us:USA:California:
+1:1858:us:USA:California:
+1:1909:us:USA:California:
+1:1916:us:USA:California:
+1:1925:us:USA:California:
+1:1949:us:USA:California:
+1:1951:us:USA:California:
+1:1603:us:USA:New Hampshire:
+1:1303:us:USA:Colorado:
+1:1719:us:USA:Colorado:
+1:1720:us:USA:Colorado:
+1:1970:us:USA:Colorado:
+1:1201:us:USA:New Jersey:
+1:1551:us:USA:New Jersey:
+1:1609:us:USA:New Jersey:
+1:1732:us:USA:New Jersey:
+1:1848:us:USA:New Jersey:
+1:1856:us:USA:New Jersey:
+1:1862:us:USA:New Jersey:
+1:1908:us:USA:New Jersey:
+1:1973:us:USA:New Jersey:
+1:1203:us:USA:Connecticut:
+1:1475:us:USA:Connecticut:
+1:1860:us:USA:Connecticut:
+1:1505:us:USA:New Mexico:
+1:1575:us:USA:New Mexico:
+1:1302:us:USA:Delaware:
+1:1702:us:USA:Nevada:
+1:1775:us:USA:Nevada:
+1:1239:us:USA:Florida:
+1:1305:us:USA:Florida:
+1:1321:us:USA:Florida:
+1:1352:us:USA:Florida:
+1:1386:us:USA:Florida:
+1:1407:us:USA:Florida:
+1:1561:us:USA:Florida:
+1:1727:us:USA:Florida:
+1:1754:us:USA:Florida:
+1:1772:us:USA:Florida:
+1:1786:us:USA:Florida:
+1:1813:us:USA:Florida:
+1:1850:us:USA:Florida:
+1:1863:us:USA:Florida:
+1:1904:us:USA:Florida:
+1:1941:us:USA:Florida:
+1:1954:us:USA:Florida:
+1:1212:us:USA:New York:
+1:1315:us:USA:New York:
+1:1347:us:USA:New York:
+1:1516:us:USA:New York:
+1:1518:us:USA:New York:
+1:1585:us:USA:New York:
+1:1607:us:USA:New York:
+1:1631:us:USA:New York:
+1:1646:us:USA:New York:
+1:1716:us:USA:New York:
+1:1718:us:USA:New York:
+1:1845:us:USA:New York:
+1:1914:us:USA:New York:
+1:1917:us:USA:New York:
+1:1929:us:USA:New York:
+1:1229:us:USA:Georgia:
+1:1404:us:USA:Georgia:
+1:1470:us:USA:Georgia:
+1:1478:us:USA:Georgia:
+1:1678:us:USA:Georgia:
+1:1706:us:USA:Georgia:
+1:1762:us:USA:Georgia:
+1:1770:us:USA:Georgia:
+1:1912:us:USA:Georgia:
+1:1216:us:USA:Ohio:
+1:1234:us:USA:Ohio:
+1:1330:us:USA:Ohio:
+1:1419:us:USA:Ohio:
+1:1440:us:USA:Ohio:
+1:1513:us:USA:Ohio:
+1:1567:us:USA:Ohio:
+1:1614:us:USA:Ohio:
+1:1740:us:USA:Ohio:
+1:1937:us:USA:Ohio:
+1:1808:us:USA:Hawaii:
+1:1405:us:USA:Oklahoma:
+1:1539:us:USA:Oklahoma:
+1:1580:us:USA:Oklahoma:
+1:1918:us:USA:Oklahoma:
+1:1208:us:USA:Idaho:
+1:1458:us:USA:Oregon:
+1:1503:us:USA:Oregon:
+1:1541:us:USA:Oregon:
+1:1971:us:USA:Oregon:
+1:1217:us:USA:Illinois:
+1:1224:us:USA:Illinois:
+1:1309:us:USA:Illinois:
+1:1312:us:USA:Illinois:
+1:1331:us:USA:Illinois:
+1:1618:us:USA:Illinois:
+1:1630:us:USA:Illinois:
+1:1708:us:USA:Illinois:
+1:1773:us:USA:Illinois:
+1:1815:us:USA:Illinois:
+1:1847:us:USA:Illinois:
+1:1872:us:USA:Illinois:
+1:1215:us:USA:Pennsylvania:
+1:1267:us:USA:Pennsylvania:
+1:1412:us:USA:Pennsylvania:
+1:1484:us:USA:Pennsylvania:
+1:1570:us:USA:Pennsylvania:
+1:1610:us:USA:Pennsylvania:
+1:1717:us:USA:Pennsylvania:
+1:1724:us:USA:Pennsylvania:
+1:1814:us:USA:Pennsylvania:
+1:1878:us:USA:Pennsylvania:
+1:1219:us:USA:Indiana:
+1:1260:us:USA:Indiana:
+1:1317:us:USA:Indiana:
+1:1574:us:USA:Indiana:
+1:1765:us:USA:Indiana:
+1:1812:us:USA:Indiana:
+1:1401:us:USA:Rhode Island:
+1:1319:us:USA:Iowa:
+1:1515:us:USA:Iowa:
+1:1563:us:USA:Iowa:
+1:1641:us:USA:Iowa:
+1:1712:us:USA:Iowa:
+1:1803:us:USA:South Carolina:
+1:1843:us:USA:South Carolina:
+1:1864:us:USA:South Carolina:
+1:1316:us:USA:Kansas:
+1:1620:us:USA:Kansas:
+1:1785:us:USA:Kansas:
+1:1913:us:USA:Kansas:
+1:1605:us:USA:SouthDakota:
+1:1270:us:USA:Kentucky:
+1:1502:us:USA:Kentucky:
+1:1606:us:USA:Kentucky:
+1:1859:us:USA:Kentucky:
+1:1423:us:USA:Tennessee:
+1:1615:us:USA:Tennessee:
+1:1731:us:USA:Tennessee:
+1:1865:us:USA:Tennessee:
+1:1901:us:USA:Tennessee:
+1:1931:us:USA:Tennessee:
+1:1225:us:USA:Louisiana:
+1:1318:us:USA:Louisiana:
+1:1337:us:USA:Louisiana:
+1:1504:us:USA:Louisiana:
+1:1985:us:USA:Louisiana:
+1:1210:us:USA:Texas:
+1:1214:us:USA:Texas:
+1:1254:us:USA:Texas:
+1:1281:us:USA:Texas:
+1:1325:us:USA:Texas:
+1:1361:us:USA:Texas:
+1:1409:us:USA:Texas:
+1:1430:us:USA:Texas:
+1:1432:us:USA:Texas:
+1:1469:us:USA:Texas:
+1:1512:us:USA:Texas:
+1:1682:us:USA:Texas:
+1:1713:us:USA:Texas:
+1:1806:us:USA:Texas:
+1:1817:us:USA:Texas:
+1:1830:us:USA:Texas:
+1:1832:us:USA:Texas:
+1:1903:us:USA:Texas:
+1:1915:us:USA:Texas:
+1:1936:us:USA:Texas:
+1:1940:us:USA:Texas:
+1:1956:us:USA:Texas:
+1:1972:us:USA:Texas:
+1:1979:us:USA:Texas:
+1:1339:us:USA:Massachusetts:
+1:1351:us:USA:Massachusetts:
+1:1413:us:USA:Massachusetts:
+1:1508:us:USA:Massachusetts:
+1:1617:us:USA:Massachusetts:
+1:1774:us:USA:Massachusetts:
+1:1781:us:USA:Massachusetts:
+1:1857:us:USA:Massachusetts:
+1:1978:us:USA:Massachusetts:
+1:1385:us:USA:Utah:
+1:1435:us:USA:Utah:
+1:1801:us:USA:Utah:
+1:1240:us:USA:Maryland:
+1:1301:us:USA:Maryland:
+1:1410:us:USA:Maryland:
+1:1443:us:USA:Maryland:
+1:1276:us:USA:Virginia:
+1:1434:us:USA:Virginia:
+1:1540:us:USA:Virginia:
+1:1571:us:USA:Virginia:
+1:1703:us:USA:Virginia:
+1:1757:us:USA:Virginia:
+1:1804:us:USA:Virginia:
+1:1207:us:USA:Maine:
+1:1802:us:USA:Vermont:
+1:1231:us:USA:Michigan:
+1:1248:us:USA:Michigan:
+1:1269:us:USA:Michigan:
+1:1313:us:USA:Michigan:
+1:1517:us:USA:Michigan:
+1:1586:us:USA:Michigan:
+1:1616:us:USA:Michigan:
+1:1734:us:USA:Michigan:
+1:1810:us:USA:Michigan:
+1:1906:us:USA:Michigan:
+1:1947:us:USA:Michigan:
+1:1989:us:USA:Michigan:
+1:1206:us:USA:Washington:
+1:1253:us:USA:Washington:
+1:1360:us:USA:Washington:
+1:1425:us:USA:Washington:
+1:1509:us:USA:Washington:
+1:1218:us:USA:Minnesota:
+1:1320:us:USA:Minnesota:
+1:1507:us:USA:Minnesota:
+1:1612:us:USA:Minnesota:
+1:1651:us:USA:Minnesota:
+1:1763:us:USA:Minnesota:
+1:1952:us:USA:Minnesota:
+1:1262:us:USA:Wisconsin:
+1:1414:us:USA:Wisconsin:
+1:1534:us:USA:Wisconsin:
+1:1608:us:USA:Wisconsin:
+1:1715:us:USA:Wisconsin:
+1:1920:us:USA:Wisconsin:
+1:1314:us:USA:Missouri:
+1:1417:us:USA:Missouri:
+1:1573:us:USA:Missouri:
+1:1636:us:USA:Missouri:
+1:1660:us:USA:Missouri:
+1:1816:us:USA:Missouri:
+1:1304:us:USA:West Virginia:
+1:1228:us:USA:Mississippi:
+1:1601:us:USA:Mississippi:
+1:1662:us:USA:Mississippi:
+1:1769:us:USA:Mississippi:
+1:1307:us:USA:Wyoming:

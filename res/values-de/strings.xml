@@ -48,7 +48,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     <string name="accept_video">Annehmen</string>
     <string name="audio_only">Video aus</string>
     <string name="mute_video">Video stumm</string>
-    <string name="verify_button">Prüfen</string>
+    <string name="verify_button">Drücken um\nSicherheit\nzu prüfen</string>
     <string name="verify_infotext_top">Bitte mit Partner vergleichen</string>
     <string name="verify_infotext_bottom">und hier eine Partnerkennung eintragen</string>
     <string name="next">Weiter</string>
@@ -56,8 +56,28 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     <string name="login">Anmelden</string>
     <string name="logout">Abmelden</string>
     <string name="exit">Beenden</string>
-    <string name="settings">Einstellungen</string>
+    <string name="settings">Einstellungen</string>    
+    <string name="send_message">Senden</string>
     
+    <string name="companion_codes">Einladungskodes</string>
+
+    <string name="sip_state_calling">Anrufen&#8230;</string>
+    <string name="sip_state_connecting">Verbinden&#8230;</string>
+    <string name="sip_state_ringing">Läuten</string>
+    <string name="sip_state_ended">Anruf beendet</string>
+    <string name="sip_state_online">Online</string>
+    <string name="sip_state_offline">Offline</string>
+
+    <string name="call_duration">Dauer</string>
+    <string name="call_type_audio">Ankommender Anruf</string>
+    <string name="call_type_video">Ankommender Videoanruf</string>
+    <string name="call_error">Fehler</string>
+
+    <!-- Strings to display security status, handle with care during translations -->
+    <string name="secstate_secure">SECURE</string>
+    <string name="secstate_zrtp_problem">ZRTP Problem</string>
+    <string name="secstate_not_secure">Not SECURE</string>
+
     <!-- Strings for the crypto panel -->
     <string name="crypto_peer_name">Partner name</string>
 	<string name="crypto_peer_client">ZRTP Partnerprogramm</string>
@@ -95,6 +115,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     <string name="zrtp_we_header">ZRTP Sicherheitsnachrichten</string>
     <string name="zrtp_we_error">ZRTP Fehler</string>
     <string name="zrtp_we_warn">ZRTP Warnung</string>
+    <string name="srtp_we_warn">SRTP Warnung</string>
+    <string name="zrtp_show_details">Details anzeigen</string>
+    <string name="zrtp_hide_details">Details ausblenden</string>
     
     <!-- Strings for the provisioning activity and messages -->
     <string name="provisioning_infotext">Erstellen Ihrer Benutzerkennung</string>
@@ -154,7 +177,17 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     <string name="thanks_bottom_line">Zum Verwalten Ihres SilentCircle Benutzerkontos öffnen Sie im Browser bitte\nwww.silentcircle.com</string>
     
     <!-- Explanation of SAS code/words -->
-    <string name="sas_explanation">Vergleichen Sie diesen Authentifizierungscode mündlich mit ihrem Gesprächspartner. Stimmen die Codes nicht überein, könnte ein Abhörmaßnahme aktiv sein.</string>
+    <string name="sas_explanation">Vergleichen Sie diesen Authentifizierungscode mündlich mit ihrem Gesprächspartner. Stimmen die Kodes nicht überein, könnte eine Abhörmaßnahme aktiv sein.</string>
+    
+    <!-- Text for the companion code screen -->
+    <string name="companion_vertu_welcome">Willkommen bei SilentCircle in Zusammarbeit mit Vertu.\nWir haben für Sie fünf 30-Tage Gastzugänge bereitgestellt, die sie an Freunde oder Familie weitergeben können.\nSenden Sie anderen einen Einladungscode, damit diese einen SilentCircle 30-Tage Gastzugang aktivieren können.</string>
+
+    <plurals name="companion_codes_available">
+        <item quantity="one">Sie haben noch einen Einladungskode.</item>
+        <item quantity="other">Sie haben noch %1$d Einladungskodes.</item>
+    </plurals>
+    <string name="companion_sms_text">Willkommen bei SilentCircle. Mit dem Einladungskode %1$s können Sie bei <font fgcolor="#ffffffff">accounts.silentcircle.com</font> Ihr Benutzerkonto anlegen.</string>
+    <string name="companion_manage_info">Weitere Optionen um ihre Einladungskodes zu verwalten finden in Ihrem Benutzerkonto auf <font fgcolor="#ffffffff">accounts.silentcircle.com</font></string>
     
     <!-- Description of image buttons -->
     <string name="caller_image">Bild des Anrufers</string>
@@ -174,7 +207,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     <string name="video_audio_mute">Audio stumm</string>
     <string name="video_switch_camera">Kameras umschalten</string>
     
-    <string name="crypto_padlock">Schloß zeigt den Sicherheitsstatu</string>
+    <string name="crypto_padlock">Schloß zeigt den Sicherheitsstatus</string>
     
     <!--
          String describing the image on ImageButton one
@@ -286,4 +319,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	-->
 	<string name="description_delete_button">Löschen</string>
 
+	<string name="zrtp_common_cmp">Vergleichen Sie diesen Authentifizierungscode mündlich mit ihrem Gesprächspartner. Stimmen die Kodes nicht überein, könnte eine Abhörmaßnahme aktiv sein.</string>
+    <string name="zrtp_common_cls">Probleme mit der Netzverbindung. Bitte auflegen und nochmal anrufen.</string>
+    <string name="zrtp_common_upd">Die angerufene Person sollte die Silent Phone Anwendung aktualisieren.</string>
+    <string name="zrtp_common_app">Anwendungsfehler. Bitte die Silent Phone Anwendung löschen und neu installieren.</string>
+	
 </resources>

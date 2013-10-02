@@ -41,7 +41,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 	<item>
 		<shape>
-			<gradient android:angle="270" android:endColor="#c0101010" android:startColor="#c0707070" />
+			<gradient android:angle="270" android:endColor="@color/dial_button_end" android:startColor="@color/dial_button_start" />
 
 			<padding android:bottom="10dp" android:left="5dp" android:right="5dp" android:top="10dp" />
 <!--

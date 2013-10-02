@@ -29,5 +29,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package com.silentcircle.silentphone.utils;
 
 public class TBuild {
-	public static String T_BUILD_NR = "167r";
+	public static String T_BUILD_NR = "189 Open";
 };
+

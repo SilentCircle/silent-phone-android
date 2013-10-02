@@ -30,6 +30,9 @@ package com.silentcircle.silentphone.activities;//TCallWindow;
 
 import java.lang.ref.WeakReference;
 
+import com.actionbarsherlock.app.SherlockFragmentActivity;
+import com.actionbarsherlock.view.Menu;
+import com.actionbarsherlock.view.MenuItem;
 import com.silentcircle.silentphone.R;
 import com.silentcircle.silentphone.TiviPhoneService;
 import com.silentcircle.silentphone.utils.CTCall;
@@ -58,10 +61,10 @@ import android.os.IBinder;
 import android.os.Message;
 import android.os.PowerManager;
 import android.support.v4.app.DialogFragment;
-import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.SurfaceView;
@@ -79,15 +82,13 @@ import android.widget.RelativeLayout.LayoutParams;
 import android.widget.TextView;
 import android.view.Window;
 
-import android.view.Menu;
-import android.view.MenuItem;
-
 import android.media.AudioManager;
 import android.media.ToneGenerator;
 
 import android.widget.Toast;
 
-public class TCallWindow  extends FragmentActivity implements CallStateChangeListener, DeviceStateChangeListener, SensorEventListener {
+public class TCallWindow  extends SherlockFragmentActivity implements CallStateChangeListener, DeviceStateChangeListener,
+    SensorEventListener {
     
     private static final String LOG_TAG = "TCallWindow";
 
@@ -98,9 +99,15 @@ public class TCallWindow  extends FragmentActivity implements CallStateChangeLis
     public static final int SHOW_DPAD_MENU_ITEM = FIRST_MENU_ID + 9;
     public static final int SHOW_ENROLL = FIRST_MENU_ID + 10;
 
-    public static final int IN_CALL_DIALPAD_HIDE_TIMER = 1;
-    public static final int IN_CALL_DIALPAD_HIDE_TIME_DEFAULT = 6000;   // given in ms
+    private static final int IN_CALL_DIALPAD_HIDE_TIMER = 1;
+    private static final int IN_CALL_DIALPAD_HIDE_TIME_DEFAULT = 6000;   // given in ms
 
+    private static final int SWITCH_SECURITY_STATE_TEXT_AUDIO = 2;
+    private static final int SWITCH_SECURITY_STATE_TEXT_VIDEO = 3;
+    private static final int SWITCH_SECURITY_STATE_TEXT_TIME_DEFAULT = 5000;   // given in ms
+
+    private static final int ZRTP_MESSAGE_RESULT = 101;
+    
     /**
      * The static variables and flags have a global meaning and are used even if
      * this object was destroyed
@@ -167,7 +174,7 @@ public class TCallWindow  extends FragmentActivity implements CallStateChangeLis
     private TextView sasText;
     private TextView additionalInfo;
     private TextView secureState;
-    private TextView verifyButton;
+    private Button   verifyButton;
     private TextView zrtpPeerName;
 
     /*
@@ -197,12 +204,6 @@ public class TCallWindow  extends FragmentActivity implements CallStateChangeLis
     private RelativeLayout videoOverlayView;
     private SurfaceView previewSurface;
     
-    /**
-     * Layout view of the ZRTP warning/error messages
-     */
-    private View zrtpWarningError;
-    private TextView zrtpWEMessage;
-    private TextView zrtpWEMessageType;
     private boolean zrtpErrorShowing = false;
 
     // Some hardware stuff
@@ -236,6 +237,28 @@ public class TCallWindow  extends FragmentActivity implements CallStateChangeLis
                 if (parent.inCallDialer != null && parent.inCallDialer.isVisible())
                     parent.hideInCallDialog(null);     // Method does not use the View parameter, thus null is OK
                 break;
+
+                case SWITCH_SECURITY_STATE_TEXT_AUDIO:
+                case SWITCH_SECURITY_STATE_TEXT_VIDEO:
+                    CTCall call = TiviPhoneService.calls.selectedCall;
+                    String askState = "media.audio.zrtp.sec_state";
+                    if (msg.what == SWITCH_SECURITY_STATE_TEXT_VIDEO)
+                        askState = "media.video.zrtp.sec_state";
+                    if ("ZRTP Error".equals(call.bufSecureMsg.toString())) {
+                        int secState = Integer.parseInt(TiviPhoneService.getInfo(call.iEngID, call.iCallId, askState));
+                        if ((secState & 0x100) == 0x100) {      // We have SDES security
+                            parent.secureState.setText(R.string.secstate_secure);
+                            parent.secureState.setTextColor(parent.resources.getColor(R.color.solid_yellow));
+                            parent.additionalInfo.setText(R.string.to_server_only);
+                            parent.additionalInfo.setVisibility(View.VISIBLE);
+                        }
+                        else {
+                            parent.secureState.setText(R.string.zrtp_we_error);
+                            parent.secureState.setTextColor(parent.resources.getColor(R.color.solid_red));
+                            parent.additionalInfo.setVisibility(View.INVISIBLE);
+                        }
+                    }
+                break;
             }
         }
     }
@@ -260,6 +283,7 @@ public class TCallWindow  extends FragmentActivity implements CallStateChangeLis
             // cast its IBinder to a concrete class and directly access it.
             phoneService = ((TiviPhoneService.LocalBinder)service).getService();
             phoneIsBound = true;
+            serviceBound();
             phoneService.addStateChangeListener(TCallWindow.this);
             phoneService.addDeviceChangeListener(TCallWindow.this);
         }
@@ -278,7 +302,7 @@ public class TCallWindow  extends FragmentActivity implements CallStateChangeLis
        Toast.makeText(getBaseContext(), s, Toast.LENGTH_LONG).show();
     }
 
-    void doBindService() {
+    private void doBindService() {
         // Establish a connection with the service.  We use an explicit
         // class name because we want a specific service implementation that
         // we know will be running in our own process (and thus won't be
@@ -286,7 +310,7 @@ public class TCallWindow  extends FragmentActivity implements CallStateChangeLis
         bindService(new Intent(TCallWindow.this, TiviPhoneService.class), phoneConnection, Context.BIND_AUTO_CREATE);
     }
     
-    void doUnbindService() {
+    private void doUnbindService() {
         if (phoneIsBound) {
             // Detach our existing connection.
             unbindService(phoneConnection);
@@ -294,79 +318,30 @@ public class TCallWindow  extends FragmentActivity implements CallStateChangeLis
         }
     }
 
-    public String doX(int z) {
+    private String doX(int z) {
         if (phoneService != null)
             return phoneService.doX(z);
         return "test";
     }
 
-    public int doCmd(String s) {
+    private int doCmd(String s) {
         return TiviPhoneService.doCmd(s);
     }
-
-    /* *********************************************************************
-     * Functions to handle Menu options. TODO Need to check if all menu entries are necessary.
-     * ******************************************************************* */
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        boolean result = super.onCreateOptionsMenu(menu);
-
-        MenuItem m = null;
-        m = menu.add(0, ANSWER_MENU_ITEM, 0, "Answer");
-        m.setIcon(android.R.drawable.sym_call_incoming);
-
-        m = menu.add(0, VIDEO_MENU_ITEM, 0, "Video");
-        m.setIcon(android.R.drawable.ic_menu_camera);
-
-        m = menu.add(0, HANG_UP_MENU_ITEM, 0, "End call");
-
-        m = menu.add(0, SHOW_ENROLL, 0, "ZRTP Enroll");
-
-        return result;
-    }
-
-
-    @Override
-    public boolean onPrepareOptionsMenu(Menu menu) {
-        boolean result = super.onPrepareOptionsMenu(menu);
-        CTCall call = TiviPhoneService.calls.selectedCall;
-
-        boolean bShowEnroll = call!=null && call.iShowEnroll;
-
-        menu.findItem(SHOW_ENROLL).setVisible(bShowEnroll);
-        menu.findItem(VIDEO_MENU_ITEM).setVisible(call != null && call.iActive && call.bIsVideoActive);
-        if (call!=null && call.iEnded!=0) {
-            menu.findItem(HANG_UP_MENU_ITEM).setVisible(true);
-        }
-        else {
-            menu.findItem(HANG_UP_MENU_ITEM).setVisible(false);
-        }
-        menu.findItem(ANSWER_MENU_ITEM).setVisible(call != null && call.mustShowAnswerBT());
-        return result;
-    }
-
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-        case HANG_UP_MENU_ITEM:
-            endCall(true);
-            break;
-        case ANSWER_MENU_ITEM:
-            answerCall(true);
-            break;
-        case SHOW_ENROLL:
-            doCmd(".enroll");
-            break;
-        case VIDEO_MENU_ITEM:
-            if (videoScreen != null) {
-                videoScreen.startStopCamera();
-            }
-            // if(mtw.pr.isCapturing())mtw.pr.stop();else mtw.pr.start();
-            break;
-        }
-        return true;
-    }
-
     
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == ZRTP_MESSAGE_RESULT) {
+            if (resultCode != RESULT_OK) {
+                int callId = data.getIntExtra(ZrtpMessages.CALL_ID, 0);
+                zrtpMessageDialogCloseEndCall(callId);
+            }
+            else {
+                zrtpMessageDialogClose();
+            }
+            return;
+        }
+    }
+
     /*
      * Switch audio between normal and in-call mode.
      * 
@@ -374,15 +349,24 @@ public class TCallWindow  extends FragmentActivity implements CallStateChangeLis
      */
     public static void am(Context ctx, boolean mode) {
         AudioManager am = (AudioManager) ctx.getSystemService(AUDIO_SERVICE);
-        am.setMode(mode ? AudioManager.MODE_IN_CALL : AudioManager.MODE_NORMAL);
-    }
 
+        int iApiLevel = android.os.Build.VERSION.SDK_INT;
+
+        int m_ic = iApiLevel < 11 ?  AudioManager.MODE_IN_CALL : AudioManager.MODE_IN_COMMUNICATION;
+
+        int mv = mode ? m_ic : AudioManager.MODE_NORMAL;
+        am.setMode(mv);
+        if(mode){
+            am.setMicrophoneMute(false);
+        }
+    }
 
     /* *********************************************************************
      * Call handling functions 
      * ******************************************************************* */
 
     void answerCall(boolean userPressed) {
+
         if (userPressed) {
             // this should be called only before starting audio engine(recording, playback)
             // or it can brake audio playback (Samsung S3)
@@ -393,6 +377,7 @@ public class TCallWindow  extends FragmentActivity implements CallStateChangeLis
         runOnUiThread(new Runnable() {
             public void run() {
                 phoneService.stopRT();
+                speakerButton.setPressed(Utilities.isSpeakerOn(getBaseContext()));
                 dismissCall.setVisibility(View.INVISIBLE);
                 dismissCall.setEnabled(false);
 
@@ -406,7 +391,7 @@ public class TCallWindow  extends FragmentActivity implements CallStateChangeLis
         });
         CTCall call = TiviPhoneService.calls.selectedCall;
         if (!userPressed) {
-            setCallState(1, getDur(0));
+            setCallState(getDur(0));
         }
         else {
             if (call != null) {
@@ -425,10 +410,10 @@ public class TCallWindow  extends FragmentActivity implements CallStateChangeLis
             Utilities.turnOnSpeaker(getBaseContext(), false, false);
             Utilities.restoreSpeakerMode(getBaseContext());
         }
-    }
 
-    synchronized void endCall(boolean userPressed) {
-        CTCall call = TiviPhoneService.calls.selectedCall;
+    }
+    
+    synchronized void endCall(boolean userPressed, CTCall call) {
         if (call == null) {
             Log.w(LOG_TAG, "Null call during end call processing: " + userPressed);
             runOnUiThread(new Runnable() {
@@ -461,22 +446,44 @@ public class TCallWindow  extends FragmentActivity implements CallStateChangeLis
                 am(getBaseContext(), false);
             }
         });
-
-        // Protects against double insert
-        TMActivity.insertCallLog(this, call);
+        Utilities.turnOnSpeaker(this, false, true); // Set speaker to off at end of call and remember this
 
         iHideAfter = userPressed ? 1 : 3;
 
-        // If the call never started and out user pressed hangup - this call is not a missed call
+        // If the call never started and user pressed hangup - this call is not a missed call
         if (!userPressed) {
             String str = call != null ? call.bufMsg.toString() : doX(8);
             str = str.replace('\r', ' ');
             str = str.replace((char) 3, ' ');
             str = str.replace((char) 1, ' ');
-            setCallState(1, "Ended. " + str);
+            setCallState(str);
         }
         else
-            setCallState(1, "Ended  " + getDur(1));
+            setCallState(getDur(1));
+    }
+
+    /**
+     * Handle key down events while handling a call.
+     * 
+     * We only handle KEYCODE_HEADSETHOOK key for the time being. If the user presses this key
+     * we either answer or end the call, depending on the call's state.
+     *  
+     * @param keyCode 
+     * @param event
+     */
+    public boolean onKeyDown (int keyCode, KeyEvent event) {
+        if (TMActivity.SP_DEBUG) Log.d(LOG_TAG, "button, action: " + keyCode);
+        if (KeyEvent.KEYCODE_HEADSETHOOK == keyCode) {
+            CTCall call = TiviPhoneService.calls.selectedCall;
+            if (call != null && call.mustShowAnswerBT()) {
+                answerCall(true);
+            }
+            else {
+                endCall(true, TiviPhoneService.calls.selectedCall);
+            }
+            return true;
+        }
+        return false;
     }
 
     private String getDur(int iAddDur) {
@@ -487,17 +494,21 @@ public class TCallWindow  extends FragmentActivity implements CallStateChangeLis
         }
 
         long dur = (System.currentTimeMillis() - call.uiStartTime + 500) / 1000;
-        String s = iAddDur != 0 ? "Duration " : "";
+        StringBuilder s = new StringBuilder(40);
+        if (iAddDur != 0) {
+            s.append(getString(R.string.call_duration));
+            s.append(' ');
+        }
         long min = dur / 60;
         long sec = dur - min * 60;
         if (min < 10)
-            s += "0";
-        s += min;
-        s += ":";
+            s.append('0');
+        s.append(min);
+        s.append(':');
         if (sec < 10)
-            s += "0";
-        s += sec;
-        return s;
+            s.append('0');
+        s.append(sec);
+        return s.toString();
     }
 
     private void setAntennaInfo() {
@@ -540,18 +551,130 @@ public class TCallWindow  extends FragmentActivity implements CallStateChangeLis
 
     /* *********************************************************************
      * Methods and private class that handle ZRTP state changes
-     * ******************************************************************* */  
-    private void showZrtpErrorWarning(String message) {
+     * ******************************************************************* */
+    
+    /**
+     * Method to handle end of the ZRTP Message activity
+     */
+    public void zrtpMessageDialogClose() {
+        zrtpErrorShowing = false;
+    }
+    
+    /**
+     * Method to close the ZRTP Warning/Error and end the call overlay
+     */
+    public void zrtpMessageDialogCloseEndCall(int callId) {
+        CTCall call = TiviPhoneService.calls.findCallById(callId);
+        endCall(true, call);
+        zrtpErrorShowing = false;
+    }
 
-        // If video currently active check if we switch off video
-        if (zrtpErrorShowing) {
-            zrtpWEMessage.setText(message);
+    private void showZrtpErrorWarning(String[] message, int type, CTCall call) {
+        if (message == null)
             return;
-        }        
-        rootLayout.addView(zrtpWarningError);
-        zrtpWEMessage.setText(message);
+
+        // IF error dialog already on display don't show a new one to avoid stacking
+        if (!zrtpErrorShowing) {
+            Intent intent = new Intent();
+            intent.setClass(this, ZrtpMessages.class);
+            intent.putExtra(ZrtpMessages.MESSAGES, message);
+            intent.putExtra(ZrtpMessages.CALL_ID, call.iCallId);
+            intent.putExtra(ZrtpMessages.MSG_TYPE, type);
+            startActivityForResult(intent, ZRTP_MESSAGE_RESULT);
+        }
         zrtpErrorShowing = true;
         return;
+    }
+
+    /**
+     * Setup new messages based on warning/err message classification.
+     * 
+     * The ZrtpMessageDialog.newInstance method knows about the String array offsets. If this gets changed
+     * you must change it there as well.
+     * 
+     * @param msg original warning/error message
+     * @return String array with new, possibly translated messages
+     */
+    private String[] getTranslatedMessage(String msg, CTCall call) {
+        if (msg == null)
+            return null;
+
+        int index = msg.indexOf(':');   // message classification is sn_cmmm: - see strings.xml
+        String msgIdString = msg.substring(0, index);
+
+        // These two messages are neglibile (replay, parse problem), thus ignore them completely
+        if ("s2_c007".equals(msgIdString) || "s2_c051".equals(msgIdString))
+            return null;
+
+        int secState = Integer.parseInt(TiviPhoneService.getInfo(call.iEngID, call.iCallId, "media.zrtp.sec_state"));
+
+        // The 0x100 signals that SDES is active and thus we are in a secure state. No need to
+        // display scary ZRTP messages. Even if ZRTP fails we stay secure with SDES - at least
+        // in SilentCircle environment.
+        //
+        // Now check which messages we must show in any case.
+        // Display the following warning messages because they either require user attention or give some
+        // information about bad network/SRTP conditions.
+        boolean showWarn = "s2_c004".equals(msgIdString) || "s2_c006".equals(msgIdString) || "s2_c008".equals(msgIdString) ||
+                "s2_c050".equals(msgIdString);
+
+        // Which error messages to show in case SDES is active. Currently none.
+        boolean showError = false;
+
+        if ((secState & 0x100) == 0x100 && !(showWarn || showError))
+            return null;
+
+        String[] retData = new String[3];
+        retData[0] = null;
+        retData[1] = msg;
+        retData[2] = null;
+        if (index == -1) {
+             return retData;
+        }
+        int msgId = this.getResources().getIdentifier(msgIdString, "string", this.getPackageName());
+        if (msgId == 0) {
+            return retData;
+        }
+        retData[0] = ZrtpMessages.getCommonMessage(this, msgId);
+        retData[1] = msgIdString + ": " + getString(msgId);  // prepend id-code to message from resource that maybe translated 
+        msgId = this.getResources().getIdentifier(msgIdString + "_explanation", "string", this.getPackageName());
+        if (msgId != 0)
+            retData[2] = getString(msgId);
+        return retData;
+    }
+
+    private void setSecurityStateField(CTCall call, TiviPhoneService.CT_cb_msg msg) {
+        additionalInfo.setVisibility(View.INVISIBLE);
+        if ("SECURE SDES".equals(call.bufSecureMsg.toString())) {
+            call.sdesActive = true;
+            secureState.setTextColor(resources.getColor(R.color.solid_yellow));
+            secureState.setText(R.string.secstate_secure);
+            additionalInfo.setText(R.string.to_server_only);
+            additionalInfo.setVisibility(View.VISIBLE);
+        }
+        else if ("SECURE".equals(call.bufSecureMsg.toString())) {
+            secureState.setText(R.string.secstate_secure);
+        }
+        else if ("ZRTP Error".equals(call.bufSecureMsg.toString())) {
+            String askState = "media.audio.zrtp.sec_state";
+            if (msg == TiviPhoneService.CT_cb_msg.eZRTPMsgV)
+                askState = "media.video.zrtp.sec_state";
+            int secState = Integer.parseInt(TiviPhoneService.getInfo(call.iEngID, call.iCallId, askState));
+            secureState.setText(R.string.zrtp_we_error);
+            if ((secState & 0x100) == 0x100) {   // SDES active: tell Huston we have a problem, then show SECURITY again
+                secureState.setTextColor(resources.getColor(R.color.solid_yellow));
+                mHandler.sendEmptyMessageDelayed(SWITCH_SECURITY_STATE_TEXT_AUDIO, SWITCH_SECURITY_STATE_TEXT_TIME_DEFAULT);
+            }
+            else {
+                secureState.setTextColor(resources.getColor(R.color.solid_red));
+            }
+        }
+        else  if ("Not SECURE".equals(call.bufSecureMsg.toString())) {
+            secureState.setText(R.string.secstate_not_secure);
+        }
+        else {
+            secureState.setText(call.bufSecureMsg.toString());
+        }
     }
 
     /**
@@ -572,26 +695,20 @@ public class TCallWindow  extends FragmentActivity implements CallStateChangeLis
             if (iCanUseZRTP && call.iActive) {
                 callingState.setVisibility(View.INVISIBLE);
                 secureState.setVisibility(View.VISIBLE);
-                
+
                 switch (msg) {
                 case eZRTPErrV:
                 case eZRTPErrA:
-                    zrtpWEMessageType.setTextColor(resources.getColor(R.color.solid_red));
-                    zrtpWEMessageType.setText(R.string.zrtp_we_error);
-                    
                     if (call.zrtpWarning.getLen() > 0) {
-                        zrtpWEMessage.setTextColor(resources.getColor(R.color.solid_red));
-                        showZrtpErrorWarning(call.zrtpWarning.toString());
+                        showZrtpErrorWarning(getTranslatedMessage(call.zrtpWarning.toString(), call),
+                                TiviPhoneService.CT_cb_msg.eZRTPErrA.ordinal(), call);
                     }
                     break;
 
-                case eZRTPWarn:
-                    zrtpWEMessageType.setTextColor(resources.getColor(R.color.solid_yellow));
-                    zrtpWEMessageType.setText(R.string.zrtp_we_warn);
-                    
+                case eZRTPWarn:                    
                     if (call.zrtpWarning.getLen() > 0) {
-                        zrtpWEMessage.setTextColor(resources.getColor(R.color.solid_yellow));
-                        showZrtpErrorWarning(call.zrtpWarning.toString());
+                        showZrtpErrorWarning(getTranslatedMessage(call.zrtpWarning.toString(), call),
+                                TiviPhoneService.CT_cb_msg.eZRTPWarn.ordinal(), call);
                     }
                     break;
 
@@ -607,10 +724,7 @@ public class TCallWindow  extends FragmentActivity implements CallStateChangeLis
                     secureState.invalidate();
                     sasText.invalidate();
                     
-                    call.sdesActive = false;//test
-                    if (additionalInfo == null)
-                        additionalInfo = (TextView)findViewById(R.id.AdditionalInfo);
-                      
+                    call.sdesActive = false;
                     additionalInfo.setVisibility(View.INVISIBLE);
                     break;
 
@@ -624,19 +738,11 @@ public class TCallWindow  extends FragmentActivity implements CallStateChangeLis
                         zrtpPeerName.setText(call.zrtpPEER.toString());
                         handlePeerCallerName();
                     }
-                    
+
+                case eZRTPMsgV:
+                case eZRTPMsgA:
                 default:
-                    if ("SECURE SDES".equals(call.bufSecureMsg.toString())) {
-                        call.sdesActive = true;
-                        secureState.setTextColor(resources.getColor(R.color.solid_yellow));
-                        secureState.setText(R.string.secstate_secure);
-                        if (additionalInfo == null)
-                            additionalInfo = (TextView)findViewById(R.id.AdditionalInfo);
-                        additionalInfo.setText(R.string.to_server_only);
-                        additionalInfo.setVisibility(View.VISIBLE);
-                    }
-                    else
-                        secureState.setText(call.bufSecureMsg.toString());
+                    setSecurityStateField(call, msg);
                     secureState.invalidate();
                 }
             }
@@ -663,7 +769,7 @@ public class TCallWindow  extends FragmentActivity implements CallStateChangeLis
 
      private void checkMedia(CTCall call) {
 
-        // If video currently active check if we switch off video
+        // If video currently active check if we need to switch off video
         if (bIsVideo) {
             if (!call.bIsVideoActive) {
                 switchVideo(call, false);
@@ -672,13 +778,13 @@ public class TCallWindow  extends FragmentActivity implements CallStateChangeLis
             return;
         }
         
-        // If video currently not active and we got a new video media then
+        // If video is currently not active and we got a new video media then
         // show video overlay with buttons, user must accept the video stream
         if (!bIsVideo && call.bIsVideoActive) {
             if (call.iShowVerifySas) {
                 return;
             }
-            rootLayout.addView(videoOverlay);
+            activateVideo();
             bIsVideo = true;
             return;
         }
@@ -718,6 +824,7 @@ public class TCallWindow  extends FragmentActivity implements CallStateChangeLis
                     startActivity(intent);
                 }
                 break;
+
             case eRinging:
                 setVolumeControlStream(AudioManager.STREAM_VOICE_CALL);  
                 break;
@@ -747,7 +854,7 @@ public class TCallWindow  extends FragmentActivity implements CallStateChangeLis
                 callingState.invalidate();
             }
             if (call.iActive) {
-                enableDisableFunctionButtons(true); // enable the functions now (call manager, dial pad, video, contacts)
+                enableFunctionButtons(true); // enable the functions now (call manager, dial pad, video, contacts)
             }
             // Get the SIP display name if not already done
             String s = call.getNameFromAB();
@@ -783,7 +890,9 @@ public class TCallWindow  extends FragmentActivity implements CallStateChangeLis
         changedState = state;
         runOnUiThread(new Runnable() {
             public void run() {
-                if (changedState == TiviPhoneService.EVENT_WIRED_HEADSET_PLUG) {
+                switch (changedState) {
+
+                case TiviPhoneService.EVENT_WIRED_HEADSET_PLUG:
                     // inCall dialer manages speaker state if it is visible, thus don't restore but switch on
                     // without storing state
                     if (!phoneService.isHeadsetPlugged()) {
@@ -792,7 +901,7 @@ public class TCallWindow  extends FragmentActivity implements CallStateChangeLis
                             return;
                         }
                         // if the state is "not connected", restore the speaker state.
-                        Utilities.restoreSpeakerMode(getApplicationContext());
+                        Utilities.restoreSpeakerMode(getBaseContext());
                         speakerButton.setPressed(Utilities.isSpeakerOn(getBaseContext()));
                         updateProximitySensorMode(true);
                     }
@@ -800,6 +909,14 @@ public class TCallWindow  extends FragmentActivity implements CallStateChangeLis
                         // if the state is "connected", force the speaker off without storing the state.
                         switchSpeaker(false, false);
                     }
+                    break;
+
+                case TiviPhoneService.EVENT_HEADSET_HOOK_PRESSED:
+                    answerCall(true);
+                    break;
+
+                default:
+                    break;
                 }
             }
         });
@@ -823,19 +940,10 @@ public class TCallWindow  extends FragmentActivity implements CallStateChangeLis
             callingState.setVisibility(View.INVISIBLE);
             secureState.setVisibility(View.VISIBLE);
 
-            if (call.sdesActive) {
-                secureState.setTextColor(resources.getColor(R.color.solid_yellow));
-                secureState.setText("SECURE");
-                if (additionalInfo == null)
-                    additionalInfo = (TextView) findViewById(R.id.AdditionalInfo);
-                additionalInfo.setText(R.string.to_server_only);
-                additionalInfo.setVisibility(View.VISIBLE);
-            }
-            else {
-                secureState.setText(call.bufSecureMsg.toString());
-                if (!call.iShowVerifySas) {
-                    secureState.setTextColor(resources.getColor(R.color.solid_green));
-                }
+            TiviPhoneService.CT_cb_msg msg = bIsVideo ? TiviPhoneService.CT_cb_msg.eZRTPMsgV : TiviPhoneService.CT_cb_msg.eZRTPMsgA;
+            setSecurityStateField(call, msg);
+            if (!call.iShowVerifySas) {
+                secureState.setTextColor(resources.getColor(R.color.solid_green));
             }
             secureState.invalidate();
 
@@ -872,11 +980,12 @@ public class TCallWindow  extends FragmentActivity implements CallStateChangeLis
 
             callingState.setVisibility(View.VISIBLE);
             callingState.setText(call.bufMsg.toString());
-            enableDisableFunctionButtons(false);
+            enableFunctionButtons(false);
         }
         else {
             callDuration.setText(getDur(0));
-            enableDisableFunctionButtons(true);
+            setVolumeControlStream(AudioManager.STREAM_VOICE_CALL);
+            enableFunctionButtons(true);
             updateProximitySensorMode(true);
         }
 
@@ -930,11 +1039,24 @@ public class TCallWindow  extends FragmentActivity implements CallStateChangeLis
         speakerButton.setPressed(Utilities.isSpeakerOn(getBaseContext()));
     }
 
-    private void enableDisableFunctionButtons(boolean enable) {
-        showInCallDialer.setEnabled(enable);
-        addNewCall.setEnabled(enable);
-        startVideoCall.setEnabled(enable);
-        startCallManager.setEnabled(enable);
+    private void enableFunctionButtons(boolean enable) {
+        if (!enable) {
+            showInCallDialer.setVisibility(View.INVISIBLE);
+            addNewCall.setVisibility(View.INVISIBLE);
+            startVideoCall.setVisibility(View.INVISIBLE);
+            startCallManager.setVisibility(View.INVISIBLE);
+
+        }
+        else {
+            showInCallDialer.setVisibility(View.VISIBLE);
+            addNewCall.setVisibility(View.VISIBLE);
+            startVideoCall.setVisibility(View.VISIBLE);
+            startCallManager.setVisibility(View.VISIBLE);
+            showInCallDialer.setEnabled(enable);
+            addNewCall.setEnabled(enable);
+            startVideoCall.setEnabled(enable);
+            startCallManager.setEnabled(enable);
+        }
     }
 
 
@@ -1040,23 +1162,14 @@ public class TCallWindow  extends FragmentActivity implements CallStateChangeLis
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         
-        resources = getResources();
-
-        if(phoneService == null)
-           phoneService = TiviPhoneService.mc;
-
-        // Local bind the TiviPhoneService
-        doBindService();
-
-        // On outgoing call we may not yet have a selected call
-        CTCall call = TiviPhoneService.calls.selectedCall;
-
+        resources = getResources();        
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         
         // This is a phone call screen, thus perform some specific handling
         int wflags = WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED;
         wflags |= WindowManager.LayoutParams.FLAG_IGNORE_CHEEK_PRESSES;
         wflags |= WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD;
+        wflags |= WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON;
 
         getWindow().addFlags(wflags);
 
@@ -1079,11 +1192,12 @@ public class TCallWindow  extends FragmentActivity implements CallStateChangeLis
         dismissCall = (Button)findViewById(R.id.DismissCall);
         hangupCall = (Button)findViewById(R.id.HangupCall);
         answerCall = (Button)findViewById(R.id.AnswerCall);
-        verifyButton = (TextView)findViewById(R.id.VerifyButton);
+        verifyButton = (Button)findViewById(R.id.VerifyButton);
         verifyButton.setEnabled(false);
         antennaButton = (ImageButton)findViewById(R.id.Antenna);
         countryFlag = (ImageView)findViewById(R.id.CallFlagField);
         callerImage = (ImageView)findViewById(R.id.CallerImage);
+        additionalInfo = (TextView) findViewById(R.id.AdditionalInfo);
 
         zrtpPeerName = (TextView)findViewById(R.id.ZrtpPeerName);
         zrtpPeerName.setEnabled(false);
@@ -1122,12 +1236,6 @@ public class TCallWindow  extends FragmentActivity implements CallStateChangeLis
             }
         });
         
-        // setup ZRTP warning/error layout
-        zrtpWarningError = getLayoutInflater().inflate(R.layout.dialog_zrtp_we, null);
-        zrtpWEMessage = (TextView)zrtpWarningError.findViewById(R.id.ZrtpWEText);
-        zrtpWEMessageType = (TextView)zrtpWarningError.findViewById(R.id.ZrtpWEType);
-        
-        
         // Specific handling for mute and speaker image buttons: this makes them to behave
         // like toggle buttons. Real Android toggle buttons do not support images. 
         muteButton = (ImageButton)findViewById(R.id.MuteButton);
@@ -1156,14 +1264,20 @@ public class TCallWindow  extends FragmentActivity implements CallStateChangeLis
                     powerManager.newWakeLock(PROXIMITY_SCREEN_OFF_WAKE_LOCK, "silentphone_proximity_off_wake");
 //        }
 
+         doBindService();        // Bind the TiviPhoneService, only locally
+    }
+    
+    // Called after phone service was bound - actually part of onCreate that needs the phone service
+    private void serviceBound() {
+
+        // On outgoing call, we may not yet have a selected call
+        CTCall call = TiviPhoneService.calls.selectedCall;
+
         Bundle bundle = getIntent().getExtras();
 
         if (bundle != null) {
             int callCnt = TiviPhoneService.calls.getCallCnt();
             iIsIncoming = bundle.getInt("incoming");
-
-            // Disable buttons: call manager, dial-pad, video, Contact until call is active or call state restored
-            enableDisableFunctionButtons(false);
 
             if (iIsIncoming == TiviPhoneService.CALL_TYPE_RESTARTED) {
                 iIsIncoming = iLastiIsIncoming;
@@ -1180,8 +1294,8 @@ public class TCallWindow  extends FragmentActivity implements CallStateChangeLis
                 muteButton.setPressed(false);
                 doCmd(":mute 0");           // un-mute if we are not restarting during a call
                 isMuted = false;
-
-                Utilities.turnOnSpeaker(this, false, true);
+                // Disable buttons: call manager, dial-pad, video, Contact until call becomes active
+                enableFunctionButtons(false);
             }
             if (iIsIncoming != TiviPhoneService.CALL_TYPE_OUTGOING) {
                 sendBroadcast(new Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS));
@@ -1189,9 +1303,6 @@ public class TCallWindow  extends FragmentActivity implements CallStateChangeLis
         }
         iLastiIsIncoming = iIsIncoming;
 
-        if (!phoneService.isHeadsetPlugged()) { 
-            Utilities.restoreSpeakerMode(getBaseContext());
-        }   
         speakerButton.setPressed(Utilities.isSpeakerOn(getBaseContext()));
         updateProximitySensorMode(true);
 
@@ -1208,14 +1319,10 @@ public class TCallWindow  extends FragmentActivity implements CallStateChangeLis
         }
 
         if (caller == null) {
-            caller = doX(6);
+            caller = iIsIncoming == TiviPhoneService.CALL_TYPE_OUTGOING ? TMActivity.lastDialedNumber.toString() : doX(6);
         }
-        if (caller.startsWith("sip:")) {
-            caller = caller.substring(4);
-            int idx = caller.indexOf('@');
-            if (idx > 0)
-                caller = caller.substring(0, idx);
-        }
+        caller = Utilities.removeSipParts(caller);
+
         // These two calls set UI in case of outgoing calls. May be overwritten during
         // onResume for incoming calls.
         setCallNumberField(caller);
@@ -1223,7 +1330,7 @@ public class TCallWindow  extends FragmentActivity implements CallStateChangeLis
 
         /* *********************************************************************
          * Monitoring thread: updates the call duration time and checks for some
-         * other periodic activities to happen. It also control the delay when
+         * other periodic activities to happen. It also controls the delay when
          * to close the call window after a call ended.
          * ******************************************************************* */
         monitoring = new Thread(new Runnable() {
@@ -1258,10 +1365,10 @@ public class TCallWindow  extends FragmentActivity implements CallStateChangeLis
                     if (call != null && iHideAfter == -1) {
                         if (!bIsVideo && bActive && (!bSleepModeIsFast || (iCnt >= 83))) {
                             iCnt = 0;
-                            setCallState(1, getDur(0));
+                            setCallState(getDur(0));
                         }
                         else if (!bActive && call.iEnded != 0) {
-                            endCall(false);
+                            endCall(false, TiviPhoneService.calls.selectedCall);
                         }
                         else if (bActive) {
                             videoScreen.check(bActive);
@@ -1343,7 +1450,7 @@ public class TCallWindow  extends FragmentActivity implements CallStateChangeLis
      */
     private String lastMsg = "";
 
-    private void setCallState(int id, String s) {
+    private void setCallState(String s) {
         lastMsg = s;
         runOnUiThread(new Runnable() {
             public void run() {
@@ -1460,7 +1567,7 @@ public class TCallWindow  extends FragmentActivity implements CallStateChangeLis
      * Called when the user dismisses/ends the call.
      */
     public void hangupCall(View view) {
-       endCall(true);
+       endCall(true, TiviPhoneService.calls.selectedCall);
     }
 
     public void onCallMgr(View view) {
@@ -1556,7 +1663,6 @@ public class TCallWindow  extends FragmentActivity implements CallStateChangeLis
      * 3) if the speaker is ON
      * 4) If the slider is open(i.e. the hardkeyboard is *not* hidden)
      *
-     * @param state current state of the phone (see {@link Phone#State})
      */
     private void updateProximitySensorMode(boolean enable) {
 
@@ -1607,15 +1713,6 @@ public class TCallWindow  extends FragmentActivity implements CallStateChangeLis
         return (mProximityWakeLock != null);
     }
 
-
-    /**
-     * Method to close the ZRTP Warning/Error overlay
-     */
-    public void zrtpCloseInfo(View view) {
-        rootLayout.removeView(zrtpWarningError);
-        zrtpErrorShowing = false;
-    }
-    
     /* *********************************************************************
      * Methods to handle the video switching 
      * ******************************************************************* */
@@ -1623,15 +1720,19 @@ public class TCallWindow  extends FragmentActivity implements CallStateChangeLis
     private boolean frontCamera = true;
     
     private void activateVideo() {
+        View parent = (View)videoOverlay.getParent();
+        if (parent == rootLayout) {
+            return;
+        }
         rootLayout.addView(videoOverlay);
-        videoScreen.setFrontCamera(frontCamera);
-        videoScreen.startStopCamera();
-        videoMute = false;
-        
         if (!Utilities.isSpeakerOn(getBaseContext())) {
             switchSpeaker(true, false);
         }
-        switchButtonsVideoActive();
+        if (!videoAccept.isEnabled()) {     // If video accept button is _not_ enabled then user accepted the video
+            videoScreen.setFrontCamera(frontCamera);
+            videoScreen.startStopCamera();
+            videoMute = false;
+        }
     }
 
     private void deactivateVideo() {
@@ -1639,16 +1740,21 @@ public class TCallWindow  extends FragmentActivity implements CallStateChangeLis
         Utilities.restoreSpeakerMode(getBaseContext());
         speakerButton.setPressed(Utilities.isSpeakerOn(getBaseContext()));
         updateProximitySensorMode(true);
-        switchButtonsVideoInactive();
         rootLayout.removeView(videoOverlay);
     }
 
     /**
-     * Switch video on or off.
+     * Switch video connection on or off depending on user actions.
+     * 
+     * This method gets called only if
+     * - the user touches the video button (on = true)
+     * - the user declines the video offer (on = false)
+     * - the user switches back to audio only (on = false)
+     * - or if video is active and a call has no video channel anymore (on = false)
+     * 
      * 
      * @param call        the call that controls the video stream
      * @param on       if true switch video on, switch off otherwise
-     * @param overlayOnly if true show video overlay only, don't send video commands to call engine
      */
     synchronized public void switchVideo(CTCall call, boolean on) {
         // without synchronized can crash when pressing decline if checkMedia call happens very fast.
@@ -1658,6 +1764,7 @@ public class TCallWindow  extends FragmentActivity implements CallStateChangeLis
 
             if (call.iShowVerifySas)    // Switch on video only if the user(s) verified the SAS: verification button not shown
                 return;
+            switchButtonsVideoActive();
             activateVideo();
             doCmd("*C" + call.iCallId); // send re-invite for video on
         }
@@ -1666,6 +1773,7 @@ public class TCallWindow  extends FragmentActivity implements CallStateChangeLis
                 return;
             doCmd("*c" + call.iCallId); // send re-invite for video off
             deactivateVideo();
+            switchButtonsVideoInactive();
         }
         bIsVideo = on;
         return;
@@ -1689,7 +1797,7 @@ public class TCallWindow  extends FragmentActivity implements CallStateChangeLis
      * @param view Button that triggered this action.
      */
     public void videoEndCallButton(View view) {
-        endCall(true);
+        endCall(true, TiviPhoneService.calls.selectedCall);
     }
 
     /**
@@ -1816,6 +1924,8 @@ public class TCallWindow  extends FragmentActivity implements CallStateChangeLis
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     }
     
+    
+
     /* *********************************************************************
      * Handling of the Verify panel display. Triggered by a click on the Verify
      * text button.
@@ -2094,7 +2204,7 @@ public class TCallWindow  extends FragmentActivity implements CallStateChangeLis
     }
     
     public void endCallDialog(View view) {
-        endCall(true);
+        endCall(true, TiviPhoneService.calls.selectedCall);
         Utilities.restoreSpeakerMode(getBaseContext());
         inCallDialer.dismiss();
         if (toneGenerator != null)
@@ -2239,7 +2349,7 @@ public class TCallWindow  extends FragmentActivity implements CallStateChangeLis
             builder.setView(view)
                    .setPositiveButton(R.string.close_dialog, new DialogInterface.OnClickListener() {
                        public void onClick(DialogInterface dialog, int id) {
-                           ((TCallWindow)getActivity()).verifyLater();
+                           ((TCallWindow)getActivity()).setToggleButtons();
                        }
                    });
             return builder.create();

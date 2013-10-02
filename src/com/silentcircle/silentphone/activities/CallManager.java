@@ -85,8 +85,6 @@ public class CallManager extends Activity implements CallStateChangeListener {
     private ArrayList<View> contentViews = new ArrayList<View>(15);
 
     private Resources res;
-    private Drawable normalBackground;
-    private Drawable holdBackground;
     
     private boolean canUseZrtp;
 
@@ -106,6 +104,7 @@ public class CallManager extends Activity implements CallStateChangeListener {
             // cast its IBinder to a concrete class and directly access it.
             phoneService = ((TiviPhoneService.LocalBinder)service).getService();
             phoneIsBound = true;
+            serviceBound();
             phoneService.addStateChangeListener(CallManager.this);
         }
 
@@ -143,8 +142,6 @@ public class CallManager extends Activity implements CallStateChangeListener {
         if (CALL_MGR_STOP.equals(action))
                 finish();
 
-        setContentView(R.layout.activity_call_manager);
-
         // This is a phone call screen, thus perform some specific handling
         // TODO: Proximity handling similar to CallWindow?
         int wflags = WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED;
@@ -153,8 +150,8 @@ public class CallManager extends Activity implements CallStateChangeListener {
 
         getWindow().addFlags(wflags);
 
-        // Local bind the TiviPhoneService
-        doBindService();
+        setContentView(R.layout.activity_call_manager);
+
         canUseZrtp = Utilities.checkZRTP();
 
         res = getResources();
@@ -162,29 +159,33 @@ public class CallManager extends Activity implements CallStateChangeListener {
 
         callMngrContent = (LinearLayout) findViewById(R.id.CallManagerContent);
 
-        normalBackground = res.getDrawable(R.drawable.call_mng_normal);
-        holdBackground = res.getDrawable(R.drawable.call_mng_hold);
-
-        Drawable shape = res.getDrawable(R.drawable.text_custom);
         float fontSize = res.getDimension(R.dimen.call_manager_header_text_size);
 
         conferenceTitle = new TextView(this);
         conferenceTitle.setText(getString(R.string.call_mng_conference));
-        conferenceTitle.setBackgroundDrawable(shape);
+        conferenceTitle.setBackgroundResource(R.drawable.text_custom);
         conferenceTitle.setTextSize(fontSize);
 
         inOutTitle = new TextView(this);
         inOutTitle.setText(getString(R.string.call_mng_in_out));
-        inOutTitle.setBackgroundDrawable(shape);
+        inOutTitle.setBackgroundResource(R.drawable.text_custom);
         inOutTitle.setTextSize(fontSize);
 
         privateTitle = new TextView(this);
         privateTitle.setText(getString(R.string.call_mng_private));
-        privateTitle.setBackgroundDrawable(shape);
+        privateTitle.setBackgroundResource(R.drawable.text_custom);
         privateTitle.setTextSize(fontSize);
 
+        // Local bind the TiviPhoneService
+        doBindService();
         setupCallLists();
-    }    
+    }
+
+    /**
+     * Called after service was connected
+     */
+    private void serviceBound() {
+    }
 
     public boolean onCreateOptionsMenu(Menu menu) {
         return false;
@@ -320,7 +321,7 @@ public class CallManager extends Activity implements CallStateChangeListener {
         View rowView = (RelativeLayout) rowLayout.findViewById(R.id.CallMngLine);
         rowView.setTag(call);
         if (call.iIsOnHold)
-            rowView.setBackgroundDrawable(holdBackground);
+            rowView.setBackgroundResource(R.drawable.call_mng_hold);
 
         rowView.setOnLongClickListener(new OnLongClickListener() {
             public boolean onLongClick(View view) {
@@ -397,7 +398,7 @@ public class CallManager extends Activity implements CallStateChangeListener {
                 if (isConfOnHold()) // if conference is on hold, no need to process
                     return;
             }
-            view.setBackgroundDrawable(holdBackground);
+            view.setBackgroundResource(R.drawable.call_mng_hold);
             call.iIsOnHold = true;
             TiviPhoneService.doCmd("*h" + call.iCallId);
         }
@@ -419,7 +420,7 @@ public class CallManager extends Activity implements CallStateChangeListener {
                 else {
                     View otherView = findContentViewByTag(otherCall);
                     otherCall.iIsOnHold = true;
-                    otherView.setBackgroundDrawable(holdBackground);
+                    otherView.setBackgroundResource(R.drawable.call_mng_hold);
                     TiviPhoneService.doCmd("*h" + otherCall.iCallId);
                 }
             }
@@ -428,7 +429,7 @@ public class CallManager extends Activity implements CallStateChangeListener {
 
             // un-hold the clicked call and set it as new current selected call
             call.iIsOnHold = false;
-            view.setBackgroundDrawable(normalBackground);
+            view.setBackgroundResource(R.drawable.call_mng_normal);
             TiviPhoneService.calls.setCurCall(call);
             TiviPhoneService.doCmd("*u" + call.iCallId);
         }
@@ -459,7 +460,7 @@ public class CallManager extends Activity implements CallStateChangeListener {
                 continue;
             View view = findContentViewByTag(c);
             c.iIsOnHold = true;
-            view.setBackgroundDrawable(holdBackground);
+            view.setBackgroundResource(R.drawable.call_mng_hold);
             TiviPhoneService.doCmd("*h" + c.iCallId);
         }
     }
@@ -489,10 +490,10 @@ public class CallManager extends Activity implements CallStateChangeListener {
             TiviPhoneService.doCmd("*+" + call.iCallId);
         }
         if (call.iIsOnHold) {
-            callView.setBackgroundDrawable(holdBackground);
+            callView.setBackgroundResource(R.drawable.call_mng_hold);
         }
         else {
-            callView.setBackgroundDrawable(normalBackground);
+            callView.setBackgroundResource(R.drawable.call_mng_normal);
         }
         updateContentView();
     }
@@ -618,7 +619,6 @@ public class CallManager extends Activity implements CallStateChangeListener {
             if (userPressed) {
                 TiviPhoneService.doCmd("*e" + call.iCallId);
             }
-            TMActivity.insertCallLog(this, call);
             return null;
         }
 
@@ -631,7 +631,6 @@ public class CallManager extends Activity implements CallStateChangeListener {
 
         // Terminate current call, switch to next.
         TiviPhoneService.doCmd("*e" + call.iCallId);
-        TMActivity.insertCallLog(this, call);
 
         if (nextCall != null) {
             TiviPhoneService.calls.setCurCall(nextCall);    // switch selected call

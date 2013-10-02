@@ -1,0 +1,30 @@
+# Android generated files #
+###########################
+android.keystore
+local.properties
+bin/
+gen/
+obj/
+libs/armeabi/
+
+# OS generated files #
+######################
+.DS_Store*
+ehthumbs.db
+Icon?
+Thumbs.db
+
+# Eclipse generated files #
+###########################
+.settings/org.eclipse.jdt.core.prefs
+
+# Backup files
+##################
+*~
+
+# Android Studio/IntelliJ and gradle directories
+##################
+out/
+build/
+.gradle/
+

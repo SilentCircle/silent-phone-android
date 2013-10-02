@@ -31,12 +31,20 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	android:layout_width="wrap_content"
 	android:layout_height="wrap_content"
 	android:layout_gravity="center_horizontal"
-	android:background="@drawable/bg_main" >
+	android:background="@color/silent_black" >
 
-	<!-- Header -->
+    <ImageView
+    	android:id="@+id/InfoLogoView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="center"
+        android:src="@drawable/sc_logo_big" />
+
+    <!-- Header -->
 
 	<TextView
 		android:id="@+id/ThanksTopLine"
+		style="@style/TextAppearanceTranslucent"
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
 		android:layout_centerHorizontal="true"
@@ -45,21 +53,21 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 		android:layout_marginTop="8dp"
 		android:gravity="center_horizontal"
 		android:text="@string/thanks_top_line"
-		android:textColor="@android:color/white"
 		android:textSize="16.0sp" />
 
 	<TextView
 		android:id="@+id/ThanksSCnumber"
+        style="@style/TextAppearanceTranslucent"
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
 		android:layout_below="@+id/ThanksTopLine"
 		android:layout_centerHorizontal="true"
 		android:layout_marginTop="8dp"
-		android:textColor="@android:color/white"
 		android:textSize="20.0sp" />
 
 	<TextView
 		android:id="@+id/ThanksBottomLine"
+        style="@style/TextAppearanceTranslucent"
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
 		android:layout_below="@+id/ThanksSCnumber"
@@ -69,13 +77,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 		android:layout_marginTop="8dp"
 		android:gravity="center_horizontal"
 		android:text="@string/thanks_bottom_line"
-		android:textColor="@android:color/white"
 		android:textSize="16.0sp" />
 
 	<!-- Second line: build number -->
 
 	<TextView
 		android:id="@+id/InfoBuildNumber"
+        style="@style/TextAppearanceTranslucent"
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
 		android:layout_above="@+id/InfoDeviceInfo"
@@ -83,42 +91,39 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 		android:layout_marginTop="5dp"
 		android:background="@null"
 		android:text="@string/info_build_number"
-		android:textColor="@android:color/white"
 		android:textSize="12.0sp" />
 
 	<TextView
 		android:id="@+id/InfoBuildNumberInfo"
+        style="@style/TextAppearanceTranslucent"
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
 		android:layout_alignRight="@+id/ThanksTopLine"
 		android:layout_alignTop="@+id/InfoBuildNumber"
 		android:background="@null"
-		android:textColor="@android:color/white"
 		android:textSize="12.0sp" />
 
 	<!-- Third line: device information -->
 
 	<TextView
 		android:id="@+id/InfoDeviceInfo"
+        style="@style/TextAppearanceTranslucent"
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
 		android:layout_above="@+id/InfoDeviceClass"
 		android:layout_alignLeft="@+id/ThanksTopLine"
 		android:layout_marginTop="5dp"
-		android:background="@null"
 		android:text="@string/info_device_info"
-		android:textColor="@android:color/white"
 		android:textSize="12.0sp" 
 		android:visibility="invisible"/>
 
 	<TextView
 		android:id="@+id/InfoDeviceInfoInfo"
+        style="@style/TextAppearanceTranslucent"
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
 		android:layout_alignRight="@+id/ThanksTopLine"
 		android:layout_alignTop="@+id/InfoDeviceInfo"
-		android:background="@null"
-		android:textColor="@android:color/white"
 		android:textSize="12.0sp"
 		android:visibility="invisible"/>
 
@@ -126,25 +131,23 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 	<TextView
 		android:id="@+id/InfoDeviceClass"
+        style="@style/TextAppearanceTranslucent"
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
 		android:layout_alignLeft="@+id/ThanksTopLine"
 		android:layout_alignParentBottom="true"
 		android:layout_marginTop="5dp"
-		android:background="@null"
 		android:text="@string/info_device_class"
-		android:textColor="@android:color/white"
 		android:textSize="12.0sp"
 		android:visibility="invisible"/>
 
 	<TextView
 		android:id="@+id/InfoDeviceClassInfo"
+        style="@style/TextAppearanceTranslucent"
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
 		android:layout_alignRight="@+id/ThanksTopLine"
 		android:layout_alignTop="@+id/InfoDeviceClass"
-		android:background="@null"
-		android:textColor="@android:color/white"
 		android:textSize="12.0sp"
 		android:visibility="invisible"/>
 

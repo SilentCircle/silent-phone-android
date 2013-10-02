@@ -28,6 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 package com.silentcircle.silentphone.views;
 
+import com.silentcircle.silentphone.activities.TMActivity;
 import com.silentcircle.silentphone.utils.CTCamera;
 import com.silentcircle.silentphone.utils.CVOut;
 
@@ -131,9 +132,9 @@ public class CallScreen extends SurfaceView implements SurfaceHolder.Callback {
         iSurfOk = 1;
         sw = w;
         sh = h;
-        rect.set(0, 0, w, h); // todo
+        rect.set(0, 0, w, h);
         surf = mHolder.getSurface();
-        Log.d("tivi", "surfaceChanged (" + w + " " + h + " f=" + format + ")");
+        if (TMActivity.SP_DEBUG) Log.d("tivi", "surfaceChanged (" + w + " " + h + " f=" + format + ")");
         iPrevCameraH = -2;
        // MTView.pr.passSurf(holder);
     }
@@ -262,8 +263,6 @@ public class CallScreen extends SurfaceView implements SurfaceHolder.Callback {
                
                 vout.draw(canvas, ox, oy, rectFS, paL);// slow //fullscr
             }
-     //       drawCameraVideo(canvas, hor, bResizeOut);
-
         }
     }
 }

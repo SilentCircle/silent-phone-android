@@ -28,24 +28,21 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 package com.silentcircle.silentphone.activities;
 
-import android.app.Activity;
-import android.app.AlertDialog;
+import android.provider.ContactsContract;
 import android.widget.TextView;
 
-import android.content.DialogInterface;
 import android.content.ServiceConnection;
 import android.os.IBinder;
 import android.content.ComponentName;
 
 import android.os.Bundle;
-import android.support.v4.app.DialogFragment;
-import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 import android.util.Log;
 import android.view.View;
 import android.content.Context;
 import android.view.KeyEvent;
-import android.app.Dialog;
 import android.provider.CallLog;
 
 import android.media.AudioManager;
@@ -54,12 +51,7 @@ import android.net.Uri;
 
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
-import android.content.res.Configuration;
-import android.content.res.Resources;
 
-import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View.OnClickListener;
 import android.view.View.OnLongClickListener;
 
@@ -67,40 +59,64 @@ import android.widget.Toast;
 
 import android.database.Cursor;
 
-import android.provider.ContactsContract.CommonDataKinds.Phone;
+import android.provider.ContactsContract;
 
+import com.actionbarsherlock.app.ActionBar;
+import com.actionbarsherlock.app.ActionBar.Tab;
+import com.actionbarsherlock.app.SherlockFragmentActivity;
+import com.actionbarsherlock.view.Menu;
+import com.actionbarsherlock.view.MenuInflater;
+import com.actionbarsherlock.view.MenuItem;
+
+import com.silentcircle.silentcontacts.ScCallLog;
+import com.silentcircle.silentcontacts.ScContactsContract.CommonDataKinds.Phone;
 import com.silentcircle.silentphone.R;
 import com.silentcircle.silentphone.TiviPhoneService;
-import com.silentcircle.silentphone.utils.CTCall;
-import com.silentcircle.silentphone.utils.TBuild;
+import com.silentcircle.silentphone.utils.DeviceDetectionVertu;
+import com.silentcircle.silentphone.utils.DeviceHandling;
 import com.silentcircle.silentphone.utils.Utilities;
 import com.silentcircle.silentphone.utils.FontFitTextView;
 import com.silentcircle.silentphone.utils.CTStringBuffer;
 import com.silentcircle.silentphone.utils.CTFlags;
 
 import com.silentcircle.silentphone.views.CallScreen;
+import com.silentcircle.silentphone.fragments.InfoFragment;
 import com.silentcircle.silentphone.receivers.OCT;
 
 
 
 import android.widget.ImageButton;
 
-public class TMActivity extends FragmentActivity {
+public class TMActivity extends SherlockFragmentActivity {
 
     private static final String LOG_TAG = "TMActivity";
 
+    private static String SILENT_CALL_ACTION = "com.silentcircle.silentphone.action.NEW_OUTGOING_CALL";
+    private static String SILENT_EDIT_BEFORE_CALL_ACTION = "com.silentcircle.silentphone.action.EDIT_BFORE_CALL";
+    private static String CALL_PRIVILEGED = "android.intent.action.CALL_PRIVILEGED";
+
     private FontFitTextView dialText;
-    private static CTStringBuffer lastDialedNumber= new CTStringBuffer();
+    public static CTStringBuffer lastDialedNumber= new CTStringBuffer();
 
     private static final int CONTACT_PICKER_RESULT = 1001;
+    private static final int CONTACT_PICKER_RESULT_SILENT = 1002;
     private static final int PROVISIONING_RESULT = 47118;
     private static final int KEY_GEN_RESULT = 7118;
+    private static final int DUMMY_RESULT = 11;
 
+    private static final int SPA_HOME_POSITION = 0;
+
+    private static final int INFO_POSITION = 1;
+    private static final String INFO_TAG = "spa_info_fragment";
+
+    private static final int CONTACTS_POSITION = 2;
+    private static final int RECENTS_POSITION = 3;
+
+    
     /**
      * Play a DTMF tone for 200ms
      */
     private static int DTMF_TONE_DURATION = 200;
-
 
     /**
      * Set to true by onNewIntent if user adds a new call, reset in onPause
@@ -109,7 +125,7 @@ public class TMActivity extends FragmentActivity {
 
     public static boolean SP_DEBUG;
 
-    private boolean bShowCfg;
+    public boolean bShowCfg;
     private boolean phoneIsBound;
     private TiviPhoneService phoneService;
     private boolean provisioningDone;
@@ -119,6 +135,13 @@ public class TMActivity extends FragmentActivity {
     private ImageButton dialButton;
     private ImageButton backSpcButton;
     private ImageButton zeroKeyButton;
+    
+    private ActionBar actionBar;
+    private InfoFragment infoFragment;
+
+    // some navigation tab store their position here, used to restore tab selection 
+    // after calling an activity
+    private int savedPosition;
     
     private ToneGenerator mToneGenerator;
 
@@ -131,9 +154,10 @@ public class TMActivity extends FragmentActivity {
             // cast its IBinder to a concrete class and directly access it.
             phoneService = ((TiviPhoneService.LocalBinder) service).getService();
             phoneIsBound = true;
+            serviceBound();
             if (provisioningDone) {
                 provisioningDone = false;
-                showThanks();
+                doLaunchInfo();
             }
         }
 
@@ -142,8 +166,8 @@ public class TMActivity extends FragmentActivity {
             // unexpectedly disconnected -- that is, its process crashed.
             // Because it is running in our same process, we should never
             // see this happen.
-            phoneService = null;
             phoneIsBound = false;
+            phoneService = null;
         }
     };
 
@@ -163,30 +187,56 @@ public class TMActivity extends FragmentActivity {
         }
     }
 
-    public void doLaunchHistory() {
+    private void doLaunchHistory() {
         Intent showCallLog = new Intent();
         showCallLog.setAction(Intent.ACTION_VIEW);
-        showCallLog.setType(CallLog.Calls.CONTENT_TYPE);
-        startActivity(showCallLog);    
+
+        if (phoneService.hasSilentContacts())
+            showCallLog.setType(ScCallLog.ScCalls.CONTENT_TYPE);
+        else
+            showCallLog.setType(CallLog.Calls.CONTENT_TYPE);
+
+        startActivityForResult(showCallLog, DUMMY_RESULT);    
     }
 
+    private void doLaunchContactPicker() {
+        Intent contactPickerIntent;
 
-    public void doLaunchContactPicker() {// View view) {
-        //http://stackoverflow.com/questions/2383580/how-do-i-load-a-contact-photo
-        //http://stackoverflow.com/questions/3509178/getting-a-photo-from-a-contact
+        if (phoneService.hasSilentContacts()) {
+            contactPickerIntent = new Intent(Intent.ACTION_PICK, Phone.CONTENT_URI);
+            startActivityForResult(contactPickerIntent, CONTACT_PICKER_RESULT_SILENT);
+        }
+        else {
+            contactPickerIntent = new Intent(Intent.ACTION_PICK, ContactsContract.CommonDataKinds.Phone.CONTENT_URI);
+            startActivityForResult(contactPickerIntent, CONTACT_PICKER_RESULT);
+        }
+    }
 
-        Intent contactPickerIntent = new Intent(Intent.ACTION_PICK, Phone.CONTENT_URI);
-        startActivityForResult(contactPickerIntent, CONTACT_PICKER_RESULT);
+    private void doLaunchInfo() {
+        final FragmentManager fragmentManager = this.getSupportFragmentManager();
+        final FragmentTransaction transaction = fragmentManager.beginTransaction();
+
+        infoFragment = (InfoFragment)fragmentManager.findFragmentByTag(INFO_TAG);
+        if (infoFragment == null) {
+            infoFragment = new InfoFragment();
+            transaction.add(R.id.start_screen, infoFragment, INFO_TAG);            
+        }
+        transaction.show(infoFragment);
+        transaction.commitAllowingStateLoss();
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+
+        if (resultCode == DUMMY_RESULT)
+            return;
+
         if (requestCode == PROVISIONING_RESULT) {
             if (resultCode != RESULT_OK) {
                 exitApplication();
             }
             else {
-                startS(this);
+                startService(this);
                 provisioningDone = true;
             }
             return;
@@ -194,13 +244,13 @@ public class TMActivity extends FragmentActivity {
         if (requestCode == CONTACT_PICKER_RESULT) {
             if (resultCode == RESULT_OK) {
                 Uri result = data.getData();
-                Cursor c = managedQuery(result, null, null, null, null);// c.moveToFirst();
-                if (c.moveToFirst()) {
-                    int index = c.getColumnIndexOrThrow(Phone.NUMBER);
+                Cursor c = managedQuery(result, null, null, null, null);
+                if (c != null && c.moveToFirst()) {
+                    int index = c.getColumnIndexOrThrow(ContactsContract.CommonDataKinds.Phone.NUMBER);
                     if (index < 0)
-                        return;// TODO check
+                        return;
                     String number = c.getString(index);
-                    if(number.startsWith(OCT.prefix_check) && number.length() >= OCT.prefix_check.length() + 4){
+                    if(number.startsWith(OCT.prefix_check) && (number.length() >= (OCT.prefix_check.length() + 4))){
                         number = number.substring(OCT.prefix_check.length());
                     }
                     else if (number.startsWith(OCT.prefix_add) && number.length() >= OCT.prefix_check.length() + 4) {
@@ -213,8 +263,23 @@ public class TMActivity extends FragmentActivity {
                     return;
                 }
             }
-            if (data != null) {
-                setDialText(data.getAction());    
+        }
+        if (requestCode == CONTACT_PICKER_RESULT_SILENT) {
+            if (resultCode == RESULT_OK) {
+                Uri result = data.getData();
+                Cursor c = managedQuery(result, null, null, null, null);
+                if (c != null && c.moveToFirst()) {
+                    int index = c.getColumnIndexOrThrow(Phone.NUMBER);
+                    if (index < 0)
+                        return;
+
+                    String number = c.getString(index);
+                    number = number.trim();
+                    if (number != null) {
+                        setDialText(number);
+                    }
+                    return;
+                }
             }
         }
         if (requestCode == KEY_GEN_RESULT) {
@@ -222,14 +287,12 @@ public class TMActivity extends FragmentActivity {
                 exitApplication();
             }
             else {
-                startS(this);
+                startService(this);
             }
-            return;            
         }
     }
 
     void setDialText(String s) {
-//isPhoneNR(s) ??
         if(s.length() == 0 || s.indexOf("+") == 0 || (s.indexOf("1") == 0 && s.length()==11)) {
            setCountryFlag(s);
         }
@@ -239,121 +302,84 @@ public class TMActivity extends FragmentActivity {
         dialText.setSelection(dialText.getText().length());
     }
 
-
-    public static final int FIRST_MENU_ID = Menu.FIRST;
-    public static final int EXIT_MENU_ITEM = FIRST_MENU_ID + 1;
-    public static final int LOGIN_MENU_ITEM = FIRST_MENU_ID + 2;
-    public static final int CFG_MENU_ITEM = FIRST_MENU_ID + 3;
-    public static final int UNREG_MENU_ITEM = FIRST_MENU_ID + 4;
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        boolean result = super.onCreateOptionsMenu(menu);
-        MenuItem m;
-
-        m = menu.add(0, EXIT_MENU_ITEM, 0, getString(R.string.exit));
-        m.setIcon(android.R.drawable.ic_menu_close_clear_cancel);// ok
-        m = menu.add(0, UNREG_MENU_ITEM, 0, getString(R.string.logout));
-        m.setIcon(R.drawable.logout);
-
-        m = menu.add(0, CFG_MENU_ITEM, 0, getString(R.string.settings));
-        m.setIcon(android.R.drawable.ic_menu_preferences);// ok
-
-        m = menu.add(0, LOGIN_MENU_ITEM, 0, getString(R.string.login));
-        m.setIcon(R.drawable.login);// ic_menu_set_as);
-
-
-        return result;
-    }
-
-    static boolean bConectedToServ = false;
+    public static boolean bConnectedToServ = false;
     static boolean bUserPressedOffline = false;
 
     @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getSupportMenuInflater();
+        inflater.inflate(R.menu.activity_start_screen, menu);
+        return true;
+    }
+
+    @Override
     public boolean onPrepareOptionsMenu(Menu menu) {
-        boolean result = super.onPrepareOptionsMenu(menu);
+        int iInCall = TiviPhoneService.calls.getCallCnt();
 
-        int iInCall = TiviPhoneService.calls.getCallCnt();// getCallState();
-
-        boolean bServStarted = bConectedToServ && TiviPhoneService.mc != null;
+        boolean bServiceStarted = TMActivity.bConnectedToServ && TiviPhoneService.mc != null;
         int iPhoneState = TiviPhoneService.getPhoneState();
 
-        menu.findItem(EXIT_MENU_ITEM).setVisible(iInCall == 0);
-        menu.findItem(LOGIN_MENU_ITEM).setVisible((!bServStarted || iPhoneState == 0));
-        menu.findItem(CFG_MENU_ITEM).setVisible(bShowCfg);
-        menu.findItem(UNREG_MENU_ITEM).setVisible(bServStarted && iInCall == 0 && iPhoneState != 0);
+        menu.findItem(R.id.start_menu_exit).setVisible(iInCall == 0);
+        menu.findItem(R.id.start_menu_login).setVisible((!bServiceStarted || iPhoneState == 0));
+        menu.findItem(R.id.start_menu_settings).setVisible(bShowCfg);
+        menu.findItem(R.id.start_menu_logout).setVisible(bServiceStarted && iInCall == 0 && iPhoneState != 0);
 
-        return result;
+        return true;
     }
 
-    static public void insertCallLog(Activity ctx, CTCall call){
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        super.onOptionsItemSelected(item);
 
-       long duration = 0;
-       String caller = null;
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                if (infoFragment != null && !infoFragment.isHidden()) {
+                    FragmentManager fragmentManager = getSupportFragmentManager();
+                    FragmentTransaction ft = fragmentManager.beginTransaction();
+                    ft.hide(infoFragment);
+                    ft.commitAllowingStateLoss();
+                }
+                break;
 
-       if(call==null || call.iRecentsUpdated)
-           return;
-       call.iRecentsUpdated = true;
+            case R.id.start_menu_info:
+                doLaunchInfo();
+                break;
 
-       if (call.uiStartTime != 0) {
-          duration = System.currentTimeMillis() - call.uiStartTime;
-          call.uiStartTime = 0;
-       }
-       int iType = call.iIsIncoming ? android.provider.CallLog.Calls.INCOMING_TYPE
-                                    : android.provider.CallLog.Calls.OUTGOING_TYPE;
+            case R.id.start_menu_contacts:
+                doLaunchContactPicker();
+                break;
 
-       if (duration == 0 && iType != TiviPhoneService.CALL_TYPE_OUTGOING) {
-          iType = android.provider.CallLog.Calls.MISSED_TYPE;
-       }
+            case R.id.start_menu_recents:
+                doLaunchHistory();
+                break;
 
-       if (call.bufDialed.getLen() > 0)
-          caller = call.bufDialed.toString();
-       else if (call.bufPeer.getLen() > 0)
-          caller = call.bufPeer.toString();
-       else caller = "";                    // must not be here
+            case R.id.start_menu_exit:
+                exitApplication();
+                break;
 
-       TMActivity.insertCallIntoCallLog(ctx, caller, iType, duration);
+            case R.id.start_menu_logout:
+                bUserPressedOffline = true;
+                TiviPhoneService.doCmd(":unreg");
+                break;
+
+            case R.id.start_menu_login: {
+                bUserPressedOffline = false;
+                startService(this);
+                break;
+            }
+            case R.id.start_menu_settings:
+                showCfg();
+                break;
+        }
+        return true;
     }
 
-    // do not use this directly
-    private static void insertCallIntoCallLog(Activity ctx, String dst, int iType, long dur) {
-        // TODO cfg
-        final android.content.ContentResolver resolver = ctx.getBaseContext().getContentResolver();
-        android.content.ContentValues values = new android.content.ContentValues(5);
-
-        // strip @ and chars
-        StringBuffer strDst = new StringBuffer(20);
-        int i = 0;
-        int dL = dst.length();
-        while (i < dL && ((dst.charAt(i) <= '9' && dst.charAt(i) >= '0') || (i == 0 && dst.charAt(0) == '+'))) {
-            strDst.append(dst.charAt(i));
-            i++;
-        }
-        if (i != 0 && i < dL && dst.charAt(i) == '@') {
-            values.put(CallLog.Calls.NUMBER, OCT.prefix_add +" "+ strDst);
-        }
-        else
-            values.put(CallLog.Calls.NUMBER, OCT.prefix_add +" "+ dst);
-
-        values.put(CallLog.Calls.TYPE    , Integer.valueOf(iType));
-        values.put(CallLog.Calls.DATE    , Long.valueOf(System.currentTimeMillis() - dur));
-        values.put(CallLog.Calls.DURATION, Long.valueOf(dur/1000));
-        values.put(CallLog.Calls.NEW     , Boolean.valueOf(true));
-
-        try {
-            resolver.insert(CallLog.CONTENT_URI, values);
-        }
-        catch (IllegalArgumentException ex) {
-            return;
-        }
-    }
-
-    public void makeCall(boolean b) {
+    private void makeCall(boolean b) {
 
         makeCall(b, dialText.getText().toString());
     }
 
-    void makeCall(boolean b, String dst) {
+    private void makeCall(boolean b, String dst) {
         if (dst == null || dst.length() < 1) {
             setDialText(lastDialedNumber.toString());
             return;
@@ -376,7 +402,19 @@ public class TMActivity extends FragmentActivity {
             }
 
             if ("*##*8*".compareTo(dst) == 0){
-               TiviPhoneService.doCmd(":s");showToast("save");
+               TiviPhoneService.doCmd(":s");showToast("Save");
+               return;
+            }
+
+            if(phoneService!=null && "*##*71*".compareTo(dst) == 0){
+               phoneService.enableDisableWifiLock(true);
+               showToast("Wifi on");
+               return;
+            }
+
+            if(phoneService!=null && "*##*70*".compareTo(dst) == 0){
+               phoneService.enableDisableWifiLock(false);
+               showToast("Wifi off");
                return;
             }
 
@@ -400,19 +438,19 @@ public class TMActivity extends FragmentActivity {
         }
     }
 
-    public void startS(Context c) {
+    public void startService(Context c) {
         // Check and set the secret key
 
-        if (TiviPhoneService.use_password_key && TiviPhoneService.getSecretKeyStatus() == TiviPhoneService.SECURE_KEY_NOT_AVAILABE) {
-            Intent i = new Intent(this, KeyGeneration.class);
-            i.putExtra(KeyGeneration.NEW_PROVISIONING, false);
-            startActivityForResult(i, KEY_GEN_RESULT);
-            return;
-        }
- 
-        if (!bConectedToServ) {
+//        if (TiviPhoneService.use_password_key && TiviPhoneService.getSecretKeyStatus() == TiviPhoneService.SECURE_KEY_NOT_AVAILABE) {
+//            Intent i = new Intent(this, KeyGeneration.class);
+//            i.putExtra(KeyGeneration.NEW_PROVISIONING, false);
+//            startActivityForResult(i, KEY_GEN_RESULT);
+//            return;
+//        }
+
+        if (!bConnectedToServ) {
             c.startService(new Intent(c, TiviPhoneService.class));
-            bConectedToServ = true;
+            bConnectedToServ = true;
             // service will send ":reg"
         }
         else if (TiviPhoneService.mc != null)
@@ -420,34 +458,8 @@ public class TMActivity extends FragmentActivity {
         doBindService();
     }
 
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        super.onOptionsItemSelected(item);
-
-        switch (item.getItemId()) {
-        case EXIT_MENU_ITEM:
-            exitApplication();
-            break;
-
-        case UNREG_MENU_ITEM:
-            bUserPressedOffline = true;
-            TiviPhoneService.doCmd(":unreg");
-            break;
-
-        case LOGIN_MENU_ITEM: {
-            bUserPressedOffline = false;
-            startS(this);
-            break;
-        }
-        case CFG_MENU_ITEM:
-            showCfg();
-            break;
-        }
-        return true;
-    }
-
     void showCfg() {
-        if (bConectedToServ)
+        if (bConnectedToServ)
             TiviPhoneService.doCmd(":unreg");
         Intent intent = new Intent();
         intent.setClass(this, TAdvCfg.class);
@@ -462,9 +474,10 @@ public class TMActivity extends FragmentActivity {
     
     @Override
     protected void onNewIntent (Intent intent) {
-        if (!phoneService.isHeadsetPlugged()) {
+        if (phoneIsBound && !phoneService.isHeadsetPlugged()) {
             switchOnSpeaker = true;
         }
+        processIntent(intent);
     }
 
     @Override
@@ -475,6 +488,7 @@ public class TMActivity extends FragmentActivity {
         Log.d(LOG_TAG, "Debuggable: " + SP_DEBUG);
 
         TiviPhoneService.initJNI(getBaseContext());
+        setupActionBar();
 
         if (TiviPhoneService.mc==null && TiviPhoneService.doCmd("isProv") == 0) {
             Intent provisionigIntent = new Intent(this, Provisioning.class);
@@ -482,60 +496,111 @@ public class TMActivity extends FragmentActivity {
             startActivityForResult(provisionigIntent, PROVISIONING_RESULT);
         } 
         else if (!bUserPressedOffline) {
-            startS(this);
+            startService(this);             // start phone service and bind it
         }
-        // Don't use phoneService here: service binding usually delayed until Activity startup
-        // is complete.
-        if (TiviPhoneService.mc != null && TiviPhoneService.calls.getCallCnt() != 0) {
+        if (TiviPhoneService.calls.getCallCnt() != 0) {
             TiviPhoneService.mc.showCallScreen(TiviPhoneService.CALL_TYPE_RESTARTED);
         }
         setContentView(R.layout.activity_start_screen);
 
         dialText = (FontFitTextView)findViewById(R.id.DialNumberText);
         dialButton = (ImageButton)findViewById(R.id.Number_call);
-        dialButton.setOnClickListener(new OnClickListener() {
-            public void onClick(View view) {
-                makeCall(false);
-            }
-        });
+        countryFlag = (TextView)findViewById(R.id.StartFlagField);
+        backSpcButton = (ImageButton)findViewById(R.id.Number_backspace);
+
+        zeroKeyButton = (ImageButton)findViewById(R.id.Number_0);
         dialButton.setOnLongClickListener(new OnLongClickListener() {
             public boolean onLongClick(View view) {
                 phoneService.showCallScreen(TiviPhoneService.CALL_TYPE_RESTARTED);
                 return true;
             }
         });
-
-        countryFlag = (TextView)findViewById(R.id.StartFlagField);
-        backSpcButton = (ImageButton)findViewById(R.id.Number_backspace);
-
         // Long click on backspace clears the dial test field.
         backSpcButton.setOnLongClickListener(new OnLongClickListener() {
             public boolean onLongClick(View view) {
                 setDialText("");
-
                 return true;
             }
         });
-        zeroKeyButton = (ImageButton)findViewById(R.id.Number_0);
-
-        // Long click on backspace clears the dial test field.
+        // Long click on zero sets the plus sign.
         zeroKeyButton.setOnLongClickListener(new OnLongClickListener() {
             public boolean onLongClick(View view) {
                 keyPressed(KeyEvent.KEYCODE_PLUS);
                 return true;
             }
         });
-        
-        checkCallToNr();
+    }
+    
+    /**
+     * Called after service was connected
+     */
+    private void serviceBound() {
+        dialButton.setOnClickListener(new OnClickListener() {
+            public void onClick(View view) {
+                if (!bUserPressedOffline)
+                    makeCall(false);
+            }
+        });
+        DeviceHandling.checkAndSetAec();
+        processIntent(getIntent());
+        checkCallToNr(OCT.getCallToNumber(getBaseContext()));
     }
 
-    private void checkCallToNr(){
-        String s = OCT.getCallToNumber(getBaseContext());
+    private void setupActionBar() {
+        actionBar = getSupportActionBar();
+        actionBar.setDisplayShowTitleEnabled(false);
+        actionBar.setDisplayShowHomeEnabled(true);
+        actionBar.setHomeButtonEnabled(true);
+
+        actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_STANDARD);
+    }
+
+    private void checkCallToNr(String s) {
         if (s != null) {
             setDialText(s);
-            if(TiviPhoneService.mc != null && TiviPhoneService.getPhoneState() == 2){
-               makeCall(false);
+            if (TiviPhoneService.getPhoneState() != 2)
+                TiviPhoneService.doCmd(":reg");
+            makeCall(false);
+        }
+    }
+
+    private void processIntent(Intent intent) {
+        if (TMActivity.SP_DEBUG) Log.v(LOG_TAG, "Received intent: " + intent);
+
+        if (intent == null)
+            return;
+
+        String action = intent.getAction();
+        if (action == null)
+            return;
+
+        Uri numberUri = intent.getData();
+        if (numberUri == null)
+            return;
+
+        String number = numberUri.getSchemeSpecificPart();
+        if (SILENT_CALL_ACTION.equals(action) || SILENT_EDIT_BEFORE_CALL_ACTION.equals(action)) {
+            number = number.trim();
+            if (SILENT_CALL_ACTION.equals(action))
+                checkCallToNr(number);
+            else {
+                if (number != null) {
+                    setDialText(number);
+                }
             }
+            return;
+        }
+        if (CALL_PRIVILEGED.equals(action)) {
+            if (DeviceDetectionVertu.isVertu() && number.startsWith("+1")) {
+                number = number.trim();
+            }
+            if(number.startsWith(OCT.prefix_check) && number.length() >= OCT.prefix_check.length() + 4) {
+                number = number.substring(OCT.prefix_check.length()).trim();
+            }
+            if(number.startsWith(OCT.prefix_add) && number.length() >= OCT.prefix_add.length() + 4) {
+                number = number.substring(OCT.prefix_add.length()).trim();
+            }
+            checkCallToNr(number);
         }
     }
 
@@ -655,20 +720,7 @@ public class TMActivity extends FragmentActivity {
         case R.id.Number_backspace:
             keyPressed(KeyEvent.KEYCODE_DEL);
             break;
-        case R.id.Number_contact:
-            doLaunchContactPicker();
-            break;
         }
-        return;
-    }
-
-    /**
-     * User pressed the Recent calls button.
-     * 
-     * @param view the view that contains the button.
-     */
-    public void onNumberRecent(View view) {
-        doLaunchHistory();
     }
 
     private void showToastLong(String s) {
@@ -679,14 +731,10 @@ public class TMActivity extends FragmentActivity {
         Toast.makeText(this, s, Toast.LENGTH_SHORT).show();
     }
 
-    private void showNotification() {
-        return;
-    }
-    
     @Override
     public void onResume() {
         super.onResume();
-        checkCallToNr();
+        checkCallToNr(OCT.getCallToNumber(getBaseContext()));
         if (mToneGenerator == null) {
             try {
                 mToneGenerator = new ToneGenerator(AudioManager.STREAM_DTMF, 80);
@@ -734,64 +782,7 @@ public class TMActivity extends FragmentActivity {
         }).start();        
     }
     
-    /* *********************************************************************
-     * Handle information and thanks dialog. Maybe we need to extend this to implement
-     * account selection - later. 
-     * ******************************************************************* */
-    private static String internalInfo = TBuild.T_BUILD_NR;
-    private static String deviceInfo = android.os.Build.BRAND + " " + android.os.Build.DEVICE;
-    
-    private static String[] screenSizes = {"Undefined", "Small", "Normal", "Large", "XLarge"};
-
-    private static ThanksInfoDialog thanks;
-
-    public void onSilentCircle(View view) {
-        showThanks();
-    }
-
-    public void showThanks() {
-        FragmentManager fragmentManager = getSupportFragmentManager();
-        thanks = new ThanksInfoDialog();
-        thanks.show(fragmentManager, "SCPhoneThanks_dialog");
-    }
-
-    public static class ThanksInfoDialog extends DialogFragment {
-        private TextView numberText;
-        private TextView infoText;
-
-        @Override
-        public Dialog onCreateDialog(Bundle savedInstanceState) {
-            AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-            // Get the layout inflater
-            LayoutInflater inflater = getActivity().getLayoutInflater();
-           
-
-            // Inflate and set the layout for the dialog
-            // Pass null as the parent view because its going in the dialog layout
-            View view = inflater.inflate(R.layout.dialog_thanks_info, null);
-            numberText = (TextView)view.findViewById(R.id.ThanksSCnumber);
-            numberText.setText(CTFlags.formatNumber(Utilities.getTCValue("edNR")));
-
-            infoText = (TextView)view.findViewById(R.id.InfoBuildNumberInfo);
-            infoText.setText(internalInfo);
-            infoText = (TextView)view.findViewById(R.id.InfoDeviceInfoInfo);
-            infoText.setText(deviceInfo);
-
-            Resources res = getResources();
-            Configuration config = res.getConfiguration();
-            int idx = config.screenLayout & Configuration.SCREENLAYOUT_SIZE_MASK;
-            String classification = getString(R.string.dpi_classified_as) + ", " + screenSizes[idx] + ", API: " + android.os.Build.VERSION.SDK_INT;
-            infoText = (TextView)view.findViewById(R.id.InfoDeviceClassInfo);
-            infoText.setText(classification);
-            
-                                
-            // Add inflated view and action buttons
-            builder.setView(view)
-                   .setPositiveButton(getString(R.string.close_dialog), new DialogInterface.OnClickListener() {
-                       public void onClick(DialogInterface dialog, int id) {
-                       }
-                   });
-            return builder.create();
-        }
+    protected static void hideFragment(FragmentTransaction ft, Fragment f) {
+        if ((f != null) && !f.isHidden()) ft.hide(f);
     }
 }

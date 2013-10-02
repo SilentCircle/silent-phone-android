@@ -28,7 +28,33 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 -->
 
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:id="@+id/menu_settings"
-        android:title="@string/menu_settings"
-        android:orderInCategory="100" />
+
+    <item android:id="@+id/start_menu_info"
+          android:icon="@drawable/ic_ab_about"
+          android:showAsAction="always" />
+
+    <item android:id="@+id/start_menu_contacts"
+          android:icon="@drawable/ic_ab_contact"
+          android:showAsAction="always" />
+
+    <item android:id="@+id/start_menu_recents"
+          android:icon="@drawable/ic_ab_history_holo_dark"
+          android:showAsAction="always" />
+
+    <item android:id="@+id/start_menu_exit"
+        android:title="@string/exit"
+        android:showAsAction="never"/>
+
+    <item android:id="@+id/start_menu_login"
+          android:title="@string/login"
+          android:showAsAction="never"/>
+
+    <item android:id="@+id/start_menu_logout"
+          android:title="@string/logout"
+          android:showAsAction="never"/>
+
+    <item android:id="@+id/start_menu_settings"
+          android:title="@string/settings"
+          android:showAsAction="never"/>
+
 </menu>

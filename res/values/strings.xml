@@ -48,20 +48,36 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	<string name="accept_video">Accept</string>
 	<string name="audio_only">Audio only</string>
 	<string name="mute_video">Mute video</string>
-	<string name="verify_button">Verify</string>
+	<string name="verify_button">Press to\nverify\nsecurity</string>
 	<string name="verify_infotext_top">Compare with partner</string>
 	<string name="verify_infotext_bottom">and enter partner’s name here</string>
-    <string name="next">Next</string>
+	<string name="next">Next</string>
 	<string name="back">Back</string>
-    <string name="login">Login</string>
-    <string name="logout">Logout</string>
+	<string name="login">Login</string>
+	<string name="logout">Logout</string>
 	<string name="exit">Exit</string>
-    <string name="settings">Settings</string>
+	<string name="settings">Settings</string>
+    <string name="send_message">Send</string>
+	
+    <string name="companion_codes">Invitation codes</string>
 
-    <!-- Strings to display security status, handle with care during translations -->
-    <string name="secstate_secure">SECURE</string>
-    
-	<!-- Strings for the crypto panel -->
+    <string name="sip_state_calling">Calling&#8230;</string>
+    <string name="sip_state_connecting">Connecting&#8230;</string>
+    <string name="sip_state_ringing">Ringing</string>
+    <string name="sip_state_ended">Call ended</string>
+    <string name="sip_state_online">Online</string>
+    <string name="sip_state_offline">Offline</string>
+
+    <string name="call_duration">Duration</string>
+    <string name="call_type_audio">Incoming call</string>
+    <string name="call_type_video">Incoming video call</string>
+    <string name="call_error">Error</string>
+
+	<!-- Strings to display security status, handle with care during translations -->
+	<string name="secstate_secure">SECURE</string>
+    <string name="secstate_not_secure">Not SECURE</string>
+
+    <!-- Strings for the crypto panel -->
 	<string name="crypto_peer_name">Peer name</string>
 	<string name="crypto_peer_client">ZRTP Peer client</string>
 	<string name="crypto_peer_client_id">ZRTP client ID</string>
@@ -98,7 +114,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	<string name="zrtp_we_header">ZRTP security message</string>
 	<string name="zrtp_we_error">ZRTP Error</string>
 	<string name="zrtp_we_warn">ZRTP Warning</string>
-
+    <string name="srtp_we_warn">SRTP Warning</string>
+	<string name="zrtp_show_details">Show details</string>
+    <string name="zrtp_hide_details">Hide details</string>
+	
 	<!-- Strings for the provisioning activity and messages -->
 	<string name="provisioning_infotext">Account Creation</string>
 	<string name="provisioning_vertu_welcome">Welcome to Silent Circle in partnership with Vertu</string>
@@ -129,36 +148,46 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	<string name="provisioning_lastname_req">A last name is required. Please check.</string>
 	<string name="provisioning_email_req">An email address is required. Please check.</string>
 	<string name="provisioning_already_registered">Device already registered.</string>
-    <string name="provisioning_pwstrength_weak">Password strength: WEAK</string>
-    <string name="provisioning_pwstrength_good">Password strength: GOOD</string>
-    <string name="provisioning_pwstrength_strong">Password strength: STRONG</string>
-    <string name="provisioning_show_pw">Show password</string>
-    <string name="provisioning_privacy_tc">I have read and accepted the privacy policy and terms and conditions from  www.silentcircle.com</string>
-    <string name="provisioning_get_news">I would like to receive exclusive news and invitations from Services</string>
-    <string name="provisioning_welcome_long">As a Vertu Customer you enjoy 12 months of complimentary access to SilentCircle’s encrypted communications services.</string>
-    <string name="provisioning_new_account">Create new account</string>
-    <string name="provisioning_existing_account">Login to existing account</string>
-    <string name="provisioning_check_tc">Please accept and check the terms and conditions</string>
-    <string name="provisioning_create">Create</string>
-    <string name="provisioning_get_activation_code">Please login to your account at\nwww.silentcircle.com\nto retrieve an activation code.</string>
-    	
-    <!-- Strings for the key generation and messages -->
-	<string name="key_generation_info">Generating keys, please standby.</string>
-    <string name="key_generation_error">Error during key generation</string>
-    <string name="key_generation_missing_key">Cannot retrieve previously generated secret key.</string>
-    <string name="key_generation_wrong_key">Selected key name does not match expected key name.</string>
-    <string name="key_generation_error_key">Cannot read and decode stored secret key.</string>
-    <string name="key_generation_storage_fail">Could not store the generated secret key.</string>
-    <string name="key_generation_error_key_generation">Cannot generate a secret key: </string>
-    <string name="key_generation_error_not_rsa_key">Data not a private RSA key.</string>
-    		
-    <!-- Strings for the thanks dialog -->
-    <string name="thanks_top_line">Thank you, your SilentCircle phone number is</string>
-    <string name="thanks_bottom_line">To manage your SilentCircle account please go to\nwww.silentcircle.com</string>
-    
-    <!-- Explanation of SAS code/words -->
-    <string name="sas_explanation">You should verbally compare this authentication code with your partner. If it doesn’t match, it indicates the presence of a wiretapper.</string>
+	<string name="provisioning_pwstrength_weak">Password strength: WEAK</string>
+	<string name="provisioning_pwstrength_good">Password strength: GOOD</string>
+	<string name="provisioning_pwstrength_strong">Password strength: STRONG</string>
+	<string name="provisioning_show_pw">Show password</string>
+	<string name="provisioning_privacy_tc">I have read and accepted the privacy policy and terms and conditions from  www.silentcircle.com</string>
+	<string name="provisioning_get_news">I would like to receive exclusive news and invitations from Services</string>
+	<string name="provisioning_welcome_long">As a Vertu Customer you enjoy 12 months of complimentary access to SilentCircle’s encrypted communications services.</string>
+	<string name="provisioning_new_account">Create new account</string>
+	<string name="provisioning_existing_account">Login to existing account</string>
+	<string name="provisioning_check_tc">Please accept and check the terms and conditions</string>
+	<string name="provisioning_create">Create</string>
+	<string name="provisioning_get_activation_code">Please login to your account at\nwww.silentcircle.com\nto retrieve an activation code.</string>
 
+	<!-- Strings for the key generation and messages -->
+	<string name="key_generation_info">Generating keys, please standby.</string>
+	<string name="key_generation_error">Error during key generation</string>
+	<string name="key_generation_missing_key">Cannot retrieve previously generated secret key.</string>
+	<string name="key_generation_wrong_key">Selected key name does not match expected key name.</string>
+	<string name="key_generation_error_key">Cannot read and decode stored secret key.</string>
+	<string name="key_generation_storage_fail">Could not store the generated secret key.</string>
+	<string name="key_generation_error_key_generation">Cannot generate a secret key: </string>
+	<string name="key_generation_error_not_rsa_key">Data not a private RSA key.</string>
+
+	<!-- Strings for the thanks dialog -->
+	<string name="thanks_top_line">Thank you, your SilentCircle phone number is</string>
+	<string name="thanks_bottom_line">To manage your SilentCircle account please go to\nwww.silentcircle.com</string>
+
+	<!-- Explanation of SAS code/words -->
+	<string name="sas_explanation">You should verbally compare this authentication code with your partner. If it doesn’t match, it indicates the presence of a wiretapper.</string>
+
+	<!-- Text for the companion code screen -->
+    <string name="companion_vertu_welcome">Welcome to Silent Circle in partnership with Vertu.\nWe have provided you with five 30 day guest passes to use with your family and friends.\nTo invite others to SilentCircle please send them an invitation code to activate their 30 day guest pass.</string>
+
+    <plurals name="companion_codes_available">
+        <item quantity="one">You have one available invitation code.</item>
+        <item quantity="other">You have %1$d available invitation codes.</item>
+    </plurals>
+    <string name="companion_sms_text">Welcome to SilentCircle. Please enter your invitation code %1$s at <font fgcolor="#ffffffff">accounts.silentcircle.com</font> to create your free account.</string>
+    <string name="companion_manage_info">More options to manage your invitation codes are available at <font fgcolor="#ffffffff">accounts.silentcircle.com</font></string>
+    
     <!-- Description of image buttons -->
 	<string name="caller_image">Image of caller</string>
 	<string name="signal_strength">Signal quality</string>
@@ -219,12 +248,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	-->
 	<string name="description_image_button_five">five</string>
 
-	<!--
+    <!--
          String describing the image on ImageButton six
 
         Note: AccessibilityServices use this attribute to announce what the view represents.
               This is especially valuable for views without textual representation like ImageView.
-	-->
+    -->
 	<string name="description_image_button_six">six</string>
 
 	<!--
@@ -288,5 +317,184 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
          Used by AccessibilityService to announce the purpose of the button.
 	-->
 	<string name="description_delete_button">backspace</string>
+
+	<!--
+     Information strings, usually used for logging and trace only. An applications shall not
+     show this info to the user. The application may use these infos to trigger actions, for
+     example if ZRTP reports the s1_c010 message then it may change the display to secure state,
+     or it may implement a "progress bar" to show ongoing ZRTP activities, etc.
+
+     Thus the explanation string can be empty.
+     
+     The string name coding is: 
+       s1   - message is in info message group
+       cnnn - sequence number
+     
+     The coding maps to the codes (enumerations) defined in the core ZRTP library (ZrtpCodes.h).
+	-->
+	<string name="zrtp_common_cmp">"You should verbally compare the authentication code with the person you are calling. If it doesn’t match, it indicates that someone may have intercepted the call."</string>
+    <string name="zrtp_common_cls">Connection Error. Please close and call again.</string>
+    <string name="zrtp_common_upd">The person you are calling needs to update their Silent Phone application to the latest version</string>
+    <string name="zrtp_common_app">Application Error. Please re-install Silent Phone.</string>
+
+	<string name="s1_c001">Hello received, preparing a Commit</string>
+	<string name="s1_c001_explanation"></string>
+	<string name="s1_c002">Commit: Generated a public DH key</string>
+	<string name="s1_c002_explanation"></string>
+	<string name="s1_c003">Responder: Commit received, preparing DHPart1</string>
+	<string name="s1_c003_explanation"></string>
+	<string name="s1_c004">DH1Part: Generated a public DH key</string>
+	<string name="s1_c004_explanation"></string>
+	<string name="s1_c005">Initiator: DHPart1 received, preparing DHPart2</string>
+	<string name="s1_c005_explanation"></string>
+	<string name="s1_c006">Responder: DHPart2 received, preparing Confirm1</string>
+	<string name="s1_c006_explanation"></string>
+	<string name="s1_c007">Initiator: Confirm1 received, preparing Confirm2</string>
+	<string name="s1_c007_explanation"></string>
+	<string name="s1_c008">Responder: Confirm2 received, preparing Conf2Ack</string>
+	<string name="s1_c008_explanation"></string>
+	<string name="s1_c009">At least one retained secrets matches - security OK</string>
+	<string name="s1_c009_explanation"></string>
+	<string name="s1_c010">Entered secure state</string>
+	<string name="s1_c010_explanation"></string>
+	<string name="s1_c011">No more security for this session</string>
+	<string name="s1_c011_explanation"></string>
+
+	<!--
+     Text and explanation strings for SRTP/ZRTP waring. User may continue with call, it's
+     still secure. However, the user shall read the explanation and follow hints.
+
+     The string name coding is: 
+       s2   - message is in warning message group
+       cnnn - sequence number
+	-->
+
+
+	<!--
+    Not used, DH4096 was discared
+    <string name="s2_c001">Commit contains an AES256 cipher but does not offer a Diffie-Helman 4096</string>
+    <string name="s2_c001_explanation"></string>
+	-->
+
+	<string name="s2_c002">Received a GoClear message</string>
+	<string name="s2_c002_explanation"></string>
+
+	<!--
+    Not used, DH4096 was discared
+    <string name="s2_c003">Hello offers an AES256 cipher but does not offer a Diffie-Helman 4096</string>
+    <string name="s2_c003_explanation"></string>
+	-->
+
+	<string name="s2_c004">No retained secret matches - verify SAS.</string>
+	<string name="s2_c004_explanation">You should verbally compare this authentication code with your partner. If it doesn’t match, it indicates the presence of a wiretapper.</string>
+	<string name="s2_c005">Internal ZRTP packet CRC mismatch - packet dropped.</string>
+	<string name="s2_c005_explanation">The application received wrong ZRTP security data. Often indicates a bad network connection and you may try to setup a new call.</string>
+	<string name="s2_c006">Dropping packet because SRTP authentication failed.</string>
+	<string name="s2_c006_explanation">The application received unauthenticated media. May indicate misrouted packets, network errors, or attempted injection of false media packets from a third party.  You may try to setup a new call.</string>
+	<string name="s2_c007">Dropping packet because SRTP replay check failed.</string>
+	<string name="s2_c007_explanation">The application received repeated media. Often indicates a bad network connection and you may try to setup a new call.</string>
+	<string name="s2_c008">You MUST check SAS with your partner.</string>
+	<string name="s2_c008_explanation">You must verbally compare the authentication code with your partner. If it doesn’t match, it indicates the presence of a wiretapper.</string>
+
+	<string name="s2_c050">Received Hallo hash does not match computed Hello hash.</string>
+    <string name="s2_c050_explanation">This may indicate a software error, or a possible attempted attack. You must verbally compare the authentication code with your partner. If it doesn’t match, it indicates the presence of a wiretapper.</string>
+	<string name="s2_c051">Parsing of received SRTP packet failed</string>
+	<!--
+     Text and explanation strings for ZRTP errors. User shall terminated the call because it's not secure.
+     If such an error happens an set up a new call.
+
+     The string name coding is: 
+       s3   - message is in error (severe) message group
+       cnnn - sequence number
+	-->
+
+	<string name="s3_c001">Hash HMAC check of Hello failed!</string>
+	<string name="s3_c001_explanation">ZRTP Hello message integrity failure. May indicate software error or possible attack. Close this call and setup a new call.</string>
+	<string name="s3_c002">Hash HMAC check of Commit failed!</string>
+	<string name="s3_c002_explanation">ZRTP Commit message integrity failure. May indicate software error or possible attack. Close this call and setup a new call.</string>
+	<string name="s3_c003">Hash HMAC check of DHPart1 failed!</string>
+	<string name="s3_c003_explanation">A check during security key exchange failed. May indicate network problem. Close this call and setup a new call.</string>
+	<string name="s3_c004">Hash HMAC check of DHPart2 failed!</string>
+	<string name="s3_c004_explanation">ZRTP DHPart2 message integrity failure. May indicate software error or possible attack. Close this call and setup a new call.</string>
+	<string name="s3_c005">Cannot send data - connection or peer down?</string>
+	<string name="s3_c005_explanation">Network connection lost during security setup. This indicates a network problem. Close this call and setup a new call.</string>
+	<string name="s3_c006">Internal protocol error occurred!</string>
+	<string name="s3_c006_explanation">Internal application error. Close this call, restart the programm and setup a new call.</string>
+	<string name="s3_c007">Cannot start a timer - internal resources exhausted?</string>
+	<string name="s3_c007_explanation">Internal application error. Close this call, restart the programm and setup a new call.</string>
+	<string name="s3_c008">Too many retries during ZRTP negotiation - connection or peer down?</string>
+	<string name="s3_c008_explanation">This indicates either a network problem or your partner’s software encountered a problem. Close this call and setup a new call.</string>
+
+	<!-- 
+	 Text and explanation strings for ZRTP protocol errors as defined in RFC6189.
+	 The string name coding is: 
+	   s4   - message is in ZRTP protocol error group
+	   cnnn - decimal value of the error code defined in RFC6189
+	-->
+
+	<string name="s4_c016">Malformed packet (CRC OK, but wrong structure)</string>
+	<string name="s4_c016_explanation">May indicate a software error, or a possible attempted attack. Close this call and setup a new call.</string>
+	<string name="s4_c020">Critical software error</string>
+	<string name="s4_c020_explanation">Internal application error. Close this call, restart the app and setup a new call.</string>
+	<string name="s4_c048">Unsupported ZRTP version</string>
+	<string name="s4_c048_explanation">The other party does not support to correct ZRTP version. Please ask the other party to update the application.</string>
+
+	<!-- Currently not used
+	<string name="s4_c064">Hello components mismatch</string>
+	<string name="s4_c064_explanation"></string>
+	-->
+	<string name="s4_c081">Hash type not supported</string>
+	<string name="s4_c081_explanation">The other party tried to use an unsupported security (HASH) algorithm. Close this call and ask the other party to update the application.</string>
+	<string name="s4_c082">Cipher type not supported</string>
+	<string name="s4_c082_explanation">The other party tried to use an unsupported encryption algorithm. Close this call and ask the other party to update the application.</string>
+	<string name="s4_c083">Public key exchange not supported</string>
+	<string name="s4_c083_explanation">The other party tried to use an unsupported key exchange algorithm. Close this call and ask the other party to update the application.</string>
+	<string name="s4_c084">SRTP auth. tag not supported</string>
+	<string name="s4_c084_explanation">The other party tried to use an unsupported secure media authentication algorithm. Close this call and ask the other party to update the application.</string>
+	<string name="s4_c085">SAS scheme not supported</string>
+	<string name="s4_c085_explanation">The other party tried to use an unsupported Short Authentication String (SAS) algorithm. Close this call and ask the other party to update the application.</string>
+
+	<!-- Currently not used
+	<string name="s4_c086">No shared secret available, DH mode required</string>
+	<string name="s4_c086_explanation"></string>
+	-->
+	<string name="s4_c097">DH Error: bad pvi or pvr ( == 1, 0, or p-1)</string>
+	<string name="s4_c097_explanation">The other party computed insecure key exchange data. Close this call and setup a new call.</string>
+	<string name="s4_c098">DH Error: hvi != hashed data</string>
+	<string name="s4_c098_explanation">ZRTP Hash Commit did not match DH packet. Close this call and setup a new call.</string>
+	<string name="s4_c099">Received relayed SAS from untrusted MiTM</string>
+	<string name="s4_c099_explanation">Wrong SAS relay behavior from an untrusted PBX. Please inform administrator of the PBX if possible.</string>
+	<string name="s4_c112">Authentication Error: Bad Confirm packet HMAC</string>
+	<string name="s4_c112_explanation">ZRTP Confirm message integrity failure. Close this call and setup a new call.</string>
+
+	<!-- Currently not used
+	<string name="s4_c128">Nonce reuse</string>
+	<string name="s4_c128_explanation"></string>
+	-->
+	<string name="s4_c144">Duplicate ZIDs in Hello Packets</string>
+	<string name="s4_c144_explanation">Your VoIP client and the other party’s client use the same ZRTP id (ZID). You may avoid this happening again if you dial *##*9787257* to generate a new ZID.</string>
+	
+	<!-- Currently not used
+	<string name="s4_c160">GoClear packet received, but not allowed</string>
+	<string name="s4_c160_explanation"></string>
+	-->
+
+	<!--
+    Text and explanation strings for ZRTP/PBX enrollment functions. If the application
+    supports enrollemnt it may decide what to show to the user.
+
+     The string name coding is: 
+       s5   - message is in enumeartion function message group
+       cnnn - sequence number
+	-->
+
+	<string name="s5_c000">Trusted MitM enrollment requested</string>
+	<string name="s5_c000_explanation"></string>
+	<string name="s5_c001">Trusted MitM enrollment canceled by user</string>
+	<string name="s5_c001_explanation"></string>
+	<string name="s5_c003">Trusted MitM enrollment failed</string>
+	<string name="s5_c003_explanation"></string>
+	<string name="s5_c004">Trusted MitM enrollment OK</string>
+	<string name="s5_c004_explanation"></string>
 
 </resources>

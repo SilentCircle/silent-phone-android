@@ -2,12 +2,23 @@
 
 LOCAL_PATH:= $(call my-dir)
 
-ifeq ($(USER),werner)
-### Werner: uncomment next lines
+# CHECK THIS
+# When we start an automated build set some environment variable to 'yes'
+# The path setup follows the proposed dir structure depicted in the e-mail
+ifeq ($(AUTOMATED_BUILD),1)
+
+### setup for automated build
+ROOT_SRC_PATH := $(JNI_ROOT)
+TIVI_SRC_PATH := $(ROOT_SRC_PATH)/silentphone
+
+else ifeq ($(USER),werner)
+
+### setup for Werner
 ROOT_SRC_PATH := $(HOME)/silentC
 TIVI_SRC_PATH := $(ROOT_SRC_PATH)/tivi/sources
 else
-### Janis: uncoment next lines
+
+### setup for Janis
 ROOT_SRC_PATH := $(HOME)/proj
 TIVI_SRC_PATH := $(ROOT_SRC_PATH)/sources
 endif
@@ -35,8 +46,8 @@ LOCAL_EXPORT_C_INCLUDES := $(LOCAL_PATH)
 include $(PREBUILT_SHARED_LIBRARY)
 
 include $(CLEAR_VARS)
-LOCAL_MODULE := speex
-LOCAL_SRC_FILES := libspeex.so
+LOCAL_MODULE := aec
+LOCAL_SRC_FILES := libaec.so
 LOCAL_EXPORT_C_INCLUDES := $(LOCAL_PATH)
 include $(PREBUILT_SHARED_LIBRARY)
 
@@ -52,27 +63,37 @@ LOCAL_ARM_MODE := arm
 LOCAL_LDLIBS := -llog
 
 LOCAL_SHARED_LIBRARIES := tina
-LOCAL_SHARED_LIBRARIES += speex
+LOCAL_SHARED_LIBRARIES += aec
 LOCAL_STATIC_LIBRARIES := zrtpcpp
 
-ifeq ($(USER),werner)
+
+ifeq ($(AUTOMATED_BUILD),1)
+LOCAL_C_INCLUDES := $(LOCAL_PATH)/../polarssl/include
+TLS_SRC := $(LOCAL_PATH)/../polarssl
+TLS_SOURCES := $(shell cd support/silentphone; ls ../polarssl/library/*.c) 
+
+else ifeq ($(USER),werner)
+
 # Werner: use this
-LOCAL_C_INCLUDES := ../libs/polarssl-1.1.1/include
-TLS_SRC := ../libs/polarssl-1.1.1
+LOCAL_C_INCLUDES := ../libs/polarssl/include
+TLS_SRC := ../libs/polarssl
+TLS_SOURCES := $(wildcard $(TLS_SRC)/library/*.c)
 else
+
 # Janis: use this
-LOCAL_C_INCLUDES := ../../libs/zrtp/clients/tivi
-LOCAL_C_INCLUDES += ../../libs/zrtp
-LOCAL_C_INCLUDES += ../../libs/polarssl-1.1.1/include
-TLS_SRC := ../../libs/polarssl-1.1.1
+LOCAL_C_INCLUDES := ../libs/zrtp/clients/tivi
+LOCAL_C_INCLUDES += ../libs/zrtp
+LOCAL_C_INCLUDES += ../libs/polarssl/include
+TLS_SRC := ../libs/polarssl
+TLS_SOURCES := $(wildcard $(TLS_SRC)/library/*.c)
 endif
+
+LOCAL_SRC_FILES += $(TLS_SOURCES)
+
 
 TPM_SRC := tiviengine/
 
-MY_SOURCES := $(wildcard $(TLS_SRC)/library/*.c) 
-
-
-MY_SOURCES += $(TPM_SRC)password.cpp $(TPM_SRC)media.cpp $(TPM_SRC)threads.cpp \
+MY_SOURCES := $(TPM_SRC)password.cpp $(TPM_SRC)media.cpp $(TPM_SRC)threads.cpp \
 	$(TPM_SRC)CMakeSipSdp.cpp $(TPM_SRC)CPhone.cpp $(TPM_SRC)CSessions.cpp\
 	$(TPM_SRC)g_cfg.cpp $(TPM_SRC)app_license.cpp $(TPM_SRC)prov.cpp\
 	$(TPM_SRC)lic_keys.cpp $(TPM_SRC)CTSipSock.cpp $(TPM_SRC)sip_reason_translator.cpp\
@@ -83,11 +104,11 @@ T_R_SRC := /
 
 MY_SOURCES += $(T_R_SRC)utils/utils.cpp $(T_R_SRC)encrypt/md5/md5.cpp \
 	$(T_R_SRC)xml/parse_xml.cpp $(T_R_SRC)sipparser/client/CSipParse.cpp \
-	$(T_R_SRC)rtp/parseRTP.cpp $(T_R_SRC)/video/CTRTPVideoPlayer.cpp\
+	$(T_R_SRC)rtp/parseRTP.cpp $(T_R_SRC)video/CTRTPVideoPlayer.cpp\
 	$(T_R_SRC)sdp/parseSDP.cpp $(T_R_SRC)audio/android_audio.cpp \
 	$(T_R_SRC)baseclasses/CTEditBase.cpp $(T_R_SRC)codecs/g711/g711.cpp \
-	$(T_R_SRC)os/sys_utils.cpp $(T_R_SRC)/encrypt/tls/CTTLS.cpp \
-   $(T_R_SRC)utils/CTCoutryCode.cpp $(T_R_SRC)utils/utils_video.cpp
+	$(T_R_SRC)os/sys_utils.cpp $(T_R_SRC)encrypt/tls/CTTLS.cpp \
+	$(T_R_SRC)utils/CTCoutryCode.cpp $(T_R_SRC)utils/utils_video.cpp
 
 VAD_PATH := audio/vad/
 MY_SOURCES += $(VAD_PATH)vad1.c $(VAD_PATH)vad2.c $(VAD_PATH)r_fft.c

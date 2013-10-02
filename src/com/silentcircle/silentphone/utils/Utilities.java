@@ -28,6 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 package com.silentcircle.silentphone.utils;
 
+import com.silentcircle.silentphone.R;
 import com.silentcircle.silentphone.TiviPhoneService;
 
 import android.content.Context;
@@ -118,9 +119,14 @@ public class Utilities {
         int height = iw.getMeasuredHeight();
         call.iImgHeight = call.iImgHeight < height ? height : call.iImgHeight;
 
-        if (call.image != null && call.iImgHeight > 0) {
-            iw.setImageBitmap(call.image);
-            // set maximum image size size, actual size may be smaller
+        if (call.iImgHeight > 0) {
+            if (call.image != null) {
+                iw.setImageBitmap(call.image);
+            }
+            else { // No caller image, set dummy image
+                iw.setImageResource(R.drawable.ico_user);
+            }
+            // set maximum image size, actual size may be smaller
             iw.setMaxHeight(call.iImgHeight);
             iw.setMaxWidth(call.iImgHeight); // try to make it quadratic
             iw.setAdjustViewBounds(true);
@@ -185,8 +191,8 @@ public class Utilities {
             }
         }
         else {
-
-            if (bSams) {// isGalaxyS() || nexus) 
+    //        boolean bDuos=true;
+            if (bSams && iApiLevel<9){// && !bDuos) {// isGalaxyS() || nexus)
                 am.setMode(AudioManager.MODE_IN_CALL);
                 am.setMode(AudioManager.MODE_NORMAL);
                 am.setSpeakerphoneOn(bOn);
@@ -225,6 +231,30 @@ public class Utilities {
         }
 
         mToneGenerator.startTone(tone, duration);
+    }
+
+    /**
+     * Check if a number contains SIP related parts and remove them
+     *
+     * @param number to check and reformat
+     * @return pure number string
+     */
+    public static String removeSipParts(String number) {
+
+        if (number == null || number.isEmpty())
+            return number;
+
+        int idx;
+        String n = number;
+        if (n.startsWith("sip:") || n.startsWith("sips:" )) {
+            idx = n.indexOf(':');
+            n = n.substring(idx+1);
+        }
+        idx = n.indexOf('@');
+        if (idx > 0)
+            n = n.substring(0, idx);
+
+        return n;
     }
 
     /*

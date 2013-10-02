@@ -486,15 +486,13 @@ public class Provisioning extends FragmentActivity {
     }
     
     private void showErrorInfo(String msg) {
-        errMessage = msg;
-        ErrorMsgDialogFragment errMsg = new ErrorMsgDialogFragment();
+        ErrorMsgDialogFragment errMsg = ErrorMsgDialogFragment.newInstance(msg);
         FragmentManager fragmentManager = getSupportFragmentManager();
         errMsg.show(fragmentManager, "SilentPhoneProvisioningError");
     }
 
     private void showInputInfo(String msg) {
-        infoMessage = msg;
-        InfoMsgDialogFragment infoMsg = new InfoMsgDialogFragment();
+        InfoMsgDialogFragment infoMsg = InfoMsgDialogFragment.newInstance(msg);
         FragmentManager fragmentManager = getSupportFragmentManager();
         infoMsg.show(fragmentManager, "SilentPhoneProvisioningInfo");
     }
@@ -628,9 +626,13 @@ public class Provisioning extends FragmentActivity {
     }
 
     /**
-     * User canceled provisioning.
+     * User pressed the 'back' button. 
      * 
-     * Finish activity, main activity to decide what to do - usually terminates whole application.
+     * Depending of the provisioning state we may take different actions. If possible we just got back
+     * to the previous step (screen). If already at the welcome screen we do nothing.
+     * 
+     * Going back from normal provisioning (STEP5) means we finish the activity and return a CANCEL
+     * to the main activity which then decides what to do - usually terminates whole application.
      */
     public void provisioningCancel(View view) {
         switch (provisioningStep) {
@@ -771,6 +773,15 @@ public class Provisioning extends FragmentActivity {
         }
     }
 
+    /**
+     * A simple password strength check.
+     * 
+     * This check just looks for length and some different characters to give an indication
+     * about a password strength.
+     * 
+     * @author werner
+     *
+     */
     private class PasswordFilter implements TextWatcher {
 
         public void onTextChanged(CharSequence s, int start, int before, int count) {
@@ -822,14 +833,25 @@ public class Provisioning extends FragmentActivity {
     /*
      * Dialog classes to display Error and Information messages.
      */
-    private static String errMessage;
+    private static String MESSAGE = "message";
     public static class ErrorMsgDialogFragment extends DialogFragment {
+        
+        public static ErrorMsgDialogFragment newInstance(String msg) {
+            ErrorMsgDialogFragment f = new ErrorMsgDialogFragment();
+
+            Bundle args = new Bundle();
+            args.putString(MESSAGE, msg);
+            f.setArguments(args);
+
+            return f;
+        }
+
         @Override
         public Dialog onCreateDialog(Bundle savedInstanceState) {
             // Use the Builder class for convenient dialog construction
             AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
             builder.setTitle(getString(R.string.provisioning_error))
-                .setMessage(errMessage)
+                .setMessage(getArguments().getString(MESSAGE))
                 .setPositiveButton(getString(R.string.close_dialog), new DialogInterface.OnClickListener() {
                        public void onClick(DialogInterface dialog, int id) {
                            ((Provisioning)getActivity()).provisioningCancel(null);
@@ -840,14 +862,24 @@ public class Provisioning extends FragmentActivity {
         }
     }
 
-    private static String infoMessage;
     public static class InfoMsgDialogFragment extends DialogFragment {
+
+        public static InfoMsgDialogFragment newInstance(String msg) {
+            InfoMsgDialogFragment f = new InfoMsgDialogFragment();
+
+            Bundle args = new Bundle();
+            args.putString(MESSAGE, msg);
+            f.setArguments(args);
+
+            return f;
+        }
+
         @Override
         public Dialog onCreateDialog(Bundle savedInstanceState) {
             // Use the Builder class for convenient dialog construction
             AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
             builder.setTitle(getString(R.string.provisioning_info))
-                .setMessage(infoMessage)
+                .setMessage(getArguments().getString(MESSAGE))
                 .setPositiveButton(getString(R.string.confirm_dialog), new DialogInterface.OnClickListener() {
                        public void onClick(DialogInterface dialog, int id) {
                        }

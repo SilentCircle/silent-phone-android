@@ -32,6 +32,12 @@
 
     <color name="blue_callstate">#ff50b4fd</color>
     
+    <color name="dial_button_start">#e0505050</color>
+    <color name="dial_button_end">#e0202020</color>
     <color name="v_blue">#00a7cf</color>
+    
+    <color name="silent_white">#ddffffff</color>
+    <color name="silent_black">#ff111111</color>
+    <color name="silent_black_translucent">#fe111111</color>
     
 </resources>

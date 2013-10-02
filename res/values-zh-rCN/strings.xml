@@ -95,6 +95,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	<string name="zrtp_we_header">ZRTP 安全信息</string>
 	<string name="zrtp_we_error">ZRTP 错误</string>
 	<string name="zrtp_we_warn">ZRTP 警告</string>
+    <string name="zrtp_we_warn">SRTP 警告</string>
 
 	<!-- Strings for the provisioning activity and messages -->
     <string name="provisioning_infotext">创建帐户</string>

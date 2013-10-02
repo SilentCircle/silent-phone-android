@@ -1,0 +1,26 @@
+<!-- 
+// +++LICENSE_BEGIN+++
+/*
+ * Copyright © 2012, Silent Circle
+ * All rights reserved.
+ */
+// +++LICENSE_END+++
+ -->
+ 
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:tools="http://schemas.android.com/tools"
+	android:id="@+id/ZrtpMessageRoot"
+	android:layout_width="match_parent"
+	android:layout_height="match_parent"
+	android:background="@color/silent_black"
+	android:focusable="false"
+	android:orientation="vertical" >
+
+    <ImageView
+        android:id="@+id/ZrtpWeLogoView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="center"
+        android:src="@drawable/sc_logo_big" />
+
+</LinearLayout>

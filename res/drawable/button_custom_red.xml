@@ -30,14 +30,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
 
 	<item android:state_pressed="true"><shape>
-			<gradient android:angle="270" android:endColor="#c0000080" android:startColor="#c00000f0" />
+			<gradient android:angle="270" android:endColor="#e0000080" android:startColor="#e00000f0" />
 
 			<padding android:bottom="10dp" android:left="5dp" android:right="5dp" android:top="10dp" />
 
 			<corners android:radius="6dp" />
 		</shape></item>
 	<item><shape>
-			<gradient android:angle="270" android:endColor="#c0400000" android:startColor="#c0f00000" />
+			<gradient android:angle="270" android:endColor="#e0400000" android:startColor="#e0f00000" />
 
 			<padding android:bottom="10dp" android:left="5dp" android:right="5dp" android:top="10dp" />
 			<!--

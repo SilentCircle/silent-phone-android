@@ -66,8 +66,6 @@ Keep the tag fields in synch with the interface specifications.
 		android:textSize="14sp" />
 
 	<ScrollView
-		xmlns:android="http://schemas.android.com/apk/res/android"
-		xmlns:tools="http://schemas.android.com/tools"
 		android:id="@+id/ProvisioningScrollFrameLayout"
 		android:layout_width="match_parent"
 		android:layout_height="wrap_content"
@@ -81,13 +79,10 @@ Keep the tag fields in synch with the interface specifications.
 		android:visibility="visible" >
 
 		<FrameLayout
-			xmlns:android="http://schemas.android.com/apk/res/android"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content">
 
 			<RelativeLayout
-				xmlns:android="http://schemas.android.com/apk/res/android"
-				xmlns:tools="http://schemas.android.com/tools"
 				android:id="@+id/ProvisioningUserFields"
 				android:layout_width="match_parent"
 				android:layout_height="wrap_content"
@@ -209,7 +204,6 @@ Keep the tag fields in synch with the interface specifications.
 			</RelativeLayout>
 
 			<RelativeLayout
-				xmlns:android="http://schemas.android.com/apk/res/android"
 				android:id="@+id/ProvisioningCodeLayout"
 				android:layout_width="match_parent"
 				android:layout_height="match_parent"
@@ -244,7 +238,6 @@ Keep the tag fields in synch with the interface specifications.
 			</RelativeLayout>
 
 			<RelativeLayout
-				xmlns:android="http://schemas.android.com/apk/res/android"
 				android:id="@+id/ProvisioningSpinnerLayout"
 				android:layout_width="match_parent"
 				android:layout_height="match_parent"
@@ -261,7 +254,6 @@ Keep the tag fields in synch with the interface specifications.
 			</RelativeLayout>
 
 			<RelativeLayout
-				xmlns:android="http://schemas.android.com/apk/res/android"
 				android:id="@+id/ProvisioningCheckboxLayout"
 				android:layout_width="match_parent"
 				android:layout_height="match_parent"
@@ -299,7 +291,6 @@ Keep the tag fields in synch with the interface specifications.
 			</RelativeLayout>
 
 			<RelativeLayout
-				xmlns:android="http://schemas.android.com/apk/res/android"
 				android:id="@+id/ProvisioningWelcomeLayout"
 				android:layout_width="match_parent"
 				android:layout_height="wrap_content"
