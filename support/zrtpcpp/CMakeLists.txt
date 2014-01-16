@@ -12,12 +12,12 @@ cmake_minimum_required(VERSION 2.6)
 
 PROJECT(libzrtpcpp)
 
-SET(CPACK_PACKAGE_VERSION_MAJOR 3)
-SET(CPACK_PACKAGE_VERSION_MINOR 2)
+SET(CPACK_PACKAGE_VERSION_MAJOR 4)
+SET(CPACK_PACKAGE_VERSION_MINOR 0)
 SET(CPACK_PACKAGE_VERSION_PATCH 0)
 
-set (VERSION 3.2.0)
-set (SOVERSION 3)
+set (VERSION 4.0.0)
+set (SOVERSION 4)
 
 # Define supported command line parameters.
 #
@@ -25,6 +25,7 @@ set (SOVERSION 3)
 # Without any options cmake generates libzrtpcpp for use with GNU ccRTP
 #
 option(CCRTP "Build library to use with GNU ccRTP." OFF)
+option(CORE_LIB "Build core library only, no spcific client support." OFF)
 option(CRYPTO_STANDALONE "Use embedded crypto and big number modules." ON)
 option(TIVI "Build library for the tivi client, implies '-DCRYPTO_STNDALONE=true'." OFF)
 option(SQLITE "Use SQLite DB as backend for ZRTP cache." OFF)
@@ -47,6 +48,9 @@ elseif (TIVI)
     set(zrtplibName zrtptivi)
     set(CRYPTO_STANDALONE true)
     set(SQLITE true)
+elseif (CORE_LIB)
+    set (PACKAGE libzrtpcore)
+    set(zrtplibName zrtpcppcore)
 else()
     MESSAGE(WARNING "No client defined, building for GNU ccRTP.")
     set (PACKAGE libzrtpcpp)
@@ -65,7 +69,10 @@ endif()
 # set to true for debug and trace during CMakeLists development
 # set(CMAKE_VERBOSE_MAKEFILE TRUE)
 
-MESSAGE( STATUS "Configuring GNU ${PROJECT_NAME} ${VERSION} for ${PACKAGE}...")
+execute_process(COMMAND git rev-parse --short HEAD OUTPUT_VARIABLE GIT_COMMIT)
+STRING(REGEX REPLACE "(\r?\n)+$" "" GIT_COMMIT "${GIT_COMMIT}")
+
+MESSAGE( STATUS "Configuring GNU ${PROJECT_NAME} ${VERSION} for ${PACKAGE}, commit: ${GIT_COMMIT} ...")
 
 # include most of the fine stuff we need
 include(FindPkgConfig)
@@ -145,14 +152,19 @@ configure_file(config.h.cmake ${CMAKE_BINARY_DIR}/config.h)
 
 add_definitions(-g -O2 -fno-strict-aliasing)
 if(CMAKE_COMPILER_IS_GNUCXX)
-  add_definitions(-Wno-long-long -Wno-char-subscripts)
-  add_definitions(-Wall -ansi -pedantic)
-  add_definitions(-DNEW_STDCPP)
+#    add_definitions(-Wno-long-long -Wno-char-subscripts)
+#    add_definitions(-Wall -ansi -pedantic)
+#    add_definitions(-Wall -pedantic)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -pedantic -std=c99")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -pedantic -std=c++11")
+    add_definitions(-DNEW_STDCPP)
 endif()
 
 include_directories(BEFORE ${CMAKE_BINARY_DIR})
 include_directories (${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/zrtp)
+
 if(CRYPTO_STANDALONE)
+    add_definitions(-DSUPPORT_NON_NIST)
     include_directories (${CMAKE_SOURCE_DIR}/bnlib)
 endif()
 
@@ -200,7 +212,14 @@ set(bnlib_src
     ${CMAKE_SOURCE_DIR}/bnlib/jacobi.c
     ${CMAKE_SOURCE_DIR}/bnlib/germain.c
     ${CMAKE_SOURCE_DIR}/bnlib/ec/ec.c
-    ${CMAKE_SOURCE_DIR}/bnlib/ec/ecdh.c)
+    ${CMAKE_SOURCE_DIR}/bnlib/ec/ecdh.c
+    ${CMAKE_SOURCE_DIR}/bnlib/ec/curve25519-donna.c)
+
+set(zrtp_skein_src
+    ${CMAKE_SOURCE_DIR}/zrtp/crypto/skeinMac256.cpp
+    ${CMAKE_SOURCE_DIR}/zrtp/crypto/skein256.cpp
+    ${CMAKE_SOURCE_DIR}/zrtp/crypto/skeinMac384.cpp
+    ${CMAKE_SOURCE_DIR}/zrtp/crypto/skein384.cpp)
 
 set(zrtp_crypto_src
     ${CMAKE_SOURCE_DIR}/zrtp/crypto/zrtpDH.cpp
@@ -208,6 +227,7 @@ set(zrtp_crypto_src
     ${CMAKE_SOURCE_DIR}/zrtp/crypto/sha256.cpp
     ${CMAKE_SOURCE_DIR}/zrtp/crypto/hmac384.cpp
     ${CMAKE_SOURCE_DIR}/zrtp/crypto/sha384.cpp
+
     ${CMAKE_SOURCE_DIR}/zrtp/crypto/aesCFB.cpp
     ${CMAKE_SOURCE_DIR}/zrtp/crypto/twoCFB.cpp
     ${CMAKE_SOURCE_DIR}/zrtp/crypto/sha2.c)
@@ -226,12 +246,15 @@ endif()
 
 if (CCRTP)
     add_subdirectory(clients/ccrtp)
+    add_subdirectory(demo)
 endif()
-
-add_subdirectory(demo)
 
 if (TIVI)
     add_subdirectory(clients/tivi)
+endif()
+
+if (CORE_LIB)
+    add_subdirectory(clients/no_client)
 endif()
 
 ##very usefull for macosx, specially when using gtkosx bundler

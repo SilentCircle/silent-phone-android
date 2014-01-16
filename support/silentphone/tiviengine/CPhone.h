@@ -147,7 +147,7 @@ public:
          p_cfg.iUserRegister=p_cfg.iCanRegister=0;
          remRegister();
          while(p_cfg.reg.uiRegUntil>0 && iMSec>0)
-         {Sleep(20);iMSec-=20;}
+         {Sleep(50);iMSec-=50;}
       }
       return 0;
    }

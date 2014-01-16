@@ -1,0 +1,356 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+Copyright Â© 2004-2012 Tivi LTD,www.tiviphone.com. All rights reserved.
+Copyright Â© 2012-2013, Silent Circle, LLC. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+    * Any redistribution, use, or modification is done solely for personal 
+      benefit and not for any commercial purpose or for monetary gain
+    * Redistributions of source code must retain the above copyright
+      notice, this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above copyright
+      notice, this list of conditions and the following disclaimer in the
+      documentation and/or other materials provided with the distribution.
+    * Neither the name Silent Circle nor the
+      names of its contributors may be used to endorse or promote products
+      derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL SILENT CIRCLE, LLC BE LIABLE FOR ANY
+DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-->
+
+<resources>
+
+	<!-- Common used string for call screen, start screen  etc. -->
+	<string name="app_name">Silent Phone</string>
+	<string name="silent_circle">Silent Circle</string>
+	<string name="menu_settings">Menú</string>
+	<string name="call_mgr_button">Gerente de\nllamadas</string>
+	<string name="hangup_call">Finalizar</string>
+	<string name="dismiss_call">Rechazar</string>
+	<string name="answer_call">Contestar</string>
+	<string name="close_dialog">Cerrar</string>
+	<string name="cancel_dialog">Cancelar</string>
+	<string name="confirm_dialog">Confirmar</string>
+	<string name="provision_later">Más tarde</string>
+	<string name="prepare_antenna">Preparando&#8230;</string> <!-- &#8230: code for elipsis -->
+	<string name="to_server_only">Al servidor</string>
+	<string name="error_code">Código de error: </string>
+	<string name="accept_video">Aceptar</string>
+	<string name="audio_only">Sólo Sonido</string>
+	<string name="mute_video">Video sin sonido</string>
+	<string name="verify_button">Verificar</string>
+	<string name="verify_infotext_top">Comparar con compañero</string>
+	<string name="verify_infotext_bottom">y teclee el nombre del compañero aquí</string>
+	<string name="next">Siguiente </string>
+	<string name="back">Atrás</string>
+	<string name="login">Acceder</string>
+	<string name="logout">Salir</string>
+	<string name="exit">Salir</string>
+	<string name="settings">Configuración</string>
+    <string name="send_message">Enviar</string>
+	
+    <string name="companion_codes">Códigos de invitación</string>
+
+    <string name="sip_state_calling">Llamando&#8230;</string>
+    <string name="sip_state_connecting">Conectando&#8230;</string>
+    <string name="sip_state_ringing">Llamando</string>
+    <string name="sip_state_ended">Llamada finalizada</string>
+    <string name="sip_state_online">En linea</string>
+    <string name="sip_state_offline">Fuera de linea</string>
+    <string name="sip_error_register">No se puede registrar</string>
+    <string name="sip_error_generic">No se puede connectar</string>
+    <string name="sip_error_decline">Llamada declinada</string>
+    <string name="sip_error_no_user">Usuario no encontrado</string>
+    <string name="sip_error_no_cover">Sin cobertura</string>
+    <string name="sip_error_no_server">No se puede llegar a servidor</string>
+
+    <string name="call_duration">Duración</string>
+    <string name="call_type_audio">Llamada entrante</string>
+    <string name="call_type_video">Videollamada entrante</string>
+    <string name="call_error">Error</string>
+
+	<!-- Strings to display security status, handle with care during translations -->
+	<string name="secstate_secure">SEGURA</string>
+    <string name="secstate_not_secure">No Seguro</string>
+    <string name="secstate_looking">Buscando a compañero</string>
+    <string name="secstate_going_sec">Asegurando</string>
+    <string name="secstate_sec_disabled">No es seguro-no permitido</string>
+
+    <!-- Strings for the crypto panel -->
+	<string name="crypto_peer_name">Nombre del compañero</string>
+	<string name="crypto_peer_client">Cliente ZRTP del compañero</string>
+	<string name="crypto_peer_client_id">Identificación ZRTP del cliente</string>
+	<string name="crypto_peer_client_proto">Versión del protocolo</string>
+	<string name="crypto_crypto_components">Componentes cryptográficos</string>
+	<string name="crypto_crypto_components_tls">Cifras TLS:</string>
+	<string name="crypto_crypto_components_zhash">ZRTP Hash:</string>
+	<string name="crypto_crypto_components_pk">Intercambio de llaves:</string>
+	<string name="crypto_crypto_components_cipher">Cifra:</string>
+	<string name="crypto_crypto_components_hash">Hash:</string>
+	<string name="crypto_crypto_components_sauth">Etiqueta de autorización de SRTP:</string>
+	<string name="crypto_shared_secrets">Secretos Compartidos</string>
+	<string name="crypto_shared_secrets_rs1">RS1</string>
+	<string name="crypto_shared_secrets_rs2">RS2</string>
+	<string name="crypto_shared_secrets_aux">AUX</string>
+	<string name="crypto_shared_secrets_pbx">PBX</string>
+
+	<!-- strings for the call manager -->
+	<string name="call_mng_conference">Conferencia</string>
+	<string name="call_mng_private">Privado</string>
+	<string name="call_mng_in_out">Entrante, saliente</string>
+
+	<!-- strings for the incall dial pad -->
+	<string name="dialog_dial_hide">Ocultar</string>
+
+	<!-- string for the Info dialog -->
+	<string name="info_header_line">Información de cliente y terminal (dispositivo)</string>
+	<string name="info_own_number">Número de Silent Phone propio:</string>
+	<string name="info_build_number">Versión de cliente de Silent Phone:</string>
+	<string name="info_device_info">Información del terminal (dispositivo):</string>
+	<string name="info_device_class">Clasificación del terminal (dispositivo):</string>
+
+	<!-- strings for the ZRTP warning/error panel -->
+	<string name="zrtp_we_header">Mensaje de seguridad de ZRTP</string>
+	<string name="zrtp_we_error">Error de ZRTP</string>
+	<string name="zrtp_we_warn">Aviso de ZRTP</string>
+    <string name="srtp_we_warn">Aviso de SRTP</string>
+	<string name="zrtp_show_details">Mostrar detalles</string>
+    <string name="zrtp_hide_details">Ocultar detalles</string>
+	
+	<!-- Strings for the provisioning activity and messages -->
+	<string name="provisioning_infotext">Creación de cuenta</string>
+    <string name="provisioning_welcome">Bienvenido a Silent Circle</string>
+	<string name="provisioning_vertu_welcome">Bienvenido a Silent Circle en colaboración con Vertu</string>
+	<string name="provisioning_stepinfo_1">Paso 1 de 2</string>
+	<string name="provisioning_stepinfo_2">Paso 2 de 2</string>
+	<string name="provisioning_username">Por favor introduzca el nombre de usuario</string>
+	<string name="provisioning_username_hint">Nombre de usuario</string>
+	<string name="provisioning_password">Contraseña para Silent Phone (introducir dos veces)</string>
+	<string name="provisioning_password_hint">Introduzca la contraseña</string>
+	<string name="provisioning_password_hint2">Introduzca la contraseña (verificar)</string>
+	<string name="provisioning_firstname">Nombre</string>
+	<string name="provisioning_firstname_hint">Introduzca su nombre</string>
+	<string name="provisioning_lastname">Apellido</string>
+	<string name="provisioning_lastname_hint">Introduzca su apellido</string>
+	<string name="provisioning_email_info">Requerido para recuperar su nombre de usuario ó contraseña</string>
+	<string name="provisioning_email_hint">Dirección de correo electrónico</string>
+	<string name="provisioning_code">Código de Activación</string>
+	<string name="provisioning_no_network">Red no disponible: </string>
+	<string name="provisioning_no_data">No hay datos de provisionamiento disponible</string>
+	<string name="provisioning_wrong_format">Formato de datos erróneo: </string>
+	<string name="provisioning_error">Error de provisionamiento</string>
+	<string name="provisioning_info">Información</string>
+	<string name="provisioning_user_req">Se requiere el nombre de usuario. Por favor compruébelo.</string>
+	<string name="provisioning_psn_invalid">Número válido de serie no encontrado!</string>
+	<string name="provisioning_password_req">Se requiere la contraseña. Por favor compruébela.</string>
+	<string name="provisioning_password_match">Las contraseñas no coinciden. Por favor compruébelas.</string>
+	<string name="provisioning_firstname_req">Se requiere un nombre. Por favor compruébelo.</string>
+	<string name="provisioning_lastname_req">Se requiere un apellido. Por favor compruébelo.</string>
+	<string name="provisioning_email_req">Se require una dirección de correo electrónico. Por favor compruébela.</string>
+	<string name="provisioning_already_registered">Dispositivo registrado</string>
+	<string name="provisioning_pwstrength_weak">Seguridad de contraseña: Débil</string>
+	<string name="provisioning_pwstrength_good">Seguridad de contraseña: Buena</string>
+	<string name="provisioning_pwstrength_strong">Seguridad de contraseña: Fuerte</string>
+	<string name="provisioning_show_pw">Mostrar contraseña</string>
+	<string name="provisioning_privacy_tc">He leído y aceptado los términos de privacidad y condiciones de www.silentcircle.com</string>
+	<string name="provisioning_get_news">Me gustaría recibir noticias exclusivas e invitaciones de Servicios</string>
+	<string name="provisioning_welcome_long">Como cliente de Vertu, usted recibe 12 meses de acceso gratuito a los servicios de comunicaciones encriptadas de Silent Circle.</string>
+	<string name="provisioning_new_account">Crear nueva cuenta</string>
+	<string name="provisioning_existing_account">Acceder a cuenta existente</string>
+	<string name="provisioning_check_tc">Por favor de aceptar y verifiqué los términos y condiciones</string>
+	<string name="provisioning_create">Crear</string>
+	<string name="provisioning_get_activation_code">Por favor de acceder a su cuenta en\nwww.silentcircle.com\npara obtener su código de activación.</string>
+    <string name="provisioning_credentials">Nombre de usuario o contraseña incorrectos. Verificar.</string>
+
+    <string name="key_manager_available">Uso de Silent Circle KeyManager.</string>
+
+	<!-- Strings for the thanks dialog -->
+	<string name="thanks_top_line">Gracias, su número de teléfono de Silent Circle es</string>
+	<string name="thanks_bottom_line">Para administrar su cuenta de Silent Circle, por favor, vaya a\nwww.silentcircle.com</string>
+    <string name="thanks_number">Número:</string>
+    <string name="thanks_name">Nombre:</string>
+
+    <!-- Explanation of SAS code/words -->
+	<string name="sas_explanation">Debería comparar verbalmente este código de autentificación con la otra persona. Si no coincide esto indica la presencia de alguien escuchando su conversación..</string>
+
+	<!-- Text for the companion code screen -->
+    <string name="companion_vertu_welcome">Bienvenido a Silent Circle en colaboración con Vertu.\nLe hemos proporcionado cinco pases de 30 dias para que los utilize con su familia y amigos.\nPara invitar a otros a Silent Circle, por favor, envíesles un código de invitación para que activar su pase.</string>
+
+    <plurals name="companion_codes_available">
+        <item quantity="one">Usted tiene un código de invitación a su disposición.</item>
+        <item quantity="other">Usted tiene %1$d códigos de invitación a su disposición.</item>
+    </plurals>
+    <string name="companion_sms_text">Bienvenido a Silent Circle. Por favor, introduzca su código de invitación %1$s en <font fgcolor="#ffffffff">accounts.silentcircle.com</font> para crear su cuenta gratuita.</string>
+    <string name="companion_manage_info">Más opciones para administrar sus códigos de invitación en <font fgcolor="#ffffffff">accounts.silentcircle.com</font></string>
+
+    <!-- preferences -->
+    <string name="preference_options">Ajustes</string>
+    <string name="preferred_sas_type">Tipo de SAS preferido</string>
+    <string name="sas_char_mode">SAS se muestra con cuatro caracteres</string>
+    <string name="sas_word_mode">SAS se muestra con dos palabras</string>
+    <string name="sp_ringtone">Timbre de llamada</string>
+    <string name="no_ringtone">Timbre de llamada</string>
+
+    <string name="preferred_algorithms">Prefer Non-NIST Suite</string>
+    <string name="nist_preferred">Always prefer non-NIST algorithms if available: Twofish, Skein, and Bernstein curves.</string>
+
+    <string name="sca_info_install">"Silent Circle ofrece una aplicación encriptada que le permite a usted únicamente acceder a sus contactos y registro de llamadas.
+        \nSilent Contacts es un complemento gratuito de Silent Circle.
+        \nPara obtener más información, visite nuestro sitio web.
+        \n\n<font fgcolor="#ff50b4fd"><b>Instalar Silent Contacts</b></font></string>
+    <string name="sca_add_security">Agregar seguridad</string>
+
+    <!-- Description of image buttons -->
+	<string name="caller_image">Imagen del contacto</string>
+	<string name="signal_strength">Calidad de la señal</string>
+	<string name="country_flag">Bandera del país</string>
+	<string name="mute_image_button">Sin audio</string>
+	<string name="incall_dial_image_button">Marcar número durante la llamada</string>
+	<string name="speaker_image_button">Apagar ó encender el altavoz</string>
+	<string name="add_call_image_button">Añadir otra llamada</string>
+	<string name="add_video_image_button">Iniciar videollamada</string>
+	<string name="dial_image_button">Marcar número</string>
+	<string name="contacts_image_button">Abrir contactos</string>
+	<string name="recent_image_button">Mostrar llamadas recientes</string>
+	<string name="backspace_image_button">borra el caracter</string>
+	<string name="end_call_image_button">Finalizar llamada</string>
+	<string name="answer_call_image_button">Contestar llamada</string>
+	<string name="video_audio_mute">alternar audio (encendido y apagado)</string>
+	<string name="video_switch_camera">alternar cámaras</string>
+	<string name="crypto_padlock">Candado para mostrar estado de seguridad</string>
+
+	<!-- The following string and comments are copied from original Android sources, Android License applies -->
+	<!--
+         String describing the image on ImageButton one
+
+        Note: AccessibilityServices use this attribute to announce what the view represents.
+              This is especially valuable for views without textual representation like ImageView.
+	-->
+	<string name="description_image_button_one">uno</string>
+
+	<!--
+         String describing the image on ImageButton two
+
+        Note: AccessibilityServices use this attribute to announce what the view represents.
+              This is especially valuable for views without textual representation like ImageView.
+	-->
+	<string name="description_image_button_two">dos</string>
+
+	<!--
+         String describing the image on ImageButton three
+
+        Note: AccessibilityServices use this attribute to announce what the view represents.
+              This is especially valuable for views without textual representation like ImageView.
+	-->
+	<string name="description_image_button_three">tres</string>
+
+	<!--
+         String describing the image on ImageButton four
+
+        Note: AccessibilityServices use this attribute to announce what the view represents.
+              This is especially valuable for views without textual representation like ImageView.
+	-->
+	<string name="description_image_button_four">cuatro</string>
+
+	<!--
+         String describing the image on ImageButton five
+
+        Note: AccessibilityServices use this attribute to announce what the view represents.
+              This is especially valuable for views without textual representation like ImageView.
+	-->
+	<string name="description_image_button_five">cinco</string>
+
+    <!--
+         String describing the image on ImageButton six
+
+        Note: AccessibilityServices use this attribute to announce what the view represents.
+              This is especially valuable for views without textual representation like ImageView.
+    -->
+	<string name="description_image_button_six">seis</string>
+
+	<!--
+         String describing the image on ImageButton seven
+
+        Note: AccessibilityServices use this attribute to announce what the view represents.
+              This is especially valuable for views without textual representation like ImageView.
+	-->
+	<string name="description_image_button_seven">siete</string>
+
+	<!--
+         String describing the image on ImageButton eight
+
+        Note: AccessibilityServices use this attribute to announce what the view represents.
+              This is especially valuable for views without textual representation like ImageView.
+	-->
+	<string name="description_image_button_eight">ocho</string>
+
+	<!--
+         String describing the image on ImageButton nine
+
+        Note: AccessibilityServices use this attribute to announce what the view represents.
+              This is especially valuable for views without textual representation like ImageView.
+	-->
+	<string name="description_image_button_nine">nueve</string>
+
+	<!--
+         String describing the image on ImageButton star
+
+        Note: AccessibilityServices use this attribute to announce what the view represents.
+              This is especially valuable for views without textual representation like ImageView.
+	-->
+	<string name="description_image_button_star">asterísco</string>
+
+	<!--
+         String describing the image on ImageButton zero
+
+        Note: AccessibilityServices use this attribute to announce what the view represents.
+              This is especially valuable for views without textual representation like ImageView.
+	-->
+	<string name="description_image_button_zero">cero</string>
+
+	<!--
+         String describing the image on ImageButton pound
+
+        Note: AccessibilityServices use this attribute to announce what the view represents.
+              This is especially valuable for views without textual representation like ImageView.
+	-->
+	<string name="description_image_button_pound">simbolo de libra</string>
+
+	<!--
+         String describing the Dial ImageButton
+
+         Used by AccessibilityService to announce the purpose of the button.
+	-->
+	<string name="description_dial_button">marcar</string>
+
+	<!--
+         String describing the Delete/Backspace ImageButton
+
+         Used by AccessibilityService to announce the purpose of the button.
+	-->
+	<string name="description_delete_button">borrar</string>
+
+	<string name="zrtp_common_cmp">Debería comparar verbalmente este código de autentificación con la persona a la que ha llamado. Si no coincide, esto indica que alguien podría haber interceptado la conversación.</string>
+    <string name="zrtp_common_cls">Error de conexión. Por favor cuelgue y llame de nuevo.</string>
+    <string name="zrtp_common_upd">La persona a la que ha llamado debe actualizar la ultima versión de Silent Phone.</string>
+    <string name="zrtp_common_app">Error de aplicación. Por favor, reinstale Silent Phone.</string>
+
+    <!-- Permissions -->
+    <string name="permission_read">Leer contactos seguros</string>
+    <string name="permission_write">Escribir contactos seguros</string>
+
+    <!-- Permissions key manager -->
+    <string name="permission_read_km">Leer acceso al administrador de claves de Silent Circle</string>
+    <string name="permission_write_km">Escribir acceso al administrador de claves de Silent Circle</string>
+
+</resources>

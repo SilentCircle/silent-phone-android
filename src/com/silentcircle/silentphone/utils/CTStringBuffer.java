@@ -29,7 +29,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package com.silentcircle.silentphone.utils;
 
 public class CTStringBuffer {
-    public StringBuffer str = null;//new StringBuffer(128);
+    public StringBuffer str;
     
     public CTStringBuffer(){
        str = new StringBuffer(128);
@@ -37,8 +37,7 @@ public class CTStringBuffer {
     public CTStringBuffer(int size){
        str = new StringBuffer(size);
     }
-    
-    
+
     synchronized public String toString(){
        return str.toString();
     }

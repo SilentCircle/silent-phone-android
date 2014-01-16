@@ -24,6 +24,13 @@
 #else
 #include <AudioToolbox/AudioServices.h>
 #endif
+
+#include "../os/CTMutex.h"
+
+static CTMutex mutexDA;
+static CTMutex mutexUA;
+
+
 enum {
    kAsFloat = 32,
    kAs16Bit = 16,
@@ -45,11 +52,6 @@ enum {
  
 */
 
-#include "../os/CTMutex.h"
-
-static CTMutex mutexDA;
-static CTMutex mutexUA; 
-
 
 int setAudioRouteRest(int iLoudSpkr, int iRest);
 
@@ -65,20 +67,199 @@ double createSine(double fCtx, T *p, int iSamples, float freq, int iRate, int iV
    return fCtx;
 }
 
+char * t_CFStringCopyUTF8String(CFStringRef str,  char *buffer, int iMaxLen);
+
+class CTAudioUsage{
+   int iBluetoothIsAvailable;
+   int iBluetoothIsUsed;
+   char bufLastUsedRoute[64]="";
+   int iWaitForBT;
+   
+   void(*fncCBOnRouteChange)(void *self, void *ptrUserData);
+   void *ptrUserData=NULL;
+   
+public:
+   CTAudioUsage(){iWaitForBT=0;iBluetoothIsAvailable=0;iBluetoothIsUsed=0;bufLastUsedRoute[0]=0;fncCBOnRouteChange=NULL;ptrUserData=NULL;}
+   //TODO use notifcation center
+   
+   
+   void setAudioRouteChangeCB(void(*_fncCBOnRouteChange)(void *self, void *ptrUserData), void *_ptrUserData){
+      fncCBOnRouteChange=_fncCBOnRouteChange;
+      ptrUserData=_ptrUserData;
+   }
+   
+   int isBTAvailable(){return iBluetoothIsAvailable || iBluetoothIsUsed;}
+   int isBTUsed(){return iBluetoothIsUsed;}
+   
+   void shouldSwitchToBT(){
+      /*
+       //fails if - airplay button is used
+       //can not switch bt on, if it airplay button was touched
+       //must reset BT dev
+      if(!iBluetoothIsUsed && iBluetoothIsAvailable){
+         iWaitForBT=1;
+      }
+       */
+   }
+   
+   int isLoudspkrInUse(){return strcmp(bufLastUsedRoute, "SpeakerAndMicrophone")==0;}
+   
+   const char *getDevName(){return &bufLastUsedRoute[0];}
+   
+   void setCurRoute(CFStringRef str){
+      t_CFStringCopyUTF8String(str, bufLastUsedRoute, sizeof(bufLastUsedRoute));
+      iBluetoothIsUsed=isBT(str);
+      if(iWaitForBT){
+         if(iBluetoothIsUsed)iWaitForBT=0;else iBluetoothIsAvailable=0;
+      }
+      if(iBluetoothIsUsed)iBluetoothIsAvailable=1;
+      
+      printf("[new route:%s bt=%d btAv=%d]\n",bufLastUsedRoute,iBluetoothIsUsed, iBluetoothIsAvailable);
+      if(fncCBOnRouteChange)fncCBOnRouteChange(this, ptrUserData);
+   }
+   
+   
+   static int isBT(CFStringRef str){
+      char buf[64];
+      char *p=t_CFStringCopyUTF8String(str, buf, sizeof(buf));
+      if(!p)return 0;
+      if(strcmp(p,"HeadsetBT")==0)return 1;
+      return strstr(p,"BT")!=NULL;
+   }
+
+   static void propListener(	void *                  inClientData,
+                            AudioSessionPropertyID	inID,
+                            UInt32                  inDataSize,
+                            const void *            inData)
+   {
+      typedef struct{
+         union{
+            int i;
+            char c[4];
+         };
+      }sss;
+      
+      sss s;
+      s.i=inID;
+      
+      CTAudioUsage *_this = (CTAudioUsage*)inClientData;
+      
+      printf("[id=%c%c%c%c]",s.c[0],s.c[1],s.c[2],s.c[3]);
+      //SpeakHereController *THIS = (SpeakHereController*)inClientData;
+      if (inID == kAudioSessionProperty_AudioRouteChange)
+      {
+         CFDictionaryRef routeDictionary = (CFDictionaryRef)inData;
+         //CFShow(routeDictionary);
+         CFNumberRef reason = (CFNumberRef)CFDictionaryGetValue(routeDictionary, CFSTR(kAudioSession_AudioRouteChangeKey_Reason));
+         SInt32 reasonVal;
+         CFNumberGetValue(reason, kCFNumberSInt32Type, &reasonVal);
+         
+         printf("[reasonVal=%ld reason=%d]\n",reasonVal,reason);
+         
+         int iOldWasBT=0;
+         
+         
+         if (reasonVal != kAudioSessionRouteChangeReason_CategoryChange)
+         {
+            CFStringRef oldRoute = (CFStringRef)CFDictionaryGetValue(routeDictionary, CFSTR(kAudioSession_AudioRouteChangeKey_OldRoute));
+            if (oldRoute)
+            {
+               iOldWasBT=isBT(oldRoute);
+               printf("[old route: rw=%d obt=%d]\n", reasonVal,iOldWasBT);
+               CFShow(oldRoute);
+
+            }
+            else
+               printf("ERROR GETTING OLD AUDIO ROUTE!\n");
+            
+            if (reasonVal == kAudioSessionRouteChangeReason_OldDeviceUnavailable)
+            {
+               if(iOldWasBT)_this->iBluetoothIsAvailable=0;
+               /*
+                if (THIS->player->IsRunning()) {
+                [THIS pausePlayQueue];
+                [[NSNotificationCenter defaultCenter] postNotificationName:@"playbackQueueStopped" object:THIS];
+                }
+                */
+            }
+            
+            CFStringRef newRoute;
+            UInt32 size; size = sizeof(CFStringRef);
+            OSStatus error = AudioSessionGetProperty(kAudioSessionProperty_AudioRoute, &size, &newRoute);
+            if (error) printf("ERROR GETTING NEW AUDIO ROUTE! %ld\n", error);
+            else
+            {
+               _this->setCurRoute(newRoute);
+            }
+            
+            
+
+            /*
+             // stop the queue if we had a non-policy route change
+             if (THIS->recorder->IsRunning()) {
+             [THIS stopRecord];
+             }
+             */
+         }
+         else{
+            CFStringRef newRoute;
+            UInt32 size; size = sizeof(CFStringRef);
+            OSStatus error = AudioSessionGetProperty(kAudioSessionProperty_AudioRoute, &size, &newRoute);
+            if (error) printf("ERROR GETTING NEW AUDIO ROUTE! %ld\n", error);
+            else
+            {
+               _this->setCurRoute(newRoute);
+
+            }
+         }
+      }
+      else if (inID == kAudioSessionProperty_AudioInputAvailable)
+      {
+         if (inDataSize == sizeof(UInt32)) {
+            UInt32 isAvailable = *(UInt32*)inData;
+            // disable recording if input is not available
+            //THIS->btn_record.enabled = (isAvailable > 0) ? YES : NO;
+         }
+      }
+   }
+};
+
+static CTAudioUsage ctBTUsage;
+
+int isLoudspkrInUse(){
+   return ctBTUsage.isLoudspkrInUse();
+}
+
+int isBTUsed(){
+   return ctBTUsage.isBTUsed();
+}
+
+int isBTAvailable(){
+   return ctBTUsage.isBTAvailable();
+}
+const char * getAudioDevName(){
+   return ctBTUsage.getDevName();
+}
+
+void setAudioRouteChangeCB(void(*fncCBOnRouteChange)(void *self, void *ptrUserData), void *ptrUserData){
+   ctBTUsage.setAudioRouteChangeCB(fncCBOnRouteChange, ptrUserData);
+}
 
 void initAS(int iForce=0){
    static int iInitOk=0;
    if(!iInitOk || iForce){
       iInitOk=1;
       AudioSessionInitialize(NULL, NULL, NULL,NULL);
+
+      
+      AudioSessionAddPropertyListener(kAudioSessionProperty_AudioRouteChange, &CTAudioUsage::propListener, &ctBTUsage);
+
+      
    }
 
 }
-//short tmpBuf[1024*64+64];
 
-//#include "CTFreq.h"
-//CTDecFreq cfreq;
-#ifndef T_IPHONE 
+#ifndef T_IPHONE
 AudioDeviceID NewGetDefaultInputDevice()
 {
    AudioDeviceID theAnswer = 0;
@@ -434,6 +615,9 @@ void CTMAudio::init()
    if(iInitOk)return;
    iInitOk=0;
 
+ //  UInt32 sessionCategory = kAudioSessionCategory_PlayAndRecord;
+   //AudioSessionSetProperty(kAudioSessionProperty_AudioCategory, sizeof(sessionCategory), &sessionCategory);
+   
    /*
     UInt32 ac = kAudioSessionCategory_PlayAndRecord;
     err = AudioSessionSetProperty(kAudioSessionProperty_AudioCategory, sizeof(audioCategory), &audioCategory);
@@ -969,42 +1153,44 @@ public:
       
    }
    int startRec(void *p, int (*cbFnc)(void *, short *, int )){
-    //  dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-
-      
-      cbRecData=p;
-      cbFncRec=cbFnc;
-      iRecStarted=1;
-     // return 
+      dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+         
+         cbRecData=p;
+         cbFncRec=cbFnc;
+         iRecStarted=1;
          start();
-      //});
+      });
       return 0;
       
    }
    int startPlay(void *p, int (*cbFnc)(void *, short *, int , int iRestarted)){
- //     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-
-
-      iIsFirstPacket=1;
-      cbPlayData=p;
-      cbFncPlay=cbFnc;
-      iPlayStarted=1;
-      
-      start();
-   //   });
+      dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+         
+         
+         iIsFirstPacket=1;
+         cbPlayData=p;
+         cbFncPlay=cbFnc;
+         iPlayStarted=1;
+         
+         start();
+      });
       return 0;
    }
    void stopRec(){
+      dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
          iRecStarted=0;
          if(!iPlayStarted){
             stop_rel();
          }
+      });
    }
    void stopPlay(){
+      dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
          iPlayStarted=0;
          if(!iRecStarted){
             stop_rel();
          }
+      });
    }
 private:
    int start();
@@ -1111,16 +1297,22 @@ void CTMAudioDuplex::init(){
    iInitOk=0;
    
    initAS();
-   
+   int reps=0;
+rep1:
    UInt32 sessionCategory = kAudioSessionCategory_PlayAndRecord;
-   AudioSessionSetProperty(kAudioSessionProperty_AudioCategory, sizeof(sessionCategory), &sessionCategory);   
-   /*
-    UInt32 ac = kAudioSessionCategory_PlayAndRecord;
-    err = AudioSessionSetProperty(kAudioSessionProperty_AudioCategory, sizeof(audioCategory), &audioCategory);
-    if (err != kAudioSessionNoError) {
-    printf("err=%d",err);
-    } 
-    */
+   err = AudioSessionSetProperty(kAudioSessionProperty_AudioCategory, sizeof(sessionCategory), &sessionCategory);
+   if(!reps && err == kAudioSessionNotInitialized){
+      
+      initAS(1);
+      reps=1;
+      goto rep1;
+   }
+   
+   UInt32 b=1;
+   
+   err = AudioSessionSetProperty (kAudioSessionProperty_OverrideCategoryEnableBluetoothInput,
+                            sizeof(b), &b);
+   
    // Open the default output unit
    /*
     
@@ -1475,14 +1667,6 @@ void CTMAudioDuplex::stop(){
  }
  
  */
-/*
- UInt32 allowMixing = true;
- 
- AudioSessionSetProperty ( kAudioSessionProperty_OverrideCategoryMixWithOthers,  
- sizeof (allowMixing),                                 
- &allowMixing                                          
- );
- */
 
 /*
  BOOL isHeadsetPluggedIn() {
@@ -1560,11 +1744,15 @@ void CTMAudioDuplex::stop(){
  }
  */
 
-int setAudioRouteRest(int iLoudSpkr, int iRest){
+
+
+int _setAudioRouteRest(int iLoudSpkr, int iRest, int BT){
   // return iLoudSpkr;
-   static int iPrev=-1;
+   static int iPrevSpkr=-1;
+   static int iPrevBT=1;
    
-   if(iRest==1)iLoudSpkr=iPrev;
+   if(iRest==1)iLoudSpkr=iPrevSpkr;
+   if(iRest==1)BT=iPrevBT;
    
    OSStatus o;
    int reps=0;
@@ -1578,34 +1766,42 @@ rep:
    kAudioSessionOverrideAudioRoute_None;
 
    
-   if(iRest==0)iPrev=iLoudSpkr;
+   if(iRest==0)iPrevSpkr=iLoudSpkr;
+   if(iRest==0)iPrevBT=BT;
    
+   if(ctBTUsage.isBTAvailable() && !iLoudSpkr){
+      ctBTUsage.shouldSwitchToBT();
+   }
+   /*
    if(!iLoudSpkr){
       if(!reps)initAS(1);//TODO BT test
       UInt32 sessionCategory = kAudioSessionCategory_PlayAndRecord;
       AudioSessionSetProperty(kAudioSessionProperty_AudioCategory, sizeof(sessionCategory), &sessionCategory);
       
-      UInt32 b=1;
+      UInt32 b=(UInt32)BT;
       
       o = AudioSessionSetProperty (
                                    kAudioSessionProperty_OverrideCategoryEnableBluetoothInput,
                                    sizeof(b), &b);
-      /*
-      printf("err=%d\n",o);
+      printf("[AudioSessionSetProperty(BT)=%ld {%4.s} set=%lu]",o, (char*)&o, b);
       
       
-      UInt32 sz=0;
-      o = AudioSessionGetProperty (
-                                   kAudioSessionProperty_OverrideCategoryEnableBluetoothInput,
-                                   &sz, &b);
-      printf("get OverrideCategoryEnableBluetoothInput=%d\n",b);
-       */
+       UInt32 sz=sizeof(b);
+       
+       AudioSessionGetProperty(kAudioSessionProperty_OverrideCategoryEnableBluetoothInput,&sz,&b);
+       
+       printf("[AudioSessionGetProperty(BT)=%lu sz=%lu]", b,sz);
+      
+      
    }
-   
+   */
 #if 1
+
+   
    o = AudioSessionSetProperty (
                                 kAudioSessionProperty_OverrideAudioRoute,
                                 sizeof(dst), &dst);
+   
 #else
    UInt32 defaultToSpeaker = dst;
    o = AudioSessionSetProperty (kAudioSessionProperty_OverrideCategoryDefaultToSpeaker,                        
@@ -1626,6 +1822,15 @@ rep:
 
    return iLoudSpkr;
 }
+
+int setAudioRouteRest(int iLoudSpkr, int iRest){
+   return _setAudioRouteRest(iLoudSpkr,iRest,1);
+}
+
+int switchToEarpiece(){
+   return _setAudioRouteRest(0,0,0);
+}
+
 int setAudioRoute(int iLoudSpkr){//call only from main thread
    return setAudioRouteRest(iLoudSpkr,0);
 }
@@ -1771,7 +1976,7 @@ void audioServicesSystemSoundCompletionProc(  SystemSoundID  ssID,
          iRingRepCount++;
          
          if(!iRingIsInBackGround){
-            if(iRingRepCount==150){
+            if(iRingRepCount>=60){
                stoRingTone();
                return;
             }
@@ -1862,8 +2067,12 @@ int getAOState(CFStringRef *state){
    OSStatus status = AudioSessionGetProperty(kAudioSessionProperty_AudioRoute, &propertySize, state);
    return status==kAudioSessionNoError?0:status;
 }
-
+//
 int isPlaybackVolumeMuted(){
+   
+   int isPlaybackVolumeMutedIOS6();
+   int getIOSVersion();
+   if(getIOSVersion()>=6)return isPlaybackVolumeMutedIOS6();
    Float32 volume = 1.0;
    UInt32 dataSize = sizeof(Float32);
    
@@ -1883,6 +2092,8 @@ int useRetroRingtone(){
    return (pR && *pR==1);
 }
 
+const char * getRingtone(const char *p=NULL);
+
 void vibrateOnce(){
    vOnce.vibrate();
 }
@@ -1892,9 +2103,13 @@ void* playDefaultRingTone(int iIsInBack){
    iRingRepCount=0;
    iVibrateRepCount=0;
    if(iStopRingTone==0 || mySSID)return NULL;
+   
+
 
    mySSID=0;
    if(!iRingIsInBackGround){
+      
+      CFStringRef n =  CFStringCreateWithCString(NULL, getRingtone(), kCFStringEncodingUTF8);
 
       CFBundleRef mainBundle = CFBundleGetMainBundle ();
       
@@ -1906,16 +2121,15 @@ void* playDefaultRingTone(int iIsInBack){
 
       CFURLRef myURLRef  = CFBundleCopyResourceURL (
                                                   mainBundle,
-                                                    useRetroRingtone()?
-                                                    (CFSTR ("ring_retro")):
-                                                    (CFSTR ("ring")),
+                                                    n,
                                                   CFSTR ("caf"),
                                                   NULL
                                                   );
+      CFRelease(n);
+      if(!myURLRef)return NULL;
       
       AudioServicesCreateSystemSoundID (myURLRef, &mySSID);
       printf("[mySSID=%lu]",mySSID);
-      
       CFRelease(myURLRef);
    }
    
@@ -1944,12 +2158,14 @@ void* playDefaultRingTone(int iIsInBack){
       else{
          puts("!backRing");
          setAudioRouteRest(1,-1);
+         
          AudioServicesAddSystemSoundCompletion(kSystemSoundID_Vibrate,
                                                NULL,NULL,
                                                audioServicesSystemSoundCompletionProcVibrate,
                                                NULL);
          
          AudioServicesPlaySystemSound (kSystemSoundID_Vibrate);
+         
          AudioServicesPlayAlertSound(mySSID);
          AudioServicesAddSystemSoundCompletion(mySSID,
                                                NULL,NULL,
@@ -1964,6 +2180,70 @@ void* playDefaultRingTone(int iIsInBack){
 
    return (void*)1;
 
+}
+
+static SystemSoundID ringTestSsid=0;
+
+
+void stopTestRingTone(){
+   
+   if(ringTestSsid){
+      SystemSoundID s=ringTestSsid;ringTestSsid=0;
+      AudioServicesRemoveSystemSoundCompletion(s);
+      AudioServicesDisposeSystemSoundID(s);
+      
+   }
+}
+
+static void stopTestRingTone_ssid(SystemSoundID s){
+   
+   if(ringTestSsid==s && s){
+      ringTestSsid=0;
+      AudioServicesRemoveSystemSoundCompletion(s);
+      AudioServicesDisposeSystemSoundID(s);
+   }
+}
+
+void playTestRingTone(const char *name){
+   //playDefaultRingTone(0,1);
+   CFBundleRef mainBundle = CFBundleGetMainBundle ();
+   
+   // Get the URL to the sound file to play. The file in this case
+   // is "tap.aif"
+   
+   //afconvert -f caff -d aac  -c 1 telephone-ring.wav ring.caf
+   
+   SystemSoundID ssid=0;
+   
+   CFStringRef n =  CFStringCreateWithCString(NULL, name, kCFStringEncodingUTF8);
+   CFURLRef myURLRef  = CFBundleCopyResourceURL (
+                                                 mainBundle,
+                                                 n,
+                                                 CFSTR ("caf"),
+                                                 NULL
+                                                 );
+   if(myURLRef){
+      AudioServicesCreateSystemSoundID (myURLRef, &ssid);
+      CFRelease(myURLRef);
+   }
+   printf("[ssid=%lu]",ssid);
+   
+   CFRelease(n);
+   
+   if(!ssid)return;
+   
+   dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+      setAudioRouteRest(1,-1);
+      
+      stopTestRingTone();
+
+
+      ringTestSsid=ssid;
+      AudioServicesPlayAlertSound(ssid);
+  
+      sleep(4);
+      stopTestRingTone_ssid(ssid);
+   });
 }
 
 

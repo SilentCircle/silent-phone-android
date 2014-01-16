@@ -162,7 +162,7 @@ ZrtpQueue::takeInDataPacket(void)
     // already handled we delete any packets here after processing.
     if (enableZrtp && zrtpEngine != NULL) {
         // Fixed header length + smallest ZRTP packet (includes CRC)
-        if (rtn < (12 + sizeof(HelloAckPacket_t))) // data too small, dismiss
+        if (rtn < (int32)(12 + sizeof(HelloAckPacket_t))) // data too small, dismiss
             return 0;
 
         // Get CRC value into crc (see above how to compute the offset)

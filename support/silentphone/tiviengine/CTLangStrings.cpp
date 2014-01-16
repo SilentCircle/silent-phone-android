@@ -342,9 +342,7 @@ void CTLangStrings::constrEng()
    lRegSucc.setText("Registration successful");
    lMissCall.setText("Missed call");
    lIncomCall.setText("Incoming call from");
-   lConnecting.setText("Connecting to ");//i-net...");
-   lConnecting.addText(lApiShortName);
-   lConnecting.addText("...");
+   lConnecting.setText("Connecting...");
    
    
    lMyUN.setText("My login name");

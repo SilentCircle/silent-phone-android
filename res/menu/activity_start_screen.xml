@@ -41,8 +41,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
           android:icon="@drawable/ic_ab_history_holo_dark"
           android:showAsAction="always" />
 
+    <!--
+    Use the Logout string here: actually Exit" performs a "logout" first then
+    exits the application. To "login" again the user only needs to click on the
+    application's icon, the app starts and performs a login.
+    -->
     <item android:id="@+id/start_menu_exit"
-        android:title="@string/exit"
+        android:title="@string/logout"
         android:showAsAction="never"/>
 
     <item android:id="@+id/start_menu_login"

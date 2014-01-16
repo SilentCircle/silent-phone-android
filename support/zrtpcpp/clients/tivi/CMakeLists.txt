@@ -42,7 +42,7 @@ set(crypto_src_srtp
    ${CMAKE_SOURCE_DIR}/srtp/crypto/SrtpSymCrypto.cpp
    ${CMAKE_SOURCE_DIR}/srtp/crypto/sha1.c)
 
-set(zrtpcpp_src ${zrtp_src} ${zrtp_tivi_src} ${zrtp_crypto_src} ${bnlib_src} ${srtp_src} ${crypto_src_srtp} ${cryptcommon_srcs})
+set(zrtpcpp_src ${zrtp_src} ${zrtp_tivi_src} ${zrtp_crypto_src} ${zrtp_skein_src} ${bnlib_src} ${srtp_src} ${crypto_src_srtp} ${cryptcommon_srcs})
 
 # for the Thread classes etc. - remove D_WITHOUT_TIVI_ENV if you compile for/with Tivi modules, maybe build static
 # and iclude this into Tivi shared lib in the second step. Need to cross-check with Java build in case of static build.
@@ -95,10 +95,14 @@ if(JAVA)
 
 endif()
 
+add_custom_command(OUTPUT ${CMAKE_BINARY_DIR}/buildinfo.c 
+                   COMMAND ${CMAKE_COMMAND} -E echo \"char zrtpBuildInfo[] = \\\"${VERSION}:${GIT_COMMIT}:${CMAKE_SYSTEM_PROCESSOR}\\\"\;\" > ${CMAKE_BINARY_DIR}/buildinfo.c)
 
-add_library(${zrtplibName} ${LIBRARY_BUILD_TYPE} ${zrtpcpp_src})
+add_library(${zrtplibName} ${LIBRARY_BUILD_TYPE} ${zrtpcpp_src} ${CMAKE_BINARY_DIR}/buildinfo.c)
 set_target_properties(${zrtplibName} PROPERTIES VERSION ${VERSION} SOVERSION ${SOVERSION})
 target_link_libraries(${zrtplibName} ${LIBS})
+
+add_custom_command(TARGET ${zrtplibName} POST_BUILD COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_BINARY_DIR}/buildinfo.c)
 
 # **** Test programs ****
 #

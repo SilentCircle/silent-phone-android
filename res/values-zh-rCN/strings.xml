@@ -32,7 +32,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 	<!-- Common used string for call screen, start screen  etc. -->
 	<string name="app_name">Silent Phone</string>
-	<string name="silent_circle">SilentCircle</string>
+	<string name="silent_circle">Silent Circle</string>
 	<string name="menu_settings">菜单</string>
 	<string name="call_mgr_button">通话管理</string>
 	<string name="hangup_call">结束通话</string>
@@ -57,7 +57,35 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     <string name="logout">退出</string>
     <string name="exit">退出</string>
     <string name="settings">设置</string>
-	
+    <string name="send_message">发送</string>
+
+    <string name="companion_codes">邀请代码</string>
+
+    <string name="sip_state_calling">正在呼叫</string>
+    <string name="sip_state_connecting">正在连接</string>
+    <string name="sip_state_ringing">正在响铃</string>
+    <string name="sip_state_ended">通话已结束</string>
+    <string name="sip_state_online">在线</string>
+    <string name="sip_state_offline">下线</string>
+    <string name="sip_error_register">无法注册</string>
+    <string name="sip_error_generic">无法连接</string>
+    <string name="sip_error_decline">通话被拒绝</string>
+    <string name="sip_error_no_user">用户不存在</string>
+    <string name="sip_error_no_cover">没有网络连接</string>
+    <string name="sip_error_no_server">无法连接服务器</string>
+
+    <string name="call_duration">通话时长</string>
+    <string name="call_type_audio">来电</string>
+    <string name="call_type_video">视频来电l</string>
+    <string name="call_error">出错</string>
+
+    <!-- Strings to display security status, handle with care during translations -->
+    <string name="secstate_secure">安全通话</string>
+    <string name="secstate_not_secure">非安全通话</string>
+    <string name="secstate_looking">寻找对方</string>
+    <string name="secstate_going_sec">正在加密</string>
+    <string name="secstate_sec_disabled">非安全通话(未激活)</string>
+
 	<!-- Strings for the crypto panel -->
 	<string name="crypto_peer_name">对方姓名</string>
 	<string name="crypto_peer_client">ZRTP 对方用户</string>
@@ -95,9 +123,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	<string name="zrtp_we_header">ZRTP 安全信息</string>
 	<string name="zrtp_we_error">ZRTP 错误</string>
 	<string name="zrtp_we_warn">ZRTP 警告</string>
-    <string name="zrtp_we_warn">SRTP 警告</string>
+    <string name="srtp_we_warn">SRTP 警告</string>
+    <string name="zrtp_show_details">显示详细</string>
+    <string name="zrtp_hide_details">隐藏详细</string>
 
-	<!-- Strings for the provisioning activity and messages -->
+    <!-- Strings for the provisioning activity and messages -->
     <string name="provisioning_infotext">创建帐户</string>
     <string name="provisioning_vertu_welcome">欢迎进入 Silent Circle — Vertu 合作伙伴</string>
     <string name="provisioning_stepinfo_1">步骤 1 / 2</string>
@@ -133,31 +163,30 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     <string name="provisioning_show_pw">显示密码</string>
     <string name="provisioning_privacy_tc">我已经阅读并愿意接受 www.silentcircle.com 网站隐私保护政策及条款和条件</string>
     <string name="provisioning_get_news">我愿意接收该服务发送的专属消息及邀请</string>
-    <string name="provisioning_welcome_long">作为 Vertu 用户，您能免费尊享 12 个月的 SilentCircle 沟通加密服务。</string>
+    <string name="provisioning_welcome_long">作为 Vertu 用户，您能免费尊享 12 个月的 Silent Circle 沟通加密服务。</string>
     <string name="provisioning_new_account">创建新帐户</string>
     <string name="provisioning_existing_account">登录已有帐户</string>
     <string name="provisioning_check_tc">请查看并接受条款和条件</string>
     <string name="provisioning_create">创建</string>
     <string name="provisioning_get_activation_code">请在 www.silentcircle.com 登录您的帐户，以获取激活码。</string>
-	
-    <!-- Strings for the provisioning activity and messages -->
-	<string name="key_generation_info">正在生成密钥，请稍后。</string>
-    <string name="key_generation_error">生成密钥出错</string>
-    <string name="key_generation_missing_key">无法获取已生成的密钥。</string>
-    <string name="key_generation_wrong_key">选择的密钥名称错误。</string>
-    <string name="key_generation_error_key">无法读取和破解已存储的密钥。</string>
-    <string name="key_generation_storage_fail">无法存储生成的密钥。</string>
-    <string name="key_generation_error_key_generation">无法生成密钥：</string>
-    <string name="key_generation_error_not_rsa_key">Data not a private RSA key.</string>
 
     <!-- Strings for the thanks dialog -->
-    <string name="thanks_top_line">谢谢，您的 SilentCircle 电话号码是</string>
-    <string name="thanks_bottom_line">请登录 \nwww.silentcircle.com 管理您的 SilentCircle 帐户</string>
+    <string name="thanks_top_line">谢谢，您的 Silent Circle 电话号码是</string>
+    <string name="thanks_bottom_line">请登录 \nwww.silentcircle.com 管理您的 Silent Circle 帐户</string>
     
     <!-- Explanation of SAS code/words -->
     <string name="sas_explanation">您需要与对方口头核对认证代码。如果认证代码不符，则存在窃听。</string>
 
-    		
+    <!-- Text for the companion code screen -->
+    <string name="companion_vertu_welcome">欢迎加入Silent Circle — Vertu 合作伙伴.\n我们为您提供5个有效期为30天的访客通行证,您可以和家人或朋友使用.\n请发送邀请代码给他们以激活30天有效的访客通行证,您的家人或朋友就可以使用Silent Circle.</string>
+
+    <plurals name="companion_codes_available">
+        <item quantity="one">您有一个邀请代码</item>
+        <item quantity="other">您有 %1$d 个邀请代码</item>
+    </plurals>
+    <string name="companion_sms_text">欢迎进入 Silent Circle. 请j将您的邀请代码 %1$s 输入到 <font fgcolor="#ffffffff">accounts.silentcircle.com</font> 来创建您的账号.</string>
+    <string name="companion_manage_info">更多邀请代码的管理方法,请访问 <font fgcolor="#ffffffff">accounts.silentcircle.com</font></string>
+
     <!-- Description of image buttons -->
 	<string name="caller_image">来电者头像</string>
 	<string name="signal_strength">信号质量</string>
@@ -287,5 +316,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
          Used by AccessibilityService to announce the purpose of the button.
 	-->
 	<string name="description_delete_button">退格</string>
+
+    <string name="zrtp_common_cmp">您应该和通话方口头核对认证代码,如果认证代码不符,就说明可能有人截听通话</string>
+    <string name="zrtp_common_cls">链接错误:请挂机并重拨</string>
+    <string name="zrtp_common_upd">您拨叫的用户需要更新到最新版本的Silent Phone应用程序</string>
+    <string name="zrtp_common_app">软件错误:请重装Silent Phone应用程序</string>
 
 </resources>

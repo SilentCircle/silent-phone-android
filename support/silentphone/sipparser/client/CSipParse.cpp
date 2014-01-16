@@ -167,12 +167,15 @@ int CSip::tryParseHdr()
          // if  (CMP(strList[tokensParsed],"REQUIRE",7))
          //   {tokensParsed++;parseSupportReq(&gspSIPMsg->hldRequire);  return 0;}
          return UNKNOWN;
-         /*
+         
           case 8:
-          if  (CMP(strList[tokensParsed],"SUPORTED",8))                    /// ???
-          {tokensParsed++;parseSupportReq(&gspSIPMsg->hldSupprted);           return 0;}
+          //if  (CMP(strList[tokensParsed],"SUPORTED",8))                    /// ???
+         // {tokensParsed++;parseSupportReq(&gspSIPMsg->hldSupprted);           return 0;}
+         if  (CMP(strList[tokensParsed],"PRIORITY",8))
+         {tokensParsed++; parsePriority();           return 0;}
+         
           return UNKNOWN;
-          */
+         
       case 9:
          if  (CMP(strList[tokensParsed],call_rate,9))
          {tokensParsed++; parseCallRate();           return 0;}
@@ -1090,10 +1093,9 @@ int CSip::parseOrganization(){ return 0; }
 int CSip::parsePortaBilling()
 {
    int i,j;
-   //  DEBUG(0,"Conttype info");
    
    TOKENS_IN_LINE
-   // for (j=tokensParsed;j<tokensParsed+i;j++) printStr(strList[j]);
+   
    j=tokensParsed;
    if (i<4) 
    {printError("Error: in hdrPortaBill",DROP); return DROP;}

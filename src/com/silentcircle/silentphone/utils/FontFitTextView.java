@@ -64,7 +64,7 @@ public class FontFitTextView extends EditText {
     { 
         if (textWidth <= 0)
             return;
-        int targetWidth = textWidth - this.getPaddingLeft() - this.getPaddingRight();
+        int targetWidth = textWidth - this.getTotalPaddingLeft() - this.getTotalPaddingRight();
         float hi = textSize;
         float lo = textSize / 2;
         final float threshold = 0.5f; // How close we have to be

@@ -179,7 +179,7 @@ public:
    void addInt(int i, const char * format="%d")
    {
       char buf[64];
-      int iLenAdd=sprintf(buf,format,i);
+      int iLenAdd=snprintf(buf,sizeof(buf),format,i);
       addText((char *)&buf, iLenAdd);
    }
    //retrn shorts added

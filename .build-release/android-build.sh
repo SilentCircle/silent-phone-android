@@ -1,46 +1,36 @@
 #!/bin/bash
 
-# This script expects the following environment variables (values can differ):
+# Symbols expected by script
 #
-# ANDROID_ADT=/opt/adt-bundle-linux-x86_64-20130522
-# ANDROID_ANT=/opt/adt-bundle-linux-x86_64-20130522/eclipse/plugins/org.apache.ant_1.8.3.v201301120609/bin/ant
-# ANDROID_NDK=/opt/android-ndk-r8e
-# ANDROID_SDK=/opt/android-sdk-linux
+# export ANDROID_ADT=/opt/adt-bundle-linux-x86_64
+# export ANDROID_ANT=$ANDROID_ADT/eclipse/plugins/org.apache.ant_1.8.3.v20120321-1730/bin/ant
+# export ANDROID_SDK=$ANDROID_ADT/sdk
+# export ANDROID_NDK=/opt/android-ndk-r8e
+# export JAVA_JDK=/opt/jdk1.6.0_45/bin
 #
-# SRC_ROOT=$HOME
-# AUTOMATED_BUILD=1
-
-# derived locations
+# export PATH=$JAVA_JDK:$ANDROID_NDK:$ANDROID_ADT:$ANDROID_ANT:$ANDROID_SDK/tools:$PATH
+# export SRC_ROOT=$WORKSPACE
+# export AUTOMATED_BUILD=1
+# export JNI_ROOT=$WORKSPACE/scandroid/support
 #
-SCANDROID_ROOT=$SRC_ROOT
-
-# cleanup 
+# export GRADLE_USER_HOME="$WORKSPACE/scandroid"
 #
-rm -rf $SCANDROID_ROOT/obj
-rm -rf $SCANDROID_ROOT/libs/armeabi
-
-# ndk jni builds
-#
-pushd $SCANDROID_ROOT
-ndk-build
-# ndk-build -d -B V=1 NDK_LOG=1 
-popd
-
-# android build 
-# 
-pushd $SCANDROID_ROOT
 
 echo "sdk.dir=$ANDROID_SDK" > local.properties
 echo "ndk.dir=$ANDROID_NDK" >> local.properties
 
-android update project --target android-17 --name ActionBarSherlock --path support/ActionBarSherlock/library
+# ndk jni builds
+# ndk-build -d -B V=1 NDK_LOG=1
+ndk-build
 
-$ANDROID_ANT \
--Dkey.store=$SCANDROID_ROOT/.build-release/test-debug.keystore \
--Dkey.store.password=android \
--Dkey.alias=androiddebugkey  \
--Dkey.alias.password=android \
-clean release
+echo "build_environment=silentcircle.com"                 >> gradle.properties
+echo "build_version=$BUILD_NUMBER"                        >> gradle.properties
+echo "build_commit=$(git log -n 1 --pretty=format:'%h')"  >> gradle.properties
+echo "build_date=$BUILD_ID"                               >> gradle.properties
+echo "build_debug=true"                                   >> gradle.properties
+echo "build_partners="                                    >> gradle.properties
 
-popd
+#./gradlew tasks
+#./gradlew assembleDebug
+./gradlew clean assembleRelease
 

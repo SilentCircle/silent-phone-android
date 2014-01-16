@@ -102,28 +102,9 @@ typedef struct{
 {
 @public int iCanDrawOnScreen;
 
-   /*
-@public CTAVideoMem vm[2];
-   
-@public CTVideoOut *pVO;
-
-//@public CGImageRef imageEmpty;
-//@public int *data;
-//@public int iDataSize;
-//@public CGContextRef drawCtx;
-   
-   
-   CALayer *dstLayer;
-   CALayer *dstLayer2;
-   CALayer *prevL;
-   
-
-   
-   int iPrevVM;
-   
-*/   
-   
+ 
    id <UITouchDetector>  _touchDetector;
+
 }
 
 -(int)getDrawInto:(CTVideoOut*)vo;

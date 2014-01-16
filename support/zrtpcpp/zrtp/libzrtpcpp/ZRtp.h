@@ -1,8 +1,8 @@
 /*
-  Copyright (C) 2006-2012 Werner Dittmann
+  Copyright (C) 2006-2013 Werner Dittmann
 
   This program is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
+  it under the terms of the GNU Lesser General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
 
@@ -846,6 +846,12 @@ private:
     ZIDRecord *zidRec;
 
     /**
+     * Save record
+     * 
+     * If false don't save record until user vrified and confirmed the SAS.
+     */
+    bool saveZidRecord;
+    /**
      * Random IV data to encrypt the confirm data, 128 bit for AES
      */
     uint8_t randomIV[16];
@@ -992,20 +998,75 @@ private:
     bool checkMultiStream(ZrtpPacketHello* hello);
 
     /**
-     * Checks if Hello packet contains a strong (384bit) hash and returns it.
+     * Checks if Hello packet contains a strong (384bit) hash based on selection policy.
+     * 
+     * The function currently implements the nonNist policy only:
+     * If the public key algorithm is a non-NIST ECC algorithm this function prefers
+     * non-NIST HASH algorithms (Skein etc).
+     * 
+     * If Hello packet does not contain a strong hash then this functions returns @c NULL.
      *
+     * @param hello The Hello packet.
+     * @param algoName name of selected PK algorithm
      * @return @c hash algorithm if found in Hello packet, @c NULL otherwise.
      */
-    AlgorithmEnum* getStrongHashOffered(ZrtpPacketHello *hello);
+    AlgorithmEnum* getStrongHashOffered(ZrtpPacketHello *hello, int32_t algoName);
 
     /**
-     * Checks if Hello packet offers a strong (256bit) symmetric cipher.
+     * Checks if Hello packet offers a strong (256bit) symmetric cipher based on selection policy.
      *
-     * The method returns the first strong cipher offered in the Hello packet.
+     * The function currently implements the nonNist policy only:
+     * If the public key algorithm is a non-NIST ECC algorithm this function prefers
+     * non-NIST symmetric cipher algorithms (Twofish etc).
+     *
+     * If Hello packet does not contain a symmetric cipher then this functions returns @c NULL.
+
+     * @param hello The Hello packet.
+     * @param algoName name of selected PK algorithm
+     * @return @c hash algorithm if found in Hello packet, @c NULL otherwise.
      *
      * @return @c cipher algorithm if found in Hello packet, @c NULL otherwise.
      */
-    AlgorithmEnum* getStrongCipherOffered(ZrtpPacketHello *hello);
+    AlgorithmEnum* getStrongCipherOffered(ZrtpPacketHello *hello, int32_t algoName);
+
+    /**
+     * Checks if Hello packet contains a hash based on selection policy.
+     *
+     * The function currently implements the nonNist policy only:
+     * If the public key algorithm is a non-NIST ECC algorithm this function prefers
+     * non-NIST HASH algorithms (Skein etc).
+     *
+     * @param hello The Hello packet.
+     * @param algoName name of selected PK algorithm
+     * @return @c hash algorithm found in Hello packet.
+     */
+    AlgorithmEnum* getHashOffered(ZrtpPacketHello *hello, int32_t algoName);
+
+    /**
+     * Checks if Hello packet offers a symmetric cipher based on selection policy.
+     *
+     * The function currently implements the nonNist policy only:
+     * If the public key algorithm is a non-NIST ECC algorithm this function prefers
+     * non-NIST symmetric cipher algorithms (Twofish etc).
+     *
+     * @param hello The Hello packet.
+     * @param algoName name of selected PK algorithm
+     * @return non-NIST @c cipher algorithm if found in Hello packet, @c NULL otherwise
+     */
+    AlgorithmEnum* getCipherOffered(ZrtpPacketHello *hello, int32_t algoName);
+
+    /**
+     * Checks if Hello packet offers a SRTP authentication length based on selection policy.
+     *
+     * The function currently implements the nonNist policy only:
+     * If the public key algorithm is a non-NIST ECC algorithm this function prefers
+     * non-NIST algorithms (Skein etc).
+     *
+     * @param hello The Hello packet.
+     * @param algoName algoName name of selected PK algorithm
+     * @return @c authLen algorithm found in Hello packet
+     */
+    AlgorithmEnum* getAuthLenOffered(ZrtpPacketHello *hello, int32_t algoName);
 
     /**
      * Save the computed MitM secret to the ZID record of the peer
@@ -1018,6 +1079,8 @@ private:
     void computeHvi(ZrtpPacketDHPart* dh, ZrtpPacketHello *hello);
 
     void computeSharedSecretSet(ZIDRecord *zidRec);
+
+    void computeAuxSecretIds();
 
     void computeSRTPKeys();
 

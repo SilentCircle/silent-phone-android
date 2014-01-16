@@ -29,6 +29,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 
+#include <stdlib.h>
 #include <string.h>
 #include "../baseclasses/CTEditBase.h"
 #include "main.h"
@@ -52,15 +53,15 @@ typedef struct{
    
    int iPreferDH2K;
    
-   int iDisableAES256;
+   int iDisableAES256; //rename to iDisable256keySize
    int iDisableDH2K;
    int iDisable256SAS;
    
    int iDisableECDH384;
    int iDisableECDH256;
-   int iEnableSHA384;
+   int iEnableSHA384;//rename to iDisable384hashSize
    
-   int iDisableSkein;
+   int iDisableSkein;//auth
    int iDisableTwofish;
    
    int iHideCfg;
@@ -74,12 +75,19 @@ typedef struct{
    
    int iKeepScreenOnIfBatOk;
    
+   int iPreferNIST;
+   int iDisableBernsteinCurve3617;
+   int iDisableBernsteinCurve25519;
+   int iDisableSkeinHash;
    
    int iSASConfirmClickCount;//TODO remove
    
-   int iRetroRingtone;
+   int iRetroRingtone;//TODO remove
+   
    
    char szLastUsedAccount[128];
+   
+   char szRingTone[64];
    
 }TG_SETTINS;
 
@@ -104,7 +112,7 @@ public:
       if(iInitOk)return;
       iInitOk=1;
       
-      CTEditBase b(1024);
+      CTEditBase b(4096);
       setCfgFN(b,G_CFG_FILE_ID);
 
       g_Settings.iEnableSHA384=1;
@@ -115,6 +123,7 @@ public:
       char *p=loadFileW(b.getText(),iCfgLen);
       if(!p){iInitOk=0;return;}
       setFileBackgroundReadable(b);
+     // puts(p);
       
       
       int getCFGItemSz(char *ret, int iMaxSize, char *p, int iCfgLen, const char *key);
@@ -134,10 +143,18 @@ public:
       
       M_FNC_INT_T(g_Settings.iDisableSkein,iDisableSkein);
       M_FNC_INT_T(g_Settings.iDisableTwofish,iDisableTwofish);
+
+      int r = M_FNC_INT_T(g_Settings.iPreferNIST,iPreferNIST);
       
+      if( r<0 ){//iPreferNIST is not detected 
+         g_Settings.iPreferNIST = 0;
+         g_Settings.iDisableTwofish = 0;//must override here it was previously 1 
+         g_Settings.iDisableSkein = 0;
+      }
       
-      
-      
+      M_FNC_INT_T(g_Settings.iDisableBernsteinCurve25519,iDisableBernsteinCurve25519);
+      M_FNC_INT_T(g_Settings.iDisableBernsteinCurve3617,iDisableBernsteinCurve3617);
+
       
       if(g_Settings.iDisableECDH384==0){
          g_Settings.iEnableSHA384=1;
@@ -155,17 +172,22 @@ public:
       
       M_FNC_INT_T(g_Settings.iKeepScreenOnIfBatOk,iKeepScreenOnIfBatOk);
       M_FNC_INT_T(g_Settings.iShowRXLed,iShowRXLed);
+      M_FNC_INT_T(g_Settings.iDisableSkeinHash,iDisableSkeinHash);
+      
+      
+      
       M_FNC_INT_T(g_Settings.iRetroRingtone,iRetroRingtone);
-      
-      
-      
       
       M_FNC_INT_T(g_Settings.iSASConfirmClickCount,iSASConfirmClickCount);
       
       g_Settings.iSASConfirmClickCount=10;
       
-   getCFGItemSz(g_Settings.szLastUsedAccount,sizeof(g_Settings.szLastUsedAccount),p,iCfgLen,"szLastUsedAccount");
+      strcpy(g_Settings.szRingTone,"Default");
+      getCFGItemSz(g_Settings.szLastUsedAccount,sizeof(g_Settings.szLastUsedAccount),p,iCfgLen,"szLastUsedAccount");
       
+      getCFGItemSz(g_Settings.szRingTone,sizeof(g_Settings.szRingTone),p,iCfgLen,"szRingTone");
+      
+
       
       memcpy(&prevSettings,&g_Settings,sizeof(TG_SETTINS));
       
@@ -176,8 +198,8 @@ public:
       
       if(memcmp(&prevSettings,&g_Settings,sizeof(TG_SETTINS))==0)return;
       memcpy(&prevSettings,&g_Settings,sizeof(TG_SETTINS));
-      char dst[2048];
-      CTEditBase b(2048);
+      char dst[4096];
+      CTEditBase b(4096);
       setCfgFN(b,G_CFG_FILE_ID);
       
       int l=0;
@@ -195,6 +217,11 @@ public:
       SAVE_G_CFG_I(g_Settings.iDisableSkein,iDisableSkein);
       SAVE_G_CFG_I(g_Settings.iDisableTwofish,iDisableTwofish);
       
+      SAVE_G_CFG_I(g_Settings.iPreferNIST,iPreferNIST);
+      SAVE_G_CFG_I(g_Settings.iDisableBernsteinCurve3617,iDisableBernsteinCurve3617);
+      SAVE_G_CFG_I(g_Settings.iDisableBernsteinCurve25519,iDisableBernsteinCurve25519);
+
+      
       SAVE_G_CFG_I(g_Settings.iHideCfg,iHideCfg);
       
       SAVE_G_CFG_I(g_Settings.iDontSimplifyVideoUI,iDontSimplifyVideoUI);
@@ -202,19 +229,15 @@ public:
       SAVE_G_CFG_I(g_Settings.iAudioUnderflow,iAudioUnderflow);
       SAVE_G_CFG_I(g_Settings.iRetroRingtone,iRetroRingtone);
       
-      
-      
-      
-      
       SAVE_G_CFG_I(g_Settings.iSASConfirmClickCount,iSASConfirmClickCount);//TODO remove
       SAVE_G_CFG_I(g_Settings.iShowRXLed,iShowRXLed);
       SAVE_G_CFG_I(g_Settings.iKeepScreenOnIfBatOk,iKeepScreenOnIfBatOk);
-      
-      
-      
-      
+      SAVE_G_CFG_I(g_Settings.iDisableSkeinHash, iDisableSkeinHash);
       
       l+=snprintf(&dst[l],sizeof(dst)-1-l,"%s: %s\n","szLastUsedAccount",g_Settings.szLastUsedAccount);
+      
+      l+=snprintf(&dst[l],sizeof(dst)-1-l,"%s: %s\n","szRingTone",g_Settings.szRingTone);
+      
       
       
       saveFileW(b.getText(),&dst[0],l);
@@ -257,6 +280,13 @@ if(opt)*opt=NULL;\
 iSize=sizeof(g_Settings._K);\
 return &g_Settings._K;\
 }
+#define GLOB_SZ_CHK_O(_K,_O) \
+if(iKeyLen+1==sizeof(#_K) &&  t_isEqual(key,#_K,iKeyLen)){\
+if(type)*type=PHONE_CFG::e_char;\
+if(opt)*opt=(char *)_O;\
+iSize=sizeof(g_Settings._K);\
+return &g_Settings._K;\
+}
    
    //
    
@@ -276,22 +306,28 @@ return &g_Settings._K;\
    
    GLOB_I_CHK(iHideCfg);
    
-   
    GLOB_I_CHK(iDontSimplifyVideoUI);
    GLOB_I_CHK(iDisplayUnsolicitedVideo);
    
    GLOB_I_CHK(iAudioUnderflow);
    GLOB_I_CHK(iRetroRingtone);
    
+   GLOB_I_CHK(iPreferNIST);
+   GLOB_I_CHK(iDisableSkeinHash);
+   GLOB_I_CHK(iDisableBernsteinCurve3617);
+   GLOB_I_CHK(iDisableBernsteinCurve25519);
    
-
+   
    GLOB_I_CHK(iSASConfirmClickCount);
    
    GLOB_I_CHK(iShowRXLed);
    GLOB_I_CHK(iKeepScreenOnIfBatOk);
    
-   
    GLOB_SZ_CHK(szLastUsedAccount);
+   
+   GLOB_SZ_CHK_O(szRingTone,"Default,Retro,Bells chromatic");
+   //,Funny");
+   
    
    return NULL;
 }
@@ -306,15 +342,39 @@ void *findGlobalCfgKey(const char *key){
 }
 
 
+const char * getRingtone(const char *p){
+   if(!p)p = (char*)findGlobalCfgKey("szRingTone");
+   if(!p || !p[0])return "ring";
+   if(strcmp(p, "Default")==0)return "ring";
+   if(strcmp(p, "Retro")==0)return "ring_retro";
+   if(strcmp(p, "Bells chromatic")==0)return "bells-chromatic";
+   
+//--   if(strcmp(p, "Funny")==0)return "funny";
+   
+   return "ring";
+}
+
+
+
 
 int setGlobalValueByKey(const char *key, int iKeyLen, char *sz){
 
-#define GLOB_SZ_CHK_P(_K) \
-if(iKeyLen+1==sizeof(#_K) &&  t_isEqual(key,#_K,iKeyLen)){\
-strcpy(&g_Settings._K[0],sz);\
-return 0;\
-}
-   GLOB_SZ_CHK_P(szLastUsedAccount);
+   int iSize;
+   char *opt;
+   int type;
+   char *p = (char*)findGlobalCfgKey((char*)key,iKeyLen,iSize,&opt,&type);
+   
+   if(!p || !iSize)return -1;
+   
+   if(type==PHONE_CFG::e_char){
+      strncpy(p,sz,iSize);
+      p[iSize-1]=0;
+   }
+   else{
+      *(int*)p=atoi(sz);
+   }
+   
+   
    return 1;
 }
 

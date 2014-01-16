@@ -35,7 +35,6 @@ import android.database.Cursor;
 import android.database.MatrixCursor;
 import android.net.Uri;
 
-import com.silentcircle.silentcontacts.ScCallLog;
 import com.silentcircle.silentphone.TiviPhoneService;
 
 /**
@@ -105,7 +104,7 @@ public class StatusProvider extends ContentProvider {
 
     private static final UriMatcher sURIMatcher = new UriMatcher(UriMatcher.NO_MATCH);
     static {
-        sURIMatcher.addURI(ScCallLog.AUTHORITY, "status", STATUS);
+        sURIMatcher.addURI(AUTHORITY, "status", STATUS);
     }
 
     public StatusProvider() {

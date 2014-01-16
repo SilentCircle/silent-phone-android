@@ -643,6 +643,7 @@ private:
 #else //os
 ///---------
 //#pragma message("os ! symb")
+#include  <ctype.h>
 
 #if  defined(_WIN32_WCE) ||  defined(_WIN32)
 #ifndef INADDR_ANY
@@ -815,10 +816,11 @@ public:
       if(!sock)return 0;
 
       iNeedClose=1;
-      iIsBinded=0;
-      sendCloseLocal();
-     // sendTo((char *)&buf,5,&addr);
-      Sleep(50);
+      if(iIsBinded){
+         iIsBinded=0;
+         sendCloseLocal();
+         Sleep(20);
+      }
 #ifndef SD_BOTH
 #define SD_BOTH 2
 #endif
@@ -839,13 +841,24 @@ public:
       sa.sin_port=(unsigned short)address->getPortNF();
       sa.sin_family = AF_INET;
       if(!sa.sin_port)return 0;
-//      connect(sock,(struct sockaddr *)&sa,  sizeof(sa));
-  //    return send(sock,buf,iLen,0);
       iBytesSent+=iLen;
-       //printf("[rtp-send=%d %d]",iLen,address->ip);   
-      int r=sendto(sock,buf,iLen,0,(struct sockaddr *)&sa,  sizeof(sa));
+
+      int r = sendto(sock,buf,iLen,0,(struct sockaddr *)&sa,  sizeof(sa));
+     // ENETDOWN
+      if(r<0 && isalpha(buf[0])){//debug only sip
+         printf("[ERR: send udp failed err=%d res=%d]",errno,r);
+         
+         if(errno==EPIPE && !iSuspended){
+            reStartSock();
+            r = sendto(sock,buf,iLen,0,(struct sockaddr *)&sa,  sizeof(sa));
+            if(r<0){printf("[resend failed]");}
+         }
+         //EPIPE
+         //errno==ENETDOWN
+         
+      }
       
-     // char b[64];  printf("[send udp   a=%s ret=%d l=%d]\n", address->toStr(b,1),r,iLen);
+      //char b[64];  printf("[send udp   a=%s ret=%d l=%d]\n", address->toStr(b,1),r,iLen);
       
       return r;
    }
@@ -898,25 +911,18 @@ public:
             if(s>80)s=80;
             Sleep(s);//TODO if in background sleep longer
             iErrCnt++;
-            int iBi=iIsBinded;
             address->clear();
             if((iErrCnt&15)==15)
-               printf("[port=%d ip=%x iErrCnt=%d ret=%d iIsBack=%d]",
-                      htons(sa.sin_port),sa.sin_addr.s_addr,iErrCnt,ret,iIsBack);
+               printf("[--port=%d lport=%d ip=%x iErrCnt=%d ret=%d iIsBack=%d errno=%d--]",
+                      htons(sa.sin_port),addr.getPort(),sa.sin_addr.s_addr,iErrCnt,ret,iIsBack,errno);
 #ifdef __APPLE__
+            int isTmpWorkingInBackGround();
 
-            if(iBi && !iSuspended && iErrCnt>10 && !isInBackGround()){
+            int iBi=iIsBinded; //ETIMEDOUT
+            if(iBi && !iSuspended && iErrCnt>10 && (!isInBackGround()||(iErrCnt>35 && isTmpWorkingInBackGround()))){
                iErrCnt=0;
                
-               iSuspended=1;
-               
-               puts("recreate");
-               Sleep(20);
-               createSock();
-               Sleep(20);
-               puts("rebind");
-               Bind(&addr,1);
-               iSuspended=0;
+               reStartSock();
             }
             else{
                if((iErrCnt&3)==3)Sleep(200);
@@ -1001,6 +1007,19 @@ public:
 private:
    int iNeedClose;
    int iSuspended;
+   
+   void reStartSock(){
+      if(iSuspended)return;
+      iSuspended=1;
+      //TODO setFlag sock was recreted
+      puts("recreate");
+      Sleep(20);
+      createSock();
+      Sleep(20);
+      
+      printf("[rebind()=%d]", Bind(&addr,1));
+      iSuspended=0;
+   }
 
 };
 inline int hasNetworkConnect(unsigned int ip){

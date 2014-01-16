@@ -77,10 +77,7 @@ public class CTCalls {
             return true;
         if (iType == ePrivateCall && c.iEnded == 0 && c.iActive && !c.iIsInConferece)
             return true;
-        if (iType == eStartupCall && c.iEnded == 0 && !c.iActive)
-            return true;
-
-        return false;
+        return iType == eStartupCall && c.iEnded == 0 && !c.iActive;
     }
 
     public CTCall getCall(int ofs) {
@@ -128,7 +125,7 @@ public class CTCalls {
      * This method resets the object variable <code>selectedCall</code>to <code>null</code> if
      * no calls are active (count is zero).
      * 
-     * @return
+     * @return number of active calls
      */
     public int getCallCnt() {
         int n = 0;
@@ -249,4 +246,4 @@ public class CTCalls {
         return null;
     }
 
-};
+}

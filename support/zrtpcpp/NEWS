@@ -1,3 +1,13 @@
+== GNU ZRTP 4.0.0 ==
+
+For this version I added some new algorithms for the DH key agreement
+and the Skein Hash for ZRTP. Not further functional enhancments.
+
+Added a new (old) build parameter -DCORE_LIB that will build a ZRTP core
+library. This was available in V2.3 but I somehow lost this for 3.0
+You may add other build parameters, such as SQLITE and CRYPTO_STANDALONE
+if you build the core library.
+
 
 == GNU ZRTP 3.2.0 ==
 

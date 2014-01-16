@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 Werner Dittmann
+ * Copyright (C) 2012-2013 Werner Dittmann
  * All rights reserved. For licensing and other legal details, see the file legal.c.
  *
  * @author Werner Dittmann <Werner.Dittmann@t-online.de>
@@ -100,6 +100,46 @@ static curveData nist521 = {
         "11839296a789a3bc0045c8a5fb42c7d1bd998f54449579b446817afbd17273e662c97ee72995ef42640c550b9013fad0761353c7086a272c24088be94769fd16650",
 };
 
+
+/*
+ * The data for curve3617 copied from:
+ * http://safecurves.cr.yp.to/field.html
+ * http://safecurves.cr.yp.to/base.html
+ */
+static curveData curve3617 = {
+    "3fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffef",  /* Prime */
+    "7ffffffffffffffffffffffffffffffffffffffffffffffffffeb3cc92414cf706022b36f1c0338ad63cf181b0e71a5e106af79",   /* order */
+    "",                                                                                                          /* SEED */
+    "",                                                                                                          /* c */
+    "",                                                                                                          /* b */
+    "1a334905141443300218c0631c326e5fcd46369f44c03ec7f57ff35498a4ab4d6d6ba111301a73faa8537c64c4fd3812f3cbc595",  /* Gx*/
+    "22",                                                                                                        /* Gy (radix 16) */
+};
+
+/*
+ * The data for curve25519 copied from:
+ * http://safecurves.cr.yp.to/field.html
+ * http://safecurves.cr.yp.to/base.html
+ * 
+ * Note: 
+ * The data for Curve25519 is here for the sake of completeness and to have the same
+ * set of initialization. One exception if the base point X coordinate (Gx) that we use to
+ * compute the DH public value, refer to function ecdhGeneratePublic(...) in ecdh.c.
+ * 
+ * Otherwise the functions use EcCurve structure only to get the pointers to the Curve25519
+ * wrapper functions.
+ * 
+ */
+static curveData curve25519 = {
+    "7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffed",   /* Prime */
+    "1000000000000000000000000000000014def9dea2f79cd65812631a5cf5d3ed",   /* order */
+    "",                                                                   /* SEED */
+    "",                                                                   /* c */
+    "",                                                                   /* b */
+    "9",                                                                  /* Gx */
+    "20ae19a1b8a086b4e01edd2c7748d14c923d4d7e6d7c61b229e9c5a27eced3d9",   /* Gy */
+};
+
 /*============================================================================*/
 /*    Bignum Shorthand Functions                                              */
 /*============================================================================*/
@@ -140,7 +180,7 @@ int bnSubQMod_ (struct BigNum *rslt, unsigned n1, struct BigNum *mod)
     return 0;
 }
 
-int bnMulMod_ (struct BigNum *rslt, struct BigNum *n1, struct BigNum *n2, struct BigNum *mod, const NistECpCurve *curve)
+int bnMulMod_ (struct BigNum *rslt, struct BigNum *n1, struct BigNum *n2, struct BigNum *mod, const EcCurve *curve)
 {
     bnMul (rslt, n1, n2);
     if (curve)
@@ -150,17 +190,17 @@ int bnMulMod_ (struct BigNum *rslt, struct BigNum *n1, struct BigNum *n2, struct
     return 0;
 }
 
-int bnMulQMod_ (struct BigNum *rslt, struct BigNum *n1, unsigned n2, struct BigNum *mod, const NistECpCurve *curve)
+int bnMulQMod_ (struct BigNum *rslt, struct BigNum *n1, unsigned n2, struct BigNum *mod, const EcCurve *curve)
 {
     bnMulQ (rslt, n1, n2);
     if (curve)
         curve->modOp(rslt, rslt, mod);
     else
         bnMod(rslt, rslt, mod);
-    return 0;
+   return 0;
 }
 
-int bnSquareMod_ (struct BigNum *rslt, struct BigNum *n1, struct BigNum *mod, const NistECpCurve *curve)
+int bnSquareMod_ (struct BigNum *rslt, struct BigNum *n1, struct BigNum *mod, const EcCurve *curve)
 {
     bnSquare (rslt, n1);
     if (curve)
@@ -170,24 +210,99 @@ int bnSquareMod_ (struct BigNum *rslt, struct BigNum *n1, struct BigNum *mod, co
     return 0;
 }
 
+/*
+ * Note on the Curve25519 functions and usage of BigNumber:
+ * In most cases the functions to compute Curve25519 data are small wrapper functions
+ * that implement the same API as for the other curve functions. The wrapper functions
+ * then call the very specific, high-efficient function in curve25519-donna.c .
+ * 
+ * For Curve25519 we don't have a real implementation for point add, point doubling, modulo
+ * and check public key. Please refer to the actual implementations below.
+ */
+
+static int ecGetAffineNist(const EcCurve *curve, EcPoint *R, const EcPoint *P);
+static int ecGetAffineEd(const EcCurve *curve, EcPoint *R, const EcPoint *P);
+static int ecGetAffine25519(const EcCurve *curve, EcPoint *R, const EcPoint *P);
+
+static int ecDoublePointNist(const EcCurve *curve, EcPoint *R, const EcPoint *P);
+static int ecDoublePointEd(const EcCurve *curve, EcPoint *R, const EcPoint *P);
+static int ecDoublePoint25519(const EcCurve *curve, EcPoint *R, const EcPoint *P);
+
+static int ecAddPointNist(const EcCurve *curve, EcPoint *R, const EcPoint *P, const EcPoint *Q);
+static int ecAddPointEd(const EcCurve *curve, EcPoint *R, const EcPoint *P, const EcPoint *Q);
+static int ecAddPoint25519(const EcCurve *curve, EcPoint *R, const EcPoint *P, const EcPoint *Q);
+
+static int ecCheckPubKeyNist(const EcCurve *curve, const EcPoint *pub);
+static int ecCheckPubKey3617(const EcCurve *curve, const EcPoint *pub);
+static int ecCheckPubKey25519(const EcCurve *curve, const EcPoint *pub);
+
+static int ecGenerateRandomNumberNist(const EcCurve *curve, BigNum *d);
+static int ecGenerateRandomNumber3617(const EcCurve *curve, BigNum *d);
+static int ecGenerateRandomNumber25519(const EcCurve *curve, BigNum *d);
+
+static int ecMulPointScalarNormal(const EcCurve *curve, EcPoint *R, const EcPoint *P, const BigNum *scalar);
+static int ecMulPointScalar25519(const EcCurve *curve, EcPoint *R, const EcPoint *P, const BigNum *scalar);
+
 /* Forward declaration of new modulo functions for the EC curves */
 static int newMod192(BigNum *r, const BigNum *a, const BigNum *modulo);
 static int newMod256(BigNum *r, const BigNum *a, const BigNum *modulo);
 static int newMod384(BigNum *r, const BigNum *a, const BigNum *modulo);
 static int newMod521(BigNum *r, const BigNum *a, const BigNum *modulo);
 
-int ecGetCurveNistECp(NistCurves curveId, NistECpCurve *curve)
+static int mod3617(BigNum *r, const BigNum *a, const BigNum *modulo);
+static int mod25519(BigNum *r, const BigNum *a, const BigNum *modulo);
+
+static void commonInit()
+{
+    bnBegin(mpiZero); bnSetQ(mpiZero, 0);
+    bnBegin(mpiOne); bnSetQ(mpiOne, 1);
+    bnBegin(mpiTwo); bnSetQ(mpiTwo, 2);
+    bnBegin(mpiThree); bnSetQ(mpiThree, 3);
+    bnBegin(mpiFour); bnSetQ(mpiFour, 4);
+    bnBegin(mpiEight); bnSetQ(mpiEight, 8);
+}
+
+static void curveCommonInit(EcCurve *curve)
+{
+    /* Initialize scratchpad variables and their pointers */
+    bnBegin(&curve->_S1); curve->S1 = &curve->_S1;
+    bnBegin(&curve->_U1); curve->U1 = &curve->_U1;
+    bnBegin(&curve->_H);  curve->H = &curve->_H;
+    bnBegin(&curve->_R);  curve->R = &curve->_R;
+    bnBegin(&curve->_t0); curve->t0 = &curve->_t0;
+    bnBegin(&curve->_t1); curve->t1 = &curve->_t1;
+    bnBegin(&curve->_t2); curve->t2 = &curve->_t2;
+    bnBegin(&curve->_t3); curve->t3 = &curve->_t3;
+}
+
+static void curveCommonPrealloc(EcCurve *curve)
 {
     size_t maxBits;
+
+    /* variables must be able to hold p^2, plus one nimb (min. 15 bits) for overflow */
+    maxBits = bnBits(curve->p) * 2 + 15;
+
+    /* The set_bit allocates enough memory to hold maximum values */
+    /* Initialize scratchpad variables before use */
+    bnPrealloc(curve->S1, maxBits);
+    bnPrealloc(curve->U1, maxBits);
+    bnPrealloc(curve->H, maxBits);
+    bnPrealloc(curve->R, maxBits);
+    bnPrealloc(curve->S1, maxBits);
+    bnPrealloc(curve->t1, maxBits);
+    bnPrealloc(curve->t2, maxBits);
+    bnPrealloc(curve->t3, maxBits);
+}
+
+int ecGetCurveNistECp(Curves curveId, EcCurve *curve)
+{
     curveData *cd;
 
+    if (curveId >= Curve25519 && curveId <= Curve3617)
+        return ecGetCurvesCurve(curveId, curve);
+
     if (!initialized) {
-        bnBegin(mpiZero); bnSetQ(mpiZero, 0);
-        bnBegin(mpiOne); bnSetQ(mpiOne, 1);
-        bnBegin(mpiTwo); bnSetQ(mpiTwo, 2);
-        bnBegin(mpiThree); bnSetQ(mpiThree, 3);
-        bnBegin(mpiFour); bnSetQ(mpiFour, 4);
-        bnBegin(mpiEight); bnSetQ(mpiEight, 8);
+        commonInit();
         initialized = 1;
     }
     if (curve == NULL)
@@ -202,15 +317,7 @@ int ecGetCurveNistECp(NistCurves curveId, NistECpCurve *curve)
     bnBegin(&curve->_Gx);   curve->Gx = &curve->_Gx;
     bnBegin(&curve->_Gy);   curve->Gy = &curve->_Gy;
 
-    /* Initialize scratchpad variables and their pointers */
-    bnBegin(&curve->_S1); curve->S1 = &curve->_S1;
-    bnBegin(&curve->_U1); curve->U1 = &curve->_U1;
-    bnBegin(&curve->_H);  curve->H = &curve->_H;
-    bnBegin(&curve->_R);  curve->R = &curve->_R;
-    bnBegin(&curve->_t0); curve->t0 = &curve->_t0;
-    bnBegin(&curve->_t1); curve->t1 = &curve->_t1;
-    bnBegin(&curve->_t2); curve->t2 = &curve->_t2;
-    bnBegin(&curve->_t3); curve->t3 = &curve->_t3;
+    curveCommonInit(curve);
 
     switch (curveId) {
     case NIST192P:
@@ -242,6 +349,13 @@ int ecGetCurveNistECp(NistCurves curveId, NistECpCurve *curve)
         return -2;
     }
 
+    curve->affineOp = ecGetAffineNist;
+    curve->doubleOp = ecDoublePointNist;
+    curve->addOp = ecAddPointNist;
+    curve->checkPubOp = ecCheckPubKeyNist;
+    curve->randomOp = ecGenerateRandomNumberNist;
+    curve->mulScalar = ecMulPointScalarNormal;
+
     bnReadAscii(curve->p, cd->p, 10);
     bnReadAscii(curve->n, cd->n, 10);
     bnReadAscii(curve->SEED, cd->SEED, 16);
@@ -252,25 +366,77 @@ int ecGetCurveNistECp(NistCurves curveId, NistECpCurve *curve)
     bnReadAscii(curve->Gx, cd->Gx, 16);
     bnReadAscii(curve->Gy, cd->Gy, 16);
 
-    /* variables must be able to hold p^2, plus one nimb (min. 15 bits) for overflow */
-    maxBits = bnBits(curve->p) * 2 + 15;
-
-    /* The set_bit allocates enough memory to hold maximum values */
-    /* Initialize scratchpad variables before use */
-    bnPrealloc(curve->S1, maxBits);
-    bnPrealloc(curve->U1, maxBits);
-    bnPrealloc(curve->H, maxBits);
-    bnPrealloc(curve->R, maxBits);
-    bnPrealloc(curve->S1, maxBits);
-    bnPrealloc(curve->t1, maxBits);
-    bnPrealloc(curve->t2, maxBits);
-    bnPrealloc(curve->t3, maxBits);
+    curveCommonPrealloc(curve);
+    curve->id = curveId;
 
     return 0;
 }
 
+int ecGetCurvesCurve(Curves curveId, EcCurve *curve)
+{
+    curveData *cd;
 
-void ecFreeCurveNistECp(NistECpCurve *curve) 
+    if (!initialized) {
+        commonInit();
+        initialized = 1;
+    }
+    if (curve == NULL)
+        return -2;
+
+    /* set-up all bignum structures, simplifies "free" handling */
+    bnBegin(&curve->_p);    curve->p = &curve->_p;
+    bnBegin(&curve->_n);    curve->n = &curve->_n;
+    bnBegin(&curve->_SEED); curve->SEED = &curve->_SEED;
+    bnBegin(&curve->_c);    curve->c = &curve->_c;
+    bnBegin(&curve->_a);    curve->a = &curve->_a;
+    bnBegin(&curve->_b);    curve->b = &curve->_b;
+    bnBegin(&curve->_Gx);   curve->Gx = &curve->_Gx;
+    bnBegin(&curve->_Gy);   curve->Gy = &curve->_Gy;
+
+    curveCommonInit(curve);
+
+    switch (curveId) {
+    case Curve3617:
+        cd = &curve3617;
+        curve->modOp = mod3617;
+        curve->affineOp = ecGetAffineEd;
+        curve->doubleOp = ecDoublePointEd;
+        curve->addOp = ecAddPointEd;
+        curve->checkPubOp = ecCheckPubKey3617;
+        curve->randomOp = ecGenerateRandomNumber3617;
+        curve->mulScalar = ecMulPointScalarNormal;
+
+        bnReadAscii(curve->a, "3617", 10);
+        break;
+
+    case Curve25519:
+        cd = &curve25519;
+        curve->modOp = mod25519;
+        curve->affineOp = ecGetAffine25519;
+        curve->doubleOp = ecDoublePoint25519;
+        curve->addOp = ecAddPoint25519;
+        curve->checkPubOp = ecCheckPubKey25519;
+        curve->randomOp = ecGenerateRandomNumber25519;
+        curve->mulScalar = ecMulPointScalar25519;
+
+        bnReadAscii(curve->a, "486662", 10);
+        break;
+
+    default:
+        return -2;
+    }
+    bnReadAscii(curve->p, cd->p, 16);
+    bnReadAscii(curve->n, cd->n, 16);
+
+    bnReadAscii(curve->Gx, cd->Gx, 16);
+    bnReadAscii(curve->Gy, cd->Gy, 16);
+
+    curveCommonPrealloc(curve);
+    curve->id = curveId;
+    return 0;
+}
+
+void ecFreeCurveNistECp(EcCurve *curve) 
 {
     if (curve == NULL)
         return;
@@ -307,16 +473,26 @@ void ecFreePoint(EcPoint *P)
     FREE_EC_POINT(P);
 }
 
-void ecSetBasePoint(NistECpCurve *C, EcPoint *P)
+void ecSetBasePoint(EcCurve *C, EcPoint *P)
 {
     SET_EC_BASE_POINT(C, P);
+}
+
+void ecFreeCurvesCurve(EcCurve *curve)
+{
+    ecFreeCurveNistECp(curve);
 }
 
 /*============================================================================*/
 /*    Elliptic Curve arithmetic                                               */
 /*============================================================================*/
 
-int ecGetAffine(const NistECpCurve *curve, EcPoint *R, const EcPoint *P)
+int ecGetAffine(const EcCurve *curve, EcPoint *R, const EcPoint *P)
+{
+    return curve->affineOp(curve, R, P);
+}
+
+static int ecGetAffineNist(const EcCurve *curve, EcPoint *R, const EcPoint *P)
 {
     int ret = 0;
 
@@ -341,7 +517,48 @@ int ecGetAffine(const NistECpCurve *curve, EcPoint *R, const EcPoint *P)
     return ret;
 }
 
-int ecDoublePoint(const NistECpCurve *curve, EcPoint *R, const EcPoint *P)
+static int ecGetAffineEd(const EcCurve *curve, EcPoint *R, const EcPoint *P)
+{
+    int ret = 0;
+
+    struct BigNum z_1;
+
+    bnBegin(&z_1);
+
+    /* affine x = X / Z */
+    bnInv (&z_1, P->z, curve->p);                 /* z_1 = Z^(-1) */
+    bnMulMod_(R->x, P->x, &z_1, curve->p, curve);
+
+    /* affine y = Y / Z */
+    bnMulMod_(R->y, P->y, &z_1, curve->p, curve);
+
+    bnSetQ(R->z, 1);
+
+    bnEnd(&z_1);
+    return ret;
+
+}
+
+/* 
+ * If the arguments do not point to the same EcPoint then copy P to result.
+ * Curve25519 has no specific GetAffine function, it's all inside curve25519-donna
+ */
+static int ecGetAffine25519(const EcCurve *curve, EcPoint *R, const EcPoint *P)
+{
+    if (R != P) {
+        bnCopy(R->x, P->x);
+        bnCopy(R->y, P->y);
+        bnCopy(R->z, P->z);
+    }
+    return 0;
+}
+
+int ecDoublePoint(const EcCurve *curve, EcPoint *R, const EcPoint *P)
+{
+    return curve->doubleOp(curve, R, P);
+}
+
+static int ecDoublePointNist(const EcCurve *curve, EcPoint *R, const EcPoint *P)
 {
     int ret = 0;
 
@@ -405,8 +622,72 @@ int ecDoublePoint(const NistECpCurve *curve, EcPoint *R, const EcPoint *P)
     return ret;
 }
 
+static int ecDoublePointEd(const EcCurve *curve, EcPoint *R, const EcPoint *P)
+{
+    EcPoint tP;
+    const EcPoint *ptP = 0;
+
+    /* Check for overlapping arguments, copy if necessary and set pointer */
+    if (P == R) {
+        INIT_EC_POINT(&tP);
+        ptP = &tP;
+        bnCopy(tP.x, P->x);
+        bnCopy(tP.y, P->y);
+        bnCopy(tP.z, P->z);
+    }
+    else 
+        ptP = P;
+
+    /* Compute B, C, D, H, E */
+    bnCopy(curve->t1, ptP->x);
+    bnAddMod_(curve->t1, ptP->y, curve->p);
+    bnSquareMod_(curve->t0, curve->t1, curve->p, curve);       /* t0 -> B */
+
+    bnSquareMod_(R->x, ptP->x, curve->p, curve);               /* Rx -> C */
+
+    bnSquareMod_(R->y, ptP->y, curve->p, curve);               /* Ry -> D */
+
+    bnSquareMod_(R->z, ptP->z, curve->p, curve);               /* Rz -> H */
+    bnAddMod_(R->z, R->z, curve->p);                           /* Rz -> 2H */
+
+    bnCopy(curve->t1, R->x);
+    bnAddMod_(curve->t1, R->y, curve->p);                      /* t1 -> E */
+
+    /* Compute Ry */
+    bnCopy(curve->t2, R->x);
+    bnSubMod_(curve->t2, R->y, curve->p);                      /* C - D */
+    bnMulMod_(R->y, curve->t1, curve->t2, curve->p, curve);    /* E * t3; Ry */
+
+    /* Compute Rx */
+    bnSubMod_(curve->t0, curve->t1, curve->p);                 /* B - E; sub result */
+    bnCopy(curve->t2, curve->t1);
+    bnSubMod_(curve->t2, R->z, curve->p);                      /* t2 -> J; (E - 2H) */
+    bnMulMod_(R->x, curve->t2, curve->t0, curve->p, curve);    /* J * t0 */
+
+    /* Compute Rz */
+    bnMulMod_(R->z, curve->t2, curve->t1, curve->p, curve);    /* J * E */
+
+    if (P == R)
+        FREE_EC_POINT(&tP);
+
+    return 0;
+}
+
+/* 
+ * Curve25519 has no specific Double Point function, all inside curve25519-donna
+ */
+static int ecDoublePoint25519(const EcCurve *curve, EcPoint *R, const EcPoint *P)
+{
+    return -2;
+}
+
 /* Add two elliptic curve points. Any of them may be the same object. */
-int ecAddPoint(const NistECpCurve *curve, EcPoint *R, const EcPoint *P, const EcPoint *Q)
+int ecAddPoint(const EcCurve *curve, EcPoint *R, const EcPoint *P, const EcPoint *Q)
+{
+    return curve->addOp(curve, R, P, Q);
+}
+
+static int ecAddPointNist(const EcCurve *curve, EcPoint *R, const EcPoint *P, const EcPoint *Q)
 {
     int ret = 0;
 
@@ -520,10 +801,117 @@ int ecAddPoint(const NistECpCurve *curve, EcPoint *R, const EcPoint *P, const Ec
     return ret;
 }
 
-int ecMulPointScalar(const NistECpCurve *curve, EcPoint *R, const EcPoint *P, const BigNum *scalar)
+/*
+ * Refer to the document: Faster addition and doubling on elliptic curves; Daniel J. Bernstein and Tanja Lange
+ * section 4.
+ *
+ * This function is a variant of the 'addition'. The function returns the result in an own curve point
+ * and does not overwrite its input parameters.
+ */
+static int ecAddPointEd(const EcCurve *curve, EcPoint *R, const EcPoint *P, const EcPoint *Q)
 {
+    EcPoint tP, tQ;
+    const EcPoint *ptP = 0;
+    const EcPoint *ptQ = 0;
 
-    /* MPI_CHK below macro requires a 'ret' variable and a cleanup label */
+    /* if P is (@,@), R = Q */
+    if (!bnCmp(P->z, mpiZero)) {
+        bnCopy(R->x, Q->x);
+        bnCopy(R->y, Q->y);
+        bnCopy(R->z, Q->z);
+        return 0;
+    }
+
+    /* if Q is (@,@), R = P */
+    if (!bnCmp(Q->z, mpiZero)) {
+        bnCopy(R->x, P->x);
+        bnCopy(R->y, P->y);
+        bnCopy(R->z, P->z);
+        return 0;
+    }
+
+    /* Check for overlapping arguments, copy if necessary and set pointers */
+    if (P == R) {
+        INIT_EC_POINT(&tP);
+        ptP = &tP;
+        bnCopy(tP.x, P->x);
+        bnCopy(tP.y, P->y);
+        bnCopy(tP.z, P->z);
+    }
+    else 
+        ptP = P;
+
+    if (Q == R) {
+        INIT_EC_POINT(&tQ);
+        ptQ = &tQ;
+        bnCopy(tQ.x, Q->x);
+        bnCopy(tQ.y, Q->y);
+        bnCopy(tQ.z, Q->z);
+    }
+    else
+        ptQ = Q;
+
+    /* Compute A, C, D first */
+    bnMulMod_(R->z, ptP->z, ptQ->z, curve->p, curve);            /* Rz -> A; (Z1 * z2); Rz becomes R3 */
+    bnMulMod_(R->x, ptP->x, ptQ->x, curve->p, curve);            /* Rx -> C; (X1 * X2); Rx becomes R1 */
+    bnMulMod_(R->y, ptP->y, ptQ->y, curve->p, curve);            /* Ry -> D; (Y1 * Y2); Ry becomes R2 */
+
+    /* Compute large parts of X3 equation, sub result in t0 */
+    bnCopy(curve->t0, ptP->x);
+    bnAddMod_(curve->t0, ptP->y, curve->p);                      /* t0 -> X1 + Y1 */
+    bnCopy(curve->t1, ptQ->x);
+    bnAddMod_(curve->t1, ptQ->y, curve->p);                      /* t1 -> X2 + Y2 */
+    bnMulMod_(curve->t2, curve->t0, curve->t1, curve->p, curve); /* t2 = t0 * t1 */
+    bnSubMod_(curve->t2, R->x, curve->p);                        /* t2 - C */
+    bnSubMod_(curve->t2, R->y, curve->p);                        /* t2 - D */
+    bnMulMod_(curve->t0, curve->t2, R->z, curve->p, curve);      /* t0 -> R7; (t2 * A); sub result */
+
+    /* Compute E */
+    bnMulMod_(curve->t2, R->x, R->y, curve->p, curve);           /* t2 = C * D */
+    bnMulMod_(curve->t1, curve->t2, curve->a, curve->p, curve);  /* t1 -> E; t1 new R8 */
+
+    /* Compute part of Y3 equation, sub result in t2 */
+    bnSubMod_(R->y, R->x, curve->p);                             /* Ry = D - C; sub result */
+    bnMulMod_(curve->t2, R->y, R->z, curve->p, curve);           /* t2 = Ry * A; sub result */
+
+    /* Compute B */
+    bnSquareMod_(R->z, R->z, curve->p, curve);                   /* Rz -> B; (A^2) */
+
+    /* Compute F */
+    bnCopy(curve->t3, R->z);
+    bnSubMod_(curve->t3, curve->t1, curve->p);                   /* t3 -> F; (B - E) */
+
+    /* Compute G */
+    bnAddMod_(R->z, curve->t1, curve->p);                        /* Rz -> G; (B + E) */
+
+    /* Compute, X, Y, Z results */
+    bnMulMod_(R->x, curve->t3, curve->t0, curve->p, curve);      /* Rx = F * t0 */
+    bnMulMod_(R->y, curve->t2, R->z, curve->p, curve);           /* Ry = t2 * G */
+    bnMulMod_(R->z, curve->t3, R->z, curve->p, curve);           /* Rz = F * G */
+
+    if (P == R)
+        FREE_EC_POINT(&tP);
+    if (Q == R)
+        FREE_EC_POINT(&tQ);
+
+    return 0;
+}
+
+/* 
+ * Curve25519 has no specific Add Point function, all inside curve25519-donna
+ */
+static int ecAddPoint25519(const EcCurve *curve, EcPoint *R, const EcPoint *P, const EcPoint *Q)
+{
+    return -2;
+}
+
+int ecMulPointScalar(const EcCurve *curve, EcPoint *R, const EcPoint *P, const BigNum *scalar)
+{
+    return curve->mulScalar(curve, R, P, scalar);
+}
+
+static int ecMulPointScalarNormal(const EcCurve *curve, EcPoint *R, const EcPoint *P, const BigNum *scalar)
+{
     int ret = 0;
     int i;
     int bits = bnBits(scalar);
@@ -549,7 +937,26 @@ int ecMulPointScalar(const NistECpCurve *curve, EcPoint *R, const EcPoint *P, co
     return ret;
 }
 
+/* 
+ * This function uses BigNumber only as containers to transport the 32 byte data.
+ * This makes it compliant to the other functions and thus higher-level API does not change.
+ * 
+ * curve25519_donna function uses data in little endian format.
+ */
+static int ecMulPointScalar25519(const EcCurve *curve, EcPoint *R, const EcPoint *P, const BigNum *scalar)
+{
+    uint8_t basepoint[32], secret[32], result[32];
+
+    bnExtractLittleBytes(P->x, basepoint, 0, 32);  /* 25519 function requires the X coordinate only (compressed) */
+    bnExtractLittleBytes(scalar, secret, 0, 32);
+    curve25519_donna(result, secret, basepoint);
+    bnInsertLittleBytes(R->x, result, 0, 32);
+    return 0;
+}
+
 #ifdef WEAKRANDOM
+#include <fcntl.h>
+
 /*
  * A standard random number generator that uses the portable random() system function.
  *
@@ -557,10 +964,15 @@ int ecMulPointScalar(const NistECpCurve *curve, EcPoint *R, const EcPoint *P, co
  */
 static int _random(unsigned char *output, size_t len)
 {
-    size_t i;
+    size_t num = 0;
 
-    for(i = 0; i < len; ++i )
-        output[i] = random();
+    int rnd = open("/dev/urandom", O_RDONLY);
+    if (rnd >= 0) {
+        num = read(rnd, output, len);
+        close(rnd);
+    }
+    else
+        return num;
 
     return( 0 );
 }
@@ -572,7 +984,12 @@ static int _random(unsigned char *output, size_t len)
 }
 #endif
 
-int ecGenerateRandomNumber(const NistECpCurve *curve, BigNum *d)
+int ecGenerateRandomNumber(const EcCurve *curve, BigNum *d)
+{
+    return curve->randomOp(curve, d);
+}
+
+static int ecGenerateRandomNumberNist(const EcCurve *curve, BigNum *d)
 {
     BigNum c, nMinusOne;
 
@@ -603,7 +1020,42 @@ int ecGenerateRandomNumber(const NistECpCurve *curve, BigNum *d)
     return 0;
 }
 
-int ecCheckPubKey(const NistECpCurve *curve, const EcPoint *pub)
+static int ecGenerateRandomNumber3617(const EcCurve *curve, BigNum *d)
+{
+    unsigned char random[52];
+    _random(random, 52);
+
+    /* prepare the secret random data: clear bottom 3 bits. Clearing top 2 bits
+     * makes is a 414 bit value
+     */
+    random[51] &= ~0x7;
+    random[0] &= 0x3f;
+    /* convert the random data into big numbers */
+    bnInsertBigBytes(d, random, 0, 52);
+    return 0;
+}
+
+static int ecGenerateRandomNumber25519(const EcCurve *curve, BigNum *d)
+{
+    unsigned char random[32];
+    _random(random, 32);
+
+    /* No specific preparation. The curve25519_donna functions prepares the data.
+     *
+     * convert the random data into big numbers. the bigNumber is a container only.
+     * we don not use the big number for any arithmetic
+     */
+    bnInsertLittleBytes(d, random, 0, 32);
+    return 0;
+
+}
+
+int ecCheckPubKey(const EcCurve *curve, const EcPoint *pub)
+{
+    return curve->checkPubOp(curve, pub);
+}
+
+static int ecCheckPubKeyNist(const NistECpCurve *curve, const EcPoint *pub)
 {
     /* Represent point at infinity by (0, 0), make sure it's not that */
     if (bnCmpQ(pub->x, 0) == 0 && bnCmpQ(pub->y, 0) == 0) {
@@ -627,6 +1079,87 @@ int ecCheckPubKey(const NistECpCurve *curve, const EcPoint *pub)
     }
     return 1;
 
+}
+
+static int ecCheckPubKey3617(const EcCurve *curve, const EcPoint *pub)
+{
+    /* Represent point at infinity by (0, 0), make sure it's not that */
+    if (bnCmpQ(pub->x, 0) == 0 && bnCmpQ(pub->y, 0) == 0) {
+        return 0;
+    }
+    /* Check that coordinates are within range */
+    if (bnCmpQ(pub->x, 0) < 0 || bnCmp(pub->x, curve->p) >= 0) {
+        return 0;
+    }
+    if (bnCmpQ(pub->y, 0) < 0 || bnCmp(pub->y, curve->p) >= 0) {
+        return 0;
+    }
+    /* Check that point satisfies EC equation x^2+y^2 = 1+3617x^2y^2, mod P */
+    bnSquareMod_(curve->t1, pub->y, curve->p, curve);
+    bnSquareMod_(curve->t2, pub->x, curve->p, curve);
+    bnCopy(curve->t3, curve->t1);                                /* Load t3 */
+    bnAddMod_(curve->t3, curve->t2, curve->p);                   /* t3 = t1 + t2, (x^2+y^2)*/
+
+    bnMulMod_(curve->t0, curve->a, curve->t1, curve->p, curve);  /* t0 = a * t1,  (3617 * x^2) */
+    bnMulMod_(curve->t0, curve->t0, curve->t2, curve->p, curve); /* t0 = t0 * t1, (3617 * x^2 * y^2) */
+    bnAddMod_(curve->t0, mpiOne, curve->p);                      /* t0 = t0 + 1,  (3617 * x^2 * y^2 + 1) */
+
+    if (bnCmp (curve->t0, curve->t3) != 0) {
+        return 0;
+    }
+    return 1;
+}
+
+/**
+ * According to http://cr.yp.to/ecdh.html#validate no validation is required if used for Diffie-Hellman
+ * thus always return success.
+ */
+static int ecCheckPubKey25519(const EcCurve *curve, const EcPoint *pub)
+{
+    return 1;
+}
+
+static int mod3617(BigNum *r, const BigNum *a, const BigNum *modulo)
+{
+    unsigned char buffer[52] = {0};
+    int cmp;
+    BigNum tmp;
+
+    bnBegin(&tmp);
+    cmp = bnCmp(modulo, a);
+    if (cmp == 0) {             /* a is equal modulo, set resul to zero */
+        bnSetQ(r, 0);
+        return 0;
+    }
+    if (cmp > 0) {              /* modulo is greater than a - copy a to r and return it */
+        bnCopy(r, a);
+        return 0;
+    }
+    bnExtractLittleBytes(a, buffer, 0, 52);
+    buffer[51] &= 0x3f;
+
+    bnCopy(&tmp, a);
+    bnRShift(&tmp, 414);
+    bnCopy(r, &tmp);
+    bnLShift(r, 4);
+    bnAdd(r, &tmp);
+
+    bnInsertLittleBytes(&tmp, buffer, 0, 52);
+
+    bnAdd(r, &tmp);
+    while (bnCmp(r, modulo) >= 0) {
+        bnSub(r, modulo);
+    }
+    bnEnd(&tmp);
+    return 0;
+}
+
+/* 
+ * Curve25519 has no specific modulo function, all inside curve25519-donna
+ */
+static int mod25519(BigNum *r, const BigNum *a, const BigNum *modulo)
+{
+    return -2;
 }
 
 /*
@@ -1110,7 +1643,6 @@ static int newMod384(BigNum *r, const BigNum *a, const BigNum *modulo)
 #undef A
 
 
-
 /* new modulo for 521bit curve, much easier because the prime for 521 is a real Mersenne prime */
 static int newMod521(BigNum *r, const BigNum *a, const BigNum *modulo)
 {
@@ -1160,3 +1692,4 @@ static int newMod521(BigNum *r, const BigNum *a, const BigNum *modulo)
     }
     return 0;
 }
+

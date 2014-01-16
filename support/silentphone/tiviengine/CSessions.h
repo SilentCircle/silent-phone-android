@@ -100,15 +100,16 @@ typedef struct{
       iFirstPackPeriod=iStartPeriod;
       if(iStartPeriod>6*T_GT_SECOND)iStartPeriod=6*T_GT_SECOND;
       iRetransmitPeriod=iStartPeriod/2;
-      if(iRetransmitPeriod<T_GT_HSECOND)iRetransmitPeriod=T_GT_HSECOND;
       setPeriod(iRetransmitPeriod);
       
    }
    inline void updateRetransmit(t_ph_tick uiGT)
    {
       if(iIsTCPorTLS){
-         uiNextRetransmit=uiGT+T_GT_SECOND*4;
-         iRetransmitPeriod=T_GT_SECOND*6;
+         if(iRetransmitPeriod<T_GT_SECOND*4)
+            uiNextRetransmit=uiGT+T_GT_SECOND*4;
+         else
+            uiNextRetransmit=uiGT+(unsigned int)iRetransmitPeriod;
       }
       else if(iFirstPackPeriod)
          {uiNextRetransmit=uiGT+(unsigned int)iFirstPackPeriod;iFirstPackPeriod=0;}
@@ -255,7 +256,7 @@ typedef struct {
    inline int isSesActive()
    {
       CTSesMediaBase *m=mBase;//MUST use m , mBase can be set to NULL, but destroyed later
-      return cs.iBusy && m && m->isSesActive() && (cs.iCallStat!=CALL_STAT::EEnding);
+      return cs.iInUse && m && m->isSesActive() && (cs.iCallStat!=CALL_STAT::EEnding);
    }
 
    inline int isSession()
@@ -280,7 +281,7 @@ typedef struct {
    int getInfo(const char *key, char *p, int iMax){
       
       p[0]=0;
-      if(!cs.iBusy || uiClearMemAt || cs.iCallStat==CALL_STAT::EEnding)return 0;
+      if(!cs.iInUse || uiClearMemAt || cs.iCallStat==CALL_STAT::EEnding)return 0;
       // ?? use "sip." prefix
       if(strcmp(key,"peername")==0){
          
@@ -295,6 +296,21 @@ typedef struct {
        
          return snprintf(p,iMax,"%.*s",tf->dstrName.uiLen,tf->dstrName.strVal);
       }
+      /*
+       String s = TiviPhoneService.getInfo(iEngID, iCallId, "getPriority");//can call this fnc after receiving eIncomCall
+       It will return "", "non-urgent", "normal", "urgent", or "emergency".
+       */
+      if(strcmp(key,"getPriority")==0){
+         
+         switch(sSIPMsg.dstrPriority.uiVal){
+            case PRIORITY_NON_URGENT: return snprintf(p, iMax,  "non-urgent");
+            case PRIORITY_NORMAL:     return snprintf(p, iMax,  "normal");
+            case PRIORITY_URGENT:     return snprintf(p, iMax,  "urgent");
+            case PRIORITY_EMERGENCY:  return snprintf(p, iMax,  "emergency");
+         }
+         return 0;
+      }
+      
       return 0;
    }
 
@@ -303,11 +319,7 @@ typedef struct {
    int iKillCalled;
    int iIsSession;
    
- //  int iIsInConference; - moved to cs
-   
- //  int iMediaType;//from media base
    void setMBase(CTSesMediaBase *m){
-   //   iMediaType=m?m->getMediaType():0;
       if(m){
          m->setBaseData(pMediaIDS?pMediaIDS->pzrtp:NULL,&cs,pMediaIDS);
       }
@@ -657,7 +669,7 @@ public:
       int n=0;
       for(int i=0;i<iMaxSesions;i++)
       {
-         if(!pSessionArray[i].cs.iBusy)continue;
+         if(!pSessionArray[i].cs.iInUse)continue;
          if(!pSessionArray[i].isSession() || pSessionArray[i].cs.iCallStat==pSessionArray[i].cs.EEnding)continue;
          n++;
          
@@ -672,7 +684,7 @@ public:
       CSesBase *spSes=NULL;
       for(i=0;i<iMaxSesions;i++)
       {
-         if(!pSessionArray[i].cs.iBusy)continue;
+         if(!pSessionArray[i].cs.iInUse)continue;
           spSes=&pSessionArray[i];
          
          if(spSes->cs.iCallSubStat!=CALL_STAT::EWaitUserAnswer)continue;
@@ -698,7 +710,7 @@ public:
 
       for(i=0;i<iMaxSesions;i++)
       {
-        if(!pSessionArray[i].cs.iBusy)continue;
+        if(!pSessionArray[i].cs.iInUse)continue;
 
        spSes=&pSessionArray[i];
 
@@ -781,7 +793,7 @@ public:
        
        for(i=0;i<iMaxSesions;i++)//iMaxSesions;i++)
        {
-          if(pSessionArray[i].cs.iBusy)
+          if(pSessionArray[i].cs.iInUse)
           {
              
               if(iMeth==METHOD_REGISTER && pSessionArray[i].cs.iSendS==METHOD_REGISTER)
@@ -803,7 +815,7 @@ public:
           spSes=&pSessionArray[i];
           if(iMeth!=METHOD_REGISTER)prevRetSes=spSes;
           
-          spSes->cs.iBusy=1;
+          spSes->cs.iInUse=1;
           spSes->cs.iCaller=bCaller;
 
           spSes->dstConAddr=*paddr;
@@ -871,20 +883,20 @@ public:
    {
       int ret=0;
       int i;
-      for(i=0;i<iMaxSesions;i++)if(!pSessionArray[i].cs.iBusy)ret++;
+      for(i=0;i<iMaxSesions;i++)if(!pSessionArray[i].cs.iInUse)ret++;
       return ret;
    }
    int getSessionsCnt(){
       int ret=0;
       int i;
-      for(i=0;i<iMaxSesions;i++)if(pSessionArray[i].cs.iBusy)ret++;
+      for(i=0;i<iMaxSesions;i++)if(pSessionArray[i].cs.iInUse)ret++;
       return ret;
    }
    
    int getMediaSessionsCnt(){
       int ret=0;
       int i;
-      for(i=0;i<iMaxSesions;i++)if(pSessionArray[i].cs.iBusy && pSessionArray[i].isSession())ret++;
+      for(i=0;i<iMaxSesions;i++)if(pSessionArray[i].cs.iInUse && pSessionArray[i].isSession())ret++;
       return ret;
    }
 
@@ -1093,7 +1105,7 @@ public:
    int sendResp(CTSipSock & sc, int iCode, SIP_MSG *psMsg)
    {
       sMsg=psMsg;
-      buf=new char [psMsg->uiOffset+512];//bufData;
+      buf=new char [DATA_SIZE];//bufData;
       if(buf==NULL)return -1;
 
       iIsTLS=sc.isTLS();
@@ -1192,11 +1204,11 @@ public:
    int makeReq(int id, PHONE_CFG * cfg, ADDR *addrExt=NULL,STR_64 *str64ExtADDR=NULL);
    
    int makeResp(int id, PHONE_CFG * cfg =NULL, char *pDst=NULL, int iDstLen=0);
-   int addAuth(char *un, char *pwd, SIP_MSG *psMsg);
+   int addAuth(const char *un, const char *pwd, SIP_MSG *psMsg);
    int addContent(const char *type, char *pCont, int iContLen);//NEW
    int addContent8(const char *type, CTStrBase *e);
    int addContent16(const char *type, CTStrBase *e);
-   int addParams(char *p, int iLenAdd);
+   int addParams(const char *p, int iLenAdd=-1);
 
 
    int makeSdpHdr(char *pIP_Orig, int iIPLen);
@@ -1208,8 +1220,9 @@ public:
 
    int makeSDPMedia(CTMakeSdpBase &b, int fUseExtPort)
    {
-     uiLen+=(unsigned int )b.makeSdp(buf+uiLen, 500,fUseExtPort);//TODO
-     return 0;
+      printf("[makeSDPMedia bytes_left=%d]",(int)(DATA_SIZE-uiLen));
+      uiLen+=(unsigned int )b.makeSdp(buf+uiLen, DATA_SIZE-uiLen,fUseExtPort);//TODO
+      return 0;
    }
    inline static int addDefaultContent(char *buf)
    {

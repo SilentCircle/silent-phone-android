@@ -108,3 +108,20 @@ NSString *toNSFromTB(CTStrBase *b){
    return r;
 }
 
+char * t_CFStringCopyUTF8String(CFStringRef str,  char *buffer, int iMaxLen) {
+   if (str == NULL || !buffer || iMaxLen<1) {
+      return NULL;
+   }
+   buffer[0]=0;
+   iMaxLen--;
+   
+   // CFIndex length = CFStringGetLength(aString);
+   // CFIndex maxSize  = CFStringGetMaximumSizeForEncoding(length, kCFStringEncodingUTF8);
+   
+   if (CFStringGetCString(str, buffer, iMaxLen, kCFStringEncodingUTF8)) {
+      return buffer;
+   }
+   return NULL;
+}
+
+

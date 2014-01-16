@@ -72,19 +72,20 @@ int CTiViPhone::TimerProc(void *f)
    if(ph->p_cfg.GW.ip)
       ph->keepAlive.sendNow();
    
-   unsigned int uiT,uiPrecTC=getTickCount();
+   unsigned int uiT,uiPrevTC=getTickCount();
    t_ph_tick uiPrevGT=0;
-   unsigned int uiPrevTick=uiPrecTC;
+   unsigned int uiPrevTick=uiPrevTC;
+   t_ph_tick uiGTOk=1;
    
    while(ph->bRun)
    {
-      
+      int iWasSuspended=0;
       //TODO if all done, do notify "can suspend"
 #ifndef T_TEST_SYNC_TIMER
       i++;
       T_SLEEP_INC_TIME(250);
       if(ph->bRun==0)break;
-      //TODO check - do i need to send data
+      //TODO check - do i need to send data?, do we have a tasks(active_cals, stun, rereg, keepalive, checkip...)?
       if((i&(4-1)))continue;
       uiT=getTickCount();
 #else
@@ -100,9 +101,10 @@ int CTiViPhone::TimerProc(void *f)
       if (waitTime > 1100) {
          __android_log_print(ANDROID_LOG_DEBUG,"TIMERNEW", "Current time: %ld, waitTime: %u, uiT: %u, uiGT: %llu\n", time(NULL), waitTime, uiT, ph->uiGT);
          ph->uiGT += 1000;                 // Max wait time in ms, according to T_SLEEP_INC_TIME macro - JANIS
+         iWasSuspended = waitTime > 5000;
       }
-      else
-         ph->uiGT += waitTime;
+      else 
+         ph->uiGT += waitTime>0 ? waitTime : 5;
       
       rc = pthread_mutex_unlock(&ph->timerMutex);
       
@@ -112,25 +114,39 @@ int CTiViPhone::TimerProc(void *f)
       
       
 #if 1
+      int d = (int)(uiT-uiPrevTick);
       
-      unsigned int d=(uiT-uiPrecTC);
+      if(d<0){
+         d=1;
+      }
+      else if(d>20000){
+         printf("thread is too slow, posible something is wrong, time=%llu d=%u\n",ph->uiGT, d);
+         if(d>36000001)d=36000001;//10h
+         iWasSuspended=1;
+      }
+      
+      ph->uiGT = uiGTOk + d;
+      uiGTOk = ph->uiGT;//tmp only - i will stop to update the ph->uiGT in other places
+      uiPrevTick = uiT;
+      int s = (d >> 10); if(s < 1)s = 1;
+      iSecondsSinceStart += s;
+      iSecondsSinceIPChanged += s;
+      
+#else
+      
+      unsigned int d=(uiT-uiPrevTC);
       unsigned int d2=(ph->uiGT-uiPrevGT);
       int dd=(d-d2);
       unsigned int dPrev=uiT-uiPrevTick;
     
-#if defined(ANDROID_NDK)
-     // __android_log_print(ANDROID_LOG_DEBUG,"TIMERNEW", "d: %u, dd: %d", d, dd);
-#endif
-     
       //apple ios and android backround fix
       if(dd>500 || (dPrev>4000 && dPrev<36000001)){
-         if(dd<36000001){
+         if(dd>0 && dd<36000001){
             t_ph_tick u=ph->uiGT;
-            u-=d2;
-            u+=d;
+            u+=dd;
             ph->uiGT=u;
             uiPrevGT=ph->uiGT;
-            uiPrecTC=uiT;
+            uiPrevTC=uiT;
             if(dd>20000){
                //it is ok if app was suspended
 #if defined(ANDROID_NDK)
@@ -146,22 +162,23 @@ int CTiViPhone::TimerProc(void *f)
          }
          else{
             uiPrevGT=ph->uiGT;
-            uiPrecTC=uiT;
+            uiPrevTC=uiT;
          }
          //         printf("new GT %d\n",ph->uiGT);
       }
       uiPrevTick=uiT;
-      
-#endif
       iSecondsSinceStart++;
       iSecondsSinceIPChanged++;
+      
+#endif
+
       
       if(ph->p_cfg.iAccountIsDisabled)continue;
       
       if(ph->bRun==1){
          
          
-         if((iSecondsSinceStart&1) || (ph->ipBinded==0 && ph->p_cfg.GW.ip==0))
+         if(iWasSuspended || (iSecondsSinceStart&1) || (ph->ipBinded==0 && ph->p_cfg.GW.ip==0))
          {
             ip = ph->cPhoneCallback->getLocalIp();
             
@@ -183,7 +200,7 @@ int CTiViPhone::TimerProc(void *f)
                //TODO change connection or switch from udp to tcp
             }
             
-            if(!ph->iOptionsSent &&  ph->uiGT-uiPrevIPResetAt>T_GT_SECOND){
+            if(!ph->iOptionsSent &&  ph->uiGT-uiPrevIPResetAt>T_GT_SECOND){ // the onNewIp() calls the sendSipKA()
                
                //tivi keepalive not supported
                //iKeepaliveSupported=0;//TODO add TO CPhone

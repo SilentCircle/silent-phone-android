@@ -82,7 +82,7 @@ unsigned int calcMD5(const char *p, int iLen, int n){
    
    return md5.final();
 }
-
+//if you ask why md5 ??? read (RFC 3621, 2617)
 /* calculate H(A1) as per spec */
 int DigestCalcHA1(IN  HDR_AUT * aut, IN unsigned char *un, IN unsigned char * pwd, 
                   OUT HASHHEX SessionKey)
@@ -116,6 +116,7 @@ int DigestCalcHA1(IN  HDR_AUT * aut, IN unsigned char *un, IN unsigned char * pw
    return true;
 };
 
+//if you ask why md5 ??? read (RFC 3621, 2617)
 /* calculate request-digest/response-digest as per HTTP Digest spec */
 int DigestCalcResponse(
                        IN HASHHEX HA1,           /* H(A1) */
@@ -129,7 +130,7 @@ int DigestCalcResponse(
                        )
 {
    
-
+   //if you ask why md5 ??? read (RFC 3621, 2617)
    CTMd5 md5;
    HASH HA2;
    HASH RespHash;

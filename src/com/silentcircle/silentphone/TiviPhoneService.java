@@ -29,70 +29,74 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 package com.silentcircle.silentphone;
 
-import android.net.wifi.WifiManager;
+import android.annotation.TargetApi;
+import android.app.AlarmManager;
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.app.Service;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothHeadset;
+import android.bluetooth.BluetoothProfile;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.PackageManager.NameNotFoundException;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.media.AudioManager;
+import android.media.AudioManager.OnAudioFocusChangeListener;
+import android.media.Ringtone;
+import android.media.RingtoneManager;
+import android.media.ToneGenerator;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+import android.net.Uri;
+import android.net.wifi.WifiManager;
+import android.os.Binder;
+import android.os.Build;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.IBinder;
+import android.os.Message;
+import android.os.SystemClock;
+import android.os.Vibrator;
 import android.preference.PreferenceManager;
+import android.provider.CallLog;
+import android.support.v4.app.NotificationCompat;
+import android.telephony.PhoneNumberUtils;
+import android.telephony.PhoneStateListener;
+import android.telephony.TelephonyManager;
+import android.text.TextUtils;
+import android.util.Log;
 
 import com.silentcircle.silentcontacts.ScCallLog;
+import com.silentcircle.silentcontacts.ScContactsContract;
+import com.silentcircle.silentphone.activities.CallStateChangeListener;
+import com.silentcircle.silentphone.activities.DeviceStateChangeListener;
+import com.silentcircle.silentphone.activities.TCallWindow;
+import com.silentcircle.silentphone.activities.TMActivity;
+import com.silentcircle.silentphone.preferences.SpRingtone;
+import com.silentcircle.silentphone.receivers.OCT;
+import com.silentcircle.silentphone.utils.CTCall;
+import com.silentcircle.silentphone.utils.CTCalls;
+import com.silentcircle.silentphone.utils.TWake;
+import com.silentcircle.silentphone.utils.Utilities;
 
-import java.lang.Object;
+import java.io.File;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
-
-import java.io.File;
-
-import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
-import android.os.SystemClock;
-import android.os.Vibrator;
-import android.os.IBinder;
-import android.os.Binder;
-
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
-
-import android.app.AlarmManager;
-import android.app.PendingIntent;
-import android.app.NotificationManager;
-import android.app.Notification;
-import android.app.Service;
-
-import android.content.BroadcastReceiver;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
-import android.content.pm.PackageManager.NameNotFoundException;
-
-import android.media.AudioManager;
-import android.media.RingtoneManager;
-import android.media.Ringtone;
-import android.media.ToneGenerator;
-import android.media.AudioManager.OnAudioFocusChangeListener;
-
-import android.net.Uri;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
-
-import android.provider.CallLog;
-import android.telephony.PhoneStateListener;
-import android.telephony.TelephonyManager;
-
-import android.util.Log;
-
-import com.silentcircle.silentphone.activities.TMActivity;
-import com.silentcircle.silentphone.activities.CallStateChangeListener;
-import com.silentcircle.silentphone.activities.DeviceStateChangeListener;
-import com.silentcircle.silentphone.activities.TCallWindow;
-import com.silentcircle.silentphone.receivers.OCT;
-import com.silentcircle.silentphone.utils.CTCall;
-import com.silentcircle.silentphone.utils.CTCalls;
-import com.silentcircle.silentphone.utils.TWake;
-import com.silentcircle.silentphone.utils.Utilities;
+import java.util.List;
+import java.util.Set;
 
 public class TiviPhoneService extends Service {
    
@@ -102,26 +106,32 @@ public class TiviPhoneService extends Service {
 
     public enum CT_cb_msg {
         eReg, eError, eRinging, eSIPMsg, eCalling, eIncomCall, eNewMedia, eEndCall, eZRTPMsgA, eZRTPMsgV, eZRTP_sas, eZRTPErrA, eZRTPErrV, eZRTPWarn, eStartCall, eEnrroll, eZRTP_peer, eZRTP_peer_not_verifed, eMsg, eLast
-    };
+    }
 
     static public final int CALL_TYPE_INAVLID = -1;
     static public final int CALL_TYPE_OUTGOING = 0;
     static public final int CALL_TYPE_INCOMING = 1;
     
     // Status codes for secure key processing
-    static public final int SECURE_KEY_NOT_AVAILABE = 1;
-    static public final int SECURE_KEY_AVAILABE = 2;
-    static public final int SECURE_KEY_SET_TO_CPP = 3;
-    
+    static public final int SECURE_KEY_NOT_AVAILABLE = 1;
+//  We may use these feature some time later
+//    static public final int SECURE_KEY_AVAILABE = 2;
+//    static public final int SECURE_KEY_SET_TO_CPP = 3;
+
     // static because we process it before we instantiate and start the service
-    private static int secretKeyStatus = SECURE_KEY_NOT_AVAILABE;
-    
+    private static int secretKeyStatus = SECURE_KEY_NOT_AVAILABLE;
+
     // Message and event codes; see SilentPhoneAppBroadcastReceiver below.
     public static final int EVENT_WIRED_HEADSET_PLUG = 1;
     public static final int EVENT_DOCK_STATE_CHANGED = 2;
 
-    // We got a media button event, send this to call window for further handling 
+    // We got a media button event, send this to call window for further handling
     public static final int EVENT_HEADSET_HOOK_PRESSED = 3;
+    public static final int EVENT_BT_HEADSET_ADDED = 4;
+    public static final int EVENT_BT_HEADSET_REMOVED = 5;
+    public static final int EVENT_BT_HEADSET_SCO_ON = 6;
+    public static final int EVENT_BT_HEADSET_SCO_OFF = 7;
+
 
     // Values and status code for keep-alive mechanism
     public static final int KEEP_ALIVE_WAKEUP = 1007;         // Message codes
@@ -136,21 +146,22 @@ public class TiviPhoneService extends Service {
     private volatile boolean mContinueVibrating;
 
     private Ringtone ringtone;
-    private Uri defaultRingtone;
     private VibratorThread vibThread;
     private Vibrator vibrator;
-    
-    /** Set to true if GSM/CDMA phone state is off-hook. */
-    private boolean otherPhoneOffHook;
+    private SharedPreferences prefs;
+
+    private Bitmap notifyLargeIcon;
 
     private AlarmManager alarmManager;
-    
+
+    private static String deviceId;
+
     OnAudioFocusChangeListener afChangeListener;
     /**
      * Restarted means that the main activity was restarted from Notification or
      * because user closed the Activity during the call and then clicked the icon to
      * get the call back. In this case the main activity detects this and calls
-     * <code>showCallScreen</code> with this call type. This suppresses ringing.
+     * {@code showCallScreen} with this call type. This suppresses ringing.
      */
     static public final int CALL_TYPE_RESTARTED = 2;
 
@@ -158,9 +169,8 @@ public class TiviPhoneService extends Service {
     private final Collection<DeviceStateChangeListener> deviceStateListeners = new LinkedList<DeviceStateChangeListener>();
     
     /*
-     * Some counters to get statistics aboput partial wakelock usage
+     * Some counters to get statistics about partial wakelock usage
      */
-    private int pwlWakeCallback;    // called from native libs
     private int pwlAlarmWake;       // via Alarm notification
     private int pwlNetworkState;    // via network state change
     private int pwlOnCreate;        // service onCreate() - should never > 1
@@ -169,7 +179,7 @@ public class TiviPhoneService extends Service {
     /**
      * Name of the SilentContacts package
      */
-    private static final String SC_CONTACTS_PKG = "com.silentcircle.silentcontacts";
+    private static final String SC_CONTACTS_PKG = "com.silentcircle.contacts";
     private PackageInfo scPkgInfo;
     
     @Override
@@ -203,24 +213,15 @@ public class TiviPhoneService extends Service {
 
     public static TiviPhoneService mc = null;
 
-    static final String tivi_app_name = "SilentCircle";// move to cfg class
-
-    static final String ACTION_FOREGROUND = "com.tivi.tiviphone.FOREGROUND";
-    static final String ACTION_BACKGROUND = "com.tivi.tiviphone.BACKGROUND";
-
-    private static final Class<?>[] mSetForegroundSignature = new Class[] { boolean.class };
     private static final Class<?>[] mStartForegroundSignature = new Class[] { int.class, Notification.class };
     private static final Class<?>[] mStopForegroundSignature = new Class[] { boolean.class };
 
-    private Method mSetForeground;
     private Method mStartForeground;
     private Method mStopForeground;
-    private Object[] mSetForegroundArgs = new Object[1];
     private Object[] mStartForegroundArgs = new Object[2];
     private Object[] mStopForegroundArgs = new Object[1];
 
     private boolean bStarted = false;
-
 
     /**
      *  Broadcast receiver for various intent broadcasts (see onCreate()), mainly to keep track of device status.
@@ -237,7 +238,7 @@ public class TiviPhoneService extends Service {
 
     private NotificationManager mNM;
     private TWake wk;
-    
+
     /* **********************************************************
      * Initialization and definition of the native interfaces to the
      * Tivi SIP/RTP/Codec engine that is implemented in C and C++
@@ -249,7 +250,7 @@ public class TiviPhoneService extends Service {
         System.loadLibrary("tivi");
     }
    
-   //Callback
+    //Callback
     private final BroadcastReceiver mNetworkStateReceiver = new BroadcastReceiver() {
        @Override
        public void onReceive(Context context, Intent intent) {
@@ -266,7 +267,7 @@ public class TiviPhoneService extends Service {
          NetworkInfo ni = cm.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
          boolean wifiStateOn = ni != null && ni.isConnectedOrConnecting();
          //TODO test NetworkInfo cm.getActiveNetworkInfo ()
-         checkNetState(wifiStateOn ? 1: 0, 0, 0);
+         checkNetState(wifiStateOn ? 1 : 0, 0, 0);
     }
 
     void startNetworkMonitor() {
@@ -297,14 +298,14 @@ public class TiviPhoneService extends Service {
 
     // can pass command to engine
     public static native String getInfo(int iEngineID, int iCallID, String z);// if iEngineID==-1 || iCallID==-1 then it is not
-                                                                              // used
-    public static native int setKeyData(byte[] key);
+//  Maybe we sue this at a later time again                                                                              // used
+//  public static native int setKeyData(byte[] key);
 
     private static native int initPhone();
 
-    private static native int savePath(byte[] z);
+    private static native int savePath(String str);
 
-    private static native int saveImei(byte[] z);
+    private static native int saveImei(String str);
 
     private static native int checkNetState(int iIsWifi, int IP, int iIsIpValid);
 
@@ -318,7 +319,7 @@ public class TiviPhoneService extends Service {
 
     public native static int getVFrame(int iPrevID, int[] idata, int[] sxy);
 
-    void invokeMethod(Method method, Object[] args) {
+    private void invokeMethod() {
         try {
             mStartForeground.invoke(this, mStartForegroundArgs);
         }
@@ -335,18 +336,14 @@ public class TiviPhoneService extends Service {
     /**
      * This is a wrapper around the new startForeground method, using the older APIs if it is not available.
      */
-    void startForegroundCompat(int id, Notification notification) {
+    private void startForegroundCompat(int id, Notification notification) {
         // If we have the new startForeground API, then use it.
         if (mStartForeground != null) {
-            mStartForegroundArgs[0] = Integer.valueOf(id);
+            mStartForegroundArgs[0] = id;
             mStartForegroundArgs[1] = notification;
-            invokeMethod(mStartForeground, mStartForegroundArgs);
+            invokeMethod();
             return;
         }
-
-        // Fall back on the old API.
-        // mSetForegroundArgs[0] = Boolean.TRUE;
-        // invokeMethod(mSetForeground, mSetForegroundArgs);
         mNM.notify(id, notification);
 
     }
@@ -354,7 +351,7 @@ public class TiviPhoneService extends Service {
     /**
      * This is a wrapper around the new stopForeground method, using the older APIs if it is not available.
      */
-    void stopForegroundCompat(int id) {
+    private void stopForegroundCompat(int id) {
         bStarted = false;
         // If we have the new stopForeground API, then use it.
         if (mStopForeground != null) {
@@ -372,14 +369,9 @@ public class TiviPhoneService extends Service {
             }
             return;
         }
-
         // Fall back on the old API. Note to cancel BEFORE changing the
         // foreground state, since we could be killed at that point.
         mNM.cancel(id);
-        // mSetForegroundArgs[0] = Boolean.FALSE;
-        // invokeMethod(mSetForeground, mSetForegroundArgs);
-//        setForeground(false);
-
     }
 
     @Override
@@ -388,8 +380,7 @@ public class TiviPhoneService extends Service {
         wk = new TWake(this, LOG_TAG);
         mc = this;
 
-        defaultRingtone = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE);
-
+        prefs = PreferenceManager.getDefaultSharedPreferences(this);
         vibrator = (Vibrator) getSystemService(android.content.Context.VIBRATOR_SERVICE);
 
         mNM = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
@@ -403,12 +394,8 @@ public class TiviPhoneService extends Service {
             mStartForeground = mStopForeground = null;
             return;
         }
-        try {
-            mSetForeground = getClass().getMethod("setForeground", mSetForegroundSignature);
-        }
-        catch (NoSuchMethodException e) {
-            throw new IllegalStateException("OS  doesn't have Service.startForeground OR Service.setForeground!");
-        }
+
+        // Use the current hasKeyManager state.
         initJNI(getBaseContext());
         doInit(TMActivity.SP_DEBUG ? 1 : 0);
         startNetworkMonitor();
@@ -420,7 +407,15 @@ public class TiviPhoneService extends Service {
         intentFilter.addAction(Intent.ACTION_BATTERY_LOW);
         intentFilter.addAction(AudioManager.RINGER_MODE_CHANGED_ACTION);
         registerReceiver(variousReceiver, intentFilter);
-        
+
+        intentFilter = new IntentFilter();
+        intentFilter.addAction(AudioManager.ACTION_SCO_AUDIO_STATE_UPDATED);
+        registerReceiver(headsetAudioState, intentFilter);
+
+        intentFilter = new IntentFilter(BluetoothAdapter.ACTION_CONNECTION_STATE_CHANGED);
+        registerReceiver(bluetoothState, intentFilter);
+
+
         // Empty audio focus change listener: we request audio focus on incoming call for STREAM_MUSIC
         // and we will not stop the call on focus loss in this case. Comments left in as reminder.
         afChangeListener = new OnAudioFocusChangeListener() {
@@ -438,21 +433,15 @@ public class TiviPhoneService extends Service {
                 }
             }
         };
-        // Check availability of SilentContacts
-        PackageManager pm = this.getPackageManager();
-        try {
-            scPkgInfo = pm.getPackageInfo(SC_CONTACTS_PKG, 0);
-        }
-        catch (NameNotFoundException e) {
-            // TODO start Activity to inform user about missing SilentContacts and ask to install the package
-//            e.printStackTrace();
-        }
-
+        // TODO start Activity to inform user about missing SilentContacts and ask to install the package
+        hasSilentContacts();
         telephonyManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
         telephonyManager.listen(phoneStateReceiver, PhoneStateListener.LISTEN_CALL_STATE );
 
         alarmManager = (AlarmManager)getSystemService(Context.ALARM_SERVICE);
-
+        if (checkBluetoothDeviceAvailable()) {
+            addBtProfileListener();
+        }
         wk.start();
         pwlOnCreate++;
         if (TMActivity.SP_DEBUG) Log.i(LOG_TAG, "PartialWake - onCreate. Count: " + pwlOnCreate +", at: " + System.currentTimeMillis());
@@ -482,7 +471,7 @@ public class TiviPhoneService extends Service {
         Context c = getBaseContext();
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(c);
-        boolean b = prefs.getBoolean(key_wifi_lock, false);
+        boolean b = prefs.getBoolean(key_wifi_lock, true);
         if (!b)
             return;
 
@@ -502,6 +491,7 @@ public class TiviPhoneService extends Service {
         }
     }
 
+    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
     @Override
     public void onDestroy() {
 
@@ -510,20 +500,24 @@ public class TiviPhoneService extends Service {
         // Make sure our notification is gone.
         stopForegroundCompat(R.drawable.online);
         stopNetworkMonitor();
-
+        unregisterReceiver(variousReceiver);
+        unregisterReceiver(bluetoothState);
+        unregisterReceiver(headsetAudioState);
+        if (headsetProxyListenerAdded)
+            bluetoothAdapter.closeProfileProxy(BluetoothProfile.HEADSET, bluetoothHeadsetProxy);
         stopWifiLock();
 
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        handleCommand(intent);
+        handleCommand();
 
         // We want this service to continue running until it is explicitly stopped, so return sticky.
         return START_STICKY;
     }
 
-    void handleCommand(Intent intent) {
+    private void handleCommand() {
         Notification notification = setNewInfo();
         if (!bStarted)
             startForegroundCompat(R.drawable.online, notification);
@@ -534,10 +528,8 @@ public class TiviPhoneService extends Service {
 
     /**
      * Cleanup if a call ends.
-     * 
-     * @param c call that ended.
      */
-    void onStopCall(CTCall c) {
+    private void onStopCall() {
         if (calls.getLastCall() == null) {      // No more active calls
             mHandler.sendEmptyMessage(KEEP_ALIVE_WAKEUP);
             ((AudioManager) getSystemService(AUDIO_SERVICE)).abandonAudioFocus(afChangeListener);
@@ -604,11 +596,15 @@ public class TiviPhoneService extends Service {
      * @return {@code true} if SilentContacts package is available
      */
     public boolean hasSilentContacts() {
+        if (scPkgInfo != null)
+            return true;
+
         PackageManager pm = getPackageManager();
         try {
-            scPkgInfo = pm.getPackageInfo(SC_CONTACTS_PKG, 0);
+            scPkgInfo = pm.getPackageInfo(SC_CONTACTS_PKG, PackageManager.GET_PERMISSIONS);
         }
-        catch (NameNotFoundException e) {
+        catch (NameNotFoundException ex) {
+            Log.d(LOG_TAG, "SCA not found");
         }
         return scPkgInfo != null;
     }
@@ -619,8 +615,8 @@ public class TiviPhoneService extends Service {
        callStateChanged(c, CT_cb_msg.eNewMedia);
     }
 
+    // Callback from native code to monitor if SIP stack requires a wakelock - currently not used
     private void wakeCallback(int iLock){
-//        if (TMActivity.SP_DEBUG) Log.i(LOG_TAG,"sip lock "+ iLock);
     }
 
     /**
@@ -634,7 +630,7 @@ public class TiviPhoneService extends Service {
     private void callback(int iEngID, int iCallID, int msgid, String str) {
 
         if (msgid < 0 || msgid >= CT_cb_msg.eLast.ordinal()) {
-            if (TMActivity.SP_DEBUG) Log.i(LOG_TAG, "ERR: msgid<0 || msgid>=eLast.ordinal()");
+            if (TMActivity.SP_DEBUG) Log.i(LOG_TAG, "ERR: msgid < 0 || msgid >= eLast.ordinal()");
             return;
         }
         CT_cb_msg en = CT_cb_msg.values()[msgid];
@@ -654,7 +650,7 @@ public class TiviPhoneService extends Service {
             if (c == null) {
                 return;
             }
-            boolean vc = false;
+            boolean vc = false;     // On mobile clients not possible - leave in for later possible enhancement
             if (vc)
                 p = getString(R.string.call_type_video);
             else
@@ -753,6 +749,7 @@ public class TiviPhoneService extends Service {
 
         case eSIPMsg:
             p = str;
+            if (TMActivity.SP_DEBUG) Log.d(LOG_TAG, "SIP mesg: '" + p + "'");
             break;
 
             // This case is for outgoing calls
@@ -773,10 +770,13 @@ public class TiviPhoneService extends Service {
         case eEndCall:
             if (!c.iSipHasErrorMessage)
                 p = getString(R.string.sip_state_ended);
+            if (calls.getCallCnt() <= 1) {
+                stopRT();
+            }
             if (c.iEnded == 0)
                 c.iEnded = 2;
             updateRecents(c);
-            onStopCall(c);
+            onStopCall();
             break;
 
             // The engine sends eStartCall on outgoing and incoming calls 
@@ -794,10 +794,11 @@ public class TiviPhoneService extends Service {
 
         case eError:
             if (str != null)
-                p = str;
+                p = translateSipErrorMsg(str);
             else {
                 p = getString(R.string.call_error);
             }
+            if (TMActivity.SP_DEBUG) Log.d(LOG_TAG, "Some SIP error message: '" + p + "'");
             c.iSipHasErrorMessage = true;
             break;
         
@@ -809,6 +810,32 @@ public class TiviPhoneService extends Service {
             c.bufMsg.setText(p);
         }
         callStateChanged(c, en);
+    }
+
+    private String translateSipErrorMsg(String msg) {
+
+        // Trim string and force to lowercase - easier to match
+        String trimmed = msg.trim().toLowerCase();
+
+        if (trimmed.startsWith("user not found"))
+            return getString(R.string.sip_error_no_user);
+
+        if (trimmed.startsWith("cannot connect")) {
+            if (trimmed.contains("decline"))
+                return getString(R.string.sip_error_decline);
+
+            // Add more specific messages if necessary, based on string parsing
+            return getString(R.string.sip_error_generic);
+
+        }
+        if (trimmed.startsWith("remote party is out of coverage"))
+            return getString(R.string.sip_error_no_cover);
+        if (trimmed.startsWith("could not reach server"))
+            return getString(R.string.sip_error_no_server);
+        if (trimmed.startsWith("cannot register")) {
+            return getString(R.string.sip_error_register);
+        }
+        return msg;
     }
 
     public String doX(int z) {
@@ -832,28 +859,34 @@ public class TiviPhoneService extends Service {
         iInitialized = true;
 
         TelephonyManager tm = (TelephonyManager) ctx.getSystemService(Context.TELEPHONY_SERVICE);
-        String imei = tm.getDeviceId();
-        if (imei == null) {
-            imei = android.os.Build.SERIAL
+        String idData = tm.getDeviceId();
+        if (idData == null) {
+            idData = android.os.Build.SERIAL
                     + " "
                     + android.provider.Settings.Secure.getString(ctx.getContentResolver(),
-                            android.provider.Settings.Secure.ANDROID_ID);
+                    android.provider.Settings.Secure.ANDROID_ID);
         }
         else {
             String add = android.os.Build.SERIAL
                     + " "
                     + android.provider.Settings.Secure.getString(ctx.getContentResolver(),
-                            android.provider.Settings.Secure.ANDROID_ID);
+                    android.provider.Settings.Secure.ANDROID_ID);
 
-            imei += " " + add;
+            idData += " " + add;
         }
-        saveImei(imei.getBytes());
+        deviceId = idData;
+        saveImei(idData);
 
         File f = ctx.getFilesDir();
-        savePath(f.toString().getBytes());
+        if (f != null)
+            savePath(f.toString());
         initPhone();
         doCmd("g.setLevel " + android.os.Build.VERSION.SDK_INT);
         return 0;
+    }
+
+    public static String getDeviceId() {
+        return deviceId;
     }
 
     synchronized private Notification setNewInfo() {
@@ -875,7 +908,8 @@ public class TiviPhoneService extends Service {
             ico = R.drawable.offline;
         }
 
-        Notification notification = new Notification(ico, text, System.currentTimeMillis());
+        if (notifyLargeIcon == null)
+            notifyLargeIcon = BitmapFactory.decodeResource(getResources(), R.drawable.spa_launcher);
 
         Intent intent = new Intent(this, TMActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
@@ -883,8 +917,15 @@ public class TiviPhoneService extends Service {
         // The PendingIntent to launch our activity if the user selects this notification
         PendingIntent contentIntent = PendingIntent.getActivity(this, 0, intent, 0);
 
-        // Set the info for the views that show in the notification panel.
-        notification.setLatestEventInfo(this, tivi_app_name, text, contentIntent);
+        Notification notification = new NotificationCompat.Builder(this)
+                .setContentTitle(getString(R.string.app_name))
+                .setContentText(text)
+                .setSmallIcon(ico)
+                .setLargeIcon(notifyLargeIcon)
+                .setWhen(System.currentTimeMillis())
+                .setContentIntent(contentIntent)
+                .build();
+
         mNM.notify(R.drawable.online, notification);
         return notification;
 
@@ -897,7 +938,7 @@ public class TiviPhoneService extends Service {
         if (TMActivity.SP_DEBUG) Log.i(LOG_TAG, "PartialWake - showCallScreen. Count: " + pwlShowScreen +", at: " + System.currentTimeMillis());            
         Intent intent = new Intent();
         intent.setClass(this, TCallWindow.class);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
 
         Bundle bundle = new Bundle();
         bundle.putString("name", doX(6));
@@ -980,8 +1021,15 @@ public class TiviPhoneService extends Service {
         if (iRM != AudioManager.RINGER_MODE_SILENT) {
 
             if (iRM == AudioManager.RINGER_MODE_NORMAL) {
-                Uri tone = calls.selectedCall.customRingtoneUri == null ? defaultRingtone
-                        : calls.selectedCall.customRingtoneUri;
+                String toneString = prefs.getString(SpRingtone.RINGTONE_KEY, null);
+
+                Uri defaultRingtone;
+                if (TextUtils.isEmpty(toneString))
+                    defaultRingtone = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE);
+                else
+                    defaultRingtone = Uri.parse(toneString);
+                Uri tone = calls.selectedCall.customRingtoneUri == null ? defaultRingtone : calls.selectedCall.customRingtoneUri;
+
                 ringtone = RingtoneManager.getRingtone(TiviPhoneService.this, tone);
                 if (ringtone != null) {
                     if (!isHeadsetPlugged())
@@ -999,7 +1047,6 @@ public class TiviPhoneService extends Service {
     }
     
     public void stopRT() {
-
         if (ringtone != null && ringtone.isPlaying()) {
             Utilities.restoreSpeakerMode(this);
             ringtone.stop();
@@ -1025,9 +1072,9 @@ public class TiviPhoneService extends Service {
      * Get status of secret key processing.
      *  
      * @return secret key processing status
-     * @see SECURE_KEY_NOT_AVAILABE
-     * @see SECURE_KEY_AVAILABE
-     * @see SECURE_KEY_SET_TO_CPP
+     * @see #SECURE_KEY_NOT_AVAILABLE
+     * see #SECURE_KEY_AVAILABE
+     * see #SECURE_KEY_SET_TO_CPP
      */
     public static int getSecretKeyStatus() {
         return secretKeyStatus;
@@ -1067,6 +1114,8 @@ public class TiviPhoneService extends Service {
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
+            if (action == null)
+                return;
             if (action.equals(Intent.ACTION_HEADSET_PLUG)) {
                 isHeadsetPlugged = (intent.getIntExtra("state", 0) == 1);
                 deviceStateChanged(EVENT_WIRED_HEADSET_PLUG);
@@ -1113,13 +1162,13 @@ public class TiviPhoneService extends Service {
     private ToneGenerator mToneGenerator;
     private ArrayList<CTCall> callOnHoldList = new ArrayList<CTCall>(15);
 
-    private void playInCallTone(int toneId) {       
+    private void playInCallTone() {
         if (mToneGenerator == null) {
             try {
                 mToneGenerator = new ToneGenerator(AudioManager.STREAM_VOICE_CALL, 80);
                 mToneGenerator.startTone(ToneGenerator.TONE_SUP_CALL_WAITING);
             } catch (RuntimeException e) {
-                Log.w(LOG_TAG, "Exception caught while creating local tone generator: " + e);
+                Log.w(LOG_TAG, "Exception caught while creating local tone generator.");
                 mToneGenerator = null;
             }
         }
@@ -1155,9 +1204,9 @@ public class TiviPhoneService extends Service {
     private void insertCallLog(CTCall call){
 
         long duration = 0;
-        String caller = null;
+        String caller;
 
-        if(call==null || call.iRecentsUpdated)
+        if(call == null || call.iRecentsUpdated)
             return;
         call.iRecentsUpdated = true;
 
@@ -1165,29 +1214,31 @@ public class TiviPhoneService extends Service {
             duration = System.currentTimeMillis() - call.uiStartTime;
             call.uiStartTime = 0;
         }
-        int iType = call.iIsIncoming ? android.provider.CallLog.Calls.INCOMING_TYPE
-                : android.provider.CallLog.Calls.OUTGOING_TYPE;
 
-        if (duration == 0 && iType != TiviPhoneService.CALL_TYPE_OUTGOING) {
-            iType = android.provider.CallLog.Calls.MISSED_TYPE;
+        // Here we can use the same values for CallLog and SCCallLog: kept in synch
+        int iType = call.iIsIncoming ? CallLog.Calls.INCOMING_TYPE : CallLog.Calls.OUTGOING_TYPE;
+
+        if (duration == 0 && iType != CallLog.Calls.OUTGOING_TYPE) {
+            iType = CallLog.Calls.MISSED_TYPE;
         }
 
         if (call.bufDialed.getLen() > 0)
             caller = call.bufDialed.toString();
         else if (call.bufPeer.getLen() > 0)
             caller = call.bufPeer.toString();
-        else caller = "";                    // must not be here
+        else
+            caller = "";                    // must not be here
 
         if (hasSilentContacts()) {
-            insertCallIntoSilentCallLog(getBaseContext(), caller, iType, duration);
+            insertCallIntoSilentCallLog(getBaseContext(), call, caller, iType, duration);
         }
         else {
-            insertCallIntoCallLog(getBaseContext(), caller, iType, duration);
+            insertCallIntoCallLog(getBaseContext(), call, caller, iType, duration);
         }
     }
 
     // do not use this directly
-    private static void insertCallIntoCallLog(Context ctx, String dst, int iType, long dur) {
+    private static void insertCallIntoCallLog(Context ctx, CTCall call, String dst, int iType, long dur) {
         final android.content.ContentResolver resolver = ctx.getContentResolver();
         android.content.ContentValues values = new android.content.ContentValues(5);
 
@@ -1205,47 +1256,45 @@ public class TiviPhoneService extends Service {
         else
             values.put(CallLog.Calls.NUMBER, OCT.prefix_add +" "+ dst);
 
-        values.put(CallLog.Calls.TYPE    , Integer.valueOf(iType));
-        values.put(CallLog.Calls.DATE    , Long.valueOf(System.currentTimeMillis() - dur));
-        values.put(CallLog.Calls.DURATION, Long.valueOf(dur/1000));
-        values.put(CallLog.Calls.NEW     , Boolean.valueOf(true));
+        values.put(CallLog.Calls.TYPE    , iType);
+        values.put(CallLog.Calls.DATE    , System.currentTimeMillis() - dur);
+        values.put(CallLog.Calls.DURATION, dur / 1000);
+        values.put(CallLog.Calls.NEW     , true);
 
         try {
             resolver.insert(CallLog.CONTENT_URI, values);
         }
-        catch (IllegalArgumentException ex) {
-            return;
+        catch (Exception ex) {
+            call.secExceptionMsg = "Cannot write native call log.";
+            Log.w(LOG_TAG, "Call log (native) insert Exception, not storing call log.");
         }
     }
 
-    private static void insertCallIntoSilentCallLog(Context ctx, String dst, int iType, long dur) {
+    private static void insertCallIntoSilentCallLog(Context ctx, CTCall call, String dst, int iType, long dur) {
         final android.content.ContentResolver resolver = ctx.getContentResolver();
         android.content.ContentValues values = new android.content.ContentValues(5);
 
-        // strip @ and chars
-        StringBuffer strDst = new StringBuffer(32);
-        int i = 0;
-        int dL = dst.length();
-        while (i < dL && ((dst.charAt(i) <= '9' && dst.charAt(i) >= '0') || (i == 0 && dst.charAt(0) == '+'))) {
-            strDst.append(dst.charAt(i));
-            i++;
-        }
-        if (i != 0 && i < dL && dst.charAt(i) == '@') {
-            values.put(ScCallLog.ScCalls.NUMBER, strDst.toString());
-        }
-        else
+        if (Utilities.isUriNumber(dst)) {
             values.put(ScCallLog.ScCalls.NUMBER, dst);
+        }
+        else {
+            if (PhoneNumberUtils.isGlobalPhoneNumber(dst))
+                values.put(ScCallLog.ScCalls.NUMBER, dst);
+            else
+                values.put(ScCallLog.ScCalls.NUMBER, dst + "@sip.silentcircle.net");
+        }
+        values.put(ScCallLog.ScCalls.TYPE, iType);
+        values.put(ScCallLog.ScCalls.DATE, System.currentTimeMillis() - dur);
+        values.put(ScCallLog.ScCalls.DURATION, dur / 1000);
+        values.put(ScCallLog.ScCalls.NEW, true);
 
-        values.put(ScCallLog.ScCalls.TYPE    , Integer.valueOf(iType));
-        values.put(ScCallLog.ScCalls.DATE    , Long.valueOf(System.currentTimeMillis() - dur));
-        values.put(ScCallLog.ScCalls.DURATION, Long.valueOf(dur/1000));
-        values.put(ScCallLog.ScCalls.NEW     , Boolean.valueOf(true));
+        Uri uri = ScCallLog.CONTENT_URI.buildUpon().appendQueryParameter(ScContactsContract.NON_BLOCKING, "true").build();
 
         try {
-            resolver.insert(ScCallLog.CONTENT_URI, values);
-        }
-        catch (IllegalArgumentException ex) {
-            return;
+            resolver.insert(uri, values);
+        } catch (Exception ex) {
+            call.secExceptionMsg = "Cannot write SC call log.";
+            Log.w(LOG_TAG, "Call log (SC) insert Exception, not storing call log.", ex);
         }
     }
 
@@ -1281,11 +1330,10 @@ public class TiviPhoneService extends Service {
                         AudioManager am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
                         savedRingerMode = am.getRingerMode();
                         am.setRingerMode(AudioManager.RINGER_MODE_SILENT);
-                        playInCallTone(ToneGenerator.TONE_SUP_CALL_WAITING);
+                        playInCallTone();
                     }
                     else {
                         if (TMActivity.SP_DEBUG) Log.d(LOG_TAG, "Call state has changed - offhook!");
-                        otherPhoneOffHook = true;
                         stopInCallTone();
                         setCallsHold();
                     }
@@ -1304,7 +1352,6 @@ public class TiviPhoneService extends Service {
                     am.setRingerMode(savedRingerMode);
                     savedRingerMode = null;
                 }
-                otherPhoneOffHook = false;
                 TiviPhoneService.doCmd(":GSMactive 0");
                 stopInCallTone();       // no-op if GSM/CDMA call was answered or not handled
                 setCallsNoHold();       // no-op if GSM/CDMA call was not answered or not handled
@@ -1334,7 +1381,7 @@ public class TiviPhoneService extends Service {
             if (parent == null)
                 return;
 
-            boolean cc = TiviPhoneService.calls.getLastCall() == null ? false : true;
+            boolean cc = TiviPhoneService.calls.getLastCall() != null;
             int ret = 10;
             if (!cc)
                 ret = TiviPhoneService.doCmd("getint.ReqTimeToLive");
@@ -1391,5 +1438,140 @@ public class TiviPhoneService extends Service {
             }
         }
     }
+
+
+    private BluetoothHeadset bluetoothHeadsetProxy;
+    private BluetoothAdapter bluetoothAdapter;
+    private boolean headsetProxyListenerAdded;
+    private BluetoothProfile.ServiceListener mProfileListener;
+    private boolean btHeadsetScoActive;
+
+    /* Broadcast receiver for the SCO State broadcast intent.*/
+    private final BroadcastReceiver headsetAudioState = new BroadcastReceiver() {
+
+        public void onReceive(Context context, Intent intent) {
+            if(TMActivity.SP_DEBUG) Log.d(LOG_TAG, "BT HeadsetAudioState onReceive");
+
+            int state = intent.getIntExtra(AudioManager.EXTRA_SCO_AUDIO_STATE, -1);
+
+            if (state == AudioManager.SCO_AUDIO_STATE_CONNECTED) {
+                if (TMActivity.SP_DEBUG) Log.d(LOG_TAG, "BT SCO is connected");
+                deviceStateChanged(EVENT_BT_HEADSET_SCO_ON);
+            }
+            else if (state == AudioManager.SCO_AUDIO_STATE_DISCONNECTED) {
+                if (TMActivity.SP_DEBUG) Log.d(LOG_TAG, "BT SCO is disconnected");
+                deviceStateChanged(EVENT_BT_HEADSET_SCO_OFF);
+            }
+        }
+    };
+
+    public boolean btHeadsetScoActive() {
+        return btHeadsetScoActive;
+    }
+
+    public void bluetoothHeadset(boolean on) {
+        AudioManager audioManager = (AudioManager)getSystemService(AUDIO_SERVICE);
+        if (on) {
+            audioManager.startBluetoothSco();
+        }
+        else {
+            audioManager.stopBluetoothSco();
+        }
+        btHeadsetScoActive = on;
+    }
+
+    public boolean checkBluetoothDeviceAvailable() {
+        // Get the local Bluetooth adapter
+        // TODO: adapt to JB MR2
+        if (bluetoothAdapter == null)
+            bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+
+        // If the adapter is still null, then Bluetooth is not supported
+        if (bluetoothAdapter == null) {
+            return false;
+        }
+        // Check whether BT is enabled
+        if (!bluetoothAdapter.isEnabled()) {
+            return false;
+        }
+        // Check list of bonded devices
+        Set<BluetoothDevice> pairedDevices = bluetoothAdapter.getBondedDevices();
+        // If there are paired devices
+        if (pairedDevices.size() > 0) {
+            if(TMActivity.SP_DEBUG)                 // Loop through paired devices
+                for (BluetoothDevice device : pairedDevices) {
+                    Log.d(LOG_TAG, "BT Device: "+ device.getName());
+                }
+        }
+        else {
+            Log.i(LOG_TAG, "No paired device.");
+            return false;
+        }
+        return true;
+    }
+
+    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
+    private void addBtProfileListener() {
+        // Establish connection to the BT Headset proxy.
+        if (!headsetProxyListenerAdded && Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+            if (mProfileListener == null) {
+                mProfileListener = new BluetoothProfile.ServiceListener() {
+                    public void onServiceConnected(int profile, BluetoothProfile proxy) {
+                        if (profile != BluetoothProfile.HEADSET)
+                            return;
+
+                        if (TMActivity.SP_DEBUG) Log.d(LOG_TAG, "Got BT headset profile proxy");
+                        bluetoothHeadsetProxy = (BluetoothHeadset) proxy;
+
+                        // Now check if we have a headset. If yes -> check if the first supports SCO audio
+                        List<BluetoothDevice> headSets = bluetoothHeadsetProxy.getConnectedDevices();
+                        if (TMActivity.SP_DEBUG) Log.d(LOG_TAG, "Number of BT headsets (P): " + headSets.size());
+                        deviceStateChanged(EVENT_BT_HEADSET_ADDED);
+                    }
+
+                    public void onServiceDisconnected(int profile) {
+                        if (profile == BluetoothProfile.HEADSET) {
+                            if (TMActivity.SP_DEBUG) Log.d(LOG_TAG, "Remove BT headset profile proxy");
+                            bluetoothHeadsetProxy = null;
+                            deviceStateChanged(EVENT_BT_HEADSET_REMOVED);
+                        }
+                    }
+                };
+            }
+            bluetoothAdapter.getProfileProxy(this, mProfileListener, BluetoothProfile.HEADSET);
+            headsetProxyListenerAdded = true;
+        }
+    }
+
+    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
+    public boolean hasBtHeadSet() {
+        if (bluetoothHeadsetProxy != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+            List<BluetoothDevice> headSets = bluetoothHeadsetProxy.getConnectedDevices();
+            if(TMActivity.SP_DEBUG) Log.d(LOG_TAG, "Number of available BT headsets (C): " + headSets.size());
+            return (headSets.size() > 0);
+        }
+        return false;
+    }
+
+    /* Broadcast receiver for the SCO State broadcast intent.*/
+    private final BroadcastReceiver bluetoothState = new BroadcastReceiver() {
+
+        public void onReceive(Context context, Intent intent) {
+            int state = intent.getIntExtra(BluetoothAdapter.EXTRA_CONNECTION_STATE, -1);
+            if(TMActivity.SP_DEBUG) Log.d(LOG_TAG, "BT connection state: " + state);
+
+            if (state == BluetoothAdapter.STATE_CONNECTED) {
+                addBtProfileListener();
+            }
+            else if (state == BluetoothAdapter.STATE_DISCONNECTING || state == BluetoothAdapter.STATE_DISCONNECTED) {
+                if (headsetProxyListenerAdded) {
+                    bluetoothAdapter.closeProfileProxy(BluetoothProfile.HEADSET, bluetoothHeadsetProxy);
+                    headsetProxyListenerAdded = false;
+                    bluetoothHeadsetProxy = null;
+                    deviceStateChanged(EVENT_BT_HEADSET_SCO_OFF);   // make sure call window knows it
+                }
+            }
+        }
+    };
 }
 

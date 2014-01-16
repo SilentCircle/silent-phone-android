@@ -2,8 +2,10 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/support/ActionBarSherlock/ActionBarSherlock.iml" filepath="$PROJECT_DIR$/support/ActionBarSherlock/ActionBarSherlock.iml" />
       <module fileurl="file://$PROJECT_DIR$/support/ActionBarSherlock/library/library.iml" filepath="$PROJECT_DIR$/support/ActionBarSherlock/library/library.iml" />
       <module fileurl="file://$PROJECT_DIR$/scandroid.iml" filepath="$PROJECT_DIR$/scandroid.iml" />
+      <module fileurl="file://$PROJECT_DIR$/support/support.iml" filepath="$PROJECT_DIR$/support/support.iml" />
     </modules>
   </component>
 </project>

@@ -137,7 +137,7 @@ typedef struct{
    enum ECs{
       EClear=0, EInit=1,EOk=2,EEnding=3,EWaitUserAnswer=4,ESendError=5
    };
-   int iBusy;//TODO rename to iInUse
+   int iInUse;
    ECs iCallStat;
    int iCallSubStat;
 
@@ -180,19 +180,15 @@ public:
    
    
    CTSesMediaBase(CSessionsBase &cbEng):cbEng(&cbEng){
-      iSdpSent=0;
+
       pCallStatus=NULL;
-      iPacketReceived=0;iIsActive=0;
-
-      uiIPOrig=uiIPConn=0;
-      iRTPSource=0;
-      pzrtp=NULL;;
       cAO=NULL;
-
+      clear();
    }
  
    void clear()
    {
+      iSdpParsed=0;
       pzrtp=NULL;
       pMediaIDS=NULL;
       iRTPSource=0;

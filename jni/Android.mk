@@ -5,6 +5,7 @@ LOCAL_PATH:= $(call my-dir)
 # CHECK THIS
 # When we start an automated build set some environment variable to 'yes'
 # The path setup follows the proposed dir structure depicted in the e-mail
+
 ifeq ($(AUTOMATED_BUILD),1)
 
 ### setup for automated build
@@ -29,7 +30,7 @@ ZRTP_SRC_PATH := $(ROOT_SRC_PATH)/zrtpcpp
 
 include $(CLEAR_VARS)
 LOCAL_MODULE := zrtpcpp
-LOCAL_SRC_FILES := libzrtpcpp.a
+LOCAL_SRC_FILES := $(TARGET_ARCH_ABI)/libzrtpcpp.a
 
 # Where to find CtZrtpSession.h
 LOCAL_EXPORT_C_INCLUDES := $(ZRTP_SRC_PATH)/clients/tivi
@@ -41,13 +42,13 @@ include $(PREBUILT_STATIC_LIBRARY)
 
 include $(CLEAR_VARS)
 LOCAL_MODULE := tina
-LOCAL_SRC_FILES := libtina.so
+LOCAL_SRC_FILES := $(TARGET_ARCH_ABI)/libtina.so
 LOCAL_EXPORT_C_INCLUDES := $(LOCAL_PATH)
 include $(PREBUILT_SHARED_LIBRARY)
 
 include $(CLEAR_VARS)
 LOCAL_MODULE := aec
-LOCAL_SRC_FILES := libaec.so
+LOCAL_SRC_FILES := $(TARGET_ARCH_ABI)/libaec.so
 LOCAL_EXPORT_C_INCLUDES := $(LOCAL_PATH)
 include $(PREBUILT_SHARED_LIBRARY)
 
@@ -98,7 +99,7 @@ MY_SOURCES := $(TPM_SRC)password.cpp $(TPM_SRC)media.cpp $(TPM_SRC)threads.cpp \
 	$(TPM_SRC)g_cfg.cpp $(TPM_SRC)app_license.cpp $(TPM_SRC)prov.cpp\
 	$(TPM_SRC)lic_keys.cpp $(TPM_SRC)CTSipSock.cpp $(TPM_SRC)sip_reason_translator.cpp\
 	$(TPM_SRC)digestmd5.cpp $(TPM_SRC)userCfg.cpp $(TPM_SRC)build_nr.cpp\
-	$(TPM_SRC)CTLangStrings.cpp
+	$(TPM_SRC)release.cpp $(TPM_SRC)CTLangStrings.cpp $(TPM_SRC)tivi_log.cpp
 
 T_R_SRC := /
 

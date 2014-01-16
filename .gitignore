@@ -5,7 +5,7 @@ local.properties
 bin/
 gen/
 obj/
-libs/armeabi/
+libs/
 
 # OS generated files #
 ######################
@@ -27,4 +27,5 @@ Thumbs.db
 out/
 build/
 .gradle/
-
+gradle.properties
+*.iml

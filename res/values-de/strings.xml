@@ -32,7 +32,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 	<!-- Common used string for call screen, start screen  etc. -->
 	<string name="app_name">Silent Phone</string>
-	<string name="silent_circle">SilentCircle</string>
+	<string name="silent_circle">Silent Circle</string>
 	<string name="menu_settings">Menu</string>
 	<string name="call_mgr_button">Anruf\nManager</string>
 	<string name="hangup_call">Beenden</string>
@@ -48,7 +48,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     <string name="accept_video">Annehmen</string>
     <string name="audio_only">Video aus</string>
     <string name="mute_video">Video stumm</string>
-    <string name="verify_button">Drücken um\nSicherheit\nzu prüfen</string>
+    <string name="verify_button">Prüfe\nSicherheit</string>
     <string name="verify_infotext_top">Bitte mit Partner vergleichen</string>
     <string name="verify_infotext_bottom">und hier eine Partnerkennung eintragen</string>
     <string name="next">Weiter</string>
@@ -67,6 +67,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     <string name="sip_state_ended">Anruf beendet</string>
     <string name="sip_state_online">Online</string>
     <string name="sip_state_offline">Offline</string>
+    <string name="sip_error_register">Anmeldungsfehler</string>
+    <string name="sip_error_generic">Keine Verbindung</string>
+    <string name="sip_error_decline">Ruf abgewiesen</string>
+    <string name="sip_error_no_user">Kein Teilnehmer</string>
+    <string name="sip_error_no_cover">Keine Funkverbindung</string>
+    <string name="sip_error_no_server">Server nicht erreichbar</string>
 
     <string name="call_duration">Dauer</string>
     <string name="call_type_audio">Ankommender Anruf</string>
@@ -74,9 +80,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     <string name="call_error">Fehler</string>
 
     <!-- Strings to display security status, handle with care during translations -->
-    <string name="secstate_secure">SECURE</string>
-    <string name="secstate_zrtp_problem">ZRTP Problem</string>
-    <string name="secstate_not_secure">Not SECURE</string>
+    <string name="secstate_secure">SICHER</string>
+    <string name="secstate_not_secure">NICHT Sicher</string>
+    <string name="secstate_looking">Prüfe Sicherheit</string>
+    <string name="secstate_going_sec">Sicherheit herstellen</string>
+    <string name="secstate_sec_disabled">NICHT Sicher - nicht konfiguriert</string>
 
     <!-- Strings for the crypto panel -->
     <string name="crypto_peer_name">Partner name</string>
@@ -121,7 +129,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     
     <!-- Strings for the provisioning activity and messages -->
     <string name="provisioning_infotext">Erstellen Ihrer Benutzerkennung</string>
-    <string name="provisioning_vertu_welcome">Willkommen bei SilentCircle in Zusammarbeit mit Vertu</string>
+    <string name="provisioning_welcome">Willkommen bei Silent Circle</string>
+    <string name="provisioning_vertu_welcome">Willkommen bei Silent Circle in Zusammarbeit mit Vertu</string>
     <string name="provisioning_stepinfo_1">Schritt 1 von 2</string>
     <string name="provisioning_stepinfo_2">Schritt 2 von 2</string>
     <string name="provisioning_username">Bitte einen Kurznamen eingeben</string>
@@ -155,40 +164,52 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     <string name="provisioning_show_pw">Passwort anzeigen</string>
     <string name="provisioning_privacy_tc">Ich habe die Datenschutzregeln und die Geschäftsbedingungen von www.silentcircle.com gelesen und akzeptiert</string>
     <string name="provisioning_get_news">Ich möchte über exclusive Dienste und Neuigkeiten informiert werden</string>
-    <string name="provisioning_welcome_long">Als Vertu Kunde können sie SilentCircles abhörsichere Kommunikationsdieste 12 Monate kostenfrei nutzen.</string>
+    <string name="provisioning_welcome_long">Als Vertu Kunde können sie Silent Circles abhörsichere Kommunikationsdieste 12 Monate kostenfrei nutzen.</string>
     <string name="provisioning_new_account">Neue Benutzerkennung anlegen</string>
     <string name="provisioning_existing_account">Bestehende Kennung verwenden</string>
     <string name="provisioning_check_tc">Bitte akzeptieren Sie die Geschäftsbedingungen</string>
     <string name="provisioning_create">Erstellen</string>
     <string name="provisioning_get_activation_code">Verwenden Sie bitte Ihre Kennung bei\nwww.silentcircle.com\num den Aktivierungscode zu bekommen.</string>
-    
-    <!-- Strings for the key generation and messages -->
-    <string name="key_generation_info">Erzeuge Schlüssel, bitte etwas Geduld.</string>
-    <string name="key_generation_error">Fehler während Schlüsselerzeugung.</string>
-    <string name="key_generation_missing_key">Gespeicherter Schlüssel wurde nicht gefunden.</string>
-    <string name="key_generation_wrong_key">Falscher Schlüssel ausgewählt.</string>
-    <string name="key_generation_error_key">Schlüssel kann nicht gelesen oder ausgewertet werden.</string>
-    <string name="key_generation_storage_fail">Erzeugter Schlüssel kann nicht gespeichert werden.</string>
-    <string name="key_generation_error_key_generation">Schlüssel kann nicht erzeugt werden: </string>
-    <string name="key_generation_error_not_rsa_key">Schlüssel ist kein RSA Schlüssel.</string>
-    
+    <string name="provisioning_credentials">Nutzername oder Passwort ist falsch. Bitte überprüfen.</string>
+
+    <string name="key_manager_available">Silent Circle KeyManager wird verwendet.</string>
+
     <!-- Strings for the thanks dialog -->
-    <string name="thanks_top_line">Danke. Ihre SilentCircle Telefonnummer ist</string>
-    <string name="thanks_bottom_line">Zum Verwalten Ihres SilentCircle Benutzerkontos öffnen Sie im Browser bitte\nwww.silentcircle.com</string>
-    
+    <string name="thanks_top_line">Ihre Silent Circle Telefoninformation:</string>
+    <string name="thanks_bottom_line">Zum Verwalten Ihres Silent Circle Benutzerkontos öffnen Sie im Browser\nwww.silentcircle.com</string>
+    <string name="thanks_number">Nummer:</string>
+    <string name="thanks_name">Name:</string>
+
     <!-- Explanation of SAS code/words -->
     <string name="sas_explanation">Vergleichen Sie diesen Authentifizierungscode mündlich mit ihrem Gesprächspartner. Stimmen die Kodes nicht überein, könnte eine Abhörmaßnahme aktiv sein.</string>
     
     <!-- Text for the companion code screen -->
-    <string name="companion_vertu_welcome">Willkommen bei SilentCircle in Zusammarbeit mit Vertu.\nWir haben für Sie fünf 30-Tage Gastzugänge bereitgestellt, die sie an Freunde oder Familie weitergeben können.\nSenden Sie anderen einen Einladungscode, damit diese einen SilentCircle 30-Tage Gastzugang aktivieren können.</string>
+    <string name="companion_vertu_welcome">Willkommen bei Silent Circle in Zusammarbeit mit Vertu.\nWir haben für Sie fünf 30-Tage Gastzugänge bereitgestellt, die sie an Freunde oder Familie weitergeben können.\nSenden Sie anderen einen Einladungscode, damit diese einen Silent Circle 30-Tage Gastzugang aktivieren können.</string>
 
     <plurals name="companion_codes_available">
         <item quantity="one">Sie haben noch einen Einladungskode.</item>
         <item quantity="other">Sie haben noch %1$d Einladungskodes.</item>
     </plurals>
-    <string name="companion_sms_text">Willkommen bei SilentCircle. Mit dem Einladungskode %1$s können Sie bei <font fgcolor="#ffffffff">accounts.silentcircle.com</font> Ihr Benutzerkonto anlegen.</string>
+    <string name="companion_sms_text">Willkommen bei Silent Circle. Mit dem Einladungskode %1$s können Sie bei <font fgcolor="#ffffffff">accounts.silentcircle.com</font> Ihr Benutzerkonto anlegen.</string>
     <string name="companion_manage_info">Weitere Optionen um ihre Einladungskodes zu verwalten finden in Ihrem Benutzerkonto auf <font fgcolor="#ffffffff">accounts.silentcircle.com</font></string>
-    
+
+    <!-- preferences -->
+    <string name="preference_options">Einstellungen</string>
+    <string name="preferred_sas_type">SAS Typ einstellen</string>
+    <string name="sas_char_mode">SAS mit 4 Zeichen anzeigen</string>
+    <string name="sas_word_mode">SAS als 2 englische Worte anzeigen</string>
+    <string name="sp_ringtone">Klingelton</string>
+    <string name="no_ringtone">Kein Klingelton</string>
+
+    <string name="preferred_algorithms">Bevorzuge Non-NIST-Paket</string>
+    <string name="nist_preferred">Wenn verfügbar, dann bevorzuge non-NIST Sicherheitsalgorithmen: Twofish, Skein, Bernstein Kurven.</string>
+
+    <string name="sca_info_install">"Silent Circle bietet eine App an, die Ihre Konatktdaten und Anruflisten verschlüsselt speichert.
+        \nSilent Contacts ist ein kostenloses Zusatzangebot von Silent Circle.
+        \nNähere Informationen erhalten sie auf unserer Webseite.
+        \n<font fgcolor="#ff50b4fd"><b>Silent Contacts installieren</b></font>"</string>
+    <string name="sca_add_security">Für bessere Sicherheit</string>
+
     <!-- Description of image buttons -->
     <string name="caller_image">Bild des Anrufers</string>
     <string name="signal_strength">Signalqualität</string>
@@ -323,5 +344,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     <string name="zrtp_common_cls">Probleme mit der Netzverbindung. Bitte auflegen und nochmal anrufen.</string>
     <string name="zrtp_common_upd">Die angerufene Person sollte die Silent Phone Anwendung aktualisieren.</string>
     <string name="zrtp_common_app">Anwendungsfehler. Bitte die Silent Phone Anwendung löschen und neu installieren.</string>
-	
+
+    <!-- Permissions -->
+    <string name="permission_read">Lesen verschlüsselter Kontakte</string>
+    <string name="permission_write">Schreiben verschlüsselter Kontakte</string>
+
+    <!-- Permissions key manager -->
+    <string name="permission_read_km">Lesezugriff zu Silent Circle Keymanager</string>
+    <string name="permission_write_km">Schreibzugriff zu Silent Circle Keymanager</string>
+
 </resources>

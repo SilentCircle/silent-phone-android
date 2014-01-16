@@ -26,17 +26,16 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-package com.silentcircle.silentphone.utils;//TMActivity;
+package com.silentcircle.silentphone.utils;
 
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
-import android.graphics.Bitmap;
-
 import android.graphics.Rect;
 
-import java.nio.IntBuffer;
-
 import com.silentcircle.silentphone.TiviPhoneService;
+
+import java.nio.IntBuffer;
 
 //video output screen
 public class CVOut {
@@ -48,6 +47,7 @@ public class CVOut {
     int iCanDraw = 0;
     public int w = 176;
     public int h = 144;
+   int iAllocedWH=0;
     int iPrevID = 0;
     Rect rectSrc = null;
 
@@ -55,9 +55,11 @@ public class CVOut {
     int iPrevFilled = -1;
    
     public void clear(){
-        if(idata != null)return;
+        if(idata != null)
+            return;
         int sz = w * h;
-        for(int i=0;i<sz;i++)idata[i]=0;
+        for(int i=0;i<sz;i++)
+            idata[i]=0;
         if (bm != null)
            bm.eraseColor(android.graphics.Color.BLACK);
     }
@@ -100,9 +102,12 @@ public class CVOut {
             h = sxy[1];
             rectSrc = null;
             rectSrc = new Rect(0, 0, w, h);
-            idata = null;
             ib = null;
-            idata = new int[w * h];
+            if(iAllocedWH!=w*h){
+               idata = null;
+               iAllocedWH=w*h;
+               idata = new int[iAllocedWH];
+            }
             bm = null;
             System.gc();
             ib = IntBuffer.wrap(idata);

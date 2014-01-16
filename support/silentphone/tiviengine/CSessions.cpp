@@ -104,6 +104,7 @@ void CPhSesions::createCallId(CSesBase *spSes, int iIsReg)
    
    int sp=(int)spSes;
    
+//collision are not important
    CTMd5 md5;
    CTMd5 md5pwd;
    md5pwd.update((unsigned char *)"salt",4);
@@ -193,7 +194,7 @@ void CPhSesions::handleSessions()
    LOCK_MUTEX_SES
    for (i=0;i<iMaxSesions;i++)
    {
-      if(pSessionArray[i].cs.iBusy==FALSE)continue;
+      if(pSessionArray[i].cs.iInUse==FALSE)continue;
       spSes=&pSessionArray[i];
       if(spSes->mBase && 
          (spSes->cs.iCallStat==CALL_STAT::EInit || spSes->cs.iCallStat==CALL_STAT::EOk)
@@ -243,7 +244,7 @@ CSesBase *CPhSesions::findSessionByZRTP(CTZRTP *z){
    for(int i=0;i<iMaxSesions;i++)
    {
       spSes=&pSessionArray[i];
-      if(!spSes->cs.iBusy || spSes->cs.iCallStat>spSes->cs.EOk)continue;
+      if(!spSes->cs.iInUse || spSes->cs.iCallStat>spSes->cs.EOk)continue;
       mb=spSes->mBase;
       CTMediaIDS *mids=spSes->pMediaIDS;
       if(!spSes->isSession() || !mb || !mids)continue;
@@ -262,7 +263,7 @@ CTZRTP *CPhSesions::findSessionZRTP(CSesBase *ses){
    for(int i=0;i<iMaxSesions;i++)
    {
       spSes=&pSessionArray[i];
-      if(spSes!=ses || !spSes->cs.iBusy || spSes->cs.iCallStat>spSes->cs.EOk)continue;
+      if(spSes!=ses || !spSes->cs.iInUse || spSes->cs.iCallStat>spSes->cs.EOk)continue;
       mb=spSes->mBase;
       CTMediaIDS *mids=spSes->pMediaIDS;
       if(!spSes->isSession() || !mb || !mids)break;
@@ -287,7 +288,7 @@ CTAudioOutBase *CPhSesions::findSessionAO(CSesBase *ses){
    for(int i=0;i<iMaxSesions;i++)
    {
       spSes=&pSessionArray[i];
-      if(!spSes->cs.iBusy || spSes!=ses)continue;
+      if(!spSes->cs.iInUse || spSes!=ses)continue;
       mb=spSes->mBase;
       if(!spSes->isSession() || !mb)break;
       
@@ -312,7 +313,7 @@ void CPhSesions::onDataSend(char *buf, int iLen, unsigned int uiPos, int iDataTy
    for(i=0;i<iMaxSesions;i++)
    {
       spSes=&pSessionArray[i];
-      if(!spSes->cs.iBusy ||
+      if(!spSes->cs.iInUse ||
          (iDataType == CTSesMediaBase::eAudio && spSes->cs.iIsInConference) ||
          spSes->cs.iCallStat!=CALL_STAT::EOk)continue ;
       
@@ -877,10 +878,17 @@ int CPhSesions::onSipMsg(CSesBase *spSes, SIP_MSG *sMsg)
             iRegTryParam=0;
             reinviteMonitor.onOnline(&uiGT);
             
-            cPhoneCallback->registrationInfo(&strings.lRegSucc,cPhoneCallback->eOnline);
+            if(sMsg->hldContact.uiCount>1){
+               CTEditBuf<128> rc;
+               rc.setText(strings.lRegSucc);
+               rc.addInt(sMsg->hldContact.uiCount, "(%u)");
+               cPhoneCallback->registrationInfo(&rc,cPhoneCallback->eOnline);
+            }
+            else{
+               cPhoneCallback->registrationInfo(&strings.lRegSucc,cPhoneCallback->eOnline);
+            }
             
             //TODO if(prev_contact_addr!=curr_contact_addr)reInvite(); here
-            int _TODO_if_contact_addr_changed_reinvite_here;
          }
          else
          {
@@ -1041,7 +1049,7 @@ void CPhSesions::setStopReason(CSesBase *spSes, int code, const char *msg, DSTR 
 
 void CPhSesions::onKillSes(CSesBase *spSes, int iReason, SIP_MSG *sMsg ,int iMeth)
 {
-   if(!spSes || !spSes->cs.iBusy)return;
+   if(!spSes || !spSes->cs.iInUse)return;
    
    int iCanClearNow=1;
    

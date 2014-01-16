@@ -44,7 +44,6 @@ CGContextRef MyCreateBitmapContext (int pixelsWide,
    CGContextRef    context = NULL;
    CGColorSpaceRef colorSpace;
    void *          bitmapData;
-   int             bitmapByteCount;
    int             bitmapBytesPerRow;
    
    bitmapBytesPerRow   = (pixelsWide * 4);// 1
@@ -94,9 +93,6 @@ static VOObject voArray[eMaxVOObjCnt];
 @implementation QuartzImageView;
 
 
-
-
-
 - (void)awakeFromNib
 {
    [self allocx];
@@ -137,26 +133,33 @@ static VOObject voArray[eMaxVOObjCnt];
 }
 
 - (void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event {
-   
+
    UITouch *aTouch1 = [touches anyObject];
    CGPoint touchLocation = [aTouch1 locationInView:self];
    if(!_touchDetector)_touchDetector=self.touchDetector;
-   if(_touchDetector)[_touchDetector onTouch:self updown:-1 x:touchLocation.x y:touchLocation.y];   
+   if(_touchDetector)[_touchDetector onTouch:self updown:-1 x:touchLocation.x y:touchLocation.y];
+   puts("touchesBegan");
 }
 
 - (void)touchesMoved:(NSSet *)touches withEvent:(UIEvent *)event{
    UITouch *aTouch1 = [touches anyObject];
    CGPoint touchLocation = [aTouch1 locationInView:self];
    if(!_touchDetector)_touchDetector=self.touchDetector;
-   if(_touchDetector)[_touchDetector onTouch:self updown:0 x:touchLocation.x y:touchLocation.y];   
+   if(_touchDetector)[_touchDetector onTouch:self updown:0 x:touchLocation.x y:touchLocation.y];
+   puts("touchesMoved");
+   
    
 }
 - (void)touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event{
    UITouch *aTouch1 = [touches anyObject];
    CGPoint touchLocation = [aTouch1 locationInView:self];
    if(!_touchDetector)_touchDetector=self.touchDetector;
-   if(_touchDetector)[_touchDetector onTouch:self  updown:1 x:touchLocation.x y:touchLocation.y];   
+   if(_touchDetector)[_touchDetector onTouch:self  updown:1 x:touchLocation.x y:touchLocation.y];
+   puts("touchesEnded");
    
+}
+- (void)touchesCancelled:(NSSet *)touches withEvent:(UIEvent *)event{
+   puts("touchesCancelled");
 }
 
 
@@ -205,6 +208,7 @@ static VOObject voArray[eMaxVOObjCnt];
    self.clearsContextBeforeDrawing = !!iClear;
 
    CTVideoOut *pVO=vo->pVO;
+   const int screenIsPortrait =  self.frame.size.width<self.frame.size.height;
    
    {
       int iRecPortrait=pVO && pVO->getH()*5>pVO->getW()*6;
@@ -212,7 +216,7 @@ static VOObject voArray[eMaxVOObjCnt];
       CGImageRetain(vmDraw->imageEmpty);
       myLayer.shouldRasterize=NO;
       myLayer.contents = (id) vmDraw->imageEmpty;
-      myLayer.contentsGravity=iRecPortrait?kCAGravityResizeAspectFill:kCAGravityResizeAspect;//kCAGravityResizeAspect;//
+      myLayer.contentsGravity=iRecPortrait && screenIsPortrait?kCAGravityResizeAspectFill:kCAGravityResizeAspect;//kCAGravityResizeAspect;//
       myLayer.borderWidth = 0.0;
       
       if(iCntObjects<2  || (iCntObjects==2 && iId==0)){
@@ -232,16 +236,12 @@ static VOObject voArray[eMaxVOObjCnt];
             myLayer.masksToBounds=NO;
             int wh=self.bounds.size.width/3;
             int hh=self.bounds.size.height/3;
-            //myLayer.bounds = CGRectMake((iId&1)*wh, (iId>>1)*hh, wh, hh);
             int xp=iId&1;
             int yp=iId>>1;
-            //myLayer.bounds =
             myLayer.frame = CGRectMake(xp?(self.bounds.size.width*xp-wh):0, yp?(self.bounds.size.height*yp-hh):0, wh, hh);
             
          }
          
-         
-         printf("draw=%d\n",iId);
          myLayer.zPosition=.5f;
       }
       
@@ -266,8 +266,6 @@ static VOObject voArray[eMaxVOObjCnt];
    vo->prevL=myLayer;
 
    if(iClear){vo->iPrevFrame=-1;vo->prevL=NULL;}
-
- //  if(!iClear)[myLayer needsDisplay];
    
    CGImageRelease(vmDraw->imageEmpty);
    
@@ -417,9 +415,7 @@ int CTVideoOut::start(){
 void CTVideoOut::startDraw(){
    
    QuartzImageView *q=(QuartzImageView*)qiw;
-
    dataLocked=(int*)[q getNextData:this];
-   
 }
 
 
@@ -521,7 +517,8 @@ void CTVideoOut::endDraw(){
 }
 
 int CTVideoOut::drawFrame(){
-   if(qiw && iStarted==2){
+   
+   if(qiw && iStarted==2 ){
       int iDrawInto=[(QuartzImageView*)qiw getDrawInto:this];
       if(iDrawInto>=0){
          

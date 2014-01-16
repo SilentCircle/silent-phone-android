@@ -32,7 +32,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 	<!-- Common used string for call screen, start screen  etc. -->
 	<string name="app_name">Silent Phone</string>
-	<string name="silent_circle">SilentCircle</string>
+	<string name="silent_circle">Silent Circle</string>
 	<string name="menu_settings">Menu</string>
 	<string name="call_mgr_button">Call\nManager</string>
 	<string name="hangup_call">End call</string>
@@ -48,7 +48,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	<string name="accept_video">Accept</string>
 	<string name="audio_only">Audio only</string>
 	<string name="mute_video">Mute video</string>
-	<string name="verify_button">Press to\nverify\nsecurity</string>
+	<string name="verify_button">Verify\nsecurity</string>
 	<string name="verify_infotext_top">Compare with partner</string>
 	<string name="verify_infotext_bottom">and enter partner’s name here</string>
 	<string name="next">Next</string>
@@ -67,6 +67,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     <string name="sip_state_ended">Call ended</string>
     <string name="sip_state_online">Online</string>
     <string name="sip_state_offline">Offline</string>
+    <string name="sip_error_register">Cannot register</string>
+    <string name="sip_error_generic">Cannot connect</string>
+    <string name="sip_error_decline">Call declined</string>
+    <string name="sip_error_no_user">User not found</string>
+    <string name="sip_error_no_cover">No radio coverage</string>
+    <string name="sip_error_no_server">Could not reach server</string>
 
     <string name="call_duration">Duration</string>
     <string name="call_type_audio">Incoming call</string>
@@ -76,6 +82,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	<!-- Strings to display security status, handle with care during translations -->
 	<string name="secstate_secure">SECURE</string>
     <string name="secstate_not_secure">Not SECURE</string>
+    <string name="secstate_looking">Looking for peer</string>
+    <string name="secstate_going_sec">Going secure</string>
+    <string name="secstate_sec_disabled">Not SECURE - not enabled</string>
 
     <!-- Strings for the crypto panel -->
 	<string name="crypto_peer_name">Peer name</string>
@@ -120,6 +129,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	
 	<!-- Strings for the provisioning activity and messages -->
 	<string name="provisioning_infotext">Account Creation</string>
+    <string name="provisioning_welcome">Welcome to Silent Circle</string>
 	<string name="provisioning_vertu_welcome">Welcome to Silent Circle in partnership with Vertu</string>
 	<string name="provisioning_stepinfo_1">Step 1 of 2</string>
 	<string name="provisioning_stepinfo_2">Step 2 of 2</string>
@@ -152,28 +162,23 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	<string name="provisioning_pwstrength_good">Password strength: GOOD</string>
 	<string name="provisioning_pwstrength_strong">Password strength: STRONG</string>
 	<string name="provisioning_show_pw">Show password</string>
-	<string name="provisioning_privacy_tc">I have read and accepted the privacy policy and terms and conditions from  www.silentcircle.com</string>
+	<string name="provisioning_privacy_tc">I have read and accepted the privacy policy and terms and conditions from www.silentcircle.com</string>
 	<string name="provisioning_get_news">I would like to receive exclusive news and invitations from Services</string>
-	<string name="provisioning_welcome_long">As a Vertu Customer you enjoy 12 months of complimentary access to SilentCircle’s encrypted communications services.</string>
+	<string name="provisioning_welcome_long">As a Vertu Customer you enjoy 12 months of complimentary access to Silent Circle’s encrypted communications services.</string>
 	<string name="provisioning_new_account">Create new account</string>
 	<string name="provisioning_existing_account">Login to existing account</string>
 	<string name="provisioning_check_tc">Please accept and check the terms and conditions</string>
 	<string name="provisioning_create">Create</string>
 	<string name="provisioning_get_activation_code">Please login to your account at\nwww.silentcircle.com\nto retrieve an activation code.</string>
+    <string name="provisioning_credentials">Username or password wrong. Please check.</string>
 
-	<!-- Strings for the key generation and messages -->
-	<string name="key_generation_info">Generating keys, please standby.</string>
-	<string name="key_generation_error">Error during key generation</string>
-	<string name="key_generation_missing_key">Cannot retrieve previously generated secret key.</string>
-	<string name="key_generation_wrong_key">Selected key name does not match expected key name.</string>
-	<string name="key_generation_error_key">Cannot read and decode stored secret key.</string>
-	<string name="key_generation_storage_fail">Could not store the generated secret key.</string>
-	<string name="key_generation_error_key_generation">Cannot generate a secret key: </string>
-	<string name="key_generation_error_not_rsa_key">Data not a private RSA key.</string>
+    <string name="key_manager_available">Using Silent Circle KeyManager.</string>
 
 	<!-- Strings for the thanks dialog -->
-	<string name="thanks_top_line">Thank you, your SilentCircle phone number is</string>
-	<string name="thanks_bottom_line">To manage your SilentCircle account please go to\nwww.silentcircle.com</string>
+	<string name="thanks_top_line">Your Silent Circle phone information:</string>
+	<string name="thanks_bottom_line">To manage your Silent Circle account go to\nwww.silentcircle.com</string>
+    <string name="thanks_number">Number:</string>
+    <string name="thanks_name">Name:</string>
 
 	<!-- Explanation of SAS code/words -->
 	<string name="sas_explanation">You should verbally compare this authentication code with your partner. If it doesn’t match, it indicates the presence of a wiretapper.</string>
@@ -185,9 +190,26 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
         <item quantity="one">You have one available invitation code.</item>
         <item quantity="other">You have %1$d available invitation codes.</item>
     </plurals>
-    <string name="companion_sms_text">Welcome to SilentCircle. Please enter your invitation code %1$s at <font fgcolor="#ffffffff">accounts.silentcircle.com</font> to create your free account.</string>
+    <string name="companion_sms_text">Welcome to Silent Circle. Please enter your invitation code %1$s at <font fgcolor="#ffffffff">accounts.silentcircle.com</font> to create your free account.</string>
     <string name="companion_manage_info">More options to manage your invitation codes are available at <font fgcolor="#ffffffff">accounts.silentcircle.com</font></string>
-    
+
+    <!-- preferences -->
+    <string name="preference_options">Settings</string>
+    <string name="preferred_sas_type">Preferred SAS type</string>
+    <string name="sas_char_mode">SAS displayed as four characters</string>
+    <string name="sas_word_mode">SAS displayed as two words</string>
+    <string name="sp_ringtone">Ringtone</string>
+    <string name="no_ringtone">No ringtone</string>
+
+    <string name="preferred_algorithms">Prefer Non-NIST Suite</string>
+    <string name="nist_preferred">Always prefer non-NIST algorithms if available: Twofish, Skein, and Bernstein curves.</string>
+
+    <string name="sca_info_install">"Silent Circle provides an encrypted app that lets you and only you access your contacts and call log.
+        \nSilent Contacts is a free add-on from Silent Circle.
+        \nFor more information, go to our website.
+        \n<font fgcolor="#ffffffff"><b>Install Silent Contacts</b></font>"</string>
+    <string name="sca_add_security">Add Security</string>
+
     <!-- Description of image buttons -->
 	<string name="caller_image">Image of caller</string>
 	<string name="signal_strength">Signal quality</string>
@@ -334,10 +356,18 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	-->
 	<string name="zrtp_common_cmp">"You should verbally compare the authentication code with the person you are calling. If it doesn’t match, it indicates that someone may have intercepted the call."</string>
     <string name="zrtp_common_cls">Connection Error. Please close and call again.</string>
-    <string name="zrtp_common_upd">The person you are calling needs to update their Silent Phone application to the latest version</string>
+    <string name="zrtp_common_upd">The person you are calling needs to update their Silent Phone application to the latest version.</string>
     <string name="zrtp_common_app">Application Error. Please re-install Silent Phone.</string>
 
-	<string name="s1_c001">Hello received, preparing a Commit</string>
+    <!-- Permissions -->
+    <string name="permission_read">Read secure contacts</string>
+    <string name="permission_write">Write secure contacts</string>
+
+    <!-- Permissions key manager -->
+    <string name="permission_read_km">Read access to Silent Circle key manager</string>
+    <string name="permission_write_km">Write access to Silent Circle key manager</string>
+
+    <string name="s1_c001">Hello received, preparing a Commit</string>
 	<string name="s1_c001_explanation"></string>
 	<string name="s1_c002">Commit: Generated a public DH key</string>
 	<string name="s1_c002_explanation"></string>

@@ -34,6 +34,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 unsigned int getTickCount();
 void tmp_log(const char *p);
+int mustUseTLS();
 
 #define T_UNKNOWN_SOCK_RET (-2)
 
@@ -114,7 +115,7 @@ CTSipSock::CTSipSock(CTSockCB &c):CTSockBase(),udp(c),tcp(NULL),sockCB(c),tls(NU
 
 void CTSipSock::setSockType(const char *p){
    
-   if(strcmp(p,"TLS")==0){setSockType(eTLS);}
+   if(strcmp(p,"TLS")==0 || mustUseTLS()){setSockType(eTLS);}
    else if(strcmp(p,"TCP")==0){setSockType(eTCP);}
    else if(strcmp(p,"UDP")==0){setSockType(eUDP);}
    else setSockType(eUDP);
@@ -546,13 +547,15 @@ int CTSipSock::sendToReal(const char *buf, int iLen, ADDR *address){
          if(tcp)printf("[tcp %d=%d,%d=%d]",tcp->getAddrConnected().ip,address->ip,tcp->getAddrConnected().getPort(),address->getPort());
       }
       else if(iType==eTLS){
-         if(tls){
+         int isRelease();
+         
+         if(tls && !isRelease()){
             char bufA[32];
             char bufB[32];
             tls->getAddrConnected().toStr(&bufA[0]);
             address->toStr(&bufB[0]);
             
-            char d[64];sprintf(d,"[tls conn=%s dst=%s]",bufA,bufB);
+            char d[64];snprintf(d,sizeof(d),"[tls conn=%s dst=%s]",bufA,bufB);
             tmp_log(d);
          }
       }
@@ -611,10 +614,6 @@ int CTSipSock::sendToReal(const char *buf, int iLen, ADDR *address){
                iLen=0;//do not send keeplive
             }
             else {
-               if(!iTlsIsSent){
-                  iTlsIsSent=1;
-                  Sleep(50);//wait recv starts listen
-               }
                r=tls->_send(buf,iLen);
                if(iLen>0)tivi_slog("sent[%d]-tls\n[%.*s]",r,min(iLen,10),buf);
                
@@ -622,6 +621,9 @@ int CTSipSock::sendToReal(const char *buf, int iLen, ADDR *address){
                   tmp_log("f-recr");
                   iFlagRecreate|=2;//ok
                   iFlagRecreate&=~4;
+               }
+               else if(!iTlsIsSent){
+                  iTlsIsSent=1;
                }
             }
             return r;
@@ -802,7 +804,7 @@ int CTSipSock::recvFrom(char *buf, int iLen, ADDR *address){
       
       rec=recFrom2(&cbTcp,buf,iLen,&tmpBuf[0],sizeof(tmpBuf),&iBytesInNextTmpBuf);
       if(rec<=0){
-         if(tls->peerClosed()==1){
+         if(tls->peerClosed()==1 && iTlsIsSent){
             tmp_log("[tls->peerClosed() recreate]");
             iFlagRecreate|=2;
             iFlagRecreate&=~4;

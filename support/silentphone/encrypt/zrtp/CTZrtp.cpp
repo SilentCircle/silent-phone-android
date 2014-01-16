@@ -41,11 +41,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #ifdef _C_T_ZRTP_V_H
 
-
 void clearZrtpCachesG(void *pZrtpGlobals){}
 char *getEntropyFromZRTP_tmp(unsigned char *p, int iBytes){
-   return (char*)p; 
+   return (char*)p;
 }
+
 
 #else
 
@@ -56,7 +56,7 @@ char * getFileStorePath();
 void log_file_protection_prop(const char *fn);
 void setFileBackgroundReadable(CTEditBase &b);
 void setFileBackgroundReadable(const char *fn);
-
+void log_zrtp(const char *tag, const char *buf);
 
 static int ig_InitCNT=0;
 static char bufPathCache[2048];
@@ -72,7 +72,6 @@ static CTEditBase bufFNEntropy(2048);
 #endif
 
 int t_has_zrtp(){return 1;}
-
 
 void add_tz_random(void *p, int iLen){
    ZrtpRandom::addEntropy((unsigned char *)p,iLen);
@@ -94,8 +93,6 @@ void saveEntropy(){
       setFileBackgroundReadable(bufFNEntropy);
    }
 }
-
-
 
 static void loadEntropy(){
    static int iEntropyLoaded;
@@ -126,8 +123,20 @@ static void loadEntropy(){
    if(p)delete p;
 }
 
+//#include <CtZrtpSession.h>
 
-//#include <sqlite3.h>
+const char *getZRTP_Build(){return getZrtpBuildInfo();}
+/*
+   static char buf[128]="";
+   if(!buf[0]){
+      CtZrtpSession *n = new CtZrtpSession();
+      n->getInfo("buildInfo",(uint8_t*)&buf[0], sizeof(buf));
+      delete n;
+   }
+   
+   return &buf[0];
+}
+ */
 
 
 
@@ -251,21 +260,16 @@ void CTZRTP::enrollAccepted(const char *mitm_name){
 
 int CTZRTP::setDstHash(char *p, int iLen, int iIsVideo){
    
-
-  // mutextTest.lock();
    if(iLen>100)return -1;
    
    char bufTMP[128];strncpy(bufTMP,p,iLen);bufTMP[iLen]=0;p=&bufTMP[0];
    //memset(bufTMP,'a',32);//test warning
    CtZrtpSession::setSignalingHelloHash((char*)p, TO_N);
-   //mutextTest.unLock();
    return 0;
 }
 int CTZRTP::getSignalingHelloHash(char *helloHash, int iIsVideo, int index){
-   
 
    return CtZrtpSession::getSignalingHelloHash(helloHash, TO_N, index);
-
 }
 
 void CTZRTP::release_zrtp(){
@@ -292,6 +296,8 @@ int CTZRTP::init_zrtp(int iCaller, char *zid_base16, int iInitVideoHash, int iIn
    setUserCallback(this, CtZrtpSession::AudioStream);
    setUserCallback(this, CtZrtpSession::VideoStream);
 //mutextTest.unLock();
+   
+   log_zrtp("t_zrtp", "init_zrtp()");
    
    return 0;
 }

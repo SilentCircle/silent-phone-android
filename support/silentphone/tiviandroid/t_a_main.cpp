@@ -89,7 +89,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 void tivi_log1(const char *p, int val);
-
+void tmp_log(const char *p);
 void add_tz_random(void *p, int iLen);
 const char *findFilePath(const char *fn);
 void t_save_glob();
@@ -582,7 +582,7 @@ public:
       unsigned int uiTC=getTickCount();
       
       for(int i=0;i<eMaxAOCnt;i++){
-         int d = (int)(uiTC-ao[i].uiReleasedAT);
+         int d = (int)(uiTC-ao[i].uiReleasedAT);//#SP-263 getTickCount can overlap 
          if(!ao[i].iInUse && (iSecondPass || (ao[i].uiReleasedAT==0 && ao[i].voipAudioOut) || d>5000)){
             ao[i].iInUse=3;
             ao[i].iRate=iRate;
@@ -798,6 +798,7 @@ public:
       //some carriers prepended +1 even call originates outside US
       if(iLen<6)return sz;//number is too small
       if(sz[0]!='+' && sz[1]!='1')return sz;
+      if(sz[0]=='+' && sz[1]!='1')return sz;//
       int iDigits=0;
       for(int i=0;i<iLen;i++){
          if(isalpha(sz[i]))return sz;
@@ -906,7 +907,7 @@ public:
 };
 
 #ifndef __APPLE__
-// #include "../audio/ec/speex_aec/speex_aec.h"
+//#include "../audio/ec/speex_aec/speex_aec.h"
 #endif
 
 static int iEchoCancellerOn = 3;//0 - off, 1-speex, 2-google ,3 eng_speex, 4 eng_speex+goog
@@ -1314,7 +1315,6 @@ public:
                dtmf.start(p[1]);
                //--dtmfPlay.play(p[1]);
                return T_TRY_OTHER_ENG;
-               break;
             case 'd':
                dtmfPlay.play(p[1]);
                
@@ -1477,16 +1477,8 @@ public:
             }
             else if(iLen==12 && strcmp(p+1,"waitOffline")==0){
                if(p_cfg.iAccountIsDisabled)return T_TRY_OTHER_ENG;
-
-               for(int z=0;z<10;z++){
-                  if(!ph)break;
-                  Sleep(200);
-                  if(!p_cfg.isOnline() && !p_cfg.reg.bUnReg)break;
-                  
-               }
-               puts("offline");
                
-               
+               if(ph)ph->waitOffline();
                return T_TRY_OTHER_ENG;
                
             }
@@ -1504,13 +1496,13 @@ public:
                return T_TRY_OTHER_ENG;
             }
             else if(iLen==15 && strcmp(p+1,"afterCfgUpdate")==0){
-               printf("[afterCfgUpdate %d %s %s]",p_cfg.iNeedSave,p_cfg.tmpServ,p_cfg.str32GWaddr.strVal);
+ 
                if(p_cfg.iNeedSave){
                   if(!p_cfg.iAccountIsDisabled)checkCfgChanges(0);
                   if(!p_cfg.iAccountIsDisabled)p_cfg.iReRegisterNow=1;
                   saveCfg(&p_cfg,iEngineIndex);
                }
-               printf("[afterCfgUpdate %d %s %s]",p_cfg.iNeedSave,p_cfg.tmpServ,p_cfg.str32GWaddr.strVal);
+ 
                if(p_cfg.iAccountIsDisabled)return T_TRY_OTHER_ENG;
                p_cfg.iCanRegister=1;
                p_cfg.iUserRegister=1;
@@ -1824,7 +1816,11 @@ protected:
       }
       
       info(e,iType,0);
-      
+      /*
+      char buf[128];
+      snprintf(buf, sizeof(buf), "p=%p ison=%d unreg=%d net=%d u=%llu",this, p_cfg.isOnline(),p_cfg.reg.bUnReg, p_cfg.iHasNetwork,p_cfg.reg.uiRegUntil);
+      tmp_log(buf);
+      */
       sendCB(CT_cb_msg::eReg,0,&bufLastRegErr[0]);
       
       return 0;
@@ -2364,18 +2360,7 @@ public:
    void stop(){
       
    }
-   /*
-    int l=(int)strlen(argv[i]);
-    if(l==5 && strcmp(argv[i],".sock")==0){
-    cPhone->ph->sockSip.getInfo("sock",&bufX[0], 511);
-    return &bufX[0];
-    }
-    if(l==11 && strcmp(argv[i],".lastErrMsg")==0){
-    strcpy(bufX,cPhone->bufLastErrMsg);
-    cPhone->bufLastErrMsg[0]=0;
-    return &bufX[0];
-    }
-    */
+
    CPhoneCons *isThisEngine(CPhoneCons *ret, const char *p, int iPLen, const char *name){
       if(ret){
          if(name){
@@ -2423,10 +2408,7 @@ public:
       }eng[eMaxAccounts];
       
       char cmd[128];
-      
-      
-      
-      
+ 
    }T_ENG_LIST_CALL_TO;
    
    void callTo(void *pEng, const char *cmd){
@@ -2534,7 +2516,7 @@ public:
             break;
          }
          
-         Sleep(50);
+         Sleep(100);
          
          iFailCnt=0;
          
@@ -2586,7 +2568,6 @@ public:
       
       CPhoneCons *firstOnlineEng=NULL;
       
-
       for(int i=0;i<pl->iCnt;i++){
          resp[i]=0;
          respMsg[i].reset();
@@ -2602,7 +2583,6 @@ public:
          delete pl;
          return 0;
       }
-      
 #if 1
 
       int iFirstOk=waitResp(pl,resp);
@@ -2617,6 +2597,7 @@ public:
       if(pl->iTmpCallID>pl->self->iLastTmpCallIDToStop){//check if not canceled by caller
       
          if(iFirstOk>=0){
+            
             pl->eng[iFirstOk].eng->command(pl->cmd);
             
             if(pl->iTmpCallID<=pl->self->iLastTmpCallIDToStop){
@@ -2712,18 +2693,11 @@ public:
       
       for(int i=0;i<eAccountCount;i++){
          CPhoneCons *ret=getAccountByID(i,1);
-         if(ret==eng){
+         if(!ret || !ret->ph)continue;
+         
+         if(ret==eng || isSameAccount(eng,ret)){
             if(ret->p_cfg.isOnline() && (int)ret->p_cfg.reg.uiRegUntil>0){
-               
                return 2;
-            }
-         }
-         else {
-            if(ret!=eng && ret && ret->ph && isSameAccount(eng,ret))
-               //   ret->p_cfg.szTitle[0] &&  strcmp(ret->p_cfg.szTitle,eng->p_cfg.szTitle)==0)
-            {
-               if(ret->p_cfg.isOnline() && (int)ret->p_cfg.reg.uiRegUntil>0)
-                  return 2;
             }
          }
       }
@@ -2733,6 +2707,9 @@ public:
    }
    int getPhoneState(){
       CPhoneCons *eng = getAccountByID(0,1);
+      if(!eng)return 0;
+      //TODO find SC account
+      if(!eng->p_cfg.user.un[0]){eng = getAccountByID(1,1);if(!cPhone)cPhone=eng;}
       if(!eng)return 0;
       if(isAccountOnline(eng))return 2;
       if(eng->p_cfg.reg.bRegistring)return 1;
@@ -2787,13 +2764,15 @@ public:
       return NULL;
    }
    
+   #define CMP_SZ(_P,_SZ) (l+1==sizeof(_SZ) && p && strcmp(_P,_SZ)==0)
+   
    const char* sendEngMsg(void *pEng, const char *p){
       
       if(!iStarted || iExiting)return "";
       
       int l=p?strlen(p):0;
       
-      if(l==5 && t_isEqual(p,"title",5)){
+      if(CMP_SZ(p,"title")){
          if(!pEng)return "";
          for(int i=0;i<eAccountCount;i++){
             CPhoneCons *ret=getAccountByID(i);
@@ -2805,10 +2784,18 @@ public:
          return "";
       }
       
+      
       if(!pEng){
          if(!p)return "";
          
-         if(l==10 && strcmp(p,"all_online")==0){
+         if(l>4 && strncmp(p,"cfg.",4)==0){
+            static char buf[256];
+            char *findByServKey(void *pEng, const char *key, char *buf, int iMax);
+            char *res=findByServKey(NULL, p+4, &buf[0], sizeof(buf)-1);
+            return res?res:"";
+         }
+         
+         if(CMP_SZ(p,"all_online")){
             for(int i=0;i<eAccountCount;i++){
                CPhoneCons *ret=getAccountByID(i,1);
                if(!ret)break;
@@ -2831,7 +2818,7 @@ public:
       }
       
       
-      if(l==6 && p && pEng && t_isEqual(p,"delete",6)){
+      if( pEng && CMP_SZ(p,"delete")){
          deleteAccount((CPhoneCons*)pEng);
          return "ok";
       }
@@ -2850,20 +2837,35 @@ public:
             }
             if(p){
                
+               if(l>9 && strncmp(p,"set ",4)==0){
+                  
+                  if(strncmp(p+4,"cfg.",4)==0){
+                     int setCfgValueSZ(char *sz, void *pCfg, char *key, int iKeyLen);
+                     
+                     int findChar(const char *p, char c);
+                     int pos=findChar(p+8,'=');
+                     if(pos<1)return "";
+                     
+                     if(setCfgValueSZ((char *)p+9+pos, &ret->p_cfg,(char*)p+8,pos)<0)return "err";
+                     
+                     return "ok";
+                  }
+               }
+               
                if(l>4 && strncmp(p,"cfg.",4)==0){
                   static char buf[256];
                   char *findByServKey(void *pEng, const char *key, char *buf, int iMax);
                   char *res=findByServKey(ret, p+4, &buf[0], sizeof(buf)-1);
                   return res?res:"";
                }
-               
-               if(l==4 && strcmp(p,"name")==0){
+
+               if(CMP_SZ(p,"name")){
                   static char buf[256];
                   if(ret->p_cfg.szTitle[0])strcpy(&buf[0],&ret->p_cfg.szTitle[0]);
                   else strcpy(&buf[0],ret->p_cfg.str32GWaddr.strVal);
                   return &buf[0];
                }
-               if(l==9 && strcmp(p,"name_stat")==0){
+               if(CMP_SZ(p,"name_stat")){
                   static char buf[256];
                   if(ret->p_cfg.szTitle[0])strcpy(&buf[0],&ret->p_cfg.szTitle[0]);
                   else strcpy(&buf[0],ret->p_cfg.str32GWaddr.strVal);
@@ -2871,11 +2873,11 @@ public:
                      strcat(&buf[0]," Online");
                   return &buf[0];
                }
-               if(l==6 &&  strcmp(p,"regErr")==0){
+               if(CMP_SZ(p,"regErr")){
                   if(!ret || !ret->ph)return "";
                   return &ret->bufLastRegErr[0];
                }
-               if(l==4 && t_isEqual(p,"isON",4)){
+               if(CMP_SZ(p,"isON")){
                   
                   if(isAccountOnline(ret)){
                      return "yes";//&buf[0];
@@ -2891,17 +2893,17 @@ public:
                   return "no";
                }
                
-               if(l==5 && t_isEqual(p,".sock",5)){
+               if(CMP_SZ(p,".sock")){
                   static char buf[256];
                   ret->ph->sockSip.getInfo("sock",&buf[0], sizeof(buf)-1);
                   return &buf[0];
                }
-               if(l==6 && t_isEqual(p,".isTLS",6)){
+               if(CMP_SZ(p,".isTLS")){
                   static char buf[16];
                   sprintf(buf,"%d",ret->ph->sockSip.isTLS());
                   return &buf[0];
                }
-               if(l==11 && strcmp(p,".lastErrMsg")==0){
+               if(CMP_SZ(p,".lastErrMsg")){
                   static char buf[256];
                   strncpy(buf,ret->bufLastErrMsg,sizeof(buf)-1);
                   buf[sizeof(buf)-1]=0;
@@ -2980,9 +2982,41 @@ public:
       audioMngr.cAI.cb=this;
       audioMngr.cVI.cb=this;
       CPhoneCons *ret;
+      
+      if(p && strncmp(p,"set ",4)==0){
+         
+         if(strncmp(p+4,"cfg.",4)==0){
+            int setGlobalValueByKey(const char *key, int iKeyLen, char *sz);
+            int setCfgValueSZ(char *sz, void *pCfg, char *key, int iKeyLen);
+            
+            int findChar(const char *p, char c);
+            int pos=findChar(p+8,'=');
+            if(pos<1)return 0;
+            int r=setGlobalValueByKey(p+8,pos,(char *)p+9+pos);
+            if(r>0){
+               t_save_glob();
+               return 0;
+            }
+            
+            for(int iEnabled=1;iEnabled>=0;iEnabled--){
+               for(int i=0;i<eAccountCount;i++){
+                  ret=getAccountByID(i,iEnabled);
+                  if(ret){
+                     setCfgValueSZ((char *)p+9+pos, &ret->p_cfg,(char*)p+8,pos);
+                  }
+               }
+            }
+            
+            return 0;
+         }
+      }
 
       if(p && strncmp(p,"*##*",4)==0){
          
+         if(strcmp(p+4,"3948*")==0){//exit
+            exit(0);
+            return 0;
+         }
          if(strcmp(p+4,"3357768*")==0){//delprov
             int created_by_user[eAccountCount];
             int iLast=0;
@@ -2998,7 +3032,9 @@ public:
             destroy();//test;
             void delProvFiles(const int *p, int iCnt);
             delProvFiles(&created_by_user[0],iLast);
+#if !defined(ANDROID_NDK)
             exit(1);
+#endif
             return 0;
          }
          if(strcmp(p+4,"9787257*")==0){
@@ -3020,6 +3056,23 @@ public:
             puts("crash now, testing app autorestart");
             char *p2=(char*)"crash_test";
             memset(p2,10,100);
+            return 0;
+         }
+         if(strcmp(p+4,"367*")==0){//dns
+            ret=(CPhoneCons*)getCurrentDOut();
+            if(!ret || !ret->ph)return -1;
+            ret->ph->checkServDomainName(0,1);
+            // ret->info(<#CTStrBase *e#>, <#int iType#>, <#int SesId#>)
+            
+            return 0;
+         }
+         if(strcmp(p+4,"367734*")==0){//dns
+            ret=(CPhoneCons*)getCurrentDOut();
+            if(!ret || !ret->ph)return -1;
+            ret->ph->checkServDomainName(0,1);
+            ret->p_cfg.iReRegisterNow=1;
+            // ret->info(<#CTStrBase *e#>, <#int iType#>, <#int SesId#>)
+            
             return 0;
          }
          void setRtpQueue(int f);
@@ -3081,6 +3134,9 @@ public:
             //--ret->command(p);
             return 0;
          }
+      }
+      if(p && p[0]==':' && (p[1]=='S' || p[1]=='s')){
+         t_save_glob();
       }
       
       
@@ -3249,6 +3305,7 @@ public:
    }
 private:
    CPhoneCons *load(int i){
+     // char buf[128];snprintf(buf, sizeof(buf),"load=%d",i);tmp_log(buf);
       account[i].ph=new CPhoneCons(i);
       account[i].iSTLen=strlen(account[i].ph->p_cfg.szTitle);
       account[i].iInUse=1;
@@ -3406,8 +3463,10 @@ char* findByServKey(void *pEng, const char *key, char *buf, int iMax){
    char *opt;
    char *pRet=(char*)findCfgItemByServiceKey(pEng, (char*)key, sz, &opt,&t);
    if(pRet && sz>0){
-      if(t==PHONE_CFG::e_char)
-         return (char*)pRet;
+      if(t==PHONE_CFG::e_char){
+         strncpy(buf, pRet, iMax);buf[iMax-1]=0;
+         return buf;
+      }
       
       int v=*(int*)pRet;
       snprintf(buf,iMax,"%d",v);
@@ -3526,7 +3585,14 @@ void  setDevIDUSB(int){}
 int getSetCfgVal(int iGet, char *k, int iKeyLen, char *v, int iMaxVLen){
    
    cPhone=engMain->getAccountByID(0, 1);
+   if(cPhone && !cPhone->p_cfg.szTitle[0]){
+      //TODO find SC account
+      CPhoneCons *p=engMain->getAccountByID(1, 1);//get a valid account
+      if(p)cPhone=p;
+   }
    if(!cPhone){
+      return 0;//android does not support multiple accounts or cfg
+      
       engMain->getEmptyAccount();
       engMain->clickOnEmpty();
       cPhone=engMain->getAccountByID(0, 1);
@@ -3617,25 +3683,32 @@ void onNewVideoData(int *d, unsigned char *yuv, int w, int h, int angle){
 #endif
 
 int disableABookLookup(){return 0;}
-/*
-static int test_th_send_opt(void *p){
-   
-   CPhoneCons *eng = engMain->getAccountByID(1,1);
-   
+
+static int test_th_send_opt(void *pv){
+   /*
    char name[64];
+   char *p=(char*)pv;
+   if(!p || !p[0])return 0;
    
-   strncpy(name, (char*)p+1, 63);
    
-   int dur=(((char*)p)[0]-'0');
+   int id=(((char*)p)[0]-'0');p++;
+   if(!p[0])return 0;
+   CPhoneCons *eng = engMain->getAccountByID(id,1);
+   
+   
+   int dur=(((char*)p)[0]-'0');p++;
+   if(!p[0])return 0;
    dur*=30;
+   
+   strncpy(name, (char*)p, 63);
    
    if(!name[0] || dur<1)return 0;
    
    name[63]=0;
    name[strlen(name)-1]=0;//rem star
    
-   CTEditBuf<64> b;
-   b.setText("Keapalive");
+   CTEditBuf<1024> b;
+   b.setText("Hi, Keapalive Keapalive Keapalive Keapalive Keapalive Keapalive Keapalive Keapalive Keapalive Keapalive Keapalive Keapalive Keapalive Keapalive Keapalive Keapalive Keapalive Keapalive Keapalive KeapaliveKeapalive Keapalive Keapalive Keapalive Keapalive Keapalive Keapalive Keapalive Keapalive KeapaliveKeapalive Keapalive Keapalive Keapalive Keapalive Keapalive Keapalive Keapalive Keapalive KeapaliveKeapalive Keapalive Keapalive Keapalive Keapalive Keapalive Keapalive Keapalive Keapalive KeapaliveKeapalive Keapalive Keapalive Keapalive Keapalive Keapalive Keapalive Keapalive Keapalive KeapaliveKeapalive Keapalive Keapalive Keapalive Keapalive Keapalive Keapalive Keapalive Keapalive KeapaliveKeapalive Keapalive Keapalive Keapalive Keapalive Keapalive Keapalive Keapalive Keapalive Keapalive");
    
    while(name[0]){
       printf("[send options %s dur=%dsec]", name, dur);
@@ -3643,6 +3716,7 @@ static int test_th_send_opt(void *p){
       eng->ph->sendMsg(0, name, NULL, &b);
       Sleep(dur*1*1000);
    }
+    */
    return 0;
 }
 
@@ -3651,7 +3725,6 @@ void test_send_options(const char *name){
    startThX(test_th_send_opt, (void*)name);
 }
 
-*/
 
 
 

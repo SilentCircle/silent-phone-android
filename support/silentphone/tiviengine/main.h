@@ -104,6 +104,13 @@ typedef struct{
    ADDR addr;
    char *pUser;
    int iUserLen;
+   int iPriority;
+   void clearAll(){
+      clear();
+      addr.clear();
+      iPriority=0;
+      
+   }
    void clear()
    {
       iUserLen=0;

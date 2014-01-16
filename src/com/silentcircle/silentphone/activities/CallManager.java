@@ -28,7 +28,26 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 package com.silentcircle.silentphone.activities;
 
-import java.util.ArrayList;
+import android.app.Activity;
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
+import android.content.ServiceConnection;
+import android.content.res.Resources;
+import android.os.Bundle;
+import android.os.IBinder;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.view.View.OnLongClickListener;
+import android.view.WindowManager;
+import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
+import android.widget.TextView;
 
 import com.silentcircle.silentphone.R;
 import com.silentcircle.silentphone.TiviPhoneService;
@@ -36,27 +55,7 @@ import com.silentcircle.silentphone.utils.CTCall;
 import com.silentcircle.silentphone.utils.CTCalls;
 import com.silentcircle.silentphone.utils.Utilities;
 
-import android.app.Activity;
-import android.content.ComponentName;
-import android.content.Context;
-import android.content.Intent;
-import android.content.ServiceConnection;
-import android.content.res.Resources;
-import android.graphics.drawable.Drawable;
-import android.os.Bundle;
-import android.os.IBinder;
-import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.View;
-import android.view.WindowManager;
-import android.view.View.OnClickListener;
-import android.view.View.OnLongClickListener;
-import android.widget.ImageButton;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
-import android.widget.TextView;
+import java.util.ArrayList;
 
 public class CallManager extends Activity implements CallStateChangeListener {
 
@@ -346,7 +345,10 @@ public class CallManager extends Activity implements CallStateChangeListener {
         textView.setText(call.bufSecureMsg.toString());
 
         textView = (TextView) rowLayout.findViewById(R.id.CallMngSas);
-        textView.setText(call.bufSAS.toString());
+        if (call.bufSAS.toString().isEmpty())
+            textView.setVisibility(View.INVISIBLE);
+        else
+            textView.setText(call.bufSAS.toString());
 
         ImageButton btn = (ImageButton) rowLayout.findViewById(R.id.CallMngEndCall);
         Utilities.setCallerImage(call, (ImageView)rowLayout.findViewById(R.id.CallMngImage));

@@ -354,6 +354,10 @@ return &cfg->STR_CVG_ADD V_ID;\
       T_C_ITEMB(iCfgUserNameAsNumber,1);
       T_C_ITEMB(iZRTP_On,1);
       T_C_ITEMB(iSDES_On,0);
+      T_C_ITEMB(iZRTPTunnel_On,1);
+      
+      T_C_ITEMB(iCanUseP2Pmedia,1);
+      
       T_C_ITEMB(iUseTiViBuddys,1);
       
       T_C_ITEMC(szPrefix,32,"");
@@ -386,16 +390,19 @@ return &cfg->STR_CVG_ADD V_ID;\
 #else
    return NULL;
 }//fnc end
+void *findGlobalCfgKey(char *key, int iKeyLen, int &iSize, char **opt, int *type);
 
 int setCfgValue(char *pSet, int iSize, void *pCfg, char *key, int iKeyLen){
    int iLen=0;
    void *ofs=NULL;
+   
    if(!pCfg){
-      void *findGlobalCfgKey(char *key, int iKeyLen, int &iSize, char **opt, int *type);
       ofs= findGlobalCfgKey(key,iKeyLen, iLen,NULL,NULL);
    }
-   else 
+   else {
      ofs = findCfgItemKey(pCfg,key,iKeyLen, iLen,NULL,NULL);
+      if(!ofs) ofs=findGlobalCfgKey(key,iKeyLen, iLen,NULL,NULL);
+   }
    if(iLen==0 || !ofs)return -2;
    if(iSize>iLen)iSize=iLen;
    
@@ -418,8 +425,60 @@ int setCfgValue(char *pSet, int iSize, void *pCfg, char *key, int iKeyLen){
    }
    //c->fncOnArgSet(pUserData, key);
    return 0;
+}
+
+int setCfgValueSZ(char *sz, void *pCfg, char *key, int iKeyLen){
+   int iLen=0;
+   void *ofs=NULL;
+   int type;
+   if(!pCfg){
+      ofs= findGlobalCfgKey(key,iKeyLen, iLen,NULL,&type);
+   }
+   else {
+      ofs = findCfgItemKey(pCfg,key,iKeyLen, iLen,NULL,&type);
+      if(!ofs) ofs=findGlobalCfgKey(key,iKeyLen, iLen,NULL,&type);
+   }
+   
+   if(iLen==0 || !ofs)return -2;
+
+   int i=0;
+   void *pSet;
+   int iSize;
+   if(type == PHONE_CFG::e_char){
+      pSet=sz;
+      iSize=strlen(sz);
+   }
+   else{
+      iSize=4;
+      pSet=&i;
+      i=atoi(sz);
+   }
+
+   
+   if(iSize>iLen)iSize=iLen;
+   
+   PHONE_CFG *c=(PHONE_CFG*)pCfg;
+   if(c && ((iKeyLen==10 && t_isEqual("bufpxifnat",key,10)) ||
+            (iKeyLen==7  && t_isEqual("tmpServ",key,7)) )
+      ){
+      c->iDetectedNewServDomain=1;
+      //  puts("serv");
+   }
+   
+   // printf("[kl=%d,%s]",iKeyLen,key);
+   
+   if(iLen!=iSize)memset(ofs,0,iLen);
+   memcpy(ofs,pSet,iSize);
+   //TODO cmp
+   if(c){
+      c->iCfgChangesDetected++;
+      c->iNeedSave=1;
+   }
+   //c->fncOnArgSet(pUserData, key);
+   return 0;
    
 }
+
 
 #endif
 

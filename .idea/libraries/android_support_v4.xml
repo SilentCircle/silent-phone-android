@@ -2,7 +2,6 @@
   <library name="android-support-v4">
     <CLASSES>
       <root url="jar://$PROJECT_DIR$/support/ActionBarSherlock/library/libs/android-support-v4.jar!/" />
-      <root url="jar://$PROJECT_DIR$/build/exploded-bundles/library.aar/libs/android-support-v4.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />

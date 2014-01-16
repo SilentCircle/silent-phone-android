@@ -130,7 +130,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 		android:paddingBottom="0dp"
 		android:paddingTop="0dp"
 		android:contentDescription="@string/video_audio_mute"
-		android:src="@drawable/ico_mute_small"
+		android:src="@drawable/ic_device_access_mic_muted"
 		android:visibility="invisible" />
 
 	<!-- Decline video offer button, visible when video starts -->

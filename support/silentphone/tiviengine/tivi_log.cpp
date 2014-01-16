@@ -47,6 +47,8 @@ void zrtp_log(const char *tag, const char *buf){
 }
 */
 
+int t_snprintf(char *buf, int iMaxSize, const char *format, ...);
+
 static unsigned int log_line_cnt=0;
 
 template<int iMaxLines>
@@ -73,8 +75,12 @@ public:
       
       char *p=getLine(line);
       iBytesInLine[line] = 0;
-      iBytesInLine[line] = snprintf(p, eBytesPerLine-1,"%s,%u,[%s]\n",tag,log_line_cnt,buf);
+      iBytesInLine[line] = t_snprintf(p, eBytesPerLine-1,"%s,%u,[%s]\n",tag,log_line_cnt,buf);
       log_line_cnt++;
+#if defined(ANDROID_NDK)
+      void tivi_log_tag(const char *tag, const char *val);
+      tivi_log_tag(tag, buf);
+#endif
    }
    void fillLog(int iLastNLines, void *ret, void(*fnc)(void *ret, const char *line, int iLen)){
       
@@ -152,7 +158,7 @@ void t_read_log(int iLastNLines, void *ret, void(*fnc)(void *ret, const char *li
 void t_init_log(){
    void set_zrtp_log_cb(void *pRet, void (*cb)(void *ret, const char *tag, const char *buf));
    set_zrtp_log_cb(&zrtp_log, CTLog<50>::log_fnc);
-   zrtp_log.log("zrtp","first msg");
+ //  zrtp_log.log("zrtp","t_init_log()");
    /*
    for(int i=0;i<100;i++){
       char b[8];

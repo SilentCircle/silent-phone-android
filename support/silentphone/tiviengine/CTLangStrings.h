@@ -68,7 +68,7 @@ public:
 
 class CTLangStrings : public CTStringsBase{
 public:
-   CTLangStrings():list(0){iZRTPInitOk=0;}
+   CTLangStrings():list(){iZRTPInitOk=0;}
    ~CTLangStrings(){}
 
 

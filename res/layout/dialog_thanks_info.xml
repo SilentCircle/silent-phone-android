@@ -28,8 +28,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 -->
 
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-	android:layout_width="wrap_content"
-	android:layout_height="wrap_content"
+	android:layout_width="match_parent"
+	android:layout_height="match_parent"
 	android:layout_gravity="center_horizontal"
 	android:background="@color/silent_black" >
 
@@ -38,7 +38,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:scaleType="center"
-        android:src="@drawable/sc_logo_big" />
+        android:src="@drawable/sc_logo_white" />
 
     <!-- Header -->
 
@@ -53,33 +53,81 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 		android:layout_marginTop="8dp"
 		android:gravity="center_horizontal"
 		android:text="@string/thanks_top_line"
-		android:textSize="16.0sp" />
+		android:textSize="16sp" />
 
-	<TextView
-		android:id="@+id/ThanksSCnumber"
+    <TextView
+            android:id="@+id/ThanksNumber"
+            style="@style/TextAppearanceTranslucent"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/ThanksTopLine"
+            android:layout_alignParentLeft="true"
+            android:layout_marginLeft="@dimen/provisioning_left_margin"
+            android:layout_marginTop="8dp"
+            android:textSize="20sp"
+            android:text="@string/thanks_number"/>
+
+    <TextView
+		android:id="@+id/ThanksNumberInfo"
         style="@style/TextAppearanceTranslucent"
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
-		android:layout_below="@+id/ThanksTopLine"
-		android:layout_centerHorizontal="true"
-		android:layout_marginTop="8dp"
-		android:textSize="20.0sp" />
+        android:layout_alignParentRight="true"
+        android:layout_marginRight="@dimen/provisioning_right_margin"
+        android:layout_alignBaseline="@+id/ThanksNumber"
+		android:textSize="20sp" />
 
-	<TextView
+    <TextView
+            android:id="@+id/ThanksName"
+            style="@style/TextAppearanceTranslucent"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/ThanksNumber"
+            android:layout_alignParentLeft="true"
+            android:layout_marginLeft="@dimen/provisioning_left_margin"
+            android:layout_marginTop="8dp"
+            android:textSize="20sp"
+            android:text="@string/thanks_name"/>
+
+    <TextView
+            android:id="@+id/ThanksNameInfo"
+            style="@style/TextAppearanceTranslucent"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_marginRight="@dimen/provisioning_right_margin"
+            android:layout_alignBaseline="@+id/ThanksName"
+            android:textSize="20sp"/>
+
+
+    <TextView
 		android:id="@+id/ThanksBottomLine"
         style="@style/TextAppearanceTranslucent"
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
-		android:layout_below="@+id/ThanksSCnumber"
+		android:layout_below="@+id/ThanksName"
 		android:layout_centerHorizontal="true"
 		android:layout_marginLeft="@dimen/provisioning_left_margin"
 		android:layout_marginRight="@dimen/provisioning_right_margin"
 		android:layout_marginTop="8dp"
 		android:gravity="center_horizontal"
 		android:text="@string/thanks_bottom_line"
-		android:textSize="16.0sp" />
+		android:textSize="16sp" />
 
-	<!-- Second line: build number -->
+    <!-- Key manager status line -->
+    <TextView
+        android:id="@+id/InfoKeyManager"
+        style="@style/TextAppearanceTranslucent"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/InfoBuildNumber"
+        android:layout_alignParentLeft="true"
+        android:layout_marginLeft="@dimen/provisioning_left_margin"
+        android:layout_marginTop="5dp"
+        android:background="@null"
+        android:textSize="12sp" />
+
+	<!-- build number -->
 
 	<TextView
 		android:id="@+id/InfoBuildNumber"
@@ -87,23 +135,25 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
 		android:layout_above="@+id/InfoDeviceInfo"
-		android:layout_alignLeft="@+id/ThanksTopLine"
+        android:layout_alignParentLeft="true"
+        android:layout_marginLeft="@dimen/provisioning_left_margin"
 		android:layout_marginTop="5dp"
 		android:background="@null"
 		android:text="@string/info_build_number"
-		android:textSize="12.0sp" />
+		android:textSize="12sp" />
 
 	<TextView
 		android:id="@+id/InfoBuildNumberInfo"
         style="@style/TextAppearanceTranslucent"
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
-		android:layout_alignRight="@+id/ThanksTopLine"
+        android:layout_alignParentRight="true"
+        android:layout_marginRight="@dimen/provisioning_right_margin"
 		android:layout_alignTop="@+id/InfoBuildNumber"
 		android:background="@null"
-		android:textSize="12.0sp" />
+		android:textSize="12sp" />
 
-	<!-- Third line: device information -->
+	<!-- device information -->
 
 	<TextView
 		android:id="@+id/InfoDeviceInfo"
@@ -111,10 +161,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
 		android:layout_above="@+id/InfoDeviceClass"
-		android:layout_alignLeft="@+id/ThanksTopLine"
+        android:layout_alignParentLeft="true"
+        android:layout_marginLeft="@dimen/provisioning_left_margin"
 		android:layout_marginTop="5dp"
 		android:text="@string/info_device_info"
-		android:textSize="12.0sp" 
+		android:textSize="12sp"
 		android:visibility="invisible"/>
 
 	<TextView
@@ -122,23 +173,25 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
         style="@style/TextAppearanceTranslucent"
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
-		android:layout_alignRight="@+id/ThanksTopLine"
+        android:layout_alignParentRight="true"
+        android:layout_marginRight="@dimen/provisioning_right_margin"
 		android:layout_alignTop="@+id/InfoDeviceInfo"
-		android:textSize="12.0sp"
+		android:textSize="12sp"
 		android:visibility="invisible"/>
 
-	<!-- Forth line: device classification -->
+	<!-- device classification -->
 
 	<TextView
 		android:id="@+id/InfoDeviceClass"
         style="@style/TextAppearanceTranslucent"
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
-		android:layout_alignLeft="@+id/ThanksTopLine"
-		android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true"
+        android:layout_marginLeft="@dimen/provisioning_left_margin"
+ 		android:layout_alignParentBottom="true"
 		android:layout_marginTop="5dp"
 		android:text="@string/info_device_class"
-		android:textSize="12.0sp"
+		android:textSize="12sp"
 		android:visibility="invisible"/>
 
 	<TextView
@@ -146,9 +199,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
         style="@style/TextAppearanceTranslucent"
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
-		android:layout_alignRight="@+id/ThanksTopLine"
+        android:layout_alignParentRight="true"
+        android:layout_marginRight="@dimen/provisioning_right_margin"
 		android:layout_alignTop="@+id/InfoDeviceClass"
-		android:textSize="12.0sp"
+		android:textSize="12sp"
 		android:visibility="invisible"/>
 
 </RelativeLayout>

@@ -1,8 +1,8 @@
 /*
-  Copyright (C) 2006-2012 Werner Dittmann
+  Copyright (C) 2006-2013 Werner Dittmann
 
   This program is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
+  it under the terms of the GNU Lesser General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
 
@@ -100,6 +100,12 @@ ZrtpPacketHello::ZrtpPacketHello(uint8_t *data) {
 
     zrtpHeader = (zrtpPacketHeader_t *)&((HelloPacket_t *)data)->hdr;	// the standard header
     helloHeader = (Hello_t *)&((HelloPacket_t *)data)->hello;
+
+    // Force the isLengthOk() check to fail when we process the packet.
+    if (getLength() < HELLO_FIXED_PART_LEN) {
+        computedLength = 0;
+        return;
+    }
 
     uint32_t t = *((uint32_t*)&helloHeader->flags);
     uint32_t temp = zrtpNtohl(t);

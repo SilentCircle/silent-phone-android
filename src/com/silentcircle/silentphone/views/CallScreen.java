@@ -28,21 +28,25 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 package com.silentcircle.silentphone.views;
 
+import android.content.Context;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.Rect;
+import android.util.Log;
+import android.view.Surface;
+import android.view.SurfaceHolder;
+import android.view.SurfaceView;
+
 import com.silentcircle.silentphone.activities.TMActivity;
 import com.silentcircle.silentphone.utils.CTCamera;
 import com.silentcircle.silentphone.utils.CVOut;
 
-import android.content.Context;
-
-import android.util.Log;
-import android.graphics.*;
-
-import android.view.SurfaceHolder;
-import android.view.SurfaceView;
-import android.view.Surface;
-
 
 public class CallScreen extends SurfaceView implements SurfaceHolder.Callback {
+
+    private static String LOG_TAG = "CallScreen";
+
     static CVOut vout = new CVOut();
     Surface surf = null;
     SurfaceHolder mHolder;
@@ -84,7 +88,7 @@ public class CallScreen extends SurfaceView implements SurfaceHolder.Callback {
     }
 
     public int getNumCameras() {
-        return camera.getNumCameras();
+        return CTCamera.getNumCameras();
     }
 
     int getCameraH() {
@@ -134,7 +138,7 @@ public class CallScreen extends SurfaceView implements SurfaceHolder.Callback {
         sh = h;
         rect.set(0, 0, w, h);
         surf = mHolder.getSurface();
-        if (TMActivity.SP_DEBUG) Log.d("tivi", "surfaceChanged (" + w + " " + h + " f=" + format + ")");
+        if (TMActivity.SP_DEBUG) Log.d(LOG_TAG, "surfaceChanged (" + w + " " + h + " f=" + format + ")");
         iPrevCameraH = -2;
        // MTView.pr.passSurf(holder);
     }
@@ -206,6 +210,7 @@ public class CallScreen extends SurfaceView implements SurfaceHolder.Callback {
     /*
      * IntBuffer
      */
+    int iClearScr = 0;
     int iPrevW = 0, iPrevH = 0;
     int iPrevCameraH = -1;
     Rect rect = new Rect(0, 0, 240, 160);
@@ -221,7 +226,12 @@ public class CallScreen extends SurfaceView implements SurfaceHolder.Callback {
         if (iPrevW != vout.w || iPrevH != vout.h) {
             iPrevW = vout.w;
             iPrevH = vout.h;
-            canvas.drawColor(Color.BLACK);
+            iClearScr = 10; //?? why does not with =1;
+        }
+       
+        if (iClearScr > 0){
+           iClearScr--;
+           canvas.drawColor(Color.BLACK);
         }
 
         if (bCallIsActive) {
@@ -261,7 +271,7 @@ public class CallScreen extends SurfaceView implements SurfaceHolder.Callback {
                 }
                 rectFS.set(ox, oy, ox + wshow, oy + hshow);
                
-                vout.draw(canvas, ox, oy, rectFS, paL);// slow //fullscr
+                vout.draw(canvas, ox, oy, rectFS, paL);         // slow //fullscr
             }
         }
     }

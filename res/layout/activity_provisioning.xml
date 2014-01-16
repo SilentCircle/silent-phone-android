@@ -37,10 +37,12 @@ Keep the tag fields in synch with the interface specifications.
 
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
 	xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/ProvisioningMain"
 	android:layout_width="match_parent"
 	android:layout_height="match_parent"
 	android:orientation="vertical"
-	tools:context=".MainActivity" >
+    android:background="@color/silent_black"
+	tools:context=".activities.Provisioning" >
 
 	<TextView
 		android:id="@+id/ProvisioningInfoText"
@@ -68,7 +70,7 @@ Keep the tag fields in synch with the interface specifications.
 	<ScrollView
 		android:id="@+id/ProvisioningScrollFrameLayout"
 		android:layout_width="match_parent"
-		android:layout_height="wrap_content"
+		android:layout_height="match_parent"
 		android:layout_above="@+id/ProvisioningButtons"
 		android:layout_below="@+id/ProvisioningInfoText"
         android:layout_marginLeft="@dimen/provisioning_left_margin"
@@ -93,7 +95,6 @@ Keep the tag fields in synch with the interface specifications.
 					android:id="@+id/ProvisioningUsernameInput"
 					android:layout_width="match_parent"
 					android:layout_height="wrap_content"
-					android:layout_below="@+id/ProvisioningInfoText"
 					android:layout_marginTop="@dimen/provisioning_top_margin"
 					android:hint="@string/provisioning_username_hint"
 					android:imeOptions="actionNext"
@@ -204,40 +205,6 @@ Keep the tag fields in synch with the interface specifications.
 			</RelativeLayout>
 
 			<RelativeLayout
-				android:id="@+id/ProvisioningCodeLayout"
-				android:layout_width="match_parent"
-				android:layout_height="match_parent"
-				android:orientation="vertical"
-				android:visibility="invisible" >
-
-				<TextView
-					android:id="@+id/ProvisioningGetCode"
-					android:layout_width="match_parent"
-					android:layout_height="wrap_content"
-					android:layout_alignParentLeft="true"
-					android:layout_marginTop="@dimen/provisioning_top_margin"
-					android:background="@null"
-					android:gravity="center_horizontal"
-					android:text="@string/provisioning_get_activation_code"
-					android:textSize="16sp" />
-
-				<EditText
-					android:id="@+id/ProvisioningCodeInput"
-					android:layout_width="match_parent"
-					android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/provisioning_top_margin"
-					android:layout_below="@+id/ProvisioningGetCode"
-                    android:ellipsize="end"
-					android:gravity="center_vertical"
-					android:hint="@string/provisioning_code"
-					android:inputType="textCapCharacters|textNoSuggestions"
-					android:singleLine="true"
-					android:tag="provisioning_code"
-					android:textSize="25sp"
-					android:visibility="visible" />
-			</RelativeLayout>
-
-			<RelativeLayout
 				android:id="@+id/ProvisioningSpinnerLayout"
 				android:layout_width="match_parent"
 				android:layout_height="match_parent"
@@ -317,7 +284,7 @@ Keep the tag fields in synch with the interface specifications.
 					android:layout_centerHorizontal="true"
 					android:layout_marginTop="@dimen/provisioning_top_margin"
 					android:contentDescription="@string/silent_circle"
-					android:src="@drawable/sc_logo_big" />
+					android:src="@drawable/sc_logo_white" />
 
 				<Button
 					android:id="@+id/ProvisioningRegisterButton"
@@ -329,7 +296,7 @@ Keep the tag fields in synch with the interface specifications.
 					android:gravity="center_horizontal|center_vertical"
 					android:onClick="provisioningNewAccount"
 					android:text="@string/provisioning_new_account"
-					android:textSize="18.0sp" />
+					android:textSize="18sp" />
 
 				<Button
 					android:id="@+id/ProvisioningNormalButton"
@@ -341,7 +308,7 @@ Keep the tag fields in synch with the interface specifications.
 					android:gravity="center_horizontal|center_vertical"
 					android:onClick="provisioningExistingAccount"
 					android:text="@string/provisioning_existing_account"
-					android:textSize="18.0sp" />
+					android:textSize="18sp" />
 			</RelativeLayout>
 		</FrameLayout>
 	</ScrollView>
@@ -365,7 +332,7 @@ Keep the tag fields in synch with the interface specifications.
 			android:background="@null"
 			android:enabled="false"
 			android:gravity="center_horizontal|center_vertical"
-			android:textSize="18.0sp"
+			android:textSize="18sp"
 			android:visibility="invisible" />
 
 		<Button
@@ -381,7 +348,7 @@ Keep the tag fields in synch with the interface specifications.
 			android:paddingBottom="6dp"
 			android:paddingTop="6dp"
 			android:text="@string/back"
-			android:textSize="18.0sp"
+			android:textSize="18sp"
 			android:visibility="invisible" />
 
 		<Button
@@ -397,7 +364,7 @@ Keep the tag fields in synch with the interface specifications.
 			android:paddingBottom="6dp"
 			android:paddingTop="6dp"
 			android:text="@string/next"
-			android:textSize="18.0sp"
+			android:textSize="18sp"
 			android:visibility="invisible" />
 	</RelativeLayout>
 

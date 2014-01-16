@@ -38,6 +38,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <CtZrtpCallback.h>
 
+
 class CTZRTP;
 class CTZrtpCb{
 public:
@@ -131,27 +132,18 @@ public:
    
    void start(unsigned int uiSSRC, streamName streamNm);
    
-   //TODO struct clearOnRelase
-   //TODO struct clearOnInit
-   //TODO lastwarning, buf and id
-   
-//   int iNeedEnroll;
    int iCachesOk;
    int iSoundPlayed;
    
    int iFailPlayed;
    
    int iWarnDetected;
-  // int iBadHashDetected;
    
    
    char bufPeer[128];
    char bufWarning[512];
    
    char bufSecurePBXMsg[64];
-   
-  //-- char bufSAS[64];
-   
    
    int iCanUseZRTP;
    void *pRet[2];//Victors zrtp 

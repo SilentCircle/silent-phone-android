@@ -29,7 +29,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package com.silentcircle.silentphone.utils;
 
 import android.content.Context;
-
 import android.os.PowerManager;
 
 public class TWake {

@@ -40,11 +40,11 @@ import java.util.HashMap;
 /**
  * This class contains functions to classify Android devices and perform specific handling.
  *
- * The class uses product name and similar available parameter to classify a device and
+ * The class uses product name and similar available parameters to classify a device and
  * to perform some specific handling. For example some devices have a built-in hardware
  * echo canceler and we can switch off the SW echo canceler. This leads to much better
- * audio quality. Also we can enable some specific SW echo canceler after some we know
- * which one works best for a specific device.
+ * audio quality. Also we can enable some specific SW echo canceler after we know which
+ * one works best for a specific device.
  *
  * Created by werner on 06.06.13.
  */
@@ -59,8 +59,16 @@ import java.util.HashMap;
   samsung       | google             | Galaxy Nexus     | maguro        | Google Nexus 3?    | SW, webRTC
   samsung       | Verizon            | SCH-I535         | d2vzw         | Galaxy S3, US      | HW built-in
   samsung       | samsung            | GT-I9300         | m0            | Galaxy S3, EU      | HW built-in
+  samsung       | google             | Nexus 10         | manta         | Google Nexus 10    | ??
+
   lge           | google             | Nexus 4          | mako          | Google Nexus 4     | SW, webRTC
+
+  motorola      | sprint             | MB855            | sunfire         |                    | SW, webRTC
+
   HTC           | htc_asia_hk        | HTC One X        | endeavoru     | HTC One X          | HW built-in
+
+  Vertu         | Vertu              | Vertu Ti         | ??            | Vertu Ti           | HW built-in
+  Vertu         | Vertu              | Constellation V  | gambit        | Constellation V ?  | HW built-in
  */
 public class DeviceHandling {
 
@@ -70,11 +78,13 @@ public class DeviceHandling {
         final String manufacturer;
         final String brand;
         final String model;
-        final String device;
+        final String deviceName;
         final String aecSelect;
         final boolean aecSwitchModes;
         final String aecControlSpkrOff;     // use this command also to switch off in case of HW AEC
         final String aecControlSpkrOn;
+        final boolean useProximityWakeLock;
+        final boolean switchAudioMode;
 
         /**
          * Data record to describe an Android device and define it's AEC commands
@@ -104,16 +114,24 @@ public class DeviceHandling {
          * @param sm    If true then use dynamic AEC mode switching between earpiece/headset and speaker
          * @param aModeOff Command to switch to AEC mode if speaker is not active
          * @param aModeOn  Command to switch to AEC mode is speaker is active
+         * @param useProxy If true the device supports and can use the in-call proximity sensor wake-up
+         * @param switchAudio If true switch audio modes during call. Some devices don't like this.
          */
-        DeviceData(String m, String b, String modl, String d, String s, boolean sm, String aModeOff, String aModeOn) {
+        DeviceData(String m, String b, String modl, String d, String s, boolean sm, String aModeOff, String aModeOn,
+            boolean useProxy, boolean switchAudio) {
             manufacturer = m;
             brand = b;
             model = modl;
-            device = d;
+            deviceName = d;
             aecSelect = s;
             aecSwitchModes = sm;
             aecControlSpkrOff = aModeOff;
             aecControlSpkrOn = aModeOn;
+            useProximityWakeLock = useProxy;
+            switchAudioMode = switchAudio;
+        }
+        DeviceData(String m, String b, String modl, String d, String s, boolean sm, String aModeOff, String aModeOn) {
+            this(m, b, modl, d, s,  sm, aModeOff, aModeOn, true, true);
         }
     }
 
@@ -123,36 +141,46 @@ public class DeviceHandling {
     // Not null if we could classify the device
     private static DeviceData device;
 
-    // This list holds device data for devices that have "samsung" as manufacturer string (case insensitive)
-    // This may include other brands like google.
-    private static ArrayList<DeviceData> samsung = new ArrayList<DeviceData>(10);
+    private static ArrayList<DeviceData> htc = new ArrayList<DeviceData>(10);
 
     // This list holds device data for devices that have "lge" as manufacturer string (case insensitive)
     // This may include other brands like google.
     private static ArrayList<DeviceData> lge = new ArrayList<DeviceData>(10);
+    private static ArrayList<DeviceData> motorola = new ArrayList<DeviceData>(10);
+    // This list holds device data for devices that have "samsung" as manufacturer string (case insensitive)
+    // This may include other brands like google.
+    private static ArrayList<DeviceData> samsung = new ArrayList<DeviceData>(10);
+    private static ArrayList<DeviceData> vertu = new ArrayList<DeviceData>(10);
 
-    private static ArrayList<DeviceData> htc = new ArrayList<DeviceData>(10);
-   
     // This Map holds the manufacturer lists, key is manufacturer name
     private static HashMap<String, ArrayList<DeviceData>> manufacturerList = new HashMap<String, ArrayList<DeviceData>>(10);
 
 
     static {
-        samsung.add(new DeviceData("samsung", "samsung", "GT-N7000", "GT-N7000", "*##*30*", false, null , null));
-        samsung.add(new DeviceData("samsung", "samsung", "GT-I9082", "baffin", "*##*30*", false, null , null));   // Duos
-        samsung.add(new DeviceData("samsung", "Verizon", "SCH-I535", "d2vzw", "*##*30*", false, null , null));    // US galaxy S3
-        samsung.add(new DeviceData("samsung", "samsung", "GT-I9300", "m0", "*##*30*", false, null , null));       // EU galaxy S3
-        samsung.add(new DeviceData("samsung", "google", "Galaxy Nexus", "maguro", "*##*33*", true, "*##*33#1*" , "*##*33#3*"));
+        samsung.add(new DeviceData("samsung", "samsung", "GT-N7000", "GT-N7000", "*##*30*", false, null, null));
+        samsung.add(new DeviceData("samsung", "samsung", "GT-I9082", "baffin", "*##*30*", false, null, null));   // Duos
+        samsung.add(new DeviceData("samsung", "Verizon", "SCH-I535", "d2vzw", "*##*30*", false, null, null));    // US galaxy S3
+        samsung.add(new DeviceData("samsung", "samsung", "GT-I9300", "m0", "*##*30*", false, null, null));       // EU galaxy S3
+        samsung.add(new DeviceData("samsung", "google", "Galaxy Nexus", "maguro", "*##*33*", true, "*##*33#1*", "*##*33#3*"));
+        samsung.add(new DeviceData("samsung", "google", "Nexus 10", "manta", "*##*33*", false, null, null));
+
+        htc.add(new DeviceData("HTC", "htc_asia_hk", "HTC One X", "endeavoru", "*##*30*", false, null, null));
 
         // Use the WebRTC AEC for Nexus 4, maybe we need to add a mode as well, maybe need to switch modes during
         // speaker handling
         lge.add(new DeviceData("lge", "google", "Nexus 4", "mako", "*##*33*", false, null, null));
-       
-        htc.add(new DeviceData("HTC", "htc_asia_hk", "HTC One X", "endeavoru", "*##*30*", false, null, null));
+
+        motorola.add(new DeviceData("motorola", "sprint", "MB855", "sunfire", "*##*33*", true, "*##*33#1*", "*##*33#3*",
+                false, false));     // don't switch audio mode, don't use proximity wake-up on this (old) device
+
+        vertu.add(new DeviceData("Vertu", "Vertu", "Vertu Ti", "UNKNOWN", "*##*30*", false, null, null));
+        vertu.add(new DeviceData("Vertu", "Vertu", "Constellation V", "gambit", "*##*30*", false, null, null));
 
         manufacturerList.put("samsung", samsung);
-        manufacturerList.put("lge", lge);
         manufacturerList.put("htc", htc);
+        manufacturerList.put("lge", lge);
+        manufacturerList.put("vertu", vertu);
+        manufacturerList.put("motorola", motorola);
     }
 
     public static void deviceClassification() {
@@ -167,7 +195,7 @@ public class DeviceHandling {
         for (DeviceData dd : ddList) {
 //            boolean brand = dd.brand != null && dd.brand.equals(Build.BRAND);
             boolean model = dd.model != null && dd.model.equals(Build.MODEL);
-//            boolean dev = dd.device != null && dd.device.equals(Build.DEVICE);
+//            boolean dev = dd.deviceNAme != null && dd.deviceName.equals(Build.DEVICE);
 
             if (model) {        // If the model of this manufacturer matches assume a hit
                 device = dd;
@@ -191,12 +219,29 @@ public class DeviceHandling {
         }
     }
 
+    public static boolean useProximityWakeup() {
+        deviceClassification();
+        return device == null || device.useProximityWakeLock;
+    }
+
+    public static boolean switchAudioMode() {
+        deviceClassification();
+        return device == null || device.switchAudioMode;
+    }
+
+    public static String getModel() {
+        deviceClassification();
+        if (device == null)
+            return null;
+        return device.model;
+    }
+
     /**
-     * Set AEC mode according to the speaker state.
-     *
-     * @param speakerOn if true use the command defined in <code>aecControlSpkrOn</code>, otherwise
-     *                  use <code>aecControlSpkrOff</code>
-     */
+      * Set AEC mode according to the speaker state.
+      *
+      * @param speakerOn if true use the command defined in <code>aecControlSpkrOn</code>, otherwise
+      *                  use <code>aecControlSpkrOff</code>
+      */
 //    public static void setAecMode(boolean speakerOn) {
 //        deviceClassification();
 //        if (device == null || !device.aecSwitchModes) {

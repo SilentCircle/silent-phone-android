@@ -409,6 +409,7 @@ public:
    int createCandidates(ADDR *priv, ADDR *publ, char *pOut, int iMaxLen){
       char b1[ADDR::eMaxDNS_SIZE];
       char b2[ADDR::eMaxDNS_SIZE];
+      if(iMaxLen<50)return 0;
       
       publ->toStr(b1,1);
       const char *natType = "unkn";//TODO get type

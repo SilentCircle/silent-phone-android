@@ -1,14 +1,10 @@
 ## Introduction
 
-This repository contains the sources for Silent Circle's Silent Phone for Android project. Using these sources and the the instructions that follow, you should be able to build a Silent Phone APK that can be installed and run on an Android device.
+This repository contains the sources for Silent Circle's Silent Phone for Android project. Using these sources and the instructions that follow, you will be able to build a Silent Phone APK that can be installed on an Android device and with a Silent Circle subscripion be able to make secure encrypted calls.
 
 ### What's New In This Version
-- These instructions have been updated with details about the build environment, to make it easier for those who want to build the APK from source.
-- These sources are for the version 1.6.5 project, which was the version of the project that was shipping at the time we started building this commit.
-
-### Coming "Soon"
-- We will update these sources to the currently shipping Silent Phone 1.6.6 release.
-- Beyond the 1.6.6 release we will switch to using gradle as the build tool.
+- These sources are for the version 1.8.1 project, which was the version of the project that was shipping at the time we started building this commit.
+- New for this release the build uses the Gradle build system.
 
 ### Overview
 
@@ -22,9 +18,10 @@ To compile and build Silent Phone you need a full Android development environmen
 
 #### Specific Recommendations
 
-Using the following components, we have built the product in a virtual machine, on bare iron, and on a laptop that also serves as a personal machine. Other successful configurations are certainly possible, but this is the one we tested with.
+Using the following components, we have built the product in a virtual machine, on bare iron, and on a laptop that also serves as a personal machine. Other successful configurations are certainly possible, this is the one we tested with.
 
-- minimum system configuration: 512 Mb memory, 20 GB disk
+- minimum system configuration: 1,536 Mb memory, 20 GB disk
+
 - debian-7.0.0-amd64-DVD-1.iso
   
   In response to "`software selection`" all you need is
@@ -46,125 +43,129 @@ Using the following components, we have built the product in a virtual machine, 
          $ apt-get install unzip
          $ apt-get install sudo  
 
+- Create and login to a non-privileged account
+
+         $ adduser pat
+
+- Create a local directory to hold the packages and tools needed to build the product
+
+         $ mkdir ~/opt
+
 - java
 
   The version of java that gives the least trouble is Sun/Oracle JDK6. For the test build, we used the `jdk-6u45-linux-x64.bin` system. It can be acquired from 
-  
   [https://www.oracle.com/technetwork/java/javasebusiness/downloads/java-archive-downloads-javase6-419409.html#jdk-6u45-oth-JPR]().
-
-         $ sh jdk-6u45-linux-x64.bin
-         $ sudo mv jdk1.6.0_45 /opt
 
   The hash of the version that we tested with is 
          $ openssl sha1 jdk-6u45-linux-x64.bin
          SHA1(jdk-6u45-linux-x64.bin)= 24425cdb69c11e86d6b58757b29e5ba4e4977660
+
+  Unpack java and move it under the local opt directory
+         $ sh jdk-6u45-linux-x64.bin
+         $ sudo mv jdk1.6.0_45 ~/opt
 
 - ADT - Android Development Toolkit
 
   While the build doesn't use Eclipse, pulling the whole ADT ensures that many needed things are fetched.
 
          $ wget http://dl.google.com/android/adt/adt-bundle-linux-x86_64-20130729.zip
-         $ sudo unzip adt-bundle-linux-x86_64-20130729.zip -d /opt
+         $ unzip adt-bundle-linux-x86_64-20130729.zip -d ~/opt
 
 - NDK - Native Development Kit
 
   Silent Phone has native components. The lastest NDK causes compiler errors, so use this one instead:
 
          $ wget https://dl.google.com/android/ndk/android-ndk-r8e-linux-x86_64.tar.bz2
-         $ sudo tar -xjf android-ndk-r8e-linux-x86_64.tar.bz2 -C /opt
+         $ tar -xjf android-ndk-r8e-linux-x86_64.tar.bz2 -C ~/opt
 
 - Android configuration
 
-  Note: We had do the following few steps as the root user in order to update with the needed configurations.
+  Note: We had do the following few steps to update with the needed configurations.
 
   First, add java and android tools to the path:
   
-         $ export PATH=$PATH:/opt/jdk1.6.0_45/bin:/opt/adt-bundle-linux-x86_64-20130729/sdk/tools
+         $ export PATH=$HOME/opt/jdk1.6.0_45/bin:$HOME/opt/adt-bundle-linux-x86_64-20130729/sdk/tools:$PATH
          
-  Next, use the android tool to find "SDK Platform Android 4.2.2, API 17, revision 2" and "Android Support Repository, revision 2"
+  Next, use the android tool to find the following the following tools and libraries, this list will be reduced in the next release, but for now you need the following: 
 
-         $ android list sdk
+    Android SDK Tools, revision 22.3
+    Android SDK Platform-tools, revision 19.0.1
+    Android SDK Build-tools, revision 19.0.1
+    Android SDK Build-tools, revision 19
+    Android SDK Build-tools, revision 17
+    SDK Platform Android 4.4.2, API 19, revision 2
+    SDK Platform Android 4.2.2, API 17, revision 2
+    Android Support Repository, revision 4
 
-  For us it was entries 4 and 44:
-  
-          4- SDK Platform Android 4.2.2, API 17, revision 2
-         44- Android Support Repository, revision 2
+      $ android list sdk --all 
 
-  Update those entries, doing the higher number one first so the ordering does not change:
+  For us it was entries 1,2,3,4,8,10,12,82:
 
-         $ android update sdk --no-ui --filter 44
-           ...license stuff...
-           Do you accept the license 'android-sdk-license-bcbbd656' [y/n]: y
+     1- Android SDK Tools, revision 22.3
+     2- Android SDK Platform-tools, revision 19.0.1
+     3- Android SDK Build-tools, revision 19.0.1
+     4- Android SDK Build-tools, revision 19
+     8- Android SDK Build-tools, revision 17
+    10- SDK Platform Android 4.4.2, API 19, revision 2
+    12- SDK Platform Android 4.2.2, API 17, revision 2
+    82- Android Support Repository, revision 4
+                  
+  Now use the update tool to fetch the components:
 
-           Installing Archives:
-             Preparing to install archives
-             Downloading Android Support Repository, revision 2
-             Installing Android Support Repository, revision 2
-               Installed Android Support Repository, revision 299%)
-           Done. 1 package installed.
+      $ android update sdk --no-ui --all --filter 1,2,3,4,8,10,12,82 
+         ...license stuff...
+         Do you accept the license 'android-sdk-license-bcbbd656' [y/n]: y
 
-  Then:
-         
-         $ android update sdk --no-ui --filter 4
-           ...license stuff...
-           Do you accept the license 'android-sdk-license-bcbbd656' [y/n]: y
- 
-           Installing Archives:
-             Preparing to install archives
-             Downloading SDK Platform Android 4.2.2, API 17, revision 2
-             Installing SDK Platform Android 4.2.2, API 17, revision 2
-               Installed SDK Platform Android 4.2.2, API 17, revision 296%)
-           Done. 1 package installed.
+   Installing Archives:
+           ...
+   Done. 8 packages installed.
+
 
   It may also be necessary to change the privileges on one of the files, to permit the build script to execute it:
   
-         $ chmod g+x /opt/adt-bundle-linux-x86_64-20130729/eclipse/plugins/org.apache.ant_1.8.3.v201301120609/bin/ant
-           
-  You can now exit root.
+         $ chmod g+x ~/opt/adt-bundle-linux-x86_64-20130729/eclipse/plugins/org.apache.ant_1.8.3.v201301120609/bin/ant
 
-- Fix up access to /opt
+- Gradle 
 
-  (It could be that the prerequisites don't permit the needed access.)
-  
-         $ sudo groupadd android
-         $ sudo usermod -a -G android my-account-goes-here
-         $ sudo chgrp -R android /opt/adt-bundle-linux-x86_64-20130729 /opt/android-ndk-r8e /opt/jdk1.6.0_45
+  This build uses the Gradle build automation tool.  You can find out more about Gradle at www.gradle.org.  On starting the build the Gradle tool will download updates to itself and other select components used in the production of this product.
 
-  In order to have the shell pick up the android group, you will have to logout and log back in.
 
 ### Directory structure
 
     .
-    |-- README.md
-    |-- BUILD.sh
+    |-- build                  # build results
+    |   |-- apk                # where the resulting apk is found
+    |   `...
     |-- gradle
     |-- jni
     |-- libs
-    |-- res
-    |-- src
-    `-- support                 
-        |-- ActionBarSherlock   # see on github 
-        |-- polarssl            # see on github
-        |-- silentphone         # Main directory for C/C++ sources
-        |   |-- audio
-        |   |-- baseclasses
-        |   |-- codecs
-        |   |-- encrypt
-        |   |-- os
-        |   |-- rtp
-        |   |-- sdp
-        |   |-- sipparser
-        |   |-- stun
-        |   |-- tiviandroid
-        |   |-- tiviengine
-        |   |-- utils
-        |   |-- video
-        |   `-- xml
-        `-- zrtpcpp             # see on github
+    |-- obj
+    |-- res                    # Android app resources
+    |-- src                    # Android app code
+    |-- support
+    |   |-- ActionBarSherlock  # see on github
+    |   |-- polarssl           # see on github
+    |   |-- silentphone        # Main directory for C/C++ sources
+    |   |   |-- audio
+    |   |   |-- baseclasses
+    |   |   |-- codecs
+    |   |   |-- encrypt
+    |   |   |-- os
+    |   |   |-- rtp
+    |   |   |-- sdp
+    |   |   |-- sipparser
+    |   |   |-- stun
+    |   |   |-- tiviandroid
+    |   |   |-- tiviengine
+    |   |   |-- utils
+    |   |   |-- video
+    |   |   `-- xml
+    |   `-- zrtpcpp           # see on github
+    `-- templates
 
 ##Further Notes:
 
-    gradle  - not used to build this project
+    gradle  - gradle build support
     libs    - library output directory
     res     - resource files
     src     - the java source file use to build Silent Phone Android
@@ -184,4 +185,7 @@ cd to the top level repository directory and invoke BUILD.sh
 
 ##Post-Build Instructions
 
-A successful build will result in a `silentphone.apk` file in the top level directory. Move this file to your Android device and run it to install Silent Phone. Then go to [https://silentcircle.com/login]() and enter your account credentials. On the next screen click on "`Add Silent Phone`" and enter the displayed activation code into your android device. You can now use your application to send and receive calls.
+A successful build results in an apk file in the build/apk directory. Move this file to your Android device and run it to install Silent Phone.  You must have a Silent Circle subscritpion to use Silent Phone, you can purchase one at [https://silentcircle.com]. Enter your acccount credentials into the app.  You can now send and receieve secure calls.
+
+Note: Silent Circle has three products that run on Andriod:  Silent Contacts, Silent Phone and Silent Text, the products work together however to do so requires that they all be signed by the same code signing certificate.  The same codesigning certificate for open source work is included in this project and the others which is different from the certficate used to sign the Play store versions. The practical restriction to be aware of is that apps with mixed certificates are not permitted to share data and hence can not work together on the same Android device.  To clarify there is no problem sending messages or calling between devices for example communitcation between Android and iOS devices.
+

@@ -30,4 +30,4 @@ package com.silentcircle.silentphone.utils;
 
 public class TZRTP{
 	public static boolean bEnabled=true;
-};
+}

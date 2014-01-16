@@ -28,6 +28,7 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include "../encrypt/md5/md5.h"
 #include "CSessions.h"
 #include "digestmd5.h"
 
@@ -57,36 +58,54 @@ const struct SIP_METH CMakeSip::sip_meth[]=
    {METHOD_PUBLISH,7, "PUBLISH"},
    {METHOD_SUBSCRIBE,9, "SUBSCRIBE"}
 };
-int CMakeSip::addParams(char *p, int iLenAdd)
+int CMakeSip::addParams(const char *p, int iLenAdd)
 {
+   if(!p)return 0;
+   
+   if(iLenAdd<0)iLenAdd=strlen(p);
+   
    ADD_L_STR(buf,uiLen,p,iLenAdd);
    return 0;
 }
 
-int CMakeSip::addAuth(char *un, char *pwd, SIP_MSG *psMsg)
+int CMakeSip::addAuth(const char *un, const char *pwd, SIP_MSG *psMsg)
 {
    
    HASHHEX HA1;
    HASHHEX HA2 = "";
    HASHHEX respHex32;
    HDR_AUT * hdrAuth=&psMsg->hdrProxyAuthen;
+   char bufCNonce[32]="";
    
    if (psMsg==NULL || un==NULL || pwd==NULL)
       return -1;
-   DEBUG_T(0,"add proxy auth");
    
    if(psMsg->sipHdr.dstrStatusCode.uiVal==401)
-   {
       hdrAuth=&sMsg->hdrWWWAuth;
-   }
-   char *pCNonce=hdrAuth->dstrQOP.strVal?(char *)"6ad34fc1":NULL;
-   char *pNC=(char *)"00000001";
    
+   char *pCNonce=NULL;
+   if(hdrAuth->dstrQOP.strVal){
+      
+      CTMd5 md5;
+      
+      unsigned int u=getTickCount();
+      md5.update(psMsg->hdrTo.dstrTag.strVal, psMsg->hdrTo.dstrTag.uiLen);
+      md5.update(psMsg->dstrCallID.strVal, psMsg->dstrCallID.uiLen);
+      md5.update(&u, sizeof(u));
+      u=md5.final();
+      
+      pCNonce=&bufCNonce[0];
+      snprintf(bufCNonce, sizeof(bufCNonce),"c0de%u",u);
+   }
+   
+   char *pNC=(char *)"00000001";//TODO if (new_nonce && hdrAuth->iFlag & 32) inc this
    
    if (false==DigestCalcHA1(hdrAuth,(unsigned char *)un,(unsigned char *)pwd, HA1))
       return -2;
+   
    if (false==DigestCalcResponse(HA1, hdrAuth,psMsg->hdrCSeq.uiMethodID,pCNonce,pNC, &strDstAddr, HA2, respHex32))
       return -2;
+   
    if(psMsg->sipHdr.dstrStatusCode.uiVal==407)
    {
       ADD_STR(buf,uiLen,"Proxy-Authorization: ");
@@ -283,6 +302,7 @@ int CMakeSip::makeReq(int id, PHONE_CFG * cfg, ADDR *addrExt,STR_64 *str64ExtADD
       case METHOD_ACK:
       case METHOD_CANCEL:
          uiCSeq=sMsg->hdrCSeq.dstrID.uiVal;
+         if(!uiCSeq)uiCSeq=spSes->uiSipCseq;
          break;
          
       case METHOD_REFER:
@@ -476,7 +496,9 @@ int CMakeSip::makeReq(int id, PHONE_CFG * cfg, ADDR *addrExt,STR_64 *str64ExtADD
 
       uiLen+=sprintf(s+uiLen,"To: <%.*s>", D_STR(*toAddr));
       
-      if(tag->uiLen && !fToTagIgnore)
+      int iToTagIgnore=fToTagIgnore || (id==METHOD_INVITE && spSes && spSes->cs.iCallStat==CALL_STAT::EInit);//or reivite before 200ok
+      //METHOD_INVITE
+      if(tag->uiLen && !iToTagIgnore)
       {
          ADD_0_STR(s,uiLen,";tag=");
          ADD_DSTRCRLF(s,uiLen,(*tag));

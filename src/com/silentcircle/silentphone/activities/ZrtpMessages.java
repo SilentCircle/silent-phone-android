@@ -28,9 +28,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 package com.silentcircle.silentphone.activities;
 
-import com.silentcircle.silentphone.R;
-import com.silentcircle.silentphone.TiviPhoneService;
-
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -45,11 +42,14 @@ import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.Window;
 import android.view.WindowManager;
-import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.TextView;
+
+import com.silentcircle.silentphone.R;
+import com.silentcircle.silentphone.TiviPhoneService;
 
 public class ZrtpMessages extends FragmentActivity {
     
@@ -230,7 +230,6 @@ public class ZrtpMessages extends FragmentActivity {
          * @param texts String array that contains the messages to display
          * @param type  Error or Warning type
          * @param callId which call triggered the problem.
-         * @return
          */
         public static ZrtpMessageDialog newInstance(String[] texts, int type, int callId) {
             ZrtpMessageDialog f = new ZrtpMessageDialog();

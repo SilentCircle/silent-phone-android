@@ -31,23 +31,20 @@ package com.silentcircle.silentphone.receivers;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
 import android.util.Log;
 
-import android.content.SharedPreferences;
-import android.net.Uri;
-import android.preference.PreferenceManager;
-
-//import com.tivi.tiviphone.utils.TCall;
-import com.silentcircle.silentphone.utils.Utilities;
 import com.silentcircle.silentphone.activities.TMActivity;
+import com.silentcircle.silentphone.utils.Utilities;
 
 /**
- * ProcessOutgoingCallTest tests {@link OutgoingCallBroadcaster} by performing
+ * ProcessOutgoingCallTest tests {link OutgoingCallBroadcaster} by performing
  * a couple of simple modifications to outgoing calls, and by printing log
  * messages for each call.
  */
 public class OCT extends BroadcastReceiver {
-   private static final String TAG = "Tivi.OCT";
+   private static final String TAG = "OCT";
    
    // silentphone 74536874663
    public static final String prefix_add = "SilentPhone";
@@ -57,8 +54,6 @@ public class OCT extends BroadcastReceiver {
    public static final String call_to_timestamp = "call_to_timestamp";
    
    public static final int STORED_NR_LIFETIME = 3000;// 3 sec
-
-   private static String SILENT_CALL_ACTION = "com.silentcircle.silentphone.action.NEW_OUTGOING_CALL";
 
    public static String getCallToNumber(Context context){
       
@@ -110,28 +105,27 @@ public class OCT extends BroadcastReceiver {
       
       context.startActivity(i);	     
    }
-   
-   public void onReceive(Context context, Intent intent) {
-      if (intent.getAction().equals(Intent.ACTION_NEW_OUTGOING_CALL)) {
-         String number = getResultData();
 
-         if (TMActivity.SP_DEBUG) Log.v(TAG, "Received " + intent + " [number:" + number + "]");
-         
-         if (number == null) {
-             return;
-         }
+    public void onReceive(Context context, Intent intent) {
+        if (Intent.ACTION_NEW_OUTGOING_CALL.equals(intent.getAction())) {
+            String number = getResultData();
 
-         if(number.startsWith(prefix_check) && number.length() >= prefix_check.length() + 4) {
-            startTivi(context,number.substring(prefix_check.length()),intent);
-            setResultData(null);
-            return;
-         }
-         
-         if(number.startsWith(prefix_add) && number.length() >= prefix_add.length() + 4) {
-            startTivi(context,number.substring(prefix_add.length()),intent);
-            setResultData(null);
-            return;
-         }
-      }
-   }
+            if (TMActivity.SP_DEBUG) Log.v(TAG, "Received " + intent + " [number:" + number + "]");
+
+            if (number == null) {
+                return;
+            }
+
+            if (number.startsWith(prefix_check) && number.length() >= prefix_check.length() + 4) {
+                startTivi(context, number.substring(prefix_check.length()), intent);
+                setResultData(null);
+                return;
+            }
+
+            if (number.startsWith(prefix_add) && number.length() >= prefix_add.length() + 4) {
+                startTivi(context, number.substring(prefix_add.length()), intent);
+                setResultData(null);
+            }
+        }
+    }
 }

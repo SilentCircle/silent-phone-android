@@ -33,6 +33,8 @@ class CtZrtpSendCb;
 class ZrtpConfigure;
 class CMutexClass;
 
+extern "C" __EXPORT const char *getZrtpBuildInfo();
+
 class __EXPORT CtZrtpSession {
 
 public:
@@ -637,6 +639,20 @@ public:
      * @see getZrtpEncapAttribute
      */
     void setZrtpEncapAttribute(const char *attribute, streamName streamNm);
+
+    /**
+     * @brief Set the auxilliary secret for ZRTP
+     * 
+     * An application may set an auxilliary secret and the ZRTP stack uses it as
+     * additional data to compute the SRTP keys.
+     * 
+     * Only the master stream (Audio) can use the auxilliary secret because only the
+     * master stream performs a Diffie-Hellman negotiation.
+     *
+     * @param secret the secret data
+     * @param length the length of the secret data in bytes
+     */
+    void setAuxSecret(const unsigned char *secret, int length);
 
 protected:
     friend class CtZrtpStream;

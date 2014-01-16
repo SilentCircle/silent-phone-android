@@ -447,9 +447,10 @@ int getCFGItemI(int *ret, char *p, int iCfgLen, const char *key){
 
    int r=0;
    int a=CTCfgParser::getInt(iCfgLen,p,key,r,1);
-   if(a==0){*ret=r;}
+   if(a==0){*ret=r; return 0;}
    return -1;
 }
+
 int getCFGItemSz(char *ret, int iMaxSize, char *p, int iCfgLen, const char *key){
    iMaxSize--;//zero term
    int r=CTCfgParser::getText2Buf(p,key,ret,iMaxSize,iCfgLen);
@@ -753,14 +754,7 @@ CTiViPhone::CTiViPhone(CTEngineCallBack *cPhoneCallback
 }
 
 void CTiViPhone::checkSIPTransport(){
-#if 0
-   if(strcmp(&p_cfg.szSipTransport[0],"TLS")==0){sockSip.setSockType(sockSip.eTLS);}
-   else if(strcmp(&p_cfg.szSipTransport[0],"TCP")==0){sockSip.setSockType(sockSip.eTCP);}
-   else if(strcmp(&p_cfg.szSipTransport[0],"UDP")==0){sockSip.setSockType(sockSip.eUDP);}
-   else sockSip.setSockType(sockSip.eUDP);
-#else
    sockSip.setSockType(p_cfg.szSipTransport);
-#endif
 }
 
 
@@ -947,8 +941,6 @@ iSockPaused=0;
          
       }
       reinviteMonitor.onNewIP();
-     // if(p_cfg.reg.uiRegUntil==0)reInvite();
-      //else will reinvite after rereg
    }
 }
 void CTiViPhone::restoreServ()
@@ -972,7 +964,7 @@ int CTiViPhone::canPlayRingtone(){
       spSes=getSesByIndex(i);
       if(!spSes)continue;
       
-      if(spSes->cs.iBusy==FALSE)continue;
+      if(spSes->cs.iInUse==FALSE)continue;
       if(spSes->cs.iCallStat==CALL_STAT::EInit 
          && spSes->cs.iCallSubStat==CALL_STAT::EWaitUserAnswer)return 1;
    }
@@ -997,7 +989,7 @@ void CTiViPhone::onTimer()
    for (int i=0;i<iMaxSesions;i++)
    {
       spSes=getSesByIndex(i);
-      if(!spSes || !spSes->cs.iBusy)continue;
+      if(!spSes || !spSes->cs.iInUse)continue;
       
       if(spSes->iDoEndCall)endCall((int)spSes);
       else if(spSes->iDoAnswerCall)answerCall((int)spSes);
@@ -1053,14 +1045,40 @@ int CTiViPhone::cleanNumber(char *p, int iLen){
    int iOutLen=0;
    int iAtFound=0;
    
+  // void log_audio(const char *tag, const char *buf);
+  // log_audio("in",p);
+
+   int wasAlpha=0;//clean number completly
    for(int i=0;i<iLen;i++){
-      if(p[i] && (p[i]!='-' || iAtFound) && p[i]!='(' && p[i]!=')' && p[i]!=' '){
+      if(!wasAlpha  && !iAtFound && isalpha(p[i])){wasAlpha=1;break;}
+      if(p[i]=='@')break;
+   }
+   
+   
+   //apple why??
+   //??? -0xc2 0xa0 comes from the ios phone book, but it looks like space
+   //0xC2 0xA0
+ 
+   for(int i=0;i<iLen;i++){
+      if(p[i]=='@')iAtFound=1;
+      
+      if(!wasAlpha && !iAtFound){
+         if(isdigit(p[i]) || (i==0 && (p[0]=='+' || p[0]=='*'))){
+            dst[iOutLen]=p[i];
+            iOutLen++;
+         }
+         continue;
+      }
+      
+      if(p[i] && (p[i]!='-' || iAtFound) && p[i]!='(' && p[i]!=')' && p[i]!=' ' && isascii(p[i])){
          dst[iOutLen]=p[i];
          iOutLen++;
-         if(p[i]=='@')iAtFound=1;
       }
    }
+   
    dst[iOutLen]=0;
+   printf("[out=%s]",dst);
+ //  log_audio("out",dst);
    
    return iOutLen;
 }
@@ -1073,6 +1091,14 @@ int CTiViPhone::checkUri(char *pUriIn,int iInLen, char *pUriOut, int iMaxOutSize
    int iSip=0;
    if(iInLen==0)
       return -100000;
+   
+   char pIn[128];
+   strncpy(pIn, pUriIn, sizeof(pIn));pIn[sizeof(pIn)-1]=0;if(iInLen>=sizeof(pIn))iInLen=sizeof(pIn)-1;
+   pUriIn=&pIn[0];
+   
+   pUri->clearAll();
+   
+   while(iInLen>1 && pUriIn[iInLen-1]=='!'){pUri->iPriority++;iInLen--;}
    
    iInLen=cleanNumber(pUriIn,iInLen);
    
@@ -1141,6 +1167,7 @@ int CTiViPhone::call(char *uri, CTSesMediaBase *media, const char *contactUri, i
       uri+=3;
       len-=3;
    }
+   
    char bufUri[128];
 
    int ret=checkUri(uri,len, &bufUri[0], sizeof(bufUri)-1, &sUri,useDc || !p_cfg.isOnline());
@@ -1212,7 +1239,7 @@ int CTiViPhone::call(char *uri, CTSesMediaBase *media, const char *contactUri, i
    //---add cc if necessary --end
    
    spSes->dstSipAddr.uiLen = snprintf(spSes->dstSipAddr.strVal, spSes->dstSipAddr.getMaxSize(), "sip:%s%s", bufCC, bufUri);
-   printf("[dst=%.*s]\n",spSes->dstSipAddr.uiLen, spSes->dstSipAddr.strVal);
+   printf("[dst=%.*s prio=%d]\n",spSes->dstSipAddr.uiLen, spSes->dstSipAddr.strVal,sUri.iPriority);
    
    if(contactUri)
    {
@@ -1233,6 +1260,12 @@ int CTiViPhone::call(char *uri, CTSesMediaBase *media, const char *contactUri, i
 
    media->onStart();
    ms.makeReq(METHOD_INVITE,&p_cfg);
+   
+   if(sUri.iPriority>=2)
+      ms.addParams("Priority: emergency\r\n");
+   else if(sUri.iPriority==1)
+      ms.addParams("Priority: urgent\r\n");
+   
    makeSDP(*this,spSes,ms);
    ms.addContent();
    sendSip(sockSip,spSes);
@@ -1273,7 +1306,7 @@ int CTiViPhone::answerCall(int SesId)
    keepAlive.sendEverySec(0);
   LOCK_MUTEX_SES
    
-   if(!spSes->cs.iBusy || spSes->cs.iCaller || spSes->cs.iCallStat!=CALL_STAT::EInit){
+   if(!spSes->cs.iInUse || spSes->cs.iCaller || spSes->cs.iCallStat!=CALL_STAT::EInit){
       UNLOCK_MUTEX_SES
       return -2;   
    }
@@ -1319,7 +1352,7 @@ int CTiViPhone::endCall(int SesId, int iReasonCode)
 
    LOCK_MUTEX_SES
    
-   if(!spSes->cs.iBusy ||  spSes->cs.iCallStat==CALL_STAT::EEnding || !spSes->isSession()|| !spSes->cs.iCallStat){
+   if(!spSes->cs.iInUse ||  spSes->cs.iCallStat==CALL_STAT::EEnding || !spSes->isSession()|| !spSes->cs.iCallStat){
       UNLOCK_MUTEX_SES
       return -2;   
    }
@@ -1400,7 +1433,7 @@ void CTiViPhone::removeRetMsg(int SesId){
    
    CSesBase *spSes=findSessionByID(SesId);
    
-   if(!spSes || !spSes->cs.iBusy){
+   if(!spSes || !spSes->cs.iInUse){
       UNLOCK_MUTEX_SES
       return ;
    }
@@ -1412,7 +1445,7 @@ void CTiViPhone::removeRetMsg(int SesId){
 
 
 
-int CTiViPhone::sendSipMsg(int ises, const char *szMeth, char * uri, const char *szCType, CTStrBase *e, char *pSipParams, int iSipParamLen)
+int CTiViPhone::sendSipMsg(int ises, const char *szMeth, char *uri, const char *szCType, CTStrBase *e, char *pSipParams, int iSipParamLen)
 {
    URI sUri;
    CSesBase  *spSes=NULL;
@@ -1569,8 +1602,7 @@ int CTiViPhone::addRegister(char *uri){
    }
 
    if(!p_cfg.GW.ip && !addrPx.ip ){
-      CTEditBase b("Connecting...");//TODO
-      cPhoneCallback->registrationInfo(&b, cPhoneCallback->eErrorAndOffline);
+      cPhoneCallback->registrationInfo(&strings.lConnecting, cPhoneCallback->eErrorAndOffline);
       return 0;//TODO
    }
 
@@ -1616,9 +1648,7 @@ int CTiViPhone::addRegister(char *uri){
    p_cfg.GW=sUri.addr;
    
    if(!p_cfg.GW.ip){
-      CTEditBuf<32> b;
-      b.setText("Connecting...");
-      cPhoneCallback->registrationInfo(&b, cPhoneCallback->eErrorAndOffline);
+      cPhoneCallback->registrationInfo(&strings.lConnecting, cPhoneCallback->eErrorAndOffline);
       if(p_cfg.reg.bUnReg){
          //setOffline
       }
@@ -1819,7 +1849,6 @@ int CTiViPhone::sendSipKA(int iForce, int *respCode){
    
    //tivi keepalive not supported
    //iKeepaliveSupported=0;//TODO add TO CPhone
-   //TODO set session return param if no connection
    //TODO rem prev option keepalives
    //TODO mark as keeplive
    //TODO send KA from one session
@@ -2218,9 +2247,6 @@ int CTiViPhone::recMsg(SIP_MSG *sMsg, int rec, ADDR &addr)//called from thread
      
    }   
    
-   //puts("search found\n");
-
-
      UNLOCK_MUTEX_SES
 
    //puts("onSipMsgSes ok\n");
@@ -2234,6 +2260,7 @@ int CTiViPhone::reRegSeq(int iStart=0)//TODO check
 {
    if(iStart)
    {
+      //TODO if in_background_mob set_online=0 //if reg_call_id is always tha same
       if(p_cfg.isOnline())
         iNextReRegSeq=1;
       else
@@ -2296,7 +2323,6 @@ int CTiViPhone::reRegSeq(int iStart=0)//TODO check
          if(p_cfg.reg.uiRegUntil || p_cfg.iCanRegister==0)//??
          {
             iNextReRegSeq=0;
-            //oldpos reInvite();//move this after recv "200ok online"
 
             if(p_cfg.iUseStun && uiCheckNetworkTypeAt==0)
                uiCheckNetworkTypeAt=uiGT;
@@ -2316,7 +2342,7 @@ int CTiViPhone::reInvite(int SesId, const char *media){
    
    CSesBase *ses=findSessionByID(SesId);
 
-   if(!ses || !ses->cs.iBusy )return -1;
+   if(!ses || !ses->cs.iInUse )return -1;
    if(!ses->isSession() || ses->cs.iCallStat==ses->cs.EEnding)return -2;
    if(!ses->cs.iCaller && ses->cs.iCallStat==CALL_STAT::EInit)return -3;
 
@@ -2329,7 +2355,7 @@ int CTiViPhone::reInvite(int SesId, const char *media){
       UNLOCK_MUTEX_SES
       return -5;
    }
-   if(!ses->cs.iBusy || !ses->isSession() || ses->cs.iCallStat==ses->cs.EEnding){
+   if(!ses->cs.iInUse || !ses->isSession() || ses->cs.iCallStat==ses->cs.EEnding){
       UNLOCK_MUTEX_SES
       return -2;
    }
@@ -2375,7 +2401,7 @@ int CTiViPhone::reInvite(int SesId, const char *media){
    sendSip(sockSip,ses);
 
    UNLOCK_MUTEX_SES
-   printf("[pm %p %p]",pm,nm);
+   
    if(pm && nm){
       cPhoneCallback->mediaFinder->release(pm);
    }
@@ -2392,12 +2418,12 @@ int CTiViPhone::reInvite()
    CSesBase * ses=getRoot();
    for (i=0;i<iMaxSesions;i++)
    {
-      if(!ses[i].cs.iBusy)continue;
+      if(!ses[i].cs.iInUse)continue;
       if(ses[i].isSession())
       {
          LOCK_MUTEX_SES
          //
-         if(ses[i].cs.iBusy && ses[i].isSession() && ses[i].cs.iCallStat!=CALL_STAT::EEnding){
+         if(ses[i].cs.iInUse && ses[i].isSession() && ses[i].cs.iCallStat!=CALL_STAT::EEnding){
             
             resetSesParams(&ses[i], METHOD_INVITE);
             
@@ -2445,7 +2471,7 @@ int CTiViPhone::closeEngine()
    CSesBase * ses=getRoot();
    for (i=0;i<iMaxSesions;i++)
    {
-      if(ses[i].cs.iBusy==FALSE)continue;
+      if(!ses[i].cs.iInUse)continue;
       if(ses[i].isSession())
       {
          endCall((int)&ses[i]);
@@ -2464,18 +2490,11 @@ int CTiViPhone::closeEngine()
       Sleep(50);
    }
    
-   bRun=0;//FALSE;
+   bRun=0;
   
    if(cPhoneCallback->mediaFinder)
       cPhoneCallback->mediaFinder->stop();
-   //tivi_log("close eng 4");
 
-   ADDR a="127.0.0.1";
-   a.setPort(sockSip.addr.getPort());;
-   //tivi_log("close eng 5");
-
-   sockSip.sendTo("1",1,&a);
-   Sleep(20);
    sockSip.closeSocket();
    thTimer.wait();
    threadSip.wait();
@@ -2567,7 +2586,7 @@ int getInfoCBUni(short *pUni, int iMaxLen, void *pUserData)
 #ifdef L_SYMB_VERS
       l=sprintf((char *)pUni,"TiVi SIP Phone - Version " L_SYMB_VERS "\nDeveloped by TiVi\nMore info: www.tivi.com\n");
 #else
-      l=sprintf((char *)pUni,"SilentEyes - Version 1.0.1\nDeveloped by Silent Circle\nMore info: www.silentcircle.com\n");
+      l=sprintf((char *)pUni,"Silent Phone - Version 1.0.1\nDeveloped by Silent Circle\nMore info: www.silentcircle.com\n");
 #endif
 #endif
       l+=getInfo((char *)pUni+l,iMaxLen,p,p?&p->p_cfg:NULL);
@@ -2815,7 +2834,10 @@ void CTiViPhone::chechRereg(){
       
       if(bRun==1 && extAddr.ip &&
          
-         (p_cfg.iUseStun==0 || !p_cfg.iIsInForeground || p_cfg.iNet!=CTStun::NOT_DETECTDED || p_cfg.iUseOnlyNatIp) &&
+         (p_cfg.iUseStun==0 || !p_cfg.iIsInForeground || p_cfg.iNet!=CTStun::NOT_DETECTDED
+          || p_cfg.iUseOnlyNatIp
+          || (p_cfg.iIsInForeground && p_cfg.iNet==CTStun::NOT_DETECTDED && getMediaSessionsCnt()))//if (app is in background) or (call is active) stun is not used 
+         &&
          
          ((uiNextRegTry && uiNextRegTry<uiGT) ||p_cfg.reg.uiRegUntil<uiGT || p_cfg.iReRegisterNow) &&
          p_cfg.reg.bReReg==0 &&
@@ -3000,7 +3022,11 @@ int CTiViPhone::parseUri(CTEngineCallBack *cPhoneCallback,PHONE_CFG& p_cfg,char 
          default:
             if(!iIsAlfaNum)
             {
-               return -1;
+               void log_audio(const char *tag, const char *buf);
+               char b[64];
+               sprintf(b,"%d '%d' %d",szUri[i?-1:0],szUri[0],szUri[1]);
+               log_audio("err-5",b);
+               return -5;
             }
       }
       iPrev=iIsAlfaNum;

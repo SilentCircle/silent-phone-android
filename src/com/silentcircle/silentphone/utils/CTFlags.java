@@ -29,14 +29,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package com.silentcircle.silentphone.utils;
 
 import com.silentcircle.silentphone.R;
-
 import com.silentcircle.silentphone.TiviPhoneService;
-
-import android.content.Context;
 
 public class CTFlags {
       
-   public class CTRet{
+   public class CTRet {
       
       public String countryCode=null;
       public String country=null;
@@ -51,9 +48,9 @@ public class CTFlags {
          city=null;
          iResID=-1;
       }
-   };
+   }
    
-   public CTFlags(Context c){
+   public CTFlags() {
    }
    
    public CTRet ret =  new CTRet();
@@ -80,23 +77,12 @@ public class CTFlags {
    
    public static String formatNumber(String number) {
       //# (###) ###-#### ####
-      String newnr = TiviPhoneService.getInfo(-1, -1, "format.nr=" + number);
-      if(newnr == null || newnr.length() <= 0)return number;
-      return newnr;
+      String newNr = TiviPhoneService.getInfo(-1, -1, "format.nr=" + number);
+      if(newNr == null || newNr.length() <= 0)
+          return number;
+      return newNr;
    }
 
-   
-   static int getResIDByNumber(String number) {
-      //cc:country:city
-      String flag = TiviPhoneService.getInfo(-1, -1, "get.flag=" + number);
-      if(flag == null || flag.length() <= 3) 
-          return -1;
-     
-      int resID = getResID(flag.substring(0,2));
-
-      return resID;
-   }
-   
    static private int getResID(String cc) {
     int ret = -1;
     if ("do".compareToIgnoreCase(cc) == 0)
@@ -106,8 +92,7 @@ public class CTFlags {
        java.lang.reflect.Field field = res.getField(cc);
        ret = field.getInt(null);
     }
-    catch (Exception e) {
-    }
+    catch (Exception ignored) {}
     return ret;
    }
 }

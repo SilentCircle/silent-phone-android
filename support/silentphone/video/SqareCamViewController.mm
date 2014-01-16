@@ -39,7 +39,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #import <UIKit/UIGraphics.h>
 
 #include "CTVideoInIOS.h"
-
+int getIOSVersion();
 
 #pragma mark-
 
@@ -49,8 +49,8 @@ static const NSString *AVCaptureStillImageIsCapturingStillImageContext = @"AVCap
 static CGFloat DegreesToRadians(CGFloat degrees) {return degrees * M_PI / 180;};
 
 static void ReleaseCVPixelBuffer(void *pixel, const void *data, size_t size);
-static void ReleaseCVPixelBuffer(void *pixel, const void *data, size_t size) 
-{	
+static void ReleaseCVPixelBuffer(void *pixel, const void *data, size_t size)
+{
 	CVPixelBufferRef pixelBuffer = (CVPixelBufferRef)pixel;
 	CVPixelBufferUnlockBaseAddress( pixelBuffer, 0 );
 	CVPixelBufferRelease( pixelBuffer );
@@ -58,8 +58,8 @@ static void ReleaseCVPixelBuffer(void *pixel, const void *data, size_t size)
 
 // create a CGImage with provided pixel buffer, pixel buffer must be uncompressed kCVPixelFormatType_32ARGB or kCVPixelFormatType_32BGRA
 static OSStatus CreateCGImageFromCVPixelBuffer(CVPixelBufferRef pixelBuffer, CGImageRef *imageOut);
-static OSStatus CreateCGImageFromCVPixelBuffer(CVPixelBufferRef pixelBuffer, CGImageRef *imageOut) 
-{	
+static OSStatus CreateCGImageFromCVPixelBuffer(CVPixelBufferRef pixelBuffer, CGImageRef *imageOut)
+{
 	OSStatus err = noErr;
 	OSType sourcePixelFormat;
 	size_t width, height, sourceRowBytes;
@@ -101,7 +101,7 @@ bail:
 	return err;
 }
 
-// utility used by newSquareOverlayedImageForFeatures for 
+// utility used by newSquareOverlayedImageForFeatures for
 static CGContextRef CreateCGBitmapContextForSize(CGSize size);
 static CGContextRef CreateCGBitmapContextForSize(CGSize size)
 {
@@ -125,43 +125,45 @@ static CGContextRef CreateCGBitmapContextForSize(CGSize size)
 }
 
 #pragma mark-
-
-@interface UIImage (RotationMethods)
-- (UIImage *)imageRotatedByDegrees:(CGFloat)degrees;
-@end
-
-@implementation UIImage (RotationMethods)
-
-- (UIImage *)imageRotatedByDegrees:(CGFloat)degrees 
-{   
-	// calculate the size of the rotated view's containing box for our drawing space
-	UIView *rotatedViewBox = [[UIView alloc] initWithFrame:CGRectMake(0,0,self.size.width, self.size.height)];
-	CGAffineTransform t = CGAffineTransformMakeRotation(DegreesToRadians(degrees));
-	rotatedViewBox.transform = t;
-	CGSize rotatedSize = rotatedViewBox.frame.size;
-	[rotatedViewBox release];
-	
-	// Create the bitmap context
-	UIGraphicsBeginImageContext(rotatedSize);
-	CGContextRef bitmap = UIGraphicsGetCurrentContext();
-	
-	// Move the origin to the middle of the image so we will rotate and scale around the center.
-	CGContextTranslateCTM(bitmap, rotatedSize.width/2, rotatedSize.height/2);
-	
-	//   // Rotate the image context
-	CGContextRotateCTM(bitmap, DegreesToRadians(degrees));
-	
-	// Now, draw the rotated/scaled image into the context
-	CGContextScaleCTM(bitmap, 1.0, -1.0);
-	CGContextDrawImage(bitmap, CGRectMake(-self.size.width / 2, -self.size.height / 2, self.size.width, self.size.height), [self CGImage]);
-	
-	UIImage *newImage = UIGraphicsGetImageFromCurrentImageContext();
-	UIGraphicsEndImageContext();
-	return newImage;
-	
-}
-
-@end
+/*
+ @interface UIImage (RotationMethods)
+ - (UIImage *)imageRotatedByDegrees:(CGFloat)degrees;
+ @end
+ 
+ @implementation UIImage (RotationMethods)
+ 
+ - (UIImage *)imageRotatedByDegrees:(CGFloat)degrees
+ {
+ 
+ // calculate the size of the rotated view's containing box for our drawing space
+ UIView *rotatedViewBox = [[UIView alloc] initWithFrame:CGRectMake(0,0,self.size.width, self.size.height)];
+ CGAffineTransform t = CGAffineTransformMakeRotation(DegreesToRadians(degrees));
+ rotatedViewBox.transform = t;
+ CGSize rotatedSize = rotatedViewBox.frame.size;
+ [rotatedViewBox release];
+ 
+ // Create the bitmap context
+ UIGraphicsBeginImageContext(rotatedSize);
+ CGContextRef bitmap = UIGraphicsGetCurrentContext();
+ 
+ // Move the origin to the middle of the image so we will rotate and scale around the center.
+ CGContextTranslateCTM(bitmap, rotatedSize.width/2, rotatedSize.height/2);
+ 
+ //   // Rotate the image context
+ CGContextRotateCTM(bitmap, DegreesToRadians(degrees));
+ 
+ // Now, draw the rotated/scaled image into the context
+ CGContextScaleCTM(bitmap, 1.0, -1.0);
+ CGContextDrawImage(bitmap, CGRectMake(-self.size.width / 2, -self.size.height / 2, self.size.width, self.size.height), [self CGImage]);
+ 
+ UIImage *newImage = UIGraphicsGetImageFromCurrentImageContext();
+ UIGraphicsEndImageContext();
+ return newImage;
+ 
+ }
+ 
+ @end
+ */
 
 #pragma mark-
 
@@ -181,7 +183,7 @@ static CGContextRef CreateCGBitmapContextForSize(CGSize size)
 {
    if(session)return;
    
-
+   
    previewLayer=nil;
    
    
@@ -195,12 +197,12 @@ static CGContextRef CreateCGBitmapContextForSize(CGSize size)
    /*
     if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone)
     [session setSessionPreset:
-    AVCaptureSessionPreset352x288];//   
+    AVCaptureSessionPreset352x288];//
     //  AVCaptureSessionPreset640x480];//AVCaptureSessionPreset1280x720
     else
     [session setSessionPreset:AVCaptureSessionPresetPhoto];
     */
-   [session setSessionPreset:AVCaptureSessionPreset352x288];//   
+   [session setSessionPreset:AVCaptureSessionPreset352x288];//
    //176x144  [session setSessionPreset:AVCaptureSessionPresetLow];
    // Select a video device, make an input
 	AVCaptureDevice *device = [AVCaptureDevice defaultDeviceWithMediaType:AVMediaTypeVideo];
@@ -212,8 +214,8 @@ static CGContextRef CreateCGBitmapContextForSize(CGSize size)
       if ( [session canAddInput:deviceInput] )
          [session addInput:deviceInput];
       
-
-
+      
+      
       // Make a video data output
       videoDataOutput = [[AVCaptureVideoDataOutput alloc] init];
       //	videoDataOutput = [AVCaptureVideoDataOutput new];
@@ -237,23 +239,42 @@ static CGContextRef CreateCGBitmapContextForSize(CGSize size)
       dispatch_queue_t queue = dispatch_queue_create("myQueue", NULL);
       [videoDataOutput setSampleBufferDelegate:self queue:queue];
       dispatch_release(queue);
-
+      
       if ( [session canAddOutput:videoDataOutput] )
          [session addOutput:videoDataOutput];
-
-
+      
+      
       previewLayer = [[AVCaptureVideoPreviewLayer alloc] initWithSession:session];
       [previewLayer setBackgroundColor:[[UIColor clearColor] CGColor]];
-      [previewLayer setVideoGravity:AVLayerVideoGravityResizeAspect];
+      /*
+       enum {
+       AVCaptureVideoOrientationPortrait           = 1,
+       AVCaptureVideoOrientationPortraitUpsideDown = 2,
+       AVCaptureVideoOrientationLandscapeRight     = 3,
+       AVCaptureVideoOrientationLandscapeLeft      = 4,
+       };
+       typedef
+       */
       
+      [previewLayer setVideoGravity:AVLayerVideoGravityResizeAspect];//AVLayerVideoGravityResizeAspect];
+      iOrientation=[[UIApplication sharedApplication] statusBarOrientation];
 
-      
-      previewView=self;   
+      previewView=self;
       CALayer *rootLayer = [previewView layer];
       [rootLayer setMasksToBounds:YES];
       
       CGRect rr=[rootLayer bounds];
       [previewLayer setFrame:rr];
+      
+      
+      if(getIOSVersion()>=6){
+         //cvc.transform = CGAffineTransformMakeRotation(rotation);
+        //-- AVCaptureConnection *previewLayerConnection=previewLayer.connection;
+        //-- previewLayerConnection.videoOrientation=iOrientation;
+      }
+      else{
+        // previewLayer.orientation=iOrientation;
+      }
       
       if(1){
          previewLayer.borderWidth=2;
@@ -267,7 +288,6 @@ static CGContextRef CreateCGBitmapContextForSize(CGSize size)
       
       [session startRunning];
       iRunning=1;
-      NSLog(@"start video");
    }
    
 bail:
@@ -277,8 +297,8 @@ bail:
       [session release];
 		UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:[NSString stringWithFormat:@"Failed with error %d", (int)[error code]]
                                                           message:[error localizedDescription]
-                                                         delegate:nil 
-                                                cancelButtonTitle:@"Dismiss" 
+                                                         delegate:nil
+                                                cancelButtonTitle:@"Dismiss"
                                                 otherButtonTitles:nil];
 		[alertView show];
 		[alertView release];
@@ -286,9 +306,85 @@ bail:
 	}
 #endif
 }
+
+-(int) getDegFromOrientation:(int)v{
+   
+   switch(v){
+      case AVCaptureVideoOrientationPortrait:return 270;
+      case AVCaptureVideoOrientationPortraitUpsideDown:return 90;
+      case AVCaptureVideoOrientationLandscapeLeft:return  0;
+      case AVCaptureVideoOrientationLandscapeRight:return  180;
+   }
+   return 270;
+}
+
++(float)getRotation:(int) toInterfaceOrientation{
+   float rotation = 0;
+   
+   if (toInterfaceOrientation==UIInterfaceOrientationPortrait) {
+      rotation = 0;
+   } else
+      if (toInterfaceOrientation==UIInterfaceOrientationLandscapeLeft) {
+         rotation = M_PI/2;
+      } else
+         if (toInterfaceOrientation==UIInterfaceOrientationLandscapeRight) {
+            rotation = -M_PI/2;
+         }
+   return  rotation;
+}
+
+-(void)setOrientation:(int)v{
+   /*
+    enum {
+    AVCaptureVideoOrientationPortrait           = 1,
+    AVCaptureVideoOrientationPortraitUpsideDown = 2,
+    AVCaptureVideoOrientationLandscapeRight     = 3,
+    AVCaptureVideoOrientationLandscapeLeft      = 4,
+    };
+    */
+   
+   
+   iOrientation=v;
+   
+   if(!previewLayer)return;
+   
+   CGFloat w = self.frame.size.width;
+   CGFloat h = self.frame.size.height;
+   int iHor=w>h;
+   int iRev=0;
+   if(iHor &&
+      (v==AVCaptureVideoOrientationPortrait || v==AVCaptureVideoOrientationPortraitUpsideDown))
+      iRev=1;
+   else if(!iHor &&
+           !(v==AVCaptureVideoOrientationPortrait || v == AVCaptureVideoOrientationPortraitUpsideDown))
+      iRev=1;
+   
+   if(iRev)
+      previewView.frame = CGRectMake(self.frame.origin.x,self.frame.origin.y, h,w);
+   
+   
+   if(getIOSVersion()>=6){
+      //cvc.transform = CGAffineTransformMakeRotation(rotation);
+//      AVCaptureConnection *previewLayerConnection=previewLayer.connection;
+  //    previewLayerConnection.videoOrientation=iOrientation;
+   }
+   else{
+     // previewLayer.orientation=iOrientation;
+   }
+   CALayer *rootLayer = [previewView layer];
+   [rootLayer setMasksToBounds:YES];
+   
+   CGRect rr=[rootLayer bounds];
+   [previewLayer setFrame:rr];
+   
+   
+   
+}
+
 -(void)stopR{
    if(session)[session stopRunning];
 }
+
 -(void)startR{
    if(session)[session startRunning];
 }
@@ -297,28 +393,22 @@ bail:
 // clean up capture setup
 - (void)teardownAVCapture
 {
-   //   iCanStart=0;
    iRunning=0;
-   //TODO secondary thread
-   NSLog(@"stop video 0");
    if(session)[session stopRunning];
    
 	if(videoDataOutput)[videoDataOutput release];
    if (videoDataOutputQueue && videoDataOutput)
 		dispatch_release(videoDataOutputQueue);
-
+   
    if(previewLayer){
 	   [previewLayer removeFromSuperlayer];
 	   [previewLayer release];
    }
    previewLayer=NULL;
-
    
    if(session)[session release];
-   NSLog(@"stop video ok");
    session=NULL;
    videoDataOutput=NULL;
-   //?? videoDataOutputQueue=NULL;
 }
 
 -(void)dic:(CGContextRef)context im:(UIImage*)im{
@@ -328,35 +418,35 @@ bail:
    
 }
 
-- (UIImage *) imageFromSampleBuffer:(CMSampleBufferRef) sampleBuffer 
+- (UIImage *) imageFromSampleBuffer:(CMSampleBufferRef) sampleBuffer
 {
    // Get a CMSampleBuffer's Core Video image buffer for the media data
-   CVImageBufferRef imageBuffer = CMSampleBufferGetImageBuffer(sampleBuffer); 
+   CVImageBufferRef imageBuffer = CMSampleBufferGetImageBuffer(sampleBuffer);
    // Lock the base address of the pixel buffer
-   CVPixelBufferLockBaseAddress(imageBuffer, 0); 
+   CVPixelBufferLockBaseAddress(imageBuffer, 0);
    
    // Get the number of bytes per row for the pixel buffer
-   void *baseAddress = CVPixelBufferGetBaseAddress(imageBuffer); 
+   void *baseAddress = CVPixelBufferGetBaseAddress(imageBuffer);
    
    // Get the number of bytes per row for the pixel buffer
-   size_t bytesPerRow = CVPixelBufferGetBytesPerRow(imageBuffer); 
+   size_t bytesPerRow = CVPixelBufferGetBytesPerRow(imageBuffer);
    // Get the pixel buffer width and height
-   size_t width = CVPixelBufferGetWidth(imageBuffer); 
-   size_t height = CVPixelBufferGetHeight(imageBuffer); 
+   size_t width = CVPixelBufferGetWidth(imageBuffer);
+   size_t height = CVPixelBufferGetHeight(imageBuffer);
    
    // Create a device-dependent RGB color space
-   CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB(); 
+   CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
    
    // Create a bitmap graphics context with the sample buffer data
-   CGContextRef context = CGBitmapContextCreate(baseAddress, width, height, 8, 
-                                                bytesPerRow, colorSpace, kCGBitmapByteOrder32Little | kCGImageAlphaPremultipliedFirst); 
+   CGContextRef context = CGBitmapContextCreate(baseAddress, width, height, 8,
+                                                bytesPerRow, colorSpace, kCGBitmapByteOrder32Little | kCGImageAlphaPremultipliedFirst);
    // Create a Quartz image from the pixel data in the bitmap graphics context
-   CGImageRef quartzImage = CGBitmapContextCreateImage(context); 
+   CGImageRef quartzImage = CGBitmapContextCreateImage(context);
    // Unlock the pixel buffer
    CVPixelBufferUnlockBaseAddress(imageBuffer,0);
    
    // Free up the context and color space
-   CGContextRelease(context); 
+   CGContextRelease(context);
    CGColorSpaceRelease(colorSpace);
    
    // Create an image object from the Quartz image
@@ -369,11 +459,11 @@ bail:
 }
 
 - (void)captureOutput:(AVCaptureOutput *)captureOutput didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer fromConnection:(AVCaptureConnection *)connection
-{	
-   //NSLog(@"captureOutput");
+{
    if(!cVI)return;
-#if 1
    
+   connection.videoOrientation=iOrientation;//previewLayer.orientation;
+
    
    CVImageBufferRef imageBuffer = CMSampleBufferGetImageBuffer(sampleBuffer);
    
@@ -384,15 +474,19 @@ bail:
    //  size_t bytesPerRow = CVPixelBufferGetBytesPerRow(imageBuffer);
    size_t width = CVPixelBufferGetWidth(imageBuffer);
    size_t height = CVPixelBufferGetHeight(imageBuffer);
+   int deg = [self getDegFromOrientation: iOrientation];
+  //-- printf("[deg=%d]",deg);
    
-   unsigned int uiPos=cVI->onNewVideoData((int*)baseAddress, NULL,width,height);
+   deg=0;
    
-
+   unsigned int uiPos=cVI->onNewVideoData((int*)baseAddress, NULL,width, height, deg);
+   
+   
    CVPixelBufferUnlockBaseAddress(imageBuffer,0);
    if(uiPos>0){
       cVI->sendBuf(uiPos);
    }
-//#define _TEST_BUILT_IN_ENCODER
+   //#define _TEST_BUILT_IN_ENCODER
 #ifdef _TEST_BUILT_IN_ENCODER
    /*
     UIImage *im = [self imageFromSampleBuffer:sampleBuffer];
@@ -410,34 +504,35 @@ bail:
    //  self set
    
    // 30% faster
-    unsigned int getTickCount();
-    unsigned int ui =getTickCount();
-    
-    UIImage *img = [self imageFromSampleBuffer:sampleBuffer];
-    NSData * ns=UIImageJPEGRepresentation (img,.3f );
-    //[ns release];
-    // [img release];
-    
-    printf("[hsp%d ns%d]",getTickCount()-ui,ns.length );
-    
+   unsigned int getTickCount();
+   unsigned int ui =getTickCount();
+   
+   UIImage *img = [self imageFromSampleBuffer:sampleBuffer];
+   NSData * ns=UIImageJPEGRepresentation (img,.3f );
+   //[ns release];
+   // [img release];
+   
+   printf("[hsp%d ns%d]",getTickCount()-ui,ns.length );
+   
 #endif /*_TEST_BUILT_IN_ENCODER*/
    return;
-#endif
+
 }
 
 
-
-// utility routing used during image capture to set up capture orientation
-- (AVCaptureVideoOrientation)avOrientationForDeviceOrientation:(UIDeviceOrientation)deviceOrientation
-{
-	AVCaptureVideoOrientation result = deviceOrientation;
-	if ( deviceOrientation == UIDeviceOrientationLandscapeLeft )
-		result = AVCaptureVideoOrientationLandscapeRight;
-	else if ( deviceOrientation == UIDeviceOrientationLandscapeRight )
-		result = AVCaptureVideoOrientationLandscapeLeft;
-	return result;
-}
-
+/*
+ // utility routing used during image capture to set up capture orientation
+ - (AVCaptureVideoOrientation)avOrientationForDeviceOrientation:(UIDeviceOrientation)deviceOrientation
+ {
+ printf("[deviceOrientation=%d]",deviceOrientation);
+ AVCaptureVideoOrientation result = deviceOrientation;
+ if ( deviceOrientation == UIDeviceOrientationLandscapeLeft )
+ result = AVCaptureVideoOrientationLandscapeRight;
+ else if ( deviceOrientation == UIDeviceOrientationLandscapeRight )
+ result = AVCaptureVideoOrientationLandscapeLeft;
+ return deviceOrientation;//result;
+ }
+ */
 
 
 // utility routine to display error aleart if takePicture fails
@@ -446,8 +541,8 @@ bail:
 	dispatch_async(dispatch_get_main_queue(), ^(void) {
 		UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:[NSString stringWithFormat:@"%@ (%d)", message, (int)[error code]]
                                                           message:[error localizedDescription]
-                                                         delegate:nil 
-                                                cancelButtonTitle:@"Dismiss" 
+                                                         delegate:nil
+                                                cancelButtonTitle:@"Dismiss"
                                                 otherButtonTitles:nil];
 		[alertView show];
 		[alertView release];
@@ -456,7 +551,7 @@ bail:
 
 
 
-
+/*
 // find where the video box is positioned within the preview layer based on the video size and gravity
 + (CGRect)videoPreviewBoxForGravity:(NSString *)gravity frameSize:(CGSize)frameSize apertureSize:(CGSize)apertureSize
 {
@@ -499,7 +594,7 @@ bail:
    
 	return videoBox;
 }
-
+*/
 
 
 
@@ -581,52 +676,84 @@ bail:
    // iCanStart=0;
    void g_setQWview_vi(void *p);
    g_setQWview_vi(self);
-
-   iCanAutoStart=1;
-
+   previewLayer=NULL;
+   
+   iCanAutoStart=0;
+   
 }
 
-- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
-{
-   // Return YES for supported orientations
-	return (interfaceOrientation == UIInterfaceOrientationPortrait);
-}
+
 @end
 
 
 
-unsigned int CTVideoInIOS::onNewVideoData(int *d, unsigned char *yuv, int nw, int nh){
+unsigned int CTVideoInIOS::onNewVideoData(int *d, unsigned char *yuv, int nw, int nh, int iRotDeg){
    if(!iStarted)return 0;
    unsigned int getTickCount();
    unsigned int uiPos=(getTickCount()&~1);
-   setXY_priv(nw,nh);
+   setXY_priv(nw,nh,iRotDeg==90 || iRotDeg==270);
    unsigned char *p=buf;
    static unsigned int uiPrevFrameAt;
    
    if(uiPrevFrameAt+(unsigned int)((iVideoFrameEveryMs*3)>>2)>uiPos)return 0;
-   // iVideoFrameEveryMs
    
    uiPrevFrameAt=uiPos;
-   const int h4=h*4;
-//rotate img
-   for(int y=0;y<h;y++){
-      const int *od=d+y+w*h;
+   if(iRotDeg==270){
+      
+      const int h4=h*4;
+      for(int y=0;y<h;y++){
+         const int *od=d+y+w*h;
+         unsigned char *rb=(unsigned char*)(&od[0]);
+         for(int x=0;x<w;x++){
+            rb-=h4;
+            p[0]=rb[0];
+            p[1]=rb[1];
+            p[2]=rb[2];
+            //
+            p+=3;
+         }
+      }
+   }
+   else if(iRotDeg==90){
+      const int h4=h*4;
+      for(int y=0;y<h;y++){
+         const int *od=d+(h-y-1)+w*h;
+         unsigned char *rb=(unsigned char*)(&od[0]);
+         for(int x=0;x<w;x++){
+            rb-=h4;
+            p[0]=rb[0];
+            p[1]=rb[1];
+            p[2]=rb[2];
+            //
+            p+=3;
+         }
+      }
+      
+   }
+   else if(iRotDeg==0){
+      const int sz=w*h;
+      const int *od=d;;
       unsigned char *rb=(unsigned char*)(&od[0]);
-      for(int x=0;x<w;x++){
-         //unsigned char *rb=(unsigned char*)(&od[x*h]);
-#if 0
-         p[0]=pi[0];
-         p[1]=pi[1];
-         p[2]=pi[2];
-         p+=3;pi+=4;
-#else
-         rb-=h4;
+      for(int i=0;i<sz;i++){
          p[0]=rb[0];
          p[1]=rb[1];
          p[2]=rb[2];
-         // 
+         rb+=4;
          p+=3;
-#endif
+      }
+      
+   }
+   else{
+      for(int y=0;y<h;y++){
+         const int *od=d+w*(h-y-1);
+         unsigned char *rb=(unsigned char*)(&od[0]);
+         for(int x=0;x<w;x++){
+            p[0]=rb[0];
+            p[1]=rb[1];
+            p[2]=rb[2];
+            rb+=4;
+            p+=3;
+         }
       }
    }
    return uiPos;
@@ -690,11 +817,15 @@ int CTVideoInIOS::init(void *hParent){
 }
 void CTVideoInIOS::setXY(int x, int y){}//TODO user wants screen x by y
 
-void CTVideoInIOS::setXY_priv(int x, int y){
+void CTVideoInIOS::setXY_priv(int x, int y, int iRot){
    // h=192*2;w=144*2;
-   int r=x;x=y;y=r;
+   int wh=w*h;
+   if(iRot){
+      int r=x;x=y;y=r;
+   }
    if(x==w && y==h)return;
    w=x;h=y;
+   if(wh==w*h)return;
    unsigned char *nb=new unsigned char [(w+16)*(h+16)*3];
    unsigned char *ob=buf;
    buf=nb;

@@ -52,6 +52,7 @@ AVCaptureVideoDataOutputSampleBufferDelegate>
    @public CTVideoInIOS *cVI;
    int iRunning;
    @public int iCanAutoStart;
+   int iOrientation;
    
    
    
@@ -64,5 +65,7 @@ AVCaptureVideoDataOutputSampleBufferDelegate>
 -(void)startR;
 -(int)capturing;
 - (void)switchCamerasStep:(int)step;
+-(void)setOrientation:(int)v;
++(float)getRotation:(int) toInterfaceOrientatio;
 
 @end

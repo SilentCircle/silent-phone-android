@@ -57,6 +57,8 @@ void tivi_log_scr(const char* format, ...);
 int parseSDP(SDP *psdp, char *buf, int iLen);
 int parseRTP(RTP_PACKET_P *recPacket, char *p);
 int hasAttrib(SDP &sdp, const char *attr, int iType);
+int t_snprintf(char *buf, int iMaxSize, const char *format, ...);
+void log_zrtp(const char *tag, const char *buf);
 
 #define IS_CN(_PT) (_PT==T_MY_CN_PT_ID || _PT==19)
 
@@ -276,21 +278,21 @@ CTMediaIDS* initMediaIDS(void *pThis, CSessionsBase *sb, int iCaller){
       if(!mf->pOwner){
          p=mf;
          p->pOwner=pThis;
-         
+         ////if you ask why md5 ??? read (RFC 3550)
          CTMd5 md5;
-         int i=(int)getTickCount();
+         int t=(int)getTickCount();
          int x=(int)pThis;
          
          md5.update((unsigned char *)&x,4);
          md5.update((unsigned char *)&sb->p_cfg,sizeof(sb->p_cfg));
          md5.update((unsigned char *)&sb->uiGT,sizeof(sb->uiGT));
-         md5.update((unsigned char *)&i,4);
+         md5.update((unsigned char *)&t,4);
          
          md5.update((unsigned char *)&sb->extAddr.ip,4);
          md5.update((unsigned char *)&sb->ipBinded,4);
          md5.update((unsigned char *)&sb->iRandomCounter,4);
          unsigned int res[4];
-         md5.final((unsigned char*)&res[0]);
+         md5.final((unsigned char*)&res[0]);//generate RTP SSRC
          sb->iRandomCounter+=res[0];
          sb->iRandomCounter^=res[1];
          
@@ -820,7 +822,7 @@ void CRTPV::sendRtp(CtZrtpSession const *session, uint8_t* packet, size_t length
    
    ADDR *a=&rtpV.addrDst;
    int r = sockth->sendTo((char*)packet, length, a);
-   char b[64];a->toStr(b); printf("[zrtp CRTPV send cb %d %d %s [%x l=%lu=%d]]",iStarted,streamNm, b, packet[0],length,r );
+  // char b[64];a->toStr(b); printf("[zrtp CRTPV send cb %d %d %s [%x l=%lu=%d]]",iStarted,streamNm, b, packet[0],length,r );
 }
 
 void CRTPAsendPacket(void *ctx, char *p, unsigned int uiLen ,int iIsVideo){
@@ -901,8 +903,8 @@ int CRTPA::onData(char *p, int iLen, ADDR *a)
          
          if(1)
          {
-            char b[64];sprintf(b, "a-srtp-fail pt=%d seq=%d prev_ok_seq=%d",rtp.rtpRec.pt, rtp.rtpRec.seqNr, rtp.iPrevId);
-            void log_zrtp(const char *tag, const char *buf);
+            char b[64];
+            sprintf(b, "a-srtp-fail pt=%d seq=%d prev_ok_seq=%d",rtp.rtpRec.pt, rtp.rtpRec.seqNr, rtp.iPrevId);
             log_zrtp("t_zrtp",b);//5394 5463
          }
          
@@ -1502,8 +1504,8 @@ int CRTPA::tryEncryptSendPack(CRTPX *r, CTSock *s, int iIsVideo){
      static int cc;cc++;
     if((cc&127)==1 && r->rtpSend.allPack.len>15){
    // r->rtpSend.dataBuf[15]+=10;
-    for(int i=0;i<25;i++)//burst test
-       s->sendTo((char *)&r->rtpSend.dataBuf[0], r->rtpSend.allPack.len, &aNewDst);
+       for(int i=0;i<25;i++)//burst test
+          s->sendTo((char *)&r->rtpSend.dataBuf[0], r->rtpSend.allPack.len, &aNewDst);
     }
 #endif
 
@@ -1557,25 +1559,7 @@ static int getRtpSOURCE(SDP *sdp){
 
    return iRtpSrc;
 }
-/*
-//TODO test and uncomment
-int trySetDataFromSdp(SDP &sdp, CTZRTP *zrtp, CTXIce *ice, int iType, int iInviter){
- 
-   for(int i=0;i<sdp.attribs.iAttribCnt;i++){
-      
-      if(sdp.attribs.n[i].iMediaType==iType){
-         
-         if(ice->addDstCandidate(sdp.attribs.n[i].p, sdp.attribs.n[i].iLen)>=0)continue;
-         
-         if(zrtp->trySetDstHash(sdp.attribs.n[i].p, sdp.attribs.n[i].iLen,iType==SDP::eVideo)>=0)continue;
-         
-         if(zrtp->tryParseSdes(sdp.attribs.n[i].p, sdp.attribs.n[i].iLen, NULL, NULL, iInviter,
-                         iType==SDP::eVideo?CtZrtpSession::VideoStream:CtZrtpSession::AudioStream)>=0)continue;
-      }
-   }
-   return 0;
-}
-*/
+
 int trySetIceData(SDP &sdp, CTXIce *ice, int iType){
    int i;
    ice->onSDPRecv();
@@ -1634,7 +1618,9 @@ int trySetSDES_info(SDP &sdp, CTZRTP *zrtp, int iType, int iInviter){
          sprintf(bu,"[%s][%s][b=%d]\n",sdp.attribs.n[i].p, sdp.attribs.n[i].p+(sizeof(ph_mix)-1),b);
          tmp_log(bu);
   */       
-         sdp.attribs.n[i].p[sdp.attribs.n[i].iLen]=c;//restore 
+         sdp.attribs.n[i].p[sdp.attribs.n[i].iLen]=c;//restore
+         
+         log_zrtp("t_zrtp",b?"setCryptoMixAttribute()=ok":"setCryptoMixAttribute()=false");
          break;
       }
    }
@@ -1643,13 +1629,15 @@ int trySetSDES_info(SDP &sdp, CTZRTP *zrtp, int iType, int iInviter){
       
       if(sdp.attribs.n[i].iMediaType==iType  && sdp.attribs.n[i].iLen>32 && strncmp(sdp.attribs.n[i].p,ph,sizeof(ph)-1)==0){
          int l=sdp.attribs.n[i].iLen-(sizeof(ph)-1);
-         zrtp->parseSdes(sdp.attribs.n[i].p+(sizeof(ph)-1), l, NULL, NULL, iInviter,
+         bool b=zrtp->parseSdes(sdp.attribs.n[i].p+(sizeof(ph)-1), l, NULL, NULL, iInviter,
                          iType==SDP::eVideo?CtZrtpSession::VideoStream:CtZrtpSession::AudioStream);
+         log_zrtp("t_zrtp",b?"parseSdes()=ok":"parseSdes()=false");
          
          return 0;
       }
    }
 #endif
+   log_zrtp("t_zrtp","sdes is not found");
    printf("[sdes is not found,type=%d]",iType);
    return -1;
 }
@@ -1665,19 +1653,26 @@ int trySetZRTP_encap(SDP &sdp, CTZRTP *zrtp, int iType){
       if (sdp.attribs.n[i].iMediaType == iType  && sdp.attribs.n[i].iLen > sizeof(ph) && strncmp(sdp.attribs.n[i].p, ph, sizeof(ph)-1)==0) {
          int l = sdp.attribs.n[i].iLen - (sizeof(ph) - 1);
          zrtp->setZrtpEncapAttribute(sdp.attribs.n[i].p + sizeof(ph)-1, sn);
+         log_zrtp("t_zrtp","setZrtpEncapAttribute ok");
          cnt=1;
          break;
       }
    }
-   if (!cnt)
+  // char b[64];sprintf(b, "a-srtp-fail pt=%d seq=%d prev_ok_seq=%d",rtp.rtpRec.pt, rtp.rtpRec.seqNr, rtp.iPrevId);
+   
+   
+   if (!cnt){
+      log_zrtp("t_zrtp","setZrtpEncapAttribute not ok");
+
       puts("[zrtp-encap not found]\n");
+   }
    return cnt? 0: -1;
 }
 
 
 void CRTPX::onSDPAttribs(SDP &sdp, int eType, PHONE_CFG &p_cfg, int iInviter, CTZRTP *pzrtp){
    
-   if(T_CAN_USE_T_ICE)
+   if(T_CAN_USE_T_ICE && p_cfg.iCanUseP2Pmedia)
       trySetIceData(sdp, &ice, eType);
    
    iCanResetMedia=60;
@@ -1690,7 +1685,9 @@ void CRTPX::onSDPAttribs(SDP &sdp, int eType, PHONE_CFG &p_cfg, int iInviter, CT
    
    if(p_cfg.iSDES_On){
       trySetSDES_info(sdp, pzrtp, eType, iInviter);
-      trySetZRTP_encap(sdp, pzrtp, eType);
+      
+      if(p_cfg.iZRTPTunnel_On)
+         trySetZRTP_encap(sdp, pzrtp, eType);
    }
    
 }
@@ -1724,7 +1721,7 @@ int CRTPA::onSdp(char *pSdp, int iLen, int iIsReq, int iForceMedia)//uu CRTPX
    uiIPConn=sdp.media[0].ipConnect;
    iRTPSource = getRtpSOURCE(&sdp);//sdp.s.pSessName
    
-   int iInviter=iSdpSent;
+   int iInviter=iSdpSent;//iIsReq?????
 
    rtp.onSDPAttribs(sdp, SDP::eAudio, cbEng->p_cfg, iInviter, pzrtp);
    
@@ -1902,6 +1899,7 @@ int CRTPV::onSdp(char *pSdp, int iLen, int iIsReq, int iForceMedia)
       iSdpSent=0;
       puts("resetSdesContext");
       pzrtp->resetSdesContext(pzrtp->VideoStream);
+      log_zrtp("t_zrtp","resetSdesContext(video)");
    }
 
    rtp.onSDPAttribs(sdp, SDP::eAudio, cbEng->p_cfg, iInviter, pzrtp);
@@ -1951,7 +1949,7 @@ int CTSesMediaBase::addNonMediaAttribs(char *p, int iMaxLen, int iIsVideo
       for(int i=0;i<cnt;i++){
          char tmp[128];
          int l=pzrtp->getSignalingHelloHash(tmp,iIsVideo,i);
-         if(l>0)iLen+=sprintf(p+iLen,"a=zrtp-hash:%.*s\r\n",l,&tmp[0]);
+         if(l>0)iLen+=t_snprintf(p+iLen,iMaxLen-iLen,"a=zrtp-hash:%.*s\r\n",l,&tmp[0]);
       }
    }
 
@@ -1967,17 +1965,20 @@ int CTSesMediaBase::addNonMediaAttribs(char *p, int iMaxLen, int iIsVideo
       int iInviter=!iSdpParsed;//pCallStatus && pCallStatus->iCaller - fails on reinivte, dont use pCallStatus
       
       if(iInviter){
-         pzrtp->t_createSdes(&tmp[0], &l, sn);
+         bool b=pzrtp->t_createSdes(&tmp[0], &l, sn);
+         log_zrtp("t_zrtp", b?"t_createSdes()=ok":"t_createSdes()=false");
       }
       else{
          bool b=pzrtp->getSavedSdes(&tmp[0], &l, sn);
+         log_zrtp("t_zrtp", b?"getSavedSdes()=ok":"getSavedSdes()=false");
          if(!b)l=0;
       }
       
-      if(cbEng->p_cfg.iZRTP_On){
+      if(cbEng->p_cfg.iZRTP_On && cbEng->p_cfg.iZRTPTunnel_On){
          const char *encap = pzrtp->getZrtpEncapAttribute(sn);
          if (encap != NULL) {
-            iLen += sprintf(p+iLen, "a=zrtp-encap:%s\r\n",  encap);
+            iLen += t_snprintf(p+iLen,iMaxLen-iLen, "a=zrtp-encap:%s\r\n",  encap);
+            log_zrtp("t_zrtp", "add zrtp-encap:");
          }
       }
       
@@ -1985,15 +1986,17 @@ int CTSesMediaBase::addNonMediaAttribs(char *p, int iMaxLen, int iIsVideo
       if(l>0 && l<sizeof(tmp)){
          
          mixLen = pzrtp->getCryptoMixAttribute(tmp1, l1, sn);
-         if (mixLen > 0)
-            iLen += sprintf(p+iLen, "a=crypto-mix:%.*s\r\n", (int)mixLen, tmp1);
-         
-         iLen+=sprintf(p+iLen,"a=crypto:%.*s\r\n",(int)l,&tmp[0]);
+         if (mixLen > 0){
+            iLen += t_snprintf(p+iLen,iMaxLen-iLen, "a=crypto-mix:%.*s\r\n", (int)mixLen, tmp1);
+            log_zrtp("t_zrtp", "add crypto-mix:");
+         }
+         iLen+=t_snprintf(p+iLen,iMaxLen-iLen,"a=crypto:%.*s\r\n",(int)l,&tmp[0]);
+         log_zrtp("t_zrtp", "add crypto:");
       }
       
    }
    
-   if(T_CAN_USE_T_ICE && iAddIce){
+   if(T_CAN_USE_T_ICE && iAddIce && cbEng->p_cfg.iCanUseP2Pmedia){
       iLen+=rtp->ice.createCandidates(addrPriv, addrPubl, p+iLen, iMaxLen-iLen);
    }
    
@@ -2117,6 +2120,7 @@ int CRTPV::makeSdp(char *p, int iMaxLen, int fUseExtPort)
 
 static int addSDPCodec(char *p, int iMaxLen, CSessionsBase &eng, int id, int eType){
    int iLen=0;
+   if(iMaxLen<200)return 0;
    switch(id)
    {
       case 0:
@@ -2178,7 +2182,7 @@ int CRTPX::makeSdp(char *p, int iMaxLen, unsigned int uiPort,
    //rtpSend
    int iResponseOnlyWithOneCodecIn200Ok=eng.p_cfg.iResponseOnlyWithOneCodecIn200Ok && iShowAll==0;
    
-   int iLen=sprintf(p,eng.p_cfg.iSDES_On?"m=%s %u RTP/SAVP":"m=%s %u RTP/AVP",media,uiPort);//if SDES  use SAVP ??
+   int iLen=t_snprintf(p,iMaxLen,eng.p_cfg.iSDES_On?"m=%s %u RTP/SAVP":"m=%s %u RTP/AVP",media,uiPort);//if SDES  use SAVP ??
    
    struct CODECS *cmy=&eng.sSdp.u.codec[0];
    int iMyCC=eng.sSdp.codecCount;
@@ -2189,14 +2193,14 @@ int CRTPX::makeSdp(char *p, int iMaxLen, unsigned int uiPort,
    if(iShowAll){
       for (i=0;i<iMyCC;i++){
          if(cmy[i].eType!=eType)continue;
-         iLen+=sprintf(p+iLen," %u",cmy[i].uiID);
+         iLen+=t_snprintf(p+iLen, iMaxLen-iLen," %u",cmy[i].uiID);
       }
    }
    else{
       for (i=0;i<iCodecsMatching[iIsVideo];i++){
          int id=codecMatches[iIsVideo][i];
          if(i && iResponseOnlyWithOneCodecIn200Ok && id!=T_MY_DTMF_PT_ID && !IS_CN(id))continue;
-         iLen+=sprintf(p+iLen," %u",id);
+         iLen+=snprintf(p+iLen, iMaxLen-iLen," %u",id);
       }
    }
    
@@ -2243,7 +2247,7 @@ int CRTPX::makeSdp(char *p, int iMaxLen, unsigned int uiPort,
     */
    //   ADD_STR(p,iLen,"a=sendrecv\r\n");
    //-- return iLen;
-   return sprintf(p+iLen,"a=x-ssrc:%08x\r\n",uiSSRC)+iLen;
+   return t_snprintf(p+iLen, iMaxLen-iLen,"a=x-ssrc:%08x\r\n",uiSSRC)+iLen;
 }
 
 

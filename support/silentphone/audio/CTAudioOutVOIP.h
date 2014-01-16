@@ -158,7 +158,7 @@ public:
             
             if(iUnderflow && iCanClearPlayedData && !iCNReceived && isPlaying()){
                void createSine(double &ctx, short *s, int iSamples, float freq, int iRate, int iVol, int iIsLast);
-               createSine(dbgUnderFlowCTX,tmp,iSamples,330., iRate, 1000, 0);
+               createSine(dbgUnderFlowCTX,tmp,iSamples,330., iRate, 500, 0);
                iUnderflowDetected=1;
             }
             else {dbgUnderFlowCTX=0;iUnderflowDetected=0;}

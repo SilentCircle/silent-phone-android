@@ -385,6 +385,20 @@ protected:
      */
     void setZrtpEncapAttribute(const char *attribute);
 
+    /**
+     * @brief Set the auxilliary secret for ZRTP
+     * 
+     * An application may set an auxilliary secret and the ZRTP stack uses it as
+     * additional data to compute the SRTP keys.
+     * 
+     * Only the master stream (Audio) can use the auxilliary secret because only the
+     * master stream performs a Diffie-Hellman negotiation.
+     *
+     * @param secret the secret data
+     * @param length the length of the secret data in bytes
+     */
+    void setAuxSecret(const unsigned char *secret, int length);
+
     /*
      * The following methods implement the GNU ZRTP callback interface.
      * For detailed documentation refer to file ZrtpCallback.h

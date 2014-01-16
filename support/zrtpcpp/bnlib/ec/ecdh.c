@@ -9,7 +9,7 @@
 #include <ec/ec.h>
 #include <ec/ecdh.h>
 
-int ecdhGeneratePublic(const NistECpCurve *curve, EcPoint *Q, const BigNum *d)
+int ecdhGeneratePublic(const EcCurve *curve, EcPoint *Q, const BigNum *d)
 {
     EcPoint G;
 
@@ -24,7 +24,7 @@ int ecdhGeneratePublic(const NistECpCurve *curve, EcPoint *Q, const BigNum *d)
     return ecCheckPubKey(curve, Q);
 }
 
-int ecdhComputeAgreement(const NistECpCurve *curve, BigNum *agreement, const EcPoint *Q, const BigNum *d)
+int ecdhComputeAgreement(const EcCurve *curve, BigNum *agreement, const EcPoint *Q, const BigNum *d)
 {
     EcPoint t0;
 

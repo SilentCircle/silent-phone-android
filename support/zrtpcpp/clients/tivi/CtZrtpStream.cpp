@@ -23,6 +23,14 @@
 #include <cryptcommon/aes.h>
 #include <cryptcommon/ZrtpRandom.h>
 
+// #define DEBUG_CTSTREAM
+#ifdef DEBUG_CTSTREAM
+static char debBuf[500];
+#define DEBUG(deb)   deb
+#else
+#define DEBUG(deb)
+#endif
+
 static TimeoutProvider<std::string, CtZrtpStream*>* staticTimeoutProvider = NULL;
 
 static std::map<int32_t, std::string*> infoMap;
@@ -173,8 +181,6 @@ bool CtZrtpStream::processOutgoingRtp(uint8_t *buffer, size_t length, size_t *ne
         }
         if (useSdesForMedia && sdes != NULL) {   // SDES stream available, let SDES protect if necessary
             rc = sdes->outgoingRtp(buffer, length, newLength);
-            if (*sdesTempBuffer != 0)       // clear SDES crypto string if not already done
-                memset(sdesTempBuffer, 0, maxSdesString);
             sdesProtect++;
         }
         return rc;
@@ -182,8 +188,6 @@ bool CtZrtpStream::processOutgoingRtp(uint8_t *buffer, size_t length, size_t *ne
     // At this point ZRTP/SRTP is active
     if (useSdesForMedia && sdes != NULL) {       // We still have a SDES - other client did not send zrtp-hash thus we protect twice
         rc = sdes->outgoingRtp(buffer, length, newLength);
-        if (*sdesTempBuffer != 0)           // clear SDES crypto string if not already done
-            memset(sdesTempBuffer, 0, maxSdesString);
         if (!rc) {
             return rc;
         }
@@ -209,10 +213,10 @@ int32_t CtZrtpStream::processIncomingRtp(uint8_t *buffer, const size_t length, s
                 return 1;
             }
             rc = sdes->incomingRtp(buffer, length, newLength);
-            if (*sdesTempBuffer != 0)           // clear SDES crypto string if not already done
-                memset(sdesTempBuffer, 0, maxSdesString);
-
             if (rc == 1) {                      // SDES unprotect OK, do some statistics and return success
+                if (*sdesTempBuffer != 0)       // clear SDES crypto string if not already done
+                    memset(sdesTempBuffer, 0, maxSdesString);
+
                 srtpAuthErrorBurst = 0;
                 srtpReplayErrorBurst = 0;
                 srtpDecodeErrorBurst = 0;
@@ -296,9 +300,12 @@ int32_t CtZrtpStream::processIncomingRtp(uint8_t *buffer, const size_t length, s
                 }
                 return 0;
             }
+            if (*sdesTempBuffer != 0)                          // clear SDES crypto string if not already done
+                memset(sdesTempBuffer, 0, maxSdesString);
             useLength = newLength + CRC_SIZE;                  // length check assumes a ZRTP CRC
         }
         else {
+            DEBUG(char tmpBuffer[500];)
             useZrtpTunnel = false;
             // Get CRC value into crc (see above how to compute the offset)
             uint16_t temp = length - CRC_SIZE;
@@ -307,6 +314,8 @@ int32_t CtZrtpStream::processIncomingRtp(uint8_t *buffer, const size_t length, s
             if (!zrtpCheckCksum(buffer, temp, crc)) {
                 zrtpCrcErrors++;
                 if (zrtpCrcErrors > 15) {
+                    DEBUG(snprintf(debBuf, 499, "len: %d, sdes: %p, sdesMedia: %d, zrtpEncap: %d", temp, (void*)sdes, useSdesForMedia, zrtpEncapSignaled); zrtp_log("CtZrtpStream", debBuf);)
+
                     sendInfo(Warning, WarningCRCmismatch);
                     zrtpCrcErrors = 0;
                 }
@@ -417,6 +426,7 @@ int CtZrtpStream::getInfo(const char *key, char *p, int maxLen) {
         secState |= 0x100;
 
     T_ZRTP_I("sec_state", secState);
+    T_ZRTP_LB("buildInfo",  zrtpBuildInfo);
 
     // Compute Hello-hash info string
     const char *strng = NULL;
@@ -445,7 +455,7 @@ int CtZrtpStream::getInfo(const char *key, char *p, int maxLen) {
         info = zrtpEngine->getDetailInfo();
 
         if (iLen == 1 && key[0] == 'v') {
-            return sprintf(p, "%d", sasVerified);
+            return snprintf(p, maxLen, "%d", sasVerified);
         }
         if(strncmp("sc_secure", key, iLen) == 0) {
             int v = (zrtpHashMatch && sasVerified && !peerHelloHashes.empty() && tiviState == CtZrtpSession::eSecure);
@@ -454,7 +464,7 @@ int CtZrtpStream::getInfo(const char *key, char *p, int maxLen) {
                 v = 0;
             if (v && (info->secretsMatched & ZRtp::Rs1) == 0 && !sasVerified)
                 v = 0;
-            return sprintf(p, "%d" ,v);
+            return snprintf(p, maxLen, "%d", v);
         }
     }
     else if (useSdesForMedia && sdes != NULL) {
@@ -639,6 +649,10 @@ void CtZrtpStream::setZrtpEncapAttribute(const char *attribute) {
             useZrtpTunnel = true;
         }
     }
+}
+
+void CtZrtpStream::setAuxSecret(const unsigned char *secret, int length) {
+    zrtpEngine->setAuxSecret((unsigned char*)secret, length);
 }
 
 /* *********************
@@ -1135,6 +1149,7 @@ void CtZrtpStream::initStrings() {
     warningMap.insert(std::pair<int32_t, std::string*>(WarningSRTPreplayError, new std::string("s2_c007: Dropping packet because SRTP replay check failed!")));
     warningMap.insert(std::pair<int32_t, std::string*>(WarningNoExpectedRSMatch,
                                                 new std::string("s2_c008: You MUST check SAS with your partner. If it doesn't match, it indicates the presence of a wiretapper.")));
+    warningMap.insert(std::pair<int32_t, std::string*>(WarningNoExpectedAuxMatch, new std::string("s2_c009: Expected auxilliary secret match failed")));
 
     severeMap.insert(std::pair<int32_t, std::string*>(SevereHelloHMACFailed,  new std::string("s3_c001: Hash HMAC check of Hello failed!")));
     severeMap.insert(std::pair<int32_t, std::string*>(SevereCommitHMACFailed, new std::string("s3_c002: Hash HMAC check of Commit failed!")));

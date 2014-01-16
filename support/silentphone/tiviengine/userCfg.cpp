@@ -69,6 +69,10 @@ int encryptPWD(const char *pwd, int iLen, char *hexOut, int iMaxOut, int iIndex)
 int isAESKeySet();
 
 
+int mustUseZRTP();
+int mustUseSDES();
+int mustUseTLS();
+
 
 #define CFG_F_FALSE  0
 #define CFG_F_TRUE   1
@@ -357,6 +361,12 @@ void FindXMLVal(NODE *node, int level, int cfgFlag, PHONE_CFG &cfg)
                }
                break;
                ///sUserCfg.szMelody
+            case CFG_F_TRUE|CFG_F_SDP:
+                  if (tmpNV->name.len==3 && strncmp(tmpNV->name.s,"p2p",3)==0){
+                     cfg.iCanUseP2Pmedia=tmpNV->value.s[0]-'0';
+                     printf(cfg.iCanUseP2Pmedia?"[p2p_on]":"[p2p_off]");
+                  }
+                  break;
             case CFG_F_VIDEO|CFG_F_TRUE|CFG_F_SDP:
                if (CMP_XML(tmpNV->name,"RATE",4))
                   cfg.iVideoFrameEveryMs=(int)strtoul(tmpNV->value.s,NULL,0);
@@ -386,6 +396,9 @@ void FindXMLVal(NODE *node, int level, int cfgFlag, PHONE_CFG &cfg)
                   int f=(int)strtoul(tmpNV->value.s,NULL,0);
                   cfg.iCanUseZRTP=f;
                   cfg.iSDES_On=!!f;
+               }
+               else if (CMP_XML(tmpNV->name,"TUNNELING",9)){
+                  cfg.iZRTPTunnel_On=!!strtoul(tmpNV->value.s,NULL,0);
                }
                break;
 
@@ -554,7 +567,7 @@ void guiSaveUserCfg(PHONE_CFG *p, short *fn)
    fprintf(f,"outMsgCol=\"%u,%u,%u\" ",
       GetRValue(c2),
       GetGValue(c2),
-      GetGValue(c2)
+      GetBValue(c2)
 
       );
    fprintf(f,"/>\r\n");
@@ -570,8 +583,8 @@ void guiSaveUserCfg(PHONE_CFG *p, short *fn)
    fprintf(f,"   </snddev>"T_CRLF);
    
 
-   fprintf(f,"   <sdp>"T_CRLF);
-   fprintf(f,"      <zrtp flag=\"%d\" zid=\"%s\" sdes=\"%d\"/>"T_CRLF,p->iCanUseZRTP,&p->szZID_base16[0], p->iSDES_On);
+   fprintf(f,"   <sdp p2p=\"%d\">"T_CRLF,p->iCanUseP2Pmedia);
+   fprintf(f,"      <zrtp flag=\"%d\" zid=\"%s\" sdes=\"%d\" tunneling=\"%d\"/>"T_CRLF,p->iCanUseZRTP,&p->szZID_base16[0], p->iSDES_On, p->iZRTPTunnel_On);
    fprintf(f,"      <audio rtpport=\"%d\" agc=\"%d\" vad=\"%d\" vadg=\"%d\" aec=\"%d\" pcksz=\"%d\" pckszg=\"%d\">"T_CRLF,p->iRtpPort,p->iUseAGC ,p->iUseVAD,p->iUseVAD3G,p->iUseAEC,p->iPayloadSizeSend,p->iPayloadSizeSend3G);
 
    fprintf(f,"         <codecs enabledg=\"%s\" disabledg=\"%s\" enabled=\"%s\" disabled=\"%s\" respwithone=\"%d\"/>"T_CRLF,p->szACodecs3G,p->szACodecsDisabled3G,p->szACodecs,p->szACodecsDisabled,p->iResponseOnlyWithOneCodecIn200Ok);
@@ -734,6 +747,48 @@ void deleteCfg(void *p, int iIndex){
    
 }
 
+static void setCfgDefaults(PHONE_CFG *cfg){
+   cfg->setDefaults();
+   cfg->bufStun[0]=0;
+   cfg->iWarnNetworkUsage=1;
+   cfg->iWarnCamMicUsage=1;
+   cfg->iUseStun=1;
+   cfg->iSDES_On=1;//sdes on by default ??? need for SC
+   cfg->iZRTPTunnel_On=1;
+   cfg->iCanUseP2Pmedia=1;
+   
+   cfg->iPlainPasswordDetected=0;
+   
+   if(cfg->iUseStun && !cfg->bufStun[0]){
+      cfg->iUseStun=0;
+   }
+}
+
+static void checkCfg(PHONE_CFG *cfg){
+#ifdef _WIN32
+   cfg->iSDES_On=1;//we have only SC accounts on win32.
+   cfg->iZRTP_On=1;
+#else
+
+   if(mustUseZRTP()) cfg->iZRTP_On=1;
+   if(mustUseSDES()) cfg->iSDES_On=1;
+#endif
+   
+   
+   if(mustUseTLS()){
+      strcpy(cfg->szSipTransport,"TLS");
+   }
+   
+   if(cfg->iUseStun && !cfg->bufStun[0]){
+      cfg->iUseStun=0;
+   }
+   if(&cfg->szACodecsDisabled[0]){
+      remIds(&cfg->szACodecs[0],sizeof(cfg->szACodecs),&cfg->szACodecsDisabled[0]);
+   }
+   if(&cfg->szACodecsDisabled3G[0]){
+      remIds(&cfg->szACodecs3G[0],sizeof(cfg->szACodecs3G),&cfg->szACodecsDisabled3G[0]);
+   }
+}
 
 static int getCfgLoc(PHONE_CFG *cfg,int iCheckImei, int iIndex)
 {
@@ -745,44 +800,24 @@ static int getCfgLoc(PHONE_CFG *cfg,int iCheckImei, int iIndex)
       setCfgFN(b,iIndex);
       setFileBackgroundReadable(b);
 
-      cfg->setDefaults();
-      cfg->bufStun[0]=0;
       cfg->iIndex=iIndex;
+      setCfgDefaults(cfg);
+
 
       CParseXml xml;
       NODE *node=xml.mainXML(b.getText());
       if(node==NULL)getCfgO(cfg);
 
-      cfg->iWarnNetworkUsage=1;
-      cfg->iWarnCamMicUsage=1;
-      cfg->iUseStun=1;
-      
-      cfg->iSDES_On=1;//sdes on by default ??? need for SC
-      
-      if(cfg->iUseStun && !cfg->bufStun[0]){
-         cfg->iUseStun=0;
-      }
       if(!node)return -1;
 
-      cfg->iPlainPasswordDetected=0;
-      FindXMLVal(node,0,0,*cfg);
-#ifdef _WIN32
-      cfg->iSDES_On=1;//we have only SC accounts on win32.
-      cfg->iZRTP_On=1;
-#endif
       
+      FindXMLVal(node,0,0,*cfg);
+      
+      checkCfg(cfg);
+
       if(cfg->iPlainPasswordDetected && isAESKeySet())
          guiSaveUserCfg(cfg,b.getText());
 
-      if(cfg->iUseStun && !cfg->bufStun[0]){
-         cfg->iUseStun=0;
-      }
-      if(&cfg->szACodecsDisabled[0]){
-         remIds(&cfg->szACodecs[0],sizeof(cfg->szACodecs),&cfg->szACodecsDisabled[0]);
-      }
-      if(&cfg->szACodecsDisabled3G[0]){
-         remIds(&cfg->szACodecs3G[0],sizeof(cfg->szACodecs3G),&cfg->szACodecsDisabled3G[0]);
-      }
    }
 
    if(iCheckImei!=2 && cfg->iRtpPort==0 && cfg->iSipPortToBind==0)

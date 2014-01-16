@@ -35,14 +35,20 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.provider.ContactsContract;
+import android.telephony.PhoneNumberUtils;
+import android.util.Log;
 
+import com.silentcircle.silentcontacts.ScContactsContract;
 import com.silentcircle.silentcontacts.ScContactsContract.PhoneLookup;
 import com.silentcircle.silentcontacts.ScContactsContract.RawContacts;
 import com.silentcircle.silentphone.TiviPhoneService;
+import com.silentcircle.silentphone.activities.TMActivity;
 
 import java.io.InputStream;
 
 public class CTCall {
+
+    private static final String LOG_TAG = "CTCall";
 
     private boolean contactsDataChecked;
 
@@ -80,6 +86,7 @@ public class CTCall {
         iSipHasErrorMessage = false;
         iRecentsUpdated = false;
         bIsVideoActive =false;
+        videoAccepted =false;
         sdesActive = false;
 
         iUserDataLoaded = 0;
@@ -99,8 +106,10 @@ public class CTCall {
         iImgHeight = 0;
 
         image = null;
-        
         customRingtoneUri = null;
+        lookupUri = null;
+        contactId = 0;
+        secExceptionMsg = null;
     }
 
     public void fillDataFromContacts(TiviPhoneService service) {
@@ -108,7 +117,6 @@ public class CTCall {
             return;
 
         Context ctx = service.getBaseContext();
-        Uri lookupUri;
         Uri contentUri;
         String phoneLookUpId;
         String ringtoneIdx;
@@ -116,9 +124,21 @@ public class CTCall {
         boolean hasSilentContacts = false;
 
         if (service.hasSilentContacts()) {
-            lookupUri = Uri.withAppendedPath(PhoneLookup.CONTENT_FILTER_URI, bufPeer.toString());
+            if (!PhoneNumberUtils.isGlobalPhoneNumber(bufPeer.toString())) {
+                // "peer's number" is a SIP address, so use the PhoneLookup table with the SIP parameter.
+                Uri.Builder uriBuilder = PhoneLookup.CONTENT_FILTER_URI.buildUpon();
+                uriBuilder.appendPath(Uri.encode(bufPeer.toString() + "@sip.silentcircle.net"));
+                uriBuilder.appendQueryParameter(PhoneLookup.QUERY_PARAMETER_SIP_ADDRESS, "1");
+                lookupUri = uriBuilder.build();
+                if (TMActivity.SP_DEBUG) Log.d("CTCall", "SIP lookup uri: " + lookupUri);
+                phoneLookUpId = ScContactsContract.Data.RAW_CONTACT_ID;     // TODO - check and test this
+            }
+            else {
+                lookupUri = Uri.withAppendedPath(PhoneLookup.CONTENT_FILTER_URI, bufPeer.toString());
+                phoneLookUpId = PhoneLookup._ID;
+            }
+            lookupUri = lookupUri.buildUpon().appendQueryParameter(ScContactsContract.NON_BLOCKING, "true").build();
             displayNameIdx = RawContacts.DISPLAY_NAME;
-            phoneLookUpId = PhoneLookup._ID;
             contentUri = RawContacts.CONTENT_URI;
             ringtoneIdx = PhoneLookup.CUSTOM_RINGTONE;
             hasSilentContacts = true;
@@ -130,10 +150,16 @@ public class CTCall {
             contentUri = ContactsContract.Contacts.CONTENT_URI;
             ringtoneIdx = ContactsContract.PhoneLookup.CUSTOM_RINGTONE;
         }
-        Cursor c = ctx.getContentResolver().query(lookupUri, null, null, null, null);
+        Cursor c = null;
+        try {
+            c = ctx.getContentResolver().query(lookupUri, null, null, null, null);
+        } catch (Exception e) {
+            secExceptionMsg = "Cannot read contact data.";
+            Log.w(LOG_TAG, "Contacts query Exception, not using contacts data.");
+        }
         if (c != null) {
             if (c.moveToFirst()) {
-                
+//                DatabaseUtils.dumpCursor(c);
                 int idx = c.getColumnIndex(displayNameIdx);
                 if (idx != -1) {
                     String name = c.getString(idx);
@@ -144,7 +170,7 @@ public class CTCall {
                 // Check for a small photo
                 idx = c.getColumnIndex(phoneLookUpId);
                 if (idx != -1) {
-                    long contactId = c.getLong(idx);
+                    contactId = c.getLong(idx);
                     if (contactId != 0) {
                         // Get photo of contactId as input stream:
                         Uri uri = ContentUris.withAppendedId(contentUri, contactId);                        
@@ -154,7 +180,6 @@ public class CTCall {
                         if (input != null)
                             image = BitmapFactory.decodeStream(input);
                     }
-
                 }
 
                 idx =  c.getColumnIndex(ringtoneIdx);
@@ -185,7 +210,7 @@ public class CTCall {
      * Set caller's name or number.
      * 
      * The functions strips off the SIP protocol identifier and the domain name.
-     * @param s
+     * @param s The name
      */
     public void setPeerName(String s) {
         if (!iInUse) {
@@ -224,8 +249,6 @@ public class CTCall {
      * Holds the call duration in ms - currently not used (duration computed dynamically).
      */
     public long iDuration;
-
-    public long iTmpDur;
 
     /**
      * Set to true by phone engine if incoming call detected (eIncomCall).
@@ -268,6 +291,7 @@ public class CTCall {
     public int iUserDataLoaded;
    
     public boolean bIsVideoActive;
+    public boolean videoAccepted;
 
     /**
      * Set by phone engine to current system time if the call ended (eEndCall)
@@ -297,4 +321,19 @@ public class CTCall {
     public Bitmap image;
 
     public Uri customRingtoneUri;
+
+    /**
+     * The lookup URI to locate the contact in the DB.
+     */
+    public Uri lookupUri;
+
+    /**
+     * Id of raw contact
+     *
+     * If not null then we have a contact in the contact DB.
+     */
+    public long contactId;
+
+    /** If no null then a background service saw an exception when accessing SCA data */
+    public String secExceptionMsg;
 };

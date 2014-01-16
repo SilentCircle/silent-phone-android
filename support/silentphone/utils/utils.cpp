@@ -34,6 +34,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <stdarg.h>
+
 
 
 #if defined(_WIN32_WCE) || defined(__SYMBIAN32__) || defined(ARM)  || defined(ANDROID_NDK) 
@@ -562,6 +564,43 @@ unsigned int crc32(const void *ptr, size_t cnt){
    return crc32_calc(ptr,cnt,0xEDB88320);
 }
 
+#ifdef _WIN32
+#define snprintf _snprintf
+#endif
+
+//returns: the number of characters printed
+int t_snprintf(char *buf, int iMaxSize, const char *format, ...){
+   
+   if(iMaxSize<1){
+      // DEBUG_WARN
+      return 0;
+   }
+   
+   if(!buf){
+      //DEBUG_WARN
+      return 0;
+   }
+   
+   va_list arg;
+   va_start(arg, format);
+   int l = vsnprintf(buf, (size_t)iMaxSize, format, arg);
+   va_end( arg );
+   
+   if(l<=0){
+      return 0;
+   }
+   if(l>iMaxSize)l=iMaxSize-1;
+   return l;
+}
+
+int findChar(const char *p, char c){
+   const char *start=p;
+   for(;*p;p++){
+      if(*p==c)return p-start;
+   }
+   return -1;
+}
+
 void safeStrCpy(char *dst, const char *name, int iMaxSize){
    if(!name){
       if(dst)dst[0]=0;
@@ -575,6 +614,7 @@ void safeStrCpy(char *dst, const char *name, int iMaxSize){
 int stripDotsIfNumber(char *p, int iLen){
    
    int i;
+   //should i strip numbers here ?? 
    for(i=0;i<iLen;i++)if(!isdigit(p[i]) && p[i]!='.')return iLen;
    
    int iNewLen=0;

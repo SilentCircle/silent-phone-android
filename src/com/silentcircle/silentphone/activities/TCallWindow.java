@@ -28,25 +28,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 package com.silentcircle.silentphone.activities;//TCallWindow;
 
-import java.lang.ref.WeakReference;
-
-import com.actionbarsherlock.app.SherlockFragmentActivity;
-import com.actionbarsherlock.view.Menu;
-import com.actionbarsherlock.view.MenuItem;
-import com.silentcircle.silentphone.R;
-import com.silentcircle.silentphone.TiviPhoneService;
-import com.silentcircle.silentphone.utils.CTCall;
-import com.silentcircle.silentphone.utils.CTCalls;
-import com.silentcircle.silentphone.utils.CTFlags;
-import com.silentcircle.silentphone.utils.Utilities;
-import com.silentcircle.silentphone.views.*;
-
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.Context;
 import android.content.ServiceConnection;
 import android.content.res.Resources;
 import android.graphics.Color;
@@ -54,7 +41,9 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
-
+import android.media.AudioManager;
+import android.media.ToneGenerator;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -63,6 +52,7 @@ import android.os.PowerManager;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -72,6 +62,7 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.View.OnTouchListener;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
@@ -80,24 +71,28 @@ import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.RelativeLayout.LayoutParams;
 import android.widget.TextView;
-import android.view.Window;
-
-import android.media.AudioManager;
-import android.media.ToneGenerator;
-
 import android.widget.Toast;
+
+import com.actionbarsherlock.app.ActionBar;
+import com.actionbarsherlock.app.SherlockFragmentActivity;
+import com.actionbarsherlock.view.Menu;
+import com.actionbarsherlock.view.MenuInflater;
+import com.actionbarsherlock.view.MenuItem;
+import com.silentcircle.silentphone.R;
+import com.silentcircle.silentphone.TiviPhoneService;
+import com.silentcircle.silentphone.utils.CTCall;
+import com.silentcircle.silentphone.utils.CTCalls;
+import com.silentcircle.silentphone.utils.CTFlags;
+import com.silentcircle.silentphone.utils.DeviceHandling;
+import com.silentcircle.silentphone.utils.Utilities;
+import com.silentcircle.silentphone.views.CallScreen;
+
+import java.lang.ref.WeakReference;
 
 public class TCallWindow  extends SherlockFragmentActivity implements CallStateChangeListener, DeviceStateChangeListener,
     SensorEventListener {
     
     private static final String LOG_TAG = "TCallWindow";
-
-    public static final int FIRST_MENU_ID = Menu.FIRST;
-    public static final int HANG_UP_MENU_ITEM = FIRST_MENU_ID + 1;
-    public static final int VIDEO_MENU_ITEM = FIRST_MENU_ID + 5;
-    public static final int ANSWER_MENU_ITEM = FIRST_MENU_ID + 8;
-    public static final int SHOW_DPAD_MENU_ITEM = FIRST_MENU_ID + 9;
-    public static final int SHOW_ENROLL = FIRST_MENU_ID + 10;
 
     private static final int IN_CALL_DIALPAD_HIDE_TIMER = 1;
     private static final int IN_CALL_DIALPAD_HIDE_TIME_DEFAULT = 6000;   // given in ms
@@ -125,7 +120,8 @@ public class TCallWindow  extends SherlockFragmentActivity implements CallStateC
 
     private Resources resources;
     private Thread monitoring;
-    
+    private ActionBar actionBar;
+
     private int iIsIncoming = TiviPhoneService.CALL_TYPE_INAVLID;
     
     private boolean  iCanUseZRTP = false;
@@ -154,6 +150,7 @@ public class TCallWindow  extends SherlockFragmentActivity implements CallStateC
      * ******************************************************************* */
     private ImageButton muteButton;
     private ImageButton speakerButton;
+    private ImageButton headsetBtButton;
     private ImageButton showInCallDialer;
     private ImageButton addNewCall;
     private ImageButton startVideoCall;
@@ -283,9 +280,9 @@ public class TCallWindow  extends SherlockFragmentActivity implements CallStateC
             // cast its IBinder to a concrete class and directly access it.
             phoneService = ((TiviPhoneService.LocalBinder)service).getService();
             phoneIsBound = true;
-            serviceBound();
             phoneService.addStateChangeListener(TCallWindow.this);
             phoneService.addDeviceChangeListener(TCallWindow.this);
+            serviceBound();
         }
 
         public void onServiceDisconnected(ComponentName className) {
@@ -297,10 +294,6 @@ public class TCallWindow  extends SherlockFragmentActivity implements CallStateC
             phoneIsBound = false;
         }
     };
-
-    void showToast(String s){
-       Toast.makeText(getBaseContext(), s, Toast.LENGTH_LONG).show();
-    }
 
     private void doBindService() {
         // Establish a connection with the service.  We use an explicit
@@ -348,15 +341,14 @@ public class TCallWindow  extends SherlockFragmentActivity implements CallStateC
      * This is a static wrapper function to simplify thread/context handling. 
      */
     public static void am(Context ctx, boolean mode) {
+        if (!DeviceHandling.switchAudioMode())
+            return;
+
         AudioManager am = (AudioManager) ctx.getSystemService(AUDIO_SERVICE);
 
-        int iApiLevel = android.os.Build.VERSION.SDK_INT;
-
-        int m_ic = iApiLevel < 11 ?  AudioManager.MODE_IN_CALL : AudioManager.MODE_IN_COMMUNICATION;
-
-        int mv = mode ? m_ic : AudioManager.MODE_NORMAL;
-        am.setMode(mv);
-        if(mode){
+        int modeInCall =  Build.VERSION.SDK_INT < 11 ?  AudioManager.MODE_IN_CALL : AudioManager.MODE_IN_COMMUNICATION;
+        am.setMode(mode ? modeInCall : AudioManager.MODE_NORMAL);
+        if (mode) {
             am.setMicrophoneMute(false);
         }
     }
@@ -413,7 +405,7 @@ public class TCallWindow  extends SherlockFragmentActivity implements CallStateC
 
     }
     
-    synchronized void endCall(boolean userPressed, CTCall call) {
+    synchronized void endCall(boolean userPressed, final CTCall call) {
         if (call == null) {
             Log.w(LOG_TAG, "Null call during end call processing: " + userPressed);
             runOnUiThread(new Runnable() {
@@ -425,8 +417,8 @@ public class TCallWindow  extends SherlockFragmentActivity implements CallStateC
             });            
             return;
         }
- 
-        // Our user pressed the end-call button. 
+
+        // Our user pressed the end-call button.
         if (userPressed) {
             doCmd("*e" + call.iCallId);
             return;
@@ -444,6 +436,7 @@ public class TCallWindow  extends SherlockFragmentActivity implements CallStateC
                     rootLayout.removeView(videoOverlay);
                 }
                 am(getBaseContext(), false);
+                call.secExceptionMsg = null;
             }
         });
         Utilities.turnOnSpeaker(this, false, true); // Set speaker to off at end of call and remember this
@@ -460,30 +453,6 @@ public class TCallWindow  extends SherlockFragmentActivity implements CallStateC
         }
         else
             setCallState(getDur(1));
-    }
-
-    /**
-     * Handle key down events while handling a call.
-     * 
-     * We only handle KEYCODE_HEADSETHOOK key for the time being. If the user presses this key
-     * we either answer or end the call, depending on the call's state.
-     *  
-     * @param keyCode 
-     * @param event
-     */
-    public boolean onKeyDown (int keyCode, KeyEvent event) {
-        if (TMActivity.SP_DEBUG) Log.d(LOG_TAG, "button, action: " + keyCode);
-        if (KeyEvent.KEYCODE_HEADSETHOOK == keyCode) {
-            CTCall call = TiviPhoneService.calls.selectedCall;
-            if (call != null && call.mustShowAnswerBT()) {
-                answerCall(true);
-            }
-            else {
-                endCall(true, TiviPhoneService.calls.selectedCall);
-            }
-            return true;
-        }
-        return false;
     }
 
     private String getDur(int iAddDur) {
@@ -602,11 +571,16 @@ public class TCallWindow  extends SherlockFragmentActivity implements CallStateC
         int index = msg.indexOf(':');   // message classification is sn_cmmm: - see strings.xml
         String msgIdString = msg.substring(0, index);
 
-        // These two messages are neglibile (replay, parse problem), thus ignore them completely
+        // These two messages are negligible (replay, parse problem), thus ignore them completely
         if ("s2_c007".equals(msgIdString) || "s2_c051".equals(msgIdString))
             return null;
 
-        int secState = Integer.parseInt(TiviPhoneService.getInfo(call.iEngID, call.iCallId, "media.zrtp.sec_state"));
+        int secState = 0;
+        try {
+            secState = Integer.parseInt(TiviPhoneService.getInfo(call.iEngID, call.iCallId, "media.zrtp.sec_state"));
+        } catch (NumberFormatException e) {
+            return null;
+        }
 
         // The 0x100 signals that SDES is active and thus we are in a secure state. No need to
         // display scary ZRTP messages. Even if ZRTP fails we stay secure with SDES - at least
@@ -659,7 +633,10 @@ public class TCallWindow  extends SherlockFragmentActivity implements CallStateC
             String askState = "media.audio.zrtp.sec_state";
             if (msg == TiviPhoneService.CT_cb_msg.eZRTPMsgV)
                 askState = "media.video.zrtp.sec_state";
-            int secState = Integer.parseInt(TiviPhoneService.getInfo(call.iEngID, call.iCallId, askState));
+            int secState = 0;
+            try {
+                secState = Integer.parseInt(TiviPhoneService.getInfo(call.iEngID, call.iCallId, askState));
+            } catch (NumberFormatException e) {}
             secureState.setText(R.string.zrtp_we_error);
             if ((secState & 0x100) == 0x100) {   // SDES active: tell Huston we have a problem, then show SECURITY again
                 secureState.setTextColor(resources.getColor(R.color.solid_yellow));
@@ -671,6 +648,15 @@ public class TCallWindow  extends SherlockFragmentActivity implements CallStateC
         }
         else  if ("Not SECURE".equals(call.bufSecureMsg.toString())) {
             secureState.setText(R.string.secstate_not_secure);
+        }
+        else  if ("Looking for peer".equals(call.bufSecureMsg.toString())) {
+            secureState.setText(R.string.secstate_looking);
+        }
+        else  if ("Going secure".equals(call.bufSecureMsg.toString())) {
+            secureState.setText(R.string.secstate_going_sec);
+        }
+        else  if ("Not SECURE no crypto enabled".equals(call.bufSecureMsg.toString())) {
+            secureState.setText(R.string.secstate_going_sec);
         }
         else {
             secureState.setText(call.bufSecureMsg.toString());
@@ -762,7 +748,6 @@ public class TCallWindow  extends SherlockFragmentActivity implements CallStateC
         runOnUiThread(new zrtpChangeWrapper(call, msg));
     }
 
-
     /* *********************************************************************
      * Methods and private class that handle call state changes
      * ******************************************************************* */  
@@ -840,6 +825,11 @@ public class TCallWindow  extends SherlockFragmentActivity implements CallStateC
             case eCalling:
                 updateProximitySensorMode(true); 
                 setCallNumberField(call.bufPeer.toString());
+                sasText.setVisibility(View.INVISIBLE);      // in case this is a second/added call this clears old data
+                zrtpPeerName.setVisibility(View.INVISIBLE);
+                secureState.setVisibility(View.INVISIBLE);
+                verifyButton.setVisibility(View.INVISIBLE);
+                callingState.setVisibility(View.VISIBLE);
                 break;
 
             default:
@@ -860,8 +850,15 @@ public class TCallWindow  extends SherlockFragmentActivity implements CallStateC
             String s = call.getNameFromAB();
             if (s != null) {
                 sipCallerName.setText(s);
+                if (s.equals(call.bufPeer.toString())) {
+                    callNumber.setText(null);
+                }
             }
             Utilities.setCallerImage(call, callerImage);
+            if (call.secExceptionMsg != null) {
+                Toast.makeText(TCallWindow.this, call.secExceptionMsg, Toast.LENGTH_LONG).show();
+                call.secExceptionMsg = null;
+            }
         }
     }
 
@@ -878,9 +875,8 @@ public class TCallWindow  extends SherlockFragmentActivity implements CallStateC
         runOnUiThread(new callChangeWrapper(call, msg));
     }
 
-    
-    private int changedState;
 
+    private int changedState;
     /**
      * Device state change listener.
      * 
@@ -892,31 +888,46 @@ public class TCallWindow  extends SherlockFragmentActivity implements CallStateC
             public void run() {
                 switch (changedState) {
 
-                case TiviPhoneService.EVENT_WIRED_HEADSET_PLUG:
-                    // inCall dialer manages speaker state if it is visible, thus don't restore but switch on
-                    // without storing state
-                    if (!phoneService.isHeadsetPlugged()) {
-                        if (inCallDialer != null && inCallDialer.isVisible()) {
-                            switchSpeaker(true, false);
-                            return;
+                    case TiviPhoneService.EVENT_WIRED_HEADSET_PLUG:
+                        // inCall dialer manages speaker state if it is visible, thus don't restore but switch on
+                        // without storing state
+                        if (!phoneService.isHeadsetPlugged()) {
+                            if (inCallDialer != null && inCallDialer.isVisible()) {
+                                switchSpeaker(true, false);
+                                return;
+                            }
+                            // if the state is "not connected", restore the speaker state.
+                            Utilities.restoreSpeakerMode(getBaseContext());
+                            speakerButton.setPressed(Utilities.isSpeakerOn(getBaseContext()));
+                            updateProximitySensorMode(true);
                         }
-                        // if the state is "not connected", restore the speaker state.
-                        Utilities.restoreSpeakerMode(getBaseContext());
-                        speakerButton.setPressed(Utilities.isSpeakerOn(getBaseContext()));
-                        updateProximitySensorMode(true);
-                    }
-                    else {
-                        // if the state is "connected", force the speaker off without storing the state.
-                        switchSpeaker(false, false);
-                    }
-                    break;
+                        else {
+                            // if the state is "connected", force the speaker off without storing the state.
+                            switchSpeaker(false, false);
+                        }
+                        break;
 
-                case TiviPhoneService.EVENT_HEADSET_HOOK_PRESSED:
-                    answerCall(true);
-                    break;
+                    case TiviPhoneService.EVENT_HEADSET_HOOK_PRESSED:
+                        answerCall(true);
+                        break;
 
-                default:
-                    break;
+                    case TiviPhoneService.EVENT_BT_HEADSET_SCO_OFF:
+                        int v = TiviPhoneService.doCmd("set.samplerate=48000");
+                        if(TMActivity.SP_DEBUG) Log.d(LOG_TAG, "BT off event - set_rate 48000: " + v);
+                        headsetBtButton.setPressed(false);
+                        if(!phoneService.hasBtHeadSet()) {      // check for lost headset/connection
+                            headsetBtButton.setVisibility(View.GONE);
+                        }
+                        break;
+
+                    case TiviPhoneService.EVENT_BT_HEADSET_ADDED:
+                        headsetBtButton.setVisibility(View.VISIBLE);
+                        break;
+
+                    case TiviPhoneService.EVENT_BT_HEADSET_SCO_ON:
+                    case TiviPhoneService.EVENT_BT_HEADSET_REMOVED:
+                    default:
+                        break;
                 }
             }
         });
@@ -970,6 +981,10 @@ public class TCallWindow  extends SherlockFragmentActivity implements CallStateC
                     zrtpPeerName.setVisibility(View.INVISIBLE);                    
                 }
             }
+            else {
+                sasText.setVisibility(View.INVISIBLE);
+                zrtpPeerName.setVisibility(View.INVISIBLE);
+            }
         }
         if (!call.iActive) {
             // Security/ZRTP fields are invisible during SIP call setup
@@ -994,10 +1009,16 @@ public class TCallWindow  extends SherlockFragmentActivity implements CallStateC
         String s = call.getNameFromAB();
         if (s != null) {
             sipCallerName.setText(s);
+            if (s.equals(call.bufPeer.toString())) {
+                callNumber.setText(null);
+            }
         }
         Utilities.setCallerImage(call, callerImage);
         setAnswerEndCallButton(call);
         setToggleButtons();
+        if (bIsVideo) {
+            activateVideo();
+        }
     }
     
     /**
@@ -1035,6 +1056,7 @@ public class TCallWindow  extends SherlockFragmentActivity implements CallStateC
      * Current toggle buttons/states are: mute and speaker.
      */
     private void setToggleButtons() {
+        headsetBtButton.setPressed(phoneService.btHeadsetScoActive());
         muteButton.setPressed(isMuted);
         speakerButton.setPressed(Utilities.isSpeakerOn(getBaseContext()));
     }
@@ -1061,7 +1083,7 @@ public class TCallWindow  extends SherlockFragmentActivity implements CallStateC
 
 
     private void setCallNumberField(String number) {
-        CTFlags f = new CTFlags(getBaseContext());
+        CTFlags f = new CTFlags();
         if (f.getNumberInfo(number) >= 0) {
             countryFlag.setImageResource(f.ret.iResID);
         }
@@ -1073,8 +1095,33 @@ public class TCallWindow  extends SherlockFragmentActivity implements CallStateC
     }
 
     /* *********************************************************************
-     * Activity lifecycle methods
-     * ******************************************************************* */  
+     * Activity lifecycle methods, menu handling
+     * ******************************************************************* */
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getSupportMenuInflater();
+        inflater.inflate(R.menu.activity_call_screen, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        super.onOptionsItemSelected(item);
+
+        switch (item.getItemId()) {
+
+            case R.id.call_menu_info:
+                showInCallInfo();
+                break;
+        }
+        return true;
+    }
 
     @Override
     protected void onStart() {
@@ -1103,6 +1150,8 @@ public class TCallWindow  extends SherlockFragmentActivity implements CallStateC
         super.onPause();
 
         iForeground = 0;
+        if (bIsVideo)
+            deactivateVideo();
     }
 
     @Override
@@ -1163,7 +1212,7 @@ public class TCallWindow  extends SherlockFragmentActivity implements CallStateC
         super.onCreate(savedInstanceState);
         
         resources = getResources();        
-        requestWindowFeature(Window.FEATURE_NO_TITLE);
+        //requestWindowFeature(Window.FEATURE_NO_TITLE);
         
         // This is a phone call screen, thus perform some specific handling
         int wflags = WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED;
@@ -1173,6 +1222,7 @@ public class TCallWindow  extends SherlockFragmentActivity implements CallStateC
 
         getWindow().addFlags(wflags);
 
+        setupActionBar();
         setContentView(R.layout.activity_call_screen);
 
         // Get all necessary buttons and text fields. The code uses them everywhere.
@@ -1240,6 +1290,7 @@ public class TCallWindow  extends SherlockFragmentActivity implements CallStateC
         // like toggle buttons. Real Android toggle buttons do not support images. 
         muteButton = (ImageButton)findViewById(R.id.MuteButton);
         speakerButton = (ImageButton)findViewById(R.id.SpeakerButton);
+        headsetBtButton = (ImageButton)findViewById(R.id.HeadsetBtButton);
         setTouchHandlers();
 
         iCanUseZRTP = Utilities.checkZRTP();
@@ -1258,13 +1309,13 @@ public class TCallWindow  extends SherlockFragmentActivity implements CallStateC
          * the 3 commented code lines. We may enhance this after Gingerbread support is gone.
          */
         int PROXIMITY_SCREEN_OFF_WAKE_LOCK = 32;
-//        if ((pm.getSupportedWakeLockFlags()
-//             & PowerManager.PROXIMITY_SCREEN_OFF_WAKE_LOCK) != 0x0) {
+//        if ((pm.getSupportedWakeLockFlags() & PowerManager.PROXIMITY_SCREEN_OFF_WAKE_LOCK) != 0x0) {
+            /** To see if the wake-up is really used refer to {@link #proximitySensorModeEnabled()} */
             mProximityWakeLock =
                     powerManager.newWakeLock(PROXIMITY_SCREEN_OFF_WAKE_LOCK, "silentphone_proximity_off_wake");
 //        }
 
-         doBindService();        // Bind the TiviPhoneService, only locally
+        doBindService();        // Bind the TiviPhoneService, only locally
     }
     
     // Called after phone service was bound - actually part of onCreate that needs the phone service
@@ -1303,6 +1354,8 @@ public class TCallWindow  extends SherlockFragmentActivity implements CallStateC
         }
         iLastiIsIncoming = iIsIncoming;
 
+        if (phoneService.hasBtHeadSet())
+            headsetBtButton.setVisibility(View.VISIBLE);
         speakerButton.setPressed(Utilities.isSpeakerOn(getBaseContext()));
         updateProximitySensorMode(true);
 
@@ -1408,7 +1461,7 @@ public class TCallWindow  extends SherlockFragmentActivity implements CallStateC
                                 }
                                 iHideAfter = -1;
                                 
-                                Intent intent = null;
+                                Intent intent;
                                 // Just one call left, handle it here, terminate call manager if running
                                 if (numCalls == 1) {
                                     if (nextCall.iIsInConferece) {   // no need to have the last call in a conference
@@ -1439,10 +1492,52 @@ public class TCallWindow  extends SherlockFragmentActivity implements CallStateC
                         }
                     }
                 }
+                phoneService.bluetoothHeadset(false);
                 TCallWindow.this.finish();
             }
         });
         monitoring.start();
+    }
+
+    private void setupActionBar() {
+        actionBar = getSupportActionBar();
+        if (actionBar == null)
+            return;
+        actionBar.setDisplayShowTitleEnabled(false);
+        actionBar.setDisplayShowHomeEnabled(true);
+        actionBar.setHomeButtonEnabled(false);
+
+        actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_STANDARD);
+    }
+
+    @Override
+    public boolean dispatchKeyEvent (KeyEvent event) {
+        int action = event.getAction();
+        int keyCode = event.getKeyCode();
+        CTCall call = TiviPhoneService.calls.selectedCall;
+
+        if (call == null)
+            return false;
+        switch (keyCode) {
+            case KeyEvent.KEYCODE_VOLUME_DOWN:
+                if (action == KeyEvent.ACTION_DOWN && !call.iActive) {
+                    phoneService.stopRT();
+                    return true;
+                }
+                return false;
+
+            case KeyEvent.KEYCODE_HEADSETHOOK:
+                if (action == KeyEvent.ACTION_DOWN) {
+                    if (call.mustShowAnswerBT())
+                        answerCall(true);
+                    else
+                        endCall(true, call);
+                }
+                return true;
+
+            default:
+                return false;
+        }
     }
 
     /*
@@ -1465,12 +1560,38 @@ public class TCallWindow  extends SherlockFragmentActivity implements CallStateC
      * Simplify handling of speaker switching
      */
     private void switchSpeaker(boolean onOff, boolean storeState) {
+        if (phoneService.btHeadsetScoActive())              // Don't switch to speaker if BT is active
+            return;
         Utilities.turnOnSpeaker(getBaseContext(), onOff, storeState);
         speakerButton.setPressed(onOff);
         updateProximitySensorMode(true);
-        
     }
-    
+
+    /*
+     * Simplify handling of Bluetooth headset switching
+     */
+    private void switchBtHeadset(boolean on) {
+
+        if (!phoneService.hasBtHeadSet())
+            return;
+
+        if (on) {
+            switchSpeaker(false, false);            // Switch off speaker, don't store this state wo we can restore
+            int v = TiviPhoneService.doCmd("set.samplerate=16000");
+            if(TMActivity.SP_DEBUG) Log.d(LOG_TAG, "BT on - set_rate 16000: " + v);
+            phoneService.bluetoothHeadset(true);
+        }
+        else {
+            phoneService.bluetoothHeadset(false);
+            int v = TiviPhoneService.doCmd("set.samplerate=48000");
+            if(TMActivity.SP_DEBUG)Log.d(LOG_TAG, "BT off - set_rate 48000: " + v);
+            Utilities.restoreSpeakerMode(getBaseContext());
+            speakerButton.setPressed(Utilities.isSpeakerOn(getBaseContext()));
+        }
+        headsetBtButton.setPressed(on);
+        updateProximitySensorMode(true);
+    }
+
     /* *********************************************************************
      * Methods to setup and handle call window buttons. Some buttons need
      * specific touch handler.
@@ -1480,15 +1601,28 @@ public class TCallWindow  extends SherlockFragmentActivity implements CallStateC
         muteButton.setOnTouchListener(new MuteButtons());
         videoAudioMute.setOnTouchListener(new MuteButtons());
 
+        headsetBtButton.setOnTouchListener(new OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                if (event.getAction() == MotionEvent.ACTION_DOWN)
+                    return true;
+                if (event.getAction() != MotionEvent.ACTION_UP)
+                    return false;
+                switchBtHeadset(!phoneService.btHeadsetScoActive());
+                return true;
+            }
+        });
+
         speakerButton.setOnTouchListener(new OnTouchListener() {
+            @Override
             public boolean onTouch(View v, MotionEvent event) {
                 if (event.getAction() == MotionEvent.ACTION_DOWN)
                     return true;
                 if (event.getAction() != MotionEvent.ACTION_UP)
                     return false;
 
-                boolean spkrState = !Utilities.isSpeakerOn(getBaseContext());
-                switchSpeaker(spkrState, true);
+                boolean speakerState = !Utilities.isSpeakerOn(getBaseContext());
+                switchSpeaker(speakerState, true);
                 return true;
             }
         });
@@ -1512,8 +1646,9 @@ public class TCallWindow  extends SherlockFragmentActivity implements CallStateC
                 return true;
             }
         });
-   }
-    /** 
+    }
+
+    /**
      * Called when the user answers the call.
      */
     public void answerCall(View view) {
@@ -1541,7 +1676,7 @@ public class TCallWindow  extends SherlockFragmentActivity implements CallStateC
 
         Intent i = new Intent();
         i.setClass(this, TMActivity.class);
-        i.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);        
+        i.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
         startActivity(i);
 
         finish();
@@ -1633,7 +1768,6 @@ public class TCallWindow  extends SherlockFragmentActivity implements CallStateC
         }
     }
 
-    
     /**
      * Comment and code taken from Phone app - will use some of the commented
      * code/features sometime later when looking BT, speaker, etc 
@@ -1679,7 +1813,8 @@ public class TCallWindow  extends SherlockFragmentActivity implements CallStateC
                 // on when we become horizontal until the proximity sensor goes negative.
 //                boolean horizontal = (mOrientation == AccelerometerListener.ORIENTATION_HORIZONTAL);
 
-                boolean keepScreenOn = Utilities.isSpeakerOn(getBaseContext()) || phoneService.isHeadsetPlugged();
+                boolean keepScreenOn = Utilities.isSpeakerOn(getBaseContext()) || phoneService.isHeadsetPlugged() ||
+                        phoneService.btHeadsetScoActive();
                 if (enable && !keepScreenOn) {
                     // Phone is in use!  Arrange for the screen to turn off
                     // automatically when the sensor detects a close object.
@@ -1703,14 +1838,14 @@ public class TCallWindow  extends SherlockFragmentActivity implements CallStateC
         }
     }
 
-
-
     /**
-     * @return true if this device supports the "proximity sensor
-     * auto-lock" feature while in-call (see updateProximitySensorMode()).
+     * Check if this device uses the ProximitySensorWakeLock.
+     *
+     * @return true if this device supports the "proximity sensor auto-lock" feature while
+     *              in-call (see updateProximitySensorMode()).
      */
     private boolean proximitySensorModeEnabled() {
-        return (mProximityWakeLock != null);
+        return (mProximityWakeLock != null && DeviceHandling.useProximityWakeup());
     }
 
     /* *********************************************************************
@@ -1725,9 +1860,11 @@ public class TCallWindow  extends SherlockFragmentActivity implements CallStateC
             return;
         }
         rootLayout.addView(videoOverlay);
-        if (!Utilities.isSpeakerOn(getBaseContext())) {
+        if (!Utilities.isSpeakerOn(getBaseContext()) && !phoneService.isHeadsetPlugged()) {
             switchSpeaker(true, false);
         }
+        if (videoScreen.getNumCameras() <= 1)
+            frontCamera = false;
         if (!videoAccept.isEnabled()) {     // If video accept button is _not_ enabled then user accepted the video
             videoScreen.setFrontCamera(frontCamera);
             videoScreen.startStopCamera();
@@ -1737,8 +1874,10 @@ public class TCallWindow  extends SherlockFragmentActivity implements CallStateC
 
     private void deactivateVideo() {
         CallScreen.stopCamera();
-        Utilities.restoreSpeakerMode(getBaseContext());
-        speakerButton.setPressed(Utilities.isSpeakerOn(getBaseContext()));
+        if (!phoneService.btHeadsetScoActive()) {              // Don't switch to speaker if BT is active
+            Utilities.restoreSpeakerMode(getBaseContext());
+            speakerButton.setPressed(Utilities.isSpeakerOn(getBaseContext()));
+        }
         updateProximitySensorMode(true);
         rootLayout.removeView(videoOverlay);
     }
@@ -1753,7 +1892,7 @@ public class TCallWindow  extends SherlockFragmentActivity implements CallStateC
      * - or if video is active and a call has no video channel anymore (on = false)
      * 
      * 
-     * @param call        the call that controls the video stream
+     * @param call     the call that controls the video stream
      * @param on       if true switch video on, switch off otherwise
      */
     synchronized public void switchVideo(CTCall call, boolean on) {
@@ -1818,35 +1957,29 @@ public class TCallWindow  extends SherlockFragmentActivity implements CallStateC
      * Current toggle buttons/states are: video mute and audio mute.
      */
     private void setVideoToggleButtons() {
-        if (isMuted) {
-            videoAudioMute.setPressed(true);
-        }
-        else {
-            videoAudioMute.setPressed(false);
-        }
-        if (videoMute) {
-            videoMuteButton.setPressed(true);
-        }
-        else {
-            videoMuteButton.setPressed(false);
-        }
+        videoAudioMute.setPressed(isMuted);
+        videoMuteButton.setPressed(videoMute);
     }
 
     /**
      * Change buttons to video not accepted state
      */
     private void switchButtonsVideoInactive() {
+        CTCall call = TiviPhoneService.calls.selectedCall;
+        if (call == null)
+            return;
         videoAccept.setEnabled(true);
         videoAccept.setVisibility(View.VISIBLE);
         videoDecline.setEnabled(true);
         videoDecline.setVisibility(View.VISIBLE);
+        call.videoAccepted = false;
 
         videoAudioMute.setEnabled(false);
         videoAudioMute.setVisibility(View.INVISIBLE);
         videoSwitchCamera.setEnabled(false);
         videoSwitchCamera.setVisibility(View.INVISIBLE);
         videoEndCall.setEnabled(false);
-        videoEndCall.setVisibility(View.INVISIBLE);        
+        videoEndCall.setVisibility(View.INVISIBLE);
     }
 
     /**
@@ -1855,10 +1988,14 @@ public class TCallWindow  extends SherlockFragmentActivity implements CallStateC
      * Video is accepted automatically if user started video.
      */
     private void switchButtonsVideoActive() {
+        CTCall call = TiviPhoneService.calls.selectedCall;
+        if (call == null)
+            return;
         videoAccept.setEnabled(false);
         videoAccept.setVisibility(View.INVISIBLE);
         videoDecline.setEnabled(false);
         videoDecline.setVisibility(View.INVISIBLE);
+        call.videoAccepted = true;
 
         videoAudioMute.setEnabled(true);
         videoAudioMute.setVisibility(View.VISIBLE);
@@ -1883,9 +2020,11 @@ public class TCallWindow  extends SherlockFragmentActivity implements CallStateC
         videoOverlayView.addView(previewSurface);
         videoMute = false;
         switchButtonsVideoActive();
+        if (videoScreen.getNumCameras() <= 1)
+            frontCamera = false;
         videoScreen.setFrontCamera(frontCamera);
         videoScreen.startStopCamera();
-        if (!Utilities.isSpeakerOn(getBaseContext())) {
+        if (!Utilities.isSpeakerOn(getBaseContext()) && !phoneService.isHeadsetPlugged()) {
             switchSpeaker(true, false);
         }
     }
@@ -1956,9 +2095,6 @@ public class TCallWindow  extends SherlockFragmentActivity implements CallStateC
     private void storePeerAndVerify(String peerName) {
         CTCall call = TiviPhoneService.calls.selectedCall;
         if (call != null) {
-            if (call.iMuted) {
-                muteButton.setPressed(true);
-            }
             String cmd = "*z" + call.iCallId + " " + peerName;
             TiviPhoneService.doCmd(cmd);
             call.zrtpPEER.setText(peerName);
@@ -1970,6 +2106,7 @@ public class TCallWindow  extends SherlockFragmentActivity implements CallStateC
             zrtpPeerName.setText(peerName);
             handlePeerCallerName();
         }
+        setToggleButtons();
     }
 
     private void handlePeerCallerName() {
@@ -2234,6 +2371,7 @@ public class TCallWindow  extends SherlockFragmentActivity implements CallStateC
     private static final String lbHash = "media.zrtp.lbHash";
     private static final String lbKeyExchange = "media.zrtp.lbKeyExchange";
     private static final String socket = ".sock";      //socket info, tls ciphers or udp,tcp
+    private static final String lbBuildInfo = "media.zrtp.buildInfo";
 
     /**
      * Reads the crypto information from the Tivi engine and prepares the bundle.
@@ -2244,6 +2382,10 @@ public class TCallWindow  extends SherlockFragmentActivity implements CallStateC
             return null;
 
         Bundle args = new Bundle();
+
+        String buildInfo = TiviPhoneService.getInfo(call.iEngID, call.iCallId, lbBuildInfo);
+        if (TMActivity.SP_DEBUG) Log.d(LOG_TAG, "ZRTP build information: " + buildInfo);
+//        String[] info = buildInfo.split(":");
 
         args.putString(sdp_hash, TiviPhoneService.getInfo(call.iEngID, call.iCallId, sdp_hash));
         args.putString(lbClient, TiviPhoneService.getInfo(call.iEngID, call.iCallId, lbClient));
@@ -2304,7 +2446,7 @@ public class TCallWindow  extends SherlockFragmentActivity implements CallStateC
             // Inflate and set the layout for the dialog
             // set the SAS string to compare
             // Pass null as the parent view because its going in the dialog layout
-            View view = inflater.inflate(R.layout.activity_crypto_info, null);
+            View view = inflater.inflate(R.layout.dialog_crypto_info, null);
             TextView txtv = (TextView)view.findViewById(R.id.CryptoCryptoComponentsCipherInfo);
             txtv.setText(args.getString(lbChiper));
             txtv = (TextView)view.findViewById(R.id.CryptoCryptoComponentsHashInfo);
@@ -2385,6 +2527,56 @@ public class TCallWindow  extends SherlockFragmentActivity implements CallStateC
                        public void onClick(DialogInterface dialog, int id) {
                        }
                    });
+            // Create the AlertDialog object and return it
+            return builder.create();
+        }
+    }
+
+    private void showInCallInfo() {
+        InCallInfo infoMsg = InCallInfo.newInstance();
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        infoMsg.show(fragmentManager, "SilentPhoneInCallInfo");
+    }
+
+    public static class InCallInfo extends DialogFragment {
+
+        public static InCallInfo newInstance() {
+            InCallInfo f = new InCallInfo();
+            return f;
+        }
+
+        @Override
+        public Dialog onCreateDialog(Bundle savedInstanceState) {
+            // Use the Builder class for convenient dialog construction
+            AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+
+            LayoutInflater inflater = getActivity().getLayoutInflater();
+
+            // Inflate and set the layout for the dialog
+            // Pass null as the parent view because its going in the dialog layout
+            View view = inflater.inflate(R.layout.dialog_incall_info, null);
+
+            // We always have a name
+            TextView txtv = (TextView)view.findViewById(R.id.InCallNameInfo);
+            txtv.setText(TiviPhoneService.getInfo(0, -1, "cfg.un"));
+
+            String nr = TiviPhoneService.getInfo(0, -1, "cfg.nr");
+            txtv = (TextView)view.findViewById(R.id.InCallNumberInfo);
+
+            if (TextUtils.isEmpty(nr)) {
+                view.findViewById(R.id.InCallNumber).setVisibility(View.GONE);
+                txtv.setVisibility(View.GONE);
+            }
+            else
+                txtv.setText(CTFlags.formatNumber(nr));
+
+            // Add inflated view and action buttons
+            builder.setView(view)
+                    .setTitle(R.string.thanks_top_line)
+                    .setPositiveButton(R.string.close_dialog, new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {}
+                    });
+
             // Create the AlertDialog object and return it
             return builder.create();
         }

@@ -638,7 +638,7 @@ typedef struct{
       if(pUrl && pUrl[0]=='/')pUrl++;
       if(!iContentLen)
       {
-         l=sprintf(bufGet,
+         l=snprintf(bufGet,sizeof(bufGet),
             "%s /%s HTTP/1.0\r\n"
             "Host: %s\r\n"
             "%s"
@@ -647,7 +647,7 @@ typedef struct{
       }
       else
       {
-         l=sprintf(bufGet,
+         l=snprintf(bufGet,sizeof(bufGet),
             "%s /%s HTTP/1.0\r\n"
             "Host: %s\r\n"
             "%s"
@@ -702,7 +702,11 @@ typedef struct{
             }
             a.ip=CTSock::getHostByName(a.bufAddr,a.bufAddr[i]==':'?i:0);
          }
-         if(a.ip==0)return -1;
+         if(a.ip==0){
+            iHttpRespID=-1;
+            iBytesReceived=0;
+            return -1;
+         }
          strcpy(szPrevAddr,a.bufAddr);
          iPrevIp=a.ip;
       }
@@ -714,7 +718,7 @@ typedef struct{
       if(pUrl && pUrl[0]=='/')pUrl++;
       if(!iContentLen)
       {
-         l=sprintf(bufGet,
+         l=snprintf(bufGet,sizeof(bufGet),
             "%s /%s HTTP/1.0\r\n"
             "Host: %s\r\n"
             "%s"
@@ -723,7 +727,7 @@ typedef struct{
       }
       else
       {
-         l=sprintf(bufGet,
+         l=snprintf(bufGet,sizeof(bufGet),
             "%s /%s HTTP/1.0\r\n"
             "Host: %s\r\n"
             "%s"

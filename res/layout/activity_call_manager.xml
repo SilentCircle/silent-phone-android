@@ -33,8 +33,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	android:layout_width="match_parent"
 	android:layout_height="match_parent"
 	android:baselineAligned="false"
-	android:background="@drawable/bg_main"
 	android:focusable="false"
+    android:background="@color/silent_black"
 	android:orientation="vertical" >
 
     <LinearLayout
@@ -43,7 +43,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
         android:layout_height="wrap_content"
         android:layout_weight="1"
         android:orientation="vertical" >
-
 	</LinearLayout>
 
 </ScrollView>

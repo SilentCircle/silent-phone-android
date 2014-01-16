@@ -27,6 +27,8 @@ void relTcpBGSock(void *ptr){}
 void *prepareTcpSocketForBg(int s){return (void*)1;}
 #endif
 
+int mustCheckTLSCert();
+
 #ifdef _WIN32
 #define snprintf _snprintf
 #endif
@@ -58,6 +60,29 @@ void my_debug( void *ctx, int level, const char *str )
     */
     //if( level < DEBUG_LEVEL )
       //tivi_slog("lev[%d]%s",level,str);
+}
+
+void *getEncryptedPtr_debug(void *p){
+   
+   if(!p)return NULL;//dont leak the key
+   
+   static unsigned long long bufKey;
+   static int iInit=1;
+   if(iInit){
+      iInit=0;
+      FILE *f=fopen("/dev/urandom","rb");;
+      if(f){
+         fread(&bufKey,1,8,f);
+         fclose(f);
+      }
+   }
+   unsigned long long ull=(unsigned long long)p;
+   
+   if(ull<10000)return p;//dont leak the key
+   
+   ull^=bufKey;
+   
+   return (void*)ull;
 }
 
 
@@ -186,45 +211,7 @@ int CTTLS::_connect(ADDR *address){
    x509_cert *ca=&((T_SSL*)pSSL)->cacert;
 
    
-#if 0
-static int ssl_default_ciphersuitesz[] =
-{
-#if defined(POLARSSL_DHM_C)
-#if defined(POLARSSL_AES_C)
-//    SSL_EDH_RSA_AES_128_SHA,
-    SSL_EDH_RSA_AES_256_SHA,
-#endif
-#if defined(POLARSSL_CAMELLIA_C)
-    SSL_EDH_RSA_CAMELLIA_128_SHA,
-    SSL_EDH_RSA_CAMELLIA_256_SHA,
-#endif
-#if defined(POLARSSL_DES_C)
-    SSL_EDH_RSA_DES_168_SHA,
-#endif
-#endif
-
-#if defined(POLARSSL_AES_C)
-    SSL_RSA_AES_256_SHA,
-#endif
-#if defined(POLARSSL_CAMELLIA_C)
-    SSL_RSA_CAMELLIA_256_SHA,
-#endif
-#if defined(POLARSSL_AES_C)
-   // SSL_RSA_AES_128_SHA,
-#endif
-#if defined(POLARSSL_CAMELLIA_C)
-   // SSL_RSA_CAMELLIA_128_SHA,
-#endif
-#if defined(POLARSSL_DES_C)
-    SSL_RSA_DES_168_SHA,
-#endif
-#if defined(POLARSSL_ARC4_C)
-    SSL_RSA_RC4_128_SHA,
-    SSL_RSA_RC4_128_MD5,
-#endif
-    0
-};
-#else
+#if 1
    const int ssl_default_ciphersuitesz[] =
    {
 #if defined(POLARSSL_DHM_C)
@@ -322,29 +309,41 @@ static int ssl_default_ciphersuitesz[] =
    int ret;
    memset( ca, 0, sizeof( x509_cert ) );
 	do{
-#define CERT_VERIFY
+
       int iCertErr=1;
-#ifdef CERT_VERIFY
 
       char *p=cert;
       if(cert){
          iCertErr = x509parse_crt( ca, (unsigned char *) p,       strlen( p ) );
       }
-#endif
-      puts(&bufX[0]);
+      if(mustCheckTLSCert() && (!cert || iCertErr)){
+         failedCert("No TLS Certificate",NULL,1);
+         return -1;
+      }
+
+      char b[64];snprintf(b,sizeof(b), "[net_connect(addr=%s port=%d);]",&bufX[0], address->getPort()+iIncPort);
+      tmp_log(b);
+
 		if(net_connect(&(((T_SSL*)pSSL)->sock),&bufX[0],address->getPort()+iIncPort))
          break;
       
       iLastTLSSOCK_TEST=(((T_SSL*)pSSL)->sock);
       iNeedCallCloseSocket=1;
+      
 #ifndef _WIN32
       int on=1;
+      /*
+       int delay = X; setsockopt(sockfd,SOL_TCP,TCP_KEEPIDLE,&delay,sizeof(delay)); int count = X; setsockopt(sockfd,SOL_TCP,TCP_KEEPCNT,&count,sizeof(count)); int interval = X; setsockopt(sockfd,SOL_TCP,TCP_KEEPINTVL,&interval,sizeof(interval)); int enable = 1; setsockopt(sockfd,SOL_SOCKET,SO_KEEPALIVE,&enable,sizeof(enable)); 
+       */
 
       setsockopt((((T_SSL*)pSSL)->sock), SOL_SOCKET, SO_KEEPALIVE, &on, sizeof(on));//new 05052012
  //TODO set this if need backgr only
 #endif
       relTcpBGSock(((T_SSL*)pSSL)->voipBCKGR);
-      ((T_SSL*)pSSL)->voipBCKGR=prepareTcpSocketForBg(((T_SSL*)pSSL)->sock);
+      ((T_SSL*)pSSL)->voipBCKGR=prepareTcpSocketForBg(((T_SSL*)pSSL)->sock);//ios sets to non-blocking socket here.
+      
+      //make sure to have blocking socket, the iOS defualts to non-blocking for voip
+      net_set_block(((T_SSL*)pSSL)->sock);//
       
       initEntropy();
       
@@ -372,13 +371,12 @@ static int ssl_default_ciphersuitesz[] =
 
 
       iCertFailed=0;
-#ifdef CERT_VERIFY
+
       if(iCertErr==0){
          ssl_set_ca_chain( ssl, ca, NULL, &bufCertHost[0] );
          ssl_set_hostname( ssl, &bufCertHost[0] );
          checkCert();
       }
-#endif
 
       
       iClosed=0;
@@ -509,8 +507,7 @@ int CTTLS::_send(const char *buf, int iLen){
             Sleep(20);
       }
 	}
-   void tmp_log(const char *p);
-   char d[64];sprintf(d, "[ssl-send=%p %.*s l=%d ret=%d]",ssl, 7,buf, iLen, ret);tmp_log(d);
+   void tmp_log(const char *p); char d[64];snprintf(d,sizeof(d), "[ssl-send=%p %.*s l=%d ret=%d]",getEncryptedPtr_debug(ssl), 12,buf, iLen, ret);tmp_log(d);
    
    if(ret<0){
       if(ret==POLARSSL_ERR_NET_CONN_RESET || ret==POLARSSL_ERR_NET_SEND_FAILED){
@@ -546,7 +543,9 @@ int CTTLS::_recv(char *buf, int iMaxSize){
       if( ret == POLARSSL_ERR_NET_WANT_READ || ret == POLARSSL_ERR_NET_WANT_WRITE ){
          
          Sleep(ret == POLARSSL_ERR_NET_WANT_WRITE?50:5);
-         if(iPrevReadRet==ret)Sleep(15);
+         if(iPrevReadRet==ret)
+            Sleep(15);
+         printf("[sock rw]");
          iPrevReadRet=ret;
          continue;
          //break;
@@ -572,7 +571,7 @@ int CTTLS::_recv(char *buf, int iMaxSize){
       break;
    };
    if(iPeerClosed==2 || ret==POLARSSL_ERR_NET_CONN_RESET || ret==POLARSSL_ERR_NET_RECV_FAILED){
-      char b[64];sprintf(b, "tls_recv err clear connaddr ret=%d pc=%d",ret, iPeerClosed);
+      char b[64];snprintf(b,sizeof(b), "tls_recv err clear connaddr ret=%d pc=%d",ret, iPeerClosed);
       tmp_log(b);
       iPeerClosed=1;
       this->addrConnected.clear();
@@ -581,7 +580,7 @@ int CTTLS::_recv(char *buf, int iMaxSize){
    }
    else{
       void tmp_log(const char *p);
-      char d[64];sprintf(d, "[ssl-recv=%p %.*s max=%d ret=%d]",ssl, 12,buf, iMaxSize, ret);tmp_log(d);
+      char d[64];snprintf(d,sizeof(d), "[ssl-recv=%p %.*s max=%d ret=%d]",getEncryptedPtr_debug(ssl), 12,buf, iMaxSize, ret);tmp_log(d);
    }
 
    if(ret<0){

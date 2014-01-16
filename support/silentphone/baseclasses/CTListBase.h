@@ -142,30 +142,15 @@ public:
 class CTList{
 public:
    int iCanChange;
-   CTList(int iNeedProtect=0):iCanChange(1),lroot(NULL),tail(NULL),iNeedProtect(iNeedProtect){}//TODO aisardziibu sheit
+   void *pUserStorage;
+   CTList():iCanChange(1),lroot(NULL),tail(NULL){pUserStorage=NULL;}
    virtual ~CTList()
    {
-      if(iNeedProtect)
-      {
-         //create mutex
-      }
+
       removeAll();
    }
    //CListItem *getRoot(){return lroot;}
-   inline void lock()
-   {
-      if(iNeedProtect)
-      {
-         //mutex
-      }
-   }
-   inline void unlock()
-   {
-      if(iNeedProtect)
-      {      
-         //mutex
-      }
-   }
+
    typedef int (FNC_LIST_CALLBACK)(CListItem *item, void *pUserData);
    void callBack(FNC_LIST_CALLBACK *p, void *pUserData)
    {

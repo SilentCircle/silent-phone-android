@@ -109,7 +109,7 @@ public:
    void stop(void *pData);
    void setXY(int x, int y);   
 
-   unsigned int onNewVideoData(int *d, unsigned char *yuv, int nw, int nh);
+   unsigned int onNewVideoData(int *d, unsigned char *yuv, int nw, int nh, int iRotDeg);
    void sendBuf(unsigned int uiPos);
   
    
@@ -120,7 +120,7 @@ public:
       return 0;
    }
 private:
-   void setXY_priv(int x, int y);
+   void setXY_priv(int x, int y, int iRot);
    
 };
 

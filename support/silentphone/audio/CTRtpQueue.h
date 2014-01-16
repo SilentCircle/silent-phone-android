@@ -451,7 +451,7 @@ public:
          iWaitForIncomingData=0;
       }
       //remove 
-      if(si > 4*iRate || si>3*iRate+iNeedSamplesInBuf){
+      if(si > 5*iRate || si>4*iRate+iNeedSamplesInBuf){
          findBestDecodePack(iNeedSamplesInBuf);
       }
       

@@ -1,5 +1,5 @@
 /*
-Copyright © 2012-2013, Silent Circle, LLC.  All rights reserved.
+Copyright © 2012-2014, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -28,31 +28,17 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 package com.silentcircle.silentphone.activities;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.net.MalformedURLException;
-import java.net.URL;
-
-import javax.net.ssl.HttpsURLConnection;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
-import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 import android.text.Editable;
 import android.text.InputType;
 import android.text.TextWatcher;
@@ -67,12 +53,36 @@ import android.widget.RelativeLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
+import com.actionbarsherlock.app.SherlockFragmentActivity;
+import com.silentcircle.keymngrspa.KeyManagerSupport;
 import com.silentcircle.silentphone.R;
 import com.silentcircle.silentphone.TiviPhoneService;
-import com.silentcircle.silentphone.utils.Utilities;
+import com.silentcircle.silentphone.fragments.ProvisioningUserPassword;
 import com.silentcircle.silentphone.utils.DeviceDetectionVertu;
+import com.silentcircle.silentphone.utils.Utilities;
 
-public class Provisioning extends FragmentActivity {
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
+import java.math.BigInteger;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
+
+import javax.net.ssl.HttpsURLConnection;
+
+public class Provisioning extends SherlockFragmentActivity {
 
     private static final int PROVISIONING_STEP0 = 0;
     private static final int PROVISIONING_STEP1 = 1;
@@ -82,7 +92,10 @@ public class Provisioning extends FragmentActivity {
     private static final int PROVISIONING_STEP5 = 5;
 
     private static final String LOG_TAG = "Provisioning";
-    private static final int KEY_GEN_RESULT = 7118;
+    private static final String USER_PASS_TAG = "spa_username_password_fragment";
+
+    static final String PREF_KM_API_KEY = "com.silentcircle.silentphone.prov_km_api_key";
+    static final String KM_API_KEY = "prov_km_api_key";
 
     private Thread provFirstThread;
     private StringBuilder content = new StringBuilder();
@@ -95,7 +108,6 @@ public class Provisioning extends FragmentActivity {
      */
     private static final int MIN_CONTENT_LENGTH = 10;
 
-    private RelativeLayout codeInputLayout;
     private RelativeLayout spinnerLayout;
     private RelativeLayout checkboxLayout;
     private RelativeLayout welcomeLayout;
@@ -120,9 +132,6 @@ public class Provisioning extends FragmentActivity {
     private Button provCancel;
     private Button provOk;
 
-    private EditText provCodeInput;
-
-    private boolean normalProvisioning = true;
     private boolean termsAndConditionsOk = false;
 
     private String deviceProvisioningData[];
@@ -135,6 +144,9 @@ public class Provisioning extends FragmentActivity {
     private FilterEnter filterEnter = new FilterEnter();
     private PasswordFilter pwFilter = new PasswordFilter();
 
+    private boolean hasKeyManager;
+    private String deviceId;
+
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
@@ -144,7 +156,6 @@ public class Provisioning extends FragmentActivity {
         setContentView(R.layout.activity_provisioning);
 
         extendedProvLayout = (RelativeLayout)findViewById(R.id.ProvisioningUserFields);
-        codeInputLayout = (RelativeLayout)findViewById(R.id.ProvisioningCodeLayout);
         spinnerLayout = (RelativeLayout)findViewById(R.id.ProvisioningSpinnerLayout);
         checkboxLayout = (RelativeLayout)findViewById(R.id.ProvisioningCheckboxLayout);
         welcomeLayout = (RelativeLayout)findViewById(R.id.ProvisioningWelcomeLayout);
@@ -170,44 +181,55 @@ public class Provisioning extends FragmentActivity {
         emailInput = (EditText) findViewById(R.id.ProvisioningEmailInput);
         emailInput.addTextChangedListener(filterEnter);
 
-        provCodeInput = (EditText) findViewById(R.id.ProvisioningCodeInput);
-
         provCancel = (Button) findViewById(R.id.ProvisioningCancel);
         provOk = (Button) findViewById(R.id.ProvisioningOK);
 
-        if (TiviPhoneService.use_password_key) {
-            Intent i = new Intent(this, KeyGeneration.class);
-            i.putExtra(KeyGeneration.NEW_PROVISIONING, false);
-            startActivityForResult(i, KEY_GEN_RESULT);
-        }
-        else {
-            if (DeviceDetectionVertu.isVertu()) {
-                deviceProvisioningData = DeviceDetectionVertu.getDeviceData(getApplicationContext());
+        setResult(Activity.RESULT_CANCELED);        // assume failure unless provisioning threads set it to OK
+
+        hasKeyManager = getIntent().getBooleanExtra("KeyManager", false);
+
+        // If we have a key manager available: check for an existing API key. If available use it and
+        // perform the provisioning.
+        if (hasKeyManager) {
+            byte[] data = KeyManagerSupport.getSharedKeyData(getContentResolver(), KeyManagerSupport.DEV_AUTH_DATA_TAG);
+            if (data != null) {
+                infoText.setText(null);
                 try {
-                    requestUrl = new URL(deviceProvisioningData[0]);
-                }
-                catch (MalformedURLException e) {
-                    finish();
-                }
+                    String devAuthorization = new String(data, "UTF-8");
+                    data = KeyManagerSupport.getSharedKeyData(getContentResolver(), KeyManagerSupport.DEV_UNIQUE_ID_TAG);
+                    if (data == null) {
+                        showInputInfo(getString(R.string.provisioning_no_data));
+                        return;
+                    }
+                    deviceId = new String(data, "UTF-8");
+                    if (TMActivity.SP_DEBUG) Log.d(LOG_TAG, "Shared deviceId : " + deviceId);
 
-                provisioningStep = PROVISIONING_STEP1;
-                welcomeLayout.setVisibility(View.VISIBLE);
+                    // We have a key manager, we have API key and device_id - thus set this preference to true
+                    SharedPreferences prefs =  getSharedPreferences(PREF_KM_API_KEY, Context.MODE_PRIVATE);
+                    prefs.edit().putBoolean(KM_API_KEY, true).commit();
+                    provisionWithAuthorization(devAuthorization, false);
+                    return;
+                } catch (UnsupportedEncodingException ignored) {}
             }
-            else
-                switchToNormalProvisioning();
         }
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == KEY_GEN_RESULT) {
-            if (resultCode != RESULT_OK) {
-                setResult(Activity.RESULT_CANCELED);
+        deviceId = getIntent().getStringExtra("DeviceId");
+        if (deviceId != null)
+            deviceId = hashDeviceId();
+        if (deviceId == null)
+            finish();                               // a major problem
+        if (TMActivity.SP_DEBUG) Log.d(LOG_TAG, "Device id: " + deviceId);
+        if (DeviceDetectionVertu.isVertu()) {
+            deviceProvisioningData = DeviceDetectionVertu.getDeviceData(getApplicationContext());
+            try {
+                requestUrl = new URL(deviceProvisioningData[0]);
+            } catch (MalformedURLException e) {
                 finish();
             }
-            else {
-                provFirstThread.start();
-            }
+            provisioningStep = PROVISIONING_STEP1;
+            welcomeLayout.setVisibility(View.VISIBLE);
+        }
+        else {
+            usernamePassword();
         }
     }
 
@@ -227,13 +249,12 @@ public class Provisioning extends FragmentActivity {
                     case HttpsURLConnection.HTTP_NOT_FOUND:
                         runOnUiThread(new Runnable() {
                             public void run() {
-                                switchToNormalProvisioning();
+                                usernamePassword();
                             }
                         });
                         break;
 
                     case HttpsURLConnection.HTTP_OK:
-                        normalProvisioning = false;
                         InputStream in = new BufferedInputStream(urlConnection.getInputStream());
                         readStream(in);
                         runOnUiThread(new Runnable() {
@@ -247,7 +268,7 @@ public class Provisioning extends FragmentActivity {
                         showInputInfo(getString(R.string.provisioning_already_registered));
                         runOnUiThread(new Runnable() {
                             public void run() {
-                                switchToNormalProvisioning();
+                                usernamePassword();
                             }
                         });
                         break;
@@ -256,7 +277,7 @@ public class Provisioning extends FragmentActivity {
                         showInputInfo(getString(R.string.error_code) + ret);
                         runOnUiThread(new Runnable() {
                             public void run() {
-                                switchToNormalProvisioning();
+                                usernamePassword();
                             }
                         });
                         break;
@@ -265,7 +286,6 @@ public class Provisioning extends FragmentActivity {
                 catch (IOException e) {
                     showErrorInfo(getString(R.string.provisioning_no_network) + e.getLocalizedMessage());
                     Log.e(LOG_TAG, "Network not available: " + e.getMessage());
-                    return;
                 }
                 finally {
                     urlConnection.disconnect();
@@ -324,7 +344,7 @@ public class Provisioning extends FragmentActivity {
                     }
                     // Here we may build in some more dedicated error handling, for example to allow the user
                     // to re-enter the user name in case it's already used by someone else. Need to sync with
-                    // server return codes. Instead of showing an error show and info dialog, and enable buttons
+                    // server return codes. Instead of showing an error show info dialog, and enable buttons
                     // again. Something like this:
                     //
                     // showInputInfo("some nice informative message");
@@ -356,12 +376,21 @@ public class Provisioning extends FragmentActivity {
                         catch (JSONException e) {
                             Log.w(LOG_TAG, "JSON exception: " + e);
                         }
-                        showErrorInfo(msg);
+                        showInputInfo(msg);
                         return;
                     }
                 }
                 catch (IOException e) {
-                    showErrorInfo(getString(R.string.provisioning_no_network) + e.getLocalizedMessage());
+                    // Disable spinner, show fields again
+                    runOnUiThread(new Runnable() {
+                            public void run() {
+                            spinnerLayout.setVisibility(View.INVISIBLE);
+                            extendedProvLayout.setVisibility(View.VISIBLE);
+                            setupThreads();
+                            enableButtons(true);
+                        }
+                        });
+                    showInputInfo(getString(R.string.provisioning_no_network) + e.getLocalizedMessage());
                     Log.e(LOG_TAG, "Network not available: " + e.getMessage());
                     return;
                 }
@@ -374,15 +403,18 @@ public class Provisioning extends FragmentActivity {
         });
     }
 
-    private void switchToNormalProvisioning() {
-        extendedProvLayout.setVisibility(View.INVISIBLE);
-        welcomeLayout.setVisibility(View.INVISIBLE);
-        spinnerLayout.setVisibility(View.INVISIBLE);
+    private void usernamePassword() {
         provisioningStep = PROVISIONING_STEP5;
-        codeInputLayout.setVisibility(View.VISIBLE);
-        stepInfoText.setText(null);
-        infoText.setText(null);
-        enableButtons(true);
+        FragmentManager fm = getSupportFragmentManager();
+        FragmentTransaction ft = fm.beginTransaction();
+        ProvisioningUserPassword usernamePassword = (ProvisioningUserPassword)fm.findFragmentByTag(USER_PASS_TAG);
+        if (usernamePassword == null) {
+            usernamePassword = new ProvisioningUserPassword(deviceId);
+            ft.add(R.id.ProvisioningMain, usernamePassword, USER_PASS_TAG);
+        }
+        ft.show(usernamePassword);
+        ft.commitAllowingStateLoss();
+        fm.executePendingTransactions();
     }
 
     private void switchToExtraProvisioning() {
@@ -412,6 +444,41 @@ public class Provisioning extends FragmentActivity {
         spinnerLayout.setVisibility(View.INVISIBLE);
         extendedProvLayout.setVisibility(View.VISIBLE);
         enableButtons(true);
+    }
+
+    public void usernamePasswordDone(String devAuthorization) {
+        FragmentManager fm = getSupportFragmentManager();
+        FragmentTransaction ft = fm.beginTransaction();
+        ProvisioningUserPassword usernamePassword = (ProvisioningUserPassword)fm.findFragmentByTag(USER_PASS_TAG);
+        ft.hide(usernamePassword);
+        ft.commitAllowingStateLoss();
+
+        boolean storeApiKey = false;
+        // This should not happen :-) - parallel provisioning at nearly same time ... use stored API key
+        if (hasKeyManager) {
+            byte[] data = KeyManagerSupport.getSharedKeyData(getContentResolver(), KeyManagerSupport.DEV_AUTH_DATA_TAG);
+            if (data != null) {
+                try {
+                    devAuthorization = new String(data, "UTF-8");
+                } catch (UnsupportedEncodingException ignored) {}
+            }
+            else
+                storeApiKey = true;
+        }
+        provisionWithAuthorization(devAuthorization, storeApiKey);
+    }
+
+    private void provisionWithAuthorization(String devAuthorization, boolean storeApiKey) {
+        scrollFrameLayout.scrollTo(0,0);
+        extendedProvLayout.setVisibility(View.INVISIBLE);
+        welcomeLayout.setVisibility(View.INVISIBLE);
+        spinnerLayout.setVisibility(View.VISIBLE);
+        stepInfoText.setText(null);
+        infoText.setText(getString(R.string.prepare_antenna));  // the text somehow fits: Prepare...
+        enableButtons(false);
+        provisioningStep = PROVISIONING_STEP5;
+        new Thread(new ProvisioningThreadAuthorization(devAuthorization, storeApiKey)).start();
+        new Thread(new ProvisioningMonitorThread()).start();
     }
 
     private void enableButtons(boolean enable) {
@@ -461,37 +528,18 @@ public class Provisioning extends FragmentActivity {
                 if (reqField.equals(field))
                     return true;
             }
-            catch (JSONException e) {
-            }
+            catch (JSONException ignored) {}
         }
         return false;
     }
-    
-    /**
-     * A simple check if two passwords are equal.
-     * 
-     * Returns false if one or both passwords are null or empty or if the passwords
-     * don't match.
-     * 
-     * @param pw1 first password
-     * @param pw2 second password
-     * @return true if both passwords match and are not empty.
-     */
-    private boolean checkPassword(String pw1, String pw2) {
-        if (pw1 == null || pw2 == null)
-            return false;
-        if (pw1.isEmpty() || pw2.isEmpty())
-            return false;
-        return pw1.equals(pw2);
-    }
-    
+
     private void showErrorInfo(String msg) {
         ErrorMsgDialogFragment errMsg = ErrorMsgDialogFragment.newInstance(msg);
         FragmentManager fragmentManager = getSupportFragmentManager();
         errMsg.show(fragmentManager, "SilentPhoneProvisioningError");
     }
 
-    private void showInputInfo(String msg) {
+    public void showInputInfo(String msg) {
         InfoMsgDialogFragment infoMsg = InfoMsgDialogFragment.newInstance(msg);
         FragmentManager fragmentManager = getSupportFragmentManager();
         infoMsg.show(fragmentManager, "SilentPhoneProvisioningInfo");
@@ -510,16 +558,6 @@ public class Provisioning extends FragmentActivity {
      * @param view the Confirm button
      */
     public void provisioningOk(View view) {
-
-        if (normalProvisioning) {
-            provisioningCode = provCodeInput.getText().toString();
-            codeInputLayout.setVisibility(View.INVISIBLE);
-            spinnerLayout.setVisibility(View.VISIBLE);
-            new Thread(new ProvisioningThread(provisioningCode)).start();
-            new Thread(new ProvisioningMonitorThread()).start();
-            return;
-        }
-
         switch (provisioningStep) {
         case PROVISIONING_STEP2:
             customerData = new JSONObject();
@@ -595,7 +633,7 @@ public class Provisioning extends FragmentActivity {
      */
     public void provisioningExistingAccount(View v) {
         welcomeLayout.setVisibility(View.INVISIBLE);
-        switchToNormalProvisioning();
+        usernamePassword();
     }
 
     /**
@@ -617,7 +655,7 @@ public class Provisioning extends FragmentActivity {
     public void showPasswordCheck(View v) {
         CheckBox cbv = (CheckBox)v;
         if (cbv.isChecked()) {
-            passwordInput.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_NORMAL);
+            passwordInput.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
         }
         else {
             passwordInput.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
@@ -662,7 +700,7 @@ public class Provisioning extends FragmentActivity {
     }
 
     private void readStream(InputStream in) {
-        BufferedReader reader = null;
+        BufferedReader reader;
         content.delete(0, content.length()); // remove old content
         reader = new BufferedReader(new InputStreamReader(in));
 
@@ -676,30 +714,70 @@ public class Provisioning extends FragmentActivity {
             e.printStackTrace();
         }
         finally {
-            if (reader != null) {
-                try {
-                    reader.close();
-                }
-                catch (IOException e) {
-                    e.printStackTrace();
-                }
+            try {
+                reader.close();
+            }
+            catch (IOException e) {
+                e.printStackTrace();
             }
         }
+    }
+
+    private String hashDeviceId() {
+        MessageDigest md;
+        try {
+            md = MessageDigest.getInstance("MD5");
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+            return null;
+        }
+        byte[] hash;
+        try {
+            hash = md.digest(deviceId.getBytes("UTF-8"));
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+            return null;
+        }
+        return new BigInteger(1, hash).toString(16);
     }
 
     /* ********************************************************************************
      * Handle second step of provisioning process.
      * 
-     * After user entered the provisioning code or server supplied a provisioning code we start two threads: one thread that
-     * issues the actual provisioning command and waits until done.
+     * After user entered the provisioning code or server supplied a provisioning code
+     * we start two threads:
+     *  - either a thread that issues the actual provisioning command and waits until done.
+     *     or
+     *  - a thread that uses the device authorization data to perform provisioning.
      * 
-     * The second thread monitors the provisioning progress. Terminates if the first thread terminates and sets stop flag.
+     * The second thread monitors the provisioning progress. It terminates if the first
+     * started thread terminates and sets the stop flag.
      * ********************************************************************************
      */
+
+    /*
+    Provisioning commands to use with C++ code:
+
+    C++ code supports two provisioning methods. The first method use the normal 'provisioning code'
+    that the use obtained from the Web site.
+    The second method uses authorization data (API key). We use this method if another application
+    already got this data and stored it with the key manager.
+
+    TiviPhoneService.doCmd("prov.start=" + provCode);          //start prov with user provisioning code
+    TiviPhoneService.doCmd("prov.start.apikey=" + apiKey);     //start prov with authorization data (API key)
+
+    To get authorization data (API key) from a provisioning process if provCode was used
+    String result = TiviPhoneService.getInfo(-1, -1, "prov.getAPIKey");
+
+    Clear the authorization data in C++ code:
+    TiviPhoneService.doCmd("prov.clear.apikey"); to clear the API key.
+    */
 
     private int provisioningResult = 0;
     private boolean stopProvMonitoring = false;
 
+    // Provisioning starts this thread if we got the activation, either via user input
+    // or via automatic Vertu provisioning.
     private class ProvisioningThread implements Runnable {
         private String provCode;
 
@@ -711,49 +789,94 @@ public class Provisioning extends FragmentActivity {
             // Run Provisioning in own thread because it may take several seconds.
             // The ProvisioningMonitorThread reports possible error message.
             provisioningResult = TiviPhoneService.doCmd("prov.start=" + provCode);
+            if (provisioningResult >= 0) {
+                String devAuthorization = TiviPhoneService.getInfo(-1, -1, "prov.getAPIKey");
+
+                // if the device has Silent Circle key manager then get the authorization data
+                // and store it with the key manager.
+                if (hasKeyManager) {
+                    storeApiKey(devAuthorization);
+                }
+                // in any case clear the authorization data (apikey) in C++ code
+                TiviPhoneService.doCmd("prov.clear.apikey");
+            }
             stopProvMonitoring = true;
         }
+    }
+
+    // Provisioning starts this thread if we could get the device's authorization code from
+    // the key manager.
+    private class ProvisioningThreadAuthorization implements Runnable {
+        private String authorizationCode;
+        private boolean storeApiKey;
+
+        ProvisioningThreadAuthorization(String devAuth, boolean store) {
+            authorizationCode = devAuth;
+            storeApiKey = store;
+        }
+
+        public void run() {
+            // Run Provisioning in own thread because it may take several seconds.
+            // The ProvisioningMonitorThread reports possible error message.
+            provisioningResult = TiviPhoneService.doCmd("prov.start.apikey=" + authorizationCode);
+            stopProvMonitoring = true;
+            if (storeApiKey && provisioningResult >= 0)
+                storeApiKey(authorizationCode);
+        }
+    }
+
+    private void storeApiKey(String devAuthorization) {
+        try {
+            byte[] data = devAuthorization.getBytes("UTF-8");
+            if (!KeyManagerSupport.storeSharedKeyData(Provisioning.this.getContentResolver(),
+                    data, KeyManagerSupport.DEV_AUTH_DATA_TAG)) {
+                Log.e(LOG_TAG, "Cannot store the device authorization data with key manager.");
+                return;
+            }
+            Arrays.fill(data, (byte) 0);
+            data = KeyManagerSupport.getSharedKeyData(getContentResolver(), KeyManagerSupport.DEV_UNIQUE_ID_TAG);
+            if (data == null) {                                 // Don't overwrite an existing device id
+                data = deviceId.getBytes("UTF-8");
+                if (!KeyManagerSupport.storeSharedKeyData(Provisioning.this.getContentResolver(),
+                        data, KeyManagerSupport.DEV_UNIQUE_ID_TAG)) {
+                    Log.e(LOG_TAG, "Cannot store the device identification data with key manager.");
+                    return;
+                }
+            }
+        } catch (UnsupportedEncodingException e) {
+            Log.e(LOG_TAG, "Cannot convert device authorization data:", e);
+        }
+        // We have a key manager, we have API key and device_id - thus set this preference to true
+        SharedPreferences prefs =  getSharedPreferences(PREF_KM_API_KEY, Context.MODE_PRIVATE);
+        prefs.edit().putBoolean(KM_API_KEY, true).commit();
     }
 
     private class ProvisioningMonitorThread implements Runnable {
         String result;
 
         public void run() {
-            boolean errorMessage = false;
+            provisioningStep = PROVISIONING_STEP5;
             while (!stopProvMonitoring) {
                 Utilities.Sleep(1000); // Wait for one second
                 result = TiviPhoneService.getInfo(-1, -1, "prov.tryGetResult");
+            }
+            if (provisioningResult >= 0) {
+                setResult(Activity.RESULT_OK);
+                finish();
+            }
+            else {
                 runOnUiThread(new Runnable() {
                     public void run() {
-                        provCodeInput.setText(result);
-                        provCodeInput.invalidate();
+                        result = getString(R.string.error_code) + result;
+                        spinnerLayout.setVisibility(View.INVISIBLE);
+                        showErrorInfo(result);
                     }
                 });
             }
-            if (provisioningResult < 0) {
-                errorMessage = true;
-                result = getString(R.string.error_code) + result;
-                showErrorInfo(result);
-            }
-            if (errorMessage) {
-                Utilities.Sleep(5000);
-            }
-            runOnUiThread(new Runnable() {
-                public void run() {
-                    if (provisioningResult >= 0) {
-                        setResult(Activity.RESULT_OK);
-                    }
-                    else {
-                        setResult(Activity.RESULT_CANCELED);
-                    }
-                    finish();
-                    return;
-                }
-            });
+            return;
         }
     }
 
-    
     private class FilterEnter implements TextWatcher {
 
         public void onTextChanged(CharSequence s, int start, int before, int count) {

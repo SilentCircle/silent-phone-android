@@ -1,217 +1,258 @@
-<!--
-// +++LICENSE_BEGIN+++
-/*
- * Copyright © 2012, Silent Circle
- * All rights reserved.
- */
-// +++LICENSE_END+++
--->
 
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-	xmlns:tools="http://schemas.android.com/tools"
-	android:id="@+id/start_screen"
-	android:layout_width="match_parent"
-	android:layout_height="match_parent"
-    android:background="@color/silent_black" >
+                xmlns:tools="http://schemas.android.com/tools"
+                android:id="@+id/start_screen"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@color/silent_black" >
+
+    <TextView
+            android:id="@+id/StartFlagField"
+            style="@style/DigitsTextAppearance"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBottom="@+id/DialNumberText"
+            android:layout_alignParentLeft="true"
+            android:layout_alignTop="@+id/DialNumberText"
+            android:gravity="center_horizontal"
+            android:padding="0dp"
+            android:textColor="@android:color/white"
+            android:textSize="10sp" />
+
+    <com.silentcircle.silentphone.utils.FontFitTextView
+            android:id="@+id/DialNumberText"
+            style="@style/DigitsTextAppearance"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:layout_marginTop="5dp"
+            android:layout_toRightOf="@+id/StartFlagField"
+            android:layout_toLeftOf="@+id/StartKeyboard"
+            android:gravity="center_horizontal"
+            android:inputType="textEmailAddress"
+            android:singleLine="true"
+            android:imeOptions="actionGo"
+            android:textColor="@android:color/white"
+            tools:context=".StartScreen" />
+
+    <ImageButton
+            android:id="@+id/StartKeyboard"
+            style="@style/DigitsTextAppearance"
+            android:layout_alignTop="@+id/DialNumberText"
+            android:layout_alignBottom="@+id/DialNumberText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:focusableInTouchMode="false"
+            android:contentDescription="@string/description_image_button_two"
+            android:onClick="dialPadClick"
+            android:src="@drawable/ic_device_access_dial_pad" />
+
+    <ImageButton
+            android:id="@+id/StartDialPad"
+            style="@style/DigitsTextAppearance"
+            android:layout_alignTop="@+id/DialNumberText"
+            android:layout_alignBottom="@+id/DialNumberText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:focusableInTouchMode="false"
+            android:contentDescription="@string/description_image_button_two"
+            android:onClick="keyboardClick"
+            android:src="@drawable/ic_hardware_keyboard" />
 
     <ImageView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:scaleType="center"
-        android:src="@drawable/silentcircle_logo_wd" />
+            android:id="@+id/StartTopLogo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/DialNumberText"
+            android:layout_marginTop="20dp"
+            android:layout_centerHorizontal="true"
+            android:src="@drawable/sc_logo_white" />
 
-		<TextView
-		android:id="@+id/StartFlagField"
-		style="@style/DigitsTextAppearance"
-		android:layout_width="wrap_content"
-		android:layout_height="wrap_content"
-		android:layout_alignBottom="@+id/DialNumberText"
-		android:layout_alignParentLeft="true"
-		android:layout_alignTop="@+id/DialNumberText"
-		android:gravity="center_horizontal"
-		android:padding="0dp"
-		android:textColor="@android:color/white"
-		android:textSize="10.0sp" />
 
-	<com.silentcircle.silentphone.utils.FontFitTextView
-		android:id="@+id/DialNumberText"
-		style="@style/DigitsTextAppearance"
-		android:layout_width="match_parent"
-		android:layout_height="wrap_content"
-		android:layout_below="@+id/SilentCircle"
-		android:layout_marginTop="5dp"
-		android:layout_toRightOf="@+id/StartFlagField"
-		android:gravity="center_horizontal"
-		android:inputType="textEmailAddress"
-		android:singleLine="true"
-		android:textColor="@android:color/white"
-		tools:context=".StartScreen" />
+    <FrameLayout
+            android:id="@+id/DialPadFrame"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            tools:visibility="visible">
 
-	<RelativeLayout
-		android:id="@+id/DialPadTable"
-		android:layout_width="wrap_content"
-		android:layout_height="wrap_content"
-		android:layout_alignParentBottom="true"
-		android:layout_marginBottom="15dp"
-		android:layout_centerHorizontal="true">
+        <RelativeLayout android:layout_width="match_parent"
+                        android:layout_height="match_parent" >
 
-		<ImageButton
-			android:id="@+id/Number_1"
-			style="@style/DialpadButtonStyle"
-			android:layout_marginBottom="2dp"
-			android:contentDescription="@string/description_image_button_one"
-			android:onClick="onNumberClick"
-			android:src="@drawable/dial_num_1_wht" />
+            <ImageView
+                    android:id="@+id/StartCenterLogo"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:scaleType="center"
+                    android:src="@drawable/sc_logo_50grey" />
 
-		<ImageButton
-			android:id="@+id/Number_2"
-			style="@style/DialpadButtonStyle"
-			android:layout_alignTop="@+id/Number_1"
-			android:layout_marginBottom="2dp"
-			android:layout_marginLeft="2dp"
-			android:layout_marginRight="2dp"
-			android:layout_toRightOf="@+id/Number_1"
-			android:contentDescription="@string/description_image_button_two"
-			android:onClick="onNumberClick"
-			android:src="@drawable/dial_num_2_wht" />
+            <RelativeLayout
+                    android:id="@+id/DialPadTable"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentBottom="true"
+                    android:layout_marginBottom="15dp"
+                    android:layout_centerHorizontal="true">
 
-		<ImageButton
-			android:id="@+id/Number_3"
-			style="@style/DialpadButtonStyle"
-			android:layout_alignTop="@+id/Number_2"
-			android:layout_marginBottom="2dp"
-			android:layout_toRightOf="@+id/Number_2"
-			android:contentDescription="@string/description_image_button_three"
-			android:onClick="onNumberClick"
-			android:src="@drawable/dial_num_3_wht" />
+                <ImageButton
+                        android:id="@+id/Number_1"
+                        style="@style/DialpadButtonStyle"
+                        android:layout_marginBottom="2dp"
+                        android:contentDescription="@string/description_image_button_one"
+                        android:onClick="onNumberClick"
+                        android:src="@drawable/dial_num_1_wht" />
 
-		<ImageButton
-			android:id="@+id/Number_4"
-			style="@style/DialpadButtonStyle"
-			android:layout_alignLeft="@+id/Number_1"
-			android:layout_below="@+id/Number_1"
-			android:layout_marginBottom="2dp"
-			android:contentDescription="@string/description_image_button_four"
-			android:onClick="onNumberClick"
-			android:src="@drawable/dial_num_4_wht" />
+                <ImageButton
+                        android:id="@+id/Number_2"
+                        style="@style/DialpadButtonStyle"
+                        android:layout_alignTop="@+id/Number_1"
+                        android:layout_marginBottom="2dp"
+                        android:layout_marginLeft="2dp"
+                        android:layout_marginRight="2dp"
+                        android:layout_toRightOf="@+id/Number_1"
+                        android:contentDescription="@string/description_image_button_two"
+                        android:onClick="onNumberClick"
+                        android:src="@drawable/dial_num_2_wht" />
 
-		<ImageButton
-			android:id="@+id/Number_5"
-			style="@style/DialpadButtonStyle"
-			android:layout_alignTop="@+id/Number_4"
-			android:layout_marginBottom="2dp"
-			android:layout_marginLeft="2dp"
-			android:layout_marginRight="2dp"
-			android:layout_toRightOf="@+id/Number_4"
-			android:contentDescription="@string/description_image_button_five"
-			android:onClick="onNumberClick"
-			android:src="@drawable/dial_num_5_wht" />
+                <ImageButton
+                        android:id="@+id/Number_3"
+                        style="@style/DialpadButtonStyle"
+                        android:layout_alignTop="@+id/Number_2"
+                        android:layout_marginBottom="2dp"
+                        android:layout_toRightOf="@+id/Number_2"
+                        android:contentDescription="@string/description_image_button_three"
+                        android:onClick="onNumberClick"
+                        android:src="@drawable/dial_num_3_wht" />
 
-		<ImageButton
-			android:id="@+id/Number_6"
-			style="@style/DialpadButtonStyle"
-			android:layout_alignTop="@+id/Number_5"
-			android:layout_marginBottom="2dp"
-			android:layout_toRightOf="@+id/Number_5"
-			android:contentDescription="@string/description_image_button_six"
-			android:onClick="onNumberClick"
-			android:src="@drawable/dial_num_6_wht" />
+                <ImageButton
+                        android:id="@+id/Number_4"
+                        style="@style/DialpadButtonStyle"
+                        android:layout_alignLeft="@+id/Number_1"
+                        android:layout_below="@+id/Number_1"
+                        android:layout_marginBottom="2dp"
+                        android:contentDescription="@string/description_image_button_four"
+                        android:onClick="onNumberClick"
+                        android:src="@drawable/dial_num_4_wht" />
 
-		<ImageButton
-			android:id="@+id/Number_7"
-			style="@style/DialpadButtonStyle"
-			android:layout_alignLeft="@+id/Number_4"
-			android:layout_below="@+id/Number_4"
-			android:layout_marginBottom="2dp"
-			android:contentDescription="@string/description_image_button_seven"
-			android:onClick="onNumberClick"
-			android:src="@drawable/dial_num_7_wht" />
+                <ImageButton
+                        android:id="@+id/Number_5"
+                        style="@style/DialpadButtonStyle"
+                        android:layout_alignTop="@+id/Number_4"
+                        android:layout_marginBottom="2dp"
+                        android:layout_marginLeft="2dp"
+                        android:layout_marginRight="2dp"
+                        android:layout_toRightOf="@+id/Number_4"
+                        android:contentDescription="@string/description_image_button_five"
+                        android:onClick="onNumberClick"
+                        android:src="@drawable/dial_num_5_wht" />
 
-		<ImageButton
-			android:id="@+id/Number_8"
-			style="@style/DialpadButtonStyle"
-			android:layout_alignTop="@+id/Number_7"
-			android:layout_marginBottom="2dp"
-			android:layout_marginLeft="2dp"
-			android:layout_marginRight="2dp"
-			android:layout_toRightOf="@+id/Number_7"
-			android:contentDescription="@string/description_image_button_eight"
-			android:onClick="onNumberClick"
-			android:src="@drawable/dial_num_8_wht" />
+                <ImageButton
+                        android:id="@+id/Number_6"
+                        style="@style/DialpadButtonStyle"
+                        android:layout_alignTop="@+id/Number_5"
+                        android:layout_marginBottom="2dp"
+                        android:layout_toRightOf="@+id/Number_5"
+                        android:contentDescription="@string/description_image_button_six"
+                        android:onClick="onNumberClick"
+                        android:src="@drawable/dial_num_6_wht" />
 
-		<ImageButton
-			android:id="@+id/Number_9"
-			style="@style/DialpadButtonStyle"
-			android:layout_alignTop="@+id/Number_8"
-			android:layout_marginBottom="2dp"
-			android:layout_toRightOf="@+id/Number_8"
-			android:contentDescription="@string/description_image_button_nine"
-			android:onClick="onNumberClick"
-			android:src="@drawable/dial_num_9_wht" />
+                <ImageButton
+                        android:id="@+id/Number_7"
+                        style="@style/DialpadButtonStyle"
+                        android:layout_alignLeft="@+id/Number_4"
+                        android:layout_below="@+id/Number_4"
+                        android:layout_marginBottom="2dp"
+                        android:contentDescription="@string/description_image_button_seven"
+                        android:onClick="onNumberClick"
+                        android:src="@drawable/dial_num_7_wht" />
 
-		<ImageButton
-			android:id="@+id/Number_star"
-			style="@style/DialpadButtonStyle"
-			android:layout_alignLeft="@+id/Number_7"
-			android:layout_below="@+id/Number_7"
-			android:layout_marginBottom="2dp"
-			android:contentDescription="@string/description_image_button_star"
-			android:onClick="onNumberClick"
-			android:src="@drawable/dial_num_star_wht" />
+                <ImageButton
+                        android:id="@+id/Number_8"
+                        style="@style/DialpadButtonStyle"
+                        android:layout_alignTop="@+id/Number_7"
+                        android:layout_marginBottom="2dp"
+                        android:layout_marginLeft="2dp"
+                        android:layout_marginRight="2dp"
+                        android:layout_toRightOf="@+id/Number_7"
+                        android:contentDescription="@string/description_image_button_eight"
+                        android:onClick="onNumberClick"
+                        android:src="@drawable/dial_num_8_wht" />
 
-		<ImageButton
-			android:id="@+id/Number_0"
-			style="@style/DialpadButtonStyle"
-			android:layout_alignTop="@+id/Number_star"
-			android:layout_marginBottom="2dp"
-			android:layout_marginLeft="2dp"
-			android:layout_marginRight="2dp"
-			android:layout_toRightOf="@+id/Number_star"
-			android:contentDescription="@string/description_image_button_zero"
-			android:onClick="onNumberClick"
-			android:src="@drawable/dial_num_0_wht" />
+                <ImageButton
+                        android:id="@+id/Number_9"
+                        style="@style/DialpadButtonStyle"
+                        android:layout_alignTop="@+id/Number_8"
+                        android:layout_marginBottom="2dp"
+                        android:layout_toRightOf="@+id/Number_8"
+                        android:contentDescription="@string/description_image_button_nine"
+                        android:onClick="onNumberClick"
+                        android:src="@drawable/dial_num_9_wht" />
 
-		<ImageButton
-			android:id="@+id/Number_hash"
-			style="@style/DialpadButtonStyle"
-			android:layout_alignTop="@+id/Number_0"
-			android:layout_marginBottom="2dp"
-			android:layout_toRightOf="@+id/Number_0"
-			android:contentDescription="@string/description_image_button_pound"
-			android:onClick="onNumberClick"
-			android:src="@drawable/dial_num_pound_wht" />
+                <ImageButton
+                        android:id="@+id/Number_star"
+                        style="@style/DialpadButtonStyle"
+                        android:layout_alignLeft="@+id/Number_7"
+                        android:layout_below="@+id/Number_7"
+                        android:layout_marginBottom="2dp"
+                        android:contentDescription="@string/description_image_button_star"
+                        android:onClick="onNumberClick"
+                        android:src="@drawable/dial_num_star_wht" />
 
-		<ImageButton
-			android:id="@+id/Number_call"
-			style="@style/DialpadButtonStyle"
-			android:layout_width="wrap_content"
-			android:layout_alignLeft="@+id/Number_star"
-			android:layout_alignRight="@+id/Number_0"
-			android:layout_below="@+id/Number_star"
-			android:layout_marginBottom="2dp"
-			android:paddingTop="5dp"
-            android:paddingBottom="5dp"
-			android:contentDescription="@string/dial_image_button"
-			android:onClick="onNumberClick"
-			android:soundEffectsEnabled="true"
-			android:src="@drawable/ic_dial_action_call"
-			android:state_enabled="false" />
+                <ImageButton
+                        android:id="@+id/Number_0"
+                        style="@style/DialpadButtonStyle"
+                        android:layout_alignTop="@+id/Number_star"
+                        android:layout_marginBottom="2dp"
+                        android:layout_marginLeft="2dp"
+                        android:layout_marginRight="2dp"
+                        android:layout_toRightOf="@+id/Number_star"
+                        android:contentDescription="@string/description_image_button_zero"
+                        android:onClick="onNumberClick"
+                        android:src="@drawable/dial_num_0_wht" />
 
-		<ImageButton
-			android:id="@+id/Number_backspace"
-			style="@style/DialpadButtonStyle"
-			android:layout_width="wrap_content"
-			android:layout_alignRight="@+id/Number_hash"
-			android:layout_alignTop="@+id/Number_call"
-			android:layout_alignBottom="@+id/Number_call"
-			android:layout_marginLeft="2dp"
-			android:layout_toRightOf="@+id/Number_call"
-            android:paddingTop="5dp"
-            android:paddingBottom="5dp"
-			android:contentDescription="@string/backspace_image_button"
-			android:onClick="onNumberClick"
-			android:soundEffectsEnabled="true"
-			android:src="@drawable/ic_ab_backspace" />
-	</RelativeLayout>
+                <ImageButton
+                        android:id="@+id/Number_hash"
+                        style="@style/DialpadButtonStyle"
+                        android:layout_alignTop="@+id/Number_0"
+                        android:layout_marginBottom="2dp"
+                        android:layout_toRightOf="@+id/Number_0"
+                        android:contentDescription="@string/description_image_button_pound"
+                        android:onClick="onNumberClick"
+                        android:src="@drawable/dial_num_pound_wht" />
 
+                <ImageButton
+                        android:id="@+id/Number_call"
+                        style="@style/DialpadButtonStyle"
+                        android:layout_width="wrap_content"
+                        android:layout_alignLeft="@+id/Number_star"
+                        android:layout_alignRight="@+id/Number_0"
+                        android:layout_below="@+id/Number_star"
+                        android:layout_marginBottom="2dp"
+                        android:paddingTop="5dp"
+                        android:paddingBottom="5dp"
+                        android:contentDescription="@string/dial_image_button"
+                        android:soundEffectsEnabled="true"
+                        android:src="@drawable/ic_dial_action_call"
+                        android:state_enabled="false" />
+
+                <ImageButton
+                        android:id="@+id/Number_backspace"
+                        style="@style/DialpadButtonStyle"
+                        android:layout_width="wrap_content"
+                        android:layout_alignRight="@+id/Number_hash"
+                        android:layout_alignTop="@+id/Number_call"
+                        android:layout_alignBottom="@+id/Number_call"
+                        android:layout_marginLeft="2dp"
+                        android:layout_toRightOf="@+id/Number_call"
+                        android:paddingTop="5dp"
+                        android:paddingBottom="5dp"
+                        android:contentDescription="@string/backspace_image_button"
+                        android:onClick="onNumberClick"
+                        android:soundEffectsEnabled="true"
+                        android:src="@drawable/ic_ab_backspace" />
+            </RelativeLayout>
+        </RelativeLayout>
+    </FrameLayout>
 </RelativeLayout>

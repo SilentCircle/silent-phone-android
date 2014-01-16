@@ -38,7 +38,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:scaleType="center"
-        android:src="@drawable/silentcircle_logo_wd" />
+        android:src="@drawable/sc_logo_50grey" />
 	
 	<TextView
 		android:id="@+id/CallerName"
@@ -130,13 +130,17 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     	android:layout_alignRight="@+id/CallerImage"
     	android:layout_below="@+id/CallerImage"
     	android:layout_marginTop="5dp"
+        android:padding="2dp"
     	android:clickable="true"
     	android:gravity="center_horizontal|center_vertical"
     	android:onClick="verifyButton"
     	android:text="@string/verify_button"
     	android:textColor="@android:color/white"
     	android:textSize="14sp"
-    	android:visibility="invisible" />
+    	android:visibility="invisible"
+        android:background="@color/dial_button_start"
+        tools:text="@string/verify_button"
+        tools:visibility="visible"/>
 
     <!-- android:layout_width="100dp" android:background="@drawable/rounded_white" -->
 
@@ -220,21 +224,22 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 		android:textSize="18sp" />
 <!--      android:background="@drawable/rounded_gray"
 -->
-	<TableLayout
+	<LinearLayout
 		android:id="@+id/CallScreenTable"
 		android:layout_width="match_parent"
 		android:layout_height="wrap_content"
 		android:layout_below="@+id/ZrtpPeerName"
 		android:layout_centerHorizontal="true"
+        android:orientation="vertical"
 		android:layout_marginLeft="20dp"
 		android:layout_marginRight="20dp"
 		android:layout_marginTop="20dp" >
 
 		<!-- android:background="@drawable/fpad" -->
 
-		<TableRow
+		<LinearLayout
 			android:id="@+id/tableRow1"
-			android:layout_width="wrap_content"
+			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
 			android:layout_marginTop="0dp" >
 
@@ -242,8 +247,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 				android:id="@+id/MuteButton"
 				style="@style/IncallButtonStyle"
 				android:layout_marginBottom="2dp"
+                android:layout_width="0dp"
+                android:layout_weight="1"
 				android:contentDescription="@string/mute_image_button"
-				android:src="@drawable/ico_mute" />
+				android:src="@drawable/ic_device_access_mic_muted" />
 
 			<ImageButton
 				android:id="@+id/DialButton"
@@ -251,21 +258,36 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 				android:layout_marginBottom="2dp"
 				android:layout_marginLeft="2dp"
 				android:layout_marginRight="2dp"
+                android:layout_width="0dp"
+                android:layout_weight="1"
 				android:contentDescription="@string/incall_dial_image_button"
 				android:onClick="startInCallDialer"
-				android:src="@drawable/ico_keypad" />
+				android:src="@drawable/ic_device_access_dial_pad" />
 
 			<ImageButton
 				android:id="@+id/SpeakerButton"
 				style="@style/IncallButtonStyle"
 				android:layout_marginBottom="2dp"
+                android:layout_width="0dp"
+                android:layout_weight="1"
 				android:contentDescription="@string/speaker_image_button"
-				android:src="@drawable/ico_speaker" />
-		</TableRow>
+				android:src="@drawable/ic_device_access_volume_on" />
 
-		<TableRow
+            <ImageButton
+                android:id="@+id/HeadsetBtButton"
+                style="@style/IncallButtonStyle"
+                android:layout_marginBottom="2dp"
+                android:layout_marginLeft="2dp"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:visibility="gone"
+                android:contentDescription="@string/speaker_image_button"
+                android:src="@drawable/ic_hardware_headset_bt" />
+		</LinearLayout>
+
+		<LinearLayout
 			android:id="@+id/tableRow2"
-			android:layout_width="wrap_content"
+			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
 			android:layout_marginTop="0dp" >
 
@@ -273,9 +295,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 				android:id="@+id/AddCallButton"
 				style="@style/IncallButtonStyle"
 				android:layout_marginBottom="2dp"
+                android:layout_width="0dp"
+                android:layout_weight="1"
 				android:contentDescription="@string/add_call_image_button"
 				android:onClick="addCall"
-				android:src="@drawable/ico_add_call" />
+				android:src="@drawable/ic_device_access_add_call" />
 
 			<ImageButton
 				android:id="@+id/VideoButton"
@@ -283,20 +307,24 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 				android:layout_marginBottom="2dp"
 				android:layout_marginLeft="2dp"
 				android:layout_marginRight="2dp"
+                android:layout_width="0dp"
+                android:layout_weight="1"
 				android:contentDescription="@string/add_video_image_button"
 				android:onClick="videoButton"
-				android:src="@drawable/ico_camera" />
+				android:src="@drawable/ic_device_access_video" />
 
 			<Button
 				android:id="@+id/CallMngrButton"
 				style="@style/IncallButtonStyle"
 				android:layout_marginBottom="2dp"
 				android:onClick="onCallMgr"
+                android:layout_width="0dp"
+                android:layout_weight="1"
 				android:text="@string/call_mgr_button"
 				android:textColor="@android:color/white"
 				android:textSize="12.0sp" />
-		</TableRow>
-	</TableLayout>
+		</LinearLayout>
+	</LinearLayout>
 
 	<RelativeLayout
 		android:layout_width="match_parent"

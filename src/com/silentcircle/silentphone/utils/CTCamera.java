@@ -28,25 +28,23 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 package com.silentcircle.silentphone.utils;
 
+import android.graphics.Bitmap;
 import android.hardware.Camera;
 import android.hardware.Camera.PreviewCallback;
-
-import java.io.IOException;
+import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
-import android.graphics.Bitmap;
+import com.silentcircle.silentphone.TiviPhoneService;
+import com.silentcircle.silentphone.activities.TMActivity;
 
+import java.io.IOException;
 import java.lang.reflect.Method;
 import java.nio.ShortBuffer;
 
-import com.silentcircle.silentphone.TiviPhoneService;
-
-import android.util.Log;
-
-import com.silentcircle.silentphone.activities.TMActivity;
-
 public class CTCamera implements PreviewCallback, SurfaceHolder.Callback {
+
+    private static String LOG_TAG = "CTCamera";
 
     @Override
     public void onPreviewFrame(byte[] data, Camera arg1) {
@@ -59,8 +57,6 @@ public class CTCamera implements PreviewCallback, SurfaceHolder.Callback {
 
     Camera camera = null;
     
-    private int numCameras = 0;
-
     public int w = 0;
     public int h = 0;
 
@@ -127,11 +123,10 @@ public class CTCamera implements PreviewCallback, SurfaceHolder.Callback {
         iSurfOk = 1;
         if (iStarted != 0) {
             setupCamera();
-
         }
     }
 
-    public void stop() {
+    synchronized public void stop() {
         // Log.d(TAG, "stop");
         if (camera == null || iStarted == 0) {
             iStarted = 0;
@@ -151,7 +146,7 @@ public class CTCamera implements PreviewCallback, SurfaceHolder.Callback {
         return iStarted == 1;
     }
 
-    public int start() {
+    synchronized public int start() {
 
         if (iStarted != 0)
             return -1;
@@ -161,8 +156,8 @@ public class CTCamera implements PreviewCallback, SurfaceHolder.Callback {
     }
    
    
-    public int getNumCameras() {
-        return numCameras;
+    public static int getNumCameras() {
+        return Camera.getNumberOfCameras();
     }
 
     public void setCameraFacing(boolean bFront) {
@@ -172,16 +167,21 @@ public class CTCamera implements PreviewCallback, SurfaceHolder.Callback {
    
     
     private int getCameraID(boolean bFront){
-       numCameras = Camera.getNumberOfCameras();
+       int numCameras = Camera.getNumberOfCameras();
        Camera.CameraInfo ci = new Camera.CameraInfo();
        for(int i = 0; i < numCameras; i++){
           Camera.getCameraInfo(i, ci);
-          if(TMActivity.SP_DEBUG)
-             Log.i("tivi", "getCameraInfo f=" + ci.facing + "o=" +ci.orientation);
-          if(ci.facing == Camera.CameraInfo.CAMERA_FACING_FRONT && bFront)return i;
-          if(ci.facing == Camera.CameraInfo.CAMERA_FACING_BACK && !bFront)return i;
+          if(TMActivity.SP_DEBUG) Log.i(LOG_TAG, "getCameraInfo f= " + ci.facing + ", o= " +ci.orientation + ", front: " + bFront);
+          if(ci.facing == Camera.CameraInfo.CAMERA_FACING_FRONT && bFront) {
+              if(TMActivity.SP_DEBUG) Log.i(LOG_TAG, "getCameraInfo: returning front facing: " + i);
+              return i;
+          }
+          if(ci.facing == Camera.CameraInfo.CAMERA_FACING_BACK && !bFront) {
+              if(TMActivity.SP_DEBUG) Log.i(LOG_TAG, "getCameraInfo: returning back facing: " + i);
+              return i;
+          }
        }
-       return 0;//return default
+       return 0;                                    //return default
        
     }
 
@@ -193,20 +193,21 @@ public class CTCamera implements PreviewCallback, SurfaceHolder.Callback {
        
         if(camera == null) return -1;
 
-        if(TMActivity.SP_DEBUG)Log.d("tivi", "startC " + camera);
+        if(TMActivity.SP_DEBUG)Log.d(LOG_TAG, "startC " + camera);
 
         camera.setPreviewCallback(this);
 
         camera.setErrorCallback(new Camera.ErrorCallback() {
             @Override
             public void onError(int error, Camera camera) {
-                Log.d("Tivi", "Camera. onError : error=" + error);
+                Log.d(LOG_TAG, "Camera onError : error= " + error);
             }
         });
 
-        if (displayHolder != null)
+        if(TMActivity.SP_DEBUG) Log.i(LOG_TAG, "setupCamera: surface holder: " + displayHolder);
+        if (displayHolder != null) {
             passSurf(displayHolder);
-
+        }
         sizeChanged(w, h);
 
         return 0;
@@ -228,7 +229,7 @@ public class CTCamera implements PreviewCallback, SurfaceHolder.Callback {
     void yuv2rgb32(byte[] b) {
         if (iStarted == 0)
             return; // Log.d(TAG, "onPreviewFrame - wrote bytes: "+ b.length+"w"+w+"h"+h);
-        TiviPhoneService.nv21ToRGB32(b, idata, null, w, h, bUseFrontCamera?270:90);// null - dont convert preview pic
+        TiviPhoneService.nv21ToRGB32(b, idata, null, w, h, bUseFrontCamera ? 270 : 90);// null - don't convert preview pic
         iFrameId++;
     }
 
@@ -238,14 +239,6 @@ public class CTCamera implements PreviewCallback, SurfaceHolder.Callback {
     public Bitmap bmp = null;
     int iFrameIdFilled = -1;
 
-    byte[] testB = null;
-    static byte bx = 0;
-
-    boolean surfPassed = false;
-
-    public void fillBmp() {
-    }
-
     protected void setDisplayOrientation(Camera camera, int angle) {
         Method downPolymorphic;
         try {
@@ -253,8 +246,7 @@ public class CTCamera implements PreviewCallback, SurfaceHolder.Callback {
             if (downPolymorphic != null)
                 downPolymorphic.invoke(camera, new Object[] { angle });
         }
-        catch (Exception e1) {
-        }
+        catch (Exception ignored) {}
     }
 
     public void sizeChanged(int nw, int nh) {
@@ -267,8 +259,7 @@ public class CTCamera implements PreviewCallback, SurfaceHolder.Callback {
                 // In this instance, simply use the first available
                 // preview size; could be refined to find the closest
                 // values to the surface size
-                if(TMActivity.SP_DEBUG)
-                   Log.d("tivi", "CameraSize w" + s.width + " h" + s.height);
+                if(TMActivity.SP_DEBUG) Log.d(LOG_TAG, "CameraSize w: " + s.width + ", h: " + s.height);
                 int sd = s.width * s.height;
                 int dif = sd - d;
                 if (dif < 0)
@@ -282,8 +273,7 @@ public class CTCamera implements PreviewCallback, SurfaceHolder.Callback {
             }
         }
 
-        if(TMActivity.SP_DEBUG)
-           Log.d("tivi", "Camera w" + w + " h" + h);
+        if(TMActivity.SP_DEBUG) Log.d(LOG_TAG, "Camera w: " + w + ", h: " + h);
 
         if (w != nw || h != nh) {
             iFrameIdFilled = -1;
@@ -306,10 +296,13 @@ public class CTCamera implements PreviewCallback, SurfaceHolder.Callback {
         parameters.setPreviewSize(nw, nh);
         setDisplayOrientation(camera, 90);
 
-        parameters.setPreviewFormat(17);// nv21
+        parameters.setPreviewFormat(17);                    // nv21
 
         camera.setParameters(parameters);
-        camera.startPreview();
-
+        try {
+            camera.startPreview();
+        } catch (Exception ignored) {
+            Log.w(LOG_TAG, "Cannot start preview - exception thrown by runtime.");
+        }
     }
 }

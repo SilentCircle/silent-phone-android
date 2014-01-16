@@ -90,9 +90,13 @@ int showSSLErrorMsg(void *ret, const char *p){
 int showSSLErrorMsg(void *ret, const char *p);
 #endif
 
+void tmp_log(const char *p);
+
 static int respF(void *p, int i){
+  
    int *rc=(int*)p;
    *rc=1;
+   
    return 0;
 }
 
@@ -123,6 +127,7 @@ int showSSLErrorMsg2(void *ret, const char *p){
 }
 
 
+
 char* download_page2(const char *url, char *buf, int iMaxLen, int &iRespContentLen, 
                     void (*cb)(void *p, int ok, const char *pMsg), void *cbRet){
    
@@ -134,13 +139,14 @@ char* download_page2(const char *url, char *buf, int iMaxLen, int &iRespContentL
    CTTHttp<CTTLS> *s=new CTTHttp<CTTLS>(buf,iMaxLen);
    CTTLS *tls=s->createSock();
    int r=s->splitUrl((char*)url, strlen(url),&bufA[0],&bufU[0]);
+   
 
    if(r<0){
       cb(cbRet,-1,"Check url");
       return 0;
    }
    
-   printf("u=%s U=%s A=%s\n",url,bufU,bufA);
+//   printf("u=%s U=%s A=%s\n",url,bufU,bufA);
    
    const char *pathFN1="prov_cert.prov";//(const char*)T_getSometing2(NULL,"path","prov_cert.crt");
    
@@ -203,17 +209,18 @@ char* download_page2(const char *url, char *buf, int iMaxLen, int &iRespContentL
    wt.ptr=&iRespCode;
    wt.respFnc=respF;
    s->waitResp(&wt,60);
-   
    cb(cbRet,1,"Downloading...");
-   
    s->getUrl(tls,&bufU[0],&bufA[0],"GET");//locks
+   
    iRespContentLen=0;
    char *p=s->getContent(iRespContentLen);
-   
+
    if(p)cb(cbRet,1,"Downloading ok");
    
    int c=0;
-   while(iRespCode==0){Sleep(50);c++;if(c>200)break;}
+   while(iRespCode==0){Sleep(100);c++;if(c>600)break;}//wait for waitResp thread
+
+
    delete s;
    return p;
 }
@@ -336,13 +343,27 @@ void delProvFiles(const int *p, int iCnt){
 
 static int iProvisioned=-1;//unknown
 
+
+static char bufAPIKey[1024]="";
+
+const char *getAPIKey(){return &bufAPIKey[0];}
+
+int provClearAPIKey(){
+   int ret=bufAPIKey[0];
+   memset(bufAPIKey, 0, sizeof(bufAPIKey));
+   return ret?0:-1;//if we had a key return 0
+}
+
+int checkProvWithAPIKey(const char *aAPIKey, void (*cb)(void *p, int ok, const char *pMsg), void *cbRet);
+
+static const char *pLink="https://accounts.silentcircle.com";
+
 int checkProv(const char *pUserCode, void (*cb)(void *p, int ok, const char *pMsg), void *cbRet){
    /*
     http://sccps.silentcircle.com/provisioning/silent_phone/tivi_cfg.xml?api_key=12345
     http://sccps.silentcircle.com/provisioning/silent_phone/settings.txt?api_key=12345
     http://sccps.silentcircle.com/provisioning/silent_phone/tivi_cfg_glob.txt?api_key=12345
     */
-   const char *pLink="https://accounts.silentcircle.com";
    char bufReq[1024];
    const char *t_getDevID_md5();
    const char *t_getDev_name();
@@ -374,18 +395,27 @@ int checkProv(const char *pUserCode, void (*cb)(void *p, int ok, const char *pMs
    
 #undef CHK_BUF
    
-   char bufToken[1024];
-   int r=getToken(&bufReq[0], &bufToken[0],255,cb,cbRet);
+   
+   int r=getToken(&bufReq[0], &bufAPIKey[0],255,cb,cbRet);
    if(r<0){
+
       return -1;
    }
    
    cb(cbRet,1,"Configuration code ok");
    
+   return checkProvWithAPIKey(&bufAPIKey[0],cb, cbRet);;
+}
+
+
+
+int checkProvWithAPIKey(const char *pAPIKey, void (*cb)(void *p, int ok, const char *pMsg), void *cbRet){
    
+
+   char bufReq[1024];
    char bufCfg[4096];
    
-   const char *pFN_to_download[]   ={"settings.txt","tivi_cfg_glob.txt","tivi_cfg.xml","tivi_cfg1.xml",NULL};
+   const char *pFN_to_download[]   = {"settings.txt","tivi_cfg_glob.txt","tivi_cfg.xml","tivi_cfg1.xml",NULL};
 
    const char *pFNErr[]={"D-Err1","D-Err2","D-Err3","D-Err4","D-Err5","D-Err6",NULL};
    
@@ -398,7 +428,7 @@ int checkProv(const char *pUserCode, void (*cb)(void *p, int ok, const char *pMs
    
    for(int i=0;;i++){
       if(!pFN_to_download[i] || !pFN_to_save[i])break;
-      snprintf(bufReq,sizeof(bufReq)-1,"%s/provisioning/silent_phone/%s?api_key=%s",pLink,pFN_to_download[i],bufToken);
+      snprintf(bufReq,sizeof(bufReq)-1,"%s/provisioning/silent_phone/%s?api_key=%s",pLink,pFN_to_download[i],pAPIKey);
       
       int iRespContentLen=0;
       char* p=download_page2(&bufReq[0], &bufCfg[0], sizeof(bufCfg)-100, iRespContentLen,cb,cbRet);
@@ -432,11 +462,11 @@ int checkProv(const char *pUserCode, void (*cb)(void *p, int ok, const char *pMs
          saveCfgFile(pFN_to_save[i],p,iRespContentLen);
 #endif
          
-         printf("Saving %s content=[%.*s]\n",pFN_to_save[i], iRespContentLen,p);
+       //  printf("Saving %s content=[%.*s]\n",pFN_to_save[i], iRespContentLen,p);
       }
       else{
          iCfgPos=saveCfgFile(iCfgPos, p,iRespContentLen);
-         printf("Saving pos=%d content=[%.*s]\n",iCfgPos-1, iRespContentLen,p);
+         //printf("Saving pos=%d content=[%.*s]\n",iCfgPos-1, iRespContentLen,p);
       }
       
 #endif
@@ -508,7 +538,16 @@ int isProvisioned(int iCheckNow){
       int getGCfgFileID();
       setCfgFN(b,getGCfgFileID());
       if(isFileExistsW(b.getText())){
-         iProvisioned=1;
+         setCfgFN(b,0);
+         if(isFileExistsW(b.getText())){
+            iProvisioned=1;
+            break;
+         }
+         setCfgFN(b,1);
+         if(isFileExistsW(b.getText())){
+            iProvisioned=1;
+            break;
+         }
          break;
       }
       
@@ -522,6 +561,7 @@ int isProvisioned(int iCheckNow){
 //-----------------android-------------------
 
 class CTProvNoCallBack{
+   int iSteps;
 public:
    int iHasData;
    int iProvStat;
@@ -532,15 +572,18 @@ public:
    CTProvNoCallBack(){
       reset();
    }
+   void setSteps(int i){iSteps=i;}
    void reset(){
       
       memset(bufMsg, 0, sizeof(bufMsg));
       iHasData=0;
       okCode=0;
       iProvStat=0;
+      
    }
    void provCallBack(void *p, int ok, const char *pMsg){
       
+      //if(pMsg)tmp_log(pMsg);
       if(ok<=0){
          if(okCode<ok)return;
          okCode=ok;
@@ -549,9 +592,9 @@ public:
 
       }
       else{
-
+         if(!iSteps)iSteps=14;
          iProvStat++;
-         int res=iProvStat*100/14;
+         int res=iProvStat*100/iSteps;
          if(res>100)res=100;
          sprintf(bufMsg,"%d %% done",res);
          //progress
@@ -578,8 +621,16 @@ const char* getProvNoCallBackResp(){
 //porv.start=code
 int checkProvNoCallBack(const char *pUserCode){
    provNCB.reset();
+   provNCB.setSteps(14);
    return checkProv(pUserCode, provCallBack, &provNCB);
 }
+
+int checkProvAPIKeyNoCallBack(const char *pApiKey){
+   provNCB.reset();
+   provNCB.setSteps(11);
+   return checkProvWithAPIKey(pApiKey, provCallBack, &provNCB);
+}
+
 /*
 -(void)cbTLS:(int)ok  msg:(const char*)msg {
    NSLog(@"prov=[%s] %d",msg,ok);

@@ -142,7 +142,7 @@ public:
    int addCalls(int iAll, CSesBase *root, int iMax){
       int c=0;
       for(int i=0;i<iMax;i++){
-         if(root[i].cs.iBusy && root[i].isSession() && (root[i].cs.iIsInConference || iAll)){
+         if(root[i].cs.iInUse && root[i].isSession() && (root[i].cs.iIsInConference || iAll)){
             if(addCall(&root[i])<0)break; 
             c++;
          }

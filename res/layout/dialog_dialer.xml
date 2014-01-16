@@ -15,7 +15,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:scaleType="center"
-        android:src="@drawable/silentcircle_logo_wd" />
+        android:src="@drawable/sc_logo_50grey" />
 
     <LinearLayout
 		android:layout_width="wrap_content"

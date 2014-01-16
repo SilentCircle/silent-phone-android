@@ -61,7 +61,8 @@ class TestCallbackAudio: public CtZrtpCb {
     }
 
     void onPeer(CtZrtpSession *session, char *name, int iIsVerified, CtZrtpSession::streamName streamNm) {
-        fprintf(stderr, "onPeer: %s\n", name == NULL ? "NULL" : name);
+        fprintf(stderr, "onPeer: %s", name == NULL || strlen(name) == 0 ? "NULL" : name);
+        fprintf(stderr, ", verified: %s\n", iIsVerified ? "YES" : "NO");
         uint8_t buffer[20];
 
         session->getInfo("rs1", buffer, 19);
@@ -117,6 +118,10 @@ class TestSendCallbackAudio: public CtZrtpSendCb {
     }
 };
 
+extern char zrtpBuildInfo[];
+static unsigned char recvAuxSecret[] = {1,2,3,4,5,6,7,8,9,0};
+
+
 int main(int argc,char **argv) {
     int z;
     ssize_t length;
@@ -125,6 +130,8 @@ int main(int argc,char **argv) {
     uint8_t buffer[1300];            // Recv buffer
     uint32_t uiSSRC = 0xfeedbacc;
 
+    fprintf(stderr, "Config info: %s\n", getZrtpBuildInfo());
+    
     CtZrtpSession::initCache("testzid.dat");        // initialize cache file
 
     CtZrtpSession *session = new CtZrtpSession();
@@ -136,6 +143,7 @@ int main(int argc,char **argv) {
     session->setUserCallback(callback, CtZrtpSession::AudioStream);
     session->setSendCallback(sendCallback, CtZrtpSession::AudioStream);
     session->getSignalingHelloHash((char*)buffer, CtZrtpSession::AudioStream, 0);
+    session->setAuxSecret(recvAuxSecret, sizeof(recvAuxSecret));
 
     fprintf(stderr, "Our Hello hash: %s\n", buffer);
 

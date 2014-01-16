@@ -41,8 +41,8 @@ void md5_calc(unsigned char *output, unsigned char *input, unsigned int inlen);
 //int  getHash(unsigned char *strHash, const char *strzNonce, const char *strzPwd);
 int  getHash16(unsigned char *strHash16, const char *strzNonce, const char *strzPwd);
 int  getHash32(unsigned char *strHash32, const char *strzNonce, const char *strzPwd);
-//void writeHash(const char *strzNonce, const char *strzPwd);
 
+//if you ask why -- read (RFC 3621, 2617, 3550) 
 class CTMd5{
 public:
    CTMd5():iFinal(0)
@@ -50,8 +50,10 @@ public:
       MD5Init(&ctx);
    }
    ~CTMd5(){}
+   inline void update(const void *p, unsigned int uiLen){return update((unsigned char *)p, uiLen);}
    void update(unsigned char *p, unsigned int uiLen)
    {
+      if(!uiLen || !p)return;
       if(iFinal)
       {
          iFinal=0;

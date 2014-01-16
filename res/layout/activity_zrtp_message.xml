@@ -21,6 +21,6 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:scaleType="center"
-        android:src="@drawable/sc_logo_big" />
+        android:src="@drawable/sc_logo_white" />
 
 </LinearLayout>

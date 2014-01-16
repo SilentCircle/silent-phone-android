@@ -28,14 +28,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 package com.silentcircle.silentphone.utils;
 
-import com.silentcircle.silentphone.R;
-import com.silentcircle.silentphone.TiviPhoneService;
-
 import android.content.Context;
 import android.media.AudioManager;
 import android.media.ToneGenerator;
 import android.util.Log;
 import android.widget.ImageView;
+
+import com.silentcircle.silentphone.R;
+import com.silentcircle.silentphone.TiviPhoneService;
 
 /**
  * This class has static functions only, mainly used for convenience
@@ -53,36 +53,12 @@ public class Utilities {
         return System.currentTimeMillis();
     }
 
-    public static long get_time_sec() {
-        return System.currentTimeMillis() / 1000;
-    }
-
     static public void Sleep(long ms) {
         try {
             Thread.sleep(ms);
         }
-        catch (InterruptedException e) {
-        }
+        catch (InterruptedException ignored) {}
     }
-
-    /**
-     * Get a configuration value from Tivi C/C++, convert result to String an return it.
-     * 
-     * @param s the configuration key to look at
-     * @return A result string.
-     */
-    static public String getTCValue(String s) {
-        byte[] response = new byte[128];
-
-        if(TiviPhoneService.getSetCfgVal(1, s.getBytes(), s.length(), response) < 0){
-           return "";
-        }
-        int l = 0;
-        while (response[l] != 0 && l < 64)
-            l++;
-        String ret=new String(response, 0, l);
-        return ret;
-     }
 
     /**
      * Check configuration if ZRTP is enabled.
@@ -182,24 +158,19 @@ public class Utilities {
                 // route audio to back speaker
                 am.setMode(AudioManager.MODE_IN_CALL);
                 am.setMode(AudioManager.MODE_NORMAL);
-                am.setSpeakerphoneOn(bOn);
             }
             else {
                 // route audio to earpiece
                 am.setMode(AudioManager.MODE_IN_CALL);
-                am.setSpeakerphoneOn(bOn);
             }
+            am.setSpeakerphoneOn(bOn);
         }
         else {
-    //        boolean bDuos=true;
-            if (bSams && iApiLevel<9){// && !bDuos) {// isGalaxyS() || nexus)
+            if (bSams && iApiLevel < 9) {                // && !bDuos) {// isGalaxyS() || nexus)
                 am.setMode(AudioManager.MODE_IN_CALL);
                 am.setMode(AudioManager.MODE_NORMAL);
-                am.setSpeakerphoneOn(bOn);
             }
-            // Non-Samsung and Samsung 2.2 and up devices
-            else
-                am.setSpeakerphoneOn(bOn);
+            am.setSpeakerphoneOn(bOn);
         }
     }
 
@@ -257,6 +228,20 @@ public class Utilities {
         return n;
     }
 
+    /**
+     * Determines if the specified number is actually a URI
+     * (i.e. a SIP address) rather than a regular PSTN phone number,
+     * based on whether or not the number contains an "@" character.
+     *
+     * @param number
+     * @return true if number contains @
+     */
+    public static boolean isUriNumber(String number) {
+        // Note we allow either "@" or "%40" to indicate a URI, in case
+        // the passed-in string is URI-escaped.  (Neither "@" nor "%40"
+        // will ever be found in a legal PSTN number.)
+        return number != null && (number.contains("@") || number.contains("%40"));
+    }
     /*
      * The following lines are currently a reminder that we may implement status bar icons
      */

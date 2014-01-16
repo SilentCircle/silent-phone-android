@@ -20,6 +20,10 @@
 
 static CMutexClass sessionLock;
 
+const char *getZrtpBuildInfo()
+{
+    return zrtpBuildInfo;
+}
 CtZrtpSession::CtZrtpSession() : mitmMode(false), signSas(false), enableParanoidMode(false), isReady(false),
     zrtpEnabled(true), sdesEnabled(true) {
 
@@ -103,6 +107,7 @@ CtZrtpSession::~CtZrtpSession() {
     delete streams[VideoStream];
 }
 
+void zrtp_log(const char *tag, const char *buf);
 void CtZrtpSession::setupConfiguration(ZrtpConfigure *conf) {
 
 // Set _WITHOUT_TIVI_ENV to a real name that is TRUE if the Tivi client is compiled/built.
@@ -113,14 +118,17 @@ void *findGlobalCfgKey(char *key, int iKeyLen, int &iSize, char **opt, int *type
 #define GET_CFG_I(RET,_KEY) {int *p=(int*)findGlobalCfgKey((char*)_KEY,sizeof(_KEY)-1,iSZ,&opt,&type);if(p && iSZ==4)RET=*p;else RET=-1;}
 #endif
 
+
 // The next three vars are used in case of a real Tivi compile, see macro above.
     int iSZ;
     char *opt;
     int type;
+    void zrtp_log( const char *tag, const char *buf);
 
     int b32sas = 0, iDisableDH2K = 0, iDisableAES256 = 0, iPreferDH2K = 0;
     int iDisableECDH256 = 0, iDisableECDH384 = 0, iEnableSHA384 = 1;
-    int iDisableSkein = 0, iDisableTwofish = 0;
+    int iDisableSkein = 0, iDisableTwofish = 0, iPreferNIST = 0;
+    int iDisableSkeinHash = 0, iDisableBernsteinCurve25519 = 0, iDisableBernsteinCurve3617 = 0;
 
     GET_CFG_I(b32sas, "iDisable256SAS");
     GET_CFG_I(iDisableAES256, "iDisableAES256");
@@ -132,36 +140,107 @@ void *findGlobalCfgKey(char *key, int iKeyLen, int &iSize, char **opt, int *type
     GET_CFG_I(iEnableSHA384, "iEnableSHA384");
     GET_CFG_I(iDisableSkein, "iDisableSkein");
     GET_CFG_I(iDisableTwofish, "iDisableTwofish");
+    GET_CFG_I(iPreferNIST, "iPreferNIST");
+
+    GET_CFG_I(iDisableSkeinHash, "iDisableSkeinHash");
+    GET_CFG_I(iDisableBernsteinCurve25519, "iDisableBernsteinCurve25519");
+    GET_CFG_I(iDisableBernsteinCurve3617, "iDisableBernsteinCurve3617");
 
     conf->clear();
 
+    /*
+     * Setting the selection policy is a more generic policy than the iPreferNIST
+     * configuration set by the user. The selection policy is a decision of the
+     * client, not the user
+     */
+    conf->setSelectionPolicy(ZrtpConfigure::PreferNonNist);
 
-    if (iDisableECDH384 == 0)
-        conf->addAlgo(PubKeyAlgorithm, zrtpPubKeys.getByName("EC38"));
+    /*
+     * Handling of iPreferNIST: if this is false (== 0) then we add the non-NIST algorithms
+     * to the configuration and place them in front of the NIST algorithms. Refer to RFC6189
+     * section 4.1.2 regarding selection of the public key algorithm.
+     * 
+     * With the configuration flags we can enable/disable each ECC PK algorithm separately.
+     * 
+     */
+    if (iPreferNIST == 0) {
+        if (iDisableBernsteinCurve3617 == 0)
+            conf->addAlgo(PubKeyAlgorithm, zrtpPubKeys.getByName("E414"));
+        if (iDisableECDH384 == 0)
+            conf->addAlgo(PubKeyAlgorithm, zrtpPubKeys.getByName("EC38"));
+    }
+    else {
+        if (iDisableECDH384 == 0)
+            conf->addAlgo(PubKeyAlgorithm, zrtpPubKeys.getByName("EC38"));
+        if (iDisableBernsteinCurve3617 == 0)
+            conf->addAlgo(PubKeyAlgorithm, zrtpPubKeys.getByName("E414"));
+    }
 
-    if (iDisableECDH256 == 0)
-        conf->addAlgo(PubKeyAlgorithm, zrtpPubKeys.getByName("EC25"));
+    if (iPreferNIST == 0) {
+        if (iDisableBernsteinCurve25519 == 0)
+            conf->addAlgo(PubKeyAlgorithm, zrtpPubKeys.getByName("E255"));
+        if (iDisableECDH256 == 0)
+            conf->addAlgo(PubKeyAlgorithm, zrtpPubKeys.getByName("EC25"));
+    }
+    else {
+        if (iDisableECDH256 == 0)
+            conf->addAlgo(PubKeyAlgorithm, zrtpPubKeys.getByName("EC25"));
+        if (iDisableBernsteinCurve25519 == 0)
+            conf->addAlgo(PubKeyAlgorithm, zrtpPubKeys.getByName("E255"));
+    }
 
-    if (iPreferDH2K && !iDisableDH2K) {
+    // DH2K handling: if DH2K not disabled and prefered put it infrom of DH3K,
+    // If not preferred and not disabled put if after DH3K. Don't use DH2K if
+    // it's not enabled at all (iDisableDH2K == 1)
+    if (iPreferDH2K && iDisableDH2K == 0) {
         conf->addAlgo(PubKeyAlgorithm, zrtpPubKeys.getByName("DH2k"));
     }
     conf->addAlgo(PubKeyAlgorithm, zrtpPubKeys.getByName("DH3k"));
+    if (iPreferDH2K == 0 && iDisableDH2K == 0)
+        conf->addAlgo(PubKeyAlgorithm, zrtpPubKeys.getByName("DH2k"));
+
     conf->addAlgo(PubKeyAlgorithm, zrtpPubKeys.getByName("Mult"));
 
-    if (iEnableSHA384 == 1 || iDisableECDH384 == 0) {
-        conf->addAlgo(HashAlgorithm, zrtpHashes.getByName("S384"));
-    }
-    conf->addAlgo(HashAlgorithm, zrtpHashes.getByName("S256"));
 
+    // Handling of Hash algorithms: similar to PK, if PreferNIST is false
+    // then put Skein in fromt oF SHA. Regardless if the Hash is enabled or
+    // not: if configuration enables a large curve then also use the large
+    // hashes.
+    if (iPreferNIST == 0) {
+        if (iDisableSkeinHash == 0 || iDisableBernsteinCurve3617 == 0)
+            conf->addAlgo(HashAlgorithm, zrtpHashes.getByName("SKN3"));
+        if (iEnableSHA384 == 1 || iDisableECDH384 == 0) 
+            conf->addAlgo(HashAlgorithm, zrtpHashes.getByName("S384"));
+    }
+    else {
+        if (iEnableSHA384 == 1 || iDisableECDH384 == 0) 
+            conf->addAlgo(HashAlgorithm, zrtpHashes.getByName("S384"));
+        if (iDisableSkeinHash == 0 || iDisableBernsteinCurve3617 == 0)
+            conf->addAlgo(HashAlgorithm, zrtpHashes.getByName("SKN3"));
+    }
+
+    if (iPreferNIST == 0) {
+        if (iDisableSkeinHash == 0)
+            conf->addAlgo(HashAlgorithm, zrtpHashes.getByName("SKN2"));
+        conf->addAlgo(HashAlgorithm, zrtpHashes.getByName("S256"));
+    }
+    else {
+        conf->addAlgo(HashAlgorithm, zrtpHashes.getByName("S256"));
+        if (iDisableSkeinHash == 0)
+            conf->addAlgo(HashAlgorithm, zrtpHashes.getByName("SKN2"));
+    }
+
+    // Handling of Symmetric algorithms: always prefer twofish (regardless
+    // of NIST setting) if it is not disabled. iDisableAES256 means: disable
+    // large ciphers
     if (iDisableAES256 == 0) {
-        if (iDisableTwofish == 0) {
+        if (iDisableTwofish == 0)
             conf->addAlgo(CipherAlgorithm, zrtpSymCiphers.getByName("2FS3"));
-        }
         conf->addAlgo(CipherAlgorithm, zrtpSymCiphers.getByName("AES3"));
     }
-    if (iDisableTwofish == 0) {
+
+    if (iDisableTwofish == 0)
         conf->addAlgo(CipherAlgorithm, zrtpSymCiphers.getByName("2FS1"));
-    }
     conf->addAlgo(CipherAlgorithm, zrtpSymCiphers.getByName("AES1"));
 
     if (b32sas == 1) {
@@ -172,12 +251,22 @@ void *findGlobalCfgKey(char *key, int iKeyLen, int &iSize, char **opt, int *type
         conf->addAlgo(SasType, zrtpSasTypes.getByName("B32 "));
     }
 
-    if (iDisableSkein == 0) {
-        conf->addAlgo(AuthLength, zrtpAuthLengths.getByName("SK32"));
-        conf->addAlgo(AuthLength, zrtpAuthLengths.getByName("SK64"));
+    if (iPreferNIST == 0) {
+        if (iDisableSkein == 0) {
+            conf->addAlgo(AuthLength, zrtpAuthLengths.getByName("SK32"));
+            conf->addAlgo(AuthLength, zrtpAuthLengths.getByName("SK64"));
+        }
+        conf->addAlgo(AuthLength, zrtpAuthLengths.getByName("HS32"));
+        conf->addAlgo(AuthLength, zrtpAuthLengths.getByName("HS80"));
     }
-    conf->addAlgo(AuthLength, zrtpAuthLengths.getByName("HS32"));
-    conf->addAlgo(AuthLength, zrtpAuthLengths.getByName("HS80"));
+    else {
+        conf->addAlgo(AuthLength, zrtpAuthLengths.getByName("HS32"));
+        conf->addAlgo(AuthLength, zrtpAuthLengths.getByName("HS80"));
+        if (iDisableSkein == 0) {
+            conf->addAlgo(AuthLength, zrtpAuthLengths.getByName("SK32"));
+            conf->addAlgo(AuthLength, zrtpAuthLengths.getByName("SK64"));
+        }
+    }
 }
 
 void CtZrtpSession::setUserCallback(CtZrtpCb* ucb, streamName streamNm) {
@@ -539,6 +628,16 @@ void CtZrtpSession::setZrtpEncapAttribute(const char *attribute, streamName stre
     stream->setZrtpEncapAttribute(attribute);
 }
 
+void CtZrtpSession::setAuxSecret(const unsigned char *secret, int length) {
+    if (!isReady || !(streams[AudioStream] != NULL))
+        return;
+
+    CtZrtpStream *stream = streams[AudioStream];
+    if (stream->isStopped)
+        return;
+
+    stream->setAuxSecret(secret, length);
+}
 
 void CtZrtpSession::cleanCache() {
     getZidCacheInstance()->cleanup();

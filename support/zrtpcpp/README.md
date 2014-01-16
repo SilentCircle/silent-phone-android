@@ -1,28 +1,43 @@
 ## GNU ZRTP C++
 
 This package provides a library that adds ZRTP support to the GNU
-ccRTP stack. Phil Zimmermann developed ZRTP to allow ad-hoc, easy to
+ccRTP stack and serves as library for other RTP stacks (PJSIP, GStreamer).
+Phil Zimmermann developed ZRTP to allow ad-hoc, easy to
 use key negotiation to setup Secure RTP (SRTP) sessions. GNU ZRTP works
 together with GNU ccRTP (1.5.0 or later) and provides a ZRTP
 implementation that can be directly embedded into client and server
 applications.
 
-The GNU ZRTP implementation is compliant to [RFC 6189][]. Currently GNU ZRTP
-C++ supports the following features:
+The GNU ZRTP implementation is compliant to [RFC 6189][] and adds some more
+algorithms. Currently GNU ZRTP C++ supports the following features:
 
 * multi-stream mode
-* Finite field Diffie-Helman with 2048 and 3072 bit primes
-* Elliptic curve Diffie-Helman with 256 and 384 bit curves
-* AES-128 and AES-256 symmetric cipher
+* Finite field Diffie-Hellman with 2048 and 3072 bit primes
+* Elliptic curve Diffie-Hellman with 256 and 384 bit curves (NIST curves)
+* Elliptic curves Curve25519 and Curve3617 (Dan Bernstein, Tanja Lange)
+* Skein Hash and MAC for ZRTP
+* AES-128 and AES-256 symmetric ciphers
 * Twofish-128 and Twofish-256 bit symmetric ciphers
 * The SRTP authentication methods HMAC-SHA1 with 32 bit and 80 bit length and
   the Skein MAC with 32 bit and 64 bit length
 * The Short Authentication String (SAS) type with base 32 encoding (4
-  characters)
+  characters) and the SAS 256 type using words.
 
-Some features like preshared mode or signed SAS are not supported but the GNU
+Some features like preshared mode are not supported but the GNU
 ZRTP C++ implementation defines the necessary external interfaces and
-functions for these enhanced features (stubs only).
+functions for these enhanced features.
+
+**Note:** The Elliptic curves Cure25519 and Curve3617 are available only if you
+select the crypto standalone mode during build.
+
+The newer verisons (starting with 4.1) implement an extensible mechanisms to
+define algorithm selection policies that control selection of Hash, symmetric
+cipher, and the SRTP authentication. Currently two policies exist: _Standard_
+and _PreferNonNist_. The Standard policy selects algorihms based on the
+preferences (order) in the Hello packet, the PreferNonNist policy prefers 
+non-NIST algorithms, for example Skein and Twofish, if the selected public key
+(Diffie-Hellman) algorithm is also one of the non-NIST algorithms. This is 
+fully backward compatible and in-line with RFC6189.
 
 ### SDES support
 This release also provides SDES support. The SDES implementation does not
@@ -76,15 +91,18 @@ following versions of Twinkle include GNU ZRTP C++ as well.
 
 
 ### License and further information
-Please note, most this library is licensed under the GNU GPL, version 3 or 
-later.
+I changed the license of the ZRTP core source files from GPL to LGPL. Other
+sources files may have own license. Please refer to the copyright notices of
+the files.
+
+Thus most of this library is licensed under the GNU LGPL, version 3 or later.
 
 For further information refer to the [ZRTP FAQ][zrtpfaq] and the
 [GNU ZRTP howto][zrtphow]. Both are part of the GNU Telephony wiki and are
 located in its documentation category.
 
 Source code in the directory `clients/tivi` and below is not licensed under the
-GNU GPL and is for reference and review only. Refer to the copyright statments
+GNU LGPL and is for reference and review only. Refer to the copyright statments
 of the source code in these directories, in particular the sqlite3 sources which
 have their own license.
 
@@ -99,10 +117,10 @@ process. To build GNU ZRTP C++ perform the following steps after you unpacked
 the source archive or pulled the source from [Github][]:
 
     cd <zrtpsrc_dir>
-	mkdir build
-	cd build
-	cmake ..
-	make
+    mkdir build
+    cd build
+    cmake ..
+    make
 
 The CMakeLists.txt supports several options. If you don't specify any options
 then `cmake` generates the build that supports GNU ccRTP library and it uses
@@ -125,3 +143,12 @@ build directory and create a new one to start from fresh (this is the ultimate
 different settings without mixing the two builds.
 
 [github]: http://github.com/wernerd/ZRTPCPP
+
+
+### Notes when building ZRTP C++ for Android
+
+The CMake files support creation of an `Android.mk` file for the Tivi client
+and may give you an idea how to do it for other clients. The generated
+`Android.mk` generates `buildinfo_*.c` files in the root directory. You may
+delete these files after the Android static libraries are ready.
+

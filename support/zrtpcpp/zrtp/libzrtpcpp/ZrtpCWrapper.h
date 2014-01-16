@@ -1,9 +1,9 @@
 /*
     This file defines the GNU ZRTP C-to-C++ wrapper.
-    Copyright (C) 2010  Werner Dittmann
+    Copyright (C) 2013  Werner Dittmann
 
     This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
+    it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
 
@@ -565,7 +565,7 @@ extern "C"
      * @returns
      *      Pointer to the ZrtpContext
      */
-    ZrtpContext* zrtp_CreateWrapper();
+    ZrtpContext* zrtp_CreateWrapper(void);
 
     /**
      * Initialize the ZRTP protocol engine.

@@ -32,21 +32,19 @@ import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.os.Build;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.View.OnClickListener;
+import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.actionbarsherlock.app.SherlockFragment;
-import com.actionbarsherlock.view.Menu;
-import com.actionbarsherlock.view.MenuInflater;
 import com.silentcircle.silentphone.R;
 import com.silentcircle.silentphone.TiviPhoneService;
 import com.silentcircle.silentphone.activities.TMActivity;
+import com.silentcircle.silentphone.utils.BuildInfo;
 import com.silentcircle.silentphone.utils.CTFlags;
-import com.silentcircle.silentphone.utils.TBuild;
-import com.silentcircle.silentphone.utils.Utilities;
 
 public class InfoFragment extends SherlockFragment {
 
@@ -54,16 +52,18 @@ public class InfoFragment extends SherlockFragment {
      * Handle information and thanks dialog. Maybe we need to extend this to implement
      * account selection - later. 
      * ******************************************************************* */
-    private static String buildInfo = TBuild.T_BUILD_NR;
+    private static String buildInfo = BuildInfo.BUILD_VERSION + " (" + BuildInfo.COMMIT_ID + ")";
     private static String deviceInfo = Build.MANUFACTURER + ", " + Build.BRAND + ", " + Build.MODEL + ", " + Build.DEVICE;
     
     private static String[] screenSizes = {"Undefined", "Small", "Normal", "Large", "XLarge"};
 
     private TextView numberText;
+    private TextView nameText;
     private TextView infoText;
     private View infoView;
 
     private boolean showDebug;
+    private String keyManagerStatus;
 
     @Override
     public void onCreate (Bundle savedInstanceState) {
@@ -81,9 +81,19 @@ public class InfoFragment extends SherlockFragment {
             public void onClick(View v) {
             }
         });
+        // We always have a name
+        nameText = (TextView) infoView.findViewById(R.id.ThanksNameInfo);
+        nameText.setText(TiviPhoneService.getInfo(0, -1, "cfg.un"));
 
-        numberText = (TextView) infoView.findViewById(R.id.ThanksSCnumber);
-        numberText.setText(CTFlags.formatNumber(Utilities.getTCValue("edNR")));
+        numberText = (TextView) infoView.findViewById(R.id.ThanksNumberInfo);
+        String nr = TiviPhoneService.getInfo(0, -1, "cfg.nr");
+
+        if (TextUtils.isEmpty(nr)) {
+            numberText.setVisibility(View.GONE);
+            infoView.findViewById(R.id.ThanksNumber).setVisibility(View.GONE);
+        }
+        else
+            numberText.setText(CTFlags.formatNumber(nr));
 
         infoText = (TextView) infoView.findViewById(R.id.InfoBuildNumberInfo);
         infoText.setText(buildInfo);
@@ -95,6 +105,8 @@ public class InfoFragment extends SherlockFragment {
             }
         });
         infoText.setClickable(true);
+
+        ((TextView) infoView.findViewById(R.id.InfoKeyManager)).setText(keyManagerStatus);
 
         infoText = (TextView) infoView.findViewById(R.id.InfoDeviceInfoInfo);
         infoText.setText(deviceInfo);
@@ -112,6 +124,10 @@ public class InfoFragment extends SherlockFragment {
             showDebugInfo();
         }
         return infoView;
+    }
+
+    public void setKeyManagerStatus(String status) {
+        keyManagerStatus = status;
     }
 
     private void showDebugInfo() {

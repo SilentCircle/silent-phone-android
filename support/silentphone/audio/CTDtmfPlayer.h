@@ -161,7 +161,7 @@ public:
       iPlaySilence=1;
       if(iSamplesPlayed<10||(uiStopAT && uiStopAT<getTickCount())){uiStopAT=0;ao.stop();}
       //  iPlaySilenceSampleCnt=iPrevRate*4;
-      ao.stopAfter(4000);//TODO use oter thread
+      ao.stopAfter(4000);//TODO use other thread
       
    }
    void stopz(){
