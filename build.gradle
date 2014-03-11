@@ -1,128 +1,16 @@
-import org.apache.tools.ant.filters.*
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
 
 buildscript {
     repositories {
         mavenCentral()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:0.6.+'
-    }
-}
-task wrapper(type: Wrapper) {
-    gradleVersion = '1.8'
-}
-
-apply plugin: 'android'
-
-dependencies {
-    compile project(":support:ActionBarSherlock:library")
-    compile files('libs/SilentContacts-0.1.0.jar')
-//    compile files('libs/KeyManagerSupport.jar')
-}
-
-android {
-    compileSdkVersion 19
-    buildToolsVersion "19.0.0"
-
-    defaultConfig {
-        minSdkVersion 10
-        targetSdkVersion 19
-    }
-    sourceSets {
-        main {
-            manifest.srcFile 'AndroidManifest.xml'
-            java.srcDirs = ['src']
-            resources.srcDirs = ['src']
-            aidl.srcDirs = ['src']
-            renderscript.srcDirs = ['src']
-            res.srcDirs = ['res']
-            assets.srcDirs = ['assets']
-        }
-
-        instrumentTest.setRoot('tests')
-    }
-
-    signingConfigs {
-        sc {
-            storeFile file(".build-release/test-debug.keystore")
-            storePassword "android"
-            keyAlias "androiddebugkey"
-            keyPassword "android"
-        }
-    }
-
-    buildTypes {
-        debug {
-        }
-
-        develop {
-            initWith debug
-            signingConfig signingConfigs.sc
-            zipAlign true
-        }
-
-        alpha {
-            initWith release
-            signingConfig signingConfigs.sc
-            zipAlign true
-        }
-
-        release {
-            initWith release
-            signingConfig signingConfigs.sc
-            zipAlign true
-        }
-    }
-// Where to store some generated Java files.
-    def genSrcDir = "generated-src"
-    def utilsPkg = "com/silentcircle/silentphone/utils"
-
-    // buildInfo checks and creates a build info block based on data in
-    // gradle.properties. To avoid build failues it checks if a property is
-    // available. If it's not available it uses some default value.
-    task buildInfo {
-        if (project.hasProperty('build_commit'))  {ext.revision = build_commit} else {ext.revision="DEBUG"}
-        if (project.hasProperty('build_date'))    {ext.date = build_date} else {ext.date="NONE"}
-        if (project.hasProperty('build_version')) {ext.version = build_version} else {ext.version="DEBUG"}
-
-        ext.update = false
-    }
-
-    task('filterCopy', type: Copy, dependsOn: buildInfo) {
-        def rev     = buildInfo.revision
-        def date    = buildInfo.date
-        def version = buildInfo.version
-        def outputDir = file("$buildDir/$genSrcDir/$utilsPkg")
-
-        outputs.upToDateWhen { buildInfo.update }
-        from 'templates'  into outputDir  include 'BuildInfo.java'
-        filter(ReplaceTokens, tokens: [commitid: rev, timestamp: date,
-        version: version])
-    }
-
-    tasks.withType(Compile) { compileTask -> compileTask.dependsOn filterCopy}
-
-// the statement "srcDir" below *adds* the defined dir to the existing set of java src dirs.
-// This is not documented in the gradle documentation, but it's the actaul behaviour,
-// refer to Android Gradle plugin documentation
-    sourceSets {
-        main {
-            java {
-                srcDir "$buildDir/$genSrcDir"
-            }
-        }
+        classpath 'com.android.tools.build:gradle:0.9.+'
     }
 }
 
-task copyNativeLibs(type: Copy) {
-    from(new File(project(':').getProjectDir(), 'libs')) { include '**/*.so' }
-    into new File(buildDir, 'native-libs')
-}
-
-tasks.withType(Compile) { compileTask -> compileTask.dependsOn copyNativeLibs }
-
-clean.dependsOn 'cleanCopyNativeLibs'
-
-tasks.withType(com.android.build.gradle.tasks.PackageApplication) { pkgTask ->
-    pkgTask.jniDir new File(buildDir, 'native-libs')
+allprojects {
+    repositories {
+        mavenCentral()
+    }
 }

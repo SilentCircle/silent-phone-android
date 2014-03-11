@@ -3,10 +3,20 @@
   <component name="GradleSettings">
     <option name="linkedExternalProjectsSettings">
       <GradleProjectSettings>
+        <option name="distributionType" value="DEFAULT_WRAPPED" />
         <option name="externalProjectPath" value="$PROJECT_DIR$" />
-        <option name="useAutoImport" value="true" />
+        <option name="modules">
+          <set>
+            <option value="$PROJECT_DIR$" />
+            <option value="$PROJECT_DIR$/Silent-Phone-Android" />
+            <option value="$PROJECT_DIR$/Support" />
+            <option value="$PROJECT_DIR$/Support/ActionBarSherlock" />
+            <option value="$PROJECT_DIR$/Support/ActionBarSherlock/library" />
+          </set>
+        </option>
       </GradleProjectSettings>
     </option>
+    <option name="serviceDirectoryPath" value="$USER_HOME$/.gradle" />
   </component>
 </project>
 
