@@ -2,10 +2,9 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/support/ActionBarSherlock/ActionBarSherlock.iml" filepath="$PROJECT_DIR$/support/ActionBarSherlock/ActionBarSherlock.iml" />
-      <module fileurl="file://$PROJECT_DIR$/support/ActionBarSherlock/library/library.iml" filepath="$PROJECT_DIR$/support/ActionBarSherlock/library/library.iml" />
-      <module fileurl="file://$PROJECT_DIR$/scandroid.iml" filepath="$PROJECT_DIR$/scandroid.iml" />
-      <module fileurl="file://$PROJECT_DIR$/support/support.iml" filepath="$PROJECT_DIR$/support/support.iml" />
+      <module fileurl="file://$PROJECT_DIR$/Silent-Phone-Android.iml" filepath="$PROJECT_DIR$/Silent-Phone-Android.iml" />
+      <module fileurl="file://$PROJECT_DIR$/Silent-Phone-Android/Silent-Phone-Android-Silent-Phone-Android.iml" filepath="$PROJECT_DIR$/Silent-Phone-Android/Silent-Phone-Android-Silent-Phone-Android.iml" />
+      <module fileurl="file://$PROJECT_DIR$/Support/ActionBarSherlock/library/library.iml" filepath="$PROJECT_DIR$/Support/ActionBarSherlock/library/library.iml" />
     </modules>
   </component>
 </project>

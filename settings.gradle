@@ -1,2 +1,3 @@
-include "support:ActionBarSherlock:library"
+include ':Silent-Phone-Android'
+include "Support:ActionBarSherlock:library"
 

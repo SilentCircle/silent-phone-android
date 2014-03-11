@@ -1,9 +1,0 @@
-<component name="libraryTable">
-  <library name="library.aar">
-    <CLASSES>
-      <root url="jar://$PROJECT_DIR$/build/exploded-bundles/library.aar/classes.jar!/" />
-    </CLASSES>
-    <JAVADOC />
-    <SOURCES />
-  </library>
-</component>
