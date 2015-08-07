@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+// +++LICENSE_BEGIN+++
+/*
+ * Copyright © 2014, Silent Circle
+ * All rights reserved.
+ */
+// +++LICENSE_END+++
+ -->
+
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              xmlns:tools="http://schemas.android.com/tools"
+              android:id="@+id/force_traversal"
+              android:orientation="vertical"
+              android:layout_width="match_parent"
+              android:layout_height="wrap_content"
+              android:layout_marginTop="@dimen/spacing_normal"
+              android:visibility="gone"
+              tools:context=".activities.DialerActivity">
+
+    <CheckBox
+            android:id="@+id/force_traversal_check"
+            style="@style/Widget.Silent.DrawerCheckBox"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true"
+            android:layout_alignBaseline="@+id/traversal_title"
+/>
+    <TextView
+            style="@style/Widget.Silent.SimpleText.Medium"
+            android:id="@+id/force_traversal_title"
+            android:layout_toRightOf="@id/force_traversal_check"
+            android:layout_toEndOf="@id/force_traversal_check"
+            android:paddingTop="@dimen/spacing_normal"
+            android:text="@string/force_traversal"/>
+    <TextView
+            style="@style/Widget.Silent.SimpleText.Small"
+            android:layout_below="@id/force_traversal_title"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true"
+            android:layout_marginLeft="@dimen/spacing_normal"
+            android:layout_marginStart="@dimen/spacing_normal"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:maxLines="5"
+            android:text="@string/force_traversal_explanation"/>
+
+</RelativeLayout>

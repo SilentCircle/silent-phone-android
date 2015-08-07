@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+// +++LICENSE_BEGIN+++
+/*
+ * Copyright © 2014, Silent Circle
+ * All rights reserved.
+ */
+// +++LICENSE_END+++
+ -->
+<!-- A layout representing a single key in the dialpad -->
+<!--<com.android.dialer.dialpad.DialpadKeyButton -->
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    style="@style/DialpadButtonStyle"
+    tools:context=".activities.DialerActivity">
+
+<!--    <RelativeLayout
+            style="@style/DialButtonRelative">
+        <ImageButton
+                android:id="@+id/dialpad_rnd_btn"
+                style="@style/DialKeyRoundImageButton"/>
+                -->
+        <LinearLayout
+                android:id="@+id/dialpad_rnd_btn"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+        <TextView
+                android:id="@+id/dialpad_key_number"
+                style="@style/DialKeyNumberStyle"
+                tools:text="2"/>
+        <TextView
+                android:id="@+id/dialpad_key_letters"
+                style="@style/DialKeyLetterStyle"
+                tools:text="ABC"/>
+        </LinearLayout>
+<!--    </RelativeLayout> -->
+</FrameLayout>
+<!--</com.android.dialer.dialpad.DialpadKeyButton> -->

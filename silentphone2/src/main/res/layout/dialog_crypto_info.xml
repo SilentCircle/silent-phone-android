@@ -1,0 +1,381 @@
+<!-- 
+// +++LICENSE_BEGIN+++
+/*
+ * Copyright © 2014, Silent Circle
+ * All rights reserved.
+ */
+// +++LICENSE_END+++
+ -->
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+            xmlns:tools="http://schemas.android.com/tools"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="?sp_drawer_background"
+            android:id="@+id/CryptoScrollView">
+
+    <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+
+        <!-- The ZRTP peername if it exists -->
+        <TextView
+                android:id="@+id/CryptoPeerName"
+                style="@style/Widget.Silent.SimpleText.Large"
+                android:layout_alignParentTop="true"
+                android:layout_marginTop="5dp"
+                android:gravity="center_horizontal|center_vertical"
+                android:text="@string/crypto_peer_name"/>
+
+        <!-- The padlock -->
+        <ImageView
+                android:id="@+id/CryptoPanelPadlock"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/CryptoPeerName"
+                android:layout_marginTop="5dp"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentStart="true"
+                android:layout_marginLeft="5dp"
+                android:layout_marginStart="5dp"
+                android:contentDescription="@string/crypto_padlock"
+                android:src="@drawable/main_lock_locked"
+                tools:visibility="visible"/>
+
+        <!-- The ZRTP SAS string if it exists -->
+        <TextView
+                android:id="@+id/CryptoSasText"
+                style="@style/Widget.Silent.SimpleText.Small"
+                android:layout_width="wrap_content"
+                android:layout_below="@+id/CryptoPeerName"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="5dp"
+                android:gravity="center_horizontal|center_vertical"
+                tools:text="sas"/>
+
+        <!-- ZRTP peer client info layout -->
+        <!-- Header -->
+        <TextView
+                android:id="@+id/CryptoPeerClient"
+                style="@style/DrawerSectionTitle"
+                android:layout_below="@+id/CryptoPanelPadlock"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentStart="true"
+                android:text="@string/crypto_peer_client"/>
+
+        <!-- first line, client id -->
+        <TextView
+                android:id="@+id/CryptoPeerClientId"
+                style="@style/Widget.Silent.SimpleText.Small"
+                android:layout_width="wrap_content"
+                android:layout_alignLeft="@+id/CryptoPeerClient"
+                android:layout_alignStart="@+id/CryptoPeerClient"
+                android:layout_below="@+id/CryptoPeerClient"
+                android:layout_marginTop="5dp"
+                android:layout_marginLeft="5dp"
+                android:layout_marginStart="5dp"
+                android:text="@string/crypto_peer_client_id"/>
+
+        <TextView
+                android:id="@+id/CryptoPeerClientIdInfo"
+                style="@style/Widget.Silent.SimpleText.Small"
+                android:layout_width="wrap_content"
+                android:layout_alignParentRight="true"
+                android:layout_alignParentEnd="true"
+                android:layout_alignTop="@+id/CryptoPeerClientId"
+                android:layout_below="@+id/CryptoPeerClient"
+                android:layout_marginRight="5dp"
+                android:layout_marginEnd="5dp"
+                tools:text="Client id info"/>
+
+        <!-- second line, protocol version -->
+        <TextView
+                android:id="@+id/CryptoPeerClientProto"
+                style="@style/Widget.Silent.SimpleText.Small"
+                android:layout_width="wrap_content"
+                android:layout_alignLeft="@+id/CryptoPeerClientId"
+                android:layout_alignStart="@+id/CryptoPeerClientId"
+                android:layout_below="@+id/CryptoPeerClientId"
+                android:layout_marginTop="3dp"
+                android:text="@string/crypto_peer_client_proto"/>
+
+        <TextView
+                android:id="@+id/CryptoPeerClientProtoInfo"
+                style="@style/Widget.Silent.SimpleText.Small"
+                android:layout_width="wrap_content"
+                android:layout_alignTop="@+id/CryptoPeerClientProto"
+                android:layout_alignRight="@+id/CryptoPeerClientIdInfo"
+                android:layout_alignEnd="@+id/CryptoPeerClientIdInfo"
+                tools:text="1.10"/>
+
+        <!-- second line, protocol version -->
+        <TextView
+                android:id="@+id/CryptoPeerSecureSince"
+                style="@style/Widget.Silent.SimpleText.Small"
+                android:layout_width="wrap_content"
+                android:layout_alignLeft="@+id/CryptoPeerClientId"
+                android:layout_alignStart="@+id/CryptoPeerClientId"
+                android:layout_below="@+id/CryptoPeerClientProto"
+                android:layout_marginTop="3dp"
+                android:text="@string/crypto_secure_since"/>
+
+        <TextView
+                android:id="@+id/CryptoPeerSecureSinceInfo"
+                style="@style/Widget.Silent.SimpleText.Small"
+                android:layout_width="wrap_content"
+                android:layout_alignTop="@+id/CryptoPeerSecureSince"
+                android:layout_alignRight="@+id/CryptoPeerClientIdInfo"
+                android:layout_alignEnd="@+id/CryptoPeerClientIdInfo"
+                tools:text="2014-10-01T00:00:00"/>
+
+        <!-- Crypto components info layout -->
+        <!-- Header -->
+        <TextView
+                android:id="@+id/CryptoCryptoComponents"
+                style="@style/DrawerSectionTitle"
+                android:layout_alignLeft="@+id/CryptoPeerClient"
+                android:layout_alignStart="@+id/CryptoPeerClient"
+                android:layout_alignParentTop="false"
+                android:layout_below="@+id/CryptoPeerSecureSince"
+                android:layout_marginTop="20dp"
+                android:text="@string/crypto_crypto_components"/>
+
+        <!-- first line, TLS info -->
+        <TextView
+                android:id="@+id/CryptoCryptoComponentsTls"
+                style="@style/Widget.Silent.SimpleText.Small"
+                android:layout_width="wrap_content"
+                android:layout_alignLeft="@+id/CryptoPeerClientId"
+                android:layout_alignStart="@+id/CryptoPeerClientId"
+                android:layout_below="@+id/CryptoCryptoComponents"
+                android:layout_marginTop="5dp"
+                android:text="@string/crypto_crypto_components_tls"/>
+
+        <TextView
+                android:id="@+id/CryptoCryptoComponentsTlsInfo"
+                style="@style/Widget.Silent.SimpleText.Small"
+                android:layout_width="wrap_content"
+                android:layout_alignTop="@+id/CryptoCryptoComponentsTls"
+                android:layout_toRightOf="@id/CryptoCryptoComponentsTls"
+                android:layout_toEndOf="@id/CryptoCryptoComponentsTls"
+                android:layout_marginLeft="5dp"
+                android:layout_marginStart="5dp"
+                android:layout_alignRight="@+id/CryptoPeerClientIdInfo"
+                android:layout_alignEnd="@+id/CryptoPeerClientIdInfo"
+                android:singleLine="true"
+                android:scrollHorizontally="true"
+                android:ellipsize="marquee"
+                android:marqueeRepeatLimit ="marquee_forever"
+                android:gravity="end"
+                tools:text="cipher suite"/>
+
+        <!-- second line, ZRTP hash info -->
+        <TextView
+                android:id="@+id/CryptoCryptoComponentsZhash"
+                style="@style/Widget.Silent.SimpleText.Small"
+                android:layout_width="wrap_content"
+                android:layout_alignLeft="@+id/CryptoPeerClientId"
+                android:layout_alignStart="@+id/CryptoPeerClientId"
+                android:layout_below="@+id/CryptoCryptoComponentsTls"
+                android:layout_marginTop="3dp"
+                android:text="@string/crypto_crypto_components_zhash"/>
+
+        <TextView
+                android:id="@+id/CryptoCryptoComponentsZhashInfo"
+                style="@style/Widget.Silent.SimpleText.Small"
+                android:layout_width="wrap_content"
+                android:layout_alignTop="@+id/CryptoCryptoComponentsZhash"
+                android:layout_alignRight="@+id/CryptoPeerClientIdInfo"
+                android:layout_alignEnd="@+id/CryptoPeerClientIdInfo"
+                tools:text="zrtp hash"/>
+
+        <!-- third line, key exchange info -->
+        <TextView
+                android:id="@+id/CryptoCryptoComponentsPk"
+                style="@style/Widget.Silent.SimpleText.Small"
+                android:layout_width="wrap_content"
+                android:layout_alignLeft="@+id/CryptoPeerClientId"
+                android:layout_alignStart="@+id/CryptoPeerClientId"
+                android:layout_below="@+id/CryptoCryptoComponentsZhash"
+                android:layout_marginTop="3dp"
+                android:text="@string/crypto_crypto_components_pk"/>
+
+        <TextView
+                android:id="@+id/CryptoCryptoComponentsPkInfo"
+                style="@style/Widget.Silent.SimpleText.Small"
+                android:layout_width="wrap_content"
+                android:layout_alignTop="@+id/CryptoCryptoComponentsPk"
+                android:layout_alignRight="@+id/CryptoPeerClientIdInfo"
+                android:layout_alignEnd="@+id/CryptoPeerClientIdInfo"
+                tools:text="key exchange"/>
+
+        <!-- fourth line, cipher info -->
+        <TextView
+                android:id="@+id/CryptoCryptoComponentsCipher"
+                style="@style/Widget.Silent.SimpleText.Small"
+                android:layout_width="wrap_content"
+                android:layout_alignLeft="@+id/CryptoPeerClientId"
+                android:layout_alignStart="@+id/CryptoPeerClientId"
+                android:layout_below="@+id/CryptoCryptoComponentsPk"
+                android:layout_marginTop="3dp"
+                android:text="@string/crypto_crypto_components_cipher"/>
+
+        <TextView
+                android:id="@+id/CryptoCryptoComponentsCipherInfo"
+                style="@style/Widget.Silent.SimpleText.Small"
+                android:layout_width="wrap_content"
+                android:layout_alignTop="@+id/CryptoCryptoComponentsCipher"
+                android:layout_alignRight="@+id/CryptoPeerClientIdInfo"
+                android:layout_alignEnd="@+id/CryptoPeerClientIdInfo"
+                tools:text="cipher"/>
+
+        <!-- fifth line, hash info -->
+        <TextView
+                android:id="@+id/CryptoCryptoComponentsHash"
+                style="@style/Widget.Silent.SimpleText.Small"
+                android:layout_width="wrap_content"
+                android:layout_alignLeft="@+id/CryptoPeerClientId"
+                android:layout_alignStart="@+id/CryptoPeerClientId"
+                android:layout_below="@+id/CryptoCryptoComponentsCipher"
+                android:layout_marginTop="3dp"
+                android:text="@string/crypto_crypto_components_hash"/>
+
+        <TextView
+                android:id="@+id/CryptoCryptoComponentsHashInfo"
+                style="@style/Widget.Silent.SimpleText.Small"
+                android:layout_width="wrap_content"
+                android:layout_alignTop="@+id/CryptoCryptoComponentsHash"
+                android:layout_alignRight="@+id/CryptoPeerClientIdInfo"
+                android:layout_alignEnd="@+id/CryptoPeerClientIdInfo"
+                tools:text="hash"/>
+
+        <!-- sixth line, SRTP auth tag info -->
+        <TextView
+                android:id="@+id/CryptoCryptoComponentsSauth"
+                style="@style/Widget.Silent.SimpleText.Small"
+                android:layout_width="wrap_content"
+                android:layout_alignLeft="@+id/CryptoPeerClientId"
+                android:layout_alignStart="@+id/CryptoPeerClientId"
+                android:layout_below="@+id/CryptoCryptoComponentsHash"
+                android:layout_marginTop="3dp"
+                android:text="@string/crypto_crypto_components_sauth"/>
+
+        <TextView
+                android:id="@+id/CryptoCryptoComponentsSauthInfo"
+                style="@style/Widget.Silent.SimpleText.Small"
+                android:layout_width="wrap_content"
+                android:layout_alignTop="@+id/CryptoCryptoComponentsSauth"
+                android:layout_alignRight="@+id/CryptoPeerClientIdInfo"
+                android:layout_alignEnd="@+id/CryptoPeerClientIdInfo"
+                tools:text="auth tag"/>
+
+
+        <!-- Shared secrects blinken lights -->
+        <!-- Header -->
+        <TextView
+                android:id="@+id/CryptoSharedSecrets"
+                style="@style/DrawerSectionTitle"
+                android:layout_alignLeft="@+id/CryptoPeerClient"
+                android:layout_alignStart="@+id/CryptoPeerClient"
+                android:layout_alignParentTop="false"
+                android:layout_below="@+id/CryptoCryptoComponentsSauth"
+                android:layout_marginTop="20dp"
+                android:text="@string/crypto_shared_secrets"/>
+
+        <!-- RS1 text and light -->
+        <TextView
+                android:id="@+id/CryptoSharedSecretsRs1"
+                style="@style/Widget.Silent.SimpleText.Small"
+                android:layout_width="wrap_content"
+                android:layout_alignLeft="@+id/CryptoPeerClientId"
+                android:layout_alignStart="@+id/CryptoPeerClientId"
+                android:layout_below="@+id/CryptoSharedSecrets"
+                android:layout_marginTop="5dp"
+                android:text="@string/crypto_shared_secrets_rs1"/>
+
+        <ImageView
+                android:id="@+id/CryptoSharedSecretsRs1Info"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignLeft="@+id/CryptoSharedSecretsRs1"
+                android:layout_alignStart="@+id/CryptoSharedSecretsRs1"
+                android:layout_below="@+id/CryptoSharedSecretsRs1"
+                android:layout_marginTop="5dp"
+                android:layout_marginLeft="2dp"
+                android:layout_marginStart="2dp"
+                android:background="@drawable/indicator_gray"
+                tools:ignore="SmallSp"/>
+
+        <!-- RS2 text and light -->
+        <TextView
+                android:id="@+id/CryptoSharedSecretsRs2"
+                style="@style/Widget.Silent.SimpleText.Small"
+                android:layout_width="wrap_content"
+                android:layout_alignTop="@+id/CryptoSharedSecretsRs1"
+                android:layout_toRightOf="@+id/CryptoSharedSecretsRs1"
+                android:layout_toEndOf="@+id/CryptoSharedSecretsRs1"
+                android:layout_marginLeft="10dp"
+                android:layout_marginStart="10dp"
+                android:text="@string/crypto_shared_secrets_rs2"/>
+
+        <ImageView
+                android:id="@+id/CryptoSharedSecretsRs2Info"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignLeft="@+id/CryptoSharedSecretsRs2"
+                android:layout_alignStart="@+id/CryptoSharedSecretsRs2"
+                android:layout_alignTop="@+id/CryptoSharedSecretsRs1Info"
+                android:layout_below="@+id/CryptoSharedSecretsRs2"
+                android:layout_marginLeft="2dp"
+                android:layout_marginStart="2dp"
+                android:background="@drawable/indicator_gray"
+                tools:ignore="SmallSp"/>
+
+        <!-- AUX text and light -->
+        <TextView
+                android:id="@+id/CryptoSharedSecretsAux"
+                style="@style/Widget.Silent.SimpleText.Small"
+                android:layout_width="wrap_content"
+                android:layout_alignTop="@+id/CryptoSharedSecretsRs1"
+                android:layout_toRightOf="@+id/CryptoSharedSecretsRs2"
+                android:layout_toEndOf="@+id/CryptoSharedSecretsRs2"
+                android:layout_marginLeft="10dp"
+                android:layout_marginStart="10dp"
+                android:text="@string/crypto_shared_secrets_aux"/>
+
+        <ImageView
+                android:id="@+id/CryptoSharedSecretsAuxInfo"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignLeft="@+id/CryptoSharedSecretsAux"
+                android:layout_alignStart="@+id/CryptoSharedSecretsAux"
+                android:layout_alignTop="@+id/CryptoSharedSecretsRs1Info"
+                android:layout_below="@+id/CryptoSharedSecretsAux"
+                android:layout_marginLeft="2dp"
+                android:layout_marginStart="2dp"
+                android:background="@drawable/indicator_gray"/>
+
+        <!-- PBX text and light -->
+        <TextView
+                android:id="@+id/CryptoSharedSecretsPbx"
+                style="@style/Widget.Silent.SimpleText.Small"
+                android:layout_width="wrap_content"
+                android:layout_alignTop="@+id/CryptoSharedSecretsRs1"
+                android:layout_toRightOf="@+id/CryptoSharedSecretsAux"
+                android:layout_toEndOf="@+id/CryptoSharedSecretsAux"
+                android:layout_marginLeft="10dp"
+                android:layout_marginStart="10dp"
+                android:text="@string/crypto_shared_secrets_pbx"/>
+
+        <ImageView
+                android:id="@+id/CryptoSharedSecretsPbxInfo"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignLeft="@+id/CryptoSharedSecretsPbx"
+                android:layout_alignStart="@+id/CryptoSharedSecretsPbx"
+                android:layout_alignTop="@+id/CryptoSharedSecretsRs1Info"
+                android:layout_below="@+id/CryptoSharedSecretsPbx"
+                android:layout_marginLeft="2dp"
+                android:layout_marginStart="2dp"
+                android:background="@drawable/indicator_gray"/>
+    </RelativeLayout>
+</ScrollView>

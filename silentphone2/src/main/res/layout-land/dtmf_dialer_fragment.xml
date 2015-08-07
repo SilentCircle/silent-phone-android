@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+// +++LICENSE_BEGIN+++
+/*
+ * Copyright © 2014, Silent Circle
+ * All rights reserved.
+ */
+// +++LICENSE_END+++
+ -->
+
+<LinearLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+
+    <View
+            android:layout_height="1dp"
+            android:layout_marginBottom="1dp"
+            android:background="?sp_divider_color"
+            android:layout_width="match_parent"/>
+
+
+    <LinearLayout
+            android:id="@+id/top"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:paddingStart="@dimen/dialpad_horizontal_margin"
+            android:paddingEnd="@dimen/dialpad_horizontal_margin"
+            android:layoutDirection="ltr"
+            android:orientation="horizontal"
+            tools:context=".activities.InCallActivity">
+
+        <!-- Keypad section -->
+            <include
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:layout_gravity="center_vertical"
+                    layout="@layout/dialpad"/>
+
+        <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+            <EditText
+                    android:id="@+id/digits"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="@style/DialpadDestinationTextAppearance"
+                    android:gravity="center"
+                    android:scrollHorizontally="true"
+                    android:singleLine="true"
+                    android:paddingLeft="10dp"
+                    android:textColor="?sp_dial_text_color"
+                    android:textCursorDrawable="@null"
+                    android:background="?sp_dial_text_background"
+                    android:focusableInTouchMode="false"
+                    tools:text="+1 (203) 499-6427"/>
+            <View
+                    style="@style/DialpadHorizontalSeparator"
+                    android:layout_height="1dp"
+                    android:background="?sp_divider_color"/>
+            <View
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:background="@null"/>
+
+            <Button
+                    android:id="@+id/back"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/back"
+                    android:visibility="visible"/>
+        </LinearLayout>
+    </LinearLayout>
+</LinearLayout>

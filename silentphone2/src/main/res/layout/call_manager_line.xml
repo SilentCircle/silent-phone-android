@@ -1,0 +1,149 @@
+<!-- 
+// +++LICENSE_BEGIN+++
+/*
+ * Copyright © 2014, Silent Circle
+ * All rights reserved.
+ */
+// +++LICENSE_END+++
+ -->
+
+<android.support.v7.widget.CardView
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:spa="http://schemas.android.com/apk/res-auto"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:id="@+id/CallMngLine"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="4dp"
+        spa:cardBackgroundColor="@color/incall_call_banner_background_color"
+        spa:cardCornerRadius="4dp">
+
+<LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="@dimen/spacing_normal"
+        android:gravity="center_vertical"
+        android:descendantFocusability="blocksDescendants"
+        android:focusable="false"
+        tools:context=".activities.InCallActivity">
+    <!--
+        android:background="?sp_call_manager_line_background"
+    The 'blocksDescendants' enables setOnItemClickListener(), see
+    http://code.google.com/p/android/issues/detail?id=3414, comments 56 and 57
+    -->
+    <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+
+        <ImageButton
+                android:id="@+id/CallMngEndCall"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/button_rnd_small_red"
+                android:contentDescription="@string/end_call_button"
+                android:src="?sp_ic_end_call"/>
+
+        <LinearLayout
+                android:id="@+id/CallMngImage"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="@dimen/spacing_normal"
+                android:layout_marginRight="@dimen/spacing_normal"
+                android:layout_toRightOf="@id/CallMngEndCall"
+                android:layout_toEndOf="@id/CallMngEndCall"
+                android:orientation="vertical"
+                android:gravity="center_horizontal">
+
+            <com.silentcircle.silentphone2.views.CircleImageSelectable
+                    android:id="@+id/caller_image"
+                    android:layout_width="@dimen/in_call_btn_width"
+                    android:layout_height="@dimen/in_call_btn_width"
+                    android:background="@color/silent_back_end"
+                    android:src="?sp_ic_contact_picture"
+                    spa:sp_round_image_diameter="@dimen/in_call_btn_width"
+                    spa:sp_round_image_stroke_width="2dp"
+                    spa:sp_round_image_stroke_color="?sp_dial_button_primary_color"
+                    spa:sp_round_image_shadow_color="#80555555"/>
+
+            <TextView
+                    android:id="@+id/caller_text"
+                    style="@style/Widget.Silent.SimpleText.Small"
+                    android:layout_width="@dimen/in_call_btn_width"
+                    android:singleLine="true"
+                    android:ellipsize="marquee"
+                    android:scrollHorizontally="true"
+                    android:marqueeRepeatLimit ="marquee_forever"
+                    android:gravity="center"
+                    tools:text="Caller name"/>
+        </LinearLayout>
+
+        <ImageButton
+                android:id="@+id/CallMngAnswerCall"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_toRightOf="@id/CallMngImage"
+                android:layout_toEndOf="@id/CallMngImage"
+                android:layout_alignTop="@+id/CallMngEndCall"
+                android:background="@drawable/button_rnd_small_green"
+                android:contentDescription="@string/end_call_button"
+                android:src="?sp_ic_call"
+                android:visibility="invisible"
+                tools:visibility="visible"/>
+    </RelativeLayout>
+
+    <LinearLayout
+            android:id="@+id/indicators"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="@dimen/spacing_normal"
+            android:layout_marginStart="@dimen/spacing_normal"
+            android:orientation="vertical"
+            android:gravity="center_horizontal">
+
+        <TextView
+                android:id="@+id/sec_info"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@android:color/white"
+                android:visibility="gone"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                tools:visibility="visible"
+                tools:text="Not Secure"/>
+
+         <LinearLayout
+                android:id="@+id/verify_sas"
+                android:layout_width="wrap_content"
+                android:layout_height="0dp"
+                android:layout_marginTop="@dimen/spacing_normal"
+                android:orientation="vertical"
+                android:gravity="center_horizontal"
+                android:layout_weight="1">
+
+            <TextView
+                    android:id="@+id/verify_label"
+                    style="@style/Widget.Silent.Text"
+                    android:textSize="14sp"
+                    android:text="@string/verify_label"
+                    android:visibility="gone"
+                    tools:visibility="visible"
+                    tools:text="Touch and verify"/>
+<!--
+            android:shadowColor="@android:color/white"
+            android:shadowDx="0"
+            android:shadowDy="0"
+            android:shadowRadius="1"
+-->
+            <TextView
+                    android:id="@+id/sas_text"
+                    style="@style/Widget.Silent.Text"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:visibility="invisible"
+                    tools:text="SASword1 SASword2"
+                    tools:visibility="visible"/>
+
+        </LinearLayout>
+    </LinearLayout>
+</LinearLayout>
+</android.support.v7.widget.CardView>

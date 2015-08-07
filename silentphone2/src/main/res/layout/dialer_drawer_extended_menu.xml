@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+// +++LICENSE_BEGIN+++
+/*
+ * Copyright © 2014, Silent Circle
+ * All rights reserved.
+ */
+// +++LICENSE_END+++
+ -->
+
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              xmlns:tools="http://schemas.android.com/tools"
+              android:layout_width="match_parent"
+              android:layout_height="wrap_content"
+              android:layout_marginTop="@dimen/spacing_normal"
+              tools:context=".activities.DialerActivity"
+              tools:visibility="visible">
+
+    <Button
+            style="@style/Widget.Silent.TransparentButton.Medium"
+            android:id="@+id/extended_menu"
+            android:text="Extended menu"
+            android:drawableLeft="@android:drawable/ic_menu_more"
+            android:drawableStart="@android:drawable/ic_menu_more"
+            />
+
+</RelativeLayout>

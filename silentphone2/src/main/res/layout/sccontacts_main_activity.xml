@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright (C) 2006 The Android Open Source Project
+
+     Licensed under the Apache License, Version 2.0 (the "License");
+     you may not use this file except in compliance with the License.
+     You may obtain a copy of the License at
+
+          http://www.apache.org/licenses/LICENSE-2.0
+
+     Unless required by applicable law or agreed to in writing, software
+     distributed under the License is distributed on an "AS IS" BASIS,
+     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     See the License for the specific language governing permissions and
+     limitations under the License.
+-->
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+             xmlns:app="http://schemas.android.com/apk/res-auto"
+             android:layout_width="match_parent"
+             android:layout_height="match_parent"
+             android:fitsSystemWindows="true"
+             android:orientation="vertical"
+             android:animateLayoutChanges="true"
+             android:id="@+id/sc_main_frame">
+
+
+<!--        <android.support.v7.widget.Toolbar
+                android:id="@+id/main_search_toolbar"
+                android:layout_height="wrap_content"
+                android:layout_width="match_parent"
+                android:minHeight="?attr/actionBarSize"
+                android:visibility="gone"/>
+-->
+    <android.support.v7.widget.Toolbar
+            android:id="@+id/main_toolbar"
+            android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+            android:minHeight="?attr/actionBarSize"
+            app:titleTextAppearance="?sp_ab_title_style"
+            app:subtitleTextAppearance="?sp_ab_subtitle_style"/>
+
+    <com.silentcircle.contacts.widget.SlidingTabLayout
+            android:id="@+id/sliding_tabs"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+    <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+        <!-- Support ViewPager behaves a bit different from "normal" ViewPager
+         also together with support FragmentManager -->
+        <android.support.v4.view.ViewPager
+                android:id="@+id/tab_pager"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"/>
+
+        <FrameLayout
+                android:id="@+id/contacts_unavailable_view"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:visibility="gone">
+            <FrameLayout
+                    android:id="@+id/contacts_unavailable_container"
+                    android:layout_height="match_parent"
+                    android:layout_width="match_parent" />
+        </FrameLayout>
+    </FrameLayout>
+</LinearLayout>

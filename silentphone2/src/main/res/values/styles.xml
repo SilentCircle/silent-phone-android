@@ -1,0 +1,393 @@
+<!--
+// +++LICENSE_BEGIN+++
+/*
+ * Copyright © 2014, Silent Circle
+ * All rights reserved.
+ */
+// +++LICENSE_END+++
+ -->
+
+<resources
+        xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <style name="DialpadButtonStyle">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:background">@null</item>
+        <item name="android:soundEffectsEnabled">false</item>
+        <item name="android:paddingLeft">6dp</item>
+        <item name="android:paddingRight">6dp</item>
+        <item name="android:paddingTop">3dp</item>
+        <item name="android:paddingBottom">3dp</item>
+    </style>
+
+    <style name="DialpadTableStyle">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">@dimen/dialpad_vertical_margin</item>
+        <item name="android:paddingLeft">5dip</item>
+        <item name="android:paddingRight">5dip</item>
+        <item name="android:paddingBottom">10dip</item>
+        <item name="android:visibility">visible</item>
+        <item name="android:stretchColumns">0,1,2</item>
+    </style>
+
+    <style name="DialButtonRelative">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+    </style>
+
+    <style name="DialKeyNumberStyle">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textColor">?sp_dial_button_primary_color</item>
+        <item name="android:textSize">@dimen/dialpad_key_numbers_size</item>
+        <item name="android:layout_centerHorizontal">true</item>
+        <item name="android:gravity">center_horizontal</item>
+    </style>
+    <!-- <item name="android:fontFamily">sans-serif-light</item> -->
+
+    <style name="DialKeyLetterStyle">
+        <item name="android:layout_width">@dimen/dialpad_key_letters_width</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textColor">?sp_dial_button_secondary_color</item>
+        <item name="android:textSize">@dimen/dialpad_key_letters_size</item>
+        <item name="android:gravity">center_horizontal</item>
+        <item name="android:layout_marginTop">@dimen/dial_key_letter_margin</item>
+    </style>
+
+    <style name="DialKeyRoundImageButton">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:clickable">true</item>
+        <item name="android:layout_centerInParent">true</item>
+        <item name="android:background">?sp_dial_button</item>
+    </style>
+
+    <!-- To change table layout (row distribution on screen) change layout_height to
+         wrap_content and remove (comment) the layout_weight, these should got together
+         with changes in dialpad.xml, stretchColumns in TableLayout -->
+    <style name="RowStyle">
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_weight">1</item>
+    </style>
+    <!--         <item name="android:background">?android:attr/selectableItemBackground</item>-->
+
+    <style name="DialpadDestinationTextAppearance">
+        <item name="android:maxLines">1</item>
+        <item name="android:scrollHorizontally">true</item>
+        <item name="android:textSize">@dimen/dialpad_digits_text_size</item>
+        <item name="android:freezesText">true</item>
+        <item name="android:focusableInTouchMode">true</item>
+        <item name="android:editable">true</item>
+        <item name="android:cursorVisible">false</item>
+    </style>
+
+    <style name="DialpadHorizontalSeparator">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">@dimen/dialpad_vertical_margin</item>
+        <item name="android:background">@null</item>
+    </style>
+
+    <style name="DrawerSectionTitle">
+        <item name="android:background">?sp_drawer_header_background</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:padding">@dimen/spacing_normal</item>
+        <item name="android:drawablePadding">@dimen/spacing_normal</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">?sp_drawer_header_text_color</item>
+    </style>
+
+    <style name="CallMngrSectionTitle">
+        <item name="android:background">?sp_drawer_header_background</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:padding">@dimen/spacing_normal</item>
+        <item name="android:minHeight">@dimen/action_bar_height</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">?sp_drawer_header_text_color</item>
+    </style>
+
+    <style name="DrawerScrollStyle">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">match_parent</item>
+        <item name="android:background">?sp_drawer_background</item>
+        <item name="android:scrollbarStyle">insideInset</item>
+        <!--
+        <item name="android:scrollbarStyle">insideInset</item>
+        <item name="android:scrollbarStyle">outsideInset</item>
+        <item name="android:scrollbarStyle">insideOverlay</item>
+        <item name="android:scrollbarStyle">outsideOverlay</item>
+        -->
+    </style>
+
+    <style name="Widget"/>
+
+    <style name="Widget.Silent">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textColor">?android:textColorPrimary</item>
+        <item name="android:textColorHint">?android:textColorSecondary</item>
+    </style>
+
+    <style name="Widget.Silent.Text">
+    </style>
+
+    <style name="Widget.Silent.DrawerCheckBox">
+    </style>
+
+    <style name="Widget.Silent.DrawerSimpleText">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_margin">@dimen/spacing_normal</item>
+    </style>
+
+    <style name="Widget.Silent.DrawerSimpleTextSmall">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginLeft">@dimen/spacing_normal</item>
+        <item name="android:layout_marginRight">@dimen/spacing_normal</item>
+        <item name="android:textAppearance">?android:attr/textAppearanceSmall</item>
+    </style>
+
+    <style name="Widget.Silent.BtnLabel">
+        <item name="android:gravity">center_horizontal</item>
+    </style>
+
+    <style name="Widget.Silent.SimpleText">
+        <item name="android:layout_width">match_parent</item>
+    </style>
+
+    <style name="Widget.Silent.SimpleText.Small">
+        <item name="android:textAppearance">?android:attr/textAppearanceSmall</item>
+    </style>
+
+    <style name="Widget.Silent.SimpleText.Medium">
+        <item name="android:textAppearance">?android:attr/textAppearanceMedium</item>
+    </style>
+
+    <style name="Widget.Silent.SimpleText.Large">
+        <item name="android:textAppearance">?android:attr/textAppearanceLarge</item>
+    </style>
+
+    <style name="Widget.Silent.InCallButtons">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:layout_height">@dimen/button_height</item>
+        <item name="android:gravity">center</item>
+    </style>
+
+    <style name="Widget.Silent.InCallButtonsLand">
+        <item name="android:layout_height">@dimen/button_height</item>
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:gravity">center</item>
+        <item name="android:textColor">?sp_call_btn_text_color</item>
+    </style>
+
+    <style name="Widget.Silent.TransparentButton">
+        <item name="android:layout_width">fill_parent</item>
+        <item name="android:background">@null</item>
+        <item name="android:gravity">start|center_vertical</item>
+    </style>
+
+    <style name="Widget.Silent.TransparentButton.Medium">
+        <item name="android:textAppearance">?android:attr/textAppearanceMedium</item>
+    </style>
+
+    <style name="Widget.Silent.TransparentButton.Large">
+        <item name="android:textAppearance">?android:attr/textAppearanceLarge</item>
+    </style>
+
+    <style name="VideoButtons"
+            parent="android:Widget.Button">
+        <item name="android:textAppearance">?android:attr/textAppearanceMedium</item>
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">0dp</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:gravity">center</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+
+    <!-- ************ Styles for SCA part ************************* -->
+
+    <!-- This is similar to ?android:attr/listSeparatorTextView but uses different
+         background and text color. See also android:style/Widget.Holo.TextView.ListSeparator
+         (which is private, so we cannot specify it as a parent style).  -->
+    <style name="ContactListSeparatorTextViewStyle">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <!-- See comments for @dimen/list_section_divider_min_height -->
+        <item name="android:minHeight">@dimen/list_section_divider_min_height</item>
+        <item name="android:background">@drawable/list_section_divider_holo_custom</item>
+        <item name="android:textAppearance">?android:attr/textAppearanceSmall</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">@color/people_app_theme_color</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:paddingLeft">8dip</item>
+        <item name="android:ellipsize">end</item>
+        <item name="android:singleLine">true</item>
+        <!--         <item name="android:textAllCaps">true</item> -->
+    </style>
+
+    <style name="ListViewStyle" parent="@style/SilentPhoneTheme">
+        <item name="android:overScrollMode">always</item>
+    </style>
+
+    <!-- android:attr/actionBarSize: API >= 11 -->
+    <style name="FragmentActionBarPadding">
+        <item name="android:paddingBottom">?android:attr/actionBarSize</item>
+    </style>
+
+    <style name="DirectoryHeader" parent="@style/SilentPhoneTheme">
+        <item name="android:background">@android:color/transparent</item>
+    </style>
+
+    <style name="PeopleNavigationDropDownTextAppearance">
+        <item name="android:textColor">?android:attr/textColorPrimary</item>
+        <item name="android:textSize">18sp</item>
+    </style>
+
+    <style name="PeopleNavigationDropDownHeaderTextAppearance">
+        <item name="android:textColor">#cdffffff</item>
+        <item name="android:textSize">18sp</item>
+    </style>
+
+    <style name="ContactDetailItemType">
+        <item name="android:textAppearance">?android:attr/textAppearanceSmall</item>
+        <item name="android:textColor">?android:attr/textColorSecondary</item>
+        <item name="android:singleLine">true</item>
+        <item name="android:ellipsize">marquee</item>
+        <item name="android:layout_gravity">center_vertical</item>
+    </style>
+
+    <style name="EditorActivityTheme" parent="@style/SilentPhoneTheme">
+        <!--
+    	<item name="android:actionBarStyle">@style/ContactsActionBarStyle</item>
+        <item name="android:actionBarItemBackground">@drawable/action_bar_item_background</item>
+        <item name="android:actionBarWidgetTheme">@style/ContactsActionBarTheme</item>
+        -->
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:listViewStyle">@style/ListViewStyle</item>
+    </style>
+
+    <style name="ContactPickerTheme" parent="@style/SilentPhoneTheme" >
+    </style>
+
+    <style name="ContactPickerLayout" parent="ContactPickerTheme">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">match_parent</item>
+    </style>
+
+    <style name="ConfirmAddDetailViewStyle">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+    </style>
+
+    <style name="ConfirmAddDetailHeaderViewStyle">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">150dip</item>
+    </style>
+
+    <style name="Theme.QuickContact" parent="@style/SilentPhoneTheme">
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:colorBackgroundCacheHint">@null</item>
+        <item name="android:windowFrame">@null</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:windowAnimationStyle">@null</item>
+        <item name="android:windowIsFloating">false</item>
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:listViewStyle">@style/ListViewStyle</item>
+    </style>
+
+    <style name="QuickContactListItemStyle">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:minHeight">?android:attr/listPreferredItemHeight</item>
+        <item name="android:orientation">horizontal</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:background">?android:attr/selectableItemBackground</item>
+    </style>
+
+    <style name="QuickContactListItemTextWrapperStyle">
+        <item name="android:layout_width">0dip</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:paddingLeft">16dip</item>
+        <item name="android:paddingRight">16dip</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:orientation">vertical</item>
+    </style>
+
+    <style name="QuickContactListBottomStyle">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">2dip</item>
+        <item name="android:background">@color/quickcontact_tab_indicator</item>
+    </style>
+
+
+    <!-- Buttons in the main "button row" of the in-call onscreen touch UI. -->
+    <style name="InCallButton">
+        <item name="android:layout_width">@dimen/in_call_button_dimension</item>
+        <item name="android:layout_height">@dimen/in_call_button_dimension</item>
+        <item name="android:layout_marginBottom">@dimen/call_button_margin_vertical</item>
+        <item name="android:layout_marginLeft">@dimen/call_button_margin_horizontal</item>
+        <item name="android:layout_marginRight">@dimen/call_button_margin_horizontal</item>
+        <item name="android:background">?android:attr/selectableItemBackground</item>
+    </style>
+
+    <!-- "Compound button" variation of InCallButton.
+         These buttons have the concept of two states: checked and unchecked.
+         (This style is just like "InCallButton" except that we also
+         clear out android:textOn and android:textOff, to avoid the default
+         text label behavior of the ToggleButton class.) -->
+    <style name="InCallCompoundButton" parent="InCallButton">
+        <item name="android:textOn">@null</item>
+        <item name="android:textOff">@null</item>
+    </style>
+
+
+    <style name="DismissButtonStyle">
+        <item name="android:paddingLeft">@dimen/dismiss_button_padding_start</item>
+        <item name="android:paddingRight">@dimen/dismiss_button_padding_end</item>
+    </style>
+
+    <style name="SectionHeaderStyle" parent="@android:style/TextAppearance.Large">
+        <item name="android:textSize">20sp</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:textColor">@color/section_header_text_color</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+    </style>
+
+    <style name="TextAppearanceSmall" parent="@android:style/TextAppearance.Small">
+        <item name="android:textSize">14sp</item>
+        <item name="android:textColor">@android:color/secondary_text_dark</item>
+    </style>
+
+    <style name="DirectoryHeaderStyle" parent="@android:style/TextAppearance.Small">
+        <item name="android:textSize">14sp</item>
+        <item name="android:textColor">?android:attr/textColorSecondary</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+    </style>
+
+    <style name="ExpandingEntryCardStyle">
+        <item name="android:elevation">@dimen/expanding_entry_card_elevation</item>
+        <item name="android:background">@color/expanding_entry_card_background_color</item>
+        <item name="android:layout_marginBottom">@dimen/expanding_entry_card_marginBottom</item>
+        <item name="android:layout_marginEnd">@dimen/expanding_entry_card_marginStartEnd</item>
+        <item name="android:layout_marginStart">@dimen/expanding_entry_card_marginStartEnd</item>
+        <item name="android:layout_marginRight">@dimen/expanding_entry_card_marginStartEnd</item>
+        <item name="android:layout_marginLeft">@dimen/expanding_entry_card_marginStartEnd</item>
+        <item name="android:orientation">vertical</item>
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+    </style>
+
+
+</resources>

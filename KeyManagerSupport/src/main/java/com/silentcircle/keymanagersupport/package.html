@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SilentCircle Key Manager for Android (SKA)</title>
+</head>
+<body>
+<h2>The rationale for the overall design of SilentCircle Key Manager for Android (SKA)</h2>
+
+A SilentCircle application must be able to make sure that it really uses SKA and not another provider with the
+same name/authority. Content provides can define permissions to restrict access to it, however a content resolver
+cannot check which content provider it really uses. Thus we have to rules:
+<ol>
+  <li>A content provider can define, "Only resolvers with permission X can access may data"
+  </li>
+  <li>A content resolver <b>CANNOT</b> define, "I only want data from providers that require permission X."
+  </li>
+</ol>
+Therefore, a rogue application could claim to be the authority for <code>com.silentcircle.keys</code> and feed malicious
+data (or worse, proxy) being sent to/from content resolvers that access it.
+<p/>
+To circumvent this problem we need to enhance each SilentCircle application (only those that actually require
+inter-working with SKA) to have an own small provider (Key Manager support provider) which is also restricted with
+permission X. This permission is further restricted to use the same signing certificate property. With this
+structure we can implement authorized mutual access.
+<p/>
+The main idea behind this is to have a set of communicating providers: one SKA key manager provider communicates with
+<em>n</em> SilentCircle application key manager support providers. All provider use the same signing certificate
+permissions to restrict this communication to a set of well known applications.
+
+<h2>The call flows between the providers</h2>
+The implementation of the CRUD functions requires several call flows. In addition we have a registration function
+that provides identification of SKA to the applications.
+
+Thus we have several call flows: registration, insert (create), query (read), update, and delete.
+
+<h3>Registration flow</h3>
+<ol>
+  <li>SPA resolves the SKA provider (standard Android mechanism) and registers with SKA, using an interface to the SKA
+      provider. According to point 1) above SKA knows that this register request comes from an application with correct
+      permissions.</li>
+  <li>SKA gets the name of requesting application (using some Android mechanisms, Binder.getCallingUid(), package
+      manager, etc). However, because these are SilentCircle applications only, we also should assume they are well
+      behaving and supply their names correctly. With this name SKA can determine the application's Key Manager support
+      provider. SKA generates a token and sends it to the application's provider. Again, according to point 1) above,
+      the application's Key Manager support provider knows that this token is indeed from SKA and stores it. This
+      completes the registration and probably runs only once for each application.</li>
+</ol>
+
+<h3>Query flow</h3>
+<ol>
+  <li>SPA resolve the SKA provider and sends a query. The query does not reveal sensitive data to a provider because it
+      contains the name of the queried key entry only. Thus a rogue provider could not learn much about it.</li>
+  <li>SKA checks the query, sets up the result and includes the token that it sent to the application during
+      registration into the result. SKA sends this data to the application.
+  <li>The application gets the result and compares the token in the result data with the token it got during
+      registration. If the token value matches the data was sent by SKA.</li>
+</ol>
+
+<h3>Insert key data flow</h3>
+The insert flow is a bit more complex because a simple insert request would contain sensitive data. Thus we must make
+sure only our SKA gets this data.
+
+<ol>
+  <li>the application stores the sensitive key data data first with its Key Manager support provider and gets back a
+      transaction id that identifies this data.</li>
+  <li>The application resolves the SKA provider and sends it an insert request that contains the transaction id.</li>
+  <li>SKA checks the insert request, resolves the application's Key Manager support provider and queries it with this
+      transaction number. Because of point 1) above the application's Key Manager support provider knows that it is
+      indeed SKA that asks for the data and returns it.</li>
+  <li>SKA stores the data and returns success to the application</li>
+</ol>
+
+<h3>The update flow</h3>
+The update flow is similar to the insert flow.
+
+<h3>The delete flow</h3>
+The delete flow is similar to the query flow.
+
+<h2>Application support</h2>
+To minimize the effort to integrate these call flows into a SilentCircle application this package contains two classes
+and an interface:
+<ol>
+    <li>The SupportProvider class. This is a <code>final</code> class and an application should not modify it.</li>
+    <li>The KeyManagerSupport class. This class provides a set of functions to support the application to register with
+        the KeyManager, and create, query, update, delete key entries.</li>
+    <li>A listener interface as part of the KeyManagerSupport class. An application may register as a listener to
+        receive some notifications. The most important notification is the <em>lock</em> notification. The
+        Key Manager sends this notification if the user locks access to the key entries. In this case an application
+        cannot access key entries any more. Also SilentCircle applications may also decide to close sensitive files,
+        flush or delete critical data, etc. Which actions to take is part of the application logic.</li>
+</ol>
+
+The classes are available as a small <code>JAR</code> file. The package name for these classes is
+<code>com.silentcircle.keymngrsupport</code>
+
+<h2>Application Integration</h2>
+<h3>Changes to <code>AndroidManifest.xml</code></h3>
+An application that uses SKA needs to add some statements and declarations to its <code>AndroidManifest</code> file.
+In a first step add the necessary permissions:
+<pre>
+    &lt;!-- SilentCircle permissions to use the key manager features -->
+    &lt;permission android:name="com.silentcircle.keymngr.permission.READ_SC_KEY" android:protectionLevel="signature"
+                android:label="@string/permission_read_km"/>
+    &lt;permission android:name="com.silentcircle.keymngr.permission.WRITE_SC_KEY" android:protectionLevel="signature"
+                android:label="@string/permission_write_km"/>
+    &lt;uses-permission android:name="com.silentcircle.keymngr.permission.READ_SC_KEY"/>
+    &lt;uses-permission android:name="com.silentcircle.keymngr.permission.WRITE_SC_KEY"/>
+</pre>
+
+In a next step add the support provider. To construct the authority name of the support key manager use the following
+rule:
+<pre>
+    [package-name].keymngrsupport
+</pre>
+where <code>package-name</code> must be the same string as the manifest's <code>package</code> statement. The
+the support provider must use the correct permission. The following code snippet shows how SilentPhone
+defines its key manager support provider:
+<pre>
+     &lt;!-- The authority for this provider is: [package-name].keymngrsupport and it must use the permission -->
+     &lt;provider
+        android:name="com.silentcircle.keymngrsupport.SupportProvider"
+        android:authorities="com.silentcircle.silentphone.keymngrsupport"
+        android:permission="com.silentcircle.keymngr.permission.WRITE_SC_KEY"
+        android:initOrder="2"
+        android:enabled="true"
+        android:exported="true"/>
+</pre>
+
+<h3>Using the key manager in an application</h3>
+An application should check if the key manager is available and register with it at a very early stage during
+application startup. If the key manager is ready then the application may access shared and private key data. The
+following code example shows a possible flow. The application uses <code>KeyManagerSupport</code> functions to perform
+the checks and registration.
+<pre>
+    ...
+    &#x40;Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        checkAndSetKeyManager();
+    }
+
+    private void checkAndSetKeyManager() {
+        if (!KeyManagerSupport.hasKeyManager(getPackageManager())) {
+            Toast.makeText(this, "KeyManager not installed on this system.", Toast.LENGTH_LONG).show();
+        }
+        else if (!KeyManagerSupport.signaturesMatch(getPackageManager(), getPackageName())) {
+            Toast.makeText(this, "KeyManager signature does not match.", Toast.LENGTH_LONG).show();
+        }
+        else {
+            hasKeyManager = true;
+            long token = KeyManagerSupport.registerWithKeyManager(getContentResolver(), getPackageName(), "SilentPhone");
+            if (token == 0) {
+                Toast.makeText(this, "Cannot register with KeyManager.", Toast.LENGTH_LONG).show();
+                hasKeyManager = false;
+            }
+        }
+        // the onActivityResult calls keyManagerChecked if KM is ready to use. Otherwise we proceed
+        // without key manager
+        if (hasKeyManager) {
+            startActivityForResult(KeyManagerSupport.getKeyManagerReadyIntent(), KEY_MANAGER_READY);
+        }
+        else {
+            keyManagerChecked();    // run without key manager - functions shall check 'hasKeyManager'
+        }
+    }
+
+    &#x40;Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+
+        if (requestCode == KEY_MANAGER_READY) {
+            if (resultCode != RESULT_OK) {      // Currently this never happens
+                Toast.makeText(this, "KeyManager READY request failed - exit.", Toast.LENGTH_LONG).show();
+                exitApplication();
+            }
+            else {
+                Toast.makeText(this, "KeyManager READY request OK.", Toast.LENGTH_LONG).show();
+                keyManagerChecked();
+            }
+        }
+    }
+
+    // This is the second half of onCreate after check of key manager availability etc.
+    private void keyManagerChecked() {
+        if (!hasKeyManager) {
+            ... do without key manager ...
+        }
+        else {
+            ... do with key manager ...
+        }
+    }
+</pre>
+
+The above code shows that the application starts the key managers activity to check if the key manager is ready,
+i.e. is <em>unlocked</em>. If the key manager is unlocked then the key manager returns immediately without any
+user interaction. If the key manager is locked it starts its UI and asks the user for the password to unlock. Once
+the unlock was successful the key manager returns with <code>RESULT_OK</code>.
+<p/>
+Currently the user cannot skip password entry. Thus if the key manager is available and the application asks it to
+become <code>READY</code> the user cannot abort this action. An application may set-up some timeout mechanism to
+proceed after some time in case a user does not enter a password and thus the key manager cannot unlock the key store.
+<p/>
+<b>TBD:</b> need some agreement if this behaviour is OK and/or which actions to take if the key manager is available
+but never gets <code>unlocked</code>. Should we assume a non-authorized usage in this case?
+
+<h3>Using key data access functions</h3>
+
+The key manager stores and returns <code>byte[]</code> only. To store and later retrieve character data, for example
+passwords or other strings, applications could use transform functions.
+
+To store character data an application may use the following sequence:
+<pre>
+    String passwordTest = "testäßüzrt";
+    ...
+    byte[] keyData = passwordTest.getBytes("UTF-8");
+    KeyManagerSupport.storePrivateKeyData(resolver, keyData, "myKeyTag");
+</pre>
+
+To read and convert back to character data:
+<pre>
+    byte[] data = KeyManagerSupport.getPrivateKeyData(resolver, "myKeyTag");
+    ...
+    String passwordTest = new String(data, "UTF-8");
+</pre>
+Some hints regarding handling of password data. In general it's not a good idea to use Java <code>String</code>
+to process password data. Strings are immutable and applications cannot clear the data. Please check the classes
+<code>CharBuffer, ByteBuffer</code> and <code>Charset</code>. Together with <code>byte[]</code> and
+<code>char[]</code> they provide mutable buffers. After an applications is done with password handling it should
+clear the buffers as much as possible.
+
+
+<h2>Shared data - currently used tag names</h2>
+
+SilentCircle applications use the key manager to store and exchange some information to implement synchronized
+provisioning and unique device identification. Currently (proposal) we have defined two shared data tag names:
+
+<pre>
+"device_authorization" - formerly know as 'API key', authorizes a device to use SilentCircle applications
+"device_unique_id"     - a unique device id
+</pre>
+
+SilentCircle applications should check for these two names and use them if they are available. If they are not
+available then the application should perform the necessary steps to set this data. In a first step generate a
+unique device id and store it. Then perform the registration and provisioning steps. If the provisioning was
+successful then the application got the authorization key (aka 'API key') and should store it.
+<p/>
+Other application should use this data to register and provision themselves without any user interaction.
+</body>
+</html>

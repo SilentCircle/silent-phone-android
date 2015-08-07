@@ -1,0 +1,304 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+// +++LICENSE_BEGIN+++
+/*
+ * Copyright © 2014, Silent Circle
+ * All rights reserved.
+ */
+// +++LICENSE_END+++
+ -->
+
+<resources>
+    <color name="green">#7700ff00</color>
+
+    <color name="solid_red">#f00</color>
+    <color name="solid_gray_light">#cccccc</color>
+
+    <!-- colors used for the security indicators - adopted to BP palette -->
+    <color name="indicator_amber">#ffffd21e</color>
+    <color name="indicator_gray">#ff787878</color>
+    <color name="indicator_green">#ff00e18c</color>
+    <color name="indicator_red">#ffff0000</color>
+
+    <color name="white_translucent">#80ffffff</color>
+    <color name="black_translucent">#80111111</color>
+
+    <!-- Colors for standard design, which is a "light"design mostly -->
+
+    <!-- Main background, an orange gradient -->
+    <color name="silent_back_start">#ffff7f00</color>
+    <color name="silent_back_end">#ffffdec3</color>
+
+    <!-- Basic colors for light designs
+     -->
+    <color name="button_stroke_color_dark_gray">#99333333</color>
+    <!-- Primary color of dialpad text, including the call button -->
+    <color name="dialpad_primary_text_color_light">#ff333333</color>
+    <!-- Secondary color of dialpad text (used for the letters corresponding to each digit -->
+    <color name="dialpad_secondary_text_color_light">#ff444444</color>
+
+    <!-- Basic colors for dark designs
+     -->
+    <color name="button_stroke_color_white">#ccffffff</color>
+    <color name="dialpad_primary_text_color_dark">#ccffffff</color>
+    <color name="dialpad_secondary_text_color_dark">#aaffffff</color>
+
+
+    <!-- Colors for Dusk theme -->
+    <color name="dusk_background">#ff282b35</color>
+    <color name="dusk_light_gray">#e5aaaaaa</color>
+    <color name="dusk_dark_gray">#e53f3f3f</color>
+    <color name="dusk_orange">#ffff8000</color>
+
+    <!-- Colors for Black theme - adopted from BP color palette -->
+    <color name="black_background">#ff212121</color>  <!-- BP black -->
+    <color name="black_light_gray">#ff787878</color>  <!-- BP light grey -->
+    <color name="black_dark_gray">#ff545454</color>   <!-- BP Charcoal -->
+    <color name="black_yellow">#ffffd21e</color>      <!-- BP Yellow -->
+    <color name="black_green">#ff00e18c</color>       <!-- BP Green (Pantone 3385) -->
+    <color name="black_green_dark">#ff00be8c</color>  <!-- BP Green (Pantone 339) -->
+    <color name="black_blue">#ff00a6dc</color>        <!-- BP Blue -->
+
+    <color name="black_background_transparent">#80212121</color>  <!-- BP black -->
+    <color name="black_light_gray_transparent">#1b787878</color>  <!-- BP light grey -->
+    <color name="black_dark_gray_transparent">#1b545454</color>   <!-- BP Charcoal -->
+
+    <!-- Colors for Q design -->
+    <color name="q_white">#fffdfc</color>
+    <color name="q_black">#272727</color>
+    <color name="q_red">#cc0000</color>
+    <color name="q_orange">#ff9900</color>
+    <color name="q_gray">#c8c8c8</color>
+
+
+    <!-- ************* Colors for SCA part ******************* -->
+
+    <!-- Color of the theme of the People app -->
+    <color name="people_app_theme_color">#33B5E5</color>
+
+    <!-- Color of the text describing an unconsumed missed call. -->
+    <color name="call_log_missed_call_highlight_color">#FF0000</color>
+
+    <!-- Colors in the contact browser list -->
+    <color name="contact_count_text_color">#AAAAAA</color>
+
+    <color name="primary_text_color">@android:color/black</color>
+    <color name="secondary_text_color">#888888</color>
+
+    <color name="background_social_updates">#ffeeeeee</color>
+
+    <!-- Color of image view placeholder. -->
+    <color name="image_placeholder">#DDDDDD</color>
+
+    <!--  Color of the vertical stripe that goes on the left of a block quote inside a stream item -->
+    <color name="stream_item_stripe_color">#CCCCCC</color>
+
+    <!-- Color of the text in the updates tab in the tab carousel on the contact detail page -->
+    <color name="detail_update_tab_text_color">#777777</color>
+
+    <!-- Color of the text of the tab carousel in the contact details  -->
+    <color name="detail_tab_carousel_tab_label_color">#EEEEEE</color>
+
+    <!-- Color of the text for buttons in the action bar  -->
+    <color name="action_bar_button_text_color">#FFFFFF</color>
+
+    <drawable name="blue">#770000ff</drawable>
+
+    <!-- Transparent drawable -->
+    <drawable name="transparent_draw">#00000000</drawable>
+
+    <color name="textColorIconOverlay">#fff</color>
+    <color name="textColorIconOverlayShadow">#000</color>
+
+    <color name="shortcut_overlay_text_background">#7f000000</color>
+
+    <!--  Color of the semi-transparent shadow box on contact tiles -->
+    <color name="contact_tile_shadow_box_color">#7F000000</color>
+
+    <!--  Color of the status message for starred contacts in the People app -->
+    <color name="people_contact_tile_status_color">#CCCCCC</color>
+
+    <!-- The same value as silent_black in SilentPhone -->
+    <color name="quickcontact_list_background">#ff111111</color>
+    <color name="quickcontact_tab_indicator">#ff33b5e6</color>
+
+    <!-- Color of the background of the contact detail and editor pages
+     Adjust this to the main theme background: attributable?-->
+    <color name="background_primary">#ff282b35</color>
+    <color name="contact_all_list_background_color">@color/black_dark_gray</color>
+
+
+    <!-- From Android Phone Common -->
+    <!-- Colors for the dialpad -->
+    <color name="dialer_theme_color">#0288d1</color>
+    <color name="dialer_theme_color_dark">@color/black_dark_gray</color>
+    <color name="background_dialpad">#fcfcfc</color>
+    <color name="background_dialpad_pressed">#ececec</color>
+    <color name="dialpad_primary_text_color">@color/dialer_theme_color</color>
+    <color name="dialpad_secondary_text_color">#737373</color>
+    <color name="dialpad_digits_text_color">#333</color>
+    <color name="dialpad_separator_line_color">#dadada</color>
+    <color name="dialpad_icon_tint">#b3b3b3</color>
+    <color name="dialpad_voicemail_tint">#919191</color>
+    <!-- until here -->
+    
+    <color name="incall_call_banner_subtext_color">#ccffffff</color>
+    <color name="incall_call_banner_text_color">#ffffff</color>
+    <color name="incall_accent_color">#ffffff</color>
+    <color name="incall_background_color">@color/dialer_theme_color_dark</color>
+    <color name="incall_call_banner_background_color">@color/incall_background_color</color>
+    <color name="button_background_color">@color/incall_background_color</color>
+
+    <!-- 70% opacity, black. -->
+    <color name="glowpad_background_color">#b3000000</color>
+    <!-- 15% opacity, white. -->
+    <color name="glowpad_outer_ring_color">#26ffffff</color>
+
+    <color name="glowpad_incoming_widget_tint">#a3a3a3</color>
+    <color name="glowpad_incoming_widget_background_tint">#ffffff</color>
+    <color name="floating_action_button_touch_tint">#80ffffff</color>
+
+    <color name="actionbar_background_color">#0fc6dc</color>
+
+    <color name="recent_call_log_item_phone_icon_tint">#000000</color>
+    <!-- Color of actions in expanded call log entries.  This text color represents actions such
+         as call back, play voicemail, etc. -->
+    <color name="call_log_action_text">@color/dialer_theme_color</color>
+    <color name="call_log_extras_text_color">#0277bd</color>
+    <!-- Color of the 1dp divider that separates favorites -->
+    <color name="favorite_contacts_separator_color">#d0d0d0</color>
+
+    <!-- Color of ripples used by Theme.Material. Taken from res/values/colors_material.xml -->
+    <color name="ripple_material_dark">#20ffffff</color>
+
+    <!-- Background colors for LetterTileDrawables. This set of colors is a subset of
+    https://spec.googleplex.com/quantumpalette#extended which passes Google Accessibility
+    Requirements for the color in question on white with >= 3.0 contrast. We used
+    http://leaverou.github.io/contrast-ratio/#white-on-%23db4437 to double-check the contrast.
+
+    These colors are also used by MaterialColorMapUtils to generate primary activity colors.
+-->
+    <array name="letter_tile_colors">
+        <item>#DB4437</item>
+        <item>#E91E63</item>
+        <item>#9C27B0</item>
+        <item>#673AB7</item>
+        <item>#3F51B5</item>
+        <item>#4285F4</item>
+        <item>#039BE5</item>
+        <item>#0097A7</item>
+        <item>#009688</item>
+        <item>#0F9D58</item>
+        <item>#689F38</item>
+        <item>#EF6C00</item>
+        <item>#FF5722</item>
+        <item>#757575</item>
+    </array>
+
+    <!-- Darker versions of letter_tile_colors, two shades darker. These colors are used
+        for settings secondary activity colors. -->
+    <array name="letter_tile_colors_dark">
+        <item>#C53929</item>
+        <item>#C2185B</item>
+        <item>#7B1FA2</item>
+        <item>#512DA8</item>
+        <item>#303F9F</item>
+        <item>#3367D6</item>
+        <item>#0277BD</item>
+        <item>#006064</item>
+        <item>#00796B</item>
+        <item>#0B8043</item>
+        <item>#33691E</item>
+        <item>#E65100</item>
+        <item>#E64A19</item>
+        <item>#424242</item>
+    </array>
+
+    <!-- The default color used for tinting photos when no color can be extracted via Palette,
+        this is Blue Grey 500 -->
+    <color name="quickcontact_default_photo_tint_color">#607D8B</color>
+    <!-- The default secondary color when no color can be extracted via Palette,
+            this is Blue Grey 700 -->
+    <color name="quickcontact_default_photo_tint_color_dark">#455A64</color>
+
+    <color name="letter_tile_default_color">#cccccc</color>
+
+    <color name="letter_tile_font_color">#ffffff</color>
+
+    <!-- White background for dialer -->
+    <color name="background_dialer_white">#ffffff</color>
+    <!-- Background color of new dialer activity -->
+    <color name="background_dialer_light">#fafafa</color>
+    <!-- Background color for search results and call details -->
+    <color name="background_dialer_results">@color/black_dark_gray</color>
+    <!-- Background color of dialer list items (contacts, call log entries) -->
+    <color name="background_dialer_list_items">@color/black_dark_gray</color>
+    <color name="background_dialer_details_list_items">@color/black_light_gray</color>
+
+    <color name="call_log_expanded_background_color">@color/black_light_gray</color>
+
+    <color name="empty_list_text_color">#b2b2b2</color>
+
+    <color name="remove_text_color">#ffffff</color>
+
+    <!-- Text color of the search box text as entered by user  -->
+    <color name="searchbox_text_color">#000000</color>
+    <!-- Background color of the search box -->
+    <color name="searchbox_background_color">#ffffff</color>
+
+    <color name="searchbox_hint_text_color">#737373</color>
+    <color name="searchbox_icon_tint">@color/searchbox_hint_text_color</color>
+
+    <color name="search_shortcut_background_color">#b6b6b6</color>
+    <color name="search_shortcut_icon_color">#f8f8f8</color>
+
+    <!-- Color of the contact name in favorite tiles -->
+    <color name="contact_tile_name_color">#ffffff</color>
+
+    <!-- Undo dialogue color -->
+    <color name="undo_dialogue_text_color">#4d4d4d</color>
+
+    <!-- Text color for the "Remove" text when a contact is dragged on top of the remove view -->
+    <color name="remove_highlighted_text_color">#FF3F3B</color>
+
+    <color name="contact_list_name_text_color">@android:color/primary_text_dark</color>
+
+    <!-- Text color for section header. -->
+    <color name="section_header_text_color">@android:color/primary_text_dark</color>
+
+    <!-- Color for icons in the actionbar -->
+    <color name="actionbar_icon_color">#ffffff</color>
+
+    <color name="quickcontact_name_detail_background">#66000000</color>
+    <color name="quickcontact_entry_sub_header_text_color">#737373</color>
+    <color name="quickcontact_entry_header_text_color">#202020</color>
+
+    <!-- Color of the separator between entries in an ExpandingEntryCardView -->
+    <color name="expanding_entry_card_item_separator_color">#e4e4e4</color>
+
+    <!-- Color of the text on an ExpandingEntryCard button -->
+    <color name="expanding_entry_card_button_text_color">@android:color/black</color>
+
+    <!-- Background color for an ExpandingEntryCard -->
+    <color name="expanding_entry_card_background_color">#ffffff</color>
+
+    <!-- Color of the margin for cards -->
+    <color name="card_margin_color">#f4f4f4</color>
+
+    <color name="dialer_green_highlight_color">#00c853</color>
+
+    <!-- Authenticator-specific colors (new "next-gen" style) -->
+    <color name="auth_active_headline_text_grey">#f6f3eb</color>
+    <color name="auth_active_body_text_grey">#bdbdbd</color>
+    <color name="auth_inactive_headline_text_grey">#bdbdbd</color>
+    <color name="auth_inactive_body_text_grey">#727377</color>
+    <color name="auth_background_grey">#36373b</color>
+    <!-- pressed and default colors for clickable textviews, buttons -->
+    <color name="auth_textview_default">#f5f3ee</color>
+    <color name="auth_textview_pressed">#727377</color>
+    <color name="auth_login_default">#e73a27</color>
+    <color name="auth_login_pressed">#727377</color>
+    <color name="auth_account_default">#454649</color>
+    <color name="auth_account_pressed">#727377</color>
+
+</resources>

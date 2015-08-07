@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Copyright (C) 2014 The Android Open Source Project
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~      http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License
+  -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+             android:layout_width="match_parent"
+             android:layout_height="wrap_content"
+             android:id="@+id/call_log_action_container">
+    <LinearLayout
+        android:id="@+id/call_log_entry_actions_ll"
+        android:gravity="center_vertical"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/call_log_action_height"
+        android:orientation="horizontal"
+        android:paddingStart="@dimen/call_log_actions_left_padding"
+        android:paddingLeft="@dimen/call_log_actions_left_padding"
+        android:visibility="visible"
+        android:importantForAccessibility="1"
+        >
+        <TextView
+            android:id="@+id/call_back_action"
+            android:background="@drawable/action_button_background"
+            android:gravity="center"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:paddingStart="@dimen/call_log_action_horizontal_padding"
+            android:paddingLeft="@dimen/call_log_action_horizontal_padding"
+            android:paddingEnd="@dimen/call_log_action_horizontal_padding"
+            android:text="@string/call_log_action_call_back"
+            android:textColor="@color/dialer_green_highlight_color"
+            android:textSize="@dimen/call_log_list_item_actions_text_size"
+            android:textStyle="bold"
+            android:nextFocusLeft="@+id/primary_action_view"
+            android:nextFocusRight="@+id/detail_action"
+            android:focusable="true"
+            android:singleLine="true"/>
+ <!--       <TextView
+            android:id="@+id/video_call_action"
+            android:background="@drawable/action_button_background"
+            android:gravity="center"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:paddingStart="@dimen/call_log_action_horizontal_padding"
+            android:paddingEnd="@dimen/call_log_action_horizontal_padding"
+            android:text="@string/call_log_action_video_call"
+            android:textColor="?attr/call_log_secondary_text_color"
+            android:textSize="@dimen/call_log_list_item_actions_text_size"
+            android:textStyle="bold"
+            android:nextFocusLeft="@+id/call_back_action"
+            android:nextFocusRight="@+id/voicemail_action"
+            android:focusable="true"
+            android:singleLine="true"/>
+
+        <TextView
+            android:id="@+id/voicemail_action"
+            android:background="@drawable/action_button_background"
+            android:gravity="center"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:paddingStart="@dimen/call_log_action_horizontal_padding"
+            android:paddingEnd="@dimen/call_log_action_horizontal_padding"
+            android:text="@string/call_log_action_voicemail"
+            android:textColor="@color/call_log_action_text"
+            android:textSize="@dimen/call_log_list_item_actions_text_size"
+            android:textStyle="bold"
+            android:nextFocusLeft="@+id/video_call_action"
+            android:nextFocusRight="@+id/details_action"
+            android:focusable="true"
+            android:singleLine="true"/>
+-->
+        <TextView
+            android:id="@+id/details_action"
+            android:background="@drawable/action_button_background"
+            android:gravity="center"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:paddingStart="@dimen/call_log_action_horizontal_padding"
+            android:paddingLeft="@dimen/call_log_action_horizontal_padding"
+            android:paddingEnd="@dimen/call_log_action_horizontal_padding"
+            android:text="@string/call_log_action_details"
+            android:textColor="?attr/call_log_secondary_text_color"
+            android:textSize="@dimen/call_log_list_item_actions_text_size"
+            android:textStyle="bold"
+            android:nextFocusLeft="@+id/voicemail_action"
+            android:nextFocusRight="@+id/report_action"
+            android:focusable="true"
+            android:singleLine="true"/>
+        <TextView
+            android:id="@+id/report_action"
+            android:background="@drawable/action_button_background"
+            android:gravity="center"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:paddingStart="@dimen/call_log_action_horizontal_padding"
+            android:paddingLeft="@dimen/call_log_action_horizontal_padding"
+            android:paddingEnd="@dimen/call_log_action_horizontal_padding"
+            android:text="@string/call_log_action_report"
+            android:textColor="?attr/call_log_secondary_text_color"
+            android:textSize="@dimen/call_log_list_item_actions_text_size"
+            android:textStyle="bold"
+            android:nextFocusLeft="@+id/details_action"
+            android:nextFocusRight="@+id/primary_action_view"
+            android:focusable="true"
+            android:singleLine="true"
+            android:visibility="gone"/>
+    </LinearLayout>
+</FrameLayout>

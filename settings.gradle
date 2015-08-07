@@ -1,2 +1,1 @@
-include "support:ActionBarSherlock:library"
-
+include ':silentphone2', ':ScContactsContract', ':KeyManagerSupport'

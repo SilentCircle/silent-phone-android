@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+// +++LICENSE_BEGIN+++
+/*
+ * Copyright © 2014, Silent Circle
+ * All rights reserved.
+ */
+// +++LICENSE_END+++
+ -->
+
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              xmlns:tools="http://schemas.android.com/tools"
+              android:id="@+id/dial_helper"
+              android:layout_width="match_parent"
+              android:layout_height="wrap_content"
+              android:layout_marginTop="@dimen/spacing_normal"
+              android:visibility="gone"
+              tools:context=".activities.DialerActivity"
+              tools:visibility="visible">
+
+    <TextView
+            style="@style/Widget.Silent.SimpleText.Medium"
+            android:id="@+id/dial_helper_title"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true"
+            android:layout_marginLeft="@dimen/spacing_normal"
+            android:layout_marginStart="@dimen/spacing_normal"
+            android:text="@string/sp_dial_helper_title" />
+    <TextView
+            style="@style/Widget.Silent.SimpleText.Small"
+            android:id="@+id/dial_helper_name"
+            android:layout_below="@id/dial_helper_title"
+            android:layout_alignLeft="@id/dial_helper_title"
+            android:layout_alignStart="@id/dial_helper_title"
+            android:maxLines="1"
+            tools:text="North America"/>
+
+</RelativeLayout>

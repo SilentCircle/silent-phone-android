@@ -1,9 +1,0 @@
-<component name="libraryTable">
-  <library name="KeyManagerSupport">
-    <CLASSES>
-      <root url="jar://$PROJECT_DIR$/libs/KeyManagerSupport.jar!/" />
-    </CLASSES>
-    <JAVADOC />
-    <SOURCES />
-  </library>
-</component>

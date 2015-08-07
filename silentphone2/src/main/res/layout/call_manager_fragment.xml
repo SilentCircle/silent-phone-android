@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+// +++LICENSE_BEGIN+++
+/*
+ * Copyright © 2014, Silent Circle
+ * All rights reserved.
+ */
+// +++LICENSE_END+++
+ -->
+
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+            xmlns:tools="http://schemas.android.com/tools"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@color/black_background">
+
+    <LinearLayout
+            android:id="@+id/main_layout"
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            tools:context=".activities.InCallActivity">
+
+        <TextView
+                android:id="@+id/conf_header"
+                style="@style/CallMngrSectionTitle"
+                android:layout_marginBottom="4dp"
+                android:text="@string/call_mng_conference"
+                tools:context=".activities.InCallActivity"/>
+
+        <LinearLayout
+                android:id="@+id/private_header"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+            <TextView
+                    android:id="@+id/conf_header_explanation"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="4dp"
+                    android:padding="@dimen/spacing_normal"
+                    android:text="@string/call_mng_conference_explanation"
+                    android:textAppearance="@android:style/TextAppearance.Small"
+                    tools:context=".activities.InCallActivity"/>
+            <TextView
+                    android:id="@+id/private_header_text"
+                    style="@style/CallMngrSectionTitle"
+                    android:layout_marginBottom="4dp"
+                    android:text="@string/call_mng_private"
+                    tools:context=".activities.InCallActivity"/>
+            <TextView
+                    android:id="@+id/private_header_explanation"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="4dp"
+                    android:padding="@dimen/spacing_normal"
+                    android:visibility="gone"
+                    android:text="@string/call_mng_private_explanation"
+                    android:textAppearance="@android:style/TextAppearance.Small"
+                    tools:context=".activities.InCallActivity"
+                    tools:visibility="visible"/>
+        </LinearLayout>
+
+        <TextView
+                android:id="@+id/in_out_header"
+                style="@style/CallMngrSectionTitle"
+                android:layout_marginBottom="4dp"
+                android:text="@string/call_mng_in_out"
+                android:visibility="gone"
+                tools:context=".activities.InCallActivity"/>
+    </LinearLayout>
+</ScrollView>

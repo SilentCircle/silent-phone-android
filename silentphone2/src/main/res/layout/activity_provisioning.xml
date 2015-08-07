@@ -1,0 +1,42 @@
+<!--
+// +++LICENSE_BEGIN+++
+/*
+ * Copyright © 2014, Silent Circle
+ * All rights reserved.
+ */
+// +++LICENSE_END+++
+-->
+
+<!--
+IMPORTANT NOTE:
+Most EditText fields have a 'android:tag' attribute. The content of the tag must match the
+corresponding field name that the Web Service interface uses to define which field is requiered or not.
+
+Keep the tag fields in synch with the interface specifications.
+-->
+
+<!-- As the main content view, the view below consumes the entire
+ space available using match_parent in both dimensions. -->
+<LinearLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:layout_height="match_parent"
+        android:layout_width="match_parent"
+        android:orientation="vertical">
+
+    <android.support.v7.widget.Toolbar
+            android:id="@+id/toolbar"
+            android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+            android:minHeight="?attr/actionBarSize"
+            android:background="@color/black_background"
+            app:titleTextAppearance="?sp_ab_title_style"
+            app:subtitleTextAppearance="?sp_ab_subtitle_style"/>
+
+    <FrameLayout
+            android:id="@+id/ProvisioningMainContainer"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            tools:context=".activities.ProvisioningActivity"/>
+</LinearLayout>

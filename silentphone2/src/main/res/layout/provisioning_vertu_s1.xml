@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+// +++LICENSE_BEGIN+++
+/*
+ * Copyright © 2014, Silent Circle
+ * All rights reserved.
+ */
+// +++LICENSE_END+++
+ -->
+
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                xmlns:tools="http://schemas.android.com/tools"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                tools:context=".activities.Provisioning">
+
+    <TextView
+            android:id="@+id/HeaderText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true"
+            android:layout_marginLeft="@dimen/activity_horizontal_margin"
+            android:layout_marginStart="@dimen/activity_horizontal_margin"
+            android:layout_marginRight="3dp"
+            android:layout_marginEnd="3dp"
+            android:layout_marginTop="8dp"
+            android:layout_toLeftOf="@+id/StepInfo"
+            android:text="@string/provisioning_vertu_welcome"
+            android:textColor="?android:textColorPrimary"
+            android:textSize="20sp"/>
+
+    <TextView
+            android:id="@+id/StepInfo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBaseline="@+id/HeaderText"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentEnd="true"
+            android:layout_marginRight="@dimen/activity_horizontal_margin"
+            android:layout_marginEnd="@dimen/activity_horizontal_margin"
+            android:text="@string/provisioning_stepInfo_1"
+            android:textColor="?android:textColorSecondary"
+            android:textSize="14sp"/>
+
+    <ScrollView
+            android:id="@+id/ProvisioningScrollFrameLayout"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_below="@+id/HeaderText"
+            android:layout_marginLeft="@dimen/activity_horizontal_margin"
+            android:layout_marginRight="@dimen/activity_horizontal_margin"
+            android:baselineAligned="false"
+            android:focusable="false"
+            android:orientation="vertical"
+            android:visibility="visible">
+
+        <LinearLayout
+                android:id="@+id/ProvisioningWelcomeLayout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="visible">
+
+            <TextView
+                    style="@style/Widget.Silent.SimpleText"
+                    android:id="@+id/ProvisioningWelcomeText"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/activity_vertical_margin"
+                    android:text="@string/provisioning_vertu_welcome_long"
+                    android:textSize="16sp"/>
+
+            <!-- Use absolute PX measurement to avoid scaling of the logo and have a good screen layout -->
+
+            <ImageView
+                    android:id="@+id/ProvisioningWelcomeImg"
+                    tools:ignore="PxUsage"
+                    android:layout_width="200px"
+                    android:layout_height="200px"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginTop="@dimen/activity_vertical_margin"
+                    android:contentDescription="@string/silent_circle"
+                    android:src="@drawable/sc_logo_white"/>
+
+            <Button
+                    android:id="@+id/registerNew"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/activity_vertical_margin"
+                    android:gravity="center"
+                    android:text="@string/provisioning_new_account"
+                    android:textSize="18sp"/>
+
+            <Button
+                    android:id="@+id/loginExisting"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:gravity="center"
+                    android:text="@string/provisioning_existing_account"
+                    android:textSize="18sp"/>
+        </LinearLayout>
+    </ScrollView>
+</RelativeLayout>

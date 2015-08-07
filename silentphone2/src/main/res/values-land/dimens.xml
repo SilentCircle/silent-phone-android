@@ -1,0 +1,13 @@
+<resources>
+        <!-- Per the design guidelines, navigation drawers should be between 240dp and 320dp:
+         https://developer.android.com/design/patterns/navigation-drawer.html -->
+    <dimen name="navigation_drawer_width">320dp</dimen>
+
+    <!-- currently the ratio is about 3:4 -->
+    <dimen name="video_preview_width">115dp</dimen>
+    <dimen name="video_preview_height">90dp</dimen>
+
+    <dimen name="video_preview_width_inner">111dp</dimen>      <!-- 6dp less on each side -->
+    <dimen name="video_preview_height_inner">86dp</dimen>
+
+</resources>

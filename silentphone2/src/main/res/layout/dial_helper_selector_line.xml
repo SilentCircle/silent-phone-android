@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+// +++LICENSE_BEGIN+++
+/*
+ * Copyright © 2014, Silent Circle
+ * All rights reserved.
+ */
+// +++LICENSE_END+++
+ -->
+<!--
+The 'blocksDescendants' enables setOnItemClickListener(), see
+http://code.google.com/p/android/issues/detail?id=3414, comments 56 and 57
+
+        android:background="@drawable/list_item_selection_dark"
+        android:background="?android:attr/activatedBackgroundIndicator"
+-->
+
+<LinearLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:descendantFocusability="blocksDescendants"
+        android:orientation="vertical">
+
+    <TextView
+              android:id="@+id/list_line"
+              style="@style/Widget.Silent.SimpleText.Medium"
+              android:paddingTop="@dimen/activity_vertical_margin"
+              android:paddingBottom="@dimen/activity_vertical_margin"
+              android:singleLine="true"
+              android:ellipsize="marquee"
+              android:marqueeRepeatLimit ="3"
+              android:scrollHorizontally="true"
+              android:background="@drawable/list_item_selection_dark"
+              tools:text="North America"
+              tools:context=".activities.DialHelperSelectorActivity"/>
+
+</LinearLayout>

@@ -1,0 +1,25 @@
+<LinearLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:layout_height="match_parent"
+        android:layout_width="match_parent"
+        android:orientation="vertical">
+
+    <android.support.v7.widget.Toolbar
+            android:id="@+id/toolbar"
+            android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+            android:minHeight="?attr/actionBarSize"
+            android:background="@color/black_background"
+            app:titleTextAppearance="?sp_ab_title_style"
+            app:subtitleTextAppearance="?sp_ab_subtitle_style"/>
+
+    <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                 xmlns:tools="http://schemas.android.com/tools"
+                 android:id="@+id/container"
+                 android:layout_width="match_parent"
+                 android:layout_height="match_parent"
+                 tools:context="com.silentcircle.silentphone2.activities.DidSelectionActivity"
+                 tools:ignore="MergeRootFrame"/>
+</LinearLayout>

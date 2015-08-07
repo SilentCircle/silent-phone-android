@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item android:state_pressed="true">
+        <shape xmlns:android="http://schemas.android.com/apk/res/android"
+               android:shape="oval" android:useLevel="false">
+
+            <size android:width="@dimen/dialpad_key_circle_width" android:height="@dimen/dialpad_key_circle_width"/>
+            <solid android:color="@color/dusk_light_gray"/>
+
+        </shape>
+    </item>
+
+    <item>
+    <shape xmlns:android="http://schemas.android.com/apk/res/android"
+           android:shape="oval" android:useLevel="false">
+
+        <size android:width="@dimen/dialpad_key_circle_width" android:height="@dimen/dialpad_key_circle_width"/>
+        <!-- some Android devices require an explicit color setting,
+             define it as fully transparent -->
+        <solid android:color="#00ffffff"/>
+        <stroke android:width="2dp" android:color="@color/button_stroke_color_white" />
+
+    </shape>
+    </item>
+
+
+</selector>

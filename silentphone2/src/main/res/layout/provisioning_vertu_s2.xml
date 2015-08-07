@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+// +++LICENSE_BEGIN+++
+/*
+ * Copyright © 2014, Silent Circle
+ * All rights reserved.
+ */
+// +++LICENSE_END+++
+ -->
+
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                xmlns:tools="http://schemas.android.com/tools"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:paddingRight="@dimen/activity_horizontal_margin"
+                android:paddingLeft="@dimen/activity_horizontal_margin"
+                android:orientation="vertical"
+                tools:context=".activities.Provisioning">
+
+    <TextView
+            android:id="@+id/HeaderText"
+            style="@style/Widget.Silent.SimpleText.Large"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true"
+            android:layout_marginTop="8dp"
+            android:layout_toLeftOf="@+id/StepInfo"
+            android:layout_toStartOf="@+id/StepInfo"
+            android:text="@string/provisioning_infoText"/>
+
+    <TextView
+            android:id="@+id/StepInfo"
+            style="@style/Widget.Silent.SimpleText.Small"
+            android:layout_width="wrap_content"
+            android:layout_alignBaseline="@+id/HeaderText"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentEnd="true"
+            android:text="@string/provisioning_stepInfo_2"
+            android:textColor="?android:textColorSecondary"/>
+
+    <ProgressBar
+            android:id="@+id/ProgressBar"
+            style="?android:attr/progressBarStyleLarge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_centerVertical="true"/>
+
+    <ScrollView
+            android:id="@+id/Scroll"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/HeaderText"
+            android:layout_above="@+id/ProvisioningButtons"
+            android:baselineAligned="false"
+            android:fillViewport="true"
+            android:focusable="false"
+            android:visibility="invisible"
+            tools:visibility="visible">
+
+        <RelativeLayout
+                android:id="@+id/ProvisioningUserFields"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="visible"
+                tools:visibility="visible">
+
+            <EditText
+                    style="@style/Widget.Silent.SimpleText"
+                    android:id="@+id/ProvisioningUsernameInput"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/activity_vertical_margin"
+                    android:hint="@string/provisioning_username_hint"
+                    android:imeOptions="actionNext"
+                    android:inputType="text"
+                    android:singleLine="true"
+                    android:tag="username"
+                    android:textSize="16sp"/>
+
+            <EditText
+                    style="@style/Widget.Silent.SimpleText"
+                    android:id="@+id/ProvisioningPasswordInput"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@+id/ProvisioningUsernameInput"
+                    android:layout_marginTop="@dimen/activity_vertical_margin"
+                    android:hint="@string/provisioning_password_hint"
+                    android:imeOptions="actionNext"
+                    android:inputType="textPassword"
+                    android:singleLine="true"
+                    android:tag="password"
+                    android:textSize="16sp"/>
+
+            <TextView
+                    style="@style/Widget.Silent.SimpleText"
+                    android:id="@+id/ProvisioningPasswordStrength"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentRight="true"
+                    android:layout_alignParentEnd="true"
+                    android:layout_below="@+id/ProvisioningPasswordInput"
+                    android:layout_marginTop="3dp"
+                    android:textSize="14sp"
+                    tools:text="Good"/>
+
+            <CheckBox
+                    android:id="@+id/ShowPassword"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@+id/ProvisioningPasswordStrength"
+                    android:layout_centerHorizontal="true"
+                    android:layout_marginTop="10dp"
+                    android:text="@string/provisioning_show_pw"/>
+
+            <TextView
+                    style="@style/Widget.Silent"
+                    android:id="@+id/ProvisioningEmailInfo"
+                    android:layout_alignParentLeft="true"
+                    android:layout_alignParentStart="true"
+                    android:layout_below="@+id/ShowPassword"
+                    android:layout_marginTop="@dimen/activity_vertical_margin"
+                    android:background="@null"
+                    android:text="@string/provisioning_vertu_email_info"
+                    android:textSize="14sp"/>
+
+            <EditText
+                    style="@style/Widget.Silent.SimpleText"
+                    android:id="@+id/ProvisioningEmailInput"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@+id/ProvisioningEmailInfo"
+                    android:layout_marginTop="5dp"
+                    android:hint="@string/provisioning_email_hint"
+                    android:imeOptions="actionNext"
+                    android:inputType="textEmailAddress"
+                    android:singleLine="true"
+                    android:tag="email_address"
+                    android:textSize="16sp"/>
+
+            <EditText
+                    style="@style/Widget.Silent.SimpleText"
+                    android:id="@+id/ProvisioningFirstNameInput"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@+id/ProvisioningEmailInput"
+                    android:layout_marginTop="@dimen/activity_vertical_margin"
+                    android:hint="@string/provisioning_firstname_hint"
+                    android:imeOptions="actionNext"
+                    android:inputType="text"
+                    android:singleLine="true"
+                    android:tag="first_name"
+                    android:textSize="16sp"/>
+
+            <EditText
+                    style="@style/Widget.Silent.SimpleText"
+                    android:id="@+id/ProvisioningLastNameInput"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@+id/ProvisioningFirstNameInput"
+                    android:layout_marginTop="@dimen/activity_vertical_margin"
+                    android:hint="@string/provisioning_lastname_hint"
+                    android:imeOptions="actionDone"
+                    android:inputType="text"
+                    android:singleLine="true"
+                    android:tag="last_name"
+                    android:textSize="16sp"/>
+        </RelativeLayout>
+    </ScrollView>
+
+    <LinearLayout
+            android:id="@+id/ProvisioningButtons"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:orientation="horizontal"
+            android:visibility="invisible"
+            tools:visibility="visible">
+
+        <Button
+                android:id="@+id/back"
+                style="@style/Widget.Silent.InCallButtons"
+                android:paddingBottom="6dp"
+                android:paddingTop="6dp"
+                android:text="@string/back"
+                android:visibility="visible"/>
+
+        <Button
+                android:id="@+id/next"
+                style="@style/Widget.Silent.InCallButtons"
+                android:paddingBottom="6dp"
+                android:paddingTop="6dp"
+                android:text="@string/next"
+                android:visibility="visible"/>
+
+    </LinearLayout>
+
+</RelativeLayout>

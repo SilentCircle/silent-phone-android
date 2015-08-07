@@ -1,0 +1,440 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+// +++LICENSE_BEGIN+++
+/*
+ * Copyright © 2014, Silent Circle
+ * All rights reserved.
+ */
+// +++LICENSE_END+++
+ -->
+
+<resources
+        xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <style name="SilentPhoneThemeBase" parent="Theme.AppCompat.NoActionBar"/>
+
+    <style name="SilentPhoneTheme" parent="@style/SilentPhoneThemeBlack"/>
+
+    <!-- the theme applied to the application or activity -->
+    <style name="SilentPhoneThemeOrange"
+           parent="Theme.AppCompat.Light.DarkActionBar">
+        <item name="android:windowBackground">@drawable/background_light</item>
+        <item name="android:actionBarStyle">@style/MyActionBar</item>
+
+        <!-- Text color of decline, answer, end call buttons -->
+        <item name="sp_call_btn_text_color">@android:color/white</item>
+
+        <!-- Attributes for number/name field text -->
+        <item name="sp_dial_text_color">@color/dialpad_primary_text_color_light</item>
+        <item name="sp_dial_text_background">@color/silent_back_end</item>
+        <item name="sp_name_text_peer_match">@color/black_green</item>
+
+        <!-- Settings for the drawers, they should all look the same, very similar -->
+        <item name="sp_drawer_background">@color/silent_back_end</item>
+        <item name="sp_drawer_header_background">@color/silent_back_start</item>
+        <item name="sp_drawer_header_text_color">@android:color/white</item>
+
+        <!-- Button icons -->
+        <item name="sp_ic_backspace">@drawable/ic_action_backspace_light</item>
+        <item name="sp_ic_call">@drawable/ic_action_call_light</item>
+        <item name="sp_ic_dial_pad">@drawable/ic_action_dial_pad_light</item>
+        <item name="sp_ic_end_call">@drawable/ic_action_end_call_light</item>
+        <item name="sp_ic_keyboard">@drawable/ic_action_keyboard_light</item>
+        <item name="sp_ic_view_list">@drawable/ic_action_view_as_list_light</item>
+        <item name="sp_ic_edit">@drawable/ic_action_edit_light</item>
+        <item name="sp_ic_contact_picture">@drawable/ic_contact_picture_180_holo_light</item>
+
+        <!-- Icons on In-call main screen -->
+        <item name="sp_ic_add_call">@drawable/ic_action_add_call_dark</item>
+        <item name="sp_ic_mic">@drawable/ic_action_mic_dark</item>
+        <item name="sp_ic_mic_muted">@drawable/ic_action_mic_muted_dark</item>
+        <item name="sp_ic_video">@drawable/ic_action_video_dark</item>
+        <item name="sp_ic_video_muted">@drawable/ic_video_muted_dark</item>
+        <item name="sp_ic_volume_muted">@drawable/ic_action_volume_muted_dark</item>
+        <item name="sp_ic_volume_on">@drawable/ic_action_volume_on_dark</item>
+        <item name="sp_ic_volume_bt">@drawable/ic_action_volume_bt_dark</item>
+        <item name="sp_ic_volume_bt_muted">@drawable/ic_action_volume_bt_muted_dark</item>
+
+        <!-- Icons for call manager entry -->
+        <item name="sp_ic_call_hold">@drawable/ic_action_call_hold_on</item>
+        <item name="sp_ic_call_not_hold">@drawable/ic_action_call_hold</item>
+        <item name="sp_ic_add_group">@drawable/ic_action_conf_add</item>
+        <item name="sp_ic_add_person">@drawable/ic_action_conf_remove</item>
+
+        <item name="sp_call_manager_line_background">@color/silent_back_end</item>
+        <item name="sp_call_manager_divider">@color/silent_back_start</item>
+        <item name="sp_call_manager_small_button">@drawable/button_rnd_small_null_gray</item>
+
+        <!-- Icons for action bar. We may use the same or different icons on the AB -->
+        <item name="sp_ic_call_manager_ab">@drawable/ic_action_call_manager_dark</item>
+        <item name="sp_ic_dial_pad_ab">@drawable/ic_action_dial_pad_dark</item>
+        <item name="sp_ic_ab_video">@drawable/ic_action_video_dark</item>
+
+        <!-- Icons for video screen -->
+        <item name="sp_ic_switch_camera">@drawable/ic_action_switch_camera_dark</item>
+
+        <!-- Attributes for round dial buttons -->
+        <item name="sp_dial_button_primary_color">@color/dialpad_primary_text_color_light</item>
+        <item name="sp_dial_button_secondary_color">@color/dialpad_secondary_text_color_light</item>
+        <item name="sp_dial_button">@drawable/dial_button_round_gray</item>
+
+        <item name="sp_call_button_background">@color/green</item>
+        <item name="sp_hangup_button_background">@android:color/holo_red_dark</item>
+        <item name="sp_decline_button_background">@android:color/holo_red_dark</item>
+        <item name="sp_accept_button_background">@android:color/holo_green_dark</item>
+
+        <!-- Round button -->
+        <item name="sp_button_round">@drawable/button_round_white</item>
+
+        <item name="sp_drawer_button">@drawable/ic_drawer_light</item>
+        <item name="sp_drawer_shadow">@drawable/drawer_shadow_dark</item>
+
+        <item name="sp_divider_color">@color/silent_back_start</item>
+
+        <item name="sp_sas_verified_color">@color/black_translucent</item>
+
+    </style>
+
+    <style name="SilentPhoneThemeWhite"
+           parent="Theme.AppCompat.Light.DarkActionBar">
+        <item name="android:windowBackground">@color/q_white</item>
+        <item name="android:actionBarStyle">@style/MyActionBarInverse</item>
+
+        <!-- Text color of decline, answer, end call buttons -->
+        <item name="sp_call_btn_text_color">@color/q_white</item>
+
+        <!-- Attributes for number/name field text -->
+        <item name="sp_dial_text_color">@color/q_black</item>
+        <item name="sp_dial_text_background">@color/q_gray</item>
+        <item name="sp_name_text_peer_match">@color/black_green</item>
+
+        <!-- Settings for the drawers, they should all look the same, very similar -->
+        <item name="sp_drawer_background">@color/q_white</item>
+        <item name="sp_drawer_header_background">@color/q_black</item>
+        <item name="sp_drawer_header_text_color">@color/q_white</item>
+
+        <item name="sp_ic_backspace">@drawable/ic_action_backspace_light</item>
+        <item name="sp_ic_call">@drawable/ic_action_call_light</item>
+        <item name="sp_ic_dial_pad">@drawable/ic_action_dial_pad_light</item>
+        <item name="sp_ic_end_call">@drawable/ic_action_end_call_light</item>
+        <item name="sp_ic_headset">@drawable/ic_action_headset_light</item>
+        <item name="sp_ic_keyboard">@drawable/ic_action_keyboard_light</item>
+        <item name="sp_ic_view_list">@drawable/ic_action_view_as_list_light</item>
+        <item name="sp_ic_edit">@drawable/ic_action_edit_light</item>
+        <item name="sp_ic_contact_picture">@drawable/ic_contact_picture_180_holo_light</item>
+
+        <!-- Icons on In-call main screen -->
+        <item name="sp_ic_add_call">@drawable/ic_action_add_call_light</item>
+        <item name="sp_ic_mic">@drawable/ic_action_mic_light</item>
+        <item name="sp_ic_mic_muted">@drawable/ic_action_mic_muted_light</item>
+        <item name="sp_ic_video">@drawable/ic_action_video_light</item>
+        <item name="sp_ic_video_muted">@drawable/ic_video_muted_dark</item>
+        <item name="sp_ic_volume_muted">@drawable/ic_action_volume_muted_light</item>
+        <item name="sp_ic_volume_on">@drawable/ic_action_volume_on_light</item>
+        <item name="sp_ic_volume_bt">@drawable/ic_action_volume_bt_light</item>
+        <item name="sp_ic_volume_bt_muted">@drawable/ic_action_volume_bt_muted_light</item>
+
+        <!-- Icons for call manager entry -->
+        <item name="sp_ic_call_hold">@drawable/ic_action_call_hold_on</item>
+        <item name="sp_ic_call_not_hold">@drawable/ic_action_call_hold</item>
+        <item name="sp_ic_add_group">@drawable/ic_action_conf_add</item>
+        <item name="sp_ic_add_person">@drawable/ic_action_conf_remove</item>
+
+        <item name="sp_call_manager_line_background">@color/q_gray</item>
+        <item name="sp_call_manager_divider">@color/q_white</item>
+        <item name="sp_call_manager_small_button">@drawable/button_rnd_small_null_white</item>
+
+        <!-- Icons for action bar. We may use the same or different icons on the AB -->
+        <item name="sp_ic_call_manager_ab">@drawable/ic_action_call_manager_dark</item>
+        <item name="sp_ic_dial_pad_ab">@drawable/ic_action_dial_pad_dark</item>
+        <item name="sp_ic_ab_video">@drawable/ic_action_video_dark</item>
+
+        <!-- Icons for video screen -->
+        <item name="sp_ic_switch_camera">@drawable/ic_action_switch_camera_dark</item>
+
+        <!-- Attributes for round dial button text -->
+        <item name="sp_dial_button_primary_color">@color/q_black</item>
+        <item name="sp_dial_button_secondary_color">@color/q_black</item>
+        <item name="sp_dial_button">@drawable/dial_button_round_gray</item>
+
+        <item name="sp_call_button_background">@color/q_orange</item>
+        <item name="sp_hangup_button_background">@color/q_red</item>
+        <item name="sp_decline_button_background">@color/q_red</item>
+        <item name="sp_accept_button_background">@android:color/holo_green_light</item>
+
+        <!-- Round button -->
+        <item name="sp_button_round">@drawable/button_round_gray</item>
+
+        <item name="sp_drawer_button">@drawable/ic_drawer_dark</item>
+        <item name="sp_drawer_shadow">@drawable/drawer_shadow_light</item>
+
+        <item name="sp_divider_color">@color/q_orange</item>
+        <item name="sp_sas_verified_color">@color/black_translucent</item>
+
+    </style>
+
+    <style name="SilentPhoneThemeDusk"
+           parent="Theme.AppCompat">
+        <item name="android:windowBackground">@color/dusk_background</item>
+        <item name="android:actionBarStyle">@style/ActionBarDusk</item>
+
+        <!-- Text color of decline, answer, end call buttons -->
+        <item name="sp_call_btn_text_color">@android:color/white</item>
+
+        <!-- Attributes for number/name field text -->
+        <item name="sp_dial_text_color">@color/dialpad_primary_text_color_dark</item>
+        <item name="sp_dial_text_background">@color/dusk_background</item>
+        <item name="sp_name_text_peer_match">@color/black_green</item>
+
+        <!-- Settings for the drawers, they should all look the same, very similar -->
+        <item name="sp_drawer_background">@color/dusk_background</item>
+        <item name="sp_drawer_header_background">@color/dusk_dark_gray</item>
+        <item name="sp_drawer_header_text_color">@android:color/white</item>
+
+        <!-- Button icons -->
+        <item name="sp_ic_backspace">@drawable/ic_action_backspace_dark</item>
+        <item name="sp_ic_call">@drawable/ic_call_dark</item>
+        <item name="sp_ic_dial_pad">@drawable/ic_action_dial_pad_dark</item>
+        <item name="sp_ic_end_call">@drawable/ic_end_call_dark</item>
+        <item name="sp_ic_keyboard">@drawable/ic_action_keyboard_dark</item>
+        <item name="sp_ic_view_list">@drawable/ic_action_view_as_list_dark</item>
+        <item name="sp_ic_edit">@drawable/ic_action_edit_dark</item>
+        <item name="sp_ic_contact_picture">@drawable/avatar_default_dark</item>
+
+        <!-- Icons on In-call main screen -->
+        <item name="sp_ic_add_call">@drawable/ic_add_call_dark</item>
+        <item name="sp_ic_mic">@drawable/ic_action_mic_dark</item>
+        <item name="sp_ic_mic_muted">@drawable/ic_action_mic_muted_dark</item>
+        <item name="sp_ic_video">@drawable/ic_action_video_dark</item>
+        <item name="sp_ic_video_muted">@drawable/ic_video_muted_dark</item>
+        <item name="sp_ic_volume_muted">@drawable/ic_action_volume_muted_dark</item>
+        <item name="sp_ic_volume_on">@drawable/ic_action_volume_on_dark</item>
+        <item name="sp_ic_volume_bt">@drawable/ic_action_volume_bt_dark</item>
+        <item name="sp_ic_volume_bt_muted">@drawable/ic_action_volume_bt_muted_dark</item>
+
+        <!-- Icons for call manager entry -->
+        <item name="sp_ic_call_hold">@drawable/ic_action_call_hold_on</item>
+        <item name="sp_ic_call_not_hold">@drawable/ic_action_call_hold</item>
+        <item name="sp_ic_add_group">@drawable/ic_action_conf_add</item>
+        <item name="sp_ic_add_person">@drawable/ic_action_conf_remove</item>
+
+        <item name="sp_call_manager_line_background">@color/dusk_dark_gray</item>
+        <item name="sp_call_manager_divider">@color/dusk_light_gray</item>
+        <item name="sp_call_manager_small_button">@drawable/button_rnd_small_null_white</item>
+
+        <!-- Icons for action bar. We may use the same or different icons on the AB -->
+        <item name="sp_ic_call_manager_ab">@drawable/ic_action_call_manager_dark</item>
+        <item name="sp_ic_dial_pad_ab">@drawable/ic_action_dial_pad_dark</item>
+        <item name="sp_ic_ab_video">@drawable/ic_action_video_dark</item>
+
+        <!-- Icons for video screen -->
+        <item name="sp_ic_switch_camera">@drawable/ic_action_switch_camera_light</item>
+
+        <!-- Attributes for round dial buttons -->
+        <item name="sp_dial_button_primary_color">@color/dialpad_primary_text_color_dark</item>
+        <item name="sp_dial_button_secondary_color">@color/dialpad_secondary_text_color_dark</item>
+        <item name="sp_dial_button">@drawable/dial_button_round_white</item>
+
+        <item name="sp_call_button_background">@color/green</item>
+        <item name="sp_hangup_button_background">@android:color/holo_red_dark</item>
+        <item name="sp_decline_button_background">@android:color/holo_red_dark</item>
+        <item name="sp_accept_button_background">@android:color/holo_green_dark</item>
+
+        <!-- Round button -->
+        <item name="sp_button_round">@drawable/button_round_white</item>
+
+        <item name="sp_drawer_button">@drawable/ic_drawer_dark</item>
+        <item name="sp_drawer_shadow">@drawable/drawer_shadow_dark</item>
+        <item name="sp_divider_color">@color/dusk_orange</item>
+
+        <item name="sp_sas_verified_color">@color/white_translucent</item>
+    </style>
+
+    <style name="SilentPhoneThemeBlack"
+           parent="SilentPhoneThemeBase">
+        <item name="android:windowBackground">@color/black_background</item>
+
+        <!-- Text color of decline, answer, end call buttons -->
+        <item name="sp_call_btn_text_color">@android:color/white</item>
+
+        <!-- Attributes for number/name field text -->
+        <item name="sp_dial_text_color">@android:color/white</item>
+        <item name="sp_dial_text_background">@color/black_dark_gray</item>
+        <item name="sp_name_text_peer_match">@color/black_green</item>
+
+        <item name="sp_sec_info_green">@color/black_green</item>
+        <item name="sp_sec_info_yellow">@color/black_yellow</item>
+
+        <!-- Settings for the drawers, they should all look the same, very similar -->
+        <item name="sp_drawer_background">@color/black_background</item>
+        <item name="sp_drawer_header_background">@color/black_dark_gray</item>
+        <item name="sp_drawer_header_text_color">@color/black_yellow</item>
+
+        <!-- Button icons -->
+        <item name="sp_ic_backspace">@drawable/ic_action_backspace_dark</item>
+        <item name="sp_ic_call">@drawable/ic_call_dark</item>
+        <item name="sp_ic_dial_pad">@drawable/ic_action_dial_pad_dark</item>
+        <item name="sp_ic_end_call">@drawable/ic_end_call_dark</item>
+        <item name="sp_ic_keyboard">@drawable/ic_action_keyboard_dark</item>
+        <item name="sp_ic_view_list">@drawable/ic_action_view_as_list_dark</item>
+        <item name="sp_ic_edit">@drawable/ic_action_edit_dark</item>
+        <item name="sp_ic_contact_picture">@drawable/avatar_default_dark</item>
+
+        <!-- Icons on In-call main screen -->
+        <item name="sp_ic_add_call">@drawable/ic_add_call_dark</item>
+        <item name="sp_ic_mic">@drawable/ic_action_mic_dark</item>
+        <item name="sp_ic_mic_muted">@drawable/ic_action_mic_muted_dark</item>
+        <item name="sp_ic_video">@drawable/ic_action_video_dark</item>
+        <item name="sp_ic_video_muted">@drawable/ic_video_muted_dark</item>
+        <item name="sp_ic_volume_muted">@drawable/ic_action_volume_muted_dark</item>
+        <item name="sp_ic_volume_on">@drawable/ic_action_volume_on_dark</item>
+        <item name="sp_ic_volume_bt">@drawable/ic_action_volume_bt_dark</item>
+        <item name="sp_ic_volume_bt_muted">@drawable/ic_action_volume_bt_muted_dark</item>
+
+        <!-- Icons for call manager entry -->
+        <item name="sp_ic_call_hold">@drawable/ic_action_call_hold_on</item>
+        <item name="sp_ic_call_not_hold">@drawable/ic_action_call_hold</item>
+        <item name="sp_ic_add_group">@drawable/ic_action_conf_add</item>
+        <item name="sp_ic_add_person">@drawable/ic_action_conf_remove</item>
+
+        <item name="sp_call_manager_line_background">@color/black_background</item>
+        <item name="sp_call_manager_divider">@android:color/white</item>
+        <item name="sp_call_manager_small_button">@drawable/button_rnd_small_null_white</item>
+
+        <!-- Icons for action bar. We may use the same or different icons on the AB -->
+        <item name="sp_ic_call_manager_ab">@drawable/ic_action_call_manager_dark</item>
+        <item name="sp_ic_dial_pad_ab">@drawable/ic_action_dial_pad_dark</item>
+        <item name="sp_ic_ab_video">@drawable/ic_action_video_dark</item>
+
+        <!-- Icons for video screen -->
+        <item name="sp_ic_switch_camera">@drawable/ic_action_switch_camera_dark</item>
+
+        <!-- Attributes for round dial buttons -->
+        <item name="sp_dial_button_primary_color">@color/black_yellow</item>
+        <item name="sp_dial_button_secondary_color">@android:color/white</item>
+        <item name="sp_dial_button">@drawable/dial_button_round_white</item>
+
+        <item name="sp_call_button_background">@android:color/holo_green_dark</item>
+        <item name="sp_hangup_button_background">@android:color/holo_red_dark</item>
+        <item name="sp_decline_button_background">@android:color/holo_red_dark</item>
+        <item name="sp_accept_button_background">@android:color/holo_green_dark</item>
+
+        <!-- Round button -->
+        <item name="sp_button_round">@drawable/button_round_white</item>
+
+        <item name="sp_drawer_button">@drawable/ic_drawer_dark</item>
+        <item name="sp_drawer_shadow">@drawable/drawer_shadow_dark</item>
+
+        <item name="sp_divider_color">@color/black_dark_gray</item>
+
+        <item name="sp_sas_verified_color">@color/white_translucent</item>
+
+        <item name="sp_ab_title_style">@style/ActionBarBlackTitle</item>
+        <item name="sp_ab_subtitle_style">@style/ActionBarBlackTitleSmall</item>
+
+        <!-- ************ Theme items for SCA part ************************* -->
+
+        <!--
+        <item name="android:textColorPrimary">@color/according to theme</item>
+        <item name="android:textColorSecondary">@color/according to theme</item>
+        -->
+        <item name="android:listViewStyle">@style/ListViewStyle</item>
+
+        <item name="list_item_textColorPrimary">?android:textColorPrimary</item>
+        <item name="list_item_textColorSecondary">?android:textColorSecondary</item>
+        <item name="list_section_header_height">32dip</item>
+        <item name="list_item_divider">?android:attr/listDivider</item>
+        <item name="list_item_padding_top">12dip</item>
+        <item name="list_item_padding_right">32dip</item>
+        <item name="list_item_padding_bottom">12dip</item>
+        <item name="list_item_padding_left">16dip</item>
+        <item name="list_item_gap_between_image_and_text">8dip</item>
+        <item name="list_item_gap_between_label_and_data">5dip</item>
+        <item name="list_item_presence_icon_margin">4dip</item>
+        <item name="list_item_presence_icon_size">16dip</item>
+        <item name="list_item_profile_photo_size">70dip</item>
+        <item name="list_item_prefix_highlight_color">@color/people_app_theme_color</item>
+        <item name="list_item_header_text_indent">8dip</item>
+        <item name="list_item_header_text_color">@color/people_app_theme_color</item>
+        <item name="list_item_header_text_size">14sp</item>
+        <item name="list_item_header_height">24dip</item>
+        <item name="list_item_header_underline_height">1dip</item>
+        <item name="list_item_header_underline_color">@color/people_app_theme_color</item>
+        <item name="list_item_data_width_weight">5</item>
+        <item name="list_item_label_width_weight">3</item>
+        <item name="list_item_background_color">@color/black_light_gray</item>
+        <item name="contact_browser_list_padding_right">0dp</item>
+        <item name="contact_browser_background">@android:color/transparent</item>
+        <item name="contact_browser_list_padding_left">0dp</item>
+        <item name="list_item_photo_size">@dimen/contact_browser_list_item_photo_size</item>
+        <item name="list_item_text_indent">@dimen/contact_browser_list_item_text_indent</item>
+        <item name="list_item_name_text_color">@color/contact_list_name_text_color</item>
+        <item name="list_item_name_text_size">16sp</item>
+        <item name="list_item_text_offset_top">-2dp</item>
+
+        <item name="activated_background">@drawable/list_item_activated_background_new</item>
+        <item name="section_header_background">@drawable/list_title_holo</item>
+        <item name="list_item_contacts_count_text_color">@color/people_app_theme_color</item>
+        <item name="list_item_contacts_count_text_size">12sp</item>
+
+        <item name="sp_round_image_diameter">@dimen/contact_browser_list_item_photo_size</item>
+        <item name="sp_round_image_stroke_width">1dp</item>
+        <item name="sp_round_image_stroke_color">@color/black_yellow</item>
+        <item name="sp_round_image_shadow_color">@color/black_light_gray</item>
+        <!--
+        <item name="android:windowContentOverlay">@null</item>
+        -->
+        <!-- CallLog -->
+        <item name="call_log_primary_text_color">?android:textColorPrimary</item>
+        <item name="call_log_secondary_text_color">?android:textColorSecondary</item>
+        <item name="call_log_header_color">#33b5e5</item>
+        <!-- Favorites -->
+        <item name="favorites_padding_bottom">?android:attr/actionBarSize</item>
+
+
+    </style>
+
+    <!-- ActionBar styles -->
+    <style name="MyActionBar"
+           parent="android:Widget.Holo.Light.ActionBar.Solid.Inverse">
+        <item name="android:background">@color/silent_back_start</item>
+    </style>
+
+    <!-- ActionBar styles -->
+    <style name="MyActionBarInverse"
+           parent="android:Widget.Holo.Light.ActionBar.Solid.Inverse">
+        <item name="android:background">@color/q_black</item>
+    </style>
+
+    <style name="ActionBarDuskTitle"
+           parent="android:TextAppearance.Medium">
+        <item name="android:textColor">@color/dusk_orange</item>
+    </style>
+
+    <style name="ActionBarDusk"
+           parent="android:Widget.Holo.ActionBar">
+        <!--        <item name="android:titleTextStyle">@android:style/TextAppearance.Holo.Widget.ActionBar.Title</item> -->
+        <item name="android:titleTextStyle">@style/ActionBarDuskTitle</item>
+        <item name="android:background">@color/q_black</item>
+    </style>
+
+    <style name="ActionBarBlackTitle"
+           parent="android:TextAppearance.Medium">
+        <item name="android:textColor">@color/black_yellow</item>
+    </style>
+
+    <style name="ActionBarBlackTitleSmall"
+           parent="android:TextAppearance.Small">
+        <item name="android:textColor">@color/black_yellow</item>
+    </style>
+
+    <style name="SelectableItem" parent="SilentPhoneTheme">
+        <item name="android:background">?android:attr/selectableItemBackground</item>
+    </style>
+
+    <style name="SilentPhoneThemeAuthenticator" parent="@style/SilentPhoneThemeBlack">
+        <item name="colorControlNormal">@color/auth_active_body_text_grey</item>
+        <item name="colorControlActivated">@color/auth_active_headline_text_grey</item>
+        <item name="colorControlHighlight">@color/auth_active_headline_text_grey</item>
+    </style>
+</resources>

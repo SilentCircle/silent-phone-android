@@ -1,0 +1,240 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+// +++LICENSE_BEGIN+++
+/*
+ * Copyright © 2014, Silent Circle
+ * All rights reserved.
+ */
+// +++LICENSE_END+++
+ -->
+
+<resources>
+    <declare-styleable name="SpaStyle">
+        <attr name="sp_call_btn_text_color" format="color|reference"/>
+
+        <!-- Attributes for number/name field text -->
+        <attr name="sp_dial_text_color" format="color|reference"/>
+        <attr name="sp_dial_text_background" format="color|reference"/>
+        <attr name="sp_name_text_peer_match" format="color|reference"/>
+
+        <attr name="sp_sec_info_green" format="color|reference"/>
+        <attr name="sp_sec_info_yellow" format="color|reference"/>
+
+        <!-- Attributes for drawers, header text color, header background, etc -->
+        <attr name="sp_drawer_background" format="color|reference"/>
+        <attr name="sp_drawer_header_background" format="color|reference"/>
+        <attr name="sp_drawer_header_text_color" format="color|reference"/>
+
+        <!-- Attributes for the icons in buttons and elsewhere
+             We define them as integer because in the style this resolves to a
+             '@drawable/some_thing' and this is an integer (R.drawable.some_thing
+        -->
+        <attr name="sp_ic_add_call" format="integer|reference"/>
+        <attr name="sp_ic_backspace" format="integer|reference"/>
+        <attr name="sp_ic_call" format="integer|reference"/>
+        <attr name="sp_ic_call_hold" format="integer|reference"/>
+        <attr name="sp_ic_call_not_hold" format="integer|reference"/>
+        <attr name="sp_ic_dial_pad" format="integer|reference"/>
+        <attr name="sp_ic_end_call" format="integer|reference"/>
+        <attr name="sp_ic_headset" format="integer|reference"/>
+        <attr name="sp_ic_keyboard" format="integer|reference"/>
+        <attr name="sp_ic_mic" format="integer|reference"/>
+        <attr name="sp_ic_mic_muted" format="integer|reference"/>
+        <attr name="sp_ic_switch_camera" format="integer|reference"/>
+        <attr name="sp_ic_video" format="integer|reference"/>
+        <attr name="sp_ic_video_muted" format="integer|reference"/>
+        <attr name="sp_ic_volume_muted" format="integer|reference"/>
+        <attr name="sp_ic_volume_on" format="integer|reference"/>
+        <attr name="sp_ic_volume_bt" format="integer|reference"/>
+        <attr name="sp_ic_volume_bt_muted" format="integer|reference"/>
+        <attr name="sp_ic_add_group" format="integer|reference"/>
+        <attr name="sp_ic_add_person" format="integer|reference"/>
+        <attr name="sp_ic_view_list" format="integer|reference"/>
+        <attr name="sp_ic_edit" format="integer|reference"/>
+        <attr name="sp_ic_contact_picture" format="integer|reference"/>
+
+        <attr name="sp_call_manager_small_button" format="integer|reference"/>
+
+        <!-- Icons for action bar. We may use the same or different icons on
+         the AB -->
+        <attr name="sp_ic_dial_pad_ab" format="integer|reference"/>
+        <attr name="sp_ic_call_manager_ab" format="integer|reference"/>
+        <attr name="sp_ic_ab_video" format="integer|reference"/>     <!-- video icon on action bar -->
+
+
+        <!-- Attributes for dial button, text color, button shape itself -->
+        <attr name="sp_dial_button_primary_color" format="reference|color"/>
+        <attr name="sp_dial_button_secondary_color" format="reference|color"/>
+        <attr name="sp_dial_button" format="reference|integer"/>
+
+        <attr name="sp_call_button_background" format="reference|color"/>
+        <attr name="sp_hangup_button_background" format="reference|color"/>
+        <attr name="sp_decline_button_background" format="reference|color"/>
+        <attr name="sp_accept_button_background" format="reference|color"/>
+
+        <attr name="sp_call_manager_line_background" format="reference|color"/>
+        <attr name="sp_call_manager_divider" format="reference|color"/>
+
+        <!-- Round button -->
+        <attr name="sp_button_round" format="reference|integer"/>
+
+        <attr name="sp_drawer_button" format="reference|integer"/>
+        <attr name="sp_drawer_shadow" format="reference|integer"/>
+
+        <!-- Colour of the main divider around texts, etc -->
+        <attr name="sp_divider_color" format="reference|color"/>
+
+        <attr name="sp_sas_verified_color" format="reference|color"/>
+
+        <attr name="sp_ab_title_style" format="reference" />
+        <attr name="sp_ab_subtitle_style" format="reference" />
+
+    </declare-styleable>
+
+    <declare-styleable name="CircleImageSelectable">
+        <attr name="sp_round_image_diameter" format="reference|dimension"/>
+        <attr name="sp_round_image_stroke_width" format="reference|dimension"/>
+        <attr name="sp_round_image_stroke_color" format="reference|color"/>
+        <attr name="sp_round_image_shadow_color" format="reference|color"/>
+    </declare-styleable>
+
+
+    <!-- ************** Styleables for SCA part ****************** -->
+
+    <declare-styleable name="BezelImageView">
+        <attr name="maskDrawable" format="reference" />
+        <attr name="borderDrawable" format="reference" />
+    </declare-styleable>
+
+    <declare-styleable name="ContactBrowser">
+        <attr name="contact_browser_list_padding_left" format="dimension"/>
+        <attr name="contact_browser_list_padding_right" format="dimension"/>
+        <attr name="contact_browser_background" format="reference"/>
+    </declare-styleable>
+
+    <declare-styleable name="ContactListItemView">
+        <attr name="list_item_height" format="dimension"/>
+        <attr name="list_section_header_height" format="dimension"/>
+        <attr name="activated_background" format="reference"/>
+        <attr name="section_header_background" format="reference"/>
+        <attr name="list_item_textColorPrimary" format="color" />
+        <attr name="list_item_textColorSecondary" format="color" />
+        <attr name="list_item_divider" format="reference"/>
+        <attr name="list_item_padding_top" format="dimension"/>
+        <attr name="list_item_padding_right" format="dimension"/>
+        <attr name="list_item_padding_bottom" format="dimension"/>
+        <attr name="list_item_padding_left" format="dimension"/>
+        <attr name="list_item_gap_between_image_and_text" format="dimension"/>
+        <attr name="list_item_gap_between_label_and_data" format="dimension"/>
+        <attr name="list_item_presence_icon_margin" format="dimension"/>
+        <attr name="list_item_presence_icon_size" format="dimension"/>
+        <attr name="list_item_photo_size" format="dimension"/>
+        <attr name="list_item_profile_photo_size" format="dimension"/>
+        <attr name="list_item_prefix_highlight_color" format="color"/>
+        <attr name="list_item_header_text_indent" format="dimension" />
+        <attr name="list_item_header_text_color" format="color" />
+        <attr name="list_item_header_text_size" format="dimension" />
+        <attr name="list_item_header_height" format="dimension" />
+        <attr name="list_item_header_underline_height" format="dimension" />
+        <attr name="list_item_header_underline_color" format="color" />
+        <attr name="list_item_contacts_count_text_color" format="color" />
+        <attr name="list_item_text_indent" format="dimension" />
+        <attr name="list_item_contacts_count_text_size" format="dimension" />
+        <attr name="list_item_data_width_weight" format="integer" />
+        <attr name="list_item_label_width_weight" format="integer" />
+        <attr name="list_item_name_text_color" format="color"/>
+        <attr name="list_item_text_offset_top" format="dimension"/>
+        <attr name="list_item_name_text_size" format="dimension"/>
+        <attr name="list_item_background_color" format="reference" />
+    </declare-styleable>
+
+    <declare-styleable name="InterpolatingLayout_Layout">
+        <attr name="layout_narrowParentWidth" format="dimension"/>
+        <attr name="layout_narrowWidth" format="dimension"/>
+        <attr name="layout_narrowMarginLeft" format="dimension"/>
+        <attr name="layout_narrowMarginRight" format="dimension"/>
+        <attr name="layout_narrowPaddingLeft" format="dimension"/>
+        <attr name="layout_narrowPaddingRight" format="dimension"/>
+        <attr name="layout_wideParentWidth" format="dimension"/>
+        <attr name="layout_wideWidth" format="dimension"/>
+        <attr name="layout_wideMarginLeft" format="dimension"/>
+        <attr name="layout_wideMarginRight" format="dimension"/>
+        <attr name="layout_widePaddingLeft" format="dimension"/>
+        <attr name="layout_widePaddingRight" format="dimension"/>
+    </declare-styleable>
+
+    <declare-styleable name="ScCallLog">
+        <attr name="call_log_primary_text_color" format="color" />
+        <attr name="call_log_primary_background_color" format="color" />
+        <attr name="call_log_secondary_text_color" format="color" />
+        <attr name="call_log_secondary_background_color" format="color" />
+        <attr name="call_log_header_color" format="color" />
+    </declare-styleable>
+
+    <declare-styleable name="ProportionalLayout">
+        <attr name="direction" format="string"/>
+        <attr name="ratio" format="float"/>
+    </declare-styleable>
+
+    <declare-styleable name="Favorites">
+        <attr name="favorites_padding_bottom" format="dimension" />
+    </declare-styleable>
+
+    <declare-styleable name="GlowPadView">
+        <attr name="android:gravity"/>
+
+        <!-- Reference to an array resource that be shown as targets around a circle. -->
+        <attr name="targetDrawables" format="reference"/>
+
+        <!-- Reference to an array resource that be used as description for the targets around the circle. -->
+        <attr name="targetDescriptions" format="reference"/>
+
+        <!-- Reference to an array resource that be used to announce the directions with targets around the circle. -->
+        <attr name="directionDescriptions" format="reference"/>
+
+        <!-- Sets a drawable as the center. -->
+        <attr name="handleDrawable" format="reference"/>
+
+        <!-- Drawable to use for wave ripple animation. -->
+        <attr name="outerRingDrawable" format="reference"/>
+
+        <!-- Drawble used for drawing points -->
+        <attr name="pointDrawable" format="reference"/>
+
+        <!-- Inner radius of glow area. -->
+        <attr name="innerRadius" format="dimension"/>
+
+        <!-- Outer radius of glow area. Target icons will be drawn on this circle. -->
+        <attr name="outerRadius" format="dimension"/>
+
+        <!-- Size of target radius. Points within this distance of target center is a "hit". -->
+        <!--
+        <attr name="hitRadius" format="dimension"/>
+        -->
+
+        <!-- Radius of glow under finger. -->
+        <attr name="glowRadius" format="dimension"/>
+
+        <!-- Tactile feedback duration for actions. Set to '0' for no vibration. -->
+        <attr name="vibrationDuration" format="integer"/>
+
+        <!-- How close we need to be before snapping to a target. -->
+        <attr name="snapMargin" format="dimension"/>
+
+        <!-- Number of waves/chevrons to show in animation. -->
+        <attr name="feedbackCount" format="integer"/>
+
+        <!-- Used when the handle shouldn't wait to be hit before following the finger -->
+        <attr name="alwaysTrackFinger" format="boolean"/>
+
+        <!-- Determine whether the glow pad is allowed to scale to fit the bounds indicated
+            by its parent. If this is set to false, no scaling will occur. If this is set to true
+            scaling will occur to fit for any axis in which gravity is set to center. -->
+        <attr name="allowScaling" format="boolean" />
+    </declare-styleable>
+
+    <declare-styleable name="ResizingText">
+        <attr name="resizing_text_min_size" format="dimension"/>
+    </declare-styleable>
+
+</resources>

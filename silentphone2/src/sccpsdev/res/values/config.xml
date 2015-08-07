@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+// +++LICENSE_BEGIN+++
+/*
+ * Copyright © 2014, Silent Circle
+ * All rights reserved.
+ */
+// +++LICENSE_END+++
+ -->
+
+<!-- Setup for SCCPS-dev configuration -->
+
+<resources>
+    <bool name="use_dev_network">true</bool>
+    <integer name="dev_network_config">1</integer>
+</resources>

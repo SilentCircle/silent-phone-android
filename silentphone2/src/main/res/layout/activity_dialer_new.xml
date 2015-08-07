@@ -1,0 +1,124 @@
+<!-- A DrawerLayout is intended to be used as the top-level content view using match_parent for both width and height to consume the full space available. -->
+<android.support.v4.widget.DrawerLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:id="@+id/drawer_layout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fitsSystemWindows="true"
+        tools:context="com.silentcircle.silentphone2.activities.DialerActivity">
+
+    <!-- As the main content view, the view below consumes the entire
+         space available using match_parent in both dimensions. -->
+    <FrameLayout
+            android:id="@+id/dialer_main_layout"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+        <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical">
+
+            <!-- We use a Toolbar so that our drawer can be displayed
+         in front of the action bar -->
+            <android.support.v7.widget.Toolbar
+                    android:id="@+id/dialer_toolbar"
+                    android:layout_height="wrap_content"
+                    android:layout_width="match_parent"
+                    android:minHeight="?attr/actionBarSize"
+                    android:background="@color/black_background">
+                <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical">
+                    <TextView android:id="@+id/title"
+                              android:layout_width="wrap_content"
+                              android:layout_height="wrap_content"
+                              android:textAppearance="?android:attr/textAppearanceMedium"
+                              android:textColor="?sp_drawer_header_text_color"
+                              android:singleLine="true"/>
+
+                    <TextView android:id="@+id/sub_title"
+                              android:layout_width="wrap_content"
+                              android:layout_height="wrap_content"
+                              android:textAppearance="?android:attr/textAppearanceSmall"
+                              android:textColor="?sp_drawer_header_text_color"
+                              android:singleLine="true"/>
+
+                </LinearLayout>
+            </android.support.v7.widget.Toolbar>
+<!--
+            <TextView
+                    style="?sp_ab_subtitle_style"
+                    android:id="@+id/sub_title"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingLeft="@dimen/dialpad_text_button_padding"
+                    android:maxLines="1"
+                    tools:text="1 555-222-3333"/>
+-->
+            <FrameLayout
+                    android:id="@+id/dial_container"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent">
+            <!-- The main contacts grid -->
+                <FrameLayout
+                        android:layout_height="match_parent"
+                        android:layout_width="match_parent"
+                        android:id="@+id/dial_frame"
+                        android:clipChildren="false" />
+            </FrameLayout>
+        </LinearLayout>
+
+        <FrameLayout
+                android:id="@+id/floating_action_button_container"
+                android:background="@drawable/fab_blue"
+                android:layout_width="@dimen/floating_action_button_width"
+                android:layout_height="@dimen/floating_action_button_height"
+                android:layout_marginBottom="@dimen/floating_action_button_margin_bottom"
+                android:layout_gravity="center_horizontal|bottom">
+
+            <ImageButton
+                    android:id="@+id/floating_action_button"
+                    android:background="@drawable/floating_action_button"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:contentDescription="Dial pad"
+                    android:src="?sp_ic_dial_pad"/>
+
+        </FrameLayout>
+
+        <!-- Host container for the contact tile drag shadow -->
+        <FrameLayout
+                android:id="@+id/activity_overlay"
+                android:layout_height="match_parent"
+                android:layout_width="match_parent">
+            <ImageView
+                    android:id="@+id/contact_tile_drag_shadow_overlay"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:visibility="gone"
+                    android:importantForAccessibility="no" />
+        </FrameLayout>
+
+    </FrameLayout>
+
+    <!-- android:layout_gravity="start" tells DrawerLayout to treat
+         this as a sliding drawer on the left side for left-to-right
+         languages and on the right side for right-to-left languages.
+         If you're not building against API 17 or higher, use
+         android:layout_gravity="left" instead. -->
+    <!-- The drawer is given a fixed width in dp and extends the full height of
+         the container. -->
+    <fragment
+            android:id="@+id/dial_content_drawer"
+            android:layout_width="@dimen/navigation_drawer_width"
+            android:layout_height="match_parent"
+            android:layout_gravity="start"
+            android:fitsSystemWindows="true"
+            android:name="com.silentcircle.silentphone2.fragments.DialDrawerFragment"
+            tools:layout="@layout/dialer_drawer"/>
+
+</android.support.v4.widget.DrawerLayout>

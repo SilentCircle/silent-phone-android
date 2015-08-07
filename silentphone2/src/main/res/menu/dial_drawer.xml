@@ -1,0 +1,45 @@
+<!--
+// +++LICENSE_BEGIN+++
+/*
+ * Copyright © 2014, Silent Circle
+ * All rights reserved.
+ */
+// +++LICENSE_END+++
+ -->
+
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+      xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item android:id="@+id/dial_menu_keystore"
+          android:title="@string/key_store_title"
+          app:showAsAction="never"/>
+
+    <item android:id="@+id/dial_menu_re_provision"
+          android:title="@string/re_provision"
+          app:showAsAction="never"/>
+
+    <item android:id="@+id/dial_menu_exit"
+          android:title="@string/logout"
+          app:showAsAction="never"/>
+
+
+    <group android:id="@+id/dial_group_develop"
+            android:visible="false">
+
+        <item android:id="@+id/dial_menu_production"
+              android:title="@string/switch_to_production"
+              app:showAsAction="never"/>
+
+        <item android:id="@+id/dial_menu_develop"
+              android:title="@string/switch_to_develop"
+              app:showAsAction="never"/>
+
+        <item android:id="@+id/dial_menu_answer_on"
+              android:title="@string/switch_auto_answer_on"
+              app:showAsAction="never"/>
+
+        <item android:id="@+id/dial_menu_answer_off"
+              android:title="@string/switch_auto_answer_off"
+              app:showAsAction="never"/>
+    </group>
+</menu>

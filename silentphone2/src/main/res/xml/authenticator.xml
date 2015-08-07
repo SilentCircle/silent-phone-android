@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<account-authenticator xmlns:android="http://schemas.android.com/apk/res/android"
+                       android:accountType="com.silentcircle.account"
+                       android:icon="@drawable/new_logo_sc_notext"
+                       android:smallIcon="@drawable/new_logo_sc_notext"
+                       android:label="@string/account_manager_label"/>

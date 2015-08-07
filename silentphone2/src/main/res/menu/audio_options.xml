@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+// +++LICENSE_BEGIN+++
+/*
+ * Copyright © 2014, Silent Circle
+ * All rights reserved.
+ */
+// +++LICENSE_END+++
+ -->
+
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <group android:checkableBehavior="single">
+        <item android:id="@+id/audio_bt"
+              android:title="@string/audio_bt" />
+        <item android:id="@+id/audio_speaker"
+              android:title="@string/audio_speaker" />
+        <item android:id="@+id/audio_ear_phone"
+              android:title="@string/audio_ear_phone" />
+    </group>
+</menu>

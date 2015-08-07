@@ -1,0 +1,302 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+// +++LICENSE_BEGIN+++
+/*
+ * Copyright © 2014, Silent Circle
+ * All rights reserved.
+ */
+// +++LICENSE_END+++
+ -->
+
+<resources
+        xmlns:tools="http://schemas.android.com/tools"
+        tools:ignore="MissingTranslation,UnusedResources">
+
+    <string name="app_name" translatable="false">Silent Phone</string>
+    <string name="silent_circle" translatable="false">Silent Circle</string>
+    <string name="by_silent_circle" translatable="false">by Silent Circle</string>
+    <string name="app_name_sca" translatable="false">Silent Phone Contacts</string>
+
+    <string name="switch_to_production" translatable="false">Production configuration</string>
+    <string name="switch_to_develop" translatable="false">Development configuration</string>
+    <string name="switch_auto_answer_on" translatable="false">Auto answer on</string>
+    <string name="switch_auto_answer_off" translatable="false">Auto answer off</string>
+    <string name="switch_log_on" translatable="false">Logging on</string>
+    <string name="switch_log_off" translatable="false">Logging off</string>
+
+    <!-- SPA-565 : the following strings need to be translated in order to fixed the bug -->
+    <!-- as Werner commented in the ticket, these strings may not be seen in production build -->
+    <string name="active_configuration" translatable="false">Active configuration </string>
+    <string name="production" translatable="false">Production</string>
+    <string name="develop" translatable="false">Develop</string>
+    <string name="normal" translatable="false">normal</string>
+    <string name="device_information" translatable="false">Device information </string>
+    <string name="screen_density" translatable="false">Screen density </string>
+    <string name="auto_answered" translatable="false">Auto answered</string>
+    <!-- end SPA-565 -->
+
+    <!-- The font-family to use for the text inside the searchbox.
+     Do not translate. -->
+    <string name="search_font_family" translatable="false">sans-serif</string>
+
+    <!-- Do not translate upper case letter /digit abbreviations -->
+    <string name="in_call_drawer_zrtp" translatable="false">ZRTP</string>
+    <string name="in_call_drawer_sdes" translatable="false">SDP/S</string>
+    <string name="in_call_drawer_tls" translatable="false">TLS</string>
+
+    <string name="crypto_shared_secrets_rs1" translatable="false">RS1</string>
+    <string name="crypto_shared_secrets_rs2" translatable="false">RS2</string>
+    <string name="crypto_shared_secrets_aux" translatable="false">AUX</string>
+    <string name="crypto_shared_secrets_pbx" translatable="false">PBX</string>
+
+    <string name="dial_symbol" translatable="false">&#9990;</string>
+    <!-- The digit to be displayed on the 0 key of the dialpad [CHAR LIMIT=1] -->
+    <string name="dialpad_0_number" translatable="false">0</string>
+    <!-- The digit to be displayed on the 1 key of the dialpad [CHAR LIMIT=1] -->
+    <string name="dialpad_1_number" translatable="false">1</string>
+    <!-- The digit to be displayed on the 2 key of the dialpad [CHAR LIMIT=1] -->
+    <string name="dialpad_2_number" translatable="false">2</string>
+    <!-- The digit to be displayed on the 3 key of the dialpad [CHAR LIMIT=1] -->
+    <string name="dialpad_3_number" translatable="false">3</string>
+    <!-- The digit to be displayed on the 4 key of the dialpad [CHAR LIMIT=1] -->
+    <string name="dialpad_4_number" translatable="false">4</string>
+    <!-- The digit to be displayed on the 5 key of the dialpad [CHAR LIMIT=1] -->
+    <string name="dialpad_5_number" translatable="false">5</string>
+    <!-- The digit to be displayed on the 6 key of the dialpad [CHAR LIMIT=1] -->
+    <string name="dialpad_6_number" translatable="false">6</string>
+    <!-- The digit to be displayed on the 7 key of the dialpad [CHAR LIMIT=1] -->
+    <string name="dialpad_7_number" translatable="false">7</string>
+    <!-- The digit to be displayed on the 8 key of the dialpad [CHAR LIMIT=1] -->
+    <string name="dialpad_8_number" translatable="false">8</string>
+    <!-- The digit to be displayed on the 9 key of the dialpad [CHAR LIMIT=1] -->
+    <string name="dialpad_9_number" translatable="false">9</string>
+    <!-- Do not translate. -->
+    <string name="dialpad_star_number" translatable="false">*</string>
+    <!-- Do not translate. -->
+    <string name="dialpad_pound_number" translatable="false">#</string>
+
+    <!-- Do not translate. -->
+    <string name="dialpad_0_letters" translatable="false">+</string>
+    <!-- Do not translate. -->
+    <string name="dialpad_1_letters" translatable="false"></string>
+    <!-- Do not translate. -->
+    <string name="dialpad_2_letters" translatable="false">ABC</string>
+    <!-- Do not translate. -->
+    <string name="dialpad_3_letters" translatable="false">DEF</string>
+    <!-- Do not translate. -->
+    <string name="dialpad_4_letters" translatable="false">GHI</string>
+    <!-- Do not translate. -->
+    <string name="dialpad_5_letters" translatable="false">JKL</string>
+    <!-- Do not translate. -->
+    <string name="dialpad_6_letters" translatable="false">MNO</string>
+    <!-- Do not translate. -->
+    <string name="dialpad_7_letters" translatable="false">PQRS</string>
+    <!-- Do not translate. -->
+    <string name="dialpad_8_letters" translatable="false">TUV</string>
+    <!-- Do not translate. -->
+    <string name="dialpad_9_letters" translatable="false">WXYZ</string>
+    <!-- Do not translate. -->
+    <string name="dialpad_star_letters" translatable="false"></string>
+    <!-- Do not translate. -->
+    <string name="dialpad_pound_letters" translatable="false"></string>
+
+
+    <!-- Font family used when drawing letters for letter tile avatars.
+     Do not translate. -->
+    <string name="letter_tile_letter_font_family" translatable="false">sans-serif-light</string>
+    <!-- String resource for the font-family to use for the call log activity's title
+         Do not translate. -->
+    <string name="call_log_activity_title_font_family" translatable="false">sans-serif-light</string>
+    <!-- String resource for the font-family to use for the full call history footer
+         Do not translate. -->
+    <string name="view_full_call_history_font_family" translatable="false">sans-serif</string>
+
+    <string name="menu_show_zid" translatable="false">Show ZID data</string>
+
+    <string name="zid_line_zid" translatable="false">Partner ZID:</string>
+    <string name="zid_line_own_zid" translatable="false">Own ZID:</string>
+    <string name="zid_line_flag" translatable="false">Flag:</string>
+    <string name="zid_line_since" translatable="false">Secure since:</string>
+    <string name="zid_line_name" translatable="false">Name:</string>
+    <string name="zid_line_no_name" translatable="false">Name not set</string>
+    <string name="zid_line_rs1" translatable="false">H(RS1):</string>
+    <string name="zid_line_rs2" translatable="false">H(RS2):</string>
+    <string name="zid_line_ttl" translatable="false">Time-to-live:</string>
+    <string name="zid_line_ttl_max" translatable="false">indefinitely</string>
+    <string name="zid_line_mitm" translatable="false">H(PBX):</string>
+
+    <!--
+     Information strings, usually used for logging and trace only. An applications shall not
+     show this info to the user. The application may use these info to trigger actions, for
+     example if ZRTP reports the s1_c010 message then it may change the display to secure state,
+     or it may implement a "progress bar" to show ongoing ZRTP activities, etc.
+
+     Thus the explanation string can be empty.
+
+     The string name coding is:
+       s1   - message is in info message group
+       cnnn - sequence number
+
+     The coding maps to the codes (enumerations) defined in the core ZRTP library (ZrtpCodes.h).
+    -->
+    <string name="s1_c001" translatable="false">Hello received, preparing a Commit</string>
+    <string name="s1_c001_explanation" translatable="false">Intentionally left empty</string>
+    <string name="s1_c002" translatable="false">Commit: Generated a public DH key</string>
+    <string name="s1_c002_explanation" translatable="false">Intentionally left empty</string>
+    <string name="s1_c003" translatable="false">Responder: Commit received, preparing DHPart1</string>
+    <string name="s1_c003_explanation" translatable="false">Intentionally left empty</string>
+    <string name="s1_c004" translatable="false">DH1Part: Generated a public DH key</string>
+    <string name="s1_c004_explanation" translatable="false">Intentionally left empty</string>
+    <string name="s1_c005" translatable="false">Initiator: DHPart1 received, preparing DHPart2</string>
+    <string name="s1_c005_explanation" translatable="false">Intentionally left empty</string>
+    <string name="s1_c006" translatable="false">Responder: DHPart2 received, preparing Confirm1</string>
+    <string name="s1_c006_explanation" translatable="false">Intentionally left empty</string>
+    <string name="s1_c007" translatable="false">Initiator: Confirm1 received, preparing Confirm2</string>
+    <string name="s1_c007_explanation" translatable="false">Intentionally left empty</string>
+    <string name="s1_c008" translatable="false">Responder: Confirm2 received, preparing Conf2Ack</string>
+    <string name="s1_c008_explanation" translatable="false">Intentionally left empty</string>
+    <string name="s1_c009" translatable="false">At least one retained secrets matches - security OK</string>
+    <string name="s1_c009_explanation" translatable="false">Intentionally left empty</string>
+    <string name="s1_c010" translatable="false">Entered secure state</string>
+    <string name="s1_c010_explanation" translatable="false">Intentionally left empty</string>
+    <string name="s1_c011" translatable="false">No more security for this session</string>
+    <string name="s1_c011_explanation" translatable="false">Intentionally left empty</string>
+
+    <!--
+     Text and explanation strings for SRTP/ZRTP waring. User may continue with call, it's
+     still secure. However, the user shall read the explanation and follow hints.
+
+     The string name coding is:
+       s2   - message is in warning message group
+       cnnn - sequence number
+    -->
+
+
+    <!--
+    Not used, DH4096 was discarded
+    <string name="s2_c001">Commit contains an AES256 cipher but does not offer a Diffie-Helman 4096</string>
+    <string name="s2_c001_explanation"></string>
+    -->
+
+    <string name="s2_c002" translatable="false">Received a GoClear message</string>
+    <string name="s2_c002_explanation" translatable="false">Intentionally left empty</string>
+
+    <!--
+    Not used, DH4096 was discared
+    <string name="s2_c003">Hello offers an AES256 cipher but does not offer a Diffie-Helman 4096</string>
+    <string name="s2_c003_explanation"></string>
+    -->
+
+    <string name="s2_c004" translatable="false">No retained secret matches - verify SAS.</string>
+    <string name="s2_c004_explanation" translatable="false">You should verbally compare this authentication code with your partner. If it doesn’t match, it indicates the presence of a wiretapper.</string>
+    <string name="s2_c005" translatable="false">Internal ZRTP packet CRC mismatch - packet dropped.</string>
+    <string name="s2_c005_explanation" translatable="false">The application received wrong ZRTP security data. Often indicates a bad network connection and you may try to setup a new call.</string>
+    <string name="s2_c006" translatable="false">Dropping packet because SRTP authentication failed.</string>
+    <string name="s2_c006_explanation" translatable="false">The application received unauthenticated media. May indicate mis-routed packets, network errors, or attempted injection of false media packets from a third party.  You may try to setup a new call.</string>
+    <string name="s2_c007" translatable="false">Dropping packet because SRTP replay check failed.</string>
+    <string name="s2_c007_explanation" translatable="false">The application received repeated media. Often indicates a bad network connection and you may try to setup a new call.</string>
+    <string name="s2_c008" translatable="false">You MUST check SAS with your partner.</string>
+    <string name="s2_c008_explanation" translatable="false">You must verbally compare the authentication code with your partner. If it doesn’t match, it indicates the presence of a wiretapper.</string>
+
+    <string name="s2_c050" translatable="false">Received Hallo hash does not match computed Hello hash.</string>
+    <string name="s2_c050_explanation" translatable="false">This may indicate a software error, or a possible attempted attack. You must verbally compare the authentication code with your partner. If it doesn’t match, it indicates the presence of a wiretapper.</string>
+    <string name="s2_c051" translatable="false">Parsing of received SRTP packet failed</string>
+    <!--
+     Text and explanation strings for ZRTP errors. User shall terminated the call because it's not secure.
+     If such an error happens an set up a new call.
+
+     The string name coding is:
+       s3   - message is in error (severe) message group
+       cnnn - sequence number
+    -->
+
+    <string name="s3_c001" translatable="false">Hash HMAC check of Hello failed!</string>
+    <string name="s3_c001_explanation" translatable="false">ZRTP Hello message integrity failure. May indicate software error or possible attack. Close this call and setup a new call.</string>
+    <string name="s3_c002" translatable="false">Hash HMAC check of Commit failed!</string>
+    <string name="s3_c002_explanation" translatable="false">ZRTP Commit message integrity failure. May indicate software error or possible attack. Close this call and setup a new call.</string>
+    <string name="s3_c003" translatable="false">Hash HMAC check of DHPart1 failed!</string>
+    <string name="s3_c003_explanation" translatable="false">A check during security key exchange failed. May indicate network problem. Close this call and setup a new call.</string>
+    <string name="s3_c004" translatable="false">Hash HMAC check of DHPart2 failed!</string>
+    <string name="s3_c004_explanation" translatable="false">ZRTP DHPart2 message integrity failure. May indicate software error or possible attack. Close this call and setup a new call.</string>
+    <string name="s3_c005" translatable="false">Cannot send data - connection or peer down?</string>
+    <string name="s3_c005_explanation" translatable="false">Network connection lost during security setup. This indicates a network problem. Close this call and setup a new call.</string>
+    <string name="s3_c006" translatable="false">Internal protocol error occurred!</string>
+    <string name="s3_c006_explanation" translatable="false">Internal application error. Close this call, restart the programm and setup a new call.</string>
+    <string name="s3_c007" translatable="false">Cannot start a timer - internal resources exhausted?</string>
+    <string name="s3_c007_explanation" translatable="false">Internal application error. Close this call, restart the programm and setup a new call.</string>
+    <string name="s3_c008" translatable="false">Too many retries during ZRTP negotiation - connection or peer down?</string>
+    <string name="s3_c008_explanation" translatable="false">This indicates either a network problem or your partner’s software encountered a problem. Close this call and setup a new call.</string>
+
+    <!--
+     Text and explanation strings for ZRTP protocol errors as defined in RFC6189.
+     The string name coding is:
+       s4   - message is in ZRTP protocol error group
+       cnnn - decimal value of the error code defined in RFC6189
+    -->
+
+    <string name="s4_c016" translatable="false">Malformed packet (CRC OK, but wrong structure)</string>
+    <string name="s4_c016_explanation" translatable="false">May indicate a software error, or a possible attempted attack. Close this call and setup a new call.</string>
+    <string name="s4_c020" translatable="false">Critical software error</string>
+    <string name="s4_c020_explanation" translatable="false">Internal application error. Close this call, restart the app and setup a new call.</string>
+    <string name="s4_c048" translatable="false">Unsupported ZRTP version</string>
+    <string name="s4_c048_explanation" translatable="false">The other party does not support to correct ZRTP version. Please ask the other party to update the application.</string>
+
+    <!-- Currently not used
+    <string name="s4_c064">Hello components mismatch</string>
+    <string name="s4_c064_explanation"></string>
+    -->
+    <string name="s4_c081" translatable="false">Hash type not supported</string>
+    <string name="s4_c081_explanation" translatable="false">The other party tried to use an unsupported security (HASH) algorithm. Close this call and ask the other party to update the application.</string>
+    <string name="s4_c082" translatable="false">Cipher type not supported</string>
+    <string name="s4_c082_explanation" translatable="false">The other party tried to use an unsupported encryption algorithm. Close this call and ask the other party to update the application.</string>
+    <string name="s4_c083" translatable="false">Public key exchange not supported</string>
+    <string name="s4_c083_explanation" translatable="false">The other party tried to use an unsupported key exchange algorithm. Close this call and ask the other party to update the application.</string>
+    <string name="s4_c084" translatable="false">SRTP auth. tag not supported</string>
+    <string name="s4_c084_explanation" translatable="false">The other party tried to use an unsupported secure media authentication algorithm. Close this call and ask the other party to update the application.</string>
+    <string name="s4_c085" translatable="false">SAS scheme not supported</string>
+    <string name="s4_c085_explanation" translatable="false">The other party tried to use an unsupported Short Authentication String (SAS) algorithm. Close this call and ask the other party to update the application.</string>
+
+    <!-- Currently not used
+    <string name="s4_c086">No shared secret available, DH mode required</string>
+    <string name="s4_c086_explanation"></string>
+    -->
+    <string name="s4_c097" translatable="false">DH Error: bad pvi or pvr ( == 1, 0, or p-1)</string>
+    <string name="s4_c097_explanation" translatable="false">The other party computed insecure key exchange data. Close this call and setup a new call.</string>
+    <string name="s4_c098" translatable="false">DH Error: hvi != hashed data</string>
+    <string name="s4_c098_explanation" translatable="false">ZRTP Hash Commit did not match DH packet. Close this call and setup a new call.</string>
+    <string name="s4_c099" translatable="false">Received relayed SAS from untrusted MiTM</string>
+    <string name="s4_c099_explanation" translatable="false">Wrong SAS relay behavior from an untrusted PBX. Please inform administrator of the PBX if possible.</string>
+    <string name="s4_c112" translatable="false">Authentication Error: Bad Confirm packet HMAC</string>
+    <string name="s4_c112_explanation" translatable="false">ZRTP Confirm message integrity failure. Close this call and setup a new call.</string>
+
+    <!-- Currently not used
+    <string name="s4_c128">Nonce reuse</string>
+    <string name="s4_c128_explanation"></string>
+    -->
+    <string name="s4_c144" translatable="false">Duplicate ZIDs in Hello Packets</string>
+    <string name="s4_c144_explanation" translatable="false">Your VoIP client and the other party’s client use the same ZRTP id (ZID). You may avoid this happening again if you dial *##*9787257* to generate a new ZID.</string>
+
+    <!-- Currently not used
+    <string name="s4_c160">GoClear packet received, but not allowed</string>
+    <string name="s4_c160_explanation"></string>
+    -->
+
+    <!--
+    Text and explanation strings for ZRTP/PBX enrollment functions. If the application
+    supports enrollemnt it may decide what to show to the user.
+
+     The string name coding is:
+       s5   - message is in enumeartion function message group
+       cnnn - sequence number
+    -->
+
+    <string name="s5_c000" translatable="false">Trusted MitM enrollment requested</string>
+    <string name="s5_c000_explanation" translatable="false">Intentionally left empty</string>
+    <string name="s5_c001" translatable="false">Trusted MitM enrollment canceled by user</string>
+    <string name="s5_c001_explanation" translatable="false">Intentionally left empty</string>
+    <string name="s5_c003" translatable="false">Trusted MitM enrollment failed</string>
+    <string name="s5_c003_explanation" translatable="false">Intentionally left empty</string>
+    <string name="s5_c004" translatable="false">Trusted MitM enrollment OK</string>
+    <string name="s5_c004_explanation" translatable="false">Intentionally left empty</string>
+
+</resources>

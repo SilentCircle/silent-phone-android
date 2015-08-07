@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+// +++LICENSE_BEGIN+++
+/*
+ * Copyright © 2014, Silent Circle
+ * All rights reserved.
+ */
+// +++LICENSE_END+++
+ -->
+
+<resources
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:ignore="MissingTranslation">
+
+    <!-- Copied from Android system resources -->
+    <bool name="preferences_prefer_dual_pane">false</bool>
+
+    <bool name="quickcontact_two_panel">false</bool>
+    <bool name="contact_all_list_show_card_frame">false</bool>
+
+    <!-- large devices (tablets) only have speakers, no ear piece -->
+    <bool name="has_speaker_only">false</bool>
+
+    <bool name="use_dev_network">false</bool>
+    <integer name="dev_network_config">0</integer>
+
+    <string name="sccps_production_base_url" translatable="false">https://sccps.silentcircle.com/</string>
+    <string name="sccps_development_base_url" translatable="false">https://sccps-dev.silentcircle.com/</string>
+
+    <string name="sccps_device_management_base" translatable="false">v1/me/device/</string>
+    <string name="sccps_user_management_base" translatable="false">v1/user/</string>
+    <string name="sccps_user_management_base_alt" translatable="false">v1/me/</string>
+    <string name="sccps_did_selection_base" translatable="false">v1/me/numbers/available/</string>
+    <string name="sccps_did_set_number" translatable="false">v1/me/numbers/</string>
+
+    <string name="sccps_directory_request" translatable="false">v1/people/?terms=</string>
+</resources>

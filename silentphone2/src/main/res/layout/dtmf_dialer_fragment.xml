@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+// +++LICENSE_BEGIN+++
+/*
+ * Copyright © 2014, Silent Circle
+ * All rights reserved.
+ */
+// +++LICENSE_END+++
+ -->
+
+<LinearLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:id="@+id/top"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:paddingStart="@dimen/dialpad_horizontal_margin"
+        android:paddingEnd="@dimen/dialpad_horizontal_margin"
+        android:layoutDirection="ltr"
+        tools:context=".activities.InCallActivity">
+
+    <View
+            style="@style/DialpadHorizontalSeparator"
+            android:layout_height="1dp"
+            android:background="?sp_divider_color"/>
+
+    <!-- Text field area, with keyboard switch and delete button -->
+    <EditText
+            android:id="@+id/digits"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textAppearance="@style/DialpadDestinationTextAppearance"
+            android:gravity="center"
+            android:scrollHorizontally="true"
+            android:singleLine="true"
+            android:paddingLeft="10dp"
+            android:paddingTop="@dimen/activity_vertical_margin"
+            android:paddingBottom="@dimen/activity_vertical_margin"
+            android:textColor="?sp_dial_text_color"
+            android:textCursorDrawable="@null"
+            android:background="?sp_dial_text_background"
+            android:focusableInTouchMode="false"
+            tools:text="+1 (203) 499-6427"/>
+    <View
+            style="@style/DialpadHorizontalSeparator"
+            android:layout_height="1dp"
+            android:background="?sp_divider_color"/>
+
+
+    <View
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:background="@null"/>
+
+    <!-- Keypad section -->
+    <include
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginBottom="@dimen/activity_vertical_margin"
+            layout="@layout/dialpad"/>
+    <Button
+            android:id="@+id/back"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/back"
+            android:visibility="visible"/>
+</LinearLayout>

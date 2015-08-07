@@ -1,0 +1,201 @@
+<!-- 
+// +++LICENSE_BEGIN+++
+/*
+ * Copyright © 2014, Silent Circle
+ * All rights reserved.
+ */
+// +++LICENSE_END+++
+ -->
+
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                xmlns:tools="http://schemas.android.com/tools"
+                android:id="@+id/VideoFragmentLayout"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:keepScreenOn="true"
+                android:orientation="horizontal"
+                tools:context=".activities.InCallActivity"
+                tools:ignore="RtlHardcoded">
+    <!-- Check for RTL layout, may need specific adaptations -->
+
+
+    <com.silentcircle.silentphone2.video.SpVideoViewHw
+            android:id="@+id/VideoView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_alignParentRight="true"/>
+
+    <TextView
+            android:id="@+id/video_explanation"
+            style="@style/Widget.Silent.SimpleText.Large"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_above="@+id/ControlLayoutBottom"
+            android:background="@color/black_translucent"
+            android:visibility="invisible"
+            android:text="@string/video_control_explanation"
+            tools:visibility="visible"/>
+
+    <FrameLayout
+            android:id="@+id/VideoPreviewContainer"
+            android:layout_width="@dimen/video_preview_width"
+            android:layout_height="@dimen/video_preview_height"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentRight="true"
+            android:layout_marginTop="@dimen/activity_vertical_margin"
+            android:layout_marginRight="@dimen/activity_vertical_margin"
+            android:background="@drawable/preview_background">
+
+        <TextureView
+                android:id="@+id/VideoSurfacePreview"
+                android:layout_width="@dimen/video_preview_width_inner"
+                android:layout_height="@dimen/video_preview_height_inner"
+                android:layout_gravity="center"/>
+
+        <TextView
+                android:id="@+id/previewSecureState"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/video_preview_text_top_margin"
+                android:textAppearance="?android:attr/textAppearanceSmall"
+                android:layout_gravity="center_horizontal"
+                android:textColor="@color/black_green"
+                android:textStyle="bold"
+                android:background="@color/black_background_transparent"
+                android:text="@string/secstate_secure"/>
+
+        <ImageView
+                android:id="@+id/previewMuteState"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:visibility="invisible"
+                android:src="@drawable/ic_action_mic_muted_dark"
+                tools:visibility="visible"/>
+    </FrameLayout>
+
+    <LinearLayout
+            android:id="@+id/ControlLayoutTop"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentTop="true"
+            android:gravity="center_vertical"
+            android:orientation="vertical"
+            android:background="@color/black_translucent"
+            android:visibility="visible">
+
+        <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+            <Button
+                    android:id="@+id/video_stop"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="@dimen/button_height"
+                    android:layout_marginRight="10dp"
+                    android:visibility="gone"
+                    android:text="@string/stop_video"/>
+
+            <Button
+                    android:id="@+id/video_pause"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="@dimen/button_height"
+                    android:layout_marginLeft="10dp"
+                    android:visibility="gone"
+                    android:text="@string/pause_video"/>
+        </LinearLayout>
+
+        <TextView
+                android:id="@+id/secure_state"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/video_preview_text_top_margin"
+                android:textAppearance="?android:attr/textAppearanceLarge"
+                android:layout_gravity="center_horizontal"
+                android:textColor="@color/black_green"
+                android:textStyle="bold"
+                android:text="@string/secstate_secure"/>
+
+        <TextView
+                android:id="@+id/number"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/video_preview_text_top_margin"
+                android:textAppearance="?android:attr/textAppearanceSmall"
+                android:layout_gravity="right"
+                android:layout_marginRight="@dimen/activity_vertical_margin_small"
+                android:textColor="@color/white_translucent"
+                tools:text="Jane Doe"/>
+
+    </LinearLayout>
+
+    <LinearLayout
+            android:id="@+id/ControlLayoutBottom"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentBottom="true"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:background="@color/black_translucent"
+            android:visibility="visible">
+
+        <ImageButton
+                android:id="@+id/mute"
+                android:layout_width="wrap_content"
+                android:layout_height="@dimen/button_height"
+                android:background="@null"
+                android:paddingLeft="@dimen/activity_vertical_margin"
+                android:paddingRight="@dimen/activity_vertical_margin"
+                android:paddingStart="@dimen/activity_vertical_margin"
+                android:paddingEnd="@dimen/activity_vertical_margin"
+                android:src="@drawable/ic_action_mic_dark"
+                tools:visibility="visible" />
+
+        <ImageButton
+                android:id="@+id/switch_camera"
+                android:layout_width="wrap_content"
+                android:layout_height="@dimen/button_height"
+                android:background="@null"
+                android:paddingLeft="@dimen/activity_vertical_margin"
+                android:paddingRight="@dimen/activity_vertical_margin"
+                android:paddingStart="@dimen/activity_vertical_margin"
+                android:paddingEnd="@dimen/activity_vertical_margin"
+                android:src="@drawable/ic_action_switch_camera_dark"
+                android:visibility="gone"
+                tools:visibility="visible" />
+
+        <Space
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"/>
+
+        <ImageButton
+                android:id="@+id/VideoDecline"
+                android:layout_width="0dp"
+                android:layout_weight="2"
+                android:layout_height="@dimen/button_height"
+                android:layout_marginRight="10dp"
+                android:background="?sp_hangup_button_background"
+                android:contentDescription="@string/video_audio_mute"
+                android:scaleType="fitCenter"
+                android:visibility="visible"
+                android:src="?sp_ic_video_muted"/>
+
+        <ImageButton
+                android:id="@+id/VideoAccept"
+                android:layout_width="0dp"
+                android:layout_height="@dimen/button_height"
+                android:layout_weight="2"
+                android:layout_marginLeft="10dp"
+                android:contentDescription="@string/accept_video"
+                android:background="?sp_accept_button_background"
+                android:scaleType="fitCenter"
+                android:src="?sp_ic_video"/>
+    </LinearLayout>
+
+
+</RelativeLayout>

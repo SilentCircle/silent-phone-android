@@ -1,0 +1,29 @@
+#!/usr/bin/perl
+use strict; 
+use warnings;
+
+# Checks that DeviceDetectionVertu.java is the stubbed version
+
+# This path is relative to where this script lives in .build-release dir
+my $sourceFile = "../src/com/silentcircle/silentphone/utils/DeviceDetectionVertu.java";
+
+open (FSRC, $sourceFile) or die $!;
+my @src = <FSRC>;
+close(FSRC);
+
+my $srcString;
+for (@src)
+{
+    my $line = $_;
+    $line =~ s/\s//g;
+    $srcString .= $line;
+}
+
+if ($srcString =~ /publicstaticbooleanisVertu\(\)\{returnfalse;\}/)
+{
+    print "$sourceFile is OK.\n";
+    exit 0;
+}
+
+print "$sourceFile needs to be replaced with stubbed version.\n";
+exit 1;

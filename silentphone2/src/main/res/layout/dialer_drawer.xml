@@ -1,0 +1,173 @@
+<!--
+// +++LICENSE_BEGIN+++
+/*
+ * Copyright © 2014, Silent Circle
+ * All rights reserved.
+ */
+// +++LICENSE_END+++
+ -->
+
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+            xmlns:tools="http://schemas.android.com/tools"
+            style="@style/DrawerScrollStyle"
+            android:id="@+id/drawer_scroll"
+            tools:context=".activities.DialerActivity">
+
+    <LinearLayout
+            android:id="@+id/drawer_content"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            tools:context="com.silentcircle.silentphone2.fragments.DialDrawerFragment">
+
+        <TextView
+                style="@style/DrawerSectionTitle"
+                android:text="@string/provisioning_info"/>
+
+        <include
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/spacing_normal"
+                layout="@layout/dialer_drawer_user_info"/>
+
+        <Button
+                style="@style/Widget.Silent.TransparentButton"
+                android:id="@+id/show_oca_minutes"
+                android:text="@string/remaining_oca_minutes"
+                android:drawableLeft="?sp_ic_view_list"
+                android:drawableStart="?sp_ic_view_list"
+                android:visibility="gone"
+                tools:visibility="visible"/>
+
+        <include
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/spacing_normal"
+                layout="@layout/dialer_drawer_tos_privacy"/>
+
+        <TextView
+                android:id="@+id/drawer_sec_header"
+                style="@style/DrawerSectionTitle"
+                android:text="@string/security_options_header"/>
+
+        <include
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/spacing_normal"
+                layout="@layout/dialer_drawer_keystore"/>
+
+        <include
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/spacing_normal"
+                layout="@layout/dialer_drawer_sas_options"/>
+
+        <include
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/spacing_normal"
+                layout="@layout/dialer_drawer_nist_option"/>
+
+        <include
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/spacing_normal"
+                layout="@layout/dialer_drawer_native_call_option"/>
+
+        <TextView
+                style="@style/DrawerSectionTitle"
+                android:text="@string/other_settings"/>
+
+        <include
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/spacing_normal"
+                layout="@layout/dialer_drawer_ringtones"/>
+
+        <include
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/spacing_normal"
+                layout="@layout/dialer_drawer_dial_helper"/>
+
+        <include
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/spacing_normal"
+                layout="@layout/dialer_drawer_boot_option"/>
+
+        <include
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/spacing_normal"
+                layout="@layout/dialer_drawer_re_provision"/>
+
+
+        <include
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/spacing_normal"
+                layout="@layout/dialer_drawer_themes"/>
+
+        <include
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/spacing_normal"
+                layout="@layout/dialer_drawer_dropout"/>
+
+        <include
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/spacing_normal"
+                layout="@layout/dialer_drawer_traversal_option"/>
+
+        <include
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/spacing_normal"
+                layout="@layout/dialer_drawer_extended_menu"/>
+
+        <include
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/spacing_normal"
+                layout="@layout/dialer_drawer_media_relay"/>
+
+        <include
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/spacing_normal"
+                layout="@layout/dialer_drawer_force_traversal_option"/>
+
+        <TextView
+                style="@style/DrawerSectionTitle"
+                android:text="@string/build_info_header"/>
+
+        <TextView
+                style="@style/Widget.Silent.SimpleText.Small"
+                android:id="@+id/dial_drawer_build_number"
+                android:paddingTop="@dimen/spacing_normal"
+                android:paddingLeft="@dimen/spacing_normal"
+                android:paddingRight="@dimen/spacing_normal"
+                tools:text="#39"/>
+
+        <TextView
+                style="@style/Widget.Silent.SimpleText.Small"
+                android:paddingTop="@dimen/spacing_normal"
+                android:paddingLeft="@dimen/spacing_normal"
+                android:paddingRight="@dimen/spacing_normal"
+                android:id="@+id/dial_drawer_build_flavor"
+                tools:text="Normal"/>
+
+        <TextView
+                style="@style/Widget.Silent.SimpleText.Small"
+                android:id="@+id/dial_drawer_build_detail"
+                android:paddingTop="@dimen/spacing_normal"
+                android:paddingLeft="@dimen/spacing_normal"
+                android:paddingRight="@dimen/spacing_normal"
+                android:visibility="gone"
+                tools:text="some more details"
+                tools:visibility="visible"/>
+
+    </LinearLayout>
+</ScrollView>

@@ -1,0 +1,1969 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+// +++LICENSE_BEGIN+++
+/*
+ * Copyright © 2014, Silent Circle
+ * All rights reserved.
+ */
+// +++LICENSE_END+++
+-->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+
+    <string name="next">Next</string>
+    <string name="back">Back</string>
+    <string name="skip">Skip</string>
+    <string name="dismiss_call">Decline</string>
+    <string name="answer_call">Answer</string>
+    <string name="verify_infotext_top">Compare with partner</string>
+    <string name="verify_infotext_bottom">and enter partner’s name here</string>
+    <string name="accept_video">Accept</string>
+    <string name="close_dialog">Close</string>
+    <string name="cancel_dialog">Cancel</string>
+    <string name="confirm_dialog">Confirm</string>
+    <string name="provision_later">Later</string>
+    <string name="crypto_padlock">Padlock to show security state</string>
+    <string name="error_code">Error code: </string>
+    <string name="logout">Logout</string>
+
+    <!-- Enable translation of server provided SIP message. -->
+
+    <string name="sip_state_calling">Calling…</string>
+    <string name="sip_state_connecting">Connecting…</string>
+    <string name="sip_state_ringing">Ringing</string>
+    <string name="sip_state_ended">Call ended</string>
+    <string name="sip_state_online">Online</string>
+    <string name="sip_state_offline">Offline</string>
+    <string name="sip_error_register">Cannot register</string>
+    <string name="sip_error_generic">Cannot connect</string>
+    <string name="sip_error_decline">Call declined</string>
+    <string name="sip_error_no_user">User not found</string>
+    <string name="sip_error_no_cover">No radio coverage</string>
+    <string name="sip_error_no_server">Could not reach server</string>
+
+    <!-- incoming call type message -->
+    <string name="call_type_audio">Incoming call</string>
+    <string name="call_error">Error</string>
+
+    <!-- Strings to display security status, handle with care during translations -->
+    <string name="secstate_secure">SECURE</string>
+    <string name="secstate_secure_question">SECURE?</string>
+    <string name="secstate_not_secure">Not SECURE</string>
+    <string name="secstate_looking">Looking for peer</string>
+    <string name="secstate_going_sec">Going secure</string>
+    <string name="secstate_sec_disabled">Not SECURE - not enabled</string>
+    <string name="to_server_only">to server</string>
+
+    <!-- Strings for the crypto panel -->
+    <string name="crypto_peer_name">Peer name</string>
+    <string name="crypto_peer_client">ZRTP Peer client</string>
+    <string name="crypto_peer_client_id">ZRTP client ID</string>
+    <string name="crypto_peer_client_proto">Protocol version</string>
+    <string name="crypto_secure_since">Secure since</string>
+    <string name="crypto_crypto_components">Crypto Components</string>
+    <string name="crypto_crypto_components_tls">TLS Ciphers:</string>
+    <string name="crypto_crypto_components_zhash">ZRTP Hash:</string>
+    <string name="crypto_crypto_components_pk">Key Exchange:</string>
+    <string name="crypto_crypto_components_cipher">Cipher:</string>
+    <string name="crypto_crypto_components_hash">Hash:</string>
+    <string name="crypto_crypto_components_sauth">SRTP Auth Tag:</string>
+    <string name="crypto_shared_secrets">Shared Secrets</string>
+
+    <!-- strings for the call manager section headers -->
+    <string name="call_mng_conference">Conference</string>
+    <string name="call_mng_private">Private</string>
+    <string name="call_mng_in_out">Incoming, outgoing</string>
+
+    <!-- strings for the ZRTP warning/error panel -->
+    <string name="zrtp_we_header">ZRTP security message</string>
+    <string name="zrtp_we_error">ZRTP Error</string>
+    <string name="zrtp_we_warn">ZRTP Warning</string>
+    <string name="srtp_we_warn">SRTP Warning</string>
+    <string name="zrtp_show_details">Show details</string>
+    <string name="zrtp_hide_details">Hide details</string>
+
+    <!-- Strings for the provisioning activity and messages -->
+    <string name="provisioning_welcome">Welcome to Silent Circle</string>
+    <string name="provisioning_vertu_welcome">Welcome to Silent Circle in partnership with Vertu</string>
+    <string name="provisioning_username_hint">Username</string>
+    <string name="provisioning_password_hint">Password</string>
+    <string name="provisioning_password_hint2">Enter password (verify)</string>
+    <string name="provisioning_firstname_hint">Enter first name</string>
+    <string name="provisioning_lastname_hint">Enter last name</string>
+    <string name="provisioning_email_hint">E-mail address</string>
+    <string name="provisioning_no_network">Network not available: </string>
+    <string name="provisioning_no_data">No provisioning data available</string>
+    <string name="provisioning_wrong_format">Wrong data format: </string>
+    <string name="provisioning_error">Provisioning Error</string>
+    <string name="provisioning_info">Information</string>
+    <string name="provisioning_user_req">Username is required. Please check.</string>
+    <string name="provisioning_user_invalid">Username must be lowercase alphanumeric (a-z,0-9) and start with a letter.</string>
+    <string name="provisioning_psn_invalid">No valid serial number found!</string>
+    <string name="provisioning_password_req">Password is required. Please check.</string>
+    <string name="provisioning_password_match">Passwords do not match. Please check.</string>
+    <string name="provisioning_firstname_req">A first name is required. Please check.</string>
+    <string name="provisioning_lastname_req">A last name is required. Please check.</string>
+    <string name="provisioning_email_req">An email address is required. Please check.</string>
+    <string name="provisioning_email_invalid">Email address invalid. Please check.</string>
+    <string name="provisioning_already_registered">Device already registered.</string>
+    <string name="provisioning_agreement">By logging in, you are agreeing to our</string>
+    <string name="pwstrength_weak">Password strength: WEAK</string>
+    <string name="pwstrength_good">Password strength: GOOD</string>
+    <string name="pwstrength_strong">Password strength: STRONG</string>
+    <string name="provisioning_show_pw">Show password</string>
+    <string name="provisioning_privacy_tc">I have read and accepted the privacy policy and terms and conditions from <a href="https://accounts.silentcircle.com/terms/">Silent Circle</a></string>
+    <string name="provisioning_terms">terms of service</string>
+    <string name="provisioning_privacy">privacy policy</string>
+    <string name="provisioning_get_news">I would like to receive exclusive news and invitations from Services</string>
+    <string name="provisioning_new_account">Create new account</string>
+    <string name="provisioning_existing_account">Login to existing account</string>
+    <string name="provisioning_existing_account_bp">Login</string>
+    <string name="provisioning_check_tc">Please accept and check the terms and conditions</string>
+    <string name="provisioning_create">Create</string>
+    <string name="provisioning_get_activation_code">Please login to your account at\nwww.silentcircle.com\nto retrieve an activation code.</string>
+    <string name="provisioning_credentials">Username or password wrong. Please check.</string>
+    <string name="provisioning_forgot_pwd">I forgot my password.</string>
+    <string name="key_manager_available">Using Silent Circle KeyManager.</string>
+    <string name="thanks_number">Number:</string>
+    <string name="thanks_name">Name:</string>
+    <string name="preferred_sas_type">Preferred SAS type</string>
+    <string name="sas_char_mode">SAS displayed as four characters</string>
+    <string name="sas_word_mode">SAS displayed as two words</string>
+    <string name="sp_ringtone">Ringtone</string>
+    <string name="no_ringtone">Default</string>
+    <string name="preferred_algorithms">Prefer Non-NIST Suite</string>
+    <string name="nist_preferred">Always prefer non-NIST algorithms if available: Twofish, Skein, and Bernstein curves.</string>
+    <string name="sca_info_install">"Silent Circle provides an encrypted app that lets you and only you access your contacts and call log.
+        \nSilent Contacts is a free add-on from Silent Circle.
+        \nFor more information, go to our website.
+        \n<b>Install Silent Contacts</b>"</string>
+    <string name="sca_add_security">Add Security</string>
+
+    <!--
+         String describing the Dial ImageButton
+
+          Used by AccessibilityService to announce the purpose of the button.
+    -->
+    <string name="description_dial_button">Dial</string>
+    <!--
+     String describing the Delete/Backspace ImageButton
+
+     Used by AccessibilityService to announce the purpose of the button.
+    -->
+    <string name="description_delete_button">backspace</string>
+    <string name="contacts_image_button">Open contacts</string>
+    <string name="recent_image_button">Display recent calls</string>
+    <string name="zrtp_common_cmp">"You should verbally compare the authentication code with the person you are calling. If it doesn’t match, it indicates that someone may have intercepted the call."</string>
+    <string name="zrtp_common_cls">Connection Error. Please close and call again.</string>
+    <string name="zrtp_common_upd">The person you are calling needs to update their Silent Phone application to the latest version.</string>
+    <string name="zrtp_common_app">Application Error. Please re-install Silent Phone.</string>
+
+    <!-- Permissions -->
+    <string name="permission_read">Read secure contacts</string>
+    <string name="permission_write">Write secure contacts</string>
+
+    <!-- Permissions key manager -->
+    <string name="permission_read_km">Read access to Silent Circle key manager</string>
+    <string name="permission_write_km">Write access to Silent Circle key manager</string>
+
+    <!-- InCall drawer strings -->
+    <string name="call_duration">Duration</string>
+
+    <!-- Only TAG names changed, copy existing translations -->
+    <string name="provisioning_stepInfo_1">Step 1 of 3</string>
+    <string name="provisioning_stepInfo_2">Step 2 of 3</string>
+    <string name="provisioning_stepInfo_3">Step 3 of 3</string>
+    <string name="provisioning_vertu_email_info">An alternate email address is necessary to receive important updates and benefits regarding your account.</string>
+    <string name="provisioning_vertu_welcome_long">As a Vertu Customer you enjoy 12 months of complimentary access to Silent Circle’s encrypted communications services.</string>
+    <string name="video_audio_mute">Toggle mute audio</string>
+    <string name="video_switch_camera">Switch cameras</string>
+
+    <!-- The following until end are MISSING translations in SPA2 for languages other than English -->
+    <string name="provisioning_infoText">Account Creation</string>
+    <string name="provisioning_bp_welcome">Welcome to Silent Circle in partnership with BlackPhone</string>
+    <string name="provisioning_bp_email_info">An email address is necessary to receive important updates and information regarding your account.</string>
+    <string name="provisioning_bp_welcome_long">As a Blackphone customer you enjoy 12 months of complimentary access to Silent Circle’s encrypted communications services.</string>
+    <string name="provisioning_bp_account">Silent Circle Account</string>
+    <string name="mute_button">Mute</string>
+    <string name="video_button">Video</string>
+    <string name="video_control">Video control</string>
+    <string name="add_call">Add call</string>
+    <string name="audio_options_button">Audio\noptions</string>
+    <string name="verify_label">Touch and verify</string>
+    <string name="stop_video">Audio only</string>
+    <string name="pause_video">Pause video</string>
+    <string name="send_video">Send video</string>
+    <string name="prepare">Preparing …</string>
+    <string name="call_manager">Call Manager</string>
+    <string name="dtmf_dialer">Tone dialer</string>
+    <string name="info_screen">Settings/info</string>
+    <string name="security_options_header">Security options</string>
+    <string name="call_info_generic">Call information</string>
+    <string name="call_info_security">Call security information</string>
+    <string name="call_info_security_detail">More details</string>
+    <string name="build_info_header">Silent Phone Build</string>
+    <string name="dial_drawer_build_flavor">Build configuration: %s</string>
+    <string name="account_creation_error">Account creation - error</string>
+    <string name="account_creation_wrong_format">Account creation - server sent wrong data format: </string>
+    <string name="account_creation_no_data">Account creation - server returned wrong data.</string>
+    <string name="other_settings">Other settings</string>
+    <string name="select_theme">Select theme</string>
+    <string name="current_theme">Current theme: %s</string>
+    <string name="theme_orange">Orange</string>
+    <string name="theme_white">White</string>
+    <string name="theme_dusk">Dusk</string>
+    <string name="theme_black">Black</string>
+
+    <!-- Strings for BlackPhone integration -->
+
+    <string name="bp_is_online">Silent Phone online</string>
+    <string name="bp_is_offline">Silent Phone currently offline</string>
+    <string name="bp_not_started">Silent Phone not started</string>
+    <string name="bp_registering">Silent Phone registering</string>
+    <string name="bp_status_unknown">Unknown status</string>
+
+    <!-- Audio options -->
+
+    <string name="audio_bt">BlueTooth headset</string>
+    <string name="audio_speaker">Speaker</string>
+    <string name="audio_ear_phone">Earpiece</string>
+    <string name="end_call_button">End call</string>
+    <string name="call_quality">Quality</string>
+    <string name="call_quality_bad">bad</string>
+    <string name="call_quality_weak">weak</string>
+    <string name="call_quality_acceptable">acceptable</string>
+    <string name="call_quality_good">good</string>
+    <string name="call_quality_very_good">very good</string>
+    <string name="in_call_drawer_zrtp_confirmed">yes, verified</string>
+    <string name="in_call_drawer_zrtp_not_confirmed">yes, not verified</string>
+    <string name="in_call_drawer_sdes_active">active</string>
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+    <string name="valid_until">Valid until:</string>
+    <string name="subscription_expired">Your Silent Circle subscription is expired.</string>
+    <string name="sip_error_not_online">User not online</string>
+    <string name="license_code_invalid">This license code doesn\'t appear to be valid. If you are having
+            trouble with activating your Blackphone and Silent Circle accounts,
+            please contact customer support at support@blackphone.ch</string>
+    <string name="license_code_duplicate">This license code appears to have been activated already. If you
+            are resetting your phone, simply log into your Silent Circle account
+            normally. If you are having trouble activating your Blackphone and
+            Silent Circle accounts, please contact customer support at support@blackphone.ch</string>
+
+    <!-- ************************** String for the Contacts part ******************************  -->
+
+    <string name="alternate_title_sca">"Silent Contacts - Silent Circle's contact application"</string>
+
+    <string name="recentCallsIconLabel">Call log</string>
+
+    <!-- Menu item used to add a number from the call log to contacts -->
+    <string name="recentCalls_addToContact">Add to contacts</string>
+
+    <!-- Text displayed when the call log is empty -->
+    <string name="recentCalls_empty">Call log is empty.</string>
+
+    <!-- Menu item used to remove all calls from the call log -->
+    <string name="recentCalls_deleteAll">Clear call log</string>
+
+    <!-- Menu item used to call a contact from the call log -->
+    <string name="recentCalls_callNumber">Call %s</string>
+
+    <!-- Menu item used to copy a number from the call log to the dialer so it can be edited before calling it -->
+    <string name="recentCalls_editNumberBeforeCall">Edit number before call</string>
+
+    <!-- Menu item used to remove a single call from the call log -->
+    <string name="recentCalls_removeFromRecentList">Remove from call log</string>
+
+    <!-- Menu item used to remove related call entries from the call log -->
+    <string name="recentCalls_removeSameFromRecentList">Remove related entries</string>
+
+    <!-- Title for incoming call details screen -->
+    <string name="type_incoming">Incoming call</string>
+
+    <!-- Title for outgoing call details screen -->
+    <string name="type_outgoing">Outgoing call</string>
+
+    <!-- Title for missed call details screen -->
+    <string name="type_missed">Missed call</string>
+
+    <!-- Title bar for call detail screen -->
+    <string name="callDetailTitle">Call details</string>
+
+
+    <!-- Menu item used to show only outgoing in the call log. [CHAR LIMIT=30] -->
+    <string name="menu_show_outgoing_only">Show outgoing only</string>
+
+    <!-- Menu item used to show only incoming in the call log. [CHAR LIMIT=30] -->
+    <string name="menu_show_incoming_only">Show incoming only</string>
+
+    <!-- Menu item used to show only missed in the call log. [CHAR LIMIT=30] -->
+    <string name="menu_show_missed_only">Show missed only</string>
+
+    <!-- Menu item used to show all calls in the call log. [CHAR LIMIT=30] -->
+    <string name="menu_show_all_calls">Show all calls</string>
+
+    <!-- Menu item used to call a contact, containing the number of the contact to call -->
+    <string name="menu_callNumber">Call %s</string>
+
+    <!-- String used to display calls from unknown numbers in the call log -->
+    <string name="unknown">Unknown</string>
+
+    <!-- String used to display calls from private numbers in the call log -->
+    <string name="private_num">Private number</string>
+
+    <!-- String used to display calls from pay phone in the call log -->
+    <string name="payphone">Pay phone</string>
+
+    <!-- The string used to represent an unknown location for a phone number in the call log [CHAR LIMIT=3] -->
+    <string name="call_log_empty_gecode">-</string>
+
+    <!-- The header in the call log used to identify missed calls and voicemail that have not yet been consumed [CHAR LIMIT=10] -->
+    <string name="call_log_new_header">New</string>
+
+    <!-- The header in the call log used to identify items that have been already consumed [CHAR LIMIT=10] -->
+    <string name="call_log_old_header">Older</string>
+
+    <!-- The header to show that call log is only showing incoming calls. [CHAR LIMIT=40] -->
+    <string name="call_log_incoming_header">Incoming calls only</string>
+
+    <!-- The header to show that call log is only showing outgoing calls. [CHAR LIMIT=40] -->
+    <string name="call_log_outgoing_header">Outgoing calls only</string>
+
+    <!-- The header to show that call log is only showing missed calls. [CHAR LIMIT=40] -->
+    <string name="call_log_missed_header">Missed calls only</string>
+
+    <string name="call_log_item_count_and_date">(%1$d) %2$s</string>
+
+    <!-- A nicely formatted call duration displayed when viewing call details. For example "42 mins 28 secs" -->
+    <string name="callDetailsDurationFormat">%1$s mins %2$s secs</string>
+
+    <!-- Toast for call detail screen when couldn't read the requested details -->
+    <string name="toast_call_detail_error">Couldn\'t read details for the requested call.</string>
+
+    <!-- String describing the button to view the contact for the current number.
+
+        Note: AccessibilityServices use this attribute to announce what the view represents.
+              This is especially valuable for views without textual representation like ImageView.
+    -->
+    <string name="description_view_contact">View contact %1$s</string>
+
+    <!-- String describing the button to add a contact for the current number.
+
+        Note: AccessibilityServices use this attribute to announce what the view represents.
+              This is especially valuable for views without textual representation like ImageView.
+    -->
+    <string name="description_add_contact">Add contact</string>
+
+    <!-- Title of the "Clearing call log" progress-dialog [CHAR LIMIT=35] -->
+    <string name="clearCallLogProgress_title">Clearing call log\u2026</string>
+
+    <!-- Title of the confirmation dialog for clearing the call log. [CHAR LIMIT=37]  -->
+    <string name="clearCallLogConfirmation_title">Clear call log?</string>
+
+    <!-- Confirmation dialog for clearing the call log. [CHAR LIMIT=NONE]  -->
+    <string name="clearCallLogConfirmation">All your call records will be deleted.</string>
+
+
+
+
+    <!-- String describing the button to SMS a number or contact.
+
+        Note: AccessibilityServices use this attribute to announce what the view represents.
+              This is especially valuable for views without textual representation like ImageView.
+              [CHAR LIMIT=NONE]
+    -->
+    <string name="description_send_text_message">Send text message to %1$s</string>
+
+    <!-- String describing the button to call a number or contact.
+
+        Note: AccessibilityServices use this attribute to announce what the view represents.
+              This is especially valuable for views without textual representation like ImageView.
+
+    <string name="description_call">Call <xliff:g id="name">%1$s</xliff:g></string>
+     -->
+    <string name="description_call">Call %1$s</string>
+
+    <!-- Custom phone number type -->
+    <string name="phoneTypeCustom">Custom</string>
+    <!-- Home phone number type -->
+    <string name="phoneTypeHome">Home</string>
+    <!-- Mobile phone number type -->
+    <string name="phoneTypeMobile">Mobile</string>
+    <!-- Work phone number type -->
+    <string name="phoneTypeWork">Work</string>
+    <!-- Work phone number type -->
+    <string name="phoneTypeSilent">Silent Phone</string>
+
+    <!-- Custom email type -->
+    <string name="emailTypeCustom">Custom</string>
+    <!-- Home email type -->
+    <string name="emailTypeHome">Home</string>
+    <!-- Work email type -->
+    <string name="emailTypeWork">Work</string>
+    <!-- Other email type -->
+    <string name="emailTypeOther">Other</string>
+    <!-- Mobile email type -->
+    <string name="emailTypeMobile">Mobile</string>
+
+    <!-- Custom postal address type -->
+    <string name="postalTypeCustom">Custom</string>
+    <!-- Home postal address type -->
+    <string name="postalTypeHome">Home</string>
+    <!-- Work postal address type -->
+    <string name="postalTypeWork">Work</string>
+    <!-- Other postal address type -->
+    <string name="postalTypeOther">Other</string>
+
+    <!-- Custom IM address type -->
+    <string name="imTypeCustom">Custom</string>
+    <!-- Home IM address type -->
+    <string name="imTypeHome">Home</string>
+    <!-- Work IM address type -->
+    <string name="imTypeWork">Work</string>
+    <!-- Other IM address type -->
+    <string name="imTypeOther">Other</string>
+
+    <!-- SilentText IM address type -->
+    <string name="imTypeSilent">Silent Text</string>
+
+    <!-- Custom IM protocol type -->
+    <string name="imProtocolCustom">Custom</string>
+    <!-- AIM IM protocol type -->
+    <string name="imProtocolAim">AIM</string>
+    <!-- MSN IM protocol type -->
+    <string name="imProtocolMsn">Windows Live</string>
+    <!-- Yahoo IM protocol type -->
+    <string name="imProtocolYahoo">Yahoo</string>
+    <!-- Skype IM protocol type -->
+    <string name="imProtocolSkype">Skype</string>
+    <!-- QQ IM protocol type -->
+    <string name="imProtocolQq">QQ</string>
+    <!-- Google Talk IM protocol type -->
+    <string name="imProtocolGoogleTalk">Google Talk</string>
+    <!-- ICQ IM protocol type -->
+    <string name="imProtocolIcq">ICQ</string>
+    <!-- Jabber IM protocol type -->
+    <string name="imProtocolJabber">Jabber</string>
+    <!-- NetMeeting IM protocol type -->
+    <string name="imProtocolNetMeeting">NetMeeting</string>
+    <!-- SilentText IM protocol type -->
+    <string name="imProtocolSilent">Silent Text</string>
+
+    <!--
+        String for Contacts and associated activities
+     -->
+    <!-- Dialog message when prompting before creating a contact. Includes
+     the email address, e.g. "Add xyz@foo.com to contacts?" -->
+    <string name="add_contact_dlg_message_fmt">Add \"%s\" to contacts?</string>
+
+    <!-- Directory partition name -->
+    <string name="contactsList">Contacts</string>
+
+    <!-- The name of the invisible local contact directory -->
+    <string name="local_invisible_directory">Other</string>
+
+    <!-- The label in section header in the contact list for a local contacts [CHAR LIMIT=128] -->
+    <string name="local_search_label">All contacts</string>
+
+    <!-- String describing the text on the header of the profile contact in the contacts list
+         This may be programatically capitalized. [CHAR LIMIT=20] -->
+    <string name="user_profile_contacts_list_header" msgid="9154761216179882405">Me</string>
+
+    <!-- The label in section header in the contact list for a contact directory [CHAR LIMIT=128] -->
+    <string name="directory_search_label">Directory</string>
+
+    <!-- Title shown in the search result activity of contacts app while searching.  [CHAR LIMIT=20] -->
+    <string name="search_results_searching">Searching\u2026</string>
+
+    <!-- Displayed at the top of search results indicating that more contacts were found than shown [CHAR LIMIT=64] -->
+    <string name="foundTooManyContacts">More than %d found.</string>
+
+    <!-- Displayed at the top of the contacts showing the zero total number of contacts found when "Only contacts with phones" not selected. [CHAR LIMIT=30] -->
+    <string name="listFoundAllContactsZero">No contacts</string>
+
+    <!-- The description presented to the user in the Intent choose when there are multiple activities that allow
+         editing a contact. This string represents the built in way to edit the contact. -->
+    <string name="editContactDescription">Edit contact</string>
+
+    <!-- The description presented to the user in the Intent choose when there are multiple activities that allow
+         creating a new contact. This string represents the built in way to create the contact. -->
+    <string name="insertContactDescription">Create contact</string>
+
+    <!-- Displayed at the top of the contacts showing the total number of contacts found when typing search query -->
+    <plurals name="searchFoundContacts">
+        <item quantity="one">1 found</item>
+        <item quantity="other">%d found</item>
+    </plurals>
+
+    <!-- Displayed at the top of the contacts showing the total number of contacts visible when "Only contacts with phones" not selected -->
+    <plurals name="listTotalAllContacts">
+        <item quantity="one">1 contact</item>
+        <item quantity="other">%d contacts</item>
+    </plurals>
+
+    <!-- Text describing that a contact has no information available other than name and photo. [CHAR LIMIT=60] -->
+    <string name="no_contact_details">No additional information for this contact.</string>
+
+    <!-- The text displayed when the contacts list is empty while displaying only contacts that have phone numbers -->
+    <string name="noContactsWithPhoneNumbers">No contacts with phone numbers.</string>
+
+    <!-- Displayed full screen when the user has no favorites and they are displaying the favorites tab. [CHAR LIMIT=NONE] -->
+    <string name="noFavoritesHelpText">"You don't have any favorites.\n\nTo add a contact to your list of favorites:\n
+        <li>Touch the <b>Contacts</b> tab\n</li>
+        \n<li>Touch the contact you want to add to your favorites\n</li>
+        \n<li>Touch the star next to the contact\'s name\n</li>"
+    </string>
+
+    <!-- The text displayed when the contacts list is empty while displaying results after searching contacts -->
+    <string name="noMatchingContacts">No matching contacts found.</string>
+
+    <!-- The text displayed when the contacts list is empty while displaying only selected contacts in multiple picker -->
+    <string name="no_contacts_selected">"No contacts selected."</string>
+
+    <!-- Displayed full screen when the user want to create a shortcut, but there is no contacts, and contact syncing is enabled -->
+    <string name="noContactsHelpTextWithSyncForCreateShortcut">"You don't have any contacts to display. (If you just added an account, it can take a few minutes to sync contacts.)"</string>
+
+    <!-- Displayed full screen when the user has no contacts and they are displaying the My Contacts group, and contact syncing is enabled.  [CHAR LIMIT=NONE] -->
+    <string name="noContactsHelpTextWithSync">"You don't have any contacts to display. (If you just added an account, it can take a few minutes to sync contacts.)\n\nTo add contacts, touch <font fgcolor="#ffffffff"><b>Menu</b></font>, then touch:\n
+        \n<li><font fgcolor="#ffffffff"><b>Accounts</b></font> to add or set up an account with contacts you can sync to the phone\n</li>
+        \n<li><font fgcolor="#ffffffff"><b>Display options</b></font> to change which contacts are visible\n</li>
+        \n<li><font fgcolor="#ffffffff"><b>New contact</b></font> to create a new contact from scratch\n</li>
+        \n<li><font fgcolor="#ffffffff"><b>Import/Export</b></font> to import contacts from your SIM or SD card\n</li>"
+    </string>
+
+    <!-- Displayed full screen when the user has no contacts and they are displaying the My Contacts group, and contact syncing is enabled, and there is no sim card (cdma).  [CHAR LIMIT=NONE] -->
+    <string name="noContactsNoSimHelpTextWithSync">"You don't have any contacts to display. (If you just added an account, it can take a few minutes to sync contacts.)\n\nTo add contacts, touch <font fgcolor="#ffffffff"><b>Menu</b></font>, then touch:\n
+        \n<li><font fgcolor="#ffffffff"><b>Accounts</b></font> to add or set up an account with contacts you can sync to the phone\n</li>
+        \n<li><font fgcolor="#ffffffff"><b>Display options</b></font> to change which contacts are visible\n</li>
+        \n<li><font fgcolor="#ffffffff"><b>New contact</b></font> to create a new contact from scratch\n</li>
+        \n<li><font fgcolor="#ffffffff"><b>Import/Export</b></font> to import contacts from your SD card\n</li>"
+    </string>
+
+    <!-- Displayed full screen when the user want to create a shortcut, but there is no contacts -->
+    <string name="noContactsHelpTextForCreateShortcut">"You don't have any contacts to display."</string>
+
+    <!-- Displayed full screen when the user has no contacts and they are displaying the My Contacts group, and contact syncing is disabled.  [CHAR LIMIT=NONE] -->
+    <string name="noContactsHelpText">"You don't have any contacts to display.\n\nTo add contacts, touch <font fgcolor="#ffffffff"><b>Menu</b></font>, then touch:\n
+        \n<li><font fgcolor="#ffffffff"><b>Accounts</b></font> to add or set up an account with contacts you can sync to the phone\n</li>
+        \n<li><font fgcolor="#ffffffff"><b>New contact</b></font> to create a new contact from scratch\n</li>
+        \n<li><font fgcolor="#ffffffff"><b>Import/Export</b></font> to import contacts from your SIM or SD card\n</li>"
+    </string>
+
+    <!-- Displayed full screen when the user has no contacts and they are displaying the My Contacts group, and contact syncing is disabled, and there is no sim card (cdma).  [CHAR LIMIT=NONE]-->
+    <string name="noContactsNoSimHelpText">"You don't have any contacts to display.\n\nTo add contacts, touch <font fgcolor="#ffffffff"><b>Menu</b></font>, then touch:\n
+        \n<li><font fgcolor="#ffffffff"><b>Accounts</b></font> to add or set up an account with contacts you can sync to the phone\n</li>
+        \n<li><font fgcolor="#ffffffff"><b>New contact</b></font> to create a new contact from scratch\n</li>
+        \n<li><font fgcolor="#ffffffff"><b>Import/Export</b></font> to import contacts from your SD card\n</li>"
+    </string>
+
+    <!-- Shown as the display name for a person when the name is missing or unknown. [CHAR LIMIT=18]-->
+    <string name="missing_name">(No name)</string>
+
+    <!-- Menu item to indicate you are done editing a contact and want to save the changes you've made -->
+    <string name="menu_done">Done</string>
+
+    <!-- Menu item to indicate you want to cancel the current editing process and NOT save the changes you've made [CHAR LIMIT=12] -->
+    <string name="menu_doNotSave">Cancel</string>
+
+    <!-- Text displayed in place of the display name for the contact that represents the user's
+      personal profile entry [CHAR LIMIT=64] -->
+    <string name="profile_display_name">Set up my profile</string>
+
+    <!-- Displayed at the top of the contacts showing the zero total number of contacts visible when "All contacts" is selected  [CHAR LIMIT=64]-->
+    <string name="listTotalAllContactsZero">No contacts.</string>
+
+    <!-- Displayed at the top of the contacts showing the zero total number of contacts visible when "Custom" is selected  [CHAR LIMIT=64]-->
+    <string name="listTotalAllContactsZeroCustom">No visible contacts.</string>
+
+    <!-- Displayed at the top of the contacts showing the zero total number of contacts visible when starred contact list is selected  [CHAR LIMIT=64]-->
+    <string name="listTotalAllContactsZeroStarred">No favorites.</string>
+
+    <!-- Displayed at the top of the contacts showing the zero total number of contacts visible when a group or account is selected  [CHAR LIMIT=64]-->
+    <string name="listTotalAllContactsZeroGroup">No contacts in %s</string>
+
+    <!-- Displayed at the top of the contacts showing the zero as total number of contacts visible when "Only contacts with phones" is selected [CHAR LIMIT=64]-->
+    <string name="listTotalPhoneContactsZero">No contacts with phone numbers</string>
+
+
+    <!-- Menu item to search contacts -->
+    <string name="menu_search">Search</string>
+
+    <!-- Menu item (in the action bar) that creates a new contact [CHAR LIMIT=30] -->
+    <string name="menu_new_contact_action_bar">Add Contact</string>
+
+    <!-- Menu item (in the action bar) that creates a new group [CHAR LIMIT=30] -->
+    <string name="menu_new_group_action_bar">Add Group</string>
+
+    <!-- The menu item to open the list of accounts -->
+    <string name="menu_accounts">Accounts</string>
+
+    <!--  The menu item to clear frequents [CHAR LIMIT=30] -->
+    <string name="menu_clear_frequents">Clear frequents</string>
+
+    <!-- The menu item to filter the list of contacts displayed -->
+    <string name="menu_contacts_filter">Contacts to display</string>
+
+    <!-- The menu item to bulk import or bulk export contacts from SIM card or SD card.  [CHAR LIMIT=30]-->
+    <string name="menu_import_export">Import/export</string>
+
+    <!-- The menu item to start vCard remove activity -->
+    <string name="menu_remove_vcard_files">Remove vCards</string>
+
+    <!-- Menu item shown only when the special debug mode is enabled, which is used to send all contacts database files via email.  [CHAR LIMI=NONE] -->
+    <string name="menu_export_database">Export database files</string>
+
+    <!-- Menu item for the settings activity [CHAR LIMIT=64] -->
+    <string name="menu_settings" msgid="377929915873428211">Settings</string>
+
+    <!-- Menu item for invoking contextual help [CHAR LIMIT=64] -->
+    <string name="menu_help">Help</string>
+
+    <string name="menu_about">About</string>
+
+    <!-- Query hint displayed inside the search field [CHAR LIMIT=64] -->
+    <string name="hint_findContacts">Find contacts</string>
+
+    <!-- The content description for the "all contacts" tab.
+
+         Note: AccessibilityServices use this attribute to announce what the view represents.
+         This is especially valuable for views without textual representation like ImageView.
+
+         [CHAR LIMIT=NONE] -->
+    <string name="contactsAllLabel">All contacts</string>
+
+    <!-- The content description text for the groups tab.
+
+         Note: AccessibilityServices use this attribute to announce what the view represents.
+         This is especially valuable for views without textual representation like ImageView.
+
+         [CHAR LIMIT=NONE] -->
+    <string name="contactsGroupsLabel">Groups</string>
+
+    <!-- The description text for the favorites tab.
+
+         Note: AccessibilityServices use this attribute to announce what the view represents.
+         This is especially valuable for views without textual representation like ImageView.
+
+         [CHAR LIMIT=NONE] -->
+    <string name="contactsFavoritesLabel">Favorites</string>
+
+    <!-- The description presented to the user in the Intent choose when there are multiple activities that allow
+         viewing a contact. This string represents the built in way to view the contact. -->
+    <string name="viewContactDesription">View contact</string>
+
+    <!-- The title bar when viewing the contact details activity -->
+    <string name="viewContactTitle">Contact details</string>
+
+    <!-- Title for data source when creating or editing a contact that doesn't
+         belong to a specific account.  This contact will only exist on the phone
+         and will not be synced. -->
+    <string name="account_phone">Device-only, unsynced</string>
+
+    <!-- Button to view the updates from the current group on the group detail page [CHAR LIMIT=25] -->
+    <string name="view_updates_from_group">View updates</string>
+
+    <!-- Title of the dialog used to set a custom label for a contact detail, like a phone number or email address.
+         For example, this may be used to set a phone number's label to "Vaction house" -->
+    <string name="customLabelPickerTitle">Custom label name</string>
+
+    <!-- Content description for the expand or collapse name fields button.
+         Clicking this button causes the name editor to toggle between showing
+         a single field where the entire name is edited at once, or multiple
+         fields corresponding to each part of the name (Name Prefix, First Name,
+         Middle Name, Last Name, Name Suffix).
+         [CHAR LIMIT=NONE] -->
+    <string name="expand_collapse_name_fields_description">Expand or collapse name fields</string>
+
+    <!-- String describing the Contact Editor Minus button
+
+         Used by AccessibilityService to announce the purpose of the button.
+
+         [CHAR LIMIT=NONE]
+    -->
+    <string name="description_minus_button">delete</string>
+
+    <!-- String describing the Contact Photo Image
+
+         Used by AccessibilityService to announce the purpose of the view.
+    -->
+    <string name="description_contact_photo">contact photo</string>
+
+    <!-- Header that expands to list all name types when editing a structured name of a contact [CHAR LIMIT=20] -->
+    <string name="nameLabelsGroup">Name</string>
+    <!-- Header that expands to list all nickname types when editing a nickname of a contact [CHAR LIMIT=20] -->
+    <string name="nicknameLabelsGroup">Nickname</string>
+    <!-- Header that expands to list all organization types when editing an organization of a contact [CHAR LIMIT=20] -->
+    <string name="organizationLabelsGroup">Organization</string>
+    <!-- Header for the list of all groups for a contact [CHAR LIMIT=20] -->
+    <string name="groupsLabel">Groups</string>
+
+
+    <!-- Field title for the full name of a contact [CHAR LIMIT=64]-->
+    <string name="full_name">Name</string>
+    <!-- Field title for the given name of a contact -->
+    <string name="name_given">Given name</string>
+    <!-- Field title for the family name of a contact -->
+    <string name="name_family">Family name</string>
+    <!-- Field title for the prefix name of a contact -->
+    <string name="name_prefix">Name prefix</string>
+    <!-- Field title for the middle name of a contact -->
+    <string name="name_middle">Middle name</string>
+    <!-- Field title for the suffix name of a contact -->
+    <string name="name_suffix">Name suffix</string>
+    <!-- Field title for the phonetic given name of a contact -->
+    <string name="name_phonetic_given">Phonetic given name</string>
+    <!-- Field title for the phonetic middle name of a contact -->
+    <string name="name_phonetic_middle">Phonetic middle name</string>
+    <!-- Field title for the phonetic family name of a contact -->
+    <string name="name_phonetic_family">Phonetic family name</string>
+    <!-- Field title for the phonetic name of a contact [CHAR LIMIT=64]-->
+    <string name="name_phonetic">Phonetic name</string>
+
+    <!-- Section title for the page containing the contact's social updates on the contact card (this abbreviated version of "Recent updates" is used when "updates" is already shown as the title of the page) [CHAR LIMIT=20]-->
+    <string name="recent" msgid="2062236709538790412">Recent</string>
+
+    <!-- Field title for the full postal address of a contact [CHAR LIMIT=64]-->
+    <string name="postal_address">Address</string>
+    <!-- Field title for the street of a structured postal address of a contact -->
+    <string name="postal_street">Street</string>
+    <!-- Field title for the PO box of a structured postal address of a contact -->
+    <string name="postal_pobox">PO box</string>
+    <!-- Field title for the neighborhood of a structured postal address of a contact -->
+    <string name="postal_neighborhood">Neighborhood</string>
+    <!-- Field title for the city of a structured postal address of a contact -->
+    <string name="postal_city">City</string>
+    <!-- Field title for the region, or state, of a structured postal address of a contact -->
+    <string name="postal_region">State</string>
+    <!-- Field title for the postal code of a structured postal address of a contact -->
+    <string name="postal_postcode">ZIP code</string>
+    <!-- Field title for the country of a structured postal address of a contact -->
+    <string name="postal_country">Country</string>
+
+    <!-- Header that expands to list all of the types of phone numbers when editing or creating a phone number for a contact [CHAR LIMIT=20] -->
+    <string name="phoneLabelsGroup">Phone</string>
+
+    <!-- Header that expands to list all of the types of email addresses when editing or creating an email address for a contact [CHAR LIMIT=20] -->
+    <string name="emailLabelsGroup">Email</string>
+
+    <!-- Header that expands to list all of the types of IM account when editing or creating an IM account for a contact [CHAR LIMIT=20] -->
+    <string name="imLabelsGroup">Silent Text / IM</string>
+
+    <!-- Header that expands to list all of the types of postal addresses when editing or creating an postal address for a contact [CHAR LIMIT=20] -->
+    <string name="postalLabelsGroup">Address</string>
+
+    <!-- The order of the items below is important, don't reorder without changing EditContactActivity.java -->
+    <skip/>
+    <!-- The labels that are under the otherLabelsGroup when editing a contact. [CHAR LIMIT=20] -->
+    <string-array name="otherLabels">
+        <!-- An organization associated with a contact -->
+        <item>Organization</item>
+        <!-- A note associated with a contact -->
+        <item>Note</item>
+    </string-array>
+
+    <!-- Generic action string for text messaging a contact. Used by AccessibilityService to announce the purpose of the view. [CHAR LIMIT=NONE] -->
+    <string name="sms">Text message</string>
+
+    <!-- The label describing the Notes field of a contact. This field allows free form text entry about a contact -->
+    <string name="label_notes">Notes</string>
+
+    <!-- The label describing the SIP address field of a contact. [CHAR LIMIT=20] -->
+    <string name="label_sip_address">Silent Phone - name</string>
+
+    <!-- Hint text for the organization name when editing -->
+    <string name="ghostData_company">Company</string>
+
+    <!-- Hint text for the organization title when editing -->
+    <string name="ghostData_title">Title</string>
+
+    <!-- Action string for calling a custom phone number -->
+    <string name="call_custom">Call %s</string>
+    <!-- Action string for calling a home phone number -->
+    <string name="call_home">Call home</string>
+    <!-- Action string for calling a mobile phone number -->
+    <string name="call_mobile">Call mobile</string>
+    <!-- Action string for calling a work phone number -->
+    <string name="call_work">Call work</string>
+    <!-- Action string for calling a work phone number -->
+    <string name="call_silent">Call Silent Phone</string>
+
+
+    <!-- Action string for calling a work fax phone number -->
+    <string name="call_fax_work">Call work fax</string>
+    <!-- Action string for calling a home fax phone number -->
+    <string name="call_fax_home">Call home fax</string>
+    <!-- Action string for calling a pager phone number -->
+    <string name="call_pager">Call pager</string>
+    <!-- Action string for calling an other phone number -->
+    <string name="call_other">Call</string>
+    <!-- Action string for calling a callback number -->
+    <string name="call_callback">Call callback</string>
+    <!-- Action string for calling a car phone number -->
+    <string name="call_car">Call car</string>
+    <!-- Action string for calling a company main phone number -->
+    <string name="call_company_main">Call company main</string>
+    <!-- Action string for calling a ISDN phone number -->
+    <string name="call_isdn">Call ISDN</string>
+    <!-- Action string for calling a main phone number -->
+    <string name="call_main">Call main</string>
+    <!-- Action string for calling an other fax phone number -->
+    <string name="call_other_fax">Call fax</string>
+    <!-- Action string for calling a radio phone number -->
+    <string name="call_radio">Call radio</string>
+    <!-- Action string for calling a Telex phone number -->
+    <string name="call_telex">Call telex</string>
+    <!-- Action string for calling a TTY/TDD phone number -->
+    <string name="call_tty_tdd">Call TTY/TDD</string>
+    <!-- Action string for calling a work mobile phone number -->
+    <string name="call_work_mobile">Call work mobile</string>
+    <!-- Action string for calling a work pager phone number -->
+    <string name="call_work_pager">Call work pager</string>
+    <!-- Action string for calling an assistant phone number -->
+    <string name="call_assistant">Call %s</string>
+    <!-- Action string for calling a MMS phone number -->
+    <string name="call_mms">Call MMS</string>
+
+    <!-- Action string for sending an SMS to a custom phone number -->
+    <string name="sms_custom">Text %s</string>
+    <!-- Action string for sending an SMS to a home phone number -->
+    <string name="sms_home">Text home</string>
+    <!-- Action string for sending an SMS to a mobile phone number -->
+    <string name="sms_mobile">Text mobile</string>
+    <!-- Action string for sending an SMS to a work phone number -->
+    <string name="sms_work">Text work</string>
+    <!-- Action string for sending an SMS to a work fax phone number -->
+    <string name="sms_fax_work">Text work fax</string>
+    <!-- Action string for sending an SMS to a home fax phone number -->
+    <string name="sms_fax_home">Text home fax</string>
+    <!-- Action string for sending an SMS to a pager phone number -->
+    <string name="sms_pager">Text pager</string>
+    <!-- Action string for sending an SMS to an other phone number -->
+    <string name="sms_other">Text</string>
+    <!-- Action string for sending an SMS to a callback number -->
+    <string name="sms_callback">Text callback</string>
+    <!-- Action string for sending an SMS to a car phone number -->
+    <string name="sms_car">Text car</string>
+    <!-- Action string for sending an SMS to a company main phone number -->
+    <string name="sms_company_main">Text company main</string>
+    <!-- Action string for sending an SMS to a ISDN phone number -->
+    <string name="sms_isdn">Text ISDN</string>
+    <!-- Action string for sending an SMS to a main phone number -->
+    <string name="sms_main">Text main</string>
+    <!-- Action string for sending an SMS to an other fax phone number -->
+    <string name="sms_other_fax">Text fax</string>
+    <!-- Action string for sending an SMS to a radio phone number -->
+    <string name="sms_radio">Text radio</string>
+    <!-- Action string for sending an SMS to a Telex phone number -->
+    <string name="sms_telex">Text telex</string>
+    <!-- Action string for sending an SMS to a TTY/TDD phone number -->
+    <string name="sms_tty_tdd">Text TTY/TDD</string>
+    <!-- Action string for sending an SMS to a work mobile phone number -->
+    <string name="sms_work_mobile">Text work mobile</string>
+    <!-- Action string for sending an SMS to a work pager phone number -->
+    <string name="sms_work_pager">Text work pager</string>
+    <!-- Action string for sending an SMS to an assistant phone number -->
+    <string name="sms_assistant">Text %s</string>
+    <!-- Action string for sending an SMS to a MMS phone number -->
+    <string name="sms_mms">Text MMS</string>
+
+    <!-- Action string for sending an email to a home email address -->
+    <string name="email_home">Email home</string>
+    <!-- Action string for sending an email to a mobile email address -->
+    <string name="email_mobile">Email mobile</string>
+    <!-- Action string for sending an email to a work email address -->
+    <string name="email_work">Email work</string>
+    <!-- Action string for sending an email to an other email address -->
+    <string name="email_other">Email</string>
+    <!-- Action string for sending an email to a custom email address -->
+    <string name="email_custom">Email %s</string>
+
+    <!-- Generic action string for sending an email -->
+    <string name="email">Email</string>
+
+    <!-- Action string for viewing a home postal address -->
+    <string name="map_home">View home address</string>
+    <!-- Action string for viewing a work postal address -->
+    <string name="map_work">View work address</string>
+    <!-- Action string for viewing an other postal address -->
+    <string name="map_other">View address</string>
+    <!-- Action string for viewing a custom postal address -->
+    <string name="map_custom">View %s address</string>
+
+    <!-- Action string for starting an IM chat with the AIM protocol -->
+    <string name="chat_silent">Chat using SilentText</string>
+    <!-- Action string for starting an IM chat with the AIM protocol -->
+    <string name="chat_aim">Chat using AIM</string>
+    <!-- Action string for starting an IM chat with the MSN or Windows Live protocol -->
+    <string name="chat_msn">Chat using Windows Live</string>
+    <!-- Action string for starting an IM chat with the Yahoo protocol -->
+    <string name="chat_yahoo">Chat using Yahoo</string>
+    <!-- Action string for starting an IM chat with the Skype protocol -->
+    <string name="chat_skype">Chat using Skype</string>
+    <!-- Action string for starting an IM chat with the QQ protocol -->
+    <string name="chat_qq">Chat using QQ</string>
+    <!-- Action string for starting an IM chat with the Google Talk protocol -->
+    <string name="chat_gtalk">Chat using Google Talk</string>
+    <!-- Action string for starting an IM chat with the ICQ protocol -->
+    <string name="chat_icq">Chat using ICQ</string>
+    <!-- Action string for starting an IM chat with the Jabber protocol -->
+    <string name="chat_jabber">Chat using Jabber</string>
+
+    <!-- Generic action string for starting an IM chat -->
+    <string name="chat">Chat</string>
+    <!-- Generic action string for starting an audio chat. Used by AccessibilityService to announce the purpose of the view. [CHAR LIMIT=NONE] -->
+    <string name="audio_chat">Voice chat</string>
+    <!-- Generic action string for starting a video chat. Used by AccessibilityService to announce the purpose of the view. [CHAR LIMIT=NONE] -->
+    <string name="video_chat">Video chat</string>
+
+    <!-- Attbution of a contact status update, when the time of update is unknown -->
+    <string name="contact_status_update_attribution">via %1$s</string>
+
+    <!-- Attbution of a contact status update, when the time of update is known -->
+    <string name="contact_status_update_attribution_with_date">%1$s via %2$s</string>
+
+    <!-- The description of the directory where the contact was found [CHAR LIMIT=100]-->
+    <string name="contact_directory_description">Directory %1$s</string>
+
+    <!-- Text used to show a organization that has both a company and title. This is used in the Detail-View
+    of a Contact. This is mostly about the formatting of the two elements, so it should be kept small [CHAR LIMIT=79] -->
+    <string name="organization_company_and_title">%2$s, %1$s</string>
+
+    <!-- Menu item used to add a star to a contact, which makes that contact show up at the top of favorites -->
+    <string name="menu_addStar">Add to favorites</string>
+
+    <!-- Menu item used to remove a star from a contact, making the contact no longer show up at the top of favorites -->
+    <string name="menu_removeStar">Remove from favorites</string>
+
+    <!-- Toast shown when text is copied to the clipboard [CHAR LIMIT=64] -->
+    <string name="toast_text_copied">Text copied</string>
+
+    <!-- Option displayed in context menu to copy long pressed item to clipboard [CHAR LIMIT=64] -->
+    <string name="copy_text">Copy to clipboard</string>
+
+    <!-- Option displayed in context menu to set long pressed item as default contact method [CHAR LIMIT=64] -->
+    <string name="set_default">Set default</string>
+
+    <!-- Option displayed in context menu to clear long pressed item as default contact method [CHAR LIMIT=64] -->
+    <string name="clear_default">Clear default</string>
+
+    <!-- The tab label for the contact detail activity that displays information about the contact [CHAR LIMIT=15] -->
+    <string name="contactDetailAbout">About</string>
+
+    <!-- The tab label for the contact detail activity that displays information about the contact [CHAR LIMIT=15] -->
+    <string name="contactDetailUpdates">Updates</string>
+
+    <!-- Label of the button to open the "add connection" popup where the user can invite a contact to other social networks or services [CHAR LIMIT=32] -->
+    <string name="add_connection_button">Add connection</string>
+
+    <!-- The text displayed when the contacts list is empty while displaying all contacts [CHAR LIMIT=NONE] -->
+    <string name="noContacts">No contacts.</string>
+
+
+    <!-- Button shown on the main contacts screen when there are no contacts on the device.
+    Creates a new contact. [CHAR LIMIT=128] -->
+    <string name="contacts_unavailable_create_contact">Create a new contact</string>
+
+    <!-- Button shown on the main contacts screen when there are no contacts on the device.
+    Initiates a contact import dialog [CHAR LIMIT=128] -->
+    <string name="contacts_unavailable_import_contacts">Import contacts</string>
+
+    <!-- Button shown in the contacts app if the background process updating contacts fails because of memory shortage [CHAR LIMIT=50] -->
+    <string name="upgrade_out_of_memory_uninstall">Uninstall some applications</string>
+
+    <!-- Button shown in the contacts app if the background process updating contacts fails because of memory shortage [CHAR LIMIT=50] -->
+    <string name="upgrade_out_of_memory_retry">Retry upgrade</string>
+
+    <!-- Text shown in the contacts app while the background process updates contacts after a locale change [CHAR LIMIT=300] -->
+    <string name="locale_change_in_progress">Contact list is being updated to reflect the change of language.</string>
+
+    <!-- Text shown in the contacts app while the background process updates contacts after a system upgrade [CHAR LIMIT=300] -->
+    <string name="upgrade_in_progress">Contact list is being updated.</string>
+
+    <!-- Text shown in the contacts app if the background process updating contacts fails because of memory shortage [CHAR LIMIT=300] -->
+    <string name="upgrade_out_of_memory">Contacts are in the process of being upgraded.
+    \n\nThe upgrade process requires approximately %s MB of internal storage.\n\nChoose one of the following options:</string>
+
+
+    <!-- Menu item used to edit a specific contact -->
+    <string name="menu_editContact">Edit</string>
+
+    <!-- Menu item used to delete a specific contact -->
+    <string name="menu_deleteContact">Delete</string>
+
+    <!-- Menu item that opens the Options activity for a given contact [CHAR LIMIT=15] -->
+    <string name="menu_set_ring_tone">Set ringtone</string>
+
+    <!-- Menu item used to create a contact shortcut when viewing contact details. [CHAR LIMIT=30] -->
+    <string name="menu_create_contact_shortcut">Place on Home screen</string>
+
+    <!-- The menu item to share the currently viewed contact [CHAR LIMIT=30] -->
+    <string name="menu_share">Share</string>
+
+    <!-- Toast shown when creating a personal copy of a contact [CHAR LIMIT=100] -->
+    <string name="toast_making_personal_copy">Creating a personal copy\u2026</string>
+
+    <!-- Description in the dialog that appears if there are no pictures from which to create an icon for a contact -->
+    <string name="photoPickerNotFoundText">No pictures are available on the device.</string>
+
+    <!-- An option in the 'Contact photo' dialog, if there is no photo yet [CHAR LIMIT=50] -->
+    <string name="take_photo">Take photo</string>
+
+    <!-- An option in the 'Contact photo' dialog, if there is already a photo [CHAR LIMIT=50] -->
+    <string name="take_new_photo">Take new photo</string>
+
+    <!-- An option in the 'Contact photo' dialog, if there is no photo yet [CHAR LIMIT=50] -->
+    <string name="pick_photo">Choose photo from Gallery</string>
+
+    <!-- An option in the 'Contact photo' dialog, if there is already a photo [CHAR LIMIT=50] -->
+    <string name="pick_new_photo">Select new photo from Gallery</string>
+
+    <!-- The menu item that allows you to remove a photo from a contact [CHAR LIMIT=50] -->
+    <string name="removePhoto">Remove photo</string>
+
+    <!-- Checkbox asking the user if they want to display a particular photo for a contact -->
+    <string name="use_photo_as_primary">Use this photo</string>
+
+    <!-- The button to add another entry of a specific data type (i.e. email, phone, address) to a contact in the Raw Contact Editor [CHAR LIMIT=22] -->
+    <string name="add_new_entry_for_section">Add new</string>
+
+    <!-- The button to add an organization field to a contact in the Raw Contact Editor [CHAR LIMIT=22] -->
+    <string name="add_organization">Add organization</string>
+
+    <!-- The add field button shown in the editor under each editable Raw Contact [CHAR LIMIT=30] -->
+    <string name="add_field">Add another field</string>
+
+    <!-- The title of the Edit-Contact screen -->
+    <string name="edit_contact">Edit contact</string>
+
+    <!-- Menu item to indicate you want to stop editing a contact and NOT save the changes you've made [CHAR LIMIT=12] -->
+    <string name="menu_discard">Discard</string>
+
+    <!-- Contents of the alert dialog when the user hits the Cancel button in the editor [CHAR LIMIT=128] -->
+    <string name="cancel_confirmation_dialog_message">Discard your changes?</string>
+
+    <!-- Toast displayed when a contact is saved [CHAR LIMIT=NONE] -->
+    <string name="contactSavedToast">Contact saved.</string>
+
+    <!-- Toast displayed when saving a contact failed. [CHAR LIMIT=NONE] -->
+    <string name="contactSavedErrorToast">Couldn\'t save contact changes.</string>
+
+    <!-- Warning dialog contents after users selects to delete a ReadOnly contact. [CHAR LIMIT=NONE] -->
+    <string name="readOnlyContactWarning">You can\'t delete contacts from read-only accounts, but you can hide them in your contacts lists.</string>
+
+    <!-- Warning dialog contents after users selects to delete a contact with ReadOnly and Writable sources. -->
+    <string name="readOnlyContactDeleteConfirmation">This contact contains information from multiple accounts. Information from read-only accounts will be hidden in your contacts lists, not deleted.</string>
+
+    <!-- Warning dialog contents after users selects to delete a contact with multiple Writable sources. -->
+    <string name="multipleContactDeleteConfirmation">Deleting this contact will delete information from multiple accounts.</string>
+
+    <!-- Confirmation dialog contents after users selects to delete a Writable contact. -->
+    <string name="deleteConfirmation">This contact will be deleted.</string>
+
+    <!-- Activity title when the user is selecting a contact for a shortcut. -->
+    <string name="shortcutActivityTitle">Choose a contact shortcut</string>
+
+    <!-- Activity title when the user is selecting a contact for a direct dial shortcut. -->
+    <string name="callShortcutActivityTitle">Choose a number to call</string>
+
+    <!-- Activity title when the user is selecting a contact for a direct message shortcut. -->
+    <string name="messageShortcutActivityTitle">Choose a number to message</string>
+
+    <!-- Activity title when the user is selecting a contact.  [CHAR LIMIT=128] -->
+    <string name="contactPickerActivityTitle">Choose a contact</string>
+
+    <!-- Text for a "create new contact" button on the bottom of the contact picker screen.
+         The text will be all capitalized.
+         [CHAR LIMIT=30] -->
+    <string name="pickerNewContactText">Create new contact</string>
+
+    <!-- When picking a contact from a list of all contacts there is an entry at the top of the
+         list that allows the user to create a new contact, which this string is used for -->
+    <string name="pickerNewContactHeader">Create new contact</string>
+
+    <!-- Dialog title when picking the application to share a contact with. -->
+    <string name="share_via">Share contact via</string>
+
+    <!-- Contact list filter selection indicating that the list shows all contacts with phone numbers [CHAR LIMIT=64] -->
+    <string name="list_filter_phones">All contacts with phone numbers</string>
+
+    <!-- Text used to explain that a contact cannot be edited from the People application since the data is read only [CHAR LIMIT=40] -->
+    <string name="contact_read_only">Not editable from this app.</string>
+
+    <!-- Displayed in a spinner dialog after the user creates a contact and it's being saved to the database -->
+    <string name="savingContact">Saving contact\u2026</string>
+
+    <!-- Title of the activity that allows the user to confirm the addition of a detail to 1 existing contact [CHAR LIMIT=25] -->
+    <string name="activity_title_confirm_add_detail">Add to contact</string>
+
+    <!-- Label of the "sort list by" display option -->
+    <string name="display_options_sort_list_by">Sort list by</string>
+
+    <!-- Label of the "view names as" display option -->
+    <string name="display_options_view_names_as">View contact names as</string>
+
+    <!-- An allowable value for the "view names as" contact display option  -->
+    <string name="display_options_view_given_name_first">Given name first</string>
+
+    <!-- An allowable value for the "view names as" contact display option  -->
+    <string name="display_options_view_family_name_first">Family name first</string>
+
+    <!-- An allowable value for the "sort list by" contact display option  -->
+    <string name="display_options_sort_by_given_name">Given name</string>
+
+    <!-- An allowable value for the "sort list by" contact display option  -->
+    <string name="display_options_sort_by_family_name">Family name</string>
+
+    <!-- Title of the settings activity [CHAR LIMIT=64] -->
+    <string name="activity_title_settings">Settings</string>
+
+
+    <!-- Here a bunch of strings for VCARD processing, import/export etc.
+     -->
+
+    <!-- Dialog message shown when SDcard does not exist. [CHAR LIMIT=30] -->
+    <string name="no_sdcard_message">No SD or storage available.</string>
+
+    <!-- Dialog title when selecting the bulk operation to perform from a list. [CHAR LIMIT=36] -->
+    <string name="dialog_import_export">Import/export contacts</string>
+
+    <!-- Dialog title when importing contacts from an external source. [CHAR LIMIT=36] -->
+    <string name="dialog_import">Import contacts</string>
+
+    <!-- Toast indicating that sharing a contact has failed. [CHAR LIMIT=NONE]  -->
+    <string name="share_error">This contact can\'t be shared.</string>
+
+    <!-- Action string for selecting (USB) storage for importing contacts [CHAR LIMIT=25] -->
+    <string name="import_from_sdcard">Import from storage</string>
+
+    <!-- Action that exports all contacts to (USB) storage [CHAR LIMIT=25] -->
+    <string name="export_to_sdcard">Export to storage</string>
+
+    <!-- Action that shares visible contacts -->
+    <string name="share_visible_contacts">Share visible contacts</string>
+
+    <!-- One of alternatives shown when the system allows a user to select how many vCard files
+         should be imported. This message shows only when the system is certain that there's more
+         than one vCard files available in the system. -->
+    <string name="import_one_vcard_string">Import one vCard file</string>
+
+    <!-- One of alternatives shown when the system allows a user to select how many vCard files
+         should be imported. This message shows only when the system is certain that there's more
+         than one vCard files available in the system. -->
+    <string name="import_multiple_vcard_string">Import multiple vCard files</string>
+
+    <!-- One of alternatives shown when the system allows a user to select how many vCard files
+         should be imported. This message shows only when the system is certain that there's more
+         than one vCard files available in the system. -->
+    <string name="import_all_vcard_string">Import all vCard files</string>
+
+    <!-- Dialog message shown when searching VCard data from (USB) storage [CHAR LIMIT=NONE] -->
+    <string name="searching_vcard_message">Searching for vCard data in storage\u2026</string>
+
+    <!-- Dialog message shown when searching VCard data failed.
+         An exact reason for the failure should [CHAR LIMIT=NONE] -->
+    <string name="scanning_sdcard_failed_message">The storage couldn\'t be scanned. (Reason: \"%s\")</string>
+
+    <!-- The failed reason shown when Contacts app (especially vCard importer/exporter)
+         emitted some I/O error. Exact reason will be appended by the system. [CHAR LIMIT=NONE] -->
+    <string name="fail_reason_io_error">I/O error</string>
+
+    <!-- Failure reason show when Contacts app (especially vCard importer) encountered
+         low memory problem and could not proceed its import procedure. [CHAR LIMIT=NONE] -->
+    <string name="fail_reason_low_memory_during_import">Not enough memory. The file may be too large.</string>
+
+    <!-- The failed reason shown when vCard parser was not able to be parsed by the current vCard
+         implementation. This might happen even when the input vCard is completely valid, though
+         we believe it is rather rare in the actual world. [CHAR LIMIT=NONE] -->
+    <string name="fail_reason_vcard_parse_error">Couldn\'t parse vCard for an unexpected reason.</string>
+
+    <!-- The failed reason shown when vCard importer doesn't support the format.
+         This may be shown when the vCard is corrupted [CHAR LIMIT=40] -->
+    <string name="fail_reason_not_supported">The format isn\'t supported.</string>
+
+    <!-- Message used when vCard import has failed. [CHAR LIMIT=40] -->
+    <string name="vcard_import_failed">Couldn\'t import vCard.</string>
+
+    <!-- The failure message shown when the system could not find any vCard file.
+         (with extension ".vcf" in (USB) storage.)
+         [CHAR LIMIT=128] -->
+    <string name="import_failure_no_vcard_file">No vCard file found in storage.</string>
+
+    <!-- Fail reason shown when vCard importer failed to look over meta information stored in vCard file(s). -->
+    <string name="fail_reason_failed_to_collect_vcard_meta_info">Couldn\'t collect meta information of given vCard file(s).</string>
+
+    <!-- The failed reason shown when the import of some of vCard files failed during multiple vCard
+         files import. It includes the case where all files were failed to be imported. -->
+    <string name="fail_reason_failed_to_read_files">One or more files couldn\'t be imported (%s).</string>
+
+    <!-- The failed reason which should not be shown but it may in some buggy condition. [CHAR LIMIT=40] -->
+    <string name="fail_reason_unknown">Unknown error.</string>
+
+    <!-- Dialog title shown when a user is asked to select vCard file. [CHAR LIMIT=25] -->
+    <string name="select_vcard_title">Choose vCard file</string>
+
+    <!-- Dialog title shown when a user is asked to select vCard file. [CHAR LIMIT=25] -->
+    <string name="select_vcard_title_remove">Remove vCard file</string>
+
+    <!-- The title shown when vCard importer is caching files to be imported into local temporary
+         data storage.  [CHAR LIMIT=40] -->
+    <string name="caching_vcard_title">Caching</string>
+
+    <!-- The message shown when vCard importer is caching files to be imported into local temporary
+         data storage. [CHAR LIMIT=NONE] -->
+    <string name="caching_vcard_message">Caching vCard(s) to local temporary storage. The actual import will start soon.</string>
+
+    <!-- The message shown while importing vCard(s).
+         First argument is current index of contacts to be imported.
+         Second argument is the total number of contacts.
+         Third argument is the name of a contact which is being read.
+         [CHAR LIMIT=20] -->
+    <string name="progress_notifier_message">Importing %1$s/%2$s: %3$s</string>
+
+    <!-- Description shown when importing vCard data.
+         The argument is the name of a contact which is being read.
+         [CHAR LIMIT=20] -->
+    <string name="importing_vcard_description">Importing %s</string>
+
+    <!-- Dialog title shown when reading vCard data failed [CHAR LIMIT=40] -->
+    <string name="reading_vcard_failed_title">Couldn\'t read vCard data</string>
+
+    <!-- The title shown when reading vCard is canceled (probably by a user)
+         [CHAR LIMIT=40] -->
+    <string name="reading_vcard_canceled_title">Reading vCard data canceled</string>
+
+    <!-- The title shown when reading vCard finished
+         The argument is file name the user imported.
+         [CHAR LIMIT=40] -->
+    <string name="importing_vcard_finished_title">Finished importing vCard %s</string>
+
+    <!-- The title shown when importing vCard is canceled (probably by a user)
+         The argument is file name the user canceled importing.
+         [CHAR LIMIT=40] -->
+    <string name="importing_vcard_canceled_title">Importing %s canceled</string>
+
+    <!-- The message shown when vCard import request is accepted. The system may start that work soon, or do it later
+         when there are already other import/export requests.
+         The argument is file name the user imported.
+         [CHAR LIMIT=40] -->
+    <string name="vcard_import_will_start_message">%s will be imported shortly.</string>
+    <!-- The message shown when vCard import request is accepted. The system may start that work soon, or do it later when there are already other import/export requests.
+         "The file" is what a user selected for importing.
+         [CHAR LIMIT=40] -->
+    <string name="vcard_import_will_start_message_with_default_name">The file will be imported shortly.</string>
+    <!-- The message shown when a given vCard import request is rejected by the system. [CHAR LIMIT=NONE] -->
+    <string name="vcard_import_request_rejected_message">vCard import request was rejected. Try again later.</string>
+    <!-- The message shown when vCard export request is accepted. The system may start that work soon, or do it later
+         when there are already other import/export requests.
+         The argument is file name the user exported.
+         [CHAR LIMIT=40] -->
+    <string name="vcard_export_will_start_message">%s will be exported shortly.</string>
+    <!-- The message shown when a given vCard export request is rejected by the system. [CHAR LIMIT=NONE] -->
+    <string name="vcard_export_request_rejected_message">vCard export request was rejected. Try again later.</string>
+    <!-- Used when file name is unknown in vCard processing. It typically happens
+         when the file is given outside the Contacts app. [CHAR LIMIT=30] -->
+    <string name="vcard_unknown_filename">contact</string>
+
+    <!-- The percentage, used for expressing the progress of vCard import/export. -->
+    <string name="percentage">%s%%</string>
+
+    <!-- Dialog title shown when a user confirms whether he/she export Contact data. [CHAR LIMIT=32] -->
+    <string name="confirm_export_title">Export contacts?</string>
+
+    <!-- Dialog message shown when a user confirms whether he/she export Contact data [CHAR LIMIT=NONE] -->
+    <string name="confirm_export_message">Your contact list will be exported to file: %s.</string>
+
+    <!-- Dialog title shown when exporting Contact data failed. [CHAR LIMIT=20] -->
+    <string name="exporting_contact_failed_title">Couldn\'t export</string>
+
+    <!-- Dialog message shown when exporting Contact data failed. [CHAR LIMIT=NONE] -->
+    <string name="exporting_contact_failed_message">The contact data wasn\'t exported.\nReason: \"%s\"</string>
+
+    <!-- The failed reason shown when there's no contact which is allowed to be exported.
+         Note that user may have contacts data but all of them are probably not allowed to be
+         exported because of security/permission reasons. [CHAR LIMIT=NONE] -->
+    <string name="fail_reason_no_exportable_contact">There is no exportable contact.</string>
+
+    <!-- The failed reason shown when vCard exporter could not create a file for the vCard since
+         there are too many files relevant to vCard. [CHAR LIMIT=NONE] -->
+    <string name="fail_reason_too_many_vcard">Too many vCard files are in the storage.</string>
+
+    <!-- The failed reason shown when the given file name is too long for the system.
+         The length limit of each file is different in each Android device, so we don't need to
+         mention it here. [CHAR LIMIT=NONE] -->
+    <string name="fail_reason_too_long_filename">Required filename is too long (\"%s\").</string>
+
+    <!-- The title shown when exporting vCard is successfuly finished [CHAR LIMIT=40] -->
+    <string name="exporting_vcard_finished_title">Finished exporting %s.</string>
+
+    <!-- The title shown when exporting vCard is canceled (probably by a user)
+         The argument is file name the user canceled importing.
+         [CHAR LIMIT=40] -->
+    <string name="exporting_vcard_canceled_title">Exporting %s canceled.</string>
+
+    <!-- Dialog title shown when the application is exporting contact data outside. [CHAR LIMIT=NONE] -->
+    <string name="exporting_contact_list_title">Exporting contact data</string>
+
+    <!-- Message shown when the application is exporting contact data outside -->
+    <string name="exporting_contact_list_message">Your contact data is being exported to: %s.</string>
+
+    <!-- The failed reason shown when contacts exporter fails to be initialized.
+         Some exact reason must follow this. [CHAR LIMIT=NONE]-->
+    <string name="fail_reason_could_not_initialize_exporter">Couldn\'t start the exporter: \"%s\".</string>
+
+    <!-- The failed reason shown when some error happend during contacts export.
+         Some exact reason must follow this. [CHAR LIMIT=NONE] -->
+    <string name="fail_reason_error_occurred_during_export">An error occurred during export: \"%s\".</string>
+
+    <!-- The error reason the vCard composer "may" emit when database is corrupted or
+         something is going wrong. Usually users should not see this text. [CHAR LIMIT=NONE] -->
+    <string name="composer_failed_to_get_database_infomation">Couldn\'t get database information.</string>
+
+    <!-- This error message shown when the user actually have no contact
+         (e.g. just after data-wiping), or, data providers of the contact list prohibits their
+         contacts from being exported to outside world via vcard exporter, etc. [CHAR LIMIT=NONE] -->
+    <string name="composer_has_no_exportable_contact">There are no exportable contacts. If you do have contacts on your device, some data providers may not allow the contacts to be exported from the device.</string>
+
+    <!-- The error reason the vCard composer may emit when vCard composer is not initialized
+         even when needed.
+         Users should not usually see this error message. [CHAR LIMIT=NONE] -->
+    <string name="composer_not_initialized">The vCard composer didn\'t start properly.</string>
+
+    <!-- The failed reason shown when vCard importer/exporter could not open the file
+         specified by a user. The file name should be in the message. [CHAR LIMIT=NONE] -->
+    <string name="fail_reason_could_not_open_file">Could not open \"%1$s\": %2$s.</string>
+
+    <!-- Message in progress bar while exporting contact list to a file "(current number) of (total number) contacts" The order of "current number" and "total number" cannot be changed (like "total: (total number), current: (current number)")-->
+    <string name="exporting_contact_list_progress">%1$s of %2$s contacts</string>
+
+    <!-- Message shown in a Dialog confirming a user's cancel request toward existing vCard import.
+         The argument is file name for the vCard import the user wants to cancel.
+         [CHAR LIMIT=128] -->
+    <string name="cancel_import_confirmation_message">Cancel import of %s?</string>
+
+    <!-- Message shown in a Dialog confirming a user's cancel request toward existing vCard export.
+         The argument is file name for the vCard export the user wants to cancel.
+         [CHAR LIMIT=128] -->
+    <string name="cancel_export_confirmation_message">Cancel export of %s?</string>
+
+    <!-- The "file name" displayed for vCards received directly via NFC [CHAR LIMIT=16] -->
+    <string name="nfc_vcard_file_name">Contact received over NFC</string>
+
+
+    <!-- Title shown in a Dialog telling users cancel vCard import/export operation is failed. [CHAR LIMIT=40] -->
+    <string name="cancel_vcard_import_or_export_failed">Couldn\'t cancel vCard import/export</string>
+
+    <!-- Text used to explain that a group cannot be edited since the data is read only [CHAR LIMIT=40] -->
+    <string name="group_read_only">Not editable on this device.</string>
+
+    <!-- Hint text in the group name box in the edit group view. [CHAR LIMIT=20]-->
+    <string name="group_name_hint">Group\'s name</string>
+
+    <!-- Label to instruct the user to type in a contact's name to add the contact as a member of the current group. [CHAR LIMIT=64] -->
+    <string name="enter_contact_name">Type person\'s name</string>
+
+    <!-- Toast displayed when a group is saved [CHAR LIMIT=NONE] -->
+    <string name="groupSavedToast">Group saved.</string>
+
+    <!-- Toast displayed when saving a group failed [CHAR LIMIT=NONE] -->
+    <string name="groupSavedErrorToast">Couldn\'t save group changes.</string>
+
+    <!-- The text displayed when there are no members in the group while displaying the group detail page [CHAR LIMIT=40] -->
+    <string name="emptyGroup">No people in this group.</string>
+
+    <!-- The text displayed to instruct users to add members to a group (when viewing a group detail page for a group with no members) [CHAR LIMIT=50] -->
+    <string name="addPeopleToGroup">To add some, edit the group.</string>
+
+    <!-- Menu item that edits the currently selected group [CHAR LIMIT=30] -->
+    <string name="menu_editGroup">Edit</string>
+
+    <!-- Menu item that deletes the currently selected group [CHAR LIMIT=30] -->
+    <string name="menu_deleteGroup">Delete</string>
+
+    <!-- Subtitle of the group detail page that describes how many people are in the current group [CHAR LIMIT=30] -->
+    <plurals name="num_contacts_in_group">
+        <item quantity="one">%1$d person from %2$s</item>
+        <item quantity="other">%1$d people from %2$s</item>
+    </plurals>
+
+    <!-- The text displayed on the divider for the Favorites tab in People app indicating that items below it are frequently contacted [CHAR LIMIT = 39] -->
+    <string name="favoritesFrequentContacted">Frequently contacted</string>
+
+    <!-- The text displayed on the divider for the Favorites tab in Phone app indicating that items below it are frequently called as opposed to starred contacts [CHAR LIMIT = 39] -->
+    <string name="favoritesFrequentCalled">Frequently called</string>
+
+    <!-- String describing a contact picture that introduces users to the contact detail screen.
+
+         Used by AccessibilityService to announce the purpose of the button.
+
+         [CHAR LIMIT=NONE]
+      -->
+    <string name="description_view_contact_detail" msgid="2795575601596468581">View contact</string>
+
+    <!-- Confirmation message of the dialog that allows deletion of a contact group  [CHAR LIMIT=256] -->
+    <string name="delete_group_dialog_message">Delete the group
+      \"%1$s\"?
+      (Contacts themselves will not be deleted.)
+    </string>
+
+    <!-- Subtitle of a group (in the group list) that describes how many people are in the current group [CHAR LIMIT=30] -->
+    <plurals name="group_list_num_contacts_in_group">
+        <item quantity="one">%1$d person</item>
+        <item quantity="other">%1$d people</item>
+    </plurals>
+
+    <!-- The text displayed when the groups list is empty while displaying all groups [CHAR LIMIT=NONE] -->
+    <string name="noGroups">No groups.</string>
+
+    <!-- The text displayed when the groups list is empty and no accounts are set on the device while displaying all groups [CHAR LIMIT=NONE] -->
+    <string name="noAccounts">To create groups you need an account.</string>
+
+    <!-- Title of the dialog that allows creation of a contact group [CHAR LIMIT=128] -->
+    <string name="create_group_dialog_title">Create new group</string>
+
+    <!-- Button shown on the main contacts screen when there are no contacts on the device.
+    Navigates to account setup [CHAR LIMIT=128] -->
+    <string name="contacts_unavailable_add_account">Sign in to an account</string>
+
+    <!-- The button to add an organization field to a contact in the Raw Contact Editor [CHAR LIMIT=15] -->
+    <string name="group_edit_field_hint_text">Group name</string>
+
+    <!-- An item in the popup list of groups that triggers creation of a contact group [CHAR LIMIT=128] -->
+    <string name="create_group_item_label">Create new group</string>
+
+    <!-- The preference section title for contact display options [CHAR LIMIT=128] -->
+    <string name="preference_displayOptions">Display options</string>
+
+    <!-- String describing the button to send a text message on quick contact.
+
+        Note: AccessibilityServices use this attribute to announce what the view represents.
+              This is especially valuable for views without textual representation like ImageView.
+              [CHAR LIMIT=NONE]
+    -->
+    <string name="description_send_message">Send message to %1$s</string>
+
+    <!-- String describing the text for a phone number in quick contact.
+
+        Note: AccessibilityServices use this attribute to announce what the view represents.
+              This is especially valuable for views without textual representation like ImageView.
+    -->
+    <string name="description_dial_phone_number">Dial phone %1$s</string>
+
+    <!-- String describing the text for photo of a contact in a contacts list.
+
+        Note: AccessibilityServices use this attribute to announce what the view represents.
+              This is especially valuable for views without textual representation like ImageView.
+    -->
+    <string name="description_quick_contact_for">Quick contact for %1$s</string>
+
+    <!-- Message displayed in a toast when you try to view the details of a contact that
+         for some reason doesn't exist anymore. [CHAR LIMIT=NONE]-->
+    <string name="invalidContactMessage">The contact doesn\'t exist.</string>
+
+    <!-- Shown as a toast when the user taps on a QuickContact icon, and no application
+         was found that could perform the selected action. [CHAR LIMIT=NONE] -->
+    <string name="quickcontact_missing_app">No app was found to handle this action.</string>
+
+    <!-- Section title for the page containing the contact's social updates on the contact card [CHAR LIMIT=20]-->
+    <string name="recent_updates">Recent updates</string>
+
+    <!-- Strings used for search bar --><skip />
+
+    <!-- This is the default button label in the system-wide search UI.
+         It is also used by the home screen's search "widget". It should be short -->
+    <string name="search_go">Search</string>
+    <!-- SearchView accessibility description for search button [CHAR LIMIT=NONE] -->
+    <string name="searchview_description_search">Search</string>
+    <!-- SearchView accessibility description for search text field [CHAR LIMIT=NONE] -->
+    <string name="searchview_description_query">Search query</string>
+    <!-- SearchView accessibility description for clear button [CHAR LIMIT=NONE] -->
+    <string name="searchview_description_clear">Clear query</string>
+    <!-- SearchView accessibility description for submit button [CHAR LIMIT=NONE] -->
+    <string name="searchview_description_submit">Submit query</string>
+    <!-- SearchView accessibility description for voice button [CHAR LIMIT=NONE] -->
+    <string name="searchview_description_voice">Voice search</string>
+
+    <string name="sca_about">Silent Circle Contacts is a companion application that stores your contacts in an encrypted database.
+    \n\nBuild number: %1$s (%2$s)</string>
+
+
+    <!--      ****************  Strings for Key store part ****************** -->
+    <string name="cannot_load_store">Cannot open key store. The password or PIN you entered is incorrect, please try again.</string>
+    <string name="cannot_create_store">Cannot create key store.</string>
+    <string name="password_hint">Enter Password</string>
+    <string name="password_hint_old">Enter old password</string>
+    <string name="password_hint_new">Enter new password</string>
+    <string name="password_hint2">Enter password (verify)</string>
+    <string name="change_password">Change password</string>
+    <string name="cannot_change_password">Password change failed. Using existing password.</string>
+    <string name="old_password_wrong">Old password is wrong. Locking key store.</string>
+    <string name="unlock">Unlock</string>
+    <string name="lock">Lock</string>
+    <string name="create">Create key store</string>
+    <string name="key_store_change_pw">Change password</string>
+    <string name="unlocked">Unlocked</string>
+    <string name="locked">Locked</string>
+    <string name="backup_store">Backup key data</string>
+    <string name="backup_access">Backup storage not accessible.</string>
+    <string name="restore_store">Restore key data</string>
+    <string name="cannot_create_backup">Cannot create backup file.</string>
+    <string name="backup_failed">Backup of key manager data failed.</string>
+    <string name="backup_created">Backup of key manager data complete.</string>
+    <string name="restore_failed">Restore of key manager data failed.</string>
+    <string name="restore_created">Restoring of key manager data complete.</string>
+    <string name="restore_access">No backup file for restore available.</string>
+    <string name="no_password">Missing password.</string>
+    <string name="information_dialog">Information</string>
+    <string name="show_pw">Show password</string>
+    <string name="password_match">Passwords do not match. Please check.</string>
+    <string name="registered_apps">Registered applications</string>
+
+
+    <!-- ******************** New or modified *********************** -->
+    <!-- Strings new after 2.0.1 release -->
+    <string name="video_control_explanation">Tap on screen to toggle video control buttons.
+        \n\nTouch small preview window to move it.</string>
+    <string name="sca_problem">Cannot run Silent Contacts</string>
+    <string name="sca_problem_explanation">Check the status of the Silent Contacts application and enable if it is disabled.
+        Without access to Silent Contacts Silent Phone cannot access contact information.</string>
+
+    <string name="start_on_boot">Start Silent Phone on boot</string>
+    <string name="start_on_boot_explanation">Start Silent Phone during the device\'s startup procedure.</string>
+
+    <string name="enable_traversal">Enable Firewall traversal</string>
+    <string name="enable_traversal_explanation">If Silent Phone detects a restrictive firewall it uses special connection settings.</string>
+
+    <string name="force_traversal">Force Firewall traversal</string>
+    <string name="force_traversal_explanation">Use a more reliable but lower-quality method of connecting the call audio, which may be needed on particularly bad networks.</string>
+
+    <string name="monitor_native_calls">Ask to secure other calls</string>
+    <string name="monitor_native_calls_explanation">Silent Phone will ask whether you would like to secure calls placed from outside of Silent Phone.</string>
+
+    <string name="setting_underflow">Dropout tone</string>
+    <string name="setting_underflow_summary">Plays low tone if no media packets are arriving from network. Indicates slow network.</string>
+
+    <string name="setting_echo_option">Echo canceler</string>
+    <string name="setting_echo_option_summary">Automatic control of echo canceler. If not selected the echo canceler is always active</string>
+
+    <!-- ******* Strings for the dial assist activity -->
+    <string name="sp_dial_helper_title">Dial assist</string>
+    <string name="sp_dial_helper_select_explanation">To simplify dialing, turn on Dial Assist and select a
+        country. The number will automatically be formatted with your country code. Otherwise, dial \'+\' and
+        the country code.</string>
+    <string name="sp_dial_helper_select_explanation_1">To call other Silent Circle subscribers, simply dial their
+        Silent Circle subscriber name.</string>
+    <string name="sp_dial_helper_select">Select your country</string>
+    <string name="sp_dial_helper_none">No dial assist</string>
+    <string name="sp_dial_helper_simple">Simple dial assist</string>
+
+    <!-- Explain specific dial support functions -->
+    <string name="sp_dial_helper_null_explanation">Dial assist disabled.</string>
+    <string name="sp_dial_helper_simple_explanation">Adds \'+\' to form an international phone number.</string>
+    <string name="sp_dial_helper_nanp_explanation">Adds \'+\' or \'+1\' or replaces a leading \'011\' with a \'+\' sign.</string>
+    <string name="sp_dial_helper_00_0_explanation">Replaces a leading \'%1$s\' with country code %2$s and a leading \'%3$s\' with the \'+\' sign.</string>
+    <string name="sp_dial_helper_00_x_explanation">Adds \'%2$s\' to dialed digits and replaces a leading \'%3$s\' with the \'+\' sign.</string>
+
+    <!-- ******* Strings for the key store management activity -->
+    <string name="key_store_set_pw_explanation">Enter an own password to enhance key store protection.\nYou need to enter
+        this password every time you start Silent Phone. You can reset to default protection at any time.</string>
+
+    <string name="key_store_change_pw_explanation">Change your own key store password.</string>
+    <string name="key_store_reset_pw_explanation">The client resets key store protection to default after you entered your password.</string>
+    <string name="key_store_enter_pw_explanation">Enter your key store password.</string>
+
+    <string name="key_store_set_pin_explanation">Enter an own PIN to enhance key store protection.\nYou need to enter
+        this PIN every time you start Silent Phone. You can reset to default protection at any time.</string>
+
+    <string name="key_store_change_pin_explanation">Change your own key store PIN.</string>
+    <string name="key_store_reset_pin_explanation">The client resets key store protection to default after you entered your PIN.</string>
+    <string name="key_store_enter_pin_explanation">Enter your key store PIN.</string>
+
+    <string name="pin_hint">Enter PIN</string>
+    <string name="pin_hint_old">Enter old PIN</string>
+    <string name="pin_hint_new">Enter new PIN</string>
+    <string name="pin_hint2">Enter PIN (verify)</string>
+
+    <string name="no_pin">Missing PIN.</string>
+    <string name="show_pin">Show PIN</string>
+    <string name="pin_match">PINs do not match. Please check.</string>
+    <string name="pin_short">PIN is too short. Enter at least %d digits </string>
+
+    <string name="key_store_title">Key store options</string>
+    <string name="key_store_type_default">Default password</string>
+    <string name="key_store_type_pw">User password</string>
+    <string name="key_store_type_pin">User PIN</string>
+
+    <string name="key_store_set_pw">Set a password</string>
+    <string name="key_store_set_pin">Set a PIN</string>
+
+    <string name="key_store_change_pin">Change PIN</string>
+
+    <string name="key_store_reset_default">Reset to default protection</string>
+
+    <string name="re_provision">Silent Phone re-provision</string>
+    <string name="re_provision_explanation">Reload Silent Phone configuration data</string>
+
+    <!-- ******** String to explain the migration activities -->
+<!--    <string name="migration_explanation">Silent Contacts is now embedded into Silent Phone. The embedded
+         Silent Contacts copies your existing contacts.
+         \n\nAfter completion of data copying accept de-installation of existing Silent Contacts.
+         \n\nIf you cancel this then de-install the existing Silent Contacts application using Android\'s app manager.
+         In this case your existing contacts are not automatically copied.</string> -->
+
+    <string name="migration_explanation_1">Silent Contacts is now embedded into Silent Phone. This migration step
+        copies your existing Silent Contacts and deletes the old Silent Key Manager and Silent Contacts applications.
+    </string>
+
+    <string name="migration_explanation_2">After completion of data copying accept de-installation of existing old Silent Contacts app.</string>
+
+    <string name="migrate_start">Start migration of Silent Contact data.</string>
+    <string name="migrate_export">Export existing Silent Contacts.</string>
+    <string name="migrate_done">Migration done.</string>
+    <string name="migrate_import">Import into embedded Silent Contacts.</string>
+    <string name="migrate_not_ready">Embedded contact provider not ready.</string>
+    <string name="migrate_failed_old_km">"Contact data migration: KeyManager request failed."</string>
+
+    <!-- ******** String for DID selection activity -->
+    <string name="did_title">Phone number selection</string>
+    <string name="did_region_area_explanation">Select your phone number from a region and area</string>
+    <string name="did_currently_selected">Currently selected</string>
+    <string name="did_region">Region:</string>
+    <string name="did_area">Area:</string>
+    <string name="did_number">Number:</string>
+    <string name="did_region_list">Select region</string>
+    <string name="did_area_list">Select area</string>
+    <string name="did_number_list">Select number</string>
+    <string name="did_selection_wrong_format">Phone number selection - server sent wrong data format: </string>
+    <string name="did_no_area">Currently no area available in this region. Select another region.</string>
+    <string name="did_no_number">Currently no phone number available, select another region or area.</string>
+    <string name="did_ask_to_complete">Complete the phone number selection.</string>
+
+    <string name="no_internet">No Internet connection</string>
+    <string name="mobile_internet_blocked">Mobile Internet blocked</string>
+    <string name="mobile_internet_available">Mobile Internet available</string>
+
+    <string name="directory_use_sc">Search Silent Circle Global Directory</string>
+<!--    <string name="directory_use_sc">Search Silent Circle Directory</string> -->
+    <string name="directory_own_org_only">Members of my own organization</string>
+
+    <string name="sign_in">Sign in</string>
+    <string name="sign_in_to_sc">Sign in to your Silent Circle account</string>
+
+    <string name="sc_privacy_link"><a href="https://silentcircle.com/privacy/">Privacy Statement</a></string>
+    <string name="sc_tos_link"><a href="https://accounts.silentcircle.com/terms/">Terms of Service</a></string>
+
+    <plurals name="number_missed_calls">
+        <item quantity="one">Missed call</item>
+        <item quantity="other">%d missed calls</item>
+    </plurals>
+
+    <string name="no_video_available">Video is not available for this call.</string>
+    <string name="call_in_progress">Call in progress</string>
+
+    <string name="server_cert_failure">Certificate check failed - retrying</string>
+
+    <string name="remaining_oca_minutes">Remaining minutes</string>
+    <string name="remaining_oca_minutes_fail">No Silent World information available</string>
+
+    <string name="remaining_oca_minutes_zero">No call minutes used. Monthly plan: %1$d minutes.</string>
+    <plurals name="remaining_oca_minutes_info">
+        <item quantity="one">You used one minute of your %1$d minutes.</item>
+        <!--<item quantity="other">You used %1$d minutes of your %2$d minutes.</item>-->
+        <item quantity="other">Plan: %1$d minutes\nRemaining: %2$d minutes</item>
+    </plurals>
+
+    <string name="setting_p2p">Use media relay</string>
+    <string name="setting_p2p_summary">Always use media relay server to conceal remote party\'s location. Adds latency.</string>
+
+    <!-- SCA-50 added string -->
+    <string name="provide_your_name">Name can not be blank. Click Cancel to discard it.</string>
+    <!-- end SCA-50 -->
+
+    <!-- SPA-259 added string -->
+    <string name="connected_to_network">Network unavailable. \nEnsure your device can connect to the Internet and try again.</string>
+    <string name="provisioning_error_message">Please re-launch the app and login again.</string>
+    <!-- end SPA-259 -->
+
+    <string name="re_provisioning_device_not_found">This device is not known to the provisioning server.
+        To re-provision this device you need to enter your Silent Circle username and password.
+        \n\nTo continue press OK.
+    </string>
+
+    <string name="spa_no">No</string>
+
+    <string name="do_secure_call">"Use Silent Phone to secure this call?"</string>
+
+    <!--
+    **************************  New Dialer layout  *************************
+    -->
+    <string name="tab_speed_dial">Speed Dial</string>
+
+    <string name="tab_recents">Recents</string>
+
+    <string name="tab_all_contacts">Contacts</string>
+
+    <!-- Button text for the "call back" button displayed underneath an entry in the call log.
+     Tapping causes a call to be placed to the caller represented by the call log entry.
+     [CHAR LIMIT=30] -->
+    <string name="call_log_action_call_back">CALL BACK</string>
+
+    <!-- Button text for the "video call" button displayed underneath an entry in the call log.
+         Tapping causes a video call to be placed to the caller represented by the call log entry.
+         [CHAR LIMIT=30] -->
+    <string name="call_log_action_video_call">VIDEO CALL</string>
+
+    <!-- Button text for the "LISTEN" button displayed underneath an entry in the call log.
+         Tapping navigates the user to the call details screen where the user can listen to the
+         voicemail represented by the call log entry.
+         [CHAR LIMIT=30] -->
+    <string name="call_log_action_voicemail">LISTEN</string>
+
+    <!-- Button text for the "DETAILS" button displayed underneath an entry in the call log.
+         Tapping navigates the user to the call details screen where the user can view details for
+         the call log entry.
+         [CHAR LIMIT=30] -->
+    <string name="call_log_action_details">DETAILS</string>
+
+    <!-- Button text for the "report" button displayed underneath an entry in the call log.
+         Tapping causes the call log entry to be reported as a bad id.
+         [CHAR LIMIT=30] -->
+    <string name="call_log_action_report">REPORT</string>
+
+    <!-- Content description for dismiss button on badge. [CHAR LIMIT=NONE] -->
+    <string name="description_dismiss">Dismiss</string>
+
+    <!-- Message displayed when there is no application available to handle a particular action.
+     [CHAR LIMIT=NONE] -->
+    <string name="activity_not_available">No installed activity available to handle selected action.</string>
+
+    Note: AccessibilityServices use this attribute to announce what the view represents.
+    This is especially valuable for views without textual representation like ImageView.
+    -->
+    <string name="description_num_calls"><xliff:g id="numberOfCalls">%1$s</xliff:g> calls.</string>
+
+    <!-- String describing the "call back" action for an entry in the call log.  The call back
+     action triggers a return call to the named user.
+     Note: AccessibilityServices uses this attribute to announce the purpose of the button.
+     [CHAR LIMIT=NONE] -->
+    <string name="description_call_back_action">Call back <xliff:g id="nameOrNumber" example="John Smith">%1$s</xliff:g></string>
+
+    <!-- String describing the "video call" action for an entry in the call log.  The video call
+         action triggers a return video call to the named person/number.
+         Note: AccessibilityServices uses this attribute to announce the purpose of the button.
+         [CHAR LIMIT=NONE] -->
+    <string name="description_video_call_action">Video call to <xliff:g id="nameOrNumber" example="John Smith">%1$s</xliff:g>.</string>
+
+    <!-- String describing the "listen" action for an entry in the call log.  The listen
+         action is shown for call log entries representing a voicemail message and this button
+         triggers playing back the voicemail.
+         Note: AccessibilityServices uses this attribute to announce the purpose of the button.
+         [CHAR LIMIT=NONE] -->
+    <string name="description_voicemail_action">Listen to voicemail from <xliff:g id="nameOrNumber" example="John Smith">%1$s</xliff:g></string>
+
+    <!-- String describing the "details" action for an entry in the call log.  The details action
+         displays the call details screen for an entry in the call log.  This shows the calls to
+         and from the specified number associated with the call log entry.
+         [CHAR LIMIT=NONE] -->
+    <string name="description_details_action">Call details for <xliff:g id="nameOrNumber" example="John Smith">%1$s</xliff:g></string>
+
+    <!-- String describing the button to access the contact details for a name or number.
+
+        Note: AccessibilityServices use this attribute to announce what the view represents.
+              This is especially valuable for views without textual representation like ImageView.
+    -->
+    <string name="description_contact_details">Contact details for <xliff:g id="nameOrNumber">%1$s</xliff:g></string>
+
+    <!-- String describing an incoming missed call entry in the call log.
+     Note: AccessibilityServices uses this attribute to announce what the view represents.
+     [CHAR LIMIT=NONE] -->
+    <string name="description_incoming_missed_call">Missed call from <xliff:g id="nameOrNumber" example="John Smith">%1$s</xliff:g>, <xliff:g id="typeOrLocation" example="Mobile">%2$s</xliff:g>, <xliff:g id="timeOfCall" example="2 min ago">%3$s</xliff:g>.</string>
+
+    <!-- String describing an incoming answered call entry in the call log.
+         Note: AccessibilityServices uses this attribute to announce what the view represents.
+         [CHAR LIMIT=NONE] -->
+    <string name="description_incoming_answered_call">Answered call from <xliff:g id="nameOrNumber" example="John Smith">%1$s</xliff:g>, <xliff:g id="typeOrLocation" example="Mobile">%2$s</xliff:g>, <xliff:g id="timeOfCall" example="2 min ago">%3$s</xliff:g>.</string>
+
+    <!-- String describing an outgoing call entry in the call log.
+         Note: AccessibilityServices uses this attribute to announce what the view represents.
+         [CHAR LIMIT=NONE] -->
+    <string name="description_outgoing_call">Call to <xliff:g id="nameOrNumber" example="John Smith">%1$s</xliff:g>, <xliff:g id="typeOrLocation" example="Mobile">%2$s</xliff:g>, <xliff:g id="timeOfCall" example="2 min ago">%3$s</xliff:g>.</string>
+
+    <!-- Delimiter used between each item in a textual list; for example "Alpha, Beta".
+     [CHAR LIMIT=3] -->
+    <string name="list_delimeter">", "</string>
+
+    <!-- String used as a header in the call log above calls which occurred today.
+     [CHAR LIMIT=65] -->
+    <string name="call_log_header_today">Today</string>
+
+    <!-- String used as a header in the call log above calls which occurred yesterday.
+         [CHAR LIMIT=65] -->
+    <string name="call_log_header_yesterday">Yesterday</string>
+
+    <!-- String used as a header in the call log above calls which occurred two days or more ago.
+         [CHAR LIMIT=65] -->
+    <string name="call_log_header_other">Older</string>
+
+    <!-- Text displayed when the list of missed calls is empty -->
+    <string name="recentMissed_empty">You have no recent missed calls.</string>
+
+    <!-- Text displayed when the list of voicemails is empty -->
+    <string name="recentVoicemails_empty">You have no recent voicemails.</string>
+
+    <!-- Title for the recent calls footer that brings users to the full call history when clicked -->
+    <string name="recents_footer_text">View full call history</string>
+
+    <!-- Shows up as a tooltip to provide a hint to the user that the profile pic in a contact
+     card can be tapped to bring up a list of all numbers, or long pressed to start reordering
+     [CHAR LIMIT=NONE]
+    -->
+    <string name="contact_tooltip">Tap image to see all numbers or press and hold to reorder</string>
+
+    <!-- Remove button that shows up when contact is long-pressed. [CHAR LIMIT=NONE] -->
+    <string name="remove_contact">Remove</string>
+
+    <!-- Shown when there are no speed dial favorites. -->
+    <string name="speed_dial_empty">Speed dial is one touch dialing\nfor favorites and numbers\n you call frequently.</string>
+
+    <!-- Shown when there are no contacts in the all contacts list. -->
+    <string name="all_contacts_empty">You have no contacts.</string>
+
+    <!-- Title for the call log tab containing the list of all voicemails and calls
+     [CHAR LIMIT=30] -->
+    <string name="call_log_all_title">All</string>
+
+    <!-- Title for the call log tab containing the list of all missed calls only
+         [CHAR LIMIT=30] -->
+    <string name="call_log_missed_title">Missed</string>
+
+    <string name="expanding_entry_card_view_see_more">See more</string>
+    <!-- Button Label to see less on an ExpandingEntryCardView [CHAR LIMIT=40] -->
+    <string name="expanding_entry_card_view_see_less">See less</string>
+    <!-- Button Label to see all on an ExpandingEntryCardView [CHAR LIMIT=40] -->
+    <string name="expanding_entry_card_view_see_all">See all</string>
+
+    <!-- Content description for the transparent views around the visible section of QuickContacts.
+     Clicking this view causes Quick Contacts to close. [CHAR LIMIT=NONE] -->
+    <string name="quickcontact_transparent_view_description">Click to return to previous screen</string>
+
+    <!-- Timestamp string for interactions from yesterday. [CHAR LIMIT=40] -->
+    <string name="yesterday">Yesterday</string>
+    <string name="tomorrow">Tomorrow</string>
+
+    <!-- Timestamp string for interactions from today. [CHAR LIMIT=40] -->
+    <string name="today">Today</string>
+    <!-- Text for an event starting on the current day with a start and end time.
+         For ex, "Today at 5:00pm-6:00pm" [CHAR LIMIT=NONE] -->
+    <string name="today_at_time_fmt">"Today at <xliff:g id="time_interval">%s</xliff:g>"</string>
+    <!-- Text for an event starting on the next day with a start and end time.
+         For ex, "Tomorrow at 5:00pm-6:00pm" [CHAR LIMIT=NONE] -->
+    <string name="tomorrow_at_time_fmt">"Tomorrow at <xliff:g id="time_interval">%s</xliff:g>"</string>
+    <!-- Format string for a date and time description.  For ex:
+         "April 19, 2012, 3:00pm - 4:00pm" [CHAR LIMIT=NONE] -->
+    <string name="date_time_fmt">"<xliff:g id="date">%s</xliff:g>, <xliff:g id="time_interval">%s</xliff:g>"</string>
+    <!-- Title for untitled calendar interactions [CHAR LIMIT=40] -->
+    <string name="untitled_event">(Untitled event)</string>
+
+    <!-- Header for the Relation entry [CHAR LIMIT=NONE] -->
+    <string name="content_description_recent_call_type_incoming">incoming</string>
+    <!-- Header for the Relation entry [CHAR LIMIT=NONE] -->
+    <string name="content_description_recent_call_type_outgoing">outgoing</string>
+    <!-- Header for the Relation entry [CHAR LIMIT=NONE] -->
+    <string name="content_description_recent_call_type_missed">missed</string>
+
+    <!-- Content description for recent sms interaction [CHAR LIMIT=NONE] -->
+    <string name="content_description_recent_call">recent call. <xliff:g id="call_details">%s</xliff:g>. click to call back</string>
+
+    <!-- Title of recent card. [CHAR LIMIT=60] -->
+    <string name="recent_card_title">Recent</string>
+
+    <!-- Header for the IM entry [CHAR LIMIT=40] -->
+    <string name="header_im_entry">IM</string>
+    <!-- Header for the Organization entry [CHAR LIMIT=40] -->
+    <string name="header_organization_entry">Organization</string>
+    <!-- Header for the Nickname entry [CHAR LIMIT=40] -->
+    <string name="header_nickname_entry">Nickname</string>
+    <!-- Header for the Note entry [CHAR LIMIT=40] -->
+    <string name="header_note_entry">Note</string>
+    <!-- Header for the Website entry [CHAR LIMIT=40] -->
+    <string name="header_website_entry">Website</string>
+    <!-- Header for the Event entry [CHAR LIMIT=40] -->
+    <string name="header_event_entry">Event</string>
+    <!-- Header for the Relation entry [CHAR LIMIT=40] -->
+    <string name="header_relation_entry">Relation</string>
+
+    <!-- When a contact has no data, we prompt the user to add a phone number for the contact. [CHAR LIMIT=40] -->
+    <string name="quickcontact_add_phone_number">Add phone number</string>
+    <!-- When a contact has no data, we prompt the user to add an email for the contact. [CHAR LIMIT=40] -->
+    <string name="quickcontact_add_email">Add email</string>
+
+    <!-- Title of recent card. [CHAR LIMIT=40] -->
+    <string name="about_card_title">About</string>
+
+    <!-- Description of what happens when you click on the unstar MenuItem. [CHAR LIMIT=NONE] -->
+    <string name="description_action_menu_remove_star">Removed from favorites</string>
+    <!-- Description of what happens when you click on the star MenuItem. [CHAR LIMIT=NONE] -->
+    <string name="description_action_menu_add_star">Added to favorites</string>
+
+    <!-- Message displayed in a toast after you create a contact shortcut in the launcher [CHAR LIMIT=NONE]-->
+    <string name="createContactShortcutSuccessful">Contact widget added to Home screen.</string>
+
+    <!-- The menu item to add the the currently viewed contact to your contacts [CHAR LIMIT=30] -->
+    <string name="menu_add_contact">Add to contacts</string>
+
+    <!-- Label for custom events  [CHAR LIMIT=20] -->
+    <string name="eventTypeCustom">Custom</string>
+    <!-- Label for a birthday event  [CHAR LIMIT=20] -->
+    <string name="eventTypeBirthday">Birthday</string>
+    <!-- Label for an anniversary event  [CHAR LIMIT=20] -->
+    <string name="eventTypeAnniversary">Anniversary</string>
+    <!-- Label for other events  [CHAR LIMIT=20] -->
+    <string name="eventTypeOther">Other</string>
+
+    <!-- Shortcut item used to call a number directly from search -->
+    <string name="search_shortcut_call_number">Call <xliff:g id="number">%s</xliff:g>
+    </string>
+
+    <!-- Shortcut item used to add a number directly from search -->
+    <string name="search_shortcut_add_to_contacts">Add to contacts</string>
+
+    <!-- Message displayed when there is no application available to handle the add contact menu option. [CHAR LIMIT=NONE] -->
+    <string name="add_contact_not_available">Re-enable the Contacts application to use this feature.</string>
+
+    <!-- Content description for the fake action menu up button as used
+     inside search. [CHAR LIMIT=NONE] -->
+    <string name="action_menu_back_from_search">stop searching</string>
+
+    <!--  String describing the icon used to clear the search field -->
+    <string name="description_clear_search">Clear search</string>
+
+    <!-- Hint displayed in dialer search box when there is no query that is currently typed.
+     [CHAR LIMIT=30] -->
+    <string name="dialer_hint_find_contact">Type a name or phone number</string>
+
+    <!-- Content description for the fake action menu overflow button.
+     This should be same as the description for the real action menu
+     overflow button available in ActionBar.
+     [CHAR LIMIT=NONE] -->
+    <string name="action_menu_overflow_description">More options</string>
+
+    <!-- Title for the sms disambiguation dialog -->
+    <string name="sms_disambig_title">Choose number</string>
+
+    <!-- Title for the call disambiguation dialog -->
+    <string name="call_disambig_title">Choose number</string>
+
+    <!-- Message next to disambiguation dialog check box -->
+    <string name="make_primary">Remember this choice</string>
+
+    <string name="low_volume">Volume may be too low.</string>
+
+    <string name="urgent_call">Urgent</string>
+    <string name="emergency_call">Emergency</string>
+
+    <string name="call_mng_conference_explanation">Drag call into conference</string>
+    <string name="call_mng_private_explanation">Drag here to remove from conference</string>
+
+    <string name="account_manager_label">Silent Circle account</string>
+    <string name="account_access_label">Access account</string>
+    <string name="account_exists">An account exists already - cannot create an additional account on this device.</string>
+    <string name="account_missing_name">Missing username for this account.</string>
+</resources>

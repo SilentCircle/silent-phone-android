@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+// +++LICENSE_BEGIN+++
+/*
+ * Copyright © 2014, Silent Circle
+ * All rights reserved.
+ */
+// +++LICENSE_END+++
+ -->
+
+<!-- Dialpad in the Phone app.
+Note regarding ignoring the DuplicateIncludedIds lint check:
+The dialpad code takes care of this. It looks up the id only below
+the FrameLayout that wraps the button construction.
+-->
+<TableLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:id="@+id/dialpad"
+        style="@style/DialpadTableStyle"
+        android:clickable="true"
+        android:background="@color/black_background"
+        tools:visibility="visible"
+        tools:ignore="DuplicateIncludedIds"
+        tools:context=".activities.DialerActivity">
+    <!-- android:stretchColumns="0,1,2" - this should go together with changes
+         in RowStyle -->
+    <TableRow
+            style="@style/RowStyle">
+
+        <include
+                android:id="@+id/one"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                layout="@layout/dialpad_key"/>
+
+        <include
+                android:id="@+id/two"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                layout="@layout/dialpad_key"/>
+
+        <include
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                layout="@layout/dialpad_key"
+                android:id="@+id/three"/>
+    </TableRow>
+
+    <TableRow
+            style="@style/RowStyle">
+
+        <include
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                layout="@layout/dialpad_key"
+               android:id="@+id/four"/>
+
+        <include
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                layout="@layout/dialpad_key"
+                android:id="@+id/five"/>
+
+        <include
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                layout="@layout/dialpad_key"
+                android:id="@+id/six"/>
+    </TableRow>
+
+    <TableRow
+            style="@style/RowStyle">
+
+        <include
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                layout="@layout/dialpad_key"
+                android:id="@+id/seven"/>
+
+        <include
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                layout="@layout/dialpad_key"
+                android:id="@+id/eight"/>
+
+        <include
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                layout="@layout/dialpad_key"
+                android:id="@+id/nine"/>
+    </TableRow>
+
+
+    <TableRow
+            style="@style/RowStyle">
+
+        <include
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                layout="@layout/dialpad_key"
+                android:id="@+id/star"/>
+
+        <include
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                layout="@layout/dialpad_key"
+                android:id="@+id/zero"/>
+
+
+        <include
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                layout="@layout/dialpad_key"
+                android:id="@+id/pound"/>
+    </TableRow>
+</TableLayout>

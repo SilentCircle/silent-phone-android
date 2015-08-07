@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+// +++LICENSE_BEGIN+++
+/*
+ * Copyright © 2014, Silent Circle
+ * All rights reserved.
+ */
+// +++LICENSE_END+++
+ -->
+
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                xmlns:tools="http://schemas.android.com/tools"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:paddingRight="@dimen/activity_horizontal_margin"
+                android:paddingLeft="@dimen/activity_horizontal_margin"
+                android:orientation="vertical"
+                tools:context=".activities.Provisioning">
+
+    <TextView
+            android:id="@+id/HeaderText"
+            style="@style/Widget.Silent.SimpleText.Large"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true"
+            android:layout_marginTop="32dp"
+            android:text="@string/provisioning_infoText"/>
+
+
+    <RelativeLayout
+        android:id="@+id/relative_container"
+        android:layout_width="203px"
+        android:layout_height="203px"
+        android:layout_centerInParent="true">
+
+        <ImageView
+            android:id="@+id/ProvisioningInProgress"
+            tools:ignore="PxUsage"
+            android:layout_width="175px"
+            android:layout_height="175px"
+            android:layout_centerInParent="true"
+            android:contentDescription="@string/silent_circle"
+            android:src="@drawable/dot_circle"/>
+
+        <ProgressBar
+            android:id="@+id/ProgressBar"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_centerInParent="true"
+            tools:visibility="visible"
+            android:indeterminate="true"
+            android:indeterminateDrawable="@drawable/progressbar_sc"/>
+
+    </RelativeLayout>
+
+    <ScrollView
+            android:id="@+id/Scroll"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_above="@+id/ProvisioningButtons"
+            android:layout_below="@+id/HeaderText"
+            android:baselineAligned="false"
+            android:focusable="false"
+            android:orientation="vertical"
+            android:visibility="visible">
+
+        <RelativeLayout
+                android:id="@+id/ProvisioningCheckboxLayout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="visible"
+                tools:visibility="visible">
+
+
+            <TextView
+                    style="@style/Widget.Silent.SimpleText"
+                    android:id="@+id/CheckBoxTCText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_toLeftOf="@+id/CheckBoxTC"
+                    android:layout_toStartOf="@+id/CheckBoxTC"
+                    android:layout_marginTop="@dimen/activity_vertical_margin"
+                    android:linksClickable="true"
+                    android:text="@string/provisioning_privacy_tc"
+                    android:textSize="16sp"
+                    android:visibility="gone"/>
+
+            <CheckBox
+                    android:id="@+id/CheckBoxTC"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentRight="true"
+                    android:layout_alignParentEnd="true"
+                    android:layout_alignBaseline="@+id/CheckBoxTCText"
+                    android:checkMark="?android:attr/listChoiceIndicatorMultiple"
+                    android:checked="false"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:visibility="gone"/>
+            <!--					android:onClick="termsAndConditionsCheck" -->
+
+            <TextView
+                    style="@style/Widget.Silent.SimpleText"
+                    android:id="@+id/CheckBoxNewsText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_toLeftOf="@+id/CheckBoxNews"
+                    android:layout_toStartOf="@+id/CheckBoxNews"
+                    android:layout_below="@id/CheckBoxTCText"
+                    android:layout_marginTop="@dimen/activity_vertical_margin"
+                    android:text="@string/provisioning_get_news"
+                    android:textSize="16sp"
+                    android:visibility="gone"/>
+
+            <CheckBox
+                    android:id="@+id/CheckBoxNews"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentRight="true"
+                    android:layout_alignParentEnd="true"
+                    android:layout_alignBaseline="@+id/CheckBoxNewsText"
+                    android:checkMark="?android:attr/listChoiceIndicatorMultiple"
+                    android:checked="false"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:visibility="gone"/>
+
+
+            <TextView
+                    style="@style/Widget.Silent.SimpleText"
+                    android:id="@+id/license_error"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/CheckBoxNewsText"
+                    android:layout_marginTop="@dimen/activity_vertical_margin"
+                    android:linksClickable="true"
+                    android:textSize="18sp"
+                    android:visibility="gone"
+                    tools:visibility="visible"
+                    tools:text="License code problem what to do next link"/>
+
+            <Button
+                    android:id="@+id/license_next"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@+id/license_error"
+                    android:layout_marginTop="@dimen/activity_vertical_margin"
+                    android:layout_centerHorizontal="true"
+                    android:paddingBottom="6dp"
+                    android:paddingTop="6dp"
+                    android:text="@string/next"
+                    android:visibility="gone"
+                    tools:visibility="visible"/>
+
+        </RelativeLayout>
+    </ScrollView>
+
+    <LinearLayout
+            android:id="@+id/ProvisioningButtons"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:orientation="horizontal">
+
+        <Button
+                android:id="@+id/back"
+                style="@style/Widget.Silent.InCallButtons"
+                android:paddingBottom="6dp"
+                android:paddingTop="6dp"
+                android:text="@string/back"
+                android:visibility="visible"/>
+
+        <Button
+                android:id="@+id/create"
+                style="@style/Widget.Silent.InCallButtons"
+                android:paddingBottom="6dp"
+                android:paddingTop="6dp"
+                android:text="@string/provisioning_create"
+                android:visibility="visible"/>
+
+    </LinearLayout>
+
+</RelativeLayout>

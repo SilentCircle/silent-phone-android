@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <array name="snooze_dismiss_drawables">
+        <item>@drawable/ic_call_dark</item>
+        <item>@null</item>
+        <item>@drawable/ic_end_call_dark</item>
+        <item>@null</item>
+    </array>
+    <array name="snooze_dismiss_descriptions">
+        <item>@string/answer_call</item>
+        <item>@null</item>
+        <item>@string/dismiss_call</item>
+        <item>@null</item>
+    </array>
+    <array name="snooze_dismiss_direction_descriptions">
+        <item>right</item>
+        <item>@null</item>
+        <item>left</item>
+        <item>@null</item>
+    </array>
+
+</resources>

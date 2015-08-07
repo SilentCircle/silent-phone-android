@@ -1,0 +1,149 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    tools:context="com.silentcircle.silentphone2.activities.DidSelectionActivity.DidSelectionFragment">
+
+    <TextView
+            android:id="@+id/did_title"
+            style="@style/Widget.Silent.SimpleText.Large"
+            android:gravity="center_horizontal"
+            android:text="@string/did_title"/>
+
+    <TextView
+            android:id="@+id/did_explanation"
+            style="@style/Widget.Silent.SimpleText.Small"
+            android:layout_below="@+id/did_title"
+            android:layout_marginTop="@dimen/activity_vertical_margin"
+            android:visibility="invisible"
+            tools:text="Select your phone number from a region and area"
+            tools:visibility="visible"/>
+
+    <TextView
+            android:id="@+id/did_select"
+            style="@style/Widget.Silent.SimpleText.Small"
+            android:layout_width="wrap_content"
+            android:layout_below="@+id/did_explanation"
+            android:layout_marginTop="@dimen/activity_vertical_margin_small"
+            android:visibility="invisible"
+            android:text="@string/did_currently_selected"
+            tools:visibility="visible"/>
+
+    <!-- Region info line -->
+    <TextView
+            android:id="@+id/did_select_region"
+            style="@style/Widget.Silent.SimpleText.Small"
+            android:layout_width="wrap_content"
+            android:layout_below="@+id/did_select"
+            android:layout_alignRight="@+id/did_select"
+            android:layout_alignEnd="@+id/did_select"
+            android:layout_marginTop="@dimen/activity_vertical_margin_small"
+            android:text="@string/did_region"
+            android:visibility="invisible"
+            tools:visibility="visible"/>
+
+    <TextView
+            android:id="@+id/did_selected_region"
+            style="@style/Widget.Silent.SimpleText.Small"
+            android:layout_width="wrap_content"
+            android:layout_toRightOf="@+id/did_select_region"
+            android:layout_toEndOf="@+id/did_select_region"
+            android:layout_marginLeft="@dimen/activity_horizontal_margin"
+            android:layout_marginStart="@dimen/activity_horizontal_margin"
+            android:layout_alignBottom="@+id/did_select_region"
+            android:visibility="invisible"
+            tools:text="USA"
+            tools:visibility="visible"/>
+
+    <!-- Area info line -->
+    <TextView
+            android:id="@+id/did_select_area"
+            style="@style/Widget.Silent.SimpleText.Small"
+            android:layout_width="wrap_content"
+            android:layout_below="@+id/did_select_region"
+            android:layout_alignRight="@+id/did_select"
+            android:layout_alignEnd="@+id/did_select"
+            android:layout_marginTop="@dimen/activity_vertical_margin_small"
+            android:visibility="invisible"
+            android:text="@string/did_area"
+            tools:visibility="visible"/>
+
+    <TextView
+            android:id="@+id/did_selected_area"
+            style="@style/Widget.Silent.SimpleText.Small"
+            android:layout_width="wrap_content"
+            android:layout_toRightOf="@+id/did_select_area"
+            android:layout_toEndOf="@+id/did_select_area"
+            android:layout_marginLeft="@dimen/activity_horizontal_margin"
+            android:layout_marginStart="@dimen/activity_horizontal_margin"
+            android:layout_alignBottom="@+id/did_select_area"
+            android:visibility="invisible"
+            tools:text="Fifty one"
+            tools:visibility="visible"/>
+
+    <!-- Area info line -->
+    <TextView
+            android:id="@+id/did_select_number"
+            style="@style/Widget.Silent.SimpleText.Small"
+            android:layout_width="wrap_content"
+            android:layout_below="@+id/did_select_area"
+            android:layout_alignRight="@+id/did_select"
+            android:layout_alignEnd="@+id/did_select"
+            android:layout_marginTop="@dimen/activity_vertical_margin_small"
+            android:text="@string/did_number"
+            android:visibility="invisible"
+            tools:visibility="visible"/>
+
+    <TextView
+            android:id="@+id/did_selected_number"
+            style="@style/Widget.Silent.SimpleText.Small"
+            android:layout_width="wrap_content"
+            android:layout_toRightOf="@+id/did_select_number"
+            android:layout_toEndOf="@+id/did_select_number"
+            android:layout_marginLeft="@dimen/activity_horizontal_margin"
+            android:layout_marginStart="@dimen/activity_horizontal_margin"
+            android:layout_alignBottom="@+id/did_select_number"
+            android:visibility="invisible"
+            tools:text="+1 222 555 3333"
+            tools:visibility="visible"/>
+
+    <TextView
+            android:id="@+id/did_select_list_title"
+            style="@style/Widget.Silent.SimpleText.Medium"
+            android:layout_width="wrap_content"
+            android:layout_below="@+id/did_select_number"
+            android:layout_marginTop="@dimen/activity_vertical_margin"
+            android:visibility="invisible"
+            tools:text="Select region"
+            tools:visibility="visible"/>
+
+    <ListView
+            android:id="@+id/listView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_below="@+id/did_select_list_title"
+            android:layout_above="@+id/did_ok_button"
+            android:layout_marginTop="@dimen/activity_vertical_margin_small"
+            android:layout_marginBottom="@dimen/activity_vertical_margin_small"
+            android:choiceMode="singleChoice"
+            android:dividerHeight="1px"
+            android:divider="?sp_dial_text_background"
+            android:scrollbarStyle="insideInset"
+            android:visibility="invisible"
+            tools:visibility="visible"/>
+
+    <Button
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/did_ok_button"
+            android:layout_alignParentBottom="true"
+            android:layout_centerHorizontal="true"
+            android:text="@android:string/ok"
+            android:visibility="invisible"
+            tools:visibility="visible"/>
+
+</RelativeLayout>

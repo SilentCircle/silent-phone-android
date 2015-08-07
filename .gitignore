@@ -1,3 +1,6 @@
+/local.properties
+/.idea/workspace.xml
+
 # Android generated files #
 ###########################
 android.keystore
@@ -5,7 +8,6 @@ local.properties
 bin/
 gen/
 obj/
-libs/
 
 # OS generated files #
 ######################
@@ -22,10 +24,16 @@ Thumbs.db
 ##################
 *~
 
-# Android Studio/IntelliJ and gradle directories
+# Backup files and Android Studio and gradle directories
 ##################
-out/
 build/
+out/
 .gradle/
-gradle.properties
+.idea/
 *.iml
+libtivi.so
+
+helper/
+translations/
+libs/
+

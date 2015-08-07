@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- currently the ratio is about 3:4 -->
+    <dimen name="video_preview_width">162dp</dimen>
+    <dimen name="video_preview_height">120dp</dimen>
+
+    <dimen name="video_preview_width_inner">156dp</dimen>
+    <dimen name="video_preview_height_inner">114dp</dimen>      <!-- 3dp less on each side -->
+
+</resources>

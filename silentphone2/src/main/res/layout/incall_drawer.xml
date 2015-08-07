@@ -1,0 +1,172 @@
+<!--
+// +++LICENSE_BEGIN+++
+/*
+ * Copyright © 2014, Silent Circle
+ * All rights reserved.
+ */
+// +++LICENSE_END+++
+ -->
+
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+            xmlns:tools="http://schemas.android.com/tools"
+            style="@style/DrawerScrollStyle"
+            tools:context=".activities.InCallActivity">
+
+    <LinearLayout android:id="@+id/drawer_content"
+                  android:layout_width="match_parent"
+                  android:layout_height="wrap_content"
+                  android:orientation="vertical"
+                  tools:context="com.silentcircle.silentphone2.fragments.InCallDrawerFragment">
+
+        <TextView
+                style="@style/DrawerSectionTitle"
+                android:text="@string/call_info_generic"/>
+
+        <LinearLayout
+                android:id="@+id/quality_info"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+>
+            <Button
+                    android:id="@+id/quality_info_detail"
+                    style="@style/Widget.Silent.TransparentButton"
+                    android:layout_width="wrap_content"
+                    android:drawableLeft="?sp_ic_view_list"
+                    android:drawableStart="?sp_ic_view_list"
+                    android:text="@string/call_quality"/>
+            <TextView
+                    android:id="@+id/quality_info_data"
+                    style="@style/Widget.Silent.SimpleText.Medium"
+                    android:layout_marginRight="@dimen/spacing_normal"
+                    android:layout_marginEnd="@dimen/spacing_normal"
+                    android:layout_gravity="center_vertical"
+                    android:gravity="end"
+                    tools:text="Good"/>
+        </LinearLayout>
+        <TextView
+                android:id="@+id/quality_info_detail_data"
+                style="@style/Widget.Silent.SimpleText.Small"
+                android:layout_marginRight="@dimen/spacing_normal"
+                android:layout_marginEnd="@dimen/spacing_normal"
+                android:layout_marginBottom="@dimen/spacing_normal"
+                android:singleLine="true"
+                android:gravity="end"
+                android:visibility="gone"
+                tools:text="12 0.1 0.2% Loss G.722"
+                tools:visibility="visible"/>
+
+        <TextView
+                style="@style/DrawerSectionTitle"
+                android:text="@string/call_info_security"/>
+
+        <LinearLayout
+                android:id="@+id/sdes_info"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/spacing_normal">
+            <TextView
+                    style="@style/Widget.Silent.SimpleText.Medium"
+                    android:layout_width="wrap_content"
+                    android:layout_marginLeft="@dimen/spacing_normal"
+                    android:layout_marginStart="@dimen/spacing_normal"
+                    android:text="@string/in_call_drawer_sdes"/>
+            <TextView
+                    style="@style/Widget.Silent.SimpleText.Medium"
+                    android:layout_marginRight="@dimen/spacing_normal"
+                    android:layout_marginEnd="@dimen/spacing_normal"
+                    android:gravity="end"
+                    android:text="@string/in_call_drawer_sdes_active"/>
+        </LinearLayout>
+
+        <LinearLayout
+                android:id="@+id/zrtp_info"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/spacing_normal"
+                android:visibility="gone"
+                tools:visibility="visible">
+            <TextView
+                    style="@style/Widget.Silent.SimpleText.Medium"
+                    android:layout_marginLeft="@dimen/spacing_normal"
+                    android:layout_marginStart="@dimen/spacing_normal"
+                    android:layout_width="wrap_content"
+                    android:text="@string/in_call_drawer_zrtp"/>
+            <TextView
+                    style="@style/Widget.Silent.SimpleText.Medium"
+                    android:id="@+id/zrtp_info_data"
+                    android:layout_marginRight="@dimen/spacing_normal"
+                    android:layout_marginEnd="@dimen/spacing_normal"
+                    android:gravity="end"
+                    tools:text="yes, verified"/>
+        </LinearLayout>
+
+        <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/spacing_normal"
+                android:orientation="vertical">
+            <TextView
+                    style="@style/Widget.Silent.SimpleText.Medium"
+                    android:layout_width="wrap_content"
+                    android:layout_marginLeft="@dimen/spacing_normal"
+                    android:layout_marginStart="@dimen/spacing_normal"
+                    android:paddingRight="@dimen/spacing_normal"
+                    android:text="@string/in_call_drawer_tls"/>
+            <TextView
+                    style="@style/Widget.Silent.SimpleText.Medium"
+                    android:id="@+id/tls_info_data"
+                    android:layout_marginRight="@dimen/spacing_normal"
+                    android:layout_marginEnd="@dimen/spacing_normal"
+                    android:gravity="end"
+                    android:singleLine="true"
+                    android:scrollHorizontally="true"
+                    android:ellipsize="marquee"
+                    android:marqueeRepeatLimit ="3"
+                    tools:text="cipher suite name"/>
+        </LinearLayout>
+
+        <LinearLayout
+                android:id="@+id/zrtp_peer_name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+            <Button
+                    android:id="@+id/zrtp_peer_name_btn"
+                    style="@style/Widget.Silent.TransparentButton.Medium"
+                    android:layout_width="wrap_content"
+                    android:paddingRight="@dimen/spacing_normal"
+                    android:paddingEnd="@dimen/spacing_normal"
+                    android:drawableLeft="?sp_ic_edit"
+                    android:drawableStart="?sp_ic_edit"
+                    android:text="@string/crypto_peer_name"/>
+            <TextView
+                    android:id="@+id/zrtp_peer_name_data"
+                    style="@style/Widget.Silent.SimpleText.Medium"
+                    android:layout_marginRight="@dimen/spacing_normal"
+                    android:layout_marginEnd="@dimen/spacing_normal"
+                    android:layout_gravity="center_vertical"
+                    android:gravity="end"
+                    android:singleLine="true"
+                    android:scrollHorizontally="true"
+                    android:ellipsize="marquee"
+                    tools:text="John Doe"/>
+        </LinearLayout>
+        <Button
+                style="@style/Widget.Silent.TransparentButton.Medium"
+                android:id="@+id/security_detail"
+                android:text="@string/call_info_security_detail"
+                android:drawableLeft="?sp_ic_view_list"
+                android:drawableStart="?sp_ic_view_list" />
+
+        <TextView
+                style="@style/DrawerSectionTitle"
+                android:text="@string/other_settings"/>
+
+        <include
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/spacing_normal"
+                layout="@layout/incall_drawer_echo_option"/>
+
+    </LinearLayout>
+</ScrollView>

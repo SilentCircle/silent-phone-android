@@ -1,0 +1,1082 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+// +++LICENSE_BEGIN+++
+/*
+ * Copyright © 2014, Silent Circle
+ * All rights reserved.
+ */
+// +++LICENSE_END+++
+ -->
+
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="next">下一步</string>
+    <string name="back">返回</string>
+    <string name="dismiss_call">拒绝来电</string>
+    <string name="answer_call">接听</string>
+    <string name="verify_infotext_top">核对对方代码</string>
+    <string name="verify_infotext_bottom">在此输入对方姓名</string>
+    <string name="accept_video">接受</string>
+    <string name="close_dialog">关闭</string>
+    <string name="cancel_dialog">取消</string>
+    <string name="confirm_dialog">确认</string>
+    <string name="provision_later">稍后</string>
+    <string name="crypto_padlock">安全状态锁</string>
+    <string name="error_code">错误代码：</string>
+    <string name="logout">退出</string>
+    <string name="sip_state_calling">正在呼叫</string>
+    <string name="sip_state_connecting">正在连接</string>
+    <string name="sip_state_ringing">正在响铃</string>
+    <string name="sip_state_ended">通话已结束</string>
+    <string name="sip_state_online">在线</string>
+    <string name="sip_state_offline">下线</string>
+    <string name="sip_error_register">无法注册</string>
+    <string name="sip_error_generic">无法连接</string>
+    <string name="sip_error_decline">通话被拒绝</string>
+    <string name="sip_error_no_user">用户不存在</string>
+    <string name="sip_error_no_cover">没有网络连接</string>
+    <string name="sip_error_no_server">无法连接服务器</string>
+    <string name="call_type_audio">来电</string>
+    <string name="call_error">出错</string>
+    <string name="secstate_secure">安全通话</string>
+    <string name="secstate_not_secure">非安全通话</string>
+    <string name="secstate_looking">寻找对方</string>
+    <string name="secstate_going_sec">正在加密</string>
+    <string name="secstate_sec_disabled">非安全通话(未激活)</string>
+    <string name="to_server_only">连接服务器</string>
+    <string name="crypto_peer_name">对方姓名</string>
+    <string name="crypto_peer_client">ZRTP 对方用户</string>
+    <string name="crypto_peer_client_id">ZRTP 用户 ID</string>
+    <string name="crypto_peer_client_proto">协议版本</string>
+    <string name="crypto_crypto_components">加密组件</string>
+    <string name="crypto_crypto_components_tls">TLS 密码：</string>
+    <string name="crypto_crypto_components_zhash">ZRTP 序列码：</string>
+    <string name="crypto_crypto_components_pk">密钥交换：</string>
+    <string name="crypto_crypto_components_cipher">密码：</string>
+    <string name="crypto_crypto_components_hash">序列码：</string>
+    <string name="crypto_crypto_components_sauth">SRTP 认证标签：</string>
+    <string name="crypto_shared_secrets">共享机密</string>
+    <string name="call_mng_conference">会议</string>
+    <string name="call_mng_private">私密</string>
+    <string name="call_mng_in_out">呼入，呼出</string>
+    <string name="zrtp_we_header">ZRTP 安全信息</string>
+    <string name="zrtp_we_error">ZRTP 错误</string>
+    <string name="zrtp_we_warn">ZRTP 警告</string>
+    <string name="srtp_we_warn">SRTP 警告</string>
+    <string name="zrtp_show_details">显示详细</string>
+    <string name="zrtp_hide_details">隐藏详细</string>
+    <string name="provisioning_welcome">欢迎使用Silent Circle</string>
+    <string name="provisioning_vertu_welcome">欢迎进入 Silent Circle — Vertu 合作伙伴</string>
+    <string name="provisioning_username_hint">用户名</string>
+    <string name="provisioning_password_hint">输入密码</string>
+    <string name="provisioning_password_hint2">再次输入密码</string>
+    <string name="provisioning_firstname_hint">输入名字</string>
+    <string name="provisioning_lastname_hint">输入姓氏</string>
+    <string name="provisioning_email_hint">电子邮件地址</string>
+    <string name="provisioning_no_network">网络无法连接：</string>
+    <string name="provisioning_no_data">无有效配置数据</string>
+    <string name="provisioning_wrong_format">数据格式错误：</string>
+    <string name="provisioning_error">配置错误</string>
+    <string name="provisioning_info">信息</string>
+    <string name="provisioning_user_req">用户名必填，请核查。</string>
+    <string name="provisioning_psn_invalid">未找到有效序列号！</string>
+    <string name="provisioning_password_req">密码必填，请核查。</string>
+    <string name="provisioning_password_match">密码不符，请核查。</string>
+    <string name="provisioning_firstname_req">名字必填，请核查。</string>
+    <string name="provisioning_lastname_req">姓氏必填，请核查。</string>
+    <string name="provisioning_email_req">电子邮件地址必填，请核查。</string>
+    <string name="provisioning_already_registered">设备已注册。</string>
+    <string name="pwstrength_weak">密码强度：弱</string>
+    <string name="pwstrength_good">密码强度：中</string>
+    <string name="pwstrength_strong">密码强度：强</string>
+    <string name="provisioning_show_pw">显示密码</string>
+    <string name="provisioning_privacy_tc">我已经阅读并愿意接受 <a href="https://accounts.silentcircle.com/terms/">Silent Circle</a> 网站隐私保护政策及条款和条件</string>
+    <string name="provisioning_get_news">我愿意接收该服务发送的专属消息及邀请</string>
+    <string name="provisioning_new_account">创建新帐户</string>
+    <string name="provisioning_existing_account">登录已有帐户</string>
+    <string name="provisioning_check_tc">请查看并接受条款和条件</string>
+    <string name="provisioning_create">创建</string>
+    <string name="provisioning_get_activation_code">请在 www.silentcircle.com 登录您的帐户，以获取激活码。</string>
+    <string name="provisioning_credentials">用户名或者密码错误。请检查。</string>
+    <string name="key_manager_available">使用Silent Circle 密钥管理器</string>
+    <string name="thanks_number">号码：</string>
+    <string name="thanks_name">姓名：</string>
+    <string name="preferred_sas_type">首选SAS类别</string>
+    <string name="sas_char_mode">SAS显示为4个字符</string>
+    <string name="sas_word_mode">SAS显示为2个单词</string>
+    <string name="sp_ringtone">铃音</string>
+    <!-- Content differ, spa1: 'No ringtone', spa2: 'Default'-->
+    <string name="no_ringtone">无铃音</string>
+    <string name="preferred_algorithms">偏好非NIST套装</string>
+    <string name="nist_preferred">如果可用的话总是偏好：非NIST算法、Twofish、Skein和Bernstein曲线。</string>
+    <string name="sca_info_install">"Silent Circle提供一个加密应用，从而让您，并且只有您可以访问您的通讯录和呼叫日志。
+        \nSilent通讯录是Silent Circle提供一个免费附加组件。
+        \n获得更多信息，请前往我们的网站。
+        \n<font fgcolor="#ffffffff"><b>安装Silent 通讯录</b></font>"</string>
+    <string name="sca_add_security">添加安全</string>
+    <string name="description_dial_button">拨号</string>
+    <string name="description_delete_button">退格</string>
+    <string name="contacts_image_button">打开联系人界面</string>
+    <string name="recent_image_button">显示最近通话</string>
+    <string name="zrtp_common_cmp">您应该和通话方口头核对认证代码,如果认证代码不符,就说明可能有人截听通话</string>
+    <string name="zrtp_common_cls">链接错误:请挂机并重拨</string>
+    <string name="zrtp_common_upd">您拨叫的用户需要更新到最新版本的Silent Phone应用程序</string>
+    <string name="zrtp_common_app">软件错误:请重装Silent Phone应用程序</string>
+    <string name="permission_read">读取安全通讯录</string>
+    <string name="permission_write">写入安全通讯录</string>
+    <string name="permission_read_km">读取Silent Circle密钥管理器</string>
+    <string name="permission_write_km">写入存取Silent Circle密钥管理器</string>
+    <string name="call_duration">通话时长</string>
+    <string name="video_audio_mute">切换静音模式</string>
+    <string name="video_switch_camera">切换摄像头</string>
+
+    <!-- Only TAG names changed, copy existing translations -->
+    <string name="provisioning_stepInfo_1">步骤 1 / 3</string>
+    <string name="provisioning_stepInfo_2">步骤 2 / 3</string>
+    <string name="provisioning_stepInfo_3">步骤 3 / 3</string>
+    <string name="provisioning_vertu_email_info">如要接收与您帐户相关的重要更新和福利讯息，必须提供另一个电子邮件地址</string>
+    <string name="provisioning_vertu_welcome_long">作为 Vertu 用户，您能免费尊享 12 个月的 Silent Circle 沟通加密服务。</string>
+
+
+    <!-- The following until end are MISSING translations in SPA2 for languages other than English -->
+    <string name="provisioning_infoText">账户创建</string>
+    <string name="provisioning_bp_welcome">欢迎与BlackPhone合作，使用Silent Circle</string>
+    <string name="provisioning_bp_email_info">需要电子邮箱地址，接收与账户相关的重要更新内容及信息。</string>
+    <string name="provisioning_bp_welcome_long">作为Blackphone客户， 您享有12个月免费使用Silent Circle加密通信的服务。</string>
+
+    <string name="mute_button">静音</string>
+    <string name="video_button">视频</string>
+    <string name="video_control">视频控制</string>
+    <string name="add_call">添加通话</string>
+    <string name="audio_options_button">音频 options</string>
+    <string name="verify_label">触摸及验证</string>
+    <string name="stop_video">停止</string>
+    <string name="pause_video">暂停</string>
+    <string name="prepare">准备 &#8230;</string>
+    <string name="call_manager">呼叫管理</string>
+    <string name="dtmf_dialer">语音拨号</string>
+    <string name="info_screen">设置/信息</string>
+    <string name="security_options_header">安全选项</string>
+    <string name="call_info_generic">呼叫信息</string>
+    <string name="call_info_security">呼叫安全信息</string>
+    <string name="call_info_security_detail">更多详情</string>
+    <string name="build_info_header">生成Silent Phone</string>
+    <string name="dial_drawer_build_flavor">生成配置: %s</string>
+    <string name="account_creation_error">账户创建-出错</string>
+    <string name="account_creation_wrong_format">账户创建-服务器发出错误数据格式</string>
+    <string name="account_creation_no_data">账户创建-服务器返回错误数据</string>
+    <string name="other_settings">其他设置</string>
+    <string name="select_theme">选择主题</string>
+    <string name="current_theme">当前主题: %s</string>
+    <string name="theme_orange">Orange</string>
+    <string name="theme_white">White</string>
+    <string name="theme_dusk">Dusk</string>
+    <string name="theme_black">Black</string>
+
+    <!-- Strings for BlackPhone integration -->
+
+    <string name="bp_is_online">在线Silent Phone</string>
+    <string name="bp_is_offline">当前离线Silent Phone</string>
+    <string name="bp_not_started">未启动Silent Phone</string>
+    <string name="bp_registering">注册Silent Phone</string>
+    <string name="bp_status_unknown">未知状态</string>
+
+    <!-- Audio options -->
+
+    <string name="audio_bt">蓝牙耳机</string>
+    <string name="audio_speaker">扬声器</string>
+    <string name="audio_ear_phone">听筒</string>
+    <string name="end_call_button">结束通话</string>
+
+    <string name="call_quality">质量</string>
+    <string name="call_quality_bad">差</string>
+    <string name="call_quality_weak">较差</string>
+    <string name="call_quality_acceptable">可接受</string>
+    <string name="call_quality_good">良好</string>
+    <string name="call_quality_very_good">非常好</string>
+
+    <string name="in_call_drawer_zrtp_confirmed">是的，已验证</string>
+    <string name="in_call_drawer_zrtp_not_confirmed">是的，未验证</string>
+    <string name="in_call_drawer_sdes_active">活跃</string>
+
+    <string name="navigation_drawer_open">打开导航抽屉</string>
+    <string name="navigation_drawer_close">关闭导航抽屉</string>
+
+    <string name="valid_until">有效期至:</string>
+    <string name="subscription_expired">您的Silent Circle预约到期</string>
+
+    <string name="sip_error_not_online">离线用户</string>
+
+    <string name="license_code_invalid">本许可代码不再有效。如果您在激活Blackphone及Silent Circle账户时出现问题，请联系客户支持人员support@blackphone.ch</string>
+    <string name="license_code_duplicate">本许可代码已激活。如果您要重启电话，通常只需登录您的Silent Circle 账户。如果您在激活Blackphone及Silent Circle账户时出现问题，请联系客户支持人员support@blackphone.ch</string>
+
+    <!-- ************************** String for the Contacts part ******************************  -->
+
+    <string name="recentCallsIconLabel">"通话记录"</string>
+    <string name="recentCalls_addToContact">"添加到“联系人”"</string>
+    <string name="recentCalls_empty">"通话记录为空。"</string>
+    <string name="recentCalls_deleteAll">"清除通话记录"</string>
+    <!-- CHECK -->
+    <string name="recentCalls_callNumber">"呼叫%s"</string>
+    <string name="recentCalls_editNumberBeforeCall">"呼叫之前编辑号码"</string>
+    <string name="recentCalls_removeFromRecentList">"从通话记录中删除"</string>
+
+    <string name="recentCalls_removeSameFromRecentList">删除相关条目</string>
+    <string name="type_incoming">"来电"</string>
+    <string name="type_outgoing">"外拨电话"</string>
+    <string name="type_missed">"未接电话"</string>
+    <string name="callDetailTitle">"通话详情"</string>
+    <string name="menu_show_outgoing_only">"仅显示外拨电话"</string>
+    <string name="menu_show_incoming_only">"仅显示来电"</string>
+    <string name="menu_show_missed_only">"仅显示未接来电"</string>
+    <string name="menu_show_all_calls">"显示所有通话"</string>
+    <!-- CHECK -->
+    <string name="menu_callNumber">"拨打 %s"</string>
+    <string name="unknown">"未知"</string>
+    <string name="private_num">"私人号码"</string>
+    <string name="payphone">"公用电话"</string>
+    <string name="call_log_empty_gecode">"-"</string>
+    <string name="call_log_new_header">"新记录"</string>
+    <string name="call_log_old_header">"旧记录"</string>
+    <string name="call_log_incoming_header">"只显示来电"</string>
+    <string name="call_log_outgoing_header">"只显示外拨电话"</string>
+    <string name="call_log_missed_header">"只显示未接来电"</string>
+    <!-- CHECK -->
+    <string name="call_log_item_count_and_date">"(%1$d) %2$s"</string>
+    <!-- CHECK -->
+    <string name="callDetailsDurationFormat">"%1$s 分 %2$s 秒"</string>
+    <string name="toast_call_detail_error">"无法读取所请求呼叫的详细信息。"</string>
+    <!-- CHECK -->
+    <string name="description_view_contact">"查看联系人%1$s"</string>
+    <string name="description_add_contact">"添加联系人"</string>
+    <string name="clearCallLogProgress_title">"正在清除通话记录..."</string>
+    <string name="clearCallLogConfirmation_title">"要清除通话记录吗？"</string>
+    <string name="clearCallLogConfirmation">"系统将删除您的所有通话记录。"</string>
+    <!-- CHECK -->
+    <string name="description_send_text_message">"向%1$s发送短信"</string>
+    <!-- CHECK -->
+    <string name="description_call">"呼叫%1$s"</string>
+
+    <string name="phoneTypeCustom">"自定义"</string>
+    <string name="phoneTypeHome">"住宅"</string>
+    <string name="phoneTypeMobile">"手机"</string>
+    <string name="phoneTypeWork">"单位"</string>
+    <string name="phoneTypeSilent">Silent Phone</string>
+
+    <string name="emailTypeCustom">"自定义"</string>
+    <string name="emailTypeHome">"家用"</string>
+    <string name="emailTypeWork">"单位"</string>
+    <string name="emailTypeOther">"其他"</string>
+    <string name="emailTypeMobile">"手机"</string>
+
+    <string name="postalTypeCustom">"自定义"</string>
+    <string name="postalTypeHome">"住宅"</string>
+    <string name="postalTypeWork">"单位"</string>
+    <string name="postalTypeOther">"其他"</string>
+
+    <string name="imTypeCustom">"自定义"</string>
+    <string name="imTypeHome">"住宅"</string>
+    <string name="imTypeWork">"单位"</string>
+    <string name="imTypeOther">"其他"</string>
+    <string name="imTypeSilent">Silent Text</string>
+
+
+    <string name="imProtocolCustom">"自定义"</string>
+    <string name="imProtocolAim">AIM</string>
+    <string name="imProtocolMsn">Windows Live</string>
+    <string name="imProtocolYahoo">Yahoo</string>
+    <string name="imProtocolSkype">Skype</string>
+    <string name="imProtocolQq">QQ</string>
+    <string name="imProtocolGoogleTalk">Google Talk</string>
+    <string name="imProtocolIcq">ICQ</string>
+    <string name="imProtocolJabber">Jabber</string>
+    <string name="imProtocolNetMeeting">NetMeeting</string>
+    <string name="imProtocolSilent">Silent Text</string>
+
+    <!-- CHECK -->
+    <string name="add_contact_dlg_message_fmt">"将“%s”添加到联系人？"</string>
+    <string name="contactsList">"联系人"</string>
+    <string name="local_invisible_directory">"其他"</string>
+    <string name="local_search_label">"所有联系人"</string>
+    <string name="user_profile_contacts_list_header">"我"</string>
+    <string name="directory_search_label">"目录"</string>
+    <string name="search_results_searching">"正在搜索..."</string>
+    <!-- CHECK -->
+    <string name="foundTooManyContacts">"找到的联系人超过 %d 位。"</string>
+    <string name="listFoundAllContactsZero">"没有联系人"</string>
+    <string name="editContactDescription">"编辑联系人"</string>
+    <string name="insertContactDescription">"创建联系人"</string>
+
+    <plurals name="searchFoundContacts">
+        <item quantity="one">"找到 1 个联系人"</item>
+        <item quantity="other">"找到 %d 个联系人"</item>
+    </plurals>
+
+    <plurals name="listTotalAllContacts">
+        <item quantity="one">"找到 1 个联系人"</item>
+        <item quantity="other">"找到 %d 个联系人"</item>
+    </plurals>
+
+    <string name="no_contact_details">"没有此联系人的其他信息。"</string>
+    <string name="noContactsWithPhoneNumbers">"没有联系人拥有电话号码。"</string>
+    <!-- CHECK -->
+    <string name="noFavoritesHelpText">"您未收藏任何联系人。"\n\n"要向您的收藏列表添加联系人，请执行以下操作："\n\n"        "<li>"触摸"<b>"联系人"</b>"标签"\n</li>\n<li>"触摸您要加入收藏的联系人"\n</li>\n<li>"触摸联系人姓名旁边的星标"\n</li></string>
+    <string name="noMatchingContacts">"未找到匹配的联系人。"</string>
+    <string name="no_contacts_selected">"未选择联系人。"</string>
+    <string name="noContactsHelpTextWithSyncForCreateShortcut">"没有任何联系人可供显示。（如果您刚刚添加了一个帐户，则系统需要几分钟的时间同步联系人。）"</string>
+    <!-- CHECK -->
+    <string name="noContactsHelpTextWithSync">"您没有任何可显示的联系人（如果您​​刚刚添加过帐户，可能是系统需要几分钟的时间来同步联系人信息）。"\n\n"要添加联系人，请触摸"<font fgcolor="#ffffffff"><b>"菜单"</b></font>"，然后："\n\n<li>"触摸"<font fgcolor="#ffffffff"><b>"帐户"</b></font>"可添加或设置帐户，您可以将该帐户中包含的联系人同步到手机"\n</li>\n<li>"触摸"<font fgcolor="#ffffffff"><b>"显示选项"</b></font>"可更改显示的联系人"\n</li>\n<li>"触摸"<font fgcolor="#ffffffff"><b>"新建联系人"</b></font>"可创建新联系人"\n</li>\n<li>"触摸"<font fgcolor="#ffffffff"><b>"导入/导出"</b></font>"可从您的 SIM 卡或 SD 卡中导入联系人"\n</li></string>
+    <!-- CHECK -->
+    <string name="noContactsNoSimHelpTextWithSync">"您没有任何可显示的联系人（如果您​​刚刚添加过帐户，可能是系统需要几分钟的时间来同步联系人信息）。"\n\n"要添加联系人，请触摸"<font fgcolor="#ffffffff"><b>"菜单"</b></font>"，然后："\n\n<li>"触摸"<font fgcolor="#ffffffff"><b>"帐户"</b></font>"可添加或设置帐户，您可以将该帐户中包含的联系人同步到手机"\n</li>\n<li>"触摸"<font fgcolor="#ffffffff"><b>"显示选项"</b></font>"可更改显示的联系人"\n</li>\n<li>"触摸"<font fgcolor="#ffffffff"><b>"新建联系人"</b></font>"可创建新联系人"\n</li>\n<li>"触摸"<font fgcolor="#ffffffff"><b>"导入/导出"</b></font>"可从您的 SD 卡中导入联系人"\n</li></string>
+    <string name="noContactsHelpTextForCreateShortcut">"没有任何联系人可供显示。"</string>
+    <!-- CHECK -->
+    <string name="noContactsHelpText">"您没有任何可显示的联系人。"\n\n"要添加联系人，请触摸"<font fgcolor="#ffffffff"><b>"菜单"</b></font>"，然后："\n\n<li>"触摸"<font fgcolor="#ffffffff"><b>"帐户"</b></font>"可添加或设置帐户，您可以将该帐户中包含的联系人同步到手机"\n</li>\n<li>"触摸"<font fgcolor="#ffffffff"><b>"新建联系人"</b></font>"可创建新联系人"\n</li>\n<li>"触摸"<font fgcolor="#ffffffff"><b>"导入/导出"</b></font>"可从您的 SIM 卡或 SD 卡中导入联系人"\n</li></string>
+    <!-- CHECK -->
+    <string name="noContactsNoSimHelpText">"您没有任何可显示的联系人。"\n\n"要添加联系人，请触摸"<font fgcolor="#ffffffff"><b>"菜单"</b></font>"，然后："\n\n<li>"触摸"<font fgcolor="#ffffffff"><b>"帐户"</b></font>"可添加或设置帐户，您可以将该帐户中包含的联系人同步到手机"\n</li>\n<li>"触摸"<font fgcolor="#ffffffff"><b>"新建联系人"</b></font>"可创建新联系人"\n</li>\n<li>"触摸"<font fgcolor="#ffffffff"><b>"导入/导出"</b></font>"可从您的 SD 卡中导入联系人"\n</li></string>
+    <string name="missing_name">"（无姓名）"</string>
+    <string name="menu_done">"完成"</string>
+    <string name="menu_doNotSave">"取消"</string>
+    <string name="profile_display_name">"设置我的个人资料"</string>
+    <string name="listTotalAllContactsZero">"没有联系人。"</string>
+    <string name="listTotalAllContactsZeroCustom">"未发现任何联系人。"</string>
+    <string name="listTotalAllContactsZeroStarred">"未收藏任何联系人。"</string>
+    <!-- CHECK -->
+    <string name="listTotalAllContactsZeroGroup">"“%s”中没有联系人"</string>
+    <string name="listTotalPhoneContactsZero">"没有联系人拥有电话号码"</string>
+    <string name="menu_search">"搜索"</string>
+    <string name="menu_new_contact_action_bar">"添加联系人"</string>
+    <string name="menu_new_group_action_bar">"添加群组"</string>
+    <string name="menu_accounts">"帐户"</string>
+    <string name="menu_clear_frequents">"清除常用联系人"</string>
+    <string name="menu_contacts_filter">"要显示的联系人"</string>
+    <string name="menu_import_export">"导入/导出"</string>
+
+    <string name="menu_remove_vcard_files">删除 vCards</string>
+    <string name="menu_export_database">"导出数据库文件"</string>
+    <string name="menu_settings">"设置"</string>
+    <string name="menu_help">"帮助"</string>
+
+    <string name="menu_about">关于</string>
+    <string name="hint_findContacts">"查找联系人"</string>
+    <string name="contactsAllLabel">"所有联系人"</string>
+    <string name="contactsGroupsLabel">"群组"</string>
+    <string name="contactsFavoritesLabel">"收藏"</string>
+    <string name="viewContactDesription">"查看联系人"</string>
+    <string name="viewContactTitle">"联系人详情"</string>
+    <string name="account_phone">"仅保存在手机中，不同步"</string>
+    <string name="view_updates_from_group">"查看更新"</string>
+    <string name="customLabelPickerTitle">"自定义标签名称"</string>
+    <string name="expand_collapse_name_fields_description">"展开或折叠姓名字段"</string> <!-- 展开或者折叠名字栏 -->
+    <string name="description_minus_button">"删除"</string>
+    <string name="description_contact_photo">"联系人照片"</string>
+    <string name="nameLabelsGroup">"姓名"</string>
+    <string name="nicknameLabelsGroup">"昵称"</string>
+    <string name="organizationLabelsGroup">"组织"</string>
+    <string name="groupsLabel">"群组"</string>
+    <string name="full_name">"姓名"</string>
+    <string name="name_given">"名字"</string>
+    <string name="name_family">"姓氏"</string>
+    <string name="name_prefix">"姓名前缀"</string>
+    <string name="name_middle">"中间名"</string>
+    <string name="name_suffix">"姓名后缀"</string>
+    <string name="name_phonetic_given">"名字拼音"</string>
+    <string name="name_phonetic_middle">"中间名拼音"</string>
+    <string name="name_phonetic_family">"姓氏拼音"</string>
+    <string name="name_phonetic">"姓名拼音"</string>
+    <string name="recent">"最新"</string>
+    <string name="postal_address">"地址"</string>
+    <string name="postal_street">"街道"</string>
+    <string name="postal_pobox">"信箱"</string>
+    <string name="postal_neighborhood">"街区"</string>
+    <string name="postal_city">"城市"</string>
+    <string name="postal_region">"省/直辖市/自治区"</string>
+    <string name="postal_postcode">"邮政编码"</string>
+    <string name="postal_country">"国家/地区"</string>
+    <string name="phoneLabelsGroup">"电话"</string>
+    <string name="emailLabelsGroup">"电子邮件"</string>
+    <string name="imLabelsGroup">"Silent Text / 聊天"</string>
+    <string name="postalLabelsGroup">"地址"</string>
+    <string name="sms">"短信"</string>
+    <string name="label_notes">"备注"</string>
+    <string name="label_sip_address">"SilentPhone - 名"</string>
+    <string name="ghostData_company">"公司"</string>
+    <string name="ghostData_title">"职位"</string>
+    <!-- CHECK -->
+    <string name="call_custom">"呼叫%s"</string>
+    <string name="call_home">"呼叫住宅电话"</string>
+    <string name="call_mobile">"呼叫手机"</string>
+    <string name="call_work">"呼叫单位"</string>
+    <!-- MISSING -->
+    <string name="call_silent">呼叫Silent Phone</string>
+    <string name="call_fax_work">"呼叫单位传真"</string>
+    <string name="call_fax_home">"呼叫住宅传真"</string>
+    <string name="call_pager">"呼叫寻呼机"</string>
+    <string name="call_other">"呼叫"</string>
+    <string name="call_callback">"呼叫回拨号码"</string>
+    <string name="call_car">"呼叫车载电话"</string>
+    <string name="call_company_main">"呼叫公司总机"</string>
+    <string name="call_isdn">"呼叫 ISDN"</string>
+    <string name="call_main">"呼叫总机"</string>
+    <string name="call_other_fax">"呼叫传真号码"</string>
+    <string name="call_radio">"呼叫无线装置"</string>
+    <string name="call_telex">"呼叫电报"</string>
+    <string name="call_tty_tdd">"呼叫 TTY/TDD"</string>
+    <string name="call_work_mobile">"呼叫单位手机"</string>
+    <string name="call_work_pager">"呼叫单位寻呼机"</string>
+    <!-- CHECK -->
+    <string name="call_assistant">"呼叫%s"</string>
+    <string name="call_mms">"呼叫彩信号码"</string>
+    <!-- CHECK -->
+    <string name="sms_custom">"向%s发送文本消息"</string>
+    <string name="sms_home">"向住宅电话发送短信"</string>
+    <string name="sms_mobile">"向手机发送短信"</string>
+    <string name="sms_work">"向单位电话发送短信"</string>
+    <string name="sms_fax_work">"向单位传真机发送短信"</string>
+    <string name="sms_fax_home">"向住宅传真机发送短信"</string>
+    <string name="sms_pager">"向寻呼机发送文字消息"</string>
+    <string name="sms_other">"发送短信"</string>
+    <string name="sms_callback">"向回拨号码发送短信"</string>
+    <string name="sms_car">"向车载电话发送短信"</string>
+    <string name="sms_company_main">"向公司总机发送短信"</string>
+    <string name="sms_isdn">"向 ISDN 发送短信"</string>
+    <string name="sms_main">"向总机发送短信"</string>
+    <string name="sms_other_fax">"向传真号码发送短信"</string>
+    <string name="sms_radio">"向无线装置发送短信"</string>
+    <string name="sms_telex">"向电报发送短信"</string>
+    <string name="sms_tty_tdd">"向 TTY/TDD 发送短信"</string>
+    <string name="sms_work_mobile">"向单位手机发送短信"</string>
+    <string name="sms_work_pager">"向单位寻呼机发送短信"</string>
+    <!-- CHECK -->
+    <string name="sms_assistant">"向%s发送短信"</string>
+    <string name="sms_mms">"向彩信号码发送短信"</string>
+    <string name="email_home">"向住宅邮箱发送电子邮件"</string>
+    <string name="email_mobile">"向手机发送电子邮件"</string>
+    <string name="email_work">"向单位邮箱发送电子邮件"</string>
+    <string name="email_other">"发送电子邮件"</string>
+    <!-- CHECK -->
+    <string name="email_custom">"向%s发送电子邮件"</string>
+    <string name="email">"电子邮件"</string>
+    <string name="map_home">"查看住宅地址"</string>
+    <string name="map_work">"查看单位地址"</string>
+    <string name="map_other">"查看地址"</string>
+    <!-- CHECK -->
+    <string name="map_custom">"查看%s地址"</string>
+
+    <string name="chat_silent">"使用 SilentText 聊天"</string>
+    <string name="chat_aim">"使用 AIM 聊天"</string>
+    <string name="chat_msn">"使用 Windows Live 聊天"</string>
+    <string name="chat_yahoo">"使用雅虎软件聊天"</string>
+    <string name="chat_skype">"使用 Skype 聊天"</string>
+    <string name="chat_qq">"使用 QQ 聊天"</string>
+    <string name="chat_gtalk">"使用 Google Talk 聊天"</string>
+    <string name="chat_icq">"使用 ICQ 聊天"</string>
+    <string name="chat_jabber">"使用 Jabber 聊天"</string>
+    <string name="chat">"聊天"</string>
+    <string name="audio_chat">"语音聊天"</string>
+    <string name="video_chat">"视频聊天"</string>
+    <!-- CHECK -->
+    <string name="contact_status_update_attribution">"来源：%1$s"</string>
+    <!-- CHECK -->
+    <string name="contact_status_update_attribution_with_date">"时间：%1$s，来源：%2$s"</string>
+    <!-- CHECK -->
+    <string name="contact_directory_description">"目录类型：%1$s"</string>
+    <!-- CHECK -->
+    <string name="organization_company_and_title">"%2$s，%1$s"</string>
+    <string name="menu_addStar">"添加到收藏"</string>
+    <string name="menu_removeStar">"从收藏中删除"</string>
+    <string name="toast_text_copied">"文本已复制"</string>
+    <string name="copy_text">"复制到剪贴板"</string>
+    <string name="set_default">"设置默认值"</string>
+    <string name="clear_default">"清除默认值"</string>
+    <string name="contactDetailAbout">"关于"</string>
+    <string name="contactDetailUpdates">"最新动态"</string>
+    <string name="add_connection_button">"添加社交网络"</string>
+    <string name="noContacts">"没有联系人。"</string>
+    <string name="contacts_unavailable_create_contact">"创建新联系人"</string>
+    <string name="contacts_unavailable_import_contacts">"导入联系人"</string>
+    <string name="upgrade_out_of_memory_uninstall">"卸载一些应用"</string>
+    <string name="upgrade_out_of_memory_retry">"重新尝试升级"</string>
+    <string name="locale_change_in_progress">"正在更新联系人列表，以反映语言的变更。"</string>
+    <string name="upgrade_in_progress">"正在更新联系人列表。"</string>
+    <!-- CHECK -->
+    <string name="upgrade_out_of_memory">"正在升级“联系人”。"\n\n"升级过程大约需要 %s MB 的内存空间。"\n\n"请选择以下某个选项："</string>
+    <string name="menu_editContact">"修改"</string>
+    <string name="menu_deleteContact">"删除"</string>
+    <string name="menu_set_ring_tone">"设置铃声"</string>
+    <string name="menu_create_contact_shortcut">"放在主屏幕上"</string>
+    <string name="menu_share">"分享"</string>
+    <string name="toast_making_personal_copy">"正在创建个人副本..."</string>
+    <string name="photoPickerNotFoundText">"手机上没有照片。"</string>
+    <string name="take_photo">"拍照"</string>
+    <string name="take_new_photo">"拍摄新照片"</string>
+    <string name="pick_photo">"从图库中选择照片"</string>
+    <string name="pick_new_photo">"从图库中选择新照片"</string>
+    <string name="removePhoto">"删除照片"</string>
+    <string name="use_photo_as_primary">"使用此照片"</string>
+    <string name="add_new_entry_for_section">"添加新条目"</string>
+    <string name="add_organization">"添加工作单位"</string>
+    <string name="add_field">"添加其他字段"</string>
+    <string name="edit_contact">"编辑联系人"</string>
+    <string name="menu_discard">"舍弃"</string>
+    <string name="cancel_confirmation_dialog_message">"要舍弃您所做的更改吗？"</string>
+    <string name="contactSavedToast">"此联系人已保存。"</string>
+    <string name="contactSavedErrorToast">"无法保存联系人更改。"</string>
+    <string name="readOnlyContactWarning">"您无法删除只读帐户中的联系人，但可以在联系人列表中将他们隐藏。"</string>
+    <string name="readOnlyContactDeleteConfirmation">"该联系人的信息中包含来自多个帐户的信息。来自只读帐户的信息将在您的联系人列表中隐藏，但不会删除。"</string>
+    <string name="multipleContactDeleteConfirmation">"删除该联系人将会删除多个帐户中的信息。"</string>
+    <string name="deleteConfirmation">"将会删除此联系人。"</string>
+    <string name="shortcutActivityTitle">"选择联系人快捷方式"</string>
+    <string name="callShortcutActivityTitle">"选择一个可直接拨号的号码"</string>
+    <string name="messageShortcutActivityTitle">"选择一个可直接向其发送短信的号码"</string>
+    <string name="contactPickerActivityTitle">"选择联系人"</string>
+    <string name="pickerNewContactText">"创建新联系人"</string>
+    <string name="pickerNewContactHeader">"新建联系人"</string>
+    <string name="share_via">"联系人分享方式"</string>
+    <string name="list_filter_phones">"所有拥有电话号码的联系人"</string>
+    <string name="contact_read_only">"无法通过此应用修改。"</string>
+    <string name="savingContact">"正在保存联系人…"</string>
+    <string name="activity_title_confirm_add_detail">"添加至联系人"</string>
+    <string name="display_options_sort_list_by">"列表排序依据"</string>
+    <string name="display_options_view_names_as">"联系人姓名的显示方式"</string>
+    <string name="display_options_view_given_name_first">"名字在前"</string>
+    <string name="display_options_view_family_name_first">"姓氏在前"</string>
+    <string name="display_options_sort_by_given_name">"名字"</string>
+    <string name="display_options_sort_by_family_name">"姓氏"</string>
+    <string name="activity_title_settings">"设置"</string>
+    <string name="no_sdcard_message">"未找到任何存储设备。"</string>
+    <string name="dialog_import_export">"导入/导出联系人"</string>
+    <string name="dialog_import">"导入联系人"</string>
+    <string name="share_error">"无法分享此联系人。"</string>
+    <string name="import_from_sdcard">"从存储设备导入"</string>
+    <string name="export_to_sdcard">"导出到存储设备"</string>
+    <string name="share_visible_contacts">"分享可见的联系人"</string>
+    <string name="import_one_vcard_string">"导入一个 vCard 文件"</string>
+    <string name="import_multiple_vcard_string">"导入多个 vCard 文件"</string>
+    <string name="import_all_vcard_string">"导入所有 vCard 文件"</string>
+    <string name="searching_vcard_message">"正在从存储设备中搜索 vCard 文件..."</string>
+    <!-- CHECK -->
+    <string name="scanning_sdcard_failed_message">"无法扫描该存储设备。（原因：“%s”）"</string>
+    <string name="fail_reason_io_error">"I/O 错误"</string>
+    <string name="fail_reason_low_memory_during_import">"内存不足。该文件可能过大。"</string>
+    <string name="fail_reason_vcard_parse_error">"由于意外原因而无法解析 vCard。"</string>
+    <string name="fail_reason_not_supported">"该格式不受支持。"</string>
+    <string name="vcard_import_failed">"无法导入 vCard。"</string>
+    <string name="import_failure_no_vcard_file">"未在存储设备中找到 vCard 文件。"</string>
+    <string name="fail_reason_failed_to_collect_vcard_meta_info">"无法收集指定的 vCard 文件的元信息。"</string>
+    <string name="fail_reason_failed_to_read_files">"一个或多个文件无法导入 (%s)。"</string>
+    <string name="fail_reason_unknown">"未知错误。"</string>
+    <string name="select_vcard_title">"选择 vCard 文件"</string>
+
+    <string name="select_vcard_title_remove">删除vCard文件</string>
+    <string name="caching_vcard_title">"正在缓存..."</string>
+    <string name="caching_vcard_message">"正在将 vCard 缓存到本地临时存储设备。实际导入操作即将开始。"</string>
+    <!-- CHECK -->
+    <string name="progress_notifier_message">"正在导入第 %1$s 个（共 %2$s 个）联系人：%3$s"</string>
+    <!-- CHECK -->
+    <string name="importing_vcard_description">"正在导入%s"</string>
+    <string name="reading_vcard_failed_title">"无法读取 vCard 数据"</string>
+    <string name="reading_vcard_canceled_title">"已取消读取 vCard 数据"</string>
+    <!-- CHECK -->
+    <string name="importing_vcard_finished_title">"导入 vCard %s 已完成"</string>
+    <!-- CHECK -->
+    <string name="importing_vcard_canceled_title">"已取消导入 %s"</string>
+    <!-- CHECK -->
+    <string name="vcard_import_will_start_message">"%s 将在稍后导入。"</string>
+    <string name="vcard_import_will_start_message_with_default_name">"系统稍后就会导入该文件。"</string>
+    <string name="vcard_import_request_rejected_message">"vCard 导入请求遭拒，请稍后重试。"</string>
+    <!-- CHECK -->
+    <string name="vcard_export_will_start_message">"%s 将在稍后导出。"</string>
+    <string name="vcard_export_request_rejected_message">"vCard 导出请求遭拒，请稍后重试。"</string>
+    <string name="vcard_unknown_filename">"联系人"</string>
+    <!-- CHECK -->
+    <string name="percentage">"%s%%"</string>
+    <string name="confirm_export_title">"要导出联系人吗？"</string>
+    <!-- CHECK -->
+    <string name="confirm_export_message">"系统会将您的联系人列表导出到以下文件：%s。"</string>
+    <string name="exporting_contact_failed_title">"无法导出"</string>
+    <!-- CHECK -->
+    <string name="exporting_contact_failed_message">"未导出联系人数据。"\n"原因：“%s”"</string>
+    <string name="fail_reason_no_exportable_contact">"没有可导出的联系人。"</string>
+    <string name="fail_reason_too_many_vcard">"存储设备中的 vCard 文件过多。"</string>
+    <!-- CHECK -->
+    <string name="fail_reason_too_long_filename">"指定的文件名过长（“%s”）。"</string>
+    <!-- CHECK -->
+    <string name="exporting_vcard_finished_title">"导出 %s 已完成。"</string>
+    <!-- CHECK -->
+    <string name="exporting_vcard_canceled_title">"已取消导出 %s。"</string>
+    <string name="exporting_contact_list_title">"正在导出联系人数据"</string>
+    <!-- CHECK -->
+    <string name="exporting_contact_list_message">"正在将您的联系人数据导出到：%s。"</string>
+    <!-- CHECK -->
+    <string name="fail_reason_could_not_initialize_exporter">"无法启动导出程序：“%s”。"</string>
+    <!-- CHECK -->
+    <string name="fail_reason_error_occurred_during_export">"导出时出错：“%s”。"</string>
+    <string name="composer_failed_to_get_database_infomation">"无法获取数据库信息。"</string>
+    <string name="composer_has_no_exportable_contact">"没有可导出的联系人。如果您的手机上确实存有联系人信息，可能是某些数据服务提供商不允许从手机中导出联系人。"</string>
+    <string name="composer_not_initialized">"vCard 制作程序未正确启动。"</string>
+    <!-- CHECK -->
+    <string name="fail_reason_could_not_open_file">"无法打开“%1$s”：%2$s。"</string>
+    <!-- CHECK -->
+    <string name="exporting_contact_list_progress">"第 %1$s 个联系人（共 %2$s 个）"</string>
+    <!-- CHECK -->
+    <string name="cancel_import_confirmation_message">"要取消导入 %s 吗​​？"</string>
+    <!-- CHECK -->
+    <string name="cancel_export_confirmation_message">"要取消导出 %s 吗​​？"</string>
+    <string name="nfc_vcard_file_name">"已通过 NFC 收到联系人信息"</string>
+    <string name="cancel_vcard_import_or_export_failed">"无法取消导入/导出 vCard"</string>
+    <string name="group_read_only">"无法在此设备上修改。"</string>
+    <string name="group_name_hint">"群组名称"</string>
+    <string name="enter_contact_name">"键入联系人的姓名"</string>
+    <string name="groupSavedToast">"群组已保存。"</string>
+    <string name="groupSavedErrorToast">"无法保存所做的群组更改。"</string>
+    <string name="emptyGroup">"此组中没有联系人。"</string>
+    <string name="addPeopleToGroup">"要添加联系人，请修改该组。"</string>
+    <string name="menu_editGroup">"修改"</string>
+    <string name="menu_deleteGroup">"删除"</string>
+
+    <plurals name="num_contacts_in_group">
+        <item quantity="one">"%2$s中有 %1$d 个联系人"</item>
+        <item quantity="other">"有 %1$d 人来自%2$s"</item>
+    </plurals>
+
+    <string name="favoritesFrequentContacted">"经常联系的人"</string>
+    <string name="favoritesFrequentCalled">"经常呼叫的联系人"</string>
+    <string name="description_view_contact_detail">"查看联系人"</string>
+    <!-- CHECK -->
+    <string name="delete_group_dialog_message">"要删除群组“%1$s”（并不会删除联系人本身）吗？"</string>
+
+    <plurals name="group_list_num_contacts_in_group">
+        <item quantity="one">"%1$d 个人"</item>
+        <item quantity="other">"%1$d 个人"</item>
+    </plurals>
+
+    <string name="noGroups">"没有任何群组。"</string>
+    <string name="noAccounts">"您需要拥有一个帐户才能创建群组。"</string>
+    <string name="create_group_dialog_title">"创建新群组"</string>
+    <string name="contacts_unavailable_add_account">"登录帐户"</string>
+    <string name="group_edit_field_hint_text">"群组名称"</string>
+    <string name="create_group_item_label">"创建新群组"</string>
+    <string name="preference_displayOptions">"显示选项"</string>
+    <!-- CHECK -->
+    <string name="description_send_message">"向%1$s发送短信"</string>
+    <!-- CHECK -->
+    <string name="description_dial_phone_number">"拨打%1$s的电话"</string>
+    <!-- CHECK -->
+    <string name="description_quick_contact_for">"%1$s的快速联系头像"</string>
+    <string name="invalidContactMessage">"该联系人不存在。"</string>
+    <string name="quickcontact_missing_app">"未找到可处理此操作的应用。"</string>
+    <string name="recent_updates">"最新动态"</string>
+
+    <string name="search_go">"搜索"</string>
+    <string name="searchview_description_search">"搜索"</string>
+    <string name="searchview_description_query">"搜索查询"</string>
+    <string name="searchview_description_clear">"清除查询"</string>
+    <string name="searchview_description_submit">"提交查询"</string>
+    <string name="searchview_description_voice">"语音搜索"</string>
+
+    <string name="sca_about">Silent Circle Contacts 是一款将您的联系人保存在一个加密数据库中的配套应用程序
+        \n\n版本号： %1$s (%2$s)</string>
+
+    <!-- String for Key Manager part -->
+
+    <string name="cannot_load_store">无法载入密钥存储器。</string>
+    <string name="cannot_create_store">无法创建密钥存储器。</string>
+
+    <string name="password_hint">输入密码</string>
+    <string name="password_hint_old">输入旧密码</string>
+    <string name="password_hint_new">输入新密码</string>
+    <string name="password_hint2">输入密码（验证）</string>
+    <string name="change_password">更改密码</string>
+    <string name="cannot_change_password">密码更改失败。使用现有密码。</string>
+    <string name="old_password_wrong">旧密码错误。锁住密码存储器。</string>
+
+    <string name="unlock">解锁</string>
+    <string name="lock">上锁</string>
+    <string name="create">创建密码存储器</string>
+    <string name="unlocked">已解锁</string>
+    <string name="locked">已解锁</string>
+
+    <string name="backup_store">备份密钥数据</string>
+    <string name="backup_access">不可访问备份存储。</string>
+    <string name="restore_store">恢复密钥数据</string>
+    <string name="cannot_create_backup">无法创建备份文件。</string>
+    <string name="backup_failed">密钥管理器数据备份失败。</string>
+    <string name="backup_created">密钥管理器数据备份完成。</string>
+    <string name="restore_failed">恢复密钥管理器数据失败。</string>
+    <string name="restore_created">恢复密钥管理器数据完成。</string>
+    <string name="restore_access">无可用的用于恢复的备份文件。</string>
+    <string name="no_password">密码缺失。</string>
+
+    <string name="information_dialog">信息</string>
+    <string name="show_pw">显示密码</string>
+    <string name="password_match">密码不匹配。请检查。</string>
+
+    <string name="registered_apps">已注册应用</string>
+
+    <!--******************** New or modified ***********************-->
+    <!--Strings new after 2.0.1 release-->
+  <string name="video_control_explanation">在屏幕上点击，切换视频控制按钮。
+\n\n点击小预览窗口，移动它。</string>
+    <string name="sca_problem">无法运行Silent Contacts</string>
+  <string name="sca_problem_explanation">检查Silent Contacts应用程序的状态，如果未启动，启动该程序。
+在未获得访问Silent Contacts Silent Phone权限的情况，无法存取联系信息。</string>
+    <string name="start_on_boot">在开机过程中，启动Silent Phone</string>
+    <string name="start_on_boot_explanation">在设备的启动过程中，启动Silent Phone。</string>
+    <!--******* Strings for the dial assist activity-->
+    <string name="sp_dial_helper_title">Dial assist</string>
+  <string name="sp_dial_helper_select_explanation">为了简化拨号，打开Dial Assist，选择一个
+        国家。会用你的国家代码对电话号码进行自动格式化，或者拨\'+\'号和国家代码。</string>
+    <string name="sp_dial_helper_select_explanation_1">如果要呼叫其他Silent Circle订阅者，简化的方式是拨他们Silent Circle订阅者姓名。</string>
+    <string name="sp_dial_helper_select">选择你的国家</string>
+    <string name="sp_dial_helper_none">未安装dial assist</string>
+    <string name="sp_dial_helper_simple">方便的dial assist</string>
+    <!--Explain specific dial support functions-->
+    <string name="sp_dial_helper_null_explanation">Dial assist未启动。</string>
+    <string name="sp_dial_helper_simple_explanation">加上 \'+\'号构成一个国际电话号码。</string>
+    <string name="sp_dial_helper_nanp_explanation">加上\'+\'号或\'+1\'，或者用\'+\'代替开头的\'011\'。</string>
+    <string name="sp_dial_helper_00_0_explanation">用国家代码%2$s代替开头的\'%1$s\'，用\'+\'号代替开头的\'%3$s\'。</string>
+    <string name="sp_dial_helper_00_x_explanation">在已拨数字前加\'%2$s\'，用\'+\'号代替开头的 \'%3$s\'。</string>
+    <!--******* Strings for the key store management activity-->
+    <string name="key_store_set_pw_explanation">输入密码，提高密钥存储保护。\n你每次启动Silent Phone时，都需要输入这个密码。你可以随时重置为默认保护。</string>
+    <string name="key_store_change_pw_explanation">更改你的密钥存储密码。</string>
+    <string name="key_store_reset_pw_explanation">你输入密码后，可以将密钥存储保护重置为默认保护。</string>
+    <string name="key_store_enter_pw_explanation">输入你的密钥存储密码。</string>
+    <string name="key_store_set_pin_explanation">输入PIN，提高密钥存储保护。\n你每次启动Silent Phone时，都需要输入这个PIN。你可以随时重置为默认保护。</string>
+    <string name="key_store_change_pin_explanation">更改你的密钥存储PIN。</string>
+    <string name="key_store_reset_pin_explanation">你输入密码后，可以将密钥存储保护重置为默认保护。</string>
+    <string name="key_store_enter_pin_explanation">输入你的密钥存储PIN。</string>
+    <string name="pin_hint">输入PIN</string>
+    <string name="pin_hint_old">输入旧PIN</string>
+    <string name="pin_hint_new">输入新PIN</string>
+    <string name="pin_hint2">输入PIN（校验）</string>
+    <string name="no_pin">缺少PIN。</string>
+    <string name="show_pin">显示PIN</string>
+    <string name="pin_match">PIN不匹配。请检查。</string>
+    <string name="pin_short">PIN太短。至少输入%d位数字</string>
+    <string name="key_store_title">密钥存储选项</string>
+    <string name="key_store_type_default">默认密码</string>
+    <string name="key_store_type_pw">用户密码</string>
+    <string name="key_store_type_pin">用户PIN</string>
+    <string name="key_store_set_pw">设置密码</string>
+    <string name="key_store_set_pin">设置PIN</string>
+    <string name="key_store_change_pin">更改PIN</string>
+    <string name="key_store_reset_default">重置为默认保护</string>
+    <string name="re_provision">Silent Phone重新指配</string>
+    <string name="re_provision_explanation">重新载入Silent Phone的配置数据</string>
+    <!--******** String to explain the migration activities-->
+    <!--<string name="migration_explanation">Silent Contacts is now embedded into Silent Phone. The embedded
+           Silent Contacts copies your existing contacts.
+           \n\nAfter completion of data copying accept de-installation of existing Silent Contacts.
+           \n\nIf you cancel this then de-install the existing Silent Contacts application using Android\'s app manager.
+           In this case your existing contacts are not automatically copied.</string>-->
+    <string name="migration_explanation_1">目前，Silent Contacts被嵌入在Silent Phone中。数据转移过程是复制现有的Silent Contacts，删除原有的Silent密钥管理应用程序和Silent Contacts应用程序。</string>
+    <string name="migration_explanation_2">完成数据复制后，卸载原有的Silent Contacts应用程序。</string>
+    <string name="migrate_start">开始转移Silent Contact数据。</string>
+    <string name="migrate_export">输出现有的Silent Contacts。</string>
+    <string name="migrate_done">数据转移完成。</string>
+    <string name="migrate_import">将数据输入到嵌入的Silent Contacts。</string>
+    <string name="migrate_not_ready">嵌入的联系提供商未准备好。</string>
+    <string name="migrate_failed_old_km">联系数据转移：KeyManager请求失败。</string>
+    <!--******** String for DID selection activity-->
+    <string name="did_title">电话号码选择</string>
+    <string name="did_region_area_explanation">从一个地区和区域中选择你的电话号码</string>
+    <string name="did_currently_selected">选择正确</string>
+    <string name="did_region">地区：</string>
+    <string name="did_area">区域：</string>
+    <string name="did_number">号码：</string>
+    <string name="did_region_list">选择地区</string>
+    <string name="did_area_list">选择区域</string>
+    <string name="did_number_list">选择号码</string>
+    <string name="did_selection_wrong_format">电话号码选择——服务器发送错误数据格式：</string>
+    <string name="did_no_area">目前，在这地区没有可用的区域。选择另一个地区。</string>
+    <string name="did_no_number">目前，没有可用的电话号码，选择另一个地区或区域。</string>
+    <string name="did_ask_to_complete">完成电话号码选择。</string>
+    <string name="no_internet">未连接到互联网</string>
+    <string name="mobile_internet_blocked">移动互联网不可用</string>
+    <string name="mobile_internet_available">移动互联网可用</string>
+    <string name="directory_use_sc">Silent Circle目录</string>
+    <string name="directory_own_org_only">自己的组织</string>
+    <string name="sign_in">注册</string>
+    <string name="sc_privacy_link"><a href="https://silentcircle.com/privacy/">隐私声明</a></string>
+    <string name="sc_tos_link"><a href="https://accounts.silentcircle.com/terms/">服务条款</a></string>
+    <plurals name="number_missed_calls">
+        <item quantity="other">%d未接电话</item>
+    </plurals>
+    <string name="no_video_available">此次通话无法使用视频。</string>
+    <string name="call_in_progress">正在通话</string>
+    <string name="server_cert_failure">证书检查失败——重试</string>
+    <string name="remaining_oca_minutes">剩余的OCA分钟数</string>
+    <string name="remaining_oca_minutes_fail">没有可获得的OCA信息</string>
+    <string name="remaining_oca_minutes_zero">未使用的呼叫分钟数。您所在用户组拥有%1$d分钟。</string>
+    <plurals name="remaining_oca_minutes_info">
+        <item quantity="other">你所在用户组拥有%2$d分钟，你已经使用了%1$d分钟。</item>
+    </plurals>
+    <!--SCA-50 added string-->
+    <string name="provide_your_name">姓名必须填写。点击Cancel删除。</string>
+    <!--end SCA-50-->
+
+    <!--
+    **************************  New Dialer layout  *************************
+    -->
+    <string name="tab_speed_dial">快速拨号</string>
+
+    <string name="tab_recents">最近</string>
+
+    <string name="tab_all_contacts">联系人</string>
+
+    <!-- Button text for the "call back" button displayed underneath an entry in the call log.
+     Tapping causes a call to be placed to the caller represented by the call log entry.
+     [CHAR LIMIT=30] -->
+    <string name="call_log_action_call_back">回电</string>
+
+    <!-- Button text for the "video call" button displayed underneath an entry in the call log.
+         Tapping causes a video call to be placed to the caller represented by the call log entry.
+         [CHAR LIMIT=30] -->
+    <string name="call_log_action_video_call">视频通话</string>
+
+    <!-- Button text for the "LISTEN" button displayed underneath an entry in the call log.
+         Tapping navigates the user to the call details screen where the user can listen to the
+         voicemail represented by the call log entry.
+         [CHAR LIMIT=30] -->
+    <string name="call_log_action_voicemail">听取</string>
+
+    <!-- Button text for the "DETAILS" button displayed underneath an entry in the call log.
+         Tapping navigates the user to the call details screen where the user can view details for
+         the call log entry.
+         [CHAR LIMIT=30] -->
+    <string name="call_log_action_details">详情</string>
+
+    <!-- Button text for the "report" button displayed underneath an entry in the call log.
+         Tapping causes the call log entry to be reported as a bad id.
+         [CHAR LIMIT=30] -->
+    <string name="call_log_action_report">今天</string>
+
+    <!-- Content description for dismiss button on badge. [CHAR LIMIT=NONE] -->
+    <string name="description_dismiss">关闭</string>
+
+    <!-- Message displayed when there is no application available to handle a particular action.
+     [CHAR LIMIT=NONE] -->
+    <string name="activity_not_available">没有任何已安装的应用可以处理所选操作。</string>
+
+    Note: AccessibilityServices use this attribute to announce what the view represents.
+    This is especially valuable for views without textual representation like ImageView.
+    -->
+    <string name="description_num_calls"><xliff:g id="numberOfCalls">%1$s</xliff:g>次通话。.</string>
+
+    <!-- String describing the "call back" action for an entry in the call log.  The call back
+     action triggers a return call to the named user.
+     Note: AccessibilityServices uses this attribute to announce the purpose of the button.
+     [CHAR LIMIT=NONE] -->
+    <string name="description_call_back_action">"给<xliff:g id="NAMEORNUMBER">%1$s</xliff:g>回电"</string>
+
+    <!-- String describing the "video call" action for an entry in the call log.  The video call
+         action triggers a return video call to the named person/number.
+         Note: AccessibilityServices uses this attribute to announce the purpose of the button.
+         [CHAR LIMIT=NONE] -->
+    <string name="description_video_call_action">"向<xliff:g id="NAMEORNUMBER">%1$s</xliff:g>发起的视频通话。"</string>
+
+    <!-- String describing the "listen" action for an entry in the call log.  The listen
+         action is shown for call log entries representing a voicemail message and this button
+         triggers playing back the voicemail.
+         Note: AccessibilityServices uses this attribute to announce the purpose of the button.
+         [CHAR LIMIT=NONE] -->
+    <string name="description_voicemail_action">"听取来自<xliff:g id="NAMEORNUMBER">%1$s</xliff:g>的语音邮件"</string>
+
+    <!-- String describing the "details" action for an entry in the call log.  The details action
+         displays the call details screen for an entry in the call log.  This shows the calls to
+         and from the specified number associated with the call log entry.
+         [CHAR LIMIT=NONE] -->
+    <string name="description_details_action">"与<xliff:g id="NAMEORNUMBER">%1$s</xliff:g>的通话详情"</string>
+
+    <!-- String describing the button to access the contact details for a name or number.
+
+        Note: AccessibilityServices use this attribute to announce what the view represents.
+              This is especially valuable for views without textual representation like ImageView.
+    -->
+    <string name="description_contact_details">"<xliff:g id="NAMEORNUMBER">%1$s</xliff:g>的详细联系信息"</string>
+
+    <!-- String describing an incoming missed call entry in the call log.
+     Note: AccessibilityServices uses this attribute to announce what the view represents.
+     [CHAR LIMIT=NONE] -->
+    <string name="description_incoming_missed_call">"<xliff:g id="TIMEOFCALL">%3$s</xliff:g>来自<xliff:g id="NAMEORNUMBER">%1$s</xliff:g>（<xliff:g id="TYPEORLOCATION">%2$s</xliff:g>）的未接电话。"</string>
+
+    <!-- String describing an incoming answered call entry in the call log.
+         Note: AccessibilityServices uses this attribute to announce what the view represents.
+         [CHAR LIMIT=NONE] -->
+    <string name="description_incoming_answered_call">"<xliff:g id="TIMEOFCALL">%3$s</xliff:g>来自<xliff:g id="NAMEORNUMBER">%1$s</xliff:g>（<xliff:g id="TYPEORLOCATION">%2$s</xliff:g>）的已接电话。"</string>
+
+    <!-- String describing an outgoing call entry in the call log.
+         Note: AccessibilityServices uses this attribute to announce what the view represents.
+         [CHAR LIMIT=NONE] -->
+    <string name="description_outgoing_call">"<xliff:g id="TIMEOFCALL">%3$s</xliff:g>与<xliff:g id="NAMEORNUMBER">%1$s</xliff:g>（<xliff:g id="TYPEORLOCATION">%2$s</xliff:g>）的通话。"</string>
+
+    <!-- Delimiter used between each item in a textual list; for example "Alpha, Beta".
+     [CHAR LIMIT=3] -->
+    <string name="list_delimeter">"、 "</string>
+
+    <!-- String used as a header in the call log above calls which occurred today.
+     [CHAR LIMIT=65] -->
+    <string name="call_log_header_today">今天</string>
+
+    <!-- String used as a header in the call log above calls which occurred yesterday.
+         [CHAR LIMIT=65] -->
+    <string name="call_log_header_yesterday">昨天</string>
+
+    <!-- String used as a header in the call log above calls which occurred two days or more ago.
+         [CHAR LIMIT=65] -->
+    <string name="call_log_header_other">更早</string>
+
+    <!-- Text displayed when the list of missed calls is empty -->
+    <string name="recentMissed_empty">您最近没有未接电话。</string>
+
+    <!-- Text displayed when the list of voicemails is empty -->
+    <string name="recentVoicemails_empty">您最近没有语音邮件。</string>
+
+    <!-- Title for the recent calls footer that brings users to the full call history when clicked -->
+    <string name="recents_footer_text">查看全部通话记录</string>
+
+    <!-- Shows up as a tooltip to provide a hint to the user that the profile pic in a contact
+     card can be tapped to bring up a list of all numbers, or long pressed to start reordering
+     [CHAR LIMIT=NONE]
+    -->
+    <string name="contact_tooltip">点按图片可查看所有号码，按住图片可重新排序</string>
+
+    <!-- Remove button that shows up when contact is long-pressed. [CHAR LIMIT=NONE] -->
+    <string name="remove_contact">移除</string>
+
+    <!-- Shown when there are no speed dial favorites. -->
+    <string name="speed_dial_empty">使用快速拨号功能，轻轻一点即可拨打\n所收藏联系人的电话号码\n以及经常拨打的电话号码。</string>
+
+    <!-- Shown when there are no contacts in the all contacts list. -->
+    <string name="all_contacts_empty">您没有联系人。</string>
+
+    <!-- Title for the call log tab containing the list of all voicemails and calls
+     [CHAR LIMIT=30] -->
+    <string name="call_log_all_title">全部</string>
+
+    <!-- Title for the call log tab containing the list of all missed calls only
+         [CHAR LIMIT=30] -->
+    <string name="call_log_missed_title">未接电话</string>
+
+    <string name="expanding_entry_card_view_see_more">查看更多</string>
+    <!-- Button Label to see less on an ExpandingEntryCardView [CHAR LIMIT=40] -->
+    <string name="expanding_entry_card_view_see_less">隐藏部分</string>
+    <!-- Button Label to see all on an ExpandingEntryCardView [CHAR LIMIT=40] -->
+    <string name="expanding_entry_card_view_see_all">查看全部</string>
+
+    <!-- Content description for the transparent views around the visible section of QuickContacts.
+     Clicking this view causes Quick Contacts to close. [CHAR LIMIT=NONE] -->
+    <string name="quickcontact_transparent_view_description">点击即可返回上一屏幕</string>
+
+    <!-- Timestamp string for interactions from yesterday. [CHAR LIMIT=40] -->
+    <string name="yesterday">昨天</string>
+    <string name="tomorrow">明天</string>
+
+    <!-- Timestamp string for interactions from today. [CHAR LIMIT=40] -->
+    <string name="today">今天</string>
+    <!-- Text for an event starting on the current day with a start and end time.
+         For ex, "Today at 5:00pm-6:00pm" [CHAR LIMIT=NONE] -->
+    <string name="today_at_time_fmt">"今天<xliff:g id="TIME_INTERVAL">%s</xliff:g>"</string>
+    <!-- Text for an event starting on the next day with a start and end time.
+         For ex, "Tomorrow at 5:00pm-6:00pm" [CHAR LIMIT=NONE] -->
+    <string name="tomorrow_at_time_fmt">"明天<xliff:g id="TIME_INTERVAL">%s</xliff:g>"</string>
+    <!-- Format string for a date and time description.  For ex:
+         "April 19, 2012, 3:00pm - 4:00pm" [CHAR LIMIT=NONE] -->
+    <string name="date_time_fmt">"<xliff:g id="DATE">%s</xliff:g>，<xliff:g id="TIME_INTERVAL">%s</xliff:g>"</string>
+    <!-- Title for untitled calendar interactions [CHAR LIMIT=40] -->
+    <string name="untitled_event">(未命名的活动)</string>
+
+    <!-- Header for the Relation entry [CHAR LIMIT=NONE] -->
+    <string name="content_description_recent_call_type_incoming">来电</string>
+    <!-- Header for the Relation entry [CHAR LIMIT=NONE] -->
+    <string name="content_description_recent_call_type_outgoing">外拨电话</string>
+    <!-- Header for the Relation entry [CHAR LIMIT=NONE] -->
+    <string name="content_description_recent_call_type_missed">未接电话</string>
+
+    <!-- Content description for recent sms interaction [CHAR LIMIT=NONE] -->
+    <string name="content_description_recent_call">"近期通话。<xliff:g id="CALL_DETAILS">%s</xliff:g>。点按可回拨"</string>
+
+    <!-- Title of recent card. [CHAR LIMIT=60] -->
+    <string name="recent_card_title">最近</string>
+
+    <!-- Header for the IM entry [CHAR LIMIT=40] -->
+    <string name="header_im_entry">聊天工具</string>
+    <!-- Header for the Organization entry [CHAR LIMIT=40] -->
+    <string name="header_organization_entry">单位</string>
+    <!-- Header for the Nickname entry [CHAR LIMIT=40] -->
+    <string name="header_nickname_entry">昵称</string>
+    <!-- Header for the Note entry [CHAR LIMIT=40] -->
+    <string name="header_note_entry">备注</string>
+    <!-- Header for the Website entry [CHAR LIMIT=40] -->
+    <string name="header_website_entry">网站</string>
+    <!-- Header for the Event entry [CHAR LIMIT=40] -->
+    <string name="header_event_entry">活动</string>
+    <!-- Header for the Relation entry [CHAR LIMIT=40] -->
+    <string name="header_relation_entry">关系</string>
+
+    <!-- When a contact has no data, we prompt the user to add a phone number for the contact. [CHAR LIMIT=40] -->
+    <string name="quickcontact_add_phone_number">添加电话号码</string>
+    <!-- When a contact has no data, we prompt the user to add an email for the contact. [CHAR LIMIT=40] -->
+    <string name="quickcontact_add_email">添加电子邮件地址</string>
+
+    <!-- Title of recent card. [CHAR LIMIT=40] -->
+    <string name="about_card_title">简介</string>
+
+    <!-- Description of what happens when you click on the unstar MenuItem. [CHAR LIMIT=NONE] -->
+    <string name="description_action_menu_remove_star">已从收藏中移除</string>
+    <!-- Description of what happens when you click on the star MenuItem. [CHAR LIMIT=NONE] -->
+    <string name="description_action_menu_add_star">已添加到收藏</string>
+
+    <!-- Message displayed in a toast after you create a contact shortcut in the launcher [CHAR LIMIT=NONE]-->
+    <string name="createContactShortcutSuccessful">联系人小部件已添加到主屏幕。</string>
+
+    <!-- The menu item to add the the currently viewed contact to your contacts [CHAR LIMIT=30] -->
+    <string name="menu_add_contact">添加到通讯录</string>
+
+    <!-- Label for custom events  [CHAR LIMIT=20] -->
+    <string name="eventTypeCustom">自定义</string>
+    <!-- Label for a birthday event  [CHAR LIMIT=20] -->
+    <string name="eventTypeBirthday">生日</string>
+    <!-- Label for an anniversary event  [CHAR LIMIT=20] -->
+    <string name="eventTypeAnniversary">周年纪念日</string>
+    <!-- Label for other events  [CHAR LIMIT=20] -->
+    <string name="eventTypeOther">其他</string>
+
+    <string name="do_secure_call">"Use Silent Phone to secure this call?"</string>
+
+    <!-- Shortcut item used to call a number directly from search -->
+    <string name="search_shortcut_call_number">拨打<xliff:g id="NUMBER">%s</xliff:g>
+    </string>
+
+    <!-- Shortcut item used to add a number directly from search -->
+    <string name="search_shortcut_add_to_contacts">添加到通讯录</string>
+
+    <!-- Message displayed when there is no application available to handle the add contact menu option. [CHAR LIMIT=NONE] -->
+    <string name="add_contact_not_available">请重新启用“通讯录”应用以便使用此功能。</string>
+
+    <!-- Content description for the fake action menu up button as used
+     inside search. [CHAR LIMIT=NONE] -->
+    <string name="action_menu_back_from_search">停止搜索</string>
+
+    <!--  String describing the icon used to clear the search field -->
+    <string name="description_clear_search">清除搜索内容</string>
+
+    <!-- Hint displayed in dialer search box when there is no query that is currently typed.
+     [CHAR LIMIT=30] -->
+    <string name="dialer_hint_find_contact">输入姓名或手机号</string>
+
+    <!-- Content description for the fake action menu overflow button.
+     This should be same as the description for the real action menu
+     overflow button available in ActionBar.
+     [CHAR LIMIT=NONE] -->
+    <string name="action_menu_overflow_description">更多选项</string>
+
+    <!-- Title for the sms disambiguation dialog -->
+    <string name="sms_disambig_title">选择号码</string>
+
+    <!-- Title for the call disambiguation dialog -->
+    <string name="call_disambig_title">选择号码</string>
+
+    <!-- Message next to disambiguation dialog check box -->
+    <string name="make_primary">记住此选择</string>
+
+</resources>

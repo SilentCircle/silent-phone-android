@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+// +++LICENSE_BEGIN+++
+/*
+ * Copyright © 2014, Silent Circle
+ * All rights reserved.
+ */
+// +++LICENSE_END+++
+ -->
+
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              xmlns:tools="http://schemas.android.com/tools"
+              android:layout_width="match_parent"
+              android:layout_height="wrap_content"
+              android:layout_marginTop="@dimen/spacing_normal"
+              android:visibility="visible"
+              tools:context=".activities.DialerActivity"
+              tools:visibility="visible">
+
+    <CheckBox
+            android:id="@+id/underflow_check"
+            style="@style/Widget.Silent.DrawerCheckBox"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true"
+            android:layout_alignBaseline="@+id/underflow_title"/>
+    <TextView
+            style="@style/Widget.Silent.SimpleText.Medium"
+            android:id="@+id/underflow_title"
+            android:layout_marginLeft="@dimen/spacing_normal"
+            android:layout_marginStart="@dimen/spacing_normal"
+            android:layout_toRightOf="@id/underflow_check"
+            android:layout_toEndOf="@id/underflow_check"
+            android:layout_marginTop="@dimen/spacing_normal"
+            android:text="@string/setting_underflow" />
+    <TextView
+            style="@style/Widget.Silent.SimpleText.Small"
+            android:id="@+id/underflow_text"
+            android:layout_below="@id/underflow_title"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true"
+            android:layout_marginLeft="@dimen/spacing_normal"
+            android:layout_marginStart="@dimen/spacing_normal"
+            android:maxLines="4"
+            android:text="@string/setting_underflow_summary"/>
+
+</RelativeLayout>

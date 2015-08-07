@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+// +++LICENSE_BEGIN+++
+/*
+ * Copyright © 2014, Silent Circle
+ * All rights reserved.
+ */
+// +++LICENSE_END+++
+ -->
+
+<LinearLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:id="@+id/top"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:layoutDirection="ltr"
+        tools:ignore="RtlHardcoded">
+    <!-- Check for RTL layout, may need specific adaptations -->
+
+    <!-- Text field area, with keyboard switch and delete button -->
+    <LinearLayout
+            android:id="@+id/digits_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center">
+
+        <ImageButton
+                android:id="@+id/input_type_switch"
+                android:layout_width="0dip"
+                android:layout_weight="0"
+                android:layout_height="match_parent"
+                android:background="?list_item_background_color"
+                android:contentDescription="@string/description_delete_button"
+                android:visibility="gone"/>
+
+        <!--    android:layout_gravity="center_vertical"
+                android:gravity="center"
+                android:focusableInTouchMode="false"
+                android:state_enabled="false"
+        -->
+        <!--            <com.android.dialer.dialpad.DigitsEditText -->
+        <com.silentcircle.silentphone2.views.FontFitEditText
+                android:id="@+id/digits"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="@dimen/dialpad_digits_line_height"
+                android:paddingTop="@dimen/activity_vertical_margin_small"
+                android:paddingBottom="@dimen/activity_vertical_margin_small"
+                android:textAppearance="@style/DialpadDestinationTextAppearance"
+                android:gravity="center"
+                android:singleLine="true"
+                android:imeActionId="2"
+                android:imeActionLabel="@string/description_dial_button"
+                android:inputType="textEmailAddress"
+                android:imeOptions="flagNoExtractUi"
+                android:paddingRight="5dp"
+                android:paddingLeft="5dp"
+                android:textColor="?sp_dial_text_color"
+                android:textCursorDrawable="@null"
+                android:background="?list_item_background_color"
+                tools:text="+1 (203) 499-6427"/>
+        <!--            android:fontFamily="sans-serif-light" -->
+
+        <ImageButton
+                android:id="@+id/deleteButton"
+                android:layout_width="56dip"
+                android:layout_height="match_parent"
+                android:layout_gravity="center_vertical"
+                android:gravity="center"
+                android:state_enabled="false"
+                android:background="?list_item_background_color"
+                android:contentDescription="@string/description_delete_button"
+                android:src="@drawable/ic_action_backspace_dark"/>
+    </LinearLayout>
+
+    <!-- Rubber space -->
+    <View
+            android:id="@+id/spacer"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:background="#00000000"/>
+
+    <View
+            style="@style/DialpadHorizontalSeparator"
+            android:id="@+id/request_helper"
+            android:layout_height="0dp"
+            android:focusableInTouchMode="true"/>
+
+    <FrameLayout
+            android:id="@+id/dialpad_floating_action_button_container"
+            android:background="@drawable/fab_green"
+            android:layout_width="@dimen/floating_action_button_width"
+            android:layout_height="@dimen/floating_action_button_height"
+            android:layout_marginBottom="@dimen/floating_action_button_margin_bottom"
+            android:layout_gravity="center_horizontal">
+
+        <ImageButton
+                android:id="@+id/dialButton"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@drawable/floating_action_button"
+                android:contentDescription="@string/description_dial_button"
+                android:src="?sp_ic_call"/>
+
+    </FrameLayout>
+
+</LinearLayout>
+

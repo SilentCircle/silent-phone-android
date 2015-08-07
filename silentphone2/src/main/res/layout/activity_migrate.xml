@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              xmlns:tools="http://schemas.android.com/tools"
+              android:orientation="vertical"
+              android:layout_marginLeft="@dimen/activity_horizontal_margin"
+              android:layout_marginRight="@dimen/activity_horizontal_margin"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent">
+
+    <TextView
+            style="@style/Widget.Silent.SimpleText.Medium"
+            android:id="@+id/migrate_message"
+            android:gravity="center"
+            tools:text="Migration progress message"/>
+
+    <TextView
+            style="@style/Widget.Silent.SimpleText.Small"
+            android:id="@+id/migrate_explanation_1"
+            android:layout_below="@+id/migrate_message"
+            android:layout_marginTop="@dimen/activity_vertical_margin"
+            android:text="@string/migration_explanation_1"/>
+    <TextView
+            style="@style/Widget.Silent.SimpleText.Small"
+            android:id="@+id/migrate_explanation_2"
+            android:layout_below="@+id/migrate_explanation_1"
+            android:layout_marginTop="@dimen/activity_vertical_margin"
+            android:text="@string/migration_explanation_2"/>
+
+    <ProgressBar
+            style="?android:attr/progressBarStyleLarge"
+            android:id="@+id/progressBar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/migrate_explanation_2"
+            android:layout_marginTop="@dimen/activity_vertical_margin"
+            android:visibility="invisible"
+            android:layout_centerHorizontal="true"/>
+
+    <LinearLayout
+            android:id="@+id/migrate_buttons"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:orientation="horizontal">
+
+        <Button
+                android:id="@+id/migrate_cancel"
+                style="@style/Widget.Silent.InCallButtons"
+                android:paddingBottom="6dp"
+                android:paddingTop="6dp"
+                android:text="@android:string/cancel"
+                android:visibility="gone"/>
+
+        <Button
+                android:id="@+id/migrate_go"
+                style="@style/Widget.Silent.InCallButtons"
+                android:paddingBottom="6dp"
+                android:paddingTop="6dp"
+                android:text="@android:string/ok"
+                android:visibility="visible"/>
+
+    </LinearLayout>
+
+</RelativeLayout>
