@@ -81,6 +81,25 @@ void closeSkein256Context(void* ctx, unsigned char* digest)
     free(hd);
 }
 
+void* initializeSkein256Context(void* ctx)
+{
+    SkeinCtx_t *hd = reinterpret_cast<SkeinCtx_t *>(ctx);
+    if (hd != NULL) {
+        skeinCtxPrepare(hd, SKEIN_SIZE);
+        skeinInit(hd, SKEIN256_DIGEST_LENGTH*8);
+    }
+    return (void*)hd;
+}
+
+void finalizeSkein256Context(void* ctx, unsigned char* digest)
+{
+    SkeinCtx_t* hd = reinterpret_cast<SkeinCtx_t*>(ctx);
+
+    if (digest != NULL && hd != NULL) {
+        skeinFinal(hd, digest);
+    }
+}
+
 void skein256Ctx(void* ctx, unsigned char* data, unsigned int dataLength)
 {
     SkeinCtx_t* hd = reinterpret_cast<SkeinCtx_t*>(ctx);

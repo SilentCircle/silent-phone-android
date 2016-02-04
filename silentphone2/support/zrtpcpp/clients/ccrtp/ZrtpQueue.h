@@ -411,6 +411,8 @@ public:
     /**
      * Get Multi-stream parameters.
      *
+     * Deprecated - use getMultiStrParams(ZRtp **zrtpMaster);
+     * 
      * Use this method to get the Multi-stream that were computed during
      * the ZRTP handshake. An application may use these parameters to
      * enable multi-stream processing for an associated SRTP session.
@@ -428,11 +430,13 @@ public:
      *
      * @see setMultiStrParams()
      */
-    std::string getMultiStrParams();
+    DEPRECATED std::string getMultiStrParams() {return getMultiStrParams(NULL); }
 
     /**
      * Set Multi-stream parameters.
      *
+     * Deprecated - use setMultiStrParams(std::string parameters, ZRtp* zrtpMaster);
+     * 
      * Use this method to set the parameters required to enable Multi-stream
      * processing of ZRTP. The multi-stream parameters must be set before the
      * application starts the ZRTP protocol engine.
@@ -446,7 +450,48 @@ public:
      *
      * @see getMultiStrParams()
      */
-    void setMultiStrParams(std::string parameters);
+    DEPRECATED void setMultiStrParams(std::string parameters) { setMultiStrParams(parameters, NULL);}
+
+    /**
+     * Get Multi-stream parameters.
+     *
+     * Use this method to get the Multi-stream that were computed during
+     * the ZRTP handshake. An application may use these parameters to
+     * enable multi-stream processing for an associated SRTP session.
+     *
+     * Refer to chapter 4.4.2 in the ZRTP specification for further details
+     * and restriction how and when to use multi-stream mode.
+     *
+     * @param zrtpMaster
+     *     Where the function returns the pointer of the ZRTP master stream.
+     * @return
+     *    a string that contains the multi-stream parameters. The application
+     *    must not modify the contents of this string, it is opaque data. The
+     *    application may hand over this string to a new ZrtpQueue instance
+     *    to enable multi-stream processing for this ZrtpQueue.
+     *    If ZRTP was not started or ZRTP is not yet in secure state the method
+     *    returns an empty string.
+     */
+    std::string getMultiStrParams(ZRtp **zrtpMaster);
+
+    /**
+     * Set Multi-stream parameters.
+     *
+     * Use this method to set the parameters required to enable Multi-stream
+     * processing of ZRTP. The multi-stream parameters must be set before the
+     * application starts the ZRTP protocol engine.
+     *
+     * Refer to chapter 4.4.2 in the ZRTP specification for further details
+     * of multi-stream mode.
+     *
+     * @param parameters
+     *     A string that contains the multi-stream parameters that this
+     *     new ZrtpQueue instanace shall use. See also
+     *     <code>getMultiStrParams(ZRtp **zrtpMaster)</code>
+     * @param zrtpMaster
+     *     The pointer of the ZRTP master stream.
+     */
+    void setMultiStrParams(std::string parameters, ZRtp* zrtpMaster);
 
     /**
      * Check if this ZRTP use Multi-stream.

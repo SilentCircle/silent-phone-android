@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <com.silentcircle.messaging.views.ListView
+        android:id="@+id/chat_events"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:divider="@drawable/none"
+        android:dividerHeight="@dimen/messaging_chat_item_divider_height"
+        android:listSelector="@drawable/none"
+        android:stackFromBottom="true"
+        android:transcriptMode="normal"
+        android:background="@drawable/bg_window_logo_dark" />
+
+</RelativeLayout>

@@ -19,9 +19,10 @@
     <Button
             style="@style/Widget.Silent.TransparentButton.Medium"
             android:id="@+id/extended_menu"
-            android:text="Extended menu"
+            android:text="@string/extended_menu"
             android:drawableLeft="@android:drawable/ic_menu_more"
             android:drawableStart="@android:drawable/ic_menu_more"
+            android:drawablePadding="@dimen/conversation_option_image_margin"
             />
 
 </RelativeLayout>

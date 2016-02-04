@@ -32,7 +32,11 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Parcel;
 import android.os.Parcelable;
-import android.util.Log;
+import android.provider.ContactsContract.CommonDataKinds.Phone;
+import android.provider.ContactsContract.CommonDataKinds.SipAddress;
+import android.provider.ContactsContract.Contacts;
+import android.provider.ContactsContract.Data;
+import android.provider.ContactsContract.RawContacts;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -48,11 +52,6 @@ import com.silentcircle.common.MoreContactUtils;
 import com.silentcircle.common.list.OnPhoneNumberPickerActionListener;
 import com.silentcircle.common.util.ContactDisplayUtils;
 import com.silentcircle.common.util.DialerUtils;
-import com.silentcircle.silentcontacts2.ScContactsContract;
-import com.silentcircle.silentcontacts2.ScContactsContract.CommonDataKinds.Phone;
-import com.silentcircle.silentcontacts2.ScContactsContract.CommonDataKinds.SipAddress;
-import com.silentcircle.silentcontacts2.ScContactsContract.Data;
-import com.silentcircle.silentcontacts2.ScContactsContract.RawContacts;
 import com.silentcircle.silentphone2.R;
 import com.silentcircle.silentphone2.activities.TransactionSafeActivity;
 import com.silentcircle.silentphone2.services.ContactUpdateService;
@@ -84,7 +83,7 @@ public class PhoneNumberInteraction implements OnLoadCompleteListener<Cursor> {
         String dataSet;
         long type;
         String label;
-        /** {@link android.provider.ContactsContract.CommonDataKinds.Phone#CONTENT_ITEM_TYPE} or {@link android.provider.ContactsContract.CommonDataKinds.SipAddress#CONTENT_ITEM_TYPE}. */
+        /** {@link Phone#CONTENT_ITEM_TYPE} or {@link SipAddress#CONTENT_ITEM_TYPE}. */
         String mimeType;
 
         public PhoneItem() {
@@ -123,7 +122,7 @@ public class PhoneNumberInteraction implements OnLoadCompleteListener<Cursor> {
 
         @Override
         public boolean shouldCollapseWith(PhoneItem phoneItem, Context context) {
-            return MoreContactUtils.shouldCollapse(ScContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE, phoneNumber,
+            return MoreContactUtils.shouldCollapse(Phone.CONTENT_ITEM_TYPE, phoneNumber,
                     Phone.CONTENT_ITEM_TYPE, phoneItem.phoneNumber);
         }
 
@@ -132,8 +131,8 @@ public class PhoneNumberInteraction implements OnLoadCompleteListener<Cursor> {
             return phoneNumber;
         }
 
-        public static final Creator<PhoneItem> CREATOR
-                = new Creator<PhoneItem>() {
+        public static final Parcelable.Creator<PhoneItem> CREATOR
+                = new Parcelable.Creator<PhoneItem>() {
             @Override
             public PhoneItem createFromParcel(Parcel in) {
                 return new PhoneItem(in);
@@ -152,7 +151,8 @@ public class PhoneNumberInteraction implements OnLoadCompleteListener<Cursor> {
     private static class PhoneItemAdapter extends ArrayAdapter<PhoneItem> {
         private final int mInteractionType;
 
-        public PhoneItemAdapter(Context context, List<PhoneItem> list, int interactionType) {
+        public PhoneItemAdapter(Context context, List<PhoneItem> list,
+                int interactionType) {
             super(context, R.layout.phone_disambig_item, android.R.id.text2, list);
             mInteractionType = interactionType;
         }
@@ -172,18 +172,18 @@ public class PhoneNumberInteraction implements OnLoadCompleteListener<Cursor> {
     }
 
     /**
-     * {@link android.app.DialogFragment} used for displaying a dialog with a list of phone numbers of which
+     * {@link DialogFragment} used for displaying a dialog with a list of phone numbers of which
      * one will be chosen to make a call or initiate an sms message.
      *
      * It is recommended to use
-     * {@link com.silentcircle.silentphone2.interactions.PhoneNumberInteraction#startInteractionForPhoneCall(TransactionSafeActivity, android.net.Uri)} or
-     * {@link com.silentcircle.silentphone2.interactions.PhoneNumberInteraction#startInteractionForTextMessage(TransactionSafeActivity, android.net.Uri)}
+     * {@link PhoneNumberInteraction#startInteractionForPhoneCall(TransactionSafeActivity, Uri)} or
+     * {@link PhoneNumberInteraction#startInteractionForTextMessage(TransactionSafeActivity, Uri)}
      * instead of directly using this class, as those methods handle one or multiple data cases
      * appropriately.
      */
     /* Made public to let the system reach this class */
     public static class PhoneDisambiguationDialogFragment extends DialogFragment
-            implements DialogInterface.OnClickListener, OnDismissListener {
+            implements DialogInterface.OnClickListener, DialogInterface.OnDismissListener {
 
         private static final String ARG_PHONE_LIST = "phoneList";
         private static final String ARG_INTERACTION_TYPE = "interactionType";
@@ -218,8 +218,8 @@ public class PhoneNumberInteraction implements OnLoadCompleteListener<Cursor> {
             final View setPrimaryView = inflater.inflate(R.layout.set_primary_checkbox, null);
             return new AlertDialog.Builder(activity)
                     .setAdapter(mPhonesAdapter, this)
-                    .setTitle(mInteractionType == ContactDisplayUtils.INTERACTION_SMS ?
-                            R.string.sms_disambig_title : R.string.call_disambig_title)
+                    .setTitle(mInteractionType == ContactDisplayUtils.INTERACTION_SMS
+                            ? R.string.sms_disambig_title : R.string.call_disambig_title)
                     .setView(setPrimaryView)
                     .create();
         }
@@ -250,24 +250,25 @@ public class PhoneNumberInteraction implements OnLoadCompleteListener<Cursor> {
             Phone._ID,                      // 0
             Phone.NUMBER,                   // 1
             Phone.IS_SUPER_PRIMARY,         // 2
-//            RawContacts.ACCOUNT_TYPE,       // 3
-//            RawContacts.DATA_SET,           // 4
-            Phone.TYPE,                     // 3
-            Phone.LABEL,                    // 4
-            Phone.MIMETYPE,                 // 5
-            Phone.RAW_CONTACT_ID            // 6
+            RawContacts.ACCOUNT_TYPE,       // 3
+            RawContacts.DATA_SET,           // 4
+            Phone.TYPE,                     // 5
+            Phone.LABEL,                    // 6
+            Phone.MIMETYPE,                 // 7
+            Phone.CONTACT_ID                // 8
     };
 
     private static final int _ID = 0;
     private static final int NUMBER = 1;
     private static final int IS_SUPER_PRIMARY = 2;
-//    private static final int ACCOUNT_TYPE = 3;
-//    private static final int DATA_SET = 4;
-    private static final int TYPE = 3;
-    private static final int LABEL = 4;
-    private static final int MIMETYPE = 5;
-    private static final int CONTACT_ID = 6;
+    private static final int ACCOUNT_TYPE = 3;
+    private static final int DATA_SET = 4;
+    private static final int TYPE = 5;
+    private static final int LABEL = 6;
+    private static final int MIMETYPE = 7;
+    private static final int CONTACT_ID = 8;
 
+    /* ** We may extend the selection to include SC specific MIME types */
     private static final String PHONE_NUMBER_SELECTION =
             Data.MIMETYPE + " IN ('"
                 + Phone.CONTENT_ITEM_TYPE + "', "
@@ -287,18 +288,19 @@ public class PhoneNumberInteraction implements OnLoadCompleteListener<Cursor> {
     private CursorLoader mLoader;
 
     /**
-     * Constructs a new {@link com.silentcircle.silentphone2.interactions.PhoneNumberInteraction}. The constructor takes in a {@link android.content.Context}
+     * Constructs a new {@link PhoneNumberInteraction}. The constructor takes in a {@link Context}
      * instead of a {@link TransactionSafeActivity} for testing purposes to verify the functionality
-     * of this class. However, all factory methods for creating {@link com.silentcircle.silentphone2.interactions.PhoneNumberInteraction}s
+     * of this class. However, all factory methods for creating {@link PhoneNumberInteraction}s
      * require a {@link TransactionSafeActivity} (i.e. see {@link #startInteractionForPhoneCall}).
      */
     @VisibleForTesting
-    PhoneNumberInteraction(Context context, int interactionType, OnDismissListener dismissListener) {
+    PhoneNumberInteraction(Context context, int interactionType,
+            DialogInterface.OnDismissListener dismissListener) {
         this(context, interactionType, dismissListener, null);
     }
 
     private PhoneNumberInteraction(Context context, int interactionType,
-            OnDismissListener dismissListener, String callOrigin) {
+            DialogInterface.OnDismissListener dismissListener, String callOrigin) {
         mContext = context;
         mInteractionType = interactionType;
         mDismissListener = dismissListener;
@@ -354,11 +356,10 @@ public class PhoneNumberInteraction implements OnLoadCompleteListener<Cursor> {
         mUseDefault = useDefault;
         final Uri queryUri;
         final String inputUriAsString = uri.toString();
-        if (inputUriAsString.startsWith(RawContacts.CONTENT_URI.toString())) {
-            if (!inputUriAsString.endsWith(RawContacts.Data.CONTENT_DIRECTORY)) {
-                queryUri = Uri.withAppendedPath(uri, RawContacts.Data.CONTENT_DIRECTORY);
-            }
-            else {
+        if (inputUriAsString.startsWith(Contacts.CONTENT_URI.toString())) {
+            if (!inputUriAsString.endsWith(Contacts.Data.CONTENT_DIRECTORY)) {
+                queryUri = Uri.withAppendedPath(uri, Contacts.Data.CONTENT_DIRECTORY);
+            } else {
                 queryUri = uri;
             }
         } else if (inputUriAsString.startsWith(Data.CONTENT_URI.toString())) {
@@ -404,12 +405,17 @@ public class PhoneNumberInteraction implements OnLoadCompleteListener<Cursor> {
                 PhoneItem item = new PhoneItem();
                 item.id = cursor.getLong(_ID);
                 item.phoneNumber = cursor.getString(NUMBER);
-//                item.accountType = cursor.getString(ACCOUNT_TYPE);
-//                item.dataSet = cursor.getString(DATA_SET);
+                item.accountType = cursor.getString(ACCOUNT_TYPE);
+                item.dataSet = cursor.getString(DATA_SET);
                 item.type = cursor.getInt(TYPE);
                 item.label = cursor.getString(LABEL);
                 item.mimeType = cursor.getString(MIMETYPE);
 
+                // TODO check for SIP, SC mime types, fixup names etc
+                /*
+                 * We can add some code to select the preferred number, name etc based on the
+                 * MIME types etc.
+                 */
                 phoneList.add(item);
             }
 
@@ -453,8 +459,8 @@ public class PhoneNumberInteraction implements OnLoadCompleteListener<Cursor> {
      * @param activity that is calling this interaction. This must be of type
      * {@link TransactionSafeActivity} because we need to check on the activity state after the
      * phone numbers have been queried for.
-     * @param uri contact Uri (built from {@link android.provider.ContactsContract.Contacts#CONTENT_URI}) or data Uri
-     * (built from {@link android.provider.ContactsContract.Data#CONTENT_URI}). Contact Uri may show the disambiguation dialog while
+     * @param uri contact Uri (built from {@link Contacts#CONTENT_URI}) or data Uri
+     * (built from {@link Data#CONTENT_URI}). Contact Uri may show the disambiguation dialog while
      * data Uri won't.
      */
     public static void startInteractionForPhoneCall(TransactionSafeActivity activity, Uri uri) {
@@ -469,8 +475,8 @@ public class PhoneNumberInteraction implements OnLoadCompleteListener<Cursor> {
      * @param activity that is calling this interaction. This must be of type
      * {@link TransactionSafeActivity} because we need to check on the activity state after the
      * phone numbers have been queried for.
-     * @param uri contact Uri (built from {@link android.provider.ContactsContract.Contacts#CONTENT_URI}) or data Uri
-     * (built from {@link android.provider.ContactsContract.Data#CONTENT_URI}). Contact Uri may show the disambiguation dialog while
+     * @param uri contact Uri (built from {@link Contacts#CONTENT_URI}) or data Uri
+     * (built from {@link Data#CONTENT_URI}). Contact Uri may show the disambiguation dialog while
      * data Uri won't.
      * @param useDefault Whether or not to use the primary(default) phone number. If true, the
      * primary phone number will always be used by default if one is available. If false, a
@@ -505,8 +511,8 @@ public class PhoneNumberInteraction implements OnLoadCompleteListener<Cursor> {
      * @param activity that is calling this interaction. This must be of type
      * {@link TransactionSafeActivity} because we need to check on the activity state after the
      * phone numbers have been queried for.
-     * @param uri contact Uri (built from {@link android.provider.ContactsContract.Contacts#CONTENT_URI}) or data Uri
-     * (built from {@link android.provider.ContactsContract.Data#CONTENT_URI}). Contact Uri may show the disambiguation dialog while
+     * @param uri contact Uri (built from {@link Contacts#CONTENT_URI}) or data Uri
+     * (built from {@link Data#CONTENT_URI}). Contact Uri may show the disambiguation dialog while
      * data Uri won't.
      */
     public static void startInteractionForTextMessage(TransactionSafeActivity activity, Uri uri) {

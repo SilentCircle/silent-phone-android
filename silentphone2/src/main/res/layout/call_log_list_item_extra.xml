@@ -18,9 +18,11 @@
 
 <!-- Can't use merge here because this is referenced via a ViewStub -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/badge_container"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+             xmlns:tools="http://schemas.android.com/tools"
+             android:id="@+id/badge_container"
+             android:layout_width="match_parent"
+             android:layout_height="wrap_content"
+        android:background="@color/background_dialer_list_items">
 
     <View android:layout_width="match_parent"
         android:layout_height="1px"
@@ -33,7 +35,6 @@
         android:paddingEnd="@dimen/call_log_outer_margin"
         android:paddingTop="@dimen/call_log_item_extra_padding_vertical"
         android:paddingBottom="@dimen/call_log_item_extra_padding_vertical"
-        android:background="?android:attr/selectableItemBackground"
         android:clickable="true">
 
         <ImageView android:id="@+id/badge_image"
@@ -60,9 +61,9 @@
             android:src="@drawable/ic_close_dk"
             android:tint="@color/recent_call_log_item_phone_icon_tint"
             android:alpha="0.3"
-            android:background="?android:attr/selectableItemBackground"
             android:visibility="gone"
-            android:contentDescription="@string/description_dismiss" />
+            android:contentDescription="@string/description_dismiss"
+                tools:visibility="visible"/>
 
     </LinearLayout>
 

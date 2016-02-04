@@ -29,9 +29,11 @@ import android.content.Intent;
 import android.database.ContentObserver;
 import android.database.Cursor;
 import android.graphics.Rect;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.provider.ContactsContract;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -48,11 +50,10 @@ import com.silentcircle.common.util.ViewUtil;
 import com.silentcircle.contacts.ContactsUtils;
 import com.silentcircle.silentcontacts2.ScCallLog;
 import com.silentcircle.silentcontacts2.ScCallLog.ScCalls;
-import com.silentcircle.silentcontacts2.ScContactsContract;
-
 import com.silentcircle.silentphone2.R;
 import com.silentcircle.silentphone2.list.ListsFragment.HostInterface;
 import com.silentcircle.silentphone2.services.InsertCallLogHelper;
+
 
 //import com.android.contacts.common.GeoUtil;
 //import com.silentcircle.common.util.DialerUtils;
@@ -121,7 +122,18 @@ public class CallLogFragment extends ListFragment
         }
         @Override
         public void onChange(boolean selfChange) {
+            onChange(selfChange, null);
+        }
+        @Override
+        public void onChange(boolean selfChange, Uri uri) {
             mRefreshDataRequired = true;
+
+            // need to manually re-trigger refresh data in this case because somehow
+            // the cursor did not notice the data change (maybe because we use sqlCipher?) and
+            // onResume was not call because the delete dialog is a simple Dialog only.
+            if (ClearCallLogDialog.justDeletingData()) {
+                refreshData();
+            }
         }
     }
 
@@ -198,7 +210,7 @@ public class CallLogFragment extends ListFragment
         mKeyguardManager =
                 (KeyguardManager) getActivity().getSystemService(Context.KEYGUARD_SERVICE);
         getActivity().getContentResolver().registerContentObserver(ScCallLog.CONTENT_URI, true, mCallLogObserver);
-        getActivity().getContentResolver().registerContentObserver(ScContactsContract.AUTHORITY_URI, true, mContactsObserver);
+        getActivity().getContentResolver().registerContentObserver(ContactsContract.AUTHORITY_URI, true, mContactsObserver);
 //        getActivity().getContentResolver().registerContentObserver(Status.CONTENT_URI, true, mVoicemailStatusObserver);
         setHasOptionsMenu(true);
         updateCallList(mCallTypeFilter, mDateLimit);

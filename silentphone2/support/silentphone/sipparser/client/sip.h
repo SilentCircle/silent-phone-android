@@ -1,32 +1,6 @@
-/*
-Created by Janis Narbuts
-Copyright (C) 2004-2012, Tivi LTD, www.tiviphone.com. All rights reserved.
-Copyright (C) 2012-2015, Silent Circle, LLC.  All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-    * Any redistribution, use, or modification is done solely for personal
-      benefit and not for any commercial purpose or for monetary gain
-    * Redistributions of source code must retain the above copyright
-      notice, this list of conditions and the following disclaimer.
-    * Redistributions in binary form must reproduce the above copyright
-      notice, this list of conditions and the following disclaimer in the
-      documentation and/or other materials provided with the distribution.
-    * Neither the name Silent Circle nor the
-      names of its contributors may be used to endorse or promote products
-      derived from this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL SILENT CIRCLE, LLC BE LIABLE FOR ANY
-DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
+//VoipPhone
+//Created by Janis Narbuts
+//Copyright (c) 2004-2012 Tivi LTD, www.tiviphone.com. All rights reserved.
 
 //#include "main.h"
 
@@ -126,10 +100,13 @@ typedef struct _DSTR{
 
 
 typedef struct _SIP_URI{
+   
    DSTR dstrSipAddr;
 //   DSTR dstrTransport;
 //   DSTR dstrUser;
    //DSTR dstrPwd;
+
+   
    DSTR dstrHost;
    DSTR dstrUserName;
    //DSTR dstrTTL;
@@ -141,6 +118,8 @@ typedef struct _SIP_URI{
   // DSTR dstrLR;
    DSTR dstrPort;//New 
    int  iMethodFlag;
+   
+   DSTR dstrX_SC_DevID;
 } SIP_URI;
 
 //-------
@@ -279,6 +258,11 @@ struct HOLDER_UNKNOWN_HDR{
    unsigned int  uiCount;
 };
 
+struct HDR_X_SC_MSG_META{
+   DSTR dstrFullRow;
+   DSTR dstr64bitID;
+};
+
 struct SIP_HDR{
    DSTR dstrFullRow; //rindas saakums un garums ieskaitot hdr_name
    DSTR dstrSipVer;   // "SIP"+"/"+#+"."+#
@@ -315,6 +299,7 @@ typedef struct _SIP_MSG
    DSTR dstrPriority;
    DSTR dstrEvent;
    DSTR dstrContEncoding;
+   
    struct SIP_HDR             sipHdr;
    struct HDR_CALL_INFO       hdrCallInfo;
    struct HDR_CONT_TYPE       hdrContType;
@@ -339,7 +324,9 @@ typedef struct _SIP_MSG
    struct HOLDER_CONTACT      hldContact;
    
    struct HOLDER_P_A_ID       hldP_Asserted_id;
-
+   
+   struct HDR_X_SC_MSG_META hdrXSCMsgMeta;
+   
    HLD_ROUTE  hldRoute;
    HLD_ROUTE  hldRecRoute;
    struct HOLDER_PROX_REQUIRE hldProxReq;
@@ -348,7 +335,7 @@ typedef struct _SIP_MSG
    HLD_SUP  hldSupprted;
    HLD_SUP  hldUnSupp;
    struct HOLDER_UNKNOWN_HDR  hldUnknownHdr;
-
+   
    unsigned int               uiAllowHdrMethodFlags;
    unsigned int               uiOffset;
    char                       rawDataBuffer[MSG_BUFFER_SIZE+MSG_BUFFER_TAIL_SIZE];

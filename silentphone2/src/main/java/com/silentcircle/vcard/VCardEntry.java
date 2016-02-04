@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2014-2015, Silent Circle, LLC. All rights reserved.
+Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -58,20 +58,20 @@ import android.telephony.PhoneNumberUtils;
 import android.text.TextUtils;
 import android.util.Log;
 
-import com.silentcircle.silentcontacts2.ScContactsContract.CommonDataKinds.Email;
-import com.silentcircle.silentcontacts2.ScContactsContract.CommonDataKinds.Event;
-import com.silentcircle.silentcontacts2.ScContactsContract.CommonDataKinds.GroupMembership;
-import com.silentcircle.silentcontacts2.ScContactsContract.CommonDataKinds.Im;
-import com.silentcircle.silentcontacts2.ScContactsContract.CommonDataKinds.Nickname;
-import com.silentcircle.silentcontacts2.ScContactsContract.CommonDataKinds.Note;
-import com.silentcircle.silentcontacts2.ScContactsContract.CommonDataKinds.Organization;
-import com.silentcircle.silentcontacts2.ScContactsContract.CommonDataKinds.Phone;
-import com.silentcircle.silentcontacts2.ScContactsContract.CommonDataKinds.Photo;
-import com.silentcircle.silentcontacts2.ScContactsContract.CommonDataKinds.SipAddress;
-import com.silentcircle.silentcontacts2.ScContactsContract.CommonDataKinds.StructuredName;
-import com.silentcircle.silentcontacts2.ScContactsContract.CommonDataKinds.StructuredPostal;
-import com.silentcircle.silentcontacts2.ScContactsContract.Data;
-import com.silentcircle.silentcontacts2.ScContactsContract.RawContacts;
+import android.provider.ContactsContract.CommonDataKinds.Email;
+import android.provider.ContactsContract.CommonDataKinds.Event;
+import android.provider.ContactsContract.CommonDataKinds.GroupMembership;
+import android.provider.ContactsContract.CommonDataKinds.Im;
+import android.provider.ContactsContract.CommonDataKinds.Nickname;
+import android.provider.ContactsContract.CommonDataKinds.Note;
+import android.provider.ContactsContract.CommonDataKinds.Organization;
+import android.provider.ContactsContract.CommonDataKinds.Phone;
+import android.provider.ContactsContract.CommonDataKinds.Photo;
+import android.provider.ContactsContract.CommonDataKinds.SipAddress;
+import android.provider.ContactsContract.CommonDataKinds.StructuredName;
+import android.provider.ContactsContract.CommonDataKinds.StructuredPostal;
+import android.provider.ContactsContract.Data;
+import android.provider.ContactsContract.RawContacts;
 import com.silentcircle.vcard.VCardUtils.PhoneNumberUtilsPort;
 
 import java.util.ArrayList;
@@ -101,7 +101,7 @@ public class VCardEntry {
     private static final Map<String, Integer> sImMap = new HashMap<String, Integer>();
 
     static {
-        sImMap.put(VCardConstants.PROPERTY_X_SILENT, Im.PROTOCOL_SILENT);
+        sImMap.put(VCardConstants.PROPERTY_X_SILENT, Im.PROTOCOL_CUSTOM);
         sImMap.put(VCardConstants.PROPERTY_X_AIM, Im.PROTOCOL_AIM);
         sImMap.put(VCardConstants.PROPERTY_X_MSN, Im.PROTOCOL_MSN);
         sImMap.put(VCardConstants.PROPERTY_X_YAHOO, Im.PROTOCOL_YAHOO);
@@ -2564,7 +2564,7 @@ public class VCardEntry {
         // builder.withValue(RawContacts.ACCOUNT_NAME, null);
         // builder.withValue(RawContacts.ACCOUNT_TYPE, null);
         // }
-        builder.withValue(RawContacts.DISPLAY_NAME, null);
+        builder.withValue(RawContacts.DISPLAY_NAME_PRIMARY, null);
         operationList.add(builder.build());
 
         int start = operationList.size();

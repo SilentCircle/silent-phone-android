@@ -1,32 +1,7 @@
-/*
-Created by Janis Narbuts
-Copyright (C) 2004-2012, Tivi LTD, www.tiviphone.com. All rights reserved.
-Copyright (C) 2012-2015, Silent Circle, LLC.  All rights reserved.
+//VoipPhone
+//Created by Janis Narbuts
+//Copyright (c) 2004-2012 Tivi LTD, www.tiviphone.com. All rights reserved.
 
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-    * Any redistribution, use, or modification is done solely for personal
-      benefit and not for any commercial purpose or for monetary gain
-    * Redistributions of source code must retain the above copyright
-      notice, this list of conditions and the following disclaimer.
-    * Redistributions in binary form must reproduce the above copyright
-      notice, this list of conditions and the following disclaimer in the
-      documentation and/or other materials provided with the distribution.
-    * Neither the name Silent Circle nor the
-      names of its contributors may be used to endorse or promote products
-      derived from this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL SILENT CIRCLE, LLC BE LIABLE FOR ANY
-DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
 
 #ifndef _C_TIVI_SES_H
 #define _C_TIVI_SES_H 
@@ -47,12 +22,17 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../stun/CTStun.h"
 #include "../utils/CTNetwCheck.h"
 
+#include "tivi_log.h"
+
+
 int getCallInfo(int iCallID, const char *key, int *v);
 int getCallInfo(int iCallID, const char *key, char *p, int iMax);
 
 unsigned int getTickCount();
 
 #include "CTPhMediaBase.h"
+
+#include "axolotl_glue.h"
 
 typedef struct _STORAGE {
    int  offset;//bytes in buf
@@ -104,7 +84,10 @@ typedef struct{
       if(iStartPeriod>6*T_GT_SECOND)iStartPeriod=6*T_GT_SECOND;
       iRetransmitPeriod=iStartPeriod/2;
       setPeriod(iRetransmitPeriod);
-      
+   }
+   void recv100REG(t_ph_tick uiGT, int iTimeoutSeconds = 8){
+      iRetransmitions = 0;
+      uiNextRetransmit=uiGT + iTimeoutSeconds*T_GT_SECOND;
    }
    inline void updateRetransmit(t_ph_tick uiGT)
    {
@@ -286,6 +269,10 @@ typedef struct {
       p[0]=0;
       if(!cs.iInUse || uiClearMemAt || cs.iCallStat==CALL_STAT::EEnding)return 0;
       // ?? use "sip." prefix
+      if(strcmp(key,"callid")==0){
+         if(!sSIPMsg.dstrCallID.uiLen || !sSIPMsg.dstrCallID.strVal)return 0;
+         return snprintf(p,iMax,"%.*s",sSIPMsg.dstrCallID.uiLen, sSIPMsg.dstrCallID.strVal);
+      }
       
       if(strcmp(key,"peername")==0){
          
@@ -307,6 +294,13 @@ typedef struct {
             
             return snprintf(p,iMax,"%.*s",tf->dstrName.uiLen,tf->dstrName.strVal);
          }
+      }
+      
+      if(strcmp(key, "xscdevid")==0){
+         
+         DSTR *d = &sSIPMsg.hldContact.x[0].sipUri.dstrX_SC_DevID;
+         if(d->uiLen<1)return 0;
+         return snprintf(p,iMax,"%.*s",d->uiLen,d->strVal);
       }
       
       if(strncmp(key,"AssertedId",10)==0){//Should we support AssertedId=0, AssertedId=1, ...
@@ -379,6 +373,9 @@ typedef struct {
    STR_64 *pIPLocal;
    
    SEND_TO sSendTo;
+   STR_T<256> sipSendAddHdr;
+   STR_T<128> sipHdrAddrDstDevId;
+   
    
    unsigned int uiUserVisibleSipPort;
 
@@ -403,6 +400,8 @@ typedef struct {
    unsigned int uiSend480AfterTicks;//if not answered
    
 
+   long long sentSimpleMsgId64bit;
+   
    int iStopReasonSet;
    int *ptrResp;//must be static //  static int v=0; ses->ptrResp=&v;, or you have to call removeRetMsg() to clear the ptrResp before v will be invalid
    CTEditBase *retMsg;
@@ -415,7 +414,7 @@ typedef struct {
       return ses_id();
    }
    inline int ses_id(){
-      return (long long)this&0x7fffffff;
+      return (long long)this&0x7fffffff;//TODO
    }
 
 }CSesBase;
@@ -762,25 +761,24 @@ public:
 
       for(i=0;i<iMaxSesions;i++)
       {
-        if(!pSessionArray[i].cs.iInUse)continue;
-
-       spSes=&pSessionArray[i];
-
-       if(iCIDLen!=(int)spSes->sSIPMsg.dstrCallID.uiLen)continue;
-       if(memcmp(pCID,spSes->sSIPMsg.dstrCallID.strVal,iCIDLen))continue;
-
-       DEBUG_T(0,"Call id ok")
-
-       if(spSes->str16Tag.uiLen && iUseTag)
-       {
-          if(iTagLen!=(int)spSes->str16Tag.uiLen || !pTag)continue;
-          if(memcmp(pTag,spSes->str16Tag.strVal,iTagLen))continue;
-       }
-       //TODO check addr
-
-       DEBUG_T(0,"tag ok")
-       return spSes;
+         if(!pSessionArray[i].cs.iInUse)continue;
+         
+         spSes=&pSessionArray[i];
+         
+         if(iCIDLen!=(int)spSes->sSIPMsg.dstrCallID.uiLen)continue;
+         if(memcmp(pCID,spSes->sSIPMsg.dstrCallID.strVal,iCIDLen))continue;
+         
+         if(spSes->str16Tag.uiLen && iUseTag)
+         {
+            if(iTagLen!=(int)spSes->str16Tag.uiLen || !pTag)continue;
+            if(memcmp(pTag,spSes->str16Tag.strVal,iTagLen))continue;
+         }
+         //TODO check addr
+         
+         t_logf(log_events,__FUNCTION__,"Session found cid:%.*s", iCIDLen, pCID);
+         return spSes;
       }
+      log_events(__FUNCTION__,"Session ! found");
       //while(1);
       return NULL;
       
@@ -811,7 +809,7 @@ public:
           spSes->uiUserVisibleSipPort=sockSip.addr.getPort();
        }
 
-       if(p_cfg.isOnline() || iMeth==METHOD_REGISTER)
+       if(1)//p_cfg.isOnline() || iMeth==METHOD_REGISTER)
        {
           char *u=NULL;
           if(*p_cfg.user.nr)
@@ -886,10 +884,10 @@ public:
           
           //spSes->uiSipCseq=0;
           
-          CTMediaIDS* initMediaIDS(void *pThis, CSessionsBase *sb, int iCaller);
+          CTMediaIDS* initMediaIDS(void *pThis, int iCallId, CSessionsBase *sb, int iCaller);
           if(iMeth==METHOD_INVITE){
              
-             spSes->pMediaIDS = initMediaIDS(spSes,this,bCaller);
+             spSes->pMediaIDS = initMediaIDS(spSes,spSes->ses_id(),this,bCaller);
              if(p_cfg.iNet == CTStun::FIREWALL){
                // enableTMR(1,spSes);
              }
@@ -930,7 +928,7 @@ public:
       if(iEnable && spSes->mBase && spSes->pMediaIDS->tmrTunnel)spSes->mBase->initTunneling();
    }
    
-   void setStopReason(CSesBase *spSes, int code, const char *msg, DSTR *dstr=NULL, CTEditBase *e=NULL);
+   void setStopReason(CSesBase *spSes, int code, int meth, const char *msg, DSTR *dstr=NULL, CTEditBase *e=NULL);
    
 
    void onKillSes(CSesBase *spSes, int iReason, SIP_MSG *sMsg, int meth);
@@ -1189,6 +1187,8 @@ public:
    int iContactId;
 
    CTEngineCallBack *cPhoneCallback;
+   
+   const char *pSipHdrUriAdd;
 
    SIP_MSG *getSipMsg(){return sMsg;}
    
@@ -1198,6 +1198,7 @@ public:
       ,iContentAdded(0),uiPosToContentLen(0)
       ,iBufMalloced(0)
    {
+      pSipHdrUriAdd=NULL;
       cPhoneCallback=NULL;
       fToTagIgnore=0;
       iContactId=0;
@@ -1227,6 +1228,7 @@ public:
    :spSes(NULL),sMsg(psMsg),iRetLen(NULL),uiLen(0)
    ,iContentAdded(0),uiPosToContentLen(0)
    {
+      pSipHdrUriAdd=NULL;
       cPhoneCallback=NULL;
       iContactId=fToTagIgnore=0;
       buf=new char [DATA_SIZE];
@@ -1237,6 +1239,7 @@ public:
       :spSes(NULL),sMsg(psMsg),iRetLen(NULL),uiLen(0)
       ,iContentAdded(0),uiPosToContentLen(0)
    {
+      pSipHdrUriAdd=NULL;
       cPhoneCallback=NULL;
       iContactId=fToTagIgnore=0;
       sendResp(sc,iCode,psMsg);
@@ -1246,6 +1249,7 @@ public:
       :spSes(pSes),uiLen(0),iContentAdded(0),uiPosToContentLen(0)
       ,uiPosContentStart(0),iBufMalloced(0)
    {
+      pSipHdrUriAdd=NULL;
       cPhoneCallback=NULL;
       iContactId=fToTagIgnore=0;
       

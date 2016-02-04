@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2014-2015, Silent Circle, LLC. All rights reserved.
+Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -31,32 +31,33 @@ package com.silentcircle.silentphone2.services;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.content.ContentProviderOperation;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.content.OperationApplicationException;
 import android.database.Cursor;
-import android.database.DatabaseUtils;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.RemoteException;
+import android.provider.ContactsContract;
+import android.provider.ContactsContract.PhoneLookup;
 import android.support.v4.app.NotificationCompat;
-import android.telephony.PhoneNumberUtils;
 import android.util.Log;
 
 import com.silentcircle.common.util.DataUsageStatUpdater;
 import com.silentcircle.contacts.utils.PhoneNumberHelper;
 import com.silentcircle.silentcontacts2.ScCallLog;
-import com.silentcircle.silentcontacts2.ScContactsContract;
-import com.silentcircle.silentcontacts2.ScContactsContract.PinnedPositions;
 import com.silentcircle.silentphone2.R;
+import com.silentcircle.silentphone2.list.PhoneFavoritesTileAdapter;
+import com.silentcircle.silentphone2.list.ShortcutCardsAdapter;
 import com.silentcircle.silentphone2.util.CallState;
 import com.silentcircle.silentphone2.util.ConfigurationUtilities;
-import com.silentcircle.silentcontacts2.ScContactsContract.PhoneLookup;
 
 import java.util.ArrayList;
-import java.util.Collection;
 
 /**
  * Counts the number of missed new calls in the call log and creates a Notification if
@@ -103,7 +104,7 @@ public class InsertCallLogHelper extends AsyncTask<Uri, Void, Cursor> {
         resolver.insert(uri[0], mInsertValues);
         int removed = removeExpiredEntries();
         if (ConfigurationUtilities.mTrace) Log.d(TAG, "Removed " + removed + " old/expired call log entries");
-        
+
         // Update usage counter for this number and contact
         String called = mInsertValues.getAsString(ScCallLog.ScCalls.NUMBER);
         DataUsageStatUpdater updater = new DataUsageStatUpdater(mCtx);
@@ -114,9 +115,10 @@ public class InsertCallLogHelper extends AsyncTask<Uri, Void, Cursor> {
         if (type == ScCallLog.ScCalls.OUTGOING_TYPE) {
             long id = getContactIdFromPhoneNumber(mCtx, mInsertValues.getAsString(ScCallLog.ScCalls.NUMBER));
             if (id != NO_CONTACT_FOUND) {
-                PinnedPositions.undemote(resolver, id);
+                unDemote(id);
             }
         }
+        resolver.notifyChange(ShortcutCardsAdapter.AUTHORITY_URI, null, false);
         // Query new and missed call log entries
         // TODO: request ScCallLog.ScCalls.DATE field and sort by this field. Use field from first record to build the notification below (setWhen(...))
         return resolver.query(ScCallLog.ScCalls.CONTENT_URI, new String[] {ScCallLog.ScCalls._ID},
@@ -173,19 +175,24 @@ public class InsertCallLogHelper extends AsyncTask<Uri, Void, Cursor> {
     private long getContactIdFromPhoneNumber(Context context, String number) {
         final Uri lookupUri;
         final String phoneLookUpId;
+
+        String selection = null;
+        String[] projection = null;
+
         if (PhoneNumberHelper.isUriNumber(number)) {
-            // number is a SIP address: use the PhoneLookup table with the SIP parameter.
-            Uri.Builder uriBuilder = PhoneLookup.CONTENT_FILTER_URI.buildUpon();
-            uriBuilder.appendPath(Uri.encode(number));
-            uriBuilder.appendQueryParameter(PhoneLookup.QUERY_PARAMETER_SIP_ADDRESS, "1");
-            lookupUri = uriBuilder.build();
-            phoneLookUpId = ScContactsContract.Data.RAW_CONTACT_ID;
+            // number is a SIP address: use customized lookup
+            lookupUri = ContactsContract.Data.CONTENT_URI;
+            phoneLookUpId = ContactsContract.Data.CONTACT_ID;
+            selection = CallState.createSipLookupClause(number);
+            projection = new String[] {ContactsContract.Data._ID, ContactsContract.Data.CONTACT_ID,
+                    ContactsContract.Data.DISPLAY_NAME, ContactsContract.CommonDataKinds.SipAddress.SIP_ADDRESS};
         }
         else {
             lookupUri = Uri.withAppendedPath(PhoneLookup.CONTENT_FILTER_URI, Uri.encode(number));
             phoneLookUpId = PhoneLookup._ID;
+            projection = new String[] {phoneLookUpId};
         }
-        final Cursor cursor = context.getContentResolver().query(lookupUri, new String[] {phoneLookUpId}, null, null, null);
+        final Cursor cursor = context.getContentResolver().query(lookupUri, projection, selection, null, null);
         if (cursor == null) {
             return NO_CONTACT_FOUND;
         }
@@ -195,7 +202,7 @@ public class InsertCallLogHelper extends AsyncTask<Uri, Void, Cursor> {
                 return NO_CONTACT_FOUND;
             if (cursor.moveToFirst()) {
                 return cursor.getLong(idx);
-            } 
+            }
             else {
                 return NO_CONTACT_FOUND;
             }
@@ -204,4 +211,15 @@ public class InsertCallLogHelper extends AsyncTask<Uri, Void, Cursor> {
         }
     }
 
+    private void unDemote(long id) {
+        ArrayList<ContentProviderOperation> ops = new ArrayList<>();
+        PhoneFavoritesTileAdapter.updatePinnedForContact(mCtx, id, PhoneFavoritesTileAdapter.UNPINNED, ops);
+        try {
+            mCtx.getContentResolver().applyBatch(ContactsContract.AUTHORITY, ops);
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        } catch (OperationApplicationException e) {
+            e.printStackTrace();
+        }
+    }
 }

@@ -160,6 +160,11 @@ public class CallLogActivity extends ActionBarActivity implements CallLogQueryHa
         // it's PagerAdapter set.
         mSlidingTabLayout = (SlidingTabLayout)findViewById(R.id.sliding_tabs);
         mSlidingTabLayout.setCustomTabView(R.layout.tab_text, R.id.text_tab);
+        mSlidingTabLayout.setSelectedIndicatorColors(getResources().getColor(R.color.sc_ng_text_red));
+        mSlidingTabLayout.setDividerColors(getResources().getColor(android.R.color.transparent));
+        mSlidingTabLayout.setDefaultTabTextColor(R.color.sc_ng_text_grey_2);
+        mSlidingTabLayout.setSelectedTabTextColor(R.color.sc_ng_text_red);
+
         // END_INCLUDE (setup_sliding tab layout)
 
 //        if (startingTab == TAB_INDEX_VOICEMAIL) {

@@ -21,6 +21,7 @@ import android.util.AttributeSet;
 import android.view.View;
 
 import com.silentcircle.common.list.ContactEntry;
+import com.silentcircle.common.list.ContactTileView;
 import com.silentcircle.contacts.ContactsUtils;
 import com.silentcircle.contacts.utils.ViewUtil;
 
@@ -32,9 +33,11 @@ import com.silentcircle.contacts.utils.ViewUtil;
  */
 public class ContactTilePhoneFrequentView extends ContactTileView {
     private String mPhoneNumberString;
+    final private Context mContext;
 
     public ContactTilePhoneFrequentView(Context context, AttributeSet attrs) {
         super(context, attrs);
+        mContext = context;
     }
 
     @Override

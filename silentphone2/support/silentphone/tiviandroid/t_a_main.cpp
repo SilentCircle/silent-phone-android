@@ -1,32 +1,6 @@
-/*
-Created by Janis Narbuts
-Copyright (C) 2004-2012, Tivi LTD, www.tiviphone.com. All rights reserved.
-Copyright (C) 2012-2015, Silent Circle, LLC.  All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-    * Any redistribution, use, or modification is done solely for personal
-      benefit and not for any commercial purpose or for monetary gain
-    * Redistributions of source code must retain the above copyright
-      notice, this list of conditions and the following disclaimer.
-    * Redistributions in binary form must reproduce the above copyright
-      notice, this list of conditions and the following disclaimer in the
-      documentation and/or other materials provided with the distribution.
-    * Neither the name Silent Circle nor the
-      names of its contributors may be used to endorse or promote products
-      derived from this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL SILENT CIRCLE, LLC BE LIABLE FOR ANY
-DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
+//VoipPhone
+//Created by Janis Narbuts
+//Copyright (c) 2004-2012 Tivi LTD, www.tiviphone.com. All rights reserved.
 
 // tiviCons.cpp : Defines the entry point for the console application.
 //
@@ -1011,6 +985,7 @@ public:
 #include "../../libs/aec/src/aec.h"
 #endif
 
+
 static int iEchoCancellerOn = 3;//0 - off, 1-speex, 2-google ,3 eng_speex, 4 eng_speex+goog
 int getEchoEnableState(){return iEchoCancellerOn;}
 
@@ -1251,7 +1226,7 @@ public:
    CPhoneCons(int iEngIndex)
    :CTEngineCallBack()
    {
-      
+    
       initGlobConstr();
       iEngineIndex=iEngIndex;
       
@@ -1277,6 +1252,10 @@ public:
       int getCfg(PHONE_CFG *cfg,int iCheckImei, int iIndex);
       getCfg(&p_cfg,1,iEngineIndex);
       
+      //CTAxoInterfaceBase::sharedInstance(p_cfg.user.un);
+      void g_sendDataFuncAxo(uint8_t* names[], uint8_t* devIds[], uint8_t* envelopes[], size_t sizes[], uint64_t msgIds[]);
+      CTAxoInterfaceBase::setSendCallback(g_sendDataFuncAxo);
+      
       p_cfg.iAutoRegister=1;
       
       int readSignedCfg(PHONE_CFG &cfg, CTLangStrings *strings);
@@ -1298,7 +1277,7 @@ public:
       iRun=1;
       iEngStarted=1;
       
-      ph = new CTiViPhone(this,&strings,10);
+      ph = new CTiViPhone(this,&strings,30);
       ph->setZrtpCB(this);
       
       p_cfg.iAutoRegister=1;
@@ -1498,7 +1477,10 @@ public:
             case 'X':
             {
                int rc = 0;
-               
+               if (!ph) {
+                   return T_TRY_OTHER_ENG;
+               }
+
                pthread_mutex_lock(&ph->timerDoneMutex);
                pthread_cond_signal(&ph->timerConditional);
                rc = pthread_cond_timeout_np(&ph->timerDoneConditional, &ph->timerDoneMutex, 1000);
@@ -1555,6 +1537,7 @@ public:
                      break;
                   case 'm':case 'M':
                   {
+                      if(!ph)return T_TRY_OTHER_ENG;
                      startEngine();
                      iLen-=3;//rem ":m "
                      char buf[2048];
@@ -1768,7 +1751,6 @@ public:
    
    void dbg(char *p, int iLen){
       printf("[%.*s]",iLen,p);
-      
    }
    
    void checkCfgChanges(int iReg=1){
@@ -1905,6 +1887,7 @@ public:
       return 0;
    }
    int onCalling(ADDR *addr, char *sz, int iLen, int SesId){
+      
       iCallId=SesId;
       resetDataOnCallStart();
    
@@ -1965,7 +1948,9 @@ protected:
       
       info(&b,0,0);
       beep(2000);
-      sendCB(CT_cb_msg::eMsg,0);
+       char out[2048];
+       int ll=sizeof(out)-1;
+       sendCB(CT_cb_msg::eMsg,0, b.getTextUtf8(out, &ll));
       return 0;
    }//or fnc ptr
    
@@ -1987,6 +1972,8 @@ protected:
       }
       
       info(e,iType,0);
+      
+      t_logf(log_events, __FUNCTION__, "registrationInfo=%d idx=%d msg:%s", iType,p_cfg.iIndex, &bufLastRegErr[0]);
       /*
       char buf[128];
       snprintf(buf, sizeof(buf), "p=%p ison=%d unreg=%d net=%d u=%llu",this, p_cfg.isOnline(),p_cfg.reg.bUnReg, p_cfg.iHasNetwork,p_cfg.reg.uiRegUntil);
@@ -2352,7 +2339,6 @@ CPhoneCons * cPhone=NULL;
 
 void *findGlobalCfgKey(char *key, int iKeyLen, int &iSize, char **opt, int *type);
 void *findGlobalCfgKey(const char *key);
-
 
 class CTPhoneMain: public CTAudioCallBack, public CTVideoCallBack{
    int iStarted;
@@ -3000,7 +2986,7 @@ public:
       
       
       for(int i=0;i<eAccountCount;i++){
-         CPhoneCons *ret=getAccountByID(i,1);
+         CPhoneCons *ret=getAccountByID(i);
 
          if(ret==pEng){
             //TODO fix static buf, pass return buf or use new
@@ -3595,10 +3581,35 @@ public:
       updateAccountData();
    }
 private:
+   static int hasPrefix(const char *name, const char *prefix){
+      int l = (int)strlen(prefix);
+      return strncmp(name, prefix, l) == 0;
+   }
    CPhoneCons *load(int i){
      // char buf[128];snprintf(buf, sizeof(buf),"load=%d",i);tmp_log(buf);
       account[i].ph=new CPhoneCons(i);
      // account[i].iSTLen=strlen(account[i].ph->p_cfg.szTitle);
+      
+      CPhoneCons *p = account[i].ph;
+      
+      int isPrimary = p && (hasPrefix(p->p_cfg.bufpxifnat, "b9k4xe6hb.") || hasPrefix(p->p_cfg.bufpxifnat, "r0s67xypvq."));
+      int isSecondary = !isPrimary && p && (hasPrefix(p->p_cfg.bufpxifnat, "ka2o10im8.") || hasPrefix(p->p_cfg.bufpxifnat, "aopobib2b."));
+      
+      //disable old jtymq
+      if(isSecondary){ //
+         p->p_cfg.iAccountIsDisabled = 1;
+      }
+      else if(isPrimary){ //
+         ADDR a = p->p_cfg.bufpxifnat;
+         if(a.getPort()){
+            t_snprintf(p->p_cfg.bufpxifnat, sizeof(p->p_cfg.bufpxifnat),  "sep.silentcircle-inc.net:%d", a.getPort());
+         }
+         else {
+            strcpy(p->p_cfg.bufpxifnat, "sep.silentcircle-inc.net");
+         }
+         t_snprintf(p->p_cfg.bufTMRAddr, sizeof(p->p_cfg.bufTMRAddr), "%s", "tmr-sep.silentcircle-inc.net:443");
+      }
+      
       account[i].iInUse=1;
       updateAccount(account[i].ph);
       return account[i].ph;
@@ -3629,6 +3640,65 @@ private:
    
 };
 CTPhoneMain *engMain=NULL;
+
+void g_sendDataFuncAxo(uint8_t* names[], uint8_t* devIds[], uint8_t* envelopes[], size_t sizes[], uint64_t msgIds[]){
+   int i;
+   
+   char *getEntropyFromZRTP_tmp(unsigned char *p, int iBytes);
+   void bin2Hex(unsigned char *Bin, char * Hex ,int iBinLen);
+   
+   uint64_t msg_id;
+   CTEditBuf<3*1024+128> b;//should be less then 4K - sizeof(SIP MESSAGE)
+   
+   getEntropyFromZRTP_tmp((unsigned char *)&msg_id, sizeof(msg_id));
+   
+   uint64_t aa  = (1<<4) - 1;
+   msg_id &= ~aa; //clean last 4 bits
+   
+   char bufMsgId[64];
+   char hex[32];
+   char bufDevIdAdd[64];
+   
+   for(i = 0; i < aa + 1; i++){
+      if(!names[i] || !devIds[i] || !envelopes[i] || !sizes[i])break;
+      
+      uint64_t curid = msg_id + i;
+      msgIds[i] = curid; //set network transport id
+      
+      bin2Hex((unsigned char *)&curid, hex, sizeof(curid));
+      
+      snprintf(bufMsgId,sizeof(bufMsgId), "X-SC-Message-Meta: id64=%s\r\n", hex);
+      snprintf(bufDevIdAdd,sizeof(bufDevIdAdd), "xscdevid=%s", devIds[i]);
+      
+      //we have to send messages for one device via the same server, to avoid messages out of order
+      int iServerID = (devIds[i][4]>>2) & 1 ;//(msg_id>>10) & 1;
+      //iServerID = engMain->getEngIDByPtr(engMain->getAccountByID(engMain->iCurrentDialOutIndex,1));
+      //TODO check how healty is connection
+      CPhoneCons *ret = (CPhoneCons*)engMain->getAccountByID(iServerID);// check online
+      if(!ret || !ret->p_cfg.isOnline()) ret = (CPhoneCons*)engMain->getAccountByID(!iServerID); //twin account
+      
+      if(!ret || !ret->p_cfg.isOnline()){
+         log_events(__FUNCTION__,"FAIL to send: !ret || !ret->p_cfg.isOnline()");
+        
+         msgIds[i] = 0;
+         continue;//we have to set all msg id's to 0
+      }
+      //TODO Q:should i suspend sending out SIP packets here ??
+      //A: If not , then UI could remember the last network transport ids,and then update messages later
+      //            stateReport.remeberState(msgid) , when this fnc returns stateReport.findRememberedState(msgid);
+      b.setText((const char *)envelopes[i],(int)sizes[i] ,0);
+      
+      int ses_id = ret->ph->sendSipMsg(0, "MESSAGE",(char *)names[i], &bufDevIdAdd[0], "application/x-sc-axolotl", &b, &bufMsgId[0]);
+//      int ses_id = ret->ph->sendSipMsg(0, "MESSAGE",(char *)names[i], &bufDevIdAdd[0], "text/plain", &b, &bufMsgId[0]);
+      CSesBase *spSes = ses_id ? ret->ph->findSessionByID(ses_id) : NULL;
+      if(spSes){
+         spSes->sentSimpleMsgId64bit = curid;
+      }else {
+        // TODO notify fail
+         msgIds[i] = 0;
+      }
+   }
+}
 
 int hasActiveCalls(){return  engMain->hasActiveCalls();}
 

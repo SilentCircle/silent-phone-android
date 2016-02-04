@@ -14,6 +14,7 @@
 
 #include <libzrtpcpp/ZrtpCallback.h>
 #include <libzrtpcpp/ZrtpSdesStream.h>
+#include <srtp/SrtpHandler.h>
 
 #include <CtZrtpSession.h>
 #include <TiviTimeoutProvider.h>
@@ -26,6 +27,7 @@ static const int maxSdesString = 256;
 
 static const uint32_t supressWarn = 200;
 static const uint32_t srtpErrorBurstThreshold = 20;
+static const int32_t NumSrtpErrorData = 200;
 
 class CryptoContext;
 class CryptoContextCtrl;
@@ -417,6 +419,23 @@ protected:
      */
     void setAuxSecret(const unsigned char *secret, int length);
 
+    /**
+     * @brief Get SRTP error trace data.
+     *
+     * This function copies the internal SRTP error trace data into an array. The
+     * caller must provide this array and must make sure that the array can receive
+     * at least @c NumSrtpErrorData number of @c SrtpErrorData structure elements.
+     * 
+     * On return the array contains the @c SrtpErrorData elemts in chronological order,
+     * i.e. index zero is the oldest element, the newest element is at index @c returnValue-1.
+     *
+     * @param data Pointer to an array of @c SrtpErrorData structures, minumim length
+     *             of array must be @c NumSrtpErrorData elements.
+     *
+     * @return Number of copies @c SrtpErrorData elements.
+     */
+    int32_t getSrtpTraceData(SrtpErrorData* data);
+
     /*
      * The following methods implement the GNU ZRTP callback interface.
      * For detailed documentation refer to file ZrtpCallback.h
@@ -492,7 +511,13 @@ private:
 
     int role;                               //!< Initiator or Responder role
 
+    SrtpErrorData srtpErrorInfo[NumSrtpErrorData];
+    int32_t errorInfoIndex;
+    uint32_t numErrorArrayWrap;
+
     void initStrings();
+    
+    SrtpErrorData* srtpErrorElement();
 };
 
 #endif /* _CTZRTPSTREAM_H_ */

@@ -180,6 +180,29 @@ enum InfoEnrollment {
 }
 
 /**
+ * @brief Codes and structure for SRTP error trace data
+ */
+
+#define RTP_HEADER_LENGTH 12
+
+typedef enum {
+    DecodeError = 1,
+    ReplayError = 2,
+    AuthError   = 3
+} SrtpErrorType;
+
+/**
+ * @brief Trace data of SRTP packet in case of unprotect error.
+ */
+typedef struct _SrtpErrorData {
+    SrtpErrorType errorType;
+    uint32_t rtpHeader[RTP_HEADER_LENGTH / sizeof(uint32_t)];
+    size_t length;
+    uint64_t guessedIndex;
+} SrtpErrorData;
+
+
+/**
  * @}
  */
 #endif

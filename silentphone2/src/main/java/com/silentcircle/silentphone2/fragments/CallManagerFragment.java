@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2014-2015, Silent Circle, LLC. All rights reserved.
+Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -129,10 +129,10 @@ public class CallManagerFragment extends Fragment implements TiviPhoneService.Se
             TypedArray array = theme.obtainStyledAttributes(R.styleable.SpaStyle);
 
             if (array != null) {
-                mSasVerifiedColor = array.getColor(R.styleable.SpaStyle_sp_sas_verified_color, R.color.white_translucent);
-                mSecurityTextColorNormal = array.getColor(R.styleable.SpaStyle_sp_dial_text_color, android.R.color.white);
-                mSecurityTextColorGreen = array.getColor(R.styleable.SpaStyle_sp_sec_info_green, R.color.indicator_green);
-                mSecurityTextColorYellow = array.getColor(R.styleable.SpaStyle_sp_sec_info_yellow, R.color.indicator_amber);
+                mSasVerifiedColor = array.getColor(R.styleable.SpaStyle_sp_sas_verified_color, getResources().getColor(R.color.white_translucent));
+                mSecurityTextColorNormal = array.getColor(R.styleable.SpaStyle_sp_dial_text_color, getResources().getColor(android.R.color.white));
+                mSecurityTextColorGreen = array.getColor(R.styleable.SpaStyle_sp_sec_info_green, getResources().getColor(R.color.indicator_green));
+                mSecurityTextColorYellow = array.getColor(R.styleable.SpaStyle_sp_sec_info_yellow, getResources().getColor(R.color.indicator_amber));
 
                 mMicOpen = array.getDrawable(R.styleable.SpaStyle_sp_ic_mic);
                 mMicMute = array.getDrawable(R.styleable.SpaStyle_sp_ic_mic_muted);

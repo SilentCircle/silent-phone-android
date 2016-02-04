@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.silentcircle.messaging.views.FailureEventView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_error_light"
+    android:gravity="center">
+
+    <com.silentcircle.messaging.views.TextView
+        android:id="@+id/error_message"
+        style="@style/Widget.Text.Floating.Error"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginRight="@dimen/space_normal"
+        android:text="@string/sample_error" />
+
+</com.silentcircle.messaging.views.FailureEventView>

@@ -14,47 +14,17 @@
      limitations under the License.
 -->
 
-<!-- This layout is supposed to match the content of the controls in call_detail.xml  -->
-<LinearLayout
+<TextView
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:ex="http://schemas.android.com/apk/res-auto"
-    android:orientation="vertical"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content">
-
-    <!-- Contact photo. -->
-    <view
-        class="com.silentcircle.contacts.widget.ProportionalLayout"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        ex:ratio="0.5"
-        ex:direction="widthToHeight"
-    >
-        <!-- Proportional layout requires a view in it. -->
-        <View
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-        />
-    </view>
-    <!-- Separator line -->
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="1dip"
+    android:layout_height="wrap_content"
+    android:paddingTop="@dimen/call_detail_header_top_margin"
+    android:paddingBottom="@dimen/call_detail_header_bottom_margin"
+    android:paddingLeft="@dimen/call_detail_horizontal_margin"
+    android:paddingStart="@dimen/call_detail_horizontal_margin"
+    android:textColor="@color/secondary_text_color"
+    android:textSize="@dimen/call_log_secondary_text_size"
+    android:fontFamily="sans-serif-medium"
+    android:singleLine="true"
+    android:text="@string/call_detail_list_header"
     />
-    <!-- Voice mail controls - we don't support Voice mail - gone -->
-    <!-- TODO: Make the height be based on a constant.
-    <View
-        android:id="@+id/header_voice_mail_container"
-        android:layout_width="match_parent"
-        android:layout_height="140dip"
-        android:layout_marginBottom="@dimen/call_detail_button_spacing"
-    />
-    -->
-    <!-- Call and SMS -->
-    <View
-        android:id="@+id/header_call_and_sms_container"
-        android:layout_width="match_parent"
-        android:layout_height="@dimen/call_log_list_item_height"
-    />
-
-</LinearLayout>

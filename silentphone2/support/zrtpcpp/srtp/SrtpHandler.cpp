@@ -31,8 +31,6 @@
 #include <CryptoContext.h>
 #include <CryptoContextCtrl.h>
 
-#define RTP_HEADER_LENGTH 12
-
 bool SrtpHandler::decodeRtp(uint8_t* buffer, int32_t length, uint32_t *ssrc, uint16_t *seq, uint8_t** payload, int32_t *payloadlen)
 {
     int offset;
@@ -83,6 +81,14 @@ bool SrtpHandler::decodeRtp(uint8_t* buffer, int32_t length, uint32_t *ssrc, uin
     return true;
 }
 
+static void fillErrorData(SrtpErrorData* data, SrtpErrorType type, uint8_t* buffer, size_t length, uint64_t guessedIndex)
+{
+    data->errorType = type;
+    memcpy((void*)data->rtpHeader, (void*)buffer, RTP_HEADER_LENGTH);
+    data->length = length;
+    data->guessedIndex = guessedIndex;
+}
+
 bool SrtpHandler::protect(CryptoContext* pcc, uint8_t* buffer, size_t length, size_t* newLength)
 {
     uint8_t* payload = NULL;
@@ -118,7 +124,7 @@ bool SrtpHandler::protect(CryptoContext* pcc, uint8_t* buffer, size_t length, si
     return true;
 }
 
-int32_t SrtpHandler::unprotect(CryptoContext* pcc, uint8_t* buffer, size_t length, size_t* newLength)
+int32_t SrtpHandler::unprotect(CryptoContext* pcc, uint8_t* buffer, size_t length, size_t* newLength, SrtpErrorData* errorData)
 {
     uint8_t* payload = NULL;
     int32_t payloadlen = 0;
@@ -129,8 +135,11 @@ int32_t SrtpHandler::unprotect(CryptoContext* pcc, uint8_t* buffer, size_t lengt
         return 0;
     }
 
-    if (!decodeRtp(buffer, length, &ssrc, &seqnum, &payload, &payloadlen))
+    if (!decodeRtp(buffer, length, &ssrc, &seqnum, &payload, &payloadlen)) {
+        if (errorData != NULL)
+            fillErrorData(errorData, DecodeError, buffer, length, 0);
         return 0;
+    }
     /*
      * This is the setting of the packet data when we come to this point:
      *
@@ -140,7 +149,7 @@ int32_t SrtpHandler::unprotect(CryptoContext* pcc, uint8_t* buffer, size_t lengt
      *
      * Because this is an SRTP packet we need to adjust some values here.
      * The SRTP MKI and authentication data is always at the end of a
-     * packet. Thus compute the position of this data.
+     * packet. Thus compute the positions of this data.
      */
     uint32_t srtpDataIndex = length - (pcc->getTagLength() + pcc->getMkiLength());
 
@@ -155,12 +164,15 @@ int32_t SrtpHandler::unprotect(CryptoContext* pcc, uint8_t* buffer, size_t lengt
     // const uint8* mki = buffer + srtpDataIndex;
     uint8_t* tag = buffer + srtpDataIndex + pcc->getMkiLength();
 
-    /* Replay control */
-    if (!pcc->checkReplay(seqnum)) {
-        return -2;
-    }
     /* Guess the index */
     uint64_t guessedIndex = pcc->guessIndex(seqnum);
+
+    /* Replay control */
+    if (!pcc->checkReplay(seqnum)) {
+        if (errorData != NULL)
+            fillErrorData(errorData, ReplayError, buffer, length, guessedIndex);
+        return -2;
+    }
 
     if (pcc->getTagLength() > 0) {
         uint32_t guessedRoc = guessedIndex >> 16;
@@ -168,6 +180,8 @@ int32_t SrtpHandler::unprotect(CryptoContext* pcc, uint8_t* buffer, size_t lengt
 
         pcc->srtpAuthenticate(buffer, (uint32_t)length, guessedRoc, mac);
         if (memcmp(tag, mac, pcc->getTagLength()) != 0) {
+            if (errorData != NULL)
+                fillErrorData(errorData, AuthError, buffer, length, guessedIndex);
             return -1;
         }
     }

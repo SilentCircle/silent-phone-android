@@ -19,9 +19,9 @@ package com.silentcircle.contacts.calllognew;
 import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
-import android.net.Uri;
 
 import com.silentcircle.contacts.ContactsUtils;
+import com.silentcircle.contacts.SCInviteActivity;
 import com.silentcircle.contacts.ScCallDetailActivity;
 import com.silentcircle.silentcontacts2.ScCallLog;
 
@@ -45,6 +45,14 @@ public abstract class IntentProvider {
         };
     }
 
+    public static IntentProvider getReturnMessagingIntentProvider(final String address) {
+        return new IntentProvider() {
+            @Override
+            public Intent getIntent(Context context) {
+                return ContactsUtils.getMessagingIntent(address, context);
+            }
+        };
+    }
 //    public static IntentProvider getReturnCallIntentProvider(final String number,
 //            final PhoneAccountHandle accountHandle) {
 //        return new IntentProvider() {
@@ -118,4 +126,16 @@ public abstract class IntentProvider {
             }
         };
     }
+
+    public static IntentProvider getInviteIntentProvider(final String number) {
+        return new IntentProvider() {
+            @Override
+            public Intent getIntent(Context context) {
+                Intent intent = new Intent(context, SCInviteActivity.class);
+                intent.putExtra(SCInviteActivity.INVITE_PHONE_NUMBER, number);
+                return intent;
+            }
+        };
+    }
+
 }

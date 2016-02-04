@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2014-2015, Silent Circle, LLC. All rights reserved.
+Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -52,8 +52,12 @@ import android.widget.PopupMenu;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.silentcircle.common.util.DialerUtils;
+import com.silentcircle.contacts.ContactsUtils;
+import com.silentcircle.messaging.util.Action;
 import com.silentcircle.silentphone2.R;
 import com.silentcircle.silentphone2.activities.DialerActivity;
+import com.silentcircle.silentphone2.activities.InCallActivity;
 import com.silentcircle.silentphone2.activities.InCallCallback;
 import com.silentcircle.silentphone2.services.TiviPhoneService;
 import com.silentcircle.silentphone2.util.CallState;
@@ -92,6 +96,7 @@ public class InCallMainFragment extends Fragment implements View.OnClickListener
     private ImageButton mMute;
     private ImageButton mVideo;
     private ImageButton mAddCall;
+    private ImageButton mChat;
     private ImageButton mAudioOptions;
 
     // The caller/callee avatar and name/number
@@ -154,13 +159,13 @@ public class InCallMainFragment extends Fragment implements View.OnClickListener
                 mSpeakerOff = array.getDrawable(3);
                 mSpeakerBt = array.getDrawable(4);
                 mSpeakerBtOff = array.getDrawable(5);
-                mSasVerifiedColor = array.getColor(6, R.color.white_translucent);
-                mNameNumberTextColorNormal = array.getColor(7, android.R.color.white);
-                mNameNumberTextColorPeerMatch = array.getColor(8, R.color.black_green);
+                mSasVerifiedColor = array.getColor(6, getResources().getColor(R.color.white_translucent));
+                mNameNumberTextColorNormal = array.getColor(7, getResources().getColor(android.R.color.white));
+                mNameNumberTextColorPeerMatch = array.getColor(8, getResources().getColor(R.color.black_green));
 
                 mSecurityTextColorNormal = mNameNumberTextColorNormal;
-                mSecurityTextColorGreen = array.getColor(9, R.color.black_green);
-                mSecurityTextColorYellow = array.getColor(10, R.color.black_yellow);
+                mSecurityTextColorGreen = array.getColor(9, getResources().getColor(R.color.black_green));
+                mSecurityTextColorYellow = array.getColor(10, getResources().getColor(R.color.black_yellow));
                 array.recycle();
             }
         }
@@ -199,6 +204,9 @@ public class InCallMainFragment extends Fragment implements View.OnClickListener
 
         mAddCall = (ImageButton) fragmentView.findViewById(R.id.add_image);
         mAddCall.setOnClickListener(this);
+
+        mChat = (ImageButton) fragmentView.findViewById(R.id.start_chat_image);
+        mChat.setOnClickListener(this);
 
         mAudioOptions = (ImageButton)fragmentView.findViewById(R.id.audio_image);
 
@@ -301,6 +309,11 @@ public class InCallMainFragment extends Fragment implements View.OnClickListener
                 break;
 
             case R.id.audio_image:
+                break;
+
+            case R.id.start_chat_image:
+                Intent intent = Action.VIEW_CONVERSATIONS.intent(getActivity(), DialerActivity.class);
+                startActivity(intent);
                 break;
 
             case R.id.sas_text:
@@ -520,6 +533,7 @@ public class InCallMainFragment extends Fragment implements View.OnClickListener
 
         showFunctionButtons(call.iActive, !call.iShowVerifySas);  // set the functions button (video, add call)
         setAnswerEndCallButton(call);
+
         setCallNumberField(call.bufPeer.toString());
         // if call.mContentLoaderActive -> schedule a delayed lookup to possibly overwrite the default avatar
         if (call.mContactsLoaderActive)
@@ -722,6 +736,7 @@ public class InCallMainFragment extends Fragment implements View.OnClickListener
     private void setCallNumberField(String number) {
         if (TextUtils.isEmpty(number))
             return;
+
         String formatted;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
             formatted = PhoneNumberUtils.formatNumber(number, Locale.getDefault().getCountry());

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.silentcircle.messaging.views.RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/activity"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".activity.ConversationActivity">
+
+    <FrameLayout
+        android:id="@+id/chat"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@+id/conversation_toolbar"
+        android:layout_above="@+id/upload" />
+
+    <include
+        android:id="@+id/upload"
+        layout="@layout/upload"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/compose"
+        android:layout_margin="@dimen/spacing_normal" />
+
+    <include
+        android:id="@+id/compose"
+        layout="@layout/compose" />
+
+    <include
+        android:id="@+id/progress"
+        layout="@layout/indeterminate_progress"
+        android:visibility="gone" />
+
+</com.silentcircle.messaging.views.RelativeLayout>

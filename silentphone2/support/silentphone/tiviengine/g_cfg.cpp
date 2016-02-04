@@ -1,32 +1,6 @@
-/*
-Created by Janis Narbuts
-Copyright (C) 2004-2012, Tivi LTD, www.tiviphone.com. All rights reserved.
-Copyright (C) 2012-2015, Silent Circle, LLC.  All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-    * Any redistribution, use, or modification is done solely for personal
-      benefit and not for any commercial purpose or for monetary gain
-    * Redistributions of source code must retain the above copyright
-      notice, this list of conditions and the following disclaimer.
-    * Redistributions in binary form must reproduce the above copyright
-      notice, this list of conditions and the following disclaimer in the
-      documentation and/or other materials provided with the distribution.
-    * Neither the name Silent Circle nor the
-      names of its contributors may be used to endorse or promote products
-      derived from this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL SILENT CIRCLE, LLC BE LIABLE FOR ANY
-DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
+//VoipPhone
+//Created by Janis Narbuts
+//Copyright (c) 2004-2012 Tivi LTD, www.tiviphone.com. All rights reserved.
 
 
 #include <stdlib.h>
@@ -35,7 +9,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "main.h"
 #include "../utils/CTDataBuf.h"
 
-
+#include "tivi_log.h"
 
 
 void setCfgFN(CTEditBase &b, int iIndex);
@@ -43,6 +17,8 @@ void setFileBackgroundReadable(CTEditBase &b);
 
 void setAudioInputVolume(int);
 void setAudioOutputVolume(int);
+void setDefaultDialingPref();
+
 
 int t_snprintf(char *buf, int iMaxSize, const char *format, ...);
 
@@ -78,6 +54,7 @@ typedef struct{
    
    int iAudioUnderflow;
    int iShowRXLed;
+   int iShowGeekStrip;
    
    int iKeepScreenOnIfBatOk;
    
@@ -110,6 +87,7 @@ typedef struct{
    char szDialingPrefCountry[64];
    
    char szRecentsMaxHistory[32];
+   char szMessageNotifcations[64];
    
    
 }TG_SETTINS;
@@ -136,11 +114,12 @@ public:
       if(iInitOk)return;
       iInitOk=1;
       
-      CTEditBase b(4096);
+      CTEditBase b(4096*2);
       setCfgFN(b,G_CFG_FILE_ID);
 
       g_Settings.iEnableSHA384=1;
       g_Settings.iSASConfirmClickCount=10;
+      g_Settings.iAudioUnderflow = 1;
 
       
       int iCfgLen=0;
@@ -194,6 +173,8 @@ public:
       M_FNC_INT_T(g_Settings.iDisplayUnsolicitedVideo,iDisplayUnsolicitedVideo);
       
       M_FNC_INT_T(g_Settings.iAudioUnderflow,iAudioUnderflow);
+      M_FNC_INT_T(g_Settings.iShowGeekStrip,iShowGeekStrip);
+      
       g_Settings.iDontSimplifyVideoUI=1;
       
       
@@ -230,11 +211,16 @@ public:
       getCFGItemSz(g_Settings.szDialingPrefCountry,sizeof(g_Settings.szDialingPrefCountry),p,iCfgLen,"szDialingPrefCountry");
       
       strcpy(g_Settings.szRecentsMaxHistory,"1 month");
+      strcpy(g_Settings.szMessageNotifcations,"Message and Sender");
 
       getCFGItemSz(g_Settings.szRecentsMaxHistory,sizeof(g_Settings.szRecentsMaxHistory),p,iCfgLen,"szRecentsMaxHistory");
+      getCFGItemSz(g_Settings.szMessageNotifcations,sizeof(g_Settings.szMessageNotifcations),p,iCfgLen,"szMessageNotifcations");
       
+      //strncmp(g_Settings.szRecentsMaxHistory, "szRec",5)==0 old bug fix, where it was storeing key: value with value as ""
+      if(!g_Settings.szDialingPrefCountry[0] || strncmp(g_Settings.szDialingPrefCountry, "szRec",5)==0){
+         setDefaultDialingPref();
+      }
       
-
       memcpy(&prevSettings,&g_Settings,sizeof(TG_SETTINS));
       
       delete p;
@@ -244,8 +230,8 @@ public:
       
       if(memcmp(&prevSettings,&g_Settings,sizeof(TG_SETTINS))==0)return;
       memcpy(&prevSettings,&g_Settings,sizeof(TG_SETTINS));
-      char dst[4096];
-      CTEditBase b(4096);
+      char dst[4096*2];
+      CTEditBase b(4096*2);
       setCfgFN(b,G_CFG_FILE_ID);
       
       int l=0;
@@ -277,6 +263,8 @@ public:
       SAVE_G_CFG_I(g_Settings.iDontSimplifyVideoUI,iDontSimplifyVideoUI);
       SAVE_G_CFG_I(g_Settings.iDisplayUnsolicitedVideo,iDisplayUnsolicitedVideo);
       SAVE_G_CFG_I(g_Settings.iAudioUnderflow,iAudioUnderflow);
+      SAVE_G_CFG_I(g_Settings.iShowGeekStrip,iShowGeekStrip);
+      
       SAVE_G_CFG_I(g_Settings.iRetroRingtone,iRetroRingtone);
 
       
@@ -292,10 +280,17 @@ public:
       l+=t_snprintf(&dst[l],sizeof(dst)-1-l,"%s: %s\n","szLastUsedAccount",g_Settings.szLastUsedAccount);
       
       l+=t_snprintf(&dst[l],sizeof(dst)-1-l,"%s: %s\n","szRingTone",g_Settings.szRingTone);
+
+      if(!g_Settings.szDialingPrefCountry[0]){
+         setDefaultDialingPref();
+      }
       
       l+=t_snprintf(&dst[l],sizeof(dst)-1-l,"%s: %s\n","szDialingPrefCountry",g_Settings.szDialingPrefCountry);
 
       l+=t_snprintf(&dst[l],sizeof(dst)-1-l,"%s: %s\n","szRecentsMaxHistory",g_Settings.szRecentsMaxHistory);
+      
+      l+=t_snprintf(&dst[l],sizeof(dst)-1-l,"%s: %s\n","szMessageNotifcations",g_Settings.szMessageNotifcations);
+      
       
       
       saveFileW(b.getText(),&dst[0],l);
@@ -366,6 +361,16 @@ void t_init_glob(){
    initRTList();
 }
 
+void setDefaultDialingPref(){
+   const char *getPrefLang(void);
+   const char *getCountryByID(const char *);
+   const char *lang = getPrefLang();
+   strcpy(g_Settings.szDialingPrefCountry, getCountryByID(lang));
+   if(!g_Settings.szDialingPrefCountry[0]){
+      strcpy(g_Settings.szDialingPrefCountry, "USA");
+   }
+}
+
 
 void *findGlobalCfgKey(char *key, int iKeyLen, int &iSize, char **opt, int *type){
    
@@ -416,6 +421,8 @@ return &g_Settings._K;\
    GLOB_I_CHK(iDisplayUnsolicitedVideo);
    
    GLOB_I_CHK(iAudioUnderflow);
+   GLOB_I_CHK(iShowGeekStrip);
+   
 
    GLOB_I_CHK(iForceFWTraversal);
    GLOB_I_CHK(iEnableFWTraversal);
@@ -446,6 +453,8 @@ return &g_Settings._K;\
    
    //TODO if (this is changing) fix recent list and save 
    GLOB_SZ_CHK_O(szRecentsMaxHistory, "5 minutes,1 hour,12 hours,1 day,1 week,1 month,1 year");
+   GLOB_SZ_CHK_O(szMessageNotifcations, "Notification only,Sender only,Message and Sender");
+  
    
    /*
     5 minutes
@@ -465,10 +474,7 @@ return &g_Settings._K;\
       g_Settings.szDialingPrefCountry[2]==0) &&
       strcmp(key, "szDialingPrefCountry")==0){
       once=1;
-      const char *getPrefLang(void);
-      const char *getCountryByID(const char *);
-      const char *lang = getPrefLang();
-      strcpy(g_Settings.szDialingPrefCountry, getCountryByID(lang));
+      setDefaultDialingPref();
    }
 
    GLOB_SZ_CHK_O(szDialingPrefCountry,getDialingPrefCountryList());
@@ -603,6 +609,6 @@ void checkGlobalSettings(void *g_zrtp){
       void clearZrtpCachesG(void *pZrtpGlobals);
       clearZrtpCachesG(g_zrtp);
       
-      puts("caches cleared");
+      log_events( __FUNCTION__, "caches cleared");
    }
 }

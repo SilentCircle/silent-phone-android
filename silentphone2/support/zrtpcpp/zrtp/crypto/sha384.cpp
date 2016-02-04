@@ -61,7 +61,9 @@ void sha384(unsigned char *dataChunks[], unsigned int dataChunckLength[], unsign
 void* createSha384Context()
 {
     sha384_ctx *ctx = reinterpret_cast<sha384_ctx*>(malloc(sizeof(sha384_ctx)));
-    sha384_begin(ctx);
+    if (ctx != NULL) {
+        sha384_begin(ctx);
+    }
     return (void*)ctx;
 }
 
@@ -69,10 +71,29 @@ void closeSha384Context(void* ctx, unsigned char* digest)
 {
     sha384_ctx* hd = reinterpret_cast<sha384_ctx*>(ctx);
 
-    if (digest != NULL) {
+    if (digest != NULL && hd != NULL) {
         sha384_end(digest, hd);
     }
     free(hd);
+}
+
+void* initializeSha384Context(void* ctx)
+{
+    sha384_ctx* hd = reinterpret_cast<sha384_ctx*>(ctx);
+
+    if (hd != NULL) {
+        sha384_begin(hd);
+    }
+    return (void*)hd;
+}
+
+void finalizeSha384Context(void* ctx, unsigned char* digest)
+{
+    sha384_ctx* hd = reinterpret_cast<sha384_ctx*>(ctx);
+
+    if (digest != NULL && hd != NULL) {
+        sha384_end(digest, hd);
+    }
 }
 
 void sha384Ctx(void* ctx, unsigned char* data, unsigned int dataLength)

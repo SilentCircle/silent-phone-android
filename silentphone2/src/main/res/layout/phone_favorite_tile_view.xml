@@ -130,4 +130,5 @@
             android:contentDescription="@string/description_view_contact_detail" />
 
     </RelativeLayout>
+
 </view>

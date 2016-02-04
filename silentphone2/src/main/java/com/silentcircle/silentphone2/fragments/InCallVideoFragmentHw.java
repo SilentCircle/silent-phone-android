@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2014-2015, Silent Circle, LLC. All rights reserved.
+Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -38,7 +38,6 @@ import android.content.pm.ActivityInfo;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.graphics.drawable.Drawable;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -309,6 +308,11 @@ public class InCallVideoFragmentHw extends Fragment implements View.OnClickListe
 
         mVideoPause = (Button)fragmentView.findViewById(R.id.video_pause);
         mVideoPause.setOnClickListener(this);
+        /*
+         * set text upon startup depending of pause flag.
+         * if video is paused, indicate it can be sent and vice versa
+         */
+        mVideoPause.setText(getString(mPauseVideo ? R.string.send_video : R.string.pause_video));
 
         mVideoStop = (Button)fragmentView.findViewById(R.id.video_stop);
         mVideoStop.setOnClickListener(this);

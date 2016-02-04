@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+	<!-- Placeholders for the layout designer; not visible in end-user UI -->
+	<string name="sample_duration" translatable="false">Messages expire in 5 minutes</string>
+	<string name="sample_time_and_duration" translatable="false">Today at 2:31 pm (5m)</string>
+	<string name="sample_domain" translatable="false">xmpp.silentcircle.com</string>
+	<string name="sample_sas_phrase" translatable="false">Alpha Bravo Charlie Delta</string>
+	<string name="sample_device" translatable="false">Android Device</string>
+	<string name="sample_port" translatable="false">9999</string>
+	<string name="sample_message" translatable="false">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec a diam lectus. Sed sit amet ipsum mauris. Maecenas congue ligula ac quam viverra nec consectetur ante hendrerit. Donec et mollis dolor. Praesent et diam eget libero egestas mattis sit amet vitae augue. Nam tincidunt congue enim, ut porta lorem lacinia consectetur. Donec ut libero sed arcu vehicula ultricies a non tortor. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aenean ut gravida lorem. Ut turpis felis, pulvinar a semper sed, adipiscing id dolor. Pellentesque auctor nisi id magna consequat sagittis. Curabitur dapibus enim sit amet elit pharetra tincidunt feugiat nisl imperdiet. Ut convallis libero in urna ultrices accumsan. Donec sed odio eros. Donec viverra mi quis quam pulvinar at malesuada arcu rhoncus. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. In rutrum accumsan ultricies. Mauris vitae nisi at sem facilisis semper ac in est.</string>
+	<string name="sample_error" translatable="false">You must enter a valid foo with that bar.</string>
+	<string name="sample_sender" translatable="false">Alice Coder</string>
+	<string name="sample_first_name" translatable="false">Alice</string>
+	<string name="sample_last_name" translatable="false">Coder</string>
+	<string name="sample_count" translatable="false">12</string>
+	<string name="sample_recipient" translatable="false">Bob Coder</string>
+	<string name="sample_name" translatable="false">Charlie Hacker</string>
+	<string name="sample_artist" translatable="false">The Silent Circles</string>
+	<string name="sample_album" translatable="false">Pies are Square</string>
+	<string name="sample_title" translatable="false">Round and Round</string>
+	<string name="sample_version" translatable="false">1.2.3</string>
+	<string name="sample_username" translatable="false">alicesmith</string>
+	<string name="sample_stylized_username" translatable="false">\@alicesmith</string>
+	<string name="sample_masked_password" translatable="false">************</string>
+	<string name="sample_email_address" translatable="false">you@example.com</string>
+	<string name="sample_filename" translatable="false">attachment.xml</string>
+	<string name="sample_rating" translatable="false">&#9734;&#9734;&#9734;</string>
+	<string name="sample_ringtone" translatable="false">Default</string>
+	<string name="sample_warning" translatable="false">This is a good warning.</string>
+	<string name="sample_failure" translatable="false">This is a good failure.</string>
+	<string name="sample_time_relative" translatable="false">5 minutes ago</string>
+	<string name="sample_burn_notice" translatable="false">30m</string>
+
+</resources>

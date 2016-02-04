@@ -147,7 +147,9 @@ void* createSha256HmacContext(uint8_t* key, int32_t keyLength)
 {
     hmacSha256Context *ctx = reinterpret_cast<hmacSha256Context*>(malloc(sizeof(hmacSha256Context)));
 
-    hmacSha256Init(ctx, key, keyLength);
+    if (ctx != NULL) {
+        hmacSha256Init(ctx, key, keyLength);
+    }
     return ctx;
 }
 

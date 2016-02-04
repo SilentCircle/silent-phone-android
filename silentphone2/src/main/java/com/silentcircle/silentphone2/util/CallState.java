@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2014-2015, Silent Circle, LLC. All rights reserved.
+Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -31,6 +31,7 @@ package com.silentcircle.silentphone2.util;
 import android.content.ContentUris;
 import android.content.Context;
 import android.database.Cursor;
+import android.database.DatabaseUtils;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
@@ -38,9 +39,12 @@ import android.os.AsyncTask;
 import android.telephony.PhoneNumberUtils;
 import android.util.Log;
 
-import com.silentcircle.silentcontacts2.ScContactsContract;
-import com.silentcircle.silentcontacts2.ScContactsContract.PhoneLookup;
-import com.silentcircle.silentcontacts2.ScContactsContract.RawContacts;
+import android.provider.ContactsContract;
+import android.provider.ContactsContract.PhoneLookup;
+import android.provider.ContactsContract.Contacts;
+import android.provider.ContactsContract.CommonDataKinds.SipAddress;
+
+import com.silentcircle.silentphone2.R;
 import com.silentcircle.silentphone2.services.TiviPhoneService;
 
 import java.io.InputStream;
@@ -58,6 +62,8 @@ public class CallState {
     public StringBuildHelper zrtpWarning = new StringBuildHelper(256);
     public StringBuildHelper zrtpPEER = new StringBuildHelper();
     private StringBuildHelper nameFromAB = new StringBuildHelper();//  from phoneBook  or sip
+
+    public StringBuildHelper mAssertedName = new StringBuildHelper(); // getInfo(call.iEngID, call.iCallId, "AssertedId");
 
     public StringBuildHelper bufDialed = new StringBuildHelper();
     public StringBuildHelper bufPeer = new StringBuildHelper();
@@ -192,6 +198,8 @@ public class CallState {
         zrtpWarning.reset();
         zrtpPEER.reset();
 
+        mAssertedName.reset();
+
         bufDialed.reset();
         bufServerName.reset();
         bufPeer.reset();
@@ -244,6 +252,15 @@ public class CallState {
         mPriority = NORMAL;
     }
 
+    public static String createSipLookupClause(String sipAddress) {
+        final StringBuilder sb = new StringBuilder();
+        sb.append(SipAddress.SIP_ADDRESS + " LIKE ");
+        DatabaseUtils.appendEscapedSQLString(sb, sipAddress + '%');
+        sb.append(" AND " + SipAddress.MIMETYPE + "='" + SipAddress.CONTENT_ITEM_TYPE + "'");
+
+        return sb.toString();
+    }
+
     public void fillDataFromContacts(TiviPhoneService service) {
         if (contactsDataChecked || service == null)
             return;
@@ -252,34 +269,35 @@ public class CallState {
         String phoneLookUpId;
         Context ctx = service.getBaseContext();
 
+        String selection = null;
+        String[] projection = null;
+
         if (!PhoneNumberUtils.isGlobalPhoneNumber(bufPeer.toString())) {
-            // "peer's number" is a SIP address: use the PhoneLookup table with the SIP parameter.
-            Uri.Builder uriBuilder = PhoneLookup.CONTENT_FILTER_URI.buildUpon();
-            uriBuilder.appendPath(Uri.encode(bufPeer.toString() + "@sip.silentcircle.net"));
-            uriBuilder.appendQueryParameter(PhoneLookup.QUERY_PARAMETER_SIP_ADDRESS, "1");
-            lookupUri = uriBuilder.build();
-            phoneLookUpId = ScContactsContract.Data.RAW_CONTACT_ID;
+            // number is a SIP address: use customized lookup
+            lookupUri = ContactsContract.Data.CONTENT_URI;
+            phoneLookUpId = ContactsContract.Data.CONTACT_ID;
+            selection = createSipLookupClause(bufPeer.toString() + ctx.getString(R.string.sc_sip_domain_0));
+            projection = new String[] {ContactsContract.Data._ID, ContactsContract.Data.CONTACT_ID,
+                    ContactsContract.Data.DISPLAY_NAME};
         }
         else {
             lookupUri = Uri.withAppendedPath(PhoneLookup.CONTENT_FILTER_URI, bufPeer.toString());
             phoneLookUpId = PhoneLookup._ID;
         }
-        lookupUri = lookupUri.buildUpon().appendQueryParameter(ScContactsContract.NON_BLOCKING, "true").build();
-        if (ConfigurationUtilities.mTrace) Log.d(LOG_TAG, "SCA lookup uri: " + lookupUri);
+        if (ConfigurationUtilities.mTrace) Log.d(LOG_TAG, "SPA lookup uri: " + lookupUri);
 
         mContactsLoaderActive = true;
         contactsDataChecked = true;
-        LoaderTaskLoadContactData loaderTask = new LoaderTaskLoadContactData(phoneLookUpId, ctx);
+        LoaderTaskLoadContactData loaderTask = new LoaderTaskLoadContactData(phoneLookUpId, ctx, projection, selection);
         loaderTask.execute(lookupUri);
     }
 
     public String getNameFromAB() {
-       
-       if(nameFromAB.getLen() == 0){
-           String s = TiviPhoneService.getInfo(iEngID, iCallId, "peername");
-          nameFromAB.setText(s);
-       }
-       return nameFromAB.toString();
+        if (nameFromAB.getLen() == 0){
+            String s = TiviPhoneService.getInfo(iEngID, iCallId, "peername");
+            nameFromAB.setText(s);
+        }
+        return nameFromAB.toString();
     }
 
     public boolean mustShowAnswerBT() {
@@ -303,25 +321,29 @@ public class CallState {
 
         String mPhoneLookUpId;
         Context mCtx;
+        String mSelection;
+        String[] mProjection;
 
-        LoaderTaskLoadContactData(String phoneId, Context ctx) {
+        LoaderTaskLoadContactData(String phoneId, Context ctx, String[] projection, String selection) {
             mPhoneLookUpId = phoneId;
             mCtx = ctx;
+            mProjection = projection;
+            mSelection = selection;
         }
 
         @Override
         protected Void doInBackground(Uri... uri) {
             Cursor c = null;
             try {
-                c = mCtx.getContentResolver().query(uri[0], null, null, null, null);
+                c = mCtx.getContentResolver().query(uri[0], mProjection, mSelection, null, null);
             } catch (Exception e) {
                 secExceptionMsg = "Cannot read contact data.";
                 Log.w(LOG_TAG, "Contacts query Exception, not using contacts data.");
             }
             if (c != null) {
+//                DatabaseUtils.dumpCursor(c);
                 if (c.moveToFirst()) {
-                    // DatabaseUtils.dumpCursor(c);
-                    int idx = c.getColumnIndex(RawContacts.DISPLAY_NAME);
+                    int idx = c.getColumnIndex(Contacts.DISPLAY_NAME);
                     if (idx != -1) {
                         String name = c.getString(idx);
                         if (name != null && name.length() > 0)
@@ -334,10 +356,10 @@ public class CallState {
                         contactId = c.getLong(idx);
                         if (contactId != 0) {
                             // Get photo of contactId as input stream:
-                            Uri uriStream = ContentUris.withAppendedId(RawContacts.CONTENT_URI, contactId);
+                            Uri uriStream = ContentUris.withAppendedId(Contacts.CONTENT_URI, contactId);
                             if (uriStream != null) {
                                 InputStream input =
-                                        RawContacts.openContactPhotoInputStream(mCtx.getContentResolver(), uriStream, true);
+                                        Contacts.openContactPhotoInputStream(mCtx.getContentResolver(), uriStream, true);
                                 if (input != null)
                                     image = BitmapFactory.decodeStream(input);
                             }

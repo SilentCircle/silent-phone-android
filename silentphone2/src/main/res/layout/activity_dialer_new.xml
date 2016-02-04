@@ -28,7 +28,7 @@
                     android:layout_height="wrap_content"
                     android:layout_width="match_parent"
                     android:minHeight="?attr/actionBarSize"
-                    android:background="@color/black_background">
+                    android:background="?sp_actionbar_color">
                 <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -37,7 +37,7 @@
                               android:layout_width="wrap_content"
                               android:layout_height="wrap_content"
                               android:textAppearance="?android:attr/textAppearanceMedium"
-                              android:textColor="?sp_drawer_header_text_color"
+                              android:textColor="?sp_actionbar_title_text_color"
                               android:singleLine="true"/>
 
                     <TextView android:id="@+id/sub_title"
@@ -74,7 +74,7 @@
 
         <FrameLayout
                 android:id="@+id/floating_action_button_container"
-                android:background="@drawable/fab_blue"
+                android:background="@drawable/fab_red"
                 android:layout_width="@dimen/floating_action_button_width"
                 android:layout_height="@dimen/floating_action_button_height"
                 android:layout_marginBottom="@dimen/floating_action_button_margin_bottom"
@@ -102,6 +102,23 @@
                     android:visibility="gone"
                     android:importantForAccessibility="no" />
         </FrameLayout>
+        <!--
+        <FrameLayout
+                android:id="@+id/logo_container"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+
+                tools:visibility="visible">
+            <ImageView
+                    android:id="@+id/ProvisioningWelcomeImg"
+                    tools:ignore="PxUsage"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:contentDescription="@string/silent_circle"
+                    android:src="@drawable/sc_logo_grey"/>
+        </FrameLayout>
+-->
 
     </FrameLayout>
 

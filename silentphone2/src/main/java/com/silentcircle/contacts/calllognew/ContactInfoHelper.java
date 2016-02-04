@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2015, Silent Circle, LLC. All rights reserved.
+Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -48,19 +48,27 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 package com.silentcircle.contacts.calllognew;
 
-import android.content.ContentUris;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Build;
+import android.provider.ContactsContract;
+import android.provider.ContactsContract.CommonDataKinds.Phone;
+import android.provider.ContactsContract.Contacts;
+import android.provider.ContactsContract.PhoneLookup;
 import android.telephony.PhoneNumberUtils;
 import android.text.TextUtils;
 
+import com.silentcircle.contacts.utils.Constants;
 import com.silentcircle.contacts.utils.PhoneNumberHelper;
-import com.silentcircle.silentcontacts2.ScContactsContract.DisplayPhoto;
-import com.silentcircle.silentcontacts2.ScContactsContract.PhoneLookup;
-import com.silentcircle.silentcontacts2.ScContactsContract.RawContacts;
-import com.silentcircle.silentcontacts2.ScContactsContract.RawContacts.Photo;
+import com.silentcircle.contacts.utils.UriUtils;
+import com.silentcircle.silentphone2.util.CallState;
 import com.silentcircle.silentphone2.util.Utilities;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.List;
 
 /**
  * Utility class to look up the contact information for a given number.
@@ -89,7 +97,7 @@ public class ContactInfoHelper {
     public ContactInfo lookupNumber(String number, String countryIso) {
         final ContactInfo info;
 
-        if (com.silentcircle.contacts.utils.PhoneNumberHelper.isUriNumber(number)) {
+        if (PhoneNumberHelper.isUriNumber(number)) {
             // This "number" is really a SIP address.
             ContactInfo sipInfo = queryContactInfoForSipAddress(number);
             if (sipInfo == null || sipInfo == ContactInfo.EMPTY) {
@@ -127,11 +135,42 @@ public class ContactInfoHelper {
                     updatedInfo.formattedNumber = Utilities.removeSipParts(number);
                 else
                     updatedInfo.formattedNumber = formatPhoneNumber(number, null, countryIso);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
+                    updatedInfo.normalizedNumber = PhoneNumberUtils.formatNumberToE164(number, countryIso);
+                updatedInfo.lookupUri = createTemporaryContactUri(updatedInfo.formattedNumber);
             } else {
                 updatedInfo = info;
             }
         }
         return updatedInfo;
+    }
+
+    /**
+     * Creates a JSON-encoded lookup uri for a unknown number without an associated contact
+     *
+     * @param number - Unknown phone number
+     * @return JSON-encoded URI that can be used to perform a lookup when clicking on the quick
+     *         contact card.
+     */
+    private static Uri createTemporaryContactUri(String number) {
+        try {
+            final JSONObject contactRows = new JSONObject().put(Phone.CONTENT_ITEM_TYPE,
+                    new JSONObject().put(Phone.NUMBER, number).put(Phone.TYPE, Phone.TYPE_CUSTOM));
+
+            final String jsonString = new JSONObject().put(Contacts.DISPLAY_NAME, number)
+                    .put(Contacts.DISPLAY_NAME_SOURCE, ContactsContract.DisplayNameSources.PHONE)
+                    .put(Contacts.CONTENT_ITEM_TYPE, contactRows).toString();
+
+            return Contacts.CONTENT_LOOKUP_URI
+                    .buildUpon()
+                    .appendPath(Constants.LOOKUP_URI_ENCODED)
+                    .appendQueryParameter(ContactsContract.DIRECTORY_PARAM_KEY,
+                            String.valueOf(Long.MAX_VALUE))
+                    .encodedFragment(jsonString)
+                    .build();
+        } catch (JSONException e) {
+            return null;
+        }
     }
 
     /**
@@ -143,35 +182,29 @@ public class ContactInfoHelper {
      * The {@link ContactInfo#formattedNumber} field is always set to {@code null} in the returned
      * value.
      */
-    private ContactInfo lookupContactFromUri(Uri uri, boolean isSip) {
+    private ContactInfo lookupContactFromUri(Uri uri) {
         final ContactInfo info;
         Cursor phonesCursor =
-                mContext.getContentResolver().query(uri, isSip ? PhoneQuery._PROJECTION_SIP : PhoneQuery._PROJECTION, null, null, null);
+                mContext.getContentResolver().query(uri, PhoneQuery._PROJECTION, null, null, null);
 
         if (phonesCursor != null) {
             try {
                 if (phonesCursor.moveToFirst()) {
                     info = new ContactInfo();
-                    long contactId = !isSip ? phonesCursor.getLong(PhoneQuery.PERSON_ID) : phonesCursor.getLong(PhoneQuery.DATA_RAW_CONTACT_ID);
-                    info.lookupUri = RawContacts.getLookupUri(contactId);
+                    long contactId = phonesCursor.getLong(PhoneQuery.PERSON_ID);
+                    String lookupKey = phonesCursor.getString(PhoneQuery.LOOKUP_KEY);
+                    info.lookupKey = lookupKey;
+                    info.lookupUri = ContactsContract.Contacts.getLookupUri(contactId, lookupKey);
                     info.name = phonesCursor.getString(PhoneQuery.NAME);
                     info.type = phonesCursor.getInt(PhoneQuery.PHONE_TYPE);
                     info.label = phonesCursor.getString(PhoneQuery.LABEL);
                     info.number = phonesCursor.getString(PhoneQuery.MATCHED_NUMBER);
                     info.normalizedNumber = phonesCursor.getString(PhoneQuery.NORMALIZED_NUMBER);
                     info.photoId = phonesCursor.getLong(PhoneQuery.PHOTO_ID);
-                    info.photoFileId = phonesCursor.getLong(PhoneQuery.PHOTO_FILE_ID);
-                    if (info.photoFileId != 0) {
-                        info.photoUri = ContentUris.withAppendedId(DisplayPhoto.CONTENT_URI, info.photoFileId);
-                    }
-                    else if (info.photoId != 0) {
-                        info.photoUri = Uri.withAppendedPath(ContentUris.withAppendedId(RawContacts.CONTENT_URI, contactId),
-                                Photo.CONTENT_DIRECTORY);
-                    }
-                    else
-                        info.photoUri = null;
+                    info.photoUri =
+                            UriUtils.parseUriOrNull(phonesCursor.getString(PhoneQuery.PHOTO_URI));
                     info.formattedNumber = null;
-                } 
+                }
                 else {
                     info = ContactInfo.EMPTY;
                 }
@@ -196,18 +229,70 @@ public class ContactInfoHelper {
      */
     private ContactInfo queryContactInfoForSipAddress(String sipAddress) {
         final ContactInfo info;
-
-        // "contactNumber" is a SIP address, so use the PhoneLookup table with the SIP parameter.
-        Uri.Builder uriBuilder = PhoneLookup.CONTENT_FILTER_URI.buildUpon();
-        uriBuilder.appendPath(Uri.encode(sipAddress));
-        uriBuilder.appendQueryParameter(PhoneLookup.QUERY_PARAMETER_SIP_ADDRESS, "1");
-        info = lookupContactFromUri(uriBuilder.build(), true);
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+            info = queryContactInfoForSipAddress16(sipAddress);
+        }
+        else {
+            // "contactNumber" is a SIP address, so use the PhoneLookup table with the SIP parameter.
+            Uri.Builder uriBuilder = PhoneLookup.CONTENT_FILTER_URI.buildUpon();
+            uriBuilder.appendPath(Uri.encode(sipAddress));
+            uriBuilder.appendQueryParameter(PhoneLookup.QUERY_PARAMETER_SIP_ADDRESS, "1");
+            info = lookupContactFromUri(uriBuilder.build());
+        }
         if (info != null && info != ContactInfo.EMPTY) {
             info.formattedNumber = Utilities.removeSipParts(sipAddress);
         }
         return info;
     }
 
+    private ContactInfo queryContactInfoForSipAddress16(String sipAddress) {
+        final ContactInfo info;
+
+        Uri lookupUri = ContactsContract.Data.CONTENT_URI;
+        String selection = CallState.createSipLookupClause(sipAddress);
+
+        info = lookupContactFromUriSip16(lookupUri, selection);
+        if (info != null && info != ContactInfo.EMPTY) {
+            info.formattedNumber = Utilities.removeSipParts(sipAddress);
+        }
+        return info;
+    }
+
+    private ContactInfo lookupContactFromUriSip16(Uri uri, String selection) {
+        final ContactInfo info;
+        Cursor phonesCursor =
+                mContext.getContentResolver().query(uri, PhoneQuery._PROJECTION_SIP, selection, null, null);
+
+        if (phonesCursor != null) {
+            try {
+                if (phonesCursor.moveToFirst()) {
+                    info = new ContactInfo();
+                    long contactId = phonesCursor.getLong(PhoneQuery.SIP_PERSON_ID);
+                    String lookupKey = phonesCursor.getString(PhoneQuery.SIP_LOOKUP_KEY);
+                    info.lookupKey = lookupKey;
+                    info.lookupUri = ContactsContract.Contacts.getLookupUri(contactId, lookupKey);
+                    info.name = phonesCursor.getString(PhoneQuery.SIP_NAME);
+                    info.type = phonesCursor.getInt(PhoneQuery.SIP_PHONE_TYPE);
+                    info.label = phonesCursor.getString(PhoneQuery.SIP_LABEL);
+                    info.number = phonesCursor.getString(PhoneQuery.SIP_ADDRESS);
+                    info.normalizedNumber = null;
+                    info.photoId = phonesCursor.getLong(PhoneQuery.SIP_PHOTO_ID);
+                    info.photoUri =
+                            UriUtils.parseUriOrNull(phonesCursor.getString(PhoneQuery.SIP_PHOTO_URI));
+                    info.formattedNumber = null;
+                }
+                else {
+                    info = ContactInfo.EMPTY;
+                }
+            } finally {
+                phonesCursor.close();
+            }
+        } else {
+            // Failed to fetch the data, ignore this request.
+            info = null;
+        }
+        return info;
+    }
     /**
      * Determines the contact information for the given phone number.
      * <p>
@@ -230,7 +315,7 @@ public class ContactInfoHelper {
         }
         // The "contactNumber" is a regular phone number, so use the PhoneLookup table.
         Uri uri = Uri.withAppendedPath(PhoneLookup.CONTENT_FILTER_URI, Uri.encode(contactNumber));
-        ContactInfo info = lookupContactFromUri(uri, false);
+        ContactInfo info = lookupContactFromUri(uri);
         if (info != null && info != ContactInfo.EMPTY) {
             info.formattedNumber = formatPhoneNumber(number, null, countryIso);
         }
@@ -261,4 +346,46 @@ public class ContactInfoHelper {
         }
         return PhoneNumberHelper.formatNumber(number, normalizedNumber, countryIso);
     }
+
+    /**
+     * Parses the given URI to determine the original lookup key of the contact.
+     */
+    public static String getLookupKeyFromUri(Uri lookupUri) {
+        // Would be nice to be able to persist the lookup key somehow to avoid having to parse
+        // the uri entirely just to retrieve the lookup key, but every uri is already parsed
+        // once anyway to check if it is an encoded JSON uri, so this has negligible effect
+        // on performance.
+        if (lookupUri != null && !UriUtils.isEncodedContactUri(lookupUri)) {
+            final List<String> segments = lookupUri.getPathSegments();
+            // This returns the third path segment of the uri, where the lookup key is located.
+            // See {@link android.provider.ContactsContract.Contacts#CONTENT_LOOKUP_URI}.
+            return (segments.size() < 3) ? null : Uri.encode(segments.get(2));
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * Given a contact's sourceType, return true if the contact is a business
+     *
+     * @param sourceType sourceType of the contact. This is usually populated by
+     *        {@link #mCachedNumberLookupService}.
+     */
+//    public boolean isBusiness(int sourceType) {
+//        return mCachedNumberLookupService != null
+//                && mCachedNumberLookupService.isBusiness(sourceType);
+//    }
+
+    /**
+     * This function looks at a contact's source and determines if the user can
+     * mark caller ids from this source as invalid.
+     *
+     * @param sourceType The source type to be checked
+     * @param objectId The ID of the Contact object.
+     * @return true if contacts from this source can be marked with an invalid caller id
+     */
+//    public boolean canReportAsInvalid(int sourceType, String objectId) {
+//        return mCachedNumberLookupService != null
+//                && mCachedNumberLookupService.canReportAsInvalid(sourceType, objectId);
+//    }
 }

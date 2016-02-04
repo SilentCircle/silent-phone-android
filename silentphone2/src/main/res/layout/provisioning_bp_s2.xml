@@ -103,6 +103,7 @@
                     android:layout_marginLeft="40dp"
                     android:layout_marginTop="10dp"
                     android:text="@string/provisioning_show_pw"
+                    android:contentDescription="@string/provisioning_show_pw"
                     android:textColor="@color/auth_inactive_body_text_grey"
                     android:textSize="12sp"/>
 

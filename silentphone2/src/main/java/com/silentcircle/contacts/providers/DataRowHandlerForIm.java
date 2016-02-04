@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2014-2015, Silent Circle, LLC. All rights reserved.
+Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -50,7 +50,7 @@ package com.silentcircle.contacts.providers;
 import android.content.ContentValues;
 import android.content.Context;
 
-import com.silentcircle.contacts.model.account.LabelHelper.ImLabel;
+
 import com.silentcircle.contacts.providers.SearchIndexManager.IndexBuilder;
 import com.silentcircle.contacts.providers.aggregation.SimpleRawContactAggregator;
 import com.silentcircle.silentcontacts2.ScContactsContract.CommonDataKinds.Im;
@@ -73,7 +73,7 @@ public class DataRowHandlerForIm extends DataRowHandlerForCommonDataKind {
     public void appendSearchableData(IndexBuilder builder) {
         int protocol = builder.getInt(Im.PROTOCOL);
         String customProtocol = builder.getString(Im.CUSTOM_PROTOCOL);
-        builder.appendContent(ImLabel.getProtocolLabel(mContext.getResources(), protocol, customProtocol).toString());
+        builder.appendContent(android.provider.ContactsContract.CommonDataKinds.Im.getProtocolLabel(mContext.getResources(), protocol, customProtocol).toString());
         builder.appendContentFromColumn(Im.DATA, IndexBuilder.SEPARATOR_SLASH);
     }
 }

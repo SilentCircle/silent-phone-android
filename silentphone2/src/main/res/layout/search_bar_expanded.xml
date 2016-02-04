@@ -32,7 +32,7 @@
         android:src="@drawable/ic_back_arrow"
         android:contentDescription="@string/action_menu_back_from_search"
         android:background="@null"
-        android:tint="@color/actionbar_background_color" />
+        android:tint="?sp_icon_tint_color" />
 
     <EditText
         android:id="@+id/search_view"
@@ -58,6 +58,6 @@
         android:src="@drawable/ic_close_dk"
         android:clickable="true"
         android:contentDescription="@string/description_clear_search"
-        android:tint="@color/searchbox_icon_tint"/>
+        android:tint="?sp_icon_tint_color"/>
 
 </LinearLayout>

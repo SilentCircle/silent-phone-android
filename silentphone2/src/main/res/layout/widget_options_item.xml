@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/location_sharing"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="5dp"
+    android:clickable="true">
+
+    <LinearLayout
+        android:id="@+id/location_sharing_"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:background="@drawable/bg_widget_options_item"
+        android:duplicateParentState="true"
+        android:clickable="false">
+
+        <ImageView
+            android:id="@+id/widget_optitem_image"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/ic_location"
+            android:duplicateParentState="true"
+            android:clickable="false"/>
+
+        <TextView
+            android:id="@+id/widget_optitem_text"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center_vertical"
+            android:maxLines="1"
+            android:duplicateParentState="true"
+            android:clickable="false"
+            tools:text="Location sharing"
+            android:textSize="@dimen/text_xlarge"
+            android:textColor="@color/chat_options_text_color"/>
+
+        <CheckBox
+            android:id="@+id/widget_optitem_checkbox"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:duplicateParentState="true"
+            android:clickable="false"
+            android:text="" />
+
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/widget_optitem_description"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/location_sharing_"
+        tools:text="Enable location sharing"
+        android:textSize="@dimen/text_normal"
+        android:textColor="@color/chat_options_text_color"
+        android:clickable="false"/>
+
+</RelativeLayout>

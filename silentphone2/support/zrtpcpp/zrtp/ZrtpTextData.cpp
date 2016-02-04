@@ -64,6 +64,7 @@ char sasString[] = "SAS";
 char KDFString[] = "ZRTP-HMAC-KDF";
 
 char zrtpSessionKey[] = "ZRTP Session Key";
+char zrtpExportedKey[] = "Exported key";
 
 char zrtpMsk[] = "ZRTP MSK";
 char zrtpTrustedMitm[] = "Trusted MiTM key";

@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="@dimen/drawer_width"
+    android:layout_height="match_parent"
+    android:background="@color/chat_options_drawer_background">
+
+    <LinearLayout style="@style/Widget.Silence.LinearLayout.Vertical"
+        android:layout_height="match_parent">
+
+        <com.silentcircle.messaging.views.OptionsItem
+            android:id="@+id/location_sharing"
+            style="@style/Widget.OptionsItem"
+            android:layout_marginTop="@dimen/conversation_option_margin_top"
+            app:src="@drawable/ic_location_wide_disabled"
+            app:srcChecked="@drawable/ic_location_wide_enabled"
+            app:text="@string/share_location"
+            app:description="@string/dialog_message_enable_device_location" />
+
+        <com.silentcircle.messaging.views.OptionsItem
+            android:id="@+id/burn_notice"
+            style="@style/Widget.OptionsItem"
+            android:layout_marginBottom="@dimen/conversation_option_burn_margin_bottom"
+            app:src="@drawable/ic_burn_wide_enabled"
+            app:srcChecked="@drawable/ic_burn_wide_enabled"
+            app:isCheckable="false"
+            app:text="@string/burn_notice"
+            app:description="@string/sample_duration" />
+
+
+        <LinearLayout
+            style="@style/Widget.Silence.LinearLayout.Horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginLeft="@dimen/conversation_option_seeker_layout_margin_left"
+            android:layout_marginBottom="@dimen/conversation_option_seeker_layout_margin_bottom"
+            android:padding="@dimen/spacing_normal">
+
+            <ImageView
+                android:id="@+id/inactivity_timeout_icon"
+                style="@style/Widget.Silence.ImageView"
+                android:contentDescription="@string/autolock"
+                android:layout_height="wrap_content"
+                android:layout_width="wrap_content"
+                android:src="@drawable/ic_action_timer" />
+
+            <SeekBar
+                android:id="@+id/burn_delay_value"
+                style="@style/Widget.OptionsSeekBar"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="@dimen/conversation_option_seeker_margin_left"
+                android:max="11"
+                android:progress="5"
+                android:indeterminate="false" />
+
+        </LinearLayout>
+
+        <com.silentcircle.messaging.views.OptionsItem
+            android:id="@+id/clear"
+            style="@style/Widget.OptionsItem"
+            app:isCheckable="false"
+            app:src="@drawable/ic_action_delete"
+            app:text="@string/clear_conversation"
+            app:description="@string/clear_conversation_exp" />
+
+        <!--
+            disabled save option to match iOS app functionality
+            additional functionality will be added in later versions
+        -->
+        <com.silentcircle.messaging.views.OptionsItem
+            android:id="@+id/save"
+            style="@style/Widget.OptionsItem"
+            android:visibility="gone"
+            app:isCheckable="false"
+            app:src="@drawable/ic_action_save"
+            app:text="@string/save_conversation" />
+
+        <LinearLayout
+            style="@style/Widget.Silence.LinearLayout.Vertical"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="gone">
+
+            <CheckBox
+                android:id="@+id/send_receipts"
+                style="@style/Widget.Silence.CheckBox"
+                android:layout_height="wrap_content"
+                android:layout_width="wrap_content"
+                android:text="@string/send_receipts" />
+
+            <View style="@style/Widget.Silence.Divider"
+                android:layout_height="wrap_content"
+                android:layout_width="match_parent" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/verify"
+            style="@style/Widget.Silence.LinearLayout.Vertical"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_margin="@dimen/spacing_normal"
+            android:padding="@dimen/spacing_normal"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/verify_rating"
+                style="@style/Widget.Silence.TextView.About"
+                android:layout_height="wrap_content"
+                android:layout_width="wrap_content"
+                android:layout_marginBottom="@dimen/spacing_normal"
+                android:text="@string/security_rating_hint_2_to_3" />
+
+            <TextView
+                android:id="@+id/verify_label"
+                style="@style/Widget.Silence.TextView"
+                android:layout_height="wrap_content"
+                android:layout_width="wrap_content"
+                android:layout_marginBottom="@dimen/spacing_normal"
+                android:text="@string/verify_description_unverified" />
+
+            <CheckBox
+                android:id="@+id/verified"
+                style="@style/Widget.Silence.CheckBox"
+                android:layout_height="wrap_content"
+                android:layout_width="wrap_content"
+                android:text="@string/sample_sas_phrase"/>
+
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/reset_keys"
+            style="@style/Widget.Silence.SubtleButton.Refresh"
+            android:visibility="gone"
+            android:text="@string/reset_keys" />
+
+        <com.silentcircle.messaging.views.OptionsItem
+                android:id="@+id/remote_devices"
+                style="@style/Widget.OptionsItem"
+                app:isCheckable="false"
+                app:src="?sp_ic_view_list"
+                app:text="@string/show_remote_dev"
+                app:description="@string/show_remote_dev_exp" />
+    </LinearLayout>
+
+</ScrollView>

@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2014-2015, Silent Circle, LLC. All rights reserved.
+Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -41,16 +41,23 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * See the License for the specific language governing permissions and
  * limitations under the License
  */
+
+// Modified to run with Android < Lollipop, see also PhoneFavoritesTileAdapter how
+// we implement the pinned field replacement
+
 package com.silentcircle.contacts;
 
 import android.content.Context;
 import android.content.CursorLoader;
 import android.net.Uri;
+import android.os.Build;
 import android.provider.ContactsContract;
+import android.provider.ContactsContract.CommonDataKinds.Phone;
+import android.provider.ContactsContract.CommonDataKinds.SipAddress;
+import android.provider.ContactsContract.Contacts;
+import android.util.Log;
 
-import com.silentcircle.silentcontacts2.ScContactsContract;
-import com.silentcircle.silentcontacts2.ScContactsContract.CommonDataKinds.Phone;
-import com.silentcircle.silentcontacts2.ScContactsContract.RawContacts;
+import com.google.common.annotations.VisibleForTesting;
 
 /**
  * Used to create {@link android.support.v4.content.CursorLoader}s to load different groups of {@link com.silentcircle.contacts.list.ContactTileView}s
@@ -61,23 +68,30 @@ public final class ContactTileLoaderFactory {
     public final static int DISPLAY_NAME = 1;
     public final static int STARRED = 2;
     public final static int PHOTO_URI = 3;
+    public final static int LOOKUP_KEY = 4;
+    public final static int CONTACT_PRESENCE = 5;
+    public final static int CONTACT_STATUS = 6;
 
     // Only used for StrequentPhoneOnlyLoader
-    public final static int PHONE_NUMBER = 4;
-    public final static int PHONE_NUMBER_TYPE = 5;
-    public final static int PHONE_NUMBER_LABEL = 6;
-    public final static int IS_DEFAULT_NUMBER = 7;
-    public final static int PINNED = 8;
+    public final static int PHONE_NUMBER = 5;
+    public final static int PHONE_NUMBER_TYPE = 6;
+    public final static int PHONE_NUMBER_LABEL = 7;
+    public final static int IS_DEFAULT_NUMBER = 8;
+//    public final static int PINNED = 9;
+
     // The _ID field returned for strequent items actually contains data._id instead of
     // contacts._id because the query is performed on the data table. In order to obtain the
     // contact id for strequent items, we thus have to use Phone.contact_id instead.
     public final static int CONTACT_ID_FOR_DATA = 9;
 
     private static final String[] COLUMNS = new String[] {
-        RawContacts._ID, // ..........................................0
-        RawContacts.DISPLAY_NAME, // .................................1
-        RawContacts.STARRED, // ......................................2
-        RawContacts.PHOTO_URI, // ....................................3
+        Contacts._ID, // ..........................................0
+        Contacts.DISPLAY_NAME, // .................................1
+        Contacts.STARRED, // ......................................2
+        Contacts.PHOTO_URI, // ....................................3
+        Contacts.LOOKUP_KEY, // ...................................4
+        Contacts.CONTACT_PRESENCE, // .............................5
+        Contacts.CONTACT_STATUS, // ...............................6
     };
 
     /**
@@ -86,37 +100,52 @@ public final class ContactTileLoaderFactory {
      * is set to true. The main difference is the lack of presence
      * and status data and the addition of phone number and label.
      */
-    private static final String[] COLUMNS_PHONE_ONLY = new String[] {
-        RawContacts._ID, // ..........................................0
-        RawContacts.DISPLAY_NAME, // .................................1
-        RawContacts.STARRED, // ......................................2
-        RawContacts.PHOTO_URI, // ....................................3
-        Phone.NUMBER, // .............................................4
-        Phone.TYPE, // ...............................................5
-        Phone.LABEL, // ..............................................6
-        Phone.IS_SUPER_PRIMARY, //..............   ...................7
-        RawContacts.PINNED, // .......................................8
-        Phone.RAW_CONTACT_ID // ......................................9
+    @VisibleForTesting
+    public static final String[] COLUMNS_PHONE_ONLY = new String[] {
+        Contacts._ID, // ..........................................0
+        Contacts.DISPLAY_NAME, // .................................1
+        Contacts.STARRED, // ......................................2
+        Contacts.PHOTO_URI, // ....................................3
+        Contacts.LOOKUP_KEY, // ...................................4
+        Phone.NUMBER, // ..........................................5
+        Phone.TYPE, // ............................................6
+        Phone.LABEL, // ...........................................7
+        // Special handling: API < 19 don't return the IS_SUPER_PRIMARY,
+        // replace with a simple other field. Adjust the code handling accordingly
+        // in PhoneFavoritesTileAdapter
+//        Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT ?
+//                Phone.IS_SUPER_PRIMARY :
+        Contacts.STARRED, //.......................................8
+//        Contacts.PINNED, // .....................................9
+        // Special handling: API < 19 don't return the CONTACT_ID field,
+        // replace with a simple other field. ContactsCache and PhoneFavoriteTileAdapter
+        // were previously adjusted not to use the CONTACT_ID field
+        Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT ?
+                Phone.CONTACT_ID : Phone.NAME_RAW_CONTACT_ID  //...9
     };
 
+    private static final String STARRED_ORDER = Contacts.DISPLAY_NAME+" COLLATE NOCASE ASC";
+
     public static CursorLoader createStrequentLoader(Context context) {
-        return new CursorLoader(context, RawContacts.CONTENT_STREQUENT_URI, COLUMNS, null, null, null);
+        return new CursorLoader(context, Contacts.CONTENT_STREQUENT_URI, COLUMNS, null, null,
+                STARRED_ORDER);
     }
 
     public static CursorLoader createStrequentPhoneOnlyLoader(Context context) {
-        Uri uri = RawContacts.CONTENT_STREQUENT_URI.buildUpon()
-                .appendQueryParameter(ScContactsContract.STREQUENT_PHONE_ONLY, "true").build();
+        Uri uri = Contacts.CONTENT_STREQUENT_URI.buildUpon()
+                .appendQueryParameter(ContactsContract.STREQUENT_PHONE_ONLY, "true").build();
 
         return new CursorLoader(context, uri, COLUMNS_PHONE_ONLY, null, null, null);
     }
 
     public static CursorLoader createStarredLoader(Context context) {
-        return new CursorLoader(context, RawContacts.CONTENT_URI, COLUMNS,
-                RawContacts.STARRED + "=?", new String[]{"1"}, RawContacts.DISPLAY_NAME + " ASC");
+        return new CursorLoader(context, Contacts.CONTENT_URI, COLUMNS, Contacts.STARRED + "=?",
+                new String[]{"1"},  STARRED_ORDER);
     }
 
-    public static CursorLoader createFrequentLoader(Context context) {
-        return new CursorLoader(context, RawContacts.CONTENT_FREQUENT_URI, COLUMNS,
-                 RawContacts.STARRED + "=?", new String[]{"0"}, null);
-    }
+    // Not used in Dialer
+//    public static CursorLoader createFrequentLoader(Context context) {
+//        return new CursorLoader(context, Contacts.CONTENT_FREQUENT_URI, COLUMNS,
+//                 Contacts.STARRED + "=?", new String[]{"0"}, null);
+//    }
 }

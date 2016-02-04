@@ -94,10 +94,29 @@ void macSkein( uint8_t* key, int32_t key_length,
  *    Integer that contains the length of the MAC in bits (not bytes).
  * @param skeinSize
  *    The Skein size to use.
+ * @return Returns a pointer to the initialized context or @c NULL in case of an error.
+ */
+void* createSkeinMacContext(uint8_t* key, int32_t key_length, int32_t mac_length, SkeinSize_t skeinSize);
+
+/**
+ * Initialize a Skein MAC context.
+ *
+ * An application uses this context to hash several data with on Skein MAC
+ * Context with the same key, key length and mac length
+ *
+ * @param ctx
+ *     Pointer to initialized Skein MAC context
+ * @param key
+ *    The MAC key.
+ * @param key_length
+ *    Lenght of the MAC key in bytes
+ * @param mac_length
+ *    Integer that contains the length of the MAC in bits (not bytes).
+ * @param skeinSize
+ *    The Skein size to use.
  * @return Returns a pointer to the initialized context
  */
-void* createSkeinMacContext(uint8_t* key, int32_t key_length, 
-                            int32_t mac_length, SkeinSize_t skeinSize);
+void* initializeSkeinMacContext(void* ctx, uint8_t* key, int32_t key_length, int32_t mac_length, SkeinSize_t skeinSize);
 
 /**
  * Compute Skein MAC.

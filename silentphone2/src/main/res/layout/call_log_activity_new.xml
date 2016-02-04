@@ -27,13 +27,20 @@
             android:layout_height="wrap_content"
             android:layout_width="match_parent"
             android:minHeight="?attr/actionBarSize"
+            android:background="?sp_actionbar_color"
             app:titleTextAppearance="?sp_ab_title_style"
-            app:subtitleTextAppearance="?sp_ab_subtitle_style"/>
+            app:subtitleTextAppearance="?sp_ab_subtitle_style" />
+
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/sc_ng_text_dark" />
 
     <com.silentcircle.contacts.widget.SlidingTabLayout
             android:id="@+id/sliding_tabs"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            android:layout_height="wrap_content"
+            android:background="@color/sc_ng_background_1" />
 
     <android.support.v4.view.ViewPager
             android:id="@+id/call_log_pager"

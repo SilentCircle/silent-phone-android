@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2014-2015, Silent Circle, LLC. All rights reserved.
+Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -51,28 +51,31 @@ import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.CursorLoader;
+import android.content.res.Resources;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.ContactsContract;
+import android.provider.ContactsContract.Contacts;
+import android.provider.ContactsContract.Data;
+import android.provider.ContactsContract.Directory;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.QuickContactBadge;
 import android.widget.SectionIndexer;
 import android.widget.TextView;
 
 import com.silentcircle.common.list.IndexerListAdapter;
 import com.silentcircle.common.list.ContactListItemView;
 import com.silentcircle.common.list.ContactListPinnedHeaderView;
+import com.silentcircle.common.util.SearchUtil;
 import com.silentcircle.contacts.ContactPhotoManagerNew;
 import com.silentcircle.contacts.ContactPhotoManagerNew.DefaultImageRequest;
 import com.silentcircle.contacts.widget.CompositeCursorAdapter;
-import com.silentcircle.contacts.widget.ScQuickContactBadgeNew;
-import com.silentcircle.silentcontacts2.ScContactsContract;
-import com.silentcircle.silentcontacts2.ScContactsContract.Directory;
-import com.silentcircle.silentcontacts2.ScContactsContract.RawContacts;
 import com.silentcircle.silentphone2.R;
 
 import java.util.HashSet;
@@ -145,8 +148,8 @@ public abstract class ScContactEntryListAdapter extends IndexerListAdapter {
 
     public ScContactEntryListAdapter(Context context, boolean enableScDir) {
         super(context);
-        addPartitions(enableScDir);
         setDefaultFilterHeaderText(R.string.local_search_label);
+        addPartitions(enableScDir);
     }
 
     /**
@@ -216,6 +219,7 @@ public abstract class ScContactEntryListAdapter extends IndexerListAdapter {
         partition.setDirectoryType(getContext().getString(R.string.contactsList));
         partition.setPriorityDirectory(true);
         partition.setPhotoSupported(true);
+        partition.setLabel(mDefaultFilterHeaderText.toString());
         return partition;
     }
 
@@ -240,7 +244,7 @@ public abstract class ScContactEntryListAdapter extends IndexerListAdapter {
     protected void removeDirectoriesAfterDefault() {
         final int partitionCount = getPartitionCount();
         for (int i = partitionCount - 1; i >= 0; i--) {
-            final CompositeCursorAdapter.Partition partition = getPartition(i);
+            final Partition partition = getPartition(i);
             if ((partition instanceof DirectoryPartition)
                     && ((DirectoryPartition) partition).getDirectoryId() == Directory.DEFAULT) {
                 break;
@@ -250,10 +254,10 @@ public abstract class ScContactEntryListAdapter extends IndexerListAdapter {
         }
     }
 
-    private int getPartitionByDirectoryId(long id) {
+    protected int getPartitionByDirectoryId(long id) {
         int count = getPartitionCount();
         for (int i = 0; i < count; i++) {
-            CompositeCursorAdapter.Partition partition = getPartition(i);
+            Partition partition = getPartition(i);
             if (partition instanceof DirectoryPartition) {
                 if (((DirectoryPartition)partition).getDirectoryId() == id) {
                     return i;
@@ -261,6 +265,20 @@ public abstract class ScContactEntryListAdapter extends IndexerListAdapter {
             }
         }
         return -1;
+    }
+
+    protected DirectoryPartition getDirectoryById(long id) {
+        int count = getPartitionCount();
+        for (int i = 0; i < count; i++) {
+            Partition partition = getPartition(i);
+            if (partition instanceof DirectoryPartition) {
+                final DirectoryPartition directoryPartition = (DirectoryPartition) partition;
+                if (directoryPartition.getDirectoryId() == id) {
+                    return directoryPartition;
+                }
+            }
+        }
+        return null;
     }
 
     protected boolean isUseScDirLoaderOrg() {
@@ -279,6 +297,7 @@ public abstract class ScContactEntryListAdapter extends IndexerListAdapter {
         mUseScDirLoaderOrg = use;
     }
 
+
     public abstract String getContactDisplayName(int position);
     public abstract void configureLoader(CursorLoader loader, long directoryId);
 
@@ -289,7 +308,7 @@ public abstract class ScContactEntryListAdapter extends IndexerListAdapter {
         boolean notify = false;
         int count = getPartitionCount();
         for (int i = 0; i < count; i++) {
-            CompositeCursorAdapter.Partition partition = getPartition(i);
+            Partition partition = getPartition(i);
             if (partition instanceof DirectoryPartition) {
                 DirectoryPartition directoryPartition = (DirectoryPartition)partition;
                 if (!directoryPartition.isLoading()) {
@@ -307,7 +326,7 @@ public abstract class ScContactEntryListAdapter extends IndexerListAdapter {
     public void clearPartitions() {
         int count = getPartitionCount();
         for (int i = 0; i < count; i++) {
-            CompositeCursorAdapter.Partition partition = getPartition(i);
+            Partition partition = getPartition(i);
             if (partition instanceof DirectoryPartition) {
                 DirectoryPartition directoryPartition = (DirectoryPartition)partition;
                 directoryPartition.setStatus(DirectoryPartition.STATUS_NOT_LOADED);
@@ -334,7 +353,8 @@ public abstract class ScContactEntryListAdapter extends IndexerListAdapter {
         if (TextUtils.isEmpty(queryString)) {
             mUpperCaseQueryString = null;
         } else {
-            mUpperCaseQueryString = queryString.toUpperCase();
+            mUpperCaseQueryString = SearchUtil
+                    .cleanStartAndEndOfSearchQuery(queryString.toUpperCase()) ;
         }
     }
 
@@ -355,6 +375,11 @@ public abstract class ScContactEntryListAdapter extends IndexerListAdapter {
             return ScDirectoryLoader.MAX_RECORDS;
         }
         return mDirectoryResultLimit;
+    }
+
+    public int getDirectoryResultLimit(DirectoryPartition directoryPartition) {
+        final int limit = directoryPartition.getResultLimit();
+        return limit == DirectoryPartition.RESULT_LIMIT_DEFAULT ? mDirectoryResultLimit : limit;
     }
 
     public void setDirectoryResultLimit(int limit) {
@@ -493,6 +518,11 @@ public abstract class ScContactEntryListAdapter extends IndexerListAdapter {
             if (getPartitionByDirectoryId(id) == -1) {
                 DirectoryPartition partition = new DirectoryPartition(false, true);
                 partition.setDirectoryId(id);
+                if (isRemoteDirectory(id)) {
+                    partition.setLabel(mContext.getString(R.string.directory_search_label));
+                } else {
+                    partition.setLabel(mDefaultFilterHeaderText.toString());
+                }
                 partition.setDirectoryType(cursor.getString(directoryTypeColumnIndex));
                 partition.setDisplayName(cursor.getString(displayNameColumnIndex));
                 int photoSupport = cursor.getInt(photoSupportColumnIndex);
@@ -525,7 +555,7 @@ public abstract class ScContactEntryListAdapter extends IndexerListAdapter {
             return;
         }
 
-        CompositeCursorAdapter.Partition partition = getPartition(partitionIndex);
+        Partition partition = getPartition(partitionIndex);
         if (partition instanceof DirectoryPartition) {
             ((DirectoryPartition)partition).setStatus(DirectoryPartition.STATUS_LOADED);
         }
@@ -539,6 +569,9 @@ public abstract class ScContactEntryListAdapter extends IndexerListAdapter {
         if (isSectionHeaderDisplayEnabled() && partitionIndex == getIndexedPartition()) {
             updateIndexer(cursor);
         }
+
+        // When the cursor changes, cancel any pending asynchronous photo loads.
+        mPhotoLoader.cancelPendingRequests(mFragmentRootView);
     }
 
     public void changeCursor(Cursor cursor) {
@@ -553,19 +586,36 @@ public abstract class ScContactEntryListAdapter extends IndexerListAdapter {
             setIndexer(null);
             return;
         }
+
         Bundle bundle = cursor.getExtras();
+        if (bundle.containsKey(Contacts.EXTRA_ADDRESS_BOOK_INDEX_TITLES) &&
+                bundle.containsKey(Contacts.EXTRA_ADDRESS_BOOK_INDEX_COUNTS)) {
+            String sections[] =
+                    bundle.getStringArray(Contacts.EXTRA_ADDRESS_BOOK_INDEX_TITLES);
+            int counts[] = bundle.getIntArray(
+                    Contacts.EXTRA_ADDRESS_BOOK_INDEX_COUNTS);
 
-        if (bundle == Bundle.EMPTY)   // try the dirty trick if Cursor does not support setExtras() function
-            bundle = mContext.getContentResolver().call(ScContactsContract.AUTHORITY_URI, "INDEX", null, null);
-
-        if (bundle != null && bundle.containsKey(ScContactsContract.ContactCounts.EXTRA_ADDRESS_BOOK_INDEX_TITLES)) {
-            String sections[] = bundle.getStringArray(ScContactsContract.ContactCounts.EXTRA_ADDRESS_BOOK_INDEX_TITLES);
-            int counts[] = bundle.getIntArray(ScContactsContract.ContactCounts.EXTRA_ADDRESS_BOOK_INDEX_COUNTS);
-            setIndexer(new ContactsSectionIndexer(sections, counts));
-        } 
-        else {
+            if (getExtraStartingSection()) {
+                // Insert an additional unnamed section at the top of the list.
+                String allSections[] = new String[sections.length + 1];
+                int allCounts[] = new int[counts.length + 1];
+                for (int i = 0; i < sections.length; i++) {
+                    allSections[i + 1] = sections[i];
+                    allCounts[i + 1] = counts[i];
+                }
+                allCounts[0] = 1;
+                allSections[0] = "";
+                setIndexer(new ContactsSectionIndexer(allSections, allCounts));
+            } else {
+                setIndexer(new ContactsSectionIndexer(sections, counts));
+            }
+        } else {
             setIndexer(null);
         }
+    }
+
+    protected boolean getExtraStartingSection() {
+        return false;
     }
 
     @Override
@@ -609,7 +659,7 @@ public abstract class ScContactEntryListAdapter extends IndexerListAdapter {
     public boolean isLoading() {
         int count = getPartitionCount();
         for (int i = 0; i < count; i++) {
-            CompositeCursorAdapter.Partition partition = getPartition(i);
+            Partition partition = getPartition(i);
             if (partition instanceof DirectoryPartition
                     && ((DirectoryPartition) partition).isLoading()) {
                 return true;
@@ -635,7 +685,7 @@ public abstract class ScContactEntryListAdapter extends IndexerListAdapter {
         int defaultPartitionIndex = -1;
         int count = getPartitionCount();
         for (int i = 0; i < count; i++) {
-            CompositeCursorAdapter.Partition partition = getPartition(i);
+            Partition partition = getPartition(i);
             if (partition instanceof DirectoryPartition &&
                     ((DirectoryPartition)partition).getDirectoryId() == Directory.DEFAULT) {
                 defaultPartitionIndex = i;
@@ -668,8 +718,9 @@ public abstract class ScContactEntryListAdapter extends IndexerListAdapter {
     }
 
     @Override
+    @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
     protected void bindHeaderView(View view, int partitionIndex, Cursor cursor) {
-        CompositeCursorAdapter.Partition partition = getPartition(partitionIndex);
+        Partition partition = getPartition(partitionIndex);
         if (!(partition instanceof DirectoryPartition)) {
             return;
         }
@@ -678,12 +729,10 @@ public abstract class ScContactEntryListAdapter extends IndexerListAdapter {
         long directoryId = directoryPartition.getDirectoryId();
         TextView labelTextView = (TextView)view.findViewById(R.id.label);
         TextView displayNameTextView = (TextView)view.findViewById(R.id.display_name);
-
-        if (directoryId == Directory.DEFAULT || directoryId == Directory.LOCAL_INVISIBLE) {
-            labelTextView.setText(mDefaultFilterHeaderText);
-        }
-        else {
-            labelTextView.setText(R.string.directory_search_label);
+        labelTextView.setText(directoryPartition.getLabel());
+        if (!isRemoteDirectory(directoryId)) {
+            displayNameTextView.setText(null);
+        } else {
             String directoryName = directoryPartition.getDisplayName();
             String displayName = !TextUtils.isEmpty(directoryName)
                     ? directoryName
@@ -691,6 +740,16 @@ public abstract class ScContactEntryListAdapter extends IndexerListAdapter {
             displayNameTextView.setText(displayName);
         }
 
+        final Resources res = getContext().getResources();
+        final int headerPaddingTop = partitionIndex == 1 && getPartition(0).isEmpty()?
+                0 : res.getDimensionPixelOffset(R.dimen.directory_header_extra_top_padding);
+        // There should be no extra padding at the top of the first directory header
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+            view.setPaddingRelative(view.getPaddingStart(), headerPaddingTop, view.getPaddingEnd(), view.getPaddingBottom());
+        }
+        else {
+            view.setPadding(view.getPaddingLeft(), headerPaddingTop, view.getPaddingRight(), view.getPaddingBottom());
+        }
         // The display of the cursor count is sort of misleading - it shows the number of number/name data records,
         // not the number of contact entries.
         TextView countText = (TextView)view.findViewById(R.id.count);
@@ -736,9 +795,9 @@ public abstract class ScContactEntryListAdapter extends IndexerListAdapter {
                 int offset = getCursor(partition).getPosition();
                 Cursor cursor = (Cursor) getItem(position);
                 if (cursor != null) {
-                    int profileColumnIndex = cursor.getColumnIndex(RawContacts.CONTACT_TYPE);
+                    int profileColumnIndex = cursor.getColumnIndex(Contacts.IS_USER_PROFILE);
                     if (profileColumnIndex != -1) {
-                        isUserProfile = cursor.getInt(profileColumnIndex) == RawContacts.CONTACT_TYPE_OWN;
+                        isUserProfile = cursor.getInt(profileColumnIndex) == 1;
                     }
                     // Restore the old cursor position.
                     cursor.moveToPosition(offset);
@@ -752,15 +811,15 @@ public abstract class ScContactEntryListAdapter extends IndexerListAdapter {
     public String getQuantityText(int count, int zeroResourceId, int pluralResourceId) {
         if (count == 0) {
             return getContext().getString(zeroResourceId);
-        }
-        else {
-            String format = getContext().getResources().getQuantityText(pluralResourceId, count).toString();
+        } else {
+            String format = getContext().getResources()
+                    .getQuantityText(pluralResourceId, count).toString();
             return String.format(format, count);
         }
     }
 
     public boolean isPhotoSupported(int partitionIndex) {
-        CompositeCursorAdapter.Partition partition = getPartition(partitionIndex);
+        Partition partition = getPartition(partitionIndex);
         if (partition instanceof DirectoryPartition) {
             return ((DirectoryPartition) partition).isPhotoSupported();
         }
@@ -785,31 +844,34 @@ public abstract class ScContactEntryListAdapter extends IndexerListAdapter {
      * @param photoIdColumn Index of the photo id column
      * @param photoUriColumn Index of the photo uri column. Optional: Can be -1
      * @param contactIdColumn Index of the contact id column
+     * @param lookUpKeyColumn Index of the lookup key column
+     * @param displayNameColumn Index of the display name column
      */
-    protected void bindQuickContact(final ContactListItemView view, int partitionIndex, Cursor cursor, int photoIdColumn,
-            int photoUriColumn, int contactIdColumn, int nameColumn) {
-
+    protected void bindQuickContact(final ContactListItemView view, int partitionIndex,
+            Cursor cursor, int photoIdColumn, int photoUriColumn, int contactIdColumn,
+            int lookUpKeyColumn, int displayNameColumn) {
         long photoId = 0;
         if (!cursor.isNull(photoIdColumn)) {
             photoId = cursor.getLong(photoIdColumn);
         }
 
-        ScQuickContactBadgeNew quickContact = view.getQuickContact();
-        quickContact.assignContactUri(getContactUri(partitionIndex, cursor, contactIdColumn));
-
-        DefaultImageRequest request = getDefaultImageRequestFromCursor(cursor,
-                nameColumn,
-                RawContacts.getLookupUri(cursor.getLong(contactIdColumn)).toString());
+        QuickContactBadge quickContact = view.getQuickContact();
+        quickContact.assignContactUri(
+                getContactUri(partitionIndex, cursor, contactIdColumn, lookUpKeyColumn));
 
         if (photoId != 0 || photoUriColumn == -1) {
-            getPhotoLoader().loadThumbnail(quickContact, photoId, mDarkTheme, mCircularPhotos, request);
+            getPhotoLoader().loadThumbnail(quickContact, photoId, mDarkTheme, mCircularPhotos,
+                    null);
         } else {
             final String photoUriString = cursor.getString(photoUriColumn);
             final Uri photoUri = photoUriString == null ? null : Uri.parse(photoUriString);
-            if (photoUri != null) {
-                request = null;
+            DefaultImageRequest request = null;
+            if (photoUri == null) {
+                request = getDefaultImageRequestFromCursor(cursor, displayNameColumn,
+                        lookUpKeyColumn);
             }
-            getPhotoLoader().loadPhoto(quickContact, photoUri, -1, mDarkTheme, mCircularPhotos, request);
+            getPhotoLoader().loadPhoto(quickContact, photoUri, -1, mDarkTheme, mCircularPhotos,
+                    request);
         }
 
     }
@@ -830,18 +892,29 @@ public abstract class ScContactEntryListAdapter extends IndexerListAdapter {
 
     }
 
-    protected Uri getContactUri(int partitionIndex, Cursor cursor, int contactIdColumn) {
-
+    protected Uri getContactUri(int partitionIndex, Cursor cursor,
+            int contactIdColumn, int lookUpKeyColumn) {
         long contactId = cursor.getLong(contactIdColumn);
-        Uri uri = RawContacts.getLookupUri(contactId);
+        String lookupKey = cursor.getString(lookUpKeyColumn);
         long directoryId = ((DirectoryPartition)getPartition(partitionIndex)).getDirectoryId();
         if (directoryId == SC_DIRECTORY)
             return null;                    // We don't have a database URI for SC directory contacts
+        // Remote directories must have a lookup key or we don't have
+        // a working contact URI
+        if (TextUtils.isEmpty(lookupKey) && isRemoteDirectory(directoryId)) {
+            return null;
+        }
+        Uri uri = Contacts.getLookupUri(contactId, lookupKey);
         if (directoryId != Directory.DEFAULT) {
             uri = uri.buildUpon().appendQueryParameter(
-                    ScContactsContract.DIRECTORY_PARAM_KEY, String.valueOf(directoryId)).build();
+                    ContactsContract.DIRECTORY_PARAM_KEY, String.valueOf(directoryId)).build();
         }
         return uri;
+    }
+
+    public static boolean isRemoteDirectory(long directoryId) {
+        return directoryId != ContactsContract.Directory.DEFAULT
+                && directoryId != ContactsContract.Directory.LOCAL_INVISIBLE;
     }
 
     public void setContactsCount(String count) {
@@ -858,13 +931,14 @@ public abstract class ScContactEntryListAdapter extends IndexerListAdapter {
      *
      * @param cursor Contacts cursor positioned at the current row to retrieve contact details for
      * @param displayNameColumn Column index of the display name
-     * @param lookupKey String of a lookup key (used for coloring the letter tile etc)
+     * @param lookupKeyColumn Column index of the lookup key
      * @return {@link DefaultImageRequest} with the displayName and identifier fields set to the
      * display name and lookup key of the contact.
      */
     public DefaultImageRequest getDefaultImageRequestFromCursor(Cursor cursor,
-                                                                int displayNameColumn, final String lookupKey) {
+            int displayNameColumn, int lookupKeyColumn) {
         final String displayName = cursor.getString(displayNameColumn);
+        final String lookupKey = cursor.getString(lookupKeyColumn);
         return new DefaultImageRequest(displayName, lookupKey, mCircularPhotos);
     }
 }

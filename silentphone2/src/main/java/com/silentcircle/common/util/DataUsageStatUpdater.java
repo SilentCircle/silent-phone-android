@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2015, Silent Circle, LLC. All rights reserved.
+Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -43,15 +43,16 @@ import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
+import android.provider.ContactsContract;
+import android.provider.ContactsContract.CommonDataKinds.Email;
+import android.provider.ContactsContract.CommonDataKinds.Phone;
+import android.provider.ContactsContract.DataUsageFeedback;
 import android.text.TextUtils;
 import android.text.util.Rfc822Token;
 import android.text.util.Rfc822Tokenizer;
 import android.util.Log;
 
-import com.silentcircle.silentcontacts2.ScContactsContract.CommonDataKinds.Callable;
-import com.silentcircle.silentcontacts2.ScContactsContract.CommonDataKinds.Email;
-import com.silentcircle.silentcontacts2.ScContactsContract.CommonDataKinds.Phone;
-import com.silentcircle.silentcontacts2.ScContactsContract.DataUsageFeedback;
+import com.silentcircle.silentphone2.util.ConfigurationUtilities;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -151,9 +152,7 @@ public class DataUsageStatUpdater {
      * input has no valid entities. 
      */
     public boolean updateWithPhoneNumber(String number, long contactId) {
-        if (Log.isLoggable(TAG, Log.DEBUG)) {
-            Log.d(TAG, "++++ updateWithPhoneNumber: " + number);
-        }
+        if (ConfigurationUtilities.mTrace) Log.d(TAG, "updateWithPhoneNumber: " + number);
         if (number == null)
             return false;
 
@@ -161,9 +160,9 @@ public class DataUsageStatUpdater {
             number = number.substring(1);
         }
         String where = "(" + Phone.NUMBER + " LIKE '%" + number +"' OR " + Phone.NORMALIZED_NUMBER + " LIKE '%" + number + "') AND "
-                + Phone.RAW_CONTACT_ID +"=" + contactId;
-        final Cursor cursor = mResolver.query(Callable.CONTENT_URI,
-                new String[] {Phone.RAW_CONTACT_ID, Phone._ID, Phone.NORMALIZED_NUMBER, Phone.DATA1}, where, null, null);
+                + Phone.CONTACT_ID +"=" + contactId;
+        final Cursor cursor = mResolver.query(ContactsContract.Data.CONTENT_URI,
+                new String[] {Phone.CONTACT_ID, Phone._ID, Phone.NORMALIZED_NUMBER, Phone.DATA1}, where, null, null);
 
         if (cursor == null) {
             Log.w(TAG, "Cursor for Phone.CONTENT_URI became null.");

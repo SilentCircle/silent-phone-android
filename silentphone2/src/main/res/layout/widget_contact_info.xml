@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginLeft="@dimen/messaging_viewer_vcard_item_margin_left"
+    android:layout_marginStart="@dimen/messaging_viewer_vcard_item_margin_left"
+    android:layout_marginTop="@dimen/messaging_viewer_vcard_item_margin_top"
+    android:layout_marginBottom="@dimen/messaging_viewer_vcard_item_margin_bottom"
+    android:layout_marginRight="@dimen/messaging_viewer_vcard_item_margin_right"
+    android:layout_marginEnd="@dimen/messaging_viewer_vcard_item_margin_right"
+    android:orientation="vertical">
+
+    <TextView
+        android:id="@+id/widget_contact_info_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="@dimen/text_normal"
+        tools:text="Label" />
+
+    <TextView
+        android:id="@+id/widget_contact_info_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="@dimen/text_xlarge"
+        android:textColor="@color/silent_white"
+        tools:text="Street name, City, postal code" />
+
+</LinearLayout>

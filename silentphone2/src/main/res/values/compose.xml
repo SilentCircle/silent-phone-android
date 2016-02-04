@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:android="http://schemas.android.com/apk/res/android">
+
+  <style name="Compose">
+    <item name="android:layout_width">fill_parent</item>
+    <item name="android:layout_height">wrap_content</item>
+    <item name="android:background">@color/chat_main_background</item>
+    <item name="android:padding">@dimen/spacing_small</item>
+    <item name="android:gravity">center_vertical</item>
+    <item name="android:layout_alignParentBottom">true</item>
+  </style>
+
+  <style name="_ComposeText">
+    <item name="android:padding">@dimen/spacing_normal</item>
+    <item name="android:background">@drawable/bg_text_input</item>
+    <item name="android:textColor">@color/chat_compose_text</item>
+    <item name="android:textSize">@dimen/text_xlarge</item>
+    <item name="android:imeOptions">actionSend</item>
+    <item name="android:inputType">textCapSentences|textMultiLine|textAutoCorrect</item>
+  </style>
+  
+  <style name="ComposeText" parent="_ComposeText"/>
+
+  <style name="ComposeSend">
+    <item name="android:layout_width">wrap_content</item>
+    <item name="android:layout_height">wrap_content</item>
+    <item name="android:layout_alignParentRight">true</item>
+    <item name="android:layout_alignTop">@+id/compose_text</item>
+    <item name="android:layout_alignBottom">@+id/compose_text</item>
+    <item name="android:padding">@dimen/spacing_small</item>
+    <item name="android:scaleType">fitEnd</item>
+    <item name="android:background">@drawable/bg_selectable</item>
+    <item name="android:src">@drawable/ic_action_attachment_dark</item>
+  </style>
+
+  <style name="ComposeAttach">
+    <item name="android:layout_width">wrap_content</item>
+    <item name="android:layout_height">wrap_content</item>
+    <item name="android:padding">@dimen/spacing_small</item>
+    <item name="android:scaleType">fitEnd</item>
+    <item name="android:background">@drawable/bg_selectable</item>
+    <item name="android:src">@drawable/ic_action_attachment</item>
+  </style>
+
+  <style name="StartChat">
+    <item name="android:layout_width">wrap_content</item>
+    <item name="android:layout_height">wrap_content</item>
+    <item name="android:padding">@dimen/spacing_small</item>
+    <item name="android:background">@drawable/bg_selectable</item>
+    <item name="android:src">@drawable/ic_action_start_chat</item>
+  </style>
+
+</resources>

@@ -19,6 +19,7 @@ package com.silentcircle.contacts.calllognew;
 import android.annotation.TargetApi;
 import android.content.res.Resources;
 import android.os.Build;
+import android.provider.ContactsContract.CommonDataKinds.Phone;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
 import android.view.View;
@@ -27,9 +28,9 @@ import android.widget.TextView;
 import com.google.common.collect.Lists;
 import com.silentcircle.common.testing.NeededForTesting;
 import com.silentcircle.common.util.DialerUtils;
-import com.silentcircle.contacts.model.account.LabelHelper;
 import com.silentcircle.contacts.utils.PhoneNumberHelper;
 import com.silentcircle.silentphone2.R;
+import com.silentcircle.silentphone2.util.Utilities;
 
 import java.util.ArrayList;
 
@@ -104,7 +105,7 @@ public class PhoneCallDetailsHelper {
             mPhoneNumberHelper.getDisplayNumber(details.number,
                     details.numberPresentation, details.formattedNumber);
         if (TextUtils.isEmpty(details.name)) {
-            nameText = displayNumber;
+            nameText = Utilities.removeSipParts(displayNumber.toString());
             // We have a real phone number as "nameView" so make it always LTR
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1)
                 views.nameView.setTextDirection(View.TEXT_DIRECTION_LTR);
@@ -165,7 +166,7 @@ public class PhoneCallDetailsHelper {
 //                numberFormattedLabel = details.geocode;
 //            }
 //            else {
-                numberFormattedLabel = LabelHelper.PhoneLabel.getTypeLabel(mResources, details.numberType,
+                numberFormattedLabel = Phone.getTypeLabel(mResources, details.numberType,
                         details.numberLabel);
 //            }
         }

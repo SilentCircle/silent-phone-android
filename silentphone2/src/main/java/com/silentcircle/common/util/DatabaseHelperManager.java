@@ -17,11 +17,12 @@
 package com.silentcircle.common.util;
 
 import android.content.Context;
-import com.silentcircle.silentphone2.database.DialerDatabaseHelper;
+
+import com.silentcircle.silentphone2.database.DialerDatabaseHelperOrig;
 
 
 public class DatabaseHelperManager {
-    public static DialerDatabaseHelper getDatabaseHelper(Context context) {
-        return DialerDatabaseHelper.getInstance(context);
+    public static DialerDatabaseHelperOrig getDatabaseHelper(Context context) {
+        return DialerDatabaseHelperOrig.getInstance(context);
     }
 }

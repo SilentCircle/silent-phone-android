@@ -1,32 +1,6 @@
-/*
-Created by Janis Narbuts
-Copyright (C) 2004-2012, Tivi LTD, www.tiviphone.com. All rights reserved.
-Copyright (C) 2012-2015, Silent Circle, LLC.  All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-    * Any redistribution, use, or modification is done solely for personal
-      benefit and not for any commercial purpose or for monetary gain
-    * Redistributions of source code must retain the above copyright
-      notice, this list of conditions and the following disclaimer.
-    * Redistributions in binary form must reproduce the above copyright
-      notice, this list of conditions and the following disclaimer in the
-      documentation and/or other materials provided with the distribution.
-    * Neither the name Silent Circle nor the
-      names of its contributors may be used to endorse or promote products
-      derived from this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL SILENT CIRCLE, LLC BE LIABLE FOR ANY
-DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
+//VoipPhone
+//Created by Janis Narbuts
+//Copyright (c) 2004-2012 Tivi LTD, www.tiviphone.com. All rights reserved.
 
 #if  (defined(_WIN32) || defined(__SYMBIAN32__) || defined(_WIN32_WCE) || defined(ANDROID_NDK) || defined(__APPLE__))
 //&&  !defined(__SYMBIAN32__)
@@ -53,6 +27,20 @@ int fillCfg(char *dest,STR_XML *src);
 
 int hex2BinL(unsigned char *Bin, char * Hex, int iLen);
 
+
+static int loadSZ(char *v, int iLen , char *sz, int maxSZ){
+   
+   if(iLen / 2 + 1 > maxSZ){
+      sz[0]=0;
+      return 0;
+   }
+   
+   hex2BinL((unsigned char *)sz,v,iLen);
+   sz[iLen/2]=0;
+   
+   return 0;
+}
+
 static int loadBE(char *v, int iLen , CTEditBase *b){
    
 //TODO getMaxLen
@@ -78,6 +66,22 @@ static int addItemBE(FILE *f, const char *key, CTEditBase *b){
    if(l>255)l=255;//???
    
    bin2Hex((unsigned char *)b->getText(),&r[0],l*2);
+   //r[l*4]=0;
+   
+   fprintf(f," %s=\"%s\"",key,r);
+   //printf(" %s=\"%s\"",key,r);
+   return 0;
+}
+
+static int addItemSZ(FILE *f, const char *key, const char *value){
+   char r[1024];
+   
+   void bin2Hex(unsigned char *Bin, char * Hex ,int iBinLen);
+   
+   int l=(int)strlen(value);
+   if(l>255)l=255;//???
+   
+   bin2Hex((unsigned char *)value,&r[0],l);
    //r[l*4]=0;
    
    fprintf(f," %s=\"%s\"",key,r);
@@ -134,7 +138,7 @@ int keepHistoryFor(){
 
 void saveRecetnsFN(CTList *list, const char *tag, int iIsRecents, const char *fn){
    
-   unsigned int getTickCount();
+   unsigned int getTickCount(void);
    unsigned int ui=getTickCount();
    if(!iLoaded)return;
    FILE *f=fopen(fn,"wb+");
@@ -167,6 +171,7 @@ void saveRecetnsFN(CTList *list, const char *tag, int iIsRecents, const char *fn
          addItemBE(f,"peerAddr",&rec->peerAddr);
          addItemBE(f,"myAddr",&rec->myAddr);
          addItemBE(f,"lbServ",&rec->lbServ);
+         addItemSZ(f,"szPAN",rec->szPeerAssertedUsername);
          
          if(iIsRecents){
             addItemUI(f,"uiStartTime",rec->uiStartTime);
@@ -239,8 +244,9 @@ int loadRecetnsFN(CTList *list, const char *tag, int iIsRecents, const char *fn)
       while(nv && iCanAdd){
          do{
 #define T_TRY_LOAD_E(_A,_DST) if(TCMP(nv->name,_A)){loadBE(nv->value.s,nv->value.len, _DST);break;}
-#define T_TRY_LOAD_I(_A,_DST) if(TCMP(nv->name,_A)){_DST=atoi(nv->value.s);;break;}
-#define T_TRY_LOAD_UI(_A,_DST) if(TCMP(nv->name,_A)){_DST=atol(nv->value.s);break;}
+#define T_TRY_LOAD_I(_A,_DST) if(TCMP(nv->name,_A)){_DST=(int)atoi(nv->value.s);;break;}
+#define T_TRY_LOAD_UI(_A,_DST) if(TCMP(nv->name,_A)){_DST=(int)atol(nv->value.s);break;}
+#define T_TRY_LOAD_SZ(_A,_DST) if(TCMP(nv->name,_A)){loadSZ(nv->value.s,nv->value.len, _DST, sizeof(_DST)-1);;break;}
 
             if(iIsRecents){
                
@@ -262,6 +268,7 @@ int loadRecetnsFN(CTList *list, const char *tag, int iIsRecents, const char *fn)
             T_TRY_LOAD_E("peerAddr",&rec->peerAddr);
             T_TRY_LOAD_E("myAddr",&rec->myAddr);
             T_TRY_LOAD_E("lbServ",&rec->lbServ);
+            T_TRY_LOAD_SZ("szPAN",rec->szPeerAssertedUsername);
             
          }while(0);
          nv=nv->next;

@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2014-2015, Silent Circle, LLC. All rights reserved.
+Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -47,17 +47,22 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 package com.silentcircle.contacts.list;
 
+import android.annotation.TargetApi;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
-import android.view.View;
+import android.os.Build;
+import android.provider.ContactsContract;
+import android.provider.ContactsContract.Contacts;
+import android.provider.ContactsContract.Directory;
+import android.provider.ContactsContract.SearchSnippets;
+import android.text.TextUtils;
+import android.util.Log;
 import android.view.ViewGroup;
 
 import com.silentcircle.common.list.ContactListItemView;
 import com.silentcircle.contacts.ContactPhotoManagerNew.DefaultImageRequest;
-import com.silentcircle.silentcontacts2.ScContactsContract;
-import com.silentcircle.silentcontacts2.ScContactsContract.Directory;
-import com.silentcircle.silentcontacts2.ScContactsContract.RawContacts;
+import com.silentcircle.contacts.preference.ContactsPreferences;
 import com.silentcircle.silentphone2.R;
 
 /**
@@ -68,57 +73,63 @@ import com.silentcircle.silentphone2.R;
 public abstract class ScContactListAdapter extends ScContactEntryListAdapter {
 
     // Coumn numbers changed, see below
+//    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     protected static class ContactQuery {
         private static final String[] CONTACT_PROJECTION_PRIMARY = new String[] {
-            RawContacts._ID,                           // 0
-            RawContacts.DISPLAY_NAME_PRIMARY,          // 1
-            RawContacts.PHOTO_ID,                      // 2
-            RawContacts.PHOTO_THUMBNAIL_URI,           // 3
-            RawContacts.CONTACT_TYPE,                  // 4
-//          Contacts.CONTACT_PRESENCE,                 // ?
-//          Contacts.CONTACT_STATUS,                   // ?
+            Contacts._ID,                           // 0
+            Contacts.DISPLAY_NAME_PRIMARY,          // 1
+            Contacts.CONTACT_PRESENCE,              // 2
+            Contacts.CONTACT_STATUS,                // 3
+            Contacts.PHOTO_ID,                      // 4
+            Contacts.PHOTO_THUMBNAIL_URI,           // 5
+            Contacts.LOOKUP_KEY,                    // 6
+            Contacts.IS_USER_PROFILE,               // 7
         };
 
         private static final String[] CONTACT_PROJECTION_ALTERNATIVE = new String[] {
-            RawContacts._ID,                           // 0
-            RawContacts.DISPLAY_NAME_ALTERNATIVE,      // 1
-            RawContacts.PHOTO_ID,                      // 2
-            RawContacts.PHOTO_THUMBNAIL_URI,           // 3
-            RawContacts.CONTACT_TYPE,                  // 4
-//          Contacts.CONTACT_PRESENCE,                 // ?
-//          Contacts.CONTACT_STATUS,                   // ?
+            Contacts._ID,                           // 0
+            Contacts.DISPLAY_NAME_ALTERNATIVE,      // 1
+            Contacts.CONTACT_PRESENCE,              // 2
+            Contacts.CONTACT_STATUS,                // 3
+            Contacts.PHOTO_ID,                      // 4
+            Contacts.PHOTO_THUMBNAIL_URI,           // 5
+            Contacts.LOOKUP_KEY,                    // 6
+            Contacts.IS_USER_PROFILE,               // 7
         };
 
         private static final String[] FILTER_PROJECTION_PRIMARY = new String[] {
-            RawContacts._ID,                           // 0
-            RawContacts.DISPLAY_NAME_PRIMARY,          // 1
-            RawContacts.PHOTO_ID,                      // 2
-            RawContacts.PHOTO_THUMBNAIL_URI,           // 3
-            RawContacts.CONTACT_TYPE,                  // 4
-//          Contacts.CONTACT_PRESENCE,                 // ?
-//          Contacts.CONTACT_STATUS,                   // ?
-//            SearchSnippetColumns.SNIPPET,            // ?
+            Contacts._ID,                           // 0
+            Contacts.DISPLAY_NAME_PRIMARY,          // 1
+            Contacts.CONTACT_PRESENCE,              // 2
+            Contacts.CONTACT_STATUS,                // 3
+            Contacts.PHOTO_ID,                      // 4
+            Contacts.PHOTO_THUMBNAIL_URI,           // 5
+            Contacts.LOOKUP_KEY,                    // 6
+            Contacts.IS_USER_PROFILE,               // 7
+            SearchSnippets.SNIPPET                  // 8
         };
 
         private static final String[] FILTER_PROJECTION_ALTERNATIVE = new String[] {
-            RawContacts._ID,                           // 0
-            RawContacts.DISPLAY_NAME_ALTERNATIVE,      // 1
-            RawContacts.PHOTO_ID,                      // 2
-            RawContacts.PHOTO_THUMBNAIL_URI,           // 3
-            RawContacts.CONTACT_TYPE,                  // 4
-//          Contacts.CONTACT_PRESENCE,              // 2
-//          Contacts.CONTACT_STATUS,                // 3
-//          SearchSnippetColumns.SNIPPET,           // 8
+            Contacts._ID,                           // 0
+            Contacts.DISPLAY_NAME_ALTERNATIVE,      // 1
+            Contacts.CONTACT_PRESENCE,              // 2
+            Contacts.CONTACT_STATUS,                // 3
+            Contacts.PHOTO_ID,                      // 4
+            Contacts.PHOTO_THUMBNAIL_URI,           // 5
+            Contacts.LOOKUP_KEY,                    // 6
+            Contacts.IS_USER_PROFILE,               // 7
+            SearchSnippets.SNIPPET                  // 8
         };
 
         public static final int CONTACT_ID               = 0;
         public static final int CONTACT_DISPLAY_NAME     = 1;
-        public static final int CONTACT_PHOTO_ID         = 2;
-        public static final int CONTACT_PHOTO_URI        = 3;
-        public static final int CONTACT_TYPE             = 4;
-//      public static final int CONTACT_PRESENCE_STATUS  = ?;
-//      public static final int CONTACT_CONTACT_STATUS   = ?;
-//      public static final int CONTACT_SNIPPET          = ?;
+        public static final int CONTACT_PRESENCE_STATUS  = 2;
+        public static final int CONTACT_CONTACT_STATUS   = 3;
+        public static final int CONTACT_PHOTO_ID         = 4;
+        public static final int CONTACT_PHOTO_URI        = 5;
+        public static final int CONTACT_LOOKUP_KEY       = 6;
+        public static final int CONTACT_IS_USER_PROFILE  = 7;
+        public static final int CONTACT_SNIPPET          = 8;
     }
 
     private CharSequence mUnknownNameText;
@@ -166,7 +177,7 @@ public abstract class ScContactListAdapter extends ScContactEntryListAdapter {
 
     protected static Uri buildSectionIndexerUri(Uri uri) {
         return uri.buildUpon()
-                .appendQueryParameter(ScContactsContract.ContactCounts.ADDRESS_BOOK_INDEX_EXTRAS, "true").build();
+                .appendQueryParameter(Contacts.EXTRA_ADDRESS_BOOK_INDEX, "true").build();
     }
 
     
@@ -188,11 +199,12 @@ public abstract class ScContactListAdapter extends ScContactEntryListAdapter {
     public Uri getContactUri(int partitionIndex, Cursor cursor) {
 
         long contactId = cursor.getLong(ContactQuery.CONTACT_ID);
-        Uri uri = RawContacts.getLookupUri(contactId);
+        String lookupKey = cursor.getString(ContactQuery.CONTACT_LOOKUP_KEY);
+        Uri uri = Contacts.getLookupUri(contactId, lookupKey);
         long directoryId = ((DirectoryPartition)getPartition(partitionIndex)).getDirectoryId();
         if (directoryId != Directory.DEFAULT) {
             uri = uri.buildUpon().appendQueryParameter(
-                    ScContactsContract.DIRECTORY_PARAM_KEY, String.valueOf(directoryId)).build();
+                    ContactsContract.DIRECTORY_PARAM_KEY, String.valueOf(directoryId)).build();
         }
         return uri;
     }
@@ -208,7 +220,14 @@ public abstract class ScContactListAdapter extends ScContactEntryListAdapter {
         if (getSelectedContactDirectoryId() != directoryId) {
             return false;
         }
-        return directoryId != Directory.LOCAL_INVISIBLE && getSelectedContactId() == cursor.getLong(ContactQuery.CONTACT_ID);
+        String lookupKey = getSelectedContactLookupKey();
+        if (lookupKey != null && TextUtils.equals(lookupKey,
+                cursor.getString(ContactQuery.CONTACT_LOOKUP_KEY))) {
+            return true;
+        }
+
+        return directoryId != Directory.DEFAULT && directoryId != Directory.LOCAL_INVISIBLE
+                && getSelectedContactId() == cursor.getLong(ContactQuery.CONTACT_ID);
     }
 
     @Override
@@ -256,14 +275,14 @@ public abstract class ScContactListAdapter extends ScContactEntryListAdapter {
             if (photoUri == null) {
                 request = getDefaultImageRequestFromCursor(cursor,
                         ContactQuery.CONTACT_DISPLAY_NAME,
-                        RawContacts.getLookupUri(cursor.getLong(ContactQuery.CONTACT_ID)).toString());
+                        ContactQuery.CONTACT_LOOKUP_KEY);
             }
             getPhotoLoader().loadDirectoryPhoto(view.getPhotoView(), photoUri, mDarkTheme, 
                     getCircularPhotos(), request);
         }
     }
 
-    protected void bindNameAndView(final ContactListItemView view, Cursor cursor) {
+    protected void bindNameAndViewId(final ContactListItemView view, Cursor cursor) {
         view.showDisplayName(cursor, ContactQuery.CONTACT_DISPLAY_NAME, getContactNameDisplayOrder());
         // Note: we don't show phonetic any more (See issue 5265330)
 
@@ -271,15 +290,16 @@ public abstract class ScContactListAdapter extends ScContactEntryListAdapter {
     }
 
     protected void bindPresenceAndStatusMessage(final ContactListItemView view, Cursor cursor) {
-        view.showPresenceAndStatusMessage(cursor, 0, 0);   // disabled in adapter
+        view.showPresenceAndStatusMessage(cursor, ContactQuery.CONTACT_PRESENCE_STATUS,
+                ContactQuery.CONTACT_CONTACT_STATUS);
     }
 
     protected void bindSearchSnippet(final ContactListItemView view, Cursor cursor) {
-        view.showSnippet(cursor, 0); // disabled in adapter
+        view.showSnippet(cursor, ContactQuery.CONTACT_SNIPPET);
     }
 
     public int getSelectedContactPosition() {
-        if (/*mSelectedContactLookupKey == null &&*/ mSelectedContactId == 0) {
+        if (mSelectedContactLookupKey == null && mSelectedContactId == 0) {
             return -1;
         }
 
@@ -305,13 +325,13 @@ public abstract class ScContactListAdapter extends ScContactEntryListAdapter {
         cursor.moveToPosition(-1);      // Reset cursor
         int offset = -1;
         while (cursor.moveToNext()) {
-//            if (mSelectedContactLookupKey != null) {
-//                String lookupKey = cursor.getString(ContactQuery.CONTACT_LOOKUP_KEY);
-//                if (mSelectedContactLookupKey.equals(lookupKey)) {
-//                    offset = cursor.getPosition();
-//                    break;
-//                }
-//            }
+            if (mSelectedContactLookupKey != null) {
+                String lookupKey = cursor.getString(ContactQuery.CONTACT_LOOKUP_KEY);
+                if (mSelectedContactLookupKey.equals(lookupKey)) {
+                    offset = cursor.getPosition();
+                    break;
+                }
+            }
             if (mSelectedContactId != 0 && (mSelectedContactDirectoryId == Directory.DEFAULT
                     || mSelectedContactDirectoryId == Directory.LOCAL_INVISIBLE)) {
                 long contactId = cursor.getLong(ContactQuery.CONTACT_ID);
@@ -360,9 +380,8 @@ public abstract class ScContactListAdapter extends ScContactEntryListAdapter {
         super.changeCursor(partitionIndex, cursor);
 
         // Check if a profile exists
-        if (cursor != null && cursor.getCount() > 0) {
-            cursor.moveToFirst();
-            setProfileExists(cursor.getInt(ContactQuery.CONTACT_TYPE) == RawContacts.CONTACT_TYPE_OWN);
+        if (cursor != null && cursor.moveToFirst()) {
+            setProfileExists(cursor.getInt(ContactQuery.CONTACT_IS_USER_PROFILE) == 1);
         }
     }
 
@@ -372,14 +391,13 @@ public abstract class ScContactListAdapter extends ScContactEntryListAdapter {
     protected final String[] getProjection(boolean forSearch) {
         final int sortOrder = getContactNameDisplayOrder();
         if (forSearch) {
-            if (sortOrder == ScContactsContract.Preferences.DISPLAY_ORDER_PRIMARY) {
+            if (sortOrder == ContactsPreferences.DISPLAY_ORDER_PRIMARY) {
                 return ContactQuery.FILTER_PROJECTION_PRIMARY;
             } else {
                 return ContactQuery.FILTER_PROJECTION_ALTERNATIVE;
             }
-        } 
-        else {
-            if (sortOrder == ScContactsContract.Preferences.DISPLAY_ORDER_PRIMARY) {
+        } else {
+            if (sortOrder == ContactsPreferences.DISPLAY_ORDER_PRIMARY) {
                 return ContactQuery.CONTACT_PROJECTION_PRIMARY;
             } else {
                 return ContactQuery.CONTACT_PROJECTION_ALTERNATIVE;

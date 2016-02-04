@@ -63,6 +63,8 @@ void sha384(unsigned char * data_chunks[],
 void* createSha384Context()
 {
     SHA512_CTX* ctx = (SHA512_CTX*)malloc(sizeof (SHA512_CTX));
+    if (ctx == NULL)
+        return NULL;
     SHA384_Init(ctx);
     return (void*)ctx;
 }
@@ -75,6 +77,22 @@ void closeSha384Context(void* ctx, unsigned char* digest)
         SHA384_Final(digest, hd);
     }
     free(hd);
+}
+
+void* initializeSha384Context(void* ctx)
+{
+    SHA512_CTX* hd = (SHA512_CTX*)ctx;
+    SHA384_Init(hd);
+    return (void*)hd;
+}
+
+void finalizeSha384Context(void* ctx, unsigned char* digest)
+{
+    SHA512_CTX* hd = (SHA512_CTX*)ctx;
+
+    if (digest != NULL) {
+        SHA384_Final(digest, hd);
+    }
 }
 
 void sha384Ctx(void* ctx, unsigned char* data, 

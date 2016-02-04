@@ -1,0 +1,16 @@
+package axolotl;
+
+option optimize_for = LITE_RUNTIME;
+
+message MessageEnvelope {
+  optional string name           = 1;
+  optional string scClientDevId  = 2;
+  optional uint32 device_id      = 3;
+  optional bytes  supplement     = 4;
+  optional bytes  message        = 5;
+  optional string msgId          = 6;
+  optional bytes  recvIdHash     = 7;
+  optional bytes  senderIdHash   = 8;
+  optional string recvDeviceId   = 9;
+  optional bytes  recvDevIdBin   = 10;
+}

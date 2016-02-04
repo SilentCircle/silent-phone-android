@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2015, Silent Circle, LLC. All rights reserved.
+Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -33,6 +33,7 @@ import android.app.Fragment;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.text.Html;
+import android.text.InputFilter;
 import android.text.Spannable;
 import android.text.TextPaint;
 import android.text.TextUtils;
@@ -46,6 +47,7 @@ import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import com.silentcircle.common.util.SearchUtil;
 import com.silentcircle.silentphone2.BuildConfig;
 import com.silentcircle.silentphone2.R;
 import com.silentcircle.silentphone2.activities.ProvisioningActivity;
@@ -96,12 +98,19 @@ public class AccountStep1 extends Fragment implements View.OnClickListener {
 
         mUsernameInput = (EditText) stepView.findViewById(R.id.ProvisioningUsernameInput);
         mUsernameInput.addTextChangedListener(filterEnter);
+        mUsernameInput.setFilters(new InputFilter[]{SearchUtil.USERNAME_INPUT_FILTER, SearchUtil.LOWER_CASE_INPUT_FILTER});
 
         mPasswordInput = (EditText) stepView.findViewById(R.id.ProvisioningPasswordInput);
         mPasswordInput.setTag("current_password");
 
         mRegisterNew = (Button) stepView.findViewById(R.id.registerNew);
         mRegisterNew.setOnClickListener(this);
+
+        // only allow create account when a license code is present
+        // the following three lines should be removed when freemium support is to be included in the product
+        Bundle args = getArguments();
+        if (args == null || TextUtils.isEmpty(args.getString(AuthenticatorActivity.ARG_RONIN_CODE, null)))
+            mRegisterNew.setVisibility(View.GONE);
 
         stepView.findViewById(R.id.loginExisting).setOnClickListener(this);
 
@@ -143,7 +152,6 @@ public class AccountStep1 extends Fragment implements View.OnClickListener {
     @Override
     public void onStart() {
         super.onStart();
-        refreshButtons();
         mParent.showPasswordCheck(mPasswordInput, mShowPassword.isChecked());
     }
 
@@ -238,7 +246,7 @@ public class AccountStep1 extends Fragment implements View.OnClickListener {
      */
     public void provisioningOk() {
         mCustomerData = new JSONObject();
-        if (!checkInputAndCopy((String) mUsernameInput.getTag(), mUsernameInput.getText().toString().trim())) {
+        if (!checkInputAndCopy((String) mUsernameInput.getTag(), mUsernameInput.getText().toString().trim().toLowerCase())) {
             mParent.showInputInfo(getString(R.string.provisioning_user_req));
             return;
         }
@@ -250,16 +258,8 @@ public class AccountStep1 extends Fragment implements View.OnClickListener {
         CharSequence nameInput = mUsernameInput.getText();
         String username = null;
         if (nameInput != null)
-            username = nameInput.toString().trim();
+            username = nameInput.toString().trim().toLowerCase();
         mParent.accountStep3(mCustomerData, username, true);
     }
 
-    private void refreshButtons() {
-        Bundle args = getArguments();
-        if (args != null) {
-            String roninCode = args.getString(AuthenticatorActivity.ARG_RONIN_CODE, null);
-            if (TextUtils.isEmpty(roninCode))
-                mRegisterNew.setVisibility(View.GONE);
-        }
-    }
 }

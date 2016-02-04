@@ -1,1 +1,1 @@
-include ':silentphone2', ':ScContactsContract', ':KeyManagerSupport'
+include ':silentphone2', ':ScContactsContract', ':KeyManagerSupport', ':ImageViewTouch'

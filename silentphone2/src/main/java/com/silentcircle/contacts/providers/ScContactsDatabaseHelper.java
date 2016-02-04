@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2014-2015, Silent Circle, LLC. All rights reserved.
+Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -45,7 +45,6 @@ import android.text.util.Rfc822Token;
 import android.text.util.Rfc822Tokenizer;
 import android.util.Log;
 
-import com.google.common.collect.Table;
 import com.silentcircle.contacts.database.DeletedContactsTableUtil;
 import com.silentcircle.contacts.database.MoreDatabaseUtils;
 import com.silentcircle.keymanagersupport.KeyManagerSupport;
@@ -67,9 +66,9 @@ import com.silentcircle.silentcontacts2.ScContactsContract.DisplayNameSources;
 import com.silentcircle.silentcontacts2.ScContactsContract.DisplayPhoto;
 import com.silentcircle.silentcontacts2.ScContactsContract.FullNameStyle;
 import com.silentcircle.silentcontacts2.ScContactsContract.Groups;
-import com.silentcircle.silentcontacts2.ScContactsContract.PinnedPositions;
 import com.silentcircle.silentcontacts2.ScContactsContract.PhoneticNameStyle;
 import com.silentcircle.silentcontacts2.ScContactsContract.PhotoFiles;
+import com.silentcircle.silentcontacts2.ScContactsContract.PinnedPositions;
 import com.silentcircle.silentcontacts2.ScContactsContract.RawContacts;
 import com.silentcircle.silentcontacts2.ScContactsContract.RawContacts.Photo;
 import com.silentcircle.silentcontacts2.ScContactsContract.StreamItemPhotos;
@@ -99,20 +98,20 @@ public class ScContactsDatabaseHelper extends SQLiteOpenHelper implements KeyMan
     private static final String DATABASE_NAME = "sc_contacts.db";
 
     public interface Tables {
-        public static final String RAW_CONTACTS = "raw_contacts";
-        public static final String DATA = "data";
-        public static final String STREAM_ITEMS = "stream_items";
-        public static final String STREAM_ITEM_PHOTOS = "stream_item_photos";
-        public static final String CALLS = "calls";
-        public static final String MIMETYPES = "mimetypes";
-        public static final String NAME_LOOKUP = "name_lookup";
-        public static final String PHONE_LOOKUP = "phone_lookup";
-        public static final String DIRECTORIES = "directories";
-        public static final String SEARCH_INDEX = "search_index";
-        public static final String PROPERTIES = "properties";
-        public static final String PHOTO_FILES = "photo_files";
-        public static final String GROUPS = "groups";
-        public static final String DELETED_CONTACTS = "deleted_contacts";
+        String RAW_CONTACTS = "raw_contacts";
+        String DATA = "data";
+        String STREAM_ITEMS = "stream_items";
+        String STREAM_ITEM_PHOTOS = "stream_item_photos";
+        String CALLS = "calls";
+        String MIMETYPES = "mimetypes";
+        String NAME_LOOKUP = "name_lookup";
+        String PHONE_LOOKUP = "phone_lookup";
+        String DIRECTORIES = "directories";
+        String SEARCH_INDEX = "search_index";
+        String PROPERTIES = "properties";
+        String PHOTO_FILES = "photo_files";
+        String GROUPS = "groups";
+        String DELETED_CONTACTS = "deleted_contacts";
 
         /** Saves all possible prefixes to refer to a contacts. 
          * 
@@ -139,21 +138,21 @@ public class ScContactsDatabaseHelper extends SQLiteOpenHelper implements KeyMan
          * For {@link com.silentcircle.silentcontacts2.ScContactsContract.DataUsageFeedback}. The table structure
          * itself is not exposed outside.
          */
-        public static final String DATA_USAGE_STAT = "data_usage_stat";
+        String DATA_USAGE_STAT = "data_usage_stat";
 
-        public static final String DATA_JOIN_MIMETYPES = "data JOIN mimetypes ON (data.mimetype_id = mimetypes._id)";
+        String DATA_JOIN_MIMETYPES = "data JOIN mimetypes ON (data.mimetype_id = mimetypes._id)";
 
-        public static final String RAW_CONTACTS_JOIN_ACCOUNTS = Tables.RAW_CONTACTS;
+        String RAW_CONTACTS_JOIN_ACCOUNTS = Tables.RAW_CONTACTS;
 
-        public static final String DATA_JOIN_RAW_CONTACTS = "data "
+        String DATA_JOIN_RAW_CONTACTS = "data "
                 + "JOIN raw_contacts ON (data.raw_contact_id = raw_contacts._id)";
 
-        public static final String DATA_JOIN_MIMETYPE_RAW_CONTACTS = "data "
+        String DATA_JOIN_MIMETYPE_RAW_CONTACTS = "data "
                 + "JOIN mimetypes ON (data.mimetype_id = mimetypes._id) "
                 + "JOIN raw_contacts ON (data.raw_contact_id = raw_contacts._id)"
                 ;
  
-        public static final String CONTACTS_JOIN_RAW_CONTACTS_DATA_FILTERED_BY_GROUPMEMBERSHIP =
+        String CONTACTS_JOIN_RAW_CONTACTS_DATA_FILTERED_BY_GROUPMEMBERSHIP =
                 Tables.RAW_CONTACTS
                     + " INNER JOIN " + Tables.DATA
                         + " ON (" + DataColumns.CONCRETE_DATA1 + "=" + GroupsColumns.CONCRETE_ID
@@ -179,7 +178,7 @@ public class ScContactsDatabaseHelper extends SQLiteOpenHelper implements KeyMan
          * Adds the "group_member_count column" to the query, which will be null if a group has
          * no members.  Use ifnull(group_member_count, 0) if 0 is needed instead.
          */
-        public static final String GROUP_MEMBER_COUNT =
+        String GROUP_MEMBER_COUNT =
                 " LEFT OUTER JOIN (SELECT "
                         + "data.data1 AS member_count_group_id, "
                         + "COUNT(data.raw_contact_id) AS group_member_count "
@@ -192,107 +191,107 @@ public class ScContactsDatabaseHelper extends SQLiteOpenHelper implements KeyMan
     }
 
     public interface Views {
-        public static final String DATA = "view_data";
-        public static final String RAW_CONTACTS = "view_raw_contacts";
+        String DATA = "view_data";
+        String RAW_CONTACTS = "view_raw_contacts";
 //        public static final String CONTACTS = "view_contacts";
 //        public static final String ENTITIES = "view_entities";
-        public static final String RAW_ENTITIES = "view_raw_entities";
-        public static final String GROUPS = "view_groups";
-        public static final String DATA_USAGE_STAT = "view_data_usage_stat";
-        public static final String STREAM_ITEMS = "view_stream_items";
+        String RAW_ENTITIES = "view_raw_entities";
+        String GROUPS = "view_groups";
+        String DATA_USAGE_STAT = "view_data_usage_stat";
+        String STREAM_ITEMS = "view_stream_items";
     }
     
     public interface Clauses {
-        final String GROUP_HAS_ACCOUNT_AND_SOURCE_ID = Groups.SOURCE_ID + "=?";
+        String GROUP_HAS_ACCOUNT_AND_SOURCE_ID = Groups.SOURCE_ID + "=?";
     }
 
     public interface RawContactsColumns {
-        public static final String CONCRETE_ID = Tables.RAW_CONTACTS + "." + ScBaseColumns._ID;
+        String CONCRETE_ID = Tables.RAW_CONTACTS + "." + ScBaseColumns._ID;
 
-        public static final String CONCRETE_SOURCE_ID = Tables.RAW_CONTACTS + "." + RawContacts.SOURCE_ID;
-        public static final String CONCRETE_VERSION = Tables.RAW_CONTACTS + "." + RawContacts.VERSION;
-        public static final String CONCRETE_DIRTY =  Tables.RAW_CONTACTS + "." + RawContacts.DIRTY;
-        public static final String CONCRETE_DELETED = Tables.RAW_CONTACTS + "." + RawContacts.DELETED;
-        public static final String CONCRETE_SYNC1 = Tables.RAW_CONTACTS + "." + RawContacts.SYNC1;
-        public static final String CONCRETE_SYNC2 = Tables.RAW_CONTACTS + "." + RawContacts.SYNC2;
-        public static final String CONCRETE_SYNC3 = Tables.RAW_CONTACTS + "." + RawContacts.SYNC3;
-        public static final String CONCRETE_SYNC4 = Tables.RAW_CONTACTS + "." + RawContacts.SYNC4;
-        public static final String CONCRETE_CUSTOM_RINGTONE = Tables.RAW_CONTACTS + "." + RawContacts.CUSTOM_RINGTONE;
-        public static final String CONCRETE_LAST_TIME_CONTACTED = Tables.RAW_CONTACTS + "." + RawContacts.LAST_TIME_CONTACTED;
-        public static final String CONCRETE_TIMES_CONTACTED = Tables.RAW_CONTACTS + "." + RawContacts.TIMES_CONTACTED;
-        public static final String CONCRETE_STARRED = Tables.RAW_CONTACTS + "." + RawContacts.STARRED;
-        public static final String CONCRETE_PINNED = Tables.RAW_CONTACTS + "." + RawContacts.PINNED;
+        String CONCRETE_SOURCE_ID = Tables.RAW_CONTACTS + "." + RawContacts.SOURCE_ID;
+        String CONCRETE_VERSION = Tables.RAW_CONTACTS + "." + RawContacts.VERSION;
+        String CONCRETE_DIRTY =  Tables.RAW_CONTACTS + "." + RawContacts.DIRTY;
+        String CONCRETE_DELETED = Tables.RAW_CONTACTS + "." + RawContacts.DELETED;
+        String CONCRETE_SYNC1 = Tables.RAW_CONTACTS + "." + RawContacts.SYNC1;
+        String CONCRETE_SYNC2 = Tables.RAW_CONTACTS + "." + RawContacts.SYNC2;
+        String CONCRETE_SYNC3 = Tables.RAW_CONTACTS + "." + RawContacts.SYNC3;
+        String CONCRETE_SYNC4 = Tables.RAW_CONTACTS + "." + RawContacts.SYNC4;
+        String CONCRETE_CUSTOM_RINGTONE = Tables.RAW_CONTACTS + "." + RawContacts.CUSTOM_RINGTONE;
+        String CONCRETE_LAST_TIME_CONTACTED = Tables.RAW_CONTACTS + "." + RawContacts.LAST_TIME_CONTACTED;
+        String CONCRETE_TIMES_CONTACTED = Tables.RAW_CONTACTS + "." + RawContacts.TIMES_CONTACTED;
+        String CONCRETE_STARRED = Tables.RAW_CONTACTS + "." + RawContacts.STARRED;
+        String CONCRETE_PINNED = Tables.RAW_CONTACTS + "." + RawContacts.PINNED;
 
-        public static final String DISPLAY_NAME = RawContacts.DISPLAY_NAME_PRIMARY;
-        public static final String DISPLAY_NAME_SOURCE = RawContacts.DISPLAY_NAME_SOURCE;
-        public static final String AGGREGATION_NEEDED = "aggregation_needed";
+        String DISPLAY_NAME = RawContacts.DISPLAY_NAME_PRIMARY;
+        String DISPLAY_NAME_SOURCE = RawContacts.DISPLAY_NAME_SOURCE;
+        String AGGREGATION_NEEDED = "aggregation_needed";
 
-        public static final String CONCRETE_DISPLAY_NAME = Tables.RAW_CONTACTS + "." + DISPLAY_NAME;
-        public static final String CONCRETE_NAME_VERIFIED = Tables.RAW_CONTACTS + "." + RawContacts.NAME_VERIFIED;
+        String CONCRETE_DISPLAY_NAME = Tables.RAW_CONTACTS + "." + DISPLAY_NAME;
+        String CONCRETE_NAME_VERIFIED = Tables.RAW_CONTACTS + "." + RawContacts.NAME_VERIFIED;
 
-        public static final String CONCRETE_CONTACT_LAST_UPDATED_TIMESTAMP = Tables.RAW_CONTACTS + "."
+        String CONCRETE_CONTACT_LAST_UPDATED_TIMESTAMP = Tables.RAW_CONTACTS + "."
                 + RawContacts.CONTACT_LAST_UPDATED_TIMESTAMP;
 
-        public static final String PHONEBOOK_LABEL_PRIMARY = "phonebook_label";
-        public static final String PHONEBOOK_BUCKET_PRIMARY = "phonebook_bucket";
-        public static final String PHONEBOOK_LABEL_ALTERNATIVE = "phonebook_label_alt";
-        public static final String PHONEBOOK_BUCKET_ALTERNATIVE = "phonebook_bucket_alt";
+        String PHONEBOOK_LABEL_PRIMARY = "phonebook_label";
+        String PHONEBOOK_BUCKET_PRIMARY = "phonebook_bucket";
+        String PHONEBOOK_LABEL_ALTERNATIVE = "phonebook_label_alt";
+        String PHONEBOOK_BUCKET_ALTERNATIVE = "phonebook_bucket_alt";
     }
 
     public interface DataColumns {
-        public static final String PACKAGE_ID = "package_id";
-        public static final String MIMETYPE_ID = "mimetype_id";
+        String PACKAGE_ID = "package_id";
+        String MIMETYPE_ID = "mimetype_id";
 
-        public static final String CONCRETE_ID = Tables.DATA + "." + ScBaseColumns._ID;
-        public static final String CONCRETE_MIMETYPE_ID = Tables.DATA + "." + MIMETYPE_ID;
-        public static final String CONCRETE_RAW_CONTACT_ID = Tables.DATA + "." + Data.RAW_CONTACT_ID;
-        public static final String CONCRETE_GROUP_ID = Tables.DATA + "." + GroupMembership.GROUP_ROW_ID;
+        String CONCRETE_ID = Tables.DATA + "." + ScBaseColumns._ID;
+        String CONCRETE_MIMETYPE_ID = Tables.DATA + "." + MIMETYPE_ID;
+        String CONCRETE_RAW_CONTACT_ID = Tables.DATA + "." + Data.RAW_CONTACT_ID;
+        String CONCRETE_GROUP_ID = Tables.DATA + "." + GroupMembership.GROUP_ROW_ID;
 
-        public static final String CONCRETE_DATA1 = Tables.DATA + "." + Data.DATA1;
-        public static final String CONCRETE_DATA2 = Tables.DATA + "." + Data.DATA2;
-        public static final String CONCRETE_DATA3 = Tables.DATA + "." + Data.DATA3;
-        public static final String CONCRETE_DATA4 = Tables.DATA + "." + Data.DATA4;
-        public static final String CONCRETE_DATA5 = Tables.DATA + "." + Data.DATA5;
-        public static final String CONCRETE_DATA6 = Tables.DATA + "." + Data.DATA6;
-        public static final String CONCRETE_DATA7 = Tables.DATA + "." + Data.DATA7;
-        public static final String CONCRETE_DATA8 = Tables.DATA + "." + Data.DATA8;
-        public static final String CONCRETE_DATA9 = Tables.DATA + "." + Data.DATA9;
-        public static final String CONCRETE_DATA10 = Tables.DATA + "." + Data.DATA10;
-        public static final String CONCRETE_DATA11 = Tables.DATA + "." + Data.DATA11;
-        public static final String CONCRETE_DATA12 = Tables.DATA + "." + Data.DATA12;
-        public static final String CONCRETE_DATA13 = Tables.DATA + "." + Data.DATA13;
-        public static final String CONCRETE_DATA14 = Tables.DATA + "." + Data.DATA14;
-        public static final String CONCRETE_DATA15 = Tables.DATA + "." + Data.DATA15;
-        public static final String CONCRETE_IS_PRIMARY = Tables.DATA + "." + Data.IS_PRIMARY;
-        public static final String CONCRETE_PACKAGE_ID = Tables.DATA + "." + PACKAGE_ID;
+        String CONCRETE_DATA1 = Tables.DATA + "." + Data.DATA1;
+        String CONCRETE_DATA2 = Tables.DATA + "." + Data.DATA2;
+        String CONCRETE_DATA3 = Tables.DATA + "." + Data.DATA3;
+        String CONCRETE_DATA4 = Tables.DATA + "." + Data.DATA4;
+        String CONCRETE_DATA5 = Tables.DATA + "." + Data.DATA5;
+        String CONCRETE_DATA6 = Tables.DATA + "." + Data.DATA6;
+        String CONCRETE_DATA7 = Tables.DATA + "." + Data.DATA7;
+        String CONCRETE_DATA8 = Tables.DATA + "." + Data.DATA8;
+        String CONCRETE_DATA9 = Tables.DATA + "." + Data.DATA9;
+        String CONCRETE_DATA10 = Tables.DATA + "." + Data.DATA10;
+        String CONCRETE_DATA11 = Tables.DATA + "." + Data.DATA11;
+        String CONCRETE_DATA12 = Tables.DATA + "." + Data.DATA12;
+        String CONCRETE_DATA13 = Tables.DATA + "." + Data.DATA13;
+        String CONCRETE_DATA14 = Tables.DATA + "." + Data.DATA14;
+        String CONCRETE_DATA15 = Tables.DATA + "." + Data.DATA15;
+        String CONCRETE_IS_PRIMARY = Tables.DATA + "." + Data.IS_PRIMARY;
+        String CONCRETE_PACKAGE_ID = Tables.DATA + "." + PACKAGE_ID;
     }
 
     public interface GroupMembershipColumns {
-        public static final String RAW_CONTACT_ID = Data.RAW_CONTACT_ID;
-        public static final String GROUP_ROW_ID = GroupMembership.GROUP_ROW_ID;
+        String RAW_CONTACT_ID = Data.RAW_CONTACT_ID;
+        String GROUP_ROW_ID = GroupMembership.GROUP_ROW_ID;
     }
 
     public interface GroupsColumns {
-        public static final String PACKAGE_ID = "package_id";
-        public static final String CONCRETE_PACKAGE_ID = Tables.GROUPS + "." + PACKAGE_ID;
+        String PACKAGE_ID = "package_id";
+        String CONCRETE_PACKAGE_ID = Tables.GROUPS + "." + PACKAGE_ID;
 
-        public static final String CONCRETE_ID = Tables.GROUPS + "." + ScBaseColumns._ID;
-        public static final String CONCRETE_SOURCE_ID = Tables.GROUPS + "." + Groups.SOURCE_ID;
+        String CONCRETE_ID = Tables.GROUPS + "." + ScBaseColumns._ID;
+        String CONCRETE_SOURCE_ID = Tables.GROUPS + "." + Groups.SOURCE_ID;
     }
 
     public interface PhoneLookupColumns {
-        public static final String _ID = ScBaseColumns._ID;
-        public static final String DATA_ID = "data_id";
-        public static final String RAW_CONTACT_ID = "raw_contact_id";
-        public static final String NORMALIZED_NUMBER = "normalized_number";
-        public static final String MIN_MATCH = "min_match";
+        String _ID = ScBaseColumns._ID;
+        String DATA_ID = "data_id";
+        String RAW_CONTACT_ID = "raw_contact_id";
+        String NORMALIZED_NUMBER = "normalized_number";
+        String MIN_MATCH = "min_match";
     }
 
     public interface NameLookupColumns {
-        public static final String RAW_CONTACT_ID = "raw_contact_id";
-        public static final String DATA_ID = "data_id";
-        public static final String NORMALIZED_NAME = "normalized_name";
-        public static final String NAME_TYPE = "name_type";
+        String RAW_CONTACT_ID = "raw_contact_id";
+        String DATA_ID = "data_id";
+        String NORMALIZED_NAME = "normalized_name";
+        String NAME_TYPE = "name_type";
     }
 
     public final static class NameLookupType {
@@ -313,11 +312,11 @@ public class ScContactsDatabaseHelper extends SQLiteOpenHelper implements KeyMan
     }
 
     public interface MimetypesColumns {
-        public static final String _ID = ScBaseColumns._ID;
-        public static final String MIMETYPE = "mimetype";
+        String _ID = ScBaseColumns._ID;
+        String MIMETYPE = "mimetype";
 
-        public static final String CONCRETE_ID = Tables.MIMETYPES + "." + ScBaseColumns._ID;
-        public static final String CONCRETE_MIMETYPE = Tables.MIMETYPES + "." + MIMETYPE;
+        String CONCRETE_ID = Tables.MIMETYPES + "." + ScBaseColumns._ID;
+        String CONCRETE_MIMETYPE = Tables.MIMETYPES + "." + MIMETYPE;
     }
 
     public static final class SearchIndexColumns {
@@ -332,26 +331,26 @@ public class ScContactsDatabaseHelper extends SQLiteOpenHelper implements KeyMan
      */
     public interface DataUsageStatColumns {
         /** type: INTEGER (long) */
-        public static final String _ID = "stat_id";
-        public static final String CONCRETE_ID = Tables.DATA_USAGE_STAT + "." + _ID;
+        String _ID = "stat_id";
+        String CONCRETE_ID = Tables.DATA_USAGE_STAT + "." + _ID;
 
         /** type: INTEGER (long) */
-        public static final String DATA_ID = "data_id";
-        public static final String CONCRETE_DATA_ID = Tables.DATA_USAGE_STAT + "." + DATA_ID;
+        String DATA_ID = "data_id";
+        String CONCRETE_DATA_ID = Tables.DATA_USAGE_STAT + "." + DATA_ID;
 
         /** type: INTEGER (long) */
-        public static final String LAST_TIME_USED = "last_time_used";
-        public static final String CONCRETE_LAST_TIME_USED =
+        String LAST_TIME_USED = "last_time_used";
+        String CONCRETE_LAST_TIME_USED =
                 Tables.DATA_USAGE_STAT + "." + LAST_TIME_USED;
 
         /** type: INTEGER */
-        public static final String TIMES_USED = "times_used";
-        public static final String CONCRETE_TIMES_USED =
+        String TIMES_USED = "times_used";
+        String CONCRETE_TIMES_USED =
                 Tables.DATA_USAGE_STAT + "." + TIMES_USED;
 
         /** type: INTEGER */
-        public static final String USAGE_TYPE_INT = "usage_type";
-        public static final String CONCRETE_USAGE_TYPE =
+        String USAGE_TYPE_INT = "usage_type";
+        String CONCRETE_USAGE_TYPE =
                 Tables.DATA_USAGE_STAT + "." + USAGE_TYPE_INT;
 
         /**
@@ -359,35 +358,35 @@ public class ScContactsDatabaseHelper extends SQLiteOpenHelper implements KeyMan
          *
          * @see android.provider.ContactsContract.DataUsageFeedback#USAGE_TYPE
          */
-        public static final int USAGE_TYPE_INT_CALL = 0;
-        public static final int USAGE_TYPE_INT_LONG_TEXT = 1;
-        public static final int USAGE_TYPE_INT_SHORT_TEXT = 2;
+        int USAGE_TYPE_INT_CALL = 0;
+        int USAGE_TYPE_INT_LONG_TEXT = 1;
+        int USAGE_TYPE_INT_SHORT_TEXT = 2;
     }
 
     public interface StreamItemsColumns {
-        final String CONCRETE_ID = Tables.STREAM_ITEMS + "." + ScBaseColumns._ID;
-        final String CONCRETE_RAW_CONTACT_ID =  Tables.STREAM_ITEMS + "." + StreamItems.RAW_CONTACT_ID;
+        String CONCRETE_ID = Tables.STREAM_ITEMS + "." + ScBaseColumns._ID;
+        String CONCRETE_RAW_CONTACT_ID =  Tables.STREAM_ITEMS + "." + StreamItems.RAW_CONTACT_ID;
 //        final String CONCRETE_PACKAGE = Tables.STREAM_ITEMS + "." + StreamItems.RES_PACKAGE;
-        final String CONCRETE_ICON = Tables.STREAM_ITEMS + "." + StreamItems.RES_ICON;
-        final String CONCRETE_LABEL = Tables.STREAM_ITEMS + "." + StreamItems.RES_LABEL;
-        final String CONCRETE_TEXT = Tables.STREAM_ITEMS + "." + StreamItems.TEXT;
-        final String CONCRETE_TIMESTAMP = Tables.STREAM_ITEMS + "." + StreamItems.TIMESTAMP;
-        final String CONCRETE_COMMENTS = Tables.STREAM_ITEMS + "." + StreamItems.COMMENTS;
-        final String CONCRETE_SYNC1 = Tables.STREAM_ITEMS + "." + StreamItems.SYNC1;
-        final String CONCRETE_SYNC2 = Tables.STREAM_ITEMS + "." + StreamItems.SYNC2;
-        final String CONCRETE_SYNC3 = Tables.STREAM_ITEMS + "." + StreamItems.SYNC3;
-        final String CONCRETE_SYNC4 = Tables.STREAM_ITEMS + "." + StreamItems.SYNC4;
+        String CONCRETE_ICON = Tables.STREAM_ITEMS + "." + StreamItems.RES_ICON;
+        String CONCRETE_LABEL = Tables.STREAM_ITEMS + "." + StreamItems.RES_LABEL;
+        String CONCRETE_TEXT = Tables.STREAM_ITEMS + "." + StreamItems.TEXT;
+        String CONCRETE_TIMESTAMP = Tables.STREAM_ITEMS + "." + StreamItems.TIMESTAMP;
+        String CONCRETE_COMMENTS = Tables.STREAM_ITEMS + "." + StreamItems.COMMENTS;
+        String CONCRETE_SYNC1 = Tables.STREAM_ITEMS + "." + StreamItems.SYNC1;
+        String CONCRETE_SYNC2 = Tables.STREAM_ITEMS + "." + StreamItems.SYNC2;
+        String CONCRETE_SYNC3 = Tables.STREAM_ITEMS + "." + StreamItems.SYNC3;
+        String CONCRETE_SYNC4 = Tables.STREAM_ITEMS + "." + StreamItems.SYNC4;
     }
 
     public interface StreamItemPhotosColumns {
-        final String CONCRETE_ID = Tables.STREAM_ITEM_PHOTOS + "." + ScBaseColumns._ID;
-        final String CONCRETE_STREAM_ITEM_ID = Tables.STREAM_ITEM_PHOTOS + "." + StreamItemPhotos.STREAM_ITEM_ID;
-        final String CONCRETE_SORT_INDEX = Tables.STREAM_ITEM_PHOTOS + "." + StreamItemPhotos.SORT_INDEX;
-        final String CONCRETE_PHOTO_FILE_ID = Tables.STREAM_ITEM_PHOTOS + "." + StreamItemPhotos.PHOTO_FILE_ID;
-        final String CONCRETE_SYNC1 = Tables.STREAM_ITEM_PHOTOS + "." + StreamItemPhotos.SYNC1;
-        final String CONCRETE_SYNC2 = Tables.STREAM_ITEM_PHOTOS + "." + StreamItemPhotos.SYNC2;
-        final String CONCRETE_SYNC3 = Tables.STREAM_ITEM_PHOTOS + "." + StreamItemPhotos.SYNC3;
-        final String CONCRETE_SYNC4 = Tables.STREAM_ITEM_PHOTOS + "." + StreamItemPhotos.SYNC4;
+        String CONCRETE_ID = Tables.STREAM_ITEM_PHOTOS + "." + ScBaseColumns._ID;
+        String CONCRETE_STREAM_ITEM_ID = Tables.STREAM_ITEM_PHOTOS + "." + StreamItemPhotos.STREAM_ITEM_ID;
+        String CONCRETE_SORT_INDEX = Tables.STREAM_ITEM_PHOTOS + "." + StreamItemPhotos.SORT_INDEX;
+        String CONCRETE_PHOTO_FILE_ID = Tables.STREAM_ITEM_PHOTOS + "." + StreamItemPhotos.PHOTO_FILE_ID;
+        String CONCRETE_SYNC1 = Tables.STREAM_ITEM_PHOTOS + "." + StreamItemPhotos.SYNC1;
+        String CONCRETE_SYNC2 = Tables.STREAM_ITEM_PHOTOS + "." + StreamItemPhotos.SYNC2;
+        String CONCRETE_SYNC3 = Tables.STREAM_ITEM_PHOTOS + "." + StreamItemPhotos.SYNC3;
+        String CONCRETE_SYNC4 = Tables.STREAM_ITEM_PHOTOS + "." + StreamItemPhotos.SYNC4;
     }
 
     public interface PhotoFilesColumns {
@@ -904,7 +903,7 @@ public class ScContactsDatabaseHelper extends SQLiteOpenHelper implements KeyMan
         ");");
 
         createDirectoriesTable(db);
-        createSearchIndexTable(db, false /* we build stats table later */);
+        createSearchIndexTable(db);
 
         db.execSQL("CREATE TABLE " + Tables.DATA_USAGE_STAT + "(" +
                 DataUsageStatColumns._ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
@@ -938,7 +937,7 @@ public class ScContactsDatabaseHelper extends SQLiteOpenHelper implements KeyMan
         createContactsViews(db);
         createGroupsView(db);
         createContactsTriggers(db);
-        createContactsIndices(db, false /* we build stats table later */);
+        createContactsIndices(db);
 
         if (mDatabaseOptimizationEnabled) {
             db.execSQL("ANALYZE;"); // This will create a sqlite_stat1 table that is used for query optimization
@@ -966,7 +965,7 @@ public class ScContactsDatabaseHelper extends SQLiteOpenHelper implements KeyMan
         setProperty(db, DbProperties.DIRECTORY_SCAN_COMPLETE, "0");
     }
 
-    public void createSearchIndexTable(SQLiteDatabase db, boolean rebuildSqliteStats) {
+    public void createSearchIndexTable(SQLiteDatabase db) {
         db.execSQL("DROP TABLE IF EXISTS " + Tables.SEARCH_INDEX);
 
         // use FTS4 module if we drop API 10
@@ -979,7 +978,7 @@ public class ScContactsDatabaseHelper extends SQLiteOpenHelper implements KeyMan
                 + ")");
     }
 
-    private void createContactsIndices(SQLiteDatabase db, boolean rebuildSqliteStats) {
+    private void createContactsIndices(SQLiteDatabase db) {
         db.execSQL("DROP INDEX IF EXISTS name_lookup_index");
         db.execSQL("CREATE INDEX name_lookup_index ON " + Tables.NAME_LOOKUP + " (" +
                 NameLookupColumns.NORMALIZED_NAME + "," +
@@ -1432,7 +1431,7 @@ public class ScContactsDatabaseHelper extends SQLiteOpenHelper implements KeyMan
             createContactsViews(db);
             createGroupsView(db);
             createContactsTriggers(db);
-            createContactsIndices(db, false /* we build stats table later */);
+            createContactsIndices(db);
             rebuildSqliteStats = true;
         }
 
@@ -1536,8 +1535,8 @@ public class ScContactsDatabaseHelper extends SQLiteOpenHelper implements KeyMan
 
 //            loadNicknameLookupTable(db);
             insertNameLookup(db);
-            rebuildSortKeys(db, provider);
-            createContactsIndices(db, true);
+            rebuildSortKeys(db);
+            createContactsIndices(db);
             db.setTransactionSuccessful();
         } finally {
             db.endTransaction();
@@ -1549,7 +1548,7 @@ public class ScContactsDatabaseHelper extends SQLiteOpenHelper implements KeyMan
     /**
      * Regenerates sort keys for all contacts.
      */
-    private void rebuildSortKeys(SQLiteDatabase db, ScContactsProvider provider) {
+    private void rebuildSortKeys(SQLiteDatabase db) {
         Cursor cursor = db.query(Tables.RAW_CONTACTS, new String[]{RawContacts._ID},
                 null, null, null, null, null);
         try {
@@ -1728,7 +1727,7 @@ public class ScContactsDatabaseHelper extends SQLiteOpenHelper implements KeyMan
      * @return An unique integer mapping for the given value.
      */
     private long lookupAndCacheId(SQLiteStatement query, SQLiteStatement insert, String value, HashMap<String, Long> cache) {
-        long id = -1;
+        long id;
         try {
             // Try searching database for mapping
             DatabaseUtils.bindObjectToProgram(query, 1, value);
@@ -1835,10 +1834,9 @@ public class ScContactsDatabaseHelper extends SQLiteOpenHelper implements KeyMan
                     " WHERE " + Tables.DATA + "." + Data._ID + "=?");
         }
         try {
-            // Try database query to find mimetype
+            // Try database query to find mimeType
             DatabaseUtils.bindObjectToProgram(mDataMimetypeQuery, 1, dataId);
-            String mimetype = mDataMimetypeQuery.simpleQueryForString();
-            return mimetype;
+            return mDataMimetypeQuery.simpleQueryForString();
         } catch (SQLiteDoneException e) {
             // No valid mapping found, so return null
             return null;
@@ -1853,7 +1851,7 @@ public class ScContactsDatabaseHelper extends SQLiteOpenHelper implements KeyMan
     }
 
     private interface RawContactNameQuery {
-        public static final String RAW_SQL =
+        String RAW_SQL =
                 "SELECT "
                         + DataColumns.MIMETYPE_ID + ","
                         + Data.IS_PRIMARY + ","
@@ -1873,22 +1871,22 @@ public class ScContactsDatabaseHelper extends SQLiteOpenHelper implements KeyMan
                         " AND (" + Data.DATA1 + " NOT NULL OR " +
                                 Organization.TITLE + " NOT NULL)";
 
-        public static final int MIMETYPE = 0;
-        public static final int IS_PRIMARY = 1;
-        public static final int DATA1 = 2;
-        public static final int GIVEN_NAME = 3;                         // data2
-        public static final int FAMILY_NAME = 4;                        // data3
-        public static final int PREFIX = 5;                             // data4
-        public static final int TITLE = 5;                              // data4
-        public static final int MIDDLE_NAME = 6;                        // data5
-        public static final int SUFFIX = 7;                             // data6
-        public static final int PHONETIC_GIVEN_NAME = 8;                // data7
-        public static final int PHONETIC_MIDDLE_NAME = 9;               // data8
-        public static final int ORGANIZATION_PHONETIC_NAME = 9;         // data8
-        public static final int PHONETIC_FAMILY_NAME = 10;              // data9
-        public static final int FULL_NAME_STYLE = 11;                   // data10
-        public static final int ORGANIZATION_PHONETIC_NAME_STYLE = 11;  // data10
-        public static final int PHONETIC_NAME_STYLE = 12;               // data11
+        int MIMETYPE = 0;
+        int IS_PRIMARY = 1;
+        int DATA1 = 2;
+        int GIVEN_NAME = 3;                         // data2
+        int FAMILY_NAME = 4;                        // data3
+        int PREFIX = 5;                             // data4
+        int TITLE = 5;                              // data4
+        int MIDDLE_NAME = 6;                        // data5
+        int SUFFIX = 7;                             // data6
+        int PHONETIC_GIVEN_NAME = 8;                // data7
+        int PHONETIC_MIDDLE_NAME = 9;               // data8
+        int ORGANIZATION_PHONETIC_NAME = 9;         // data8
+        int PHONETIC_FAMILY_NAME = 10;              // data9
+        int FULL_NAME_STYLE = 11;                   // data10
+        int ORGANIZATION_PHONETIC_NAME_STYLE = 11;  // data10
+        int PHONETIC_NAME_STYLE = 12;               // data11
     }
 
     /**
@@ -2247,8 +2245,7 @@ public class ScContactsDatabaseHelper extends SQLiteOpenHelper implements KeyMan
     }
 
     public String getCurrentCountryIso() {
-        String locale = mContext.getResources().getConfiguration().locale.getCountry();
-        return locale;
+        return mContext.getResources().getConfiguration().locale.getCountry();
     }
 
     public void insertNameLookupForPhoneticName(long rawContactId, long dataId, String familyName,

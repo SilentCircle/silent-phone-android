@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2014-2015, Silent Circle, LLC. All rights reserved.
+Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -172,6 +172,7 @@ public class DeviceHandling {
     // This may include other brands like google.
     private static ArrayList<DeviceData> samsung = new ArrayList<>(10);
     private static ArrayList<DeviceData> vertu = new ArrayList<>(10);
+    private static ArrayList<DeviceData> sgp = new ArrayList<>(10);
 
     // This Map holds the manufacturer lists, key is manufacturer name
     private static HashMap<String, ArrayList<DeviceData>> manufacturerList = new HashMap<>(10);
@@ -184,6 +185,8 @@ public class DeviceHandling {
         samsung.add(new DeviceData("samsung", "google", "Galaxy Nexus", "maguro", WR_AEC, true, "*##*33#1*", "*##*33#3*"));
         samsung.add(new DeviceData("samsung", "google", "Nexus 10", "manta", WR_AEC, false, null, null));
 
+        sgp.add(new DeviceData("SGP", "SGP", "Blackphone 2", "BP2", HW_AEC, false, null, null));
+
         htc.add(new DeviceData("HTC", "htc_asia_hk", "HTC One X", "endeavoru", HW_AEC, false, null, null));
 
         // Use the WebRTC AEC for Nexus 4, maybe we need to add a mode as well, maybe need to switch modes during
@@ -193,6 +196,7 @@ public class DeviceHandling {
 
         motorola.add(new DeviceData("motorola", "sprint", "MB855", "sunfire", WR_AEC, true, "*##*33#1*", "*##*33#3*",
                 false, false, 0));     // don't switch audio mode, don't use proximity wake-up on this (old) device
+        motorola.add(new DeviceData("motorola", "google", "Nexus 6", "shamu", WR_AEC, true, null, null));
 
         vertu.add(new DeviceData("Vertu", "Vertu", "Vertu Ti", "UNKNOWN", HW_AEC, false, null, null));
         vertu.add(new DeviceData("Vertu", "Vertu", "Constellation V", "gambit", HW_AEC, false, null, null));
@@ -200,6 +204,7 @@ public class DeviceHandling {
         vertu.add(new DeviceData("Vertu", "Vertu", "Aster", "alexa", HW_AEC, false, null, null, true, true, 1));
 
         manufacturerList.put("samsung", samsung);
+        manufacturerList.put("sgp", sgp);
         manufacturerList.put("htc", htc);
         manufacturerList.put("lge", lge);
         manufacturerList.put("vertu", vertu);
@@ -239,29 +244,10 @@ public class DeviceHandling {
     public static void checkAndSetAec() {
         deviceClassification();
 
-//        boolean canUseInternalAec = false;
-//
-//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-//            canUseInternalAec = AcousticEchoCanceler.isAvailable();
-//        }
         if (device == null || device.aecSelect == null) {
-//            if (canUseInternalAec) {
-//                AudioRecordSp.setUseInternalAec(true);
-//                TiviPhoneService.doCmd(HW_AEC);     // if device has Android AEC then switch off echo handling in C++
-//            }
             return;
         }
         String aec = device.aecSelect;
-
-        // Use the internal SW AEC only if no HW AEC is available
-//        canUseInternalAec &= !HW_AEC.equals(aec);
-
-        // Override a *##*3[1-4]* command on startup. Switch off SW AEC handling in C++ code
-        // and link Android's internal AEC to AudioRecord. The AndroidRecordSp helper class manages this.
-//        if (canUseInternalAec) {
-//            AudioRecordSp.setUseInternalAec(true);
-//            aec = HW_AEC;
-//        }
         TiviPhoneService.doCmd(aec);
 
         if (device.gainReduction != 0) {

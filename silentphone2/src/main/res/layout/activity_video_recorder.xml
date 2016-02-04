@@ -1,0 +1,65 @@
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="horizontal"
+    android:keepScreenOn="true">
+
+    <TextureView
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/video_preview_texture_view"/>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="25dp"
+        android:layout_marginTop="20dp"
+        android:layout_gravity="top|left"
+        android:paddingLeft="8dp"
+        android:paddingRight="8dp"
+        android:paddingTop="3dp"
+        android:paddingBottom="3dp"
+        android:background="@drawable/bg_video_record_info"
+        android:id="@+id/video_record_info_layout"
+        android:visibility="invisible">
+        <ImageButton
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_marginRight="5dp"
+            android:background="#00000000"
+            android:src="@drawable/ic_recording_indicator"
+            android:scaleType="fitCenter"/>
+
+        <com.silentcircle.messaging.views.TextView
+            android:id="@+id/video_countdown_text_view"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:textSize="18sp"
+            android:text="00:00"
+            android:textColor="@android:color/white"
+            android:gravity="center"/>
+    </LinearLayout>
+
+    <ImageButton
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:paddingTop="25dp"
+        android:paddingBottom="25dp"
+        android:id="@+id/video_record_flip_button"
+        android:layout_gravity="bottom|right"
+        android:layout_marginBottom="100dp"
+        android:background="#00000000"
+        android:src="@drawable/ic_camera_rear_white_24dp"
+        android:scaleType="fitCenter"/>
+
+    <ImageButton
+        android:layout_width="fill_parent"
+        android:layout_height="100dp"
+        android:paddingTop="25dp"
+        android:paddingBottom="25dp"
+        android:id="@+id/video_record_start_stop_button"
+        android:layout_gravity="bottom"
+        android:background="#55000000"
+        android:src="@drawable/ic_videocam_white_24dp"
+        android:scaleType="fitCenter"/>
+</FrameLayout>

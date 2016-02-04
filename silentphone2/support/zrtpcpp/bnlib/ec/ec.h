@@ -212,6 +212,8 @@ int ecGetAffine(const EcCurve *curve, EcPoint *R, const EcPoint *P);
  * @param curve the NIST curve to use.
  *
  * @param d receives the generated random number.
+ * 
+ * @return 0 if random data generation is OK, <0 in case of an error.
  */
 int ecGenerateRandomNumber(const NistECpCurve *curve, BigNum *d);
 

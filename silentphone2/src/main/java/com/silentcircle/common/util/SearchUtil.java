@@ -16,6 +16,11 @@
 
 package com.silentcircle.common.util;
 
+import android.text.InputFilter;
+import android.text.SpannableString;
+import android.text.Spanned;
+import android.text.TextUtils;
+
 import com.google.common.annotations.VisibleForTesting;
 
 /**
@@ -36,6 +41,78 @@ public class SearchUtil {
                     '}';
         }
     }
+
+    public static final InputFilter USERNAME_INPUT_FILTER = new InputFilter() {
+
+        @Override
+        public CharSequence filter(CharSequence source, int start, int end, Spanned dest, int dstart, int dend) {
+
+            boolean isUnchanged = true;
+            StringBuilder stringBuilder = new StringBuilder(end - start);
+            for (int i = start, j = dstart; i < end; i++) {
+                char currentChar = source.charAt(i);
+                if (isCharAllowed(currentChar, j)) {
+                    stringBuilder.append(currentChar);
+                    j++;
+                } else {
+                    isUnchanged = false;
+                }
+            }
+
+            if (isUnchanged) {
+                return null;
+            } else {
+                if (source instanceof Spanned) {
+                    SpannableString spannableString = new SpannableString(stringBuilder);
+                    TextUtils.copySpansFrom((Spanned) source, start, stringBuilder.length(), null,
+                            spannableString, 0);
+                    return spannableString;
+                } else {
+                    return stringBuilder;
+                }
+            }
+        }
+
+        /* first character should be a letter followed by combination of letters and digits */
+        private boolean isCharAllowed(char c, int position) {
+            return (position == 0 && isLetter((int) c))
+                    || (position > 0 && (Character.isDigit(c) || isLetter((int) c)));
+        }
+
+        public boolean isLetter(int codePoint) {
+            boolean result = false;
+            if (('A' <= codePoint && codePoint <= 'Z') || ('a' <= codePoint && codePoint <= 'z')) {
+                result = true;
+            }
+            return result;
+        }
+    };
+
+    public static final InputFilter LOWER_CASE_INPUT_FILTER = new InputFilter() {
+
+        @Override
+        public CharSequence filter(CharSequence source, int start, int end,
+                                   Spanned dest, int dstart, int dend) {
+            for (int i = start; i < end; i++) {
+                if (Character.isUpperCase(source.charAt(i))) {
+                    char[] v = new char[end - start];
+                    TextUtils.getChars(source, start, end, v, 0);
+                    String s = new String(v).toLowerCase();
+
+                    if (source instanceof Spanned) {
+                        SpannableString sp = new SpannableString(s);
+                        TextUtils.copySpansFrom((Spanned) source,
+                                start, end, null, sp, 0);
+                        return sp;
+                    } else {
+                        return s;
+                    }
+                }
+            }
+
+            return null; // keep original
+        }
+    };
 
     /**
      * Given a string with lines delimited with '\n', finds the matching line to the given

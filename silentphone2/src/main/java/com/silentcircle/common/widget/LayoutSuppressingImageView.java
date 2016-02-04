@@ -16,6 +16,7 @@
 
 package com.silentcircle.common.widget;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.util.AttributeSet;
 import android.widget.ImageView;
@@ -32,6 +33,7 @@ public class LayoutSuppressingImageView extends ImageView {
         super(context, attrs);
     }
 
+    @SuppressLint("MissingSuperCall")
     @Override
     public void requestLayout() {
         forceLayout();

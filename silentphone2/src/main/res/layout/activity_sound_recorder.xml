@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/sound_recorder_layout"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:layout_marginLeft="10dp"
+    android:layout_marginRight="10dp"
+    android:background="@drawable/bg_sound_recorder">
+
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:minHeight="48.0dp"
+        android:orientation="vertical"
+        android:paddingBottom="4.0dp"
+        android:paddingLeft="8.0dp"
+        android:paddingRight="8.0dp"
+        android:layout_marginLeft="10dp"
+        android:layout_marginRight="10dp"
+        android:paddingTop="4.0dp"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/title_tv"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:layout_marginLeft="20dp"
+            android:singleLine="true"
+            android:text="@string/silent_circle"
+            android:textColor="?android:textColorPrimary"
+            android:textSize="18.0dp" />
+
+        <TextView
+            android:id="@+id/preview_name_tv"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:singleLine="true"
+            android:textColor="?android:textColorSecondary"
+            android:textSize="14.0dp"
+            android:visibility="gone" />
+    </LinearLayout>
+
+    <View
+        android:layout_width="fill_parent"
+        android:layout_height="2.0dp"
+        android:layout_marginLeft="10dp"
+        android:layout_marginRight="10dp"
+        android:background="#ff484848"
+        android:visibility="gone"/>
+
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="96.0dp"
+        android:layout_marginLeft="20dp"
+        android:layout_marginRight="20dp"
+        android:gravity="center"
+        android:orientation="horizontal">
+
+        <ImageButton
+            android:id="@+id/record_audio_play_pause_button"
+            style="@style/Widget.Silent.TransparentButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@android:drawable/ic_media_play"
+            android:visibility="gone"/>
+
+        <TextView
+            android:id="@+id/record_audio_time_current"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="6.0dp"
+            android:singleLine="true"
+            android:text="0:00"
+            android:textSize="18.0sp"
+            android:visibility="visible" />
+
+        <RelativeLayout
+            android:layout_width="0.0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1.0"
+            android:layout_marginLeft="2dp"
+            android:layout_marginRight="2dp">
+
+            <ProgressBar
+                android:id="@+id/record_audio_progress"
+                style="@style/Widget.AppCompat.ProgressBar.Horizontal"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"/>
+
+            <SeekBar
+                android:id="@+id/audio_seekbar"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:focusable="true"
+                android:indeterminateOnly="false"
+                android:maxHeight="13.0dp"
+                android:minHeight="13.0dp"
+                android:thumbOffset="3.0dp"
+                android:visibility="invisible"
+                android:indeterminate="false"
+                style="@android:style/Widget.DeviceDefault.SeekBar"/>
+        </RelativeLayout>
+
+        <TextView
+            android:id="@+id/record_audio_time_max"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="6.0dp"
+            android:singleLine="true"
+            android:text="3:00"
+            android:textSize="18.0sp" />
+    </LinearLayout>
+
+    <View
+        android:layout_width="fill_parent"
+        android:layout_height="0.5dp"
+        android:layout_marginLeft="10dp"
+        android:layout_marginRight="10dp"
+        android:background="#ff484848" />
+
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
+        android:layout_marginLeft="10dp"
+        android:layout_marginRight="10dp"
+        android:padding="0.0dp">
+
+        <Button
+            android:id="@+id/record_audio_control_button"
+            style="@style/InCallButton"
+            android:fontFamily="sans-serif-medium"
+            android:textSize="17sp"
+            android:layout_width="0.0dp"
+            android:layout_height="48.0dp"
+            android:layout_margin="0dp"
+            android:layout_weight="1.0"
+            android:text="@string/record_dialog"
+            android:textColor="?android:textColorPrimary" />
+
+        <View
+            android:id="@+id/record_audio_button_separator"
+            android:layout_width="0.5dp"
+            android:layout_height="fill_parent"
+            android:layout_marginBottom="0.0dp"
+            android:layout_marginTop="0.0dp"
+            android:background="#ff484848" />
+
+        <Button
+            android:id="@+id/record_audio_cancel_button"
+            style="@style/InCallButton"
+            android:fontFamily="sans-serif-medium"
+            android:textSize="17sp"
+            android:layout_width="0.0dp"
+            android:layout_height="48.0dp"
+            android:layout_margin="0dp"
+            android:layout_weight="1.0"
+            android:text="@string/cancel_dialog"
+            android:textColor="?android:textColorPrimary" />
+    </LinearLayout>
+</LinearLayout>

@@ -1,32 +1,6 @@
-/*
-Created by Janis Narbuts
-Copyright (C) 2004-2012, Tivi LTD, www.tiviphone.com. All rights reserved.
-Copyright (C) 2012-2015, Silent Circle, LLC.  All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-    * Any redistribution, use, or modification is done solely for personal
-      benefit and not for any commercial purpose or for monetary gain
-    * Redistributions of source code must retain the above copyright
-      notice, this list of conditions and the following disclaimer.
-    * Redistributions in binary form must reproduce the above copyright
-      notice, this list of conditions and the following disclaimer in the
-      documentation and/or other materials provided with the distribution.
-    * Neither the name Silent Circle nor the
-      names of its contributors may be used to endorse or promote products
-      derived from this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL SILENT CIRCLE, LLC BE LIABLE FOR ANY
-DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
+// VoipPhone
+// Created by Janis Narbuts
+// Copyright (c) 2004-2012 Tivi LTD, www.tiviphone.com. All rights reserved.
 
 #ifdef _WIN32
 #define snprintf _snprintf
@@ -69,6 +43,29 @@ int isAESKeySet(){
    return iPasswordWasSet;
 }
 
+unsigned char bufAxoKey[32];
+
+unsigned char *get32ByteAxoKey(){
+   return bufAxoKey;
+}
+
+static void initAxoKey(const unsigned char *p, int iLen){
+   void sha256(unsigned char *data,
+               unsigned int data_length,
+               unsigned char *digest);
+   
+   const char *salt =  "axo_key_salt";
+   const int salt_len = strlen(salt);
+   
+   unsigned char buf[128];
+   memset(buf, 0, sizeof(buf));
+   if(iLen + salt_len > sizeof(buf)) iLen = sizeof(buf) - salt_len;
+   
+   memcpy(buf, salt, salt_len);
+   memcpy(&buf[salt_len], p, iLen);
+   
+   sha256(buf, sizeof(buf), bufAxoKey);
+}
 
 void setPWDKey(unsigned char *k, int iLen){
 
@@ -77,6 +74,9 @@ void setPWDKey(unsigned char *k, int iLen){
    // The AES object stores the key internalliy in "ready to use" format. No need
    // to store it otherwise.. The key length is given in bits: 128 bits == 16 bytes.
    iPasswordWasSet = 1;
+   
+   initAxoKey(k, iLen);
+   
    if (iLen == 16)
       aes.key128(k);
    else if (iLen == 24)

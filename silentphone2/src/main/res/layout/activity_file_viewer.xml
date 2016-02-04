@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    style="@style/Widget.Silence.RelativeLayout"
+    android:background="@drawable/bg_window_dark">
+
+    <include
+        android:id="@+id/file_viewer_toolbar"
+        layout="@layout/messaging_file_viewer_toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?android:attr/actionBarSize" />
+
+    <FrameLayout
+        android:id="@+id/content"
+        android:layout_below="@+id/file_viewer_toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <TextView
+        android:id="@+id/error"
+        style="@style/Widget.Silence.TextView.Error"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
+        android:visibility="gone" />
+
+    <include
+        android:id="@+id/export"
+        layout="@layout/upload"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:visibility="gone" />
+
+    <include
+        android:id="@+id/progress"
+        layout="@layout/indeterminate_progress"
+        android:visibility="gone" />
+
+    <View
+        android:id="@+id/blackout"
+        style="@style/Widget.Silence.Blackout" />
+</RelativeLayout>

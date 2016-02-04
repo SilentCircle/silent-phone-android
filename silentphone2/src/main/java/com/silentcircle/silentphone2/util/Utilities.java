@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2014-2015, Silent Circle, LLC. All rights reserved.
+Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -31,19 +31,16 @@ package com.silentcircle.silentphone2.util;
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Activity;
-import android.content.ContentResolver;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
-import android.database.Cursor;
 import android.graphics.Paint;
 import android.graphics.drawable.Drawable;
 import android.media.AudioManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
-import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.preference.PreferenceManager;
@@ -57,11 +54,17 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.silentcircle.silentcontacts2.ScContactsContract;
 import com.silentcircle.silentphone2.R;
 import com.silentcircle.silentphone2.services.TiviPhoneService;
 
+import org.w3c.dom.Text;
+
+import java.io.UnsupportedEncodingException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Locale;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * This class has static functions only, mainly used for convenience
@@ -75,14 +78,10 @@ public class Utilities {
     private static final String THEME_PREF = "sp_theme";
     private static int mSelectedTheme;
 
-//    public static final int CONTACT_PICKER_RESULT_SILENT = 1002;
-//    public static final int DUMMY_RESULT = 11;
-
     /** Speaker state, persisting between various speaker events */
     private static boolean sIsSpeakerEnabled = false;
 
     private static Drawable mDefaultAvatar;
-    public static int mDrawerId;
     public static int mDrawerShadowId;
 
     public static long get_time_ms() {
@@ -183,7 +182,7 @@ public class Utilities {
         String n = number;
         if (n.startsWith("sip:") || n.startsWith("sips:" )) {
             idx = n.indexOf(':');
-            n = n.substring(idx+1);
+            n = n.substring(idx + 1);
         }
         return getUsernameFromUriNumber(n);
     }
@@ -227,6 +226,8 @@ public class Utilities {
     /**
      * Read theme from preferences and set it.
      *
+     * ******* Currently mainly commented out - maybe we use selectable themes once again *******
+     *
      * If no theme was set then read the theme name from preferences, check for known
      * names and set the theme. Activities shall call this functions during
      * {@link android.app.Activity#onCreate(android.os.Bundle)} before they set or initialize
@@ -237,20 +238,20 @@ public class Utilities {
     public static void setTheme(Activity activity) {
         if (mSelectedTheme == 0) {
             // Change here if standard (startup) theme changes
-            String theme = getSelectedTheme(activity);
+//            String theme = getSelectedTheme(activity);
 
-            if (theme.equals(activity.getString(R.string.theme_orange)))
-                mSelectedTheme = R.style.SilentPhoneThemeOrange;
-            else if (theme.equals(activity.getString(R.string.theme_white)))
-                mSelectedTheme = R.style.SilentPhoneThemeWhite;
-            else if (theme.equals(activity.getString(R.string.theme_dusk)))
-                mSelectedTheme = R.style.SilentPhoneThemeDusk;
-            else if (theme.equals(activity.getString(R.string.theme_black)))
+//            if (theme.equals(activity.getString(R.string.theme_orange)))
+//                mSelectedTheme = R.style.SilentPhoneThemeOrange;
+//            else if (theme.equals(activity.getString(R.string.theme_white)))
+//                mSelectedTheme = R.style.SilentPhoneThemeWhite;
+//            else if (theme.equals(activity.getString(R.string.theme_dusk)))
+//                mSelectedTheme = R.style.SilentPhoneThemeDusk;
+//            else if (theme.equals(activity.getString(R.string.theme_black)))
+//                mSelectedTheme = R.style.SilentPhoneThemeBlack;
+//            else {
                 mSelectedTheme = R.style.SilentPhoneThemeBlack;
-            else {
-                mSelectedTheme = R.style.SilentPhoneThemeBlack;
-                Log.w(TAG, "Cannot change theme, unknown: " + theme);
-            }
+//                Log.w(TAG, "Cannot change theme, unknown: " + theme);
+//            }
         }
         activity.setTheme(mSelectedTheme);
         setStyledAttributes(activity);
@@ -283,9 +284,14 @@ public class Utilities {
         return true;
     }
 
+    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+    @SuppressWarnings("deprecation")
     public static void setStyledAttributes(Context context) {
-        mDefaultAvatar = context.getResources().getDrawable(R.drawable.ic_contact_picture_holo_dark);
-        mDrawerId = R.drawable.ic_drawer_dark;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
+            mDefaultAvatar = context.getResources().getDrawable(R.drawable.ic_contact_picture_holo_dark, null);
+        else
+            mDefaultAvatar = context.getResources().getDrawable(R.drawable.ic_contact_picture_holo_dark);
+
         mDrawerShadowId = R.drawable.drawer_shadow_dark;
 
         Resources.Theme theme = context.getTheme();
@@ -294,47 +300,9 @@ public class Utilities {
         TypedArray a = theme.obtainStyledAttributes(R.styleable.SpaStyle);
         if (a != null) {
             mDefaultAvatar = a.getDrawable(R.styleable.SpaStyle_sp_ic_contact_picture);
-            mDrawerId = a.getResourceId(R.styleable.SpaStyle_sp_drawer_button, R.drawable.ic_drawer_dark);
             mDrawerShadowId = a.getResourceId(R.styleable.SpaStyle_sp_drawer_shadow, R.drawable.drawer_shadow_dark);
             a.recycle();
         }
-    }
-
-    /**
-     * Read a number or name from Silent Contacts application.
-     *
-     * @param resolver our Content resolver
-     * @param result the result URI from the picker activity
-     * @return the trimmed number or {@code null}
-     */
-    public static String getPickerNumberSilent(ContentResolver resolver, Uri result) {
-
-        String scheme = result.getScheme();
-        if (!"content".equals(scheme)) {
-            return result.getSchemeSpecificPart();
-        }
-        Cursor c;
-        try {
-            c = resolver.query(result, null, null, null, null);
-        } catch (Exception e) {
-            Log.w(TAG, "Silent Contacts picker query Exception, cannot use contacts data.");
-            return null;
-        }
-        if (c != null && c.moveToFirst()) {
-            int index = c.getColumnIndexOrThrow(ScContactsContract.CommonDataKinds.Phone.NUMBER);
-            if (index < 0) {
-                c.close();
-                return null;
-            }
-
-            String number = c.getString(index);
-            if (number != null) {
-                number = number.trim();
-            }
-            c.close();
-            return number;
-        }
-        return null;
     }
 
     public static String formatSas(String sas) {
@@ -486,7 +454,8 @@ public class Utilities {
                 >= Configuration.SCREENLAYOUT_SIZE_LARGE;
     }
 
-    final protected static char[] hexArray = "0123456789ABCDEF".toCharArray();
+    final protected static char[] hexArrayUpper = "0123456789ABCDEF".toCharArray();
+    final protected static char[] hexArrayLower = "0123456789abcdef".toCharArray();
 
     /**
      * Convert a byte array to it printable hex presentation.
@@ -496,9 +465,13 @@ public class Utilities {
      * @param bytes the input array
      * @return a character array with hex characters
      */
-    @SuppressWarnings("unused")
     public static char[] bytesToHexChars(byte[] bytes) {
-        char[] hexChars = new char[bytes.length * 2];
+        return bytesToHexChars(bytes, false);
+    }
+
+    public static char[] bytesToHexChars(byte[] bytes, boolean lowerCase) {
+        final char[] hexChars = new char[bytes.length * 2];
+        final char[] hexArray = lowerCase ? hexArrayLower : hexArrayUpper;
         for ( int j = 0; j < bytes.length; j++ ) {
             int v = bytes[j] & 0xFF;
             hexChars[j * 2] = hexArray[v >>> 4];
@@ -525,6 +498,30 @@ public class Utilities {
         return data;
     }
 
+    /**
+     * Hash a string with MD5 to generate some id data
+     *
+     * @param input
+     * @return
+     */
+    public static String hashMd5(String input) {
+        final MessageDigest md;
+        try {
+            md = MessageDigest.getInstance("MD5");
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+            return null;
+        }
+        final byte[] hash;
+        try {
+            hash = md.digest(input.getBytes("UTF-8"));
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+            return null;
+        }
+        return new String(bytesToHexChars(hash, true));
+    }
+
     public static boolean isNetworkConnected(Context context){
         ConnectivityManager connMgr = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
@@ -546,14 +543,34 @@ public class Utilities {
         TextView tv = (TextView)toolbar.findViewById(R.id.sub_title);
         switch (registerStatus) {
             case 1:             // connecting
-                tv.setTextColor(res.getColor(R.color.white_translucent));
+                tv.setTextColor(res.getColor(R.color.sc_ng_background_3));
                 break;
             case 2:             // online
-                tv.setTextColor(res.getColor(R.color.black_green));
+                tv.setTextColor(res.getColor(R.color.black_green_dark_1));
                 break;
             default:            // offline
-                tv.setTextColor(res.getColor(R.color.solid_red));
+                tv.setTextColor(res.getColor(R.color.sc_ng_text_red));
         }
+    }
+
+    public static boolean isAnyOf( String input, String... possibleValues ) {
+        if( possibleValues == null ) {
+            return false;
+        }
+
+        boolean is = false;
+        for( int i = 0; !is && i < possibleValues.length; i++ ) {
+            String possibleValue = possibleValues[i];
+            if( input == null ) {
+                if( possibleValue == null ) {
+                    is = true;
+                    break;
+                }
+                continue;
+            }
+            is = possibleValue != null && input.equals( possibleValue );
+        }
+        return is;
     }
 
     public static void asyncCommand(String command) {
@@ -579,4 +596,24 @@ public class Utilities {
             if (ConfigurationUtilities.mTrace) Log.d(TAG, "Processing time for command '"+ mCommand + "': " + time);
         }
     }
+
+    private static final String PATTERN_USERNAME_STR = "^[a-z][a-z0-9]{1,}$";
+    private static final Pattern PATTERN_USERNAME = Pattern.compile(PATTERN_USERNAME_STR);
+
+    /**
+     * Check whether given string is syntactically valid user - starts with a letter
+     * and is followed by letters and digits, length of the string at least 2 symbols.
+     *
+     * @param userName String to check for validity.
+     * @return true, if passed parameter is a valid user name, false if it is empty or does not
+     * match required format.
+     */
+    public static boolean isValidSipUsername(final String userName) {
+        if (TextUtils.isEmpty(userName)) {
+            return false;
+        }
+        Matcher matcher = PATTERN_USERNAME.matcher(userName);
+        return matcher.matches();
+    }
+
 }

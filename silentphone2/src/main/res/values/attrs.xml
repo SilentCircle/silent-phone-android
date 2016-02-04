@@ -25,6 +25,13 @@
         <attr name="sp_drawer_header_background" format="color|reference"/>
         <attr name="sp_drawer_header_text_color" format="color|reference"/>
 
+        <!-- ?
+                <attr name="sp_ab_title_style" format="reference" />
+        <attr name="sp_ab_subtitle_style" format="reference" />
+        -->
+        <attr name="sp_actionbar_color" format="color|reference"/>
+        <attr name="sp_actionbar_title_text_color" format="color|reference"/>
+
         <!-- Attributes for the icons in buttons and elsewhere
              We define them as integer because in the style this resolves to a
              '@drawable/some_thing' and this is an integer (R.drawable.some_thing
@@ -35,11 +42,13 @@
         <attr name="sp_ic_call_hold" format="integer|reference"/>
         <attr name="sp_ic_call_not_hold" format="integer|reference"/>
         <attr name="sp_ic_dial_pad" format="integer|reference"/>
+        <attr name="sp_ic_new_chat" format="integer|reference"/>
         <attr name="sp_ic_end_call" format="integer|reference"/>
         <attr name="sp_ic_headset" format="integer|reference"/>
         <attr name="sp_ic_keyboard" format="integer|reference"/>
         <attr name="sp_ic_mic" format="integer|reference"/>
         <attr name="sp_ic_mic_muted" format="integer|reference"/>
+        <attr name="sp_ic_start_chat" format="integer|reference"/>
         <attr name="sp_ic_switch_camera" format="integer|reference"/>
         <attr name="sp_ic_video" format="integer|reference"/>
         <attr name="sp_ic_video_muted" format="integer|reference"/>
@@ -88,6 +97,8 @@
 
         <attr name="sp_ab_title_style" format="reference" />
         <attr name="sp_ab_subtitle_style" format="reference" />
+
+        <attr name="sp_icon_tint_color" format="reference|color"/>
 
     </declare-styleable>
 
@@ -235,6 +246,20 @@
 
     <declare-styleable name="ResizingText">
         <attr name="resizing_text_min_size" format="dimension"/>
+    </declare-styleable>
+
+    <declare-styleable name="OptionsItem">
+        <attr name="src" format="reference" />
+        <attr name="srcChecked" format="reference" />
+        <attr name="text" format="reference|string" />
+        <attr name="description" format="reference|string" />
+        <attr name="textSize" format="reference|dimension" />
+        <attr name="descriptionSize" format="reference|dimension" />
+        <attr name="isCheckable" format="boolean" />
+        <attr name="imageMargin" format="reference|dimension" />
+        <attr name="checkableMargin" format="reference|dimension" />
+        <attr name="descriptionMarginTop" format="reference|dimension" />
+        <attr name="descriptionMarginLeft" format="reference|dimension" />
     </declare-styleable>
 
 </resources>

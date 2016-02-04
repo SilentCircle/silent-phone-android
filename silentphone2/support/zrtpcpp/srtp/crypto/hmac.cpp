@@ -36,14 +36,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <stdio.h>
-#include "crypto/sha1.h"
 #include "crypto/hmac.h"
-
-typedef struct _hmacSha1Context {
-    sha1_ctx ctx;
-    sha1_ctx innerCtx;
-    sha1_ctx outerCtx;
-} hmacSha1Context;
 
 static int32_t hmacSha1Init(hmacSha1Context *ctx, const uint8_t *key, uint32_t kLength)
 {
@@ -146,9 +139,19 @@ void hmac_sha1( uint8_t* key, int32_t keyLength, const uint8_t* dataChunks[], ui
 void* createSha1HmacContext(uint8_t* key, int32_t keyLength)
 {
     hmacSha1Context *ctx = reinterpret_cast<hmacSha1Context*>(malloc(sizeof(hmacSha1Context)));
+    if (ctx == NULL)
+        return NULL;
 
     hmacSha1Init(ctx, key, keyLength);
     return ctx;
+}
+
+void* initializeSha1HmacContext(void* ctx, uint8_t* key, int32_t keyLength)
+{
+    hmacSha1Context *pctx = (hmacSha1Context*)ctx;
+
+    hmacSha1Init(pctx, key, keyLength);
+    return pctx;
 }
 
 void hmacSha1Ctx(void* ctx, const uint8_t* data, uint32_t dataLength,

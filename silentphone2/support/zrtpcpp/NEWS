@@ -1,3 +1,17 @@
+== GNU ZRTP 4.4.0 ==
+
+Changes the handling of HMAC and Hash contexts to avoild tool
+many malloc/free calls and thus memory pointer problems.
+
+Enhance the handling an check the nonce when using multi-stream
+mode. This required a modification to the class file and some
+modifications on the API. The old functions are now deprecated
+but still usable. Nevertheless you should change your application
+to use the new fuctions which support the new nonce handling and
+checks.
+
+Some bug fixing as well.
+
 == GNU ZRTP 4.3.1 ==
 
 This is a bugfix release. It fixes several compiler issues in

@@ -132,7 +132,8 @@
                         android:paddingBottom="10dp"
                         android:textColor="@color/auth_inactive_body_text_grey"
                         android:textSize="12sp"
-                        android:text="@string/provisioning_show_pw"/>
+                        android:text="@string/provisioning_show_pw"
+                        android:contentDescription="@string/provisioning_show_pw" />
 
                 <View android:id="@+id/strut"
                         android:layout_width="@dimen/activity_horizontal_margin_large"

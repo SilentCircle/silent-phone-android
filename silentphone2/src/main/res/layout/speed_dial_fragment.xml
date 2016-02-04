@@ -22,7 +22,7 @@
     android:divider="?android:attr/dividerHorizontal"
     android:showDividers="end"
     android:clipChildren="false"
-    android:background="@color/background_dialer_list_items">
+    android:background="@drawable/bg_window_dark">
 
     <FrameLayout
         android:id="@+id/contact_tile_frame"

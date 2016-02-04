@@ -26,6 +26,9 @@
  * @{
  */
 
+#include <crypto/hmac.h>
+#include <cryptcommon/macSkein.h>
+
 class SrtpSymCrypto;
 
 /**
@@ -294,6 +297,11 @@ class CryptoContextCtrl {
 
     private:
 
+        typedef union _hmacCtx {
+            SkeinCtx_t       hmacSkeinCtx;
+            hmacSha1Context  hmacSha1Ctx;
+        } HmacCtx;
+
         uint32_t ssrcCtx;
         uint32_t mkiLength;
         uint8_t* mki;
@@ -326,6 +334,7 @@ class CryptoContextCtrl {
         uint8_t labelBase;
 
         void*   macCtx;
+        HmacCtx hmacCtx;
 
         SrtpSymCrypto* cipher;
         SrtpSymCrypto* f8Cipher;

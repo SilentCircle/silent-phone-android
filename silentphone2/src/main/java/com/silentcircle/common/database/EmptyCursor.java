@@ -18,6 +18,7 @@ package com.silentcircle.common.database;
 
 import net.sqlcipher.AbstractCursor;
 import android.database.CursorIndexOutOfBoundsException;
+import android.os.Bundle;
 
 /**
  * A cursor that is empty.
@@ -80,6 +81,9 @@ final public class EmptyCursor extends AbstractCursor {
 
     @Override
     public int getType(int column) { throw cursorException(); }
+
+    @Override
+    public void setExtras(Bundle extras) { throw cursorException(); }
 
     private CursorIndexOutOfBoundsException cursorException() {
         return new CursorIndexOutOfBoundsException("Operation not permitted on an empty cursor.");

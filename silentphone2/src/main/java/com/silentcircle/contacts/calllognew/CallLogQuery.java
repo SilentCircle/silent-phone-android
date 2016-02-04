@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2015, Silent Circle, LLC. All rights reserved.
+Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -76,6 +76,7 @@ public final class CallLogQuery {
             ScCalls.CACHED_PHOTO_ID,           // 13
             ScCalls.CACHED_FORMATTED_NUMBER,   // 14
             ScCalls.IS_READ,                   // 15
+            ScCalls.SC_OPTION_TEXT1            // 16
     };
 
     public static final int ID = 0;
@@ -94,5 +95,6 @@ public final class CallLogQuery {
     public static final int CACHED_PHOTO_ID = 13;
     public static final int CACHED_FORMATTED_NUMBER = 14;
     public static final int IS_READ = 15;
+    public static final int SC_OPTION_TEXT1 = 16;
     /** The indices of the synthetic "section" and relative date columns in the extended projection. */
 }

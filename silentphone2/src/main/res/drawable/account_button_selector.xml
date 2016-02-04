@@ -3,6 +3,6 @@
     <item android:state_pressed="true"
           android:drawable="@color/auth_account_pressed"/> <!-- pressed -->
     <item android:state_focused="true"
-          android:drawable="@color/auth_account_pressed"/> <!-- pressed -->
+        android:drawable="@color/auth_account_pressed"/> <!-- pressed -->
     <item android:drawable="@color/auth_account_default"/> <!-- default -->
 </selector>

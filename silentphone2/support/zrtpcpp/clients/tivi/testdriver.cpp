@@ -194,21 +194,19 @@ int main(int argc,char **argv) {
             displayError("recvfrom(2)");
         }
 //         hexdump("Data before processing", buffer, length);
-
-//         if (!session->isStarted(CtZrtpSession::AudioStream))
-//             session->start(uiSSRC, CtZrtpSession::AudioStream);
-
         /*
          * process incoming data
          */
-        size_t newLength;
+        size_t newLength = 0;
         int rc = session->processIncomingRtp(buffer, length, &newLength, CtZrtpSession::AudioStream);
-        fprintf(stderr, "processing returns: %d\n", rc);
+        fprintf(stderr, "processing returns: %d, length: %ld, newLength: %ld\n", rc, length, newLength);
 //         hexdump("Data after processing", buffer, newLength);
         if (rc == 0)
             continue;                           // drop packet
 
         fprintf(stderr, "Received data: %s\n", &buffer[12]); // assume normal RTP packet for debug printout
+        if (buffer[12] == 'e')
+            break;
     }
     /*
      * Close the socket and exit:

@@ -16,7 +16,11 @@
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
 */
 
+#ifndef _SRTPHANDLER_H_
+#define _SRTPHANDLER_H_
+
 #include <stdint.h>
+#include <libzrtpcpp/ZrtpCodes.h>
 
 class CryptoContext;
 class CryptoContextCtrl;
@@ -56,6 +60,10 @@ public:
 
     /**
      * @brief Unprotect a SRTP packet.
+     * 
+     * If the @c errorData pointer is not @c NULL then this function fills the data structure
+     * in case of an error return. The caller may store and evaluate this data to further
+     * trace the problem.
      *
      * @param pcc the SRTP CryptoContext instance
      *
@@ -64,13 +72,16 @@ public:
      * @param length the length of the SRTP packet data in bytes
      *
      * @param newLength the length of the resulting RTP packet data in bytes
+     * 
+     * @param errorData Pointer to @c errorData structure or @c NULL, default is @c NULL
      *
      * @return an integer value
      *         - 1 - success
+     *         - 0 - SRTP/RTP packet decode error
      *         - -1 - SRTP authentication failed
      *         - -2 - SRTP replay check failed
      */
-    static int32_t unprotect(CryptoContext* pcc, uint8_t* buffer, size_t length, size_t* newLength);
+    static int32_t unprotect(CryptoContext* pcc, uint8_t* buffer, size_t length, size_t* newLength, SrtpErrorData* errorData=NULL);
 
     /**
      * @brief Protect an RTCP packet.
@@ -110,3 +121,4 @@ private:
     static bool decodeRtp(uint8_t* buffer, int32_t length, uint32_t *ssrc, uint16_t *seq, uint8_t** payload, int32_t *payloadlen);
 
 };
+#endif // _SRTPHANDLER_H_

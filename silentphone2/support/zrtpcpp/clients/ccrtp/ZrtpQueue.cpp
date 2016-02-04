@@ -700,16 +700,16 @@ std::string ZrtpQueue::getPeerHelloHash()  {
         return std::string();
 }
 
-std::string ZrtpQueue::getMultiStrParams()  {
+std::string ZrtpQueue::getMultiStrParams(ZRtp ** zrtpMaster)  {
     if (zrtpEngine != NULL)
-        return zrtpEngine->getMultiStrParams();
+        return zrtpEngine->getMultiStrParams(zrtpMaster);
     else
         return std::string();
 }
 
-void ZrtpQueue::setMultiStrParams(std::string parameters)  {
+void ZrtpQueue::setMultiStrParams(std::string parameters, ZRtp* zrtpMaster)  {
     if (zrtpEngine != NULL)
-        zrtpEngine->setMultiStrParams(parameters);
+        zrtpEngine->setMultiStrParams(parameters, zrtpMaster);
 }
 
 bool ZrtpQueue::isMultiStream()  {

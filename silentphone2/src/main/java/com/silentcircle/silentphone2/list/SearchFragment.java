@@ -17,12 +17,14 @@ package com.silentcircle.silentphone2.list;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
+import android.app.Dialog;
+import android.content.Context;
 import android.content.Intent;
 import android.content.res.Resources;
+import android.database.Cursor;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.View;
 import android.view.animation.Interpolator;
 import android.widget.AbsListView;
@@ -34,12 +36,19 @@ import com.silentcircle.common.list.ContactListItemView;
 import com.silentcircle.common.list.OnPhoneNumberPickerActionListener;
 import com.silentcircle.common.util.DialerUtils;
 import com.silentcircle.common.util.ViewUtil;
+import com.silentcircle.contacts.ContactsUtils;
+import com.silentcircle.contacts.list.PhoneNumberListAdapter;
 import com.silentcircle.contacts.list.PhoneNumberPickerFragment;
 import com.silentcircle.contacts.list.ScContactEntryListAdapter;
+import com.silentcircle.contacts.list.ScDirectoryLoader;
+import com.silentcircle.messaging.services.AxoMessaging;
+import com.silentcircle.messaging.views.CallOrConversationDialog;
 import com.silentcircle.silentphone2.R;
-import com.silentcircle.silentphone2.activities.DialerActivity;
+import com.silentcircle.silentphone2.activities.ContactAdder;
+import com.silentcircle.silentphone2.util.Utilities;
 
-public class SearchFragment extends PhoneNumberPickerFragment {
+public class SearchFragment extends PhoneNumberPickerFragment
+        implements AxoMessaging.AxoMessagingStateCallback {
 
     @SuppressWarnings("unused")
     private static final String TAG = "SearchFragment";
@@ -57,6 +66,9 @@ public class SearchFragment extends PhoneNumberPickerFragment {
     private int mShowDialpadDuration;
     private int mHideDialpadDuration;
 
+    private boolean mStartConversationFlag = false;
+    private boolean mAxoRegistered = false;
+
     private HostInterface mActivity;
 
     public interface HostInterface {
@@ -66,6 +78,14 @@ public class SearchFragment extends PhoneNumberPickerFragment {
         int getActionBarHideOffset();
         @SuppressWarnings("unused")
         int getActionBarHeight();
+    }
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        AxoMessaging axoMessaging = AxoMessaging.getInstance(getActivity().getApplicationContext());
+        mAxoRegistered = axoMessaging.isRegistered();
+        axoMessaging.addStateChangeListener(this);
     }
 
     @Override
@@ -117,11 +137,18 @@ public class SearchFragment extends PhoneNumberPickerFragment {
 
             @Override
             public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount,
-                    int totalItemCount) {
+                                 int totalItemCount) {
             }
         });
 
         updatePosition(false /* animate */);
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        AxoMessaging axoMessaging = AxoMessaging.getInstance(getActivity().getApplicationContext());
+        axoMessaging.removeStateChangeListener(this);
     }
 
     @Override
@@ -146,6 +173,10 @@ public class SearchFragment extends PhoneNumberPickerFragment {
         mAddToContactNumber = addToContactNumber;
     }
 
+    public void setStartConversationFlag(boolean startConversationFlag) {
+        mStartConversationFlag = startConversationFlag;
+    }
+
     @Override
     protected ScContactEntryListAdapter createListAdapter() {
         DialerPhoneNumberListAdapter adapter = new DialerPhoneNumberListAdapter(getActivity());
@@ -155,14 +186,21 @@ public class SearchFragment extends PhoneNumberPickerFragment {
     }
 
     @Override
+    protected void configureAdapter() {
+        super.configureAdapter();
+        setConversationShortcutEnabled();
+    }
+
+    @Override
     protected void onItemClick(int position, long id) {
         final DialerPhoneNumberListAdapter adapter = (DialerPhoneNumberListAdapter) getAdapter();
         final int shortcutType = adapter.getShortcutTypeFromPosition(position);
         final OnPhoneNumberPickerActionListener listener;
+        ScDirectoryLoader.clearCachedData();
 
         switch (shortcutType) {
             case DialerPhoneNumberListAdapter.SHORTCUT_INVALID:
-                super.onItemClick(position, id);
+                startCallOrConversation(position, id, adapter.getPhoneNumber(position));
                 break;
             case DialerPhoneNumberListAdapter.SHORTCUT_DIRECT_CALL:
                 listener = getOnPhoneNumberPickerListener();
@@ -173,7 +211,7 @@ public class SearchFragment extends PhoneNumberPickerFragment {
             case DialerPhoneNumberListAdapter.SHORTCUT_ADD_NUMBER_TO_CONTACTS:
                 final String number = TextUtils.isEmpty(mAddToContactNumber) ?
                         adapter.getFormattedQueryString() : mAddToContactNumber;
-                final Intent intent = DialerActivity.getAddNumberToContactIntent(number);
+                final Intent intent = ContactsUtils.getAddNumberToContactIntent(number);  // adds directly to native contacts
                 DialerUtils.startActivityWithErrorToast(getActivity(), intent,
                         R.string.add_contact_not_available);
                 break;
@@ -183,7 +221,17 @@ public class SearchFragment extends PhoneNumberPickerFragment {
 //                    listener.onCallNumberDirectly(getQueryString(), true /* isVideoCall */);
 //                }
 //                break;
+            case DialerPhoneNumberListAdapter.SHORTCUT_DIRECT_CONVERSATION:
+                startConversation(getQueryString());
+                break;
         }
+    }
+
+    @Override
+    public void axoRegistrationStateChange(boolean registered) {
+        mAxoRegistered = registered;
+        /* depending on registration state either show or hide conversation button */
+        setConversationShortcutEnabled();
     }
 
     /**
@@ -234,6 +282,110 @@ public class SearchFragment extends PhoneNumberPickerFragment {
                     paddingTop,
                     listView.getPaddingRight(),
                     listView.getPaddingBottom());
+        }
+    }
+
+    protected void startCallOrConversation(final int position, final long id,
+                                           final String number) {
+        AxoMessaging axoMessaging =
+                AxoMessaging.getInstance(getContext().getApplicationContext());
+        boolean axoRegistered = axoMessaging.isRegistered();
+
+        /*
+         * If AxoMessaging has been registered it is possible to start a conversation
+         * with entered number. Check whether fragment has conversation flag set and
+         * start conversation if it is otherwise ask user what to do.
+         *
+         * If AxoMessaging has not been registered, start call.
+         */
+        if (axoRegistered && Character.isLetter(number.charAt(0))) {
+            if (mStartConversationFlag) {
+                startConversation(number);
+            }
+            else {
+                buildCallConversationDialog(position, id, number)
+                        .show();
+            }
+        }
+        else {
+            super.onItemClick(position, id);
+        }
+    }
+
+
+    protected void startConversation(final String number) {
+        final Intent conversationIntent = ContactsUtils.getMessagingIntent(number, getActivity());
+        DialerUtils.startActivityWithErrorToast(getActivity(), conversationIntent,
+                R.string.add_contact_not_available);
+
+    }
+
+    protected Dialog buildCallConversationDialog(final int position, final long id, final String number) {
+
+        final DialerPhoneNumberListAdapter adapter = (DialerPhoneNumberListAdapter) getAdapter();
+
+        final Cursor cursor = (Cursor)adapter.getItem(position);
+        final int scIndex = cursor.getColumnIndex(ScDirectoryLoader.SC_PRIVATE_FIELD);
+        boolean withContact = false;
+        final String scInfo;
+        if (scIndex >= 0) {
+            scInfo = cursor.getString(scIndex);
+            withContact = scInfo != null;
+        }
+        else {
+            scInfo = null;
+        }
+        final Context context = getActivity();
+        final CallOrConversationDialog dialog = new CallOrConversationDialog(context, withContact);
+        dialog.setOnCallOrConversationSelectedListener(
+                new CallOrConversationDialog.OnCallOrConversationSelectedListener() {
+
+                    @Override
+                    public void onCallSelected() {
+                        SearchFragment.super.onItemClick(position, id);
+                    }
+
+                    @Override
+                    public void onConversationSelected() {
+                        startConversation(number);
+                    }
+
+                    @Override
+                    public void onAddContactSelected() {addContactToScAccount(cursor, scInfo);}
+                });
+
+        return dialog;
+    }
+
+    private void addContactToScAccount(Cursor cursor, String scName) {
+
+        final Intent intent = new Intent(getContext(), ContactAdder.class);
+        intent.putExtra("AssertedName", "sip:" + scName + getString(R.string.sc_sip_domain_0));
+        intent.putExtra("Text", scName);
+        intent.putExtra("DisplayName", cursor.getString(PhoneNumberListAdapter.PhoneQuery.DISPLAY_NAME));
+        getContext().startActivity(intent);
+    }
+
+    /**
+     * Sets visibility of conversation shortcut.
+     *
+     * Shortcut is visible if Axolotl is enabled and entered string
+     * starts with a letter and is at least two symbols long.
+     */
+    private void setConversationShortcutEnabled() {
+        String queryString = getQueryString();
+        final boolean showMessagingShortcut = Utilities.isValidSipUsername(queryString)
+                && mAxoRegistered;
+
+        final DialerPhoneNumberListAdapter adapter = (DialerPhoneNumberListAdapter) getAdapter();
+        if (adapter != null) {
+            boolean changed = adapter.setShortcutEnabled(
+                    DialerPhoneNumberListAdapter.SHORTCUT_DIRECT_CONVERSATION,
+                    showMessagingShortcut);
+            if (changed) {
+                adapter.notifyDataSetChanged();
+            }
+
         }
     }
 }

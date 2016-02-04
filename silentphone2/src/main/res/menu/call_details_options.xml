@@ -26,7 +26,7 @@
 -->
     <item
         android:id="@+id/menu_remove_from_call_log"
-        android:icon="@drawable/ic_calllog_delete"
+        android:icon="@drawable/ic_action_delete_enabled_light"
         app:showAsAction="ifRoom"
         android:title="@string/recentCalls_removeFromRecentList"
         android:onClick="onMenuRemoveFromCallLog"

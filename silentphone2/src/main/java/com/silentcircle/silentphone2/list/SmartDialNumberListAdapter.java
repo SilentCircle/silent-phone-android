@@ -19,12 +19,12 @@ import android.content.ContentUris;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
+import android.provider.ContactsContract;
 import android.text.TextUtils;
 import android.util.Log;
 
 import com.silentcircle.common.list.ContactListItemView;
 import com.silentcircle.contacts.utils.PhoneNumberHelper;
-import com.silentcircle.silentcontacts2.ScContactsContract;
 import com.silentcircle.silentphone2.dialpad.SmartDialCursorLoader;
 import com.silentcircle.silentphone2.dialpad.SmartDialMatchPosition;
 import com.silentcircle.silentphone2.dialpad.SmartDialNameMatcher;
@@ -77,13 +77,13 @@ public class SmartDialNumberListAdapter extends DialerPhoneNumberListAdapter {
     protected void setHighlight(ContactListItemView view, Cursor cursor) {
         view.clearHighlightSequences();
 
-        final String displayName = cursor.getString(PhoneQuery.PHONE_DISPLAY_NAME);
+        final String displayName = cursor.getString(PhoneQuery.DISPLAY_NAME);
         if (displayName != null && mNameMatcher.matches(displayName)) {
             final ArrayList<SmartDialMatchPosition> nameMatches = mNameMatcher.getMatchPositions();
             for (SmartDialMatchPosition match:nameMatches) {
                 view.addNameHighlightSequence(match.start, match.end);
                 if (DEBUG) {
-                    Log.v(TAG, cursor.getString(PhoneQuery.PHONE_DISPLAY_NAME) + " " +
+                    Log.v(TAG, cursor.getString(PhoneQuery.DISPLAY_NAME) + " " +
                             mNameMatcher.getQuery() + " " + String.valueOf(match.start));
                 }
             }
@@ -108,7 +108,7 @@ public class SmartDialNumberListAdapter extends DialerPhoneNumberListAdapter {
         Cursor cursor = ((Cursor)getItem(position));
         if (cursor != null) {
             long id = cursor.getLong(PhoneQuery.PHONE_ID);
-            return ContentUris.withAppendedId(ScContactsContract.Data.CONTENT_URI, id);
+            return ContentUris.withAppendedId(ContactsContract.Data.CONTENT_URI, id);
         } 
         else {
             Log.w(TAG, "Cursor was null in getDataUri() call. Returning null instead.");
@@ -119,7 +119,9 @@ public class SmartDialNumberListAdapter extends DialerPhoneNumberListAdapter {
     @Override
     public void setQueryString(String queryString) {
         final boolean showNumberShortcuts = !TextUtils.isEmpty(getFormattedQueryString());
-        boolean changed = setShortcutEnabled(SHORTCUT_ADD_NUMBER_TO_CONTACTS, showNumberShortcuts);
+        // For NGA: Don't show the "add to contacts option"
+//        boolean changed = setShortcutEnabled(SHORTCUT_ADD_NUMBER_TO_CONTACTS, showNumberShortcuts);
+        boolean changed = setShortcutEnabled(SHORTCUT_ADD_NUMBER_TO_CONTACTS, false);
 //        changed |= setShortcutEnabled(SHORTCUT_MAKE_VIDEO_CALL, showNumberShortcuts /* && CallUtil.isVideoEnabled(getContext())*/);
         if (changed) {
             notifyDataSetChanged();

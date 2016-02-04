@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2015, Silent Circle, LLC. All rights reserved.
+Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -33,11 +33,13 @@ import android.content.Intent;
 import android.os.Build;
 import android.widget.Toast;
 
+import com.silentcircle.messaging.services.AxoMessaging;
 import com.silentcircle.silentphone2.activities.TraceListActivity;
-import com.silentcircle.silentphone2.receivers.OutgoingCallReceiver;
 import com.silentcircle.silentphone2.services.TiviPhoneService;
 
 /**
+ * Handle internal dial cheat codes.
+ *
  * Created by werner on 31.01.15.
  */
 public class DialCodes {
@@ -51,7 +53,10 @@ public class DialCodes {
             return true;
         }
 
-        if ("*##*23466*".compareTo(internalCommand) == 0){
+        if ("*##*23466*".compareTo(internalCommand) == 0) {
+            AxoMessaging.mSuppressErrorView = !AxoMessaging.mSuppressErrorView;
+            Toast.makeText(activity, "Suppressing error messages is: " + (AxoMessaging.mSuppressErrorView ? "True" : "False"),
+                    Toast.LENGTH_LONG).show();
             return true;
         }
 

@@ -85,6 +85,7 @@
  */
 
 #include <common/osSpecifics.h>
+#include <srtp/SrtpHandler.h>
 
 class CryptoContext;
 class CryptoContextCtrl;
@@ -307,6 +308,10 @@ public:
      *    called both @c sdesZrtpStreamCreateSdes and @c sdesZrtpStreamParseSdes
      *    functions to properly setup the SDES key data.
      *
+     * If the @c errorData pointer is not @c NULL then this function fills the data structure
+     * in case of an error return. The caller may store and evaluate this data to further
+     * trace the problem.
+     *
      * @param packet the buffer that contains the RTP/SRTP packet. After processing,
      *               the decrypted packet is stored in the same buffer.
      *
@@ -314,12 +319,15 @@ public:
      *
      * @param newLength to an integer that get the new length of the packet excluding SRTCP data.
      *
+     * @param errorData Pointer to @c errorData structure or @c NULL, default is @c NULL
+     *
      * @return
      *       - 1: success,
+     *       -  0: SRTP/RTP packet decode error
      *       - -1: SRTP authentication failed,
      *       - -2: SRTP replay check failed
      */
-    int incomingRtp(uint8_t *packet, size_t length, size_t *newLength);
+    int incomingRtp(uint8_t *packet, size_t length, size_t *newLength, SrtpErrorData* errorData=NULL);
 
     /**
      * @brief Process an incoming RTCP or SRTCP packet
@@ -369,12 +377,15 @@ public:
      *
      * @param newLength to an integer that get the new length of the packet excluding SRTCP data.
      *
+     * @param errorData Pointer to @c errorData structure or @c NULL, default is @c NULL
+     * 
      * @return
      *       - 1: success,
+     *       -  0: SRTP/RTP packet decode error
      *       - -1: SRTP authentication failed,
      *       - -2: SRTP replay check failed
      */
-    int incomingZrtpTunnel(uint8_t *packet, size_t length, size_t *newLength);
+    int incomingZrtpTunnel(uint8_t *packet, size_t length, size_t *newLength, SrtpErrorData* errorData=NULL);
 
         /**
      * @brief Return state of SDES stream.

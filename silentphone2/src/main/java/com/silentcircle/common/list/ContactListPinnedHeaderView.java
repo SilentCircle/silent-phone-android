@@ -44,7 +44,7 @@ public class ContactListPinnedHeaderView extends TextView {
         TypedArray a = getContext().obtainStyledAttributes(attrs, R.styleable.ContactListItemView);
 //        int backgroundColor = a.getColor(
 //                R.styleable.ContactListItemView_list_item_background_color, Color.WHITE);
-        int backgroundColor = context.getResources().getColor(R.color.black_dark_gray);  // TODO: style-able
+        int backgroundColor = context.getResources().getColor(android.R.color.transparent);  // TODO: style-able
         int textOffsetTop = a.getDimensionPixelSize(
                 R.styleable.ContactListItemView_list_item_text_offset_top, 0);
         int paddingStartOffset = a.getDimensionPixelSize(

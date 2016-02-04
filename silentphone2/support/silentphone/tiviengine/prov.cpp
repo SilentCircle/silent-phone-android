@@ -1,32 +1,6 @@
-/*
-Created by Janis Narbuts
-Copyright (C) 2004-2012, Tivi LTD, www.tiviphone.com. All rights reserved.
-Copyright (C) 2012-2015, Silent Circle, LLC.  All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-    * Any redistribution, use, or modification is done solely for personal
-      benefit and not for any commercial purpose or for monetary gain
-    * Redistributions of source code must retain the above copyright
-      notice, this list of conditions and the following disclaimer.
-    * Redistributions in binary form must reproduce the above copyright
-      notice, this list of conditions and the following disclaimer in the
-      documentation and/or other materials provided with the distribution.
-    * Neither the name Silent Circle nor the
-      names of its contributors may be used to endorse or promote products
-      derived from this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL SILENT CIRCLE, LLC BE LIABLE FOR ANY
-DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
+//VoipPhone
+//Created by Janis Narbuts
+//Copyright (c) 2004-2012 Tivi LTD, www.tiviphone.com. All rights reserved.
 
 #include "../baseclasses/CTBase.h"
 #include "../baseclasses/CTEditBase.h"
@@ -34,6 +8,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../os/CTThread.h"
 #include "../os/CTTcp.h"
 #include "../encrypt/tls/CTTLS.h"
+
+#ifdef ANDROID
+void androidLog(const char* format, ...);
+#endif
 
 #ifdef _WIN32
 #define snprintf _snprintf
@@ -101,36 +79,94 @@ static const char *productionCert=
 "9WQcCk3RvKqsnyrQ/39/2n3qse0wJcGE2jTSW3iDVuycNsMm4hH2Z0kdkquM++v/\r\n"
 "eu6FSqdQgPCnXEqULl8FmTxSQeDNtGPPAUO6nIPcj2A781q0tHuu2guQOHXvgR1m\r\n"
 "0vdXcDazv/wor3ElhVsT/h5/WrQ8\r\n"
-"-----END CERTIFICATE-----\r\n"
-;
+"-----END CERTIFICATE-----\r\n" ;
 
 /*
  * Silent Phone uses the following certificate to setup TLS with the
  * provisioning servers of the development network.
  */
 static const char *developmentCert =
-// Entrust root certificate, serial number: 38:63:DE:F8, SHA1: 50:30:06:09
+// // Entrust root certificate, serial number: 38:63:DE:F8, SHA1: 50:30:06:09
+// "-----BEGIN CERTIFICATE-----\r\n"
+// "MIIEKjCCAxKgAwIBAgIEOGPe+DANBgkqhkiG9w0BAQUFADCBtDEUMBIGA1UEChMLRW50cnVzdC5u\r\n"
+// "ZXQxQDA+BgNVBAsUN3d3dy5lbnRydXN0Lm5ldC9DUFNfMjA0OCBpbmNvcnAuIGJ5IHJlZi4gKGxp\r\n"
+// "bWl0cyBsaWFiLikxJTAjBgNVBAsTHChjKSAxOTk5IEVudHJ1c3QubmV0IExpbWl0ZWQxMzAxBgNV\r\n"
+// "BAMTKkVudHJ1c3QubmV0IENlcnRpZmljYXRpb24gQXV0aG9yaXR5ICgyMDQ4KTAeFw05OTEyMjQx\r\n"
+// "NzUwNTFaFw0yOTA3MjQxNDE1MTJaMIG0MRQwEgYDVQQKEwtFbnRydXN0Lm5ldDFAMD4GA1UECxQ3\r\n"
+// "d3d3LmVudHJ1c3QubmV0L0NQU18yMDQ4IGluY29ycC4gYnkgcmVmLiAobGltaXRzIGxpYWIuKTEl\r\n"
+// "MCMGA1UECxMcKGMpIDE5OTkgRW50cnVzdC5uZXQgTGltaXRlZDEzMDEGA1UEAxMqRW50cnVzdC5u\r\n"
+// "ZXQgQ2VydGlmaWNhdGlvbiBBdXRob3JpdHkgKDIwNDgpMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8A\r\n"
+// "MIIBCgKCAQEArU1LqRKGsuqjIAcVFmQqK0vRvwtKTY7tgHalZ7d4QMBzQshowNtTK91euHaYNZOL\r\n"
+// "Gp18EzoOH1u3Hs/lJBQesYGpjX24zGtLA/ECDNyrpUAkAH90lKGdCCmziAv1h3edVc3kw37XamSr\r\n"
+// "hRSGlVuXMlBvPci6Zgzj/L24ScF2iUkZ/cCovYmjZy/Gn7xxGWC4LeksyZB2ZnuU4q941mVTXTzW\r\n"
+// "nLLPKQP5L6RQstRIzgUyVYr9smRMDuSYB3Xbf9+5CFVghTAp+XtIpGmG4zU/HoZdenoVve8AjhUi\r\n"
+// "VBcAkCaTvA5JaJG/+EfTnZVCwQ5N328mz8MYIWJmQ3DW1cAH4QIDAQABo0IwQDAOBgNVHQ8BAf8E\r\n"
+// "BAMCAQYwDwYDVR0TAQH/BAUwAwEB/zAdBgNVHQ4EFgQUVeSB0RGAvtiJuQijMfmhJAkWuXAwDQYJ\r\n"
+// "KoZIhvcNAQEFBQADggEBADubj1abMOdTmXx6eadNl9cZlZD7Bh/KM3xGY4+WZiT6QBshJ8rmcnPy\r\n"
+// "T/4xmf3IDExoU8aAghOY+rat2l098c5u9hURlIIM7j+VrxGrD9cv3h8Dj1csHsm7mhpElesYT6Yf\r\n"
+// "zX1XEC+bBAlahLVu2B064dae0Wx5XnkcFMXj0EyTO2U87d89vqbllRrDtRnDvV5bu/8j72gZyxKT\r\n"
+// "J1wDLW8w0B62GqzeWvfRqqgnpv55gcR5mTNXuhKwqeBCbJPKVt7+bYQLCIt+jerXmCHG8+c8eS9e\r\n"
+// "nNFMFY3h7CI3zJpDC5fcgJCNs2ebb0gIFVbPv/ErfF6adulZkMV8gzURZVE=\r\n"
+// "-----END CERTIFICATE-----\r\n"
+
+// Entrust root certificate G2, serial number: 1246989352 (0x4a538c28),
+// SHA1: 8C:F4:27:FD:79:0C:3A:D1:66:06:8D:E8:1E:57:EF:BB:93:22:72:D4
 "-----BEGIN CERTIFICATE-----\r\n"
-"MIIEKjCCAxKgAwIBAgIEOGPe+DANBgkqhkiG9w0BAQUFADCBtDEUMBIGA1UEChMLRW50cnVzdC5u\r\n"
-"ZXQxQDA+BgNVBAsUN3d3dy5lbnRydXN0Lm5ldC9DUFNfMjA0OCBpbmNvcnAuIGJ5IHJlZi4gKGxp\r\n"
-"bWl0cyBsaWFiLikxJTAjBgNVBAsTHChjKSAxOTk5IEVudHJ1c3QubmV0IExpbWl0ZWQxMzAxBgNV\r\n"
-"BAMTKkVudHJ1c3QubmV0IENlcnRpZmljYXRpb24gQXV0aG9yaXR5ICgyMDQ4KTAeFw05OTEyMjQx\r\n"
-"NzUwNTFaFw0yOTA3MjQxNDE1MTJaMIG0MRQwEgYDVQQKEwtFbnRydXN0Lm5ldDFAMD4GA1UECxQ3\r\n"
-"d3d3LmVudHJ1c3QubmV0L0NQU18yMDQ4IGluY29ycC4gYnkgcmVmLiAobGltaXRzIGxpYWIuKTEl\r\n"
-"MCMGA1UECxMcKGMpIDE5OTkgRW50cnVzdC5uZXQgTGltaXRlZDEzMDEGA1UEAxMqRW50cnVzdC5u\r\n"
-"ZXQgQ2VydGlmaWNhdGlvbiBBdXRob3JpdHkgKDIwNDgpMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8A\r\n"
-"MIIBCgKCAQEArU1LqRKGsuqjIAcVFmQqK0vRvwtKTY7tgHalZ7d4QMBzQshowNtTK91euHaYNZOL\r\n"
-"Gp18EzoOH1u3Hs/lJBQesYGpjX24zGtLA/ECDNyrpUAkAH90lKGdCCmziAv1h3edVc3kw37XamSr\r\n"
-"hRSGlVuXMlBvPci6Zgzj/L24ScF2iUkZ/cCovYmjZy/Gn7xxGWC4LeksyZB2ZnuU4q941mVTXTzW\r\n"
-"nLLPKQP5L6RQstRIzgUyVYr9smRMDuSYB3Xbf9+5CFVghTAp+XtIpGmG4zU/HoZdenoVve8AjhUi\r\n"
-"VBcAkCaTvA5JaJG/+EfTnZVCwQ5N328mz8MYIWJmQ3DW1cAH4QIDAQABo0IwQDAOBgNVHQ8BAf8E\r\n"
-"BAMCAQYwDwYDVR0TAQH/BAUwAwEB/zAdBgNVHQ4EFgQUVeSB0RGAvtiJuQijMfmhJAkWuXAwDQYJ\r\n"
-"KoZIhvcNAQEFBQADggEBADubj1abMOdTmXx6eadNl9cZlZD7Bh/KM3xGY4+WZiT6QBshJ8rmcnPy\r\n"
-"T/4xmf3IDExoU8aAghOY+rat2l098c5u9hURlIIM7j+VrxGrD9cv3h8Dj1csHsm7mhpElesYT6Yf\r\n"
-"zX1XEC+bBAlahLVu2B064dae0Wx5XnkcFMXj0EyTO2U87d89vqbllRrDtRnDvV5bu/8j72gZyxKT\r\n"
-"J1wDLW8w0B62GqzeWvfRqqgnpv55gcR5mTNXuhKwqeBCbJPKVt7+bYQLCIt+jerXmCHG8+c8eS9e\r\n"
-"nNFMFY3h7CI3zJpDC5fcgJCNs2ebb0gIFVbPv/ErfF6adulZkMV8gzURZVE=\r\n"
+"MIIEPjCCAyagAwIBAgIESlOMKDANBgkqhkiG9w0BAQsFADCBvjELMAkGA1UEBhMC\r\n"
+"VVMxFjAUBgNVBAoTDUVudHJ1c3QsIEluYy4xKDAmBgNVBAsTH1NlZSB3d3cuZW50\r\n"
+"cnVzdC5uZXQvbGVnYWwtdGVybXMxOTA3BgNVBAsTMChjKSAyMDA5IEVudHJ1c3Qs\r\n"
+"IEluYy4gLSBmb3IgYXV0aG9yaXplZCB1c2Ugb25seTEyMDAGA1UEAxMpRW50cnVz\r\n"
+"dCBSb290IENlcnRpZmljYXRpb24gQXV0aG9yaXR5IC0gRzIwHhcNMDkwNzA3MTcy\r\n"
+"NTU0WhcNMzAxMjA3MTc1NTU0WjCBvjELMAkGA1UEBhMCVVMxFjAUBgNVBAoTDUVu\r\n"
+"dHJ1c3QsIEluYy4xKDAmBgNVBAsTH1NlZSB3d3cuZW50cnVzdC5uZXQvbGVnYWwt\r\n"
+"dGVybXMxOTA3BgNVBAsTMChjKSAyMDA5IEVudHJ1c3QsIEluYy4gLSBmb3IgYXV0\r\n"
+"aG9yaXplZCB1c2Ugb25seTEyMDAGA1UEAxMpRW50cnVzdCBSb290IENlcnRpZmlj\r\n"
+"YXRpb24gQXV0aG9yaXR5IC0gRzIwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK\r\n"
+"AoIBAQC6hLZy254Ma+KZ6TABp3bqMriVQRrJ2mFOWHLP/vaCeb9zYQYKpSfYs1/T\r\n"
+"RU4cctZOMvJyig/3gxnQaoCAAEUesMfnmr8SVycco2gvCoe9amsOXmXzHHfV1IWN\r\n"
+"cCG0szLni6LVhjkCsbjSR87kyUnEO6fe+1R9V77w6G7CebI6C1XiUJgWMhNcL3hW\r\n"
+"wcKUs/Ja5CeanyTXxuzQmyWC48zCxEXFjJd6BmsqEZ+pCm5IO2/b1BEZQvePB7/1\r\n"
+"U1+cPvQXLOZprE4yTGJ36rfo5bs0vBmLrpxR57d+tVOxMyLlbc9wPBr64ptntoP0\r\n"
+"jaWvYkxN4FisZDQSA/i2jZRjJKRxAgMBAAGjQjBAMA4GA1UdDwEB/wQEAwIBBjAP\r\n"
+"BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBRqciZ60B7vfec7aVHUbI2fkBJmqzAN\r\n"
+"BgkqhkiG9w0BAQsFAAOCAQEAeZ8dlsa2eT8ijYfThwMEYGprmi5ZiXMRrEPR9RP/\r\n"
+"jTkrwPK9T3CMqS/qF8QLVJ7UG5aYMzyorWKiAHarWWluBh1+xLlEjZivEtRh2woZ\r\n"
+"Rkfz6/djwUAFQKXSt/S1mja/qYh2iARVBCuch38aNzx+LaUa2NSJXsq9rD1s2G2v\r\n"
+"1fN2D807iDginWyTmsQ9v4IbZT+mD12q/OWyFcq1rca8PdCE6OoGcrBNOTJ4vz4R\r\n"
+"nAuknZoh8/CbCzB428Hch0P+vGOaysXCHMnHjf87ElgI5rY97HosTvuDls4MPGmH\r\n"
+"VHOkc8KT/1EQrBVUAdj8BbGJoX90g5pJ19xOe4pIb4tF9g==\r\n"
+"-----END CERTIFICATE-----\r\n"  
+
+// Entrust root certificate
+// Serial Number: 1164660820 (0x456b5054), SHA1 Fingerprint=B3:1E:B1:B7:40:E3:6C:84:02:DA:DC:37:D4:4D:F5:D4:67:49:52:F9
+"-----BEGIN CERTIFICATE-----\r\n"
+"MIIEkTCCA3mgAwIBAgIERWtQVDANBgkqhkiG9w0BAQUFADCBsDELMAkGA1UEBhMC\r\n"
+"VVMxFjAUBgNVBAoTDUVudHJ1c3QsIEluYy4xOTA3BgNVBAsTMHd3dy5lbnRydXN0\r\n"
+"Lm5ldC9DUFMgaXMgaW5jb3Jwb3JhdGVkIGJ5IHJlZmVyZW5jZTEfMB0GA1UECxMW\r\n"
+"KGMpIDIwMDYgRW50cnVzdCwgSW5jLjEtMCsGA1UEAxMkRW50cnVzdCBSb290IENl\r\n"
+"cnRpZmljYXRpb24gQXV0aG9yaXR5MB4XDTA2MTEyNzIwMjM0MloXDTI2MTEyNzIw\r\n"
+"NTM0MlowgbAxCzAJBgNVBAYTAlVTMRYwFAYDVQQKEw1FbnRydXN0LCBJbmMuMTkw\r\n"
+"NwYDVQQLEzB3d3cuZW50cnVzdC5uZXQvQ1BTIGlzIGluY29ycG9yYXRlZCBieSBy\r\n"
+"ZWZlcmVuY2UxHzAdBgNVBAsTFihjKSAyMDA2IEVudHJ1c3QsIEluYy4xLTArBgNV\r\n"
+"BAMTJEVudHJ1c3QgUm9vdCBDZXJ0aWZpY2F0aW9uIEF1dGhvcml0eTCCASIwDQYJ\r\n"
+"KoZIhvcNAQEBBQADggEPADCCAQoCggEBALaVtkNC+sZtKm9I35RMOVcF7sN5EUFo\r\n"
+"Nu3s/poBj6E4KPz3EEZmLk0eGrEaTsbRwJWIsMn/MYszA9u3g3s+IIRe7bJWKKf4\r\n"
+"4LlAcTfFy0cOlypowCKVYhXbR9n10Cv/gkvJrT7eTNuQgFA/CYqEAOwwCj0Yzfv9\r\n"
+"KlmaI5UXLEWeH25DeW0MXJj+SKfFI0dcXv1u5x609mhF0YaDW6KKjbHjKYD+JXGI\r\n"
+"rb68j6xSlkuqUY3kEzEZ6E5Nn9uss2rVvDlUccp6en+Q3X0dgNmBu1kmwhH+5pPi\r\n"
+"94DkZfs0Nw4pgHBNrziGLp5/V6+eF67rHMsoIV+2HNjnogQi+dPa2MsCAwEAAaOB\r\n"
+"sDCBrTAOBgNVHQ8BAf8EBAMCAQYwDwYDVR0TAQH/BAUwAwEB/zArBgNVHRAEJDAi\r\n"
+"gA8yMDA2MTEyNzIwMjM0MlqBDzIwMjYxMTI3MjA1MzQyWjAfBgNVHSMEGDAWgBRo\r\n"
+"kORnpKZTgMeGZqTx90tD+4S9bTAdBgNVHQ4EFgQUaJDkZ6SmU4DHhmak8fdLQ/uE\r\n"
+"vW0wHQYJKoZIhvZ9B0EABBAwDhsIVjcuMTo0LjADAgSQMA0GCSqGSIb3DQEBBQUA\r\n"
+"A4IBAQCT1DCw1wMgKtD5Y+iRDAUgqV8ZyntyTtSx29CW+1RaGSwMCPeyvIWonX9t\r\n"
+"O1KzKtvn1ISMY/YPyyYBkVBs9F8U4pN0wBOeMDpQ47RgxRzwIkSNcUesyBrJ6Zua\r\n"
+"AGAT/3B+XxFNSRuzFVJ7yVTav52Vr2ua2J7p8eRDjeIRRDq/r72DQnNSi6q7pynP\r\n"
+"9WQcCk3RvKqsnyrQ/39/2n3qse0wJcGE2jTSW3iDVuycNsMm4hH2Z0kdkquM++v/\r\n"
+"eu6FSqdQgPCnXEqULl8FmTxSQeDNtGPPAUO6nIPcj2A781q0tHuu2guQOHXvgR1m\r\n"
+"0vdXcDazv/wor3ElhVsT/h5/WrQ8\r\n"
 "-----END CERTIFICATE-----\r\n"
+
 ;
 
 // Default certificate: use the production network
@@ -159,7 +195,7 @@ void setProvisioningToDevelop() {
  * @brief Set provisioning link and certificate for use in production network.
  */
 void setProvisioningToProduction() {
-    provisioningLink = productionLink;
+    provisioningLink = productionLink;    
     provisioningCert = productionCert;
 }
 
@@ -308,6 +344,26 @@ char* download_page2(const char *url, char *buf, int iMaxLen, int &iRespContentL
    return download_page2Loc(url, buf, iMaxLen, iRespContentLen, cb, cbRet, "GET", NULL);
 }
 
+static void dummy_cb(void *p, int ok, const char *pMsg){
+   
+}
+
+char* t_post_json(const char *url, char *bufResp, int iMaxLen, int &iRespContentLen, const char *pContent) {
+
+   static int x = 1; //random
+   return download_page2Loc(url, bufResp, iMaxLen, iRespContentLen, dummy_cb, &x, "POST", pContent);
+}
+
+char* t_send_http_json(const char *url, const char *meth,  char *bufResp, int iMaxLen, int &iRespContentLen, const char *pContent) {
+    char bufReq[1024];
+    static int x = 2; //random
+    snprintf(bufReq, sizeof(bufReq)-10, "%s%s", provisioningLink, url);
+
+    return download_page2Loc(bufReq, bufResp, iMaxLen, iRespContentLen, dummy_cb, &x, meth, pContent);
+}
+
+
+
 //#define PROV_TEST
 
 int findJSonToken(const char *p, int iPLen, const char *key, char *resp, int iMaxLen){
@@ -336,6 +392,90 @@ int findJSonToken(const char *p, int iPLen, const char *key, char *resp, int iMa
       }
    }
    
+   return 0;
+}
+
+/*
+ * getDomainAuthURL() - Queries the SC server with a user-provided domainname.
+ * Returns the authentication URL, typically for an ADFS server, to be loaded
+ * into a WebView.
+ */
+
+int getDomainAuthURL(const char *pLink, const char *pUsername, char *auth_url, int auth_sz, void (*cb)(void *p, int ok, const char *pMsg), void *cbRet) {
+   int iRespContentLen=0;
+   char bufJSonValue[32]; /* "auth_url" -> authURL */
+   char bufResp[4096];
+   char *p=NULL;
+   char *pUN=NULL;
+   int  len=0;
+
+   memset(bufResp, 0, sizeof(bufResp));
+   p = download_page2Loc(pLink, bufResp, sizeof(bufResp) - 1, iRespContentLen, cb, cbRet, "GET", NULL);
+
+   cb(cbRet, 1, "JSON from ");
+   cb(cbRet, 1, pLink);
+   if (p == NULL) {
+      // Failed to download JSON
+      cb(cbRet, 0, "Please check network connection.");
+      return -1;
+   }
+
+   /* FIXME: We should *really* be using a proper JSON library in tiviengine/. */
+
+   /*
+    * Example JSON response:
+    *
+    * {
+    *   "auth_type": "adfs",
+    *   "can_do_username": true,
+    *   "auth_url": "https://ad.lakedaemon.net/adfs/oauth2/authorize?client_id=myclientid3&resource=https://enterprise.silentcircle.com/adfs/trust&response_type=code&redirect_uri=silentcircle-entapi://redirect"
+    * }
+    */
+
+   /* check auth_type */
+   memset(bufJSonValue, 0, sizeof(bufJSonValue));
+   len = findJSonToken(p, iRespContentLen, "auth_type", bufJSonValue, sizeof(bufJSonValue) - 1);
+   if(len <= 0) {
+      cb(cbRet, -1, "ERR: JSon field 'auth_type' not found");
+      return -1;
+   }
+
+   if (strcmp(bufJSonValue, "adfs") != 0) {
+      cb(cbRet, -1, "Server reported auth_type other than adfs!");
+      return -1;
+   }
+
+   /* get the authentication URL */
+   memset(bufJSonValue, 0, sizeof(bufJSonValue));
+   len = findJSonToken(p, iRespContentLen, "auth_url", auth_url, auth_sz - 1);
+   if(len <= 0) {
+      cb(cbRet, -1, "ERR: JSon field 'auth_url' not found");
+      return -1;
+   }
+
+   pUN = auth_url + len;
+
+   /* can we append the username? */
+   memset(bufJSonValue, 0, sizeof(bufJSonValue));
+   len = findJSonToken(p, iRespContentLen, "can_do_username", bufJSonValue, sizeof(bufJSonValue) - 1);
+   if(len <= 0) {
+      /* No need to hard fail here, we just don't get to auto-fill the username on the webpage */
+      cb(cbRet, 0, "WARN: JSon field 'can_do_username' not found");
+      return 0;
+   }
+
+   /* afawct, most webpages will either use it, or ignore it.  So, lazily default to adding it. */
+   if (strcmp(bufJSonValue, "false") != 0) {
+      unsigned int maxlen = auth_sz - (pUN - auth_url + 1);
+
+      if (strnlen(pUsername, maxlen - strlen("&username=")) == maxlen - strlen("&username=")) {
+         cb(cbRet, 0, "Username would have been truncated, not auto-filling webpage");
+         return 0;
+      }
+
+      snprintf(pUN, maxlen, "&username=%s", pUsername);
+   }
+
    return 0;
 }
 
@@ -371,6 +511,12 @@ static int getToken(const char *pLink, char *resp, int iMaxLen, void (*cb)(void 
       return -1;
    }
 #ifdef PROV_TEST
+    
+    //09/08/15 per JC in Messages
+    printf("pLink = [%s]\n", pLink); 
+    printf("pContent = [%s]\n", pContent);
+    //------------------------------------
+    
    printf("rec[%.*s]\n",iRespContentLen,p);//rem
    printf("rec-t[%s]\n",bufResp);//rem
 #endif
@@ -399,10 +545,10 @@ static int getToken(const char *pLink, char *resp, int iMaxLen, void (*cb)(void 
    resp[iMaxLen]=0;
    
 #if defined(__APPLE__)
-
+#ifndef PROV_TEST
    int storeAPIKeyToKC(const char *p);
    storeAPIKeyToKC(resp);
-   
+#endif
 #endif
    
    return ret;
@@ -605,7 +751,84 @@ int getApiKeySipUserPass(const char *pSipUN, const char *pSipPWD, void (*cb)(voi
    return 0;
 }
 
-int checkProvUserPass(const char *pUN, const char *pPWD, void (*cb)(void *p, int ok, const char *pMsg), void *cbRet){
+int checkProvAuthCookie(const char *pUN, const char *auth_cookie, const char *pdevID, void (*cb)(void *p, int ok, const char *pMsg), void *cbRet){
+   /*
+    /v1/me/device/[device_id]/
+    http://sccps.silentcircle.com/provisioning/silent_phone/tivi_cfg.xml?api_key=12345
+    http://sccps.silentcircle.com/provisioning/silent_phone/settings.txt?api_key=12345
+    http://sccps.silentcircle.com/provisioning/silent_phone/tivi_cfg_glob.txt?api_key=12345
+    */
+   char bufReq[1024];
+   char bufContent[4096];
+   const char *t_getDevID_md5();
+   const char *t_getDev_name();
+   const char *t_getVersion();
+   const char *dev_id=t_getDevID_md5();
+   const char *dev_name=t_getDev_name();
+   char locAuthCookie[2048];
+   char locUN[128];
+   
+   
+#define CHK_BUF \
+if(l+100>sizeof(bufReq)){\
+return -1;\
+}
+   
+   int l=snprintf(bufReq,sizeof(bufReq)-10,"%s/v1/me/device/%s/",provisioningLink,dev_id);
+   
+   CHK_BUF
+   
+#ifdef __APPLE__
+   const char *dev_class = "ios";
+#endif
+
+#if defined(_WIN32) || defined(_WIN64)
+   const char *dev_class = "windows";
+#endif
+
+#if defined(ANDROID_NDK)
+   const char *dev_class = "android";
+#endif
+
+#if defined(__linux__) && !defined(ANDROID_NDK)
+   const char *dev_class = "Linux";
+#endif
+
+   copyJSON_value(locAuthCookie, auth_cookie, sizeof(locAuthCookie)-1);
+   copyJSON_value(locUN, pUN, sizeof(locUN)-1);
+   
+   l = snprintf(bufContent, sizeof(bufContent),
+                "{\r\n"
+                   "\"username\": \"%s\",\r\n"
+                   "\"auth_type\": \"adfs\",\r\n"
+                   "\"auth_cookie\": \"%s\",\r\n"
+                   "\"device_name\": \"%s\",\r\n"
+#if defined (_WIN32) || defined(_WIN64)
+				   "\"app\": \"silent_phone_free\",\r\n"
+#else
+				   "\"app\": \"silent_phone\",\r\n"
+#endif
+                 "\"persistent_device_id\": \"%s\",\r\n"
+                   "\"device_class\": \"%s\",\r\n"
+                   "\"version\": \"%s\"\r\n"
+                "}\r\n", locUN, locAuthCookie, dev_name, pdevID, dev_class, t_getVersion());
+   
+#undef CHK_BUF
+   
+    // 09/08/15 for logging per JC in Messages
+    cb(cbRet,1,bufContent);
+    
+   int r=getToken(&bufReq[0], &bufAPIKey[0],255,cb,cbRet,"PUT",bufContent);
+   if(r<0){
+      return -1;
+   }
+   
+   cb(cbRet,1,"Configuration code ok");
+   
+   return checkProvWithAPIKey(&bufAPIKey[0],cb, cbRet);;
+}
+
+int checkProvUserPass(const char *pUN, const char *pPWD, const char *pdevID, void (*cb)(void *p, int ok, const char *pMsg), void *cbRet){
    /*
     /v1/me/device/[device_id]/
     http://sccps.silentcircle.com/provisioning/silent_phone/tivi_cfg.xml?api_key=12345
@@ -662,9 +885,10 @@ return -1;\
 #else
 				   "\"app\": \"silent_phone\",\r\n"
 #endif
+                 "\"persistent_device_id\": \"%s\",\r\n"
                    "\"device_class\": \"%s\",\r\n"
                    "\"version\": \"%s\"\r\n"
-                "}\r\n",locUN, locPassword, dev_name, dev_class, t_getVersion());//TODO encode pwd
+                "}\r\n",locUN, locPassword, dev_name, pdevID, dev_class, t_getVersion());//TODO encode pwd
    
    CHK_BUF
 
@@ -679,6 +903,113 @@ return -1;\
    cb(cbRet,1,"Configuration code ok");
    
    return checkProvWithAPIKey(&bufAPIKey[0],cb, cbRet);;
+}
+
+static int t_addJSON(int canTrim, char *pos, int iSize, const char *tag, const char *value){
+   
+   char bufJSonValue[1024];
+   copyJSON_value(bufJSonValue, value, sizeof(bufJSonValue)-1);
+   
+   if(canTrim)trim(bufJSonValue);
+   
+   if(!bufJSonValue[0] || iSize < 120 || strlen(value) > 80)return 0;
+   
+   return snprintf(pos, iSize, "\"%s\":\"%s\",", tag, bufJSonValue);
+}
+
+int createUserOnWeb(const char *pUN, const char *pPWD,
+                    const char *pEM, const char *pFN, const char *pLN,
+                    void (*cb)(void *p, int ok, const char *pMsg), void *cbRet){
+
+   int c, l = 0;
+   int iRespContentLen=0;
+   
+   char bufResp[4096];
+   char bufBody[4096];
+
+   
+   
+   char url[1024];
+   int ul = snprintf(url,sizeof(url)-10,"%s/v1/user/",provisioningLink);
+   
+   ul+=fixPostEncodingToken(&url[ul],sizeof(url)-10-ul,pUN,strlen(pUN));
+   url[ul] = '/'; ul++; url[ul]=0;
+ 
+   bufBody[0]='{';l = 1;
+   
+   c = t_addJSON(1, &bufBody[l], sizeof(bufBody)-l, "username", pUN);
+   if(!c){
+      cb(cbRet,0,"Please check Username field.");
+      return -1;
+   }
+   l+=c;
+   
+   c = t_addJSON(0 , &bufBody[l], sizeof(bufBody)-l, "password", pPWD);
+   if(!c){
+      cb(cbRet,0,"Please check Password field.");
+      return -1;
+   }
+   l+=c;
+   
+   c = t_addJSON(1 , &bufBody[l], sizeof(bufBody)-l, "email", pEM);
+   if(!c){
+      cb(cbRet,0,"Please check Email field.");
+      return -1;
+   }
+   l+=c;
+   
+   c = t_addJSON(1 , &bufBody[l], sizeof(bufBody)-l, "first_name", pFN); l+=c;
+   c = t_addJSON(1 , &bufBody[l], sizeof(bufBody)-l, "last_name", pLN); l+=c;
+
+   bufBody[l - 1] = '}';//remove last , from JSON
+   
+   memset(bufResp,0,sizeof(bufResp));
+   
+   char *p=download_page2Loc(url, &bufResp[0], sizeof(bufResp)-50, iRespContentLen,cb,cbRet, "PUT", bufBody);
+   
+   if(!p){
+      cb(cbRet,0,"Please check network connection.");//download json fail
+      return -1;
+   }
+#ifdef PROV_TEST
+   printf("rec[%.*s]\n",iRespContentLen,p);//rem
+   printf("rec-t[%s]\n",bufResp);//rem
+#endif
+   
+   /*
+    {"last_name": "N", "hash": "7c4219a8bcdbfe71aaa7381a72c0b57d3471ee39", "keys": [], "active_st_device": null, "country_code": "", "silent_text": true, "subscription": {"expires": "1900-01-01T00:00:00Z", "has_expired": true}, "first_name": "J", "display_name": "J N", "avatar_url": null, "silent_phone": false, "force_password_change": false, "permissions": {"can_send_media": true, "silent_text": true, "can_receive_voicemail": false, "silent_desktop": false, "silent_phone": false, "conference_create"
+    */
+   
+   char bufJSonValue[1024];
+   l=findJSonToken(p,iRespContentLen,"result",&bufJSonValue[0],1023);
+   if(l<=0){
+      cb(cbRet,0,"ERR: Result is not found");
+      return -1;
+   }
+   if(strcmp(&bufJSonValue[0],"success")){
+      l=findJSonToken(p,iRespContentLen,"error_msg",&bufJSonValue[0],1023);
+      if(l>0)
+         cb(cbRet,-1,&bufJSonValue[0]);
+      else{
+         cb(cbRet,-1,"Could not download configuration!");
+      }
+      return -1;
+   }
+   
+   void saveCfgFile(const char *fn, void *p, int iLen);
+   saveCfgFile("userData.json", bufResp, iRespContentLen);
+
+   return 0;
+}
+
+int checkUserCreate(const char *pUN, const char *pPWD, const char *pdevID,
+                    const char *pEM, const char *pFN, const char *pLN,
+                    void (*cb)(void *p, int ok, const char *pMsg), void *cbRet){
+   
+   int r = createUserOnWeb(pUN, pPWD, pEM, pFN, pLN, cb, cbRet);
+   if(r < 0)return r;
+   
+   return checkProvUserPass(pUN, pPWD, pdevID, cb, cbRet);
 }
 
 int checkProvWithAPIKey(const char *pAPIKey, void (*cb)(void *p, int ok, const char *pMsg), void *cbRet){
@@ -701,7 +1032,9 @@ int checkProvWithAPIKey(const char *pAPIKey, void (*cb)(void *p, int ok, const c
    for(int i=0;;i++){
       if(!pFN_to_download[i] || !pFN_to_save[i])break;
       snprintf(bufReq,sizeof(bufReq)-1,"%s/provisioning/silent_phone/%s?api_key=%s",provisioningLink,pFN_to_download[i],pAPIKey);
-
+#ifdef ANDROID
+      androidLog("++++ Provisioning request: %s", bufReq);
+#endif
       int iRespContentLen=0;
       char* p=download_page2(&bufReq[0], &bufCfg[0], sizeof(bufCfg)-100, iRespContentLen,cb,cbRet);
       if(!p && i>2){

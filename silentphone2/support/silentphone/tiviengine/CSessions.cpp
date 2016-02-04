@@ -1,32 +1,6 @@
-/*
-Created by Janis Narbuts
-Copyright (C) 2004-2012, Tivi LTD, www.tiviphone.com. All rights reserved.
-Copyright (C) 2012-2015, Silent Circle, LLC.  All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-    * Any redistribution, use, or modification is done solely for personal
-      benefit and not for any commercial purpose or for monetary gain
-    * Redistributions of source code must retain the above copyright
-      notice, this list of conditions and the following disclaimer.
-    * Redistributions in binary form must reproduce the above copyright
-      notice, this list of conditions and the following disclaimer in the
-      documentation and/or other materials provided with the distribution.
-    * Neither the name Silent Circle nor the
-      names of its contributors may be used to endorse or promote products
-      derived from this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL SILENT CIRCLE, LLC BE LIABLE FOR ANY
-DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
+//VoipPhone
+//Created by Janis Narbuts
+//Copyright (c) 2004-2012 Tivi LTD, www.tiviphone.com. All rights reserved.
 
 #include "CSessions.h"
 #include "../encrypt/md5/md5.h"
@@ -226,7 +200,7 @@ void CPhSesions::handleSessions()
          spSes->mBase->onTimer();
       }
 
-
+//TODO if we have trying on register and if there is nothing to receive resend register
       if(spSes->uiClearMemAt && spSes->uiClearMemAt<uiGT)
       {
          onKillSes(spSes,0,NULL,spSes->cs.iSendS);
@@ -454,12 +428,59 @@ void CPhSesions::notifyIncomingCall(CSesBase *spSes){
    cPhoneCallback->onIncomCall(&spSes->dstConAddr,dstr->strVal,dstr->uiLen ,*spSes);
 }
 
+static int isSameDSTR(DSTR *a, DSTR *b){
+   return a->strVal && b->strVal && a->uiLen == b->uiLen && memcmp(a->strVal, b->strVal, a->uiLen)==0;
+}
+
+static DSTR* getRemoteToTag(CSesBase *spSes){
+   //if i have request then i have to return from.to
+   if(spSes->sSIPMsg.sipHdr.uiMethodID)return &spSes->sSIPMsg.hdrFrom.dstrTag;
+   return &spSes->sSIPMsg.hdrTo.dstrTag;
+}
+
+static int isCorrectDstTag(CSesBase *spSes, SIP_MSG *sMsg){
+
+   return (!sMsg->sipHdr.uiMethodID && isSameDSTR(&sMsg->hdrTo.dstrTag, getRemoteToTag(spSes)))
+           ||
+           (sMsg->sipHdr.uiMethodID && isSameDSTR(&sMsg->hdrFrom.dstrTag, getRemoteToTag(spSes))
+           );
+}
+
 int CPhSesions::onSipMsgSes(CSesBase *spSes, SIP_MSG *sMsg)
 {
    int iIsReq=sMsg->sipHdr.uiMethodID;
    int iMeth=sMsg->hdrCSeq.uiMethodID;
    
-
+   if(spSes->cs.iCallStat==CALL_STAT::EOk && !isCorrectDstTag(spSes, sMsg)){
+      
+      if(sMsg->sipHdr.uiMethodID){
+         CMakeSip mm(sockSip);
+         mm.cPhoneCallback=cPhoneCallback;
+         if(sMsg->sipHdr.uiMethodID & (METHOD_BYE|METHOD_CANCEL)){
+            mm.sendResp(sockSip,200,sMsg);
+         }
+         else{
+            mm.sendResp(sockSip,481,sMsg);
+         }
+      }
+      else{
+         
+         CMakeSip ss(1,sockSip,sMsg);
+         DSTR *p;
+         if(sMsg->hldContact.uiCount){
+            p = &sMsg->hldContact.x[0].sipUri.dstrSipAddr;
+         }
+         else{
+            p = &sMsg->hdrTo.sipUri.dstrSipAddr;
+         }
+         ss.makeResp(METHOD_ACK,&p_cfg,&p->strVal[0],(int)p->uiLen);
+         ss.addContent();
+         ss.sendSip(sockSip,&sMsg->addrSipMsgRec);
+      }
+      return 0;
+   }
+   
+//spSes->cs.iCallStat=CALL_STAT::EOk
    if(sMsg->sipHdr.dstrStatusCode.uiVal>299 && sMsg->sipHdr.dstrStatusCode.uiVal!=491)//491 req pending
    {
 
@@ -530,10 +551,10 @@ int CPhSesions::onSipMsgSes(CSesBase *spSes, SIP_MSG *sMsg)
       if(sMsg->sipHdr.dstrStatusCode.uiVal==400 && sMsg->sipHdr.dstrReasonPhrase.strVal
          && strncmp(sMsg->sipHdr.dstrReasonPhrase.strVal,"Duplicated CallID", sizeof("Duplicated CallID")-1)==0)//SIP/2.0 400 Duplicated CallID
       {
-         printf("Igonred SIP err [%.*s]",sMsg->sipHdr.dstrFullRow.uiLen,sMsg->sipHdr.dstrFullRow.strVal);
+         t_logf(log_events, __FUNCTION__,"Igonred SIP err [%.*s]",sMsg->sipHdr.dstrFullRow.uiLen,sMsg->sipHdr.dstrFullRow.strVal);
          return 0;
       }
-      printf("Proccessing SIP err [%.*s]",sMsg->sipHdr.dstrFullRow.uiLen,sMsg->sipHdr.dstrFullRow.strVal);
+      t_logf(log_events, __FUNCTION__,"Proccessing SIP err [%.*s]",sMsg->sipHdr.dstrFullRow.uiLen,sMsg->sipHdr.dstrFullRow.strVal);
       
       if(iMeth==METHOD_INVITE)
       {
@@ -595,7 +616,7 @@ int CPhSesions::onSipMsgSes(CSesBase *spSes, SIP_MSG *sMsg)
       spSes->sSIPMsg.sipHdr.dstrStatusCode.uiVal!=sMsg->sipHdr.dstrStatusCode.uiVal){
       
       iSdpRet = sdpRec(sMsg,spSes);
-      printf("[SDP ret %d]",iSdpRet);
+      t_logf(log_events, __FUNCTION__,"[SDP ret %d]",iSdpRet);
       
       if(iSdpRet<0)return -1;
       
@@ -684,23 +705,29 @@ int CPhSesions::onSipMsgSes(CSesBase *spSes, SIP_MSG *sMsg)
       spSes->dstConAddr=sMsg->addrSipMsgRec;
 
 
-      if (spSes->sSIPMsg.hdrCSeq.uiMethodID==0 || spSes->sSIPMsg.hdrCSeq.dstrID.uiVal!=sMsg->hdrCSeq.dstrID.uiVal
+      if (spSes->sSIPMsg.hdrCSeq.uiMethodID==0 || spSes->sSIPMsg.hdrCSeq.dstrID.uiVal!=sMsg->hdrCSeq.dstrID.uiVal || sMsg->sipHdr.dstrStatusCode.uiVal==200
            
            //if contact addr does not match save it
           ||  (sMsg->hldContact.x[0].sipUri.dstrSipAddr.uiLen &&
-            (sMsg->hldContact.x[0].sipUri.dstrSipAddr.uiLen!=spSes->sSIPMsg.hldContact.x[0].sipUri.dstrSipAddr.uiLen ||
-            memcmp(sMsg->hldContact.x[0].sipUri.dstrSipAddr.strVal, spSes->sSIPMsg.hldContact.x[0].sipUri.dstrSipAddr.strVal, sMsg->hldContact.x[0].sipUri.dstrSipAddr.uiLen)))
-           
-           || (spSes->sSIPMsg.hldContact.x[0].sipUri.dstrSipAddr.uiLen==0 && sMsg->hldContact.x[0].sipUri.dstrSipAddr.uiLen)
+               (sMsg->hldContact.x[0].sipUri.dstrSipAddr.uiLen!=spSes->sSIPMsg.hldContact.x[0].sipUri.dstrSipAddr.uiLen ||
+                memcmp(sMsg->hldContact.x[0].sipUri.dstrSipAddr.strVal, spSes->sSIPMsg.hldContact.x[0].sipUri.dstrSipAddr.strVal, sMsg->hldContact.x[0].sipUri.dstrSipAddr.uiLen)))
+          
+          || (spSes->sSIPMsg.hldContact.x[0].sipUri.dstrSipAddr.uiLen==0 && sMsg->hldContact.x[0].sipUri.dstrSipAddr.uiLen)
           ||(spSes->sSIPMsg.hdrCSeq.uiMethodID!=sMsg->hdrCSeq.uiMethodID && sMsg->hldContact.x[0].sipUri.dstrSipAddr.uiLen)
           ||(spSes->sSIPMsg.hldRecRoute.uiCount!=sMsg->hldRecRoute.uiCount
-             || spSes->sSIPMsg.hldRecRoute.x[0].dstrFullRow.uiLen!=sMsg->hldRecRoute.x[0].dstrFullRow.uiLen)
+             || spSes->sSIPMsg.hldRecRoute.x[0].dstrFullRow.uiLen!=sMsg->hldRecRoute.x[0].dstrFullRow.uiLen
+             || spSes->sSIPMsg.hldP_Asserted_id.uiCount < sMsg->hldP_Asserted_id.uiCount) //save asserted-id if we see it
           )
       {
-         memset(&spSes->sSIPMsg,0,sizeof(SIP_MSG));
-         //parsing again, because we use pointers in spSes->sSIPMsg.rawDataBuffer
-         cSip.parseSip(sMsg->rawDataBuffer, (int)(sMsg->uiOffset-MSG_BUFFER_TAIL_SIZE), &spSes->sSIPMsg);
          
+         if(sMsg->sipHdr.dstrStatusCode.uiVal<=200 && (sMsg->sipHdr.dstrStatusCode.uiVal!=100 || sMsg->hldContact.x[0].sipUri.dstrSipAddr.uiLen)){
+            
+            if(sMsg->hldContact.x[0].sipUri.dstrSipAddr.uiLen || !spSes->sSIPMsg.hldContact.x[0].sipUri.dstrSipAddr.uiLen){
+               memset(&spSes->sSIPMsg,0,sizeof(SIP_MSG));
+               //parsing again, because we use pointers in spSes->sSIPMsg.rawDataBuffer
+               cSip.parseSip(sMsg->rawDataBuffer, (int)(sMsg->uiOffset-MSG_BUFFER_TAIL_SIZE), &spSes->sSIPMsg);
+            }
+         }
       }
          
       switch(sMsg->sipHdr.dstrStatusCode.uiVal)
@@ -828,7 +855,7 @@ int CPhSesions::onSipMsg(CSesBase *spSes, SIP_MSG *sMsg)
    {
 
       if(iSipCode!=100){
-         setStopReason(spSes, iSipCode, NULL, &sMsg->sipHdr.dstrReasonPhrase);
+         setStopReason(spSes, iSipCode, iMeth, NULL, &sMsg->sipHdr.dstrReasonPhrase);
       }
 
       SEND_TO *st=&spSes->sSendTo;
@@ -859,17 +886,18 @@ int CPhSesions::onSipMsg(CSesBase *spSes, SIP_MSG *sMsg)
          delete st;
          return 0;
       }
-      spSes->cs.iWaitS=0;
       if (iSipCode==100)
       {
-         spSes->sSendTo.stopRetransmit();
+         spSes->sSendTo.recv100REG(uiGT, 30);//wait 30 sec if we have nothing back report failed
          return 0;
       }
+      spSes->cs.iWaitS=0;
+      
       if(iSipCode>299 && iMeth==METHOD_MESSAGE)
       {
 
          onKillSes(spSes,-2,sMsg,METHOD_MESSAGE);
-
+         //
       }
       if(iSipCode>299 && iMeth==METHOD_SUBSCRIBE)
       {
@@ -885,12 +913,14 @@ int CPhSesions::onSipMsg(CSesBase *spSes, SIP_MSG *sMsg)
    {
       if (iSipCode==100)
       {
-         spSes->cs.iWaitS=0;
+         spSes->sSendTo.recv100REG(uiGT);
+         //spSes->cs.iWaitS=0; //do not set to , it will never timeout here
          return 0;
       }
+
       
       if (spSes->cs.iSendS!=METHOD_REGISTER){
-         puts("something is really wrong");
+         log_events( __FUNCTION__,"something is really wrong, spSes->cs.iSendS != METHOD_REGISTER");
          return -1;
       }
       
@@ -927,7 +957,6 @@ int CPhSesions::onSipMsg(CSesBase *spSes, SIP_MSG *sMsg)
                      {
                         ok=2;
                         uiExpTime=b;//sMsg->hldContact.x[i].dstrExpires.uiVal;
-                        DEBUG_T(0,"reg-cont-found =ok")
                      }
                      break;
                   }
@@ -941,7 +970,7 @@ int CPhSesions::onSipMsg(CSesBase *spSes, SIP_MSG *sMsg)
             uiNextRegTry = uiGT+((uiExpTime*10*T_GT_SECOND)>>4);
             p_cfg.reg.uiRegUntil=uiGT+(uiExpTime*15*T_GT_SECOND>>4);
             
-            printf("[exp %d,%d,%lld,%d %s]",uiExpTime,b,(p_cfg.reg.uiRegUntil-uiGT)/T_GT_SECOND,p_cfg.uiExpires, p_cfg.str32GWaddr.strVal);
+            t_logf(log_events, __FUNCTION__,"[REG-EXPIRES: ok=%d %d,%d,%lld,%d %s]",ok, uiExpTime,b,(p_cfg.reg.uiRegUntil-uiGT)/T_GT_SECOND,p_cfg.uiExpires, p_cfg.str32GWaddr.strVal);
             
             p_cfg.iCanRegister=1;
 
@@ -1127,10 +1156,25 @@ int CPhSesions::sdpRec(SIP_MSG *sMsg,CSesBase *spSes)
 }
 
 
-void CPhSesions::setStopReason(CSesBase *spSes, int code, const char *msg, DSTR *dstr, CTEditBase *e){
+void CPhSesions::setStopReason(CSesBase *spSes, int code, int meth, const char *msg, DSTR *dstr, CTEditBase *e){
    
    if(spSes->iStopReasonSet)return;
    spSes->iStopReasonSet=1;
+   
+   if(meth==METHOD_MESSAGE){
+      
+      DSTR d;
+      if(!dstr){
+         
+         dstr = &d;
+         if(code == -1)d.strVal = (char *)"ERR: timeout";
+         else if(code == -2)d.strVal = (char *)"ERR: slow network";
+         else d.strVal=(char*)"ERR: unknow";
+         d.uiLen = strlen(d.strVal);
+      }
+
+      CTAxoInterfaceBase::sharedInstance()->stateReport(spSes->sentSimpleMsgId64bit, code, (u_int8_t*)dstr->strVal, dstr->uiLen);
+   }
    
    
    if(spSes->retMsg){
@@ -1153,7 +1197,7 @@ void CPhSesions::onKillSes(CSesBase *spSes, int iReason, SIP_MSG *sMsg ,int iMet
    {
       spSes->iKillCalled=1;
       
-      setStopReason(spSes, spSes->iRespReceived==0 ? -1 : -2, NULL);
+      setStopReason(spSes, spSes->iRespReceived==0 ? -1 : -2, iMeth, NULL);
       
       if(spSes->isMediaSession())//TODO
       {
@@ -1355,7 +1399,10 @@ void CPhSesions::onKillSes(CSesBase *spSes, int iReason, SIP_MSG *sMsg ,int iMet
       if(!spSes->iOnEndCalled)
       {
          
-         if(spSes->isMediaSession())cPhoneCallback->onEndCall(*spSes, spSes->iDontShowMissed);
+         if(spSes->isMediaSession()){
+            log_call_marker(0, spSes->sSIPMsg.dstrCallID.strVal, spSes->sSIPMsg.dstrCallID.uiLen);
+            cPhoneCallback->onEndCall(*spSes, spSes->iDontShowMissed);
+         }
          spSes->iOnEndCalled=1;
       }
       
@@ -1363,8 +1410,10 @@ void CPhSesions::onKillSes(CSesBase *spSes, int iReason, SIP_MSG *sMsg ,int iMet
       spSes->destroy();
    }
    // iCanClearNow lieto lai ar audio dalju nebuutu prol 
-   if(iCanClearNow && spSes->canDestroy())
+   if(iCanClearNow && spSes->canDestroy()){
+      log_events(__FUNCTION__, "freeSes");
       freeSes(spSes);
+   }
    else
    {
       spSes->uiClearMemAt=uiGT+T_GT_SECOND;
@@ -1513,13 +1562,13 @@ void CPhSesions::updateSDPAddr(CSesBase *spSes){//must call from protected state
    ADDR a;
    if(spSes->pMediaIDS->tmrTunnel->audio.getServSDPAddr(a)<0){
       //TODO setup backup, or release a call
-      puts("[Err: updateSDPAddr getServSDPAddr()<0]");
+      log_events( __FUNCTION__,"[Err: getServSDPAddr()<0]");
       return ;
    }
    ADDR aVid; //TODO spSes->pMediaIDS->tmrTunnel->getServSDPAddr(a,1)
    if(spSes->sSendTo.iHasVideo && spSes->pMediaIDS->tmrTunnel->video.getServSDPAddr(aVid)<0){
       //TODO setup backup, or release a call
-      puts("[Err: updateSDPAddr v getServSDPAddr()<0]");
+      log_events( __FUNCTION__,"[Err: video getServSDPAddr()<0]");
       return ;
    }
    

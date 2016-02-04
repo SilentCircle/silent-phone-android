@@ -40,10 +40,6 @@ public class ChangeScroll extends Transition {
 
     public ChangeScroll() {}
 
-    public ChangeScroll(Context context, AttributeSet attrs) {
-        super(context, attrs);
-    }
-
     @Override
     public void captureStartValues(TransitionValues transitionValues) {
         captureValues(transitionValues);

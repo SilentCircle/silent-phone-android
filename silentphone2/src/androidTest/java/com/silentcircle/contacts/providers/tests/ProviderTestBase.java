@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2014-2015, Silent Circle, LLC. All rights reserved.
+Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -905,7 +905,7 @@ public class ProviderTestBase<T extends ContentProvider> extends AndroidTestCase
     }
 
     protected byte[] loadTestPhoto() {
-        int testPhotoId = R.drawable.ic_contacts_holo_dark;
+        int testPhotoId = R.drawable.ic_contact_picture_holo_dark;
         if (testPhotoEntry == null) {
             loadPhotoFromResource(testPhotoId, PhotoSize.ORIGINAL);
             testPhotoEntry = photoResourceCache.get(testPhotoId);

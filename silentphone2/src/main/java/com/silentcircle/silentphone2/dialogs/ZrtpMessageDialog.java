@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2014-2015, Silent Circle, LLC. All rights reserved.
+Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -206,7 +206,6 @@ public class ZrtpMessageDialog extends DialogFragment {
         }
         shortText.setText(shortTxt);
 
-        Log.d(TAG, "++++ short text: " + shortTxt);
         errorMessage = (TextView) view.findViewById(R.id.ZrtpWEText);
         errorMessage.setText(getArguments().getString(ERROR_TEXT));
         errorMessage.setVisibility(View.INVISIBLE);

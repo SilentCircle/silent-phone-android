@@ -69,8 +69,10 @@ void skein384(unsigned char *dataChunks[], unsigned int dataChunckLength[], unsi
 void* createSkein384Context()
 {
     SkeinCtx_t *ctx = reinterpret_cast<SkeinCtx_t *>(malloc(sizeof(SkeinCtx_t )));
-    skeinCtxPrepare(ctx, SKEIN_SIZE);
-    skeinInit(ctx, SKEIN384_DIGEST_LENGTH*8);
+    if (ctx != NULL) {
+        skeinCtxPrepare(ctx, SKEIN_SIZE);
+        skeinInit(ctx, SKEIN384_DIGEST_LENGTH*8);
+    }
     return (void*)ctx;
 }
 
@@ -78,10 +80,29 @@ void closeSkein384Context(void* ctx, unsigned char* digest)
 {
     SkeinCtx_t* hd = reinterpret_cast<SkeinCtx_t*>(ctx);
 
-    if (digest != NULL) {
+    if (digest != NULL && hd != NULL) {
         skeinFinal(hd, digest);
     }
     free(hd);
+}
+
+void* initializeSkein384Context(void* ctx)
+{
+    SkeinCtx_t *hd = reinterpret_cast<SkeinCtx_t *>(ctx);
+    if (hd != NULL) {
+        skeinCtxPrepare(hd, SKEIN_SIZE);
+        skeinInit(hd, SKEIN384_DIGEST_LENGTH*8);
+    }
+    return (void*)hd;
+}
+
+void finalizeSkein384Context(void* ctx, unsigned char* digest)
+{
+    SkeinCtx_t* hd = reinterpret_cast<SkeinCtx_t*>(ctx);
+
+    if (digest != NULL && hd != NULL) {
+        skeinFinal(hd, digest);
+    }
 }
 
 void skein384Ctx(void* ctx, unsigned char* data, unsigned int dataLength)

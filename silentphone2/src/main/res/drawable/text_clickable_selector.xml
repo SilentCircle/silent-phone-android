@@ -4,3 +4,4 @@
           android:color="@color/auth_textview_pressed"/> <!-- pressed -->
     <item android:color="@color/auth_textview_default"/> <!-- default -->
 </selector>
+

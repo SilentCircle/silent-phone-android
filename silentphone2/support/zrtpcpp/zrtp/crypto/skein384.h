@@ -84,7 +84,7 @@ void skein384(unsigned char *data[],
  * An application uses this context to hash several data into one Skein384
  * digest. See also skein384Ctx(...) and closeSha384Context(...).
  *
- * @return Returns a pointer to the initialized Skein384 context
+ * @return Returns a pointer to the initialized Skein384 context or @c NULL in case of an error.
  */
 void* createSkein384Context();
 
@@ -102,8 +102,33 @@ void* createSkein384Context();
  *    pointer is NULL then the functions does not compute the digest but
  *    closes the context only. The context cannot be used anymore.
  */
-void closeSkein384Context(void* ctx,
-                        unsigned char* digest);
+void closeSkein384Context(void* ctx, unsigned char* digest);
+
+/**
+ * Initialize a Skein384 context.
+ *
+ * An application uses this context to hash several data into one Skein384
+ * digest. See also skein384Ctx(...) and finalizeSkein384Context(...).
+ *
+ * @param ctx
+ *    Points to the Skein384 context.
+ * @return Returns a pointer to the initialized Skein384 context
+ */
+void* initializeSkein384Context(void* ctx);
+
+/**
+ * Compute a digest.
+ *
+ * An application uses this function to compute the Skein384 digest.
+ *
+ * @param ctx
+ *    Points to the Skein384 context.
+ * @param digest
+ *    If this pointer is not NULL then it must point to a byte array that
+ *    is big enough to hold the Skei384 digest (384 bit = 48 Bytes). If this
+ *    pointer is NULL then the functions does not compute the digest.
+ */
+void finalizeSkein384Context(void* ctx, unsigned char* digest);
 
 /**
  * Update the Skein384 context with data.
@@ -118,8 +143,7 @@ void closeSkein384Context(void* ctx,
  * @param dataLength
  *    The length of the data in bytes.
  */
-void skein384Ctx(void* ctx, unsigned char* data, 
-               unsigned int dataLength);
+void skein384Ctx(void* ctx, unsigned char* data, unsigned int dataLength);
 
 /**
  * Update the Skein384 context with several data chunks.

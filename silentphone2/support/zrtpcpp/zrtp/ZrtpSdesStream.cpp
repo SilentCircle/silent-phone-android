@@ -28,7 +28,6 @@
 #include <libzrtpcpp/ZrtpConfigure.h>
 #include <libzrtpcpp/zrtpB64Decode.h>
 #include <libzrtpcpp/zrtpB64Encode.h>
-#include <srtp/SrtpHandler.h>
 #include <srtp/CryptoContext.h>
 #include <srtp/CryptoContextCtrl.h>
 #include <cryptcommon/ZrtpRandom.h>
@@ -243,12 +242,12 @@ bool ZrtpSdesStream::outgoingRtp(uint8_t *packet, size_t length, size_t *newLeng
     return rc;
 }
 
-int ZrtpSdesStream::incomingRtp(uint8_t *packet, size_t length, size_t *newLength) {
+int ZrtpSdesStream::incomingRtp(uint8_t *packet, size_t length, size_t *newLength, SrtpErrorData* errorData) {
     if (state != SDES_SRTP_ACTIVE || recvSrtp == NULL) {    // SRTP inactive, just return with newLength set
         *newLength = length;
         return 1;
     }
-    int32_t rc = SrtpHandler::unprotect(recvSrtp, packet, length, newLength);
+    int32_t rc = SrtpHandler::unprotect(recvSrtp, packet, length, newLength, errorData);
     if (rc == 1) {
 //            unprotect++
     }
@@ -271,12 +270,12 @@ bool ZrtpSdesStream::outgoingZrtpTunnel(uint8_t *packet, size_t length, size_t *
     return rc;
 }
 
-int ZrtpSdesStream::incomingZrtpTunnel(uint8_t *packet, size_t length, size_t *newLength) {
+int ZrtpSdesStream::incomingZrtpTunnel(uint8_t *packet, size_t length, size_t *newLength, SrtpErrorData* errorData) {
     if (state != SDES_SRTP_ACTIVE || recvZrtpTunnel == NULL) {    // SRTP inactive, just return with newLength set
         *newLength = length;
         return 1;
     }
-    int32_t rc = SrtpHandler::unprotect(recvZrtpTunnel, packet, length, newLength);
+    int32_t rc = SrtpHandler::unprotect(recvZrtpTunnel, packet, length, newLength, errorData);
     if (rc == 1) {
 //            unprotect++
     }

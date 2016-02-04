@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/pinned_header_list_layout"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/bg_window_dark">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:padding="@dimen/spacing_small">
+
+        <com.silentcircle.messaging.views.ComposeText
+            android:id="@+id/editbox_username"
+            style="@style/ComposeText"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_gravity="center_vertical"
+            android:hint="@string/messaging_conversation_select_recipient_hint"
+            android:textColorHint="@color/chat_compose_hint"
+            android:background="@color/chat_compose_background"
+            android:inputType="text|textNoSuggestions" />
+
+        <ImageButton
+            android:id="@+id/button_start_conversation"
+            style="@style/StartChat"
+            android:contentDescription="@string/messaging_start_conversation_voiceover"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="@dimen/space_normal"
+            android:layout_marginRight="@dimen/space_normal"
+            android:src="@drawable/ic_action_start_chat"/>
+
+    </LinearLayout>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:background="@drawable/bg_window_dark">
+
+        <view
+            class="com.silentcircle.common.list.PinnedHeaderListView"
+            android:id="@android:id/list"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginLeft="?attr/contact_browser_list_padding_left"
+            android:layout_marginStart="?attr/contact_browser_list_padding_left"
+            android:layout_marginRight="?attr/contact_browser_list_padding_right"
+            android:layout_marginEnd="?attr/contact_browser_list_padding_right"
+            android:clipToPadding="false"
+            android:fastScrollEnabled="true"
+            android:fadingEdge="none" />
+
+        <ProgressBar
+            android:id="@+id/search_progress"
+            style="?android:attr/progressBarStyleLarge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:visibility="gone" />
+
+    </FrameLayout>
+
+    <ViewStub
+        android:id="@+id/footer_stub"
+        android:layout="@layout/footer_panel"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content" />
+
+</LinearLayout>

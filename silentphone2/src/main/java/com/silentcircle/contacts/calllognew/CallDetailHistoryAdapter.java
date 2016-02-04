@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2015, Silent Circle, LLC. All rights reserved.
+Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -47,16 +47,21 @@ package com.silentcircle.contacts.calllognew;
 import android.content.Context;
 import android.provider.CallLog.Calls;
 import android.text.format.DateUtils;
+import android.text.format.Formatter;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.TextView;
 
+import com.google.common.collect.Lists;
+import com.silentcircle.common.util.DialerUtils;
 import com.silentcircle.contacts.PhoneCallDetails;
 import com.silentcircle.contacts.calllognew.CallTypeHelper;
 import com.silentcircle.contacts.calllognew.CallTypeIconsView;
 import com.silentcircle.silentphone2.R;
+
+import java.util.ArrayList;
 
 /**
  * Adapter for a ListView containing history items from the details of a call.
@@ -71,34 +76,18 @@ public class CallDetailHistoryAdapter extends BaseAdapter {
     private final LayoutInflater mLayoutInflater;
     private final CallTypeHelper mCallTypeHelper;
     private final PhoneCallDetails[] mPhoneCallDetails;
-    /** Whether the voicemail controls are shown. */
-    private final boolean mShowVoicemail;
-    /** Whether the call and SMS controls are shown. */
-    private final boolean mShowCallAndSms;
-    /** The controls that are shown on top of the history list. */
-    private final View mControls;
-    /** The listener to changes of focus of the header. */
-    private View.OnFocusChangeListener mHeaderFocusChangeListener =
-            new View.OnFocusChangeListener() {
-        @Override
-        public void onFocusChange(View v, boolean hasFocus) {
-            // When the header is focused, focus the controls above it instead.
-            if (hasFocus) {
-                mControls.requestFocus();
-            }
-        }
-    };
 
-    public CallDetailHistoryAdapter(Context context, LayoutInflater layoutInflater, CallTypeHelper callTypeHelper, 
-            PhoneCallDetails[] phoneCallDetails, boolean showVoicemail, boolean showCallAndSms, View controls) {
+    /**
+     * List of items to be concatenated together for duration strings.
+     */
+    private ArrayList<CharSequence> mDurationItems = Lists.newArrayList();
 
+    public CallDetailHistoryAdapter(Context context, LayoutInflater layoutInflater,
+            CallTypeHelper callTypeHelper, PhoneCallDetails[] phoneCallDetails) {
         mContext = context;
         mLayoutInflater = layoutInflater;
         mCallTypeHelper = callTypeHelper;
         mPhoneCallDetails = phoneCallDetails;
-        mShowVoicemail = showVoicemail;
-        mShowCallAndSms = showCallAndSms;
-        mControls = controls;
     }
 
     @Override
@@ -144,19 +133,15 @@ public class CallDetailHistoryAdapter extends BaseAdapter {
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
         if (position == 0) {
-            final View header = convertView == null ? mLayoutInflater.inflate(R.layout.call_detail_history_header, parent, false)
+            final View header = convertView == null
+                    ? mLayoutInflater.inflate(R.layout.call_detail_history_header, parent, false)
                     : convertView;
-
-            // Call and SMS controls are only shown in the main UI if there is a known number.
-            View callAndSmsContainer = header.findViewById(R.id.header_call_and_sms_container);
-            callAndSmsContainer.setVisibility(mShowCallAndSms ? View.VISIBLE : View.GONE);
-            header.setFocusable(true);
-            header.setOnFocusChangeListener(mHeaderFocusChangeListener);
             return header;
         }
 
         // Make sure we have a valid convertView to start with
-        final View result = convertView == null ? mLayoutInflater.inflate(R.layout.call_detail_history_item, parent, false)
+        final View result  = convertView == null
+                ? mLayoutInflater.inflate(R.layout.call_detail_history_item, parent, false)
                 : convertView;
 
         PhoneCallDetails details = mPhoneCallDetails[position - 1];
@@ -181,12 +166,13 @@ public class CallDetailHistoryAdapter extends BaseAdapter {
             durationView.setVisibility(View.GONE);
         } else {
             durationView.setVisibility(View.VISIBLE);
-            durationView.setText(formatDuration(details.duration));
+            durationView.setText(formatDurationAndDataUsage(details.duration, 0L));
         }
+
         return result;
     }
 
-    private String formatDuration(long elapsedSeconds) {
+    private CharSequence formatDuration(long elapsedSeconds) {
         long minutes = 0;
         long seconds = 0;
 
@@ -197,5 +183,26 @@ public class CallDetailHistoryAdapter extends BaseAdapter {
         seconds = elapsedSeconds;
 
         return mContext.getString(R.string.callDetailsDurationFormat, minutes, seconds);
+    }
+
+    /**
+     * Formats a string containing the call duration and the data usage (if specified).
+     *
+     * @param elapsedSeconds Total elapsed seconds.
+     * @param dataUsage Data usage in bytes, or null if not specified.
+     * @return String containing call duration and data usage.
+     */
+    private CharSequence formatDurationAndDataUsage(long elapsedSeconds, Long dataUsage) {
+        CharSequence duration = formatDuration(elapsedSeconds);
+
+        if (dataUsage != null) {
+            mDurationItems.clear();
+            mDurationItems.add(duration);
+            mDurationItems.add(Formatter.formatShortFileSize(mContext, dataUsage));
+
+            return DialerUtils.join(mContext.getResources(), mDurationItems);
+        } else {
+            return duration;
+        }
     }
 }

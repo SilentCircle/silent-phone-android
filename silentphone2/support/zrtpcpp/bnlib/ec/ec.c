@@ -656,7 +656,7 @@ static int ecDoublePointEd(const EcCurve *curve, EcPoint *R, const EcPoint *P)
     /* Compute Ry */
     bnCopy(curve->t2, R->x);
     bnSubMod_(curve->t2, R->y, curve->p);                      /* C - D */
-    bnMulMod_(R->y, curve->t1, curve->t2, curve->p, curve);    /* E * t3; Ry */
+    bnMulMod_(R->y, curve->t1, curve->t2, curve->p, curve);    /* E * t2; Ry */
 
     /* Compute Rx */
     bnSubMod_(curve->t0, curve->t1, curve->p);                 /* B - E; sub result */
@@ -852,7 +852,7 @@ static int ecAddPointEd(const EcCurve *curve, EcPoint *R, const EcPoint *P, cons
         ptQ = Q;
 
     /* Compute A, C, D first */
-    bnMulMod_(R->z, ptP->z, ptQ->z, curve->p, curve);            /* Rz -> A; (Z1 * z2); Rz becomes R3 */
+    bnMulMod_(R->z, ptP->z, ptQ->z, curve->p, curve);            /* Rz -> A; (Z1 * Z2); Rz becomes R3 */
     bnMulMod_(R->x, ptP->x, ptQ->x, curve->p, curve);            /* Rx -> C; (X1 * X2); Rx becomes R1 */
     bnMulMod_(R->y, ptP->y, ptQ->y, curve->p, curve);            /* Ry -> D; (Y1 * Y2); Ry becomes R2 */
 
@@ -989,13 +989,16 @@ int ecGenerateRandomNumber(const EcCurve *curve, BigNum *d)
     return curve->randomOp(curve, d);
 }
 
+#define MAX_RANDOM_BYTES  128   // Curve 521 (our biggest curve) requires 66 (+8) bytes of random data
+
 static int ecGenerateRandomNumberNist(const EcCurve *curve, BigNum *d)
 {
     BigNum c, nMinusOne;
-
+    uint8_t ran[MAX_RANDOM_BYTES];
     size_t randomBytes = ((bnBits(curve->n) + 64) + 7) / 8;
 
-    uint8_t *ran = malloc(randomBytes);
+    if (randomBytes > MAX_RANDOM_BYTES)
+        return -1;
 
     bnBegin(&c);
     bnBegin(&nMinusOne);
@@ -1015,7 +1018,6 @@ static int ecGenerateRandomNumberNist(const EcCurve *curve, BigNum *d)
 
     bnEnd(&c);
     bnEnd(&nMinusOne);
-    free(ran);
 
     return 0;
 }
@@ -1039,6 +1041,11 @@ static int ecGenerateRandomNumber25519(const EcCurve *curve, BigNum *d)
 {
     unsigned char random[32];
     _random(random, 32);
+
+    // Same as in curve25519_donna, thus a no-op there if this function generates the secret.
+    random[0] &= 248;
+    random[31] &= 127;
+    random[31] |= 64;
 
     /* No specific preparation. The curve25519_donna functions prepares the data.
      *
@@ -1100,8 +1107,8 @@ static int ecCheckPubKey3617(const EcCurve *curve, const EcPoint *pub)
     bnCopy(curve->t3, curve->t1);                                /* Load t3 */
     bnAddMod_(curve->t3, curve->t2, curve->p);                   /* t3 = t1 + t2, (x^2+y^2)*/
 
-    bnMulMod_(curve->t0, curve->a, curve->t1, curve->p, curve);  /* t0 = a * t1,  (3617 * x^2) */
-    bnMulMod_(curve->t0, curve->t0, curve->t2, curve->p, curve); /* t0 = t0 * t1, (3617 * x^2 * y^2) */
+    bnMulMod_(curve->t0, curve->a, curve->t1, curve->p, curve);  /* t0 = a * t1,  (3617 * y^2) */
+    bnMulMod_(curve->t0, curve->t0, curve->t2, curve->p, curve); /* t0 = t0 * t2, (3617 * x^2 * y^2) */
     bnAddMod_(curve->t0, mpiOne, curve->p);                      /* t0 = t0 + 1,  (3617 * x^2 * y^2 + 1) */
 
     if (bnCmp (curve->t0, curve->t3) != 0) {

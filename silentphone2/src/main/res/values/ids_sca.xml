@@ -42,6 +42,7 @@
     <item type="id" name="dialog_export_confirmation"/>
     <item type="id" name="dialog_exporting_vcard"/>
     <item type="id" name="dialog_fail_to_export_with_reason"/>
+    <item type="id" name="dialog_import_to_contacts"/>
 
     <item type="id" name="is_swipeable_tag" />
 

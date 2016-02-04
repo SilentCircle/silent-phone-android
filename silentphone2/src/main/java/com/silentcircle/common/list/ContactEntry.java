@@ -28,11 +28,14 @@ public class ContactEntry {
     public String status;
     public String phoneLabel;
     public String phoneNumber;
+    public String imName;
     public Uri photoUri;
     public Uri lookupUri;
+    public Uri thumbnailUri;
     public String lookupKey;
     public Drawable presenceIcon;
     public long id;
+    public long photoId;
     public int pinned = PinnedPositions.UNPINNED;
     public boolean isFavorite = false;
     public boolean isDefaultNumber = false;

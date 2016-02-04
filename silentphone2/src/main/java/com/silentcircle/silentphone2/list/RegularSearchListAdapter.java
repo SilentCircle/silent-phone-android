@@ -18,10 +18,13 @@ package com.silentcircle.silentphone2.list;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
-import android.text.TextUtils;
+import android.telephony.PhoneNumberUtils;
 
 import com.silentcircle.common.util.CachedNumberLookupService;
+import com.silentcircle.common.util.CachedNumberLookupService.CachedContactInfo;
 import com.silentcircle.contacts.calllognew.ContactInfo;
+import com.silentcircle.contacts.list.DirectoryPartition;
+import com.silentcircle.silentphone2.util.Utilities;
 
 /**
  * List adapter to display regular search results.
@@ -34,41 +37,48 @@ public class RegularSearchListAdapter extends DialerPhoneNumberListAdapter {
 
     public CachedNumberLookupService.CachedContactInfo getContactInfo(CachedNumberLookupService lookupService, int position) {
         ContactInfo info = new ContactInfo();
-        CachedNumberLookupService.CachedContactInfo cacheInfo = lookupService.buildCachedContactInfo(info);
+        CachedContactInfo cacheInfo = lookupService.buildCachedContactInfo(info);
         final Cursor item = (Cursor) getItem(position);
 
         if (item != null) {
-            info.name = item.getString(PhoneQuery.PHONE_DISPLAY_NAME);
+            info.name = item.getString(PhoneQuery.DISPLAY_NAME);
             info.type = item.getInt(PhoneQuery.PHONE_TYPE);
             info.label = item.getString(PhoneQuery.PHONE_LABEL);
             info.number = item.getString(PhoneQuery.PHONE_NUMBER);
-            final String photoUriStr = item.getString(PhoneQuery.PHONE_PHOTO_URI);
+            final String photoUriStr = item.getString(PhoneQuery.PHOTO_URI);
             info.photoUri = photoUriStr == null ? null : Uri.parse(photoUriStr);
 
-//            cacheInfo.setLookupKey(item.getString(PhoneQuery.LOOKUP_KEY));
+            cacheInfo.setLookupKey(item.getString(PhoneQuery.LOOKUP_KEY));
 
-//            final int partitionIndex = getPartitionForPosition(position);
-//            final DirectoryPartition partition =
-//                (DirectoryPartition) getPartition(partitionIndex);
-//            final long directoryId = partition.getDirectoryId();
-//            final String sourceName = partition.getLabel();
-//            if (isExtendedDirectory(directoryId)) {
-//                cacheInfo.setExtendedSource(sourceName, directoryId);
-//            } else {
-//                cacheInfo.setDirectorySource(sourceName, directoryId);
-//            }
+            final int partitionIndex = getPartitionForPosition(position);
+            final DirectoryPartition partition =
+                (DirectoryPartition) getPartition(partitionIndex);
+            final long directoryId = partition.getDirectoryId();
+            final String sourceName = partition.getLabel();
+            if (isExtendedDirectory(directoryId)) {
+                cacheInfo.setExtendedSource(sourceName, directoryId);
+            } else {
+                cacheInfo.setDirectorySource(sourceName, directoryId);
+            }
         }
         return cacheInfo;
     }
 
     @Override
     public void setQueryString(String queryString) {
-        final boolean showNumberShortcuts = !TextUtils.isEmpty(getFormattedQueryString());
+        final boolean showNumberShortcuts = PhoneNumberUtils. isGlobalPhoneNumber(queryString)
+                || Utilities.isValidSipUsername(queryString);
+        final boolean showMessagingShortcuts = Utilities.isValidSipUsername(queryString);
+
         boolean changed = setShortcutEnabled(SHORTCUT_DIRECT_CALL, showNumberShortcuts);
         // Either one of the add contacts options should be enabled. If the user entered
         // a dial-able number, then clicking add to contact should add it as a number.
         // Otherwise, it should add it to a new contact as a name.
-        changed |= setShortcutEnabled(SHORTCUT_ADD_NUMBER_TO_CONTACTS, showNumberShortcuts);
+//        changed |= setShortcutEnabled(SHORTCUT_ADD_NUMBER_TO_CONTACTS, showNumberShortcuts);
+
+        // For NGA: Don't show the "add to contacts option"
+        changed |= setShortcutEnabled(SHORTCUT_ADD_NUMBER_TO_CONTACTS, false);
+        changed |= setShortcutEnabled(SHORTCUT_DIRECT_CONVERSATION, showMessagingShortcuts);
 //        changed |= setShortcutEnabled(SHORTCUT_MAKE_VIDEO_CALL, showNumberShortcuts /* && CallUtil.isVideoEnabled(getContext())*/);
         if (changed) {
             notifyDataSetChanged();

@@ -26,7 +26,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Message;
-//import android.telecom.PhoneAccountHandle;
+import android.telephony.PhoneNumberUtils;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -39,23 +39,24 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.silentcircle.common.list.OnPhoneNumberPickerActionListener;
-import com.silentcircle.contacts.utils.ExpirableCache;
-import com.silentcircle.contacts.utils.UriUtils;
-import com.silentcircle.contacts.widget.GroupingListAdapter;
-import com.silentcircle.contacts.ContactPhotoManagerNew;
-import com.silentcircle.contacts.ContactPhotoManagerNew.DefaultImageRequest;
-
-import com.silentcircle.common.util.DialerUtils;
-
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Objects;
+import com.silentcircle.common.list.OnPhoneNumberPickerActionListener;
+import com.silentcircle.common.util.DialerUtils;
+import com.silentcircle.contacts.ContactPhotoManagerNew;
+import com.silentcircle.contacts.ContactPhotoManagerNew.DefaultImageRequest;
+import com.silentcircle.contacts.ContactsUtils;
+import com.silentcircle.contacts.utils.ExpirableCache;
+import com.silentcircle.contacts.utils.PhoneNumberHelper;
+import com.silentcircle.contacts.utils.UriUtils;
+import com.silentcircle.contacts.widget.GroupingListAdapter;
 import com.silentcircle.silentcontacts2.ScCallLog.ScCalls;
 import com.silentcircle.silentphone2.R;
-import com.silentcircle.silentphone2.activities.DialerActivity;
 
 import java.util.HashMap;
 import java.util.LinkedList;
+
+//import android.telecom.PhoneAccountHandle;
 
 /**
  * Adapter class to fill in data for the Call Log.
@@ -63,6 +64,7 @@ import java.util.LinkedList;
 public class CallLogAdapter extends GroupingListAdapter
         implements ViewTreeObserver.OnPreDrawListener, CallLogGroupBuilder.GroupCreator {
 
+    private static final String TAG = "CallLogAdapter";
     private static final int VOICEMAIL_TRANSCRIPTION_MAX_LINES = 10;
 
     public static final int PRESENTATION_ALLOWED = 1;
@@ -315,6 +317,10 @@ public class CallLogAdapter extends GroupingListAdapter
             // Intent to show call log details has no action, send also if we cannot handle call directly
             if (intent.getAction() == null || mPhoneNumberPickerActionListener == null) {
                 DialerUtils.startActivityWithErrorToast(mContext, intent);
+                return;
+            }
+            if (Intent.ACTION_SENDTO.equals(intent.getAction())) {
+                view.getContext().startActivity(intent);
                 return;
             }
             Uri numberUri = intent.getData();
@@ -688,6 +694,7 @@ public class CallLogAdapter extends GroupingListAdapter
 //        views.voicemailUri = c.getString(CallLogQuery.VOICEMAIL_URI);
         // Stash away the Ids of the calls so that we can support deleting a row in the call log.
         views.callIds = getCallIds(c, count);
+        views.sipAddress = c.getString(CallLogQuery.SC_OPTION_TEXT1);
 
         final ContactInfo cachedContactInfo = getContactInfoFromCallLog(c);
 
@@ -909,6 +916,8 @@ public class CallLogAdapter extends GroupingListAdapter
 
             views.actionsView.setVisibility(View.VISIBLE);
             views.actionsView.setAlpha(1.0f);
+            views.actions2View.setVisibility(View.VISIBLE);
+            views.actions2View.setAlpha(1.0f);
             views.callLogEntryView.setBackgroundColor(mExpandedBackgroundColor);
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                 views.callLogEntryView.setTranslationZ(mExpandedTranslationZ);
@@ -919,6 +928,9 @@ public class CallLogAdapter extends GroupingListAdapter
             // inflated so we should hide it in this case.
             if (views.actionsView != null) {
                 views.actionsView.setVisibility(View.GONE);
+            }
+            if (views.actions2View != null) {
+                views.actions2View.setVisibility(View.GONE);
             }
 
             views.callLogEntryView.setBackgroundColor(mCallLogBackgroundColor);
@@ -958,10 +970,14 @@ public class CallLogAdapter extends GroupingListAdapter
             views.actionsView = (ViewGroup) stub.inflate();
         }
 
+        ViewStub stub2 = (ViewStub)callLogItem.findViewById(R.id.call_log_entry_actions_stub2);
+        if (stub2 != null) {
+            views.actions2View = (ViewGroup) stub2.inflate();
+        }
+
         if (views.callBackButtonView == null) {
             views.callBackButtonView = (TextView)views.actionsView.findViewById(R.id.call_back_action);
         }
-
 //        if (views.videoCallButtonView == null) {
 //            views.videoCallButtonView = (TextView)views.actionsView.findViewById(
 //                    R.id.video_call_action);
@@ -987,6 +1003,14 @@ public class CallLogAdapter extends GroupingListAdapter
             });
         }
 
+        if (views.writeBackButtonView == null) {
+            views.writeBackButtonView = (TextView)views.actionsView.findViewById(R.id.write_back_action);
+        }
+
+        if (views.inviteButtonView == null) {
+            views.inviteButtonView = (TextView)views.actions2View.findViewById(R.id.invite_action);
+        }
+
         bindActionButtons(views);
     }
 
@@ -998,6 +1022,9 @@ public class CallLogAdapter extends GroupingListAdapter
     private void bindActionButtons(CallLogListItemViews views) {
         boolean canPlaceCallToNumber =
                 PhoneNumberUtilsWrapper.canPlaceCallsTo(views.number, views.numberPresentation);
+
+        boolean canSendMessages = !TextUtils.isEmpty(views.sipAddress) && PhoneNumberHelper.isUriNumber(views.sipAddress);
+
         // Set return call intent, otherwise null.
         if (canPlaceCallToNumber) {
             // Sets the primary action to call the number.
@@ -1010,6 +1037,16 @@ public class CallLogAdapter extends GroupingListAdapter
             views.callBackButtonView.setVisibility(View.GONE);
         }
 
+        if (canSendMessages) {
+            // Sets the primary action to call the number.
+            views.writeBackButtonView.setTag(IntentProvider.getReturnMessagingIntentProvider(views.sipAddress));
+            views.writeBackButtonView.setVisibility(View.VISIBLE);
+            views.writeBackButtonView.setOnClickListener(mActionListener);
+        } else {
+            // Number is not callable, so hide button.
+            views.writeBackButtonView.setTag(null);
+            views.writeBackButtonView.setVisibility(View.GONE);
+        }
         // If one of the calls had video capabilities, show the video call button.
 //        if (CallUtil.isVideoEnabled(mContext) && canPlaceCallToNumber &&
 //                views.phoneCallDetailsViews.callTypeIcons.isVideoShown()) {
@@ -1035,27 +1072,41 @@ public class CallLogAdapter extends GroupingListAdapter
 //            views.voicemailButtonView.setTag(null);
 //            views.voicemailButtonView.setVisibility(View.GONE);
 
-            views.detailsButtonView.setOnClickListener(mActionListener);
-            views.detailsButtonView.setTag(
-                    IntentProvider.getCallDetailIntentProvider(views.rowId, views.callIds, null)
-            );
+        views.detailsButtonView.setOnClickListener(mActionListener);
+        views.detailsButtonView.setTag(
+                IntentProvider.getCallDetailIntentProvider(views.rowId, views.callIds, null)
+        );
 
-            if (views.canBeReportedAsInvalid && !views.reported) {
-                views.reportButtonView.setVisibility(View.VISIBLE);
-            } else {
-                views.reportButtonView.setVisibility(View.GONE);
-            }
+        if (views.canBeReportedAsInvalid && !views.reported) {
+            views.reportButtonView.setVisibility(View.VISIBLE);
+        } else {
+            views.reportButtonView.setVisibility(View.GONE);
+        }
 //        }
+
+        // check to see whether invite button should be displayed
+        // if sipaddress empty (not an SC user) and number valid then allow invite
+        if (TextUtils.isEmpty(views.sipAddress) && !TextUtils.isEmpty(views.number) && PhoneNumberUtils.isWellFormedSmsAddress(views.number)) {
+            // Sets the primary action to call the number.
+            views.inviteButtonView.setTag(IntentProvider.getInviteIntentProvider(views.number));
+            views.inviteButtonView.setVisibility(View.VISIBLE);
+            views.inviteButtonView.setOnClickListener(mActionListener);
+        } else {
+            // Number is not callable, so hide button.
+            views.inviteButtonView.setTag(null);
+            views.inviteButtonView.setVisibility(View.GONE);
+        }
 
         mCallLogViewsHelper.setActionContentDescriptions(views);
     }
 
-    protected void bindBadge(
-            View view, ContactInfo info, final PhoneCallDetails details, int callType) {
+    protected void bindBadge(View view, ContactInfo info, final PhoneCallDetails details, int callType) {
         // Do not show badge in call log.
+        // Offer add to contact only if we have an asserted ID aka Silent Circle SIP address
         if (!mIsCallLog) {
             final ViewStub stub = (ViewStub) view.findViewById(R.id.link_stub);
-            if (UriUtils.isEncodedContactUri(info.lookupUri)) {
+            final CallLogListItemViews views = (CallLogListItemViews) view.getTag();
+            if (UriUtils.isEncodedContactUri(info.lookupUri) && !TextUtils.isEmpty(views.sipAddress)) {
                 if (stub != null) {
                     final View inflated = stub.inflate();
                     inflated.setVisibility(View.VISIBLE);
@@ -1068,7 +1119,7 @@ public class CallLogAdapter extends GroupingListAdapter
                     @Override
                     public void onClick(View v) {
                         final Intent intent =
-                                DialerActivity.getAddNumberToContactIntent(details.number);
+                                ContactsUtils.getAddNumberToContactIntent(mContext, details.number, views.sipAddress);
                         mContext.startActivity(intent);
                     }
                 });
@@ -1221,7 +1272,8 @@ public class CallLogAdapter extends GroupingListAdapter
     private void setPhoto(CallLogListItemViews views, long photoId, Uri contactUri,
             String displayName, String identifier, int contactType) {
         views.quickContactView.assignContactUri(contactUri);
-        views.quickContactView.setOverlay(null);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
+            views.quickContactView.setOverlay(null);
         DefaultImageRequest request = new DefaultImageRequest(displayName, identifier,
                 contactType, true /* isCircular */);
         mContactPhotoManager.loadThumbnail(views.quickContactView, photoId, false /* darkTheme */,
@@ -1231,7 +1283,8 @@ public class CallLogAdapter extends GroupingListAdapter
     private void setPhoto(CallLogListItemViews views, Uri photoUri, Uri contactUri,
             String displayName, String identifier, int contactType) {
         views.quickContactView.assignContactUri(contactUri);
-        views.quickContactView.setOverlay(null);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
+            views.quickContactView.setOverlay(null);
         DefaultImageRequest request = new DefaultImageRequest(displayName, identifier,
                 contactType, true /* isCircular */);
         mContactPhotoManager.loadDirectoryPhoto(views.quickContactView, photoUri,

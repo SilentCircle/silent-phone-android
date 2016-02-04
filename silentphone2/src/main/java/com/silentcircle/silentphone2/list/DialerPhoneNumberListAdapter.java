@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2015, Silent Circle, LLC. All rights reserved.
+Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -29,7 +29,6 @@ package com.silentcircle.silentphone2.list;
 
 import android.content.Context;
 import android.content.res.Resources;
-import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 
@@ -57,10 +56,11 @@ public class DialerPhoneNumberListAdapter extends PhoneNumberListAdapter {
 
     public final static int SHORTCUT_INVALID = -1;
     public final static int SHORTCUT_DIRECT_CALL = 0;
-    public final static int SHORTCUT_ADD_NUMBER_TO_CONTACTS = 1;
+    public final static int SHORTCUT_DIRECT_CONVERSATION = 1;
+    public final static int SHORTCUT_ADD_NUMBER_TO_CONTACTS = 2;
 //    public final static int SHORTCUT_MAKE_VIDEO_CALL = 2;
 
-    public final static int SHORTCUT_COUNT = 2;
+    public final static int SHORTCUT_COUNT = 3;
 
     private final boolean[] mShortcutEnabled = new boolean[SHORTCUT_COUNT];
 
@@ -162,10 +162,10 @@ public class DialerPhoneNumberListAdapter extends PhoneNumberListAdapter {
         final CharSequence text;
         final int drawableId;
         final Resources resources = getContext().getResources();
-        final String number = getFormattedQueryString();
+//        final String number = getFormattedQueryString();
         switch (shortcutType) {
             case SHORTCUT_DIRECT_CALL:
-                text = resources.getString(R.string.search_shortcut_call_number, number);
+                text = resources.getString(R.string.search_shortcut_call_number, getQueryString());
                 drawableId = R.drawable.ic_search_phone;
                 break;
             case SHORTCUT_ADD_NUMBER_TO_CONTACTS:
@@ -176,6 +176,10 @@ public class DialerPhoneNumberListAdapter extends PhoneNumberListAdapter {
 //                text = resources.getString(R.string.search_shortcut_make_video_call);
 //                drawableId = R.drawable.ic_videocam;
 //                break;
+            case SHORTCUT_DIRECT_CONVERSATION:
+                text = resources.getString(R.string.search_shortcut_write_to, getQueryString());
+                drawableId = R.drawable.ic_action_silent_text;
+                break;
             default:
                 throw new IllegalArgumentException("Invalid shortcut type");
         }

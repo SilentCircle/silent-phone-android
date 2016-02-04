@@ -3,6 +3,8 @@
 //warning LNK4088: image being generated due to /FORCE option; image may not run
 #include "CTTLS.h"
 
+#include "../../tiviengine/tivi_log.h"
+
 #define T_ENABLE_TLS
 
 #include <string.h>
@@ -134,7 +136,7 @@ void CTTLS::initEntropy(){
 	if( ( ret = ctr_drbg_init( &((T_SSL*)pSSL)->ctr_drbg, entropy_func, &((T_SSL*)pSSL)->entropy,
                              (unsigned char *) getEntropyFromZRTP_tmp(&br[0],63), 63 ) ) != 0 )
 	{
-        tivi_slog("failed! ctr_drbg_init returned %d", ret );
+        t_logf(log_events, __FUNCTION__,"failed! ctr_drbg_init returned %d", ret );
 	}
   // printf("[init tls entrpoy sp=%d ms]\n",getTickCount()-ui);
 }
@@ -220,6 +222,120 @@ void test_close_last_sock(){
  return 0;
  }
  */
+typedef struct{
+   int idx;
+   
+   int iSelected;
+   
+   int iFailed;
+   
+   int iConnected;
+   
+   int f;
+   
+   char host[128];
+   int port;
+   
+   int iCanDelete;
+   
+}TH_C_TCP;
+
+static int th_connect_tcp(void *p){
+   TH_C_TCP *tcp = (TH_C_TCP*)p;
+   
+   if(!net_connect(&tcp->f, tcp->host, tcp->port)){
+      tcp->iConnected = 1;
+   }
+   else tcp->iFailed = 1;
+   
+   int iMax = 2000;
+   while (!tcp->iCanDelete && iMax>0) {
+      Sleep(50);
+      iMax--;
+   }
+   
+   if(iMax<2){
+      puts("WARN: th_connect_tcp max<2");
+   }
+   //do not delete this imidiatly
+   if(!tcp->iSelected && tcp->iConnected){
+      close(tcp->f);
+   }
+   Sleep(200);
+   delete tcp;
+   return 0;
+}
+
+//return fastet possible connection
+static int fast_tcp_connect(ADDR *address, int iIncPort){
+#define T_MAX_TCP_ADDR_CNT 8
+   
+   int ips[T_MAX_TCP_ADDR_CNT];
+   
+   CTSock::getHostByName(address->bufAddr, 0, (int*)&ips, T_MAX_TCP_ADDR_CNT);
+
+   TH_C_TCP *tcp[T_MAX_TCP_ADDR_CNT];
+
+   for(int i=0;i<T_MAX_TCP_ADDR_CNT;i++){
+      if(ips[i]==0)break;
+      
+      TH_C_TCP *p  = new TH_C_TCP;
+      memset(p, 0, sizeof(TH_C_TCP));
+      p->idx = i;
+      
+      ADDR a;
+      a.ip = ips[i];
+      a.toStr(&p->host[0],0);
+      
+      p->port = address->getPort()+iIncPort;
+      
+       printf("[net_connect(addr=%s port=%d); idx=%d]\n", &p->host[0], address->getPort()+iIncPort,i);
+      
+      void startThX(int (cbFnc)(void *p),void *data);
+      startThX(th_connect_tcp, p);
+      tcp[i] = p;
+   }
+   
+
+   int iConnected = -1;
+   int iMaxTestsLeft=0;
+   
+   
+   
+   while(1){
+      Sleep(40);
+      int iSocketsDone = 0;
+      int iSockets = 0;
+      for(int i=0;i<T_MAX_TCP_ADDR_CNT;i++){
+         if(ips[i]==0)break;
+         iSockets++;
+         iSocketsDone += (tcp[i]->iConnected || tcp[i]->iFailed);
+         
+         if(tcp[i]->iConnected && (iConnected==-1 || i < iConnected)){
+            iConnected = i;
+            //should we  reset here or we should wait just 3sec
+         }
+      }
+      if(iConnected>=0){
+         iMaxTestsLeft++;
+         if(iMaxTestsLeft > 25 * 3)break; //wait 3sec after first socket connect
+         if(iConnected == 0)break;//noone can be better than first record
+      }
+      if(iSockets == iSocketsDone)break;
+   }
+   
+   int ret = iConnected==-1 ? 0 : tcp[iConnected]->f;
+   if(ret){
+      tcp[iConnected]->iSelected = 1;
+      t_logf(log_events, __FUNCTION__, "[selected net_connect(addr=%s port=%d); idx=%d]\n", &tcp[iConnected]->host[0], address->getPort()+iIncPort,iConnected);
+   }
+   
+   for(int i=0;i<T_MAX_TCP_ADDR_CNT;i++){
+      if(ips[i]==0)break;
+      tcp[i]->iCanDelete = 1;
+   }
+   return ret;
+}
 
 int CTTLS::_connect(ADDR *address){
     addrConnected=*address;
@@ -308,10 +424,8 @@ int CTTLS::_connect(ADDR *address){
     CTAutoIntUnlock _a(&iCallingConnect);
 
     if(!iClosed) {
-        puts("destr tls");
         closeSocket();
         Sleep(100);
-        puts("destr tls ok");
     }
 
     char bufX[64];
@@ -341,13 +455,54 @@ int CTTLS::_connect(ADDR *address){
             return -1;
         }
 
-        tivi_slog("[net_connect(addr=%s port=%d);]", bufX, address->getPort()+iIncPort);
        //we could try to resolve the domain here,
        //but we can not assing that address to the (ADDR address),
        //Reason: CTSipSock will fight and close socket, if we do so we have to update GW.ip and px.ip
+       /*
+        memset(port_str, 0, sizeof(port_str));
+        snprintf(port_str, sizeof(port_str), "%d", host_port);
+        
+        // Do name resolution with both IPv6 and IPv4, but only TCP
+        memset( &hints, 0, sizeof(hints));
+        hints.ai_family = AF_INET;
+        hints.ai_socktype = SOCK_STREAM;
+        hints.ai_protocol = IPPROTO_TCP;
+        
+        getaddrinfo(host_ipstr, port_str, &hints, &addr_list);
+       // (UInt8*)addr_list->ai_addr,addr_list->ai_addrlen;
+        */
+#if 1
 
-        if(net_connect(&(((T_SSL*)pSSL)->sock), &bufX[0], address->getPort()+iIncPort))
-            break;
+       ((T_SSL*)pSSL)->sock = fast_tcp_connect(address, iIncPort);
+
+#else
+       int ips[8];
+       
+       CTSock::getHostByName(address->bufAddr, 0, (int*)&ips, 8);
+       
+       for(int i=0;i<8;i++){
+          if(ips[i]==0)break;
+          
+          ADDR a;
+          a.ip = ips[i];
+          a.toStr(&bufX[0],0);
+          
+          t_logf(log_events, __FUNCTION__, "[net_connect(addr=%s port=%d);]", bufX, address->getPort()+iIncPort);
+          printf("[net_connect(addr=%s port=%d);]", bufX, address->getPort()+iIncPort);
+          
+          if(net_connect(&(((T_SSL*)pSSL)->sock), &bufX[0], address->getPort()+iIncPort)){
+             ((T_SSL*)pSSL)->sock = 0;
+             continue;
+          }
+          
+          break;
+       }
+#endif
+       
+       
+       if(!((T_SSL*)pSSL)->sock){
+          break;
+       }
 
         iLastTLSSOCK_TEST=(((T_SSL*)pSSL)->sock);
         iNeedCallCloseSocket=1;
@@ -373,7 +528,7 @@ int CTTLS::_connect(ADDR *address){
 
         if ((ret = ssl_init( ssl ) ) != 0 ) {
             error_strerror(ret, &bufErr[0], sizeof(bufErr)-1);
-            tivi_slog("ssl_init failed: [%s]", &bufErr[0]);
+            t_logf(log_events, __FUNCTION__, "ssl_init failed: [%s]", &bufErr[0]);
             break;
         }
 
@@ -411,8 +566,8 @@ int CTTLS::_connect(ADDR *address){
 }
 
 void CTTLS::failedCert(const  char *err, const char *descr, int fatal){
-   if(descr)tivi_slog(err,descr);
-   else tivi_slog(err);
+   if(descr)t_logf(log_events, __FUNCTION__,err,descr);
+   else t_logf(log_events, __FUNCTION__, err);
    if(fatal){
       if(errMsg)errMsg(pRet,err);
       iCertFailed=1;
@@ -450,17 +605,15 @@ int CTTLS::checkCert(){
    int ret;
 
    ssl_context *ssl=&((T_SSL*)pSSL)->ssl;
-   tivi_slog( "Starting TLS handshake..." );
+   log_events( __FUNCTION__, "Starting TLS handshake..." );
  
    while ((ret = ssl_handshake(ssl)) != 0)
    {
       if( ret != POLARSSL_ERR_NET_WANT_READ && ret != POLARSSL_ERR_NET_WANT_WRITE )
       {
-          tivi_slog( "failed! ssl_handshake returned %x\n", ret );
-
           char buffer[1000];
           polarssl_strerror(ret, buffer, 1000);
-          tivi_slog("Message: %s\n", buffer);
+          t_logf(log_events, __FUNCTION__, "FAIL! ssl_handshake returned %x, Message: %s", ret, buffer);
 
          return -2;
       }
@@ -470,15 +623,15 @@ int CTTLS::checkCert(){
       Sleep(15);
 #endif
    }
-   tivi_slog("OK [Ciphersuite is %s]", ssl_get_ciphersuite( ssl ) );
+   t_logf(log_events, __FUNCTION__, "OK [Ciphersuite is %s]", ssl_get_ciphersuite( ssl ) );
    /*
     * 5. Verify the server certificate
     */
-   tivi_slog("Verifying peer X.509 certificate...");
+   t_logf(log_events, __FUNCTION__, "Verifying peer X.509 certificate...");
    
    if (( ret = ssl_get_verify_result( ssl ) ) != 0 ) {
-      tivi_slog("failed!");
-      printf("ssl_get_verify_result()=%d\n",ret);
+
+      t_logf(log_events, __FUNCTION__, "Fail: ssl_get_verify_result()=%d",ret);
       
       // ssl_context *ssl2=&((T_SSL*)pSSL)->ssl;
       //  puts((char*)ssl2->ca_chain->subject.val.p);
@@ -500,7 +653,7 @@ int CTTLS::checkCert(){
       
    }
    else
-      tivi_slog("OK");
+     log_events(__FUNCTION__,"OK");
    /* failed!
     tivi_slog( "  . Peer certificate information    ..." );
     x509parse_cert_info( (char *) buf, sizeof( buf ) - 1, "      ", ssl->peer_cert );
@@ -534,15 +687,15 @@ int CTTLS::_send(const char *buf, int iLen){
     }
     // Use this if we need a SIP trace: tivi_slog("[ssl-send=%p %.*s l=%d ret=%d]", getEncryptedPtr_debug(ssl), 800, buf, iLen, ret);
     // On Android max log line length is about 1K
-    tivi_slog("[ssl-send=%p %.*s l=%d ret=%d]", getEncryptedPtr_debug(ssl), 12, buf, iLen, ret);
+    t_logf(log_events, __FUNCTION__, "[ssl-send=%p %.*s l=%d ret=%d]", getEncryptedPtr_debug(ssl), 12, buf, iLen, ret);
 
     if (ret < 0) {
         if(ret==POLARSSL_ERR_NET_CONN_RESET || ret==POLARSSL_ERR_NET_SEND_FAILED){
             iShouldDisconnect=1;
         }
-        if(iShouldDisconnect){addrConnected.clear();iConnected=0; tivi_slog("tls_send err clear connaddr");}
+        if(iShouldDisconnect){addrConnected.clear();iConnected=0; log_events(__FUNCTION__, "tls_send err clear connaddr");}
         error_strerror(ret, bufErr, sizeof(bufErr)-1);
-        tivi_slog("send[%s] %d", bufErr, iShouldDisconnect);
+        t_logf(log_events, __FUNCTION__, "send[%s] %d", bufErr, iShouldDisconnect);
     }
     else {
         //TODO msg("getCS",5,void *p, int iSize);
@@ -590,15 +743,14 @@ int CTTLS::_recv(char *buf, int iMaxSize){
       
       if( ret < 0 )
       {
-         printf( "failed\n  ! ssl_read returned %d\n", ret );
+         t_logf(log_events, __FUNCTION__, "failed  ! ssl_read returned %d", ret );
          break;
       }
       
       break;
    };
    if(iPeerClosed==2 || ret==POLARSSL_ERR_NET_CONN_RESET || ret==POLARSSL_ERR_NET_RECV_FAILED){
-      char b[64];snprintf(b,sizeof(b), "tls_recv err clear connaddr ret=%d pc=%d",ret, iPeerClosed);
-      tmp_log(b);
+      t_logf(log_events, __FUNCTION__, "tls_recv err clear connaddr ret=%d pc=%d",ret, iPeerClosed);
       iPeerClosed=1;
       this->addrConnected.clear();
       iConnected=0;
@@ -608,12 +760,12 @@ int CTTLS::_recv(char *buf, int iMaxSize){
        // Use this if we need a SIP trace: tivi_slog("[ssl-recv=%p %.*s max=%d ret=%d]", getEncryptedPtr_debug(ssl), 800, buf, iMaxSize, ret);
     // On Android max log line length is about 1K
       if(ret>=0)
-        tivi_slog("[ssl-recv=%p %.*s max=%d ret=%d]", getEncryptedPtr_debug(ssl), 50<ret?50:ret, buf, iMaxSize, ret);
+        t_logf(log_events, __FUNCTION__,"[ssl-recv=%p %.*s max=%d ret=%d]", getEncryptedPtr_debug(ssl), 50<ret?50:ret, buf, iMaxSize, ret);
    }
    
    if(ret<0){
       error_strerror(ret,&bufErr[0],sizeof(bufErr)-1);
-      tivi_slog("<<<rec[%s]pc[%d]",&bufErr[0],iPeerClosed);
+      t_logf(log_events, __FUNCTION__,"<<<rec[%s]pc[%d]",&bufErr[0],iPeerClosed);
    }
    
    

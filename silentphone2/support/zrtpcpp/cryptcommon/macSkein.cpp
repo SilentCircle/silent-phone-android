@@ -52,10 +52,21 @@ void* createSkeinMacContext(uint8_t* key, int32_t key_length,
                             int32_t mac_length, SkeinSize_t skeinSize)
 {
     SkeinCtx_t* ctx = (SkeinCtx_t*)malloc(sizeof(SkeinCtx_t));
+    if (ctx == NULL)
+        return NULL;
 
     skeinCtxPrepare(ctx, skeinSize);
     skeinMacInit(ctx, key, key_length, mac_length);
     return ctx;
+}
+
+void* initializeSkeinMacContext(void* ctx, uint8_t* key, int32_t key_length, int32_t mac_length, SkeinSize_t skeinSize)
+{
+    SkeinCtx_t* pctx = (SkeinCtx_t*)ctx;
+
+    skeinCtxPrepare(pctx, skeinSize);
+    skeinMacInit(pctx, key, key_length, mac_length);
+    return (void*)pctx;
 }
 
 void macSkeinCtx(void* ctx, const uint8_t* data, uint32_t data_length,

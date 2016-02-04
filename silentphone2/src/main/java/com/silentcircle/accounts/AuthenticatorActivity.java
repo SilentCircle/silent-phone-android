@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2015, Silent Circle, LLC. All rights reserved.
+Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -31,6 +31,7 @@ package com.silentcircle.accounts;
 import android.accounts.Account;
 import android.accounts.AccountAuthenticatorResponse;
 import android.accounts.AccountManager;
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -42,7 +43,6 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.widget.Toolbar;
@@ -57,6 +57,7 @@ import com.silentcircle.silentphone2.R;
 import com.silentcircle.silentphone2.activities.ProvisioningActivity;
 import com.silentcircle.silentphone2.services.TiviPhoneService;
 import com.silentcircle.silentphone2.util.ConfigurationUtilities;
+import com.silentcircle.silentphone2.util.Utilities;
 
 import org.json.JSONObject;
 
@@ -178,6 +179,7 @@ public class AuthenticatorActivity extends ActionBarActivity {
     // This is the second step of the of onCreate flow.
     // The key store is ready and open. Let's check if we already have some data or if we need to run the full
     // provisioning at this point.
+    @SuppressLint("CommitPrefEdits")
     private void keyManagerChecked() {
         final Intent intent = getIntent();
 
@@ -209,12 +211,16 @@ public class AuthenticatorActivity extends ActionBarActivity {
                 String devAuthorization = new String(data, "UTF-8").trim();
                 if (ConfigurationUtilities.mTrace) Log.d(TAG, "Authentication data (API key) : " + devAuthorization);
 
-                data = KeyManagerSupport.getSharedKeyData(getContentResolver(), ConfigurationUtilities.getShardDevIdTag());
-                if (data == null) {
-                    showErrorInfo(getString(R.string.provisioning_no_data));
-                    return;
-                }
-                mDeviceId = new String(data, "UTF-8").trim();
+//                data = KeyManagerSupport.getSharedKeyData(getContentResolver(), ConfigurationUtilities.getShardDevIdTag());
+//                if (data == null) {
+//                    showErrorInfo(getString(R.string.provisioning_no_data));
+//                    return;
+//                }
+//                mDeviceId = new String(data, "UTF-8").trim();
+
+                // Compute device id from existing data, i.e. don't create a new instance dev id
+                // because this is a re-provisioning only
+                mDeviceId = Utilities.hashMd5(TiviPhoneService.getInstanceDeviceId(this, false));
                 if (ConfigurationUtilities.mTrace) Log.d(TAG, "Shared deviceId : " + mDeviceId);
 
                 final Bundle result = new Bundle();
@@ -240,10 +246,10 @@ public class AuthenticatorActivity extends ActionBarActivity {
         setSupportActionBar(toolbar);
 
         setResult(Activity.RESULT_CANCELED);        // assume failure unless provisioning threads set it to OK
-        mDeviceId = TiviPhoneService.getDeviceId(this);
+        mDeviceId = TiviPhoneService.getInstanceDeviceId(this, true);
 
         if (mDeviceId != null) {
-            mDeviceId = hashDeviceId();
+            mDeviceId = Utilities.hashMd5(mDeviceId);
         }
         if (mDeviceId == null) {
             finish();
@@ -386,15 +392,6 @@ public class AuthenticatorActivity extends ActionBarActivity {
                 return;
             }
             Arrays.fill(data, (byte) 0);
-            data = KeyManagerSupport.getSharedKeyData(getContentResolver(), ConfigurationUtilities.getShardDevIdTag());
-            if (data == null) {                                 // Don't overwrite an existing device id
-                data = mDeviceId.getBytes("UTF-8");
-                if (!KeyManagerSupport.storeSharedKeyData(getContentResolver(),
-                        data, ConfigurationUtilities.getShardDevIdTag())) {
-                    Log.e(TAG, "Cannot store the device identification data with key manager.");
-                    return;
-                }
-            }
         } catch (UnsupportedEncodingException e) {
             Log.e(TAG, "Cannot convert device authorization data:", e);
             return;
@@ -425,24 +422,6 @@ public class AuthenticatorActivity extends ActionBarActivity {
         }
         if (passwordInput.getText() != null)
             passwordInput.setSelection(passwordInput.getText().length());
-    }
-
-    private String hashDeviceId() {
-        MessageDigest md;
-        try {
-            md = MessageDigest.getInstance("MD5");
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-            return null;
-        }
-        byte[] hash;
-        try {
-            hash = md.digest(mDeviceId.getBytes("UTF-8"));
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-            return null;
-        }
-        return new BigInteger(1, hash).toString(16);
     }
 
     static boolean checkPermissions(final Bundle options, Context ctx) {

@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2014-2015, Silent Circle, LLC. All rights reserved.
+Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -48,7 +48,6 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.media.AudioManager;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
@@ -112,6 +111,9 @@ public class InCallActivity extends ActionBarActivity
     private static final String PROXIMITY_WAKEUP = "proximity_wakeup";
 
     public static final String ADD_CALL_ACTION = "add_call";
+
+    public static final String NOTIFICATION_LAUNCH_ACTION = "notification_launch";
+    public static final String NOTIFICATION_END_CALL_ACTION = "notification_end_call";
 
     public static final int ACTIVE_CALL_NOTIFICATION_ID = 47110815;
     private static final int ADD_CALL_ACTIVITY = 1113;
@@ -259,11 +261,13 @@ public class InCallActivity extends ActionBarActivity
         if (ConfigurationUtilities.mTrace) Log.d(TAG, "Intent onCreate: " + getIntent());
 
         Bundle bundle = getIntent().getExtras();
-        if (bundle == null) {
+        if (bundle == null && getIntent().getAction() == null) {
             mForceDestroy = true;
             finish();
             return;
         }
+
+        onNewIntent(getIntent());
 
         // If this is not an onCreate during a rotation then fix orientation to
         // portrait for small devices. The video fragment enables rotation and thus
@@ -296,7 +300,7 @@ public class InCallActivity extends ActionBarActivity
         }
         // Preliminary set the mPhoneService
         if (mPhoneService == null)
-            mPhoneService = TiviPhoneService.mc;
+            mPhoneService = TiviPhoneService.phoneService;
         doBindService();        // Bind the TiviPhoneService, only locally, this will set mPhoneService correctly
 
         if (savedInstanceState != null) {
@@ -440,13 +444,16 @@ public class InCallActivity extends ActionBarActivity
         if (TiviPhoneService.calls.getCallCount() > 0 && callMonitoringThread != null && callMonitoringThread.isAlive()) {
             mMonitorStopLatch = new CountDownLatch(1);
         }
-        else
+        else if(mNotificationManager != null) {
             mNotificationManager.cancel(ACTIVE_CALL_NOTIFICATION_ID);
+        }
 
-        mPhoneService.removeStateChangeListener(this);
-        mPhoneService.removeDeviceChangeListener(this);
-        mPhoneService.stopRinger();
-        mPhoneService.setNotificationToDialer();
+        if(mPhoneService != null) {
+            mPhoneService.removeStateChangeListener(this);
+            mPhoneService.removeDeviceChangeListener(this);
+            mPhoneService.stopRinger();
+            mPhoneService.setNotificationToDialer();
+        }
 
         waitForLatch(mMonitorStopLatch);
         mMonitorStopLatch = null;
@@ -532,6 +539,17 @@ public class InCallActivity extends ActionBarActivity
 
     @Override
     protected void onNewIntent(Intent intent) {
+        if(intent != null && intent.getAction() != null) {
+            switch(intent.getAction()) {
+                case NOTIFICATION_LAUNCH_ACTION:
+                    break;
+
+                case NOTIFICATION_END_CALL_ACTION:
+                    endCall(true, TiviPhoneService.calls.selectedCall);
+                    break;
+            }
+        }
+
         if (ConfigurationUtilities.mTrace) Log.d(TAG, "Received onNewIntent: " + intent);
     }
 
@@ -1040,11 +1058,15 @@ public class InCallActivity extends ActionBarActivity
             mPreviousUserPressed = userPressed;
             mTerminateEarly = true;
             Utilities.asyncCommand("*e0");      // cancel the dialing and call setup, the monitoring thread terminates
-            mPhoneService.onStopCall();
+            if(mPhoneService != null) {
+                mPhoneService.onStopCall();
+            }
             mHideAfter = mPreviousUserPressed ? 1 : 3;
             runOnUiThread(new Runnable() {
                 public void run() {
-                    mPhoneService.stopRinger();
+                    if(mPhoneService != null) {
+                        mPhoneService.stopRinger();
+                    }
                     if (TiviPhoneService.calls.getCallCount() < 1) {
                         Utilities.audioMode(getBaseContext(), false);
                         Utilities.turnOnSpeaker(getBaseContext(), false, true);
@@ -1064,10 +1086,14 @@ public class InCallActivity extends ActionBarActivity
             Utilities.asyncCommand("*e" + call.iCallId);
             if (call.iCallId == 0) {                         // mark as ended and let monitor thread handle it
                 call.callEnded = true;
-                mPhoneService.onStopCall();
+                if(mPhoneService != null) {
+                    mPhoneService.onStopCall();
+                }
                 runOnUiThread(new Runnable() {
                     public void run() {
-                        mPhoneService.stopRinger();
+                        if(mPhoneService != null) {
+                            mPhoneService.stopRinger();
+                        }
                         if (TiviPhoneService.calls.getCallCount() < 1) {
                             Utilities.audioMode(getBaseContext(), false);
                             Utilities.turnOnSpeaker(getBaseContext(), false, true);
@@ -1084,8 +1110,13 @@ public class InCallActivity extends ActionBarActivity
         call.secExceptionMsg = null;
         runOnUiThread(new Runnable() {
             public void run() {
-                mPhoneService.stopRinger();                   // This and audioMode call must be on UI thread
-                mNotificationManager.cancel(ACTIVE_CALL_NOTIFICATION_ID);
+                if(mPhoneService != null) {
+                    mPhoneService.stopRinger();                   // This and audioMode call must be on UI thread
+                }
+
+                if(mNotificationManager != null) {
+                    mNotificationManager.cancel(ACTIVE_CALL_NOTIFICATION_ID);
+                }
                 Utilities.audioMode(getBaseContext(), false);
                 Utilities.turnOnSpeaker(getBaseContext(), false, true); // Set speaker to off at end of call and remember this
             }
@@ -1138,8 +1169,13 @@ public class InCallActivity extends ActionBarActivity
                 // on when we become horizontal until the proximity sensor goes negative.
 //                boolean horizontal = (mOrientation == AccelerometerListener.ORIENTATION_HORIZONTAL);
 
-                boolean keepScreenOn = Utilities.isSpeakerOn(getBaseContext()) || mPhoneService.isHeadsetPlugged() ||
-                        mPhoneService.btHeadsetScoActive();
+                boolean usingHeadset = false;
+
+                if(mPhoneService != null) {
+                    usingHeadset = mPhoneService.isHeadsetPlugged() || mPhoneService.btHeadsetScoActive();
+                }
+
+                boolean keepScreenOn = Utilities.isSpeakerOn(getBaseContext()) || usingHeadset;
 
                 if (enable && !keepScreenOn && !mLeaveHint) {
                     // Phone is in use!  Arrange for the screen to turn off
@@ -1576,28 +1612,38 @@ public class InCallActivity extends ActionBarActivity
     public synchronized void setCallActiveNotification(final CallState call) {
         final int ico = R.drawable.stat_sys_phone_call;
 
-        Intent intent = new Intent(this, InCallActivity.class);
-        intent.setAction("notification");
-        Bundle bundle = new Bundle();
-        bundle.putInt(TiviPhoneService.CALL_TYPE, TiviPhoneService.CALL_TYPE_RESTART);
-        intent.putExtras(bundle);
-        intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-
         // The PendingIntent to launch our activity if the user selects this notification
-        PendingIntent contentIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        Intent launchIntent = new Intent(this, InCallActivity.class);
+        launchIntent.setAction(NOTIFICATION_LAUNCH_ACTION);
+        launchIntent.putExtra(TiviPhoneService.CALL_TYPE, TiviPhoneService.CALL_TYPE_RESTART);
+        launchIntent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        PendingIntent launchPendingIntent = PendingIntent.getActivity(this, 0, launchIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+        // The PendingIntent to end the current call from the notification
+        Intent endCallIntent = new Intent(this, InCallActivity.class);
+        endCallIntent.setAction(NOTIFICATION_END_CALL_ACTION);
+        endCallIntent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        PendingIntent endCallPendingIntent = PendingIntent.getActivity(this, 1, endCallIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
         if (mNotifyLargeIcon == null)
             mNotifyLargeIcon = BitmapFactory.decodeResource(getResources(), R.drawable.ic_launcher_sp);
 
+        String nameNum = call.getNameFromAB();
+        nameNum = TextUtils.isEmpty(nameNum) ? call.bufPeer.toString() : nameNum;
         Notification notification = new NotificationCompat.Builder(this)
-                .setContentTitle(call.getNameFromAB())
-                .setContentText(call.uiStartTime == 0 ? getString(R.string.call_type_audio) : getString(R.string.call_in_progress))
+                .setContentTitle(nameNum)
+                .setContentText(call.uiStartTime == 0 ?
+                        getString(call.iIsIncoming ? R.string.type_incoming : R.string.type_outgoing) : getString(R.string.call_in_progress))
                 .setSmallIcon(ico)
                 .setLargeIcon(mNotifyLargeIcon)
                 .setWhen(call.uiStartTime == 0 ? System.currentTimeMillis() : call.uiStartTime)
-                .setContentIntent(contentIntent)
-                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                .setContentIntent(launchPendingIntent)
+                .setDeleteIntent(endCallPendingIntent)
+                // Setting PRIORITY_MAX, otherwise other ongoing notifications (such as a dismissible alarm)
+                // will cause action buttons (end call, etc.) to be hidden
+                .setPriority(NotificationCompat.PRIORITY_MAX)
                 .setOngoing(true)
+                .addAction(R.drawable.ic_end_call_dark, getString(R.string.end_call_button), endCallPendingIntent)
                 .build();
         mNotificationManager.notify(ACTIVE_CALL_NOTIFICATION_ID, notification);
     }

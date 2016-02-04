@@ -93,8 +93,8 @@
             android:textColor="?attr/call_log_secondary_text_color"
             android:textSize="@dimen/call_log_list_item_actions_text_size"
             android:textStyle="bold"
-            android:nextFocusLeft="@+id/voicemail_action"
-            android:nextFocusRight="@+id/report_action"
+            android:nextFocusLeft="@+id/call_back_action"
+            android:nextFocusRight="@+id/write_back_action"
             android:focusable="true"
             android:singleLine="true"/>
         <TextView
@@ -115,5 +115,41 @@
             android:focusable="true"
             android:singleLine="true"
             android:visibility="gone"/>
+        <TextView
+            android:id="@+id/write_back_action"
+            android:background="@drawable/action_button_background"
+            android:gravity="center"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:paddingStart="@dimen/call_log_action_horizontal_padding"
+            android:paddingLeft="@dimen/call_log_action_horizontal_padding"
+            android:paddingEnd="@dimen/call_log_action_horizontal_padding"
+            android:text="@string/call_log_action_write_back"
+            android:textColor="@color/dialer_green_highlight_color"
+            android:textSize="@dimen/call_log_list_item_actions_text_size"
+            android:textStyle="bold"
+            android:nextFocusLeft="@+id/detail_action"
+            android:nextFocusRight="@+id/invite_action"
+            android:focusable="true"
+            android:singleLine="true"/>
+        <!--
+        <TextView
+            android:id="@+id/invite_action"
+            android:background="@drawable/action_button_background"
+            android:gravity="center"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:paddingStart="@dimen/call_log_action_horizontal_padding"
+            android:paddingLeft="@dimen/call_log_action_horizontal_padding"
+            android:paddingEnd="@dimen/call_log_action_horizontal_padding"
+            android:text="@string/call_log_action_invite"
+            android:textColor="@color/dialer_green_highlight_color"
+            android:textSize="@dimen/call_log_list_item_actions_text_size"
+            android:textStyle="bold"
+            android:nextFocusLeft="@+id/write_back_action"
+            android:nextFocusRight="@+id/primary_action_view"
+            android:focusable="true"
+            android:singleLine="true"/>
+            -->
     </LinearLayout>
 </FrameLayout>

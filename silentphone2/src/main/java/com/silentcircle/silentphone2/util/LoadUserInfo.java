@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2014-2015, Silent Circle, LLC. All rights reserved.
+Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -75,11 +75,12 @@ public class LoadUserInfo {
     public static final int VALID = 1;
     public static final int INVALID = 0;
 
+    private static final String OUTBOUND_PERMISSION = "OUT_BOUND_PERMISSION";
 
     @SuppressWarnings("FieldCanBeLocal")
     private final long CHECK_AFTER = 86400 * 3 * 1000;      // 3 days in ms
     @SuppressWarnings("FieldCanBeLocal")
-    private final long CHECK_AFTER_FAIL = 30*60*1000;       // 30 min in ms
+    private final long CHECK_AFTER_FAIL = 3*60*1000;       // 3 min in ms
 
     private URL mRequestUrl;
 
@@ -100,6 +101,8 @@ public class LoadUserInfo {
     private static boolean mHasOrganization;
 
     private static boolean mFirstCallAfterStart = true;
+
+    private static boolean mOutboundCallsEnabled;
 
     /**
      * Listener interface to report if data loading is complete.
@@ -203,8 +206,35 @@ public class LoadUserInfo {
         return expiry.after(now) ? VALID : INVALID;
     }
 
+    @SuppressLint("SimpleDateFormat")
+    public static boolean checkExpirationDateValid(String expirationString) {
+        if (!TextUtils.isEmpty(expirationString)) {
+            try {
+                // any expiration dates before 2000 are presumed invalid
+                // the server appears to use 1-1-1900 for premium accounts, but checking prior to 2000
+                // also covers any other bogus/default dates such as 1-1-1970 that might be in the system
+                Date expirationDate = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss").parse(mExpirationString);
+                Calendar noSubscriptionDate = Calendar.getInstance();
+                noSubscriptionDate.set(2000, 1, 1);
+                Calendar expiry = Calendar.getInstance();
+                expiry.setTime(expirationDate);
+                return expiry.after(noSubscriptionDate);
+            } catch (ParseException e) {
+                Log.e(TAG, "Date parsing failed: " + e.getMessage());
+                return false;
+            }
+        } else {
+            return false;
+        }
+    }
+
     public static boolean hasOrganization() {
         return mHasOrganization;
+    }
+
+    public static boolean isOutboundCallsEnabled(Context ctx) {
+        SharedPreferences prefs = ctx.getSharedPreferences(ProvisioningActivity.PREF_KM_API_KEY, Context.MODE_PRIVATE);
+        return prefs.getBoolean(OUTBOUND_PERMISSION, false);
     }
 
     @SuppressLint("SimpleDateFormat")           // date/time is a computer generated string
@@ -228,26 +258,28 @@ public class LoadUserInfo {
         if (mContent.length() < MIN_CONTENT_LENGTH)
             return;
 
+        JSONObject jsonObj = null;
         try {
-            JSONObject jsonObj = new JSONObject(mContent.toString());
-            JSONObject subscription = jsonObj.getJSONObject("subscription");
+            jsonObj = new JSONObject(mContent.toString());
+            final JSONObject subscription = jsonObj.getJSONObject("subscription");
             mExpirationString = subscription.getString("expires");
 
-            // Because we already have the data: check for some other data as well
-            checkOrganisation(jsonObj);
+            long currentTime = System.currentTimeMillis();
+            mNextCheck = currentTime + CHECK_AFTER;
+            SharedPreferences prefs =  mContext.getSharedPreferences(ProvisioningActivity.PREF_KM_API_KEY, Context.MODE_PRIVATE);
+            prefs.edit()
+                    .putString("SUBS_EXPIRATION_DATE", mExpirationString)
+                    .putLong("NEXT_USER_CHECK", mNextCheck)
+                    .apply();
+            setExpirationDate();
         } catch (JSONException e) {
             // Check how to inform user and then restart?
             Log.w(TAG, "JSON exception: " + e);
-            return;
         }
-        long currentTime = System.currentTimeMillis();
-        mNextCheck = currentTime + CHECK_AFTER;
-        SharedPreferences prefs =  mContext.getSharedPreferences(ProvisioningActivity.PREF_KM_API_KEY, Context.MODE_PRIVATE);
-        prefs.edit()
-                .putString("SUBS_EXPIRATION_DATE", mExpirationString)
-                .putLong("NEXT_USER_CHECK", mNextCheck)
-                .apply();
-        setExpirationDate();
+
+        // Because we already have the data: check for some other data as well
+        checkOrganisation(jsonObj);
+        parsePermissions(jsonObj);
     }
 
     private void parseOcaMinuteData() {
@@ -257,33 +289,57 @@ public class LoadUserInfo {
         if (mContent.length() < MIN_CONTENT_LENGTH)
             return;
 
+        JSONObject jsonObj = null;
         try {
-            final JSONObject jsonObj = new JSONObject(mContent.toString());
+            jsonObj = new JSONObject(mContent.toString());
             final JSONObject subscription = jsonObj.getJSONObject("subscription");
             final JSONObject usageDetails = subscription.getJSONObject("usage_details");
+
             final int minutesLeft = usageDetails.getInt("minutes_left");
-            final int baseMinutes = usageDetails.getInt("base_minutes");
+            int baseMinutes = usageDetails.getInt("base_minutes");
+            final int currentModifier = usageDetails.getInt("current_modifier");
+
+            baseMinutes += currentModifier;
+
             if (mListener != null)
                 mListener.ocaMinutes(minutesLeft, baseMinutes, null);
 
-            // Because we already have the data: check for some other data as well
-            checkOrganisation(jsonObj);
         } catch (JSONException e) {
             if (mListener != null)
                 mListener.ocaMinutes(-1, 0, mContext.getString(R.string.remaining_oca_minutes_fail));
             // Check how to inform user and then restart?
             Log.w(TAG, "JSON exception: " + e);
         }
+        // Because we already have the data: check for some other data as well
+        checkOrganisation(jsonObj);
+        parsePermissions(jsonObj);
     }
 
     private void checkOrganisation(final JSONObject jsonObj) {
         mHasOrganization = false;
-        if (!jsonObj.has("organization")) {
+        if (jsonObj == null || !jsonObj.has("organization")) {
             return;
         }
         try {
             String orgName = jsonObj.getString("organization");
             mHasOrganization = !TextUtils.isEmpty(orgName);
+        } catch (JSONException ignore) {}
+    }
+
+    /*
+    "permissions": {"can_send_media": true, "silent_text": true, "outbound_messaging": true,
+                    "can_receive_voicemail": false, "silent_desktop": true, "outbound_calling": true,
+                    "silent_phone": true, "inbound_messaging": true, "has_oca": true, "inbound_calling": true}
+     */
+    private void parsePermissions(final JSONObject jsonObj) {
+        if (jsonObj == null || !jsonObj.has("permissions"))
+            return;
+
+        try {
+            final JSONObject permissions = jsonObj.getJSONObject("permissions");
+            boolean outboundCallsEnabled = permissions.getBoolean("outbound_calling");
+            SharedPreferences prefs =  mContext.getSharedPreferences(ProvisioningActivity.PREF_KM_API_KEY, Context.MODE_PRIVATE);
+            prefs.edit().putBoolean(OUTBOUND_PERMISSION, outboundCallsEnabled).apply();
         } catch (JSONException ignore) {}
     }
 
@@ -301,6 +357,8 @@ public class LoadUserInfo {
                 if (ConfigurationUtilities.mTrace) Log.d(TAG, "User info URL: " + mRequestUrl);
                 urlConnection = (HttpsURLConnection)mRequestUrl.openConnection();
                 urlConnection.setRequestProperty("Accept-Language", Locale.getDefault().getLanguage());
+                urlConnection.setConnectTimeout(2000);
+
                 int ret = urlConnection.getResponseCode();
                 if (ConfigurationUtilities.mTrace) Log.d(TAG, "HTTP code: " + ret);
 
@@ -345,7 +403,7 @@ public class LoadUserInfo {
                 long currentTime = System.currentTimeMillis();
                 mNextCheck = currentTime + CHECK_AFTER_FAIL;
                 Log.w(TAG, "Reading expiration date failed, code: " + result +
-                        ", next check in " + CHECK_AFTER_FAIL/10 + " seconds");
+                        ", next check in " + CHECK_AFTER_FAIL/1000 + " seconds");
                 SharedPreferences prefs =  mContext.getSharedPreferences(ProvisioningActivity.PREF_KM_API_KEY, Context.MODE_PRIVATE);
                 prefs.edit()
                         .putLong("NEXT_USER_CHECK", mNextCheck)

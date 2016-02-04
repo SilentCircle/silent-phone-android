@@ -1,17 +1,7 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
-// +++LICENSE_BEGIN+++
-/*
- * Copyright © 2014, Silent Circle
- * All rights reserved.
- */
-// +++LICENSE_END+++
- -->
-
+<?xml version='1.0' encoding='UTF-8'?>
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <string name="next">Weiter</string>
     <string name="back">Zurück</string>
-    <string name="skip">Überspringen</string>
     <string name="dismiss_call">Ablehnen</string>
     <string name="answer_call">Abheben</string>
     <string name="verify_infotext_top">Bitte mit Partner vergleichen</string>
@@ -20,6 +10,8 @@
     <string name="close_dialog">Schließen</string>
     <string name="cancel_dialog">Abbrechen</string>
     <string name="confirm_dialog">Bestätigen</string>
+    <string name="record_dialog">Aufnehmen</string>
+    <string name="stop_dialog">Stop</string>
     <string name="provision_later">Später</string>
     <string name="crypto_padlock">Schloß zeigt den Sicherheitsstatus</string>
     <string name="error_code">Fehlercode: </string>
@@ -61,7 +53,6 @@
     <string name="call_mng_conference">Konferenz</string>
     <string name="call_mng_private">Privat</string>
     <string name="call_mng_in_out">Ankommend, abgehend</string>
-    <string name="zrtp_we_header">ZRTP Sicherheitsnachrichten</string>
     <string name="zrtp_we_error">ZRTP Fehler</string>
     <string name="zrtp_we_warn">ZRTP Warnung</string>
     <string name="srtp_we_warn">SRTP Warnung</string>
@@ -71,7 +62,6 @@
     <string name="provisioning_vertu_welcome">Willkommen bei Silent Circle in Zusammarbeit mit Vertu</string>
     <string name="provisioning_username_hint">Kurzname</string>
     <string name="provisioning_password_hint">Passwort</string>
-    <string name="provisioning_password_hint2">Passwort (zum Vergleich)</string>
     <string name="provisioning_firstname_hint">Ihr Vorname</string>
     <string name="provisioning_lastname_hint">Ihr Nachname</string>
     <string name="provisioning_email_hint">E-mail Adresse</string>
@@ -83,7 +73,6 @@
     <string name="provisioning_user_req">Ein Kurzname ist erforderlich. Bitte prüfen.</string>
     <string name="provisioning_psn_invalid">Keine korrekte Seriennummer gefunden!</string>
     <string name="provisioning_password_req">Ein Passwort ist erforderlich. Bitte prüfen.</string>
-    <string name="provisioning_password_match">Die Passwörter stimmen nicht überein. Bitte prüfen.</string>
     <string name="provisioning_firstname_req">Ihr Vorname ist erforderlich. Bitte prüfen.</string>
     <string name="provisioning_lastname_req">Ihr Nachname ist erforderlich. Bitte prüfen.</string>
     <string name="provisioning_email_req">Ihre E-mail Adresse ist erforderlich. Bitte prüfen.</string>
@@ -101,12 +90,9 @@
     <string name="provisioning_new_account">Neue Benutzerkennung anlegen</string>
     <string name="provisioning_existing_account">Bestehende Kennung verwenden</string>
     <string name="provisioning_existing_account_bp">Anmelden</string>
-    <string name="provisioning_check_tc">Bitte akzeptieren Sie die Geschäftsbedingungen</string>
     <string name="provisioning_create">Erstellen</string>
-    <string name="provisioning_get_activation_code">Verwenden Sie bitte Ihre Kennung bei\nwww.silentcircle.com\num den Aktivierungscode zu bekommen.</string>
     <string name="provisioning_credentials">Nutzername oder Passwort ist falsch. Bitte überprüfen.</string>
     <string name="provisioning_forgot_pwd">Ich habe mein Passwort vergessen.</string>
-    <string name="key_manager_available">Silent Circle KeyManager wird verwendet.</string>
     <string name="thanks_number">Nummer:</string>
     <string name="thanks_name">Name:</string>
     <string name="preferred_sas_type">SAS Typ einstellen</string>
@@ -116,15 +102,9 @@
     <string name="no_ringtone">Standard</string>
     <string name="preferred_algorithms">Bevorzuge Non-NIST-Paket</string>
     <string name="nist_preferred">Wenn verfügbar, dann bevorzuge non-NIST Sicherheitsalgorithmen: Twofish, Skein, Bernstein Kurven.</string>
-    <string name="sca_info_install">"Silent Circle bietet eine App an, die Ihre Konatktdaten und Anruflisten verschlüsselt speichert.
-        \nSilent Contacts ist ein kostenloses Zusatzangebot von Silent Circle.
-        \nNähere Informationen erhalten sie auf unserer Webseite.
-        \n<b>Silent Contacts installieren</b>"</string>
-    <string name="sca_add_security">Für bessere Sicherheit</string>
     <string name="description_dial_button">Wählen</string>
     <string name="description_delete_button">Löschen</string>
     <string name="contacts_image_button">Öffne Adressbuch</string>
-    <string name="recent_image_button">Zeige Liste der letzten Anrufe</string>
     <string name="zrtp_common_cmp">Vergleichen Sie diesen Authentifizierungscode mündlich mit ihrem Gesprächspartner. Stimmen die Kodes nicht überein, könnte eine Abhörmaßnahme aktiv sein.</string>
     <string name="zrtp_common_cls">Probleme mit der Netzverbindung. Bitte auflegen und nochmal anrufen.</string>
     <string name="zrtp_common_upd">Die angerufene Person sollte die Silent Phone Anwendung aktualisieren.</string>
@@ -133,22 +113,18 @@
     <string name="permission_write">Schreiben verschlüsselter Kontakte</string>
     <string name="permission_read_km">Lesezugriff zu Silent Circle Keymanager</string>
     <string name="permission_write_km">Schreibzugriff zu Silent Circle Keymanager</string>
-    <string name="call_duration">Dauer</string>
-    <string name="video_audio_mute">Audio stumm</string>
-    <string name="video_switch_camera">Kameras umschalten</string>
-
-    <!-- Only TAG names changes, copy existing translations-->
     <string name="provisioning_stepInfo_1">Schritt 1 von 3</string>
     <string name="provisioning_stepInfo_2">Schritt 2 von 3</string>
     <string name="provisioning_stepInfo_3">Schritt 3 von 3</string>
     <string name="provisioning_vertu_email_info">Diese E-Mail Adresse ist notwendig, damit wir Sie bei wichtigen Informationen und Updates benachrichtigen können.</string>
     <string name="provisioning_vertu_welcome_long">Als Vertu Kunde können sie Silent Circles abhörsichere Kommunikationsdieste 12 Monate kostenfrei nutzen.</string>
 
+    <string name="video_audio_mute">Audio stumm</string>
+    <string name="video_switch_camera">Kameras umschalten</string>
+
+    
     <string name="provisioning_infoText">Konto erstellen</string>
-    <string name="provisioning_bp_welcome">Willkommen bei Silent Circle in Zusammenarbeit mit BlackPhone</string>
     <string name="provisioning_bp_email_info">Eine E-Mail Adresse ist notwendig, damit wir Sie bei wichtigen Informationen und Updates benachrichtigen können.</string>
-    <string name="provisioning_bp_welcome_long">Als Blackphone Kunde können sie Silent Circles abhörsichere Kommunikationsdieste 12 Monate kostenfrei nutzen.</string>
-    <string name="provisioning_bp_account">Silent Circle-Konto</string>
     <string name="mute_button">Stumm</string>
     <string name="video_button">Video</string>
     <string name="video_control">Videosteuerung</string>
@@ -158,10 +134,9 @@
     <string name="stop_video">Nur Audio</string>
     <string name="pause_video">Video Pause</string>
     <string name="send_video">Video senden</string>
-    <string name="prepare">Vorbereiten &#8230;</string>
+    <string name="prepare">Vorbereiten …</string>
     <string name="call_manager">Anrufe verwalten</string>
     <string name="dtmf_dialer">Tonwahl</string>
-    <string name="info_screen">Einstellungen/Info</string>
     <string name="security_options_header">Sicherheitseinstellungen</string>
     <string name="call_info_generic">Allgemeine Information</string>
     <string name="call_info_security">Sicherheitsinformation</string>
@@ -171,13 +146,15 @@
     <string name="account_creation_error">Konto erstellen - Fehler</string>
     <string name="account_creation_wrong_format">Konto erstellen – fehlerhafte Daten vom Server: </string>
     <string name="account_creation_no_data">Konto erstellen – falsche Daten vom Server empfangen.</string>
-    <string name="other_settings">Andere Einstellingen</string>
+    <string name="other_settings">Andere Einstellungen</string>
     <string name="select_theme">Farbschema wählen</string>
     <string name="current_theme">Ausgewähltes Farbschema: %s</string>
     <string name="theme_orange">Orange</string>
     <string name="theme_white">Weiß</string>
     <string name="theme_dusk">Dusk</string>
     <string name="theme_black">Schwarz</string>
+    <string name="extended_menu">Erweitertes Menü</string>
+
     <string name="bp_is_online">Silent Phone Online</string>
     <string name="bp_is_offline">Silent Phone gerade Offline</string>
     <string name="bp_not_started">Silent Phone nicht gestartet</string>
@@ -211,13 +188,14 @@
         wenden Sie sich bitte an den Kundendienst unter der E-Mailadresse support@blackphone.ch</string>
 
 
-    <!-- ************************** String for the Contacts part ******************************  -->
+    
 
-    <string name="recentCallsIconLabel">Anrufe</string>
+    <string name="alternate_title_sca">Silent Contacts - Silent Circle\'s Kontaktverwaltung</string>
+
+
     <string name="recentCalls_addToContact">"Zu Kontakten hinzufügen"</string>
     <string name="recentCalls_empty">"Anrufliste ist leer."</string>
     <string name="recentCalls_deleteAll">"Anrufliste löschen"</string>
-    <string name="recentCalls_callNumber">"%s anrufen"</string>
     <string name="recentCalls_editNumberBeforeCall">"Nr. vor Anruf bearbeiten"</string>
     <string name="recentCalls_removeFromRecentList">"Aus Anrufliste entfernen"</string>
     <string name="recentCalls_removeSameFromRecentList">Zugehörige Einträge entfernen</string>
@@ -225,80 +203,27 @@
     <string name="type_outgoing">"Ausgehender Anruf"</string>
     <string name="type_missed">"Entgangener Anruf"</string>
     <string name="callDetailTitle">"Anrufdetails"</string>
-    <string name="menu_show_outgoing_only">"Nur ausgehende Anrufe anzeigen"</string>
-    <string name="menu_show_incoming_only">"Nur eingehende Anrufe anzeigen"</string>
-    <string name="menu_show_missed_only">"Nur entgangene Anrufe anzeigen"</string>
-    <string name="menu_show_all_calls">"Alle Anrufe anzeigen"</string>
-    <string name="menu_callNumber">"%s wählen"</string>
     <string name="unknown">"Unbekannt"</string>
     <string name="private_num">"Private Nummer"</string>
     <string name="payphone">"Münztelefon"</string>
-    <string name="call_log_empty_gecode">"-"</string>
-    <string name="call_log_new_header">"Neu"</string>
-    <string name="call_log_old_header">"Älter"</string>
-    <string name="call_log_incoming_header">"Nur eingehende Anrufe"</string>
-    <string name="call_log_outgoing_header">"Nur ausgehende Anrufe"</string>
-    <string name="call_log_missed_header">"Nur entgangene Anrufe"</string>
     <string name="call_log_item_count_and_date">"(%1$d) %2$s"</string>
     <string name="callDetailsDurationFormat">"%1$s Minuten, %2$s Sekunden"</string>
     <string name="toast_call_detail_error">"Details für den angeforderten Anruf konnten nicht gelesen werden."</string>
-    <string name="description_view_contact">"Kontakt %1$s anzeigen"</string>
-    <string name="description_add_contact">"Kontakt hinzufügen"</string>
-    <string name="clearCallLogProgress_title">"Anrufliste wird gelöscht&#8230;"</string>
+    <string name="clearCallLogProgress_title">"Anrufliste wird gelöscht…"</string>
     <string name="clearCallLogConfirmation_title">"Anrufliste löschen?"</string>
     <string name="clearCallLogConfirmation">"Ihre gesamte Anrufliste wird gelöscht."</string>
-    <string name="description_send_text_message">"SMS an %1$s senden"</string>
-    <string name="description_call">"%1$s anrufen"</string>
-    <string name="phoneTypeCustom">Benutzerdefiniert</string>
-    <string name="phoneTypeHome">Privat</string>
-    <string name="phoneTypeMobile">Mobil</string>
-    <string name="phoneTypeWork">Geschäftlich</string>
     <string name="phoneTypeSilent">Silent Phone</string>
-    <string name="emailTypeCustom">Benutzerdefiniert</string>
-    <string name="emailTypeHome">Privat</string>
-    <string name="emailTypeWork">Geschäftlich</string>
-    <string name="emailTypeOther">Sonstige</string>
-    <string name="emailTypeMobile">Mobil</string>
-    <string name="postalTypeCustom">Benutzerdefiniert</string>
-    <string name="postalTypeHome">Privat</string>
-    <string name="postalTypeWork">Geschäftlich</string>
-    <string name="postalTypeOther">Sonstige</string>
-    <string name="imTypeCustom">Benutzerdefiniert</string>
-    <string name="imTypeHome">Privat</string>
-    <string name="imTypeWork">Geschäftlich</string>
-    <string name="imTypeOther">Sonstige</string>
-    <string name="imTypeSilent">Silent Text</string>
-    <string name="imProtocolCustom">Benutzerdefiniert</string>
-    <string name="imProtocolAim">AIM</string>
-    <string name="imProtocolMsn">Windows Live</string>
-    <string name="imProtocolYahoo">Yahoo</string>
-    <string name="imProtocolSkype">Skype</string>
-    <string name="imProtocolQq">QQ</string>
-    <string name="imProtocolGoogleTalk">Google Talk</string>
-    <string name="imProtocolIcq">ICQ</string>
-    <string name="imProtocolJabber">Jabber</string>
-    <string name="imProtocolNetMeeting">NetMeeting</string>
-    <string name="imProtocolSilent">Silent Text</string>
-    <string name="add_contact_dlg_message_fmt">"\"%s\" zu den Kontakten hinzufügen?"</string>
     <string name="contactsList">"Kontakte"</string>
     <string name="local_invisible_directory">"Sonstige"</string>
     <string name="local_search_label">"Alle Kontakte"</string>
     <string name="user_profile_contacts_list_header">"Ich"</string>
     <string name="directory_search_label">"Verzeichnis"</string>
-    <string name="search_results_searching">"Suche&#8230;"</string>
+    <string name="search_results_searching">"Suche…"</string>
     <string name="foundTooManyContacts">"Mehr als %d gefunden"</string>
     <string name="listFoundAllContactsZero">"Keine Kontakte"</string>
-    <string name="editContactDescription">"Kontakt bearbeiten"</string>
-    <string name="insertContactDescription">"Kontakt erstellen"</string>
-
     <plurals name="searchFoundContacts">
         <item quantity="one">"1 gefunden"</item>
         <item quantity="other">"%d gefunden"</item>
-    </plurals>
-
-    <plurals name="listTotalAllContacts">
-        <item quantity="one">"1 Kontakt"</item>
-        <item quantity="other">"%d Kontakte"</item>
     </plurals>
 
     <string name="no_contact_details">"Keine Zusatzinformationen zu diesem Kontakt"</string>
@@ -451,72 +376,20 @@
     <string name="menu_done">"Fertig"</string>
     <string name="menu_doNotSave">"Abbrechen"</string>
     <string name="profile_display_name">"Mein Profil einrichten"</string>
-    <string name="listTotalAllContactsZero">"Keine Kontakte"</string>
-    <string name="listTotalAllContactsZeroCustom">"Keine sichtbaren Kontakte"</string>
-    <string name="listTotalAllContactsZeroStarred">"Keine Favoriten"</string>
-    <string name="listTotalAllContactsZeroGroup">"Keine Kontakte in %s"</string>
-    <string name="listTotalPhoneContactsZero">"Keine sichtbaren Kontakte mit Telefonnummern"</string>
     <string name="menu_search">"Suche"</string>
     <string name="menu_new_contact_action_bar">"Kontakt hinzufügen"</string>
     <string name="menu_new_group_action_bar">"Gruppe hinzufügen"</string>
-    <string name="menu_accounts">"Konten"</string>
     <string name="menu_clear_frequents">"\"Häufig kontaktiert\" löschen"</string>
-    <string name="menu_contacts_filter">"Kontakte zur Ansicht"</string>
     <string name="menu_import_export">"Importieren/Exportieren"</string>
     <string name="menu_remove_vcard_files">vCard Dateien löschen</string>
     <string name="menu_export_database">"Datenbankdateien exportieren"</string>
     <string name="menu_settings">"Einstellungen"</string>
     <string name="menu_help">"Hilfe"</string>
     <string name="menu_about">Über</string>
-    <string name="hint_findContacts">"Kontakte suchen"</string>
-    <string name="contactsAllLabel">"Alle Kontakte"</string>
-    <string name="contactsGroupsLabel">"Gruppen"</string>
-    <string name="contactsFavoritesLabel">"Favoriten"</string>
-    <string name="viewContactDesription">"Kontakt anzeigen"</string>
-    <string name="viewContactTitle">"Kontaktinformationen"</string>
-    <string name="account_phone">"Nur Gerät, keine Synchronisierung"</string>
-    <string name="view_updates_from_group">"Updates anzeigen"</string>
-    <string name="customLabelPickerTitle">"Name des benutzerdef. Labels"</string>
-    <string name="expand_collapse_name_fields_description">"Namensfelder maximieren oder minimieren"</string>
-    <string name="description_minus_button">"Löschen"</string>
-    <string name="description_contact_photo">"Kontaktbild"</string>
-    <string name="nameLabelsGroup">"Name"</string>
-    <string name="nicknameLabelsGroup">"Alias"</string>
-    <string name="organizationLabelsGroup">"Firma/Organisation"</string>
-    <string name="groupsLabel">"Gruppen"</string>
-    <string name="full_name">"Name"</string>
-    <string name="name_given">"Vorname"</string>
-    <string name="name_family">"Nachname"</string>
-    <string name="name_prefix">"Namenpräfix"</string>
-    <string name="name_middle">"Zweiter Vorname"</string>
-    <string name="name_suffix">"Namensuffix"</string>
-    <string name="name_phonetic_given">"Phonetischer Vorname"</string>
-    <string name="name_phonetic_middle">"Phonetischer zweiter Vorname"</string>
-    <string name="name_phonetic_family">"Phonetischer Nachname"</string>
-    <string name="name_phonetic">"Phonetischer Name"</string>
-    <string name="recent">"Neueste Nachrichten"</string>
-    <string name="postal_address">"Adresse"</string>
-    <string name="postal_street">"Straße"</string>
-    <string name="postal_pobox">"Postfach"</string>
-    <string name="postal_neighborhood">"Nachbarschaft"</string>
-    <string name="postal_city">"Stadt"</string>
-    <string name="postal_region">"Bundesland"</string>
-    <string name="postal_postcode">"Postleitzahl"</string>
-    <string name="postal_country">"Land"</string>
-    <string name="phoneLabelsGroup">"Telefon"</string>
-    <string name="emailLabelsGroup">"E-Mail"</string>
-    <string name="imLabelsGroup">"Silent Text / Chat"</string>
-    <string name="postalLabelsGroup">"Adresse"</string>
-    <string name="sms">"SMS"</string>
-    <string name="label_notes">"Notizen"</string>
-    <string name="label_sip_address">"Silent Phone - Name"</string>
-    <string name="ghostData_company">"Unternehmen"</string>
-    <string name="ghostData_title">"Titel"</string>
     <string name="call_custom">"%s anrufen"</string>
     <string name="call_home">"Anruf (privat)"</string>
     <string name="call_mobile">"Anruf (mobil)"</string>
     <string name="call_work">"Anruf (geschäftl.)"</string>
-    <string name="call_silent">SilentPhone anrufen</string>
     <string name="call_fax_work">"Fax (geschäftlich) anrufen"</string>
     <string name="call_fax_home">"Fax (privat) anrufen"</string>
     <string name="call_pager">"Anruf (Pager)"</string>
@@ -534,158 +407,47 @@
     <string name="call_work_pager">"Anruf Pager (geschäftl.)"</string>
     <string name="call_assistant">"%s anrufen"</string>
     <string name="call_mms">"Anruf (MMS)"</string>
-    <string name="sms_custom">"Text %s"</string>
-    <string name="sms_home">"SMS (privat)"</string>
-    <string name="sms_mobile">"Text (mobil)"</string>
-    <string name="sms_work">"SMS (geschäftl.)"</string>
-    <string name="sms_fax_work">"SMS an Fax (geschäftl.)"</string>
-    <string name="sms_fax_home">"SMS an Fax (privat)"</string>
-    <string name="sms_pager">"Text-Pager"</string>
-    <string name="sms_other">"SMS an"</string>
-    <string name="sms_callback">"SMS an Rückrufnummer"</string>
-    <string name="sms_car">"Text (Auto)"</string>
-    <string name="sms_company_main">"Text (Firmenhauptnummer)"</string>
-    <string name="sms_isdn">"SMS an ISDN"</string>
-    <string name="sms_main">"SMS an Hauptnummer"</string>
-    <string name="sms_other_fax">"SMS an Fax"</string>
-    <string name="sms_radio">"Text (Funktelefon)"</string>
-    <string name="sms_telex">"SMS an Telex"</string>
-    <string name="sms_tty_tdd">"SMS an TTY/TDD"</string>
-    <string name="sms_work_mobile">"SMS an Handy (geschäftl.)"</string>
-    <string name="sms_work_pager">"SMS an Pager (geschäftl.)"</string>
-    <string name="sms_assistant">"SMS an %s"</string>
-    <string name="sms_mms">"Text (MMS)"</string>
-    <string name="email_home">"E-Mail (privat)"</string>
-    <string name="email_mobile">"E-Mail (mobil)"</string>
-    <string name="email_work">"E-Mail (geschäftl.)"</string>
-    <string name="email_other">"E-Mail an"</string>
-    <string name="email_custom">"E-Mail %s"</string>
-    <string name="email">"E-Mail"</string>
-    <string name="map_home">"Privatadresse anzeigen"</string>
-    <string name="map_work">"Geschäftsadresse anzeigen"</string>
-    <string name="map_other">"Adresse anzeigen"</string>
-    <string name="map_custom">"%s-Adresse anzeigen"</string>
-    <string name="chat_silent">Über SilentText chatten</string>
-    <string name="chat_aim">"Über AIM chatten"</string>
-    <string name="chat_msn">"Über Windows Live chatten"</string>
-    <string name="chat_yahoo">"Über Yahoo! chatten"</string>
-    <string name="chat_skype">"Über Skype chatten"</string>
-    <string name="chat_qq">"Über QQ chatten"</string>
-    <string name="chat_gtalk">"Über Google Talk chatten"</string>
-    <string name="chat_icq">"Über ICQ chatten"</string>
-    <string name="chat_jabber">"Über Jabber chatten"</string>
-    <string name="chat">"Chat"</string>
-    <string name="audio_chat">"Sprach-Chat"</string>
-    <string name="video_chat">"Video-Chat"</string>
-    <string name="contact_status_update_attribution">"über %1$s"</string>
-    <string name="contact_status_update_attribution_with_date">"%1$s über %2$s"</string>
-    <string name="contact_directory_description">"Verzeichnis %1$s"</string>
-    <string name="organization_company_and_title">"%2$s, %1$s"</string>
-    <string name="menu_addStar">"Zu Favoriten hinzufügen"</string>
-    <string name="menu_removeStar">"Aus Favoriten entfernen"</string>
+    <string name="chat">"Text"</string>
     <string name="toast_text_copied">"Text kopiert"</string>
-    <string name="copy_text">"In Zwischenablage kopieren"</string>
-    <string name="set_default">"Als Standard festlegen"</string>
-    <string name="clear_default">"Als Standard löschen"</string>
-    <string name="contactDetailAbout">"Über"</string>
-    <string name="contactDetailUpdates">"Updates"</string>
-    <string name="add_connection_button">"Verbindung hinzufügen"</string>
-    <string name="noContacts">"Keine Kontakte"</string>
     <string name="contacts_unavailable_create_contact">"Neuen Kontakt erstellen"</string>
     <string name="contacts_unavailable_import_contacts">"Kontakte importieren"</string>
     <string name="upgrade_out_of_memory_uninstall">"Einige Apps deinstallieren"</string>
     <string name="upgrade_out_of_memory_retry">"Upgrade wiederholen"</string>
-    <string name="locale_change_in_progress">"Kontaktliste wird an die geänderte Sprache angepasst&#8230;"</string>
-    <string name="upgrade_in_progress">"Kontaktliste wird aktualisiert&#8230;"</string>
-    <string name="upgrade_out_of_memory">"Kontakte werden gerade aktualisiert. "\n\n"Das Upgrade erfordert etwa %s MB
-        des internen Speichers."\n\n"Wählen Sie eine der folgenden Optionen:"
-    </string>
-    <string name="menu_editContact">"Bearbeiten"</string>
-    <string name="menu_deleteContact">"Löschen"</string>
-    <string name="menu_set_ring_tone">"Klingeltonwahl"</string>
     <string name="menu_create_contact_shortcut">"Auf Startbildschirm platzieren"</string>
     <string name="menu_share">"Teilen"</string>
-    <string name="toast_making_personal_copy">"Persönliche Kopie wird erstellt&#8230;"</string>
-    <string name="photoPickerNotFoundText">"Auf dem Gerät sind keine Bilder verfügbar."</string>
-    <string name="take_photo">"Foto machen"</string>
-    <string name="take_new_photo">"Neues Foto aufnehmen"</string>
-    <string name="pick_photo">"Foto aus Galerie auswählen"</string>
-    <string name="pick_new_photo">"Neues Foto aus Galerie auswählen"</string>
-    <string name="removePhoto">"Foto entfernen"</string>
-    <string name="use_photo_as_primary">"Dieses Foto verwenden"</string>
-    <string name="add_new_entry_for_section">"Hinzufügen"</string>
-    <string name="add_organization">"Unternehmen hinzufügen"</string>
-    <string name="add_field">"Weiteres Feld hinzufügen"</string>
-    <string name="edit_contact">"Kontakt bearbeiten"</string>
     <string name="menu_discard">"Verwerfen"</string>
-    <string name="cancel_confirmation_dialog_message">"Sollen die Änderungen verworfen werden?"</string>
-    <string name="contactSavedToast">"Kontakt gespeichert"</string>
-    <string name="contactSavedErrorToast">"Kontaktänderungen konnten nicht gespeichert werden."</string>
-    <string name="readOnlyContactWarning">"Sie können keine Kontakte aus schreibgeschützten Konten löschen. Sie können
-        sie aber in Ihren Kontaktlisten ausblenden."
-    </string>
-    <string name="readOnlyContactDeleteConfirmation">"Dieser Kontakt enthält Informationen aus mehreren Konten.
-        Informationen aus schreibgeschützten Konten werden nicht gelöscht, sondern in Ihren Kontaktlisten ausgeblendet."
-    </string>
-    <string name="multipleContactDeleteConfirmation">"Wenn Sie diesen Kontakt löschen, werden Informationen aus mehreren
-        Konten gelöscht."
-    </string>
-    <string name="deleteConfirmation">"Dieser Kontakt wird gelöscht."</string>
-    <string name="shortcutActivityTitle">"Verknüpfung für Kontakt auswählen"</string>
-    <string name="callShortcutActivityTitle">"Nummer für den Anruf auswählen"</string>
-    <string name="messageShortcutActivityTitle">"Nummer für Nachricht auswählen"</string>
-    <string name="contactPickerActivityTitle">"Kontakt auswählen"</string>
     <string name="pickerNewContactText">"Neuen Kontakt erstellen"</string>
-    <string name="pickerNewContactHeader">"Neuen Kontakt erstellen"</string>
-    <string name="share_via">"Kontakt teilen über"</string>
     <string name="list_filter_phones">"Kontakte mit Tel. Nummern"</string>
-    <string name="contact_read_only">"In dieser App nicht bearbeitbar"</string>
-    <string name="savingContact">"Kontakt wird gespeichert&#8230;"</string>
-    <string name="activity_title_confirm_add_detail">"Zu Kontakt hinzufügen"</string>
     <string name="display_options_sort_list_by">"Liste sortieren nach"</string>
     <string name="display_options_view_names_as">"Kontaktnamen-Anzeige:"</string>
     <string name="display_options_view_given_name_first">"Vorname zuerst"</string>
     <string name="display_options_view_family_name_first">"Nachname zuerst"</string>
     <string name="display_options_sort_by_given_name">"Vorname"</string>
     <string name="display_options_sort_by_family_name">"Nachname"</string>
-    <string name="activity_title_settings">"Einstellungen"</string>
     <string name="no_sdcard_message">"Kein Speicher gefunden"</string>
-    <string name="dialog_import_export">"Import/Export von Kontakten"</string>
-    <string name="dialog_import">"Kontakte importieren"</string>
-    <string name="share_error">"Dieser Kontakt kann nicht geteilt werden."</string>
     <string name="import_from_sdcard">"Aus Speicher importieren"</string>
-    <string name="export_to_sdcard">"In Speicher exportieren"</string>
-    <string name="share_visible_contacts">"Sichtbare Kontakte teilen"</string>
     <string name="import_one_vcard_string">"Eine vCard-Datei importieren"</string>
     <string name="import_multiple_vcard_string">"Mehrere vCard-Dateien importieren"</string>
     <string name="import_all_vcard_string">"Alle vCard-Dateien importieren"</string>
-    <string name="searching_vcard_message">"Suche nach vCard-Daten im Speicher&#8230;"</string>
+    <string name="searching_vcard_message">"Suche nach vCard-Daten im Speicher…"</string>
     <string name="scanning_sdcard_failed_message">"Der Speicher konnte nicht gelesen werden. (Grund: \"%s\")"</string>
     <string name="fail_reason_io_error">"E/A-Fehler"</string>
     <string name="fail_reason_low_memory_during_import">"Nicht genügend Speicherplatz. Die Datei ist möglicherweise zu
         groß."
     </string>
-    <string name="fail_reason_vcard_parse_error">"Die vCard konnte aus einem unerwarteten Grund nicht geparst werden."
-    </string>
     <string name="fail_reason_not_supported">"Das Format wird nicht unterstützt."</string>
     <string name="vcard_import_failed">"Importieren der vCard nicht möglich"</string>
     <string name="import_failure_no_vcard_file">"Im Speicher wurde keine vCard-Datei gefunden."</string>
-    <string name="fail_reason_failed_to_collect_vcard_meta_info">"Abrufen der Metadaten aus angegebenen vCards nicht
-        möglich"
-    </string>
-    <string name="fail_reason_failed_to_read_files">"Eine oder mehrere Dateien können nicht importiert werden (%s)."
-    </string>
     <string name="fail_reason_unknown">"Unbekannter Fehler"</string>
     <string name="select_vcard_title">"vCard-Datei wählen"</string>
     <string name="select_vcard_title_remove">"vCard-Datei löschen"</string>
-    <string name="caching_vcard_title">"Caching läuft&#8230;"</string>
+    <string name="caching_vcard_title">"Caching läuft…"</string>
     <string name="caching_vcard_message">"Caching der vCard(s) in lokalen temporären Speicher wird durchgeführt. Der
         eigentliche Import beginnt gleich."
     </string>
     <string name="progress_notifier_message">"%1$s/%2$s wird importiert: %3$s"</string>
     <string name="importing_vcard_description">"%s wird importiert"</string>
     <string name="reading_vcard_failed_title">"Lesen der vCard-Daten nicht möglich"</string>
-    <string name="reading_vcard_canceled_title">"Lesen von vCard-Daten abgebrochen"</string>
     <string name="importing_vcard_finished_title">"Import der vCard %s abgeschlossen"</string>
     <string name="importing_vcard_canceled_title">"Import von %s abgebrochen"</string>
     <string name="vcard_import_will_start_message">"%s wird demnächst importiert."</string>
@@ -723,185 +485,34 @@
     <string name="composer_not_initialized">"Das Programm zum Erstellen der vCard wurde nicht richtig gestartet."
     </string>
     <string name="fail_reason_could_not_open_file">"\"%1$s\" konnte nicht geöffnet werden: %2$s."</string>
-    <string name="exporting_contact_list_progress">"%1$s von %1$s Kontakten"</string>
     <string name="cancel_import_confirmation_message">"Import von %s abbrechen?"</string>
     <string name="cancel_export_confirmation_message">"Export von %s abbrechen?"</string>
     <string name="nfc_vcard_file_name">"Kontakt erhalten per NCF"</string>
     <string name="cancel_vcard_import_or_export_failed">"vCard-Import/-Export nicht abgebrochen"</string>
-    <string name="group_read_only">"Auf diesem Gerät nicht bearbeitbar"</string>
-    <string name="group_name_hint">"Gruppenname"</string>
-    <string name="enter_contact_name">"Name der Person eingeben"</string>
-    <string name="groupSavedToast">"Gruppe gespeichert"</string>
-    <string name="groupSavedErrorToast">"Gruppenänderungen konnten nicht gespeichert werden."</string>
-    <string name="emptyGroup">"Keine Personen in dieser Gruppe"</string>
-    <string name="addPeopleToGroup">"Bearbeiten Sie die Gruppe, um Personen hinzuzufügen."</string>
-    <string name="menu_editGroup">"Bearbeiten"</string>
-    <string name="menu_deleteGroup">"Löschen"</string>
-
-    <plurals name="num_contacts_in_group">
-        <item quantity="one">"%1$d Person von %2$s"</item>
-        <item quantity="other">"%1$d Personen von %2$s"</item>
-    </plurals>
-
-    <string name="favoritesFrequentContacted">"Häufig kontaktiert"</string>
-    <string name="favoritesFrequentCalled">"Häufig angerufen"</string>
     <string name="description_view_contact_detail">"Kontakt anzeigen"</string>
-    <string name="delete_group_dialog_message">"Soll die Gruppe \"%1$s\" wirklich gelöscht werden? Die Kontakte selbst
-        werden nicht gelöscht."
-    </string>
-
-    <plurals name="group_list_num_contacts_in_group">
-        <item quantity="one">"%1$d Person"</item>
-        <item quantity="other">"%1$d Personen"</item>
-    </plurals>
-
-    <string name="noGroups">"Keine Gruppen"</string>
-    <string name="noAccounts">"Sie benötigen ein Konto, um Gruppen erstellen zu können."</string>
-    <string name="create_group_dialog_title">"Neue Gruppe erstellen"</string>
-    <string name="contacts_unavailable_add_account">"In einem Konto anmelden"</string>
-    <string name="group_edit_field_hint_text">"Gruppenname"</string>
-    <string name="create_group_item_label">"Neue Gruppe erstellen"</string>
     <string name="preference_displayOptions">"Anzeigeoptionen"</string>
-    <string name="description_send_message">"Nachricht an %1$s senden"</string>
-    <string name="description_dial_phone_number">"Telefonnummer für %1$s"</string>
     <string name="description_quick_contact_for">"Schnellkontakt für %1$s"</string>
-    <string name="invalidContactMessage">"Dieser Kontakt existiert nicht."</string>
-    <string name="quickcontact_missing_app">"Für diese Aktion wurde keine App gefunden."</string>
-    <string name="recent_updates">"Neueste Updates"</string>
-
-    <string name="search_go">"Suchen"</string>
-    <string name="searchview_description_search">"Suche"</string>
-    <string name="searchview_description_query">"Suchanfrage"</string>
-    <string name="searchview_description_clear">"Anfrage löschen"</string>
-    <string name="searchview_description_submit">"Anfrage senden"</string>
-    <string name="searchview_description_voice">"Sprachsuche"</string>
-
-    <string name="sca_about">Silent Circle Contacts ist eine Zusatzanwendung die Ihre Kontaktdaten und Anruflisten verschlüsselt speichert.
-    \n\nBuild Nummer: %1$s (%2$s)</string>
-
     <string name="cannot_load_store">Kann Schlüsseldatei nicht laden. Falsches Passwort oder falscher PIN.</string>
-    <string name="cannot_create_store">Kann Schlüsseldatei nicht erstellen.</string>
-
     <string name="password_hint">Passwort eingeben</string>
     <string name="password_hint_old">Altes Passwort eingeben</string>
     <string name="password_hint_new">Neues Passwort eingeben</string>
     <string name="password_hint2">Passwort eingeben (prüfen)</string>
-    <string name="change_password">Passwort ändern</string>
     <string name="cannot_change_password">Änderung des Passwortes fehlgeschlagen. Altes Passwort wird weiterverwendet.</string>
     <string name="old_password_wrong">Altes Passwort falsch. Schlüsseldatei wird gesperrt.</string>
 
-    <string name="unlock">Freigeben</string>
-    <string name="lock">Sperren</string>
-    <string name="create">Schlüsseldatei erstellen</string>
-    <string name="unlocked">Freigegeben</string>
-    <string name="locked">Gesperrt</string>
-
-    <string name="backup_store">Schlüsseldatei sichern</string>
-    <string name="backup_access">Speicher für Sicherungs nicht zugreifbar.</string>
-    <string name="restore_store">Schlüsseldatei wiederherstellen</string>
-    <string name="cannot_create_backup">Sicherungsdatei kann nicht erstellt werden.</string>
-    <string name="backup_failed">Sichern der Schlüsseldatei fehlgeschlagen.</string>
-    <string name="backup_created">Sichern der Schlüsseldatei erfolgreich.</string>
-    <string name="restore_failed">Wiederherstellen der Schlüsseldatei fehlgeschlagen.</string>
-    <string name="restore_created">Wiederherstellung der Schlüsseldatei erfolgreich.</string>
-    <string name="restore_access">Keine Sicherungsdatei gefunden.</string>
+    <string name="key_store_change_pw">Passwort ändern</string>
     <string name="no_password">Kein Passwort.</string>
 
     <string name="information_dialog">Information</string>
     <string name="show_pw">Passwort anzeigen</string>
     <string name="password_match">Passworte stimmen nicht überein. Bitte überprüfen.</string>
 
-    <string name="registered_apps">Angemeldete Anwendungen</string>
-
-    <!-- ******************** New or modified *********************** -->
-    <!-- Strings new after 2.0.1 release -->
     <string name="video_control_explanation">Bildschirm berühren zum Anzeigen der Videokontrolle.
         \n\nVorschaufenster berühren zum Verschieben.
     </string>
 
-    <string name="sca_problem">Silent Contacts nicht ausführbar</string>
-    <string name="sca_problem_explanation">Prüfen sie den Status der Silent Contacts App und aktivieren Sie die App.
-        Ohne Zugriff auf Silent Contacts kann Silent Phone keine Kontakt Information lesen.</string>
-    <string name="did_area">Gebiet:</string>
-    <string name="did_area_list">Gewähltes Gebiet</string>
-    <string name="did_ask_to_complete">Bitte wählen Sie eine Telefonnummer.</string>
-    <string name="did_currently_selected">Ausgewählt</string>
-    <string name="did_no_area">In dieser Regions is kein Gebiter mehr verfügbar. Bitte andere Region wählen.</string>
-    <string name="did_no_number">Keine Telefonnummer verfügbar. Bitte anderes Gebiet oder andere Region wählen.</string>
-    <string name="did_number">Nummber:</string>
-    <string name="did_number_list">Nummer auswählen</string>
-    <string name="did_region">Region:</string>
-    <string name="did_region_area_explanation">Auswählen einer Telefonnummer aus einer Region und eines Gebietes.</string>
-    <string name="did_region_list">Region auswählen</string>
-    <string name="did_selection_wrong_format">Auswahl Telefonummer - Server schickt fehlerhafte Daten:</string>
-    <string name="did_title">Telefonnummer auswählen</string>
-    <string name="key_store_change_pin">PIN ändern</string>
-    <string name="key_store_change_pin_explanation">Ändern des eigenen PIN für den Schlüsselspeicher.</string>
-    <string name="key_store_change_pw_explanation">Ändern des eigenen Passwortes für den Schlüsselspeicher.</string>
-    <string name="key_store_change_pw">Passwort ändern</string>
-    <string name="key_store_enter_pin_explanation">PIN für Schlüsselspeicher eingeben.</string>
-    <string name="key_store_enter_pw_explanation">Passwort für Schlüsselspeicher eingeben.</string>
-    <string name="key_store_reset_default">Rücksetzen auf Standardschutz.</string>
-    <string name="key_store_reset_pin_explanation">Nach sie ihre PIN eingegeben haben wird der Standardschutz wieder verwendet.</string>
-    <string name="key_store_reset_pw_explanation">Nach sie ihr Passwort eingegeben haben wird der Standardschutz wieder verwendet.</string>
-    <string name="key_store_set_pin">PIN setzten</string>
-    <string name="key_store_set_pin_explanation">Verwenden einer PIN um den Schutz des Schlüsselspeichers zu erhöhen.\nSie müssen diese PIN nach jedem Neustart von Silent Phone eingeben. Sie können jederzeit auf Standardschutz zurücksetzen.</string>
-    <string name="key_store_set_pw_explanation">Verwenden eines Passwortes um den Schutz des Schlüsselspeichers zu erhöhen.\nSie müssen dieses Passwort nach jedem Neustart von Silent Phone eingeben. Sie können jederzeit auf Standardschutz zurücksetzen.</string>
-    <string name="key_store_set_pw">Passwort setzen</string>
-    <string name="key_store_title">Optionen Schlüsselspeicher</string>
-    <string name="key_store_type_default">Standardpasswort</string>
-    <string name="key_store_type_pin">PIN vom Nutzer gesetzt</string>
-    <string name="key_store_type_pw">Passwort vom Nutzer gesetzt</string>
-    <string name="migrate_done">Datenmigration fertig.</string>
-    <string name="migrate_export">Silent Contacts Daten exportieren</string>
-    <string name="migrate_import">Silent Contacts Daten in integrierte Datenbank importieren.</string>
-    <string name="migrate_not_ready">Integrierte Datenverwaltung nicht verfügbar.</string>
-    <string name="migrate_start">Migration von Silent Contacts Daten startet.</string>
-    <string name="migrate_failed_old_km">"Kopiere Kontaktdaten: KeyManager nicht aktiv."</string>
-
-    <!--
-    <string name="migration_explanation">Silent Contacts ist jetzt Bestandteil der Silent Phone Anwendnung.
-    Das neue Silent Contacts kopiert ihrer existierenden Kontakte.
-    \n\nNach dem Kopieren bestätigen sie bitte die De-Installation der alten Anwendung.
-    \n\nWenn sie die Migration abbrechen de-installieren sie die alte Anwendung mit Androids Anwendnungsmanager.
-    In diesem Fall werden ihre Daten nicht automatisch kopiert.</string>
--->
-    <string name="migration_explanation_1">Silent Contacts ist jetzt Bestandteil der Silent Phone Anwendnung.
-        Das neue Silent Contacts kopiert ihrer existierenden Kontakte und löscht die alten Silent Contacts und
-        Silent Key Manager Anwendungen.</string>
-    <string name="migration_explanation_2">Nach dem Kopieren bestätigen sie bitte die De-Installation der
-        alten Silent Contacts Anwendung.</string>
-
-    <string name="no_pin">Keine PIN</string>
-    <string name="pin_hint">PIN eingeben</string>
-    <string name="pin_hint2">PIN eingeben (prüfen)</string>
-    <string name="pin_hint_new">Neue PIN eingeben</string>
-    <string name="pin_hint_old">Alte PIN eingeben</string>
-    <string name="pin_match">PIN stimmen nicht überein.</string>
-    <string name="pin_short">PIN ist zu kurz. Mindestens %d Ziffern verwenden.</string>
-    <string name="re_provision">Silent Phone Daten neu laden</string>
-    <string name="re_provision_explanation">Laden den Silent Phon Konfigurationsdaten</string>
-    <string name="setting_p2p">Mediaserver verwenden</string>
-    <string name="setting_p2p_summary">Mediadaten immer über einen Server senden um Standorte zu verschleiern. Verlängert Laufzeit.</string>
-    <string name="setting_underflow">Ton bei Audioproblemen</string>
-    <string name="setting_underflow_summary">Spielt einen leisen Warnton wenn Audiodaten fehlen. Normalerweise bei langsamen Netzwerk.</string>
-    <string name="show_pin">PIN anzeigen</string>
-    <string name="sp_dial_helper_00_0_explanation">Ersetzt führende \'%1$s\'  mit Ländercode %2$s und führende \'%3$s\'  mit dem \'+\' Zeichen.</string>
-    <string name="sp_dial_helper_00_x_explanation">Setzt \'%2$s\' vor die gewählten Ziffern und ersetzt führende \'%3$s\' mit dem \'+\' Zeichen.</string>
-    <string name="sp_dial_helper_nanp_explanation">Setzt \'+\' oder \'+1\' vor die gewählten Ziffern und ersetzt \'011\' mit dem \'+\' Zeichen.</string>
-    <string name="sp_dial_helper_none">Keine Unterstützung beim Wählen.</string>
-    <string name="sp_dial_helper_null_explanation">Wählunterstützung ausgeschaltet.</string>
-    <string name="sp_dial_helper_select">Land auswählen</string>
-    <string name="sp_dial_helper_select_explanation">Dial Assist unterstützt sie beim Wählen und formatiert die gewählte Nummer enstprechend dem geählten Land. Wenn sie \'+\' als erstes Zeichen eingeben erfolgt keine Formatierung.</string>
-    <string name="sp_dial_helper_select_explanation_1">Andere Silent Circle Teilnehmer wählen Sie mit dem Kurznamen des Teilnehmers.</string>
-    <string name="sp_dial_helper_simple">Einfache Wählunterstützung</string>
-    <string name="sp_dial_helper_simple_explanation">Fügt \'+\' hinzu und erstellt eine internationale Telefonnummer.</string>
-    <string name="sp_dial_helper_title">Dial assist</string>
     <string name="start_on_boot">Start Silent Phone nach Boot</string>
     <string name="start_on_boot_explanation">Startet Silent Phone automatisch nach der Startprozedur des Gerätes.</string>
-    <string name="alternate_title_sca">Silent Contacts - Silent Circle\'s Kontaktverwaltung</string>
-
-
     <string name="enable_traversal">Firewallumgehung aktivieren</string>
     <string name="enable_traversal_explanation">Wenn Silent Phone eine Firewall entdeckt verwendet es spezielle Netzwerkeinstellungen.</string>
 
@@ -909,8 +520,73 @@
     <string name="force_traversal_explanation">Immer spezielle Einstellungen verwenden. Nicht im produktiven Betrieb empfohlen.</string>
 
     <string name="monitor_native_calls">Andere Anrufe absichern</string>
-    <string name="monitor_native_calls_explanation">Silent Phone fragt ob sie Anrufe, die von anderen Anwendungen gestartet werden, absichern wollen (über Silent World).</string>
+    <string name="monitor_native_calls_explanation">Silent Phone fragt ob Sie Anrufe, die von anderen Anwendungen gestartet werden, absichern wollen (über Silent World).</string>
 
+    <string name="setting_underflow">Ton bei Audioproblemen</string>
+    <string name="setting_underflow_summary">Spielt einen leisen Warnton wenn Audiodaten fehlen. Normalerweise bei langsamen Netzwerk.</string>
+    <string name="setting_echo_option">Echounterdrückung</string>
+    <string name="setting_echo_option_summary">Automatische Steuerung der Echounterdrückung aktivieren. Wenn nicht ausgewählt ist die
+    Echounterdrückung immer aktiv</string>
+
+    
+    <string name="sp_dial_helper_title">Dial Assist</string>
+    <string name="sp_dial_helper_select_explanation">Dial Assist unterstützt sie beim Wählen und formatiert die gewählte Nummer enstprechend dem geählten Land. Wenn sie \'+\' als erstes Zeichen eingeben erfolgt keine Formatierung.</string>
+    <string name="sp_dial_helper_select_explanation_1">Andere Silent Circle Teilnehmer wählen Sie mit dem Kurznamen des Teilnehmers.</string>
+    <string name="sp_dial_helper_select">Land auswählen</string>
+    <string name="sp_dial_helper_none">Keine Unterstützung beim Wählen.</string>
+    <string name="sp_dial_helper_simple">Einfache Wählunterstützung</string>
+    <string name="sp_dial_helper_null_explanation">Wählunterstützung ausgeschaltet.</string>
+    <string name="sp_dial_helper_simple_explanation">Fügt \'+\' hinzu und erstellt eine internationale Telefonnummer.</string>
+    <string name="sp_dial_helper_nanp_explanation">Setzt \'+\' oder \'+1\' vor die gewählten Ziffern und ersetzt \'011\' mit dem \'+\' Zeichen.</string>
+    <string name="sp_dial_helper_00_0_explanation">Ersetzt führende \'%1$s\'  mit Ländercode %2$s und führende \'%3$s\'  mit dem \'+\' Zeichen.</string>
+    <string name="sp_dial_helper_00_x_explanation">Setzt \'%2$s\' vor die gewählten Ziffern und ersetzt führende \'%3$s\' mit dem \'+\' Zeichen.</string>
+    <string name="key_store_set_pw_explanation">Verwenden eines Passwortes um den Schutz des Schlüsselspeichers zu erhöhen.\nSie müssen dieses Passwort nach jedem Neustart von Silent Phone eingeben. Sie können jederzeit auf Standardschutz zurücksetzen.</string>
+    <string name="key_store_change_pw_explanation">Ändern des eigenen Passwortes für den Schlüsselspeicher.</string>
+    <string name="key_store_reset_pw_explanation">Nach sie ihr Passwort eingegeben haben wird der Standardschutz wieder verwendet.</string>
+    <string name="key_store_enter_pw_explanation">Passwort für Schlüsselspeicher eingeben.</string>
+    <string name="key_store_set_pin_explanation">Verwenden einer PIN um den Schutz des Schlüsselspeichers zu erhöhen.\nSie müssen diese PIN nach jedem Neustart von Silent Phone eingeben. Sie können jederzeit auf Standardschutz zurücksetzen.</string>
+    <string name="key_store_change_pin_explanation">Ändern des eigenen PIN für den Schlüsselspeicher.</string>
+    <string name="key_store_reset_pin_explanation">Nach sie ihre PIN eingegeben haben wird der Standardschutz wieder verwendet.</string>
+    <string name="key_store_enter_pin_explanation">PIN für Schlüsselspeicher eingeben.</string>
+    <string name="pin_hint">PIN eingeben</string>
+    <string name="pin_hint_old">Alte PIN eingeben</string>
+    <string name="pin_hint_new">Neue PIN eingeben</string>
+    <string name="pin_hint2">PIN eingeben (prüfen)</string>
+    <string name="no_pin">Keine PIN</string>
+    <string name="show_pin">PIN anzeigen</string>
+    <string name="pin_match">PIN stimmen nicht überein.</string>
+    <string name="pin_short">PIN ist zu kurz. Mindestens %d Ziffern verwenden.</string>
+    <string name="key_store_title">Optionen Schlüsselspeicher</string>
+    <string name="key_store_type_default">Standardpasswort</string>
+    <string name="key_store_type_pw">Passwort vom Nutzer gesetzt</string>
+    <string name="key_store_type_pin">PIN vom Nutzer gesetzt</string>
+    <string name="key_store_set_pw">Passwort setzen</string>
+    <string name="key_store_set_pin">PIN setzten</string>
+    <string name="key_store_change_pin">PIN ändern</string>
+    <string name="key_store_reset_default">Rücksetzen auf Standardschutz.</string>
+    <string name="re_provision">Kontodaten neu laden</string>
+    <string name="re_provision_explanation">Konto- und Konfigurationsdaten für Silent Phone neu laden.</string>
+    <string name="migration_explanation_new">Die Silent Contacts Funktionen wurden entfernt. Diese Anwendung verwendet
+        jetzt Androids Standardanwendung \'Kontakte\'. Ihre Daten in Silent Contacts wurden in die vCard
+        Datei <b>silent_contacts.vcf</b> exportiert.</string>
+
+    <string name="migrate_start">Migration von Silent Contacts Daten startet.</string>
+    <string name="migrate_export">Silent Contacts Daten exportieren</string>
+    <string name="migrate_done">Datenmigration fertig.</string>
+    <string name="migrate_not_ready">Integrierte Datenverwaltung nicht verfügbar.</string>
+    <string name="did_title">Telefonnummer auswählen</string>
+    <string name="did_region_area_explanation">Auswählen einer Telefonnummer aus einer Region und eines Gebietes.</string>
+    <string name="did_currently_selected">Ausgewählt</string>
+    <string name="did_region">Region:</string>
+    <string name="did_area">Gebiet:</string>
+    <string name="did_number">Nummber:</string>
+    <string name="did_region_list">Region auswählen</string>
+    <string name="did_area_list">Gewähltes Gebiet</string>
+    <string name="did_number_list">Nummer auswählen</string>
+    <string name="did_selection_wrong_format">Auswahl Telefonummer - Server schickt fehlerhafte Daten:</string>
+    <string name="did_no_area">In dieser Regions is kein Gebiter mehr verfügbar. Bitte andere Region wählen.</string>
+    <string name="did_no_number">Keine Telefonnummer verfügbar. Bitte anderes Gebiet oder andere Region wählen.</string>
+    <string name="did_ask_to_complete">Bitte wählen Sie eine Telefonnummer.</string>
     <string name="no_internet">Keine Internetverbindung</string>
     <string name="mobile_internet_blocked">Mobiles Internet geblockt</string>
     <string name="mobile_internet_available">Mobiles Internet verfügbar</string>
@@ -943,14 +619,12 @@
         <item quantity="other">Sie haben %1$d Minuten von %2$d Minuten verbraucht.</item>
     </plurals>
 
-    <!-- SCA-50 added string -->
-    <string name="provide_your_name">Name darf nicht leer sein. Klicken sie Abbrechen um die Änderung zu verwerfen.</string>
-    <!-- end SCA-50 -->
-
-    <!-- SPA-259 added string -->
+    
+    <string name="setting_p2p">Mediaserver verwenden</string>
+    <string name="setting_p2p_summary">Mediadaten immer über einen Server senden um Standorte zu verschleiern. Verlängert Laufzeit.</string>
     <string name="connected_to_network">Netzwerk nicht verfügbar.\nBitte überprüfen sie die Internetverbindung und versuchen es dann erneut.</string>
     <string name="provisioning_error_message">Bitte neu starten und neu anmelden.</string>
-    <!-- end SPA-259 -->
+    
 
     <string name="re_provisioning_device_not_found">Das Gerät ist nicht bekannt.
         Damit das Gerät eingerichtet werden kann geben Sie bitte ihren Silent Circle Nutzernamen und ihr Passwort ein.
@@ -959,266 +633,107 @@
 
     <string name="spa_no">Nein</string>
 
-    <string name="setting_echo_option">Echounterdrückung</string>
-    <string name="setting_echo_option_summary">Automatische Steuerung der Echounterdrückung aktivieren. Wenn nicht ausgewählt ist die
-    Echounterdrückung immer aktiv</string>
+    <string name="do_secure_call">"Silent Phone für diesen Anruf verwenden?"</string>
 
-    <!--
-     **************************  New Dialer layout  *************************
-    -->
-    <string name="tab_speed_dial">Kurzwahl</string>
+    
+    <string name="tab_speed_dial">SCHNELLAUSWAHL</string>
 
-    <string name="tab_recents">Neueste</string>
+    <string name="tab_recents">NEUESTE</string>
 
-    <string name="tab_all_contacts">Kontakte</string>
+    <string name="tab_all_contacts">KONTAKTE</string>
+    <string name="tab_chat">TEXT</string>
 
-    <!-- Button text for the "call back" button displayed underneath an entry in the call log.
-     Tapping causes a call to be placed to the caller represented by the call log entry.
-     [CHAR LIMIT=30] -->
+    
     <string name="call_log_action_call_back">Zurückrufen</string>
 
-    <!-- Button text for the "video call" button displayed underneath an entry in the call log.
-         Tapping causes a video call to be placed to the caller represented by the call log entry.
-         [CHAR LIMIT=30] -->
-    <string name="call_log_action_video_call">Videoanruf</string>
-
-    <!-- Button text for the "LISTEN" button displayed underneath an entry in the call log.
-         Tapping navigates the user to the call details screen where the user can listen to the
-         voicemail represented by the call log entry.
-         [CHAR LIMIT=30] -->
-    <string name="call_log_action_voicemail">Anhören</string>
-
-    <!-- Button text for the "DETAILS" button displayed underneath an entry in the call log.
-         Tapping navigates the user to the call details screen where the user can view details for
-         the call log entry.
-         [CHAR LIMIT=30] -->
+    
     <string name="call_log_action_details">Details</string>
 
-    <!-- Button text for the "report" button displayed underneath an entry in the call log.
-         Tapping causes the call log entry to be reported as a bad id.
-         [CHAR LIMIT=30] -->
+    
     <string name="call_log_action_report">Melden</string>
 
-    <!-- Content description for dismiss button on badge. [CHAR LIMIT=NONE] -->
+    <string name="call_log_action_write_back">Schreiben</string>
+
     <string name="description_dismiss">Ablehnen</string>
 
-    <!-- Message displayed when there is no application available to handle a particular action.
-     [CHAR LIMIT=NONE] -->
+    
     <string name="activity_not_available">Zur Verarbeitung der ausgewählten Aktion ist keine installierte Aktivität verfügbar.</string>
 
-    Note: AccessibilityServices use this attribute to announce what the view represents.
+    <!-- Note: AccessibilityServices use this attribute to announce what the view represents.
     This is especially valuable for views without textual representation like ImageView.
     -->
     <string name="description_num_calls"><xliff:g id="numberOfCalls">%1$s</xliff:g> Anrufe.</string>
 
-    <!-- String describing the "call back" action for an entry in the call log.  The call back
-     action triggers a return call to the named user.
-     Note: AccessibilityServices uses this attribute to announce the purpose of the button.
-     [CHAR LIMIT=NONE] -->
+    
     <string name="description_call_back_action"><xliff:g id="NAMEORNUMBER">%1$s</xliff:g> zurückrufen"</string>
 
-    <!-- String describing the "video call" action for an entry in the call log.  The video call
-         action triggers a return video call to the named person/number.
-         Note: AccessibilityServices uses this attribute to announce the purpose of the button.
-         [CHAR LIMIT=NONE] -->
-    <string name="description_video_call_action">Videoanruf an <xliff:g id="nameOrNumber" example="John Smith">%1$s</xliff:g>.</string>
+    
+    <string name="description_details_action">Anrufdetails für <xliff:g example="John Smith" id="nameOrNumber">%1$s</xliff:g></string>
 
-    <!-- String describing the "listen" action for an entry in the call log.  The listen
-         action is shown for call log entries representing a voicemail message and this button
-         triggers playing back the voicemail.
-         Note: AccessibilityServices uses this attribute to announce the purpose of the button.
-         [CHAR LIMIT=NONE] -->
-    <string name="description_voicemail_action">Mailboxnachricht von <xliff:g id="nameOrNumber" example="John Smith">%1$s</xliff:g> anhören</string>
-
-    <!-- String describing the "details" action for an entry in the call log.  The details action
-         displays the call details screen for an entry in the call log.  This shows the calls to
-         and from the specified number associated with the call log entry.
-         [CHAR LIMIT=NONE] -->
-    <string name="description_details_action">Anrufdetails für <xliff:g id="nameOrNumber" example="John Smith">%1$s</xliff:g></string>
-
-    <!-- String describing the button to access the contact details for a name or number.
-
-        Note: AccessibilityServices use this attribute to announce what the view represents.
-              This is especially valuable for views without textual representation like ImageView.
-    -->
+    
     <string name="description_contact_details">Kontaktdetails für <xliff:g id="nameOrNumber">%1$s</xliff:g></string>
 
-    <!-- String describing an incoming missed call entry in the call log.
-     Note: AccessibilityServices uses this attribute to announce what the view represents.
-     [CHAR LIMIT=NONE] -->
-    <string name="description_incoming_missed_call">Verpasster Anruf von <xliff:g id="nameOrNumber" example="John Smith">%1$s</xliff:g>, <xliff:g id="typeOrLocation" example="Mobile">%2$s</xliff:g>, <xliff:g id="timeOfCall" example="2 min ago">%3$s</xliff:g>.</string>
+    
+    <string name="description_incoming_missed_call">Verpasster Anruf von <xliff:g example="John Smith" id="nameOrNumber">%1$s</xliff:g>, <xliff:g example="Mobile" id="typeOrLocation">%2$s</xliff:g>, <xliff:g example="2 min ago" id="timeOfCall">%3$s</xliff:g>.</string>
 
-    <!-- String describing an incoming answered call entry in the call log.
-         Note: AccessibilityServices uses this attribute to announce what the view represents.
-         [CHAR LIMIT=NONE] -->
-    <string name="description_incoming_answered_call">Anruf from <xliff:g id="nameOrNumber" example="John Smith">%1$s</xliff:g>, <xliff:g id="typeOrLocation" example="Mobile">%2$s</xliff:g>, <xliff:g id="timeOfCall" example="2 min ago">%3$s</xliff:g> angenommen.</string>
+    
+    <string name="description_incoming_answered_call">Anruf from <xliff:g example="John Smith" id="nameOrNumber">%1$s</xliff:g>, <xliff:g example="Mobile" id="typeOrLocation">%2$s</xliff:g>, <xliff:g example="2 min ago" id="timeOfCall">%3$s</xliff:g> angenommen.</string>
 
-    <!-- String describing an outgoing call entry in the call log.
-         Note: AccessibilityServices uses this attribute to announce what the view represents.
-         [CHAR LIMIT=NONE] -->
-    <string name="description_outgoing_call">Abgehender Anruf an <xliff:g id="nameOrNumber" example="John Smith">%1$s</xliff:g>, <xliff:g id="typeOrLocation" example="Mobile">%2$s</xliff:g>, <xliff:g id="timeOfCall" example="2 min ago">%3$s</xliff:g>.</string>
+    
+    <string name="description_outgoing_call">Abgehender Anruf an <xliff:g example="John Smith" id="nameOrNumber">%1$s</xliff:g>, <xliff:g example="Mobile" id="typeOrLocation">%2$s</xliff:g>, <xliff:g example="2 min ago" id="timeOfCall">%3$s</xliff:g>.</string>
 
-    <!-- Delimiter used between each item in a textual list; for example "Alpha, Beta".
-     [CHAR LIMIT=3] -->
+    
     <string name="list_delimeter">", "</string>
 
-    <!-- String used as a header in the call log above calls which occurred today.
-     [CHAR LIMIT=65] -->
+    
     <string name="call_log_header_today">Heute</string>
 
-    <!-- String used as a header in the call log above calls which occurred yesterday.
-         [CHAR LIMIT=65] -->
+    
     <string name="call_log_header_yesterday">Gestern</string>
 
-    <!-- String used as a header in the call log above calls which occurred two days or more ago.
-         [CHAR LIMIT=65] -->
+    
     <string name="call_log_header_other">Ältere</string>
 
-    <!-- Text displayed when the list of missed calls is empty -->
+    
     <string name="recentMissed_empty">Keine kürzlich verpassten Anrufe.</string>
 
-    <!-- Text displayed when the list of voicemails is empty -->
-    <string name="recentVoicemails_empty">Keine neuen Mailboxnachrichten.</string>
-
-    <!-- Title for the recent calls footer that brings users to the full call history when clicked -->
+    
     <string name="recents_footer_text">Gesamte Anrufliste ansehen</string>
 
-    <!-- Shows up as a tooltip to provide a hint to the user that the profile pic in a contact
-     card can be tapped to bring up a list of all numbers, or long pressed to start reordering
-     [CHAR LIMIT=NONE]
-    -->
-    <string name="contact_tooltip">Auf Bild tippen, um alle Nummern zu sehen, oder berühren und halten, um Anordnung zu ändern</string>
-
-    <!-- Remove button that shows up when contact is long-pressed. [CHAR LIMIT=NONE] -->
+    
     <string name="remove_contact">Entfernen</string>
 
-    <!-- Shown when there are no speed dial favorites. -->
+    
     <string name="speed_dial_empty">Über die Kurzwahl können Sie \nmit einer Berührung Ihre Favoriten\n und häufig gewählte Telefonnummern anrufen</string>
 
-    <!-- Shown when there are no contacts in the all contacts list. -->
+    
     <string name="all_contacts_empty">Keine Kontakte vorhanden.</string>
 
-    <!-- Title for the call log tab containing the list of all voicemails and calls
-     [CHAR LIMIT=30] -->
+    
     <string name="call_log_all_title">Alle</string>
 
-    <!-- Title for the call log tab containing the list of all missed calls only
-         [CHAR LIMIT=30] -->
+    
     <string name="call_log_missed_title">Entgangen</string>
 
-    <string name="expanding_entry_card_view_see_more">Mehr anzeigen</string>
-    <!-- Button Label to see less on an ExpandingEntryCardView [CHAR LIMIT=40] -->
-    <string name="expanding_entry_card_view_see_less">Weniger anzeigen</string>
-    <!-- Button Label to see all on an ExpandingEntryCardView [CHAR LIMIT=40] -->
-    <string name="expanding_entry_card_view_see_all">Alle anzeigen</string>
-
-    <!-- Content description for the transparent views around the visible section of QuickContacts.
-     Clicking this view causes Quick Contacts to close. [CHAR LIMIT=NONE] -->
-    <string name="quickcontact_transparent_view_description">Klicken Sie hier, um zum vorherigen Bildschirm zurückzukehren.</string>
-
-    <!-- Timestamp string for interactions from yesterday. [CHAR LIMIT=40] -->
-    <string name="yesterday">Gestern</string>
-    <string name="tomorrow">Morgen</string>
-
-    <!-- Timestamp string for interactions from today. [CHAR LIMIT=40] -->
-    <string name="today">Heute</string>
-    <!-- Text for an event starting on the current day with a start and end time.
-         For ex, "Today at 5:00pm-6:00pm" [CHAR LIMIT=NONE] -->
-    <string name="today_at_time_fmt">"Heute um <xliff:g id="time_interval">%s</xliff:g>"</string>
-    <!-- Text for an event starting on the next day with a start and end time.
-         For ex, "Tomorrow at 5:00pm-6:00pm" [CHAR LIMIT=NONE] -->
-    <string name="tomorrow_at_time_fmt">"Morgen um <xliff:g id="time_interval">%s</xliff:g>"</string>
-    <!-- Format string for a date and time description.  For ex:
-         "April 19, 2012, 3:00pm - 4:00pm" [CHAR LIMIT=NONE] -->
-    <string name="date_time_fmt">"<xliff:g id="date">%s</xliff:g>, <xliff:g id="time_interval">%s</xliff:g>"</string>
-    <!-- Title for untitled calendar interactions [CHAR LIMIT=40] -->
-    <string name="untitled_event">(Unbekannter Termin)</string>
-
-    <!-- Header for the Relation entry [CHAR LIMIT=NONE] -->
-    <string name="content_description_recent_call_type_incoming">Eingehend</string>
-    <!-- Header for the Relation entry [CHAR LIMIT=NONE] -->
-    <string name="content_description_recent_call_type_outgoing">Abgehend</string>
-    <!-- Header for the Relation entry [CHAR LIMIT=NONE] -->
-    <string name="content_description_recent_call_type_missed">Verpasst</string>
-
-    <!-- Content description for recent sms interaction [CHAR LIMIT=NONE] -->
-    <string name="content_description_recent_call">Letzter Anruf. <xliff:g id="call_details">%s</xliff:g>. Für Rückruf klicken.</string>
-
-    <!-- Title of recent card. [CHAR LIMIT=60] -->
-    <string name="recent_card_title">Letzte</string>
-
-    <!-- Header for the IM entry [CHAR LIMIT=40] -->
-    <string name="header_im_entry">Chat</string>
-    <!-- Header for the Organization entry [CHAR LIMIT=40] -->
-    <string name="header_organization_entry">Organisation</string>
-    <!-- Header for the Nickname entry [CHAR LIMIT=40] -->
-    <string name="header_nickname_entry">Nickname</string>
-    <!-- Header for the Note entry [CHAR LIMIT=40] -->
-    <string name="header_note_entry">Notiz</string>
-    <!-- Header for the Website entry [CHAR LIMIT=40] -->
-    <string name="header_website_entry">Website</string>
-    <!-- Header for the Event entry [CHAR LIMIT=40] -->
-    <string name="header_event_entry">Termin</string>
-    <!-- Header for the Relation entry [CHAR LIMIT=40] -->
-    <string name="header_relation_entry">Beziehung</string>
-
-    <!-- When a contact has no data, we prompt the user to add a phone number for the contact. [CHAR LIMIT=40] -->
-    <string name="quickcontact_add_phone_number">Telefonnummer hinzufügen</string>
-    <!-- When a contact has no data, we prompt the user to add an email for the contact. [CHAR LIMIT=40] -->
-    <string name="quickcontact_add_email">E-Mail-Adresse hinzufügen</string>
-
-    <!-- Title of recent card. [CHAR LIMIT=40] -->
-    <string name="about_card_title">Info</string>
-
-    <!-- Description of what happens when you click on the unstar MenuItem. [CHAR LIMIT=NONE] -->
-    <string name="description_action_menu_remove_star">Aus Favoriten entfernt</string>
-    <!-- Description of what happens when you click on the star MenuItem. [CHAR LIMIT=NONE] -->
-    <string name="description_action_menu_add_star">Zu Favoriten hinzugefügt</string>
-
-    <!-- Message displayed in a toast after you create a contact shortcut in the launcher [CHAR LIMIT=NONE]-->
-    <string name="createContactShortcutSuccessful">Kontakt-Widget zum Startbildschirm hinzugefügt.</string>
-
-    <!-- The menu item to add the the currently viewed contact to your contacts [CHAR LIMIT=30] -->
-    <string name="menu_add_contact">Zu Kontakten hinzufügen</string>
-
-    <!-- Label for custom events  [CHAR LIMIT=20] -->
-    <string name="eventTypeCustom">Benutzerdefiniert</string>
-    <!-- Label for a birthday event  [CHAR LIMIT=20] -->
-    <string name="eventTypeBirthday">Geburtstag</string>
-    <!-- Label for an anniversary event  [CHAR LIMIT=20] -->
-    <string name="eventTypeAnniversary">Jahrestag</string>
-    <!-- Label for other events  [CHAR LIMIT=20] -->
-    <string name="eventTypeOther">Sonstige</string>
-
-    <string name="do_secure_call">"Silent Phone für diesen Anruf verwenden?"</string>
-
-    <!-- Shortcut item used to call a number directly from search -->
-    <string name="search_shortcut_call_number"><xliff:g id="number">%s</xliff:g> wählen
+    <string name="search_shortcut_call_number"><xliff:g id="number">%s</xliff:g> anrufen
     </string>
 
-    <!-- Shortcut item used to add a number directly from search -->
+    
     <string name="search_shortcut_add_to_contacts">Zu Kontakten hinzufügen</string>
 
-    <!-- Message displayed when there is no application available to handle the add contact menu option. [CHAR LIMIT=NONE] -->
+    
     <string name="add_contact_not_available">Aktivieren Sie erneut die App \"Silent Contacts\", um diese Funktion verwenden zu können.</string>
 
-    <!-- Content description for the fake action menu up button as used
- inside search. [CHAR LIMIT=NONE] -->
+    
     <string name="action_menu_back_from_search">Suche benden</string>
 
-    <!--  String describing the icon used to clear the search field -->
+    
     <string name="description_clear_search">Suche zurücksetzen</string>
 
-    <!-- Hint displayed in dialer search box when there is no query that is currently typed.
-     [CHAR LIMIT=30] -->
+    
     <string name="dialer_hint_find_contact">Namen/Telefonnummer eingeben</string>
 
-    <!-- Content description for the fake action menu overflow button.
-     This should be same as the description for the real action menu
-     overflow button available in ActionBar.
-     [CHAR LIMIT=NONE] -->
-    <string name="action_menu_overflow_description" msgid="2295659037509008453">Mehr Optionen</string>
-
+    
     <string name="sms_disambig_title">"Nummer auswählen"</string>
     <string name="call_disambig_title">"Nummer auswählen"</string>
     <string name="make_primary">"Auswahl speichern"</string>
@@ -1236,4 +751,211 @@
     <string name="account_exists">Es besteht breits ein Konto - ein weiteres Konto für dieses Gerät ist nicht möglich.</string>
     <string name="account_missing_name">Kein Benutzername für diese Konto verfügbar.</string>
 
+    
+    <string name="messaging_send_message">Senden</string>
+    <string name="messaging_attach_file">Anhang</string>
+    <string name="messaging_compose_hint">Sag was… </string>
+
+    <string name="undisclosed_location">(ohne nähere Angabe)</string>
+
+    <string name="thumbnail">Vorschau</string>
+    <string name="delivered">Abgeliefert</string>
+    <string name="notify_resend_request">Empfänger hat nochmaliges Senden der Nachricht angefordert.</string>
+    <string name="location">Standort</string>
+    <string name="share_location">Standort mitteilen</string>
+    <string name="silent_phone_call">Mit Silent Phone anrufen</string>
+    <string name="burn_notice">Burn Notice</string>
+    <string name="autolock">Automatische Sperre</string>
+    <string name="send_receipts">Sende Lesebestätigung</string>
+    <string name="clear_conversation">Konversation löschen</string>
+    <string name="clear_conversation_exp">Löscht alle Nachrichten in dieser Konversation</string>
+    <string name="save_conversation">Konversation sichern</string>
+    <string name="verify_description_verified">For added security, you have verified this message with the recipient.</string>
+    <string name="verify_description_unverified">For added security, verify this message with the recipient.</string>
+    <string name="reset_keys">Reset Keys</string>
+    <string name="no_expiration">Nachrichten verfallen nicht</string>
+    <string name="messages_expire">Nachrichten verfallen in <xliff:g example="in 1 minute" id="expire_timeout">%1$s</xliff:g></string>
+    <string name="are_you_sure">Sind Sie sicher?</string>
+    <string name="cannot_be_undone">Die Aktion kann nicht rückgängig gemacht werden.</string>
+    <string name="save_will_expose_data">Wenn sie die Knversation sichern erlauben sie einer Anwendung Ihrer Wahl den Zugriff auf alle Nachrichten. Nachrichten mit Anhang oder dem Kennzeichen \'Verbrennen\' werden nicht exportiert.</string>
+    <string name="warning_delete_conversation">Löschen der Konversation löscht auch alle der Daten.</string>
+    <string name="warning_media_to_be_exported">Diese Daten sind im Moment privat. Damit sie verarbeitet werden können muss<xliff:g id="application_name">Silent Phone</xliff:g> anderen Anwendungen die entschlüsselten Daten übergeben.</string>
+    <string name="share_from">Sicheres versenden von</string>
+    <string name="n_selected"><xliff:g id="count">%1$d</xliff:g> ausgewählt</string>
+    <string name="delete">Löschen</string>
+    <string name="view">Ansehen</string>
+    <string name="share">Versenden</string>
+    <string name="save">Sichern</string>
+    <string name="copy">Kopieren</string>
+    <string name="burn">Verbrennen</string>
+    <string name="resend">Nochmal senden</string>
+    <string name="options">Optionen</string>
+
+    <string name="dialog_title_cannot_enable_location_sharing">Standort mitteilen nicht möglich</string>
+    <string name="dialog_message_enable_device_location">Erlauben Sie \'Standort\' in den Systemeinstellung damit diese Option verwendbar ist. Der Standort kann leer sein wenn sie nur GPS erlauben.</string>
+    <string name="dialog_message_current_location_mode">Standortmodus ist \"%s\".</string>
+    <string name="dialog_button_ok">Ok</string>
+    <string name="dialog_button_yes">Ja</string>
+    <string name="dialog_button_no">Nein</string>
+    <string name="dialog_button_save">Sichern</string>
+    <string name="dialog_button_cancel">Abbrechen</string>
+    <string name="progress_exporting">Exporting<xliff:g example="…" id="ellipsis">…</xliff:g> <xliff:g example="32%" id="progress_percent">%1$d%%</xliff:g></string>
+
+    <string name="location_mode_off">Location services not enabled</string>
+    <string name="location_mode_device">Device only (GPS)</string>
+    <string name="location_mode_battery_saving">Battery saving</string>
+    <string name="location_mode_high_accuracy">High accuracy</string>
+
+    <string name="chat_view_empty">Konversations Log ist leer.</string>
+
+    <string name="conversation_with">Konversation mit</string>
+    <string name="username_unknown">Unbekannt</string>
+
+    <string name="toast_saved_to">Gesichert nach </string>
+    <string name="unable_to_display_file">Date kann nicht angezeigt werden <xliff:g id="file_path">%1$s</xliff:g></string>
+
+    <string name="no_axo_device">Kein Gerät für Text freigeschaltet</string>
+    <string name="axo_ask_register">Dieses Gerät für Text freischalten?</string>
+    <string name="axo_menu_register">Freischalten für Text</string>
+    <string name="axo_menu_devices">Verwalten der Geräte für Text</string>
+
+    <plurals name="axo_devices">
+        <item quantity="one">Ein Gerät ist für Text freigeschaltet</item>
+        <item quantity="other">%d Geräte sind für Text freigeschaltet</item>
+    </plurals>
+
+    <string name="axo_device_explanation">Die Liste kann ein Gerät mehrfach anzeigen wenn die App auf dem Gerät
+        gelöscht und neu installiert wurde. Aus Sicherheitsgründen wird jedesmal eine neue Sicherheitskonfiguration
+        erstellt.
+         \nKlicken Sie auf den Löschknopf um ein Gerät zu entfernen.</string>
+    <string name="message_state_sync">Sync</string>
+
+    <string name="message_error_msg_generic">Allgemeiner Fehler</string>
+    <string name="message_error_msg_version">Protokolversion wird nicht unterstützt</string>
+    <string name="message_error_msg_buffer">Interner Fehler: Datenpuffer zu klein</string>
+    <string name="message_error_msg_not_dec">Konnte empfangene Nachricht nicht entschlüsseln</string>
+    <string name="message_error_msg_no_js">Ein Datenfeld (JSON) fehlt</string>
+    <string name="message_error_msg_no_key">Gesendeter \'Pre-key\' wurde nicht gefunden - unbekannte \'Pre-key\' Identifikation</string>
+    <string name="message_error_msg_no_session">Es wurde keine Textverbindung für diesen Benutzer gefunden</string>
+    <string name="message_error_msg_old">Nachricht ist zu alt - kann ncht mehr verarbeitet werden</string>
+
+    <string name="messaging_file_viewer_view_with">Öffne <xliff:g id="file_name">%1$s</xliff:g></string>
+    <string name="messaging_image_viewer_unable_to_display_image">Bild kann nicht angezeigt werden</string>
+
+    <string name="dialog_auto_import">Daten in \'Kontakte\' importieren?</string>
+    <string name="dialog_auto_import_text">Sie können die Daten auch später jederzeit importieren. Verwenden Sie
+        dazu die Importfunktion von \'Kontake\' und wählen sie die Datei <b>%s</b></string>
+
+    <!-- Used AS Translations Editor -->
+    <string name="attachment">Anhang</string>
+    <string name="axo_local_device">\'Fingerabdruck\' für dieses Gerät:</string>
+    <string name="axo_remote_dev_header_1">Gerätename/Fingerabdruck/Geräte-Id</string>
+    <string name="axo_remote_dev_header_2">Geprüft</string>
+    <string name="axo_device_explanation_remote">Die Liste kann ein Gerät mehrfach anzeigen wenn die App auf dem Gerät des
+        Partners gelöscht und neu installiert wurde. </string>
+    <string name="axo_remote_dev_rescan">Prüfe ob neue Geräte vorhanden</string>
+    <string name="axo_remote_dev_renew">Verbindungen rücksetzten/neu aufbauen</string>
+    <string name="call_detail_list_header">Anrufliste</string>
+    <string name="call_log_action_invite">Zu Silent Circle einladen</string>
+    <string name="capture_audio_label">Audioaufnahme</string>
+    <string name="capture_video_label">Videoaufnahme</string>
+    <string name="contactCreationFailure">Konnte Kontakt nicht erstellen, bitte Log prüfen.</string>
+    <string name="contactNameLabel">Name</string>
+    <string name="contactPhoneLabel">Telefonnummer</string>
+    <string name="decrypting">Entschlüsseln…</string>
+    <string name="dialog_message_failed_to_send_to">Konnte Nachricht nicht an %1$s senden.\n\n%2$s</string>
+    <string name="dialog_title_failed_to_send_message">Konnte Nachricht nicht senden</string>
+    <string name="downloading">Downloading…</string>
+    <string name="encrypting">Verschlüsseln…</string>
+    <string name="forward">Weiterleiten</string>
+    <string name="import_contact">Importieren</string>
+    <string name="info">Info</string>
+    <string name="message_error_axo_conv_exists">Axolotlverbindung besteht schon, keine Neue notwendig</string>
+    <string name="message_error_enc_block">Interner Fehler: falsche Datenlänge für Verschlüsselung</string>
+    <string name="message_error_enc_key">Falsche Schlüssellänge für Verschlüsselung </string>
+    <string name="message_error_mac_check_failed">HMAC Überprüfung fehlgeschlagen</string>
+    <string name="message_error_msg_corrupt">Empfangene Daten sind nicht in Ordnung (korrupt)</string>
+    <string name="message_error_msg_no_dev">Der Empfänger hat kein Gerät für Textnachrichten registriert</string>
+    <string name="message_error_msg_not_init">Textverbindung nicht initialisiert</string>
+    <string name="message_error_msg_own_id">Kein eigener Schlüssel für Registrierung vorhanden</string>
+    <string name="message_error_msg_padding_failed">Datenformat fehlerhaft nach Entschlüsselung (padding)</string>
+    <string name="message_error_no_error">Kein Fehler</string>
+    <string name="message_error_no_staged_keys">Keine gespeicherten Nachrichtenschlüssel verfügbar (nur Warnung)</string>
+    <string name="message_error_pub_key_type">Fehlerhaften Daten: öffentlicher und geheimer Schlüssel passen nicht</string>
+    <string name="message_error_pub_no_curve">Verschlüsselungsalgorithmus nicht unterstützt (Kurve)</string>
+    <string name="message_error_rat_key_type">Identity-Schlüssel verwenden unterschliedlich Algorithmen (Kurven)</string>
+    <string name="message_error_recv_data_length">Länge der empfangenen Daten entspricht nicht der erwarteten Länge</string>
+    <string name="message_error_recv_id_mismatch">Identity-Schlüssel des Empfängers stimmt nicht mit dem erwarteten Schlüssel überein</string>
+    <string name="message_error_sender_id_mismatch">Identity-Schlüssel des Senders stimmt nicht mit dem erwarteten Schlüssel überein</string>
+    <string name="message_error_sup_padding_failed">Datenformat fehlerhaft nach Entschlüsselung (padding, Zusatzdaten)</string>
+    <string name="message_error_unknown">Unbekannter Fehlercode</string>
+    <string name="message_error_wrong_recv_dev_id">Gerätekennung stimmt nicht mit der erwarteten Kennung überein</string>
+    <string name="message_state_burned">Verbrannt</string>
+    <string name="message_state_composed">Erstellt</string>
+    <string name="message_state_composing">Erstellen</string>
+    <string name="message_state_delivered">Geliefert</string>
+    <string name="message_state_read">Gelesen</string>
+    <string name="message_state_received">Empfangen</string>
+    <string name="message_state_resend_requested">Wiederholung angefordert</string>
+    <string name="message_state_sent">Gesendet</string>
+    <string name="message_state_sent_to_server">Zum Server gesendet</string>
+    <string name="message_state_unknown">Unbekannt</string>
+    <string name="message_state_unused">Nicht verwendet</string>
+    <string name="messaging_options">Einstellungen Textnachrichten</string>
+    <string name="messaging_attachment_export_warn_explanation">Warnung anzeigen wenn Anhänge entschlüsselt werden</string>
+    <string name="messaging_attachment_export_warning">Warnen wenn Anhänge entschlüsselt werden</string>
+    <string name="messaging_burn_animation_explanation">Animation zeigen wenn Nachrichten verbrannt werden</string>
+    <string name="messaging_burn_animation_text">Animation Nachricht verbrennen</string>
+    <string name="messaging_burn_button_voiceover">Verbrenne Nachricht</string>
+    <string name="messaging_conversation_list_no_messages">Keine Nachrichten</string>
+    <string name="messaging_conversation_select_conversation_partner">Gesprächspartner auswählen</string>
+    <string name="messaging_conversation_select_recipient_hint">Empfängername eingeben</string>
+    <string name="messaging_file_viewer_failure">Die Datei kann nicht geöffent werden. Möglicherweise von einer anderen Anwendung geöffnet.</string>
+    <string name="messaging_pdf_viewer_button_next_page_voiceover">Nächste Seite</string>
+    <string name="messaging_pdf_viewer_button_previous_page_voiceover">Vorherige Seite</string>
+    <string name="messaging_pdf_viewer_showing_page_voiceover">Seite %1$d von %2$d</string>
+    <string name="messaging_sounds">Ton bei neuer Nachricht</string>
+    <string name="messaging_sounds_explanation">Ton bei neuer Nachricht abspielen</string>
+    <string name="messaging_start_conversation_voiceover">Textkonversation starten</string>
+    <string name="messaging_vcard_address_type_home">Zuhause</string>
+    <string name="messaging_vcard_address_type_other">Andere</string>
+    <string name="messaging_vcard_address_type_work">Arbeit</string>
+    <string name="messaging_vcard_im_type_aim">AIM</string>
+    <string name="messaging_vcard_im_type_hangouts">Hangouts</string>
+    <string name="messaging_vcard_im_type_icq">ICQ</string>
+    <string name="messaging_vcard_im_type_jabber">Jabber</string>
+    <string name="messaging_vcard_im_type_msn">Windows Live</string>
+    <string name="messaging_vcard_im_type_other">Andere</string>
+    <string name="messaging_vcard_im_type_qq">QQ</string>
+    <string name="messaging_vcard_im_type_skype">Skype</string>
+    <string name="messaging_vcard_im_type_yahoo">Yahoo</string>
+    <string name="messaging_vcard_phone_type_home">Zuhause</string>
+    <string name="messaging_vcard_phone_type_mobile">Handy</string>
+    <string name="messaging_vcard_phone_type_other">Andere</string>
+    <string name="messaging_vcard_phone_type_silent">Silent Circle</string>
+    <string name="messaging_vcard_phone_type_work">Arbeit</string>
+    <string name="messaging_vcard_section_address">Adresse</string>
+    <string name="messaging_vcard_section_birthday">Geburtstag</string>
+    <string name="messaging_vcard_section_email">E-Mail</string>
+    <string name="messaging_vcard_section_im">Chat/Text</string>
+    <string name="messaging_vcard_section_notes">Bemerkungen</string>
+    <string name="messaging_vcard_section_organization">Organisation</string>
+    <string name="messaging_vcard_section_phone">Telefon</string>
+    <string name="optimizing">Optimieren…</string>
+    <string name="provisioning_user_invalid">Benutzername muss aus Kleinbuchstaben und Ziffern (a–z,0–9) bestehen und mit einem Kleinbuchstaben anfangen</string>
+    <string name="search_shortcut_write_to">Schreiben an <xliff:g id="number">%s</xliff:g></string>
+    <string name="selectLabel">Typ auswählen</string>
+    <string name="show_remote_dev">Gerätestatus</string>
+    <string name="show_remote_dev_exp">Zeige den Gerätestatus des Gesprächspartners</string>
+    <string name="status_available">Verfügbar</string>
+    <string name="status_away">Abwesend</string>
+    <string name="status_busy">Beschäftigt</string>
+    <string name="toast_deleted_from">Datei <xliff:g id="file_path">%1$s</xliff:g> gelöscht</string>
+    <string name="toast_failed_to_export_file">Konnte Datei <xliff:g id="file_path">%1$s</xliff:g> nicht exportieren</string>
+    <string name="uploading">Uploading…</string>
+    <string name="undefinedTypeLabel">(Undefiniert)</string>
+
+    <string name="basic_account_info">Mit dem kostenlosen Basiskonto können sie unbegrenzt Nachrichten senden und
+        empfangen sowie Anrufe entgegennehmen.
+        \nAuf der Silent Circle Webseite können Sie die Funktionen ihres Kontos erweitern.</string>
 </resources>

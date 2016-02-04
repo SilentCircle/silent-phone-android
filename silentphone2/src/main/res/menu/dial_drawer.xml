@@ -18,10 +18,17 @@
           android:title="@string/re_provision"
           app:showAsAction="never"/>
 
+    <item android:id="@+id/dial_menu_axo_register"
+          android:title="@string/axo_menu_register"
+          app:showAsAction="never"/>
+
+    <item android:id="@+id/dial_menu_axo_device"
+          android:title="@string/axo_menu_devices"
+          app:showAsAction="never"/>
+
     <item android:id="@+id/dial_menu_exit"
           android:title="@string/logout"
           app:showAsAction="never"/>
-
 
     <group android:id="@+id/dial_group_develop"
             android:visible="false">
@@ -40,6 +47,10 @@
 
         <item android:id="@+id/dial_menu_answer_off"
               android:title="@string/switch_auto_answer_off"
+              app:showAsAction="never"/>
+
+        <item android:id="@+id/dial_menu_axo_register_force"
+              android:title="Force Axolotl re-register"
               app:showAsAction="never"/>
     </group>
 </menu>

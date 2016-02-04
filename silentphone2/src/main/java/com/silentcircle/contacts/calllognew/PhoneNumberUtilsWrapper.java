@@ -49,7 +49,8 @@ public class PhoneNumberUtilsWrapper {
      * mock-out this, it is not a static method.
      */
     public boolean isVoicemailNumber(CharSequence number) {
-        return number!= null && PhoneNumberUtils.isVoiceMailNumber(number.toString());
+        return false;
+//        return number!= null && PhoneNumberUtils.isVoiceMailNumber(number.toString());
     }
 
     /**

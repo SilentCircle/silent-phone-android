@@ -47,10 +47,18 @@
  */
 
 #include <stdint.h>
+#include "crypto/sha1.h"
 
 #ifndef SHA1_DIGEST_LENGTH
 #define SHA1_DIGEST_LENGTH 20
 #endif
+
+typedef struct _hmacSha1Context {
+    sha1_ctx ctx;
+    sha1_ctx innerCtx;
+    sha1_ctx outerCtx;
+} hmacSha1Context;
+
 
 /**
  * Compute SHA1 HMAC.
@@ -109,9 +117,24 @@ void hmac_sha1( uint8_t* key, int32_t key_length,
  *    The MAC key.
  * @param key_length
  *    Lenght of the MAC key in bytes
- * @return Returns a pointer to the initialized context
+ * @return Returns a pointer to the initialized context or @c NULL in case of an error.
  */
 void* createSha1HmacContext(uint8_t* key, int32_t key_length);
+
+/**
+ * Initialize a SHA1 HMAC context.
+ *
+ * An application uses this context to create several HMAC with the same key.
+ *
+ * @param ctx
+ *     Pointer to initialized SHA1 HMAC context
+ * @param key
+ *    The MAC key.
+ * @param key_length
+ *    Lenght of the MAC key in bytes
+ * @return Returns a pointer to the initialized context.
+ */
+void* initializeSha1HmacContext(void* ctx, uint8_t* key, int32_t key_length);
 
 /**
  * Compute SHA1 HMAC.

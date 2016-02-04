@@ -84,7 +84,7 @@ void skein256(unsigned char *data[],
  * An application uses this context to hash several data into one Skein256
  * digest. See also skein256Ctx(...) and closeSha256Context(...).
  *
- * @return Returns a pointer to the initialized Skein256 context
+ * @return Returns a pointer to the initialized Skein256 context or @c NULL in case of an error.
  */
 void* createSkein256Context();
 
@@ -104,6 +104,32 @@ void* createSkein256Context();
  */
 void closeSkein256Context(void* ctx,
                         unsigned char* digest);
+
+/**
+ * Initialize a Skein256 context.
+ *
+ * An application uses this context to hash several data into one Skein256
+ * digest. See also skein256Ctx(...) and finalizeSkein256Context(...).
+ *
+ * @param ctx
+ *    Points to the Skein256 context.
+ * @return Returns a pointer to the initialized Skein256 context
+ */
+void* initializeSkein256Context(void* ctx);
+
+/**
+ * Compute a digest.
+ *
+ * An application uses this function to compute the Skein256 digest.
+ *
+ * @param ctx
+ *    Points to the Skein256 context.
+ * @param digest
+ *    If this pointer is not NULL then it must point to a byte array that
+ *    is big enough to hold the Skei256 digest (256 bit = 32 Bytes). If this
+ *    pointer is NULL then the functions does not compute the digest.
+ */
+void finalizeSkein256Context(void* ctx, unsigned char* digest);
 
 /**
  * Update the Skein256 context with data.

@@ -20,7 +20,7 @@
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/black_dark_gray">
+    android:background="@drawable/bg_window_dark">
 
     <!-- Shown only when an Account filter is set.
          - paddingTop should be here to show "shade" effect correctly. -->

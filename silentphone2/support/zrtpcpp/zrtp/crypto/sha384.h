@@ -82,7 +82,7 @@ void sha384(unsigned char *data[],
  * An application uses this context to hash several data into one SHA384
  * digest. See also sha384Ctx(...) and closeSha384Context(...).
  *
- * @return Returns a pointer to the initialized SHA384 context
+ * @return Returns a pointer to the initialized SHA384 context or @c NULL in case of an error.
  */
 void* createSha384Context();
 
@@ -90,7 +90,7 @@ void* createSha384Context();
  * Compute a digest and close the SHA384 digest.
  *
  * An application uses this function to compute the SHA384 digest and to
- * close the SHA384 context.
+ * close the SHA384 context. This function calls @c free to free the context.
  *
  * @param ctx
  *    Points to the SHA384 context.
@@ -100,8 +100,33 @@ void* createSha384Context();
  *    pointer is NULL then the functions does not compute the digest but
  *    closes the context only. The context cannot be used anymore.
  */
-void closeSha384Context(void* ctx,
-                        unsigned char* digest);
+void closeSha384Context(void* ctx, unsigned char* digest);
+
+/**
+ * Initialize a SHA384 context.
+ *
+ * An application uses this context to hash several data into one SHA384
+ * digest. See also sha384Ctx(...) and closeSha384Context(...).
+ *
+ * @param ctx
+ *    Points to the SHA384 context.
+ * @return Returns the pointer to the initialized SHA384 context
+ */
+void* initializeSha384Context(void* ctx);
+
+/**
+ * Compute a digest.
+ *
+ * An application uses this function to compute the SHA384 digest.
+ *
+ * @param ctx
+ *    Points to the SHA384 context.
+ * @param digest
+ *    If this pointer is not NULL then it must point to a byte array that
+ *    is big enough to hold the SHA384 digest (384 bit = 48 Bytes). If this
+ *    pointer is NULL then the functions does not compute the digest.
+ */
+void finalizeSha384Context(void* ctx, unsigned char* digest);
 
 /**
  * Update the SHA384 context with data.

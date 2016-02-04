@@ -29,7 +29,7 @@ import com.silentcircle.contacts.list.ContactListFilter;
 import com.silentcircle.contacts.list.ScContactEntryListAdapter;
 import com.silentcircle.contacts.list.ScContactEntryListFragment;
 import com.silentcircle.contacts.list.ScDefaultContactListAdapter;
-import com.silentcircle.silentcontacts2.ScContactsContract.QuickContact;
+import android.provider.ContactsContract.QuickContact;
 import com.silentcircle.silentphone2.R;
 
 /**
@@ -68,8 +68,7 @@ public class AllContactsFragment extends ScContactEntryListFragment<ScContactEnt
             }
         };
         adapter.setDisplayPhotos(true);
-        adapter.setFilter(ContactListFilter.createFilterWithType(
-                ContactListFilter.FILTER_TYPE_DEFAULT));
+        adapter.setFilter(ContactListFilter.createFilterWithType(ContactListFilter.FILTER_TYPE_DEFAULT));
         adapter.setSectionHeaderDisplayEnabled(isSectionHeaderDisplayEnabled());
         return adapter;
     }

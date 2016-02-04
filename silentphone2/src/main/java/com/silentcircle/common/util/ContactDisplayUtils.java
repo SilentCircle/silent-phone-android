@@ -16,12 +16,23 @@
 
 package com.silentcircle.common.util;
 
+import android.annotation.TargetApi;
 import android.content.Context;
+import android.os.Build;
+import android.telephony.PhoneNumberUtils;
+import android.text.Spannable;
+import android.text.SpannableString;
+import android.text.style.TtsSpan;
 import android.util.Log;
+import android.util.Patterns;
 
 import com.google.common.base.Preconditions;
-import com.silentcircle.silentcontacts2.ScContactsContract.CommonDataKinds.Phone;
+import com.google.i18n.phonenumbers.NumberParseException;
+import com.google.i18n.phonenumbers.PhoneNumberUtil;
+import com.google.i18n.phonenumbers.Phonenumber.PhoneNumber;
 import com.silentcircle.silentphone2.R;
+
+import static android.provider.ContactsContract.CommonDataKinds.Phone;
 
 /**
  * Methods for handling various contact data labels.
@@ -96,8 +107,6 @@ public class ContactDisplayUtils {
                 return R.string.call_fax_work;
             case Phone.TYPE_FAX_HOME:
                 return R.string.call_fax_home;
-            case Phone.TYPE_SILENT:
-                return R.string.call_silent;
             case Phone.TYPE_PAGER:
                 return R.string.call_pager;
             case Phone.TYPE_OTHER:
@@ -188,4 +197,83 @@ public class ContactDisplayUtils {
 //        }
 //    }
 
+    /**
+     * Whether the given text could be a phone number.
+     *
+     * Note this will miss many things that are legitimate phone numbers, for example,
+     * phone numbers with letters.
+     */
+    public static boolean isPossiblePhoneNumber(CharSequence text) {
+        return text == null ? false : Patterns.PHONE.matcher(text.toString()).matches();
+    }
+
+    /**
+     * Returns a Spannable for the given phone number with a telephone {@link TtsSpan} set over
+     * the entire length of the given phone number.
+     */
+    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+    public static Spannable getTelephoneTtsSpannable(String phoneNumber) {
+        if (phoneNumber == null || Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+            return null;
+        }
+        final Spannable spannable = new SpannableString(phoneNumber);
+        final TtsSpan ttsSpan = getTelephoneTtsSpan(phoneNumber);
+        spannable.setSpan(ttsSpan, 0, phoneNumber.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+        return spannable;
+    }
+
+    /**
+     * Returns a Spannable for the given message with a telephone {@link TtsSpan} set for
+     * the given phone number text wherever it is found within the message.
+     */
+    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+    public static Spannable getTelephoneTtsSpannable(String message, String phoneNumber) {
+        if (message == null || Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+            return null;
+        }
+        final Spannable spannable = new SpannableString(message);
+        int start = phoneNumber == null ? -1 : message.indexOf(phoneNumber);
+        while (start >= 0) {
+            final int end = start + phoneNumber.length();
+            final TtsSpan ttsSpan = getTelephoneTtsSpan(phoneNumber);
+            spannable.setSpan(ttsSpan, start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            start = message.indexOf(phoneNumber, end);
+        }
+        return spannable;
+    }
+
+    /**
+     * Returns a telephone {@link TtsSpan} for the given phone number.
+     */
+    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+    private static TtsSpan getTelephoneTtsSpan(String phoneNumberString) {
+        if (phoneNumberString == null) {
+            throw new NullPointerException();
+        }
+
+        // Parse the phone number
+        final PhoneNumberUtil phoneNumberUtil = PhoneNumberUtil.getInstance();
+        PhoneNumber phoneNumber = null;
+        try {
+            // Don't supply a defaultRegion so this fails for non-international numbers because
+            // we don't want to TalkBalk to read a country code (e.g. +1) if it is not already
+            // present
+            phoneNumber = phoneNumberUtil.parse(phoneNumberString, /* defaultRegion */ null);
+        } catch (NumberParseException ignored) {
+        }
+
+        // Build a telephone tts span
+        final TtsSpan.TelephoneBuilder builder = new TtsSpan.TelephoneBuilder();
+        if (phoneNumber == null) {
+            // Strip separators otherwise TalkBack will be silent
+            // (this behavior was observed with TalkBalk 4.0.2 from their alpha channel)
+            builder.setNumberParts(PhoneNumberUtils.stripSeparators(phoneNumberString));
+        } else {
+            if (phoneNumber.hasCountryCode()) {
+                builder.setCountryCode(Integer.toString(phoneNumber.getCountryCode()));
+            }
+            builder.setNumberParts(Long.toString(phoneNumber.getNationalNumber()));
+        }
+        return builder.build();
+    }
 }

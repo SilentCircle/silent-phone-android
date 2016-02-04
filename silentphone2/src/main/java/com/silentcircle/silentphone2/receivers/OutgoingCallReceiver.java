@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2014-2015, Silent Circle, LLC. All rights reserved.
+Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -35,6 +35,7 @@ import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
+import com.silentcircle.contacts.utils.PhoneNumberHelper;
 import com.silentcircle.silentphone2.R;
 import com.silentcircle.silentphone2.activities.DialerActivity;
 import com.silentcircle.silentphone2.activities.SelectSecureOca;
@@ -129,7 +130,7 @@ public class OutgoingCallReceiver extends BroadcastReceiver {
         if (ConfigurationUtilities.mTrace) Log.v(TAG, "Received intent: " + intent);
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-        boolean useNativeOca = prefs.getBoolean(DialDrawerFragment.NATIVE_CALL_CHECK, false);
+        boolean useNativeOca = prefs.getBoolean(DialDrawerFragment.NATIVE_CALL_CHECK, true);
 
         if (!useNativeOca || DialerActivity.mNumber == null)    // CHECK: use OCA flag in LoadUserInfo?
             return;
@@ -141,6 +142,8 @@ public class OutgoingCallReceiver extends BroadcastReceiver {
             if (number == null) {
                 return;
             }
+            if (PhoneNumberHelper.isUriNumber(number))
+                return;
             String checkedNumber = checkAndExtractNumber(number, prefix_check);
             if (checkedNumber != null) {
                 startDialer(context, checkedNumber, intent);

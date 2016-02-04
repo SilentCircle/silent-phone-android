@@ -137,6 +137,7 @@ private:
     SymmetricZRTPSession* tx;
     string multiParams;
     string prefix;
+    ZRtp* zrtpMaster;
 
 public:
 
@@ -149,11 +150,12 @@ public:
     int doTest();
 
     string getMultiStrParams() {
-        return tx->getMultiStrParams();
+        return tx->getMultiStrParams(&zrtpMaster);
     }
 
-    void setMultiStrParams(string params) {
+    void setMultiStrParams(string params, ZRtp * zrtpM) {
         multiParams = params;
+        zrtpMaster = zrtpM;
         return;
     }
 };
@@ -166,6 +168,7 @@ private:
     SymmetricZRTPSession* rx;
     string multiParams;
     string prefix;
+    ZRtp* zrtpMaster;
 
 public:
     ZrtpRecvPacketTransmissionTestCB(): rx(NULL), multiParams("") {};
@@ -177,11 +180,12 @@ public:
     int doTest();
 
     string getMultiStrParams() {
-        return rx->getMultiStrParams();
+        return rx->getMultiStrParams(&zrtpMaster);
     }
 
-    void setMultiStrParams(string params) {
+    void setMultiStrParams(string params, ZRtp *zrtpM) {
         multiParams = params;
+        zrtpMaster = zrtpM;
         return;
     }
 };
@@ -287,12 +291,18 @@ public:
             }
             // this sets up and starts off the multi-stream test
             if (subCode == InfoSecureStateOn) {
+                ZRtp* zrtpMaster = NULL;
+                std::string str;
                 if (zrxcbMulti != NULL) {
-                    zrxcbMulti->setMultiStrParams(session->getMultiStrParams());
+                    str = session->getMultiStrParams(&zrtpMaster);
+                    zrxcbMulti->setMultiStrParams(str, zrtpMaster);
+                    fprintf(stderr, "Master (test r): %p\n", zrtpMaster);
                     zrxcbMulti->start();
                 }
                 if (ztxcbMulti != NULL) {
-                    ztxcbMulti->setMultiStrParams(session->getMultiStrParams());
+                    str = session->getMultiStrParams(&zrtpMaster);
+                    ztxcbMulti->setMultiStrParams(str, zrtpMaster);
+                    fprintf(stderr, "Master (test t): %p\n", zrtpMaster);
                     ztxcbMulti->start();
                 }
                 if (sender) {
@@ -491,7 +501,7 @@ int ZrtpSendPacketTransmissionTestCB::doTest() {
 
         //            tx->initialize("test_t.zid", true, &config);
         tx->initialize("test_t.zid", true);
-        tx->setMultiStrParams(multiParams);
+        tx->setMultiStrParams(multiParams, zrtpMaster);
 
         prefix = "TX Multi: ";
         mcb = new MyUserCallbackMulti(tx);
@@ -578,7 +588,7 @@ int ZrtpRecvPacketTransmissionTestCB::doTest() {
 
 //            rx->initialize("test_r.zid", true, &config);
         rx->initialize("test_r.zid", true);
-        rx->setMultiStrParams(multiParams);
+        rx->setMultiStrParams(multiParams, zrtpMaster);
 
         prefix = "RX Multi: ";
         mcb = new MyUserCallbackMulti(rx);

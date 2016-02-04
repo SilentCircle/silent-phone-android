@@ -1,32 +1,6 @@
-/*
-Created by Janis Narbuts
-Copyright (C) 2004-2012, Tivi LTD, www.tiviphone.com. All rights reserved.
-Copyright (C) 2012-2015, Silent Circle, LLC.  All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-    * Any redistribution, use, or modification is done solely for personal
-      benefit and not for any commercial purpose or for monetary gain
-    * Redistributions of source code must retain the above copyright
-      notice, this list of conditions and the following disclaimer.
-    * Redistributions in binary form must reproduce the above copyright
-      notice, this list of conditions and the following disclaimer in the
-      documentation and/or other materials provided with the distribution.
-    * Neither the name Silent Circle nor the
-      names of its contributors may be used to endorse or promote products
-      derived from this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL SILENT CIRCLE, LLC BE LIABLE FOR ANY
-DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
+//VoipPhone
+//Created by Janis Narbuts
+//Copyright (c) 2004-2012 Tivi LTD, www.tiviphone.com. All rights reserved.
 
 #include "CPhone.h"
 
@@ -58,7 +32,9 @@ int CTiViPhone::TimerProc(void *f)
    int iSecondsSinceStart=0;
    int iSecondsSinceIPChanged=0;
 
-   
+   if(ph->p_cfg.iIndex < 2){//start only for sc
+      CTAxoInterfaceBase::sharedInstance(ph->p_cfg.user.un);
+   }
    int ip;
    int iNextSipKA_at=10;
    
@@ -99,7 +75,10 @@ int CTiViPhone::TimerProc(void *f)
       
       // Check for long waits. Also add real number of ticks if loop wakes up faster than once a second
       if (waitTime > 1100) {
-         __android_log_print(ANDROID_LOG_DEBUG,"TIMERNEW", "Current time: %ld, waitTime: %u, uiT: %u, uiGT: %llu\n", time(NULL), waitTime, uiT, ph->uiGT);
+         
+         t_logf(log_events,__FUNCTION__, "Current time: %ld, waitTime: %u, uiT: %u, uiGT: %llu\n", time(NULL), waitTime, uiT, ph->uiGT);
+         
+//         __android_log_print(ANDROID_LOG_DEBUG,"TIMERNEW", "Current time: %ld, waitTime: %u, uiT: %u, uiGT: %llu\n", time(NULL), waitTime, uiT, ph->uiGT);
          ph->uiGT += 1000;                 // Max wait time in ms, according to T_SLEEP_INC_TIME macro - JANIS
          iWasSuspended = waitTime > 5000;
       }
@@ -120,7 +99,7 @@ int CTiViPhone::TimerProc(void *f)
          d=1;
       }
       else if(d>20000){
-         printf("thread is too slow, posible something is wrong, time=%llu d=%u\n",ph->uiGT, d);
+         t_logf(log_events,__FUNCTION__, "thread is too slow, posible something is wrong or suspended by OS, time=%llu d=%u\n",ph->uiGT, d);
          if(d>36000001)d=36000001;//10h
          iWasSuspended=1;
       }

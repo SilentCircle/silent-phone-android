@@ -20,6 +20,7 @@ import android.annotation.TargetApi;
 import android.app.ActivityManager;
 import android.content.ComponentCallbacks2;
 import android.content.ContentResolver;
+import android.content.ContentUris;
 import android.content.Context;
 import android.content.res.Configuration;
 import android.content.res.Resources;
@@ -41,6 +42,11 @@ import android.os.Handler;
 import android.os.Handler.Callback;
 import android.os.HandlerThread;
 import android.os.Message;
+import android.provider.ContactsContract;
+import android.provider.ContactsContract.Contacts;
+import android.provider.ContactsContract.Contacts.Photo;
+import android.provider.ContactsContract.Data;
+import android.provider.ContactsContract.Directory;
 import android.support.v4.graphics.drawable.RoundedBitmapDrawable;
 import android.support.v4.graphics.drawable.RoundedBitmapDrawableFactory;
 import android.text.TextUtils;
@@ -55,11 +61,6 @@ import com.google.common.collect.Sets;
 import com.silentcircle.contacts.utils.BitmapUtil;
 import com.silentcircle.contacts.utils.UriUtils;
 import com.silentcircle.contacts.widget.LetterTileDrawable;
-import com.silentcircle.silentcontacts2.ScContactsContract;
-import com.silentcircle.silentcontacts2.ScContactsContract.CommonDataKinds.Photo;
-import com.silentcircle.silentcontacts2.ScContactsContract.Data;
-import com.silentcircle.silentcontacts2.ScContactsContract.Directory;
-import com.silentcircle.silentcontacts2.ScContactsContract.RawContacts;
 import com.silentcircle.silentphone2.R;
 
 import java.io.ByteArrayOutputStream;
@@ -382,7 +383,8 @@ public abstract class ContactPhotoManagerNew implements ComponentCallbacks2 {
             view.setImageDrawable(drawable);
         }
 
-        public static Drawable getDefaultImageForContact(Resources resources, DefaultImageRequest defaultImageRequest) {
+        public static Drawable getDefaultImageForContact(Resources resources,
+                DefaultImageRequest defaultImageRequest) {
             final LetterTileDrawable drawable = new LetterTileDrawable(resources);
             if (defaultImageRequest != null) {
                 // If the contact identifier is null or empty, fallback to the
@@ -390,9 +392,10 @@ public abstract class ContactPhotoManagerNew implements ComponentCallbacks2 {
                 // display name so that a default bitmap will be used instead of a
                 // letter
                 if (TextUtils.isEmpty(defaultImageRequest.identifier)) {
-                    drawable.setContactDetails(defaultImageRequest.displayName, null);
+                    drawable.setContactDetails(null, defaultImageRequest.displayName); // NOTE: check order of parameters
                 } else {
-                    drawable.setContactDetails(defaultImageRequest.displayName, defaultImageRequest.identifier);
+                    drawable.setContactDetails(defaultImageRequest.displayName,
+                            defaultImageRequest.identifier);
                 }
                 drawable.setContactType(defaultImageRequest.contactType);
                 drawable.setScale(defaultImageRequest.scale);
@@ -482,7 +485,8 @@ public abstract class ContactPhotoManagerNew implements ComponentCallbacks2 {
      */
     public final void loadPhoto(ImageView view, Uri photoUri, int requestedExtent,
             boolean darkTheme, boolean isCircular, DefaultImageRequest defaultImageRequest) {
-        loadPhoto(view, photoUri, requestedExtent, darkTheme, isCircular, defaultImageRequest, DEFAULT_AVATAR);
+        loadPhoto(view, photoUri, requestedExtent, darkTheme, isCircular,
+                defaultImageRequest, DEFAULT_AVATAR);
     }
 
     /**
@@ -567,6 +571,7 @@ class ContactPhotoManagerImplNew extends ContactPhotoManagerNew implements Callb
      */
     private static final int MESSAGE_REQUEST_LOADING = 1;
 
+    /**
     /**
      * Type of message sent by the loader thread to indicate that some photos have
      * been loaded.
@@ -697,8 +702,8 @@ class ContactPhotoManagerImplNew extends ContactPhotoManagerNew implements Callb
             }
         };
         mBitmapHolderCacheRedZoneBytes = (int) (holderCacheSize * 0.75);
-        Log.i(TAG, "Cache adj: " + cacheSizeAdjustment);
         if (DEBUG) {
+            Log.i(TAG, "Cache adj: " + cacheSizeAdjustment);
             Log.d(TAG, "Cache size: " + btk(mBitmapHolderCache.maxSize())
                     + " + " + btk(mBitmapCache.maxSize()));
         }
@@ -795,7 +800,8 @@ class ContactPhotoManagerImplNew extends ContactPhotoManagerNew implements Callb
             DefaultImageProvider defaultProvider) {
         if (photoUri == null) {
             // No photo is needed
-            defaultProvider.applyDefaultImage(view, requestedExtent, darkTheme, defaultImageRequest);
+            defaultProvider.applyDefaultImage(view, requestedExtent, darkTheme,
+                    defaultImageRequest);
             mPendingRequests.remove(view);
         } else {
             if (DEBUG) Log.d(TAG, "loadPhoto request: " + photoUri);
@@ -1373,15 +1379,15 @@ class ContactPhotoManagerImplNew extends ContactPhotoManagerNew implements Callb
         private void queryPhotosForPreload() {
             Cursor cursor = null;
             try {
-                Uri uri = RawContacts.CONTENT_URI.buildUpon().appendQueryParameter(
-                        ScContactsContract.DIRECTORY_PARAM_KEY, String.valueOf(Directory.DEFAULT))
-                        .appendQueryParameter(ScContactsContract.LIMIT_PARAM_KEY,
+                Uri uri = Contacts.CONTENT_URI.buildUpon().appendQueryParameter(
+                        ContactsContract.DIRECTORY_PARAM_KEY, String.valueOf(Directory.DEFAULT))
+                        .appendQueryParameter(ContactsContract.LIMIT_PARAM_KEY,
                                 String.valueOf(MAX_PHOTOS_TO_PRELOAD))
                         .build();
-                cursor = mResolver.query(uri, new String[] { RawContacts.PHOTO_ID },
-                        RawContacts.PHOTO_ID + " NOT NULL AND " + RawContacts.PHOTO_ID + "!=0",
+                cursor = mResolver.query(uri, new String[] { Contacts.PHOTO_ID },
+                        Contacts.PHOTO_ID + " NOT NULL AND " + Contacts.PHOTO_ID + "!=0",
                         null,
-                        RawContacts.STARRED + " DESC, " + RawContacts.LAST_TIME_CONTACTED + " DESC");
+                        Contacts.STARRED + " DESC, " + Contacts.LAST_TIME_CONTACTED + " DESC");
 
                 if (cursor != null) {
                     while (cursor.moveToNext()) {

@@ -131,7 +131,7 @@
 
     <!-- Regular expression for prohibiting certain phone numbers in dialpad.
          Ignored if empty. -->
-    <string name="config_prohibited_phone_number_regexp"></string>
+    <string name="config_prohibited_phone_number_regexp" translatable="false"></string>
 
     <!-- If true, enable the "import contacts from SIM" feature if the device
          has an appropriate SIM or ICC card.

@@ -71,9 +71,7 @@ bool ZrtpPacketConfirm::isSignatureLengthOk() {
     int32_t expectedLen = 19;                  // Confirm packet fixed part is 19 ZRTP words
     int32_t sigLen = getSignatureLength();
 
-    if (sigLen > 0) {                          // We have a signature
-        expectedLen += sigLen + 1;             // +1 for the signature length field
-    }
+    expectedLen += sigLen;
     return (expectedLen == actualLen);
 }
 

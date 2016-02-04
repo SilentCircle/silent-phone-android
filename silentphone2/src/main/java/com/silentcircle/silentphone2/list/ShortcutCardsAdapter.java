@@ -19,11 +19,16 @@ package com.silentcircle.silentphone2.list;
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.res.Resources;
+import android.database.ContentObserver;
 import android.database.Cursor;
 import android.database.DataSetObserver;
 import android.graphics.Rect;
+import android.net.Uri;
 import android.os.Build;
+import android.os.Handler;
+import android.provider.ContactsContract;
 import android.support.annotation.NonNull;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
@@ -36,6 +41,7 @@ import android.widget.TextView;
 import com.silentcircle.contacts.calllognew.CallLogAdapter;
 import com.silentcircle.contacts.calllognew.CallLogListItemView;
 import com.silentcircle.contacts.calllognew.CallLogQueryHandler;
+import com.silentcircle.silentcontacts2.ScCallLog;
 import com.silentcircle.silentphone2.R;
 import com.silentcircle.silentphone2.list.SwipeHelper.OnItemGestureListener;
 import com.silentcircle.silentphone2.list.SwipeHelper.SwipeHelperCallback;
@@ -47,12 +53,34 @@ import com.silentcircle.silentphone2.services.InsertCallLogHelper;
  */
 public class ShortcutCardsAdapter extends BaseAdapter {
 
+    public static final String AUTHORITY = "com.silentcircle.shortcuts";
+    public static final Uri AUTHORITY_URI = Uri.parse("content://" + AUTHORITY + "/calllog");
+
     private class CustomDataSetObserver extends DataSetObserver {
         @Override
         public void onChanged() {
             notifyDataSetChanged();
         }
     }
+
+    protected ContentObserver mChangeObserver = new ContentObserver(new Handler()) {
+
+        @Override
+        public boolean deliverSelfNotifications() {
+            return true;
+        }
+
+        @Override
+        public void onChange(boolean selfChange) {
+            onChange(selfChange, null);
+        }
+
+        @Override
+        public void onChange(boolean selfChange, Uri uri) {
+            mCallLogAdapter.invalidateCache();
+            mCallLogAdapter.notifyDataSetChanged();
+        }
+    };
 
     @SuppressWarnings("unused")
     private static final String TAG = ShortcutCardsAdapter.class.getSimpleName();
@@ -128,6 +156,9 @@ public class ShortcutCardsAdapter extends BaseAdapter {
         mCallLogAdapter = callLogAdapter;
         mCallLogAdapter.registerDataSetObserver(new CustomDataSetObserver());
         mCallLogQueryHandler = new CallLogQueryHandler(mContext.getContentResolver(), mCallLogQueryHandlerListener);
+
+        mContext.getContentResolver().registerContentObserver(ContactsContract.Contacts.CONTENT_URI, true, mChangeObserver);
+        mContext.getContentResolver().registerContentObserver(AUTHORITY_URI, true, mChangeObserver);
     }
 
     /**

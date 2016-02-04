@@ -85,6 +85,7 @@ extern char sasString[];
 
 extern char KDFString[];
 extern char zrtpSessionKey[];
+extern char zrtpExportedKey[];
 extern char zrtpMsk[];
 extern char zrtpTrustedMitm[];
 

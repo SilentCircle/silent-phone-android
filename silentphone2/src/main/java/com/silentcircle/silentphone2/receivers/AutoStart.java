@@ -8,6 +8,10 @@ import android.preference.PreferenceManager;
 import android.text.TextUtils;
 import android.util.Log;
 
+import com.silentcircle.messaging.services.SCloudCleanupService;
+import com.silentcircle.messaging.services.SCloudService;
+import com.silentcircle.messaging.util.Action;
+import com.silentcircle.messaging.util.Extra;
 import com.silentcircle.silentphone2.activities.DialerActivity;
 import com.silentcircle.silentphone2.fragments.DialDrawerFragment;
 import com.silentcircle.silentphone2.util.ConfigurationUtilities;
@@ -28,6 +32,10 @@ public class AutoStart extends BroadcastReceiver {
         if (TextUtils.isEmpty(action))
             return;
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+
+        // Run cleanup for any possible leftover attachment files (rare)
+        runScloudCleanup(context);
+
         boolean startOnBoot = prefs.getBoolean(DialDrawerFragment.START_ON_BOOT, true);
 
         if (ConfigurationUtilities.mTrace) Log.d(TAG, "Auto start action: " + action + ", startOnBoot: " + startOnBoot);
@@ -42,5 +50,10 @@ public class AutoStart extends BroadcastReceiver {
 
     public static void setDisableAutoStart(boolean disable) {
         mDisableAutoStart = disable;
+    }
+
+    private void runScloudCleanup(Context context) {
+        Intent cleanupIntent = Action.PURGE_ATTACHMENTS.intent(context, SCloudCleanupService.class);
+        context.startService(cleanupIntent);
     }
 }

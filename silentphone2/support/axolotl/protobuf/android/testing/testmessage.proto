@@ -1,0 +1,17 @@
+syntax = "proto2";
+
+package test.protobuf;
+
+option java_generate_equals_and_hash = true;
+option java_outer_classname = "TextMessage";
+option java_package = "com.example.werner";
+
+option optimize_for = LITE_RUNTIME;
+
+message Textmessage {
+    optional sint64 longInt64 = 1;
+
+    optional sint32 standardInt32 = 2;
+
+    optional string someText = 3;
+}

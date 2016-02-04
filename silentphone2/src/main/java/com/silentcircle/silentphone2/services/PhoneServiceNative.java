@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2014-2015, Silent Circle, LLC. All rights reserved.
+Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -72,8 +72,13 @@ public abstract class PhoneServiceNative extends Service  {
 
     /* *************************************************************************************************
      * Initialization and declaration of the native interfaces to the C/C++ Tivi SIP/RTP/Codec engine
+     *
+     * libtivi linked with database sqlcipher
      ************************************************************************************************* */
     static {
+        System.loadLibrary("stlport_shared");
+        System.loadLibrary("sqlcipher_android");
+        System.loadLibrary("database_sqlcipher");
         System.loadLibrary("gnustl_shared");
         System.loadLibrary("tina");
         System.loadLibrary("aec");

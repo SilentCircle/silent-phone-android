@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              xmlns:tools="http://schemas.android.com/tools"
+    android:orientation="horizontal"
+    android:layout_width="wrap_content"
+    android:layout_height="match_parent"
+    android:background="@android:color/transparent">
+
+    <ImageButton
+        android:id="@+id/button_call"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginRight="@dimen/messaging_chooser_dialog_button_margin"
+        android:layout_marginEnd="@dimen/messaging_chooser_dialog_button_margin"
+        android:src="@drawable/ic_launcher_sp"/>
+
+    <ImageButton
+        android:id="@+id/button_chat"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="@dimen/messaging_chooser_dialog_button_margin"
+        android:layout_marginStart="@dimen/messaging_chooser_dialog_button_margin"
+        android:layout_marginRight="@dimen/messaging_chooser_dialog_button_margin"
+        android:layout_marginEnd="@dimen/messaging_chooser_dialog_button_margin"
+        android:src="@drawable/ic_launcher_st"/>
+
+    <ImageButton android:id="@+id/button_add"
+                 android:layout_width="wrap_content"
+                 android:layout_height="wrap_content"
+                 android:layout_marginLeft="@dimen/messaging_chooser_dialog_button_margin"
+                 android:layout_marginStart="@dimen/messaging_chooser_dialog_button_margin"
+                 android:src="@drawable/ic_person_add_24dp"
+                 android:tint="@color/call_log_extras_text_color"
+                 android:visibility="gone"
+                 android:padding="22dp"
+                 tools:visibility="visible"
+            />
+</LinearLayout>

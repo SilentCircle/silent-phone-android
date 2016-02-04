@@ -27,4 +27,4 @@
     android:paddingStart="0dip"
     android:paddingRight="10dip"
     android:paddingEnd="10dip"
-    android:background="@null"/>
+    />

@@ -2,7 +2,7 @@
 
 LOCAL_PATH:= $(call my-dir)
 
-# Install SQLCipher native libraries
+# The following three sections install SQLCipher native libraries only
 include $(CLEAR_VARS)
 LOCAL_MODULE := libdatabase_sqlcipher
 LOCAL_SRC_FILES := $(TARGET_ARCH_ABI)/libdatabase_sqlcipher.so
@@ -33,16 +33,22 @@ else ifeq ($(USER),werner)
 ### setup for Werner
 ROOT_SRC_PATH := $(HOME)/silentC
 TIVI_SRC_PATH := $(ROOT_SRC_PATH)/tivi/sources
-else
+else ifeq ($(USER),janisn)
 
 ### setup for Janis
 ROOT_SRC_PATH := $(HOME)/proj
 TIVI_SRC_PATH := $(ROOT_SRC_PATH)/sources
+else
+
+### setup for documented build
+ROOT_SRC_PATH := $(LOCAL_PATH)/silentphone2/support
+TIVI_SRC_PATH := $(ROOT_SRC_PATH)/silentphone
 endif
 
 #
 # Where to find the ZRTP files, the top level directory of ZRTP sources
 ZRTP_SRC_PATH := $(ROOT_SRC_PATH)/zrtpcpp
+AXO_SRC_PATH := $(ROOT_SRC_PATH)/axolotl
 
 include $(CLEAR_VARS)
 LOCAL_MODULE := zrtpcpp
@@ -68,11 +74,25 @@ LOCAL_SRC_FILES := $(TARGET_ARCH_ABI)/libaec.so
 LOCAL_EXPORT_C_INCLUDES := $(LOCAL_PATH)
 include $(PREBUILT_SHARED_LIBRARY)
 
+include $(CLEAR_VARS)
+LOCAL_MODULE := protobuf
+LOCAL_SRC_FILES := $(TARGET_ARCH_ABI)/libprotobuf-cpp-lite.a
+include $(PREBUILT_STATIC_LIBRARY)
+
+include $(CLEAR_VARS)
+LOCAL_MODULE := axolotl
+LOCAL_SRC_FILES := $(TARGET_ARCH_ABI)/libaxolotl++.a
+LOCAL_EXPORT_C_INCLUDES := $(AXO_SRC_PATH)
+
+include $(PREBUILT_STATIC_LIBRARY)
+
+include $(CLEAR_VARS)
+
+
 # Base directory of the Tivi sources. All other path are relative to
 # this path because it's used to set LOCAL_PATH
 LOCAL_PATH := $(TIVI_SRC_PATH)
 
-include $(CLEAR_VARS)
 
 LOCAL_MODULE    := tivi
 LOCAL_SRC_FILES := tiviandroid/jni_glue2.cpp tiviandroid/t_a_main.cpp
@@ -81,7 +101,10 @@ LOCAL_LDLIBS := -llog
 
 LOCAL_SHARED_LIBRARIES := tina
 LOCAL_SHARED_LIBRARIES += aec
+LOCAL_SHARED_LIBRARIES += libsqlcipher_android
 LOCAL_STATIC_LIBRARIES := zrtpcpp
+LOCAL_STATIC_LIBRARIES += axolotl
+LOCAL_STATIC_LIBRARIES += protobuf
 
 
 ifeq ($(AUTOMATED_BUILD),1)
@@ -95,13 +118,19 @@ else ifeq ($(USER),werner)
 LOCAL_C_INCLUDES := ../libs/polarssl/include
 TLS_SRC := ../libs/polarssl
 TLS_SOURCES := $(wildcard $(TLS_SRC)/library/*.c)
-else
+else ifeq ($(USER),janis)
 
 # Janis: use this
 LOCAL_C_INCLUDES := ../libs/zrtp/clients/tivi
 LOCAL_C_INCLUDES += ../libs/zrtp
 LOCAL_C_INCLUDES += ../libs/polarssl/include
 TLS_SRC := ../libs/polarssl
+TLS_SOURCES := $(wildcard $(TLS_SRC)/library/*.c)
+else
+
+# documented build for everyone else
+LOCAL_C_INCLUDES := $(ROOT_SRC_PATH)/polarssl/include
+TLS_SRC := $(ROOT_SRC_PATH)/polarssl
 TLS_SOURCES := $(wildcard $(TLS_SRC)/library/*.c)
 endif
 
@@ -115,7 +144,8 @@ MY_SOURCES := $(TPM_SRC)password.cpp $(TPM_SRC)media.cpp $(TPM_SRC)threads.cpp \
 	$(TPM_SRC)g_cfg.cpp $(TPM_SRC)app_license.cpp $(TPM_SRC)prov.cpp\
 	$(TPM_SRC)lic_keys.cpp $(TPM_SRC)CTSipSock.cpp $(TPM_SRC)sip_reason_translator.cpp\
 	$(TPM_SRC)digestmd5.cpp $(TPM_SRC)userCfg.cpp $(TPM_SRC)build_nr.cpp\
-	$(TPM_SRC)release.cpp $(TPM_SRC)CTLangStrings.cpp $(TPM_SRC)tivi_log.cpp
+	$(TPM_SRC)release.cpp $(TPM_SRC)CTLangStrings.cpp $(TPM_SRC)tivi_log.cpp\
+	$(TPM_SRC)axolotl_glue.cpp
 
 T_R_SRC := ./
 
@@ -177,7 +207,7 @@ LOCAL_SRC_FILES += $(MY_SOURCES)
 
 # $(warning Local_src $(LOCAL_SRC_FILES))
 
-LOCAL_CFLAGS := -DANDROID_NDK=5 $(SPA_NDK_OPTIONS)
+LOCAL_CFLAGS := -DANDROID_NDK $(SPA_NDK_OPTIONS) -DWITH_AXOLOTL
 $(info Local flags:  $(LOCAL_CFLAGS))
 
 include $(BUILD_SHARED_LIBRARY)

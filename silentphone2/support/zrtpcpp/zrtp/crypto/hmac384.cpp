@@ -147,7 +147,9 @@ void* createSha384HmacContext(uint8_t* key, int32_t keyLength)
 {
     hmacSha384Context *ctx = reinterpret_cast<hmacSha384Context*>(malloc(sizeof(hmacSha384Context)));
 
-    hmacSha384Init(ctx, key, keyLength);
+    if (ctx != NULL) {
+        hmacSha384Init(ctx, key, keyLength);
+    }
     return ctx;
 }
 

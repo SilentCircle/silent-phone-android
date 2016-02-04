@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2015, Silent Circle, LLC. All rights reserved.
+Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -32,6 +32,7 @@ import android.app.Activity;
 import android.app.Fragment;
 import android.os.Bundle;
 import android.text.Editable;
+import android.text.InputFilter;
 import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
@@ -42,6 +43,7 @@ import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import com.silentcircle.common.util.SearchUtil;
 import com.silentcircle.silentphone2.R;
 import com.silentcircle.silentphone2.activities.ProvisioningActivity;
 
@@ -69,7 +71,6 @@ public class AccountStep2 extends Fragment implements View.OnClickListener{
     private TextView mHeaderText;
 
     private boolean mUseExistingAccount = true;
-    private boolean mSimpleUsernamePassword = true;
 
     private AuthenticatorActivity mParent;
 
@@ -93,7 +94,6 @@ public class AccountStep2 extends Fragment implements View.OnClickListener{
         if (args != null) {
             mUseExistingAccount = args.getBoolean(ProvisioningActivity.USE_EXISTING, true);
             final String roninCode = args.getString(AuthenticatorActivity.ARG_RONIN_CODE, null);
-            mSimpleUsernamePassword = TextUtils.isEmpty(roninCode);
         }
         mRequiredArray = mUseExistingAccount ? USERNAME_PASSWORD_ONLY : ALL_FIELDS_REQUIRED;
     }
@@ -111,6 +111,8 @@ public class AccountStep2 extends Fragment implements View.OnClickListener{
         if (stepView == null)
             return null;
 
+        Bundle args = getArguments();
+
         ProvisioningActivity.FilterEnter filterEnter = new ProvisioningActivity.FilterEnter();
         PasswordFilter pwFilter = new PasswordFilter();
 
@@ -118,9 +120,12 @@ public class AccountStep2 extends Fragment implements View.OnClickListener{
 
         mUsernameInput = (EditText) stepView.findViewById(R.id.ProvisioningUsernameInput);
         mUsernameInput.addTextChangedListener(filterEnter);
+        mUsernameInput.setFilters(new InputFilter[]{SearchUtil.USERNAME_INPUT_FILTER, SearchUtil.LOWER_CASE_INPUT_FILTER});
+        mUsernameInput.setText(args.getString(ProvisioningActivity.USERNAME, null));
 
         mPasswordInput = (EditText) stepView.findViewById(R.id.ProvisioningPasswordInput);
         mPasswordInput.addTextChangedListener(pwFilter);
+        mPasswordInput.setText(args.getString(AuthenticatorActivity.ARG_STEP1, null));
 
         mFirstNameInput = (EditText) stepView.findViewById(R.id.ProvisioningFirstNameInput);
         mFirstNameInput.addTextChangedListener(filterEnter);
@@ -141,6 +146,18 @@ public class AccountStep2 extends Fragment implements View.OnClickListener{
         stepView.findViewById(R.id.ShowPassword).setOnClickListener(this);
 
         stepView.setBackgroundColor(getResources().getColor(R.color.auth_background_grey));
+
+        if (mUseExistingAccount) {
+            mHeaderText.setText(getString(R.string.sign_in_to_sc));
+            mBack.setText(R.string.cancel_dialog);
+            mPasswordInput.setTag("current_password");
+            mPasswordInput.setImeOptions(EditorInfo.IME_ACTION_DONE);
+            mEmailInfo.setVisibility(View.GONE);
+            mFirstNameInput.setVisibility(View.GONE);
+            mLastNameInput.setVisibility(View.GONE);
+            mEmailInput.setVisibility(View.GONE);
+        }
+
         return stepView;
     }
 
@@ -151,27 +168,6 @@ public class AccountStep2 extends Fragment implements View.OnClickListener{
     }
 
     private void refreshFields() {
-        Bundle args = getArguments();
-        if (args != null) {
-            mUseExistingAccount = args.getBoolean(ProvisioningActivity.USE_EXISTING, true);
-            final String roninCode = args.getString(AuthenticatorActivity.ARG_RONIN_CODE, null);
-            mSimpleUsernamePassword = TextUtils.isEmpty(roninCode);
-        }
-        mRequiredArray = mUseExistingAccount ? USERNAME_PASSWORD_ONLY : ALL_FIELDS_REQUIRED;
-        if (mUseExistingAccount) {
-            mHeaderText.setText(getString(R.string.sign_in_to_sc));
-            if (mSimpleUsernamePassword)
-                mBack.setText(R.string.cancel_dialog);
-            mPasswordInput.setTag("current_password");
-            mPasswordInput.setImeOptions(EditorInfo.IME_ACTION_DONE);
-            mEmailInfo.setVisibility(View.GONE);
-            mFirstNameInput.setVisibility(View.GONE);
-            mLastNameInput.setVisibility(View.GONE);
-            mEmailInput.setVisibility(View.GONE);
-        } else {
-            mUsernameInput.setText(args.getString(ProvisioningActivity.USERNAME));
-            mPasswordInput.setText(args.getString(AuthenticatorActivity.ARG_STEP1));
-        }
         mParent.showPasswordCheck(mPasswordInput, mShowPassword.isChecked());
     }
 
@@ -179,7 +175,7 @@ public class AccountStep2 extends Fragment implements View.OnClickListener{
     public void onClick(View view) {
         switch (view.getId()) {
             case R.id.back: {
-                if (mSimpleUsernamePassword)
+                if (mUseExistingAccount)
                     mParent.provisioningCancel();
                 else
                     mParent.backStep();
@@ -250,11 +246,6 @@ public class AccountStep2 extends Fragment implements View.OnClickListener{
             mParent.showInputInfo(getString(R.string.provisioning_password_req));
             return;
         }
-        // if (!checkPassword(mPasswordInput.getText().toString(), passwordInput2.getText().toString())) {
-        // showInputInfo(getString(R.string.provisioning_password_match));
-        // enableButtons();
-        // return;
-        // }
         if (!checkInputAndCopy((String) mEmailInput.getTag(), mEmailInput.getText())) {
             mParent.showInputInfo(getString(R.string.provisioning_email_req));
             return;

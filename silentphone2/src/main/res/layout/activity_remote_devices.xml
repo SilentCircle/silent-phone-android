@@ -1,0 +1,33 @@
+<!--
+// +++LICENSE_BEGIN+++
+/*
+ * Copyright © 2014, Silent Circle
+ * All rights reserved.
+ */
+// +++LICENSE_END+++
+ -->
+
+<LinearLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:layout_height="match_parent"
+        android:layout_width="match_parent"
+        android:orientation="vertical">
+
+    <android.support.v7.widget.Toolbar
+            android:id="@+id/toolbar"
+            android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+            android:minHeight="?attr/actionBarSize"
+            android:background="?sp_actionbar_color"
+            app:titleTextAppearance="?sp_ab_title_style"
+            app:subtitleTextAppearance="?sp_ab_subtitle_style"/>
+
+    <FrameLayout
+                 android:id="@+id/axo_devices_container"
+                 android:layout_width="match_parent"
+                 android:layout_height="match_parent"
+                 tools:context="com.silentcircle.messaging.activities.ShowRemoteDevicesActivity">
+    </FrameLayout>
+</LinearLayout>

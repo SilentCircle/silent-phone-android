@@ -24,8 +24,8 @@ import android.util.Log;
 
 import com.silentcircle.common.util.DatabaseHelperManager;
 import com.silentcircle.contacts.list.PhoneNumberListAdapter.PhoneQuery;
-import com.silentcircle.silentphone2.database.DialerDatabaseHelper;
-import com.silentcircle.silentphone2.database.DialerDatabaseHelper.ContactNumber;
+import com.silentcircle.silentphone2.database.DialerDatabaseHelperOrig;
+import com.silentcircle.silentphone2.database.DialerDatabaseHelperOrig.ContactNumber;
 
 import java.util.ArrayList;
 
@@ -86,7 +86,7 @@ public class SmartDialCursorLoader extends AsyncTaskLoader<Cursor> {
         }
 
         /** Loads results from the database helper. */
-        final DialerDatabaseHelper dialerDatabaseHelper = DatabaseHelperManager.getDatabaseHelper(mContext);
+        final DialerDatabaseHelperOrig dialerDatabaseHelper = DatabaseHelperManager.getDatabaseHelper(mContext);
         final ArrayList<ContactNumber> allMatches = dialerDatabaseHelper.getLooseMatches(mQuery, mNameMatcher);
 
         if (DEBUG)
@@ -98,10 +98,10 @@ public class SmartDialCursorLoader extends AsyncTaskLoader<Cursor> {
         for (ContactNumber contact : allMatches) {
             row[PhoneQuery.PHONE_ID] = contact.dataId;
             row[PhoneQuery.PHONE_NUMBER] = contact.phoneNumber;
-            row[PhoneQuery.PHONE_CONTACT_ID] = contact.id;
-//            row[PhoneQuery.LOOKUP_KEY] = contact.lookupKey;
-            row[PhoneQuery.PHONE_PHOTO_ID] = contact.photoId;
-            row[PhoneQuery.PHONE_DISPLAY_NAME] = contact.displayName;
+            row[PhoneQuery.CONTACT_ID] = contact.id;
+            row[PhoneQuery.LOOKUP_KEY] = contact.lookupKey;
+            row[PhoneQuery.PHOTO_ID] = contact.photoId;
+            row[PhoneQuery.DISPLAY_NAME] = contact.displayName;
             cursor.addRow(row);
         }
         return cursor;

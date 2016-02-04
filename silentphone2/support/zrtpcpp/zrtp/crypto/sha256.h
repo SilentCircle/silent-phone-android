@@ -82,12 +82,12 @@ void sha256(unsigned char *data[],
  * An application uses this context to hash several data into one SHA256
  * digest. See also sha256Ctx(...) and closeSha256Context(...).
  *
- * @return Returns a pointer to the initialized SHA256 context
+ * @return Returns a pointer to the initialized SHA256 context or @c NULL in case of an error.
  */
 void* createSha256Context();
 
 /**
- * Compute a digest and close the SHa256 digest.
+ * Compute a digest and close the SHA256 digest.
  *
  * An application uses this function to compute the SHA256 digest and to
  * close the SHA256 context.
@@ -100,8 +100,33 @@ void* createSha256Context();
  *    pointer is NULL then the functions does not compute the digest but
  *    closes the context only. The context cannot be used anymore.
  */
-void closeSha256Context(void* ctx,
-                        unsigned char* digest);
+void closeSha256Context(void* ctx, unsigned char* digest);
+
+/**
+ * Initialize a SHA256 context.
+ *
+ * An application uses this context to hash several data into one SHA256
+ * digest. See also sha256Ctx(...) and closeSha384Context(...).
+ *
+ * @param ctx
+ *    Points to the SHA256 context.
+ * @return Returns the pointer to the initialized SHA256 context
+ */
+void* initializeSha256Context(void* ctx);
+
+/**
+ * Compute a digest.
+ *
+ * An application uses this function to compute the SHA256 digest.
+ *
+ * @param ctx
+ *    Points to the SHA256 context.
+ * @param digest
+ *    If this pointer is not NULL then it must point to a byte array that
+ *    is big enough to hold the SHA256 digest (256 bit = 32 Bytes). If this
+ *    pointer is NULL then the functions does not compute the digest.
+ */
+void finalizeSha256Context(void* ctx, unsigned char* digest);
 
 /**
  * Update the SHA256 context with data.

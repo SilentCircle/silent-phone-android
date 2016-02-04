@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2014-2015, Silent Circle, LLC. All rights reserved.
+Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -123,7 +123,7 @@ import java.util.Map;
  */
 public class VCardComposer {
     private static final String LOG_TAG = "VCardComposer";
-    private static final boolean DEBUG = false;
+    private static final boolean DEBUG = true;
 
     public static final String FAILURE_REASON_FAILED_TO_GET_DATABASE_INFO =
         "Failed to get database information";
@@ -353,9 +353,7 @@ public class VCardComposer {
     public boolean init(final Uri contentUri, final String[] projection,  final String selection, final String[] selectionArgs,
             final String sortOrder, Uri contentUriForRawContactsEntity) {
 
-        // When removing the migration functions we may also remove tge second AUTHORITY check
-        if (!(ScContactsContract.AUTHORITY.equals(contentUri.getAuthority()) ||
-                com.silentcircle.silentcontacts.ScContactsContract.AUTHORITY.equals(contentUri.getAuthority()))) {
+        if (!ScContactsContract.AUTHORITY.equals(contentUri.getAuthority())) {
             if (DEBUG) Log.d(LOG_TAG, "Unexpected contentUri: " + contentUri);
             mErrorReason = FAILURE_REASON_UNSUPPORTED_URI;
             return false;

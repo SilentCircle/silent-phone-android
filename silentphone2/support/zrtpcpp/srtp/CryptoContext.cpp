@@ -28,8 +28,6 @@
 
 #include <CryptoContext.h>
 #include <crypto/SrtpSymCrypto.h>
-#include <crypto/hmac.h>
-#include <cryptcommon/macSkein.h>
 
 CryptoContext::CryptoContext( uint32_t ssrc,
                               int32_t roc,
@@ -158,19 +156,6 @@ CryptoContext::~CryptoContext() {
         delete f8Cipher;
         f8Cipher = NULL;
     }
-    if (macCtx != NULL) {
-        switch(aalg) {
-        case SrtpAuthenticationSha1Hmac:
-            freeSha1HmacContext(macCtx);
-            break;
-
-        case SrtpAuthenticationSkeinHmac:
-            freeSkeinMacContext(macCtx);
-            break;
-        }
-    }
-    ealg = SrtpEncryptionNull;
-    aalg = SrtpAuthenticationNull;
 }
 
 void CryptoContext::srtpEncrypt(uint8_t* pkt, uint8_t* payload, uint32_t paylen, uint64_t index, uint32_t ssrc ) {
@@ -324,11 +309,14 @@ void CryptoContext::deriveSrtpKeys(uint64_t index)
     // Initialize MAC context with the derived key
     switch (aalg) {
     case SrtpAuthenticationSha1Hmac:
-        macCtx = createSha1HmacContext(k_a, n_a);
+        macCtx = &hmacCtx.hmacSha1Ctx;
+        macCtx = initializeSha1HmacContext(macCtx, k_a, n_a);
         break;
     case SrtpAuthenticationSkeinHmac:
+        macCtx = &hmacCtx.hmacSkeinCtx;
+
         // Skein MAC uses number of bits as MAC size, not just bytes
-        macCtx = createSkeinMacContext(k_a, n_a, tagLength*8, Skein512);
+        macCtx = initializeSkeinMacContext(macCtx, k_a, n_a, tagLength*8, Skein512);
         break;
     }
     memset(k_a, 0, n_a);
@@ -435,7 +423,6 @@ void CryptoContext::update(uint16_t newSeq)
     // update the replay shift register
     // The shift register array stores bits of newer packets (higher sequence numbers) at 
     // index 0 and shifts older packets (lower sequence numbers) left to index one
-
     if (delta > 0) {                         // We got a new packet, no yet seen
         if (delta >= REPLAY_WINDOW_SIZE) {
             replay_window[0] = 1;

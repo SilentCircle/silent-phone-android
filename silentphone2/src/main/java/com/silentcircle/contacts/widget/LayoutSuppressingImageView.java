@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2014-2015, Silent Circle, LLC. All rights reserved.
+Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -48,8 +48,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 package com.silentcircle.contacts.widget;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.util.AttributeSet;
+import android.widget.ImageView;
 
 /**
  * Custom {@link android.widget.ImageView} that improves layouting performance.
@@ -57,12 +59,13 @@ import android.util.AttributeSet;
  * This improves the performance by not passing requestLayout() to its parent, taking advantage
  * of knowing that image size won't change once set.
  */
-public class LayoutSuppressingImageView extends CircleImageSelectable {
+public class LayoutSuppressingImageView extends ImageView {
 
     public LayoutSuppressingImageView(Context context, AttributeSet attrs) {
         super(context, attrs);
     }
 
+    @SuppressLint("MissingSuperCall")
     @Override
     public void requestLayout() {
         forceLayout();

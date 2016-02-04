@@ -149,8 +149,6 @@ public class SpeedDialFragment extends Fragment implements OnItemClickListener,
 
     private View mContactTileFrame;
 
-//    private TileInteractionTeaserView mTileInteractionTeaserView;
-
     private final HashMap<Long, Integer> mItemIdTopMap = new HashMap<>();
     private final HashMap<Long, Integer> mItemIdLeftMap = new HashMap<>();
 
@@ -215,9 +213,6 @@ public class SpeedDialFragment extends Fragment implements OnItemClickListener,
 
         mContactTileFrame = parentView.findViewById(R.id.contact_tile_frame);
 
-//        mTileInteractionTeaserView = (TileInteractionTeaserView) inflater.inflate(
-//                R.layout.tile_interactions_teaser_view, mListView, false);
-
         final LayoutAnimationController controller = new LayoutAnimationController(
                 AnimationUtils.loadAnimation(getActivity(), android.R.anim.fade_in));
         controller.setDelay(0);
@@ -238,14 +233,16 @@ public class SpeedDialFragment extends Fragment implements OnItemClickListener,
 
     void setEmptyViewVisibility(final boolean visible) {
         final int previousVisibility = mEmptyView.getVisibility();
-        final int newVisibility = visible ? View.VISIBLE : View.GONE;
+        final int emptyViewVisibility = visible ? View.VISIBLE : View.GONE;
+        final int listViewVisibility = visible ? View.GONE : View.VISIBLE;
 
-        if (previousVisibility != newVisibility) {
+        if (previousVisibility != emptyViewVisibility) {
             final LayoutParams params = (LayoutParams) mContactTileFrame
                     .getLayoutParams();
             params.height = visible ? LayoutParams.WRAP_CONTENT : LayoutParams.MATCH_PARENT;
             mContactTileFrame.setLayoutParams(params);
-            mEmptyView.setVisibility(newVisibility);
+            mEmptyView.setVisibility(emptyViewVisibility);
+            mListView.setVisibility(listViewVisibility);
         }
     }
 
@@ -313,6 +310,12 @@ public class SpeedDialFragment extends Fragment implements OnItemClickListener,
         for (int i = 0; i < mListView.getChildCount(); i++) {
             final View child = mListView.getChildAt(i);
             final int position = firstVisiblePosition + i;
+            // Since we are getting the position from mListView and then querying
+            // mContactTileAdapter, its very possible that things are out of sync
+            // and we might index out of bounds.  Let's make sure that this doesn't happen.
+            if (!mContactTileAdapter.isIndexInBound(position)) {
+                continue;
+            }
             final long itemId = mContactTileAdapter.getItemId(position);
             if (DEBUG) {
                 Log.d(TAG, "Saving itemId: " + itemId + " for list view child " + i + " Top: "
@@ -348,6 +351,13 @@ public class SpeedDialFragment extends Fragment implements OnItemClickListener,
                 for (int i = 0; i < mListView.getChildCount(); i++) {
                     final View child = mListView.getChildAt(i);
                     int position = firstVisiblePosition + i;
+
+                    // Since we are getting the position from mListView and then querying
+                    // mContactTileAdapter, its very possible that things are out of sync
+                    // and we might index out of bounds.  Let's make sure that this doesn't happen.
+                    if (!mContactTileAdapter.isIndexInBound(position)) {
+                        continue;
+                    }
 
                     final long itemId = mContactTileAdapter.getItemId(position);
 

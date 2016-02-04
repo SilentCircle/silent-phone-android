@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2014-2015, Silent Circle, LLC. All rights reserved.
+Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -100,8 +100,8 @@ public class CircleImageSelectable extends ImageView {
             if (a != null) {
                 mGivenDiameter = a.getDimension(R.styleable.CircleImageSelectable_sp_round_image_diameter, mGivenDiameter);
                 mStrokeWidth = a.getDimension(R.styleable.CircleImageSelectable_sp_round_image_stroke_width, 0);
-                mStrokeColor = a.getColor(R.styleable.CircleImageSelectable_sp_round_image_stroke_color, android.R.color.white);
-                mShadowColor = a.getColor(R.styleable.CircleImageSelectable_sp_round_image_shadow_color, android.R.color.black);
+                mStrokeColor = a.getColor(R.styleable.CircleImageSelectable_sp_round_image_stroke_color, getResources().getColor(android.R.color.white));
+                mShadowColor = a.getColor(R.styleable.CircleImageSelectable_sp_round_image_shadow_color, getResources().getColor(android.R.color.black));
                 a.recycle();
             }
         }

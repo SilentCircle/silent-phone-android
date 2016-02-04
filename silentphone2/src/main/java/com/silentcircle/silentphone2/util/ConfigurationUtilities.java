@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2014-2015, Silent Circle, LLC. All rights reserved.
+Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -152,5 +152,16 @@ public class ConfigurationUtilities {
 
     public static String getReprovisioningNameKey() {
         return mUseDevelopConfiguration ? NAME_KEY_DEVELOPMENT : NAME_KEY_PRODUCTION;
+    }
+
+    public static String getConversationDbName() {
+        return mUseDevelopConfiguration ? "_axo_store_dev_enc.db" : "_axo_store_enc.db";
+    }
+    public static String getRepoDbName() {
+        return mUseDevelopConfiguration ? "repo_store_dev_enc.db" : "repo_store_enc.db";
+    }
+
+    public static String getDevIdKey() {
+        return mUseDevelopConfiguration ? "spa_device_id_dev" : "spa_device_id_prod";
     }
 }

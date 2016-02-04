@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+      xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/action_burn_notice"
+        app:showAsAction="always"
+        android:orderInCategory="1"
+        android:icon="@drawable/ic_burn"
+        android:visible="false"
+        android:title="@string/burn_notice"/>
+    <item
+        android:id="@+id/action_share_location"
+        app:showAsAction="always"
+        android:orderInCategory="2"
+        android:icon="@drawable/ic_location"
+        android:visible="false"
+        android:title="@string/share_location"/>
+    <item
+        android:id="@+id/action_silent_phone_call"
+        app:showAsAction="always"
+        android:orderInCategory="3"
+        android:icon="@drawable/ic_call_light"
+        android:visible="false"
+        android:title="@string/silent_phone_call"/>
+    <item
+        android:id="@+id/options"
+        app:showAsAction="always"
+        android:orderInCategory="4"
+        android:icon="@drawable/ic_drawer_closed"
+        android:title="@string/options"/>
+</menu>

@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    style="@style/Widget.Silence.LinearLayout.Vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/raw_vcard"
+            style="@style/Widget.Silence.TextView.Long"
+            android:layout_margin="@dimen/spacing_large"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+    </ScrollView>
+
+    <ViewFlipper
+        android:id="@+id/vcard_view_flipper"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
+
+            <ListView
+                android:id="@+id/vcard_list"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:clipChildren="false"
+                android:fadingEdge="none"
+                android:listSelector="@android:color/transparent"
+                android:divider="@color/sc_ng_background_2"
+                android:dividerHeight="1dip" />
+
+            <Button
+                android:id="@+id/button_import_all_vcards"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/import_contacts"
+                android:layout_gravity="bottom" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/vcard_details_container"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
+
+            <include
+                android:id="@+id/vcard_details"
+                layout="@layout/messaging_vcard_detail_view"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1" />
+
+            <Button
+                android:id="@+id/button_import_vcard"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/import_contact" />
+
+            <Button
+                android:id="@+id/button_back"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/back" />
+
+        </LinearLayout>
+
+    </ViewFlipper>
+
+</RelativeLayout>

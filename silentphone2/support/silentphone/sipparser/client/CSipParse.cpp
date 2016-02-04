@@ -1,32 +1,6 @@
-/*
-Created by Janis Narbuts
-Copyright (C) 2004-2012, Tivi LTD, www.tiviphone.com. All rights reserved.
-Copyright (C) 2012-2015, Silent Circle, LLC.  All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-    * Any redistribution, use, or modification is done solely for personal
-      benefit and not for any commercial purpose or for monetary gain
-    * Redistributions of source code must retain the above copyright
-      notice, this list of conditions and the following disclaimer.
-    * Redistributions in binary form must reproduce the above copyright
-      notice, this list of conditions and the following disclaimer in the
-      documentation and/or other materials provided with the distribution.
-    * Neither the name Silent Circle nor the
-      names of its contributors may be used to endorse or promote products
-      derived from this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL SILENT CIRCLE, LLC BE LIABLE FOR ANY
-DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
+//VoipPhone
+//Created by Janis Narbuts
+//Copyright (c) 2004-2012 Tivi LTD, www.tiviphone.com. All rights reserved.
 
 
 
@@ -123,7 +97,7 @@ const char  CSip::p_asserted_id[]    =  "P\rASSERTED\rIDENTITY";//P_Asserted_Ide
 
 int CSip::tryParseHdr()
 {
-   
+   //
    switch(strList[tokensParsed].uiLen)
    {
       case 0:return UNKNOWN;
@@ -213,6 +187,11 @@ int CSip::tryParseHdr()
          {tokensParsed++;parseAut(&gspSIPMsg->hdrWWWAuth);           return 0;}
          //  if  (CMP(strList[tokensParsed],cont_encod,16))
          //    {tokensParsed++;parseContentEncoding();           return 0;}//TODO single params parse
+         return UNKNOWN;
+      case 17:
+         if  (CMP(strList[tokensParsed],"X\rSC\rMESSAGE\rMETA",17)){//1 + 2 + 7 + 4   + 3 =17
+            {tokensParsed++;parseXSCMessageMeta();           return 0;}
+         }
          return UNKNOWN;
       case 18:
          if (CMP(strList[tokensParsed],proxy_authen,18))
@@ -355,7 +334,7 @@ int CSip::splitSIP(char *pFrom)
 
 //NEW--------->>---
 
-int CSip::parseSipUri(SIP_URI * sipUri, int j,int i)
+int CSip::parseSipUri(SIP_URI * sipUri, int j,int i, int iIsFirstLine)
 {
 
    sipUri->dstrSipAddr=strList[j]; 
@@ -381,12 +360,19 @@ int CSip::parseSipUri(SIP_URI * sipUri, int j,int i)
                if(strList[j].iLast==':'){j++;sipUri->maddr.dstrPort=strList[j];}
                
             }
+            
+            if(strList[j].iLast=='=' && strList[j].iFirst==';' && CMP(strList[j],"XSCDEVID",8) ){
+               
+               if(strList[j+1].iLast=='>' || strList[j+1].iLast==';')
+                  sipUri->dstrX_SC_DevID=strList[j+1];
+            }
+            
             if (j>=i+tokensParsed) {printError("ERROR: parseSipUri '>' not found!",DROP);return DROP;}
          }
       }
       else
       {
-         for (;strList[j+1].iFirst!=';' && strList[j].iLast>32;j++)  
+         for (;(strList[j+1].iFirst!=';' && strList[j].iLast>' ' && !iIsFirstLine) || (iIsFirstLine && strList[j].iLast>' ');j++)
          {
             if(!ok && strList[j+1].iFirst=='@')
             {
@@ -394,6 +380,15 @@ int CSip::parseSipUri(SIP_URI * sipUri, int j,int i)
                un=iHostItem;
                iHostItem=j+1;
             }
+            //TODO sipUri->atribs[sipUri->iAtribCnt++] =
+            if((ok || iIsFirstLine) && strList[j].iLast=='=' && strList[j].iFirst==';' && CMP(strList[j],"XSCDEVID",8) ){
+               
+               j++;
+               sipUri->dstrX_SC_DevID=strList[j];
+            }
+            
+            if(strList[j].iLast<=' ')break;
+  
             if (j>=i+tokensParsed) {printError("ERROR: parseSipUri!",DROP);return DROP;}
          }
       }
@@ -524,7 +519,7 @@ int CSip::parseFirstLine()
             }
             gspSIPMsg->sipHdr.iFlag|=SIP_INTERACTION_REQUEST;
             
-            j=parseSipUri(&gspSIPMsg->sipHdr.sipUri, 1, i);
+            j=parseSipUri(&gspSIPMsg->sipHdr.sipUri, 1, i, 1);
             if(j<0){printError("ERROR hdr",j);return j;}
          } 
       }
@@ -1329,6 +1324,39 @@ int CSip::parseUserAgent(){ return 0; }
 
 
 int CSip::parseWarning(){ return 0; }
+
+int CSip::parseXSCMessageMeta(){
+   int i,j;
+   
+   TOKENS_IN_LINE;
+   
+   j=tokensParsed;
+   
+   gspSIPMsg->hdrXSCMsgMeta.dstrFullRow=strList[j-1];
+   gspSIPMsg->hdrXSCMsgMeta.dstrFullRow.uiLen=strList[j+i-1].strVal-strList[j-1].strVal+strList[j+i-1].uiLen;
+   
+   int tokens = 0;
+   
+   for (;j<tokensParsed+i;j++)
+   {
+      if(strList[j].iLast!='=')continue;
+      if((tokens && strList[j].iFirst!=';') || (!tokens && strList[j].iFirst!=':')){printError("Error in parseXSCMessageMeta!",DONT_DROP); break;}
+    
+      tokens++;
+      
+      if (CMP(strList[j],"ID\x16\x14",4))//ID64
+      {
+         j++;
+         gspSIPMsg->hdrXSCMsgMeta.dstr64bitID=strList[j];
+         
+         continue;
+      }
+   }
+   
+   tokensParsed+=i;
+   
+   return 0;
+}
 
 int CSip::parseUnknown()
 {

@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2014-2015, Silent Circle, LLC. All rights reserved.
+Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -93,6 +93,7 @@ public class ScCallLogProvider extends ContentProvider {
         sCallsProjectionMap.put(ScCalls.CACHED_NORMALIZED_NUMBER, ScCalls.CACHED_NORMALIZED_NUMBER);
         sCallsProjectionMap.put(ScCalls.CACHED_PHOTO_ID, ScCalls.CACHED_PHOTO_ID);
         sCallsProjectionMap.put(ScCalls.CACHED_FORMATTED_NUMBER, ScCalls.CACHED_FORMATTED_NUMBER);
+        sCallsProjectionMap.put(ScCalls.SC_OPTION_TEXT1, ScCalls.SC_OPTION_TEXT1);
     }
 
     private ScContactsDatabaseHelper mDbHelper;
@@ -259,7 +260,7 @@ public class ScCallLogProvider extends ContentProvider {
     }
 
     private boolean returnOnBlocking(Uri uri) {
-        boolean nonBlock = ScContactsProvider.readBooleanQueryParameter(uri, ScContactsContract.NON_BLOCKING, false);
+        boolean nonBlock = ScContactsProvider.readBooleanQueryParameter(uri, ScCallLog.NON_BLOCKING, false);
         boolean dbReady = mDbHelper.isReady();
         return !dbReady && nonBlock;
     }

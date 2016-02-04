@@ -40,7 +40,7 @@
     <!-- Basic colors for dark designs
      -->
     <color name="button_stroke_color_white">#ccffffff</color>
-    <color name="dialpad_primary_text_color_dark">#ccffffff</color>
+    <color name="dialpad_primary_text_color_dark">@color/sc_ng_text_dark</color>
     <color name="dialpad_secondary_text_color_dark">#aaffffff</color>
 
 
@@ -55,8 +55,9 @@
     <color name="black_light_gray">#ff787878</color>  <!-- BP light grey -->
     <color name="black_dark_gray">#ff545454</color>   <!-- BP Charcoal -->
     <color name="black_yellow">#ffffd21e</color>      <!-- BP Yellow -->
-    <color name="black_green">#ff00e18c</color>       <!-- BP Green (Pantone 3385) -->
+    <color name="black_green">@color/sc_ng_text_green</color>       <!-- BP Green (Pantone 3385) -->
     <color name="black_green_dark">#ff00be8c</color>  <!-- BP Green (Pantone 339) -->
+    <color name="black_green_dark_1">#ff62ab42</color>
     <color name="black_blue">#ff00a6dc</color>        <!-- BP Blue -->
 
     <color name="black_background_transparent">#80212121</color>  <!-- BP black -->
@@ -232,7 +233,7 @@
     <!-- Background color for search results and call details -->
     <color name="background_dialer_results">@color/black_dark_gray</color>
     <!-- Background color of dialer list items (contacts, call log entries) -->
-    <color name="background_dialer_list_items">@color/black_dark_gray</color>
+    <color name="background_dialer_list_items">@color/sc_ng_background</color>
     <color name="background_dialer_details_list_items">@color/black_light_gray</color>
 
     <color name="call_log_expanded_background_color">@color/black_light_gray</color>
@@ -257,6 +258,9 @@
 
     <!-- Undo dialogue color -->
     <color name="undo_dialogue_text_color">#4d4d4d</color>
+
+    <!-- Sound recorder dialog background color -->
+    <color name="sound_recorder_background_color">#424242</color>
 
     <!-- Text color for the "Remove" text when a contact is dragged on top of the remove view -->
     <color name="remove_highlighted_text_color">#FF3F3B</color>
@@ -285,7 +289,43 @@
     <!-- Color of the margin for cards -->
     <color name="card_margin_color">#f4f4f4</color>
 
-    <color name="dialer_green_highlight_color">#00c853</color>
+    <color name="dialer_green_highlight_color">@color/sc_ng_text_green</color>
+
+
+    <!-- Colors from Silent Text application -->
+    <color name="silent_black">#ff111111</color>
+    <color name="silent_darken">#22000000</color>
+    <color name="subtle_medium_grey">#30808080</color>
+    <color name="silent_orange">#ffe46226</color>
+    <color name="silent_yellow">#fff7c16d</color>
+    <color name="silent_white_disabled">#55ffffff</color>
+    <color name="silent_white">#ddffffff</color>
+    <color name="silent_grease">#ff222222</color>
+    <color name="silent_glass">#88ffffff</color>
+    <color name="silent_dark_orange">#ffa42206</color>
+    <color name="progress_color">#D23D44</color>
+    <color name="solid_white">#ffffffff</color>
+    <color name="theme_dark_text_primary">@color/solid_white</color>
+    <color name="translucent_white">#80ffffff</color>
+    <color name="theme_dark_text_secondary">@color/translucent_white</color>
+    <color name="silent_dark_grey">#ff505050</color>
+    <color name="silent_translucent_dark_grey">#80505050</color>
+
+    <color name="theme_light_text_primary">@color/silent_black</color>
+    <color name="theme_light_text_secondary">@color/silent_translucent_dark_grey</color>
+
+    <color name="sc_ng_text_grey">#f6f3eb</color>
+    <color name="sc_ng_text_grey_1">#fafafa</color>
+    <color name="sc_ng_text_grey_2">#888888</color>
+    <color name="sc_ng_text_dark">#4a4947</color>
+    <color name="sc_ng_background">#36373b</color>
+    <color name="sc_ng_background_1">#f6f3eb</color>
+    <color name="sc_ng_background_2">#28292c</color>
+    <color name="sc_ng_background_3">#727377</color>
+    <color name="sc_ng_background_outgoing">#f6f3eb</color>
+    <color name="sc_ng_background_incoming">#9e9d9d</color>
+    <color name="sc_ng_text_red">#e73a27</color>
+    <color name="sc_ng_text_green">#6fc34b</color>
 
     <!-- Authenticator-specific colors (new "next-gen" style) -->
     <color name="auth_active_headline_text_grey">#f6f3eb</color>
@@ -301,4 +341,17 @@
     <color name="auth_account_default">#454649</color>
     <color name="auth_account_pressed">#727377</color>
 
+    <!-- colors in conversation (chat) view -->
+    <color name="chat_main_background">@color/sc_ng_background</color>
+    <color name="chat_toolbar_background">@color/sc_ng_background_1</color>
+    <color name="chat_compose_background">@color/sc_ng_background_1</color>
+    <color name="chat_compose_text">@color/sc_ng_text_dark</color>
+    <color name="chat_compose_hint">#ada9a3</color>
+
+    <color name="chat_options_drawer_background">@color/sc_ng_background_2</color>
+    <color name="chat_options_text_color">@color/sc_ng_text_grey</color>
+
+    <color name="chat_error_message_text_color">@color/sc_ng_text_grey</color>
+    <color name="chat_outgoing_message_text_color">#ede9e3</color>
+    <color name="chat_outgoing_message_disabled_text_color">#cdcac6</color>
 </resources>

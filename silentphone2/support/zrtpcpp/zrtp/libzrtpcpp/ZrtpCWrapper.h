@@ -271,6 +271,7 @@ extern "C"
         ZRtp* zrtpEngine;                   /*!< Holds the real ZRTP engine */
         ZrtpCallbackWrapper* zrtpCallback;  /*!< Help class Callback wrapper */
         ZrtpConfigure* configure;           /*!< Optional configuration data */
+        ZRtp* zrtpMaster;                   /*!< Holds the master ZRTP stream in case this is a multi-stream */
         void* userData;                     /*!< User data, set by application */
     } ZrtpContext;
 
@@ -864,15 +865,17 @@ extern "C"
      * of multi-stream mode.
      *
      * @param zrtpContext
-     *    Pointer to the opaque ZrtpContext structure.
+     *    Pointer to the opaque ZrtpContext structure of the multi-media (slave) ZRTP session
      * @param length
      *    The integer that contains the length of the char array
      * @param parameters
      *     A char array that contains the multi-stream parameters that this
      *     new ZRTP instance shall use. See also
      *     <code>getMultiStrParams()</code>
+     * @param master
+     *     Pointer to the opaque ZrtpContext structure of the master ZRTP stream.
      */
-    void zrtp_setMultiStrParams(ZrtpContext* zrtpContext, char* parameters, int32_t length);
+    void zrtp_setMultiStrParams(ZrtpContext* zrtpContext, char* parameters, int32_t length, ZrtpContext* master);
 
     /**
      * Check if this ZRTP session is a Multi-stream session.

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<FrameLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/background_dialer_list_items">
+    <view
+            class="com.silentcircle.common.list.PinnedHeaderListView"
+            android:id="@android:id/list"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="?attr/contact_browser_list_padding_left"
+            android:layout_marginLeft="?attr/contact_browser_list_padding_left"
+            android:layout_marginEnd="?attr/contact_browser_list_padding_right"
+            android:layout_marginRight="?attr/contact_browser_list_padding_right"
+            android:paddingTop="18dp"
+            android:fastScrollEnabled="true"
+            android:fadingEdge="none"
+            android:nestedScrollingEnabled="true" />
+</FrameLayout>

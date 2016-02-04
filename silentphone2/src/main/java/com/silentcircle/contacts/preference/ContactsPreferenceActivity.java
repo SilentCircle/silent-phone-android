@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2014-2015, Silent Circle, LLC. All rights reserved.
+Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -44,19 +44,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 package com.silentcircle.contacts.preference;
 
-import android.annotation.TargetApi;
 import android.app.ActionBar;
-import android.content.ComponentName;
 import android.content.Context;
-import android.content.Intent;
-import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceActivity;
 import android.view.MenuItem;
 
-import com.silentcircle.contacts.activities.ScContactsMainActivity;
 import com.silentcircle.silentphone2.R;
-import com.silentcircle.silentphone2.activities.DialerActivity;
 
 import java.util.List;
 
@@ -97,23 +91,23 @@ public final class ContactsPreferenceActivity extends PreferenceActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case android.R.id.home: {
-                Intent intent;
-                if (!DialerActivity.useBpForwarder())
-                    intent = new Intent(this, ScContactsMainActivity.class);
-                else {
-                    intent = new Intent();
-                    intent.setComponent(new ComponentName(this, "com.silentcircle.contacts.activities.ScContactsMainActivityForwarder"));
-                }
-                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                try {
-                    startActivity(intent);
-                } catch (Exception ignored) { }
-                finish();
-                return true;
-            }
-        }
+//        switch (item.getItemId()) {
+//            case android.R.id.home: {
+//                Intent intent;
+//                if (!DialerActivity.useBpForwarder())
+//                    intent = new Intent(this, ScContactsMainActivity.class);
+//                else {
+//                    intent = new Intent();
+//                    intent.setComponent(new ComponentName(this, "com.silentcircle.contacts.activities.ScContactsMainActivityForwarder"));
+//                }
+//                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+//                try {
+//                    startActivity(intent);
+//                } catch (Exception ignored) { }
+//                finish();
+//                return true;
+//            }
+//        }
         return false;
     }
 

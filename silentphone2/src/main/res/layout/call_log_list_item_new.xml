@@ -37,7 +37,8 @@
         android:textColor="?attr/call_log_secondary_text_color"
         android:textSize="@dimen/call_log_secondary_text_size"
         android:paddingTop="@dimen/call_log_day_group_padding_top"
-        android:paddingBottom="@dimen/call_log_day_group_padding_bottom" />
+        android:paddingBottom="@dimen/call_log_day_group_padding_bottom"
+            tools:text="day-group label"/>
 
     <!-- Linear layout to separate the primary area containing the contact badge and caller
          information and the secondary action (call details / play voicemail). -->
@@ -66,7 +67,7 @@
             android:nextFocusRight="@+id/call_back_action"
             android:nextFocusLeft="@+id/quick_contact_photo" >
 
-            <com.silentcircle.contacts.widget.ScQuickContactBadgeNew
+            <QuickContactBadge
                 android:id="@+id/quick_contact_photo"
                 android:layout_width="@dimen/contact_photo_size"
                 android:layout_height="@dimen/contact_photo_size"
@@ -132,6 +133,7 @@
                         android:textColor="?attr/call_log_secondary_text_color"
                         android:textSize="@dimen/call_log_secondary_text_size"
                         android:singleLine="true"
+                        tools:text="location-date"
                         />
                 </LinearLayout>
             </LinearLayout>
@@ -152,6 +154,11 @@
         <ViewStub android:id="@+id/call_log_entry_actions_stub"
                   android:inflatedId="@+id/call_log_entry_actions"
                   android:layout="@layout/call_log_list_item_actions"
+                  android:layout_width="match_parent"
+                  android:layout_height="wrap_content"/>
+        <ViewStub android:id="@+id/call_log_entry_actions_stub2"
+                  android:inflatedId="@+id/call_log_entry_actions2"
+                  android:layout="@layout/call_log_list_item_actions2"
                   android:layout_width="match_parent"
                   android:layout_height="wrap_content"/>
     </LinearLayout>

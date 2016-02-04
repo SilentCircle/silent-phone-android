@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2014-2015, Silent Circle, LLC. All rights reserved.
+Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -34,8 +34,6 @@ import android.app.DialogFragment;
 import android.content.DialogInterface;
 import android.os.Bundle;
 
-import com.silentcircle.silentphone2.R;
-
 /**
  * Created by rli on 10/29/14.
  */
@@ -43,17 +41,17 @@ public class InfoMsgDialogFragment extends DialogFragment {
     private static String MESSAGE = "message";
     private static String TITLE = "title";
     private static String POSITIVE_BTN_LABEL = "positive_button_label";
-    private static String NAGETIVE_BTN_LABEL = "nagetive_button_label";
+    private static String NEGATIVE_BTN_LABEL = "negative_button_label";
     private Activity mParent;
 
-    public static InfoMsgDialogFragment newInstance(String title, String msg, int positiveBtnLabel, int nagetiveBtnLabel) {
+    public static InfoMsgDialogFragment newInstance(String title, String msg, int positiveBtnLabel, int negativeBtnLabel) {
         InfoMsgDialogFragment f = new InfoMsgDialogFragment();
 
         Bundle args = new Bundle();
         args.putString(TITLE, title);
         args.putString(MESSAGE, msg);
         args.putInt(POSITIVE_BTN_LABEL, positiveBtnLabel);
-	args.putInt(NAGETIVE_BTN_LABEL, nagetiveBtnLabel);
+        args.putInt(NEGATIVE_BTN_LABEL, negativeBtnLabel);
 
         f.setArguments(args);
 
@@ -85,8 +83,8 @@ public class InfoMsgDialogFragment extends DialogFragment {
                 }
             });
         }
-        if(args.getInt(NAGETIVE_BTN_LABEL, -1) > 0) {
-            builder.setNegativeButton(args.getInt(NAGETIVE_BTN_LABEL), new DialogInterface.OnClickListener() {
+        if(args.getInt(NEGATIVE_BTN_LABEL, -1) > 0) {
+            builder.setNegativeButton(args.getInt(NEGATIVE_BTN_LABEL), new DialogInterface.OnClickListener() {
                 public void onClick(DialogInterface dialog, int id) {
                     mParent.finish();
                 }

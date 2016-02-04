@@ -18,81 +18,29 @@ package com.silentcircle.contacts;
 
 import android.content.Context;
 import android.content.Intent;
-import android.content.res.Configuration;
-import android.database.Cursor;
 import android.graphics.Rect;
 import android.net.Uri;
+import android.provider.ContactsContract;
+import android.provider.ContactsContract.CommonDataKinds.Phone;
+import android.provider.ContactsContract.Intents.Insert;
 import android.telephony.PhoneNumberUtils;
 import android.text.TextUtils;
 import android.view.View;
 import android.widget.TextView;
 
-import com.silentcircle.contacts.activities.ScContactsMainActivity;
-import com.silentcircle.contacts.model.account.AccountType;
 import com.silentcircle.contacts.utils.Constants;
 import com.silentcircle.contacts.utils.PhoneNumberHelper;
-import com.silentcircle.silentcontacts2.ScContactsContract.CommonDataKinds.Im;
-import com.silentcircle.silentcontacts2.ScContactsContract.CommonDataKinds.Phone;
-import com.silentcircle.silentcontacts2.ScContactsContract.DisplayPhoto;
+import com.silentcircle.messaging.activities.ConversationActivity;
 import com.silentcircle.silentphone2.R;
+import com.silentcircle.silentphone2.activities.ContactAdder;
+import com.silentcircle.silentphone2.activities.DialerActivity;
 
 
 public class ContactsUtils {
     private static final String TAG = "ContactsUtils";
     private static final String WAIT_SYMBOL_AS_STRING = String.valueOf(PhoneNumberUtils.WAIT);
 
-    private static String SILENT_CALL_ACTION = "com.silentcircle.silentphone.action.NEW_OUTGOING_CALL";
-    private static String SILENT_EDIT_BEFORE_CALL_ACTION = "com.silentcircle.silentphone.action.EDIT_BEFORE_CALL";
-    
     private static int sThumbnailSize = -1;
-
-    // TODO find a proper place for the canonical version of these
-    public interface ProviderNames {
-        String SILENT = "SilentCircle";
-        String YAHOO = "Yahoo";
-        String GTALK = "GTalk";
-        String MSN = "MSN";
-        String ICQ = "ICQ";
-        String AIM = "AIM";
-        String XMPP = "XMPP";
-        String JABBER = "JABBER";
-        String SKYPE = "SKYPE";
-        String QQ = "QQ";
-    }
-
-    /**
-     * This looks up the provider name defined in
-     * ProviderNames from the predefined IM protocol id.
-     * This is used for interacting with the IM application.
-     *
-     * @param protocol the protocol ID
-     * @return the provider name the IM app uses for the given protocol, or null if no
-     * provider is defined for the given protocol
-     * @hide
-     */
-    public static String lookupProviderNameFromId(int protocol) {
-        switch (protocol) {
-        case Im.PROTOCOL_SILENT:
-            return ProviderNames.SILENT;
-        case Im.PROTOCOL_GOOGLE_TALK:
-            return ProviderNames.GTALK;
-        case Im.PROTOCOL_AIM:
-            return ProviderNames.AIM;
-        case Im.PROTOCOL_MSN:
-            return ProviderNames.MSN;
-        case Im.PROTOCOL_YAHOO:
-            return ProviderNames.YAHOO;
-        case Im.PROTOCOL_ICQ:
-            return ProviderNames.ICQ;
-        case Im.PROTOCOL_JABBER:
-            return ProviderNames.JABBER;
-        case Im.PROTOCOL_SKYPE:
-            return ProviderNames.SKYPE;
-        case Im.PROTOCOL_QQ:
-            return ProviderNames.QQ;
-        }
-        return null;
-    }
 
     /**
      * Test if the given {@link CharSequence} contains any graphic characters,
@@ -207,22 +155,6 @@ public class ContactsUtils {
      * {@link com.silentcircle.contacts.model.account.AccountType#getInviteContactActivityClassName()} or
      * {@link com.silentcircle.contacts.model.account.AccountType#syncAdapterPackageName}).
      */
-    public static Intent getInvitableIntent(AccountType accountType, Uri lookupUri) {
-//        String syncAdapterPackageName = accountType.syncAdapterPackageName;
-//        String className = accountType.getInviteContactActivityClassName();
-//        if (TextUtils.isEmpty(syncAdapterPackageName) || TextUtils.isEmpty(className)) {
-//            return null;
-//        }
-//        Intent intent = new Intent();
-//        intent.setClassName(syncAdapterPackageName, className);
-//
-//        intent.setAction(ScContactsContract.Intents.INVITE_CONTACT);
-//
-//        // Data is the lookup URI.
-//        intent.setData(lookupUri);
-//        return intent;
-        return null;
-    }
 
     /**
      * Return Uri with an appropriate scheme, accepting Voicemail, SIP, and usual phone call
@@ -235,6 +167,39 @@ public class ContactsUtils {
         return Uri.fromParts(Constants.SCHEME_TEL, number, null);
      }
 
+    public static Uri getMessagingUri(String address) {
+        return new Uri.Builder().scheme(Constants.SCHEME_IMTO).authority("silentcircle").
+                appendPath(address).build();
+    }
+
+    public static Intent getAddNumberToContactIntent(Context ctx, CharSequence text, String assertedName) {
+        final Intent intent = new Intent(ctx, ContactAdder.class);
+        intent.putExtra("AssertedName", assertedName);
+        intent.putExtra("Text", text);
+
+        return intent;
+    }
+
+    public static Intent getAddNumberToContactIntent(CharSequence text) {
+        return getAddToContactIntent(null /* name */, text /* phoneNumber */,
+                -1 /* phoneNumberType */);
+    }
+
+    public static Intent getAddToContactIntent(CharSequence name, CharSequence phoneNumber,
+                                               int phoneNumberType) {
+        Intent intent = new Intent(Intent.ACTION_INSERT_OR_EDIT);
+        intent.putExtra(Insert.PHONE, phoneNumber);
+        // Only include the name and phone type extras if they are specified (the method
+        // getAddNumberToContactIntent does not use them).
+        if (name != null) {
+            intent.putExtra(Insert.NAME, name);
+        }
+        if (phoneNumberType != -1) {
+            intent.putExtra(Insert.PHONE_TYPE, phoneNumberType);
+        }
+        intent.setType(ContactsContract.Contacts.CONTENT_ITEM_TYPE);
+        return intent;
+    }
 
     /**
      * Get the EDIT_BEFORE_CALL action string.
@@ -242,7 +207,7 @@ public class ContactsUtils {
      * @return the correct action string.
      */
     public static String getEditBeforeCallAction() {
-        return SILENT_EDIT_BEFORE_CALL_ACTION;
+        return DialerActivity.SILENT_EDIT_BEFORE_CALL_ACTION;
     }
 
     /**
@@ -251,6 +216,10 @@ public class ContactsUtils {
      */
     public static Intent getCallIntent(String number) {
         return getCallIntent(number, null);
+    }
+
+    public static Intent getMessagingIntent(String address, Context context) {
+        return getMessagingIntent(address, null, context);
     }
 
     /**
@@ -274,20 +243,19 @@ public class ContactsUtils {
      * information about call origin, see comments in Phone package (PhoneApp).
      */
     public static Intent getCallIntent(Uri uri, String callOrigin) {
-        final Intent intent = new Intent(SILENT_CALL_ACTION, uri);
+        final Intent intent = new Intent(DialerActivity.SILENT_CALL_ACTION, uri);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         return intent;
     }
 
-    /**
-     * Returns a header view based on the R.layout.list_separator, where the
-     * containing {@link android.widget.TextView} is set using the given textResourceId.
-     */
-    public static View createHeaderView(Context context, int textResourceId) {
-        View view = View.inflate(context, R.layout.list_separator, null);
-        TextView textView = (TextView) view.findViewById(R.id.title);
-        textView.setText(context.getString(textResourceId));
-        return view;
+    public static Intent getMessagingIntent(String address, String callOrigin, Context context) {
+        return getMessagingIntent(getMessagingUri(address), callOrigin, context);
+    }
+
+    public static Intent getMessagingIntent(Uri uri, String callOrigin, Context context) {
+        final Intent intent = new Intent(Intent.ACTION_SENDTO, uri, context, ConversationActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        return intent;
     }
 
     /**
@@ -306,32 +274,5 @@ public class ContactsUtils {
         rect.right = (int) ((pos[0] + view.getWidth()) * appScale + 0.5f);
         rect.bottom = (int) ((pos[1] + view.getHeight()) * appScale + 0.5f);
         return rect;
-    }
-
-    /**
-     * Returns the size (width and height) of thumbnail pictures as configured in the provider. This
-     * can safely be called from the UI thread, as the provider can serve this without performing
-     * a database access
-     */
-    public static int getThumbnailSize(Context context) {
-        if (sThumbnailSize == -1) {
-            final Cursor c = context.getContentResolver().query(
-                    DisplayPhoto.CONTENT_MAX_DIMENSIONS_URI,
-                    new String[] { DisplayPhoto.THUMBNAIL_MAX_DIM }, null, null, null);
-            try {
-                c.moveToFirst();
-                sThumbnailSize = c.getInt(0);
-            } finally {
-                c.close();
-            }
-        }
-        return sThumbnailSize;
-    }
-
-    /**
-     * @return if the context is in landscape orientation.
-     */
-    public static boolean isLandscape(Context context) {
-        return context.getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE;
     }
 }

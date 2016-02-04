@@ -24,12 +24,12 @@ import android.util.Log;
 import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.QuickContactBadge;
 import android.widget.TextView;
 
 import com.silentcircle.common.MoreContactUtils;
 import com.silentcircle.contacts.ContactPhotoManagerNew;
 import com.silentcircle.contacts.ContactPhotoManagerNew.DefaultImageRequest;
-import com.silentcircle.contacts.widget.ScQuickContactBadgeNew;
 import com.silentcircle.silentphone2.R;
 
 /**
@@ -40,7 +40,7 @@ public abstract class ContactTileView extends FrameLayout {
 
     private Uri mLookupUri;
     private ImageView mPhoto;
-    private ScQuickContactBadgeNew mQuickContact;
+    private QuickContactBadge mQuickContact;
     private TextView mName;
     private TextView mStatus;
     private TextView mPhoneLabel;
@@ -59,7 +59,7 @@ public abstract class ContactTileView extends FrameLayout {
         super.onFinishInflate();
         mName = (TextView) findViewById(R.id.contact_tile_name);
 
-        mQuickContact = (ScQuickContactBadgeNew) findViewById(R.id.contact_tile_quick);
+        mQuickContact = (QuickContactBadge) findViewById(R.id.contact_tile_quick);
         mPhoto = (ImageView) findViewById(R.id.contact_tile_image);
         mStatus = (TextView) findViewById(R.id.contact_tile_status);
         mPhoneLabel = (TextView) findViewById(R.id.contact_tile_phone_type);
@@ -166,7 +166,7 @@ public abstract class ContactTileView extends FrameLayout {
         return mLookupUri;
     }
 
-    protected ScQuickContactBadgeNew getQuickContact() {
+    protected QuickContactBadge getQuickContact() {
         return mQuickContact;
     }
 

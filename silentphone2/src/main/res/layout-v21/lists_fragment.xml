@@ -26,7 +26,7 @@
             android:id="@+id/shortcut_card_list"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@color/black_dark_gray"
+            android:background="@color/background_dialer_list_items"
             android:paddingTop="1dp"
             android:clipToPadding="false"
             android:fadingEdge="none"
@@ -43,10 +43,16 @@
                 android:layout_height="match_parent"
                 android:orientation="vertical">
 
+            <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="@color/sc_ng_text_dark" />
+
             <com.silentcircle.contacts.widget.SlidingTabLayout
                     android:id="@+id/sliding_tabs"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"/>
+                    android:layout_height="wrap_content"
+                    android:background="@color/sc_ng_background_1"/>
 
             <!--
                         <com.android.contacts.common.list.ViewPagerTabs

@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2014-2015, Silent Circle, LLC. All rights reserved.
+Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -34,6 +34,7 @@ import android.content.SharedPreferences;
 import android.util.Log;
 
 import com.silentcircle.contacts.providers.ScContactsDatabaseHelper;
+import com.silentcircle.messaging.services.AxoMessaging;
 import com.silentcircle.silentphone2.util.ConfigurationUtilities;
 
 import net.sqlcipher.database.SQLiteDatabase;
@@ -128,6 +129,10 @@ public class KeyStoreHelper {
         ScContactsDatabaseHelper db = ScContactsDatabaseHelper.getInstance(ctx);
         if (!db.isReady())
             db.onKeyManagerUnlockRequest();
+
+        AxoMessaging axoService = AxoMessaging.getInstance(ctx);
+        if (!axoService.isReady())
+            axoService.initialize();
 
         return true;
     }

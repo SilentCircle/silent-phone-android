@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2015, Silent Circle, LLC. All rights reserved.
+Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -35,6 +35,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.text.method.LinkMovementMethod;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -42,7 +43,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.CheckBox;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.ScrollView;
@@ -51,6 +51,7 @@ import android.widget.TextView;
 import com.silentcircle.silentphone2.BuildConfig;
 import com.silentcircle.silentphone2.R;
 import com.silentcircle.silentphone2.activities.ProvisioningActivity;
+import com.silentcircle.silentphone2.services.TiviPhoneService;
 import com.silentcircle.silentphone2.util.ConfigurationUtilities;
 import com.silentcircle.silentphone2.util.Constants;
 import com.silentcircle.silentphone2.util.PinnedCertificateHandling;
@@ -82,9 +83,8 @@ public class AccountStep3 extends Fragment implements View.OnClickListener {
     private CheckBox mTcCheckbox;
     private ScrollView mScroll;
     private ProgressBar mProgress;
-    private ImageView mInProgressImage;
+    private View mProgressInner;
     private LinearLayout mButtons;
-    private TextView mHeaderText;
 
     private String mApiKey;
 
@@ -133,7 +133,7 @@ public class AccountStep3 extends Fragment implements View.OnClickListener {
             return;
         }
         // Add the feature code / license code to JSON data
-        // only do this if an account is being created
+        // only do this if an account is being created (SPA-930)
         JSONObject data = mParent.getJsonHolder();
         if (mRoninCode != null && !mUseExistingAccount) {
             try {
@@ -173,24 +173,24 @@ public class AccountStep3 extends Fragment implements View.OnClickListener {
 
         mTcCheckbox = (CheckBox) stepView.findViewById(R.id.CheckBoxTC);
         mProgress = (ProgressBar) stepView.findViewById(R.id.ProgressBar);
+        mProgressInner = stepView.findViewById(R.id.ProvisioningInProgress);
         mScroll = (ScrollView) stepView.findViewById(R.id.Scroll);
         mButtons = (LinearLayout) stepView.findViewById(R.id.ProvisioningButtons);
-        mInProgressImage = (ImageView) stepView.findViewById(R.id.ProvisioningInProgress);
 
         ((TextView)stepView.findViewById(R.id.CheckBoxTCText)).setMovementMethod(LinkMovementMethod.getInstance());
 
         stepView.findViewById(R.id.back).setOnClickListener(this);
         stepView.findViewById(R.id.create).setOnClickListener(this);
 
-        mHeaderText = (TextView)stepView.findViewById(R.id.HeaderText);
+        TextView headerText = (TextView)stepView.findViewById(R.id.HeaderText);
         stepView.setBackgroundColor(getResources().getColor(R.color.auth_background_grey));
-
         if (mUseExistingAccount) {
-            mHeaderText.setText(getString(R.string.sign_in));
+            headerText.setText(getString(R.string.sign_in));
+            ((TextView)stepView.findViewById(R.id.create)).setText(getText(R.string.next));
             startLoadingRegisterDevice();
-        } else
+        } else {
             startLoadingCreateAccount();
-
+        }
         return stepView;
     }
 
@@ -225,18 +225,16 @@ public class AccountStep3 extends Fragment implements View.OnClickListener {
 
     private void showProgressBar() {
         mProgress.setVisibility(View.VISIBLE);
-        mInProgressImage.setVisibility(View.VISIBLE);
+        mProgressInner.setVisibility(View.VISIBLE);
         mScroll.setVisibility(View.INVISIBLE);
         mButtons.setVisibility(View.INVISIBLE);
     }
 
     private void createAccount() {
-//        SPA-683: removed the T&S and the check box
-//        if (!mTcCheckbox.isChecked()) {
-//            mParent.showInputInfo(getString(R.string.provisioning_check_tc));
-//            return;
-//        }
-        startLoadingCreateAccount();
+        if (mUseExistingAccount) {
+            startLoadingRegisterDevice();
+        } else
+            startLoadingCreateAccount();
     }
 
     // The loader tasks use it to switch on UI fields. If running for an existing account
@@ -362,7 +360,7 @@ public class AccountStep3 extends Fragment implements View.OnClickListener {
 
         // Serious problem. Rearrange the UI, the show the error text and button
         mProgress.setVisibility(View.INVISIBLE);
-        mInProgressImage.setVisibility(View.INVISIBLE);
+        getView().findViewById(R.id.ProvisioningInProgress).setVisibility(View.INVISIBLE);
         mScroll.setVisibility(View.VISIBLE);
         mButtons.setVisibility(View.GONE);
         view.findViewById(R.id.CheckBoxTCText).setVisibility(View.GONE);
@@ -476,21 +474,21 @@ public class AccountStep3 extends Fragment implements View.OnClickListener {
      * the same loader as we use it in normal username/password provisioning
      * ******************************************************************************* */
     private void startLoadingRegisterDevice() {
-        JSONObject data;
+        JSONObject data = null;
         // Setup other JSON and fill it with data we need for device provisioning
         if (mParent == null)
             return;
+        String hwDeviceId = Utilities.hashMd5(TiviPhoneService.getHwDeviceId(mParent));
         try {
-
+            final String deviceName = Build.MODEL;
             data = new JSONObject(mParent.getJsonHolder(), new String[] {"username"});
             data.put("password", mParent.getJsonHolder().getString(mUseExistingAccount ? "current_password" : "password"));
-            data.put("device_name", Build.MODEL);
+            data.put("device_name", deviceName);
+            data.put("persistent_device_id", hwDeviceId);
             data.put("app", "silent_phone");
             data.put("device_class", "android");
             data.put("version", BuildConfig.SPA_BUILD_NUMBER);
-        } catch (JSONException e) {
-            e.printStackTrace();        // TODO Error handling - this is a severe problem
-            return;
+        } catch (JSONException ignore) {
         }
         showProgressBar();
         LoaderTaskRegisterDevice loaderTask = new LoaderTaskRegisterDevice(data);

@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2014-2015, Silent Circle, LLC. All rights reserved.
+Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -255,7 +255,7 @@ public class StatusProvider extends ContentProvider {
         if (!TiviPhoneService.isInitialized())
             return NOT_STARTED;
 
-        if (TiviPhoneService.mc == null && TiviPhoneService.doCmd("isProv") == 0)
+        if (TiviPhoneService.phoneService == null && TiviPhoneService.doCmd("isProv") == 0)
             return NOT_PROVISIONED;
 
         int i = TiviPhoneService.getPhoneState();

@@ -101,8 +101,7 @@
         <include layout="@layout/incall_call_info" />
 
         <!-- Main cluster of onscreen buttons on the lower part of the screen. -->
-        <LinearLayout 
-                xmlns:android="http://schemas.android.com/apk/res/android"
+        <LinearLayout
                 android:id="@+id/bottomButtons"
                 android:orientation="vertical"
                 android:layout_width="match_parent"
@@ -135,6 +134,12 @@
                         style="@style/InCallCompoundButton"
                         android:contentDescription="@string/add_call"
                         android:src="?sp_ic_add_call"/>
+                <ImageButton
+                    android:id="@+id/start_chat_image"
+                    style="@style/InCallCompoundButton"
+                    android:contentDescription="@string/chat"
+                    android:src="?sp_ic_start_chat"
+                    android:visibility="visible"/>
                 <ImageButton
                         android:id="@+id/audio_image"
                         style="@style/InCallCompoundButton"

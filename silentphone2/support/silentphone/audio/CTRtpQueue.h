@@ -1,32 +1,6 @@
-/*
-Created by Janis Narbuts
-Copyright (C) 2004-2012, Tivi LTD, www.tiviphone.com. All rights reserved.
-Copyright (C) 2012-2015, Silent Circle, LLC.  All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-    * Any redistribution, use, or modification is done solely for personal
-      benefit and not for any commercial purpose or for monetary gain
-    * Redistributions of source code must retain the above copyright
-      notice, this list of conditions and the following disclaimer.
-    * Redistributions in binary form must reproduce the above copyright
-      notice, this list of conditions and the following disclaimer in the
-      documentation and/or other materials provided with the distribution.
-    * Neither the name Silent Circle nor the
-      names of its contributors may be used to endorse or promote products
-      derived from this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL SILENT CIRCLE, LLC BE LIABLE FOR ANY
-DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
+//VoipPhone
+//Created by Janis Narbuts
+//Copyright (c) 2004-2012 Tivi LTD, www.tiviphone.com. All rights reserved.
 
 #ifndef _C_T_RTP_QUEUE_H
 #define _C_T_RTP_QUEUE_H
@@ -195,6 +169,8 @@ class CTRtpQueue{
    int iRealDataReceived;
    
 public:
+   int iReducePlayDelayCnt;
+   
    CTRtpQueue(){iPacketsAdded=iLostCnt=0;iErrFlag=0;reset();iHWReadSamples=300;iRate=16000;dJit=0;memset(qPack,0,sizeof(qPack));}
    ~CTRtpQueue(){reset();}
    
@@ -226,7 +202,7 @@ public:
       }
       if(1)
       {
-         sprintf(b,"Max burst=%d end",iMaxBurstCall==1?0:iMaxBurstCall);
+         sprintf(b,"Max burst=%d pf=%d end",iMaxBurstCall==1?0:iMaxBurstCall,iReducePlayDelayCnt);
          log_audio(tag, b);
       }
       
@@ -239,6 +215,7 @@ public:
       
       roc.reset();
       
+      iReducePlayDelayCnt=0;
       iPrevWasOK=0;
       iRealDataReceived=0;
       iPlaySlowerFlag=0;
@@ -272,7 +249,7 @@ public:
          qPack[i].seq=-1; //must be set here else "if(q->seq == tsG){iErrFlag|=256;return 0;}" will fail
       }
       if(mem.bytesUsed())
-         printf("[rel rtpQ mem=[%d must be 0] was=%d]",mem.bytesUsed(), bu);
+         t_logf(log_events, __FUNCTION__,"[rel rtpQ mem=[%d must be 0] was=%d]",mem.bytesUsed(), bu);
       
       qPrevRecv=NULL;
       mem.reset();
@@ -423,12 +400,14 @@ public:
          static int dbg;
          if((dbg&127)==1){
             
+            
             if(si<100 || dJit>0.2 || (dbg&((1<<12)-1))==1){
-               printf("==[bp=%u pp=%u dJit=%.3f ns=%d si=%d tq=%d  mb=%d pb=%d ef=%x errs=%d lr=%u spdq=%u mem=%d]==\n"
+               t_logf(log_audio_stats, __FUNCTION__,"%p [bp=%u pp=%u dJit=%.3f ns=%d si=%d tq=%d  mb=%d pb=%d ef=%x errs=%d lr=%u spdq=%u mem=%d pf=%d]"
+                      ,getEncryptedPtr_debug(this)
                    ,uiBufferedTS,uiPlayPos, dJit,iNeedSamplesInBuf,si,iSamplesInTmpQueueLeft
                    ,iMaxBurstCnt,iPrevBurstCnt
                    ,iErrFlag,iErrs,uiLastReceiveSeq,iSeqPlayDecodePackInQueue
-                   ,mem.bytesUsed());
+                   ,mem.bytesUsed(),iReducePlayDelayCnt);
             }
          }
          dbg++;

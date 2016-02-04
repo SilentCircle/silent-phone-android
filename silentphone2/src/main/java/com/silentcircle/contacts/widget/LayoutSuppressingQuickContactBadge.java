@@ -16,6 +16,7 @@
 
 package com.silentcircle.contacts.widget;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.util.AttributeSet;
 import android.widget.QuickContactBadge;
@@ -26,12 +27,13 @@ import android.widget.QuickContactBadge;
  * This improves the performance by not passing requestLayout() to its parent, taking advantage
  * of knowing that image size won't change once set.
  */
-public class LayoutSuppressingQuickContactBadge extends ScQuickContactBadge {
+public class LayoutSuppressingQuickContactBadge extends QuickContactBadge {
 
     public LayoutSuppressingQuickContactBadge(Context context, AttributeSet attrs) {
         super(context, attrs);
     }
 
+    @SuppressLint("MissingSuperCall")
     @Override
     public void requestLayout() {
         forceLayout();

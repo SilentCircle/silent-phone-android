@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item type="id" name="pending"/>
+    <item type="id" name="share"/>
+    <item type="id" name="copy"/>
+
+    <!-- id used in alarm notification for a new message -->
+    <item type="id" name="messaging_notification" />
+
+    <!-- id for list item's position tag -->
+    <item type="id" name="position" />
+</resources>

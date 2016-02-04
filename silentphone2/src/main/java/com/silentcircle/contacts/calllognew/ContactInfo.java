@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2015, Silent Circle, LLC. All rights reserved.
+Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -51,6 +51,7 @@ package com.silentcircle.contacts.calllognew;
 import android.net.Uri;
 import android.text.TextUtils;
 
+import com.google.common.base.Objects;
 import com.silentcircle.contacts.utils.UriUtils;
 
 /**
@@ -58,6 +59,7 @@ import com.silentcircle.contacts.utils.UriUtils;
  */
 public final class ContactInfo {
     public Uri lookupUri;
+    public String lookupKey;
     public String name;
     public int type;
     public String label;
@@ -66,11 +68,16 @@ public final class ContactInfo {
     public String normalizedNumber;
     /** The photo for the contact, if available. */
     public long photoId;
-    public long photoFileId;
     /** The high-res photo for the contact, if available. */
     public Uri photoUri;
+    public boolean isBadData;
+    public String objectId;
 
     public static ContactInfo EMPTY = new ContactInfo();
+
+    public static String GEOCODE_AS_LABEL = "";
+
+    public int sourceType = 0;
 
     @Override
     public int hashCode() {
@@ -99,6 +106,15 @@ public final class ContactInfo {
         if (!TextUtils.equals(normalizedNumber, other.normalizedNumber)) return false;
         if (photoId != other.photoId) return false;
         if (!UriUtils.areEqual(photoUri, other.photoUri)) return false;
+        if (!TextUtils.equals(objectId, other.objectId)) return false;
         return true;
+    }
+
+    @Override
+    public String toString() {
+        return Objects.toStringHelper(this).add("lookupUri", lookupUri).add("name", name).add(
+                "type", type).add("label", label).add("number", number).add("formattedNumber",
+                formattedNumber).add("normalizedNumber", normalizedNumber).add("photoId", photoId)
+                .add("photoUri", photoUri).add("objectId", objectId).toString();
     }
 }

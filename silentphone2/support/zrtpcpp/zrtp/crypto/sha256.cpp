@@ -69,10 +69,29 @@ void closeSha256Context(void* ctx, unsigned char* digest)
 {
     sha256_ctx* hd = reinterpret_cast<sha256_ctx*>(ctx);
 
-    if (digest != NULL) {
+    if (digest != NULL && hd != NULL) {
         sha256_end(digest, hd);
     }
     free(hd);
+}
+
+void* initializeSha256Context(void* ctx)
+{
+    sha256_ctx* hd = reinterpret_cast<sha256_ctx*>(ctx);
+
+    if (hd != NULL) {
+        sha256_begin(hd);
+    }
+    return (void*)hd;
+}
+
+void finalizeSha256Context(void* ctx, unsigned char* digest)
+{
+    sha256_ctx* hd = reinterpret_cast<sha256_ctx*>(ctx);
+
+    if (digest != NULL && hd != NULL) {
+        sha256_end(digest, hd);
+    }
 }
 
 void sha256Ctx(void* ctx, unsigned char* data, unsigned int dataLength)

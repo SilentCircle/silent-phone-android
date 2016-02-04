@@ -22,7 +22,7 @@
     android:orientation="vertical"
     android:divider="?android:attr/dividerHorizontal"
     android:showDividers="end"
-    android:background="@color/background_dialer_list_items">
+    android:background="@drawable/bg_window_dark">
 
 <!--    <FrameLayout
         android:id="@+id/voicemail_status"
@@ -70,8 +70,7 @@
             android:nestedScrollingEnabled="true"
             android:clipChildren="false"
         />
-<!-- android:background="@color/black_background"
--->
+
         <include
             android:id="@+id/empty_list_view"
             android:layout_width="match_parent"

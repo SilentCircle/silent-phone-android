@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@android:id/text1"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:textSize="@dimen/text_xlarge"
+    android:gravity="center_vertical"
+    android:paddingLeft="@dimen/spacing_xlarge"
+    android:ellipsize="end"
+    android:singleLine="true"
+    android:textColor="@drawable/message_summary_text_color"
+    android:background="@drawable/bg_vcard_list_entry"
+    android:minHeight="?android:attr/listPreferredItemHeightSmall"
+    tools:text="Everything about a contact" />

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<inset xmlns:android="http://schemas.android.com/apk/res/android"
+    android:drawable="@color/chat_options_drawer_background"
+    android:insetLeft="10dp"
+    android:insetRight="10dp">
+</inset>

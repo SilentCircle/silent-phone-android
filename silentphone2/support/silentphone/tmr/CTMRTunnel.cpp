@@ -1,32 +1,6 @@
-/*
-Created by Janis Narbuts
-Copyright (C) 2004-2012, Tivi LTD, www.tiviphone.com. All rights reserved.
-Copyright (C) 2012-2015, Silent Circle, LLC.  All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-    * Any redistribution, use, or modification is done solely for personal
-      benefit and not for any commercial purpose or for monetary gain
-    * Redistributions of source code must retain the above copyright
-      notice, this list of conditions and the following disclaimer.
-    * Redistributions in binary form must reproduce the above copyright
-      notice, this list of conditions and the following disclaimer in the
-      documentation and/or other materials provided with the distribution.
-    * Neither the name Silent Circle nor the
-      names of its contributors may be used to endorse or promote products
-      derived from this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL SILENT CIRCLE, LLC BE LIABLE FOR ANY
-DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
+//VoipPhone
+//Created by Janis Narbuts
+//Copyright (c) 2004-2012 Tivi LTD, www.tiviphone.com. All rights reserved.
 
 #include "CTMRTunnel.h"
 #include "tmr_create_pack.h"
@@ -36,8 +10,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../os/CTTcp.h"
 #include "../os/CTMutex.h"
 
-#include "stdlib.h"//qsort
+#include <stdlib.h>//qsort
 
+#include "../tiviengine/tivi_log.h"
 
 //#define T_TMR_TEST
 #ifdef _WIN32
@@ -70,7 +45,7 @@ void CTMRConnectionInfo::updateMedianRT(int n_rt){
       rtPos = 0;
       qsort(&lastRoundtrips[0],127, sizeof(int),q_compareInt);
       iMedianRT = lastRoundtrips[63];
-      printf("[iMedianRT=%d mi%d ma%d]\n",iMedianRT, lastRoundtrips[0], lastRoundtrips[126]);
+      t_logf(log_audio_stats, __FUNCTION__,"TMR iMedianRT=%d mi%d ma%d",iMedianRT, lastRoundtrips[0], lastRoundtrips[126]);
       iMinRoundtripTime = (lastRoundtrips[0]+iMinRoundtripTime+1)>>1;
       iLastMaxRT = lastRoundtrips[120];
       //TODO mark we can update to recomended socket count 
@@ -220,7 +195,7 @@ int CTMRConnector::_send(void *p, int iLen){
    sentAt = getTC();
    int r = s ? s->_send((char*)p, iLen):-3;
    if(((char *)p)[4]!='R' && ((char *)p)[4]!='p')
-      printf("[_send %c %d]\n", ((char *)p)[4],r);
+      t_logf(log_audio, __FUNCTION__,"[_send %c %d]", ((char *)p)[4],r);
    return r;
 }
 
@@ -413,7 +388,7 @@ int CTMRConnector::workerThread(){
    s->closeSocket();
    Sleep(200);
    delete s;
-   printf("exit th st[S%lld R%lld RT%d v%d sentat%llu mid%llu] \n",rtpPacketsSent,rtpPacketsReceived, roundtrip, tmr_info->iIsVideo, pingSentAt,tmr_info->mediaID);
+   t_logf(log_audio_stats, __FUNCTION__,"exit th st[S%lld R%lld RT%d v%d sentat%llu mid%llu]",rtpPacketsSent,rtpPacketsReceived, roundtrip, tmr_info->iIsVideo, pingSentAt,tmr_info->mediaID);
    if(iResetInTh)iInThread=0;
    return 0;
 }
@@ -466,14 +441,14 @@ int CTMRConnector::onRcv(unsigned char *pack, int iLen){
       }
       
       if(pack[0]!='u' && pack[0]!='c'){
-         printf("[Warn: TMR first byte = (%c %d)]",pack[0], pack[0]);
+         t_logf(log_events, __FUNCTION__,"[Warn: TMR first byte = (%c %d)]",pack[0], pack[0]);
          return 0;
       }
       
       TMR_PACK_STR tmr;
       int r = parseTMR(&tmr, pack+1, iLen-1);
       if(r<0){
-         printf("[err parseTMR()=%d]\n",r);
+         t_logf(log_events, __FUNCTION__,"[err parseTMR()=%d]\n",r);
          return r;
       }
       
@@ -482,7 +457,7 @@ int CTMRConnector::onRcv(unsigned char *pack, int iLen){
       int code = -1;
       tmr.getValue(TMR_PACK_STR::eRESP_CODE,&code);
       if(code!=200){
-         printf("[err TMR_PACK_IDS::eRESP_CODE %d]\n",code);
+         t_logf(log_events, __FUNCTION__,"[err TMR_PACK_IDS::eRESP_CODE %d]\n",code);
          stop();
          return 0;
       }
@@ -492,7 +467,7 @@ int CTMRConnector::onRcv(unsigned char *pack, int iLen){
       if(tmr.getValue(TMR_PACK_STR::eSERV_PORT, &port)<0 ||
               tmr.getValue(TMR_PACK_STR::eSERV_IP4, &ip)<0){
 
-         printf("[err TMR_PACK_IDS::eSERV_IP4 || TMR_PACK_IDS::eSERV_PORT]\n");
+         t_logf(log_events, __FUNCTION__,"[err TMR_PACK_IDS::eSERV_IP4 || TMR_PACK_IDS::eSERV_PORT]\n");
       }
       
       tmr.getValue(TMR_PACK_STR::eMEDIA_ID, &tmr_info->mediaID);

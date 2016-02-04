@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2014-2015, Silent Circle, LLC. All rights reserved.
+Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -303,7 +303,7 @@ public class SearchIndexManager {
         final long start = SystemClock.elapsedRealtime();
         int count = 0;
         try {
-            mDbHelper.createSearchIndexTable(db, true);
+            mDbHelper.createSearchIndexTable(db);
             count = buildAndInsertIndex(db, null);
         } finally {
             mContactsProvider.setProviderStatus(ProviderStatus.STATUS_NORMAL);

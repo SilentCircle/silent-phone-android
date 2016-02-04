@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.silentcircle.messaging.views.ComposeView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    style="@style/Compose">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_toLeftOf="@+id/compose_send"
+        android:background="@color/chat_compose_background">
+
+        <com.silentcircle.messaging.views.ComposeText
+            android:id="@+id/compose_text"
+            style="@style/ComposeText"
+            android:hint="@string/messaging_compose_hint"
+            android:textColorHint="@color/chat_compose_hint"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_gravity="center_vertical" />
+
+        <ImageView
+            android:id="@+id/compose_attach"
+            style="@style/ComposeAttach"
+            android:layout_toLeftOf="@+id/compose_send"
+            android:contentDescription="@string/messaging_attach_file"
+            android:visibility="gone"
+            android:layout_gravity="center_vertical" />
+
+    </LinearLayout>
+
+    <ImageView
+        android:id="@+id/compose_send"
+        style="@style/ComposeSend"
+        android:contentDescription="@string/messaging_send_message" />
+
+</com.silentcircle.messaging.views.ComposeView>

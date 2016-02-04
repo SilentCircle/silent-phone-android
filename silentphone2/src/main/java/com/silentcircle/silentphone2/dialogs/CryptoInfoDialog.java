@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2014-2015, Silent Circle, LLC. All rights reserved.
+Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -60,6 +60,12 @@ import java.util.TimeZone;
  * <p/>
  * Created by werner on 01.04.14.
  */
+// ---LICENSE_BEGIN---
+/*
+ * Copyright © 2014, Silent Circle
+ * All rights reserved.
+ */
+// ---LICENSE_END---
 
 public class CryptoInfoDialog extends DialogFragment implements View.OnClickListener {
 

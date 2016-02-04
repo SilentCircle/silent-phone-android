@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.silentcircle.messaging.views.ContactView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:orientation="vertical"
+    tools:showIn="@layout/vcard">
+
+    <ScrollView
+        android:id="@+id/contact_details_scroll_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <ImageView android:id="@+id/contact_avatar"
+                    android:layout_height="wrap_content"
+                    android:layout_width="match_parent"
+                    android:scaleType="fitCenter"
+                    android:adjustViewBounds="true" />
+
+                <!-- android:src="@drawable/ic_avatar_placeholder" -->
+
+                <LinearLayout
+                    style="@style/Widget.Silence.LinearLayout.Vertical"
+                    android:padding="@dimen/spacing_normal"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="bottom">
+
+                    <TextView
+                        android:id="@+id/display_name"
+                        style="@style/Widget.Silence.TextView"
+                        android:textSize="@dimen/text_xxlarge"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        tools:text="@string/sample_recipient" />
+
+                    <TextView
+                        android:id="@+id/phonetic_name"
+                        style="@style/Widget.Silence.TextView"
+                        android:textSize="@dimen/text_xlarge"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:visibility="gone"
+                        tools:text="@string/sample_recipient" />
+
+                    <TextView
+                        android:id="@+id/username"
+                        style="@style/Widget.Silence.TextView"
+                        android:textColor="@color/silent_glass"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        tools:text="@string/sample_stylized_username" />
+
+                </LinearLayout>
+
+            </FrameLayout>
+
+
+            <LinearLayout
+                android:id="@+id/contact_details_container"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+
+        </LinearLayout>
+
+    </ScrollView>
+
+</com.silentcircle.messaging.views.ContactView>

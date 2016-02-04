@@ -1,32 +1,8 @@
-/*
-Created by Janis Narbuts
-Copyright (C) 2004-2012, Tivi LTD, www.tiviphone.com. All rights reserved.
-Copyright (C) 2012-2015, Silent Circle, LLC.  All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-    * Any redistribution, use, or modification is done solely for personal
-      benefit and not for any commercial purpose or for monetary gain
-    * Redistributions of source code must retain the above copyright
-      notice, this list of conditions and the following disclaimer.
-    * Redistributions in binary form must reproduce the above copyright
-      notice, this list of conditions and the following disclaimer in the
-      documentation and/or other materials provided with the distribution.
-    * Neither the name Silent Circle nor the
-      names of its contributors may be used to endorse or promote products
-      derived from this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL SILENT CIRCLE, LLC BE LIABLE FOR ANY
-DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
+// VoipPhone
+// Created by Janis Narbuts
+// Copyright (c) 2004-2012 Tivi LTD, www.tiviphone.com. All rights reserved.
+//
+// Modified by Werner Dittmann
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -170,7 +146,6 @@ static char g_prefLang[16] = "en";
 // Version name of SPA
 static char g_versionName[16] = {'\0'};
 
-
 JavaVM *t_getJavaVM() {
     return g_JavaVM;
 }
@@ -246,6 +221,7 @@ void tivi_log1(const char *p, int val){
 
 
 static char devID[128] = "";
+static char devIDmd5[64]="";
 
 const char *t_getDevID(int &l) {
     l = strlen(devID);
@@ -253,14 +229,7 @@ const char *t_getDevID(int &l) {
 }
 
 const char *t_getDevID_md5() {
-    static char buf[64]="";
-
-    if (!buf[0]) {
-        int l = 0;
-        l = calcMD5((unsigned char *)devID, strlen(devID), buf);
-        buf[l] = 0;
-    }
-    return buf;
+    return devIDmd5;
 }
 
 const char *t_getDev_name(){
@@ -272,6 +241,81 @@ float cpu_usage()
     return 0.1;
 }
 
+#ifdef WITH_AXOLOTL
+extern void loadAxolotl();
+
+void axoLoad()
+{
+    androidLog("Dummy function to force linking of Axolotl static lib\n");
+    loadAxolotl();
+}
+#endif
+//TODO make the same for iOS and Android
+static char push_token[256]={0};
+const char *push_fn = "push-token.txt";
+char * getFileStorePath(void);
+char *loadFile(const  char *fn, int &iLen);
+void saveFile(const char *fn,void *p, int iLen);
+
+void setPushToken(const char *p){
+   int l = snprintf(push_token, sizeof(push_token),"%s",p);
+   char fn[2048];
+   snprintf(fn,sizeof(fn)-1, "%s/%s", getFileStorePath(),push_fn);
+   
+   saveFile(fn, (void*)p, l);
+   
+   void *getAccountByID(int id);
+   void * ph = getAccountByID(0);
+   if(!ph)return;
+   
+   const char* sendEngMsg(void *pEng, const char *p);
+   
+   const char*res =  sendEngMsg(NULL, "all_online");
+   if(res && strcmp(res,"true")==0){
+      sendEngMsg(NULL,":rereg");
+   }
+
+}
+
+
+const char *getPushToken(){
+   if(push_token[0]) return &push_token[0];
+   static int iTestet=0;
+   if(!iTestet){
+      iTestet=1;
+      char fn[2048];
+      snprintf(fn,sizeof(fn)-1, "%s/%s", getFileStorePath(), push_fn);
+      
+      int l=0;
+      char *p = loadFile(fn, l);
+      if(p && l>0){
+         snprintf(push_token, sizeof(push_token),"%s",p);
+         delete p;
+      }
+      
+   }
+   
+   return &push_token[0];
+}
+
+
+const char *getAppID(){
+   static char appid[256]={0};
+   if(appid[0])return appid;
+   
+   
+   const char *p = "put.correct.app_name.here";
+   
+#if defined(DEBUG)
+   snprintf(appid, sizeof(appid), "%s--DEV", p);
+#else
+   snprintf(appid, sizeof(appid), "%s", p);
+#endif
+   
+   
+   return appid;
+   
+}
 
 const char *createZeroTerminated(char *out, int iMaxOutSize, const char *in, int iInLen){
     const char *p = in;
@@ -444,6 +488,10 @@ JNI_FUNCTION(saveImei)(JNIEnv* env, jclass thiz, jstring str)
 
     strncpy(devID, b, sizeof(devID)-1);
     devID[sizeof(devID)-1] = 0;
+
+    int l = 0;
+    l = calcMD5((unsigned char *)devID, strlen(devID), devIDmd5);
+    devIDmd5[l] = 0;
 
     setImei((char*)b);
     env->ReleaseStringUTFChars(str, b);
@@ -757,6 +805,33 @@ JNI_FUNCTION(getZrtpCounters)(JNIEnv *env, jclass thizz, jint iCallID)
     return intArray;
 }
 
+JNIEXPORT jint JNICALL
+JNI_FUNCTION(getNumAccounts)(JNIEnv* env, jclass thiz)
+{
+    int cnt=0;
+
+    for(int i=0;i<20;i++){
+        void *pCurService=getAccountByID(i);
+        if(pCurService){
+            cnt++;
+        }
+    }
+
+    return cnt;
+}
+
+JNIEXPORT void JNICALL
+JNI_FUNCTION(setPushToken)(JNIEnv* env, jclass thiz, jstring str)
+{
+ __android_log_write(ANDROID_LOG_VERBOSE,"tivi","TiviPhoneService_setPushToken");
+ if(str == NULL){
+     return;
+ }
+ const char *regId = (const char *)env->GetStringUTFChars(str, 0);
+ setPushToken(regId);
+ env->ReleaseStringUTFChars(str, regId);
+ return;
+}
 
 #ifdef __cplusplus
 }

@@ -20,28 +20,25 @@ import android.content.AsyncQueryHandler;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.database.Cursor;
-import android.database.MatrixCursor;
-import android.database.MergeCursor;
 import android.database.sqlite.SQLiteDatabaseCorruptException;
 import android.database.sqlite.SQLiteDiskIOException;
-import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteFullException;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
-//import android.provider.CallLog.Calls;
-import android.provider.VoicemailContract.Status;
 import android.util.Log;
 
-//import com.android.common.io.MoreCloseables;
-// import com.android.dialer.voicemail.VoicemailStatusHelperImpl;
 import com.google.common.collect.Lists;
 import com.silentcircle.common.database.NoNullCursorAsyncQueryHandler;
 import com.silentcircle.silentcontacts2.ScCallLog.ScCalls;
 
 import java.lang.ref.WeakReference;
 import java.util.List;
+
+//import android.provider.CallLog.Calls;
+//import com.android.common.io.MoreCloseables;
+// import com.android.dialer.voicemail.VoicemailStatusHelperImpl;
 
 /** Handles asynchronous queries to the call log. */
 public class CallLogQueryHandler extends NoNullCursorAsyncQueryHandler {
@@ -109,7 +106,7 @@ public class CallLogQueryHandler extends NoNullCursorAsyncQueryHandler {
 
     public CallLogQueryHandler(ContentResolver contentResolver, Listener listener, int limit) {
         super(contentResolver);
-        mListener = new WeakReference<Listener>(listener);
+        mListener = new WeakReference<>(listener);
         mLogLimit = limit;
     }
 

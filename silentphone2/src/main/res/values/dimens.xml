@@ -81,6 +81,7 @@
     <dimen name="call_log_name_margin_bottom">2dp</dimen>
     <dimen name="call_log_list_item_height">56dip</dimen>
     <dimen name="call_log_primary_text_size">16sp</dimen>
+    <dimen name="call_log_primary_text_size_large">18sp</dimen>
     <dimen name="call_log_secondary_text_size">14sp</dimen>
     <dimen name="call_log_day_group_padding_top">15dp</dimen>
     <dimen name="call_log_day_group_padding_bottom">9dp</dimen>
@@ -99,6 +100,12 @@
     <dimen name="call_log_list_item_actions_text_size">12sp</dimen>
     <dimen name="call_log_item_extra_padding_vertical">4dp</dimen>
 
+    <dimen name="call_detail_horizontal_margin">16dp</dimen>
+    <dimen name="call_detail_top_margin">36dp</dimen>
+    <dimen name="call_detail_bottom_margin">32dp</dimen>
+    <dimen name="call_detail_translation_z">0.5dp</dimen>
+    <dimen name="call_detail_header_top_margin">20dp</dimen>
+    <dimen name="call_detail_header_bottom_margin">9dp</dimen>
 
     <!-- Minimum height used with @drawable/list_section_divider_holo_custom.
          Right now the drawable has implicit 32dip minimal height, which is confusing.
@@ -502,5 +509,114 @@
     <!-- Search box text size -->
     <dimen name="search_text_size">20sp</dimen>
 
+
+    <!-- Dimensions for messaging wdgets -->
+    <!-- TODO: names too generic -->
+    <dimen name="text_xxlarge">22sp</dimen>
+    <dimen name="text_xlarge">18sp</dimen>
+    <dimen name="text_normal">12sp</dimen>
+    <dimen name="text_large">14sp</dimen>
+    <dimen name="text_small">10sp</dimen>
+
+    <dimen name="progress_height">4dp</dimen>
+    <dimen name="messaging_chat_item_divider_height">0dp</dimen>
+    <dimen name="messaging_actionbar_photo_margin_right">12dp</dimen>
+    <dimen name="spacing_tiny">2dp</dimen>
+
+    <dimen name="spacing_small">4dp</dimen>
+    <dimen name="spacing_large">16dp</dimen>
+    <dimen name="spacing_xlarge">32dp</dimen>
+
+    <dimen name="space_small">@dimen/spacing_small</dimen>
+    <dimen name="space_normal">@dimen/spacing_normal</dimen>
+    <dimen name="space_large">@dimen/spacing_large</dimen>
+
+    <dimen name="ic_action_width">44dp</dimen>
+    <dimen name="ic_action_height">44dp</dimen>
+
+    <dimen name="ic_inline_width">16dp</dimen>
+    <dimen name="ic_inline_height">16dp</dimen>
+    <dimen name="avatar_xlarge">160dp</dimen>
+    <dimen name="avatar_large">120dp</dimen>
+    <dimen name="avatar_normal">64dp</dimen>
+    <dimen name="avatar_small">40dp</dimen>
+
+    <dimen name="stroke_thin">1px</dimen>
+    <dimen name="stroke_normal">1dp</dimen>
+
+    <dimen name="drawer_width">280dp</dimen>
+
+    <dimen name="tab_notification_margin_left">10dp</dimen>
+    <dimen name="tab_notification_margin_bottom">10dp</dimen>
+
+    <dimen name="messaging_message_summary_text_padding">5dp</dimen>
+    <dimen name="messaging_message_info_small_text_size">10sp</dimen>
+    <dimen name="messaging_message_state_debug_text_size">7dp</dimen>
+    <dimen name="messaging_message_card_min_width">150dp</dimen>
+    <dimen name="messaging_message_card_min_height">65dp</dimen>
+    <dimen name="messaging_message_thumbnail_margin_left">4dp</dimen>
+    <dimen name="messaging_message_thumbnail_margin_right">4dp</dimen>
+    <dimen name="messaging_message_thumbnail_margin_top">4dp</dimen>
+    <dimen name="messaging_incoming_message_thumbnail_margin_right">5dp</dimen>
+    <dimen name="messaging_outgoig_message_thumbnail_margin_left">5dp</dimen>
+    <dimen name="messaging_message_thumbnail_width">128dp</dimen>
+    <dimen name="messaging_message_thumbnail_height">96dp</dimen>
+    <dimen name="messaging_message_attachment_text_width">@dimen/messaging_message_thumbnail_width</dimen>
+    <dimen name="messaging_message_time_margin">12dp</dimen>
+    <dimen name="messaging_message_buttons_margin">-16dp</dimen>
+    <dimen name="messaging_message_padding_bottom">4dp</dimen>
+    <dimen name="messaging_message_action_padding_left">4dp</dimen>
+    <dimen name="messaging_message_action_padding_right">4dp</dimen>
+    <dimen name="messaging_message_action_padding_top">0dp</dimen>
+    <dimen name="messaging_message_action_padding_bottom">1dp</dimen>
+
+    <!-- file viewer dimensions -->
+    <dimen name="messaging_viewer_failure_text_margin_top">70dp</dimen>
+    <dimen name="messaging_viewer_vcard_item_margin_left">12dp</dimen>
+    <dimen name="messaging_viewer_vcard_item_margin_right">5dp</dimen>
+    <dimen name="messaging_viewer_vcard_item_margin_top">5dp</dimen>
+    <dimen name="messaging_viewer_vcard_item_margin_bottom">5dp</dimen>
+    <dimen name="messaging_viewer_vcard_item_splitter_margin_top">4dp</dimen>
+    <dimen name="messaging_viewer_vcard_item_splitter_height">1dp</dimen>
+
+    <!-- margin for call/messaging chooser dialog buttons -->
+    <dimen name="messaging_chooser_dialog_button_margin">20dp</dimen>
+
+    <dimen name="messaging_toolbar_margin">4dp</dimen>
+
+    <!-- dimensions for conversation options menu items -->
+    <dimen name="conversation_option_margin_top">20dp</dimen>
+    <dimen name="conversation_option_margin_left">25dp</dimen>
+    <dimen name="conversation_option_margin_right">10dp</dimen>
+    <dimen name="conversation_option_margin_bottom">20dp</dimen>
+    <dimen name="conversation_option_checkable_margin">10dp</dimen>
+    <dimen name="conversation_option_image_margin">25dp</dimen>
+    <dimen name="conversation_option_description_margin_left">57dp</dimen>
+    <dimen name="conversation_option_description_margin_top">5dp</dimen>
+    <dimen name="conversation_option_burn_margin_bottom">10dp</dimen>
+    <dimen name="conversation_option_seeker_layout_margin_left">40dp</dimen>
+    <dimen name="conversation_option_seeker_layout_margin_bottom">20dp</dimen>
+    <dimen name="conversation_option_seeker_margin_left">5dp</dimen>
+
+    <!-- conversation log dimensions -->
+    <dimen name="conversation_log_list_margin_top">18dp</dimen>
+    <dimen name="conversation_log_margin_top">15dp</dimen>
+    <dimen name="conversation_log_inner_margin">13dip</dimen>
+    <dimen name="conversation_log_icon_margin">4dip</dimen>
+    <dimen name="conversation_log_outer_margin">8dp</dimen>
+    <dimen name="conversation_log_start_margin">16dp</dimen>
+    <dimen name="conversation_log_name_margin_bottom">2dp</dimen>
+    <dimen name="conversation_log_secondary_text_size">14sp</dimen>
+    <dimen name="conversation_log_day_group_padding_top">15dp</dimen>
+    <dimen name="conversation_log_day_group_padding_bottom">9dp</dimen>
+    <dimen name="conversation_log_contact_photo_size">40dp</dimen>
+    <dimen name="conversation_log_unread_message_notification_size">20dp</dimen>
+    <dimen name="conversation_log_unread_message_notification_text_size">10dp</dimen>
+    <dimen name="conversation_log_action_view_margin_left">5dp</dimen>
+    <dimen name="conversation_log_name_margin_left">10dp</dimen>
+    <dimen name="conversation_log_name_text_size">16sp</dimen>
+    <dimen name="conversation_log_time_margin_right">12dp</dimen>
+    <dimen name="conversation_log_message_summary_text_padding">5dp</dimen>
+    <dimen name="conversation_log_message_info_small_text_size">10sp</dimen>
 
 </resources>

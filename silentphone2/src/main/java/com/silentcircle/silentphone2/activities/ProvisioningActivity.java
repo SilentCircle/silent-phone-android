@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2014-2015, Silent Circle, LLC. All rights reserved.
+Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -56,9 +56,9 @@ import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
 
+import com.silentcircle.accounts.AccountConstants;
 import com.silentcircle.keymanagersupport.KeyManagerSupport;
 import com.silentcircle.silentphone2.R;
-import com.silentcircle.accounts.AccountConstants;
 import com.silentcircle.silentphone2.fragments.ProvisioningAutomatic;
 import com.silentcircle.silentphone2.fragments.ProvisioningUserPassword;
 import com.silentcircle.silentphone2.fragments.ProvisioningVertuStep1;
@@ -80,11 +80,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
-import java.math.BigInteger;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Locale;
 
@@ -155,11 +152,7 @@ public class ProvisioningActivity extends ActionBarActivity {
         hasKeyManager = getIntent().getBooleanExtra("KeyManager", false);
 
         if (DeviceDetectionVertu.isVertu()) {
-            deviceId = getIntent().getStringExtra("DeviceId");
-
-            if (deviceId != null) {
-                deviceId = hashDeviceId();
-            }
+            deviceId = Utilities.hashMd5(TiviPhoneService.getInstanceDeviceId(this, true));
             if (deviceId == null) {
                 finish();                               // a major problem
                 return;
@@ -400,24 +393,6 @@ public class ProvisioningActivity extends ActionBarActivity {
         new Thread(new ProvisioningMonitorThread()).start();
     }
 
-    private String hashDeviceId() {
-        MessageDigest md;
-        try {
-            md = MessageDigest.getInstance("MD5");
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-            return null;
-        }
-        byte[] hash;
-        try {
-            hash = md.digest(deviceId.getBytes("UTF-8"));
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-            return null;
-        }
-        return new BigInteger(1, hash).toString(16);
-    }
-
     /* ********************************************************************************
      * Handle second phase of provisioning flow.
      * 
@@ -506,14 +481,6 @@ public class ProvisioningActivity extends ActionBarActivity {
                 return;
             }
             Arrays.fill(data, (byte) 0);
-            data = KeyManagerSupport.getSharedKeyData(getContentResolver(), ConfigurationUtilities.getShardDevIdTag());
-            if (data == null) {                                 // Don't overwrite an existing device id
-                data = deviceId.getBytes("UTF-8");
-                if (!KeyManagerSupport.storeSharedKeyData(ProvisioningActivity.this.getContentResolver(),
-                        data, ConfigurationUtilities.getShardDevIdTag())) {
-                    Log.e(LOG_TAG, "Cannot store the device identification data with key manager.");
-                }
-            }
         } catch (UnsupportedEncodingException e) {
             Log.e(LOG_TAG, "Cannot convert device authorization data:", e);
         }

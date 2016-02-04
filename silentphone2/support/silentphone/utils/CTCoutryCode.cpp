@@ -1,32 +1,6 @@
-/*
-Created by Janis Narbuts
-Copyright (C) 2004-2012, Tivi LTD, www.tiviphone.com. All rights reserved.
-Copyright (C) 2012-2015, Silent Circle, LLC.  All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-    * Any redistribution, use, or modification is done solely for personal
-      benefit and not for any commercial purpose or for monetary gain
-    * Redistributions of source code must retain the above copyright
-      notice, this list of conditions and the following disclaimer.
-    * Redistributions in binary form must reproduce the above copyright
-      notice, this list of conditions and the following disclaimer in the
-      documentation and/or other materials provided with the distribution.
-    * Neither the name Silent Circle nor the
-      names of its contributors may be used to endorse or promote products
-      derived from this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL SILENT CIRCLE, LLC BE LIABLE FOR ANY
-DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
+//VoipPhone
+//Created by Janis Narbuts
+//Copyright (c) 2004-2012 Tivi LTD, www.tiviphone.com. All rights reserved.
 
 #include <stdio.h>
 #include <string.h>
@@ -60,14 +34,14 @@ public:
    char idd[8];
    char ndd[8];
    
-   CListItemStringCountry(char *country,char *code):CListItem(atoi(code)){strcpy(ccode,code);countryName.setText(country);iCountryCodeLen=strlen(code);}
+   CListItemStringCountry(char *country,char *code):CListItem(atoi(code)){strcpy(ccode,code);countryName.setText(country);iCountryCodeLen=(int)strlen(code);}
    
    CListItemStringCountry(char *country,int iCLen,char *code, int iCodeLen=0):CListItem(atoi(code)){
       sz2code[0]=0;
       countryName.setText(country,iCLen);
-      if(iCodeLen<=0)iCodeLen=strlen(code);
+      if(iCodeLen<=0)iCodeLen=(int)strlen(code);
       strncpy(ccode,code,iCodeLen);ccode[iCodeLen]=0;
-      iCountryCodeLen=strlen(code);
+      iCountryCodeLen=(int)strlen(code);
       idd[0]=0;
       ndd[0]=0;
    }
@@ -410,7 +384,7 @@ public:
    
    CListItemStringCountry *findCountryByName(const char *name){
       
-      int nl = strlen(name);
+      int nl = (int)strlen(name);
       
       for(int i=0;i<eLists;i++){
          CTList *l = &ccListI[i];
@@ -630,7 +604,7 @@ void initCC(char *p, int iLen){
 
 int canAddUS_CCode(const char *nr){
    if(*nr=='0' || *nr=='1' || *nr=='+')return 0;
-   int iLen=strlen(nr);
+   int iLen=(int)strlen(nr);
    
    char nrClean[US_NR_LEN+2];
    int iCleanLen=1;nrClean[0]='1';
@@ -766,7 +740,7 @@ public:
    
    const char *tryRemoveNDD(const char *nr){
       if(iHasUpdated==2)return nr;
-      int l = strlen(nr);
+      int l = (int)strlen(nr);
       
       if(l>=sizeof(nrWONdd))return nr;
       if(l<7)return nr;
@@ -796,7 +770,7 @@ public:
    
    int setDialed(const char *nr){
       if(iHasUpdated)return 0;
-      int l = strlen(nr);
+      int l = (int)strlen(nr);
       
       if(l>=sizeof(bufDialed))return 0;
       
@@ -819,8 +793,8 @@ public:
       
       nr = &bufDialed[0];
       
-      int nddl = strlen(cr->ndd);
-      int iddl = strlen(cr->idd);
+      int nddl = (int)strlen(cr->ndd);
+      int iddl = (int)strlen(cr->idd);
       
       printf(" ndd[%s] idd[%s]\n",cr->ndd, cr->idd);
       

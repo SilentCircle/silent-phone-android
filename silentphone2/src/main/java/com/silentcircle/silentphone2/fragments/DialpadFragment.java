@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2014-2015, Silent Circle, LLC. All rights reserved.
+Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -36,11 +36,11 @@ import android.content.res.TypedArray;
 import android.graphics.drawable.Drawable;
 import android.media.AudioManager;
 import android.media.ToneGenerator;
-import android.nfc.Tag;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.telephony.PhoneNumberUtils;
 import android.text.Editable;
+import android.text.InputFilter;
 import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.AttributeSet;
@@ -61,6 +61,7 @@ import android.widget.TextView;
 
 import com.silentcircle.common.testing.NeededForReflection;
 import com.silentcircle.common.util.DialerUtils;
+import com.silentcircle.common.util.SearchUtil;
 import com.silentcircle.common.widget.FloatingActionButtonController;
 import com.silentcircle.silentphone2.R;
 import com.silentcircle.silentphone2.activities.DialerActivity;
@@ -221,6 +222,7 @@ public class DialpadFragment extends Fragment implements View.OnClickListener,
         mDestination.setOnClickListener(this);
         mDestination.setOnLongClickListener(this);
         mDestination.addTextChangedListener(this);
+        mDestination.setFilters(new InputFilter[]{SearchUtil.LOWER_CASE_INPUT_FILTER});
         PhoneNumberFormatter.setPhoneNumberFormattingTextWatcher(mDestination);
         mDestination.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
@@ -363,8 +365,7 @@ public class DialpadFragment extends Fragment implements View.OnClickListener,
         if (activity == null)
             return;
         if (!hidden && mDestination != null) {
-            String nr = TiviPhoneService.getInfo(0, -1, "cfg.nr");
-            mNoNumber = TextUtils.isEmpty(nr);
+            mNoNumber = TextUtils.isEmpty(DialerActivity.mNumber);
 
             // In landscape mode we force the "noNumber mode to show the keyboard
             if (mDialPad == null) {
@@ -521,8 +522,9 @@ public class DialpadFragment extends Fragment implements View.OnClickListener,
     }
 
     public void clearDialpad() {
-        mDestination.getText().clear();
+        mDestination.setText(null);
         mSaveUserInput = null;
+        FindDialHelper.getDialHelper().resetAnalyser();
     }
 
     /*
@@ -577,7 +579,12 @@ public class DialpadFragment extends Fragment implements View.OnClickListener,
         if (call == null) {
             return;
         }
-        call.bufDialed.setText(mLastDestination);           // bufDialed holds normalized name/number
+        int idx = mLastDestination.indexOf(';');
+        String dest = mLastDestination;
+        if (idx > 0) {
+            dest = dest.substring(0, idx);
+        }
+        call.bufDialed.setText(dest);           // bufDialed holds normalized name/number
         call.bufMsg.setText(getString(R.string.sip_state_calling));
         call.mPstnViaOca = mPstnViaOca;
         TiviPhoneService.calls.setCurCall(call);
@@ -904,7 +911,6 @@ public class DialpadFragment extends Fragment implements View.OnClickListener,
             final Activity activity = getActivity();
             if (activity != null) {
                 activity.invalidateOptionsMenu();
-//                updateMenuOverflowButton(mWasEmptyBeforeTextChange);
             }
         }
     }
@@ -912,7 +918,6 @@ public class DialpadFragment extends Fragment implements View.OnClickListener,
     @Override
     public void afterTextChanged(Editable input) {
         if (isDestinationEmpty()) {
-//            mDigitsFilledByIntent = false;
             mDestination.setCursorVisible(false);
         }
         else
@@ -921,16 +926,5 @@ public class DialpadFragment extends Fragment implements View.OnClickListener,
         if (mDialpadQueryListener != null) {
             mDialpadQueryListener.onDialpadQueryChanged(mDestination.getText().toString());
         }
-        updateDeleteButtonEnabledState();
-    }
-
-    /**
-     * Update the enabled state of the "Dial" and "Backspace" buttons if applicable.
-     */
-    private void updateDeleteButtonEnabledState() {
-        if (getActivity() == null) {
-            return;
-        }
-        mDelete.setEnabled(!isDestinationEmpty());
     }
 }

@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <ImageView
+        android:id="@+id/pdf_image"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_above="@+id/pdf_controls"
+        android:background="@android:color/white"
+        android:scaleType="fitCenter" />
+
+    <RelativeLayout
+        android:id="@+id/pdf_controls"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true">
+
+        <ImageButton
+            android:id="@+id/button_previous"
+            style="?android:attr/buttonBarButtonStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true"
+            android:src="@android:drawable/ic_media_previous"
+            android:contentDescription="@string/messaging_pdf_viewer_button_previous_page_voiceover" />
+
+        <ImageButton
+            android:id="@+id/button_next"
+            style="?android:attr/buttonBarButtonStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentEnd="true"
+            android:src="@android:drawable/ic_media_next"
+            android:contentDescription="@string/messaging_pdf_viewer_button_next_page_voiceover" />
+
+        <TextView
+            android:id="@+id/page_position"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:textColor="@color/sc_ng_text_grey"
+            android:textSize="@dimen/text_xlarge"
+            tools:text="5/6"/>
+
+    </RelativeLayout>
+
+</RelativeLayout>

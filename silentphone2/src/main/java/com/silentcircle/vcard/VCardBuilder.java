@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2014-2015, Silent Circle, LLC. All rights reserved.
+Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -50,17 +50,11 @@ package com.silentcircle.vcard;
 import android.annotation.SuppressLint;
 import android.content.ContentResolver;
 import android.content.ContentValues;
-import android.content.res.AssetFileDescriptor;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.net.Uri;
 import android.telephony.PhoneNumberUtils;
 import android.text.TextUtils;
 import android.util.Base64;
 import android.util.Log;
 
-import com.silentcircle.contacts.model.RawContact;
-import com.silentcircle.silentcontacts2.ScContactsContract;
 import com.silentcircle.silentcontacts2.ScContactsContract.CommonDataKinds.Email;
 import com.silentcircle.silentcontacts2.ScContactsContract.CommonDataKinds.Event;
 import com.silentcircle.silentcontacts2.ScContactsContract.CommonDataKinds.Im;
@@ -1352,23 +1346,23 @@ public class VCardBuilder {
                 }
                 byte[] data = null;
                 // The following if block is for migration of hi-res DisplayPhotos
-                if (mResolverForMigration != null && contentValues.containsKey(ScContactsContract.RawContacts.PHOTO_URI)) {
-                    final Uri displayPhotoUri = Uri.parse(contentValues.getAsString(ScContactsContract.RawContacts.PHOTO_URI));
-                    InputStream input = null;
-                    try {
-                        AssetFileDescriptor fd = mResolverForMigration.openAssetFileDescriptor(displayPhotoUri, "r");
-                        input = fd.createInputStream();
-                    } catch (IOException e) {
-                        // fallback to the thumbnail code
-                    }
-                    if (input != null) {
-                        try {
-                            data = toByteArray(input);
-                        } catch (IOException e) {
-                            Log.e(LOG_TAG, "Error reading display image for migration");
-                        }
-                    }
-                }
+//                if (mResolverForMigration != null && contentValues.containsKey(ScContactsContract.RawContacts.PHOTO_URI)) {
+//                    final Uri displayPhotoUri = Uri.parse(contentValues.getAsString(ScContactsContract.RawContacts.PHOTO_URI));
+//                    InputStream input = null;
+//                    try {
+//                        AssetFileDescriptor fd = mResolverForMigration.openAssetFileDescriptor(displayPhotoUri, "r");
+//                        input = fd.createInputStream();
+//                    } catch (IOException e) {
+//                        // fallback to the thumbnail code
+//                    }
+//                    if (input != null) {
+//                        try {
+//                            data = toByteArray(input);
+//                        } catch (IOException e) {
+//                            Log.e(LOG_TAG, "Error reading display image for migration");
+//                        }
+//                    }
+//                }
                 if (data == null)
                     data = contentValues.getAsByteArray(Photo.PHOTO);
                 if (data == null) {

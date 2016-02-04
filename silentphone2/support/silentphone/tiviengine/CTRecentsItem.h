@@ -1,32 +1,6 @@
-/*
-Created by Janis Narbuts
-Copyright (C) 2004-2012, Tivi LTD, www.tiviphone.com. All rights reserved.
-Copyright (C) 2012-2015, Silent Circle, LLC.  All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-    * Any redistribution, use, or modification is done solely for personal
-      benefit and not for any commercial purpose or for monetary gain
-    * Redistributions of source code must retain the above copyright
-      notice, this list of conditions and the following disclaimer.
-    * Redistributions in binary form must reproduce the above copyright
-      notice, this list of conditions and the following disclaimer in the
-      documentation and/or other materials provided with the distribution.
-    * Neither the name Silent Circle nor the
-      names of its contributors may be used to endorse or promote products
-      derived from this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL SILENT CIRCLE, LLC BE LIABLE FOR ANY
-DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
+//VoipPhone
+//Created by Janis Narbuts
+//Copyright (c) 2004-2012 Tivi LTD, www.tiviphone.com. All rights reserved.
 
 #ifndef _CT_RECENTS_ITEM_H
 #define _CT_RECENTS_ITEM_H
@@ -52,6 +26,8 @@ public:
       iIsTooOld=0;
       
       iAnsweredSomewhereElse=0;
+      szSIPCallID[0]=0;
+      szPeerAssertedUsername[0]=0;
    }
    
    inline int isTooOld(int now, int iKeepHistoryFor){
@@ -100,6 +76,8 @@ public:
       return iAtFoundInPeer;
    }
    
+   inline int haveCallLog(){return szSIPCallID[0];}
+   
    int isSamePeer(CTRecentsItem *i){
       if(!i)return 0;
       
@@ -118,11 +96,35 @@ public:
 //         if(iLen==i->peerAddr.getLen() && memcmp(p,i_p,iLen*2)==0)
   //          return 1;
          
-         if(iAtFoundInPeer && i->iAtFoundInPeer)
-            return  (iAtFoundInPeer==i->iAtFoundInPeer 
+         if(iAtFoundInPeer && i->iAtFoundInPeer){
+            int is =  (iAtFoundInPeer==i->iAtFoundInPeer
                      && p[iAtFoundInPeer>>1]==i_p[iAtFoundInPeer>>1] 
                      && p[iAtFoundInPeer -1]==i_p[iAtFoundInPeer -1] 
                      && memcmp(p,i_p,(iAtFoundInPeer-1)*2)==0);
+            if(is)return is;
+         }
+         
+         if(szPeerAssertedUsername[0] && i->szPeerAssertedUsername[0]){
+            return strcmp(szPeerAssertedUsername,i->szPeerAssertedUsername)==0;
+         }
+         
+         char sz[64];
+         if(szPeerAssertedUsername[0]){
+            int ll = sizeof(sz)-1;
+            i->peerAddr.getTextUtf8(sz, &ll);
+            int ofs = (szPeerAssertedUsername[3]==':') ? 4 : 0;
+          //  printf("[%s %s]\n",&szPeerAssertedUsername[0],sz);
+            return strcmp(&szPeerAssertedUsername[ofs],sz)==0;
+         }
+         
+         if(i->szPeerAssertedUsername[0]){
+            int ll = sizeof(sz)-1;
+            peerAddr.getTextUtf8(sz, &ll);
+            int ofs = (i->szPeerAssertedUsername[3]==':') ? 4 : 0;
+            //printf("[%s %s]\n",&szPeerAssertedUsername[0],sz);
+            return strcmp(&i->szPeerAssertedUsername[ofs],sz)==0;
+         }
+         
          
       }
       return 0;
@@ -146,6 +148,9 @@ public:
    
    int iIsTooOld;//#SP-117
    
+   char szSIPCallID[64];//if we want to store this into db we have to store also logs into disk.
+   
+   char szPeerAssertedUsername[64];
 };
 int loadRecents(CTList *l);
 void saveRecents(CTList *l);
@@ -177,8 +182,19 @@ class CTRecentsList: protected CTList{
    int iCanSave;
    int iLoaded;
    
-public:
-   CTRecentsList(int iIsFavorites=0):CTList(),iIsFavorites(iIsFavorites){iIsSaved=0;iCurrentListIsMissed=0;lastAdded=NULL;iItemCnt=0;iLoaded=0;iCanSave=1;}
+   //CTRecentsList(int iIsFavorites=0):CTList(),iIsFavorites(iIsFavorites){iIsSaved=0;iCurrentListIsMissed=0;lastAdded=NULL;iItemCnt=0;iLoaded=0;iCanSave=1;}
+    CTRecentsList(int iIsFavorites=0):CTList(),iIsFavorites(iIsFavorites){iIsSaved=0;iCurrentListIsMissed=0;lastAdded=NULL;iItemCnt=0;iLoaded=0;iCanSave=1;}
+    
+    public:
+    static CTRecentsList *sharedFavorites(){
+        static CTRecentsList * l = new CTRecentsList(1);
+        return l;
+    }
+    static CTRecentsList *sharedRecents(){
+        static CTRecentsList * l = new CTRecentsList(0);
+        return l;
+    }
+
    
    void enableAutoSave(int f){iCanSave=f;}
    void save(){

@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2014-2015, Silent Circle, LLC. All rights reserved.
+Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -28,12 +28,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 package com.silentcircle.silentphone2.fragments;
 
+import android.annotation.TargetApi;
 import android.app.Activity;
-import android.support.v7.app.ActionBar;
 import android.app.Fragment;
 import android.app.FragmentManager;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
+import android.graphics.drawable.Drawable;
 import android.media.Ringtone;
 import android.media.RingtoneManager;
 import android.net.Uri;
@@ -41,10 +43,11 @@ import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
-import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.ActionBarDrawerToggle;
 import android.text.TextUtils;
 import android.text.method.LinkMovementMethod;
 import android.util.DisplayMetrics;
@@ -57,6 +60,8 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CheckBox;
+import android.widget.CompoundButton;
+import android.widget.LinearLayout;
 import android.widget.PopupMenu;
 import android.widget.ScrollView;
 import android.widget.TextView;
@@ -64,6 +69,9 @@ import android.widget.Toast;
 
 import com.silentcircle.keystore.KeyStoreActivity;
 import com.silentcircle.keystore.KeyStoreHelper;
+import com.silentcircle.messaging.activities.AxoRegisterActivity;
+import com.silentcircle.messaging.services.AxoMessaging;
+import com.silentcircle.messaging.util.MessagingPreferences;
 import com.silentcircle.silentphone2.BuildConfig;
 import com.silentcircle.silentphone2.R;
 import com.silentcircle.silentphone2.activities.DialerActivity;
@@ -79,15 +87,17 @@ import com.silentcircle.silentphone2.util.Utilities;
  * See the <a href="https://developer.android.com/design/patterns/navigation-drawer.html#Interaction">
  * design guidelines</a> for a complete explanation of the behaviors implemented here.
  */
-public class DialDrawerFragment extends Fragment implements View.OnClickListener, LoadUserInfo.Listener {
+public class DialDrawerFragment extends Fragment implements View.OnClickListener, LoadUserInfo.Listener, CompoundButton.OnCheckedChangeListener {
 
     private static final String TAG = DialDrawerFragment.class.getSimpleName();
 
     public static String RINGTONE_KEY = "sp_ringtone";
     public static String START_ON_BOOT = "start_on_boot";
+    public static String SHOW_ERRORS = "show_errors";
     public static String NATIVE_CALL_CHECK = "native_call_check";
     public static String ENABLE_FW_TRAVERSAL = "enable_fw_traversal";
     public static String FORCE_FW_TRAVERSAL = "force_fw_traversal";
+    public static String ENABLE_UNDERFLOW_TONE = "enable_underflow_tone";
 
     /**
      * A pointer to the current callbacks instance (the Activity).
@@ -98,23 +108,33 @@ public class DialDrawerFragment extends Fragment implements View.OnClickListener
     private ScrollView mDrawerView;
     private View mFragmentContainerView;
     private ActionBarDrawerToggle mDrawerToggle;
-//    private String mNumber;
-//    private String mName;
-    private String mExpirationDateString;
 
     private ActionBarActivity mParent;
+
+    private TextView mSecHeader;
+    private TextView mMsgHeader;
+    private TextView mOtherHeader;
+    private TextView mInfoHeader;
+
+    private LinearLayout mSecContent;
+    private LinearLayout mMsgContent;
+    private LinearLayout mOtherContent;
+    private LinearLayout mInfoContent;
+
+    private Drawable mLess;
+    private Drawable mMore;
     /**
      * Callbacks interface that all activities using this fragment must implement.
      */
-    public static interface DrawerCallbacks {
-        public static int OPENED = 1;
-        public static int CLOSED = 2;
-        public static int MOVING = 3;
+    public interface DrawerCallbacks {
+        int OPENED = 1;
+        int CLOSED = 2;
+        int MOVING = 3;
 
-        public static int RINGTONE = 1;
-        public static int DIAL_HELPER = 2;
-        public static int KEY_STORE = 3;
-        public static int RE_PROVISION = 4;
+        int RINGTONE = 1;
+        int DIAL_HELPER = 2;
+        int KEY_STORE = 3;
+        int RE_PROVISION = 4;
 
         /**
          * Called when an item in the navigation drawer is selected.
@@ -142,17 +162,46 @@ public class DialDrawerFragment extends Fragment implements View.OnClickListener
         setHasOptionsMenu(true);
     }
 
+    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+    @SuppressWarnings("deprecation")
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         mDrawerView = (ScrollView)inflater.inflate(R.layout.dialer_drawer, container, false);
+
+        mSecHeader = (TextView)mDrawerView.findViewById(R.id.drawer_sec_header);
+        mMsgHeader = (TextView)mDrawerView.findViewById(R.id.drawer_msg_header);
+        mOtherHeader = (TextView)mDrawerView.findViewById(R.id.drawer_other_header);
+        mInfoHeader = (TextView)mDrawerView.findViewById(R.id.drawer_info_header);
+
+        mSecHeader.setOnClickListener(this);
+        mMsgHeader.setOnClickListener(this);
+        mOtherHeader.setOnClickListener(this);
+        mInfoHeader.setOnClickListener(this);
+
+        mSecContent = (LinearLayout)mDrawerView.findViewById(R.id.drawer_sec_content);
+        mMsgContent = (LinearLayout)mDrawerView.findViewById(R.id.drawer_msg_content);
+        mOtherContent = (LinearLayout)mDrawerView.findViewById(R.id.drawer_other_content);
+        mInfoContent = (LinearLayout)mDrawerView.findViewById(R.id.drawer_info_content);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            mLess = getResources().getDrawable(R.drawable.ic_expand_less_white_24dp, null);
+            mMore = getResources().getDrawable(R.drawable.ic_expand_more_white_24dp, null);
+        }
+        else {
+            mLess = getResources().getDrawable(R.drawable.ic_expand_less_white_24dp);
+            mMore = getResources().getDrawable(R.drawable.ic_expand_more_white_24dp);
+        }
+
         setBuildInfo();
         setNumberName();
         prepareKeyStoreOptions();
         prepareRingtone();
         prepareOnBoot();
+        prepareShowErrors();
         prepareReProvision();
         prepareUiTheme();
         prepareAdvancedSettings();
+        prepareMessagingSettings();
 
         ((TextView)mDrawerView.findViewById(R.id.sc_privacy)).setMovementMethod(LinkMovementMethod.getInstance());
         ((TextView)mDrawerView.findViewById(R.id.sc_tos)).setMovementMethod(LinkMovementMethod.getInstance());
@@ -208,6 +257,23 @@ public class DialDrawerFragment extends Fragment implements View.OnClickListener
                 mCallbacks.onDrawerItemSelected(DrawerCallbacks.RE_PROVISION);
                 return true;
 
+            case R.id.dial_menu_axo_register:
+                Intent intent = new Intent(mParent, AxoRegisterActivity.class);
+                intent.setAction(AxoRegisterActivity.ACTION_REGISTER);
+                mParent.startActivity(intent);
+                return true;
+
+            case R.id.dial_menu_axo_device:
+                intent = new Intent(mParent, AxoRegisterActivity.class);
+                intent.setAction(AxoRegisterActivity.ACTION_MANAGE);
+                mParent.startActivity(intent);
+                return true;
+
+            case R.id.dial_menu_axo_register_force:
+                AxoMessaging axoMessaging = AxoMessaging.getInstance(mParent);
+                axoMessaging.registerDeviceMessaging(true);
+                return true;
+
             default:
                 break;
         }
@@ -235,6 +301,11 @@ public class DialDrawerFragment extends Fragment implements View.OnClickListener
             case R.id.boot_check:
             case R.id.boot_check_title:
                 toggleBootCheckbox();
+                break;
+
+            case R.id.errors_option_check:
+            case R.id.errors_option_title:
+                toggleErrorsCheckbox();
                 break;
 
             case R.id.native_call_checkbox:
@@ -283,6 +354,18 @@ public class DialDrawerFragment extends Fragment implements View.OnClickListener
                 toggleForceTraversalBox();
                 break;
 
+            case R.id.burn_animation_title:
+                toggleMessageBurnAnimationCheckbox();
+                break;
+
+            case R.id.attachment_decrypt_warn_title:
+                toggleMessageAttachmentDecryptWarnCheckbox();
+                break;
+
+            case R.id.messaging_sounds_title:
+                toggleMessageSoundsCheckbox();
+                break;
+
             case R.id.show_oca_minutes:
                 LoadUserInfo loadUserInfo = new LoadUserInfo(mParent, this);
                 loadUserInfo.loadOcaMinutesInfo();
@@ -292,10 +375,76 @@ public class DialDrawerFragment extends Fragment implements View.OnClickListener
                 selectExtendedMenu();
                 break;
 
+            case R.id.drawer_sec_header:
+                if (mSecContent.getVisibility() == View.VISIBLE) {
+                    mSecContent.setVisibility(View.GONE);
+                    mSecHeader.setCompoundDrawablesWithIntrinsicBounds(null, null, mMore, null);
+                }
+                else {
+                    mSecContent.setVisibility(View.VISIBLE);
+                    mSecHeader.setCompoundDrawablesWithIntrinsicBounds(null, null, mLess, null);
+                }
+                break;
+
+            case R.id.drawer_msg_header:
+                if (mMsgContent.getVisibility() == View.VISIBLE) {
+                    mMsgContent.setVisibility(View.GONE);
+                    mMsgHeader.setCompoundDrawablesWithIntrinsicBounds(null, null, mMore, null);
+                }
+                else {
+                    mMsgContent.setVisibility(View.VISIBLE);
+                    mMsgHeader.setCompoundDrawablesWithIntrinsicBounds(null, null, mLess, null);
+                }
+                break;
+
+            case R.id.drawer_other_header:
+                if (mOtherContent.getVisibility() == View.VISIBLE) {
+                    mOtherContent.setVisibility(View.GONE);
+                    mOtherHeader.setCompoundDrawablesWithIntrinsicBounds(null, null, mMore, null);
+                }
+                else {
+                    mOtherContent.setVisibility(View.VISIBLE);
+                    mOtherHeader.setCompoundDrawablesWithIntrinsicBounds(null, null, mLess, null);
+                }
+                break;
+
+            case R.id.drawer_info_header:
+                if (mInfoContent.getVisibility() == View.VISIBLE) {
+                    mInfoContent.setVisibility(View.GONE);
+                    mInfoHeader.setCompoundDrawablesWithIntrinsicBounds(null, null, mMore, null);
+                }
+                else {
+                    mInfoContent.setVisibility(View.VISIBLE);
+                    mInfoHeader.setCompoundDrawablesWithIntrinsicBounds(null, null, mLess, null);
+                }
+                break;
+
             default: {
                 Log.wtf(TAG, "Unexpected onClick() event from: " + view);
                 break;
             }
+        }
+    }
+
+    @Override
+    public void onCheckedChanged(CompoundButton view, boolean isChecked) {
+        switch (view.getId()) {
+            case R.id.burn_animation_check:
+                MessagingPreferences.getInstance(getActivity())
+                        .setShowBurnAnimation(mMessageBurnAnimationBox.isChecked());
+                break;
+
+            case R.id.attachment_decrypt_warn_check:
+                MessagingPreferences.getInstance(getActivity())
+                        .setWarnWhenDecryptAttachment(mMessageAttachmentDecryptWarnBox.isChecked());
+                break;
+
+            case R.id.messaging_sounds_check:
+                MessagingPreferences.getInstance(getActivity())
+                        .setMessageSoundsEnabled(mMessageSoundsBox.isChecked());
+                break;
+            default:
+                Log.wtf(TAG, "Unexpected onCheckChanged() event from: " + view);
         }
     }
 
@@ -402,6 +551,17 @@ public class DialDrawerFragment extends Fragment implements View.OnClickListener
             showInputInfo(errorInfo);
             return;
         }
+
+//        if(LoadUserInfo.checkIfFreemium() == LoadUserInfo.INVALID) {
+//            showInputInfo(getString(R.string.basic_account_info));
+//            return;
+//        }
+
+        if(!LoadUserInfo.isOutboundCallsEnabled(mParent.getApplicationContext())) {
+            showInputInfo(getString(R.string.basic_account_info));
+            return;
+        }
+
         final int minutesUsed = baseMinutes - minutesLeft;
         final String msg = (minutesUsed <= 0)? getString(R.string.remaining_oca_minutes_zero, baseMinutes) :
                 getResources().getQuantityString(R.plurals.remaining_oca_minutes_info, minutesUsed, baseMinutes, minutesLeft);
@@ -412,11 +572,11 @@ public class DialDrawerFragment extends Fragment implements View.OnClickListener
         if (mDrawerView == null)
             return;
 
-        mExpirationDateString = LoadUserInfo.getExpirationDateString();
-        if (mExpirationDateString != null) {
-            View line = mDrawerView.findViewById(R.id.dial_drawer_valid);  // layout holds valid until line
-            line.setVisibility(View.VISIBLE);
-            ((TextView) mDrawerView.findViewById(R.id.dial_drawer_valid_data)).setText(mExpirationDateString);
+        String expirationDateString = LoadUserInfo.getExpirationDateString();
+        if (LoadUserInfo.checkExpirationDateValid(expirationDateString)) {
+                View line = mDrawerView.findViewById(R.id.dial_drawer_valid);  // layout holds valid until line
+                line.setVisibility(View.VISIBLE);
+                ((TextView) mDrawerView.findViewById(R.id.dial_drawer_valid_data)).setText(expirationDateString);
         }
         if (!TextUtils.isEmpty(DialerActivity.mNumber))
             mDrawerView.findViewById(R.id.show_oca_minutes).setVisibility(View.VISIBLE);
@@ -681,6 +841,30 @@ public class DialDrawerFragment extends Fragment implements View.OnClickListener
     }
 
     /*
+     *** Start errors checkbox handling
+     */
+    private boolean mShowErrors;
+    private CheckBox mErrorsOptionBox;
+
+    private void prepareShowErrors() {
+        mErrorsOptionBox = (CheckBox)mDrawerView.findViewById(R.id.errors_option_check);
+        mErrorsOptionBox.setOnClickListener(this);
+        mDrawerView.findViewById(R.id.errors_option_title).setOnClickListener(this);
+
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mParent);
+        mShowErrors = prefs.getBoolean(SHOW_ERRORS, false);
+        mErrorsOptionBox.setChecked(mShowErrors);
+    }
+
+    private void toggleErrorsCheckbox() {
+        mShowErrors = !mShowErrors;
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mParent);
+        prefs.edit().putBoolean(SHOW_ERRORS, mShowErrors).apply();
+        DialerActivity.mShowErrors = mShowErrors;
+        mErrorsOptionBox.setChecked(mShowErrors);
+    }
+
+    /*
      *** Option to monitor call from native contact application
      */
     private boolean mNativeCallCheck;
@@ -692,7 +876,7 @@ public class DialDrawerFragment extends Fragment implements View.OnClickListener
         mDrawerView.findViewById(R.id.native_call_check_title).setOnClickListener(this);
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mParent);
-        mNativeCallCheck = prefs.getBoolean(NATIVE_CALL_CHECK, false);
+        mNativeCallCheck = prefs.getBoolean(NATIVE_CALL_CHECK, true);
         mNativeCallBox.setChecked(mNativeCallCheck);
     }
 
@@ -766,15 +950,15 @@ public class DialDrawerFragment extends Fragment implements View.OnClickListener
             @Override
             public boolean onMenuItemClick(MenuItem item) {
                 switch (item.getItemId()) {
-                    case R.string.theme_orange:
-                        Utilities.storeThemeSelection(mParent, getString(item.getItemId()), R.style.SilentPhoneThemeOrange);
-                        return true;
-                    case R.string.theme_white:
-                        Utilities.storeThemeSelection(mParent, getString(item.getItemId()), R.style.SilentPhoneThemeWhite);
-                        return true;
-                    case R.string.theme_dusk:
-                        Utilities.storeThemeSelection(mParent, getString(item.getItemId()), R.style.SilentPhoneThemeDusk);
-                        return true;
+//                    case R.string.theme_orange:
+//                        Utilities.storeThemeSelection(mParent, getString(item.getItemId()), R.style.SilentPhoneThemeOrange);
+//                        return true;
+//                    case R.string.theme_white:
+//                        Utilities.storeThemeSelection(mParent, getString(item.getItemId()), R.style.SilentPhoneThemeWhite);
+//                        return true;
+//                    case R.string.theme_dusk:
+//                        Utilities.storeThemeSelection(mParent, getString(item.getItemId()), R.style.SilentPhoneThemeDusk);
+//                        return true;
                     case R.string.theme_black:
                         Utilities.storeThemeSelection(mParent, getString(item.getItemId()), R.style.SilentPhoneThemeBlack);
                         return true;
@@ -811,6 +995,10 @@ public class DialDrawerFragment extends Fragment implements View.OnClickListener
             return;
         }
         infoMsg.show(fragmentManager, "SilentPhoneOcaInfo");
+        // Special dialog that requires a title other than "Information"
+        // TODO: Don't use InfoMsgDialogFragment
+        getFragmentManager().executePendingTransactions();
+        infoMsg.getDialog().setTitle(R.string.remaining_oca_minutes_dialog);
     }
 
     private PopupMenu mExtendedMenu;
@@ -820,8 +1008,8 @@ public class DialDrawerFragment extends Fragment implements View.OnClickListener
             mDrawerView.findViewById(R.id.extended_menu).setOnClickListener(this);
             mExtendedMenu.inflate(R.menu.dial_drawer);
         }
+        Menu menu = mExtendedMenu.getMenu();
         if (ConfigurationUtilities.mEnableDevDebOptions) {
-            Menu menu = mExtendedMenu.getMenu();
             menu.setGroupVisible(R.id.dial_group_develop, true);
             MenuItem menuItem = menu.findItem(R.id.dial_menu_production);
             menuItem.setVisible(ConfigurationUtilities.mUseDevelopConfiguration);
@@ -834,7 +1022,17 @@ public class DialDrawerFragment extends Fragment implements View.OnClickListener
 
             menuItem = menu.findItem(R.id.dial_menu_answer_off);
             menuItem.setVisible(false /*DialerActivity.mAutoAnswerForTesting*/);
+
+            menuItem = menu.findItem(R.id.dial_menu_axo_register_force);
+            menuItem.setVisible(true /*DialerActivity.mAutoAnswerForTesting*/);
         }
+        MenuItem menuItem = menu.findItem(R.id.dial_menu_axo_register);
+        AxoMessaging axoMessaging = AxoMessaging.getInstance(mParent.getApplicationContext());
+        menuItem.setVisible(!axoMessaging.isRegistered());
+
+        menuItem = menu.findItem(R.id.dial_menu_axo_device);
+        menuItem.setVisible(true);
+
         mExtendedMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
@@ -864,6 +1062,8 @@ public class DialDrawerFragment extends Fragment implements View.OnClickListener
     private CheckBox mForceTraversalBox;
 
     private void prepareAdvancedSettings() {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mParent);
+
         // Setup media relay check box
         mMediaRelayBox = (CheckBox)mDrawerView.findViewById(R.id.media_relay_check);
         mMediaRelayBox.setOnClickListener(this);
@@ -873,12 +1073,13 @@ public class DialDrawerFragment extends Fragment implements View.OnClickListener
         mUnderflowBox = (CheckBox)mDrawerView.findViewById(R.id.underflow_check);
         mUnderflowBox.setOnClickListener(this);
         mDrawerView.findViewById(R.id.underflow_title).setOnClickListener(this);
+        mUseUnderflow = prefs.getBoolean(ENABLE_UNDERFLOW_TONE, true);
+        mUnderflowBox.setChecked(mUseUnderflow);
 
         // Enable FW traversal
         mEnableTraversalBox = (CheckBox)mDrawerView.findViewById(R.id.traversal_check);
         mEnableTraversalBox.setOnClickListener(this);
         mDrawerView.findViewById(R.id.traversal_title).setOnClickListener(this);
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mParent);
         mEnableTraversal = prefs.getBoolean(ENABLE_FW_TRAVERSAL, true);
         mEnableTraversalBox.setChecked(mEnableTraversal);
 
@@ -904,6 +1105,10 @@ public class DialDrawerFragment extends Fragment implements View.OnClickListener
         else {
             TiviPhoneService.doCmd("set cfg.iForceFWTraversal=0");
         }
+    }
+
+    public void activateDropoutTone() {
+        TiviPhoneService.doCmd("set cfg.iAudioUnderflow=" + (mUseUnderflow ? "1" : "0"));
     }
 
     private void toggleEnableTraversalBox() {
@@ -948,6 +1153,8 @@ public class DialDrawerFragment extends Fragment implements View.OnClickListener
             TiviPhoneService.doCmd("set cfg.iAudioUnderflow=0");
         TiviPhoneService.doCmd(":s");
         mUnderflowBox.setChecked(mUseUnderflow);
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mParent);
+        prefs.edit().putBoolean(ENABLE_UNDERFLOW_TONE, mUseUnderflow).apply();
     }
 
 
@@ -959,6 +1166,50 @@ public class DialDrawerFragment extends Fragment implements View.OnClickListener
             TiviPhoneService.doCmd("set cfg.iCanUseP2Pmedia=1");
         TiviPhoneService.doCmd(":s");
         mMediaRelayBox.setChecked(mUseMediaRelay);
+    }
+
+    /* messaging related settings */
+    private CheckBox mMessageSoundsBox;
+    private CheckBox mMessageAttachmentDecryptWarnBox;
+    private CheckBox mMessageBurnAnimationBox;
+
+    private void prepareMessagingSettings() {
+        // this section works only if chat option is enabled
+        // set up options
+        mDrawerView.findViewById(R.id.messaging_sounds).setVisibility(View.VISIBLE);
+        mMessageSoundsBox = (CheckBox) mDrawerView.findViewById(R.id.messaging_sounds_check);
+        mMessageSoundsBox.setChecked(MessagingPreferences.getInstance(getActivity()).getMessageSoundsEnabled());
+        mMessageSoundsBox.setOnCheckedChangeListener(this);
+        mDrawerView.findViewById(R.id.messaging_sounds_title).setOnClickListener(this);
+
+        mDrawerView.findViewById(R.id.attachment_decrypt_warn).setVisibility(View.VISIBLE);
+        mMessageAttachmentDecryptWarnBox = (CheckBox) mDrawerView.findViewById(R.id.attachment_decrypt_warn_check);
+        mMessageAttachmentDecryptWarnBox.setChecked(MessagingPreferences.getInstance(getActivity()).getWarnWhenDecryptAttachment());
+        mMessageAttachmentDecryptWarnBox.setOnCheckedChangeListener(this);
+        mDrawerView.findViewById(R.id.attachment_decrypt_warn_title).setOnClickListener(this);
+
+        /* As requested do not allow user to switch burn animation off */
+        mDrawerView.findViewById(R.id.burn_animation).setVisibility(View.GONE);
+        mMessageBurnAnimationBox = (CheckBox) mDrawerView.findViewById(R.id.burn_animation_check);
+        mMessageBurnAnimationBox.setChecked(MessagingPreferences.getInstance(getActivity()).getShowBurnAnimation());
+        mMessageBurnAnimationBox.setOnCheckedChangeListener(this);
+        mDrawerView.findViewById(R.id.burn_animation_title).setOnClickListener(this);
+    }
+
+    private void toggleMessageSoundsCheckbox() {
+        mMessageSoundsBox.toggle();
+    }
+
+    private void toggleErrorsOptionCheckbox() {
+        mErrorsOptionBox.toggle();
+    }
+
+    private void toggleMessageAttachmentDecryptWarnCheckbox() {
+        mMessageAttachmentDecryptWarnBox.toggle();
+    }
+
+    private void toggleMessageBurnAnimationCheckbox() {
+        mMessageBurnAnimationBox.toggle();
     }
 
     private void showAdvancedSettings() {

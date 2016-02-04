@@ -15,7 +15,6 @@
  */
 package com.silentcircle.common.list;
 
-import android.app.ActionBar;
 import android.content.Intent;
 import android.net.Uri;
 

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.silentcircle.messaging.views.TextView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    style="@style/Widget.Text.Floating"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:text="@string/sample_title" />

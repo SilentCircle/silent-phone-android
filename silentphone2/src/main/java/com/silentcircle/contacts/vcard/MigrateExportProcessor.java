@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2014-2015, Silent Circle, LLC. All rights reserved.
+Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -47,19 +47,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 package com.silentcircle.contacts.vcard;
 
-import android.app.Notification;
-import android.app.NotificationManager;
 import android.content.ContentResolver;
-import android.content.Context;
-import android.content.Intent;
 import android.content.res.Resources;
 import android.net.Uri;
 import android.text.TextUtils;
 import android.util.Log;
 
-import com.silentcircle.contacts.activities.ScContactsMainActivity;
-import com.silentcircle.silentcontacts.ScContactsContract.RawContacts;
-import com.silentcircle.silentcontacts.ScContactsContract.RawContactsEntity;
+import com.silentcircle.silentcontacts2.ScContactsContract.RawContacts;
+import com.silentcircle.silentcontacts2.ScContactsContract.RawContactsEntity;
 import com.silentcircle.silentphone2.R;
 import com.silentcircle.silentphone2.util.ConfigurationUtilities;
 import com.silentcircle.vcard.VCardComposer;

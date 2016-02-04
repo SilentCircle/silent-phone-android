@@ -16,6 +16,7 @@
 package com.silentcircle.silentphone2.list;
 
 import android.content.ContentProviderOperation;
+import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.OperationApplicationException;
@@ -23,6 +24,11 @@ import android.content.res.Resources;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.RemoteException;
+import android.provider.ContactsContract;
+import android.provider.ContactsContract.CommonDataKinds.Phone;
+import android.provider.ContactsContract.Contacts;
+import android.provider.ContactsContract.Data;
+import android.provider.ContactsContract.RawContacts;
 import android.support.v4.util.LongSparseArray;
 import android.text.TextUtils;
 import android.util.Log;
@@ -37,12 +43,8 @@ import com.silentcircle.common.list.ContactEntry;
 import com.silentcircle.common.list.ContactTileView;
 import com.silentcircle.contacts.ContactPhotoManagerNew;
 import com.silentcircle.contacts.ContactTileLoaderFactory;
-import com.silentcircle.contacts.list.ContactTileAdapter.DisplayType;
-import com.silentcircle.contacts.model.account.LabelHelper;
-import com.silentcircle.silentcontacts2.ScContactsContract;
-import com.silentcircle.silentcontacts2.ScContactsContract.PinnedPositions;
-import com.silentcircle.silentcontacts2.ScContactsContract.RawContacts;
 import com.silentcircle.silentphone2.R;
+import com.silentcircle.silentphone2.util.ConfigurationUtilities;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -58,11 +60,29 @@ public class PhoneFavoritesTileAdapter extends BaseAdapter implements
     private static final String TAG = PhoneFavoritesTileAdapter.class.getSimpleName();
     private static final boolean DEBUG = false;
 
-    private final ContactTileView.Listener mListener;
-    private final OnDataSetChangedForAnimationListener mDataSetChangedListener;
+    // Copied from Lollipop's ContactsContract
+    /**
+     * Default value for the pinned position of an unpinned contact.
+     */
+    public static final int UNPINNED = 0;
 
-    private final Context mContext;
-    private final Resources mResources;
+    /**
+     * Value of pinned position for a contact that a user has indicated should be considered
+     * of the lowest priority. It is up to the client application to determine how to present
+     * such a contact - for example all the way at the bottom of a contact list, or simply
+     * just hidden from view.
+     */
+    public static final int DEMOTED = -1;
+
+    public static final int NO_ROW_LIMIT = -1;
+
+    public static final int ROW_LIMIT_DEFAULT = NO_ROW_LIMIT;
+
+    private ContactTileView.Listener mListener;
+    private OnDataSetChangedForAnimationListener mDataSetChangedListener;
+
+    private Context mContext;
+    private Resources mResources;
 
     /** Contact data stored in cache. This is used to populate the associated view. */
     private ArrayList<ContactEntry> mContactEntries = null;
@@ -82,8 +102,12 @@ public class PhoneFavoritesTileAdapter extends BaseAdapter implements
     private int mNumFrequents;
     private int mNumStarred;
 
-    private int mPhotoUriIndex;
-    private int mNameIndex;
+    protected int mIdIndex;
+    protected int mLookupIndex;
+    protected int mPhotoUriIndex;
+    protected int mNameIndex;
+    protected int mPresenceIndex;
+    protected int mStatusIndex;
 
     private int mPhoneNumberIndex;
     private int mPhoneNumberTypeIndex;
@@ -92,6 +116,7 @@ public class PhoneFavoritesTileAdapter extends BaseAdapter implements
     private int mStarredIndex;
     private int mPinnedIndex;
     private int mContactIdIndex;
+//    private int mSipIndex;
 
     /** Indicates whether a drag is in process. */
     private boolean mInDragging = false;
@@ -108,7 +133,7 @@ public class PhoneFavoritesTileAdapter extends BaseAdapter implements
      */
     private static final int TILES_SOFT_LIMIT = 20;
 
-    private final Comparator<ContactEntry> mContactEntryComparator = new Comparator<ContactEntry>() {
+    final Comparator<ContactEntry> mContactEntryComparator = new Comparator<ContactEntry>() {
         @Override
         public int compare(ContactEntry lhs, ContactEntry rhs) {
             return ComparisonChain.start()
@@ -145,26 +170,37 @@ public class PhoneFavoritesTileAdapter extends BaseAdapter implements
      *
      * @param inDragging Boolean variable indicating whether there is a drag in process.
      */
-    void setInDragging(boolean inDragging) {
+    public void setInDragging(boolean inDragging) {
         mDelayCursorUpdates = inDragging;
         mInDragging = inDragging;
     }
 
+    /** Gets whether the drag is in process. */
+    public boolean getInDragging() {
+        return mInDragging;
+    }
+
     /**
      * Sets the column indices for expected {@link android.database.Cursor}
-     * based on {@link DisplayType}.
+     * based on {@link Display Type}.
      */
-    void bindColumnIndices() {
+    protected void bindColumnIndices() {
+        mIdIndex = ContactTileLoaderFactory.CONTACT_ID;
+        mLookupIndex = ContactTileLoaderFactory.LOOKUP_KEY;
         mPhotoUriIndex = ContactTileLoaderFactory.PHOTO_URI;
         mNameIndex = ContactTileLoaderFactory.DISPLAY_NAME;
         mStarredIndex = ContactTileLoaderFactory.STARRED;
+        mPresenceIndex = ContactTileLoaderFactory.CONTACT_PRESENCE;
+        mStatusIndex = ContactTileLoaderFactory.CONTACT_STATUS;
 
         mPhoneNumberIndex = ContactTileLoaderFactory.PHONE_NUMBER;
         mPhoneNumberTypeIndex = ContactTileLoaderFactory.PHONE_NUMBER_TYPE;
         mPhoneNumberLabelIndex = ContactTileLoaderFactory.PHONE_NUMBER_LABEL;
         mIsDefaultNumberIndex = ContactTileLoaderFactory.IS_DEFAULT_NUMBER;
-        mPinnedIndex = ContactTileLoaderFactory.PINNED;
+//        mPinnedIndex = ContactTileLoaderFactory.PINNED;
         mContactIdIndex = ContactTileLoaderFactory.CONTACT_ID_FOR_DATA;
+
+//        mSipIndex = ContactTileLoaderFactory.SIP_ID;
     }
 
     /**
@@ -174,12 +210,12 @@ public class PhoneFavoritesTileAdapter extends BaseAdapter implements
      *
      * @param cursor The cursor to get number of frequents from.
      */
-    void saveNumFrequentsFromCursor(Cursor cursor) {
+    protected void saveNumFrequentsFromCursor(Cursor cursor) {
         mNumFrequents = cursor.getCount() - mNumStarred;
     }
 
     /**
-     * Creates {@link ContactTileView}s for each item in {@link android.database.Cursor}.
+     * Creates {@link ContactTileView}s for each item in {@link Cursor}.
      *
      * Else use {@link ContactTileLoaderFactory}
      */
@@ -239,11 +275,16 @@ public class PhoneFavoritesTileAdapter extends BaseAdapter implements
             }
 
             final String photoUri = cursor.getString(mPhotoUriIndex);
-
-            final int pinned = cursor.getInt(mPinnedIndex);
+            final String lookupKey = cursor.getString(mLookupIndex);
+            int pinned = getPinnedForContact(id);  // cursor.getInt(mPinnedIndex);
             final String name = cursor.getString(mNameIndex);
             final boolean isStarred = cursor.getInt(mStarredIndex) > 0;
-            final boolean isDefaultNumber = cursor.getInt(mIsDefaultNumberIndex) > 0;
+            if (pinned < UNPINNED && isStarred) {
+                setUnpinned(id);
+                pinned = UNPINNED;
+            }
+            final boolean isDefaultNumber = false;
+//                    Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT && (cursor.getInt(mIsDefaultNumberIndex) > 0);
 
             final ContactEntry contact = new ContactEntry();
 
@@ -251,15 +292,16 @@ public class PhoneFavoritesTileAdapter extends BaseAdapter implements
             contact.name = (!TextUtils.isEmpty(name)) ? name :
                     mResources.getString(R.string.missing_name);
             contact.photoUri = (photoUri != null ? Uri.parse(photoUri) : null);
-            contact.lookupUri =  RawContacts.getLookupUri(id);
-            contact.lookupKey = contact.lookupUri == null ? null : contact.lookupUri.toString();
+            contact.lookupKey = lookupKey;
+            contact.lookupUri = ContentUris.withAppendedId(
+                    Uri.withAppendedPath(Contacts.CONTENT_LOOKUP_URI, lookupKey), id);
             contact.isFavorite = isStarred;
             contact.isDefaultNumber = isDefaultNumber;
 
             // Set phone number and label
             final int phoneNumberType = cursor.getInt(mPhoneNumberTypeIndex);
             final String phoneNumberCustomLabel = cursor.getString(mPhoneNumberLabelIndex);
-            contact.phoneLabel = (String) LabelHelper.PhoneLabel.getTypeLabel(mResources, phoneNumberType,
+            contact.phoneLabel = (String) Phone.getTypeLabel(mResources, phoneNumberType,
                     phoneNumberCustomLabel);
             contact.phoneNumber = cursor.getString(mPhoneNumberIndex);
 
@@ -279,12 +321,12 @@ public class PhoneFavoritesTileAdapter extends BaseAdapter implements
     }
 
     /**
-     * Iterates over the {@link android.database.Cursor}
+     * Iterates over the {@link Cursor}
      * Returns position of the first NON Starred Contact
-     * Returns -1 if {@link DisplayType#STARRED_ONLY}
-     * Returns 0 if {@link DisplayType#FREQUENT_ONLY}
+     * Returns -1 if {@link Display Type#STARRED_ONLY}
+     * Returns 0 if {@link Display Type#FREQUENT_ONLY}
      */
-    int getNumStarredContacts(Cursor cursor) {
+    protected int getNumStarredContacts(Cursor cursor) {
         cursor.moveToPosition(-1);
         while (cursor.moveToNext()) {
             if (cursor.getInt(mStarredIndex) == 0) {
@@ -362,6 +404,9 @@ public class PhoneFavoritesTileAdapter extends BaseAdapter implements
         if (DEBUG) {
             Log.v(TAG, "get view for " + String.valueOf(position));
         }
+
+        int itemViewType = getItemViewType(position);
+
         PhoneFavoriteTileView tileView = null;
 
         if (convertView instanceof PhoneFavoriteTileView) {
@@ -369,7 +414,8 @@ public class PhoneFavoritesTileAdapter extends BaseAdapter implements
         }
 
         if (tileView == null) {
-            tileView = (PhoneFavoriteTileView) View.inflate(mContext, R.layout.phone_favorite_tile_view, null);
+            tileView = (PhoneFavoriteTileView) View.inflate(mContext,
+                    R.layout.phone_favorite_tile_view, null);
         }
         tileView.setPhotoManager(mPhotoManager);
         tileView.setListener(mListener);
@@ -393,7 +439,7 @@ public class PhoneFavoritesTileAdapter extends BaseAdapter implements
      *
      * @param index Position of the contact to be removed.
      */
-    void popContactEntry(int index) {
+    public void popContactEntry(int index) {
         if (isIndexInBound(index)) {
             mDraggedEntry = mContactEntries.get(index);
             mDraggedEntryIndex = index;
@@ -406,7 +452,7 @@ public class PhoneFavoritesTileAdapter extends BaseAdapter implements
      * @param itemIndex Position of the contact in {@link #mContactEntries}.
      * @return True if the given index is valid for {@link #mContactEntries}.
      */
-    private boolean isIndexInBound(int itemIndex) {
+    public boolean isIndexInBound(int itemIndex) {
         return itemIndex >= 0 && itemIndex < mContactEntries.size();
     }
 
@@ -416,9 +462,11 @@ public class PhoneFavoritesTileAdapter extends BaseAdapter implements
      * @param itemIndex Position of the contact in {@link #mContactEntries}.
      */
     private void markDropArea(int itemIndex) {
-        if (isIndexInBound(mDragEnteredEntryIndex) && isIndexInBound(itemIndex)) {
+        if (mDraggedEntry != null && isIndexInBound(mDragEnteredEntryIndex) &&
+                isIndexInBound(itemIndex)) {
             mDataSetChangedListener.cacheOffsetsForDatasetChange();
             // Remove the old placeholder item and place the new placeholder item.
+            final int oldIndex = mDragEnteredEntryIndex;
             mContactEntries.remove(mDragEnteredEntryIndex);
             mDragEnteredEntryIndex = itemIndex;
             mContactEntries.add(mDragEnteredEntryIndex, ContactEntry.BLANK_ENTRY);
@@ -431,12 +479,12 @@ public class PhoneFavoritesTileAdapter extends BaseAdapter implements
     /**
      * Drops the temporarily removed contact to the desired location in the list.
      */
-    void handleDrop() {
+    public void handleDrop() {
         boolean changed = false;
         if (mDraggedEntry != null) {
             if (isIndexInBound(mDragEnteredEntryIndex) &&
                     mDragEnteredEntryIndex != mDraggedEntryIndex) {
-                // Don't add the ContactEntry here (to prevent a double animation).
+                // Don't add the ContactEntry here (to prevent a double animation from occuring).
                 // When we receive a new cursor the list of contact entries will automatically be
                 // populated with the dragged ContactEntry at the correct spot.
                 mDropEntryIndex = mDragEnteredEntryIndex;
@@ -459,7 +507,7 @@ public class PhoneFavoritesTileAdapter extends BaseAdapter implements
                 if (!operations.isEmpty()) {
                     // update the database here with the new pinned positions
                     try {
-                        mContext.getContentResolver().applyBatch(ScContactsContract.AUTHORITY,
+                        mContext.getContentResolver().applyBatch(ContactsContract.AUTHORITY,
                                 operations);
                     } catch (RemoteException | OperationApplicationException e) {
                         Log.e(TAG, "Exception thrown when pinning contacts", e);
@@ -501,8 +549,8 @@ public class PhoneFavoritesTileAdapter extends BaseAdapter implements
      */
     private void unstarAndUnpinContact(Uri contactUri) {
         final ContentValues values = new ContentValues(2);
-        values.put(RawContacts.STARRED, false);
-        values.put(RawContacts.PINNED, PinnedPositions.DEMOTED);
+        values.put(Contacts.STARRED, false);
+// Replaced with updatePinnedForContact(...)        values.put(Contacts.PINNED, PinnedPositions.DEMOTED);
         mContext.getContentResolver().update(contactUri, values, null, null);
     }
 
@@ -519,7 +567,8 @@ public class PhoneFavoritesTileAdapter extends BaseAdapter implements
      */
     @VisibleForTesting
     /* package */ void arrangeContactsByPinnedPosition(ArrayList<ContactEntry> toArrange) {
-        final PriorityQueue<ContactEntry> pinnedQueue = new PriorityQueue<>(PIN_LIMIT, mContactEntryComparator);
+        final PriorityQueue<ContactEntry> pinnedQueue =
+                new PriorityQueue<>(PIN_LIMIT, mContactEntryComparator);
 
         final List<ContactEntry> unpinnedContacts = new LinkedList<>();
 
@@ -527,9 +576,9 @@ public class PhoneFavoritesTileAdapter extends BaseAdapter implements
         for (int i = 0; i < length; i++) {
             final ContactEntry contact = toArrange.get(i);
             // Decide whether the contact is hidden(demoted), pinned, or unpinned
-            if (contact.pinned > PIN_LIMIT || contact.pinned == PinnedPositions.UNPINNED) {
+            if (contact.pinned > PIN_LIMIT || contact.pinned == UNPINNED) {
                 unpinnedContacts.add(contact);
-            } else if (contact.pinned > PinnedPositions.DEMOTED) {
+            } else if (contact.pinned > DEMOTED) {
                 // Demoted or contacts with negative pinned positions are ignored.
                 // Pinned contacts go into a priority queue where they are ranked by pinned
                 // position. This is required because the contacts provider does not return
@@ -557,7 +606,7 @@ public class PhoneFavoritesTileAdapter extends BaseAdapter implements
         // and then cleared frequents. Contacts in this situation should become unpinned.
         while (!pinnedQueue.isEmpty()) {
             final ContactEntry entry = pinnedQueue.poll();
-            entry.pinned = PinnedPositions.UNPINNED;
+            entry.pinned = UNPINNED;
             toArrange.add(entry);
         }
 
@@ -590,15 +639,17 @@ public class PhoneFavoritesTileAdapter extends BaseAdapter implements
             final int databasePinnedPosition = i + 1;
             if (entry.pinned == databasePinnedPosition) continue;
 
-            final Uri uri = RawContacts.getLookupUri(entry.id);
-            final ContentValues values = new ContentValues();
-            values.put(RawContacts.PINNED, databasePinnedPosition);
-            positions.add(ContentProviderOperation.newUpdate(uri).withValues(values).build());
+//            final Uri uri = Uri.withAppendedPath(Contacts.CONTENT_URI, String.valueOf(entry.id));
+//            final ContentValues values = new ContentValues();
+//            values.put(Contacts.PINNED, databasePinnedPosition);
+//            positions.add(ContentProviderOperation.newUpdate(uri).withValues(values).build());
+
+            updatePinnedForContact(mContext, entry.id, databasePinnedPosition, positions);
         }
         return positions;
     }
 
-    static class ViewTypes {
+    protected static class ViewTypes {
         public static final int TILE = 0;
         public static final int COUNT = 1;
     }
@@ -642,7 +693,110 @@ public class PhoneFavoritesTileAdapter extends BaseAdapter implements
     public void onDroppedOnRemove() {
         if (mDraggedEntry != null) {
             unstarAndUnpinContact(mDraggedEntry.lookupUri);
+            ArrayList<ContentProviderOperation> ops = new ArrayList<>();
+            updatePinnedForContact(mContext, mDraggedEntry.id, DEMOTED, ops);
+            try {
+                mContext.getContentResolver().applyBatch(ContactsContract.AUTHORITY, ops);
+            } catch (RemoteException e) {
+                e.printStackTrace();
+            } catch (OperationApplicationException e) {
+                e.printStackTrace();
+            }
+
             mAwaitingRemove = true;
         }
+    }
+
+    public void setUnpinned(long contactId) {
+        ArrayList<ContentProviderOperation> ops = new ArrayList<>();
+        updatePinnedForContact(mContext, contactId, UNPINNED, ops);
+        try {
+            mContext.getContentResolver().applyBatch(ContactsContract.AUTHORITY, ops);
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        } catch (OperationApplicationException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /*
+     * The data and the functions below implement handling to store the pinned index for the speed dial
+     * grid layout. We cannot use the normal Contact PINNED filed because the native dialer already uses
+     * it and the field is also not available in earlier Android version (< Lollipop).
+     *
+     * What we do here: add an own new data type and use it to store the pinned index.
+     * This handling is quite heavy, however for a normal lookup acceptable. Only adding a new
+     * pinned index requires several operations.
+     */
+    private final static String[] DATA_FIELDS = {
+            ContactsContract.Data._ID,
+            ContactsContract.Data.MIMETYPE,
+            ContactsContract.Data.DATA4,
+            ContactsContract.Data.RAW_CONTACT_ID
+    };
+    private final static int DATA_ID =     0;
+    private final static int DATA_MIME =   1;
+    private final static int DATA_4 =      2;
+    private final static int DATA_RAW_ID = 3;
+
+    private int getPinnedForContact(long contactId) {
+        Cursor c = lookupPinnedData(mContext, contactId);
+        int data4 = UNPINNED;
+        if (c != null && c.getCount() > 0) {
+            c.moveToFirst();
+            final int dataId = c.getInt(DATA_ID);
+            data4 = c.getInt(DATA_4);
+//            if (ConfigurationUtilities.mTrace)
+//                Log.d(TAG, "++++ Found data: " + dataId +", type: " + c.getString(DATA_MIME) +
+//                        ", value: " + data4 + ", ids: " + contactId + " (" + c.getInt(DATA_RAW_ID) + ")");
+        }
+        if (c != null)
+            c.close();
+        return data4;
+    }
+
+    private static Cursor lookupPinnedData(Context ctx, long contactId) {
+        return ctx.getContentResolver().query(ContactsContract.Data.CONTENT_URI,
+                DATA_FIELDS,
+                Data.CONTACT_ID + "=?" + " AND " + Data.MIMETYPE + "='vnd.android.cursor.item/com.silentcircle.index'",
+                new String[]{String.valueOf(contactId)}, null);
+    }
+
+    public static void updatePinnedForContact(Context ctx, long contactId, int pinnedValue, ArrayList<ContentProviderOperation> ops) {
+        Cursor c = lookupPinnedData(ctx, contactId);
+        if (c != null && c.getCount() > 0) {
+            c.moveToFirst();
+            final int dataId = c.getInt(DATA_ID);
+//            if (ConfigurationUtilities.mTrace)
+//                Log.d(TAG, "++++ Update data: " + dataId +", type: " + c.getString(DATA_MIME) +
+//                        ", new value: " + pinnedValue + ", ids: " + contactId + " (" + c.getInt(DATA_RAW_ID) + ")");
+
+            ops.add(ContentProviderOperation.newUpdate(ContactsContract.Data.CONTENT_URI)
+                    .withSelection(Data._ID + "=?", new String[]{String.valueOf(dataId)})
+                    .withValue(Data.DATA4, pinnedValue)
+                    .build());
+        }
+        else {
+            Cursor c1 = ctx.getContentResolver().query(ContactsContract.RawContacts.CONTENT_URI,
+                    new String[]{RawContacts._ID, RawContacts.CONTACT_ID},
+                    RawContacts.CONTACT_ID + "=?",
+                    new String[]{String.valueOf(contactId)}, RawContacts._ID);
+            int rawId;
+            if (c1 != null && c1.getCount() > 0) {
+                c1.moveToFirst();
+                rawId = c1.getInt(0);
+                ops.add(ContentProviderOperation.newInsert(Data.CONTENT_URI)
+                        .withValue(Data.RAW_CONTACT_ID, rawId)
+                        .withValue(Data.MIMETYPE, "vnd.android.cursor.item/com.silentcircle.index")
+                        .withValue(Data.DATA4, 15)
+                        .build());
+
+            }
+            if (c1 != null)
+                c1.close();
+        }
+        if (c != null)
+            c.close();
+
     }
 }

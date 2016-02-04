@@ -120,21 +120,23 @@ public class PhoneNumberPickerFragment extends ScContactEntryListFragment<ScCont
     @Override
     public void onStart() {
         super.onStart();                // super: ScContactEntryListFragment - configures loader etc
-        if (mScDirectoryBox != null && mScDirectoryBox.isChecked()) {
-            if (!ScDirectoryLoader.mErrorOnPreviousSearch) {
-                useScDirectory(true);
-                if (mScInOrgBox != null && mScInOrgBox.isChecked()) {
-                    useScDirectoryOrganization(true);
-                }
-            }
-            else {
-                mScDirectoryBox.setChecked(false);
-                mScInOrgBox.setChecked(false);
-                useScDirectory(false);
-                useScDirectoryOrganization(false);
-                ScDirectoryLoader.mErrorOnPreviousSearch = false;
-            }
+        if (mShowScDirectoryOption) {
+            useScDirectory(true);
+            useScDirectoryOrganization(false);
         }
+//        if (mScDirectoryBox != null && mScDirectoryBox.isChecked()) {
+//            if (!ScDirectoryLoader.mErrorOnPreviousSearch) {
+//                if (mScInOrgBox != null && mScInOrgBox.isChecked()) {
+//                }
+//            }
+//            else {
+//                mScDirectoryBox.setChecked(false);
+//                mScInOrgBox.setChecked(false);
+//                useScDirectory(false);
+//                useScDirectoryOrganization(false);
+//                ScDirectoryLoader.mErrorOnPreviousSearch = false;
+//            }
+//        }
     }
 
     protected boolean getVisibleScrollbarEnabled() {
@@ -329,7 +331,7 @@ public class PhoneNumberPickerFragment extends ScContactEntryListFragment<ScCont
         View mainView = getView();
         if (mainView == null)
             return;
-        View v = getView().findViewById(R.id.sc_dir_options);
+        View v = mainView.findViewById(R.id.sc_dir_options);
         if (!flag) {
             if (v.getVisibility() == View.VISIBLE)
                 getView().findViewById(R.id.sc_dir_options).setVisibility(View.GONE);

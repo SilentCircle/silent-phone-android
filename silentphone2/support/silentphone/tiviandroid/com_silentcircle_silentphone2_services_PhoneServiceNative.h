@@ -141,6 +141,14 @@ JNIEXPORT jint JNICALL Java_com_silentcircle_silentphone2_services_PhoneServiceN
 JNIEXPORT jintArray JNICALL Java_com_silentcircle_silentphone2_services_PhoneServiceNative_getZrtpCounters
   (JNIEnv *, jclass, jint);
 
+/*
+  * Class:     com_silentcircle_silentphone2_services_PhoneServiceNative
+  * Method:    setPushToken
+  * Signature: (Ljava/lang/String;)I
+  */
+ JNIEXPORT void JNICALL Java_com_silentcircle_silentphone2_services_PhoneServiceNative_setPushToken
+   (JNIEnv *, jclass, jstring);
+
 #ifdef __cplusplus
 }
 #endif

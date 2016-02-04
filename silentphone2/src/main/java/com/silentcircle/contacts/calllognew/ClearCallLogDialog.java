@@ -18,26 +18,37 @@ package com.silentcircle.contacts.calllognew;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.app.DialogFragment;
+import android.app.FragmentManager;
 import android.app.ProgressDialog;
 import android.content.ContentResolver;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnClickListener;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.app.DialogFragment;
-import android.app.FragmentManager;
 
-import com.silentcircle.silentphone2.R;
 import com.silentcircle.silentcontacts2.ScCallLog.ScCalls;
+import com.silentcircle.silentphone2.R;
 
 /**
  * Dialog that clears the call log after confirming with the user
  */
 public class ClearCallLogDialog extends DialogFragment {
+    private static boolean mJustDeletingData;
+
     /** Preferred way to show this dialog */
     public static void show(FragmentManager fragmentManager) {
         ClearCallLogDialog dialog = new ClearCallLogDialog();
         dialog.show(fragmentManager, "deleteCallLog");
+    }
+
+    /**
+     * Return indication if the user just deleted some data and clear indication,
+     *
+     * @return the just deleted data indication
+     */
+    public static boolean justDeletingData() {
+        return mJustDeletingData;
     }
 
     @Override
@@ -52,12 +63,14 @@ public class ClearCallLogDialog extends DialogFragment {
                 final AsyncTask<Void, Void, Void> task = new AsyncTask<Void, Void, Void>() {
                     @Override
                     protected Void doInBackground(Void... params) {
+                        mJustDeletingData = true;
                         resolver.delete(ScCalls.CONTENT_URI, null, null);
                         return null;
                     }
                     @Override
                     protected void onPostExecute(Void result) {
                         progressDialog.dismiss();
+                        mJustDeletingData = false;
                     }
                 };
                 // TODO: Once we have the API, we should configure this ProgressDialog

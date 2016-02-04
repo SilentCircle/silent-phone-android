@@ -1,32 +1,6 @@
-/*
-Created by Janis Narbuts
-Copyright (C) 2004-2012, Tivi LTD, www.tiviphone.com. All rights reserved.
-Copyright (C) 2012-2015, Silent Circle, LLC.  All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-    * Any redistribution, use, or modification is done solely for personal
-      benefit and not for any commercial purpose or for monetary gain
-    * Redistributions of source code must retain the above copyright
-      notice, this list of conditions and the following disclaimer.
-    * Redistributions in binary form must reproduce the above copyright
-      notice, this list of conditions and the following disclaimer in the
-      documentation and/or other materials provided with the distribution.
-    * Neither the name Silent Circle nor the
-      names of its contributors may be used to endorse or promote products
-      derived from this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL SILENT CIRCLE, LLC BE LIABLE FOR ANY
-DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
+//VoipPhone
+//Created by Janis Narbuts
+//Copyright (c) 2004-2012 Tivi LTD, www.tiviphone.com. All rights reserved.
 
 
 #include <math.h>
@@ -556,6 +530,65 @@ int cleanPhoneNumber(char *p, int iLen){
    
    return iOutLen;
 }
+
+//>>>>>>>>>>>>>>>>>>>>>>>>>>>
+static char t_get_json_esc(unsigned char c){
+   
+//   const static char esc[]= {'\\','/','\"','\b','\f','\n','\r','\t',0};
+  // const static char esc_c[]={'\\','/','\"','b','f', 'n', 'r' ,'t',0};
+   const static char esc[]= {'\\','\"','\b','\f','\n','\r','\t',0};
+   const static char esc_c[]={'\\','\"','b','f', 'n', 'r' ,'t',0};
+
+   static char tab[256];
+   static int ok = 0;
+   
+   if(!ok){
+      ok = 1;
+      for(int j = 0; j < 256; j++){
+         
+         tab[j] = 0;//no escape
+         for(int i = 0;; i++){
+            if(esc[i] == 0)break;
+            if(j == esc[i]){tab[j] = esc_c[i]; break;}
+         }
+      }
+   }
+   
+   return tab[c];
+}
+
+int t_encode_json_string(char *out, int iMaxOut, const char *in){
+   int iLen = 0;
+   
+   iMaxOut--;
+   if(iMaxOut<1)return 0;
+   
+   for(int i = 0;; i++){
+      
+      if(iLen + 1 >= iMaxOut)break;
+      unsigned char c = (unsigned char)in[i];
+      if(c == 0)break;
+
+      
+      char is_esc = t_get_json_esc(c);
+      if(is_esc){
+         if(iLen + 2 >= iMaxOut)break;
+         out[iLen++] = '\\';
+         out[iLen++] = is_esc;
+      }
+      else if(c < 32){
+         if(iLen + 6 >= iMaxOut)break;
+         out[iLen++] = '\\';
+         sprintf(out+iLen,"u%04x",(unsigned char )c);iLen+=5;
+         continue;
+      }else
+         out[iLen++] = c;
+   }
+   out[iLen] = 0;
+   
+   return iLen;
+}
+//<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 static const unsigned int crc32_tab[] = {
    0x00000000, 0x1db71064, 0x3b6e20c8, 0x26d930ac,

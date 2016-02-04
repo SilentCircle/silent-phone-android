@@ -39,6 +39,10 @@ else
 fi
 
 
+git submodule init
+git submodule update --recursive
+git submodule status
+
 echo "sdk.dir=$ANDROID_SDK" > local.properties
 echo "ndk.dir=$ANDROID_NDK" >> local.properties
 
@@ -55,22 +59,32 @@ ndk-build
 popd
 
 
+# network proxy so gradle can update gradle toolset
+echo "systemProp.http.proxyHost=hlp01-fsyyz.hlp.silentcircle.net"   > gradle.properties
+echo "systemProp.http.proxyPort=3128"                              >> gradle.properties
+echo "systemProp.https.proxyHost=hlp01-fsyyz.hlp.silentcircle.net" >> gradle.properties
+echo "systemProp.https.proxyPort=3128"                             >> gradle.properties
+
 echo "build_environment=silentcircle.com"                 >> gradle.properties
 echo "build_version=$BUILD_NUMBER_PREFIX$BUILD_NUMBER"    >> gradle.properties
 echo "build_version_numeric=$BUILD_NUMBER"                >> gradle.properties
 echo "build_commit=$(git log -n 1 --pretty=format:'%h')"  >> gradle.properties
 echo "build_date=$BUILD_ID"                               >> gradle.properties
 echo "build_debug=true"                                   >> gradle.properties
-echo "build_partners="                                    >> gradle.properties
+echo "build_partners=Vertu"                               >> gradle.properties
 
+## Next is required for gradle plugin 1.3.0 to support the old way to
+## handle NDK builds. Maybe we can update/remove it once gradle fulls supports NDK
+echo "android.useDeprecatedNdk=true"                      >> gradle.properties
 
 # for more information on what gradlew is doing consider using --info
 # ./gradlew --info clean $BUILD_GRADLE_TASK
 ./gradlew clean $BUILD_GRADLE_TASK
 
 # build-header.txt is sent to the distribution webserver with the apk
+# WEB_REPO is a URL prepended to the commit id resulting in a web link to the commit
 #
-git log -n 1 --pretty=tformat:$"%cD :: %h%+cn<br />build #$BUILD_NUMBER on $BUILD_ID%+s" > build-header.txt
+git log -n 1 --pretty=tformat:$"%cD :: <a href=\"$WEB_REPO/%H\">%h</a>%+cn<br />build #$BUILD_NUMBER on $BUILD_ID%+s" > build-header.txt
 
 
 SymlinkAPK() {

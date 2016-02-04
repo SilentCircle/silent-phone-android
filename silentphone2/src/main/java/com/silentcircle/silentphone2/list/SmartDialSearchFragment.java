@@ -49,6 +49,7 @@ public class SmartDialSearchFragment extends SearchFragment {
         // will already be showing anyway.
         adapter.setShortcutEnabled(SmartDialNumberListAdapter.SHORTCUT_DIRECT_CALL, false);
         adapter.setShortcutEnabled(SmartDialNumberListAdapter.SHORTCUT_ADD_NUMBER_TO_CONTACTS, false);
+        adapter.setShortcutEnabled(SmartDialNumberListAdapter.SHORTCUT_DIRECT_CONVERSATION, false);
         return adapter;
     }
 

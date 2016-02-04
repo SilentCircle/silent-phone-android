@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+// +++LICENSE_BEGIN+++
+/*
+ * Copyright © 2014, Silent Circle
+ * All rights reserved.
+ */
+// +++LICENSE_END+++
+ -->
+
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                xmlns:tools="http://schemas.android.com/tools"
+                style="?android:attr/buttonBarStyle"
+                android:id="@+id/AxoRemoteDevices"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:paddingLeft="@dimen/activity_horizontal_margin"
+                android:paddingRight="@dimen/activity_horizontal_margin"
+                android:paddingTop="@dimen/activity_vertical_margin"
+                tools:context="com.silentcircle.messaging.activities.AxoRegisterActivity">
+    <TextView
+            style="@style/Widget.Silent.SimpleText.Medium"
+            android:id="@+id/AxoLocalDevice"
+            android:text="@string/axo_local_device" />
+
+    <TextView
+            style="@style/Widget.Silent.SimpleText.Small"
+            android:id="@+id/AxoLocalDeviceKey"
+            android:layout_marginTop="@dimen/activity_vertical_margin_small"
+            android:layout_below="@+id/AxoLocalDevice"
+            android:typeface="monospace"
+            tools:text="ab:12:34:56:78:9a:89:76:\nab:12:34:56:78:9a:89:76:\nab:12:34:56:78:9a:89:76:\nab:12:34:56:78:9a:89:76"
+            tools:context="com.silentcircle.messaging.activities.ShowRemoteDevicesActivity"/>
+
+    <TextView
+            style="@style/Widget.Silent.SimpleText.Medium"
+            android:id="@+id/AxoDeviceHeader"
+            android:layout_below="@+id/AxoLocalDeviceKey"
+            android:layout_marginTop="@dimen/activity_vertical_margin"
+            android:gravity="center"
+            tools:text="One remote messaging device"/>
+
+    <TextView
+            style="@style/Widget.Silent.SimpleText.Small"
+            android:id="@+id/AxoDeviceListExplanation"
+            android:layout_below="@+id/AxoDeviceHeader"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/activity_vertical_margin_small"
+            android:text="@string/axo_device_explanation_remote"
+            android:visibility="visible"
+            tools:visibility="visible"/>
+
+    <LinearLayout
+            android:id="@+id/AxoDeviceListHeader"
+            android:layout_marginTop="@dimen/activity_vertical_margin_small"
+            android:layout_below="@+id/AxoDeviceListExplanation"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:descendantFocusability="blocksDescendants"
+            android:visibility="invisible"
+            android:orientation="horizontal"
+            tools:visibility="visible">
+
+        <TextView
+                style="@style/Widget.Silent.SimpleText.Small"
+                android:layout_width="0dp"
+                android:singleLine="true"
+                android:layout_weight="1"
+                android:background="@drawable/list_item_selection_dark"
+                android:text="@string/axo_remote_dev_header_1"
+                tools:context="com.silentcircle.messaging.activities.ShowRemoteDevicesActivity"/>
+        <TextView
+                style="@style/Widget.Silent.SimpleText.Small"
+                android:layout_width="wrap_content"
+                android:singleLine="true"
+                android:background="@drawable/list_item_selection_dark"
+                android:text="@string/axo_remote_dev_header_2"
+                tools:context="com.silentcircle.messaging.activities.ShowRemoteDevicesActivity"/>
+    </LinearLayout>
+
+    <ListView
+            android:id="@+id/AxoDeviceList"
+            android:layout_marginBottom="@dimen/activity_vertical_margin"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/AxoDeviceListHeader"
+            android:layout_above="@+id/ok"
+            android:dividerHeight="1px"
+            android:divider="?sp_dial_text_background"
+            android:visibility="invisible"
+            tools:visibility="visible"/>
+
+    <ProgressBar
+            style="?android:attr/progressBarStyleLarge"
+            android:id="@+id/progressBar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/activity_vertical_margin"
+            android:layout_below="@+id/AxoDeviceListHeader"
+            android:layout_centerHorizontal="true"
+            android:visibility="invisible"
+            tools:visibility="visible" />
+
+    <Button
+            style="?android:attr/buttonBarButtonStyle"
+            android:id="@+id/ok"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/activity_vertical_margin"
+            android:layout_alignParentBottom="true"
+            android:layout_centerHorizontal="true"
+            android:text="@android:string/ok"
+            android:textColor="?sp_dial_text_color" />
+
+</RelativeLayout>

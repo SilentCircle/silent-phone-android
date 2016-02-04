@@ -18,10 +18,10 @@ package com.silentcircle.contacts.calllognew;
 
 import android.content.Context;
 import android.view.View;
+import android.widget.QuickContactBadge;
 import android.widget.TextView;
 
 import com.silentcircle.common.testing.NeededForTesting;
-import com.silentcircle.contacts.widget.ScQuickContactBadgeNew;
 import com.silentcircle.silentphone2.R;
 
 /**
@@ -29,7 +29,7 @@ import com.silentcircle.silentphone2.R;
  */
 public final class CallLogListItemViews {
     /** The quick contact badge for the contact. */
-    public final ScQuickContactBadgeNew quickContactView;
+    public final QuickContactBadge quickContactView;
     /** The primary action view of the entry. */
     public final View primaryActionView;
     /** The details of the phone call. */
@@ -40,6 +40,8 @@ public final class CallLogListItemViews {
     public final View callLogEntryView;
     /** The view containing call log item actions.  Null until the ViewStub is inflated. */
     public View actionsView;
+    /** The view containing call log item actions.  Null until the ViewStub is inflated. */
+    public View actions2View;
     /** The "call back" action button - assigned only when the action section is expanded. */
     public TextView callBackButtonView;
     /** The "video call" action button - assigned only when the action section is expanded. */
@@ -50,6 +52,10 @@ public final class CallLogListItemViews {
     public TextView detailsButtonView;
     /** The "report" action button. */
     public TextView reportButtonView;
+    /** The "write back" action button. */
+    public TextView writeBackButtonView;
+    /** The "invite" action button */
+    public TextView inviteButtonView;
 
     /**
      * The row Id for the first call associated with the call log entry.  Used as a key for the
@@ -68,6 +74,12 @@ public final class CallLogListItemViews {
      * intent is set only when the actions ViewStub is inflated.
      */
     public String number;
+
+    /**
+     * The SIP address for the current call log entry, may be null.  Cached here as the call back
+     * intent is set only when the actions ViewStub is inflated.
+     */
+    public String sipAddress;
 
     /**
      * The phone number presentation for the current call log entry.  Cached here as the call back
@@ -105,7 +117,7 @@ public final class CallLogListItemViews {
      */
     public boolean canBeReportedAsInvalid;
 
-    private CallLogListItemViews(ScQuickContactBadgeNew quickContactView, View primaryActionView,
+    private CallLogListItemViews(QuickContactBadge quickContactView, View primaryActionView,
             PhoneCallDetailsViews phoneCallDetailsViews, View callLogEntryView,
             TextView dayGroupHeader) {
         this.quickContactView = quickContactView;
@@ -117,7 +129,7 @@ public final class CallLogListItemViews {
 
     public static CallLogListItemViews fromView(View view) {
         return new CallLogListItemViews(
-                (ScQuickContactBadgeNew) view.findViewById(R.id.quick_contact_photo),
+                (QuickContactBadge) view.findViewById(R.id.quick_contact_photo),
                 view.findViewById(R.id.primary_action_view),
                 PhoneCallDetailsViews.fromView(view),
                 view.findViewById(R.id.call_log_row),
@@ -127,7 +139,7 @@ public final class CallLogListItemViews {
     @NeededForTesting
     public static CallLogListItemViews createForTest(Context context) {
         CallLogListItemViews views = new CallLogListItemViews(
-                new ScQuickContactBadgeNew(context),
+                new QuickContactBadge(context),
                 new View(context),
                 PhoneCallDetailsViews.createForTest(context),
                 new View(context),

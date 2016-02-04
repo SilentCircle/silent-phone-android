@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/bg_window_dark"
+    android:divider="?android:attr/dividerHorizontal"
+    android:orientation="vertical"
+    android:showDividers="end">
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <TextView
+            android:id="@+id/filter_status"
+            style="@style/ContactListSeparatorTextViewStyle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="@dimen/conversation_log_outer_margin"
+            android:layout_marginStart="@dimen/conversation_log_outer_margin"
+            android:paddingBottom="@dimen/conversation_log_inner_margin"
+            android:paddingTop="@dimen/conversation_log_inner_margin"
+            android:visibility="gone"
+            tools:visibility="visible" />
+
+        <View
+            android:id="@+id/conversation_log_divider"
+            android:layout_width="match_parent"
+            android:layout_height="1px"
+            android:layout_gravity="bottom"
+            android:layout_marginEnd="@dimen/conversation_log_outer_margin"
+            android:layout_marginStart="@dimen/conversation_log_outer_margin"
+            android:background="#55ffffff" />
+    </FrameLayout>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+        <!-- clipChildren=false is required to ensure shadows drawn
+            within list items aren't clipped by the list item bounds. -->
+        <ListView
+            android:id="@android:id/list"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipChildren="false"
+            android:divider="@null"
+            android:fadingEdge="none"
+            android:overScrollMode="never"
+            android:layout_marginTop="@dimen/conversation_log_list_margin_top"
+            android:nestedScrollingEnabled="true"
+            android:scrollbarStyle="outsideOverlay" />
+
+        <include
+            android:id="@+id/empty_list_view"
+            layout="@layout/empty_list_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="visible" />
+
+    </FrameLayout>
+
+</LinearLayout>

@@ -30,8 +30,6 @@
 #include <CryptoContext.h>
 
 #include <crypto/SrtpSymCrypto.h>
-#include <crypto/hmac.h>
-#include <cryptcommon/macSkein.h>
 
 
 CryptoContextCtrl::CryptoContextCtrl(uint32_t ssrc,
@@ -157,19 +155,6 @@ CryptoContextCtrl::~CryptoContextCtrl(){
         delete f8Cipher;
         f8Cipher = NULL;
     }
-    if (macCtx != NULL) {
-        switch(aalg) {
-        case SrtpAuthenticationSha1Hmac:
-            freeSha1HmacContext(macCtx);
-            break;
-
-        case SrtpAuthenticationSkeinHmac:
-            freeSkeinMacContext(macCtx);
-            break;
-        }
-    }
-    ealg = SrtpEncryptionNull;
-    aalg = SrtpAuthenticationNull;
 }
 
 void CryptoContextCtrl::srtcpEncrypt( uint8_t* rtp, int32_t len, uint32_t index, uint32_t ssrc )
@@ -321,11 +306,14 @@ void CryptoContextCtrl::deriveSrtcpKeys()
     // Initialize MAC context with the derived key
     switch (aalg) {
     case SrtpAuthenticationSha1Hmac:
-        macCtx = createSha1HmacContext(k_a, n_a);
+        macCtx = &hmacCtx.hmacSha1Ctx;
+        macCtx = initializeSha1HmacContext(macCtx, k_a, n_a);
         break;
     case SrtpAuthenticationSkeinHmac:
+        macCtx = &hmacCtx.hmacSkeinCtx;
+
         // Skein MAC uses number of bits as MAC size, not just bytes
-        macCtx = createSkeinMacContext(k_a, n_a, tagLength*8, Skein512);
+        macCtx = initializeSkeinMacContext(macCtx, k_a, n_a, tagLength*8, Skein512);
         break;
     }
     memset(k_a, 0, n_a);

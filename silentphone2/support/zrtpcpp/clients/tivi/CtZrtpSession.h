@@ -31,7 +31,9 @@ class CtZrtpStream;
 class CtZrtpCb;
 class CtZrtpSendCb;
 class ZrtpConfigure;
+class ZRtp;
 class CMutexClass;
+typedef struct _SrtpErrorData SrtpErrorData;
 
 extern "C" __EXPORT const char *getZrtpBuildInfo();
 
@@ -121,6 +123,9 @@ public:
      *
      * @param video
      *     set to @c true if video stream shoud be initialized.
+     * 
+     * @param callId
+     *     The Tivi engine's call id.
      *
      * @param config
      *     this parameter points to ZRTP configuration data. If it is
@@ -131,7 +136,7 @@ public:
      *     ZRTP processing disabled.
      *
      */
-    int init(bool audio, bool video, ZrtpConfigure* config = NULL);
+    int init(bool audio, bool video, int32_t callId = 0, ZrtpConfigure* config = NULL);
 
     /**
      * @brief Fills a ZrtpConfiguration based on selected algorithms.
@@ -688,6 +693,31 @@ public:
      */
     bool isDiscriminatorMode();
 
+    /**
+     * @brief Get SRTP error trace data.
+     *
+     * This function copies the internal SRTP error trace data into an array. The
+     * caller must provide this array and must make sure that the array can receive
+     * at least @c NumSrtpErrorData number of @c SrtpErrorData structure elements.
+     * 
+     * On return the array contains the @c SrtpErrorData elemts in chronological order,
+     * i.e. index zero is the oldest element, the newest element is at index @c returnValue-1.
+     *
+     * @param data Pointer to an array of @c SrtpErrorData structures, minumim length
+     *             of array must be @c NumSrtpErrorData elements.
+     *
+     * @param streamNm stream identifier.
+     *
+     * @return Number of copies @c SrtpErrorData elements.
+     */
+    int32_t getSrtpTraceData(SrtpErrorData* data, streamName streamNm);
+
+    /**
+     * @brief Get the Tivi engine's call id.
+     */
+    int32_t getTiviCallId() { return callId_; }
+
+
 protected:
     friend class CtZrtpStream;
 
@@ -712,6 +742,8 @@ private:
     std::string  clientIdString;
     std::string  multiStreamParameter;
     const uint8_t* ownZid;
+    ZRtp*    zrtpMaster;
+    int32_t callId_;
 
     bool mitmMode;
     bool signSas;

@@ -19,6 +19,7 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.RECORD_VIDEO" />
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
@@ -35,6 +36,8 @@
     <uses-permission android:name="android.permission.BROADCAST_STICKY" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.CALL_PHONE"/>
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
     <uses-permission android:name="com.android.launcher.permission.INSTALL_SHORTCUT"/>
 
     <uses-permission android:name="android.permission.WRITE_SETTINGS"/>
@@ -107,7 +110,6 @@
 
         <!-- android:launchMode="singleTask"  android:screenOrientation="portrait"> -->
         <activity android:name=".activities.DialerActivity"
-                  android:excludeFromRecents="true"
                   android:windowSoftInputMode="stateAlwaysHidden|adjustNothing">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -121,6 +123,7 @@
 
                 <data android:scheme="silenttel" />
                 <data android:scheme="silentsip" />
+                <data android:scheme="sip" />
             </intent-filter>
             <intent-filter android:priority="999" >
                 <action android:name="com.silentcircle.silentphone.action.EDIT_BEFORE_CALL" />
@@ -129,11 +132,28 @@
 
                 <data android:scheme="silenttel" />
                 <data android:scheme="silentsip" />
+                <data android:scheme="sip" />
             </intent-filter>
             <intent-filter>
-                <action android:name="com.silentcircle.silentphone.action.CHECK_ACCOUNT" />
+                <action android:name="android.intent.action.SENDTO"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <data android:scheme="imto" android:host="sip.silentcircle.com"/>
+            </intent-filter>
+
+            <intent-filter>
+                <action android:name="com.silentcircle.messaging.action.VIEW_CONVERSATIONS" />
 
                 <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <data android:mimeType="vnd.android.cursor.item/com.silentcircle.phone"/>
+            </intent-filter>
+            <intent-filter android:icon="@drawable/ic_launcher_st">
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <data android:mimeType="vnd.android.cursor.item/com.silentcircle.message"/>
             </intent-filter>
         </activity>
         <activity android:name=".activities.InCallActivity"
@@ -250,118 +270,7 @@
         ******************** The SCA part ****************************************
         -->
 
-        <!-- The activity is disabled during startup, the client will switch this depending on
-             some old SCA installation variant
-        -->
-        <activity
-                android:name="com.silentcircle.contacts.activities.ScContactsMainActivity"
-                android:uiOptions="splitActionBarWhenNarrow"
-                android:icon="@drawable/ic_launcher"
-                android:label="@string/app_name_sca"
-                android:taskAffinity="com.silentcircle.contacts.activities.ScContactsMainActivity"
-                android:launchMode="singleTop"
-                android:clearTaskOnLaunch="true"
-                android:enabled="false"
-                android:theme="@style/SilentPhoneTheme">
 
-            <meta-data android:name="android.support.UI_OPTIONS"
-                       android:value="splitActionBarWhenNarrow" />
-
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW"/>
-                <category android:name="android.intent.category.DEFAULT"/>
-                <data android:mimeType="vnd.android.cursor.dir/com.silentcircle.raw_contact"/>
-            </intent-filter>
-
-            <intent-filter>
-                <action android:name="android.intent.action.SEARCH" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <data android:mimeType="vnd.android.cursor.dir/com.silentcircle.raw_contact" />
-            </intent-filter>
-
-            <intent-filter>
-                <action android:name="android.intent.action.SEARCH" />
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
-
-            <intent-filter>
-                <action android:name="com.silentcircle.silentcontacts.action.LIST_STARRED"/>
-                <category android:name="android.intent.category.DEFAULT"/>
-            </intent-filter>
-        </activity>
-
-        <!-- The alias is disable during startup, the client will switch this depending on
-             some old SCA installation variant
-        -->
-        <activity-alias
-                android:name="com.silentcircle.contacts.activities.ScContactsMainActivityForwarder"
-                android:enabled="false"
-                android:targetActivity="com.silentcircle.contacts.activities.ScContactsMainActivity">
-
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW"/>
-                <category android:name="android.intent.category.DEFAULT"/>
-                <data android:mimeType="vnd.android.cursor.dir/com.silentcircle.raw_contact"/>
-            </intent-filter>
-
-            <intent-filter>
-                <action android:name="android.intent.action.SEARCH" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <data android:mimeType="vnd.android.cursor.dir/com.silentcircle.raw_contact" />
-            </intent-filter>
-
-            <intent-filter>
-                <action android:name="android.intent.action.SEARCH" />
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
-
-            <intent-filter>
-                <action android:name="com.silentcircle.silentcontacts.action.LIST_STARRED"/>
-                <category android:name="android.intent.category.DEFAULT"/>
-            </intent-filter>
-        </activity-alias>
-
-        <!-- Views the details of a single contact -->
-        <activity
-                android:name="com.silentcircle.contacts.activities.ScContactDetailActivity"
-                android:label="@string/viewContactTitle"
-                android:parentActivityName="com.silentcircle.contacts.activities.ScContactsMainActivity"
-                android:enabled="true"
-                android:theme="@style/SilentPhoneTheme">
-            <meta-data
-                    android:name="android.support.PARENT_ACTIVITY"
-                    android:value="com.silentcircle.contacts.activities.ScContactsMainActivity" />
-
-            <intent-filter android:label="@string/viewContactDesription">
-                <action android:name="android.intent.action.VIEW"/>
-                <category android:name="android.intent.category.DEFAULT"/>
-                <data android:mimeType="vnd.android.cursor.item/com.silentcircle.raw_contact"/>
-            </intent-filter>
-
-        </activity>
-
-        <activity-alias
-                android:name="com.silentcircle.contacts.activities.ScContactDetailActivityForwarder"
-                android:targetActivity="com.silentcircle.contacts.activities.ScContactDetailActivity"
-                android:parentActivityName="com.silentcircle.contacts.activities.ScContactsMainActivityForwarder"
-                android:enabled="false">
-            <meta-data
-                    android:name="android.support.PARENT_ACTIVITY"
-                    android:value="com.silentcircle.contacts.activities.ScContactsMainActivityForwarder" />
-
-            <intent-filter android:label="@string/viewContactDesription">
-                <action android:name="android.intent.action.VIEW"/>
-                <category android:name="android.intent.category.DEFAULT"/>
-                <data android:mimeType="vnd.android.cursor.item/com.silentcircle.raw_contact"/>
-            </intent-filter>
-
-        </activity-alias>
 
         <activity
                 android:name="com.silentcircle.contacts.calllognew.CallLogActivity"
@@ -377,10 +286,6 @@
             </intent-filter>
         </activity>
 
-        <!-- Service to save a contact -->
-        <service
-                android:name="com.silentcircle.contacts.ScContactSaveService"
-                android:exported="false"/>
 
         <provider
                 android:name="com.silentcircle.contacts.providers.ScCallLogProvider"
@@ -399,92 +304,6 @@
                 android:exported="true">
         </provider>
 
-        <activity android:name="com.silentcircle.contacts.activities.ScContactSelectionActivity"
-                  android:label="@string/contactsList"
-                  android:theme="@style/ContactPickerTheme"
-                  android:launchMode="singleTop"
-                  android:clearTaskOnLaunch="true"
-                  android:uiOptions="splitActionBarWhenNarrow">
-
-            <intent-filter>
-                <action android:name="android.intent.action.INSERT_OR_EDIT"/>
-                <category android:name="android.intent.category.DEFAULT"/>
-                <data android:mimeType="vnd.android.cursor.item/com.silentcircle.raw_contact"/>
-            </intent-filter>
-
-            <intent-filter>
-                <action android:name="android.intent.action.PICK"/>
-                <category android:name="android.intent.category.DEFAULT"/>
-                <data android:mimeType="vnd.android.cursor.dir/com.silentcircle.raw_contact"/>
-                <data android:mimeType="vnd.android.cursor.dir/com.silentcircle.phone_v2"/>
-                <data android:mimeType="vnd.android.cursor.dir/com.silentcircle.postal-address_v2"/>
-                <data android:mimeType="vnd.android.cursor.dir/com.silentcircle.email_v2"/>
-            </intent-filter>
-
-        </activity>
-
-        <activity
-                android:name="com.silentcircle.contacts.activities.ScShowOrCreateActivity"
-                android:label="@string/app_name_sca"
-                android:permission="com.silentcircle.silentcontacts.permission.WRITE"
-                android:theme="@style/SilentPhoneTheme">
-
-            <intent-filter>
-                <action android:name="com.silentcircle.silentcontacts.action.SHOW_OR_CREATE_CONTACT" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <data android:scheme="mailto" />
-                <data android:scheme="silenttel" />
-                <data android:scheme="imto" />
-            </intent-filter>
-        </activity>
-
-        <!-- Create a new or edit an existing contact -->
-        <activity
-                android:name="com.silentcircle.contacts.activities.ScContactEditorActivity"
-                android:label="@string/app_name_sca"
-                android:theme="@style/EditorActivityTheme"
-                android:windowSoftInputMode="adjustResize">
-
-            <intent-filter android:label="@string/editContactDescription">
-                <action android:name="android.intent.action.EDIT"/>
-                <category android:name="android.intent.category.DEFAULT"/>
-                <data android:mimeType="vnd.android.cursor.item/com.silentcircle.raw_contact"/>
-            </intent-filter>
-
-            <intent-filter android:label="@string/insertContactDescription">
-                <action android:name="android.intent.action.INSERT"/>
-                <category android:name="android.intent.category.DEFAULT"/>
-                <data android:mimeType="vnd.android.cursor.dir/com.silentcircle.raw_contact"/>
-            </intent-filter>
-
-        </activity>
-
-        <activity
-                android:name="com.silentcircle.contacts.quickcontactnew.QuickContactActivity"
-                android:label="@string/app_name_sca"
-                android:launchMode="singleTop"
-                android:excludeFromRecents="true"
-                android:noHistory="true"
-                android:taskAffinity=""
-                android:windowSoftInputMode="stateUnchanged">
-
-            <intent-filter>
-                <action android:name="com.silentcircle.silentcontacts.action.QUICK_CONTACT" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <data android:mimeType="vnd.android.cursor.item/com.silentcircle.raw_contact" />
-            </intent-filter>
-        </activity>
-
-        <activity
-                android:name="com.silentcircle.contacts.quickcontact.QuickContactActivityV19"
-                android:theme="@style/Theme.QuickContact"
-                android:exported="false"/>
-
-        <activity
-                android:name="com.silentcircle.contacts.quickcontactnew.QuickContactActivityV21"
-                android:theme="@style/Theme.QuickContact"
-                android:exported="false"/>
-
         <activity
                 android:name="com.silentcircle.contacts.ScCallDetailActivity"
                 android:label="@string/callDetailTitle"
@@ -495,68 +314,14 @@
             <meta-data
                     android:name="android.support.PARENT_ACTIVITY"
                     android:value="com.silentcircle.contacts.calllognew.CallLogActivity" />
-            <!--
-             @style/CallDetailActivityTheme"
-            android:icon="@mipmap/ic_launcher_phone"
-            -->
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW"/>
-
-                <category android:name="android.intent.category.DEFAULT"/>
-
-                <data android:mimeType="vnd.android.cursor.item/com.silentcircle.calls"/>
-            </intent-filter>
         </activity>
 
-        <!-- Confirm that a single detail will be added to an existing contact -->
-        <activity
-                android:name="com.silentcircle.contacts.activities.ConfirmAddDetailActivity"
-                android:label="@string/activity_title_confirm_add_detail"
-                android:theme="@style/SilentPhoneTheme"
-                android:windowSoftInputMode="adjustResize"
-                android:exported="false"/>
-
-        <!-- Group related activities -->
-        <!-- Views the details of a single group -->
-        <activity android:name="com.silentcircle.contacts.activities.GroupDetailActivity"
-                  android:label=""
-                  android:exported="false"
-                  android:theme="@style/SilentPhoneTheme"/>
-
-        <!-- Create a new or edit an existing group -->
-        <activity
-                android:name="com.silentcircle.contacts.activities.GroupEditorActivity"
-                android:theme="@style/SilentPhoneTheme"
-                android:exported="false"
-                android:windowSoftInputMode="adjustResize"/>
-
-        <!-- Used to set options -->
-        <activity
-                android:name="com.silentcircle.contacts.preference.ContactsPreferenceActivity"
-                android:label="@string/activity_title_settings"
-                android:exported="false"
-                android:theme="@style/SilentPhoneTheme"/>
-
-        <!-- vCard related -->
-        <activity android:name="com.silentcircle.contacts.vcard.ImportVCardActivity"
-                  android:configChanges="orientation|screenSize|keyboardHidden"
-                  android:screenOrientation="nosensor"
-                  android:theme="@style/SilentPhoneTheme">
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW"/>
-                <data android:mimeType="text/x-silentvcard"/>
-                <data android:mimeType="text/x-vcard"/>
-                <category android:name="android.intent.category.DEFAULT"/>
-            </intent-filter>
-        </activity>
+        <service android:name="com.silentcircle.contacts.UpdateScAccountDataService"/>
 
         <activity android:name="com.silentcircle.contacts.vcard.CancelActivity"
                   android:exported="false"
                   android:theme="@style/SilentPhoneTheme"/>
-        <!--
-                <activity android:name=".vcard.SelectAccountActivity"
-                    android:theme="@style/SilentPhoneTheme"/>
-        -->
+
         <activity android:name="com.silentcircle.contacts.vcard.ExportVCardActivity"
                   android:exported="false"
                   android:theme="@style/SilentPhoneTheme"/>
@@ -600,6 +365,37 @@
                     android:resource="@xml/file_paths" />
         </provider>
 
+        <provider
+            android:name="com.silentcircle.messaging.providers.PictureProvider"
+            android:authorities="com.silentcircle.messaging.provider.picture"
+            android:enabled="true"
+            android:exported="true" />
+
+        <provider
+            android:name="com.silentcircle.messaging.providers.VideoProvider"
+            android:authorities="com.silentcircle.messaging.provider.video"
+            android:enabled="true"
+            android:exported="false" />
+
+        <provider
+            android:name="com.silentcircle.messaging.providers.AudioProvider"
+            android:authorities="com.silentcircle.messaging.provider.audio"
+            android:enabled="true"
+            android:exported="false" />
+
+        <provider
+            android:name="com.silentcircle.messaging.providers.TextProvider"
+            android:authorities="com.silentcircle.messaging.provider.text"
+            android:enabled="true"
+            android:exported="false" />
+
+        <provider
+            android:name="com.silentcircle.messaging.providers.VCardProvider"
+            android:authorities="com.silentcircle.messaging.provider.vcard"
+            android:enabled="true"
+            android:exported="false" />
+
+        <!-- Account Authenticator related activities and services -->
         <activity android:name="com.silentcircle.accounts.AuthenticatorActivity"
                   android:excludeFromRecents="true"
                   android:screenOrientation="portrait"
@@ -611,16 +407,100 @@
             <intent-filter>
                 <action android:name="android.accounts.AccountAuthenticator"/>
             </intent-filter>
-            <meta-data android:name="android.accounts.AccountAuthenticator"
-                       android:resource="@xml/authenticator"/>
+            <meta-data android:name="android.accounts.AccountAuthenticator" android:resource="@xml/authenticator"/>
 
-            </service>
+        </service>
+
+        <service
+                android:name="com.silentcircle.accounts.SyncService"
+                android:exported="true">
+            <intent-filter>
+                <action android:name="android.content.SyncAdapter" />
+            </intent-filter>
+            <meta-data android:name="android.content.SyncAdapter" android:resource="@xml/sync_adapter" />
+            <meta-data android:name="android.provider.CONTACTS_STRUCTURE" android:resource="@xml/contacts" />
+        </service>
+
+        <service android:name="com.silentcircle.messaging.services.SCloudService" />
+
+        <service android:name="com.silentcircle.messaging.services.SCloudCleanupService">
+            <intent-filter>
+                <action android:name="com.silentcircle.messaging.action.PURGE_ATTACHMENTS"/>
+            </intent-filter>
+        </service>
 
         <receiver android:name="com.silentcircle.accounts.AccountChangeReceiver">
             <intent-filter>
                 <action android:name="android.accounts.LOGIN_ACCOUNTS_CHANGED"/>
             </intent-filter>
         </receiver>
+
+        <activity android:name="com.silentcircle.messaging.activities.SoundRecorderActivity"
+            android:configChanges="orientation|screenSize"
+            android:theme="@style/SoundRecorderDialog">
+            <intent-filter>
+                <action android:name="com.silentcircle.messaging.action.AUDIO_CAPTURE" />
+                <category android:name="android.intent.category.DEFAULT"/>
+                <data android:mimeType="audio/mp4"/>
+            </intent-filter>
+        </activity>
+
+        <activity android:name="com.silentcircle.messaging.activities.VideoCaptureActivity"
+            android:configChanges="screenSize"
+            android:screenOrientation="portrait"
+            android:theme="@android:style/Theme.Black.NoTitleBar.Fullscreen">
+            <intent-filter>
+                <action android:name="com.silentcircle.messaging.action.VIDEO_CAPTURE" />
+                <category android:name="android.intent.category.DEFAULT"/>
+                <data android:mimeType="video/mp4"/>
+            </intent-filter>
+        </activity>
+
+
+        <!-- Main conversation activity -->
+        <activity android:name="com.silentcircle.messaging.activities.ConversationActivity"
+            android:screenOrientation="portrait"
+            android:windowSoftInputMode="adjustResize"
+            android:theme="@style/SilentPhoneConversationTheme"
+            android:icon="@drawable/ic_launcher_st"
+            android:launchMode="singleTop">
+            <intent-filter>
+                <action android:name="android.intent.action.SENDTO"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <data android:scheme="imto" android:host="silentcircle"/>
+            </intent-filter>
+
+        </activity>
+
+        <!-- Activity to view multimedia content from conversation messages -->
+        <activity android:name="com.silentcircle.messaging.activities.FileViewerActivity"
+            android:theme="@style/SilentPhoneConversationTheme"
+            android:configChanges="screenSize|orientation"
+            android:uiOptions="splitActionBarWhenNarrow"/>
+
+        <activity android:name="com.silentcircle.messaging.activities.AxoRegisterActivity"
+                  android:exported="false"
+                  android:theme="@style/SilentPhoneTheme"/>
+
+        <activity android:name="com.silentcircle.messaging.activities.ShowRemoteDevicesActivity"
+                  android:exported="false"
+                  android:theme="@style/SilentPhoneTheme"/>
+
+        <receiver android:name="com.silentcircle.messaging.receivers.ChatNotification"
+                android:exported="false" android:enabled="true">
+            <intent-filter>
+                <action android:name="com.silentcircle.messaging.action.RECEIVE_MESSAGE" />
+            </intent-filter>
+        </receiver>
+
+        <activity android:name=".activities.ContactAdder"
+                  android:exported="false"
+                  android:theme="@style/SilentPhoneTheme"/>
+
+        <activity
+                  android:name="com.silentcircle.contacts.SCInviteActivity"
+                  android:exported="false"
+                  android:theme="@style/SilentPhoneTheme" />
 
     </application>
 

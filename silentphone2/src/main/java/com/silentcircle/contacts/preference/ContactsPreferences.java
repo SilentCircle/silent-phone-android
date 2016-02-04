@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2014-2015, Silent Circle, LLC. All rights reserved.
+Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -50,8 +50,12 @@ package com.silentcircle.contacts.preference;
 
 import android.content.ContentResolver;
 import android.content.Context;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
+import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.database.ContentObserver;
 import android.os.Handler;
+import android.provider.ContactsContract;
 import android.provider.Settings;
 import android.provider.Settings.SettingNotFoundException;
 
@@ -61,21 +65,49 @@ import com.silentcircle.silentphone2.R;
 /**
  * Manages user preferences for contacts.
  */
-public final class ContactsPreferences extends ContentObserver {
+public final class ContactsPreferences implements OnSharedPreferenceChangeListener {
+
+    /**
+     * The value for the DISPLAY_ORDER key to show the given name first.
+     */
+    public static final int DISPLAY_ORDER_PRIMARY = 1;
+
+    /**
+     * The value for the DISPLAY_ORDER key to show the family name first.
+     */
+    public static final int DISPLAY_ORDER_ALTERNATIVE = 2;
+
+    public static final String DISPLAY_ORDER_KEY = "android.contacts.DISPLAY_ORDER";
+
+    /**
+     * The value for the SORT_ORDER key corresponding to sort by given name first.
+     */
+    public static final int SORT_ORDER_PRIMARY = 1;
+
+    public static final String SORT_ORDER_KEY = "android.contacts.SORT_ORDER";
+
+    /**
+     * The value for the SORT_ORDER key corresponding to sort by family name first.
+     */
+    public static final int SORT_ORDER_ALTERNATIVE = 2;
 
     public static final String PREF_DISPLAY_ONLY_PHONES = "only_phones";
     public static final boolean PREF_DISPLAY_ONLY_PHONES_DEFAULT = false;
 
-    private Context mContext;
+    private final Context mContext;
     private int mSortOrder = -1;
     private int mDisplayOrder = -1;
     private ChangeListener mListener = null;
     private Handler mHandler;
+    private final SharedPreferences mPreferences;
 
     public ContactsPreferences(Context context) {
-        super(null);
+        super();
         mContext = context;
         mHandler = new Handler();
+        mPreferences = mContext.getSharedPreferences(context.getPackageName(),
+                Context.MODE_PRIVATE);
+        maybeMigrateSystemSettings();
     }
 
     public boolean isSortOrderUserChangeable() {
@@ -84,10 +116,9 @@ public final class ContactsPreferences extends ContentObserver {
 
     public int getDefaultSortOrder() {
         if (mContext.getResources().getBoolean(R.bool.config_default_sort_order_primary)) {
-            return ScContactsContract.Preferences.SORT_ORDER_PRIMARY;
-        }
-        else {
-            return ScContactsContract.Preferences.SORT_ORDER_ALTERNATIVE;
+            return SORT_ORDER_PRIMARY;
+        } else {
+            return SORT_ORDER_ALTERNATIVE;
         }
     }
 
@@ -97,19 +128,16 @@ public final class ContactsPreferences extends ContentObserver {
         }
 
         if (mSortOrder == -1) {
-            try {
-                mSortOrder = Settings.System.getInt(mContext.getContentResolver(),
-                        ScContactsContract.Preferences.SORT_ORDER);
-            } catch (SettingNotFoundException e) {
-                mSortOrder = getDefaultSortOrder();
-            }
+            mSortOrder = mPreferences.getInt(SORT_ORDER_KEY, getDefaultSortOrder());
         }
         return mSortOrder;
     }
 
     public void setSortOrder(int sortOrder) {
         mSortOrder = sortOrder;
-        Settings.System.putInt(mContext.getContentResolver(), ScContactsContract.Preferences.SORT_ORDER, sortOrder);
+        final Editor editor = mPreferences.edit();
+        editor.putInt(SORT_ORDER_KEY, sortOrder);
+        editor.apply();
     }
 
     public boolean isDisplayOrderUserChangeable() {
@@ -118,10 +146,9 @@ public final class ContactsPreferences extends ContentObserver {
 
     public int getDefaultDisplayOrder() {
         if (mContext.getResources().getBoolean(R.bool.config_default_display_order_primary)) {
-            return ScContactsContract.Preferences.DISPLAY_ORDER_PRIMARY;
-        }
-        else {
-            return ScContactsContract.Preferences.DISPLAY_ORDER_ALTERNATIVE;
+            return DISPLAY_ORDER_PRIMARY;
+        } else {
+            return DISPLAY_ORDER_ALTERNATIVE;
         }
     }
 
@@ -131,20 +158,16 @@ public final class ContactsPreferences extends ContentObserver {
         }
 
         if (mDisplayOrder == -1) {
-            try {
-                mDisplayOrder = Settings.System.getInt(mContext.getContentResolver(),
-                        ScContactsContract.Preferences.DISPLAY_ORDER);
-            } catch (SettingNotFoundException e) {
-                mDisplayOrder = getDefaultDisplayOrder();
-            }
+            mDisplayOrder = mPreferences.getInt(DISPLAY_ORDER_KEY, getDefaultDisplayOrder());
         }
         return mDisplayOrder;
     }
 
     public void setDisplayOrder(int displayOrder) {
         mDisplayOrder = displayOrder;
-        Settings.System.putInt(mContext.getContentResolver(),
-                ScContactsContract.Preferences.DISPLAY_ORDER, displayOrder);
+        final Editor editor = mPreferences.edit();
+        editor.putInt(DISPLAY_ORDER_KEY, displayOrder);
+        editor.apply();
     }
 
     public void registerChangeListener(ChangeListener listener) {
@@ -154,33 +177,33 @@ public final class ContactsPreferences extends ContentObserver {
         mListener = listener;
 
         // Reset preferences to "unknown" because they may have changed while the
-        // observer was unregistered.
+        // listener was unregistered.
         mDisplayOrder = -1;
         mSortOrder = -1;
 
-        final ContentResolver contentResolver = mContext.getContentResolver();
-        contentResolver
-                .registerContentObserver(Settings.System.getUriFor(ScContactsContract.Preferences.SORT_ORDER), false, this);
-        contentResolver.registerContentObserver(Settings.System.getUriFor(ScContactsContract.Preferences.DISPLAY_ORDER), false,
-                this);
+        mPreferences.registerOnSharedPreferenceChangeListener(this);
     }
 
     public void unregisterChangeListener() {
         if (mListener != null) {
-            mContext.getContentResolver().unregisterContentObserver(this);
             mListener = null;
         }
+
+        mPreferences.unregisterOnSharedPreferenceChangeListener(this);
     }
 
     @Override
-    public void onChange(boolean selfChange) {
+    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, final String key) {
         // This notification is not sent on the Ui thread. Use the previously created Handler
         // to switch to the Ui thread
         mHandler.post(new Runnable() {
             @Override
             public void run() {
-                mSortOrder = -1;
-                mDisplayOrder = -1;
+                if (DISPLAY_ORDER_KEY.equals(key)) {
+                    mDisplayOrder = getDisplayOrder();
+                } else if (SORT_ORDER_KEY.equals(key)) {
+                    mSortOrder = getSortOrder();
+                }
                 if (mListener != null) mListener.onChange();
             }
         });
@@ -188,5 +211,32 @@ public final class ContactsPreferences extends ContentObserver {
 
     public interface ChangeListener {
         void onChange();
+    }
+
+    /**
+     * If there are currently no preferences (which means this is the first time we are run),
+     * check to see if there are any preferences stored in system settings (pre-L) which can be
+     * copied into our own SharedPreferences.
+     */
+    private void maybeMigrateSystemSettings() {
+        if (!mPreferences.contains(SORT_ORDER_KEY)) {
+            int sortOrder = getDefaultSortOrder();
+            try {
+                 sortOrder = Settings.System.getInt(mContext.getContentResolver(),
+                        SORT_ORDER_KEY);
+            } catch (SettingNotFoundException e) {
+            }
+            setSortOrder(sortOrder);
+        }
+
+        if (!mPreferences.contains(DISPLAY_ORDER_KEY)) {
+            int displayOrder = getDefaultDisplayOrder();
+            try {
+                displayOrder = Settings.System.getInt(mContext.getContentResolver(),
+                        DISPLAY_ORDER_KEY);
+            } catch (SettingNotFoundException e) {
+            }
+            setDisplayOrder(displayOrder);
+        }
     }
 }

@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2014-2015, Silent Circle, LLC. All rights reserved.
+Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -38,43 +38,41 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.preference.PreferenceManager;
+import android.support.annotation.NonNull;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
-import android.view.View;
 import android.widget.TextView;
 
+import com.silentcircle.common.testing.NeededForTesting;
 import com.silentcircle.contacts.providers.ScContactsProvider;
-import com.silentcircle.keymngrsupport.KeyManagerSupport;
+import com.silentcircle.messaging.util.MIME;
+import com.silentcircle.silentcontacts2.ScContactsContract;
 import com.silentcircle.silentphone2.R;
 import com.silentcircle.silentphone2.util.ConfigurationUtilities;
-import com.silentcircle.vcard.VCardConfig;
 
 import java.io.File;
-import java.util.ArrayList;
 
 /**
  * This activity checks, starts and controls data migration from existing SCA to new embedded SCA
  *
  */
-public class MigrateByVCardActivity extends ActionBarActivity implements DialogInterface.OnClickListener, View.OnClickListener,
+public class MigrateByVCardActivity extends ActionBarActivity implements DialogInterface.OnClickListener,
     Handler.Callback {
     private static final String LOG_TAG = "MigrateByVCardActivity";
 
-    private static final String DO_MIGRATION = "do_sca_migration";
+    private static final String DO_MIGRATION = "do_nga_migration";
     private static final String ACTION_START_MIGRATION = "migration_initialize";
-    private static final int KEY_MANAGER_READY = 7;
 
     private static final int EXPORT_STARTED = 1;
-    private static final int IMPORT_STARTED = 2;
     private static final int WAIT_FOR_OPEN = 3;
-
-    private static boolean mHasBpForwarder;
 
     private VCardService mService;
 
@@ -88,13 +86,7 @@ public class MigrateByVCardActivity extends ActionBarActivity implements DialogI
 
     private final Handler mHandler = new Handler(this);
     private int mState = WAIT_FOR_OPEN;
-
-    /**
-     * Name of the old SilentCircle Key Manager package, included in silent contacts
-     */
-    private static final String OLD_SKA_PKG = "com.silentcircle.contacts";
-
-    private int mGoBack;
+    private boolean mSaveInstance;
 
     private ServiceConnection exportConnection = new ServiceConnection() {
         @Override
@@ -103,7 +95,7 @@ public class MigrateByVCardActivity extends ActionBarActivity implements DialogI
             final Uri fileUri = Uri.parse("file://" + mTargetFile);
             if (ConfigurationUtilities.mTrace) Log.d(LOG_TAG, "Send export request, uri: " + fileUri);
 
-            final ExportRequest request = new ExportRequest(fileUri, "v30_generic", true);   // true -> this is a migration request
+            final ExportRequest request = new ExportRequest(fileUri, null, true); // true -> for migration
 
             mService.setReportHandler(mHandler);
             mState = EXPORT_STARTED;
@@ -120,80 +112,50 @@ public class MigrateByVCardActivity extends ActionBarActivity implements DialogI
         }
     };
 
-    private ServiceConnection importConnection = new ServiceConnection() {
-        @Override
-        public synchronized void onServiceConnected(ComponentName name, IBinder binder) {
-            mService = ((VCardService.MyBinder) binder).getService();
-            final Uri fileUri = Uri.parse("file://" + mTargetFile);
-            if (ConfigurationUtilities.mTrace) Log.d(LOG_TAG, "Send import request, uri: " + fileUri);
-
-            ArrayList<ImportRequest> requests = new ArrayList<>();
-
-            final ImportRequest request = new ImportRequest(null, null, fileUri, "Migration import",
-                    VCardConfig.VCARD_TYPE_V30_GENERIC,
-                    null, ImportVCardActivity.VCARD_VERSION_V30, 0);
-            requests.add(request);
-
-            // The connection object will call finish().
-            mMessage.setText(getString(R.string.migrate_import));
-            mService.setReportHandler(mHandler);
-            mState = IMPORT_STARTED;
-            mService.handleImportRequest(requests, new MigrationExportListener(MigrateByVCardActivity.this));
-            unbindService(importConnection);
-            mService = null;
-        }
-
-        // Use synchronized since we don't want to call unbindAndFinish() just after this call.
-        @Override
-        public synchronized void onServiceDisconnected(ComponentName name) {
-            if (ConfigurationUtilities.mTrace) Log.d(LOG_TAG, "onServiceDisconnected() - import");
-            mService = null;
-        }
-    };
-
     @Override
-    protected void onCreate(Bundle bundle) {
-        super.onCreate(bundle);
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
 
-        mTargetFile = new File(getFilesDir(), "migrate_contacts.vcf");
+        final File file = Environment.getExternalStorageDirectory();
+        mTargetFile = new File(file, "silent_contacts.vcf");
         setContentView(R.layout.activity_migrate);
         mMessage = (TextView) findViewById(R.id.migrate_message);
         mMessage.setText(getString(R.string.migrate_start));
-        findViewById(R.id.migrate_go).setOnClickListener(this);
-        findViewById(R.id.migrate_cancel).setOnClickListener(this);
-        if (mHasBpForwarder)
-            findViewById(R.id.migrate_explanation_2).setVisibility(View.GONE);
+
+        if (savedInstanceState != null) {
+            mState = savedInstanceState.getInt("state");
+            mSaveInstance = false;
+        }
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
     }
 
     @Override
     public void onResume() {
         super.onResume();
+        mSaveInstance = false;
+        mHandler.sendEmptyMessageDelayed(0, 100);
     }
 
     @Override
-    public void onBackPressed() {
-        if (mGoBack > 1) {
-            mGoBack = 0;
-            super.onBackPressed();
-        }
-        mGoBack++;
+    protected void onStop() {
+        super.onStop();
     }
 
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        switch (requestCode) {
-            case KEY_MANAGER_READY:
-                if (resultCode != RESULT_OK) {
-                    Log.w(LOG_TAG, getString(R.string.migrate_failed_old_km) + " (" + resultCode+ ")");
-                    SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-                    prefs.edit().putBoolean(DO_MIGRATION, false).apply();
-                    finish();
-                }
-                else {
-                    keyManagerChecked();
-                }
-                break;
-        }
+    public void onSaveInstanceState (@NonNull Bundle outState) {
+        outState.putInt("state", mState);
+        mSaveInstance = true;
+        super.onSaveInstanceState(outState);
+    }
+
+    public void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        mState = savedInstanceState.getInt("state");
+        mSaveInstance = false;
     }
 
     @Override
@@ -201,9 +163,6 @@ public class MigrateByVCardActivity extends ActionBarActivity implements DialogI
         switch (mState) {
             case EXPORT_STARTED:
                 exportServiceDone();
-                break;
-            case IMPORT_STARTED:
-                importServiceDone();
                 break;
             case WAIT_FOR_OPEN:
                 waitForOpen();
@@ -217,9 +176,13 @@ public class MigrateByVCardActivity extends ActionBarActivity implements DialogI
     private void waitForOpen() {
         if (mWaitCount < 50) {
             if (ScContactsProvider.isWriteOpen()) {
-                try {
-                    startActivityForResult(KeyManagerSupport.getKeyManagerReadyIntent(), KEY_MANAGER_READY);
-                } catch (Exception ex) {
+                String action = getIntent().getAction();
+                if (ACTION_START_MIGRATION.equals(action)) {
+                    mMessage.setText(getString(R.string.migrate_export));
+                    startExportForMigration();
+                }
+                else {
+                    Log.e(LOG_TAG, "Action not known: " + getIntent().getAction());
                     finish();
                 }
                 return;
@@ -229,22 +192,7 @@ public class MigrateByVCardActivity extends ActionBarActivity implements DialogI
         }
         else {
             mMessage.setText(getString(R.string.migrate_not_ready));
-            mGoBack = 2;
         }
-    }
-
-
-    // 2nd step in onCreate, after key manager is ready
-    private void keyManagerChecked() {
-        // on result key manager ready - check intent action
-
-        String action = getIntent().getAction();
-        if (ACTION_START_MIGRATION.equals(action)) {
-            mMessage.setText(getString(R.string.migrate_export));
-            startExportForMigration();
-        }
-        else
-            finish();
     }
 
     // action_init: clear files, clear static data (if some), start service
@@ -276,21 +224,20 @@ public class MigrateByVCardActivity extends ActionBarActivity implements DialogI
             importServiceDone();
             return;
         }
-        Intent serviceIntent = new Intent(this, VCardService.class);
+        if (!mSaveInstance)
+            showNewDialog(R.id.dialog_import_to_contacts);
+    }
 
-        if (startService(serviceIntent) == null) {
-            Log.e(LOG_TAG, "Failed to start vCard service for import");
-            mErrorReason = getString(R.string.fail_reason_unknown);
-            showNewDialog(R.id.dialog_fail_to_export_with_reason);
-            return;
-        }
+    private void importVcardToContacts() {
+        /* view vCards with ImportVCardActivity */
+        Intent fileViewerIntent = new Intent(Intent.ACTION_VIEW);
+        Uri data = Uri.fromFile(mTargetFile);
+        fileViewerIntent.setDataAndType(data, MIME.TYPE_VCARD[1]);
+        startActivity(fileViewerIntent);
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        prefs.edit().putBoolean(DO_MIGRATION, false).apply();
 
-        if (!bindService(serviceIntent, importConnection, Context.BIND_AUTO_CREATE)) {
-            Log.e(LOG_TAG, "Failed to connect to vCard service for export.");
-            mErrorReason = getString(R.string.fail_reason_unknown);
-            showNewDialog(R.id.dialog_fail_to_export_with_reason);
-        }
-        // Continued in onServiceConnected() on importConnection
+        finish();
     }
 
     private void importServiceDone() {
@@ -301,19 +248,6 @@ public class MigrateByVCardActivity extends ActionBarActivity implements DialogI
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         prefs.edit().putBoolean(DO_MIGRATION, false).apply();
 
-        if (!mHasBpForwarder) {
-            // Trigger to uninstall old SCA
-            Intent intent = new Intent(Intent.ACTION_DELETE);
-            intent.setData(Uri.parse("package:" + OLD_SKA_PKG));
-            startActivity(intent);
-        }
-        else {
-            ComponentName cn = new ComponentName("com.silentcircle.contacts",
-                    "com.silentcircle.contacts.activities.ScContactsMainActivity");
-            Intent intent = new Intent("com.silentcircle.blackphone.contact.FORWARDER");
-            intent.setComponent(cn);
-            startActivity(intent);
-        }
         finish();
     }
 
@@ -337,7 +271,7 @@ public class MigrateByVCardActivity extends ActionBarActivity implements DialogI
         @Override
         public Dialog onCreateDialog(Bundle savedInstanceState) {
             int id = getArguments().getInt("resId");
-            MigrateByVCardActivity parent = (MigrateByVCardActivity) getActivity();
+            final MigrateByVCardActivity parent = (MigrateByVCardActivity) getActivity();
 
 
             switch (id) {
@@ -348,6 +282,19 @@ public class MigrateByVCardActivity extends ActionBarActivity implements DialogI
                                     parent.mErrorReason != null ? parent.mErrorReason :
                                             getString(R.string.fail_reason_unknown)))
                             .setPositiveButton(android.R.string.ok, parent)
+                            .create();
+                }
+                case R.id.dialog_import_to_contacts: {
+                    return new AlertDialog.Builder(parent)
+                            .setTitle(R.string.dialog_auto_import)
+                            .setMessage(getString(R.string.dialog_auto_import_text, parent.mTargetFile.getName()))
+                            .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    parent.importVcardToContacts();
+                                }
+                            })
+                            .setNegativeButton(android.R.string.no, parent)
                             .create();
                 }
             }
@@ -363,36 +310,9 @@ public class MigrateByVCardActivity extends ActionBarActivity implements DialogI
     }
 
     @Override
-    protected void onStop() {
-        super.onStop();
-    }
-
-    @Override
-    public void onClick(View view) {
-        switch (view.getId()) {
-            case R.id.migrate_cancel:
-                SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-                prefs.edit().putBoolean(DO_MIGRATION, false).apply();
-                finish();
-                break;
-
-            case R.id.migrate_go:
-                mHandler.sendEmptyMessageDelayed(0, 100);
-                findViewById(R.id.migrate_buttons).setVisibility(View.GONE);
-                findViewById(R.id.progressBar).setVisibility(View.VISIBLE);
-                // Continued in keyManagerChecked() via delayed handling
-                break;
-        }
-    }
-
-    @Override
     public void onClick(DialogInterface dialog, int which) {
         if (ConfigurationUtilities.mTrace) Log.d(LOG_TAG, "MigrateByVCardActivity#onClick() is called");
         finish();
-    }
-
-    public static void setBpForwarder(boolean hasForwarder) {
-        mHasBpForwarder = hasForwarder;
     }
 
     public static Intent getStartMigrationIntent(Context ctx) {
@@ -401,18 +321,36 @@ public class MigrateByVCardActivity extends ActionBarActivity implements DialogI
         return intent;
     }
 
+    private final static String[] projection = {
+            ScContactsContract.RawContacts._ID
+    };
+
+    private static boolean isContactsAvailable(Context ctx) {
+        final Cursor cursor = ctx.getContentResolver().query(ScContactsContract.RawContacts.CONTENT_URI,
+                projection, null, null, null);
+        boolean retVal = false;
+        if (cursor != null) {
+            Log.d(LOG_TAG, "++++ Migration cursor counter: " + cursor.getCount());
+            retVal = cursor.getCount() > 0;
+            cursor.close();
+        }
+        return retVal;
+    }
+
+    @NeededForTesting
+    public static void forceTrue(Context ctx) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(ctx);
+        prefs.edit().putBoolean(DO_MIGRATION, true).apply();
+    }
+
     public static boolean doMigration(Context ctx) {
+
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(ctx);
         if (!prefs.getBoolean(DO_MIGRATION, true))
             return false;
 
-        if (!KeyManagerSupport.hasKeyManager(ctx.getPackageManager())) {
-            if (ConfigurationUtilities.mTrace) Log.d(LOG_TAG, "No Key Manager");
-            prefs.edit().putBoolean(DO_MIGRATION, false).apply();
-            return false;
-        }
-        if (!KeyManagerSupport.signaturesMatch(ctx.getPackageManager(), ctx.getPackageName())) {
-            if (ConfigurationUtilities.mTrace) Log.d(LOG_TAG, "Not the same signature");
+        if (!isContactsAvailable(ctx)) {
+            if (ConfigurationUtilities.mTrace) Log.d(LOG_TAG, "No contacts data available");
             prefs.edit().putBoolean(DO_MIGRATION, false).apply();
             return false;
         }

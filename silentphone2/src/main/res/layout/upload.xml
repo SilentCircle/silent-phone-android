@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.silentcircle.messaging.views.UploadView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    style="@style/Widget.Silence.ProgressLayout">
+
+    <ImageView
+        android:id="@+id/progress_icon"
+        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"
+        style="@style/Widget.Silence.ImageView.ActionButton"
+        android:contentDescription="@string/dialog_button_cancel"
+        android:src="@drawable/ic_action_cancel" />
+
+    <LinearLayout
+        android:id="@+id/progress"
+        style="@style/Widget.Silence.ProgressView"
+        android:layout_height="wrap_content"
+        android:layout_width="match_parent">
+
+        <TextView
+            android:id="@+id/progress_label"
+            android:layout_height="wrap_content"
+            android:layout_width="wrap_content"
+            style="@style/Widget.Silence.TextView"
+            android:padding="@dimen/spacing_small"
+            android:text="@string/sample_duration" />
+
+        <ProgressBar
+            android:id="@+id/progress_bar"
+            android:layout_width="match_parent"
+            style="@style/Widget.Silence.ProgressBar"
+            android:layout_margin="@dimen/spacing_small"
+            android:max="100"/>
+    </LinearLayout>
+</com.silentcircle.messaging.views.UploadView>

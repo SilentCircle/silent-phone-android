@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2014-2015, Silent Circle, LLC. All rights reserved.
+Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -43,6 +43,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.database.ContentObserver;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.media.AudioAttributes;
@@ -66,6 +67,7 @@ import android.os.SystemClock;
 import android.os.Vibrator;
 import android.preference.PreferenceManager;
 import android.provider.CallLog;
+import android.provider.ContactsContract;
 import android.provider.Settings;
 import android.support.v4.app.NotificationCompat;
 import android.telephony.PhoneNumberUtils;
@@ -74,9 +76,12 @@ import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.util.Log;
 
+import com.silentcircle.contacts.UpdateScAccountDataService;
 import com.silentcircle.contacts.providers.LocaleChangeReceiver;
+import com.silentcircle.messaging.services.AxoMessaging;
+import com.silentcircle.messaging.services.SCloudService;
+import com.silentcircle.messaging.util.Action;
 import com.silentcircle.silentcontacts2.ScCallLog;
-import com.silentcircle.silentcontacts2.ScContactsContract;
 import com.silentcircle.silentphone2.BuildConfig;
 import com.silentcircle.silentphone2.R;
 import com.silentcircle.silentphone2.activities.DialerActivity;
@@ -158,6 +163,7 @@ public class TiviPhoneService extends PhoneServiceNative {
 
     public static final int TERMINATE_CALL = 1019;
     public static final int CHECK_NET = 1021;
+    public static final int START_MESSAGING = 1023;
 
     // Data for ring tone management
     private static final int VIBRATE_LENGTH = 1000; // ms
@@ -171,7 +177,7 @@ public class TiviPhoneService extends PhoneServiceNative {
 
     private AlarmManager alarmManager;
 
-    private static String deviceId;
+    private static String mInstanceDeviceId;
 
     OnAudioFocusChangeListener afChangeListener;
 
@@ -222,7 +228,7 @@ public class TiviPhoneService extends PhoneServiceNative {
 
     static public ManageCallStates calls = new ManageCallStates();
 
-    public static TiviPhoneService mc = null;
+    public static TiviPhoneService phoneService = null;
 
     private boolean mIsReady;
 
@@ -251,6 +257,26 @@ public class TiviPhoneService extends PhoneServiceNative {
 
     // set up a file observer to watch changes in the sys network directory
     private int mRunOnZero;
+
+    protected ContentObserver mChangeObserver = new ContentObserver(new Handler()) {
+
+        @Override
+        public boolean deliverSelfNotifications() {
+            return true;
+        }
+
+        @Override
+        public void onChange(boolean selfChange) {
+            onChange(selfChange, null);
+        }
+
+        @Override
+        public void onChange(boolean selfChange, Uri uri) {
+            Intent intent = new Intent(TiviPhoneService.this, UpdateScAccountDataService.class);
+            intent.setAction("update");
+            TiviPhoneService.this.startService(intent);
+        }
+    };
 
     private final FileObserver mSysNetObserver = new FileObserver("/sys/class/net", FileObserver.ALL_EVENTS) {
         @Override
@@ -298,6 +324,14 @@ public class TiviPhoneService extends PhoneServiceNative {
             pwlNetworkState++;
             if (ConfigurationUtilities.mTrace) Log.i(LOG_TAG, "PartialWake - network state. Count: " + pwlNetworkState +", at: " + System.currentTimeMillis());
             TiviPhoneService.checkNet(context);
+
+            // Run handler for dealing with failed attachment operations
+            if(AxoMessaging.repoIsOpen()) {
+                Intent serviceIntent = Action.RUN_ATTACHMENT_HANDLER.intent(context, SCloudService.class);
+                serviceIntent.putExtra("FROM_NETWORK", true);
+                startService(serviceIntent);
+            }
+
             mHandler.sendEmptyMessageDelayed(KEEP_ALIVE_RELEASE, 1000);
         }
     };
@@ -360,7 +394,7 @@ public class TiviPhoneService extends PhoneServiceNative {
     public void onCreate() {
 
         mWakeLock = new WakeLockHelper(this, LOG_TAG);
-        mc = this;
+        phoneService = this;
 
         prefs = PreferenceManager.getDefaultSharedPreferences(this);
         vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
@@ -405,8 +439,6 @@ public class TiviPhoneService extends PhoneServiceNative {
 
 
     public void enableDisableWifiLock(final boolean b) {
-        final Context c = getBaseContext();
-        final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(c);
         final SharedPreferences.Editor e = prefs.edit();
         e.putBoolean(key_wifi_lock, b).apply();
         if (b)
@@ -418,10 +450,6 @@ public class TiviPhoneService extends PhoneServiceNative {
     synchronized private void initWifiLock() {
         if (wifiLock != null)
             return;
-
-        final Context c = getBaseContext();
-
-        final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(c);
         final boolean b = prefs.getBoolean(key_wifi_lock, true);
         if (!b)
             return;
@@ -454,11 +482,12 @@ public class TiviPhoneService extends PhoneServiceNative {
         // Make sure our notification is gone.
         stopForeground(true);
         unregisterReceivers();
+        getContentResolver().unregisterContentObserver(mChangeObserver);
         LocaleChangeReceiver.setPhoneService(null);
         if (headsetProxyListenerAdded)
             bluetoothAdapter.closeProfileProxy(BluetoothProfile.HEADSET, bluetoothHeadsetProxy);
         stopWifiLock();
-        mc = null;
+        phoneService = null;
         iInitialized = false;
     }
 
@@ -489,7 +518,27 @@ public class TiviPhoneService extends PhoneServiceNative {
         LocaleChangeReceiver.setPhoneService(this);
 
         mIsReady = true;
+
+        mHandler.sendEmptyMessageDelayed(START_MESSAGING, 100);
+        Intent contactsUpdate = new Intent(TiviPhoneService.this, UpdateScAccountDataService.class);
+        contactsUpdate.setAction("update");
+        startService(contactsUpdate);
+
+        getContentResolver().registerContentObserver(ContactsContract.Contacts.CONTENT_URI, true, mChangeObserver);
+
         return START_STICKY;
+    }
+
+    private void setupMessaging() {
+        try {
+            AxoMessaging axoMessaging = AxoMessaging.getInstance(getApplicationContext());
+            axoMessaging.initialize();
+            if (!axoMessaging.isReady())
+                mHandler.sendEmptyMessageDelayed(START_MESSAGING, 1000);
+        } catch (Exception e) {
+            Log.e(LOG_TAG, "Initialization of messaging failed", e);
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -520,7 +569,7 @@ public class TiviPhoneService extends PhoneServiceNative {
         alarmManager.set(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime() + delay, pending);
     }
 
-    void updateRecents(final CallState c) {
+    private void updateRecents(final CallState c) {
         calls.onUpdateRecents(c);
         insertCallLog(c);
     }
@@ -561,7 +610,7 @@ public class TiviPhoneService extends PhoneServiceNative {
         }
     }
 
-    void checkMedia(final CallState call, final String str) {
+    private void checkMedia(final CallState call, final String str) {
         // start stop video
        call.videoMediaActive = !str.equalsIgnoreCase("audio");
        callStateChanged(call, CT_cb_msg.eNewMedia);
@@ -618,7 +667,7 @@ public class TiviPhoneService extends PhoneServiceNative {
             if (call == null) {
                 return;
             }
-            p = getString(R.string.call_type_audio);
+            p = getString(R.string.type_incoming);
             call.iEngID = iEngID;
             call.iCallId = iCallID;
             call.iIsIncoming = true;
@@ -632,6 +681,7 @@ public class TiviPhoneService extends PhoneServiceNative {
                     call.mPriority = CallState.EMERGENCY;
             }
 
+            call.mAssertedName.setText(TiviPhoneService.getInfo(call.iEngID, call.iCallId, "AssertedId"));
             // Set caller's name / number in call info data
             call.setPeerName(str);
 
@@ -743,11 +793,15 @@ public class TiviPhoneService extends PhoneServiceNative {
             // This case is for outgoing calls
         case eRinging:
             p = getString(R.string.sip_state_ringing);
+            call.mAssertedName.setText(TiviPhoneService.getInfo(call.iEngID, call.iCallId, "AssertedId"));
             break;
 
             // The engine sends eEndCall on outgoing and incoming calls. Setting callEnded to
             // true also removes the call from "private" or conference" state {@link ManageCallStates.isCallType()}
         case eEndCall:
+            if (call.mAssertedName.getLen() == 0) {
+                call.mAssertedName.setText(TiviPhoneService.getInfo(call.iEngID, call.iCallId, "AssertedId"));
+            }
             if (!call.iSipHasErrorMessage) {
                 if (str != null && "Call completed elsewhere".compareToIgnoreCase(str) == 0)
                     call.mAnsweredElsewhere = true;
@@ -759,6 +813,9 @@ public class TiviPhoneService extends PhoneServiceNative {
         case eStartCall:
             p = " ";                // Call is active but not yet "answered" ;
             call.iActive = true;
+            if (call.mAssertedName.getLen() == 0) {
+                call.mAssertedName.setText(TiviPhoneService.getInfo(call.iEngID, call.iCallId, "AssertedId"));
+            }
             if (call.uiStartTime == 0)
                 call.uiStartTime = System.currentTimeMillis();
 
@@ -831,7 +888,7 @@ public class TiviPhoneService extends PhoneServiceNative {
     }
 
     public static int initJNI(final Context ctx) {
-        saveImei(getDeviceId(ctx));
+        saveImei(getInstanceDeviceId(ctx, false));
 
         File f = ctx.getFilesDir();
         if (f != null)
@@ -843,27 +900,39 @@ public class TiviPhoneService extends PhoneServiceNative {
         return 0;
     }
 
-    public static String getDeviceId(Context ctx) {
-        if (deviceId == null) {
-            TelephonyManager tm = (TelephonyManager) ctx.getSystemService(Context.TELEPHONY_SERVICE);
-            String idData = tm.getDeviceId();
-            if (idData == null) {
-                idData = Build.SERIAL
-                        + " "
-                        + android.provider.Settings.Secure.getString(ctx.getContentResolver(),
-                        android.provider.Settings.Secure.ANDROID_ID);
-            }
-            else {
-                String add = Build.SERIAL
-                        + " "
-                        + android.provider.Settings.Secure.getString(ctx.getContentResolver(),
-                        android.provider.Settings.Secure.ANDROID_ID);
-
-                idData += " " + add;
-            }
-            deviceId = idData;
+    public static String getInstanceDeviceId(Context ctx, boolean newId) {
+        SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(ctx);
+        String devIdPref = pref.getString(ConfigurationUtilities.getDevIdKey(), null);
+        if (newId) {
+            mInstanceDeviceId = null;
+            devIdPref = "dev_" + System.currentTimeMillis();
+            pref.edit().putString(ConfigurationUtilities.getDevIdKey(), devIdPref).apply();
         }
-        return deviceId;
+        if (mInstanceDeviceId == null) {
+            String idData = getHwDeviceId(ctx);
+            mInstanceDeviceId = (devIdPref == null) ? idData : idData + devIdPref;
+        }
+        return mInstanceDeviceId;
+    }
+
+    public static String getHwDeviceId(Context ctx) {
+        TelephonyManager tm = (TelephonyManager) ctx.getSystemService(Context.TELEPHONY_SERVICE);
+        String idData = tm.getDeviceId();
+        if (idData == null) {
+            idData = Build.SERIAL
+                    + " "
+                    + android.provider.Settings.Secure.getString(ctx.getContentResolver(),
+                    android.provider.Settings.Secure.ANDROID_ID);
+        }
+        else {
+            String add = Build.SERIAL
+                    + " "
+                    + android.provider.Settings.Secure.getString(ctx.getContentResolver(),
+                    android.provider.Settings.Secure.ANDROID_ID);
+
+            idData += " " + add;
+        }
+        return idData;
     }
 
     public void setNotificationToDialer() {
@@ -890,6 +959,9 @@ public class TiviPhoneService extends PhoneServiceNative {
             if (info != null) {
                 text = text + " - " + info;
             }
+            AxoMessaging axoMessaging = AxoMessaging.getInstance(getApplicationContext());
+            if (axoMessaging.isRegistered())
+                axoMessaging.sendEmptySyncToSiblings();
         }
         else if (i == 1) {
             text = getString(R.string.sip_state_connecting);
@@ -1249,7 +1321,7 @@ public class TiviPhoneService extends PhoneServiceNative {
             if (PhoneNumberUtils.isGlobalPhoneNumber(dst))
                 values.put(ScCallLog.ScCalls.NUMBER, dst);
             else
-                values.put(ScCallLog.ScCalls.NUMBER, dst + "@sip.silentcircle.net");
+                values.put(ScCallLog.ScCalls.NUMBER, dst + getString(R.string.sc_sip_domain_0));
         }
         values.put(ScCallLog.ScCalls.TYPE, iType);
         values.put(ScCallLog.ScCalls.DATE, System.currentTimeMillis() - dur);
@@ -1262,7 +1334,11 @@ public class TiviPhoneService extends PhoneServiceNative {
         // not already open.
         Uri uri;
         if (!call.mPstnViaOca) {
-            uri = ScCallLog.CONTENT_URI.buildUpon().appendQueryParameter(ScContactsContract.NON_BLOCKING, "true").build();
+            String assertedName = call.mAssertedName.toString();
+            if (!TextUtils.isEmpty(assertedName)) {
+                values.put(ScCallLog.ScCalls.SC_OPTION_TEXT1, assertedName);
+            }
+            uri = ScCallLog.CONTENT_URI.buildUpon().appendQueryParameter(ScCallLog.NON_BLOCKING, "true").build();
             if (uri == null)
                 return;
             InsertCallLogHelper loaderTask = new InsertCallLogHelper(this, call, values);
@@ -1373,7 +1449,8 @@ public class TiviPhoneService extends PhoneServiceNative {
     private static class InternalHandler extends Handler {
         private final WeakReference<TiviPhoneService> mTarget;
 
-        private long prevTime = 0;
+        private long prevTime;
+        private int mShortReleases;
 
         InternalHandler(TiviPhoneService parent) {
             mTarget = new WeakReference<>(parent);
@@ -1397,6 +1474,10 @@ public class TiviPhoneService extends PhoneServiceNative {
                 return;
             }
 
+            if (msg.what == START_MESSAGING) {
+                parent.setupMessaging();
+                return;
+            }
             boolean cc = TiviPhoneService.calls.getLastCall() != null;
             int ret = 10;
             if (!cc)
@@ -1424,11 +1505,18 @@ public class TiviPhoneService extends PhoneServiceNative {
                 if (ret <= 0) {
                     if (ConfigurationUtilities.mTrace) Log.d("KEEP_ALIVE", "sleeping at: " + now);
                     parent.rescheduleWakeAlarm(KEEP_ALIVE_WAKE_UP_TIME);
+                    mShortReleases = 0;
                     parent.mWakeLock.stop();
                 }
                 else {
                     if (ConfigurationUtilities.mTrace) Log.d("KEEP_ALIVE", "delay keep alive-1 in sec: " + ret);
                     parent.mHandler.sendEmptyMessageDelayed(KEEP_ALIVE_RELEASE, 1000);
+                    mShortReleases++;
+                    if (mShortReleases > 120) {
+                        mShortReleases = 0;
+                        Log.w(LOG_TAG, "Force network reset after continuous retries");
+                        doCmd(":force.network_reset");
+                    }
                 }
                 break;
             }
