@@ -100,6 +100,8 @@ public class KeyStoreHelper {
     }
 
     public static void closeStore() {
+        if (!ready)
+            return;
         ProviderDbBackend.sendLockRequests();                // closeStore is an 'implicit' lock
         closeDatabase();
     }

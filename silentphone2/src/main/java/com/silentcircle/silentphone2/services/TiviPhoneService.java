@@ -1469,6 +1469,8 @@ public class TiviPhoneService extends PhoneServiceNative {
         if (sysDir.isDirectory()) {
             File[] sysNetFiles = sysDir.listFiles();
             mTunFound = false;
+            if (sysNetFiles == null)
+                return;
             for (File netFile : sysNetFiles) {
                 if (netFile.getName().startsWith("tun")) {
                     mTunFound = true;

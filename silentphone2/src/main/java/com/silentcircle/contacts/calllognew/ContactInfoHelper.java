@@ -62,15 +62,15 @@ import android.support.annotation.NonNull;
 import android.support.annotation.WorkerThread;
 import android.telephony.PhoneNumberUtils;
 import android.text.TextUtils;
-import android.util.Log;
 
+import com.silentcircle.SilentPhoneApplication;
 import com.silentcircle.common.util.AsyncTasks;
-import com.silentcircle.common.util.SearchUtil;
 import com.silentcircle.contacts.UpdateScContactDataService;
 import com.silentcircle.contacts.utils.Constants;
 import com.silentcircle.contacts.utils.PhoneNumberHelper;
 import com.silentcircle.contacts.utils.UriUtils;
 import com.silentcircle.messaging.services.AxoMessaging;
+import com.silentcircle.silentphone2.util.ConfigurationUtilities;
 import com.silentcircle.silentphone2.util.Utilities;
 
 import org.json.JSONException;
@@ -175,6 +175,11 @@ public class ContactInfoHelper {
                 AsyncTasks.UserInfo ui = AsyncTasks.parseUserInfo(data);
                 if (ui != null && ui.mDisplayName != null) {
                     updatedInfo.name = ui.mDisplayName;
+                    if (!TextUtils.isEmpty(ui.mAvatarUrl)) {
+                        updatedInfo.photoUri = Uri.parse(
+                                ConfigurationUtilities.getProvisioningBaseUrl(
+                                        SilentPhoneApplication.getAppContext()) + ui.mAvatarUrl);
+                    }
                 }
             } else {
                 updatedInfo = info;

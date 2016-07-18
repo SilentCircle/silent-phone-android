@@ -255,6 +255,7 @@
     <color name="chat_compose_hint">#ada9a3</color>
 
     <color name="chat_attachment_grid_color">#43454b</color>
+    <color name="chat_attachment_grid_color_light">@color/sc_ng_text_grey</color>
 
     <color name="chat_options_drawer_background">@color/sc_ng_background_2</color>
     <color name="chat_options_text_color">@color/sc_ng_text_grey</color>

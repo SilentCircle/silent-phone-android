@@ -127,6 +127,7 @@
         <attr name="sp_message_action_button_background" format="reference|color"/>
         <attr name="sp_outgoing_message_background" format="reference|color"/>
         <attr name="sp_incoming_message_background" format="reference|color"/>
+        <attr name="sp_attachment_grid_background"  format="reference|color"/>
 
     </declare-styleable>
 

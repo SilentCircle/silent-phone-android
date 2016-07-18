@@ -33,13 +33,13 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Handler;
 import android.provider.ContactsContract;
-import android.provider.Settings;
 import android.support.annotation.MainThread;
 import android.support.annotation.NonNull;
 import android.support.annotation.WorkerThread;
 import android.text.TextUtils;
 import android.util.Log;
 
+import com.silentcircle.SilentPhoneApplication;
 import com.silentcircle.common.list.ContactEntry;
 import com.silentcircle.common.util.AsyncTasks;
 import com.silentcircle.contacts.UpdateScContactDataService;
@@ -47,6 +47,7 @@ import com.silentcircle.contacts.utils.Constants;
 import com.silentcircle.messaging.services.AxoMessaging;
 import com.silentcircle.silentphone2.util.ConfigurationUtilities;
 import com.silentcircle.silentphone2.util.Utilities;
+import com.silentcircle.userinfo.LoadUserInfo;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -213,11 +214,23 @@ public final class ContactsCache {
                 // the stub entry.
                 if (result == null) {
                     byte[] dpName = null;
-                    if (AxoMessaging.getInstance(mContext).isReady())
+                    byte[] userInfo = null;
+                    if (AxoMessaging.getInstance(mContext).isReady()) {
                         dpName = AxoMessaging.getDisplayName(name);
+                        userInfo = AxoMessaging.getUserInfoFromCache(name);
+                    }
                     if (dpName != null) {
                         result = createTemporaryContactEntry(new String(dpName));
                         result.phoneNumber = name;
+
+                        if (userInfo != null) {
+                            AsyncTasks.UserInfo ui = AsyncTasks.parseUserInfo(userInfo);
+                            if (ui != null) {
+                                if (!TextUtils.isEmpty(ui.mAvatarUrl) && !LoadUserInfo.URL_AVATAR_NOT_SET.equals(ui.mAvatarUrl)) {
+                                    result.photoUri = Uri.parse(ConfigurationUtilities.getProvisioningBaseUrl(SilentPhoneApplication.getAppContext()) + ui.mAvatarUrl);
+                                }
+                            }
+                        }
                         mContactCache.add(result);
                     }
                     else {
@@ -238,9 +251,17 @@ public final class ContactsCache {
             @WorkerThread
             public void onPostRun() {
                 ContactEntry result;
+                String photoUri = null;
                 if (mUserInfo != null) {
+                    if (!TextUtils.isEmpty(mUserInfo.mAvatarUrl) && !LoadUserInfo.URL_AVATAR_NOT_SET.equals(mUserInfo.mAvatarUrl)) {
+                        photoUri = mUserInfo.mAvatarUrl;
+                    }
+
                     result = createTemporaryContactEntry(mUserInfo.mDisplayName);
                     result.phoneNumber = name;
+                    if (!TextUtils.isEmpty(photoUri)) {
+                        result.photoUri = Uri.parse(ConfigurationUtilities.getProvisioningBaseUrl(SilentPhoneApplication.getAppContext()) + photoUri);
+                    }
                 }
                 else {
                     if (ConfigurationUtilities.mTrace) Log.d(TAG, "Scheduling timeout to get user contact data.");
@@ -248,9 +269,16 @@ public final class ContactsCache {
                     result.phoneNumber = name;
                     result.timeCreated = System.currentTimeMillis();
                 }
-                if (oldEntry != null)
-                    mContactCache.remove(oldEntry);
-                mContactCache.add(result);
+                if (oldEntry != null) {
+                    synchronized (mContactCache) {
+                        mContactCache.remove(oldEntry);
+                    }
+                }
+                synchronized (mContactCache) {
+                    mContactCache.add(result);
+                }
+                // notify conversation list or conversation view to force refresh
+                MessageUtils.notifyConversationUpdated(SilentPhoneApplication.getAppContext(), name, false);
             }
         };
         if (ConfigurationUtilities.mTrace) Log.d(TAG, "Get user data from server/lookup cache for " + name);

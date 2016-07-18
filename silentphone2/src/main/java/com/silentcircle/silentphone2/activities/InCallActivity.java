@@ -69,6 +69,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.silentcircle.common.util.AsyncTasks;
+import com.silentcircle.common.util.ViewUtil;
 import com.silentcircle.silentphone2.R;
 import com.silentcircle.silentphone2.dialogs.CryptoInfoDialog;
 import com.silentcircle.silentphone2.dialogs.VerifyDialog;
@@ -259,6 +260,7 @@ public class InCallActivity extends AppCompatActivity
         super.onCreate(savedInstanceState);
 
         Utilities.setTheme(this);
+        ViewUtil.setBlockScreenshots(this);
         if (ConfigurationUtilities.mTrace) Log.d(TAG, "Intent onCreate: " + getIntent());
 
         Bundle bundle = getIntent().getExtras();

@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <integer name="google_app_measurement_enable">0</integer>
+</resources>

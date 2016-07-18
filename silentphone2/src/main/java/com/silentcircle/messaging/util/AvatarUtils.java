@@ -83,6 +83,12 @@ public class AvatarUtils {
             contactPhotoManager.loadThumbnail(quickContactView, photoId, false /* darkTheme */,
                     true /* isCircular */, request);
         }
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+            // don't show triangle for quick contact view
+            // currently click will do nothing
+            // but this view will have to be overridden
+            quickContactView.setEnabled(false);
+        }
     }
 
 

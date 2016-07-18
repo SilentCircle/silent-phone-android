@@ -20,12 +20,12 @@ import android.annotation.TargetApi;
 import android.app.ActivityManager;
 import android.content.ComponentCallbacks2;
 import android.content.ContentResolver;
-import android.content.ContentUris;
 import android.content.Context;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -47,6 +47,7 @@ import android.provider.ContactsContract.Contacts;
 import android.provider.ContactsContract.Contacts.Photo;
 import android.provider.ContactsContract.Data;
 import android.provider.ContactsContract.Directory;
+import android.support.annotation.NonNull;
 import android.support.v4.graphics.drawable.RoundedBitmapDrawable;
 import android.support.v4.graphics.drawable.RoundedBitmapDrawableFactory;
 import android.text.TextUtils;
@@ -946,6 +947,15 @@ class ContactPhotoManagerImplNew extends ContactPhotoManagerNew implements Callb
             mBitmapCache.put(request.getKey(), cachedBitmap);
         }
 
+        // hack: Don't allow resources from external requests to expire easily
+        Uri uri = request.getUri();
+        if (uri != null) {
+            final String scheme = uri.getScheme();
+            if (scheme.equals("http") || scheme.equals("https")) {
+                holder.fresh = true;
+            }
+        }
+
         // Soften the reference
         holder.bitmap = null;
 
@@ -1510,6 +1520,15 @@ class ContactPhotoManagerImplNew extends ContactPhotoManagerNew implements Callb
                         } finally {
                             is.close();
                         }
+
+                        // for external requests resize bitmap to fit it in cache
+                        // bitmap should be below 8kb
+                        if (scheme.equals("http") || scheme.equals("https")) {
+                            if (baos.size() > 8 * 1024) {
+                                baos = getResizedBitmap(baos);
+                            }
+                        }
+
                         cacheBitmap(originalUri, baos.toByteArray(), false,
                                 uriRequest.getRequestedExtent());
                         mMainThreadHandler.sendEmptyMessage(MESSAGE_PHOTOS_LOADED);
@@ -1522,6 +1541,18 @@ class ContactPhotoManagerImplNew extends ContactPhotoManagerNew implements Callb
                     cacheBitmap(originalUri, null, false, uriRequest.getRequestedExtent());
                 }
             }
+        }
+
+        @NonNull
+        private ByteArrayOutputStream getResizedBitmap(ByteArrayOutputStream baos) {
+            byte[] bitmapBytes = baos.toByteArray();
+            Bitmap bitmap = BitmapFactory.decodeByteArray(bitmapBytes, 0, bitmapBytes.length);
+            int height = (int) (bitmap.getHeight() * (50.0f / bitmap.getWidth()));
+            bitmap = Bitmap.createScaledBitmap(bitmap, (int) 50.0f, height, true);
+
+            baos = new ByteArrayOutputStream();
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, baos);
+            return baos;
         }
     }
 

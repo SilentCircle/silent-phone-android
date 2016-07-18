@@ -28,14 +28,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 package com.silentcircle.common.util;
 
-import android.content.Context;
 import android.os.AsyncTask;
 import android.support.annotation.Nullable;
 import android.support.annotation.WorkerThread;
 import android.util.Log;
 
 import com.silentcircle.messaging.services.AxoMessaging;
-import com.silentcircle.silentphone2.activities.ProvisioningActivity;
 import com.silentcircle.silentphone2.services.TiviPhoneService;
 import com.silentcircle.silentphone2.util.ConfigurationUtilities;
 
@@ -184,7 +182,7 @@ public class AsyncTasks {
                 ui.mLookupUri = data.optString("lookup_uri");
             }
             if (data.has("avatar_url")) {
-                ui.mLookupUri = data.optString("avatar_url");
+                ui.mAvatarUrl = data.optString("avatar_url");
             }
         } catch (JSONException ex) {
             Log.d("parseUserInfo", "JSON exception", ex);

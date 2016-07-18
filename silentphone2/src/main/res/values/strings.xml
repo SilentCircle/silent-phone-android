@@ -838,7 +838,9 @@
     <string name="send_file">Send File</string>
     <string name="share_contact">Share Contact</string>
 
-    <!-- voiceovers for messages in conversation view -->
+    <!-- voiceovers for conversation view -->
+    <string name="messaging_back_button_voiceover">Back to conversations</string>
+    <string name="messaging_avatar_voiceover">Partner avatar</string>
     <string name="messaging_burn_button_voiceover">Burn\u002E \u0020button</string>
     <string name="messaging_location_button_voiceover">Location\u002E \u0020button</string>
     <string name="messaging_start_conversation_voiceover">Start conversation\u002E \u0020button</string>

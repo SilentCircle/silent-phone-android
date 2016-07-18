@@ -246,7 +246,7 @@ public class RingtoneUtils {
             Log.d(TAG, "Creating a new ringtone " + uri);
             try {
                 savedRingtoneUri = contentResolver.insert(uri, values);
-            } catch (UnsupportedOperationException e) {
+            } catch (UnsupportedOperationException | IllegalArgumentException e) {
                 Log.e(TAG, "Cannot create ringtone " + name);
             }
         }

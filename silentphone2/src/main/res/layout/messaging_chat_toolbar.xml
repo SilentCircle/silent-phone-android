@@ -27,7 +27,8 @@
             android:background="@null"
             android:tint="?sp_actionbar_title_text_color"
             android:layout_gravity="center"
-            android:visibility="visible" />
+            android:visibility="visible"
+            android:contentDescription="@string/messaging_back_button_voiceover"/>
 
         <include layout="@layout/messaging_unread_message_notification"
             android:id="@+id/unread_message_notification"
@@ -53,7 +54,8 @@
                 android:layout_width="@dimen/contact_photo_size"
                 android:layout_height="@dimen/contact_photo_size"
                 android:layout_gravity="center"
-                android:layout_marginRight="@dimen/messaging_actionbar_photo_margin_right" />
+                android:layout_marginRight="@dimen/messaging_actionbar_photo_margin_right"
+                android:contentDescription="@string/messaging_avatar_voiceover"/>
 
         <LinearLayout
                 android:layout_width="wrap_content"

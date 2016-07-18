@@ -22,6 +22,7 @@ import android.text.Spanned;
 import android.text.TextUtils;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.silentcircle.userinfo.LoadUserInfo;
 
 import java.util.regex.Pattern;
 
@@ -285,6 +286,7 @@ public class SearchUtil {
     private static Pattern uuidPattern = Pattern.compile(uuidRegex);
 
     public static boolean isUuid(String name) {
-        return !TextUtils.isEmpty(name) && uuidPattern.matcher(name).matches();
+        final String uuid = LoadUserInfo.getUuid();
+        return !TextUtils.isEmpty(name) && (!TextUtils.isEmpty(uuid) && name.equals(uuid) || uuidPattern.matcher(name).matches());
     }
 }

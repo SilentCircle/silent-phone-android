@@ -23,6 +23,16 @@
         android:layout_margin="@dimen/spacing_normal" />
 
     <include
+        android:id="@+id/compose"
+        layout="@layout/compose"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/spacing_normal"
+        android:layout_above="@+id/attachment_grid_placehodler"
+        android:layout_marginEnd="@dimen/spacing_normal"
+        android:layout_marginRight="@dimen/spacing_normal" />
+
+    <include
         android:id="@+id/burn_delay_container"
         layout="@layout/compose_burn_delay_container"
         android:layout_above="@+id/attachment_grid_placehodler"
@@ -35,16 +45,6 @@
         android:layout_marginStart="@dimen/spacing_normal"
         android:layout_marginRight="@dimen/spacing_small"
         android:layout_marginEnd="@dimen/spacing_small" />
-
-    <include
-        android:id="@+id/compose"
-        layout="@layout/compose"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="@dimen/spacing_normal"
-        android:layout_above="@+id/attachment_grid_placehodler"
-        android:layout_marginEnd="@dimen/spacing_normal"
-        android:layout_marginRight="@dimen/spacing_normal" />
 
     <FrameLayout
         android:layout_width="match_parent"

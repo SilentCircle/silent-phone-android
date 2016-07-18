@@ -119,7 +119,7 @@ public class InCallVideoFragmentHw extends Fragment implements View.OnClickListe
     private TextView mMainSecureState;
     private TextView mPreviewSecureState;
     private boolean mVideoExplanationShown;
-    private boolean mSupressAutoRemove;
+    private boolean mSuppressAutoRemove;
 
     private SpVideoViewHw mVideoScreen;
     private CameraPreviewController mCamera;
@@ -187,11 +187,11 @@ public class InCallVideoFragmentHw extends Fragment implements View.OnClickListe
         @Override
         public void onAnimationEnd(Animation animation) {
             mControlLayoutBottom.setVisibility(View.VISIBLE);
-            if (!mSupressAutoRemove) {
+            if (!mSuppressAutoRemove) {
                 mControlLayoutBottom.postDelayed(mRemoveControls, SHOW_EXPLANATION_TIME);
             }
             else
-                mSupressAutoRemove = false;
+                mSuppressAutoRemove = false;
         }
     };
 
@@ -703,7 +703,7 @@ public class InCallVideoFragmentHw extends Fragment implements View.OnClickListe
         }
     }
 
-    private void setControlButtonsActive(boolean supressAutoRemove) {
+    private void setControlButtonsActive(boolean suppressAutoRemove) {
         switchMicMute(mCallback.getMuteStateCb());
         switchVideoPause(mPauseVideo);
         mAccept.setVisibility(View.GONE);
@@ -714,7 +714,7 @@ public class InCallVideoFragmentHw extends Fragment implements View.OnClickListe
         mVideoStop.setVisibility(View.VISIBLE);
 
         mControlLayoutBottom.startAnimation(mSlideOutBottom);
-        mSupressAutoRemove = supressAutoRemove;
+        mSuppressAutoRemove = suppressAutoRemove;
         mControlLayoutTop.startAnimation(mSlideOutTop);
         if (!mVideoExplanationShown) {
             mControlExplanation.setVisibility(View.VISIBLE);
@@ -744,11 +744,11 @@ public class InCallVideoFragmentHw extends Fragment implements View.OnClickListe
         mPreviewMuteIcon.setVisibility(isMute ? View.VISIBLE : View.INVISIBLE);
     }
 
-    synchronized public void switchVideoOn(boolean supressAutoRemove) {
+    synchronized public void switchVideoOn(boolean suppressAutoRemove) {
         CallState call = TiviPhoneService.calls.selectedCall;
         if (call == null)
             return;
-        setControlButtonsActive(supressAutoRemove);
+        setControlButtonsActive(suppressAutoRemove);
         activateVideoScreen();
         AsyncTasks.asyncCommand("*C" + call.iCallId); // send re-invite for video on
     }

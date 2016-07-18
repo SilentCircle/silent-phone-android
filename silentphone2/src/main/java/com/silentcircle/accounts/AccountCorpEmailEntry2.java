@@ -268,6 +268,8 @@ public class AccountCorpEmailEntry2 extends Fragment {
         WebSettings ws = ssoWebView.getSettings();
 
         ws.setJavaScriptEnabled(true);
+        // FIXME: Remove this if it happens to breaks SSO
+        ws.setAllowFileAccess(false); // Security - see NGA-522
 
         ssoWebViewObserver = new WebViewObserver();
         ssoWebViewChromeObserver = new WebChromeObserver();

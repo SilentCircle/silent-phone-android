@@ -54,6 +54,7 @@
         <item name="sp_message_action_button_background">@color/chat_background_color_light</item>
         <item name="sp_incoming_message_background">@color/chat_incoming_message_color_light</item>
         <item name="sp_outgoing_message_background">@color/chat_outgoing_message_color_light</item>
+        <item name="sp_attachment_grid_background">@color/chat_attachment_grid_color_light</item>
 
     </style>
 
@@ -249,6 +250,7 @@
         <item name="sp_message_action_button_background">@color/sc_ng_background</item>
         <item name="sp_incoming_message_background">@color/chat_incoming_message_color</item>
         <item name="sp_outgoing_message_background">@color/chat_outgoing_message_color</item>
+        <item name="sp_attachment_grid_background">@color/chat_attachment_grid_color</item>
 
         <!-- ************ Theme items for SCA part ************************* -->
 

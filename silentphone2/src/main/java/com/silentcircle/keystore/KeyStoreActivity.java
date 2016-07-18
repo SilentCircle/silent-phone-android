@@ -43,6 +43,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.text.Editable;
 import android.widget.TextView;
 
+import com.silentcircle.common.util.ViewUtil;
 import com.silentcircle.keymanagersupport.KeyManagerSupport;
 import com.silentcircle.messaging.fragments.MessagingPasswordFragment;
 import com.silentcircle.silentphone2.R;
@@ -88,6 +89,7 @@ public class KeyStoreActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        ViewUtil.setBlockScreenshots(this);
         PRNGFixes.apply();
         mHandler = new InternalHandler(this);
         processIntent(getIntent());

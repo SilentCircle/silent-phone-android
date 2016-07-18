@@ -17,14 +17,16 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="10dp"
             android:scaleType="centerCrop"
-            android:layout_gravity="center_horizontal"/>
+            android:layout_gravity="center_horizontal"
+            android:tint="?attr/sp_message_description_text_color"/>
 
         <TextView
             android:id="@+id/item_text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
-            android:gravity="center_horizontal"/>
+            android:gravity="center_horizontal"
+            android:textColor="?attr/sp_message_description_text_color"/>
     </LinearLayout>
 
 

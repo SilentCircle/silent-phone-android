@@ -43,9 +43,8 @@ import com.silentcircle.messaging.util.ContactsCache;
 import com.silentcircle.messaging.util.SoundNotifications;
 import com.silentcircle.silentphone2.R;
 import com.silentcircle.silentphone2.fragments.SettingsFragment;
-import com.silentcircle.silentphone2.services.TiviPhoneService;
 
-import java.io.IOException;
+import java.io.File;
 import java.util.Map;
 
 /**
@@ -72,6 +71,19 @@ public class SilentPhoneApplication extends Application {
 
         /* initialize sound notification pool here */
         SoundNotifications.getSoundPool();
+
+        // TODO: Implement upgrade handling - so this only occurs on upgrade
+        // Delete *possible* pre-existing Google measurement db files
+        // We now explicitly disable this in "disable_app_measurement.xml"
+        // NGA-524 Remove google_app_measurement.db from SPA
+        File measureDb1 = new File("/data/data/com.silentcircle.silentphone/databases/google_app_measurement.db-journal");
+        if (measureDb1.exists()) {
+            measureDb1.delete();
+        }
+        File measureDb2 = new File("/data/data/com.silentcircle.silentphone/databases/google_app_measurement.db");
+        if (measureDb2.exists()) {
+            measureDb2.delete();
+        }
     }
 
     public static Context getAppContext() {
@@ -95,7 +107,7 @@ public class SilentPhoneApplication extends Application {
                     editor.putString(SettingsFragment.RINGTONE_EMERGENCY_KEY, tone.toString()).apply();
 
                 }
-            } catch (IOException e) {
+            } catch (Throwable e) {
                 Log.d(TAG, "Could not register ringtone " + RingtoneUtils.TITLE_EMERGENCY);
             }
         }

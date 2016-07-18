@@ -408,7 +408,7 @@
     <string name="account_missing_name">Kein Benutzername für diese Konto verfügbar.</string>
     <string name="messaging_send_message">Senden</string>
     <string name="messaging_attach_file">Anhang</string>
-    <string name="messaging_compose_hint">Sag was… </string>
+    <string name="messaging_compose_hint">Nachricht…</string>
     <string name="undisclosed_location">(ohne nähere Angabe)</string>
     <string name="thumbnail">Vorschau</string>
     <string name="delivered">Abgeliefert</string>
@@ -551,7 +551,7 @@
     <string name="messaging_attachment_export_warn_explanation">Warnung anzeigen wenn Anhänge entschlüsselt werden</string>
     <string name="messaging_attachment_export_warning">Warnen wenn Anhänge entschlüsselt werden</string>
     <string name="messaging_burn_animation_explanation">Animation zeigen wenn Nachrichten verbrannt werden</string>
-    <string name="messaging_burn_animation_text">Animation Nachricht verbrennen</string>
+    <string name="messaging_burn_animation_text">Animation bei Nachricht verbrennen</string>
     <string name="messaging_burn_button_voiceover">Verbrenne Nachricht</string>
     <string name="messaging_conversation_list_no_messages">Keine Nachrichten</string>
     <string name="messaging_conversation_select_conversation_partner">Name des Gesprächspartners</string>
@@ -795,4 +795,13 @@ Wenn Sie einen Anruf mit Silent Phone machen und währenddessen ein normaler Anr
 \n\nSilent Phone tätigt keine normalen Telefonanrufe.</string>
     <string name="permission_storage_title">Wozu werden Medien/Daten benötigt?</string>
     <string name="permission_storage_explanation">Sie können Nachrichtenanhänge, zum Beispiel Bilder oder Sprachnachrichten, teilen und speichern. In diesem Fall benötigt Silent Phone dieses Berechtigung.</string>
+    <string name="messaging_avatar_voiceover">Bild des Partners</string>
+    <string name="messaging_back_button_voiceover">Zurück zur Konversation</string>
+    <string name="messaging_burn_delay_voiceover">Setze Dauer bis zum Verbrennen der Nachricht</string>
+    <string name="messaging_location_button_voiceover">Standort mitteilen</string>
+    <string name="messaging_theme_title">Chat Farben</string>
+    <string name="send_file">Datei senden</string>
+    <string name="share_contact">Teilen des Kontaktes</string>
+    <string name="take_photo">Foto aufnehmen</string>
+    <string name="take_video">Video aufnehmen</string>
 </resources>

@@ -81,7 +81,8 @@ public class CameraPreviewControl2 implements CameraPreviewController, TextureVi
     private static final int WIDTH = 352;
     private static final int HEIGHT = 288;
 
-    private static boolean sSizesAvailable = true;
+    private boolean mSizesAvailable = true;
+    private boolean mHardwareFull;
 
     private String mFrontCameraId;
     private String mBackCameraId;
@@ -198,10 +199,19 @@ public class CameraPreviewControl2 implements CameraPreviewController, TextureVi
             mNumberOfCameras = cameraIds.length;
             for (String id : cameraIds) {
                 CameraCharacteristics characteristics = manager.getCameraCharacteristics(id);
+
+                // At least one camera device must support FULL, otherwise the device
+                // the device has a legacy camera only and camera2 does not work correctly
+                // with renderscript etc
+                if (!mHardwareFull) {
+                    //noinspection ConstantConditions
+                    mHardwareFull = characteristics.get(CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL) ==
+                            CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_FULL;
+                }
                 StreamConfigurationMap map = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
                 if (map == null || map.getOutputSizes(ImageReader.class) == null ||
                         map.getOutputSizes(ImageReader.class).length == 0) {
-                    sSizesAvailable = false;
+                    mSizesAvailable = false;
                 }
                 Integer I = characteristics.get(CameraCharacteristics.LENS_FACING);
                 if (I != null) {
@@ -217,10 +227,10 @@ public class CameraPreviewControl2 implements CameraPreviewController, TextureVi
             }
         } catch (CameraAccessException e) {
             e.printStackTrace();
-            sSizesAvailable = false;
+            mSizesAvailable = false;
         }
         if (mFrontCameraId == null && mBackCameraId == null)
-            sSizesAvailable = false;
+            mSizesAvailable = false;
     }
 
     @Override
@@ -289,7 +299,8 @@ public class CameraPreviewControl2 implements CameraPreviewController, TextureVi
      */
     @Override
     public boolean isCamera2Usable() {
-        return  sSizesAvailable && StreamConfigurationMap.isOutputSupportedFor(ImageReader.class);
+        boolean output = StreamConfigurationMap.isOutputSupportedFor(ImageReader.class);
+        return  mSizesAvailable && mHardwareFull && output;
     }
 
     ImageReader.OnImageAvailableListener mImageAvailable = new ImageReader.OnImageAvailableListener() {
@@ -323,7 +334,8 @@ public class CameraPreviewControl2 implements CameraPreviewController, TextureVi
      * Stops the background thread and its {@link Handler}.
      */
     private void stopBackgroundThread() {
-        mImageReader.setOnImageAvailableListener(null, null);
+        if (mImageReader != null)
+            mImageReader.setOnImageAvailableListener(null, null);
         if (mBackgroundThread == null)
             return;
         mBackgroundThread.quitSafely();

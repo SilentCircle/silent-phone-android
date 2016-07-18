@@ -518,6 +518,15 @@ public class CallLogAdapter extends GroupingListAdapter
         // cache, so we have to force a redraw for these contacts regardless.
         boolean updated = existingInfo != ContactInfo.EMPTY && !info.equals(existingInfo);
 
+        // Force re-draw if photo uri is for an external resource
+        // In this case default thumbnail is used on occasions
+        if (info.photoUri != null) {
+            final String scheme = info.photoUri.getScheme();
+            if (scheme.equals("http") || scheme.equals("https")) {
+                updated = true;
+            }
+        }
+
         // Store the data in the cache so that the UI thread can use to display it. Store it
         // even if it has not changed so that it is marked as not expired.
         mContactInfoCache.put(numberCountryIso, info);
