@@ -28,6 +28,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 package com.silentcircle.silentphone2.util;
 
+import android.support.annotation.NonNull;
+
 public class StringBuildHelper {
     public StringBuffer str;
 
@@ -38,6 +40,7 @@ public class StringBuildHelper {
        str = new StringBuffer(size);
     }
 
+    @NonNull
     synchronized public String toString(){
        return str.toString();
     }

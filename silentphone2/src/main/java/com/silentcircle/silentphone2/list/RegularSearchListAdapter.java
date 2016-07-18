@@ -66,7 +66,7 @@ public class RegularSearchListAdapter extends DialerPhoneNumberListAdapter {
 
     @Override
     public void setQueryString(String queryString) {
-        final boolean showNumberShortcuts = PhoneNumberUtils. isGlobalPhoneNumber(queryString)
+        final boolean showNumberShortcuts = PhoneNumberUtils.isGlobalPhoneNumber(queryString)
                 || Utilities.isValidSipUsername(queryString);
         final boolean showMessagingShortcuts = Utilities.isValidSipUsername(queryString);
 

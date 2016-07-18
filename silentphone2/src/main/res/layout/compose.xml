@@ -32,6 +32,8 @@
     <ImageView
         android:id="@+id/compose_send"
         style="@style/ComposeSend"
-        android:contentDescription="@string/messaging_send_message" />
+        android:contentDescription="@string/messaging_send_message"
+        android:filterTouchesWhenObscured="true"
+        />
 
 </com.silentcircle.messaging.views.ComposeView>

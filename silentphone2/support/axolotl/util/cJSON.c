@@ -349,7 +349,6 @@ char *cJSON_PrintBuffered(cJSON *item,int prebuffer,int fmt)
 	p.length=prebuffer;
 	p.offset=0;
 	return print_value(item,0,fmt,&p);
-	return p.buffer;
 }
 
 
@@ -433,12 +432,10 @@ static const char *parse_array(cJSON *item,const char *value)
 /* Render an array to text */
 static char *print_array(cJSON *item,int depth,int fmt,printbuffer *p)
 {
-	char **entries;
 	char *out=0,*ptr,*ret;int len=5;
 	cJSON *child=item->child;
 	int numentries=0,i=0,fail=0;
-	size_t tmplen=0;
-	
+
 	/* How many entries in the array? */
 	while (child) numentries++,child=child->next;
 	/* Explicitly handle numentries==0 */
@@ -468,6 +465,7 @@ static char *print_array(cJSON *item,int depth,int fmt,printbuffer *p)
 	}
 	else
 	{
+		char **entries;
 		/* Allocate an array to hold the values for each */
 		entries=(char**)cJSON_malloc(numentries*sizeof(char*));
 		if (!entries) return 0;
@@ -500,7 +498,7 @@ static char *print_array(cJSON *item,int depth,int fmt,printbuffer *p)
 		ptr=out+1;*ptr=0;
 		for (i=0;i<numentries;i++)
 		{
-			tmplen=strlen(entries[i]);memcpy(ptr,entries[i],tmplen);ptr+=tmplen;
+			size_t tmplen = strlen(entries[i]);memcpy(ptr,entries[i],tmplen);ptr+=tmplen;
 			if (i!=numentries-1) {*ptr++=',';if(fmt)*ptr++=' ';*ptr=0;}
 			cJSON_free(entries[i]);
 		}
@@ -549,11 +547,10 @@ static const char *parse_object(cJSON *item,const char *value)
 /* Render an object to text. */
 static char *print_object(cJSON *item,int depth,int fmt,printbuffer *p)
 {
-	char **entries=0,**names=0;
 	char *out=0,*ptr,*ret,*str;int len=7,i=0,j;
 	cJSON *child=item->child;
-	int numentries=0,fail=0;
-	size_t tmplen=0;
+	int numentries=0;
+
 	/* Count the number of entries. */
 	while (child) numentries++,child=child->next;
 	/* Explicitly handle empty object case */
@@ -607,6 +604,8 @@ static char *print_object(cJSON *item,int depth,int fmt,printbuffer *p)
 	}
 	else
 	{
+		char **entries=0,**names=0;
+		int fail=0;
 		/* Allocate space for the names and the objects */
 		entries=(char**)cJSON_malloc(numentries*sizeof(char*));
 		if (!entries) return 0;
@@ -642,7 +641,7 @@ static char *print_object(cJSON *item,int depth,int fmt,printbuffer *p)
 		for (i=0;i<numentries;i++)
 		{
 			if (fmt) for (j=0;j<depth;j++) *ptr++='\t';
-			tmplen=strlen(names[i]);memcpy(ptr,names[i],tmplen);ptr+=tmplen;
+			size_t tmplen=strlen(names[i]);memcpy(ptr,names[i],tmplen);ptr+=tmplen;
 			*ptr++=':';if (fmt) *ptr++='\t';
 			strcpy(ptr,entries[i]);ptr+=strlen(entries[i]);
 			if (i!=numentries-1) *ptr++=',';

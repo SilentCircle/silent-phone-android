@@ -79,7 +79,7 @@ public final class CallLogListItemViews {
      * The SIP address for the current call log entry, may be null.  Cached here as the call back
      * intent is set only when the actions ViewStub is inflated.
      */
-    public String sipAddress;
+    public String assertedId;
 
     /**
      * The phone number presentation for the current call log entry.  Cached here as the call back

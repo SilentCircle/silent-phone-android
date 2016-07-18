@@ -46,12 +46,14 @@ import android.os.Build;
 import android.provider.ContactsContract;
 import android.provider.ContactsContract.CommonDataKinds.Email;
 import android.provider.ContactsContract.CommonDataKinds.Phone;
+import android.provider.ContactsContract.Data;
 import android.provider.ContactsContract.DataUsageFeedback;
 import android.text.TextUtils;
 import android.text.util.Rfc822Token;
 import android.text.util.Rfc822Tokenizer;
 import android.util.Log;
 
+import com.silentcircle.contacts.UpdateScContactDataService;
 import com.silentcircle.silentphone2.util.ConfigurationUtilities;
 
 import java.util.ArrayList;
@@ -159,16 +161,17 @@ public class DataUsageStatUpdater {
         if (number.charAt(0) == '+') {
             number = number.substring(1);
         }
-        String where = "(" + Phone.NUMBER + " LIKE '%" + number +"' OR " + Phone.NORMALIZED_NUMBER + " LIKE '%" + number + "') AND "
-                + Phone.CONTACT_ID +"=" + contactId;
-        final Cursor cursor = mResolver.query(ContactsContract.Data.CONTENT_URI,
-                new String[] {Phone.CONTACT_ID, Phone._ID, Phone.NORMALIZED_NUMBER, Phone.DATA1}, where, null, null);
+        final String where = "(" + Data.DATA1 + " LIKE '%" + number +"' OR " + Data.DATA4 + " LIKE '%" + number + "') AND "
+                + Data.CONTACT_ID +"=" + contactId;
+        final Cursor cursor = mResolver.query(Data.CONTENT_URI,
+                new String[] {Data.CONTACT_ID, Data._ID, Data.DATA4, Data.DATA1}, where, null, null);
 
         if (cursor == null) {
             Log.w(TAG, "Cursor for Phone.CONTENT_URI became null.");
         }
         else {
             final Set<Long> dataIds = new HashSet<>(cursor.getCount());
+            if (ConfigurationUtilities.mTrace)Log.d(TAG, String.format("Found %d data ids to update", cursor.getCount()));
             try {
                 cursor.move(-1);
                 while(cursor.moveToNext()) {

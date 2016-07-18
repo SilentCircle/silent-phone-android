@@ -29,6 +29,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package com.silentcircle.messaging.repository.DbRepository;
 
 import android.content.Context;
+import android.text.TextUtils;
 import android.util.Log;
 
 import com.silentcircle.messaging.model.SCloudObject;
@@ -99,16 +100,24 @@ public class DbObjectRepository implements ObjectRepository {
     }
 
     public File getDataFile(SCloudObject object) {
-        if(object == null || object.getLocator() == null || object.getLocator().toString().isEmpty()) {
+        if(object == null) {
+            return null;
+        }
+
+        return getDataFile(object.getLocator().toString());
+    }
+
+    public File getDataFile(String locator) {
+        if(TextUtils.isEmpty(locator)) {
             return null;
         }
 
         dataRoot.mkdirs();
-        // Locator shall be unique inside an event/message
-        return new File(dataRoot, String.valueOf(object.getLocator()));  // do hashing later if necessary
-//        return new File( dataRoot, Hash.sha1( String.valueOf( object.getLocator() ) ) );
-    }
 
+        // Locator shall be unique inside an event/message
+        return new File(dataRoot, String.valueOf(locator));  // do hashing later if necessary
+        // return new File( dataRoot, Hash.sha1( String.valueOf( object.getLocator() ) ) );
+    }
 
     @Override
     public byte[] read(SCloudObject object) throws IOException {

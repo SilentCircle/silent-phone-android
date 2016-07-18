@@ -66,6 +66,8 @@ public class ConfigurationUtilities {
     public static final String NAME_KEY_PRODUCTION = "provisioning_name_production";
     public static final String NAME_KEY_DEVELOPMENT = "provisioning_name_development";
 
+    public static final String NAME_CHAT_PROTECTION_PASSWORD = "chat_protection_password";
+
     public static final boolean mEnableDevDebOptions = BuildConfig.DEBUG;
     public static boolean mUseDevelopConfiguration;
     public static int mNetworkConfiguration;
@@ -122,11 +124,11 @@ public class ConfigurationUtilities {
         return ctx.getResources().getString(R.string.sccps_device_management_base);
     }
 
-    public static String getUserManagementBase(Context ctx) {
+    public static String getUserManagementBaseV1User(Context ctx) {
         return ctx.getResources().getString(R.string.sccps_user_management_base);
     }
 
-    public static String getUserManagementBaseAlt(Context ctx) {
+    public static String getUserManagementBaseV1Me(Context ctx) {
         return ctx.getResources().getString(R.string.sccps_user_management_base_alt);
     }
 
@@ -140,6 +142,10 @@ public class ConfigurationUtilities {
 
     public static String getDirectorySearch(Context ctx) {
         return ctx.getResources().getString(R.string.sccps_directory_request);
+    }
+
+    public static String getAuthBase(Context ctx) {
+        return ctx.getResources().getString(R.string.sccps_authorization_request);
     }
 
     public static String getShardAuthTag() {
@@ -163,5 +169,29 @@ public class ConfigurationUtilities {
 
     public static String getDevIdKey() {
         return mUseDevelopConfiguration ? "spa_device_id_dev" : "spa_device_id_prod";
+    }
+
+    public static String getHwDevIdSaveKey() {
+        return mUseDevelopConfiguration ? "spa_device_hw_id_save_dev" : "spa_device_hw_id_save_prod";
+    }
+
+    public static String getInstanceDevIdSaveKey() {
+        return mUseDevelopConfiguration ? "spa_device_instance_id_save_dev" : "spa_device_instance_id_save_prod";
+    }
+
+    public static String getChatProtectionKey() {
+        return NAME_CHAT_PROTECTION_PASSWORD;
+    }
+
+    public static String getPublishableKeyUrl(Context ctx){
+        return ctx.getString(R.string.sccps_publishable_key_request);
+    }
+
+    public static String getStripeTokensUrl(Context ctx){
+        return ctx.getString(R.string.sccps_stripe_tokens_request);
+    }
+
+    public static String getProcessChargeUrl(Context ctx){
+        return ctx.getString(R.string.sccps_process_charge_request);
     }
 }

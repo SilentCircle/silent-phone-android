@@ -17,13 +17,13 @@
 package com.silentcircle.silentphone2.activities;
 
 import android.os.Bundle;
-import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.AppCompatActivity;
 
 /**
  * A common superclass that keeps track of whether an {@link android.app.Activity} has saved its state yet or
  * not.
  */
-public abstract class TransactionSafeActivity extends ActionBarActivity {
+public abstract class TransactionSafeActivity extends AppCompatActivity {
 
     private boolean mIsSafeToCommitTransactions;
 

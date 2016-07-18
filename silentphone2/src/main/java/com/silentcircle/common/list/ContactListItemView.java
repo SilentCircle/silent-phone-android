@@ -744,11 +744,11 @@ public class ContactListItemView extends ViewGroup
     /**
      * Sets section header or makes it invisible if the title is null.
      */
-    public void setSectionHeader(String title) {
+    public void setSectionHeader(String title, int style) {
         if (!TextUtils.isEmpty(title)) {
             if (mHeaderTextView == null) {
                 mHeaderTextView = new TextView(getContext());
-                mHeaderTextView.setTextAppearance(getContext(), R.style.SectionHeaderStyle);
+                mHeaderTextView.setTextAppearance(getContext(), style > 0 ? style : R.style.SectionHeaderStyle);
                 mHeaderTextView.setGravity(
                         ViewUtil.isViewLayoutRtl(this) ? Gravity.RIGHT : Gravity.LEFT);
                 addView(mHeaderTextView);
@@ -1510,7 +1510,7 @@ public class ContactListItemView extends ViewGroup
         }
     }
 
-    private final boolean pointIsInView(float localX, float localY) {
+    private boolean pointIsInView(float localX, float localY) {
         return localX >= mLeftOffset && localX < mRightOffset
                 && localY >= 0 && localY < (getBottom() - getTop());
     }

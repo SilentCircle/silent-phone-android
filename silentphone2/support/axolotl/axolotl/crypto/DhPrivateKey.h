@@ -37,7 +37,7 @@ public:
     /**
      * @brief Get key size, private key data is not encoded.
      */
-    virtual int32_t getEncodedSize() const = 0;
+    virtual size_t getEncodedSize() const = 0;
 
     /**
      * @brief get raw private key data.

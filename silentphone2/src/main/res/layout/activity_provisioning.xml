@@ -31,7 +31,7 @@ Keep the tag fields in synch with the interface specifications.
             android:layout_width="match_parent"
             android:minHeight="?attr/actionBarSize"
             android:background="@color/black_background"
-            app:titleTextAppearance="?sp_ab_title_style"
+            app:titleTextAppearance="?sp_ab_dark_title_style"
             app:subtitleTextAppearance="?sp_ab_subtitle_style"/>
 
     <FrameLayout

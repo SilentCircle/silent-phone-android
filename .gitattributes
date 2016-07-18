@@ -1,0 +1,24 @@
+* text=auto eol=lf
+*.a binary
+*.bat text eol=lf
+*.c text eol=lf
+*.cpp text eol=lf
+*.gradle text eol=lf
+*.h text eol=lf
+*.html text eol=lf
+*.iml text eol=lf
+*.jar binary
+*.java text eol=lf
+*.keystore binary
+*.md text eol=lf
+*.mk text eol=lf
+*.otf binary
+*.png binary
+*.properties text eol=lf
+*.sh text eol=lf
+*.so binary
+*.txt text eol=lf
+*.wav binary
+*.ogg binary
+*.xml text eol=lf
+*.zip binary

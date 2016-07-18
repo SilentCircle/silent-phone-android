@@ -145,8 +145,8 @@
     
     <color name="incall_call_banner_subtext_color">#ccffffff</color>
     <color name="incall_call_banner_text_color">#ffffff</color>
-    <color name="incall_accent_color">#ffffff</color>
-    <color name="incall_background_color">@color/dialer_theme_color_dark</color>
+    <color name="incall_accent_color">@color/sc_ng_text_grey_1</color>
+    <color name="incall_background_color">@color/sc_ng_background_3</color>
     <color name="incall_call_banner_background_color">@color/incall_background_color</color>
     <color name="button_background_color">@color/incall_background_color</color>
 
@@ -317,6 +317,9 @@
     <color name="sc_ng_text_grey">#f6f3eb</color>
     <color name="sc_ng_text_grey_1">#fafafa</color>
     <color name="sc_ng_text_grey_2">#888888</color>
+    <color name="sc_ng_text_grey_3">#a3a3a3</color>
+    <color name="sc_ng_text_grey_4">#bdbdbd</color>
+    <color name="sc_ng_text_grey_5">#D0D2D2</color>
     <color name="sc_ng_text_dark">#4a4947</color>
     <color name="sc_ng_background">#36373b</color>
     <color name="sc_ng_background_1">#f6f3eb</color>
@@ -350,8 +353,38 @@
 
     <color name="chat_options_drawer_background">@color/sc_ng_background_2</color>
     <color name="chat_options_text_color">@color/sc_ng_text_grey</color>
+    <color name="chat_options_description_text_color">@color/sc_ng_background_3</color>
 
     <color name="chat_error_message_text_color">@color/sc_ng_text_grey</color>
     <color name="chat_outgoing_message_text_color">#ede9e3</color>
     <color name="chat_outgoing_message_disabled_text_color">#cdcac6</color>
+
+    <color name="chat_outgoing_message_disabled_color">#bb454545</color>
+    <color name="chat_outgoing_message_color">#5d5f66</color>
+    <color name="chat_outgoing_message_pressed_color">#7c2525</color>
+    <color name="chat_outgoing_message_checked_color">#7f0e0e</color>
+
+    <color name="chat_incoming_message_disabled_color">#bb454545</color>
+    <color name="chat_incoming_message_color">#f6f3eb</color>
+    <color name="chat_incoming_message_received_color">#c4c2bc</color>
+    <color name="chat_incoming_message_pressed_color">#7c2525</color>
+    <color name="chat_incoming_message_checked_color">#7f0e0e</color>
+
+    <color name="chat_incoming_message_text_received_color">#8a4947</color>
+
+    <!-- for link colour in messages use the same colour as used by BP2 -->
+    <color name="chat_message_text_link_color">#80cbc4</color>
+
+    <!-- colour for unread message count indicator -->
+    <color name="chat_message_notification_color">@color/sc_ng_text_red</color>
+
+    <array name="message_lights">
+        <item>#FF0000</item>
+        <item>#0000FF</item>
+        <item>#FFFFFF</item>
+        <item>#00FF00</item>
+        <item>#FF00FF</item>
+    </array>
+
+
 </resources>

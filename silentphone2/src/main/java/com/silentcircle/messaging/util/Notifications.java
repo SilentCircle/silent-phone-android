@@ -34,14 +34,19 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
+import android.net.Uri;
 import android.os.Build;
-import android.support.v4.app.NotificationCompat;
+import android.os.SystemClock;
+import android.support.annotation.NonNull;
 import android.util.Log;
 import android.view.View;
 
 import com.silentcircle.silentphone2.R;
 import com.silentcircle.silentphone2.activities.DialerActivity;
 import com.silentcircle.silentphone2.services.TiviPhoneService;
+import com.silentcircle.silentphone2.util.ConfigurationUtilities;
+
+import java.util.concurrent.TimeUnit;
 
 /**
  * Utilities for messaging notifications.
@@ -50,14 +55,22 @@ public final class Notifications {
 
     private static final String TAG = Notifications.class.getSimpleName();
 
+    private static long sMinimumTimeOfNextNotification = Long.MIN_VALUE;
+    private static final long NOTIFICATION_WINDOW = TimeUnit.SECONDS.toMillis(10);
+
+    private static final long[] VIBRATE_LONG = new long[] {1500, 1500};
+    private static final long[] VIBRATE_SHORT = new long[] {500, 500};
+
+    private static final int LIGHTS_INTERVAL_ON = 500;
+    private static final int LIGHTS_INTERVAL_OFF = 1000;
+
     private Notifications() {
     }
 
     /*
      * Show a notification with chat message content
      */
-    public static void sendMessageNotification(Context context, Intent messagingIntent,
-            String conversationPartner, String messageText, Bitmap notificationImage) {
+    public static void sendMessageNotification(Context context, Intent messagingIntent, Bitmap notificationImage) {
 
         int conversationsWithUnreadMessages = ConversationUtils.getConversationsWithUnreadMessages(context);
         int unreadMessageCount = ConversationUtils.getUnreadMessageCount(context);
@@ -69,9 +82,9 @@ public final class Notifications {
 
         Resources resources = context.getResources();
         String title = resources.getQuantityString(R.plurals.notify_new_messages_title,
-                unreadMessageCount, Integer.valueOf(unreadMessageCount));
+                unreadMessageCount, unreadMessageCount);
         String subtitle = resources.getQuantityString(R.plurals.notify_new_messages_subtitle,
-                conversationsWithUnreadMessages, Integer.valueOf(conversationsWithUnreadMessages),
+                conversationsWithUnreadMessages, conversationsWithUnreadMessages,
                 resources.getQuantityString(R.plurals.n_messages, unreadMessageCount,
                         Integer.valueOf(unreadMessageCount)));
 
@@ -83,22 +96,18 @@ public final class Notifications {
         PendingIntent contentIntent = PendingIntent.getActivity(context, 0, activityIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT);
 
-        int notificationFlags = Notification.DEFAULT_LIGHTS;
-        if (TiviPhoneService.calls.getCallCount() == 0) {
-            Log.d(TAG, "No ongoing calls detected, adding vibration and sound to notification");
-            notificationFlags |= Notification.DEFAULT_SOUND | Notification.DEFAULT_VIBRATE;
-        }
-
-        Notification notification = new NotificationCompat.Builder(context)
+        Notification.Builder builder = new Notification.Builder(context)
                 .setContentTitle(title)
                 .setContentText(subtitle)
                 .setSmallIcon(R.drawable.ic_chat_notification)
                 .setLargeIcon(notificationImage)
                 .setContentIntent(contentIntent)
-                .setPriority(NotificationCompat.PRIORITY_HIGH)
-                .setDefaults(notificationFlags)
-                .setAutoCancel(true)
-                .build();
+                .setPriority(Notification.PRIORITY_HIGH)
+                .setAutoCancel(true);
+
+        configureNotification(context, builder);
+
+        Notification notification = builder.build();
 
         hideSmallIcon(notification);
 
@@ -108,9 +117,11 @@ public final class Notifications {
     }
 
     public static void cancelMessageNotification(Context context, String conversationPartner) {
-        NotificationManager notificationManager =
-                (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-        notificationManager.cancel(R.id.messaging_notification);
+        if (context != null) {
+            NotificationManager notificationManager =
+                    (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+            notificationManager.cancel(R.id.messaging_notification);
+        }
     }
 
     private static void hideSmallIcon(Notification notification) {
@@ -122,4 +133,77 @@ public final class Notifications {
             }
         }
     }
+
+    public static boolean isReadyForNextNotification() {
+        long now = SystemClock.elapsedRealtime();
+        return now >= sMinimumTimeOfNextNotification;
+    }
+
+    private static void setDelayForNextNotification() {
+        sMinimumTimeOfNextNotification = SystemClock.elapsedRealtime() + NOTIFICATION_WINDOW;
+    }
+
+    private static Notification.Builder configureNotification(@NonNull Context context,
+            @NonNull Notification.Builder builder) {
+        Resources resources = context.getResources();
+
+        MessagingPreferences preferences = MessagingPreferences.getInstance(context);
+        boolean soundsEnabled = preferences.getMessageSoundsEnabled();
+
+        int light = preferences.getMessageLight();
+        int vibrate = preferences.getMessageVibrate();
+        Uri sound = preferences.getMessageRingtone();
+        if (ConfigurationUtilities.mTrace) {
+            Log.d(TAG, "Notification settings: light: " + light + ", vibrate pattern: " + vibrate
+                    + " sound: " + sound);
+        }
+
+        // calculate notification default values
+        int defaultLightFlag =
+                light == MessagingPreferences.INDEX_LIGHT_DEFAULT ? Notification.DEFAULT_LIGHTS : 0;
+        int defaultVibrateFlag =
+                vibrate == MessagingPreferences.INDEX_VIBRATE_DEFAULT ? Notification.DEFAULT_VIBRATE : 0;
+        // use system's default sound if sounds enabled and sound notification not set
+        int defaultSoundFlag = soundsEnabled && sound == null ? Notification.DEFAULT_SOUND : 0;
+
+        int notificationFlags = defaultLightFlag;
+        if (TiviPhoneService.calls.getCallCount() == 0 && isReadyForNextNotification()) {
+            if (ConfigurationUtilities.mTrace) {
+                Log.d(TAG, "No ongoing calls detected and enough time elapsed since last sound "
+                        + "notification, adding vibration and sound to upcoming notification");
+            }
+            notificationFlags |= defaultSoundFlag | defaultVibrateFlag;
+            builder.setDefaults(notificationFlags);
+
+            // set vibrate and sound for notification here where it is known that notification is
+            // allowed to use vibrate and play sound (no calls active and a timeout is observed)
+            if (sound != null && soundsEnabled) {
+                builder.setSound(sound);
+            }
+
+            if (vibrate != MessagingPreferences.INDEX_VIBRATE_DEFAULT
+                    && vibrate != MessagingPreferences.INDEX_VIBRATE_OFF) {
+                long[] vibratePattern =vibrate == MessagingPreferences.INDEX_VIBRATE_LONG
+                        ? VIBRATE_LONG : VIBRATE_SHORT;
+                builder.setVibrate(vibratePattern);
+            }
+
+            setDelayForNextNotification();
+        }
+
+        if (light != MessagingPreferences.INDEX_LIGHT_DEFAULT
+                && light != MessagingPreferences.INDEX_LIGHT_OFF) {
+            // compensate for configuration values 'default' and 'off' when calculating index
+            int index = light - 2;
+            int[] colors = resources.getIntArray(R.array.message_lights);
+            int color = (index < colors.length && (index >= 0)) ? colors[index] : colors[0];
+            if (ConfigurationUtilities.mTrace) {
+                Log.d(TAG, "Using notification color " + Integer.toHexString(color) + " (" + light + ")");
+            }
+            builder.setLights(color, LIGHTS_INTERVAL_ON, LIGHTS_INTERVAL_OFF);
+        }
+
+        return builder;
+    }
+
 }

@@ -76,7 +76,7 @@ public class SimpleRawContactAggregator {
     }
 
     private interface PhotoIdQuery {
-        final String[] COLUMNS = new String[] {
+        String[] COLUMNS = new String[] {
             DataColumns.CONCRETE_ID,
             Photo.PHOTO_FILE_ID,
         };

@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <string>
+#include <memory>
 
 /**
  * @file aesCbc.h
@@ -16,6 +17,8 @@
 #ifndef AES_BLOCK_SIZE
 #define AES_BLOCK_SIZE 16
 #endif
+
+using namespace std;
 
 namespace axolotl {
 /**
@@ -32,8 +35,7 @@ namespace axolotl {
  * @param crypText pointer to a @c std::string that gets the encrypted data
  * @return @c SUCCESS if encryption was OK, an error code otherwise
  */
-int32_t aesCbcEncrypt(const std::string& key, const std::string& IV, const std::string& plainText,
-                      std::string* cryptText);
+int32_t aesCbcEncrypt(const string& key, const string& IV, const string& plainText, shared_ptr<string> cryptText);
 
 /**
  * @brief Decrypt data with AES CBC mode.
@@ -50,10 +52,9 @@ int32_t aesCbcEncrypt(const std::string& key, const std::string& IV, const std::
  * @param plainText pointer to a @c std::string that gets the decrypted data
  * @return @c SUCCESS if decryption was OK, an error code otherwise
  */
-int32_t aesCbcDecrypt(const std::string& key, const std::string& IV, const std::string& cryptText,
-                      std::string* plainText);
+int32_t aesCbcDecrypt(const string& key, const string& IV, const string& cryptText, shared_ptr<string>  plainText);
 
-bool checkAndRemovePadding(std::string& data);
+bool checkAndRemovePadding(shared_ptr<string> data);
 
 } // namespace
 #endif // AESCBC_H

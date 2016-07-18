@@ -198,11 +198,11 @@ public class VCardConstants {
     public static final String PARAM_EXTRA_TYPE_COMPANY = "COMPANY";
 
     public interface ImportOnly {
-        public static final String PROPERTY_X_NICKNAME = "X-NICKNAME";
+        String PROPERTY_X_NICKNAME = "X-NICKNAME";
         // Some device emits this "X-" parameter for expressing Google Talk,
         // which is specifically invalid but should be always properly accepted, and emitted
         // in some special case (for that device/application).
-        public static final String PROPERTY_X_GOOGLE_TALK_WITH_SPACE = "X-GOOGLE TALK";
+        String PROPERTY_X_GOOGLE_TALK_WITH_SPACE = "X-GOOGLE TALK";
     }
 
     //// Mainly for package constants.

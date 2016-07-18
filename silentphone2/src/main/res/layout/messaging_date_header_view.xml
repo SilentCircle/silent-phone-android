@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.silentcircle.messaging.views.adapters.DateHeaderView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="center_horizontal">
+
+    <com.silentcircle.messaging.views.TextView
+        android:id="@+id/message_group_header"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="@dimen/spacing_normal"
+        android:layout_marginRight="@dimen/spacing_normal"
+        android:layout_marginTop="@dimen/spacing_small"
+        android:layout_marginBottom="@dimen/spacing_small"
+        android:paddingBottom="@dimen/spacing_small"
+        android:paddingTop="@dimen/spacing_small"
+        android:paddingLeft="@dimen/spacing_large"
+        android:paddingRight="@dimen/spacing_large"
+        android:textColor="@color/sc_ng_text_dark"
+        android:duplicateParentState="true"
+        android:addStatesFromChildren="true"
+        android:background="@drawable/bg_message_group_header"
+        tools:text="12 September 2015"
+        />
+
+</com.silentcircle.messaging.views.adapters.DateHeaderView>

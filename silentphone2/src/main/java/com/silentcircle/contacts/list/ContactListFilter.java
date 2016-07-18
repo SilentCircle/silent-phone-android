@@ -67,6 +67,7 @@ public final class ContactListFilter implements Comparable<ContactListFilter>, P
     public static final int FILTER_TYPE_STARRED = -4;
     public static final int FILTER_TYPE_WITH_PHONE_NUMBERS_ONLY = -5;
     public static final int FILTER_TYPE_SINGLE_CONTACT = -6;
+    public static final int FILTER_TYPE_WITH_SIP_NUMBERS_ONLY = -7;
 
     public static final int FILTER_TYPE_ACCOUNT = 0;
 
@@ -133,6 +134,8 @@ public final class ContactListFilter implements Comparable<ContactListFilter>, P
             case FILTER_TYPE_ACCOUNT:
                 return "account: " + accountType + (dataSet != null ? "/" + dataSet : "")
                         + " " + accountName;
+            case FILTER_TYPE_WITH_SIP_NUMBERS_ONLY:
+                return "with_sip";
         }
         return super.toString();
     }
@@ -176,14 +179,11 @@ public final class ContactListFilter implements Comparable<ContactListFilter>, P
         }
 
         ContactListFilter otherFilter = (ContactListFilter) other;
-        if (filterType != otherFilter.filterType
+        return !(filterType != otherFilter.filterType
                 || !TextUtils.equals(accountName, otherFilter.accountName)
                 || !TextUtils.equals(accountType, otherFilter.accountType)
-                || !TextUtils.equals(dataSet, otherFilter.dataSet)) {
-            return false;
-        }
+                || !TextUtils.equals(dataSet, otherFilter.dataSet));
 
-        return true;
     }
 
     /**
@@ -330,6 +330,8 @@ public final class ContactListFilter implements Comparable<ContactListFilter>, P
                 return "FILTER_TYPE_SINGLE_CONTACT";
             case FILTER_TYPE_ACCOUNT:
                 return "FILTER_TYPE_ACCOUNT";
+            case FILTER_TYPE_WITH_SIP_NUMBERS_ONLY:
+                return "FILTER_TYPE_SIP";
             default:
                 return "(unknown)";
         }

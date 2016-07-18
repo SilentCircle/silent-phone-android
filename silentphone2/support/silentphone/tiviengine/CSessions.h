@@ -1,7 +1,32 @@
-//VoipPhone
-//Created by Janis Narbuts
-//Copyright (c) 2004-2012 Tivi LTD, www.tiviphone.com. All rights reserved.
+/*
+Created by Janis Narbuts
+Copyright (C) 2004-2012, Tivi LTD, www.tiviphone.com. All rights reserved.
+Copyright (C) 2012-2016, Silent Circle, LLC.  All rights reserved.
 
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+    * Any redistribution, use, or modification is done solely for personal
+      benefit and not for any commercial purpose or for monetary gain
+    * Redistributions of source code must retain the above copyright
+      notice, this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above copyright
+      notice, this list of conditions and the following disclaimer in the
+      documentation and/or other materials provided with the distribution.
+    * Neither the name Silent Circle nor the
+      names of its contributors may be used to endorse or promote products
+      derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL SILENT CIRCLE, LLC BE LIABLE FOR ANY
+DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
 
 #ifndef _C_TIVI_SES_H
 #define _C_TIVI_SES_H 
@@ -651,6 +676,8 @@ protected:
    int registrationInfo(CTStrBase *e, int iType);
    friend int showSSLErrorMsgPhone(void *ret, const char *p);
    
+   SIP_MSG sMsg_200okReg;
+   
 public:
    CTLangStrings &strings;
    int iBytesSent;
@@ -661,6 +688,7 @@ public:
    int iActiveCallCnt;
    
 
+   STR_T<128> userPreferdSipAddr;
 
    CTThread threadSip;
 
@@ -808,8 +836,10 @@ public:
           spSes->pIPVisble=&str64BindedAddr;
           spSes->uiUserVisibleSipPort=sockSip.addr.getPort();
        }
-
-       if(1)//p_cfg.isOnline() || iMeth==METHOD_REGISTER)
+       if(userPreferdSipAddr.uiLen>0){
+          spSes->userSipAddr.set(userPreferdSipAddr.strVal);
+       }
+       else if(1)//p_cfg.isOnline() || iMeth==METHOD_REGISTER)
        {
           char *u=NULL;
           if(*p_cfg.user.nr)
@@ -1013,6 +1043,8 @@ protected:
 #endif
       pSessionArray(NULL)
    {
+      memset(&sMsg_200okReg, 0, sizeof(SIP_MSG));
+      userPreferdSipAddr.set("");
       iIsClosing=0;
       uiPrevCheckGWAt=0;
       uiSIPKeepaliveSentAt=0;
@@ -1151,6 +1183,7 @@ public:
       if(idx<0 || idx>=iMaxSesions)return NULL;
       return &pSessionArray[idx];
    }
+   int getInfo(const char *key, char *p, int iMax);
 
     
 private:
@@ -1206,7 +1239,7 @@ public:
       iIsTCP=sc.isTCP();
       
    }
-   int sendResp(CTSipSock & sc, int iCode, SIP_MSG *psMsg)
+   int sendResp(CTSipSock & sc, int iCode, SIP_MSG *psMsg, CSesBase *s = NULL)
    {
       sMsg=psMsg;
       buf=new char [DATA_SIZE];//bufData;
@@ -1217,6 +1250,11 @@ public:
 
       //SWAP_SHORT(addr.port);
       makeResp(iCode,cPhoneCallback?&cPhoneCallback->p_cfg:0);
+      
+      if(s && psMsg->sipHdr.uiMethodID == METHOD_BYE){
+         addRtpStats(s);
+      }
+      
       addContent();
       sendSip(sc, buf,(int) uiLen, &sMsg->addrSipMsgRec);
       delete buf;
@@ -1235,14 +1273,14 @@ public:
       iBufMalloced=1;
    
    }
-   CMakeSip(CTSipSock & sc, int iCode, SIP_MSG *psMsg)
+   CMakeSip(CTSipSock & sc, int iCode, SIP_MSG *psMsg, CSesBase *s=NULL)
       :spSes(NULL),sMsg(psMsg),iRetLen(NULL),uiLen(0)
       ,iContentAdded(0),uiPosToContentLen(0)
    {
       pSipHdrUriAdd=NULL;
       cPhoneCallback=NULL;
       iContactId=fToTagIgnore=0;
-      sendResp(sc,iCode,psMsg);
+      sendResp(sc,iCode,psMsg,s);
    }
 
    CMakeSip(CTSipSock &sc, CSesBase *pSes, SIP_MSG *psMsg=NULL,char *outBuf=NULL, int *iOutLen=NULL)
@@ -1320,7 +1358,8 @@ public:
    int addContent16(const char *type, CTStrBase *e);
    int addParams(const char *p, int iLenAdd=-1);
    void trySetPriorityHdr(int iPriority=0);
-
+   
+   int addRtpStats(CSesBase *s);
 
    int makeSdpHdr(char *pIP_Orig, int iIPLen);
    int addSdpMC(int iMediaType, int iPort, char *pIP_Cont, int iIPLen, SDP *my, SDP *dest);

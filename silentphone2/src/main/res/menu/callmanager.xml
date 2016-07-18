@@ -13,16 +13,16 @@
 
     <item android:id="@+id/call_manager_add_call"
           android:title="@string/add_call"
-          android:icon="?sp_ic_add_call"
+          android:icon="?sp_ic_add_call_menu"
           app:showAsAction="always" />
 
     <item android:id="@+id/call_manager_mic"
           android:title="@string/add_call"
-          android:icon="?sp_ic_mic"
+          android:icon="?sp_ic_mic_menu"
           app:showAsAction="ifRoom" />
 
     <item android:id="@+id/call_manager_speaker"
           android:title="@string/add_call"
-          android:icon="?sp_ic_volume_on"
+          android:icon="?sp_ic_volume_on_menu"
           app:showAsAction="ifRoom" />
 </menu>

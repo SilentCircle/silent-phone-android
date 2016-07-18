@@ -28,20 +28,23 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package com.silentcircle.messaging.listener;
 
 
-import android.app.AlertDialog;
+import android.support.annotation.Nullable;
+import android.support.v7.app.AlertDialog;
 import android.content.DialogInterface;
 
 public class ConfirmOnClick implements DialogInterface.OnClickListener {
 
-    private final OnConfirmListener onConfirmListener;
+    private final OnConfirmListener mOnConfirmListener;
 
-    public ConfirmOnClick(OnConfirmListener onConfirmListener) {
-        this.onConfirmListener = onConfirmListener;
+    public ConfirmOnClick(@Nullable OnConfirmListener onConfirmListener) {
+        mOnConfirmListener = onConfirmListener;
     }
 
     @Override
     public void onClick(DialogInterface dialog, int which) {
-        onConfirmListener.onConfirm(((AlertDialog) dialog).getContext());
+        if (mOnConfirmListener != null) {
+            mOnConfirmListener.onConfirm(((AlertDialog) dialog).getContext(), which);
+        }
     }
 
 }

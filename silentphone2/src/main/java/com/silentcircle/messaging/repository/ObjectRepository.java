@@ -34,8 +34,8 @@ import java.io.IOException;
 
 public interface ObjectRepository extends Repository<SCloudObject> {
 
-	public byte [] read(SCloudObject object) throws IOException;
+	byte [] read(SCloudObject object) throws IOException;
 
-	public void write(SCloudObject object) throws IOException;
+	void write(SCloudObject object) throws IOException;
 
 }

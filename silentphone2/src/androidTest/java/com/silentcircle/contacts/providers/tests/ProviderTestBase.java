@@ -864,7 +864,7 @@ public class ProviderTestBase<T extends ContentProvider> extends AndroidTestCase
         return value;
     }
 
-    protected static enum PhotoSize {
+    protected enum PhotoSize {
         ORIGINAL,
         DISPLAY_PHOTO,
         THUMBNAIL

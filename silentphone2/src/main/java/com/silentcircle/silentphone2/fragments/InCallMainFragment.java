@@ -31,6 +31,8 @@ package com.silentcircle.silentphone2.fragments;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.Fragment;
+import android.app.FragmentManager;
+import android.content.Context;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
@@ -52,22 +54,20 @@ import android.widget.PopupMenu;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.silentcircle.common.util.DialerUtils;
-import com.silentcircle.contacts.ContactsUtils;
 import com.silentcircle.messaging.util.Action;
 import com.silentcircle.silentphone2.R;
 import com.silentcircle.silentphone2.activities.DialerActivity;
-import com.silentcircle.silentphone2.activities.InCallActivity;
 import com.silentcircle.silentphone2.activities.InCallCallback;
+import com.silentcircle.silentphone2.dialogs.InfoMsgDialogFragment;
 import com.silentcircle.silentphone2.services.TiviPhoneService;
 import com.silentcircle.silentphone2.util.CallState;
 import com.silentcircle.silentphone2.util.ConfigurationUtilities;
 import com.silentcircle.silentphone2.util.DeviceHandling;
+import com.silentcircle.userinfo.LoadUserInfo;
 import com.silentcircle.silentphone2.util.Utilities;
 import com.silentcircle.silentphone2.views.multiwaveview.GlowPadView;
 
 import java.util.Locale;
-
 
 /**
  * This Fragment handles the in call screen and triggers actions.
@@ -76,7 +76,7 @@ import java.util.Locale;
  */
 public class InCallMainFragment extends Fragment implements View.OnClickListener,
         TiviPhoneService.ServiceStateChangeListener, TiviPhoneService.DeviceStateChangeListener, 
-        GlowPadView.OnTriggerListener{
+        GlowPadView.OnTriggerListener {
 
     private static final String TAG = InCallMainFragment.class.getSimpleName();
 
@@ -96,7 +96,6 @@ public class InCallMainFragment extends Fragment implements View.OnClickListener
     private ImageButton mMute;
     private ImageButton mVideo;
     private ImageButton mAddCall;
-    private ImageButton mChat;
     private ImageButton mAudioOptions;
 
     // The caller/callee avatar and name/number
@@ -105,16 +104,16 @@ public class InCallMainFragment extends Fragment implements View.OnClickListener
 
     // The security information area
     private TextView mSasText;
-    private int mSasVerifiedColor;
+    public static int mSasVerifiedColor;
     private TextView mVerifyLabel;
 
     public static int mNameNumberTextColorNormal;
     public static int mNameNumberTextColorPeerMatch;
 
     private TextView mSecurityText;
-    private int mSecurityTextColorNormal;
-    private int mSecurityTextColorGreen;
-    private int mSecurityTextColorYellow;
+    private static int mSecurityTextColorNormal;
+    private static int mSecurityTextColorGreen;
+    private static int mSecurityTextColorYellow;
 
     // Holds the icons that we change depending on state
     private Drawable mMicOpen;
@@ -135,6 +134,8 @@ public class InCallMainFragment extends Fragment implements View.OnClickListener
         super.onCreate(state);
     }
 
+    @SuppressWarnings("deprecation")
+    @TargetApi(Build.VERSION_CODES.M)
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedState) {
         Resources.Theme theme = mParent.getTheme();
@@ -159,17 +160,29 @@ public class InCallMainFragment extends Fragment implements View.OnClickListener
                 mSpeakerOff = array.getDrawable(3);
                 mSpeakerBt = array.getDrawable(4);
                 mSpeakerBtOff = array.getDrawable(5);
-                mSasVerifiedColor = array.getColor(6, getResources().getColor(R.color.white_translucent));
-                mNameNumberTextColorNormal = array.getColor(7, getResources().getColor(android.R.color.white));
-                mNameNumberTextColorPeerMatch = array.getColor(8, getResources().getColor(R.color.black_green));
+                if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.M) {
+                    mSasVerifiedColor = array.getColor(6, getResources().getColor(R.color.white_translucent));
+                    mNameNumberTextColorNormal = array.getColor(7, getResources().getColor(android.R.color.white));
+                    mNameNumberTextColorPeerMatch = array.getColor(8, getResources().getColor(R.color.black_green));
 
+                    mSecurityTextColorGreen = array.getColor(9, getResources().getColor(R.color.black_green));
+                    mSecurityTextColorYellow = array.getColor(10, getResources().getColor(R.color.black_yellow));
+                }
+                else {
+                    mSasVerifiedColor = array.getColor(6, getResources().getColor(R.color.white_translucent, theme));
+                    mNameNumberTextColorNormal = array.getColor(7, getResources().getColor(android.R.color.white, theme));
+                    mNameNumberTextColorPeerMatch = array.getColor(8, getResources().getColor(R.color.black_green, theme));
+
+                    mSecurityTextColorGreen = array.getColor(9, getResources().getColor(R.color.black_green, theme));
+                    mSecurityTextColorYellow = array.getColor(10, getResources().getColor(R.color.black_yellow, theme));
+
+                }
                 mSecurityTextColorNormal = mNameNumberTextColorNormal;
-                mSecurityTextColorGreen = array.getColor(9, getResources().getColor(R.color.black_green));
-                mSecurityTextColorYellow = array.getColor(10, getResources().getColor(R.color.black_yellow));
                 array.recycle();
             }
         }
         else {
+            // The deprecated version of the functions set the theme to null
             mMicOpen = getResources().getDrawable(R.drawable.ic_action_mic_dark);
             mMicMute = getResources().getDrawable(R.drawable.ic_action_mic_muted_dark);
             mSpeakerOn = getResources().getDrawable(R.drawable.ic_action_volume_on_dark);
@@ -180,9 +193,9 @@ public class InCallMainFragment extends Fragment implements View.OnClickListener
             mNameNumberTextColorNormal = getResources().getColor(android.R.color.white);
             mNameNumberTextColorPeerMatch = getResources().getColor(android.R.color.holo_green_dark);
 
-            mSecurityTextColorNormal = mNameNumberTextColorNormal;
             mSecurityTextColorGreen = getResources().getColor(R.color.black_green);
             mSecurityTextColorYellow = getResources().getColor(R.color.black_yellow);
+            mSecurityTextColorNormal = mNameNumberTextColorNormal;
         }
 
         final View fragmentView = inflater.inflate(R.layout.incall_main_fragment, container, false);
@@ -205,13 +218,10 @@ public class InCallMainFragment extends Fragment implements View.OnClickListener
         mAddCall = (ImageButton) fragmentView.findViewById(R.id.add_image);
         mAddCall.setOnClickListener(this);
 
-        mChat = (ImageButton) fragmentView.findViewById(R.id.start_chat_image);
-        mChat.setOnClickListener(this);
+        ImageButton chat = (ImageButton) fragmentView.findViewById(R.id.start_chat_image);
+        chat.setOnClickListener(this);
 
         mAudioOptions = (ImageButton)fragmentView.findViewById(R.id.audio_image);
-
-        if (mSpeakerOnly)
-            switchSpeaker(true, true);
 
         // Mute and audio option buttons have touch listeners, no OnClick listeners
         setTouchListeners();
@@ -238,6 +248,9 @@ public class InCallMainFragment extends Fragment implements View.OnClickListener
     public void onStart() {
         super.onStart();
         mStarted = true;
+        if (mSpeakerOnly && mCallback != null) {
+            switchSpeaker(true, true);
+        }
         showCall(TiviPhoneService.calls.selectedCall);
         processTesting();
     }
@@ -260,9 +273,25 @@ public class InCallMainFragment extends Fragment implements View.OnClickListener
         super.onPause();
     }
 
+    @TargetApi(Build.VERSION_CODES.M)
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        commonOnAttach(getActivity());
+    }
+
+    /*
+     * Deprecated on API 23
+     * Use onAttachToContext instead
+     */
+    @SuppressWarnings("deprecation")
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
+        commonOnAttach(activity);
+    }
+
+    private void commonOnAttach(Activity activity) {
         mParent = activity;
         try {
             mCallback = (InCallCallback)activity;
@@ -291,8 +320,14 @@ public class InCallMainFragment extends Fragment implements View.OnClickListener
                 break;
 
             case R.id.video_image:
+                if(!LoadUserInfo.canInitiateVideo(mParent)) {
+                    showDialog(R.string.information_dialog, R.string.basic_feature_info,
+                            android.R.string.ok, -1);
+                    return;
+                }
+
                 call = TiviPhoneService.calls.selectedCall;
-                if (call != null && !call.sdesActive && !call.iShowVerifySas)
+                if (call != null && !call.sdesActive && !TextUtils.isEmpty(call.bufSAS.toString()))
                     activateVideo();
                 else {
                     Toast.makeText(mParent, getString(R.string.no_video_available), Toast.LENGTH_LONG).show();
@@ -300,6 +335,12 @@ public class InCallMainFragment extends Fragment implements View.OnClickListener
                 break;
 
             case R.id.add_image:            // Add another call. Clear some fields and buttons
+                if(!LoadUserInfo.canStartConference(mParent)) {
+                    showDialog(R.string.information_dialog, R.string.basic_feature_info,
+                            android.R.string.ok, -1);
+                    return;
+                }
+
                 call = TiviPhoneService.calls.selectedCall;
                 if (call == null)
                     return;
@@ -318,7 +359,10 @@ public class InCallMainFragment extends Fragment implements View.OnClickListener
 
             case R.id.sas_text:
             case R.id.verify_label:
-                verifySas();
+                call = TiviPhoneService.calls.selectedCall;
+                if (call == null)
+                    return;
+                verifySas(call.iCallId);
                 break;
 
             default: {
@@ -330,10 +374,7 @@ public class InCallMainFragment extends Fragment implements View.OnClickListener
 
     // GlowView state listener
     @Override
-    public void onGrabbed(View v, int handle) {
-        // TODO Auto-generated method stub
-
-    }
+    public void onGrabbed(View v, int handle) { }
 
     @Override
     public void onReleased(View v, int handle) {
@@ -359,16 +400,10 @@ public class InCallMainFragment extends Fragment implements View.OnClickListener
     }
 
     @Override
-    public void onGrabbedStateChange(View v, int handle) {
-        // TODO Auto-generated method stub
-
-    }
+    public void onGrabbedStateChange(View v, int handle) { }
 
     @Override
-    public void onFinishFinalAnimation() {
-        // TODO Auto-generated method stub
-
-    }
+    public void onFinishFinalAnimation() { }
 
     /* ****************************************************************************
      * Public functions used by InCallActivity
@@ -473,9 +508,11 @@ public class InCallMainFragment extends Fragment implements View.OnClickListener
         if (!call.sdesActive && call.iActive)
             mSecurityText.setText(getString(R.string.secstate_not_secure));
 
-        if (!call.bufSAS.toString().isEmpty()) {
-            mSasText.setText(call.bufSAS.toString());
+        String sas = call.bufSAS.toString();
+        if (!sas.isEmpty()) {
+            mSasText.setText(sas);
             mSasText.setVisibility(View.VISIBLE);
+            mVideo.setVisibility(View.VISIBLE);
 
             // Show two security indicators because we have a ZRTP SAS. Switch on indicator1 as
             // well in case we had no SDES security before (should not happen on SC infrastructure)
@@ -485,7 +522,9 @@ public class InCallMainFragment extends Fragment implements View.OnClickListener
                 mVerifyLabel.setText(getString(R.string.verify_label));
                 mVerifyLabel.setVisibility(View.VISIBLE);
                 mVerifyLabel.setOnClickListener(this);
-                mSasText.setTextColor(mNameNumberTextColorNormal);
+                if (Character.isLetter(sas.charAt(0)) || Character.isDigit(sas.charAt(0))) {
+                    mSasText.setTextColor(mNameNumberTextColorNormal);
+                }
             }
             else {
                 // At this point: SAS verified.
@@ -512,9 +551,10 @@ public class InCallMainFragment extends Fragment implements View.OnClickListener
                 mVerifyLabel.setVisibility(View.GONE);
                 mSecurityText.setText(getString(R.string.secstate_secure));
                 mSecurityText.setTextColor(mSecurityTextColorGreen);
-                mVideo.setVisibility(View.VISIBLE);
 
-                mSasText.setTextColor(mSasVerifiedColor);
+                if (Character.isLetter(sas.charAt(0)) || Character.isDigit(sas.charAt(0))) {
+                    mSasText.setTextColor(mSasVerifiedColor);
+                }
             }
         }
     }
@@ -526,39 +566,42 @@ public class InCallMainFragment extends Fragment implements View.OnClickListener
      * may change the active (selected) call. Call manager reports this to InCall activity
      * which takes appropriate actions.
      */
+    @TargetApi(Build.VERSION_CODES.M)
+    @SuppressWarnings("deprecation")
     public void showCall(CallState call) {
         // No need to update the view if this is not the selected call
         if (call == null || call != TiviPhoneService.calls.selectedCall)
             return;
 
-        showFunctionButtons(call.iActive, !call.iShowVerifySas);  // set the functions button (video, add call)
+        showFunctionButtons(call.iActive, !TextUtils.isEmpty(call.bufSAS.toString()));  // set the functions button (video, add call)
         setAnswerEndCallButton(call);
 
-        setCallNumberField(call.bufPeer.toString());
-        // if call.mContentLoaderActive -> schedule a delayed lookup to possibly overwrite the default avatar
-        if (call.mContactsLoaderActive)
-            mCallerImage.postDelayed(new SetImageHelper(call), 100);
         Utilities.setCallerImage(call, mCallerImage);
         if (!call.iActive) {
             mVerifyLabel.setVisibility(View.VISIBLE);
             mVerifyLabel.setText(call.bufMsg.toString());
         }
         String stateLabel = getString(call.iIsIncoming ? R.string.type_incoming : R.string.type_outgoing);
-        if (call.iIsIncoming) {
-            TextView priority = (TextView)getView().findViewById(R.id.call_priority);
+        View view = getView();
+        if (call.iIsIncoming && view != null) {
+            TextView priority = (TextView)view.findViewById(R.id.call_priority);
+            Resources res = getResources();
             switch (call.mPriority) {
                 case CallState.NORMAL:
                     priority.setVisibility(View.GONE);
-                    mStateLabel.setTextColor(getResources().getColor(R.color.incall_accent_color));
+                    mStateLabel.setTextColor(Build.VERSION.SDK_INT <= Build.VERSION_CODES.M ?
+                            res.getColor(R.color.incall_accent_color) : res.getColor(R.color.incall_accent_color, mParent.getTheme()));
                     break;
                 case CallState.URGENT:
                     priority.setVisibility(View.VISIBLE);
-                    priority.setTextColor(getResources().getColor(R.color.black_yellow));
+                    priority.setTextColor(Build.VERSION.SDK_INT <= Build.VERSION_CODES.M ?
+                            res.getColor(R.color.black_yellow) : res.getColor(R.color.black_yellow, mParent.getTheme()));
                     priority.setText(getString(R.string.urgent_call));
                     break;
                 case CallState.EMERGENCY:
                     priority.setVisibility(View.VISIBLE);
-                    priority.setTextColor(getResources().getColor(R.color.q_orange));
+                    priority.setTextColor(Build.VERSION.SDK_INT <= Build.VERSION_CODES.M ?
+                            res.getColor(R.color.q_orange) : res.getColor(R.color.q_orange, mParent.getTheme()));
                     priority.setText(getString(R.string.emergency_call));
                     break;
             }
@@ -628,28 +671,6 @@ public class InCallMainFragment extends Fragment implements View.OnClickListener
         mCallback.addCallCb(call);
     }
 
-    /* ****************************************************************************
-     * The following section contains private functions
-     **************************************************************************** */
-
-    private class SetImageHelper implements Runnable {
-        CallState mCall;
-
-        SetImageHelper(CallState call) {
-            mCall = call;
-        }
-        @Override
-        public void run() {
-            if (mCall.mContactsLoaderActive)
-                mCallerImage.postDelayed(new SetImageHelper(mCall), 100);
-            else {
-                Utilities.setCallerImage(mCall, mCallerImage);
-                if (mCall.mustShowAnswerBT() && mCallback != null)
-                    mCallback.setActiveCallNotificationCb(mCall);        // call may have new caller info to show
-            }
-        }
-    }
-
     private Runnable mUpdate = new Runnable() {
         @Override
         public void run() {
@@ -670,6 +691,20 @@ public class InCallMainFragment extends Fragment implements View.OnClickListener
         int callCnt = TiviPhoneService.calls.getCallCount();
         int callType = bundle.getInt(TiviPhoneService.CALL_TYPE);
 
+        boolean isOcaCall = bundle.getBoolean(TiviPhoneService.IS_OCA_CALL);
+
+        if(isOcaCall) {
+            if (LoadUserInfo.checkIfUsesMinutes() == LoadUserInfo.VALID &&
+                    LoadUserInfo.checkIfLowMinutes(LoadUserInfo.DEFAULT_LOW_MINUTES_THRESHHOLD) == LoadUserInfo.VALID) {
+                showDialog(R.string.information_dialog, R.string.minutes_low_info,
+                        android.R.string.ok, -1);
+            } else if (LoadUserInfo.checkIfUsesCredit() == LoadUserInfo.VALID &&
+                    LoadUserInfo.checkIfLowCredit(LoadUserInfo.DEFAULT_LOW_CREDIT_THRESHHOLD) == LoadUserInfo.VALID) {
+                showDialog(R.string.information_dialog, R.string.credit_low_info,
+                        android.R.string.ok, -1);
+            }
+        }
+
         // On outgoing call, we may not yet have a selected call, we take care of this later
         CallState call = TiviPhoneService.calls.selectedCall;
 
@@ -687,7 +722,7 @@ public class InCallMainFragment extends Fragment implements View.OnClickListener
             mParent.sendBroadcast(new Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS));
         }
         if (call != null && callType == TiviPhoneService.CALL_TYPE_INCOMING && call.mustShowAnswerBT()) {
-            mCallback.getPhoneService().onIncomingCall();
+            mCallback.getPhoneService().onIncomingCall(mParent);
             mCallback.setActiveCallNotificationCb(call);
         }
         final boolean speakerOn = Utilities.isSpeakerOn(mParent.getBaseContext());
@@ -698,16 +733,12 @@ public class InCallMainFragment extends Fragment implements View.OnClickListener
         // depending on thread scheduling. In any case try to get some information to show on screen.
         String caller = null;
         if (call != null) {
-            if (call.bufDialed.getLen() > 0)
-                caller = call.bufDialed.toString();
-            else if (call.bufPeer.getLen() > 0)
-                caller = call.bufPeer.toString();
+            caller = call.getNameFromAB();
         }
-
         if (caller == null) {
             caller = bundle.getString(TiviPhoneService.CALL_NAME);
         }
-        caller = Utilities.removeSipParts(caller);
+        caller = Utilities.removeUriPartsSelective(caller);
 
         // These two functions set the UI in case of outgoing calls. May be overwritten during
         // onResume for incoming calls.
@@ -721,10 +752,10 @@ public class InCallMainFragment extends Fragment implements View.OnClickListener
         mCallback.endCallCb(TiviPhoneService.calls.selectedCall);
     }
 
-    private void verifySas() {
+    private void verifySas(int callId) {
         CharSequence text = mSasText.getText();
         if (text != null)
-            mCallback.verifySasCb(text.toString());
+            mCallback.verifySasCb(text.toString(), callId);
     }
 
     private void activateVideo() {
@@ -819,7 +850,9 @@ public class InCallMainFragment extends Fragment implements View.OnClickListener
 
     private void setAudioOptionsButton() {
         boolean isSpeaker = Utilities.isSpeakerOn(mParent.getBaseContext());
-        if (mCallback.getPhoneService().hasBtHeadSet()) {
+
+        if (mCallback != null && mCallback.getPhoneService() != null
+                && mCallback.getPhoneService().hasBtHeadSet()) {
             mAudioOptions.setImageDrawable(isSpeaker ? mSpeakerBt : mSpeakerBtOff);
         }
         else{
@@ -827,7 +860,7 @@ public class InCallMainFragment extends Fragment implements View.OnClickListener
         }
         mAudioOptions.setPressed(isSpeaker);
 
-        boolean isMute = mCallback.getMuteStateCb();
+        boolean isMute = mCallback != null && mCallback.getMuteStateCb();
         mMute.setPressed(isMute);
         mMute.setImageDrawable(isMute ? mMicMute : mMicOpen);
 
@@ -981,6 +1014,12 @@ public class InCallMainFragment extends Fragment implements View.OnClickListener
                 mCallback.endCallCb(TiviPhoneService.calls.selectedCall);
         }
     };
+
+    private void showDialog(int titleResId, int msgResId, int positiveBtnLabel, int negativeBtnLabel) {
+        InfoMsgDialogFragment infoMsg = InfoMsgDialogFragment.newInstance(titleResId, msgResId, positiveBtnLabel, negativeBtnLabel);
+        FragmentManager fragmentManager = getFragmentManager();
+        infoMsg.show(fragmentManager, TAG);
+    }
 
     private void processTesting() {
         if (!ConfigurationUtilities.mEnableDevDebOptions)

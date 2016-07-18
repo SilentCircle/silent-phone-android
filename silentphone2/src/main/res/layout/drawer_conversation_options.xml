@@ -46,7 +46,7 @@
 
             <SeekBar
                 android:id="@+id/burn_delay_value"
-                style="@style/Widget.OptionsSeekBar"
+                style="@android:style/Widget.DeviceDefault.SeekBar"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="@dimen/conversation_option_seeker_margin_left"
@@ -60,7 +60,7 @@
             android:id="@+id/clear"
             style="@style/Widget.OptionsItem"
             app:isCheckable="false"
-            app:src="@drawable/ic_action_delete"
+            app:src="@drawable/ic_action_delete_wide_enabled"
             app:text="@string/clear_conversation"
             app:description="@string/clear_conversation_exp" />
 
@@ -142,6 +142,58 @@
                 app:src="?sp_ic_view_list"
                 app:text="@string/show_remote_dev"
                 app:description="@string/show_remote_dev_exp" />
+
+        <com.silentcircle.messaging.views.OptionsItem
+            android:id="@+id/spam"
+            style="@style/Widget.OptionsItem"
+            app:isCheckable="false"
+            app:src="?sp_ic_add_person"
+            app:text="Spam"
+            android:layout_marginBottom="0dp"
+            android:visibility="gone"/>
+
+        <LinearLayout
+            android:id="@+id/spam_options"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="gone"
+            android:layout_marginLeft="50dp"
+            android:layout_marginRight="50dp">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:scrollHorizontally="true"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textSize="10sp"
+                android:text="Num"/>
+            <EditText
+                android:id="@+id/spam_num"
+                android:inputType="number"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:textColor="@android:color/white"
+                android:text="100"/>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:scrollHorizontally="true"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textSize="10sp"
+                android:text="Delay (ms)"/>
+            <EditText
+                android:id="@+id/spam_delay"
+                android:inputType="number"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:textColor="@android:color/white"
+                android:text="500"/>
+        </LinearLayout>
     </LinearLayout>
 
 </ScrollView>

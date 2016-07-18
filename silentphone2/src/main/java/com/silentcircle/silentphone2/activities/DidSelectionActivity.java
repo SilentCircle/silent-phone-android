@@ -27,11 +27,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 package com.silentcircle.silentphone2.activities;
 
-import android.app.Activity;
 import android.app.FragmentManager;
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -39,7 +38,7 @@ import android.view.MenuItem;
 import com.silentcircle.silentphone2.R;
 import com.silentcircle.silentphone2.fragments.DidSelectionFragment;
 
-public class DidSelectionActivity extends ActionBarActivity {
+public class DidSelectionActivity extends AppCompatActivity {
 
     @SuppressWarnings("unused")
     private static final String TAG = "DidSelectionActivity";

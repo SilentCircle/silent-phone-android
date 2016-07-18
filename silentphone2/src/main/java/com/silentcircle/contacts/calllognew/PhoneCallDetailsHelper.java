@@ -22,6 +22,7 @@ import android.os.Build;
 import android.provider.ContactsContract.CommonDataKinds.Phone;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
+import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 
@@ -102,10 +103,9 @@ public class PhoneCallDetailsHelper {
 
         final CharSequence nameText;
         final CharSequence displayNumber =
-            mPhoneNumberHelper.getDisplayNumber(details.number,
-                    details.numberPresentation, details.formattedNumber);
+            mPhoneNumberHelper.getDisplayNumber(details.number, details.numberPresentation, details.formattedNumber);
         if (TextUtils.isEmpty(details.name)) {
-            nameText = Utilities.removeSipParts(displayNumber.toString());
+            nameText = Utilities.removeUriPartsSelective(displayNumber.toString());
             // We have a real phone number as "nameView" so make it always LTR
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1)
                 views.nameView.setTextDirection(View.TEXT_DIRECTION_LTR);

@@ -49,38 +49,59 @@
             <TextView
                     android:id="@+id/HeaderText"
                     style="@style/Widget.Silent.SimpleText.Medium"
-                    android:text="@string/provisioning_infoText"/>
+                    android:paddingBottom="4dp"
+                    android:text="@string/provisioning_infoText" />
 
-            <EditText
-                    style="@style/Widget.Silent.SimpleText"
-                    android:id="@+id/ProvisioningUsernameInput"
+            <TextView
+                    android:id="@+id/RequiredText"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_below="@+id/HeaderText"
-                    android:layout_marginTop="32dp"
-                    android:layout_marginLeft="40dp"
-                    android:hint="@string/provisioning_username_hint"
-                    android:imeOptions="actionNext"
-                    android:inputType="text|textNoSuggestions"
-                    android:singleLine="true"
-                    android:tag="username"
+                    android:paddingBottom="8dp"
+                    android:text="@string/provisioning_all_fields_required"
                     android:textColor="@color/auth_active_body_text_grey"
-                    android:textSize="14sp"/>
+                    android:textSize="12sp"/>
 
-            <EditText
-                    style="@style/Widget.Silent.SimpleText"
-                    android:id="@+id/ProvisioningPasswordInput"
+            <android.support.design.widget.TextInputLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_below="@+id/ProvisioningUsernameInput"
-                    android:layout_marginTop="@dimen/activity_vertical_margin"
                     android:layout_marginLeft="40dp"
-                    android:hint="@string/provisioning_password_hint"
-                    android:imeOptions="actionNext"
-                    android:inputType="textPassword"
-                    android:singleLine="true"
-                    android:tag="password"
-                    android:textColor="@color/auth_active_body_text_grey"
-                    android:textSize="14sp"/>
+                    android:layout_below="@+id/RequiredText"
+                    android:id="@+id/ProvisioningUsernameLayout">
+                <EditText
+                        style="@style/Widget.Silent.SimpleText"
+                        android:id="@+id/ProvisioningUsernameInput"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="32dp"
+                        android:hint="@string/provisioning_username_hint"
+                        android:imeOptions="actionNext"
+                        android:inputType="text|textNoSuggestions"
+                        android:singleLine="true"
+                        android:tag="username"
+                        android:textColor="@color/auth_active_body_text_grey"
+                        android:textSize="14sp"/>
+            </android.support.design.widget.TextInputLayout>
+
+            <android.support.design.widget.TextInputLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="40dp"
+                    android:layout_below="@+id/ProvisioningUsernameLayout"
+                    android:id="@+id/ProvisioningPasswordLayout">
+                <EditText
+                        style="@style/Widget.Silent.SimpleText"
+                        android:id="@+id/ProvisioningPasswordInput"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/activity_vertical_margin"
+                        android:hint="@string/provisioning_password_hint"
+                        android:imeOptions="actionNext"
+                        android:inputType="textPassword"
+                        android:singleLine="true"
+                        android:tag="password"
+                        android:textColor="@color/auth_active_body_text_grey"
+                        android:textSize="14sp"/>
+            </android.support.design.widget.TextInputLayout>
 
             <TextView
                     style="@style/Widget.Silent.SimpleText"
@@ -89,8 +110,8 @@
                     android:layout_height="wrap_content"
                     android:layout_alignParentRight="true"
                     android:layout_alignParentEnd="true"
-                    android:layout_below="@+id/ProvisioningPasswordInput"
-                    android:layout_marginTop="3dp"
+                    android:layout_marginBottom="2dp"
+                    android:layout_below="@+id/ProvisioningPasswordLayout"
                     android:textSize="12sp"
                     tools:text="Good"
                     android:textColor="@color/auth_inactive_body_text_grey"/>
@@ -99,9 +120,8 @@
                     android:id="@+id/ShowPassword"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_below="@+id/ProvisioningPasswordStrength"
+                    android:layout_below="@+id/ProvisioningPasswordLayout"
                     android:layout_marginLeft="40dp"
-                    android:layout_marginTop="10dp"
                     android:text="@string/provisioning_show_pw"
                     android:contentDescription="@string/provisioning_show_pw"
                     android:textColor="@color/auth_inactive_body_text_grey"
@@ -114,55 +134,71 @@
                     android:layout_alignParentStart="true"
                     android:layout_below="@+id/ShowPassword"
                     android:layout_marginTop="@dimen/activity_vertical_margin"
+                    android:paddingBottom="8dp"
                     android:background="@null"
                     android:text="@string/provisioning_bp_email_info"
                     android:textColor="@color/auth_inactive_body_text_grey"
                     android:textSize="12sp"/>
 
-            <EditText
-                    style="@style/Widget.Silent.SimpleText"
-                    android:id="@+id/ProvisioningEmailInput"
+            <android.support.design.widget.TextInputLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_marginLeft="40dp"
                     android:layout_below="@+id/ProvisioningEmailInfo"
-                    android:layout_marginTop="@dimen/activity_vertical_margin"
-                    android:layout_marginLeft="40dp"
-                    android:hint="@string/provisioning_email_hint"
-                    android:imeOptions="actionNext"
-                    android:inputType="textEmailAddress"
-                    android:singleLine="true"
-                    android:tag="email"
-                    android:textColor="@color/auth_active_body_text_grey"
-                    android:textSize="14sp"/>
+                    android:id="@+id/ProvisioningEmailLayout">
+                <EditText
+                        style="@style/Widget.Silent.SimpleText"
+                        android:id="@+id/ProvisioningEmailInput"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/activity_vertical_margin"
+                        android:hint="@string/provisioning_email_hint"
+                        android:imeOptions="actionNext"
+                        android:inputType="textEmailAddress"
+                        android:singleLine="true"
+                        android:tag="email"
+                        android:textColor="@color/auth_active_body_text_grey"
+                        android:textSize="14sp"/>
+            </android.support.design.widget.TextInputLayout>
 
-            <EditText
-                    style="@style/Widget.Silent.SimpleText"
-                    android:id="@+id/ProvisioningFirstNameInput"
+            <android.support.design.widget.TextInputLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_below="@+id/ProvisioningEmailInput"
-                    android:layout_marginTop="@dimen/activity_vertical_margin"
                     android:layout_marginLeft="40dp"
-                    android:hint="@string/provisioning_firstname_hint"
-                    android:imeOptions="actionNext"
-                    android:inputType="text"
-                    android:singleLine="true"
-                    android:tag="first_name"
-                    android:textColor="@color/auth_active_body_text_grey"
-                    android:textSize="14sp"/>
+                    android:layout_below="@+id/ProvisioningEmailLayout"
+                    android:id="@+id/ProvisioningFirstNameLayout">
+                <EditText
+                        style="@style/Widget.Silent.SimpleText"
+                        android:id="@+id/ProvisioningFirstNameInput"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/activity_vertical_margin"
+                        android:hint="@string/provisioning_firstname_hint"
+                        android:imeOptions="actionNext"
+                        android:inputType="text|textCapWords"
+                        android:singleLine="true"
+                        android:tag="first_name"
+                        android:textColor="@color/auth_active_body_text_grey"
+                        android:textSize="14sp"/>
+            </android.support.design.widget.TextInputLayout>
 
-            <EditText
-                    style="@style/Widget.Silent.SimpleText"
-                    android:id="@+id/ProvisioningLastNameInput"
+            <android.support.design.widget.TextInputLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_below="@+id/ProvisioningFirstNameInput"
-                    android:layout_marginTop="@dimen/activity_vertical_margin"
                     android:layout_marginLeft="40dp"
-                    android:hint="@string/provisioning_lastname_hint"
-                    android:imeOptions="actionDone"
-                    android:inputType="text"
-                    android:singleLine="true"
-                    android:tag="last_name"
-                    android:textColor="@color/auth_active_body_text_grey"
-                    android:textSize="14sp"/>
+                    android:layout_below="@+id/ProvisioningFirstNameLayout"
+                    android:id="@+id/ProvisioningLastNameLayout">
+                <EditText
+                        style="@style/Widget.Silent.SimpleText"
+                        android:id="@+id/ProvisioningLastNameInput"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/activity_vertical_margin"
+                        android:hint="@string/provisioning_lastname_hint"
+                        android:imeOptions="actionDone"
+                        android:inputType="text|textCapWords"
+                        android:singleLine="true"
+                        android:tag="last_name"
+                        android:textColor="@color/auth_active_body_text_grey"
+                        android:textSize="14sp"/>
+            </android.support.design.widget.TextInputLayout>
         </RelativeLayout>
     </ScrollView>
 

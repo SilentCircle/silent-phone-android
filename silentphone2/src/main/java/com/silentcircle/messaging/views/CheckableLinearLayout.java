@@ -36,7 +36,7 @@ import android.widget.LinearLayout;
 
 public class CheckableLinearLayout extends LinearLayout implements Checkable {
 
-    private boolean checked;
+    private boolean mChecked;
 
     public CheckableLinearLayout(Context context) {
         super(context);
@@ -53,22 +53,13 @@ public class CheckableLinearLayout extends LinearLayout implements Checkable {
 
     @Override
     public boolean isChecked() {
-        return checked;
-    }
-
-    @Override
-    protected int[] onCreateDrawableState(int extraSpace) {
-        final int[] state = super.onCreateDrawableState(extraSpace + 1);
-        if (checked) {
-            // mergeDrawableStates(state, ViewUtils.STATE_CHECKED);
-        }
-        return state;
+        return mChecked;
     }
 
     @Override
     public void setChecked(boolean checked) {
-        if (checked != this.checked) {
-            this.checked = checked;
+        if (checked != mChecked) {
+            mChecked = checked;
             refreshDrawableState();
         }
     }
@@ -78,4 +69,18 @@ public class CheckableLinearLayout extends LinearLayout implements Checkable {
         setChecked(!isChecked());
     }
 
+    @Override
+    public void drawableStateChanged() {
+        super.drawableStateChanged();
+        /*
+         * Force re-draw on Lollipop and later to work around issue where there is no re-draw
+         * on state_pressed. Cached version is drawn without applying correct tint colour for
+         * state_pressed when using background tint colour selector.
+         *
+         * When using drawable selector for everything works fine.
+         */
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            invalidate();
+        }
+    }
 }

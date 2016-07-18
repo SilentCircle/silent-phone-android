@@ -40,7 +40,8 @@ public class JSONContactAdapter extends JSONAdapter {
 		try {
 			json.put( "alias", contact.getAlias() );
 			json.put( "device", contact.getDevice() );
-			json.put( "username", contact.getUsername() );
+			json.put( "username", contact.getUserId() );
+			json.put( "display_name", contact.getDisplayName() );
 		} catch( JSONException exception ) {
 			// This should never happen because we control all of the keys.
 		}
@@ -49,14 +50,10 @@ public class JSONContactAdapter extends JSONAdapter {
 
 	public Contact adapt( JSONObject json ) {
 
-		Contact contact = new Contact();
-
-		contact.setAlias( getString( json, "alias" ) );
-		contact.setDevice( getString( json, "device" ) );
-		contact.setUsername( getString( json, "username" ) );
-
+		Contact contact = new Contact(getString(json, "username"));
+		contact.setAlias(getString(json, "alias"));
+		contact.setDevice(getString(json, "device"));
+		contact.setDisplayName(getString(json, "display_name"));
 		return contact;
-
 	}
-
 }

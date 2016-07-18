@@ -127,14 +127,14 @@ public class ExpirableCache<K, V> {
      */
     public interface CachedValue<V> {
         /** Returns the value stored in the cache for a given key. */
-        public V getValue();
+        V getValue();
 
         /**
          * Checks whether the value, while still being present in the cache, is expired.
          *
          * @return true if the value is expired
          */
-        public boolean isExpired();
+        boolean isExpired();
     }
 
     /**

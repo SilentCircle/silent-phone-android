@@ -29,9 +29,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package com.silentcircle.silentphone2.fragments;
 
 
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.Fragment;
 import android.content.Context;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -74,10 +76,30 @@ public class DialHelperSelectorFragment extends Fragment implements View.OnClick
         super.onCreate(savedInstanceState);
     }
 
+    @TargetApi(Build.VERSION_CODES.M)
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        commonOnAttach(getActivity());
+    }
+
+    /*
+     * Deprecated on API 23
+     * Use onAttachToContext instead
+     */
+    @SuppressWarnings("deprecation")
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
-        mParent = (DialHelperSelectorActivity) activity;
+        commonOnAttach(activity);
+    }
+
+    private void commonOnAttach(Activity activity) {
+        try {
+            mParent = (DialHelperSelectorActivity) activity;
+        } catch (ClassCastException e) {
+            throw new ClassCastException("Activity must be DialHelperSelectorActivity.");
+        }
     }
 
     @Override
@@ -150,8 +172,7 @@ public class DialHelperSelectorFragment extends Fragment implements View.OnClick
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
             LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-            View rowView;
-            rowView = inflater.inflate(R.layout.dial_helper_selector_line, parent, false);
+            View rowView = convertView == null? inflater.inflate(R.layout.dial_helper_selector_line, parent, false) : convertView;
             if (rowView == null)
                 return null;
 

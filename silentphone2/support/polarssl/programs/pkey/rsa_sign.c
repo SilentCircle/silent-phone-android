@@ -1,12 +1,9 @@
 /*
- *  RSA/SHA-1 signature creation program
+ *  RSA/SHA-256 signature creation program
  *
- *  Copyright (C) 2006-2011, Brainspark B.V.
+ *  Copyright (C) 2006-2011, ARM Limited, All Rights Reserved
  *
- *  This file is part of PolarSSL (http://www.polarssl.org)
- *  Lead Maintainer: Paul Bakker <polarssl_maintainer at polarssl.org>
- *
- *  All rights reserved.
+ *  This file is part of mbed TLS (https://tls.mbed.org)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -29,21 +26,34 @@
 #include POLARSSL_CONFIG_FILE
 #endif
 
-#include <string.h>
+#if defined(POLARSSL_PLATFORM_C)
+#include "polarssl/platform.h"
+#else
 #include <stdio.h>
+#define polarssl_fprintf    fprintf
+#define polarssl_printf     printf
+#define polarssl_snprintf   snprintf
+#endif
 
+#if defined(POLARSSL_BIGNUM_C) && defined(POLARSSL_RSA_C) && \
+    defined(POLARSSL_SHA256_C) && defined(POLARSSL_FS_IO)
 #include "polarssl/rsa.h"
 #include "polarssl/sha1.h"
 
-#if !defined(POLARSSL_BIGNUM_C) || !defined(POLARSSL_RSA_C) ||  \
-    !defined(POLARSSL_SHA1_C) || !defined(POLARSSL_FS_IO)
-int main( int argc, char *argv[] )
-{
-    ((void) argc);
-    ((void) argv);
+#include <stdio.h>
+#include <string.h>
+#endif
 
-    printf("POLARSSL_BIGNUM_C and/or POLARSSL_RSA_C and/or "
-           "POLARSSL_SHA1_C and/or POLARSSL_FS_IO not defined.\n");
+#if defined _MSC_VER && !defined snprintf
+#define snprintf _snprintf
+#endif
+
+#if !defined(POLARSSL_BIGNUM_C) || !defined(POLARSSL_RSA_C) ||  \
+    !defined(POLARSSL_SHA256_C) || !defined(POLARSSL_FS_IO)
+int main( void )
+{
+    polarssl_printf("POLARSSL_BIGNUM_C and/or POLARSSL_RSA_C and/or "
+           "POLARSSL_SHA256_C and/or POLARSSL_FS_IO not defined.\n");
     return( 0 );
 }
 #else
@@ -53,35 +63,36 @@ int main( int argc, char *argv[] )
     int ret;
     size_t i;
     rsa_context rsa;
-    unsigned char hash[20];
+    unsigned char hash[32];
     unsigned char buf[POLARSSL_MPI_MAX_SIZE];
+    char filename[512];
 
     ret = 1;
 
     if( argc != 2 )
     {
-        printf( "usage: rsa_sign <filename>\n" );
+        polarssl_printf( "usage: rsa_sign <filename>\n" );
 
 #if defined(_WIN32)
-        printf( "\n" );
+        polarssl_printf( "\n" );
 #endif
 
         goto exit;
     }
 
-    printf( "\n  . Reading private key from rsa_priv.txt" );
+    polarssl_printf( "\n  . Reading private key from rsa_priv.txt" );
     fflush( stdout );
 
     if( ( f = fopen( "rsa_priv.txt", "rb" ) ) == NULL )
     {
         ret = 1;
-        printf( " failed\n  ! Could not open rsa_priv.txt\n" \
+        polarssl_printf( " failed\n  ! Could not open rsa_priv.txt\n" \
                 "  ! Please run rsa_genkey first\n\n" );
         goto exit;
     }
 
     rsa_init( &rsa, RSA_PKCS_V15, 0 );
-    
+
     if( ( ret = mpi_read_file( &rsa.N , 16, f ) ) != 0 ||
         ( ret = mpi_read_file( &rsa.E , 16, f ) ) != 0 ||
         ( ret = mpi_read_file( &rsa.D , 16, f ) ) != 0 ||
@@ -91,7 +102,7 @@ int main( int argc, char *argv[] )
         ( ret = mpi_read_file( &rsa.DQ, 16, f ) ) != 0 ||
         ( ret = mpi_read_file( &rsa.QP, 16, f ) ) != 0 )
     {
-        printf( " failed\n  ! mpi_read_file returned %d\n\n", ret );
+        polarssl_printf( " failed\n  ! mpi_read_file returned %d\n\n", ret );
         goto exit;
     }
 
@@ -99,62 +110,62 @@ int main( int argc, char *argv[] )
 
     fclose( f );
 
-    printf( "\n  . Checking the private key" );
+    polarssl_printf( "\n  . Checking the private key" );
     fflush( stdout );
     if( ( ret = rsa_check_privkey( &rsa ) ) != 0 )
     {
-        printf( " failed\n  ! rsa_check_privkey failed with -0x%0x\n", -ret );
+        polarssl_printf( " failed\n  ! rsa_check_privkey failed with -0x%0x\n", -ret );
         goto exit;
     }
 
     /*
-     * Compute the SHA-1 hash of the input file,
+     * Compute the SHA-256 hash of the input file,
      * then calculate the RSA signature of the hash.
      */
-    printf( "\n  . Generating the RSA/SHA-1 signature" );
+    polarssl_printf( "\n  . Generating the RSA/SHA-256 signature" );
     fflush( stdout );
 
     if( ( ret = sha1_file( argv[1], hash ) ) != 0 )
     {
-        printf( " failed\n  ! Could not open or read %s\n\n", argv[1] );
+        polarssl_printf( " failed\n  ! Could not open or read %s\n\n", argv[1] );
         goto exit;
     }
 
-    if( ( ret = rsa_pkcs1_sign( &rsa, NULL, NULL, RSA_PRIVATE, POLARSSL_MD_SHA1,
+    if( ( ret = rsa_pkcs1_sign( &rsa, NULL, NULL, RSA_PRIVATE, POLARSSL_MD_SHA256,
                                 20, hash, buf ) ) != 0 )
     {
-        printf( " failed\n  ! rsa_pkcs1_sign returned -0x%0x\n\n", -ret );
+        polarssl_printf( " failed\n  ! rsa_pkcs1_sign returned -0x%0x\n\n", -ret );
         goto exit;
     }
 
     /*
-     * Write the signature into <filename>-sig.txt
+     * Write the signature into <filename>.sig
      */
-    memcpy( argv[1] + strlen( argv[1] ), ".sig", 5 );
+    polarssl_snprintf( filename, sizeof( filename ), "%s.sig", argv[1] );
 
-    if( ( f = fopen( argv[1], "wb+" ) ) == NULL )
+    if( ( f = fopen( filename, "wb+" ) ) == NULL )
     {
         ret = 1;
-        printf( " failed\n  ! Could not create %s\n\n", argv[1] );
+        polarssl_printf( " failed\n  ! Could not create %s\n\n", filename );
         goto exit;
     }
 
     for( i = 0; i < rsa.len; i++ )
-        fprintf( f, "%02X%s", buf[i],
+        polarssl_fprintf( f, "%02X%s", buf[i],
                  ( i + 1 ) % 16 == 0 ? "\r\n" : " " );
 
     fclose( f );
 
-    printf( "\n  . Done (created \"%s\")\n\n", argv[1] );
+    polarssl_printf( "\n  . Done (created \"%s\")\n\n", filename );
 
 exit:
 
 #if defined(_WIN32)
-    printf( "  + Press Enter to exit this program.\n" );
+    polarssl_printf( "  + Press Enter to exit this program.\n" );
     fflush( stdout ); getchar();
 #endif
 
     return( ret );
 }
-#endif /* POLARSSL_BIGNUM_C && POLARSSL_RSA_C && POLARSSL_SHA1_C &&
+#endif /* POLARSSL_BIGNUM_C && POLARSSL_RSA_C && POLARSSL_SHA256_C &&
           POLARSSL_FS_IO */

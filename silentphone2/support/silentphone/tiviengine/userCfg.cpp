@@ -1,7 +1,7 @@
 /*
 Created by Janis Narbuts
 Copyright (C) 2004-2012, Tivi LTD, www.tiviphone.com. All rights reserved.
-Copyright (C) 2012-2015, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2012-2016, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -208,6 +208,11 @@ void FindXMLVal(NODE *node, int level, int cfgFlag, PHONE_CFG &cfg)
                {
                   fillCfg(cfg.partnerId,&tmpNV->value);
                }
+               else if (CMP_XML(tmpNV->name,"AUTHNAME",8))
+               {
+                  fillCfg(cfg.user.authname,&tmpNV->value);
+               }
+               //authname
                break;
                
             case CFG_F_SNDDEV|CFG_F_TRUE:
@@ -500,7 +505,7 @@ void guiSaveUserCfg(PHONE_CFG *p, short *fn)
    char pwdAES[256];
    
    
-   int iAESpwdOK = encryptPWD(p->user.pwd, strlen(p->user.pwd), &pwdAES[0], sizeof(pwdAES), p->iIndex)>=0;
+   int iAESpwdOK = encryptPWD(p->user.pwd, (int)strlen(p->user.pwd), &pwdAES[0], sizeof(pwdAES), p->iIndex)>=0;
    
    char *pServ=p->tmpServ[0]?&p->tmpServ[0]:&p->str32GWaddr.strVal[0]; 
    
@@ -509,6 +514,7 @@ void guiSaveUserCfg(PHONE_CFG *p, short *fn)
    if(p->iCfgHideNumberField) p->user.nr[0]=0;
    
    fprintf(f,"   <user loginname=\"%s\" ", p->user.un);
+   fprintf(f,"authname=\"%s\" ", p->user.authname);
    
    if(!p->iDontSavePwd){
       
@@ -527,24 +533,24 @@ void guiSaveUserCfg(PHONE_CFG *p, short *fn)
       }
    }
    
-    fprintf(f,"fromname=\"%s\"  phoneNr=\"%s\" country=\"%s\" savepwd=\"%d\" partnerId=\"%s\"/>"T_CRLF
+    fprintf(f,"fromname=\"%s\"  phoneNr=\"%s\" country=\"%s\" savepwd=\"%d\" partnerId=\"%s\"/>" T_CRLF
                   ,p->user.nick, p->user.nr, p->user.country, !p->iDontSavePwd, p->partnerId);
    
 
-   fprintf(f,"   <sip sipport=\"%d\" sipka=\"%d\" >"T_CRLF,p->iSipPortToBind,p->iSipKeepAlive);
+   fprintf(f,"   <sip sipport=\"%d\" sipka=\"%d\" >" T_CRLF,p->iSipPortToBind,p->iSipKeepAlive);
 #ifndef __APPLE__
-   fprintf(f,"      <registrar  auto=\"%s\" expires=\"%d\" lkey=\"%s\" server=\"%s\" showlocaliponly=\"%s\" pxifnat=\"%s\" stun=\"%s\" usestun=\"%d\" SIPTRANSPORT=\"%s\"/>"T_CRLF
+   fprintf(f,"      <registrar  auto=\"%s\" expires=\"%d\" lkey=\"%s\" server=\"%s\" showlocaliponly=\"%s\" pxifnat=\"%s\" stun=\"%s\" usestun=\"%d\" SIPTRANSPORT=\"%s\"/>" T_CRLF
       ,(p->iAutoRegister)?"on":"off",p->uiExpires,p->szLicenceKey,pServ
       ,(p->iUseOnlyNatIp)?"true":"false",
       p->bufpxifnat,p->bufStun,p->iUseStun,p->szSipTransport);
 #else
-   fprintf(f,"      <registrar title=\"%s\" auto=\"%s\" expires=\"%d\" lkey=\"%s\" server=\"%s\" showlocaliponly=\"%s\" pxifnat=\"%s\" stun=\"%s\" usestun=\"%d\" SIPTRANSPORT=\"%s\"/>"T_CRLF
+   fprintf(f,"      <registrar title=\"%s\" auto=\"%s\" expires=\"%d\" lkey=\"%s\" server=\"%s\" showlocaliponly=\"%s\" pxifnat=\"%s\" stun=\"%s\" usestun=\"%d\" SIPTRANSPORT=\"%s\"/>" T_CRLF
            ,p->szTitle,(p->iAutoRegister)?"on":"off",p->uiExpires,p->szLicenceKey,pServ
            ,(p->iUseOnlyNatIp)?"true":"false",
            p->bufpxifnat,p->bufStun,p->iUseStun,p->szSipTransport);
    
 #endif
-   fprintf(f,"   </sip>"T_CRLF);
+   fprintf(f,"   </sip>" T_CRLF);
 
    
    fprintf(f,"   <phone autoanswer=\"%s\" wflag=\"%d\" " ,
@@ -558,7 +564,7 @@ void guiSaveUserCfg(PHONE_CFG *p, short *fn)
    
 
 
-   fprintf(f,">"T_CRLF);
+   fprintf(f,">" T_CRLF);
 #define PEN_COL_OUT 0x003482 
 #define PEN_COL_IN  0x00d78a10 
 
@@ -587,27 +593,27 @@ void guiSaveUserCfg(PHONE_CFG *p, short *fn)
    fprintf(f,"/>\r\n");
    fprintf(f,"       <gui autoshow=\"%s\"/>\r\n",(p->iAutoShowApi)?"true":"false");
 
-   fprintf(f,"   </phone>"T_CRLF);
-   fprintf(f,"   <snddev capture=\"%s\" playback=\"%s\" ring=\"%s\">"T_CRLF
+   fprintf(f,"   </phone>" T_CRLF);
+   fprintf(f,"   <snddev capture=\"%s\" playback=\"%s\" ring=\"%s\">" T_CRLF
       ,p->aMicCfg.szName
       ,p->aPlayCfg.szName
       ,p->aRingCfg.szName);
-   fprintf(f,"       <volume input=\"%u\" output=\"%u\" ring=\"%u\"/>"T_CRLF
+   fprintf(f,"       <volume input=\"%u\" output=\"%u\" ring=\"%u\"/>" T_CRLF
       ,p->aMicCfg.iVolume, p->aPlayCfg.iVolume,p->aRingCfg.iVolume);
-   fprintf(f,"   </snddev>"T_CRLF);
+   fprintf(f,"   </snddev>" T_CRLF);
    
 
-   fprintf(f,"   <sdp p2p=\"%d\" tmr=\"%s\">"T_CRLF,p->iCanUseP2Pmedia, p->bufTMRAddr);
-   fprintf(f,"      <zrtp flag=\"%d\" zid=\"%s\" sdes=\"%d\" tunneling=\"%d\"/>"T_CRLF,p->iCanUseZRTP,&p->szZID_base16[0], p->iSDES_On, p->iZRTPTunnel_On);
-   fprintf(f,"      <audio rtpport=\"%d\" agc=\"%d\" vad=\"%d\" vadg=\"%d\" aec=\"%d\" pcksz=\"%d\" pckszg=\"%d\">"T_CRLF,p->iRtpPort,p->iUseAGC ,p->iUseVAD,p->iUseVAD3G,p->iUseAEC,p->iPayloadSizeSend,p->iPayloadSizeSend3G);
+   fprintf(f,"   <sdp p2p=\"%d\" tmr=\"%s\">" T_CRLF,p->iCanUseP2Pmedia, p->bufTMRAddr);
+   fprintf(f,"      <zrtp flag=\"%d\" zid=\"%s\" sdes=\"%d\" tunneling=\"%d\"/>" T_CRLF,p->iCanUseZRTP,&p->szZID_base16[0], p->iSDES_On, p->iZRTPTunnel_On);
+   fprintf(f,"      <audio rtpport=\"%d\" agc=\"%d\" vad=\"%d\" vadg=\"%d\" aec=\"%d\" pcksz=\"%d\" pckszg=\"%d\">" T_CRLF,p->iRtpPort,p->iUseAGC ,p->iUseVAD,p->iUseVAD3G,p->iUseAEC,p->iPayloadSizeSend,p->iPayloadSizeSend3G);
 
-   fprintf(f,"         <codecs enabledg=\"%s\" disabledg=\"%s\" enabled=\"%s\" disabled=\"%s\" respwithone=\"%d\"/>"T_CRLF,p->szACodecs3G,p->szACodecsDisabled3G,p->szACodecs,p->szACodecsDisabled,p->iResponseOnlyWithOneCodecIn200Ok);
+   fprintf(f,"         <codecs enabledg=\"%s\" disabledg=\"%s\" enabled=\"%s\" disabled=\"%s\" respwithone=\"%d\"/>" T_CRLF,p->szACodecs3G,p->szACodecsDisabled3G,p->szACodecs,p->szACodecsDisabled,p->iResponseOnlyWithOneCodecIn200Ok);
 
-   fprintf(f,"      </audio>"T_CRLF);
-   fprintf(f,"      <video rate=\"%d\" camera=\"%d\" disable=\"%d\" addmediaincall=\"%d\"/>"T_CRLF, p->iVideoFrameEveryMs,p->iCameraID,p->iDisableVideo,p->iCanAttachDetachVideo);
-   fprintf(f,"   </sdp>"T_CRLF);
-
-   fprintf(f,"</cfg>"T_CRLF);
+   fprintf(f,"      </audio>" T_CRLF);
+   fprintf(f,"      <video rate=\"%d\" camera=\"%d\" disable=\"%d\" addmediaincall=\"%d\"/>" T_CRLF, p->iVideoFrameEveryMs,p->iCameraID,p->iDisableVideo,p->iCanAttachDetachVideo);
+   fprintf(f,"   </sdp>" T_CRLF);
+ 
+   fprintf(f,"</cfg>" T_CRLF);
    fclose(f);
 
    return;

@@ -34,8 +34,8 @@ public interface ConversationRepository extends Repository<Conversation> {
 
 // TODO: check if we need this with axolotl:	ResourceStateRepository contextOf(Conversation conversation);
 
-	Conversation findByPartner(String partner);
+    Conversation findByPartner(String partner);
 
-	EventRepository historyOf(Conversation conversation);
+    EventRepository historyOf(Conversation conversation);
 
 }

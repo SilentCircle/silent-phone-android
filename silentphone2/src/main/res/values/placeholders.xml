@@ -30,6 +30,6 @@
 	<string name="sample_warning" translatable="false">This is a good warning.</string>
 	<string name="sample_failure" translatable="false">This is a good failure.</string>
 	<string name="sample_time_relative" translatable="false">5 minutes ago</string>
-	<string name="sample_burn_notice" translatable="false">30m</string>
+	<string name="sample_burn_notice" translatable="false">25d 30m</string>
 
 </resources>

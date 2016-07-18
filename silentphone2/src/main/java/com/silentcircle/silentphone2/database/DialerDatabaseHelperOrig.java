@@ -124,7 +124,7 @@ public class DialerDatabaseHelperOrig extends SQLiteOpenHelper {
     /** Query options for querying the contact database.*/
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
     public interface PhoneQuery {
-       static final Uri URI = Phone.CONTENT_URI.buildUpon().
+       Uri URI = Phone.CONTENT_URI.buildUpon().
                appendQueryParameter(ContactsContract.DIRECTORY_PARAM_KEY,
                        String.valueOf(Directory.DEFAULT)).
                appendQueryParameter(ContactsContract.REMOVE_DUPLICATE_ENTRIES, "true").
@@ -224,7 +224,7 @@ public class DialerDatabaseHelperOrig extends SQLiteOpenHelper {
      * Gets the sorting order for the smartdial table. This computes a SQL "ORDER BY" argument by
      * composing contact status and recent contact details together.
      */
-    private static interface SmartDialSortingOrder {
+    private interface SmartDialSortingOrder {
         /** Current contacts - those contacted within the last 3 days (in milliseconds) */
         long LAST_TIME_USED_CURRENT_MS = 3L * 24 * 60 * 60 * 1000;
         /** Recent contacts - those contacted within the last 30 days (in milliseconds) */

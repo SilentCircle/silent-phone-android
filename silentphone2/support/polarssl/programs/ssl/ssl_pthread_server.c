@@ -2,12 +2,9 @@
  *  SSL server demonstration program using pthread for handling multiple
  *  clients.
  *
- *  Copyright (C) 2006-2013, Brainspark B.V.
+ *  Copyright (C) 2006-2013, ARM Limited, All Rights Reserved
  *
- *  This file is part of PolarSSL (http://www.polarssl.org)
- *  Lead Maintainer: Paul Bakker <polarssl_maintainer at polarssl.org>
- *
- *  All rights reserved.
+ *  This file is part of mbed TLS (https://tls.mbed.org)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -30,14 +27,25 @@
 #include POLARSSL_CONFIG_FILE
 #endif
 
+#if defined(POLARSSL_PLATFORM_C)
+#include "polarssl/platform.h"
+#else
+#include <stdio.h>
+#define polarssl_fprintf    fprintf
+#define polarssl_printf     printf
+#define polarssl_snprintf   snprintf
+#endif
+
 #if defined(_WIN32)
 #include <windows.h>
 #endif
 
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
-
+#if defined(POLARSSL_BIGNUM_C) && defined(POLARSSL_CERTS_C) && \
+    defined(POLARSSL_ENTROPY_C) && defined(POLARSSL_SSL_TLS_C) && \
+    defined(POLARSSL_SSL_SRV_C) && defined(POLARSSL_NET_C) && \
+    defined(POLARSSL_RSA_C) && defined(POLARSSL_CTR_DRBG_C) && \
+    defined(POLARSSL_X509_CRT_PARSE_C) && defined(POLARSSL_FS_IO) && \
+    defined(POLARSSL_THREADING_C) && defined(POLARSSL_THREADING_PTHREAD)
 #include "polarssl/entropy.h"
 #include "polarssl/ctr_drbg.h"
 #include "polarssl/certs.h"
@@ -46,26 +54,37 @@
 #include "polarssl/net.h"
 #include "polarssl/error.h"
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#endif
+
 #if defined(POLARSSL_SSL_CACHE_C)
 #include "polarssl/ssl_cache.h"
 #endif
 
 #if defined(POLARSSL_MEMORY_BUFFER_ALLOC_C)
-#include "polarssl/memory.h"
+#include "polarssl/memory_buffer_alloc.h"
 #endif
+
+#define HTTP_RESPONSE \
+    "HTTP/1.0 200 OK\r\nContent-Type: text/html\r\n\r\n" \
+    "<h2>mbed TLS Test Server</h2>\r\n" \
+    "<p>Successful connection using: %s</p>\r\n"
+
+#define DEBUG_LEVEL 0
+
+#define MAX_NUM_THREADS 5
 
 #if !defined(POLARSSL_BIGNUM_C) || !defined(POLARSSL_CERTS_C) ||            \
     !defined(POLARSSL_ENTROPY_C) || !defined(POLARSSL_SSL_TLS_C) ||         \
     !defined(POLARSSL_SSL_SRV_C) || !defined(POLARSSL_NET_C) ||             \
     !defined(POLARSSL_RSA_C) || !defined(POLARSSL_CTR_DRBG_C) ||            \
-    !defined(POLARSSL_X509_CRT_PARSE_C) ||                                  \
+    !defined(POLARSSL_X509_CRT_PARSE_C) || !defined(POLARSSL_FS_IO) ||      \
     !defined(POLARSSL_THREADING_C) || !defined(POLARSSL_THREADING_PTHREAD)
-int main( int argc, char *argv[] )
+int main( void )
 {
-    ((void) argc);
-    ((void) argv);
-
-    printf("POLARSSL_BIGNUM_C and/or POLARSSL_CERTS_C and/or POLARSSL_ENTROPY_C "
+    polarssl_printf("POLARSSL_BIGNUM_C and/or POLARSSL_CERTS_C and/or POLARSSL_ENTROPY_C "
            "and/or POLARSSL_SSL_TLS_C and/or POLARSSL_SSL_SRV_C and/or "
            "POLARSSL_NET_C and/or POLARSSL_RSA_C and/or "
            "POLARSSL_CTR_DRBG_C and/or POLARSSL_X509_CRT_PARSE_C and/or "
@@ -74,14 +93,6 @@ int main( int argc, char *argv[] )
     return( 0 );
 }
 #else
-
-#define HTTP_RESPONSE \
-    "HTTP/1.0 200 OK\r\nContent-Type: text/html\r\n\r\n" \
-    "<h2>PolarSSL Test Server</h2>\r\n" \
-    "<p>Successful connection using: %s</p>\r\n"
-
-#define DEBUG_LEVEL 0
-
 threading_mutex_t debug_mutex;
 
 static void my_mutexed_debug( void *ctx, int level, const char *str )
@@ -89,7 +100,7 @@ static void my_mutexed_debug( void *ctx, int level, const char *str )
     polarssl_mutex_lock( &debug_mutex );
     if( level < DEBUG_LEVEL )
     {
-        fprintf( (FILE *) ctx, "%s", str );
+        polarssl_fprintf( (FILE *) ctx, "%s", str );
         fflush(  (FILE *) ctx  );
     }
     polarssl_mutex_unlock( &debug_mutex );
@@ -113,8 +124,6 @@ typedef struct {
     pthread_t       thread;
 } pthread_info_t;
 
-#define MAX_NUM_THREADS 5
-
 static thread_info_t    base_info;
 static pthread_info_t   threads[MAX_NUM_THREADS];
 
@@ -129,9 +138,13 @@ static void *handle_ssl_connection( void *data )
     ssl_context ssl;
     ctr_drbg_context ctr_drbg;
 
-    snprintf( pers, sizeof(pers), "SSL Pthread Thread %d", thread_id );
-    printf( "  [ #%d ]  Client FD %d\n", thread_id, client_fd );
-    printf( "  [ #%d ]  Seeding the random number generator...\n", thread_id );
+    /* Make sure memory references are valid */
+    memset( &ssl, 0, sizeof( ssl_context ) );
+    memset( &ctr_drbg, 0, sizeof( ctr_drbg_context ) );
+
+    polarssl_snprintf( pers, sizeof(pers), "SSL Pthread Thread %d", thread_id );
+    polarssl_printf( "  [ #%d ]  Client FD %d\n", thread_id, client_fd );
+    polarssl_printf( "  [ #%d ]  Seeding the random number generator...\n", thread_id );
 
     /* entropy_func() is thread-safe if POLARSSL_THREADING_C is set
      */
@@ -139,27 +152,32 @@ static void *handle_ssl_connection( void *data )
                                (const unsigned char *) pers,
                                strlen( pers ) ) ) != 0 )
     {
-        printf( "  [ #%d ]  failed: ctr_drbg_init returned -0x%04x\n",
+        polarssl_printf( "  [ #%d ]  failed: ctr_drbg_init returned -0x%04x\n",
                 thread_id, -ret );
         goto thread_exit;
     }
 
-    printf( "  [ #%d ]  ok\n", thread_id );
+    polarssl_printf( "  [ #%d ]  ok\n", thread_id );
 
     /*
      * 4. Setup stuff
      */
-    printf( "  [ #%d ]  Setting up the SSL data....\n", thread_id );
+    polarssl_printf( "  [ #%d ]  Setting up the SSL data....\n", thread_id );
 
     if( ( ret = ssl_init( &ssl ) ) != 0 )
     {
-        printf( "  [ #%d ]  failed: ssl_init returned -0x%04x\n",
+        polarssl_printf( "  [ #%d ]  failed: ssl_init returned -0x%04x\n",
                 thread_id, -ret );
         goto thread_exit;
     }
 
     ssl_set_endpoint( &ssl, SSL_IS_SERVER );
     ssl_set_authmode( &ssl, SSL_VERIFY_NONE );
+
+    /* SSLv3 is deprecated, set minimum to TLS 1.0 */
+    ssl_set_min_version( &ssl, SSL_MAJOR_VERSION_3, SSL_MINOR_VERSION_1 );
+    /* RC4 is deprecated, disable it */
+    ssl_set_arc4_support( &ssl, SSL_ARC4_DISABLED );
 
     ssl_set_rng( &ssl, ctr_drbg_random, &ctr_drbg );
     ssl_set_dbg( &ssl, my_mutexed_debug, stdout );
@@ -175,38 +193,38 @@ static void *handle_ssl_connection( void *data )
     ssl_set_ca_chain( &ssl, thread_info->ca_chain, NULL, NULL );
     if( ( ret = ssl_set_own_cert( &ssl, thread_info->server_cert, thread_info->server_key ) ) != 0 )
     {
-        printf( " failed\n  ! ssl_set_own_cert returned %d\n\n", ret );
-        goto exit;
+        polarssl_printf( " failed\n  ! ssl_set_own_cert returned %d\n\n", ret );
+        goto thread_exit;
     }
 
-    printf( "  [ #%d ]  ok\n", thread_id );
+    polarssl_printf( "  [ #%d ]  ok\n", thread_id );
 
     ssl_set_bio( &ssl, net_recv, &client_fd,
                        net_send, &client_fd );
 
-    printf( "  [ #%d ]  ok\n", thread_id );
+    polarssl_printf( "  [ #%d ]  ok\n", thread_id );
 
     /*
      * 5. Handshake
      */
-    printf( "  [ #%d ]  Performing the SSL/TLS handshake\n", thread_id );
+    polarssl_printf( "  [ #%d ]  Performing the SSL/TLS handshake\n", thread_id );
 
     while( ( ret = ssl_handshake( &ssl ) ) != 0 )
     {
         if( ret != POLARSSL_ERR_NET_WANT_READ && ret != POLARSSL_ERR_NET_WANT_WRITE )
         {
-            printf( "  [ #%d ]  failed: ssl_handshake returned -0x%04x\n",
+            polarssl_printf( "  [ #%d ]  failed: ssl_handshake returned -0x%04x\n",
                     thread_id, -ret );
             goto thread_exit;
         }
     }
 
-    printf( "  [ #%d ]  ok\n", thread_id );
+    polarssl_printf( "  [ #%d ]  ok\n", thread_id );
 
     /*
      * 6. Read the HTTP Request
      */
-    printf( "  [ #%d ]  < Read from client\n", thread_id );
+    polarssl_printf( "  [ #%d ]  < Read from client\n", thread_id );
 
     do
     {
@@ -222,26 +240,24 @@ static void *handle_ssl_connection( void *data )
             switch( ret )
             {
                 case POLARSSL_ERR_SSL_PEER_CLOSE_NOTIFY:
-                    printf( "  [ #%d ]  connection was closed gracefully\n",
+                    polarssl_printf( "  [ #%d ]  connection was closed gracefully\n",
                             thread_id );
                     goto thread_exit;
 
                 case POLARSSL_ERR_NET_CONN_RESET:
-                    printf( "  [ #%d ]  connection was reset by peer\n",
+                    polarssl_printf( "  [ #%d ]  connection was reset by peer\n",
                             thread_id );
                     goto thread_exit;
 
                 default:
-                    printf( "  [ #%d ]  ssl_read returned -0x%04x\n",
+                    polarssl_printf( "  [ #%d ]  ssl_read returned -0x%04x\n",
                             thread_id, -ret );
                     goto thread_exit;
             }
-
-            break;
         }
 
         len = ret;
-        printf( "  [ #%d ]  %d bytes read\n=====\n%s\n=====\n",
+        polarssl_printf( "  [ #%d ]  %d bytes read\n=====\n%s\n=====\n",
                 thread_id, len, (char *) buf );
 
         if( ret > 0 )
@@ -252,7 +268,7 @@ static void *handle_ssl_connection( void *data )
     /*
      * 7. Write the 200 Response
      */
-    printf( "  [ #%d ]  > Write to client:\n", thread_id );
+    polarssl_printf( "  [ #%d ]  > Write to client:\n", thread_id );
 
     len = sprintf( (char *) buf, HTTP_RESPONSE,
                    ssl_get_ciphersuite( &ssl ) );
@@ -261,37 +277,37 @@ static void *handle_ssl_connection( void *data )
     {
         if( ret == POLARSSL_ERR_NET_CONN_RESET )
         {
-            printf( "  [ #%d ]  failed: peer closed the connection\n",
+            polarssl_printf( "  [ #%d ]  failed: peer closed the connection\n",
                     thread_id );
             goto thread_exit;
         }
 
         if( ret != POLARSSL_ERR_NET_WANT_READ && ret != POLARSSL_ERR_NET_WANT_WRITE )
         {
-            printf( "  [ #%d ]  failed: ssl_write returned -0x%04x\n",
+            polarssl_printf( "  [ #%d ]  failed: ssl_write returned -0x%04x\n",
                     thread_id, ret );
             goto thread_exit;
         }
     }
 
     len = ret;
-    printf( "  [ #%d ]  %d bytes written\n=====\n%s\n=====\n",
+    polarssl_printf( "  [ #%d ]  %d bytes written\n=====\n%s\n=====\n",
             thread_id, len, (char *) buf );
 
-    printf( "  [ #%d ]  . Closing the connection...", thread_id );
+    polarssl_printf( "  [ #%d ]  . Closing the connection...", thread_id );
 
     while( ( ret = ssl_close_notify( &ssl ) ) < 0 )
     {
         if( ret != POLARSSL_ERR_NET_WANT_READ &&
             ret != POLARSSL_ERR_NET_WANT_WRITE )
         {
-            printf( "  [ #%d ]  failed: ssl_close_notify returned -0x%04x\n",
+            polarssl_printf( "  [ #%d ]  failed: ssl_close_notify returned -0x%04x\n",
                     thread_id, ret );
             goto thread_exit;
         }
     }
 
-    printf( " ok\n" );
+    polarssl_printf( " ok\n" );
 
     ret = 0;
 
@@ -302,12 +318,13 @@ thread_exit:
     {
         char error_buf[100];
         polarssl_strerror( ret, error_buf, 100 );
-        printf("  [ #%d ]  Last error was: -0x%04x - %s\n\n",
+        polarssl_printf("  [ #%d ]  Last error was: -0x%04x - %s\n\n",
                thread_id, -ret, error_buf );
     }
 #endif
 
     net_close( client_fd );
+    ctr_drbg_free( &ctr_drbg );
     ssl_free( &ssl );
 
     thread_info->thread_complete = 1;
@@ -329,7 +346,7 @@ static int thread_create( int client_fd )
 
         if( threads[i].data.thread_complete == 1 )
         {
-            printf( "  [ main ]  Cleaning up thread %d\n", i );
+            polarssl_printf( "  [ main ]  Cleaning up thread %d\n", i );
             pthread_join(threads[i].thread, NULL );
             memset( &threads[i], 0, sizeof(pthread_info_t) );
             break;
@@ -354,7 +371,7 @@ static int thread_create( int client_fd )
     return( 0 );
 }
 
-int main( int argc, char *argv[] )
+int main( void )
 {
     int ret;
     int listen_fd;
@@ -369,9 +386,6 @@ int main( int argc, char *argv[] )
 #if defined(POLARSSL_SSL_CACHE_C)
     ssl_cache_context cache;
 #endif
-
-    ((void) argc);
-    ((void) argv);
 
 #if defined(POLARSSL_MEMORY_BUFFER_ALLOC_C)
     memory_buffer_alloc_init( alloc_buf, sizeof(alloc_buf) );
@@ -395,7 +409,7 @@ int main( int argc, char *argv[] )
     /*
      * 1. Load the certificates and private RSA key
      */
-    printf( "\n  . Loading the server cert. and key..." );
+    polarssl_printf( "\n  . Loading the server cert. and key..." );
     fflush( stdout );
 
     x509_crt_init( &srvcert );
@@ -409,7 +423,7 @@ int main( int argc, char *argv[] )
                           strlen( test_srv_crt ) );
     if( ret != 0 )
     {
-        printf( " failed\n  !  x509_crt_parse returned %d\n\n", ret );
+        polarssl_printf( " failed\n  !  x509_crt_parse returned %d\n\n", ret );
         goto exit;
     }
 
@@ -417,7 +431,7 @@ int main( int argc, char *argv[] )
                           strlen( test_ca_list ) );
     if( ret != 0 )
     {
-        printf( " failed\n  !  x509_crt_parse returned %d\n\n", ret );
+        polarssl_printf( " failed\n  !  x509_crt_parse returned %d\n\n", ret );
         goto exit;
     }
 
@@ -426,7 +440,7 @@ int main( int argc, char *argv[] )
                          strlen( test_srv_key ), NULL, 0 );
     if( ret != 0 )
     {
-        printf( " failed\n  !  pk_parse_key returned %d\n\n", ret );
+        polarssl_printf( " failed\n  !  pk_parse_key returned %d\n\n", ret );
         goto exit;
     }
 
@@ -434,21 +448,21 @@ int main( int argc, char *argv[] )
     base_info.server_cert = &srvcert;
     base_info.server_key = &pkey;
 
-    printf( " ok\n" );
+    polarssl_printf( " ok\n" );
 
     /*
      * 2. Setup the listening TCP socket
      */
-    printf( "  . Bind on https://localhost:4433/ ..." );
+    polarssl_printf( "  . Bind on https://localhost:4433/ ..." );
     fflush( stdout );
 
     if( ( ret = net_bind( &listen_fd, NULL, 4433 ) ) != 0 )
     {
-        printf( " failed\n  ! net_bind returned %d\n\n", ret );
+        polarssl_printf( " failed\n  ! net_bind returned %d\n\n", ret );
         goto exit;
     }
 
-    printf( " ok\n" );
+    polarssl_printf( " ok\n" );
 
 reset:
 #ifdef POLARSSL_ERROR_C
@@ -456,7 +470,7 @@ reset:
     {
         char error_buf[100];
         polarssl_strerror( ret, error_buf, 100 );
-        printf( "  [ main ]  Last error was: -0x%04x - %s\n", -ret, error_buf );
+        polarssl_printf( "  [ main ]  Last error was: -0x%04x - %s\n", -ret, error_buf );
     }
 #endif
 
@@ -465,20 +479,20 @@ reset:
      */
     client_fd = -1;
 
-    printf( "  [ main ]  Waiting for a remote connection\n" );
+    polarssl_printf( "  [ main ]  Waiting for a remote connection\n" );
 
     if( ( ret = net_accept( listen_fd, &client_fd, NULL ) ) != 0 )
     {
-        printf( "  [ main ] failed: net_accept returned -0x%04x\n", ret );
+        polarssl_printf( "  [ main ] failed: net_accept returned -0x%04x\n", ret );
         goto exit;
     }
 
-    printf( "  [ main ]  ok\n" );
-    printf( "  [ main ]  Creating a new thread\n" );
+    polarssl_printf( "  [ main ]  ok\n" );
+    polarssl_printf( "  [ main ]  Creating a new thread\n" );
 
     if( ( ret = thread_create( client_fd ) ) != 0 )
     {
-        printf( "  [ main ]  failed: thread_create returned %d\n", ret );
+        polarssl_printf( "  [ main ]  failed: thread_create returned %d\n", ret );
         net_close( client_fd );
         goto reset;
     }
@@ -492,7 +506,6 @@ exit:
 #if defined(POLARSSL_SSL_CACHE_C)
     ssl_cache_free( &cache );
 #endif
-    ctr_drbg_free( &ctr_drbg );
     entropy_free( &entropy );
 
     polarssl_mutex_free( &debug_mutex );
@@ -502,7 +515,7 @@ exit:
 #endif
 
 #if defined(_WIN32)
-    printf( "  Press Enter to exit this program.\n" );
+    polarssl_printf( "  Press Enter to exit this program.\n" );
     fflush( stdout ); getchar();
 #endif
 

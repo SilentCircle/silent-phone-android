@@ -39,7 +39,7 @@
     <integer name="call_log_actions_fade_start">150</integer>
 
     <!-- Duration of the fade in of the call log actions. -->
-    <integer name="call_log_actions_fade_in_duration">200</integer>
+    <integer name="call_log_actions_fade_in_duration">50</integer>
 
     <!-- Duration of the fade out of the call log actions. -->
     <integer name="call_log_actions_fade_out_duration">20</integer>

@@ -204,13 +204,13 @@ public final class ScContactsContract {
     protected interface BaseSyncColumns {
 
         /** Generic column for use by sync adapters. */
-        public static final String SYNC1 = "sync1";
+        String SYNC1 = "sync1";
         /** Generic column for use by sync adapters. */
-        public static final String SYNC2 = "sync2";
+        String SYNC2 = "sync2";
         /** Generic column for use by sync adapters. */
-        public static final String SYNC3 = "sync3";
+        String SYNC3 = "sync3";
         /** Generic column for use by sync adapters. */
-        public static final String SYNC4 = "sync4";
+        String SYNC4 = "sync4";
     }
 
     public static final class Directory implements ScBaseColumns {
@@ -427,21 +427,21 @@ public final class ScContactsContract {
          * String that uniquely identifies this row to its source account.
          * <P>Type: TEXT</P>
          */
-        public static final String SOURCE_ID = "sourceid";
+        String SOURCE_ID = "sourceid";
 
         /**
          * Version number that is updated whenever this row or its related data
          * changes.
          * <P>Type: INTEGER</P>
          */
-        public static final String VERSION = "version";
+        String VERSION = "version";
 
         /**
          * Flag indicating that {@link #VERSION} has changed, and this row needs
          * to be synchronized by its owning account.
          * <P>Type: INTEGER (boolean)</P>
          */
-        public static final String DIRTY = "dirty";
+        String DIRTY = "dirty";
     }
 
     /**
@@ -459,19 +459,19 @@ public final class ScContactsContract {
          * The number of times a contact has been contacted
          * <P>Type: INTEGER</P>
          */
-        public static final String TIMES_CONTACTED = "times_contacted";
+        String TIMES_CONTACTED = "times_contacted";
 
         /**
          * The last time a contact was contacted.
          * <P>Type: INTEGER</P>
          */
-        public static final String LAST_TIME_CONTACTED = "last_time_contacted";
+        String LAST_TIME_CONTACTED = "last_time_contacted";
 
         /**
          * Is the contact starred?
          * <P>Type: INTEGER (boolean)</P>
          */
-        public static final String STARRED = "starred";
+        String STARRED = "starred";
 
         /**
          * The position at which the contact is pinned. If {@link PinnedPositions.UNPINNED},
@@ -479,14 +479,14 @@ public final class ScContactsContract {
          * <P>Type: INTEGER </P>
          * @hide
          */
-        public static final String PINNED = "pinned";
+        String PINNED = "pinned";
 
         /**
          * URI for a custom ringtone associated with the contact. If null or missing,
          * the default ringtone is used.
          * <P>Type: TEXT (URI to the ringtone)</P>
          */
-        public static final String CUSTOM_RINGTONE = "custom_ringtone";
+        String CUSTOM_RINGTONE = "custom_ringtone";
 
 //        /**
 //         * Whether the contact should always be sent to voicemail. If missing,
@@ -505,42 +505,42 @@ public final class ScContactsContract {
      * the names and Chinese omitting the space.
      */
     public interface FullNameStyle {
-        public static final int UNDEFINED = 0;
-        public static final int WESTERN = 1;
+        int UNDEFINED = 0;
+        int WESTERN = 1;
 
         /**
          * Used if the name is written in Hanzi/Kanji/Hanja and we could not determine
          * which specific language it belongs to: Chinese, Japanese or Korean.
          */
-        public static final int CJK = 2;
+        int CJK = 2;
 
-        public static final int CHINESE = 3;
-        public static final int JAPANESE = 4;
-        public static final int KOREAN = 5;
+        int CHINESE = 3;
+        int JAPANESE = 4;
+        int KOREAN = 5;
     }
 
     /**
      * Constants for various styles of capturing the pronunciation of a person's name.
      */
     public interface PhoneticNameStyle {
-        public static final int UNDEFINED = 0;
+        int UNDEFINED = 0;
 
         /**
          * Pinyin is a phonetic method of entering Chinese characters. Typically not explicitly
          * shown in UIs, but used for searches and sorting.
          */
-        public static final int PINYIN = 3;
+        int PINYIN = 3;
 
         /**
          * Hiragana and Katakana are two common styles of writing out the pronunciation
          * of a Japanese names.
          */
-        public static final int JAPANESE = 4;
+        int JAPANESE = 4;
 
         /**
          * Hangul is the Korean phonetic alphabet.
          */
-        public static final int KOREAN = 5;
+        int KOREAN = 5;
     }
 
     /**
@@ -549,12 +549,12 @@ public final class ScContactsContract {
      * {@link #ORGANIZATION}, {@link #NICKNAME}, {@link #STRUCTURED_NAME}.
      */
     public interface DisplayNameSources {
-        public static final int UNDEFINED = 0;
-        public static final int EMAIL = 10;
-        public static final int PHONE = 20;
-        public static final int ORGANIZATION = 30;
-        public static final int NICKNAME = 35;
-        public static final int STRUCTURED_NAME = 40;
+        int UNDEFINED = 0;
+        int EMAIL = 10;
+        int PHONE = 20;
+        int ORGANIZATION = 30;
+        int NICKNAME = 35;
+        int STRUCTURED_NAME = 40;
     }
 
     /**
@@ -572,7 +572,7 @@ public final class ScContactsContract {
          * The display name for the contact.
          * <P>Type: TEXT</P>
          */
-        public static final String DISPLAY_NAME = ContactNameColumns.DISPLAY_NAME_PRIMARY;
+        String DISPLAY_NAME = ContactNameColumns.DISPLAY_NAME_PRIMARY;
 
         /**
          * Reference to the row in the RawContacts table holding the contact name.
@@ -591,7 +591,7 @@ public final class ScContactsContract {
          *
          * <P>Type: INTEGER REFERENCES data(_id)</P>
          */
-        public static final String PHOTO_ID = "photo_id";
+        String PHOTO_ID = "photo_id";
 
         /**
          * Photo file ID of the full-size photo.  If present, this will be used to populate
@@ -601,7 +601,7 @@ public final class ScContactsContract {
          *
          * <P>Type: INTEGER</P>
          */
-        public static final String PHOTO_FILE_ID = "photo_file_id";
+        String PHOTO_FILE_ID = "photo_file_id";
 
         /**
          * A URI that can be used to retrieve the contact's full-size photo.
@@ -616,7 +616,7 @@ public final class ScContactsContract {
          *
          * <P>Type: TEXT</P>
          */
-        public static final String PHOTO_URI = "photo_uri";
+        String PHOTO_URI = "photo_uri";
 
         /**
          * A URI that can be used to retrieve a thumbnail of the contact's photo.
@@ -629,7 +629,7 @@ public final class ScContactsContract {
          *
          * <P>Type: TEXT</P>
          */
-        public static final String PHOTO_THUMBNAIL_URI = "photo_thumb_uri";
+        String PHOTO_THUMBNAIL_URI = "photo_thumb_uri";
 //
 //        /**
 //         * Flag that reflects the {@link Groups#GROUP_VISIBLE} state of any
@@ -648,13 +648,13 @@ public final class ScContactsContract {
          * at least one phone number, "0" otherwise.
          * <P>Type: INTEGER</P>
          */
-        public static final String HAS_PHONE_NUMBER = "has_phone_number";
+        String HAS_PHONE_NUMBER = "has_phone_number";
 
         /**
          * An opaque value that contains hints on how to find the contact if
          * its row id changed as a result of a sync or aggregation.
          */
-        public static final String LOOKUP_KEY = "lookup";
+        String LOOKUP_KEY = "lookup";
 
         /**
          * Timestamp (milliseconds since epoch) of when this contact was last updated.  This
@@ -662,7 +662,7 @@ public final class ScContactsContract {
          * modification (including deletes and inserts) of underlying contact data are also
          * reflected in this timestamp.
          */
-        public static final String CONTACT_LAST_UPDATED_TIMESTAMP = "contact_last_updated_timestamp";
+        String CONTACT_LAST_UPDATED_TIMESTAMP = "contact_last_updated_timestamp";
 
     }
 
@@ -678,7 +678,7 @@ public final class ScContactsContract {
          * The kind of data that is used as the display name for the contact, such as
          * structured name or email address.  See {@link DisplayNameSources}.
          */
-        public static final String DISPLAY_NAME_SOURCE = "display_name_source";
+        String DISPLAY_NAME_SOURCE = "display_name_source";
 
         /**
          * <p>
@@ -700,7 +700,7 @@ public final class ScContactsContract {
          *
          * @see ContactsContract.ContactNameColumns#DISPLAY_NAME_ALTERNATIVE
          */
-        public static final String DISPLAY_NAME_PRIMARY = "display_name";
+        String DISPLAY_NAME_PRIMARY = "display_name";
 
         /**
          * <p>
@@ -720,13 +720,13 @@ public final class ScContactsContract {
          * Other cases may be added later.
          * </p>
          */
-        public static final String DISPLAY_NAME_ALTERNATIVE = "display_name_alt";
+        String DISPLAY_NAME_ALTERNATIVE = "display_name_alt";
 
         /**
          * The phonetic alphabet used to represent the {@link #PHONETIC_NAME}.  See
          * {@link PhoneticNameStyle}.
          */
-        public static final String PHONETIC_NAME_STYLE = "phonetic_name_style";
+        String PHONETIC_NAME_STYLE = "phonetic_name_style";
 
         /**
          * <p>
@@ -739,7 +739,7 @@ public final class ScContactsContract {
          * such as Japan and Korea. See {@link PhoneticNameStyle}.
          * </p>
          */
-        public static final String PHONETIC_NAME = "phonetic_name";
+        String PHONETIC_NAME = "phonetic_name";
 
         /**
          * Sort key that takes into account locale-based traditions for sorting
@@ -748,14 +748,14 @@ public final class ScContactsContract {
          * the sort key is the name's Pinyin spelling, and for Japanese names
          * it is the Hiragana version of the phonetic name.
          */
-        public static final String SORT_KEY_PRIMARY = "sort_key";
+        String SORT_KEY_PRIMARY = "sort_key";
 
         /**
          * Sort key based on the alternative representation of the full name,
          * {@link #DISPLAY_NAME_ALTERNATIVE}.  Thus for Western names,
          * it is the one using the "family name first" format.
          */
-        public static final String SORT_KEY_ALTERNATIVE = "sort_key_alt";
+        String SORT_KEY_ALTERNATIVE = "sort_key_alt";
     }
 
     /**
@@ -803,12 +803,12 @@ public final class ScContactsContract {
          * A reference to the {@link ContactsContract.Contacts#_ID} that was deleted.
          * <P>Type: INTEGER</P>
          */
-        public static final String CONTACT_ID = "contact_id";
+        String CONTACT_ID = "contact_id";
 
         /**
          * Time (milliseconds since epoch) that the contact was deleted.
          */
-        public static final String CONTACT_DELETED_TIMESTAMP = "contact_deleted_timestamp";
+        String CONTACT_DELETED_TIMESTAMP = "contact_deleted_timestamp";
     }
 
     /**
@@ -852,7 +852,7 @@ public final class ScContactsContract {
          * The type for this contact.
          * <P>Type: INTEGER</P>
          */
-        public static final String CONTACT_TYPE = "contact_type";
+        String CONTACT_TYPE = "contact_type";
 
         /**
          * The "deleted" flag: "0" by default, "1" if the row has been marked
@@ -864,7 +864,7 @@ public final class ScContactsContract {
          * the data removal.
          * <P>Type: INTEGER</P>
          */
-        public static final String DELETED = "deleted";
+        String DELETED = "deleted";
 
         /**
          * The "name_verified" flag: "1" means that the name fields on this raw
@@ -891,20 +891,20 @@ public final class ScContactsContract {
          *
          * @hide
          */
-        public static final String NAME_VERIFIED = "name_verified";
+        String NAME_VERIFIED = "name_verified";
 
         /**
          * The "read-only" flag: "0" by default, "1" if the row cannot be modified or
          * deleted except by a sync adapter.  See {@link ContactsContract#CALLER_IS_SYNCADAPTER}.
          * <P>Type: INTEGER</P>
          */
-        public static final String RAW_CONTACT_IS_READ_ONLY = "raw_contact_is_read_only";
+        String RAW_CONTACT_IS_READ_ONLY = "raw_contact_is_read_only";
 
         /**
          * Flag that reflects whether this raw contact belongs to the user's
          * personal profile entry.
          */
-        public static final String RAW_CONTACT_IS_USER_PROFILE = "raw_contact_is_user_profile";
+        String RAW_CONTACT_IS_USER_PROFILE = "raw_contact_is_user_profile";
     }
 
     public static final class RawContacts implements ScBaseColumns, RawContactsColumns,  RawContactsColumnsAdd,
@@ -1637,7 +1637,7 @@ public final class ScContactsContract {
          * <p>Type: INTEGER</p>
          * <p>read-only</p>
          */
-        public static final String CONTACT_ID = "contact_id";
+        String CONTACT_ID = "contact_id";
 
         /**
          * A reference to the {@link android.provider.ContactsContract.Contacts#LOOKUP_KEY}
@@ -1646,14 +1646,14 @@ public final class ScContactsContract {
          * <p>Type: TEXT</p>
          * <p>read-only</p>
          */
-        public static final String CONTACT_LOOKUP_KEY = "contact_lookup";
+        String CONTACT_LOOKUP_KEY = "contact_lookup";
 
         /**
          * A reference to the {@link RawContacts#_ID}
          * that this stream item belongs to.
          * <p>Type: INTEGER</p>
          */
-        public static final String RAW_CONTACT_ID = "raw_contact_id";
+        String RAW_CONTACT_ID = "raw_contact_id";
 
 //        /**
 //         * The package name to use when creating {@link Resources} objects for
@@ -1699,7 +1699,7 @@ public final class ScContactsContract {
          * <P>Type: TEXT</P>
          * <p>read-only</p>
          */
-        public static final String RAW_CONTACT_SOURCE_ID = "raw_contact_source_id";
+        String RAW_CONTACT_SOURCE_ID = "raw_contact_source_id";
 
         /**
          * The resource name of the icon for the source of the stream item.
@@ -1707,7 +1707,7 @@ public final class ScContactsContract {
          * drawables, the "@drawable/" prefix must be omitted.
          * <P>Type: TEXT</P>
          */
-        public static final String RES_ICON = "icon";
+        String RES_ICON = "icon";
 
         /**
          * The resource name of the label describing the source of the status update, e.g. "Google
@@ -1715,7 +1715,7 @@ public final class ScContactsContract {
          * reference strings, the "@string/" prefix must be omitted.
          * <p>Type: TEXT</p>
          */
-        public static final String RES_LABEL = "label";
+        String RES_LABEL = "label";
 
         /**
          * <P>
@@ -1732,14 +1732,14 @@ public final class ScContactsContract {
          * </P>
          * <P>Type: TEXT</P>
          */
-        public static final String TEXT = "text";
+        String TEXT = "text";
 
         /**
          * The absolute time (milliseconds since epoch) when this stream item was
          * inserted/updated.
          * <P>Type: NUMBER</P>
          */
-        public static final String TIMESTAMP = "timestamp";
+        String TIMESTAMP = "timestamp";
 
         /**
          * <P>
@@ -1757,16 +1757,16 @@ public final class ScContactsContract {
          * </P>
          * <P>Type: TEXT</P>
          */
-        public static final String COMMENTS = "comments";
+        String COMMENTS = "comments";
 
         /** Generic column for use by sync adapters. */
-        public static final String SYNC1 = "stream_item_sync1";
+        String SYNC1 = "stream_item_sync1";
         /** Generic column for use by sync adapters. */
-        public static final String SYNC2 = "stream_item_sync2";
+        String SYNC2 = "stream_item_sync2";
         /** Generic column for use by sync adapters. */
-        public static final String SYNC3 = "stream_item_sync3";
+        String SYNC3 = "stream_item_sync3";
         /** Generic column for use by sync adapters. */
-        public static final String SYNC4 = "stream_item_sync4";
+        String SYNC4 = "stream_item_sync4";
     }
 
     public static final class StreamItemPhotos implements ScBaseColumns, StreamItemPhotosColumns {
@@ -1801,37 +1801,37 @@ public final class ScContactsContract {
          * A reference to the {@link StreamItems#_ID} this photo is associated with.
          * <P>Type: NUMBER</P>
          */
-        public static final String STREAM_ITEM_ID = "stream_item_id";
+        String STREAM_ITEM_ID = "stream_item_id";
 
         /**
          * An integer to use for sort order for photos in the stream item.  If not
          * specified, the {@link StreamItemPhotos#_ID} will be used for sorting.
          * <P>Type: NUMBER</P>
          */
-        public static final String SORT_INDEX = "sort_index";
+        String SORT_INDEX = "sort_index";
 
         /**
          * Photo file ID for the photo.
          * See {@link ContactsContract.DisplayPhoto}.
          * <P>Type: NUMBER</P>
          */
-        public static final String PHOTO_FILE_ID = "photo_file_id";
+        String PHOTO_FILE_ID = "photo_file_id";
 
         /**
          * URI for retrieving the photo content, automatically populated.  Callers
          * may retrieve the photo content by opening this URI as an asset file.
          * <P>Type: TEXT</P>
          */
-        public static final String PHOTO_URI = "photo_uri";
+        String PHOTO_URI = "photo_uri";
 
         /** Generic column for use by sync adapters. */
-        public static final String SYNC1 = "stream_item_photo_sync1";
+        String SYNC1 = "stream_item_photo_sync1";
         /** Generic column for use by sync adapters. */
-        public static final String SYNC2 = "stream_item_photo_sync2";
+        String SYNC2 = "stream_item_photo_sync2";
         /** Generic column for use by sync adapters. */
-        public static final String SYNC3 = "stream_item_photo_sync3";
+        String SYNC3 = "stream_item_photo_sync3";
         /** Generic column for use by sync adapters. */
-        public static final String SYNC4 = "stream_item_photo_sync4";
+        String SYNC4 = "stream_item_photo_sync4";
     }
 
     /**
@@ -1863,19 +1863,19 @@ public final class ScContactsContract {
          * The height, in pixels, of the photo this entry is associated with.
          * <P>Type: NUMBER</P>
          */
-        public static final String HEIGHT = "height";
+        String HEIGHT = "height";
 
         /**
          * The width, in pixels, of the photo this entry is associated with.
          * <P>Type: NUMBER</P>
          */
-        public static final String WIDTH = "width";
+        String WIDTH = "width";
 
         /**
          * The size, in bytes, of the photo stored on disk.
          * <P>Type: NUMBER</P>
          */
-        public static final String FILESIZE = "filesize";
+        String FILESIZE = "filesize";
     }
 
     /**
@@ -1891,24 +1891,24 @@ public final class ScContactsContract {
          *
          * @hide
          */
-        public static final String RES_PACKAGE = "res_package";
+        String RES_PACKAGE = "res_package";
 
         /**
          * The MIME type of the item represented by this row.
          */
-        public static final String MIMETYPE = "mimetype";
+        String MIMETYPE = "mimetype";
 
         /**
          * A reference to the {@link RawContacts#_ID}
          * that this data belongs to.
          */
-        public static final String RAW_CONTACT_ID = "raw_contact_id";
+        String RAW_CONTACT_ID = "raw_contact_id";
 
         /**
          * Whether this is the primary entry of its kind for the raw contact it belongs to.
          * <P>Type: INTEGER (if set, non-0 means true)</P>
          */
-        public static final String IS_PRIMARY = "is_primary";
+        String IS_PRIMARY = "is_primary";
 
         /**
          * Whether this is the primary entry of its kind for the aggregate
@@ -1916,14 +1916,14 @@ public final class ScContactsContract {
          * also be "primary".
          * <P>Type: INTEGER (if set, non-0 means true)</P>
          */
-        public static final String IS_SUPER_PRIMARY = "is_super_primary";
+        String IS_SUPER_PRIMARY = "is_super_primary";
 
         /**
          * The "read-only" flag: "0" by default, "1" if the row cannot be modified or
          * deleted except by a sync adapter.  See {@link ContactsContract#CALLER_IS_SYNCADAPTER}.
          * <P>Type: INTEGER</P>
          */
-        public static final String IS_READ_ONLY = "is_read_only";
+        String IS_READ_ONLY = "is_read_only";
 
         /**
          * The version of this data record. This is a read-only value. The data column is
@@ -1931,50 +1931,50 @@ public final class ScContactsContract {
          * increasing.
          * <P>Type: INTEGER</P>
          */
-        public static final String DATA_VERSION = "data_version";
+        String DATA_VERSION = "data_version";
 
         /** Generic data column, the meaning is {@link #MIMETYPE} specific */
-        public static final String DATA1 = "data1";
+        String DATA1 = "data1";
         /** Generic data column, the meaning is {@link #MIMETYPE} specific */
-        public static final String DATA2 = "data2";
+        String DATA2 = "data2";
         /** Generic data column, the meaning is {@link #MIMETYPE} specific */
-        public static final String DATA3 = "data3";
+        String DATA3 = "data3";
         /** Generic data column, the meaning is {@link #MIMETYPE} specific */
-        public static final String DATA4 = "data4";
+        String DATA4 = "data4";
         /** Generic data column, the meaning is {@link #MIMETYPE} specific */
-        public static final String DATA5 = "data5";
+        String DATA5 = "data5";
         /** Generic data column, the meaning is {@link #MIMETYPE} specific */
-        public static final String DATA6 = "data6";
+        String DATA6 = "data6";
         /** Generic data column, the meaning is {@link #MIMETYPE} specific */
-        public static final String DATA7 = "data7";
+        String DATA7 = "data7";
         /** Generic data column, the meaning is {@link #MIMETYPE} specific */
-        public static final String DATA8 = "data8";
+        String DATA8 = "data8";
         /** Generic data column, the meaning is {@link #MIMETYPE} specific */
-        public static final String DATA9 = "data9";
+        String DATA9 = "data9";
         /** Generic data column, the meaning is {@link #MIMETYPE} specific */
-        public static final String DATA10 = "data10";
+        String DATA10 = "data10";
         /** Generic data column, the meaning is {@link #MIMETYPE} specific */
-        public static final String DATA11 = "data11";
+        String DATA11 = "data11";
         /** Generic data column, the meaning is {@link #MIMETYPE} specific */
-        public static final String DATA12 = "data12";
+        String DATA12 = "data12";
         /** Generic data column, the meaning is {@link #MIMETYPE} specific */
-        public static final String DATA13 = "data13";
+        String DATA13 = "data13";
         /** Generic data column, the meaning is {@link #MIMETYPE} specific */
-        public static final String DATA14 = "data14";
+        String DATA14 = "data14";
         /**
          * Generic data column, the meaning is {@link #MIMETYPE} specific. By convention,
          * this field is used to store BLOBs (binary data).
          */
-        public static final String DATA15 = "data15";
+        String DATA15 = "data15";
 
         /** Generic column for use by sync adapters. */
-        public static final String SYNC1 = "data_sync1";
+        String SYNC1 = "data_sync1";
         /** Generic column for use by sync adapters. */
-        public static final String SYNC2 = "data_sync2";
+        String SYNC2 = "data_sync2";
         /** Generic column for use by sync adapters. */
-        public static final String SYNC3 = "data_sync3";
+        String SYNC3 = "data_sync3";
         /** Generic column for use by sync adapters. */
-        public static final String SYNC4 = "data_sync4";
+        String SYNC4 = "data_sync4";
     }
 
     /**
@@ -1982,10 +1982,10 @@ public final class ScContactsContract {
      */
     protected interface DataUsageStatColumns {
         /** The last time (in milliseconds) this {@link Data} was used. */
-        public static final String LAST_TIME_USED = "last_time_used";
+        String LAST_TIME_USED = "last_time_used";
 
         /** The number of times the referenced {@link Data} has been used. */
-        public static final String TIMES_USED = "times_used";
+        String TIMES_USED = "times_used";
     }
 
     /**
@@ -2055,25 +2055,25 @@ public final class ScContactsContract {
          * The phone number as the user entered it.
          * <P>Type: TEXT</P>
          */
-        public static final String NUMBER = "number";
+        String NUMBER = "number";
 
         /**
          * The type of phone number, for example Home or Work.
          * <P>Type: INTEGER</P>
          */
-        public static final String TYPE = "type";
+        String TYPE = "type";
 
         /**
          * The user defined label for the phone number.
          * <P>Type: TEXT</P>
          */
-        public static final String LABEL = "label";
+        String LABEL = "label";
 
         /**
          * The phone number's E164 representation.
          * <P>Type: TEXT</P>
          */
-        public static final String NORMALIZED_NUMBER = "normalized_number";
+        String NORMALIZED_NUMBER = "normalized_number";
     }
 
     public static final class PhoneLookup implements ScBaseColumns, PhoneLookupColumns,
@@ -2186,7 +2186,7 @@ public final class ScContactsContract {
             /**
              * A custom type. The custom label should be supplied by user.
              */
-            public static int TYPE_CUSTOM = 0;
+            int TYPE_CUSTOM = 0;
         }
 
         /**
@@ -2197,19 +2197,19 @@ public final class ScContactsContract {
              * The data for the contact method.
              * <P>Type: TEXT</P>
              */
-            public static final String DATA = DataColumns.DATA1;
+            String DATA = DataColumns.DATA1;
 
             /**
              * The type of data, for example Home or Work.
              * <P>Type: INTEGER</P>
              */
-            public static final String TYPE = DataColumns.DATA2;
+            String TYPE = DataColumns.DATA2;
 
             /**
              * The user defined label for the the contact method.
              * <P>Type: TEXT</P>
              */
-            public static final String LABEL = DataColumns.DATA3;
+            String LABEL = DataColumns.DATA3;
         }
 
         /**
@@ -4047,7 +4047,7 @@ public final class ScContactsContract {
          * <p>
          * Type: TEXT
          */
-        public static final String TITLE = "title";
+        String TITLE = "title";
 
         /**
          * The package name to use when creating {@link Resources} objects for
@@ -4056,7 +4056,7 @@ public final class ScContactsContract {
          *
          * @hide
          */
-        public static final String RES_PACKAGE = "res_package";
+        String RES_PACKAGE = "res_package";
 
         /**
          * The display title of this group to load as a resource from
@@ -4065,21 +4065,21 @@ public final class ScContactsContract {
          *
          * @hide
          */
-        public static final String TITLE_RES = "title_res";
+        String TITLE_RES = "title_res";
 
         /**
          * Notes about the group.
          * <p>
          * Type: TEXT
          */
-        public static final String NOTES = "notes";
+        String NOTES = "notes";
 
         /**
          * The ID of this group if it is a System Group, i.e. a group that has a special meaning
          * to the sync adapter, null otherwise.
          * <P>Type: TEXT</P>
          */
-        public static final String SYSTEM_ID = "system_id";
+        String SYSTEM_ID = "system_id";
 
         /**
          * The total number of {@link Contacts} that have
@@ -4088,7 +4088,7 @@ public final class ScContactsContract {
          * <p>
          * Type: INTEGER
          */
-        public static final String SUMMARY_COUNT = "summ_count";
+        String SUMMARY_COUNT = "summ_count";
 
         /**
          * A boolean query parameter that can be used with {@link Groups#CONTENT_SUMMARY_URI}.
@@ -4096,7 +4096,7 @@ public final class ScContactsContract {
          *
          * @hide
          */
-        public static final String PARAM_RETURN_GROUP_COUNT_PER_ACCOUNT = "return_group_count_per_account";
+        String PARAM_RETURN_GROUP_COUNT_PER_ACCOUNT = "return_group_count_per_account";
 
         /**
          * The total number of groups of the account that a group belongs to.
@@ -4113,7 +4113,7 @@ public final class ScContactsContract {
          * Type: INTEGER
          * @hide
          */
-        public static final String SUMMARY_GROUP_COUNT_PER_ACCOUNT = "group_count_per_account";
+        String SUMMARY_GROUP_COUNT_PER_ACCOUNT = "group_count_per_account";
 
         /**
          * The total number of {@link Contacts} that have both
@@ -4123,7 +4123,7 @@ public final class ScContactsContract {
          * <p>
          * Type: INTEGER
          */
-        public static final String SUMMARY_WITH_PHONES = "summ_phones";
+        String SUMMARY_WITH_PHONES = "summ_phones";
 
         /**
          * Flag indicating if the contacts belonging to this group should be
@@ -4131,7 +4131,7 @@ public final class ScContactsContract {
          * <p>
          * Type: INTEGER (boolean)
          */
-        public static final String GROUP_VISIBLE = "group_visible";
+        String GROUP_VISIBLE = "group_visible";
 
         /**
          * The "deleted" flag: "0" by default, "1" if the row has been marked
@@ -4143,7 +4143,7 @@ public final class ScContactsContract {
          * finalize the data removal.
          * <P>Type: INTEGER</P>
          */
-        public static final String DELETED = "deleted";
+        String DELETED = "deleted";
 
         /**
          * Whether this group should be synced if the SYNC_EVERYTHING settings
@@ -4151,7 +4151,7 @@ public final class ScContactsContract {
          * <p>
          * Type: INTEGER (boolean)
          */
-        public static final String SHOULD_SYNC = "should_sync";
+        String SHOULD_SYNC = "should_sync";
 
         /**
          * Any newly created contacts will automatically be added to groups that have this
@@ -4159,7 +4159,7 @@ public final class ScContactsContract {
          * <p>
          * Type: INTEGER (boolean)
          */
-        public static final String AUTO_ADD = "auto_add";
+        String AUTO_ADD = "auto_add";
 
         /**
          * When a contacts is marked as a favorites it will be automatically added
@@ -4168,14 +4168,14 @@ public final class ScContactsContract {
          * <p>
          * Type: INTEGER (boolean)
          */
-        public static final String FAVORITES = "favorites";
+        String FAVORITES = "favorites";
 
         /**
          * The "read-only" flag: "0" by default, "1" if the row cannot be modified or
          * deleted except by a sync adapter.  See {@link ContactsContract#CALLER_IS_SYNCADAPTER}.
          * <P>Type: INTEGER</P>
          */
-        public static final String GROUP_IS_READ_ONLY = "group_is_read_only";
+        String GROUP_IS_READ_ONLY = "group_is_read_only";
     }
 
     /**

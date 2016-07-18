@@ -14,6 +14,7 @@
               android:layout_width="match_parent"
               android:layout_height="wrap_content"
               android:layout_marginTop="@dimen/spacing_normal"
+              android:background="?sp_drawer_background"
               tools:context=".activities.DialerActivity">
 
     <LinearLayout
@@ -27,6 +28,7 @@
                 android:layout_marginLeft="@dimen/spacing_normal"
                 android:layout_marginStart="@dimen/spacing_normal"
                 android:layout_width="wrap_content"
+                android:textColor="@color/sc_ng_text_grey"
                 android:text="@string/thanks_name"/>
         <TextView
                 style="@style/Widget.Silent.SimpleText.Medium"
@@ -34,6 +36,7 @@
                 android:layout_marginRight="@dimen/spacing_normal"
                 android:layout_marginEnd="@dimen/spacing_normal"
                 android:gravity="end"
+                android:textColor="@color/sc_ng_text_grey"
                 tools:text="John Doe III"/>
     </LinearLayout>
 
@@ -49,6 +52,7 @@
                 android:layout_marginLeft="@dimen/spacing_normal"
                 android:layout_marginStart="@dimen/spacing_normal"
                 android:layout_width="wrap_content"
+                android:textColor="@color/sc_ng_text_grey"
                 android:text="@string/thanks_number"/>
         <TextView
                 style="@style/Widget.Silent.SimpleText.Medium"
@@ -56,6 +60,7 @@
                 android:layout_marginRight="@dimen/spacing_normal"
                 android:layout_marginEnd="@dimen/spacing_normal"
                 android:gravity="end"
+                android:textColor="@color/sc_ng_text_grey"
                 tools:text="(555) 4711 815"/>
     </LinearLayout>
 
@@ -68,9 +73,11 @@
             tools:visibility="visible">
         <TextView
                 style="@style/Widget.Silent.SimpleText.Medium"
+                android:id="@+id/dialer_drawer_valid_label"
                 android:layout_marginLeft="@dimen/spacing_normal"
                 android:layout_marginStart="@dimen/spacing_normal"
                 android:layout_width="wrap_content"
+                android:textColor="@color/sc_ng_text_grey"
                 android:text="@string/valid_until"/>
         <TextView
                 style="@style/Widget.Silent.SimpleText.Medium"
@@ -78,6 +85,7 @@
                 android:layout_marginRight="@dimen/spacing_normal"
                 android:layout_marginEnd="@dimen/spacing_normal"
                 android:gravity="end"
+                android:textColor="@color/sc_ng_text_grey"
                 tools:text="2014-09-13"/>
     </LinearLayout>
 

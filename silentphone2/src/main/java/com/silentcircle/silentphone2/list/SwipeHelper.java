@@ -471,12 +471,12 @@ public class SwipeHelper {
     }
 
     public interface OnItemGestureListener {
-        public void onSwipe(View view);
+        void onSwipe(View view);
 
         @SuppressWarnings("unused")
-        public void onTouch();
+        void onTouch();
 
         @SuppressWarnings("unused")
-        public boolean isSwipeEnabled();
+        boolean isSwipeEnabled();
     }
 }

@@ -60,9 +60,9 @@ public class VCardProviderUtils {
     public static Bitmap getVCardPreviewForContact(final Context context, final Uri uri) {
         Log.d(TAG, "Generating vCard preview for: " + uri);
 
-        VCardPreview vCardPreview = new VCardPreview(context);
-        Drawable drawable = context.getResources().getDrawable(R.drawable.ic_contact_picture_holo_dark);
-        vCardPreview.setImage(drawable);
+        Drawable drawable =
+                context.getResources().getDrawable(R.drawable.ic_contact_picture_holo_dark);
+        String displayName = null;
 
         String lookupKey = uri.getLastPathSegment();
         ContentResolver resolver = context.getContentResolver();
@@ -78,8 +78,7 @@ public class VCardProviderUtils {
         if (contactUri != null) {
             Cursor cursor = context.getContentResolver().query(contactUri, null, null, null, null);
             if (cursor != null && cursor.moveToFirst()) {
-                String displayName = cursor.getString(cursor.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME));
-                vCardPreview.setText(displayName);
+                displayName = cursor.getString(cursor.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME));
                 cursor.close();
             }
 
@@ -88,10 +87,11 @@ public class VCardProviderUtils {
                 Bitmap photo = BitmapFactory.decodeStream(inputStream);
                 photo.setDensity(DisplayMetrics.DENSITY_HIGH);
                 drawable = new BitmapDrawable(context.getResources(), photo);
-                vCardPreview.setImage(drawable);
                 IOUtils.close(inputStream);
             }
         }
+
+        VCardPreview vCardPreview = new VCardPreview(context, drawable, displayName);
 
         return loadBitmapFromView(vCardPreview);
     }

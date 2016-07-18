@@ -31,13 +31,25 @@ import android.content.Context;
 import android.database.ContentObserver;
 import android.database.Cursor;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Handler;
 import android.provider.ContactsContract;
+import android.provider.Settings;
+import android.support.annotation.MainThread;
+import android.support.annotation.NonNull;
+import android.support.annotation.WorkerThread;
 import android.text.TextUtils;
 import android.util.Log;
 
 import com.silentcircle.common.list.ContactEntry;
+import com.silentcircle.common.util.AsyncTasks;
+import com.silentcircle.contacts.UpdateScContactDataService;
+import com.silentcircle.contacts.utils.Constants;
+import com.silentcircle.messaging.services.AxoMessaging;
+import com.silentcircle.silentphone2.util.ConfigurationUtilities;
+import com.silentcircle.silentphone2.util.Utilities;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -49,34 +61,39 @@ import java.util.List;
  */
 public final class ContactsCache {
 
+    private static final String TAG = "ContactsCache";
+
+    // Not sure about correctness this
+    private static  final String SIP_DOMAIN_SILENTCIRCLE = "@sip.silentcircle.net";
+
     private static final String[] COLUMNS = new String[] {
-            ContactsContract.Contacts._ID,                                // 0
-            ContactsContract.Contacts.DISPLAY_NAME,                       // 1
-            ContactsContract.Contacts.PHOTO_URI,                          // 2
-            ContactsContract.Contacts.PHOTO_THUMBNAIL_URI,                // 3
-            ContactsContract.CommonDataKinds.Phone.NUMBER,                // 4
-            ContactsContract.CommonDataKinds.Phone.LABEL,                 // 5
-            ContactsContract.CommonDataKinds.SipAddress.SIP_ADDRESS,      // 6
-            ContactsContract.Contacts.PHOTO_ID,                           // 7
-            ContactsContract.Contacts.LOOKUP_KEY                          // 8
+            ContactsContract.Contacts.DISPLAY_NAME,                       // 0
+            ContactsContract.Contacts.PHOTO_URI,                          // 1
+            ContactsContract.Contacts.PHOTO_THUMBNAIL_URI,                // 2
+            ContactsContract.Data.DATA1,                                  // 3
+            ContactsContract.CommonDataKinds.Phone.LABEL,                 // 4
+            ContactsContract.Contacts.PHOTO_ID,                           // 5
+            ContactsContract.Contacts.LOOKUP_KEY                          // 6
     };
 
-    private static final int COLUMN_INDEX_ID = 0;
-    private static final int COLUMN_INDEX_DISPLAY_NAME = 1;
-    private static final int COLUMN_INDEX_PHOTO_URI = 2;
-    private static final int COLUMN_INDEX_THUMBNAIL_PHOTO_URI = 3;
-    private static final int COLUMN_INDEX_PHONE_NUMBER = 4;
-    private static final int COLUMN_INDEX_PHONE_LABEL = 5;
-    private static final int COLUMN_INDEX_SIP_ADDRESS = 6;
-    private static final int COLUMN_INDEX_PHOTO_ID = 7;
-    private static final int COLUMN_INDEX_LOOKUP_KEY = 8;
+    private static final int COLUMN_INDEX_DISPLAY_NAME = 0;
+    private static final int COLUMN_INDEX_PHOTO_URI = 1;
+    private static final int COLUMN_INDEX_THUMBNAIL_PHOTO_URI = 2;
+    private static final int COLUMN_INDEX_DATA1 = 3;
+    private static final int COLUMN_INDEX_PHONE_LABEL = 4;
+    private static final int COLUMN_INDEX_PHOTO_ID = 5;
+    private static final int COLUMN_INDEX_LOOKUP_KEY = 6;
+
+    // The RETRY_TIME should be longer than any network timeouts
+    private static final long RETRY_TIME = 30 * 1000;                       // Try server every 30s
 
     private static final List<ContactEntry> mContactCache =
             Collections.synchronizedList(new ArrayList<ContactEntry>());
 
 
-    final private Context mContext;
+    private static Context mContext;
     private static boolean mDoUpdate = true;
+    private static ContactsCache sContactsCache = null;
 
     private ContentObserver mChangeObserver = new ContentObserver(new Handler()) {
 
@@ -92,7 +109,14 @@ public final class ContactsCache {
         }
     };
 
-    public ContactsCache(Context ctx) {
+    public static ContactsCache getInstance(@NonNull Context context) {
+        if (sContactsCache == null) {
+            sContactsCache = new ContactsCache(context);
+        }
+        return sContactsCache;
+    }
+
+    protected ContactsCache(Context ctx) {
         mContext = ctx;
         mContext.getContentResolver().registerContentObserver(ContactsContract.Contacts.CONTENT_URI, true, mChangeObserver);
     }
@@ -102,26 +126,21 @@ public final class ContactsCache {
             return;
         mDoUpdate = false;
 
-        Uri uri;
-//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            Uri.Builder uriBuilder = ContactsContract.Contacts.CONTENT_STREQUENT_URI.buildUpon()
-                    .appendQueryParameter(ContactsContract.STREQUENT_PHONE_ONLY, "true");
-            uri = uriBuilder.build();
-//        }
-//        else {
-//            uri = ContactsContract.Contacts.CONTENT_STREQUENT_URI;
-//        }
+        mContactCache.clear();
+
+        Uri lookupUri = ContactsContract.Data.CONTENT_URI;
+        String selection = ContactsContract.Data.MIMETYPE + "='" +
+                UpdateScContactDataService.SC_MSG_CONTENT_TYPE + "' OR " +
+                ContactsContract.Data.MIMETYPE + "='" + UpdateScContactDataService.SC_PHONE_CONTENT_TYPE + "'";
 
         List<ContactEntry> entryList = new ArrayList<>();
-        Cursor cursor = context.getContentResolver().query(uri, COLUMNS, null, null, null);
+        Cursor cursor = context.getContentResolver().query(lookupUri, COLUMNS, selection, null, null);
         if (cursor != null) {
             while (cursor.moveToNext()) {
                 ContactEntry contactEntry = new ContactEntry();
-                contactEntry.id = cursor.getLong(COLUMN_INDEX_ID);
                 contactEntry.name = cursor.getString(COLUMN_INDEX_DISPLAY_NAME);
                 contactEntry.phoneLabel = cursor.getString(COLUMN_INDEX_PHONE_LABEL);
-                contactEntry.phoneNumber = cursor.getString(COLUMN_INDEX_PHONE_NUMBER);
-                contactEntry.imName = cursor.getString(COLUMN_INDEX_SIP_ADDRESS);
+                contactEntry.phoneNumber = Utilities.removeUriPartsSelective(cursor.getString(COLUMN_INDEX_DATA1));
 
                 String photoUri = cursor.getString(COLUMN_INDEX_PHOTO_URI);
                 if (!TextUtils.isEmpty(photoUri)) {
@@ -135,45 +154,143 @@ public final class ContactsCache {
 
                 contactEntry.photoId = cursor.getLong(COLUMN_INDEX_PHOTO_ID);
                 String lookupKey = cursor.getString(COLUMN_INDEX_LOOKUP_KEY);
+                contactEntry.lookupKey = lookupKey;
                 contactEntry.lookupUri = ContactsContract.Contacts.getLookupUri(contactEntry.id, lookupKey);
                 entryList.add(contactEntry);
 
                 // left for now for debug
-                /*
-                int c = cursor.getColumnCount();
-                for (int i = 0; i < c; i++) {
-                    System.out.println("AAA (1) " + cursor.getColumnName(i)
-                            + " = [" + cursor.getString(i) + "]");
-                }
-                 */
+//                int c = cursor.getColumnCount();
+//                for (int i = 0; i < c; i++) {
+//                    Log.d(TAG, "++++ " + cursor.getColumnName(i) + " = [" + cursor.getString(i) + "]");
+//                }
             }
             cursor.close();
         }
         if (entryList.size() > 0) {
             synchronized (mContactCache) {
-                mContactCache.clear();
                 mContactCache.addAll(entryList);
             }
         }
     }
 
+    @MainThread
     public static ContactEntry getContactEntryFromCache(final String name) {
         ContactEntry result = null;
+//        Log.d(TAG, "++++ look for name: " + name);
         if (!TextUtils.isEmpty(name)) {
+
             synchronized (mContactCache) {
                 for (ContactEntry entry : mContactCache) {
+//                    Log.d(TAG, "++++ entry name: " + entry.name + ", imName: " + entry.imName);
                     if (name.equals(entry.name) || name.equals(entry.imName)) {
                         result = entry;
                         break;
                     }
-                    if (entry.imName != null && entry.imName.startsWith(name + "@")) {
+//                    Log.d(TAG, "++++ entry number: " + entry.phoneNumber);
+                    if (name.equals(entry.phoneNumber)) {
                         result = entry;
                         break;
                     }
+                }
+                if (result != null && TextUtils.isEmpty(result.name) && result.timeCreated != 0) {
+                    if (result.timeCreated + RETRY_TIME < System.currentTimeMillis()) {
+                        if (ConfigurationUtilities.mTrace) Log.d(TAG, "Retry to get user contact data after timeout");
+                        // Keep the existing entry until we got some result from server. The RETRY_TIME
+                        // should be longer than any network timeouts
+                        result.timeCreated = System.currentTimeMillis();
+                        loadUserDataBackground(name, result);
+                    }
+                }
+                // If result is null then try to get a alias mapping. If successful create a stub
+                // entry, set the entry's name to the mapped display name and the name parameter
+                // to the phone name. If another cache lookup with the same name shows up we find
+                // the stub entry.
+                if (result == null) {
+                    byte[] dpName = AxoMessaging.getDisplayName(name);
+                    if (dpName != null) {
+                        result = createTemporaryContactEntry(new String(dpName));
+                        result.phoneNumber = name;
+                        mContactCache.add(result);
+                    }
+                    else {
+                        loadUserDataBackground(name, null);
+                    }
+                }
+                if (result == null) {
+                    if (ConfigurationUtilities.mTrace) Log.d(TAG, "No valid messaging contact entry found for: '" + name + "'");
                 }
             }
         }
         return result;
     }
 
+    private static void loadUserDataBackground(final String name, final ContactEntry oldEntry) {
+        AsyncTasks.UserDataBackgroundTaskNotMain getNameTask = new AsyncTasks.UserDataBackgroundTaskNotMain(name) {
+            @Override
+            @WorkerThread
+            public void onPostRun() {
+                ContactEntry result;
+                if (mUserInfo != null) {
+                    result = createTemporaryContactEntry(mUserInfo.mDisplayName);
+                    result.phoneNumber = name;
+                }
+                else {
+                    if (ConfigurationUtilities.mTrace) Log.d(TAG, "Scheduling timeout to get user contact data.");
+                    result = createTemporaryContactEntry("");
+                    result.phoneNumber = name;
+                    result.timeCreated = System.currentTimeMillis();
+                }
+                if (oldEntry != null)
+                    mContactCache.remove(oldEntry);
+                mContactCache.add(result);
+            }
+        };
+        if (ConfigurationUtilities.mTrace) Log.d(TAG, "Get user data from server/lookup cache for " + name);
+        AsyncUtils.executeSerial(getNameTask);
+    }
+
+    /**
+     * Creates ContactEntry instance filling in fields name and lookupUri.
+     *
+     * @param name - Unknown SIP name
+     * @return ContactEntry instance.
+     */
+    private static ContactEntry createTemporaryContactEntry(final String name) {
+        ContactEntry updatedInfo = new ContactEntry();
+        updatedInfo.name = name;
+        updatedInfo.lookupUri = createTemporaryContactUri(name);
+        updatedInfo.lookupKey = name;
+        return updatedInfo;
+    }
+
+    /**
+     * Adapted from ContactInfoHelper#createTemporaryContactUri
+     *
+     * Creates a JSON-encoded lookup uri for a unknown number without an associated contact
+     *
+     * @param name - Assumed SIP name
+     * @return JSON-encoded URI that can be used to perform a lookup when clicking on the quick
+     *         contact card.
+     */
+    private static Uri createTemporaryContactUri(String name) {
+        try {
+            final JSONObject contactRows = new JSONObject().put(ContactsContract.CommonDataKinds.SipAddress.CONTENT_ITEM_TYPE,
+                    new JSONObject().put(ContactsContract.CommonDataKinds.SipAddress.SIP_ADDRESS,
+                            Utilities.isUriNumber(name) ? name : name + SIP_DOMAIN_SILENTCIRCLE));
+
+            final String jsonString = new JSONObject().put(ContactsContract.Contacts.DISPLAY_NAME, name)
+                    .put(ContactsContract.Contacts.DISPLAY_NAME_SOURCE, ContactsContract.DisplayNameSources.PHONE)
+                    .put(ContactsContract.Contacts.CONTENT_ITEM_TYPE, contactRows).toString();
+
+            return ContactsContract.Contacts.CONTENT_LOOKUP_URI
+                    .buildUpon()
+                    .appendPath(Constants.LOOKUP_URI_ENCODED)
+                    .appendQueryParameter(ContactsContract.DIRECTORY_PARAM_KEY,
+                            String.valueOf(Long.MAX_VALUE))
+                    .encodedFragment(jsonString)
+                    .build();
+        } catch (JSONException e) {
+            return null;
+        }
+    }
 }

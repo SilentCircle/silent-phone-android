@@ -23,6 +23,7 @@
     <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:background="@drawable/bg_window_dark"
             android:orientation="vertical">
 
         <!-- We use a Toolbar so that our drawer can be displayed
@@ -32,7 +33,9 @@
                 android:layout_height="wrap_content"
                 android:layout_width="match_parent"
                 android:minHeight="?attr/actionBarSize"
-                android:background="@color/black_background">
+                android:background="?sp_actionbar_color"
+                app:titleTextAppearance="?sp_ab_title_style"
+                app:subtitleTextAppearance="?sp_ab_subtitle_style">
             <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -41,7 +44,7 @@
                           android:layout_width="wrap_content"
                           android:layout_height="wrap_content"
                           android:textAppearance="?android:attr/textAppearanceMedium"
-                          android:textColor="?sp_drawer_header_text_color"
+                          android:textColor="?sp_actionbar_title_text_color"
                           android:singleLine="true"/>
 
                 <TextView android:id="@+id/sub_title"

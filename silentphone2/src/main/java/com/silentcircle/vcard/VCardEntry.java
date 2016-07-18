@@ -54,10 +54,6 @@ import android.annotation.SuppressLint;
 import android.content.ContentProviderOperation;
 import android.content.ContentResolver;
 import android.net.Uri;
-import android.telephony.PhoneNumberUtils;
-import android.text.TextUtils;
-import android.util.Log;
-
 import android.provider.ContactsContract.CommonDataKinds.Email;
 import android.provider.ContactsContract.CommonDataKinds.Event;
 import android.provider.ContactsContract.CommonDataKinds.GroupMembership;
@@ -70,8 +66,14 @@ import android.provider.ContactsContract.CommonDataKinds.Photo;
 import android.provider.ContactsContract.CommonDataKinds.SipAddress;
 import android.provider.ContactsContract.CommonDataKinds.StructuredName;
 import android.provider.ContactsContract.CommonDataKinds.StructuredPostal;
+import android.provider.ContactsContract.CommonDataKinds.Website;
 import android.provider.ContactsContract.Data;
 import android.provider.ContactsContract.RawContacts;
+import android.support.v4.util.Pair;
+import android.telephony.PhoneNumberUtils;
+import android.text.TextUtils;
+import android.util.Log;
+
 import com.silentcircle.vcard.VCardUtils.PhoneNumberUtilsPort;
 
 import java.util.ArrayList;
@@ -113,16 +115,29 @@ public class VCardEntry {
     }
 
     public enum EntryLabel {
-        NAME, PHONE, EMAIL, POSTAL_ADDRESS, ORGANIZATION, IM, PHOTO, WEBSITE, SIP, NICKNAME, NOTE, BIRTHDAY, ANNIVERSARY, ANDROID_CUSTOM
+        NAME,
+        PHONE,
+        EMAIL,
+        POSTAL_ADDRESS,
+        ORGANIZATION,
+        IM,
+        PHOTO,
+        WEBSITE,
+        SIP,
+        NICKNAME,
+        NOTE,
+        BIRTHDAY,
+        ANNIVERSARY,
+        ANDROID_CUSTOM
     }
 
-    public static interface EntryElement {
+    public interface EntryElement {
         // Also need to inherit toString(), equals().
-        public EntryLabel getEntryLabel();
+        EntryLabel getEntryLabel();
 
-        public void constructInsertOperation(List<ContentProviderOperation> operationList, int backReferenceIndex);
+        void constructInsertOperation(List<ContentProviderOperation> operationList, int backReferenceIndex);
 
-        public boolean isEmpty();
+        boolean isEmpty();
     }
 
     // TODO: vCard 4.0 logically has multiple formatted names and we need to
@@ -638,9 +653,13 @@ public class VCardEntry {
 
         @Override
         public boolean isEmpty() {
-            return (TextUtils.isEmpty(mPobox) && TextUtils.isEmpty(mExtendedAddress) && TextUtils.isEmpty(mStreet)
-                    && TextUtils.isEmpty(mLocalty) && TextUtils.isEmpty(mRegion) && TextUtils.isEmpty(mPostalCode) && TextUtils
-                        .isEmpty(mCountry));
+            return (TextUtils.isEmpty(mPobox)
+                    && TextUtils.isEmpty(mExtendedAddress)
+                    && TextUtils.isEmpty(mStreet)
+                    && TextUtils.isEmpty(mLocalty)
+                    && TextUtils.isEmpty(mRegion)
+                    && TextUtils.isEmpty(mPostalCode)
+                    && TextUtils.isEmpty(mCountry));
         }
 
         @Override
@@ -910,8 +929,11 @@ public class VCardEntry {
                 return false;
             }
             ImData imData = (ImData) obj;
-            return (mType == imData.mType && mProtocol == imData.mProtocol
-                    && TextUtils.equals(mCustomProtocol, imData.mCustomProtocol) && TextUtils.equals(mAddress, imData.mAddress) && (mIsPrimary == imData.mIsPrimary));
+            return (mType == imData.mType
+                    && mProtocol == imData.mProtocol
+                    && TextUtils.equals(mCustomProtocol, imData.mCustomProtocol)
+                    && TextUtils.equals(mAddress, imData.mAddress)
+                    && (mIsPrimary == imData.mIsPrimary));
         }
 
         @Override
@@ -1151,63 +1173,63 @@ public class VCardEntry {
         }
     }
 
-    // public static class WebsiteData implements EntryElement {
-    // private final String mWebsite;
-    //
-    // public WebsiteData(String website) {
-    // mWebsite = website;
-    // }
-    //
-    // @Override
-    // public void constructInsertOperation(List<ContentProviderOperation> operationList,
-    // int backReferenceIndex) {
-    // final ContentProviderOperation.Builder builder = ContentProviderOperation
-    // .newInsert(Data.CONTENT_URI);
-    // builder.withValueBackReference(Website.RAW_CONTACT_ID, backReferenceIndex);
-    // builder.withValue(Data.MIMETYPE, Website.CONTENT_ITEM_TYPE);
-    // builder.withValue(Website.URL, mWebsite);
-    // // There's no information about the type of URL in vCard.
-    // // We use TYPE_HOMEPAGE for safety.
-    // builder.withValue(Website.TYPE, Website.TYPE_HOMEPAGE);
-    // operationList.add(builder.build());
-    // }
-    //
-    // @Override
-    // public boolean isEmpty() {
-    // return TextUtils.isEmpty(mWebsite);
-    // }
-    //
-    // @Override
-    // public boolean equals(Object obj) {
-    // if (this == obj) {
-    // return true;
-    // }
-    // if (!(obj instanceof WebsiteData)) {
-    // return false;
-    // }
-    // WebsiteData websiteData = (WebsiteData) obj;
-    // return TextUtils.equals(mWebsite, websiteData.mWebsite);
-    // }
-    //
-    // @Override
-    // public int hashCode() {
-    // return mWebsite != null ? mWebsite.hashCode() : 0;
-    // }
-    //
-    // @Override
-    // public String toString() {
-    // return "website: " + mWebsite;
-    // }
-    //
-    // @Override
-    // public EntryLabel getEntryLabel() {
-    // return EntryLabel.WEBSITE;
-    // }
-    //
-    // public String getWebsite() {
-    // return mWebsite;
-    // }
-    // }
+    public static class WebsiteData implements EntryElement {
+        private final String mWebsite;
+
+        public WebsiteData(String website) {
+            mWebsite = website;
+        }
+
+        @Override
+        public void constructInsertOperation(List<ContentProviderOperation> operationList,
+                int backReferenceIndex) {
+            final ContentProviderOperation.Builder builder = ContentProviderOperation
+                    .newInsert(Data.CONTENT_URI);
+            builder.withValueBackReference(Website.RAW_CONTACT_ID, backReferenceIndex);
+            builder.withValue(Data.MIMETYPE, Website.CONTENT_ITEM_TYPE);
+            builder.withValue(Website.URL, mWebsite);
+            // There's no information about the type of URL in vCard.
+            // We use TYPE_HOMEPAGE for safety.
+            builder.withValue(Website.TYPE, Website.TYPE_HOMEPAGE);
+            operationList.add(builder.build());
+        }
+
+        @Override
+        public boolean isEmpty() {
+            return TextUtils.isEmpty(mWebsite);
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (!(obj instanceof WebsiteData)) {
+                return false;
+            }
+            WebsiteData websiteData = (WebsiteData) obj;
+            return TextUtils.equals(mWebsite, websiteData.mWebsite);
+        }
+
+        @Override
+        public int hashCode() {
+            return mWebsite != null ? mWebsite.hashCode() : 0;
+        }
+
+        @Override
+        public String toString() {
+            return "website: " + mWebsite;
+        }
+
+        @Override
+        public EntryLabel getEntryLabel() {
+            return EntryLabel.WEBSITE;
+        }
+
+        public String getWebsite() {
+            return mWebsite;
+        }
+    }
 
     public static class BirthdayData implements EntryElement {
         private final String mBirthday;
@@ -1369,8 +1391,10 @@ public class VCardEntry {
                 return false;
             }
             SipData sipData = (SipData) obj;
-            return (mType == sipData.mType && TextUtils.equals(mLabel, sipData.mLabel)
-                    && TextUtils.equals(mAddress, sipData.mAddress) && (mIsPrimary == sipData.mIsPrimary));
+            return (mType == sipData.mType
+                    && TextUtils.equals(mLabel, sipData.mLabel)
+                    && TextUtils.equals(mAddress, sipData.mAddress)
+                    && (mIsPrimary == sipData.mIsPrimary));
         }
 
         @Override
@@ -1533,37 +1557,38 @@ public class VCardEntry {
     private List<OrganizationData> mOrganizationList;
     private List<ImData> mImList;
     private List<PhotoData> mPhotoList;
-    // private List<WebsiteData> mWebsiteList;
+    private List<WebsiteData> mWebsiteList;
     private List<SipData> mSipList;
     private List<NicknameData> mNicknameList;
     private List<NoteData> mNoteList;
     private List<AndroidCustomData> mAndroidCustomDataList;
     private BirthdayData mBirthday;
     private AnniversaryData mAnniversary;
+    private List<Pair<String, String>> mUnknownXData;
 
     /**
      * Inner iterator interface.
      */
     public interface EntryElementIterator {
-        public void onIterationStarted();
+        void onIterationStarted();
 
-        public void onIterationEnded();
+        void onIterationEnded();
 
         /**
          * Called when there are one or more {@link EntryElement} instances associated with {@link EntryLabel}.
          */
-        public void onElementGroupStarted(EntryLabel label);
+        void onElementGroupStarted(EntryLabel label);
 
         /**
          * Called after all {@link EntryElement} instances for {@link EntryLabel} provided on
          * {@link #onElementGroupStarted(EntryLabel)} being processed by {@link #onElement(EntryElement)}
          */
-        public void onElementGroupEnded();
+        void onElementGroupEnded();
 
         /**
          * @return should be true when child wants to continue the operation. False otherwise.
          */
-        public boolean onElement(EntryElement elem);
+        boolean onElement(EntryElement elem);
     }
 
     public final void iterateAllData(EntryElementIterator iterator) {
@@ -1578,7 +1603,7 @@ public class VCardEntry {
         iterateOneList(mOrganizationList, iterator);
         iterateOneList(mImList, iterator);
         iterateOneList(mPhotoList, iterator);
-        // iterateOneList(mWebsiteList, iterator);
+        iterateOneList(mWebsiteList, iterator);
         iterateOneList(mSipList, iterator);
         iterateOneList(mNicknameList, iterator);
         iterateOneList(mNoteList, iterator);
@@ -2320,12 +2345,7 @@ public class VCardEntry {
                 }
 
                 final boolean isPrimary;
-                if (typeCollection != null && typeCollection.contains(VCardConstants.PARAM_TYPE_PREF)) {
-                    isPrimary = true;
-                }
-                else {
-                    isPrimary = false;
-                }
+                isPrimary = typeCollection != null && typeCollection.contains(VCardConstants.PARAM_TYPE_PREF);
 
                 addPhone(type, phoneNumber, label, isPrimary);
             }
@@ -2335,12 +2355,7 @@ public class VCardEntry {
             Collection<String> typeCollection = paramMap.get(VCardConstants.PARAM_TYPE);
             final int type = Phone.TYPE_CUSTOM;
             final boolean isPrimary;
-            if (typeCollection != null && typeCollection.contains(VCardConstants.PARAM_TYPE_PREF)) {
-                isPrimary = true;
-            }
-            else {
-                isPrimary = false;
-            }
+            isPrimary = typeCollection != null && typeCollection.contains(VCardConstants.PARAM_TYPE_PREF);
             addPhone(type, propValue, null, isPrimary);
         }
         else if (sImMap.containsKey(propertyName)) {
@@ -2371,12 +2386,12 @@ public class VCardEntry {
         else if (propertyName.equals(VCardConstants.PROPERTY_NOTE)) {
             addNote(propValue);
         }
-        // else if (propertyName.equals(VCardConstants.PROPERTY_URL)) {
-        // if (mWebsiteList == null) {
-        // mWebsiteList = new ArrayList<WebsiteData>(1);
-        // }
-        // mWebsiteList.add(new WebsiteData(propValue));
-        // }
+        else if (propertyName.equals(VCardConstants.PROPERTY_URL)) {
+            if (mWebsiteList == null) {
+                mWebsiteList = new ArrayList<WebsiteData>(1);
+            }
+            mWebsiteList.add(new WebsiteData(propValue));
+        }
         else if (propertyName.equals(VCardConstants.PROPERTY_BDAY)) {
             mBirthday = new BirthdayData(propValue);
         }
@@ -2408,6 +2423,13 @@ public class VCardEntry {
         else if (propertyName.equals(VCardConstants.PROPERTY_X_ANDROID_CUSTOM)) {
             final List<String> customPropertyList = VCardUtils.constructListFromValue(propValue, mVCardType);
             handleAndroidCustomProperty(customPropertyList);
+        }
+        else if (propertyName.toUpperCase().startsWith("X-")) {
+            // Catch all for X- properties. The caller can decide what to do with these.
+            if (mUnknownXData == null) {
+                mUnknownXData = new ArrayList<Pair<String, String>>();
+            }
+            mUnknownXData.add(new Pair<String, String>(propertyName, propValue));
         }
         else {
         }
@@ -2512,7 +2534,7 @@ public class VCardEntry {
     }
 
     /**
-     * Consolidate several fielsds (like mName) using name candidates,
+     * Consolidate several fielsds (like mUuid) using name candidates,
      */
     public void consolidateFields() {
         mNameData.displayName = constructDisplayName();
@@ -2643,9 +2665,13 @@ public class VCardEntry {
         return mPhotoList;
     }
 
-    // public final List<WebsiteData> getWebsiteList() {
-    // return mWebsiteList;
-    // }
+    public final List<WebsiteData> getWebsiteList() {
+        return mWebsiteList;
+    }
+
+    public final List<SipData> getSipList() {
+        return mSipList;
+    }
 
     /**
      * @hide this interface may be changed for better support of vCard 4.0 (UID)
@@ -2659,5 +2685,9 @@ public class VCardEntry {
             mNameData.displayName = constructDisplayName();
         }
         return mNameData.displayName;
+    }
+
+    public List<Pair<String, String>> getUnknownXData() {
+        return mUnknownXData;
     }
 }

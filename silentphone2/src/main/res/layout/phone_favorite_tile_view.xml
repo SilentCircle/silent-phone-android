@@ -117,6 +117,7 @@
             android:background="@drawable/item_background_material_dark"
             android:layout_height="@dimen/contact_tile_info_button_height_and_width"
             android:layout_width="@dimen/contact_tile_info_button_height_and_width"
+            android:filterTouchesWhenObscured="true"
             android:paddingLeft="4dp"
             android:paddingStart="4dp"
             android:paddingRight="9dp"

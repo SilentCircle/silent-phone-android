@@ -120,4 +120,15 @@ public class ErrorEvent extends Event {
     public void setDuplicate(boolean duplicate) {
         this.mDuplicate = duplicate;
     }
+
+    public String toFormattedString() {
+        String result = super.toFormattedString()
+                + "Error: " + getError() + "\n"
+                + "Sender: " + getSender() + "\n"
+                + "Device id: " + getDeviceId() + "\n"
+                + "Message id: " + getMessageId() + "\n"
+                + "Sent to device: " + getSentToDevId() + "\n"
+                + "Is duplicate: " + isDuplicate();
+        return result;
+    }
 }

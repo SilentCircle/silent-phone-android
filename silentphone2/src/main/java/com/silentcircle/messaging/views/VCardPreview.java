@@ -29,6 +29,7 @@ package com.silentcircle.messaging.views;
 
 import android.content.Context;
 import android.graphics.drawable.Drawable;
+import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -54,8 +55,22 @@ public class VCardPreview extends LinearLayout {
 
     public VCardPreview(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
-        inflate(context, R.layout.messaging_vcard_preview, this);
+        inflate(context, R.layout.messaging_generic_vcard_preview, this);
         initializeViews();
+    }
+
+    public VCardPreview(Context context, Drawable contactPhoto, String displayName) {
+        super(context, null, 0);
+        if (contactPhoto != null && !TextUtils.isEmpty(displayName)) {
+            inflate(context, R.layout.messaging_vcard_preview, this);
+            initializeViews();
+            setImage(contactPhoto);
+            setText(displayName);
+        }
+        else {
+            inflate(context, R.layout.messaging_generic_vcard_preview, this);
+            initializeViews();
+        }
     }
 
     protected void initializeViews() {

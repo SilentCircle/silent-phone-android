@@ -24,7 +24,7 @@
         android:paddingRight="?attr/list_item_padding_right"
         android:paddingStart="?attr/list_item_padding_left"
         android:paddingEnd="?attr/list_item_padding_right"
-        android:minHeight="@dimen/list_section_divider_min_height"
+        android:minHeight="@dimen/list_header_min_height"
         android:layout_marginTop="@dimen/list_header_extra_top_padding"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
@@ -43,7 +43,7 @@
                 android:layout_marginLeft="8dip"
                 android:layout_marginStart="8dip"
                 android:textAppearance="@style/DirectoryHeaderStyle"
-                android:textColor="@color/people_app_theme_color"
+                android:textColor="@color/sc_ng_text_green"
                 android:singleLine="true"
                 tools:text="Directory"/>
 
@@ -56,7 +56,7 @@
                 android:layout_toRightOf="@+id/label"
                 android:layout_toEndOf="@+id/label"
                 android:textAppearance="@style/DirectoryHeaderStyle"
-                android:textColor="@color/people_app_theme_color"
+                android:textColor="@color/sc_ng_text_green"
                 android:singleLine="true"
                 tools:text="Dirname"/>
         <TextView
@@ -66,9 +66,10 @@
                 android:layout_height="wrap_content"
                 android:layout_alignParentRight="true"
                 android:layout_alignParentEnd="true"
+                android:layout_alignParentBottom="true"
                 android:layout_alignBaseline="@+id/label"
                 android:singleLine="true"
-                android:textSize="12sp"
+                android:textSize="14sp"
                 android:textColor="@color/contact_count_text_color"
                 tools:text="9 found"/>
 </RelativeLayout>

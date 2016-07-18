@@ -1,19 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/location_sharing"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginTop="5dp"
+    android:background="@drawable/bg_widget_options_item"
     android:clickable="true">
 
     <LinearLayout
-        android:id="@+id/location_sharing_"
+        android:id="@+id/container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
         android:orientation="horizontal"
-        android:background="@drawable/bg_widget_options_item"
         android:duplicateParentState="true"
         android:clickable="false">
 
@@ -38,8 +36,9 @@
             android:textSize="@dimen/text_xlarge"
             android:textColor="@color/chat_options_text_color"/>
 
-        <CheckBox
+        <android.support.v7.widget.AppCompatCheckBox
             android:id="@+id/widget_optitem_checkbox"
+            android:theme="@style/Widget.Silent.DrawerCheckBox"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:duplicateParentState="true"
@@ -52,7 +51,7 @@
         android:id="@+id/widget_optitem_description"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/location_sharing_"
+        android:layout_below="@id/container"
         tools:text="Enable location sharing"
         android:textSize="@dimen/text_normal"
         android:textColor="@color/chat_options_text_color"

@@ -152,7 +152,7 @@ public class AvatarView extends ImageView implements View.OnClickListener {
     @Override
     protected void onFinishInflate() {
         super.onFinishInflate();
-        setAvatar(null);
+        // setAvatar(null);
     }
 
     @Override
@@ -187,7 +187,7 @@ public class AvatarView extends ImageView implements View.OnClickListener {
     }
 
     public void setContact(Contact contact) {
-        setContact(contact != null ? contact.getUsername() : null);
+        setContact(contact != null ? contact.getUserId() : null);
     }
 
     public void setContact(ContactEntry contact) {
@@ -202,7 +202,7 @@ public class AvatarView extends ImageView implements View.OnClickListener {
     }
 
     public void setContact(Contact contact, int avatarSizeResourceID) {
-        setContact(contact != null ? contact.getUsername() : null, avatarSizeResourceID);
+        setContact(contact != null ? contact.getUserId() : null, avatarSizeResourceID);
     }
 
     public void setContact(String username) {

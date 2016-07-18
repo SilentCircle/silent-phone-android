@@ -36,6 +36,8 @@ import android.content.SyncResult;
 import android.os.Bundle;
 import android.util.Log;
 
+import com.silentcircle.silentphone2.util.ConfigurationUtilities;
+
 /**
  * Simple sync adapter that call a UI to fill in a new account.
  *
@@ -46,15 +48,12 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
 
     public SyncAdapter(Context context, boolean autoInitialize) {
         super(context, autoInitialize);
-        Log.d(TAG, "++++ Sync adapter created");
+        if (ConfigurationUtilities.mTrace) Log.d(TAG, "Sync adapter created");
     }
 
     @Override
     public void onPerformSync(Account account, Bundle extras, String authority,
                               ContentProviderClient provider, SyncResult syncResult) {
-        Log.d(TAG, "++++ Sync adapter called");
-//        Intent i = new Intent(getContext(), ContactAdder.class);
-//        i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-//        getContext().startActivity(i);
+        if (ConfigurationUtilities.mTrace) Log.d(TAG, "Sync adapter called");
     }
 }

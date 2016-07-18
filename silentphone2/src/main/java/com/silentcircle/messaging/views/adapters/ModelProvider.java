@@ -27,6 +27,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 package com.silentcircle.messaging.views.adapters;
 
+import java.util.List;
+
 /**
  * This interface defines a read-only interface for ordered collections used by list adapters.
  */
@@ -37,7 +39,7 @@ public interface ModelProvider {
      *
      * @return the number of items in this collection.
      */
-    public int getCount();
+    int getCount();
 
     /**
      * Returns the item occurring at the given position within this collection.
@@ -46,7 +48,7 @@ public interface ModelProvider {
      *            the 0-indexed position of the item within this collection.
      * @return the item occurring at the given position within this collection.
      */
-    public Object getItem( int position );
+    Object getItem(int position);
 
     /**
      * Returns a unique identifier for the item occurring at the given position within this
@@ -59,7 +61,8 @@ public interface ModelProvider {
      * @return a unique identifier for the item occurring at the given position within this
      *         collection.
      */
-    public long getItemId( int position );
+    long getItemId(int position);
 
+    List<?> getItems();
 }
 

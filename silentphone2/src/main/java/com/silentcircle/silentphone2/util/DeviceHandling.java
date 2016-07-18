@@ -162,6 +162,7 @@ public class DeviceHandling {
     // Not null if we could classify the device
     private static DeviceData device;
 
+    private static ArrayList<DeviceData> huawei = new ArrayList<>(10);
     private static ArrayList<DeviceData> htc = new ArrayList<>(10);
 
     // This list holds device data for devices that have "lge" as manufacturer string (case insensitive)
@@ -203,12 +204,16 @@ public class DeviceHandling {
         vertu.add(new DeviceData("Vertu", "Vertu", "Signature Touch", "odin", HW_AEC, false, null, null, true, true, 1));
         vertu.add(new DeviceData("Vertu", "Vertu", "Aster", "alexa", HW_AEC, false, null, null, true, true, 1));
 
+        // Assume a HW echo canceler
+        huawei.add(new DeviceData("huawei", "google", "Nexus 6P", "angler", HW_AEC, false, null, null));
+
         manufacturerList.put("samsung", samsung);
         manufacturerList.put("sgp", sgp);
         manufacturerList.put("htc", htc);
         manufacturerList.put("lge", lge);
         manufacturerList.put("vertu", vertu);
         manufacturerList.put("motorola", motorola);
+        manufacturerList.put("huawei", huawei);
     }
 
     @SuppressLint("DefaultLocale")

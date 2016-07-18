@@ -117,6 +117,8 @@ public abstract class PhoneServiceNative extends Service  {
 
     public static native int[] getZrtpCounters(int iCallID);
 
+    public static native void setPushToken(String gcmRegID);
+
     // Callback from native code to monitor if SIP stack requires a wake lock - currently not used
     abstract void wakeCallback(int iLock);
 

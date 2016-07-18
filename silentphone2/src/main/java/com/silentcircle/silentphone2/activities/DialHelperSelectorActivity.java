@@ -30,13 +30,13 @@ package com.silentcircle.silentphone2.activities;
 
 import android.app.Activity;
 import android.os.Bundle;
-import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.AppCompatActivity;
 
 import com.silentcircle.silentphone2.R;
 import com.silentcircle.silentphone2.dialhelpers.FindDialHelper;
 import com.silentcircle.silentphone2.fragments.DialHelperSelectorFragment;
 
-public class DialHelperSelectorActivity extends ActionBarActivity {
+public class DialHelperSelectorActivity extends AppCompatActivity {
 
     @SuppressWarnings("unused")
     private static final String TAG = DialHelperSelectorActivity.class.getSimpleName();

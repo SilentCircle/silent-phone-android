@@ -29,15 +29,20 @@ package com.silentcircle.messaging.views;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.ColorStateList;
 import android.graphics.Bitmap;
+import android.graphics.Rect;
 import android.graphics.drawable.AnimationDrawable;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.os.Build;
 import android.os.Handler;
+import android.support.annotation.NonNull;
+import android.support.v4.graphics.drawable.DrawableCompat;
 import android.text.TextUtils;
 import android.text.util.Linkify;
 import android.util.AttributeSet;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
@@ -54,7 +59,7 @@ import com.silentcircle.messaging.model.MessageStates;
 import com.silentcircle.messaging.model.event.IncomingMessage;
 import com.silentcircle.messaging.model.event.Message;
 import com.silentcircle.messaging.model.event.OutgoingMessage;
-import com.silentcircle.messaging.services.AxoMessaging;
+import com.silentcircle.messaging.services.SCloudService;
 import com.silentcircle.messaging.thread.Updater;
 import com.silentcircle.messaging.util.Action;
 import com.silentcircle.messaging.util.AttachmentUtils;
@@ -63,6 +68,7 @@ import com.silentcircle.messaging.util.Extra;
 import com.silentcircle.messaging.util.MIME;
 import com.silentcircle.messaging.util.MessageUtils;
 import com.silentcircle.messaging.util.MessagingPreferences;
+import com.silentcircle.messaging.util.SoundNotifications;
 import com.silentcircle.messaging.util.Updatable;
 import com.silentcircle.messaging.views.adapters.HasChoiceMode;
 import com.silentcircle.silentphone2.Manifest;
@@ -72,17 +78,43 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.text.SimpleDateFormat;
+import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
 public class MessageEventView extends RelativeLayout implements Updatable, Checkable, HasChoiceMode, OnClickListener {
 
-    private static final SimpleDateFormat sDebugDateFormatter = new SimpleDateFormat("dd/MM/yy hh:mm:ss.SSS");
+    @SuppressWarnings("unused")
+    private static final String TAG = MessageEventView.class.getSimpleName();
+    private static final SimpleDateFormat sDebugDateFormatter =
+            new SimpleDateFormat("dd/MM/yy hh:mm:ss.SSS", Locale.getDefault());
+
+    /*
+     * Map of {@link com.silentcircle.messaging.model.MessageStates} to custom drawable states
+     * defined in attr.xml file.
+     */
+    private static final int[] STATE_TO_ATTRIBUTE = new int[]{
+            R.attr.state_message_unknown,
+            R.attr.state_message_resend_requested,
+            R.attr.state_message_composing,
+            R.attr.state_message_composed,
+            R.attr.state_message_sent,
+            R.attr.state_message_sent_to_server,
+            R.attr.state_message_delivered,
+            R.attr.state_message_received,
+            R.attr.state_message_read,
+            R.attr.state_message_burned,
+            /* take into account unused value */
+            R.attr.state_message_unknown,
+            R.attr.state_message_sync,
+            R.attr.state_message_failed
+    };
 
     static class Views {
 
         public final AvatarView avatar;
         public final LinearLayout card;
         public final TextView attachment_text;
+        public final ImageView attachment_status;
         public final ImageView preview;
         public final ImageView preview_icon;
         public final ProgressBar preview_progress;
@@ -96,11 +128,14 @@ public class MessageEventView extends RelativeLayout implements Updatable, Check
         public final TextView message_state;
         public final RelativeLayout message_actions;
 
+        public final View[] clickable_views;
+
         public Views(MessageEventView parent) {
 
             avatar = (AvatarView) parent.findViewById(R.id.message_avatar);
             card = (LinearLayout) parent.findViewById(R.id.message_card);
             attachment_text = (TextView) parent.findViewById(R.id.message_attachment_text);
+            attachment_status = (ImageView) parent.findViewById(R.id.message_attachment_status);
             preview = (ImageView) parent.findViewById(R.id.message_preview);
             preview_icon = (ImageView) parent.findViewById(R.id.message_icon);
             preview_progress = (ProgressBar) parent.findViewById(R.id.message_preview_progress);
@@ -127,6 +162,8 @@ public class MessageEventView extends RelativeLayout implements Updatable, Check
             message_state = (TextView) parent.findViewById(R.id.message_state);
             // Left for debug: use this to debug message states
             message_state.setVisibility(View.GONE);
+
+            clickable_views = new View[] {card, action_burn, action_location, action_send};
         }
 
         public void setInformationViewVisibility(int visibility) {
@@ -143,8 +180,7 @@ public class MessageEventView extends RelativeLayout implements Updatable, Check
                 time.setText(null);
                 burn_notice.setText(null);
                 attachment_text.setVisibility(visibility);
-            }
-            else {
+            } else {
                 // always show card as well
                 card.setVisibility(visibility);
             }
@@ -182,10 +218,6 @@ public class MessageEventView extends RelativeLayout implements Updatable, Check
         }
     }
 
-    public static final int [] STATE_CHECKED = {
-            android.R.attr.state_checked
-    };
-
     private Views views;
 
     private boolean checked;
@@ -198,23 +230,23 @@ public class MessageEventView extends RelativeLayout implements Updatable, Check
 
     private Drawable mBackgroundDrawable;
 
-    Context context;
+    private boolean mIsBurned = true;
+
+    /* array to hold drawable state change */
+    private final int[] mStateChange = new int[2];
 
     public MessageEventView(Context context) {
         super(context);
-        MessageEventView.this.context = context;
         updater = new Updater(this);
     }
 
     public MessageEventView(Context context, AttributeSet attrs) {
         super(context, attrs);
-        MessageEventView.this.context = context;
         updater = new Updater(this);
     }
 
     public MessageEventView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
-        MessageEventView.this.context = context;
         updater = new Updater(this);
     }
 
@@ -247,16 +279,37 @@ public class MessageEventView extends RelativeLayout implements Updatable, Check
         update();
     }
 
-    @Override
-    public void onClick(View view) {
+    /* Andris' patch file, modified by Rong
+     * These should be accessed only from UI thread.
+     * Defined as member variables to avoid extensive garbage collection when many touch events
+     * are dispatched.
+     */
+    private Rect mHitRectangle = new Rect();
+    private int[] mScreenLocation = new int[2];
 
-        if (isInChoiceMode()) {
-            return;
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent event) {
+        Views views = getViews();
+        boolean shouldDispatch;
+
+        if (inChoiceMode) {
+            shouldDispatch = isEventWithinView(event, views.card);
+        } else {
+            shouldDispatch = isEventWithinView(event, views.clickable_views);
         }
 
+        // shouldDispatch ? super.dispatchTouchEvent(event) : true;
+        return !shouldDispatch || super.dispatchTouchEvent(event);
+    }
+
+    @Override
+    public void onClick(View view) {
         Views v = getViews();
         final Message message = getMessage();
         Context context = view.getContext();
+        if (isInChoiceMode()) {
+            return;
+        }
 
         if (message == null) {
             return;
@@ -268,13 +321,18 @@ public class MessageEventView extends RelativeLayout implements Updatable, Check
         }
 
         if (v.action_burn == view && message.expires()) {
-            burnMessage(message);
+            boolean soundsEnabled =
+                    MessagingPreferences.getInstance(context).getMessageSoundsEnabled();
+            if (soundsEnabled) {
+                SoundNotifications.playBurnMessageSound();
+            }
+            MessageUtils.burnMessage(context.getApplicationContext(), message);
             return;
         }
-
+        /* This functionality is currently not used
         if (v.action_send == view) {
             if (message.getState() == MessageStates.RESEND_REQUESTED) {
-                AxoMessaging.getInstance(getContext()).sendMessage(message);
+                AxoMessaging.getInstance(context.getApplicationContext()).sendMessage(message);
                 return;
             }
             Intent intent = Action.TRANSITION.intent();
@@ -284,7 +342,7 @@ public class MessageEventView extends RelativeLayout implements Updatable, Check
             context.sendBroadcast(intent, Manifest.permission.WRITE);
             return;
         }
-
+         */
         if (message.getAttachment() != null) {
             Intent intent = Action.DOWNLOAD.intent();
             Extra.PARTNER.to(intent, message.getConversationID() != null ? message.getConversationID() : message.getSender());
@@ -295,22 +353,32 @@ public class MessageEventView extends RelativeLayout implements Updatable, Check
         }
 
         if (v.card == view || this == view) {
-            Intent links = ViewUtil.createIntentForLinks(v.text);
-            if (links != null) {
-                context.startActivity(links);
+            if (ViewUtil.startActivityForTextLinks(context, v.text)) {
                 return;
             }
-
         }
-
     }
 
     @Override
     protected int[] onCreateDrawableState(int extraSpace) {
-        final int[] state = super.onCreateDrawableState(extraSpace + 1);
+        mStateChange[0] = 0;
+        mStateChange[1] = 0;
+        int position = 0;
+
+        final int[] state = super.onCreateDrawableState(extraSpace + 2);
         if (inChoiceMode && checked) {
-            mergeDrawableStates(state, STATE_CHECKED);
+            mStateChange[position++] = android.R.attr.state_checked;
         }
+
+        /* add custom drawable state from message state */
+        Message message = getMessage();
+        if (message != null) {
+            int messageState = message.getState();
+            mStateChange[position] = messageState >= 0 && messageState < STATE_TO_ATTRIBUTE.length
+                    ? STATE_TO_ATTRIBUTE[messageState] : R.attr.state_message_unknown;
+        }
+
+        mergeDrawableStates(state, mStateChange);
         return state;
     }
 
@@ -323,6 +391,7 @@ public class MessageEventView extends RelativeLayout implements Updatable, Check
     private void scheduleNextUpdate() {
         Handler handler = getHandler();
         if (handler != null) {
+            handler.removeCallbacks(updater);
             handler.postDelayed(updater, TimeUnit.SECONDS.toMillis(1));
         }
     }
@@ -347,53 +416,15 @@ public class MessageEventView extends RelativeLayout implements Updatable, Check
         }
     }
 
-/*    private void setLabelAndPreview(Siren siren, TextView labelView, ImageView imageView) {
-
-        Context context = getContext();
-
-        labelView.setVisibility(GONE);
-
-        Attachment attachment = AttachmentUtils.getAttachment(context, siren);
-        Bitmap bitmap = AttachmentUtils.getPreviewImage(context, siren, attachment);
-        String contentType = AttachmentUtils.getContentType(siren, attachment);
-
-        imageView.setImageBitmap(bitmap);
-        imageView.setVisibility(bitmap != null ? VISIBLE : GONE);
-
-        if (bitmap != null) {
-            String duration = AttachmentUtils.getLabelForDuration(siren.getMediaDuration());
-            if (duration != null) {
-                labelView.setText(duration);
-                labelView.setVisibility(VISIBLE);
-                ViewUtils.setDrawableStart(labelView, AttachmentUtils.getAttachmentLabelIcon(contentType));
-            }
-            return;
-        }
-
-        labelView.setVisibility(VISIBLE);
-        ViewUtils.setDrawableStart(labelView, AttachmentUtils.getAttachmentLabelIcon(contentType));
-
-        String label = AttachmentUtils.getLabelForDuration(siren.getMediaDuration());
-
-        if (label == null && attachment != null && attachment.getName() != null) {
-            label = new String(attachment.getName());
-        }
-
-        if (label == null && contentType != null) {
-            label = contentType;
-        }
-
-        if (label == null) {
-            labelView.setText(R.string.attachment);
-        } else {
-            labelView.setText(new String(label));
-        }
-
-    }*/
-
     public void setMessage(Message message) {
 
-        setVisibility(VISIBLE);
+        boolean isExpired =  isExpired(message);
+        setVisibility(isExpired ? GONE : VISIBLE);
+
+        if (isExpired) {
+            /* Do not try to set up any views. This message should be removed from list. */
+            return;
+        }
 
         Views v = getViews();
 
@@ -405,18 +436,20 @@ public class MessageEventView extends RelativeLayout implements Updatable, Check
         int previewVisibility = message.hasAttachment() ? VISIBLE : GONE;
         //v.preview.setVisibility(previewVisibility);
         v.attachment_text.setVisibility(previewVisibility);
+        v.attachment_status.setVisibility(View.GONE);
 
         restoreViews(message instanceof IncomingMessage);
+
         setStatusAndTime(message, v.time);
         updateBurnNotice();
         toggleEnabledState(message);
         // toggleDeliveredState(message, v.delivered);
         toggleSendActionVisibility(message, v.action_send);
 
+        // set text or attachment preview only if it won't be immediately replaced by burn animation
         if (message.hasAttachment() || message.hasMetaData()) {
             setAttachmentInfo(message.getMetaData());
-        }
-        else {
+        } else {
             setText(message.getText());
         }
 
@@ -425,24 +458,42 @@ public class MessageEventView extends RelativeLayout implements Updatable, Check
         // debug information for message
         v.message_state.setText(
                 getResources().getString(MessageStates.messageStateToStringId(message.getState()))
-                        + " " + sDebugDateFormatter.format(message.getTime()));
+                        + " " + sDebugDateFormatter.format(message.getComposeTime()));
 
-        updateView();
+        refreshDrawableState();
     }
 
     /**
      * Restore visibility of possibly hidden views.
      */
+    @SuppressWarnings("deprecation")
     public void restoreViews(boolean incoming) {
         Views v = getViews();
         v.setInformationViewVisibility(View.VISIBLE);
-        v.card.setBackgroundResource(incoming ? R.drawable.bg_card_light : R.drawable.bg_my_card_light);
+        Drawable background = getResources().getDrawable(
+                incoming ? R.drawable.bg_card_light_default : R.drawable.bg_my_card_light_default);
+
+        int backgroundColorSelectorId =
+                incoming
+                        ? R.color.incoming_message_background_selector
+                        : R.color.outgoing_message_background_selector;
+
+        ColorStateList backgroundTintColor;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            backgroundTintColor = getResources().getColorStateList(backgroundColorSelectorId, null);
+        } else {
+            backgroundTintColor = getResources().getColorStateList(backgroundColorSelectorId);
+        }
+
+        background = DrawableCompat.wrap(background);
+        DrawableCompat.setTintList(background, backgroundTintColor);
+        v.card.setBackground(background);
     }
 
-    public void setContact(ContactEntry contactEntry) {
-        Views v = getViews();
-        v.avatar.setContact(contactEntry);
-    }
+//    public void setContact(ContactEntry contactEntry) {
+//        Views v = getViews();
+//        v.avatar.setContact(contactEntry);
+//    }
 
     public void setText(final String text) {
         Views v = getViews();
@@ -468,7 +519,14 @@ public class MessageEventView extends RelativeLayout implements Updatable, Check
         String fileName = null; // Used as the name of the attachment
         String displayName = null; // Sometimes used to replace displaying fileName
 
-        if(metaData != null) {
+        Message message = getMessage();
+        SCloudService.AttachmentState state = MessageUtils.getAttachmentState(message);
+        boolean isAttachmentFailed = (state == SCloudService.AttachmentState.NOT_AVAILABLE
+                || state == SCloudService.AttachmentState.DOWNLOADING_ERROR
+                || state == SCloudService.AttachmentState.UPLOADING_ERROR);
+        int attachmentStatusVisibility = isAttachmentFailed ? View.VISIBLE : View.GONE;
+
+        if (metaData != null) {
             JSONObject metaDataJson;
 
             try {
@@ -496,26 +554,35 @@ public class MessageEventView extends RelativeLayout implements Updatable, Check
                 v.preview_icon.setImageBitmap(previewBitmap);
                 v.preview_progress.setVisibility(GONE);
                 v.preview.setVisibility(GONE);
-            } else if(iconResource != 0) {
+                v.attachment_status.setVisibility(attachmentStatusVisibility);
+            } else if (iconResource != 0) {
                 v.preview_icon.setImageResource(iconResource);
                 v.preview_icon.setVisibility(VISIBLE);
                 v.preview_progress.setVisibility(GONE);
-            } else if (!TextUtils.isEmpty(preview)){
+                v.attachment_status.setVisibility(attachmentStatusVisibility);
+            } else if (!TextUtils.isEmpty(preview)) {
                 Bitmap previewBitmap = AttachmentUtils.getPreviewImage("image/jpg", preview, 0);
 
                 v.preview.setVisibility(VISIBLE);
                 v.preview.setImageBitmap(previewBitmap);
                 v.preview_progress.setVisibility(GONE);
+                v.attachment_status.setVisibility(attachmentStatusVisibility);
             } else {
                 v.preview.setVisibility(GONE);
                 v.preview_icon.setVisibility(GONE);
                 v.preview_progress.setVisibility(GONE);
             }
+        } else if (isAttachmentFailed) {
+            v.preview_icon.setImageResource((message instanceof IncomingMessage)
+                    ? R.drawable.ic_received_attachment_failed
+                    : R.drawable.ic_sent_attachment_failed);
+            v.preview_icon.setVisibility(VISIBLE);
+            v.preview_progress.setVisibility(GONE);
         }
 
-        if(!TextUtils.isEmpty(displayName)) {
+        if (!TextUtils.isEmpty(displayName)) {
             v.attachment_text.setText(displayName);
-        } else if(!TextUtils.isEmpty(fileName)) {
+        } else if (!TextUtils.isEmpty(fileName)) {
             v.attachment_text.setText(fileName);
         } else {
             v.attachment_text.setText(R.string.attachment);
@@ -523,49 +590,6 @@ public class MessageEventView extends RelativeLayout implements Updatable, Check
 
         v.attachment_text.setVisibility(VISIBLE);
     }
-
-/*    public void setSiren(Siren siren) {
-
-        if (siren == null) {
-            return;
-        }
-
-        Views v = getViews();
-
-        v.action_location.setVisibility(siren.getLocation() != null ? VISIBLE : GONE);
-
-        if (siren.hasAttachments()) {
-            if (siren.isVoicemail()) {
-                setVoicemailLabelAndPreview(siren, v.text, v.preview);
-            } else {
-                setLabelAndPreview(siren, v.text, v.preview);
-            }
-
-            if (Constants.isRTL()) {
-                showRTLLanguage(v);
-            }
-            return;
-        }
-
-        String chatMessage = siren.getChatMessage();
-
-        if (chatMessage != null) {
-            v.preview.setVisibility(GONE);
-            v.text.setText(chatMessage);
-            Linkify.addLinks(v.text, Linkify.ALL);
-            v.text.setMovementMethod(null);
-            v.text.setVisibility(VISIBLE);
-            ViewUtils.setDrawableStart(v.text, 0);
-
-            if (Constants.isRTL()) {
-                showRTLLanguage(v);
-            }
-            return;
-        }
-
-        setVisibility(GONE);
-
-    }*/
 
     @Override
     public void setTag(Object tag) {
@@ -576,14 +600,24 @@ public class MessageEventView extends RelativeLayout implements Updatable, Check
     }
 
     private void setStatusAndTime(Message message, TextView time) {
-        String statusAndTime;
+        CharSequence statusAndTime;
 
-        if(message instanceof IncomingMessage) {
-            statusAndTime = DateUtils.getRelativeTimeSpanString(getContext(), message.getTime()).toString();
+        /*
+         * Instead of DateUtils.getRelativeTimeSpanString(getContext(), message.getTime()) show
+         * just time for messages as date is visible in header
+         */
+        if (message instanceof IncomingMessage) {
+            /*
+             * TODO
+             * Use message.getComposeTime() to show time when message was composed
+             * on partner's device. This may be different time than that which is on receiving
+             * device.
+             */
+            statusAndTime = DateUtils.getMessageTimeFormat(message.getComposeTime());
         } else {
             statusAndTime = String.format("%s %s",
                     getResources().getString(MessageStates.messageStateToStringId(message.getState())),
-                    DateUtils.getRelativeTimeSpanString(getContext(), message.getTime()).toString());
+                    DateUtils.getMessageTimeFormat(message.getTime()));
         }
 
         time.setText(statusAndTime);
@@ -597,7 +631,6 @@ public class MessageEventView extends RelativeLayout implements Updatable, Check
 
     @Override
     public void update() {
-        updateView();
         updateBurnNotice();
         scheduleNextUpdate();
     }
@@ -622,6 +655,11 @@ public class MessageEventView extends RelativeLayout implements Updatable, Check
         v.setInformationViewVisibility(View.GONE);
         // disable view updates
         cancelUpdates();
+        // mark view as transient to avoid its reuse while animation runs,
+        // only do this if it will be re-set
+        if (handler != null) {
+            setHasTransientState(true);
+        }
 
         // set background to animated drawable
         v.card.setBackgroundResource(R.drawable.poof);
@@ -633,8 +671,23 @@ public class MessageEventView extends RelativeLayout implements Updatable, Check
         for (int i = 0; i < drawable.getNumberOfFrames(); i++, duration += drawable.getDuration(i));
 
         // schedule actions to be performed when it finishes
-        if (handler != null && runnable != null) {
-            handler.postDelayed(runnable, duration);
+        Runnable postAnimationRunnable = new Runnable() {
+            @Override
+            public void run() {
+                setHasTransientState(false);
+                if (runnable != null) {
+                    runnable.run();
+                }
+            }
+        };
+        if (handler != null) {
+            handler.postDelayed(postAnimationRunnable, duration);
+        }
+        else {
+            // run the passed runnable immediately, it won't be run otherwise
+            if (runnable != null) {
+                runnable.run();
+            }
         }
 
         // start the animation
@@ -654,41 +707,11 @@ public class MessageEventView extends RelativeLayout implements Updatable, Check
         ViewUtil.setAlpha(getViews().card, enabled ? 1 : 0.5f);
     }
 
-    private void updateView() {
-        Message message = getMessage();
-        Views v = getViews();
-
-        int textColor = getResources().getColor(R.color.theme_light_text_primary);
-        if (message instanceof OutgoingMessage) {
-            switch (message.getState()) {
-                case MessageStates.UNKNOWN:
-                case MessageStates.FAILED:
-                case MessageStates.COMPOSING:
-                case MessageStates.COMPOSED:
-                case MessageStates.SENT:
-                case MessageStates.SENT_TO_SERVER:
-                    textColor = getResources().getColor(R.color.chat_outgoing_message_disabled_text_color);
-                    break;
-                case MessageStates.DELIVERED:
-                case MessageStates.READ:
-                case MessageStates.SYNC:
-                    textColor = getResources().getColor(R.color.chat_outgoing_message_text_color);
-                    break;
-                default:
-                    break;
-            }
-        }
-        v.text.setTextColor(textColor);
-        v.attachment_text.setTextColor(textColor);
-
-        v.action_location.setVisibility(mLocation != null ? VISIBLE : GONE);
-    }
-
     private void updateBurnNotice() {
 
-        Message message = getMessage();
+        final Message message = getMessage();
+        final Context context = getContext();
         Views v = getViews();
-        Context context = getContext();
 
         if (message == null || v == null || context == null) {
             return;
@@ -703,11 +726,20 @@ public class MessageEventView extends RelativeLayout implements Updatable, Check
                 long millisecondsToExpiry = message.getExpirationTime() - System.currentTimeMillis();
                 v.burn_notice.setText(DateUtils.getShortTimeString(context, millisecondsToExpiry));
                 /*
-                 * show burn animation for message if less than one second is left till expiry
+                 * Show burn animation for message if it is expired
                  */
-                if (millisecondsToExpiry <= TimeUnit.SECONDS.toMillis(1)
-                        && MessagingPreferences.getInstance(getContext()).getShowBurnAnimation()) {
-                    animateBurn(null);
+                if (isExpired(message)) {
+                    animateBurn(new Runnable() {
+                        @Override
+                        public void run() {
+                            mIsBurned = true;
+                            MessageUtils.removeMessage(message);
+                        }
+                    });
+                    /* cancel updates as well to avoid burning message multiple times */
+                    cancelUpdates();
+                    /* forget about the message */
+                    setTag(null);
                 }
             } else {
                 v.burn_notice.setText(DateUtils.getShortTimeString(context,
@@ -721,33 +753,12 @@ public class MessageEventView extends RelativeLayout implements Updatable, Check
 
     private void setLocation(final com.silentcircle.messaging.model.Location location) {
         mLocation = LocationUtils.messageLocationToLocation(location);
+
+        Views v = getViews();
+        v.action_location.setVisibility(mLocation != null ? VISIBLE : GONE);
     }
 
-    private void burnMessage(final Message message) {
-
-        Runnable burnRunnable = new Runnable() {
-            @Override
-            public void run() {
-                MessageUtils.burnMessage(getContext().getApplicationContext(), message);
-            }
-        };
-
-        /*
-         * If should show burn animation, show animation and then burn message,
-         * otherwise just burn the message.
-         *
-         * Call MessageUtils.burnMessage will also refresh the list view with messages.
-         */
-        if (MessagingPreferences.getInstance(getContext()).getShowBurnAnimation()) {
-            animateBurn(burnRunnable);
-        }
-        else {
-            MessageUtils.burnMessage(getContext().getApplicationContext(), message);
-        }
-
-        /* TODO: using delegate which calls conversation activity's performaAction would be nicer */
-    }
-
+    @SuppressWarnings("deprecation")
     private void setCardBackground(final Drawable drawable) {
         Views v = getViews();
         if (drawable != null) {
@@ -759,4 +770,24 @@ public class MessageEventView extends RelativeLayout implements Updatable, Check
         }
         v.card.setVisibility(View.VISIBLE);
     }
+
+    private boolean isExpired(@NonNull final Message message) {
+        long millisecondsToExpiry = message.getExpirationTime() - System.currentTimeMillis();
+        return (millisecondsToExpiry <= TimeUnit.SECONDS.toMillis(1));
+    }
+
+    private boolean isEventWithinView(@NonNull MotionEvent event, @NonNull View... views) {
+        boolean result = false;
+        for (View view : views) {
+            if (view == null) {
+                continue;
+            }
+            view.getHitRect(mHitRectangle);
+            view.getLocationOnScreen(mScreenLocation);
+            mHitRectangle.offset(mScreenLocation[0] - view.getLeft(), mScreenLocation[1] - view.getTop());
+            result |= mHitRectangle.contains((int) event.getRawX(), (int) event.getRawY());
+        }
+        return result;
+    }
+
 }

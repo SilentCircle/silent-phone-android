@@ -1,7 +1,10 @@
 package com.silentcircle.keystore;
 
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.Fragment;
+import android.content.Context;
+import android.os.Build;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.InputType;
@@ -17,6 +20,7 @@ import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import com.silentcircle.common.util.DialerUtils;
 import com.silentcircle.silentphone2.R;
 
 /**
@@ -55,7 +59,6 @@ public class PasswordFragment extends Fragment implements View.OnClickListener {
      * @return A new instance of fragment PasswordFragment.
      */
     public static PasswordFragment newInstance(String action, boolean usePin) {
-        Log.d(TAG, "+++ action: " + action);
         PasswordFragment fragment = new PasswordFragment();
         Bundle args = new Bundle();
         args.putString(ACTION, action);
@@ -128,9 +131,25 @@ public class PasswordFragment extends Fragment implements View.OnClickListener {
         super.onPause();
     }
 
+    @TargetApi(Build.VERSION_CODES.M)
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        commonOnAttach(getActivity());
+    }
+
+    /*
+     * Deprecated on API 23
+     * Use onAttachToContext instead
+     */
+    @SuppressWarnings("deprecation")
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
+        commonOnAttach(activity);
+    }
+
+    private void commonOnAttach(Activity activity) {
         try {
             mParent = (KeyStoreActivity)activity;
         } catch (ClassCastException e) {
@@ -158,6 +177,7 @@ public class PasswordFragment extends Fragment implements View.OnClickListener {
     private void setPasswordKeyStore() {
         mExplanation.setText(getString(mUsePin ? R.string.key_store_set_pin_explanation : R.string.key_store_set_pw_explanation));
         passwordInput.requestFocus();
+        DialerUtils.showInputMethod(passwordInput);
         passwordInput2.setVisibility(View.VISIBLE);
         if (!mUsePin) {
             pwStrength.setVisibility(View.VISIBLE);
@@ -209,6 +229,7 @@ public class PasswordFragment extends Fragment implements View.OnClickListener {
         passwordInputOld.setVisibility(View.VISIBLE);
         passwordInputOld.setImeOptions(EditorInfo.IME_ACTION_NEXT);
         passwordInputOld.requestFocus();
+        DialerUtils.showInputMethod(passwordInputOld);
 
         passwordInput.setHint(mUsePin ? R.string.pin_hint_new : R.string.password_hint_new); // ask user for a new password
         passwordInput.setVisibility(View.VISIBLE);
@@ -278,6 +299,7 @@ public class PasswordFragment extends Fragment implements View.OnClickListener {
         passwordInputOld.setVisibility(View.VISIBLE);
         passwordInputOld.setImeOptions(EditorInfo.IME_ACTION_DONE);
         passwordInputOld.requestFocus();
+        DialerUtils.showInputMethod(passwordInputOld);
         passwordInput.setVisibility(View.INVISIBLE);
         passwordShow.setVisibility(View.VISIBLE);
 
@@ -342,6 +364,7 @@ public class PasswordFragment extends Fragment implements View.OnClickListener {
         passwordInput.setVisibility(View.VISIBLE);
         passwordInput.setImeOptions(EditorInfo.IME_ACTION_DONE);
         passwordInput.requestFocus();
+        DialerUtils.showInputMethod(passwordInput);
         passwordInput.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
             public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {

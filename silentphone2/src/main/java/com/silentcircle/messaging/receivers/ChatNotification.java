@@ -33,9 +33,11 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.text.TextUtils;
+import android.util.Log;
 
 import com.silentcircle.common.list.ContactEntry;
 import com.silentcircle.contacts.ContactsUtils;
+import com.silentcircle.messaging.services.AxoMessaging;
 import com.silentcircle.messaging.util.ContactsCache;
 import com.silentcircle.messaging.util.ConversationUtils;
 import com.silentcircle.messaging.util.Extra;
@@ -48,7 +50,12 @@ import com.silentcircle.silentphone2.R;
  * This receiver is intended to receive notifications about chat message updates and arrival
  * and show notification, when a new chat message arrives but application is in background.
  */
-public class ChatNotification extends BroadcastReceiver {
+public class ChatNotification extends BroadcastReceiver implements AxoMessaging.AxoMessagingStateCallback {
+
+    private static final String TAG = ChatNotification.class.getSimpleName();
+
+    private Intent mLastNotificationIntent;
+    private Context mContext;
 
     /*
      * Receive update on chat message and act on it.
@@ -56,32 +63,48 @@ public class ChatNotification extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
 
-        String conversationPartner = Extra.PARTNER.from(intent);
-        String conversationPartnerDisplayName = conversationPartner;
+        mLastNotificationIntent = null;
+        mContext = null;
 
-        // try to get correct display name for conversation partner
-        ContactsCache.buildContactsCache(context);
-        ContactEntry contactEntry = ContactsCache.getContactEntryFromCache(conversationPartner);
-        if (contactEntry != null && !TextUtils.isEmpty(contactEntry.name)) {
-            conversationPartnerDisplayName = contactEntry.name;
+        AxoMessaging axoMessaging = AxoMessaging.getInstance(context.getApplicationContext());
+        boolean axoRegistered = axoMessaging.isRegistered();
+        if (!axoRegistered) {
+            Log.d(TAG, "Axolotl not yet registered, wait for it before showing notification.");
+            mLastNotificationIntent = intent;
+            mContext = context;
+            axoMessaging.addStateChangeListener(this);
         }
+        else {
+            sendMessageNotification(context, intent);
+        }
+    }
+
+    @Override
+    public void axoRegistrationStateChange(boolean registered) {
+        Log.d(TAG, "Axolotl state: " + registered + ", intent: " + mLastNotificationIntent);
+        if (registered && mLastNotificationIntent != null && mContext != null) {
+            sendMessageNotification(mContext, mLastNotificationIntent);
+
+            AxoMessaging axoMessaging = AxoMessaging.getInstance(mContext.getApplicationContext());
+            axoMessaging.removeStateChangeListener(this);
+            mLastNotificationIntent = null;
+            mContext = null;
+        }
+    }
+
+    private void sendMessageNotification(Context context, Intent intent) {
+        String conversationPartnerId = Extra.PARTNER.from(intent);
 
         // create intent used to launch conversation activity.
-        Intent messagingIntent = ContactsUtils.getMessagingIntent(conversationPartner, context);
+        Intent messagingIntent = ContactsUtils.getMessagingIntent(conversationPartnerId, context);
 
-        Bitmap bitmap = BitmapFactory.decodeResource(context.getResources(),
-                R.drawable.ic_launcher_st);
-
-        // retrieve message text
-        String messageText = ConversationUtils.getLastMessageForConversation(context,
-                conversationPartner);
+        Bitmap bitmap = BitmapFactory.decodeResource(context.getResources(), R.drawable.ic_launcher_st);
 
         /* Show notification.
          *
          * Leave message empty for now. It could be passed in intent from AxoMessaging but
          * that does not seem to be secure.
          */
-        Notifications.sendMessageNotification(context, messagingIntent,
-                conversationPartnerDisplayName, messageText, bitmap);
+        Notifications.sendMessageNotification(context, messagingIntent, bitmap);
     }
 }

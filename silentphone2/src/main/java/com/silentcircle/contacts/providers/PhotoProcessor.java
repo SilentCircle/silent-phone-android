@@ -106,31 +106,31 @@ public final class PhotoProcessor {
      */
     private interface PhotoSizes {
         /** Size of a thumbnail */
-        public static final int DEFAULT_THUMBNAIL = 96;
+        int DEFAULT_THUMBNAIL = 96;
 
         /**
          * Size of a display photo on memory constrained devices (those are devices with less than
          * {@link #DEFAULT_LARGE_RAM_THRESHOLD} of reported RAM
          */
-        public static final int DEFAULT_DISPLAY_PHOTO_MEMORY_CONSTRAINED = 480;
+        int DEFAULT_DISPLAY_PHOTO_MEMORY_CONSTRAINED = 480;
 
         /**
          * Size of a display photo on devices with enough ram (those are devices with at least
          * {@link #DEFAULT_LARGE_RAM_THRESHOLD} of reported RAM
          */
-        public static final int DEFAULT_DISPLAY_PHOTO_LARGE_MEMORY = 720;
+        int DEFAULT_DISPLAY_PHOTO_LARGE_MEMORY = 720;
 
         /**
          * If the device has less than this amount of RAM, it is considered RAM constrained for
          * photos
          */
-        public static final int LARGE_RAM_THRESHOLD = 640 * 1024 * 1024;
+        int LARGE_RAM_THRESHOLD = 640 * 1024 * 1024;
 
         /** If present, overrides the size given in {@link #DEFAULT_THUMBNAIL} */
-        public static final String SYS_PROPERTY_THUMBNAIL_SIZE = "contacts.thumbnail_size";
+        String SYS_PROPERTY_THUMBNAIL_SIZE = "contacts.thumbnail_size";
 
         /** If present, overrides the size determined for the display photo */
-        public static final String SYS_PROPERTY_DISPLAY_PHOTO_SIZE = "contacts.display_photo_size";
+        String SYS_PROPERTY_DISPLAY_PHOTO_SIZE = "contacts.display_photo_size";
     }
 
     private final int mMaxDisplayPhotoDim;

@@ -1,12 +1,9 @@
 /*
  *  Public key-based signature verification program
  *
- *  Copyright (C) 2006-2013, Brainspark B.V.
+ *  Copyright (C) 2006-2013, ARM Limited, All Rights Reserved
  *
- *  This file is part of PolarSSL (http://www.polarssl.org)
- *  Lead Maintainer: Paul Bakker <polarssl_maintainer at polarssl.org>
- *
- *  All rights reserved.
+ *  This file is part of mbed TLS (https://tls.mbed.org)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -29,28 +26,38 @@
 #include POLARSSL_CONFIG_FILE
 #endif
 
-#include <string.h>
+#if defined(POLARSSL_PLATFORM_C)
+#include "polarssl/platform.h"
+#else
 #include <stdio.h>
+#define polarssl_snprintf   snprintf
+#define polarssl_printf     printf
+#define polarssl_snprintf   snprintf
+#endif
 
+#if defined(POLARSSL_BIGNUM_C) && \
+    defined(POLARSSL_SHA256_C) && defined(POLARSSL_PK_PARSE_C) && \
+    defined(POLARSSL_FS_IO)
 #include "polarssl/error.h"
 #include "polarssl/md.h"
 #include "polarssl/pk.h"
 #include "polarssl/sha1.h"
+
+#include <stdio.h>
+#include <string.h>
+#endif
 
 #if defined _MSC_VER && !defined snprintf
 #define snprintf _snprintf
 #endif
 
 #if !defined(POLARSSL_BIGNUM_C) ||                                  \
-    !defined(POLARSSL_SHA1_C) || !defined(POLARSSL_PK_PARSE_C) ||   \
+    !defined(POLARSSL_SHA256_C) || !defined(POLARSSL_PK_PARSE_C) ||   \
     !defined(POLARSSL_FS_IO)
-int main( int argc, char *argv[] )
+int main( void )
 {
-    ((void) argc);
-    ((void) argv);
-
-    printf("POLARSSL_BIGNUM_C and/or "
-           "POLARSSL_SHA1_C and/or POLARSSL_PK_PARSE_C and/or "
+    polarssl_printf("POLARSSL_BIGNUM_C and/or "
+           "POLARSSL_SHA256_C and/or POLARSSL_PK_PARSE_C and/or "
            "POLARSSL_FS_IO not defined.\n");
     return( 0 );
 }
@@ -61,7 +68,7 @@ int main( int argc, char *argv[] )
     int ret = 1;
     size_t i;
     pk_context pk;
-    unsigned char hash[20];
+    unsigned char hash[32];
     unsigned char buf[POLARSSL_MPI_MAX_SIZE];
     char filename[512];
 
@@ -69,21 +76,21 @@ int main( int argc, char *argv[] )
 
     if( argc != 3 )
     {
-        printf( "usage: pk_verify <key_file> <filename>\n" );
+        polarssl_printf( "usage: pk_verify <key_file> <filename>\n" );
 
 #if defined(_WIN32)
-        printf( "\n" );
+        polarssl_printf( "\n" );
 #endif
 
         goto exit;
     }
 
-    printf( "\n  . Reading public key from '%s'", argv[1] );
+    polarssl_printf( "\n  . Reading public key from '%s'", argv[1] );
     fflush( stdout );
 
     if( ( ret = pk_parse_public_keyfile( &pk, argv[1] ) ) != 0 )
     {
-        printf( " failed\n  ! pk_parse_public_keyfile returned -0x%04x\n", -ret );
+        polarssl_printf( " failed\n  ! pk_parse_public_keyfile returned -0x%04x\n", -ret );
         goto exit;
     }
 
@@ -91,11 +98,11 @@ int main( int argc, char *argv[] )
      * Extract the signature from the text file
      */
     ret = 1;
-    snprintf( filename, sizeof(filename), "%s.sig", argv[2] );
+    polarssl_snprintf( filename, sizeof(filename), "%s.sig", argv[2] );
 
     if( ( f = fopen( filename, "rb" ) ) == NULL )
     {
-        printf( "\n  ! Could not open %s\n\n", filename );
+        polarssl_printf( "\n  ! Could not open %s\n\n", filename );
         goto exit;
     }
 
@@ -105,26 +112,26 @@ int main( int argc, char *argv[] )
     fclose( f );
 
     /*
-     * Compute the SHA-1 hash of the input file and compare
+     * Compute the SHA-256 hash of the input file and compare
      * it with the hash decrypted from the signature.
      */
-    printf( "\n  . Verifying the SHA-1 signature" );
+    polarssl_printf( "\n  . Verifying the SHA-256 signature" );
     fflush( stdout );
 
     if( ( ret = sha1_file( argv[2], hash ) ) != 0 )
     {
-        printf( " failed\n  ! Could not open or read %s\n\n", argv[2] );
+        polarssl_printf( " failed\n  ! Could not open or read %s\n\n", argv[2] );
         goto exit;
     }
 
-    if( ( ret = pk_verify( &pk, POLARSSL_MD_SHA1, hash, 0,
+    if( ( ret = pk_verify( &pk, POLARSSL_MD_SHA256, hash, 0,
                            buf, i ) ) != 0 )
     {
-        printf( " failed\n  ! pk_verify returned -0x%04x\n", -ret );
+        polarssl_printf( " failed\n  ! pk_verify returned -0x%04x\n", -ret );
         goto exit;
     }
 
-    printf( "\n  . OK (the decrypted SHA-1 hash matches)\n\n" );
+    polarssl_printf( "\n  . OK (the decrypted SHA-256 hash matches)\n\n" );
 
     ret = 0;
 
@@ -133,15 +140,15 @@ exit:
 
 #if defined(POLARSSL_ERROR_C)
     polarssl_strerror( ret, (char *) buf, sizeof(buf) );
-    printf( "  !  Last error was: %s\n", buf );
+    polarssl_printf( "  !  Last error was: %s\n", buf );
 #endif
 
 #if defined(_WIN32)
-    printf( "  + Press Enter to exit this program.\n" );
+    polarssl_printf( "  + Press Enter to exit this program.\n" );
     fflush( stdout ); getchar();
 #endif
 
     return( ret );
 }
-#endif /* POLARSSL_BIGNUM_C && POLARSSL_SHA1_C &&
+#endif /* POLARSSL_BIGNUM_C && POLARSSL_SHA256_C &&
           POLARSSL_PK_PARSE_C && POLARSSL_FS_IO */

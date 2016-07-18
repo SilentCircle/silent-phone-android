@@ -9,17 +9,19 @@
  -->
 
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              xmlns:tools="http://schemas.android.com/tools"
-              android:layout_width="match_parent"
-              android:layout_height="wrap_content"
-              android:layout_marginTop="@dimen/spacing_normal"
-              android:visibility="visible"
-              tools:context=".activities.DialerActivity"
-              tools:visibility="visible">
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="@dimen/spacing_normal"
+    android:visibility="visible"
+    tools:context=".activities.DialerActivity"
+    tools:visibility="visible">
 
-    <CheckBox
+    <android.support.v7.widget.AppCompatCheckBox
             android:id="@+id/echo_checkbox"
-            style="@style/Widget.Silent.DrawerCheckBox"
+            android:theme="@style/Widget.Silent.DrawerCheckBox"
+            android:layout_height="wrap_content"
+            android:layout_width="wrap_content"
             android:layout_alignParentLeft="true"
             android:layout_alignParentStart="true"
             android:layout_alignBaseline="@+id/echo_title"/>

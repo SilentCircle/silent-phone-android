@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:clickable="true"
+    >
+
+    <LinearLayout
+        android:id="@+id/widget_settings_item_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingLeft="@dimen/settings_item_padding_left"
+        android:paddingStart="@dimen/settings_item_padding_left"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:duplicateParentState="true"
+        android:clickable="false"
+        >
+
+        <ImageView
+            android:id="@+id/widget_settings_item_image"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/ic_location"
+            android:duplicateParentState="true"
+            android:clickable="false"
+            />
+
+        <TextView
+            android:id="@+id/widget_settings_item_text"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center_vertical"
+            android:maxLines="1"
+            android:duplicateParentState="true"
+            android:clickable="false"
+            android:textSize="@dimen/text_xlarge"
+            android:textColor="@color/chat_options_text_color"
+            android:textStyle="bold"
+            tools:text="Settings item name"
+            />
+
+        <android.support.v7.widget.SwitchCompat
+            android:theme="@style/Widget.Switch.Dark"
+            android:id="@+id/widget_settings_item_switch"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:duplicateParentState="true"
+            android:clickable="false"
+            />
+        <!-- app:track="@drawable/btn_switch_bg_selector" -->
+
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/widget_settings_item_description"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/widget_settings_item_container"
+        tools:text="Settings item description"
+        android:textSize="@dimen/text_normal"
+        android:textColor="@color/chat_options_description_text_color"
+        android:clickable="false"
+        />
+
+</RelativeLayout>

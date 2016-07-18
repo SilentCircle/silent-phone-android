@@ -43,6 +43,7 @@ public class PhoneFavoriteSquareTileView extends PhoneFavoriteTileView {
 
     public PhoneFavoriteSquareTileView(Context context, AttributeSet attrs) {
         super(context, attrs);
+        setFilterTouchesWhenObscured(true);
         mHeightToWidthRatio = getResources().getFraction(R.fraction.contact_tile_height_to_width_ratio, 1, 1);
     }
 

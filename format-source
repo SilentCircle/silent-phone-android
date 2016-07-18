@@ -1,0 +1,16 @@
+#!/bin/sh
+cfmt=clang-format
+test -z "$(which clang-format-3.9)" || clang=clang-format-3.9
+test -z "$(which clang-format-3.8)" || clang=clang-format-3.8
+find . -name .git -prune -o -type f -exec grep -Il . {} \; \
+  | while read x; do
+      file=${x##*/}
+      ext=${file##*.}
+      if head -n32 "$x" | grep "The Android Open Source Project">/dev/null; then
+        continue
+      fi
+      case "$ext" in
+        c|cpp|h|m|mm|cc|Cpp|H|inl|java)
+          $cfmt -style=file -i "$x"
+      esac
+    done

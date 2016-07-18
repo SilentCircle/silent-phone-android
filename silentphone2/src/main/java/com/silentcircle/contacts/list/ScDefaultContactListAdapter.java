@@ -170,7 +170,7 @@ public class ScDefaultContactListAdapter extends ScContactListAdapter {
         }
 
         StringBuilder selection = new StringBuilder();
-        List<String> selectionArgs = new ArrayList<String>();
+        List<String> selectionArgs = new ArrayList<>();
 
         switch (filter.filterType) {
             case ContactListFilter.FILTER_TYPE_ALL_ACCOUNTS: {
@@ -187,21 +187,21 @@ public class ScDefaultContactListAdapter extends ScContactListAdapter {
                 selection.append(Contacts.STARRED + "!=0");
                 break;
             }
-//  TODO           case ContactListFilter.FILTER_TYPE_WITH_PHONE_NUMBERS_ONLY: {
-//                selection.append(Contacts.HAS_PHONE_NUMBER + "=1");
-//                break;
-//            }
-//            case ContactListFilter.FILTER_TYPE_CUSTOM: {
-//                selection.append(RawContacts.IN_VISIBLE_GROUP + "=1");
-//                if (isCustomFilterForPhoneNumbersOnly()) {
-//                    selection.append(" AND " + Contacts.HAS_PHONE_NUMBER + "=1");
-//                }
-//                break;
-//            }
-//            case ContactListFilter.FILTER_TYPE_ACCOUNT: {
-//                // We use query parameters for account filter, so no selection to add here.
-//                break;
-//            }
+            case ContactListFilter.FILTER_TYPE_WITH_PHONE_NUMBERS_ONLY: {
+                selection.append(Contacts.HAS_PHONE_NUMBER + "=1");
+                break;
+            }
+            case ContactListFilter.FILTER_TYPE_CUSTOM: {
+                selection.append(Contacts.IN_VISIBLE_GROUP + "=1");
+                if (isCustomFilterForPhoneNumbersOnly()) {
+                    selection.append(" AND " + Contacts.HAS_PHONE_NUMBER + "=1");
+                }
+                break;
+            }
+            case ContactListFilter.FILTER_TYPE_ACCOUNT: {
+                // We use query parameters for account filter, so no selection to add here.
+                break;
+            }
         }
         loader.setSelection(selection.toString());
         loader.setSelectionArgs(selectionArgs.toArray(new String[0]));

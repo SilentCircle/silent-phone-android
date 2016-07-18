@@ -34,6 +34,8 @@ import android.os.IBinder;
 import android.util.Log;
 
 /**
+ * Simple service to instantiate the SyncAdapter.
+ *
  * Created by werner on 02.08.15.
  */
 public class SyncService extends Service {
@@ -45,7 +47,6 @@ public class SyncService extends Service {
 
     @Override
     public void onCreate() {
-        Log.d(TAG, "++++ Sync service created");
         synchronized (sSyncAdapterLock) {
             if (sSyncAdapter == null) {
                 sSyncAdapter = new SyncAdapter(getApplicationContext(), true);
@@ -55,7 +56,6 @@ public class SyncService extends Service {
 
     @Override
     public IBinder onBind(Intent intent) {
-        Log.d(TAG, "+++ Sync service bound");
         return sSyncAdapter.getSyncAdapterBinder();
     }
 

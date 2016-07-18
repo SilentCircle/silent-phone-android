@@ -122,10 +122,9 @@ void *initZrtpG()
    //http://developer.apple.com/library/ios/#qa/qa1719/_index.html
    
 #ifdef __SYMBIAN32__
-   strncpy(bufPathCache, "c:\\system\\data\\"ZRTP_CACHE_FN, sizeof(bufPathCache)-1);
+   strncpy(bufPathCache, "c:\\system\\data\\" ZRTP_CACHE_FN, sizeof(bufPathCache)-1);
 #else
 #if defined(ANDROID_NDK) || defined(__APPLE__) || defined(__linux__)
-   
    snprintf(&bufPathCache[0],sizeof(bufPathCache)-1,"%s/%s",getFileStorePath(), ZRTP_CACHE_FN);
    bufPathCache[sizeof(bufPathCache)-1]=0;
 

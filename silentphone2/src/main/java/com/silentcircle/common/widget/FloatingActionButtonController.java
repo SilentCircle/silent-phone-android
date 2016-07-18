@@ -85,6 +85,15 @@ public class FloatingActionButtonController {
     }
 
     /**
+     * Returns true if the container visibility is View.VISIBLE
+     *
+     * @return Whether or not the container is visible
+     */
+    public boolean isVisible() {
+        return mFloatingActionButtonContainer.getVisibility() == View.VISIBLE;
+    }
+
+    /**
      * Updates the FAB location (middle to right position) as the PageView scrolls.
      *
      * @param positionOffset A fraction used to calculate position of the FAB during page scroll.

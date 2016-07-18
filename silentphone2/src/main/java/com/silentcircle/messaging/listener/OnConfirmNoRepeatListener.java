@@ -27,9 +27,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 package com.silentcircle.messaging.listener;
 
-import android.content.Context;
+import android.content.DialogInterface;
 
 public interface OnConfirmNoRepeatListener {
 
-    void onConfirm(Context context, boolean shouldNotShowAgain);
+    void onConfirm(DialogInterface dialog, int which, boolean shouldNotShowAgain);
 }

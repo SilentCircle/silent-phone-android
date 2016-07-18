@@ -28,19 +28,24 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 package com.silentcircle.accounts;
 
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.Fragment;
 import android.app.FragmentManager;
+import android.content.Context;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.text.Editable;
 import android.text.TextUtils;
+import android.text.TextWatcher;
 import android.text.method.LinkMovementMethod;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.LinearLayout;
@@ -48,6 +53,7 @@ import android.widget.ProgressBar;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
+import com.silentcircle.common.util.AsyncTasks;
 import com.silentcircle.silentphone2.BuildConfig;
 import com.silentcircle.silentphone2.R;
 import com.silentcircle.silentphone2.activities.ProvisioningActivity;
@@ -76,6 +82,7 @@ public class AccountStep3 extends Fragment implements View.OnClickListener {
 
     private static final String TAG = "ProvisioningBpStep3";
     private static final int MIN_CONTENT_LENGTH = 10;
+    private static final int AUTH_ERROR_ERROR_CODE = 4;
 
     private AuthenticatorActivity mParent;
     private StringBuilder mContent = new StringBuilder();
@@ -85,7 +92,7 @@ public class AccountStep3 extends Fragment implements View.OnClickListener {
     private ProgressBar mProgress;
     private View mProgressInner;
     private LinearLayout mButtons;
-
+    private TextView mAuthToken;
     private String mApiKey;
 
     private URL mRequestUrlCreateAccount;
@@ -125,7 +132,7 @@ public class AccountStep3 extends Fragment implements View.OnClickListener {
             username = args.getString(ProvisioningActivity.USERNAME);
         }
 
-        if (ConfigurationUtilities.mTrace) Log.d(TAG, "Feature code: '" + mRoninCode + "', device id: '" + deviceId +
+        if (ConfigurationUtilities.mTrace) Log.d(TAG, "Feature code: '" + mRoninCode + "', instance device id: '" + deviceId +
                 "', existing: " + mUseExistingAccount + ", username: " + username);
         if (deviceId == null || username == null) {
             // Report this problem
@@ -146,22 +153,43 @@ public class AccountStep3 extends Fragment implements View.OnClickListener {
         try {
             // https://sccps.silentcircle.com/v1/user/  (PUT)
             mRequestUrlCreateAccount = new URL(ConfigurationUtilities.getProvisioningBaseUrl(mParent.getBaseContext()) +
-                    ConfigurationUtilities.getUserManagementBase(mParent.getBaseContext()) +
+                    ConfigurationUtilities.getUserManagementBaseV1User(mParent.getBaseContext()) +
                     Uri.encode(username) + "/");
 
             // https://sccps.silentcircle.com/v1/me/device/{device_id}/  (PUT)
+            // TODO remove enable_tfa from querystring for production
             mRequestUrlProvisionDevice = new URL(ConfigurationUtilities.getProvisioningBaseUrl(mParent.getBaseContext()) +
                     ConfigurationUtilities.getDeviceManagementBase(mParent.getBaseContext()) +
-                    Uri.encode(deviceId) + "/");
+                    Uri.encode(deviceId) + "/?enable_tfa=1");
         } catch (MalformedURLException e) {
             mParent.provisioningCancel();
         }
     }
 
+    @TargetApi(Build.VERSION_CODES.M)
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        commonOnAttach(getActivity());
+    }
+
+    /*
+     * Deprecated on API 23
+     * Use onAttachToContext instead
+     */
+    @SuppressWarnings("deprecation")
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
-        mParent = (AuthenticatorActivity) activity;
+        commonOnAttach(activity);
+    }
+
+    private void commonOnAttach(Activity activity) {
+        try {
+            mParent = (AuthenticatorActivity) activity;
+        } catch (ClassCastException e) {
+            throw new ClassCastException("Activity must be AuthenticatorActivity.");
+        }
     }
 
     @Override
@@ -176,6 +204,8 @@ public class AccountStep3 extends Fragment implements View.OnClickListener {
         mProgressInner = stepView.findViewById(R.id.ProvisioningInProgress);
         mScroll = (ScrollView) stepView.findViewById(R.id.Scroll);
         mButtons = (LinearLayout) stepView.findViewById(R.id.ProvisioningButtons);
+        mAuthToken = (TextView)stepView.findViewById(R.id.ProvisioningAuthTokenInput);
+        mAuthToken.setHint(getString(R.string.provisioning_auth_token_hint));
 
         ((TextView)stepView.findViewById(R.id.CheckBoxTCText)).setMovementMethod(LinkMovementMethod.getInstance());
 
@@ -191,6 +221,29 @@ public class AccountStep3 extends Fragment implements View.OnClickListener {
         } else {
             startLoadingCreateAccount();
         }
+
+        mAuthToken.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                // Only enable the button if the token is 6 digits long.
+                View mButton = mButtons.findViewById(R.id.create);
+                Boolean bEnable = s.toString().length() == 6;
+                mButton.setEnabled(bEnable);
+                if (bEnable)
+                    mButton.setAlpha((float) 1);
+                else
+                    mButton.setAlpha((float) 0.5);
+            }
+        });
+
         return stepView;
     }
 
@@ -198,6 +251,8 @@ public class AccountStep3 extends Fragment implements View.OnClickListener {
     public void onClick(View view) {
         switch (view.getId()) {
             case R.id.back: {
+                InputMethodManager imm = (InputMethodManager)mParent.getSystemService(Context.INPUT_METHOD_SERVICE);
+                imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
                 mParent.backStep();
                 break;
             }
@@ -351,6 +406,33 @@ public class AccountStep3 extends Fragment implements View.OnClickListener {
         return errorList;
     }
 
+    private void authTokenError() {
+        View view = getView();
+        if (view == null)
+            return;
+
+        // Two-factor authentication token required. Rearrange the UI, the show the error text, input field, and Back and Next buttons
+        mProgress.setVisibility(View.INVISIBLE);
+        getView().findViewById(R.id.ProvisioningInProgress).setVisibility(View.INVISIBLE);
+        mScroll.setVisibility(View.VISIBLE);
+        mButtons.setVisibility(View.VISIBLE);
+        view.findViewById(R.id.CheckBoxTCText).setVisibility(View.GONE);
+        mTcCheckbox.setVisibility(View.GONE);
+        mAuthToken.setVisibility(View.VISIBLE);
+        mAuthToken.setText("");
+        mAuthToken.requestFocus();
+        View v = mParent.getCurrentFocus();
+        if (v != null) {
+            InputMethodManager imm = (InputMethodManager) mParent.getSystemService(Context.INPUT_METHOD_SERVICE);
+            imm.showSoftInput(v, InputMethodManager.SHOW_IMPLICIT);
+        }
+
+        TextView errorText = (TextView)view.findViewById(R.id.license_error);
+
+        errorText.setText(getString(R.string.provisioning_auth_token_text));
+        errorText.setVisibility(View.VISIBLE);
+    }
+
     private void licenseError() {
         View view = getView();
         if (view == null)
@@ -428,7 +510,7 @@ public class AccountStep3 extends Fragment implements View.OnClickListener {
                 if (ConfigurationUtilities.mTrace) Log.d(TAG, "HTTP code: " + ret);
 
                 if (ret != HttpsURLConnection.HTTP_OK) {
-                    ProvisioningActivity.readStream(new BufferedInputStream(urlConnection.getErrorStream()), mContent);
+                    AsyncTasks.readStream(new BufferedInputStream(urlConnection.getErrorStream()), mContent);
                 }
                 return ret;
             } catch (IOException e) {
@@ -454,7 +536,7 @@ public class AccountStep3 extends Fragment implements View.OnClickListener {
                 startLoadingRegisterDevice();
             }
             else if (result == Constants.NO_NETWORK_CONNECTION){
-                showDialog(mFragment.getActivity().getString(R.string.information_dialog), mFragment.getActivity().getString(R.string.connected_to_network), android.R.string.ok, -1);
+                showDialog(R.string.information_dialog, R.string.connected_to_network, android.R.string.ok, -1);
                 cleanUp();
             }
             else {
@@ -479,6 +561,7 @@ public class AccountStep3 extends Fragment implements View.OnClickListener {
         if (mParent == null)
             return;
         String hwDeviceId = Utilities.hashMd5(TiviPhoneService.getHwDeviceId(mParent));
+        if (ConfigurationUtilities.mTrace) Log.d(TAG, "Hardware device id: " + hwDeviceId );
         try {
             final String deviceName = Build.MODEL;
             data = new JSONObject(mParent.getJsonHolder(), new String[] {"username"});
@@ -488,6 +571,8 @@ public class AccountStep3 extends Fragment implements View.OnClickListener {
             data.put("app", "silent_phone");
             data.put("device_class", "android");
             data.put("version", BuildConfig.SPA_BUILD_NUMBER);
+            if (!TextUtils.isEmpty(mAuthToken.getText()))
+                data.put("tfa_code", mAuthToken.getText());
         } catch (JSONException ignore) {
         }
         showProgressBar();
@@ -548,8 +633,25 @@ public class AccountStep3 extends Fragment implements View.OnClickListener {
         return retMsg;
     }
 
-    private void showDialog(String title, String msg, int positiveBtnLabel, int nagetiveBtnLabel) {
-        com.silentcircle.silentphone2.dialogs.InfoMsgDialogFragment infoMsg = com.silentcircle.silentphone2.dialogs.InfoMsgDialogFragment.newInstance(title, msg, positiveBtnLabel, nagetiveBtnLabel);
+    private boolean shouldRequestTwoFactorAuthToken() {
+        boolean isTwoFactorEnabled = false;
+        if (mContent.length() > MIN_CONTENT_LENGTH) {
+            try {
+                JSONObject jsonObj = new JSONObject(mContent.toString());
+                String result = jsonObj.getString("result");
+                int errorCode = jsonObj.getInt("error_code");
+                if ("error".equals(result) && errorCode == AUTH_ERROR_ERROR_CODE) {
+                    isTwoFactorEnabled = true;
+                }
+            } catch (JSONException e) {
+                /* ignore and return false */
+            }
+        }
+        return isTwoFactorEnabled;
+    }
+
+    private void showDialog(int titleResId, int msgResId, int positiveBtnLabel, int nagetiveBtnLabel) {
+        com.silentcircle.silentphone2.dialogs.InfoMsgDialogFragment infoMsg = com.silentcircle.silentphone2.dialogs.InfoMsgDialogFragment.newInstance(titleResId, msgResId, positiveBtnLabel, nagetiveBtnLabel);
         FragmentManager fragmentManager = mFragment.getFragmentManager();
         infoMsg.show(fragmentManager,TAG );
     }
@@ -599,10 +701,10 @@ public class AccountStep3 extends Fragment implements View.OnClickListener {
                 if (ConfigurationUtilities.mTrace) Log.d(TAG, "HTTP code-2: " + ret);
 
                 if (ret == HttpsURLConnection.HTTP_OK) {
-                    ProvisioningActivity.readStream(new BufferedInputStream(urlConnection.getInputStream()), mContent);
+                    AsyncTasks.readStream(new BufferedInputStream(urlConnection.getInputStream()), mContent);
                 }
                 else {
-                    ProvisioningActivity.readStream(new BufferedInputStream(urlConnection.getErrorStream()), mContent);
+                    AsyncTasks.readStream(new BufferedInputStream(urlConnection.getErrorStream()), mContent);
                 }
                 return ret;
 
@@ -638,14 +740,24 @@ public class AccountStep3 extends Fragment implements View.OnClickListener {
                 mParent.usernamePasswordDone(mApiKey);
             }
             else if (result == Constants.NO_NETWORK_CONNECTION) {
-                showDialog(mFragment.getActivity().getString(R.string.information_dialog), mFragment.getActivity().getString(R.string.connected_to_network), android.R.string.ok, -1);
+                showDialog(R.string.information_dialog, R.string.connected_to_network, android.R.string.ok, -1);
                 cleanUp();
             }
             else {
                 message = errorMessage != null ? errorMessage : message;
-                mParent.showInputInfo(message);
-                cleanUp();
+                if (shouldRequestTwoFactorAuthToken()) {
+                    if (!TextUtils.isEmpty(mAuthToken.getText())) {
+                        showDialog(R.string.information_dialog, R.string.provisioning_auth_token_error, android.R.string.ok, -1);
+                    }
+                    authTokenError();
+                } else {
+                    mParent.showInputInfo(message);
+                    cleanUp();
+                }
             }
         }
+
     }
+
+
 }

@@ -97,7 +97,8 @@ public:
     static const DhPrivateKey* decodePrivatePoint(const std::string& data, int32_t type = EcCurveTypes::Curve25519) {
         return decodePrivatePoint((const uint8_t*)data.data(), data.size(), type);
     }
-    static const DhPrivateKey* decodePrivatePoint(const uint8_t* bytes, int32_t length, int32_t type = EcCurveTypes::Curve25519) {return new Ec255PrivateKey(bytes);}
+    static const DhPrivateKey* decodePrivatePoint(const uint8_t* bytes, size_t length,
+                                                  int32_t type = EcCurveTypes::Curve25519) {return new Ec255PrivateKey(bytes);}
 
 };
 }  // namespace

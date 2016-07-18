@@ -28,10 +28,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 package com.silentcircle.silentphone2.activities;
 
+import android.accounts.Account;
+import android.accounts.AccountManager;
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Activity;
-import android.app.AlertDialog;
+import android.app.ActivityManager;
 import android.app.Dialog;
 import android.app.DialogFragment;
 import android.app.Fragment;
@@ -48,24 +50,28 @@ import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.database.Cursor;
 import android.graphics.drawable.Drawable;
-import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.os.PowerManager;
 import android.preference.PreferenceManager;
 import android.provider.ContactsContract;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
+import android.support.v4.view.GravityCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
+import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.Toolbar;
 import android.telephony.PhoneNumberUtils;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
+import android.text.method.LinkMovementMethod;
 import android.util.Log;
 import android.view.InflateException;
 import android.view.KeyEvent;
@@ -85,21 +91,23 @@ import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.silentcircle.accounts.AccountConstants;
 import com.silentcircle.common.animation.AnimUtils;
 import com.silentcircle.common.animation.AnimationListenerAdapter;
 import com.silentcircle.common.list.OnPhoneNumberPickerActionListener;
+import com.silentcircle.common.util.AsyncTasks;
 import com.silentcircle.common.util.DatabaseHelperManager;
 import com.silentcircle.common.util.DialerUtils;
 import com.silentcircle.common.widget.FloatingActionButtonController;
 import com.silentcircle.contacts.ContactsUtils;
 import com.silentcircle.contacts.calllognew.CallLogActivity;
-import com.silentcircle.contacts.utils.PhoneNumberHelper;
 import com.silentcircle.contacts.vcard.MigrateByVCardActivity;
 import com.silentcircle.keymanagersupport.KeyManagerSupport;
 import com.silentcircle.keystore.KeyStoreActivity;
 import com.silentcircle.keystore.KeyStoreHelper;
 import com.silentcircle.messaging.activities.ConversationActivity;
 import com.silentcircle.messaging.util.Action;
+import com.silentcircle.messaging.util.AsyncUtils;
 import com.silentcircle.messaging.util.Extra;
 import com.silentcircle.silentphone2.BuildConfig;
 import com.silentcircle.silentphone2.R;
@@ -109,8 +117,8 @@ import com.silentcircle.silentphone2.dialogs.InfoMsgDialogFragment;
 import com.silentcircle.silentphone2.dialpad.SmartDialPrefix;
 import com.silentcircle.silentphone2.fragments.DialDrawerFragment;
 import com.silentcircle.silentphone2.fragments.DialpadFragment;
+import com.silentcircle.silentphone2.fragments.SettingsFragment;
 import com.silentcircle.silentphone2.interactions.PhoneNumberInteraction;
-import com.silentcircle.silentphone2.list.DragDropController;
 import com.silentcircle.silentphone2.list.ListsFragment;
 import com.silentcircle.silentphone2.list.OnDragDropListener;
 import com.silentcircle.silentphone2.list.OnListFragmentScrolledListener;
@@ -118,25 +126,25 @@ import com.silentcircle.silentphone2.list.PhoneFavoriteSquareTileView;
 import com.silentcircle.silentphone2.list.RegularSearchFragment;
 import com.silentcircle.silentphone2.list.SearchFragment;
 import com.silentcircle.silentphone2.list.SmartDialSearchFragment;
-import com.silentcircle.silentphone2.list.SpeedDialFragment;
 import com.silentcircle.silentphone2.receivers.AutoStart;
-import com.silentcircle.silentphone2.receivers.OutgoingCallReceiver;
 import com.silentcircle.silentphone2.services.TiviPhoneService;
 import com.silentcircle.silentphone2.util.CallState;
 import com.silentcircle.silentphone2.util.ConfigurationUtilities;
 import com.silentcircle.silentphone2.util.Constants;
 import com.silentcircle.silentphone2.util.DeviceHandling;
 import com.silentcircle.silentphone2.util.DialCodes;
-import com.silentcircle.silentphone2.util.LoadUserInfo;
 import com.silentcircle.silentphone2.util.PinnedCertificateHandling;
 import com.silentcircle.silentphone2.util.Utilities;
 import com.silentcircle.silentphone2.views.SearchEditTextLayout;
+import com.silentcircle.userinfo.LoadUserInfo;
+import com.silentcircle.userinfo.UserInfo;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Locale;
+import java.util.Set;
 
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
@@ -144,9 +152,10 @@ import javax.net.ssl.SSLContext;
 public class DialerActivity extends TransactionSafeActivity
         implements DialDrawerFragment.DrawerCallbacks, DialpadFragment.DialpadCallbacks,
         KeyManagerSupport.KeyManagerListener, View.OnClickListener, ListsFragment.HostInterface,
-        SpeedDialFragment.HostInterface, SearchFragment.HostInterface, OnDragDropListener, 
+        SearchFragment.HostInterface, OnDragDropListener,
         ViewPager.OnPageChangeListener, DialpadFragment.OnDialpadQueryChangedListener,
-        OnListFragmentScrolledListener, OnPhoneNumberPickerActionListener, TiviPhoneService.ServiceStateChangeListener {
+        OnListFragmentScrolledListener, OnPhoneNumberPickerActionListener, TiviPhoneService.ServiceStateChangeListener,
+        LoadUserInfo.Listener {
 
     private static final String TAG = DialerActivity.class.getSimpleName();
 
@@ -169,26 +178,32 @@ public class DialerActivity extends TransactionSafeActivity
     private static final String KEY_SEARCH_QUERY = "search_query";
     private static final String KEY_IS_DIALPAD_SHOWN = "is_dialpad_shown";
     private static final String KEY_IS_AUTO_DIAL = "is_auto_dial";
+    private static final String KEY_IN_SETTINGS_UI = "in_settings_ui";
 
     public static final String SHARED_PREFS_NAME = "com.silentcircle.dialer_preferences";
 
     /*
      * Codes for startActivityWithResult Intents
      */
-    private static final int PROVISIONING_RESULT = 1003;
-    private static final int KEY_STORE_CHECK = 1004;
-    private static final int RINGTONE_SELECTED = 1005;
-    private static final int DIAL_HELPER_SELECTED = 1006;
-    private static final int KEY_STORE_PASS_ACTION = 1007;
-//    private static final int HIDE_WELCOME = 1009;
+    public static final int PROVISIONING_RESULT = 1003;
+    public static final int KEY_STORE_CHECK = 1004;
+    public static final int RINGTONE_SELECTED = 1005;
+    public static final int DIAL_HELPER_SELECTED = 1006;
+    public static final int KEY_STORE_PASS_ACTION = 1007;
+//    public static final int HIDE_WELCOME = 1009;
+    public static final int MESSAGING_LOCK_CONFIGURATION_PASS_ACTION = 1010;
+    public static final int MESSAGE_RINGTONE_SELECTED = 1011;
 
     public static boolean mAutoAnswerForTesting;
     public static int mAutoAnsweredTesting;
 
-    public static String mNumber;
-    public static String mName;
+    public static String mUuid;
+    public static String mDisplayTn;
+    public static String mDisplayAlias;
+    public static String mDisplayName;
 
-    public static float mRefreshRate;
+    public static String[] mDomainsToRemove;
+
     /**
      * Fragment managing some content related to the dialer.
      */
@@ -198,6 +213,8 @@ public class DialerActivity extends TransactionSafeActivity
     private DrawerLayout mDrawerLayout;
     private View mDrawerView;
     private ListsFragment mListsFragment;
+
+    private LoadUserInfo mLoadUserInfo;
 
     // If true then we know this phone is provisioned. During onCreate we may set this to false.
     private boolean isProvisioned = true;
@@ -220,7 +237,7 @@ public class DialerActivity extends TransactionSafeActivity
     private boolean mPhoneIsBound;
     private TiviPhoneService mPhoneService;
     private static boolean mServiceStarted;  // set to true after call to startService(..., TiviPhoneService)
-//    private static boolean mUseBpForwarder;
+    private static boolean mForceUpdates;    // true after we forced a contacts update and refreshed user info
 
     // some internal features, usually not visible to user
     private boolean mEnableShowZid;
@@ -271,15 +288,14 @@ public class DialerActivity extends TransactionSafeActivity
     private Animation mSlideOut;
 
     private int mActionBarHeight;
-    
-    private boolean mIsLandscape;
-    private int mCurrentTabPosition;
 
     private boolean mIsDialpadShown;
     private boolean mShowDialpadOnResume;
 
     private boolean mInDialpadSearch;
     private boolean mInRegularSearch;
+    private boolean mIsInSettingsUi;
+
     private DialerDatabaseHelperOrig mDialerDatabaseHelper;
 
     private Toolbar mToolbar;
@@ -321,12 +337,28 @@ public class DialerActivity extends TransactionSafeActivity
                 return;
             }
             mPhoneService.addStateChangeListener(DialerActivity.this);
-            LoadUserInfo mLoadUserInfo = new LoadUserInfo(getBaseContext(), null);
-            mLoadUserInfo.loadExpirationInfo();
-            mDialDrawerFragment.setNumberName();
-            mDialDrawerFragment.activateTraversal();
-            mDialDrawerFragment.activateDropoutTone();
+            if (!mForceUpdates) {
+                if (mLoadUserInfo == null) {
+                    mLoadUserInfo = new LoadUserInfo(getApplicationContext(), true);
+                    mLoadUserInfo.addUserInfoListener(DialerActivity.this);
+                }
 
+                mLoadUserInfo.refreshUserInfo();
+            }
+            if (mDialDrawerFragment != null) {
+                mDialDrawerFragment.setNumberName();
+            }
+
+            /* Initialize TiVi library from settings in the preferences */
+            activateTraversal();
+            activateDropoutTone();
+            activateDebugSettings();
+
+            if (!mForceUpdates) {
+                FindDialHelper.setDialHelper(DialerActivity.this, false);
+                mForceUpdates = true;
+                mPhoneService.runContactsUpdater(true);
+            }
             if (provisioningDone) {
                 provisioningDone = false;
                 if (!isDrawerOpen()) {
@@ -335,12 +367,10 @@ public class DialerActivity extends TransactionSafeActivity
                 }
                 return;
             }
-            checkCallToNr(OutgoingCallReceiver.getCallToNumber(getBaseContext()), true, mDialpadFragment);
             if (mAutoDialRequested) {
                 mDialpadFragment.dialButtonPressed();
                 mAutoDialRequested = false;
             }
-            FindDialHelper.setDialHelper(DialerActivity.this);
         }
 
         public void onServiceDisconnected(ComponentName className) {
@@ -354,7 +384,7 @@ public class DialerActivity extends TransactionSafeActivity
     };
 
     private void doBindService() {
-        
+
         // Establish a connection with the service. We use an explicit
         // class name because we want a specific service implementation that
         // we know will be running in our own process (and thus won't be
@@ -370,7 +400,6 @@ public class DialerActivity extends TransactionSafeActivity
             mPhoneIsBound = false;
         }
     }
-
 
     /**
      * Listener used to send search queries to the phone search fragment.
@@ -426,7 +455,12 @@ public class DialerActivity extends TransactionSafeActivity
         public boolean onKey(View v, int keyCode, KeyEvent event) {
             if (keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_DOWN &&
                     TextUtils.isEmpty(mSearchView.getText().toString())) {
-                maybeExitSearchUi();
+                // Currently obsolete - we no longer have directory options, so always exit
+                // maybeExitSearchUi();
+                exitSearchUi();
+                DialerUtils.hideInputMethod(mParentLayout);
+
+                return true;
             }
             return false;
         }
@@ -439,6 +473,14 @@ public class DialerActivity extends TransactionSafeActivity
         AutoStart.setDisableAutoStart(true);                            // Don't auto start if we are started once
 
         super.onCreate(savedInstanceState);
+
+        //register for push notification if registration id has not been saved yet.
+        //This may not need to unregister as Ed suggested in the email.
+//        String regId = SPAPreferences.getInstance(this).getRegistrationId();
+//        if(TextUtils.isEmpty(regId)) {
+//            C2DMUtil.registerC2DM(this);
+//        }
+
         String action = getIntent().getAction();
 
         mRemoveAccount = ACTION_REMOVE_ACCOUNT.equals(action);
@@ -446,17 +488,23 @@ public class DialerActivity extends TransactionSafeActivity
         mStartOnBoot = AutoStart.ON_BOOT.equals(action);
         mStartForMessaging = START_FOR_MESSAGING.equals(action);
 
-        if (InCallActivity.ADD_CALL_ACTION.equals(action)
-                || Action.VIEW_CONVERSATIONS.equals(Action.from(getIntent()))) {
+        if ((InCallActivity.ADD_CALL_ACTION.equals(action)
+                || Action.VIEW_CONVERSATIONS.equals(Action.from(getIntent())))
+                && TiviPhoneService.calls.getCallCount() > 0) {
             // This is a phone call screen to add a call, thus perform some specific handling
             int windowFlags = WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED;
             getWindow().addFlags(windowFlags);
         }
 
-        mRefreshRate = getWindowManager().getDefaultDisplay().getRefreshRate();
-        
         Utilities.setTheme(this);
         ConfigurationUtilities.initializeDebugSettings(getBaseContext());
+
+        if (Build.VERSION.SDK_INT >= 21 && ConfigurationUtilities.mUseDevelopConfiguration) {
+            getWindow().setStatusBarColor(getResources().getColor(android.R.color.holo_red_dark));
+        }
+
+        if (mDomainsToRemove == null)
+            mDomainsToRemove = getResources().getStringArray(R.array.domains_to_remove);
 
         Log.d(TAG, "Debug: " + ConfigurationUtilities.mTrace + ", language: " + Locale.getDefault().getLanguage()
                 + ", develop config: " + ConfigurationUtilities.mUseDevelopConfiguration + ", build commit: +-+- " +
@@ -465,12 +513,12 @@ public class DialerActivity extends TransactionSafeActivity
         TiviPhoneService.initJNI(getBaseContext());
         isProvisioned = !(TiviPhoneService.phoneService == null && TiviPhoneService.doCmd("isProv") == 0);
 
-        mIsLandscape = getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE;
+        boolean isLandscape = getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE;
 
         if (ConfigurationUtilities.mTrace) Log.d(TAG, "Received intent: " + getIntent());
 
         final boolean isLayoutRtl = Utilities.isRtl();
-        if (mIsLandscape) {
+        if (isLandscape) {
             mSlideIn = AnimationUtils.loadAnimation(this,
                     isLayoutRtl ? R.anim.dialpad_slide_in_left : R.anim.dialpad_slide_in_right);
             mSlideOut = AnimationUtils.loadAnimation(this,
@@ -513,6 +561,7 @@ public class DialerActivity extends TransactionSafeActivity
             mInDialpadSearch = savedInstanceState.getBoolean(KEY_IN_DIALPAD_SEARCH_UI);
             mShowDialpadOnResume = savedInstanceState.getBoolean(KEY_IS_DIALPAD_SHOWN);
             mAutoDialRequested = savedInstanceState.getBoolean(KEY_IS_AUTO_DIAL);
+            mIsInSettingsUi = savedInstanceState.getBoolean(KEY_IN_SETTINGS_UI);
         }
         // Register even if not key manager may not be active
         KeyManagerSupport.addListener(this);
@@ -543,23 +592,28 @@ public class DialerActivity extends TransactionSafeActivity
         // Store this in a static variable to not call PreferenceManager#getDefaultSharedPreferences
         // for every error view
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        mShowErrors = prefs.getBoolean(DialDrawerFragment.SHOW_ERRORS, false);
+        mShowErrors = prefs.getBoolean(SettingsFragment.SHOW_ERRORS, false);
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        mDialerDatabaseHelper.startSmartDialUpdateThread();
 
-        if (mDialpadFragment != null)
-            checkCallToNr(OutgoingCallReceiver.getCallToNumber(getBaseContext()), true, mDialpadFragment);
+        if(mDialerDatabaseHelper != null) {
+            mDialerDatabaseHelper.startSmartDialUpdateThread();
+        }
 
         if (mShowDialpadOnResume) {
             showDialpadFragment(false, mAutoDialRequested /* autoDial */);
             mShowDialpadOnResume = false;
         }
+
         if (mInRegularSearch) {
             updateSearchFragmentSettings();
+        }
+
+        if (isInSettingsUi()) {
+            enterSettingsUI();
         }
     }
 
@@ -572,6 +626,9 @@ public class DialerActivity extends TransactionSafeActivity
     protected void onDestroy() {
         super.onDestroy();
         mDestroyed = true;
+        if (mLoadUserInfo != null) {
+            mLoadUserInfo.removeUserInfoListener(this);
+        }
         KeyManagerSupport.removeListener(this);
         doUnbindService();
     }
@@ -585,6 +642,7 @@ public class DialerActivity extends TransactionSafeActivity
         outState.putBoolean(KEY_IN_DIALPAD_SEARCH_UI, mInDialpadSearch);
         outState.putBoolean(KEY_IS_DIALPAD_SHOWN, mIsDialpadShown);
         outState.putBoolean(KEY_IS_AUTO_DIAL, mAutoDialRequested);
+        outState.putBoolean(KEY_IN_SETTINGS_UI, isInSettingsUi());
     }
 
     @Override
@@ -618,20 +676,6 @@ public class DialerActivity extends TransactionSafeActivity
             else {
                 keyManagerChecked();
             }
-            return;
-        }
-
-        if (requestCode == RINGTONE_SELECTED) {
-            if (data == null)
-                return;
-            Uri tone = data.getParcelableExtra(RingtoneManager.EXTRA_RINGTONE_PICKED_URI);
-            mDialDrawerFragment.updateRingtone(tone);
-        }
-        if (requestCode == DIAL_HELPER_SELECTED) {
-            mDialDrawerFragment.updateDialHelper();
-        }
-        if (requestCode == KEY_STORE_PASS_ACTION) {
-            mDialDrawerFragment.prepareKeyStoreOptions();
         }
     }
 
@@ -642,18 +686,6 @@ public class DialerActivity extends TransactionSafeActivity
     public void onDrawerItemSelected(int type, Object... params) {
         Intent intent;
         switch (type) {
-            case DialDrawerFragment.DrawerCallbacks.RINGTONE:
-                Uri selected = (Uri)params[0];
-                intent = new Intent(RingtoneManager.ACTION_RINGTONE_PICKER);
-                intent.putExtra(RingtoneManager.EXTRA_RINGTONE_TYPE, RingtoneManager.TYPE_RINGTONE);
-                intent.putExtra(RingtoneManager.EXTRA_RINGTONE_EXISTING_URI, selected);
-                intent.putExtra(RingtoneManager.EXTRA_RINGTONE_DEFAULT_URI, Settings.System.DEFAULT_RINGTONE_URI);
-                intent.putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_SILENT, false);
-                intent.putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_DEFAULT, true);
-
-                startActivityForResult(intent, RINGTONE_SELECTED);
-                break;
-
             case DialDrawerFragment.DrawerCallbacks.DIAL_HELPER:
                 intent = new Intent(this, DialHelperSelectorActivity.class);
                 startActivityForResult(intent, DIAL_HELPER_SELECTED);
@@ -666,33 +698,51 @@ public class DialerActivity extends TransactionSafeActivity
                 startActivityForResult(intent, KEY_STORE_PASS_ACTION);
                 break;
 
+            case DialDrawerFragment.DrawerCallbacks.MESSAGING_LOCK_SCREEN:
+                action = (String)params[0];
+                intent = new Intent(this, KeyStoreActivity.class);
+                intent.setAction(action);
+                startActivityForResult(intent, MESSAGING_LOCK_CONFIGURATION_PASS_ACTION);
+                break;
+
             case DialDrawerFragment.DrawerCallbacks.RE_PROVISION:
                 mDrawerLayout.closeDrawer(mDrawerView);
                 mReProvisioningRequested = true;
+                exitSettingsUi();
+                findViewById(R.id.floating_action_button_container).setVisibility(View.INVISIBLE);
+                FragmentManager fm = getFragmentManager();
+                FragmentTransaction ft = fm.beginTransaction();
+                ft.hide(mListsFragment).commitAllowingStateLoss();
+                checkDeviceStatus();
+                break;
+
+            case DialDrawerFragment.DrawerCallbacks.DEVELOPER_SSL_DEBUG:
+                TiviPhoneService.doCmd("debug.option=ssl_level:" + (int)params[0]);
+                break;
+
+            case DialDrawerFragment.DrawerCallbacks.DEVELOPER_AXO_DEBUG:
+                TiviPhoneService.doCmd("debug.option=axo_level:" + (int)params[0]);
+                break;
+
+            case DialDrawerFragment.DrawerCallbacks.SETTINGS:
+                enterSettingsUI();
                 break;
         }
     }
 
     @Override
     public void onDrawerStateChange(int action) {
-        if (action == DialDrawerFragment.DrawerCallbacks.CLOSED) {
-            if (mReProvisioningRequested) {
-                mReProvisioningRequested = false;
-                findViewById(R.id.floating_action_button_container).setVisibility(View.INVISIBLE);
-                FragmentManager fm = getFragmentManager();
-                FragmentTransaction ft = fm.beginTransaction();
-                ft.hide(mListsFragment).commitAllowingStateLoss();
-                checkDeviceStatus();
-            }
-        }
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        if (mDialDrawerFragment != null && !mDialDrawerFragment.isDrawerOpen()) {
+        if (!isDrawerOpen()) {
             getMenuInflater().inflate(R.menu.dialpad, menu);
             restoreActionBar();
             return true;
+        }
+        if (isDrawerOpen() && mDialDrawerFragment.isVisible()) {
+            return false;
         }
         if (mPendingSearchViewQuery != null) {
             mSearchView.setText(mPendingSearchViewQuery);
@@ -705,12 +755,10 @@ public class DialerActivity extends TransactionSafeActivity
     public boolean onPrepareOptionsMenu(Menu menu) {
         final MenuItem item = menu.findItem(R.id.dial_menu_search);
         if (item != null) {
-            if (isInSearchUi()) {
-                item.setVisible(false);
-            }
-            else {
-                item.setVisible(true);
-            }
+            item.setVisible(!(isInSearchUi() || isInSettingsUi()));
+        }
+        if (isInSettingsUi()) {
+            mDrawerToggle.setDrawerIndicatorEnabled(false);
         }
         return super.onPrepareOptionsMenu(menu);
     }
@@ -727,6 +775,9 @@ public class DialerActivity extends TransactionSafeActivity
          * the state change to slide in the soft keyboard {@see onDrawerStateChange}
          */
         switch (item.getItemId()) {
+            case android.R.id.home:
+                onBackPressed();
+                return true;
 
             case R.id.dial_menu_search:
                 if (!isInSearchUi()) {
@@ -735,22 +786,6 @@ public class DialerActivity extends TransactionSafeActivity
                             false /* conversations flag */);
                     invalidateOptionsMenu();
                 }
-                return true;
-
-            case R.id.dial_menu_exit:
-                exitApplication();
-                return true;
-
-            case R.id.dial_menu_production:
-                ConfigurationUtilities.switchToProduction(getBaseContext());
-                mDrawerLayout.closeDrawer(mDrawerView);
-                removeProvisioningAndRestart(false);
-                return true;
-
-            case R.id.dial_menu_develop:
-                ConfigurationUtilities.switchToDevelop(getBaseContext(), ConfigurationUtilities.DEVELOPMENT_NETWORK);
-                mDrawerLayout.closeDrawer(mDrawerView);
-                removeProvisioningAndRestart(false);
                 return true;
 
             case R.id.dial_menu_answer_on:
@@ -767,6 +802,22 @@ public class DialerActivity extends TransactionSafeActivity
                 break;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+
+    public void switchConfiguration() {
+        Log.d(TAG, "Switch configuration, currently using development: "
+                + ConfigurationUtilities.mUseDevelopConfiguration);
+        if (ConfigurationUtilities.mUseDevelopConfiguration) {
+            ConfigurationUtilities.switchToProduction(getBaseContext());
+            mDrawerLayout.closeDrawer(mDrawerView);
+            removeProvisioningAndRestart(false);
+        }
+        else {
+            ConfigurationUtilities.switchToDevelop(getBaseContext(), ConfigurationUtilities.DEVELOPMENT_NETWORK);
+            mDrawerLayout.closeDrawer(mDrawerView);
+            removeProvisioningAndRestart(false);
+        }
     }
 
     @Override
@@ -791,22 +842,44 @@ public class DialerActivity extends TransactionSafeActivity
     public void onBackPressed() {
         if (mDialpadFragment != null && !mDialpadFragment.isHidden()) {
             if (TextUtils.isEmpty(mSearchQuery) ||
-                    (mSmartDialSearchFragment != null && mSmartDialSearchFragment.isVisible()
-                            && mSmartDialSearchFragment.getAdapter().getCount() == 0)) {
-                exitSearchUi();
+                    (mSmartDialSearchFragment != null && mSmartDialSearchFragment.isVisible())) {
+                if (mDialpadFragment.isDialpadVisible() &&
+                        mSmartDialSearchFragment.getAdapter().getCount() > 0) {
+                    mDialpadFragment.setDialpadVisible(false);
+
+                    return;
+                } else {
+                    exitSearchUi();
+                }
             }
+
             hideDialpadFragment(true, false);
         }
         else if (isInSearchUi()) {
             exitSearchUi();
             DialerUtils.hideInputMethod(mParentLayout);
         }
+        else if (isInSettingsUi()) {
+            exitSettingsUi();
+        }
         else {
-            super.onBackPressed();
+            boolean handled = false;
+            if (mDrawerLayout != null) {
+                if (mDrawerLayout.isDrawerOpen(GravityCompat.START)) {
+                    mDrawerLayout.closeDrawer(GravityCompat.START);
+                    handled = true;
+                }
+            }
+
+            if (!handled) {
+                super.onBackPressed();
+            }
         }
     }
 
-    public boolean isDrawerOpen() { return mDialDrawerFragment != null && mDialDrawerFragment.isDrawerOpen(); }
+    public boolean isDrawerOpen() {
+        return mDrawerLayout != null && mDrawerLayout.isDrawerOpen(GravityCompat.START);
+    }
 
     // If Dialer detects special prefix it calls internal handling
     public void internalCall(String internalCommand) {
@@ -828,25 +901,56 @@ public class DialerActivity extends TransactionSafeActivity
         }
     }
 
-    public void doCall(String callCommand, String destination) {
-        if (!LoadUserInfo.isOutboundCallsEnabled(getApplicationContext())) {
-            showDialog(getString(R.string.information_dialog), getString(R.string.basic_account_info),
-                    android.R.string.ok, -1);
-            return;
-        }
+    public void doCall(String callCommand, String destination, boolean isOcaCall) {
         if (mPhoneIsBound) {
             Utilities.audioMode(getBaseContext(), true);        // Switch to IN-COMMUNICATION mode
-            Utilities.asyncCommand(callCommand);
+
+            AsyncTasks.asyncCommand(callCommand);
             if (mCallActionIntent) {
                 setResult(RESULT_OK);
                 finish();
             }
-            mPhoneService.showCallScreen(TiviPhoneService.CALL_TYPE_OUTGOING, destination);
+            mPhoneService.showCallScreen(TiviPhoneService.CALL_TYPE_OUTGOING, destination, isOcaCall);
         }
     }
 
     public boolean isAdvancedSettings() {
         return mAdvancedSettings;
+    }
+
+    /* finalize application and exit */
+    public void exit() {
+        mDrawerLayout.closeDrawer(mDrawerView);
+        exitApplication();
+        finish();
+    }
+
+    @SuppressWarnings("deprecation")
+    public void wipePhone() {
+        // This is only visible for non-production users who are API 19+ (4.4+)
+        mDrawerLayout.closeDrawer(mDrawerView);
+
+        // Delete the account from the account manager
+        AccountManager am = AccountManager.get(this);
+        Account[] accounts = am.getAccountsByType(AccountConstants.ACCOUNT_TYPE);
+        // We force only one account to be created of {@link AccountConstants#ACCOUNT_TYPE}
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
+            am.removeAccountExplicitly(accounts[0]);
+        } else {
+            am.removeAccount(accounts[0], null, null);
+        }
+
+        // Clear app data (only for API 19+)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            if (!((ActivityManager) getSystemService(ACTIVITY_SERVICE)).clearApplicationUserData()) {
+                Toast.makeText(this, R.string.wipe_data_failed, Toast.LENGTH_LONG).show();
+            }
+        } else {
+            // Sanity toast
+            Toast.makeText(this, R.string.wipe_data_failed, Toast.LENGTH_LONG).show();
+        }
+
+        finish();
     }
 
     /* ****************************************************************************
@@ -868,11 +972,37 @@ public class DialerActivity extends TransactionSafeActivity
     @SuppressLint("CommitPrefEdits")
     private void removeProvisioningAndRestart(final boolean force) {
         if (force) {
+//             TODO: These are the beginning steps of a non-clear-data solution of logging out
+//             FIXME: more will have to be decided
+//            // Clear call log
+//            getContentResolver().delete(ScCallLog.ScCalls.CONTENT_URI, null, null);
+//
+//            // Clear conversation repository
+//            AxoMessaging axoMessaging = AxoMessaging.getInstance(this);
+//
+//            if (axoMessaging != null) {
+//                ConversationRepository conversations = axoMessaging.getConversations();
+//
+//                if (conversations != null) {
+//                    conversations.clear();
+//                }
+//            }
+//
+//            // Flag AxoMessaging instance to no longer be ready
+//            axoMessaging.setReady(false);
+//
+//            // Flag AxoMessaging instance to no longer be registered
+//            axoMessaging.setRegistered(false);
+//
+//            // Clear ZRTP cache
+//            TiviPhoneService.doCmd("*##*9787257*");
+
+            // Delete shared key data
             KeyManagerSupport.deleteSharedKeyData(getContentResolver(), ConfigurationUtilities.getShardAuthTag());
         }
         else {
             final SharedPreferences prefs =  getSharedPreferences(ProvisioningActivity.PREF_KM_API_KEY, Context.MODE_PRIVATE);
-            prefs.edit().putString(ConfigurationUtilities.getReprovisioningNameKey(), mName).commit();
+            prefs.edit().putString(ConfigurationUtilities.getReprovisioningNameKey(), mUuid).commit();
         }
         TiviPhoneService.doCmd("*##*3357768*");         // remove existing provisioning files
         TiviPhoneService.doCmd(".exit");
@@ -882,8 +1012,7 @@ public class DialerActivity extends TransactionSafeActivity
         FindDialHelper.resetDialHelper();
 
         Utilities.Sleep(3000);
-        mName = null;
-        mNumber = null;
+        mUuid = null;
         // get the intent that started us and use it to restart
         Intent intent = getIntent();
         finish();
@@ -893,20 +1022,33 @@ public class DialerActivity extends TransactionSafeActivity
     // Reset in case Drawer window changed its state
     private void restoreActionBar() {
         ActionBar actionBar = getSupportActionBar();
-        if (actionBar == null || isInSearchUi())
+        if (actionBar == null || isInSearchUi() || isInSettingsUi())
             return;
         ((TextView)mToolbar.findViewById(R.id.title)).setText(getString(R.string.app_name));
+        mToolbar.findViewById(R.id.sub_title).setVisibility(View.VISIBLE);
 
-        if (TextUtils.isEmpty(mNumber))
-            mNumber = TiviPhoneService.getInfo(0, -1, "cfg.nr");
-        if (!TextUtils.isEmpty(mNumber)) {
-            String number = PhoneNumberHelper.formatNumber(mNumber, Locale.getDefault().getCountry());
-            mNumber = TextUtils.isEmpty(number) ? mNumber : number;  // if format number eats all data show raw number
+        // Get the user's UUID/name, store it in mUuid, UUID is not very readable at all.
+        if (TextUtils.isEmpty(mUuid)) {
+            mUuid = LoadUserInfo.getUuid();
         }
-        if (TextUtils.isEmpty(mName))
-            mName  = TiviPhoneService.getInfo(0, -1, "cfg.un");
-        if (!TextUtils.isEmpty(mName)) {
-            ((TextView)mToolbar.findViewById(R.id.sub_title)).setText(mName + (!TextUtils.isEmpty(mNumber) ? "/" + mNumber : ""));
+
+        if (TextUtils.isEmpty(mDisplayTn)) {
+            mDisplayTn = LoadUserInfo.getDisplayTn();
+        }
+
+        if (TextUtils.isEmpty(mDisplayAlias)) {
+            mDisplayAlias = LoadUserInfo.getDisplayAlias();
+        }
+
+        if (TextUtils.isEmpty(mDisplayName)) {
+            mDisplayName = LoadUserInfo.getDisplayName();
+        }
+
+        if (!TextUtils.isEmpty(mDisplayAlias)) {
+            final String subtitle = mDisplayAlias +
+                    (!TextUtils.isEmpty(mDisplayTn) ? "/" + mDisplayTn : "");
+
+            ((TextView) mToolbar.findViewById(R.id.sub_title)).setText(subtitle);
             Utilities.setSubtitleColor(getResources(), mToolbar);
         }
     }
@@ -921,7 +1063,7 @@ public class DialerActivity extends TransactionSafeActivity
             mServiceStarted = true;            // service sends ":reg"
         }
         else if (TiviPhoneService.phoneService != null && TiviPhoneService.phoneService.isReady())
-            Utilities.asyncCommand(":reg"); // doCmd(":reg"); - do it async to avoid ANR in case network is slow
+            AsyncTasks.asyncCommand(":reg"); // doCmd(":reg"); - do it async to avoid ANR in case network is slow
     }
 
     // This is the second step of the of onCreate flow.
@@ -949,6 +1091,7 @@ public class DialerActivity extends TransactionSafeActivity
             startActivityForResult(provisioningIntent, PROVISIONING_RESULT);
             return;
         }
+
         startPhoneService();             // start phone service
         if (mStartOnBoot || mStartForMessaging) {
             finish();
@@ -960,26 +1103,80 @@ public class DialerActivity extends TransactionSafeActivity
         checkMigration();               // **** Migration support contacts data
     }
 
+    ActionBarDrawerToggle mDrawerToggle;
+
     // Called after service was connected, actually the third part of onCreate
     @SuppressWarnings("deprecation")
     private void doLayout() {
         try {
             setContentView(R.layout.activity_dialer_new);
-        } catch (InflateException ignore) {}
+        } catch (InflateException exception) {
+            Log.e(TAG, "Error inflating the activity", exception);
+
+            finish();
+            return;
+        }
 
         // Set up the drawer.
         mDialDrawerFragment = (DialDrawerFragment)getFragmentManager().findFragmentById(R.id.dial_content_drawer);
         mDrawerLayout = (DrawerLayout)findViewById(R.id.drawer_layout);
+
         mDrawerView = findViewById(R.id.dial_content_drawer);
-        mDialDrawerFragment.setUp(mDrawerView, mDrawerLayout);
         mToolbar = (Toolbar)findViewById(R.id.dialer_toolbar);
         setSupportActionBar(mToolbar);
 
+        mDrawerToggle = new ActionBarDrawerToggle(
+                this,
+                mDrawerLayout,
+                mToolbar,
+                R.string.navigation_drawer_open,
+                R.string.navigation_drawer_close) {
+
+            /** Called when a drawer has settled in a completely closed state. */
+            public void onDrawerClosed(View view) {
+                super.onDrawerClosed(view);
+                invalidateOptionsMenu(); // creates call to onPrepareOptionsMenu()
+            }
+
+            /** Called when a drawer has settled in a completely open state. */
+            public void onDrawerOpened(View drawerView) {
+                super.onDrawerOpened(drawerView);
+                invalidateOptionsMenu(); // creates call to onPrepareOptionsMenu()
+                if (mDialDrawerFragment != null) {
+                    mDialDrawerFragment.setNumberName();
+                    mDialDrawerFragment.setUserInfo();
+                }
+            }
+        };
+
+        mDrawerToggle.setHomeAsUpIndicator(R.drawable.ic_arrow_back_black_24dp);
+        mDrawerToggle.setToolbarNavigationClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                onBackPressed();
+            }
+        });
+
+        mDrawerLayout.setDrawerListener(mDrawerToggle);
+
+        // Defer code dependent on restoration of previous instance state.
+        mDrawerLayout.post(new Runnable() {
+            @Override
+            public void run() {
+                mDrawerToggle.syncState();
+            }
+        });
+
         ActionBar actionBar = getSupportActionBar();
+        if (actionBar == null)
+            throw new AssertionError("Fatal: Action bar is null.");
+
+        //noinspection ConstantConditions
         actionBar.setCustomView(R.layout.search_edittext);
         actionBar.setDisplayShowTitleEnabled(false);
         actionBar.setDisplayHomeAsUpEnabled(true);
-        /*actionBar.setHomeAsUpIndicator(R.drawable.ic_drawer_dark);*/
+        actionBar.setHomeButtonEnabled(true);
+        actionBar.setDisplayShowHomeEnabled(true);
 
         SearchEditTextLayout searchEditTextLayout = (SearchEditTextLayout)actionBar.getCustomView();
         searchEditTextLayout.setPreImeKeyListener(mSearchEditTextLayoutListener);
@@ -1036,6 +1233,9 @@ public class DialerActivity extends TransactionSafeActivity
         fragmentManager.executePendingTransactions();
         DeviceHandling.checkAndSetAec();
         processIntent(getIntent());
+//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+//            showBatteryOptInfo();
+//        }
     }
 
     // We may need to enhance the "checkKeyManager" process in case we use keys to encrypt
@@ -1100,27 +1300,31 @@ public class DialerActivity extends TransactionSafeActivity
 
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     @SuppressWarnings("deprecation")
-    private static boolean checkCallToNr(String number, boolean pstnViaOca, DialpadFragment pad) {
+    /**
+     * TODO: Extract a util out of this to be used in other places
+     */
+    public static boolean checkCallToNr(String number, DialpadFragment pad) {
         if (TextUtils.isEmpty(number))
             return false;
 
         number = number.trim();
         if (Utilities.isUriNumber(number)) {
-            number = Utilities.removeSipParts(number); // number.replace(getString(R.string.sc_sip_domain_0), "");
+            number = Utilities.removeUriPartsSelective(number);
         }
         boolean wasModified = false;
         char firstChar = number.charAt(0);
+        String formatted = null;
         if (firstChar == '+' || Character.isDigit(firstChar)) {
             StringBuilder modified = new StringBuilder(20);
             wasModified = FindDialHelper.getDialHelper().analyseModifyNumberString(number, modified);
             if (wasModified) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
-                    number = PhoneNumberUtils.formatNumber(modified.toString(), Locale.getDefault().getCountry());
+                    formatted = PhoneNumberUtils.formatNumber(modified.toString(), Locale.getDefault().getCountry());
                 else
-                    number = PhoneNumberUtils.formatNumber(modified.toString());
+                    formatted = PhoneNumberUtils.formatNumber(modified.toString());
             }
         }
-        pad.setDestination(number, pstnViaOca);
+        pad.setDestination(formatted != null ? formatted : number);
         return wasModified;
     }
 
@@ -1159,17 +1363,18 @@ public class DialerActivity extends TransactionSafeActivity
         exitApplication();
     }
 
-    private String[] projection = {ContactsContract.Data.MIMETYPE,
+    private final String[] projection = {ContactsContract.Data.MIMETYPE,
             ContactsContract.Data.DATA1
     };
 
     private static final int MIME_TYPE = 0;
-    private static final int ASSERTED_NAME = 1;
+    private static final int NUMBER_OR_NAME = 1;
 
     private static final String PHONE_MIME = "vnd.android.cursor.item/com.silentcircle.phone";
     private static final String MSG_MIME = "vnd.android.cursor.item/com.silentcircle.message";
 
     private Intent intentProcessed;
+    private static String mBigMContactsHack;
     private void processIntent(Intent intent) {
         if (ConfigurationUtilities.mTrace) Log.v(TAG, "Process received intent: " + intent);
 
@@ -1192,23 +1397,50 @@ public class DialerActivity extends TransactionSafeActivity
         // put that one query in an async task ;-) .
         if (Intent.ACTION_VIEW.equals(action) &&
                 (MSG_MIME.equals(intent.getType()) || PHONE_MIME.equals(intent.getType()))) {
+            if (numberUri == null) {
+                finish();
+                return;
+            }
+
+            // ********** HACK ahead HACK ahead *********
+            // Android M Contacts seems to send the view intent twice and this would cause
+            // double calling or incorrect behaviour of back buttons. Try to ignore
+            // the second Intent. Unfortunately Android M sends the second Intent
+            // with different flags, depending of the state of this Activity. Thus
+            // use two different methods to check if this is a duplicate Intent.
+            // Need some more investigation on M for this.
+            if (Build.VERSION.SDK_INT == Build.VERSION_CODES.M) {
+                if ((intent.getFlags() & Intent.FLAG_ACTIVITY_BROUGHT_TO_FRONT) != 0) {
+                    if (ConfigurationUtilities.mTrace) Log.d(TAG, "Ignoring this intent from Contacts, issue in M - flag");
+                    mBigMContactsHack = null;
+                    finish();
+                    return;
+                }
+                //Received the same Intent twice - Thus is a HACK. Need to check why this happens on M
+                if (numberUri.toString().equals(mBigMContactsHack)) {
+                    if (ConfigurationUtilities.mTrace) Log.d(TAG, "Ignoring this intent from Contacts, issue in M - dup");
+                    mBigMContactsHack = null;
+                    finish();
+                    return;
+                }
+                mBigMContactsHack = numberUri.toString();
+            }
+            // ********** HACK above HACK above *********
+
             final Cursor cursor = getContentResolver().query(numberUri, projection, null, null, null);
             if (cursor != null && cursor.getCount() > 0) {
                 cursor.moveToFirst();
-                String assertedName = cursor.getString(ASSERTED_NAME);
+                String numberOrName = cursor.getString(NUMBER_OR_NAME);
                 String type = cursor.getString(MIME_TYPE);
                 cursor.close();
 
-                if (ConfigurationUtilities.mTrace) Log.d(TAG, "Found asserted name: " + assertedName + " (" + type + ")");
+                if (ConfigurationUtilities.mTrace) Log.d(TAG, "Name from DB receiving contacts intent: " + numberOrName + " (" + type + ")");
                 if (PHONE_MIME.equals(type)) {
                     action = SILENT_CALL_ACTION;
-                    numberUri = Uri.parse(assertedName);
+                    numberUri = Uri.parse(numberOrName);
                 }
                 else if (MSG_MIME.equals(type)) {
-                    Intent msgIntent = new Intent(this, ConversationActivity.class);
-                    Extra.PARTNER.to(msgIntent, assertedName);
-                    startActivity(msgIntent);
-                    finish();
+                    startConversationFromContacts(numberOrName);
                     return;
                 }
                 else {
@@ -1220,6 +1452,8 @@ public class DialerActivity extends TransactionSafeActivity
             if (cursor != null && !cursor.isClosed())
                 cursor.close();
         }
+        else
+            mBigMContactsHack = null;
 
         if (InCallActivity.ADD_CALL_ACTION.equals(action)) {
             mCallActionIntent = true;
@@ -1233,17 +1467,10 @@ public class DialerActivity extends TransactionSafeActivity
             return;
         }
 
-        // Check if this is a call from native contacts and user decided to have a secure call
-        boolean pstnViaOca = false;
-        String pstnNumber = null;
-        if (OutgoingCallReceiver.OCA_CALL.equals(action)) {
-            pstnNumber = intent.getStringExtra(OutgoingCallReceiver.PSTN_NUMBER);
-            pstnViaOca = true;
-        }
         // If the Intent does not contain a number information and the number of active calls is
         // >= 1 then restart the InCall activity. Activities were destroyed by some user action (recent
         // app list), not by some device action like rotation.
-        if (numberUri == null && !pstnViaOca) {
+        if (numberUri == null) {
             if (TiviPhoneService.calls.getCallCount() >= 1) {
                 Intent forward = new Intent(intent);
                 Bundle bundle = new Bundle();
@@ -1257,37 +1484,66 @@ public class DialerActivity extends TransactionSafeActivity
             }
             return;
         }
-        String number = (!pstnViaOca) ? numberUri.getSchemeSpecificPart() : pstnNumber;
 
-        if (number == null || mDialpadFragment == null)
+        String scheme = numberUri.getScheme();
+        String number = numberUri.getSchemeSpecificPart();
+        String rawNumber = number;
+
+        String[] numberFields = Utilities.splitFields(number, ";");
+
+        if (numberFields == null || mDialpadFragment == null)
             return;
+        number = numberFields[0];
 
-        if (pstnViaOca || SILENT_CALL_ACTION.equals(action) || SILENT_EDIT_BEFORE_CALL_ACTION.equals(action)) {
-            boolean wasModified = checkCallToNr(number, pstnViaOca, mDialpadFragment);
+        Set<String> categories = intent.getCategories();
+        boolean fromThirdParty = Intent.ACTION_DIAL.equals(action)
+                || Intent.ACTION_CALL.equals(action)
+                || (Intent.ACTION_VIEW.equals(action)
+                        && (categories != null && categories.contains(Intent.CATEGORY_BROWSABLE)));
+
+        boolean needsAssist = TextUtils.isDigitsOnly(number) && (scheme != null && scheme.equalsIgnoreCase("tel"));
+
+        if (SILENT_CALL_ACTION.equals(action) || SILENT_EDIT_BEFORE_CALL_ACTION.equals(action) || fromThirdParty) {
+
+            // This is the case if the user requests a call to a specified device, e.g. from
+            // messaging device status display. This number string contains a device-id part.
+            if (intent.getBooleanExtra(NO_NUMBER_CHECK, false) && !fromThirdParty) {
+                mDialpadFragment.setDestination(rawNumber);     // the "raw" Number string
+                if (!mPhoneIsBound)                             // Start dialing if phone service is ready (bound)
+                    mAutoDialRequested = true;
+                else
+                    mDialpadFragment.dialButtonPressed();
+                return;
+            }
+            boolean wasModified = checkCallToNr(number, mDialpadFragment);
 
             mCallActionIntent = true;
-            if (pstnViaOca || SILENT_CALL_ACTION.equals(action)) {
+            if (SILENT_CALL_ACTION.equals(action)) {
                 if (!wasModified) {
-                    if (!mPhoneIsBound)                      // Start dialing if phone service is ready (bound)
+                    if (!mPhoneIsBound)                         // Start dialing if phone service is ready (bound)
                         mAutoDialRequested = true;
                     else
                         mDialpadFragment.dialButtonPressed();
                 }
                 else {
-                    showDialpadFragment(true /* animate */, true /* autoDial */);
+                    showDialpadFragment(true /* animate */, !needsAssist /* autoDial */);
                 }
             }
             else
-                showDialpadFragment(true, true);
+                showDialpadFragment(true, !fromThirdParty);
         }
     }
 
     private void openActionBarQueryField() {
         ActionBar actionBar = getSupportActionBar();
+        if (actionBar == null)
+            return;
         actionBar.setDisplayShowCustomEnabled(true);
+        actionBar.setDisplayHomeAsUpEnabled(false);
         ((TextView)mToolbar.findViewById(R.id.title)).setText(null);
         ((TextView)mToolbar.findViewById(R.id.sub_title)).setText(null);
-        ((SearchEditTextLayout) actionBar.getCustomView()).expand(true /* animate */, true /* requestFocus */);
+        ((SearchEditTextLayout) actionBar.getCustomView()).expand(false /* animate */, true /* requestFocus */);
+        ((SearchEditTextLayout) actionBar.getCustomView()).showBackButton(false);
     }
 
     /* *******************************************************************
@@ -1346,6 +1602,30 @@ public class DialerActivity extends TransactionSafeActivity
     public void onKeyManagerUnlockRequest() {}
 
     /**
+     * Listener that receives the data if OCA minutes are available from LoadUserInfo.
+     *
+     * @param userInfo A {@link UserInfo} object
+     * @param errorInfo   If not {@code null} then an error occurred, minutes data invalid,
+     *                    this shows the error reason
+     * @param silent      Should the user see anything?
+     */
+    @Override
+    public void onUserInfo(UserInfo userInfo, String errorInfo, boolean silent) {
+        if (ConfigurationUtilities.mTrace) Log.d(TAG, "onUserInfo, errorInfo " + errorInfo);
+
+        if (errorInfo != null) {
+            return;
+        }
+
+        mUuid = userInfo.getUuid();
+        mDisplayTn = userInfo.getDisplayTn();
+        mDisplayAlias = userInfo.getDisplayAlias();
+        mDisplayName = userInfo.getDisplayName();
+
+        restoreActionBar();
+    }
+
+    /**
      * Private Helper class that implements the actions for service state changes.
      *
      * This runs on the UI thread.
@@ -1369,9 +1649,17 @@ public class DialerActivity extends TransactionSafeActivity
         }
 
         public void run() {
+            if (TiviPhoneService.calls.getCallCount() == 0) {
+                int windowFlags = WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED;
+                getWindow().clearFlags(windowFlags);
+            }
+
             if (msg != TiviPhoneService.CT_cb_msg.eReg)
                 return;
             Utilities.setSubtitleColor(getResources(), mToolbar);
+            if (mDialDrawerFragment != null) {
+                mDialDrawerFragment.setOnlineStatus();
+            }
         }
     }
 
@@ -1393,15 +1681,8 @@ public class DialerActivity extends TransactionSafeActivity
             if (data != null) {
                 try {
                     String devAuthorization = new String(data, "UTF-8").trim();
-                    if (ConfigurationUtilities.mTrace)
-                        Log.d(TAG, "Authentication data (API key) : " + devAuthorization);
-//                    data = KeyManagerSupport.getSharedKeyData(getContentResolver(), ConfigurationUtilities.getShardDevIdTag());
-//                    if (data == null) {
-//                        showDialog(getString(R.string.information_dialog), getString(R.string.provisioning_no_data),
-//                                android.R.string.ok, -1);
-//                        return;
-//                    }
-//                    String deviceId = new String(data, "UTF-8").trim();
+                    if (ConfigurationUtilities.mTrace) Log.d(TAG, "Authentication data (API key) : " + devAuthorization);
+
                     // Compute device id from existing data, i.e. don't create a new instance dev id
                     // because this is a check for an existing device
                     String deviceId = Utilities.hashMd5(TiviPhoneService.getInstanceDeviceId(DialerActivity.this, false));
@@ -1461,14 +1742,14 @@ public class DialerActivity extends TransactionSafeActivity
                 removeProvisioningAndRestart(false);
             }
             else if(result == Constants.NO_NETWORK_CONNECTION) {
-                showDialog(getString(R.string.information_dialog), getString(R.string.connected_to_network), android.R.string.ok, -1);
+                showDialog(R.string.information_dialog, R.string.connected_to_network, android.R.string.ok, -1);
             }
             else if (result == HttpsURLConnection.HTTP_FORBIDDEN || result == HttpsURLConnection.HTTP_NOT_FOUND) {
                 if (ConfigurationUtilities.mTrace) Log.d(TAG, "Device status check - not found on provisioning server");
                 showDeviceCheckInfo();
             }
             else {
-                showDialog(getString(R.string.information_dialog), getString(R.string.connected_to_network),
+                showDialog(R.string.information_dialog, R.string.connected_to_network,
                         android.R.string.ok, -1);
             }
         }
@@ -1480,10 +1761,14 @@ public class DialerActivity extends TransactionSafeActivity
         errMsg.show(fragmentManager, "SilentPhoneDeviceCheck");
     }
 
-    private void showDialog(String title, String msg, int positiveBtnLabel, int negativeBtnLabel) {
-        InfoMsgDialogFragment infoMsg = InfoMsgDialogFragment.newInstance(title, msg, positiveBtnLabel, negativeBtnLabel);
+    private void showDialog(int titleResId, int msgResId, int positiveBtnLabel, int negativeBtnLabel) {
+        InfoMsgDialogFragment infoMsg = InfoMsgDialogFragment.newInstance(titleResId, msgResId, positiveBtnLabel, negativeBtnLabel);
         FragmentManager fragmentManager = getFragmentManager();
         infoMsg.show(fragmentManager, TAG);
+
+        // Make possible links clickable
+        fragmentManager.executePendingTransactions();
+        ((TextView) infoMsg.getDialog().findViewById(android.R.id.message)).setMovementMethod(LinkMovementMethod.getInstance());
     }
 
     public static class DeviceStatusInfo extends DialogFragment {
@@ -1533,28 +1818,63 @@ public class DialerActivity extends TransactionSafeActivity
         }
     }
 
+    // Called only for Android M or above
+    private void showBatteryOptInfo() {
+        IgnoreBatteryOptInfo infoMsg = IgnoreBatteryOptInfo.newInstance(getString(R.string.battery_info));
+        FragmentManager fragmentManager = getFragmentManager();
+        infoMsg.show(fragmentManager, "IgnoreBatteryOptInfo");
 
-    // May use it at a later time - if we like to have a splash screen
-//    private static class InternalHandler extends Handler {
-//        private final WeakReference<DialerActivity> mTarget;
-//
-//        private long prevTime = 0;
-//
-//        InternalHandler(DialerActivity parent) {
-//            mTarget = new WeakReference<>(parent);
-//        }
-//
-//        @Override
-//        public void handleMessage(Message msg) {
-//            DialerActivity parent = mTarget.get();
-//            if (parent == null)
-//                return;
-//
-//            if (msg.what == HIDE_WELCOME) {
-//                parent.findViewById(R.id.logo_container).setVisibility(View.GONE);
-//            }
-//        }
-//    }
+    }
+
+    public static class IgnoreBatteryOptInfo extends DialogFragment {
+        private DialerActivity mParent;
+
+        public static IgnoreBatteryOptInfo newInstance(String msg) {
+            IgnoreBatteryOptInfo f = new IgnoreBatteryOptInfo();
+
+            Bundle args = new Bundle();
+            args.putString("MESSAGE", msg);
+            f.setArguments(args);
+
+            return f;
+        }
+
+        public IgnoreBatteryOptInfo() {
+        }
+
+        @Override
+        public void onAttach(Activity activity) {
+            super.onAttach(activity);
+            mParent = (DialerActivity)activity;
+        }
+
+        @TargetApi(Build.VERSION_CODES.M)
+        @Override
+        public Dialog onCreateDialog(Bundle savedInstanceState) {
+            // Use the Builder class for convenient dialog construction
+            AlertDialog.Builder builder = new AlertDialog.Builder(mParent);
+            Bundle args = getArguments();
+            if (args == null)
+                return null;
+            builder.setTitle(getString(R.string.provisioning_info))
+                    .setMessage(args.getString("MESSAGE"))
+                    .setPositiveButton(getString(android.R.string.ok), new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            String packageName = mParent.getPackageName();
+                            PowerManager pm = (PowerManager) mParent.getSystemService(Context.POWER_SERVICE);
+                            if (!pm.isIgnoringBatteryOptimizations(packageName)) {
+                                Intent intent = new Intent();
+                                intent.setAction(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
+                                intent.setData(Uri.parse("package:" + packageName));
+                                startActivity(intent);
+                            }
+                        }
+                    });
+            // Create the AlertDialog object and return it
+            return builder.create();
+        }
+    }
+
     // ************** New code for Lollipop and new layout ***********************
     // ***************************************************************************
 
@@ -1585,23 +1905,7 @@ public class DialerActivity extends TransactionSafeActivity
     @Override
     public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
         position = mListsFragment.getRtlPosition(position);
-        // Only scroll the button when the first tab is selected. The button should scroll from
-        // the middle to right position only on the transition from the first tab to the second
-        // tab.
-        // If the app is in RTL mode, we need to check against the second tab, rather than the
-        // first. This is because if we are scrolling between the first and second tabs, the
-        // viewpager will report that the starting tab position is 1 rather than 0, due to the
-        // reversal of the order of the tabs.
-        final boolean isLayoutRtl = Utilities.isRtl();
-        final boolean shouldScrollButton = position == (isLayoutRtl
-                ? ListsFragment.TAB_INDEX_RECENTS : ListsFragment.TAB_INDEX_SPEED_DIAL);
-        if (shouldScrollButton && !mIsLandscape) {
-            mFloatingActionButtonController.onPageScrolled(
-                    isLayoutRtl ? 1 - positionOffset : positionOffset);
-        } 
-        else if (position != ListsFragment.TAB_INDEX_SPEED_DIAL) {
-            mFloatingActionButtonController.onPageScrolled(1);
-        }
+        mFloatingActionButtonController.onPageScrolled(1);
         mFloatingActionButton.setImageDrawable(
                 (position == ListsFragment.TAB_INDEX_CHAT) ? mNewChatIcon : mDialPadIcon);
         mFloatingActionButton.setTag(position);
@@ -1609,8 +1913,6 @@ public class DialerActivity extends TransactionSafeActivity
 
     @Override
     public void onPageSelected(int position) {
-        position = mListsFragment.getRtlPosition(position);
-        mCurrentTabPosition = position;
     }
 
     @Override
@@ -1631,7 +1933,10 @@ public class DialerActivity extends TransactionSafeActivity
 //        mDialpadFragment.setAnimate(animate);
 //        mDialpadFragment.sendScreenView();
 
-        getSupportActionBar().hide();
+        ActionBar actionBar = getSupportActionBar();
+        if (actionBar == null)
+            return;
+        actionBar.hide();
         final FragmentTransaction ft = getFragmentManager().beginTransaction();
         ft.show(mDialpadFragment);
         ft.commit();
@@ -1661,7 +1966,6 @@ public class DialerActivity extends TransactionSafeActivity
 //        }
         if (!mAutoDialRequested) {
             mAutoDialRequested = false;
-            mDialpadFragment.clearDialpad();
             if (mRegularSearchFragment != null) {
                 mRegularSearchFragment.setShowScDirectoryOption(false);
             }
@@ -1685,9 +1989,13 @@ public class DialerActivity extends TransactionSafeActivity
                 mSearchView.setText(mSearchQuery);
             if (fragment == mRegularSearchFragment) {
                 ActionBar actionBar = getSupportActionBar();
+                if (actionBar == null)
+                    return;
                 actionBar.setDisplayShowCustomEnabled(true);
+                actionBar.setDisplayHomeAsUpEnabled(false);
                 SearchEditTextLayout seTextLayout = (SearchEditTextLayout)actionBar.getCustomView();
                 seTextLayout.expand(false /*animate */, true /*focus */);
+                seTextLayout.showBackButton(false);
             }
         }
     }
@@ -1700,7 +2008,12 @@ public class DialerActivity extends TransactionSafeActivity
         ft.hide(mDialpadFragment);
         ft.commit();
 
-        mFloatingActionButtonController.scaleIn(AnimUtils.NO_DELAY);
+        /** Could already be visible, due to the dialpad and its internal search UI having
+         * overlap in their hidings, see {@link DialerActivity#exitSearchUi()}
+         **/
+        if (!mFloatingActionButtonController.isVisible()) {
+            mFloatingActionButtonController.scaleIn(AnimUtils.NO_DELAY);
+        }
     }
 
     /**
@@ -1719,7 +2032,10 @@ public class DialerActivity extends TransactionSafeActivity
             return;
         }
         mIsDialpadShown = false;
-        getSupportActionBar().show();
+        ActionBar actionBar = getSupportActionBar();
+        if (actionBar == null)
+            return;
+        actionBar.show();
 //        mDialpadFragment.setAnimate(animate);
 //
         updateSearchFragmentSettings();
@@ -1750,9 +2066,7 @@ public class DialerActivity extends TransactionSafeActivity
      * @param animate Whether or not to animate the transition.
      */
     private void updateFloatingActionButtonControllerAlignment(boolean animate) {
-        final int align = (!mIsLandscape && mCurrentTabPosition == ListsFragment.TAB_INDEX_SPEED_DIAL) ?
-                FloatingActionButtonController.ALIGN_MIDDLE :
-                FloatingActionButtonController.ALIGN_END;
+        final int align = FloatingActionButtonController.ALIGN_END;
         mFloatingActionButtonController.align(align, 0 /* offsetX */, 0 /* offsetY */, animate);
     }
 
@@ -1783,7 +2097,10 @@ public class DialerActivity extends TransactionSafeActivity
 
     @Override
     public int getActionBarHideOffset() {
-        return getSupportActionBar().getHideOffset();
+        ActionBar actionBar = getSupportActionBar();
+        if (actionBar == null)
+            return 0;
+        return actionBar.getHideOffset();
     }
 
     @Override
@@ -1820,15 +2137,6 @@ public class DialerActivity extends TransactionSafeActivity
     @Override
     public void onDroppedOnRemove() {}
 
-    /**
-     * Allows the SpeedDialFragment to attach the drag controller to mRemoveViewContainer
-     * once it has been attached to the activity.
-     */
-    @Override
-    public void setDragDropController(DragDropController dragController) {
-        mListsFragment.getRemoveView().setDragDropController(dragController);
-    }
-
     @Override
     public void onListFragmentScrollStateChange(int scrollState) {
         if (scrollState == AbsListView.OnScrollListener.SCROLL_STATE_TOUCH_SCROLL) {
@@ -1856,7 +2164,9 @@ public class DialerActivity extends TransactionSafeActivity
 
     @Override
     public void onCallNumberDirectly(String phoneNumber, boolean isVideoCall) {
-        callImmediateOrAsk(phoneNumber);
+        String[] numberFields = Utilities.splitFields(phoneNumber, ";");
+        if (numberFields != null)
+            callImmediateOrAsk(numberFields[0]);
 //        Intent intent = isVideoCall ?
 //                CallUtil.getVideoCallIntent(phoneNumber, getCallOrigin()) :
 //                CallUtil.getCallIntent(phoneNumber, getCallOrigin());
@@ -1927,6 +2237,9 @@ public class DialerActivity extends TransactionSafeActivity
             view.animate().alpha(0).withLayer();
         else
             view.animate().alpha(0);
+
+        mFloatingActionButtonController.scaleOut();
+        mDrawerToggle.setDrawerIndicatorEnabled(false);
     }
 
     /**
@@ -1962,7 +2275,10 @@ public class DialerActivity extends TransactionSafeActivity
 
 //        mActionBarController.onSearchUiExited();
         ActionBar actionBar = getSupportActionBar();
+        if (actionBar == null)
+            return;
         actionBar.setDisplayShowCustomEnabled(false);
+        actionBar.setDisplayHomeAsUpEnabled(true);
         SearchEditTextLayout seTextLayout = (SearchEditTextLayout)actionBar.getCustomView();
         if (seTextLayout.isExpanded()) {
             seTextLayout.collapse(true /* animate */);
@@ -1970,13 +2286,84 @@ public class DialerActivity extends TransactionSafeActivity
         if (seTextLayout.isFadedOut()) {
             seTextLayout.fadeIn();
         }
+        mDrawerToggle.setDrawerIndicatorEnabled(true);
         invalidateOptionsMenu();
         restoreActionBar();
+
+        /** Could already be visible, due to the dialpad and its internal search UI having
+         * overlap in their hidings, see {@link DialerActivity#commitDialpadFragmentHide()}
+         **/
+        if (!mFloatingActionButtonController.isVisible()) {
+            mFloatingActionButtonController.scaleIn(AnimUtils.NO_DELAY);
+        }
+    }
+
+    private boolean isInSettingsUi() {
+        return mIsInSettingsUi;
+    }
+
+    private void enterSettingsUI() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1 && getFragmentManager().isDestroyed()) {
+            // Weird race condition where fragment is doing work after the activity is destroyed
+            // due to talkback being on (b/10209937). Just return since we can't do any
+            // constructive here.
+            return;
+        }
+
+        ((TextView)mToolbar.findViewById(R.id.title)).setText(R.string.settings);
+        mToolbar.findViewById(R.id.sub_title).setVisibility(View.GONE);
+
+        invalidateOptionsMenu();
+
+        final FragmentTransaction transaction = getFragmentManager().beginTransaction();
+        SettingsFragment fragment = (SettingsFragment) getFragmentManager().findFragmentByTag(SettingsFragment.TAG_SETTINGS_FRAGMENT);
+        transaction.setCustomAnimations(android.R.animator.fade_in, 0);
+        if (fragment == null) {
+            fragment = new SettingsFragment();
+            transaction.add(R.id.dial_frame, fragment, SettingsFragment.TAG_SETTINGS_FRAGMENT);
+        } else {
+            transaction.show(fragment);
+        }
+        transaction.commit();
+
+        mDrawerLayout.post(new Runnable() {
+            @Override
+            public void run() {
+                mDrawerLayout.closeDrawer(mDrawerView);
+                mDrawerToggle.setDrawerIndicatorEnabled(false);
+                mDrawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
+
+            }
+        });
+
+        setFabButtonVisibility(View.GONE);
+        mIsInSettingsUi = true;
+    }
+
+    private void exitSettingsUi() {
+        mIsInSettingsUi = false;
+        setFabButtonVisibility(View.VISIBLE);
+        mDrawerToggle.setDrawerIndicatorEnabled(true);
+        mDrawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED);
+        invalidateOptionsMenu();
+        restoreActionBar();
+
+        final FragmentTransaction transaction = getFragmentManager().beginTransaction();
+        SettingsFragment fragment = (SettingsFragment) getFragmentManager().findFragmentByTag(SettingsFragment.TAG_SETTINGS_FRAGMENT);
+        if (fragment != null) {
+            transaction.remove(fragment);
+        }
+        transaction.commit();
+    }
+
+    private void setFabButtonVisibility(int visibility) {
+        final View floatingActionButtonContainer = findViewById(R.id.floating_action_button_container);
+        floatingActionButtonContainer.setVisibility(visibility);
     }
 
     private void callImmediateOrAsk(String number) {
         if (number != null && mDialpadFragment != null) {
-            boolean wasModified = checkCallToNr(number, false, mDialpadFragment);
+            boolean wasModified = checkCallToNr(number, mDialpadFragment);
             if (!wasModified)
                 mDialpadFragment.dialButtonPressed();
             else {
@@ -2045,4 +2432,58 @@ public class DialerActivity extends TransactionSafeActivity
 
     }
 
+    private void startConversationFromContacts(final String aliasName) {
+        AsyncTasks.UserDataBackgroundTask getUserDataTask = new AsyncTasks.UserDataBackgroundTask(getApplicationContext()) {
+            @Override
+            protected void onPostExecute(Integer time) {
+                super.onPostExecute(time);
+                if (mData != null && mUserInfo.mUuid != null) {
+                    Intent msgIntent = new Intent(DialerActivity.this, ConversationActivity.class);
+                    Extra.PARTNER.to(msgIntent, mUserInfo.mUuid);
+                    Extra.ALIAS.to(msgIntent, aliasName);   // Check if we should use the default alias (mAlias)?
+                    if (ConfigurationUtilities.mTrace)
+                        Log.d(TAG, "Start messaging with: " + mUserInfo.mUuid + ", (" + aliasName + ")");
+                    startActivity(msgIntent);
+                    finish();
+                }
+            }
+        };
+        AsyncUtils.execute(getUserDataTask, Utilities.removeUriPartsSelective(aliasName));
+    }
+
+    private void activateTraversal() {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        boolean enableTraversal = prefs.getBoolean(SettingsFragment.ENABLE_FW_TRAVERSAL, true);
+        boolean forceTraversal = prefs.getBoolean(SettingsFragment.FORCE_FW_TRAVERSAL, false);
+
+        if (enableTraversal)
+            TiviPhoneService.doCmd("set cfg.iEnableFWTraversal=1");
+        else {
+            TiviPhoneService.doCmd("set cfg.iEnableFWTraversal=0");
+            TiviPhoneService.doCmd("set cfg.iForceFWTraversal=0");
+        }
+        if (forceTraversal)
+            TiviPhoneService.doCmd("set cfg.ForceFWTraversal=1");
+        else {
+            TiviPhoneService.doCmd("set cfg.iForceFWTraversal=0");
+        }
+    }
+
+    public static String ENABLE_UNDERFLOW_TONE = "enable_underflow_tone";
+
+    public void activateDropoutTone() {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        boolean mUseUnderflow = prefs.getBoolean(ENABLE_UNDERFLOW_TONE, true);
+        TiviPhoneService.doCmd("set cfg.iAudioUnderflow=" + (mUseUnderflow ? "1" : "0"));
+    }
+
+    private void activateDebugSettings() {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        int sslDebugLevel = prefs.getInt(SettingsFragment.DEVELOPER_SSL_DEBUG, 0);
+        int axoDebugLevel = prefs.getInt(SettingsFragment.DEVELOPER_AXO_DEBUG, 2);
+
+        TiviPhoneService.doCmd("debug.option=ssl_level:" + sslDebugLevel);
+        TiviPhoneService.doCmd("debug.option=axo_level:" + axoDebugLevel);
+
+    }
 }

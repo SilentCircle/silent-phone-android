@@ -6,5 +6,4 @@
     <string name="support_email_address" translatable="false">support@silentcircle.com</string>
     <string name="support_email_subject" translatable="false">[User Feedback] Silent Text for Android</string>
     <string name="checkmark" translatable="false">&#x2713;</string>
-
 </resources>

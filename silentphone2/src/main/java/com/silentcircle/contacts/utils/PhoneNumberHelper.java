@@ -120,7 +120,7 @@ public class PhoneNumberHelper
             if (util.isValidNumber(pn)) {
                 result = util.format(pn, PhoneNumberFormat.E164);
             }
-        } catch (NumberParseException e) {
+        } catch (NumberParseException ignore) {
         }
         return result;
     }
@@ -153,7 +153,7 @@ public class PhoneNumberHelper
         try {
             PhoneNumber pn = util.parseAndKeepRawInput(phoneNumber, defaultCountryIso);
             result = util.formatInOriginalFormat(pn, defaultCountryIso);
-        } catch (NumberParseException e) {
+        } catch (NumberParseException ignore) {
         }
         return result;
     }
@@ -230,18 +230,6 @@ public class PhoneNumberHelper
      *               (or the URI-escaped equivalent "username%40domainname")
      * @see isUriNumber
      */
-    public static String getUsernameFromUriNumber(String number) {
-        // The delimiter between username and domain name can be
-        // either "@" or "%40" (the URI-escaped equivalent.)
-        int delimiterIndex = number.indexOf('@');
-        if (delimiterIndex < 0) {
-            delimiterIndex = number.indexOf("%40");
-        }
-        if (delimiterIndex < 0) {
-            delimiterIndex = number.length();
-        }
-        return number.substring(0, delimiterIndex);
-    }
     /*
      * Special characters
      *

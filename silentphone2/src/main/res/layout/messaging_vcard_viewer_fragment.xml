@@ -15,7 +15,8 @@
             style="@style/Widget.Silence.TextView.Long"
             android:layout_margin="@dimen/spacing_large"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
+            android:layout_height="wrap_content"
+            />
 
     </ScrollView>
 
@@ -38,14 +39,22 @@
                 android:fadingEdge="none"
                 android:listSelector="@android:color/transparent"
                 android:divider="@color/sc_ng_background_2"
-                android:dividerHeight="1dip" />
+                android:dividerHeight="1dip"
+                android:filterTouchesWhenObscured="true"
+                />
 
             <Button
+                style="@style/Widget.Button.Dark"
                 android:id="@+id/button_import_all_vcards"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_gravity="bottom"
+                android:layout_marginTop="@dimen/activity_horizontal_margin"
+                android:layout_marginBottom="@dimen/activity_horizontal_margin"
+                android:layout_marginLeft="@dimen/activity_horizontal_margin_large"
+                android:layout_marginRight="@dimen/activity_horizontal_margin_large"
                 android:text="@string/import_contacts"
-                android:layout_gravity="bottom" />
+                />
 
         </LinearLayout>
 
@@ -60,19 +69,32 @@
                 layout="@layout/messaging_vcard_detail_view"
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
-                android:layout_weight="1" />
+                android:layout_weight="1"
+                />
 
             <Button
+                style="@style/Widget.Button.Dark"
                 android:id="@+id/button_import_vcard"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/import_contact" />
+                android:layout_marginTop="@dimen/activity_vertical_margin_small"
+                android:layout_marginLeft="@dimen/activity_horizontal_margin_large"
+                android:layout_marginRight="@dimen/activity_horizontal_margin_large"
+                android:layout_marginBottom="@dimen/activity_vertical_margin_small"
+                android:text="@string/import_contact"
+                />
 
             <Button
+                style="@style/Widget.Button.Dark"
                 android:id="@+id/button_back"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/back" />
+                android:layout_marginTop="@dimen/activity_vertical_margin_small"
+                android:layout_marginBottom="@dimen/activity_horizontal_margin"
+                android:layout_marginLeft="@dimen/activity_horizontal_margin_large"
+                android:layout_marginRight="@dimen/activity_horizontal_margin_large"
+                android:text="@string/back"
+                />
 
         </LinearLayout>
 

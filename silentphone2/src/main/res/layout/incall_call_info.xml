@@ -18,13 +18,15 @@
                   android:layout_height="wrap_content"
                   android:orientation="horizontal"
                   android:clipChildren="false"
-                  android:clipToPadding="false">
+                  android:clipToPadding="false"
+                  android:layout_marginTop="@dimen/space_small">
 
         <!-- Subscription provider or WiFi calling icon displayed to the left of the label -->
         <ImageView android:id="@+id/callStateIcon"
                    android:layout_width="16dp"
                    android:layout_height="16dp"
-                   android:layout_marginEnd="4dp"
+                   android:layout_marginRight="@dimen/space_small"
+                   android:layout_marginEnd="@dimen/space_small"
                    android:baselineAlignBottom="true"
                    android:tint="@color/incall_accent_color"
                    android:alpha="0.0"
@@ -63,6 +65,7 @@
             android:layout_marginTop="-5dp"
             android:textAppearance="?android:attr/textAppearanceLarge"
             android:textSize="@dimen/call_name_text_size"
+            android:textColor="@color/sc_ng_text_grey"
             android:singleLine="true"
             android:background="@null"
             ex:resizing_text_min_size="@dimen/call_name_text_min_size"

@@ -13,7 +13,7 @@
     <string name="provision_later">稍后</string>
     <string name="crypto_padlock">安全状态锁</string>
     <string name="error_code">错误代码：</string>
-    <string name="logout">退出</string>
+    <string name="wipe_phone">退出</string>
     <string name="sip_state_calling">正在呼叫</string>
     <string name="sip_state_connecting">正在连接</string>
     <string name="sip_state_ringing">正在响铃</string>

@@ -1,6 +1,32 @@
-//VoipPhone
-//Created by Janis Narbuts
-//Copyright (c) 2004-2012 Tivi LTD, www.tiviphone.com. All rights reserved.
+/*
+Created by Janis Narbuts
+Copyright (C) 2004-2012, Tivi LTD, www.tiviphone.com. All rights reserved.
+Copyright (C) 2012-2016, Silent Circle, LLC.  All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+    * Any redistribution, use, or modification is done solely for personal
+      benefit and not for any commercial purpose or for monetary gain
+    * Redistributions of source code must retain the above copyright
+      notice, this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above copyright
+      notice, this list of conditions and the following disclaimer in the
+      documentation and/or other materials provided with the distribution.
+    * Neither the name Silent Circle nor the
+      names of its contributors may be used to endorse or promote products
+      derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL SILENT CIRCLE, LLC BE LIABLE FOR ANY
+DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
 
 #include "CPhone.h"
 #include "../encrypt/md5/md5.h"
@@ -895,6 +921,7 @@ UNLOCK_MUTEX_SES
    log_events(__FUNCTION__,str64BindedAddr.strVal);
    
 
+   t_logf(log_events, __FUNCTION__, "Detected IP change [ip=%u, iCanRecreate=%d]", ip, iCanRecreate);
    if(!hasNetworkConnect(ip))
    {
       if(!p_cfg.iUseStun)
@@ -937,8 +964,10 @@ iSockPaused=0;
          //TODO sockSip.onNewIP(ipBinded);
          //recreat taisiit tik ja iepireksh addr bija 0 vai bija timeout 
 //         if(sockSip.isTCP() && iSockPaused && iCanRecreate)sockSip.reCreate();//izveod
-         if((sockSip.isTCP() || sockSip.isTLS())  && iCanRecreate)
+         if((sockSip.isTCP() || sockSip.isTLS())  && iCanRecreate) {
+            t_logf(log_events, __FUNCTION__, "sockdebug: Recreating socket due to IP change");
             sockSip.reCreate();//izveod
+         }
          
          CTEditBuf<32> b;
          b.addText("IP ");
@@ -1410,10 +1439,17 @@ int CTiViPhone::endCall(int SesId, int iReasonCode)
    spSes->iSessionStopedByCaller=1;
 
    CMakeSip ms(sockSip,spSes);
+   
+
 
    if(iMeth)
    {
       ms.makeReq(iMeth,&p_cfg);
+      
+      if(iMeth==METHOD_BYE){
+         ms.addRtpStats(spSes);
+      }
+      
       spSes->cs.iWaitS=200;
    }
    else
@@ -1883,8 +1919,34 @@ int CTiViPhone::addMsgToWin(SIP_MSG *sMsg, char *p)//pec shis fnc sMsg lietot ne
      
      p[15]+=1;
 #endif
-     CTAxoInterfaceBase::sharedInstance()->receiveMessage((u_int8_t *)p, sMsg->dstrContLen.uiVal);
-
+     if(sMsg->hldP_Asserted_id.uiCount<1 ||  sMsg->hldP_Asserted_id.x[0].sipUri.dstrSipAddr.uiLen<6){
+        CTAxoInterfaceBase::sharedInstance()->receiveMessage((u_int8_t *)p, sMsg->dstrContLen.uiVal);
+     }
+     else{
+        int sp =0;
+        if(sMsg->hldP_Asserted_id.x[0].sipUri.dstrSipAddr.strVal[3]==':')sp=4;
+        else if(sMsg->hldP_Asserted_id.x[0].sipUri.dstrSipAddr.strVal[4]==':'
+                && strncmp(sMsg->hldP_Asserted_id.x[0].sipUri.dstrSipAddr.strVal,"sips:",4)==0){
+           sp=5;
+        }
+        
+        char *uid = sMsg->hldP_Asserted_id.x[0].sipUri.dstrSipAddr.strVal + sp;//sip:
+        int  uidL = sMsg->hldP_Asserted_id.x[0].sipUri.dstrSipAddr.uiLen - sp;
+ 
+        DSTR *disp_name = &sMsg->hldP_Asserted_id.x[0].dstrName;
+        
+        if(!disp_name->strVal || disp_name->uiLen<1){
+           disp_name = &sMsg->hdrFrom.dstrName;
+        }
+        
+        if(!disp_name->strVal || disp_name->uiLen<1){
+           CTAxoInterfaceBase::sharedInstance()->receiveMessage((u_int8_t *)p, sMsg->dstrContLen.uiVal, (u_int8_t *)uid, uidL,(u_int8_t *) NULL, 0);
+        }
+        else{
+           
+           CTAxoInterfaceBase::sharedInstance()->receiveMessage((u_int8_t *)p, sMsg->dstrContLen.uiVal, (u_int8_t *)uid, uidL,(u_int8_t *) disp_name->strVal, disp_name->uiLen);
+        }
+     }
      cm.strUN.iLen=ctx->str128AddrFromTo.uiLen;// iUnLen;
      cm.strUN.p=ctx->str128AddrFromTo.strVal; //pp
 
@@ -1998,6 +2060,7 @@ int CTiViPhone::recMsg(SIP_MSG *sMsg, int rec, ADDR &addr)//called from thread
  
    if(rec<0)
    {
+      t_logf(log_events, __FUNCTION__, "sockdebug: Something bad happened, setting sockSip.needRecreate(1)");
       if(sockSip.needRecreate(1)){
          verifyDomainAddress();
          sendSipKA();
@@ -2146,7 +2209,7 @@ int CTiViPhone::recMsg(SIP_MSG *sMsg, int rec, ADDR &addr)//called from thread
             strcat(pwd,p_cfg.szPwdEndAdd);
          }
 
-         res=ms.addAuth(p_cfg.user.un,pwd,sMsg);
+         res = ms.addAuth(p_cfg.user.authname[0] ? p_cfg.user.authname : p_cfg.user.un, pwd, sMsg);
       }
       else{
          
@@ -2287,7 +2350,7 @@ int CTiViPhone::recMsg(SIP_MSG *sMsg, int rec, ADDR &addr)//called from thread
                }
                mm.sendResp(sockSip,200,sMsg);
                UNLOCK_MUTEX_SES
-                printf("axo=[%s]\n",cSip.getContent());
+             //   printf("axo=[%s]\n",cSip.getContent());
                addMsgToWin(sMsg,cSip.getContent());
                
                return 0;
@@ -2319,8 +2382,16 @@ int CTiViPhone::recMsg(SIP_MSG *sMsg, int rec, ADDR &addr)//called from thread
                      return 0;
                   }
                   
-               }else{
-                   mm.sendResp(sockSip,501,sMsg);//not impl
+               }else {
+                  void notifyGeneric(const uint8_t* content, size_t contentLength,
+                                     const uint8_t* event, size_t eventLength,
+                                     const uint8_t* contentType, size_t typeLength);
+                  
+                  notifyGeneric(sMsg->dstrContLen.uiVal ? (const uint8_t*)cSip.getContent():NULL, sMsg->dstrContLen.uiVal,
+                                (const uint8_t*)sMsg->dstrEvent.strVal, sMsg->dstrEvent.uiLen,
+                                (const uint8_t*)sMsg->hdrContType.dstrFullRow.strVal, sMsg->hdrContType.dstrFullRow.uiLen);
+                  
+                   mm.sendResp(sockSip,200,sMsg);
                }
                break;
             }
@@ -2724,7 +2795,7 @@ int getInfo(char *buf, int iMaxLen,CTiViPhone *ph, PHONE_CFG* cfg)
    }
    
    if(ph)
-      iLen+=ph->getInfo(buf+iLen,iMaxLen-iLen);
+      iLen+=ph->getRegInfo(buf+iLen,iMaxLen-iLen);
 
    char *getBuildNr();
    iLen+=sprintf(buf+iLen,"\nBuild(%s)\n",getBuildNr());
@@ -2757,7 +2828,7 @@ int getInfoCBUni(short *pUni, int iMaxLen, void *pUserData)
 
 }
 
-int CTiViPhone::getInfo(char *buf, int iMaxLen)
+int CTiViPhone::getRegInfo(char *buf, int iMaxLen)
 {
    
    if(uiGT<T_GT_SECOND) {buf[0]=0;return 0;}

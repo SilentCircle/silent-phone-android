@@ -119,11 +119,11 @@ public class ScContactsDatabaseHelper extends SQLiteOpenHelper implements KeyMan
          * on APK we can use the real contacts DB. This has some advantages with regard to data
          * synchronization. 
          */
-        static final String PREFIX_TABLE = "prefix_table";
+        String PREFIX_TABLE = "prefix_table";
 
 
         // This list of tables contains auto-incremented sequences.
-        public static final String[] SEQUENCE_TABLES = new String[] {
+        String[] SEQUENCE_TABLES = new String[] {
             RAW_CONTACTS,
             STREAM_ITEMS,
             STREAM_ITEM_PHOTOS,
@@ -405,9 +405,9 @@ public class ScContactsDatabaseHelper extends SQLiteOpenHelper implements KeyMan
         String PROPERTY_VALUE = "property_value";
     }
 
-    public static interface PrefixColumns extends ScBaseColumns {
-        static final String PREFIX = "prefix";
-        static final String CONTACT_ID = "contact_id";
+    public interface PrefixColumns extends ScBaseColumns {
+        String PREFIX = "prefix";
+        String CONTACT_ID = "contact_id";
     }
     
     public interface Projections {

@@ -102,7 +102,6 @@ public class PhoneFavoritesTileAdapter extends BaseAdapter implements
     private int mNumFrequents;
     private int mNumStarred;
 
-    protected int mIdIndex;
     protected int mLookupIndex;
     protected int mPhotoUriIndex;
     protected int mNameIndex;
@@ -144,8 +143,8 @@ public class PhoneFavoritesTileAdapter extends BaseAdapter implements
     };
 
     public interface OnDataSetChangedForAnimationListener {
-        public void onDataSetChangedForAnimation(long... idsInPlace);
-        public void cacheOffsetsForDatasetChange();
+        void onDataSetChangedForAnimation(long... idsInPlace);
+        void cacheOffsetsForDatasetChange();
     }
 
     public PhoneFavoritesTileAdapter(Context context, ContactTileView.Listener listener,
@@ -185,7 +184,6 @@ public class PhoneFavoritesTileAdapter extends BaseAdapter implements
      * based on {@link Display Type}.
      */
     protected void bindColumnIndices() {
-        mIdIndex = ContactTileLoaderFactory.CONTACT_ID;
         mLookupIndex = ContactTileLoaderFactory.LOOKUP_KEY;
         mPhotoUriIndex = ContactTileLoaderFactory.PHOTO_URI;
         mNameIndex = ContactTileLoaderFactory.DISPLAY_NAME;

@@ -114,6 +114,8 @@ public class PinnedHeaderListView extends AutoScrollListView
     private int mHeaderPaddingStart;
     private int mHeaderWidth;
 
+    private boolean mHeaderTouchesEnabled = false;
+
     public PinnedHeaderListView(Context context) {
         this(context, null, android.R.attr.listViewStyle);
     }
@@ -357,6 +359,10 @@ public class PinnedHeaderListView extends AutoScrollListView
         }
     }
 
+    public void setHeaderTouchesEnabled(boolean enabled) {
+        mHeaderTouchesEnabled = enabled;
+    }
+
     private void ensurePinnedHeaderLayout(int viewIndex) {
         View view = mHeaders[viewIndex].view;
         if (view.isLayoutRequested()) {
@@ -436,7 +442,7 @@ public class PinnedHeaderListView extends AutoScrollListView
                             ev.getAction() == MotionEvent.ACTION_DOWN) {
                         return smoothScrollToPartition(i);
                     } else {
-                        return true;
+                        return !mHeaderTouchesEnabled;
                     }
                 }
             }
@@ -447,14 +453,14 @@ public class PinnedHeaderListView extends AutoScrollListView
 
     @Override
     public boolean onTouchEvent(MotionEvent ev) {
-        if (mHeaderTouched) {
+        if (mHeaderTouched && !mHeaderTouchesEnabled) {
             if (ev.getAction() == MotionEvent.ACTION_UP) {
                 mHeaderTouched = false;
             }
             return true;
         }
         return super.onTouchEvent(ev);
-    };
+    }
 
     private boolean smoothScrollToPartition(int partition) {
         if (mAdapter == null) {

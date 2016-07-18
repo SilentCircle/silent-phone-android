@@ -28,15 +28,16 @@
 #endif
 
 int divceil(int a, int b) {
-    int c;
-    if (a>0) {
-	if (b>0) c=a+b-1;
-	else c=a;
-    } else {
-	if (b>0) c=a;
-	else c=a+b+1;
-    }
-    return c/b;
+	int c;
+	if (a > 0) {
+		if (b > 0) c=a+b-1;
+		else c=a;
+	}
+	else {
+		if (b > 0) c=a;
+		else c=a+b+1;
+	}
+	return c/b;
 }
 
 //                                         1         2         3

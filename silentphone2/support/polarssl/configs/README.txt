@@ -18,9 +18,9 @@ them, you can pick one of the following methods:
 
    Or, using cmake:
 
-    rm CMakeCache.txt
+    find . -iname '*cmake*' -not -name CMakeLists.txt -exec rm -rf {} +
     CFLAGS="-I$PWD/configs -DPOLARSSL_CONFIG_FILE='<foo.h>'" cmake .
     make
 
 Note that the second method also works if you want to keep your custom
-configuration file outside the PolarSSL tree.
+configuration file outside the mbed TLS tree.

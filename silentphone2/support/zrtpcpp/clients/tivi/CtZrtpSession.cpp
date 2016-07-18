@@ -129,12 +129,12 @@ void *findGlobalCfgKey(char *key, int iKeyLen, int &iSize, char **opt, int *type
     int iSZ;
     char *opt;
     int type;
-    void zrtp_log( const char *tag, const char *buf);
 
     int b32sas = 0, iDisableDH2K = 0, iDisableAES256 = 0, iPreferDH2K = 0;
     int iDisableECDH256 = 0, iDisableECDH384 = 0, iEnableSHA384 = 1;
     int iDisableSkein = 0, iDisableTwofish = 0, iPreferNIST = 0;
     int iDisableSkeinHash = 0, iDisableBernsteinCurve25519 = 0, iDisableBernsteinCurve3617 = 0;
+    int iEnableDisclosure = 0;
 
     GET_CFG_I(b32sas, "iDisable256SAS");
     GET_CFG_I(iDisableAES256, "iDisableAES256");
@@ -151,6 +151,7 @@ void *findGlobalCfgKey(char *key, int iKeyLen, int &iSize, char **opt, int *type
     GET_CFG_I(iDisableSkeinHash, "iDisableSkeinHash");
     GET_CFG_I(iDisableBernsteinCurve25519, "iDisableBernsteinCurve25519");
     GET_CFG_I(iDisableBernsteinCurve3617, "iDisableBernsteinCurve3617");
+    GET_CFG_I(iEnableDisclosure, "iEnableDisclosure");
 
     conf->clear();
 
@@ -160,6 +161,10 @@ void *findGlobalCfgKey(char *key, int iKeyLen, int &iSize, char **opt, int *type
      * client, not the user
      */
     conf->setSelectionPolicy(ZrtpConfigure::PreferNonNist);
+
+    // Set the Disclosure flag if the client SW has DR active.
+    if (iEnableDisclosure == 1)
+        conf->setDisclosureFlag(true);
 
     /*
      * Handling of iPreferNIST: if this is false (== 0) then we add the non-NIST algorithms
@@ -250,6 +255,10 @@ void *findGlobalCfgKey(char *key, int iKeyLen, int &iSize, char **opt, int *type
     conf->addAlgo(CipherAlgorithm, zrtpSymCiphers.getByName("AES1"));
 
     if (b32sas == 1) {
+        conf->addAlgo(SasType, zrtpSasTypes.getByName("B32 "));
+    }
+    else if (b32sas == 2) {
+        conf->addAlgo(SasType, zrtpSasTypes.getByName("B32E"));
         conf->addAlgo(SasType, zrtpSasTypes.getByName("B32 "));
     }
     else {

@@ -247,9 +247,9 @@ public abstract class ScContactListAdapter extends ScContactEntryListAdapter {
         view.setIsSectionHeaderEnabled(isSectionHeaderDisplayEnabled());
         if (isSectionHeaderDisplayEnabled()) {
             Placement placement = getItemPlacementInSection(position);
-            view.setSectionHeader(placement.sectionHeader);
+            view.setSectionHeader(placement.sectionHeader, R.style.SectionHeaderStyleAlt);
         } else {
-            view.setSectionHeader(null);
+            view.setSectionHeader(null, 0);
         }
     }
 

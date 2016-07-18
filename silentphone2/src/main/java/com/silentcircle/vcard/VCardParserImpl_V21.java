@@ -592,10 +592,7 @@ class VCardParserImpl_V21 {
     }
 
     private boolean isAsciiLetter(char ch) {
-        if ((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z')) {
-            return true;
-        }
-        return false;
+        return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z');
     }
 
     /**

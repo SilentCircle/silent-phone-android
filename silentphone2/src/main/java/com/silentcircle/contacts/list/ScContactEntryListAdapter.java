@@ -73,10 +73,12 @@ import com.silentcircle.common.list.IndexerListAdapter;
 import com.silentcircle.common.list.ContactListItemView;
 import com.silentcircle.common.list.ContactListPinnedHeaderView;
 import com.silentcircle.common.util.SearchUtil;
+import com.silentcircle.common.util.StringUtils;
 import com.silentcircle.contacts.ContactPhotoManagerNew;
 import com.silentcircle.contacts.ContactPhotoManagerNew.DefaultImageRequest;
 import com.silentcircle.contacts.widget.CompositeCursorAdapter;
 import com.silentcircle.silentphone2.R;
+import com.silentcircle.silentphone2.util.Utilities;
 
 import java.util.HashSet;
 
@@ -141,6 +143,14 @@ public abstract class ScContactEntryListAdapter extends IndexerListAdapter {
     private CharSequence mDefaultFilterHeaderText;
 
     private boolean mUseScDirLoaderOrg;
+    protected String mPreSelector;
+    protected String[] mPreSelectorArgs;
+
+    protected String mFilterPattern;
+    protected int mContentColumn;
+
+    protected int mScDirectoryFilterType;
+    protected boolean mSearchScData;
 
     public ScContactEntryListAdapter(Context context) {
         this(context, false);
@@ -207,9 +217,9 @@ public abstract class ScContactEntryListAdapter extends IndexerListAdapter {
 //    }
 
     protected void addPartitions(boolean enableScDir) {
+        addPartition(createDefaultDirectoryPartition());
         if (enableScDir)
             addPartition(createScDirPartition());
-        addPartition(createDefaultDirectoryPartition());
 //        setIndexedPartition(getPartitionByDirectoryId(Directory.DEFAULT));
     }
 
@@ -226,7 +236,7 @@ public abstract class ScContactEntryListAdapter extends IndexerListAdapter {
     protected DirectoryPartition createScDirPartition() {
         DirectoryPartition partition = new DirectoryPartition(false, true);
         partition.setDirectoryId(SC_DIRECTORY);
-        partition.setDirectoryType("Silent Circle");
+        partition.setDirectoryType("Silent Circle Directory");
         partition.setPriorityDirectory(true);
         partition.setPhotoSupported(false);
         return partition;
@@ -297,6 +307,10 @@ public abstract class ScContactEntryListAdapter extends IndexerListAdapter {
         mUseScDirLoaderOrg = use;
     }
 
+    public void searchScData(boolean yesNo) {
+        mSearchScData = yesNo;
+    }
+
 
     public abstract String getContactDisplayName(int position);
     public abstract void configureLoader(CursorLoader loader, long directoryId);
@@ -353,9 +367,24 @@ public abstract class ScContactEntryListAdapter extends IndexerListAdapter {
         if (TextUtils.isEmpty(queryString)) {
             mUpperCaseQueryString = null;
         } else {
-            mUpperCaseQueryString = SearchUtil
-                    .cleanStartAndEndOfSearchQuery(queryString.toUpperCase()) ;
+            mQueryString = Utilities.isRtl() ? StringUtils.rtrim(mQueryString) :
+                    StringUtils.ltrim(mQueryString);
+            mUpperCaseQueryString = SearchUtil.cleanStartAndEndOfSearchQuery(mQueryString.toUpperCase()) ;
         }
+    }
+
+    public void setScPreSelector(String preSelector, String[] preSelectorArgs) {
+        mPreSelector = preSelector;
+        mPreSelectorArgs = preSelectorArgs;
+    }
+
+    public void setContentFilter(final String filterPattern, final int contentColumn) {
+        mFilterPattern = filterPattern;
+        mContentColumn = contentColumn;
+    }
+
+    public void setScDirectoryFilter(final int filterType) {
+        mScDirectoryFilterType = filterType;
     }
 
     public String getUpperCaseQueryString() {
@@ -729,19 +758,27 @@ public abstract class ScContactEntryListAdapter extends IndexerListAdapter {
         long directoryId = directoryPartition.getDirectoryId();
         TextView labelTextView = (TextView)view.findViewById(R.id.label);
         TextView displayNameTextView = (TextView)view.findViewById(R.id.display_name);
-        labelTextView.setText(directoryPartition.getLabel());
+        if(TextUtils.isEmpty(directoryPartition.getLabel())) {
+            labelTextView.setText(null);
+            labelTextView.setVisibility(View.GONE);
+        } else {
+            labelTextView.setText(directoryPartition.getLabel());
+            labelTextView.setVisibility(View.VISIBLE);
+        }
         if (!isRemoteDirectory(directoryId)) {
             displayNameTextView.setText(null);
+            displayNameTextView.setVisibility(View.GONE);
         } else {
             String directoryName = directoryPartition.getDisplayName();
             String displayName = !TextUtils.isEmpty(directoryName)
                     ? directoryName
                     : directoryPartition.getDirectoryType();
             displayNameTextView.setText(displayName);
+            displayNameTextView.setVisibility(View.VISIBLE);
         }
 
         final Resources res = getContext().getResources();
-        final int headerPaddingTop = partitionIndex == 1 && getPartition(0).isEmpty()?
+        final int headerPaddingTop = (partitionIndex == 1 && getPartition(0).isEmpty()) || partitionIndex == 0 ?
                 0 : res.getDimensionPixelOffset(R.dimen.directory_header_extra_top_padding);
         // There should be no extra padding at the top of the first directory header
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {

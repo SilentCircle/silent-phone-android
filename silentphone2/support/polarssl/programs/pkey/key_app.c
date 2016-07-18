@@ -1,12 +1,9 @@
 /*
  *  Key reading application
  *
- *  Copyright (C) 2006-2013, Brainspark B.V.
+ *  Copyright (C) 2006-2013, ARM Limited, All Rights Reserved
  *
- *  This file is part of PolarSSL (http://www.polarssl.org)
- *  Lead Maintainer: Paul Bakker <polarssl_maintainer at polarssl.org>
- *
- *  All rights reserved.
+ *  This file is part of mbed TLS (https://tls.mbed.org)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -29,26 +26,21 @@
 #include POLARSSL_CONFIG_FILE
 #endif
 
-#include <string.h>
-#include <stdlib.h>
+#if defined(POLARSSL_PLATFORM_C)
+#include "polarssl/platform.h"
+#else
 #include <stdio.h>
+#define polarssl_printf     printf
+#endif
 
+#if defined(POLARSSL_BIGNUM_C) && \
+    defined(POLARSSL_PK_PARSE_C) && defined(POLARSSL_FS_IO)
 #include "polarssl/error.h"
 #include "polarssl/rsa.h"
 #include "polarssl/x509.h"
 
-#if !defined(POLARSSL_BIGNUM_C) ||                                  \
-    !defined(POLARSSL_PK_PARSE_C) || !defined(POLARSSL_FS_IO)
-int main( int argc, char *argv[] )
-{
-    ((void) argc);
-    ((void) argv);
-
-    printf("POLARSSL_BIGNUM_C and/or "
-           "POLARSSL_PK_PARSE_C and/or POLARSSL_FS_IO not defined.\n");
-    return( 0 );
-}
-#else
+#include <string.h>
+#endif
 
 #define MODE_NONE               0
 #define MODE_PRIVATE            1
@@ -60,6 +52,25 @@ int main( int argc, char *argv[] )
 #define DFL_PASSWORD_FILE       ""
 #define DFL_DEBUG_LEVEL         0
 
+#define USAGE \
+    "\n usage: key_app param=<>...\n"                   \
+    "\n acceptable parameters:\n"                       \
+    "    mode=private|public default: none\n"           \
+    "    filename=%%s         default: keyfile.key\n"   \
+    "    password=%%s         default: \"\"\n"          \
+    "    password_file=%%s    default: \"\"\n"          \
+    "\n"
+
+
+#if !defined(POLARSSL_BIGNUM_C) ||                                  \
+    !defined(POLARSSL_PK_PARSE_C) || !defined(POLARSSL_FS_IO)
+int main( void )
+{
+    polarssl_printf("POLARSSL_BIGNUM_C and/or "
+           "POLARSSL_PK_PARSE_C and/or POLARSSL_FS_IO not defined.\n");
+    return( 0 );
+}
+#else
 /*
  * global options
  */
@@ -70,15 +81,6 @@ struct options
     const char *password;       /* password for the private key         */
     const char *password_file;  /* password_file for the private key    */
 } opt;
-
-#define USAGE \
-    "\n usage: key_app param=<>...\n"                   \
-    "\n acceptable parameters:\n"                       \
-    "    mode=private|public default: none\n"           \
-    "    filename=%%s         default: keyfile.key\n"   \
-    "    password=%%s         default: \"\"\n"          \
-    "    password_file=%%s    default: \"\"\n"          \
-    "\n"
 
 int main( int argc, char *argv[] )
 {
@@ -97,7 +99,7 @@ int main( int argc, char *argv[] )
     if( argc == 0 )
     {
     usage:
-        printf( USAGE );
+        polarssl_printf( USAGE );
         goto exit;
     }
 
@@ -136,7 +138,7 @@ int main( int argc, char *argv[] )
     {
         if( strlen( opt.password ) && strlen( opt.password_file ) )
         {
-            printf( "Error: cannot have both password and password_file\n" );
+            polarssl_printf( "Error: cannot have both password and password_file\n" );
             goto usage;
         }
 
@@ -144,16 +146,16 @@ int main( int argc, char *argv[] )
         {
             FILE *f;
 
-            printf( "\n  . Loading the password file ..." );
+            polarssl_printf( "\n  . Loading the password file ..." );
             if( ( f = fopen( opt.password_file, "rb" ) ) == NULL )
             {
-                printf( " failed\n  !  fopen returned NULL\n" );
+                polarssl_printf( " failed\n  !  fopen returned NULL\n" );
                 goto exit;
             }
             if( fgets( buf, sizeof(buf), f ) == NULL )
             {
                 fclose( f );
-                printf( "Error: fgets() failed to retrieve password\n" );
+                polarssl_printf( "Error: fgets() failed to retrieve password\n" );
                 goto exit;
             }
             fclose( f );
@@ -167,23 +169,23 @@ int main( int argc, char *argv[] )
         /*
          * 1.1. Load the key
          */
-        printf( "\n  . Loading the private key ..." );
+        polarssl_printf( "\n  . Loading the private key ..." );
         fflush( stdout );
 
         ret = pk_parse_keyfile( &pk, opt.filename, opt.password );
 
         if( ret != 0 )
         {
-            printf( " failed\n  !  pk_parse_keyfile returned -0x%04x\n", -ret );
+            polarssl_printf( " failed\n  !  pk_parse_keyfile returned -0x%04x\n", -ret );
             goto exit;
         }
 
-        printf( " ok\n" );
+        polarssl_printf( " ok\n" );
 
         /*
          * 1.2 Print the key
          */
-        printf( "  . Key information    ...\n" );
+        polarssl_printf( "  . Key information    ...\n" );
 #if defined(POLARSSL_RSA_C)
         if( pk_get_type( &pk ) == POLARSSL_PK_RSA )
         {
@@ -211,7 +213,7 @@ int main( int argc, char *argv[] )
         else
 #endif
         {
-            printf("Do not know how to print key information for this type\n" );
+            polarssl_printf("Do not know how to print key information for this type\n" );
             goto exit;
         }
     }
@@ -220,20 +222,20 @@ int main( int argc, char *argv[] )
         /*
          * 1.1. Load the key
          */
-        printf( "\n  . Loading the public key ..." );
+        polarssl_printf( "\n  . Loading the public key ..." );
         fflush( stdout );
 
         ret = pk_parse_public_keyfile( &pk, opt.filename );
 
         if( ret != 0 )
         {
-            printf( " failed\n  !  pk_parse_public_keyfile returned -0x%04x\n", -ret );
+            polarssl_printf( " failed\n  !  pk_parse_public_keyfile returned -0x%04x\n", -ret );
             goto exit;
         }
 
-        printf( " ok\n" );
+        polarssl_printf( " ok\n" );
 
-        printf( "  . Key information    ...\n" );
+        polarssl_printf( "  . Key information    ...\n" );
 #if defined(POLARSSL_RSA_C)
         if( pk_get_type( &pk ) == POLARSSL_PK_RSA )
         {
@@ -254,7 +256,7 @@ int main( int argc, char *argv[] )
         else
 #endif
         {
-            printf("Do not know how to print key information for this type\n" );
+            polarssl_printf("Do not know how to print key information for this type\n" );
             goto exit;
         }
     }
@@ -265,13 +267,13 @@ exit:
 
 #if defined(POLARSSL_ERROR_C)
     polarssl_strerror( ret, buf, sizeof(buf) );
-    printf( "  !  Last error was: %s\n", buf );
+    polarssl_printf( "  !  Last error was: %s\n", buf );
 #endif
 
     pk_free( &pk );
 
 #if defined(_WIN32)
-    printf( "  + Press Enter to exit this program.\n" );
+    polarssl_printf( "  + Press Enter to exit this program.\n" );
     fflush( stdout ); getchar();
 #endif
 

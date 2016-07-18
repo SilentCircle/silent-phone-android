@@ -74,7 +74,7 @@ public class ComposeMessageTask extends AsyncTask<String, Void, Message> {
     }
 
     private boolean isNoteToSelf() {
-        return mSelfUserName.equals(mConversation.getPartner().getUsername());
+        return mSelfUserName.equals(mConversation.getPartner().getUserId());
     }
 
     private Message save(Message message) {

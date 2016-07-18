@@ -26,8 +26,10 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Message;
+import android.support.annotation.WorkerThread;
 import android.telephony.PhoneNumberUtils;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.AccessibilityDelegate;
@@ -43,15 +45,17 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Objects;
 import com.silentcircle.common.list.OnPhoneNumberPickerActionListener;
 import com.silentcircle.common.util.DialerUtils;
+import com.silentcircle.common.util.SearchUtil;
 import com.silentcircle.contacts.ContactPhotoManagerNew;
 import com.silentcircle.contacts.ContactPhotoManagerNew.DefaultImageRequest;
 import com.silentcircle.contacts.ContactsUtils;
 import com.silentcircle.contacts.utils.ExpirableCache;
-import com.silentcircle.contacts.utils.PhoneNumberHelper;
 import com.silentcircle.contacts.utils.UriUtils;
 import com.silentcircle.contacts.widget.GroupingListAdapter;
+import com.silentcircle.messaging.services.AxoMessaging;
 import com.silentcircle.silentcontacts2.ScCallLog.ScCalls;
 import com.silentcircle.silentphone2.R;
+import com.silentcircle.silentphone2.util.Utilities;
 
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -79,7 +83,7 @@ public class CallLogAdapter extends GroupingListAdapter
          * @param view The {@link CallLogListItemView} that represents the item that was clicked
          *         on.
          */
-        public void onItemExpanded(CallLogListItemView view);
+        void onItemExpanded(CallLogListItemView view);
 
         /**
          * Retrieves the call log view for the specified call Id.  If the view is not currently
@@ -88,17 +92,17 @@ public class CallLogAdapter extends GroupingListAdapter
          * @param callId The call Id.
          * @return The call log view.
          */
-        public CallLogListItemView getViewForCallId(long callId);
+        CallLogListItemView getViewForCallId(long callId);
     }
 
     /** Interface used to initiate a refresh of the content. */
     public interface CallFetcher {
-        public void fetchCalls();
+        void fetchCalls();
     }
 
     /** Implements onClickListener for the report button. */
     public interface OnReportButtonClickListener {
-        public void onReportButtonClick(String number);
+        void onReportButtonClick(String number);
     }
 
     /**
@@ -210,9 +214,8 @@ public class CallLogAdapter extends GroupingListAdapter
 
             if (!TextUtils.equals(number, other.number)) return false;
             if (!TextUtils.equals(countryIso, other.countryIso)) return false;
-            if (!Objects.equal(callLogInfo, other.callLogInfo)) return false;
+            return Objects.equal(callLogInfo, other.callLogInfo);
 
-            return true;
         }
 
         @Override
@@ -496,6 +499,7 @@ public class CallLogAdapter extends GroupingListAdapter
      * It returns true if it updated the content of the cache and we should therefore tell the
      * view to update its content.
      */
+    @WorkerThread
     private boolean queryContactInfo(String number, String countryIso, ContactInfo callLogInfo) {
         final ContactInfo info = mContactInfoHelper.lookupNumber(number, countryIso);
 
@@ -509,7 +513,7 @@ public class CallLogAdapter extends GroupingListAdapter
         NumberWithCountryIso numberCountryIso = new NumberWithCountryIso(number, countryIso);
         ContactInfo existingInfo = mContactInfoCache.getPossiblyExpired(numberCountryIso);
 
-        final boolean isRemoteSource = false; //  info.sourceType != 0;
+//        final boolean isRemoteSource = false; //  info.sourceType != 0;
 
         // Don't force redraw if existing info in the cache is equal to {@link ContactInfo#EMPTY}
         // to avoid updating the data set for every new row that is scrolled into view.
@@ -517,7 +521,7 @@ public class CallLogAdapter extends GroupingListAdapter
 
         // Exception: Photo uris for contacts from remote sources are not cached in the call log
         // cache, so we have to force a redraw for these contacts regardless.
-        boolean updated = (existingInfo != ContactInfo.EMPTY || isRemoteSource) && !info.equals(existingInfo);
+        boolean updated = (!mIsCallLog || existingInfo != ContactInfo.EMPTY) && !info.equals(existingInfo);
 
         // Store the data in the cache so that the UI thread can use to display it. Store it
         // even if it has not changed so that it is marked as not expired.
@@ -543,6 +547,7 @@ public class CallLogAdapter extends GroupingListAdapter
         }
 
         @Override
+        @WorkerThread
         public void run() {
             boolean needRedraw = false;
             while (true) {
@@ -654,7 +659,8 @@ public class CallLogAdapter extends GroupingListAdapter
         // Default case: an item in the call log.
         views.primaryActionView.setVisibility(View.VISIBLE);
 
-        final String number = c.getString(CallLogQuery.NUMBER);
+//        DatabaseUtils.dumpCursor(c);
+        String number = c.getString(CallLogQuery.NUMBER);
         final int numberPresentation = PRESENTATION_ALLOWED;
         final long date = c.getLong(CallLogQuery.DATE);
         final long duration = c.getLong(CallLogQuery.DURATION);
@@ -694,7 +700,13 @@ public class CallLogAdapter extends GroupingListAdapter
 //        views.voicemailUri = c.getString(CallLogQuery.VOICEMAIL_URI);
         // Stash away the Ids of the calls so that we can support deleting a row in the call log.
         views.callIds = getCallIds(c, count);
-        views.sipAddress = c.getString(CallLogQuery.SC_OPTION_TEXT1);
+
+        // SC_OPTION_TEXT1 contains the P-Asserted-Id header is available, already stripped from ";xxxx" param
+        views.assertedId = c.getString(CallLogQuery.SC_OPTION_TEXT1);
+
+        // We may need this to replace the name to display, not the name to create the
+        // call intents, actions etc.
+        String displayNameSip = c.getString(CallLogQuery.SC_OPTION_TEXT2);
 
         final ContactInfo cachedContactInfo = getContactInfoFromCallLog(c);
 
@@ -759,13 +771,25 @@ public class CallLogAdapter extends GroupingListAdapter
             }
         }
 
+        CharSequence formattedNumber;
+        final String name;
+
+        // displayNameSip mainly set on incoming calls if no user info was available
+        if (TextUtils.isEmpty(displayNameSip)) {
+            name = info.name;
+            formattedNumber = info.formattedNumber;
+            if (formattedNumber != null && SearchUtil.isUuid(formattedNumber.toString()) && info.name != null)
+                number = info.name;     // Don't show the UUID URI as number
+        }
+        else {
+            name = number = displayNameSip;
+            formattedNumber = null;
+        }
         final Uri lookupUri = info.lookupUri;
-        final String name = info.name;
         final int ntype = info.type;
         final String label = info.label;
         final long photoId = info.photoId;
         final Uri photoUri = info.photoUri;
-        CharSequence formattedNumber = info.formattedNumber;
         final int[] callTypes = getCallTypes(c, count);
         final String geocode = c.getString(CallLogQuery.GEOCODED_LOCATION);
         final int sourceType = 0; // info.sourceType;
@@ -809,8 +833,8 @@ public class CallLogAdapter extends GroupingListAdapter
 //            contactType = ContactPhotoManagerNew.TYPE_BUSINESS;
 //        }
 
-        String lookupKey = lookupUri == null ? null : lookupUri.toString();
-        
+        String lookupKey = info.lookupKey != null ? info.lookupKey : ContactsUtils.getFlexibleLookupKey(lookupUri);
+
         String nameForDefaultImage = null;
         if (TextUtils.isEmpty(name)) {
             nameForDefaultImage = mPhoneNumberHelper.getDisplayNumber(details.number,
@@ -967,12 +991,12 @@ public class CallLogAdapter extends GroupingListAdapter
 
         ViewStub stub = (ViewStub)callLogItem.findViewById(R.id.call_log_entry_actions_stub);
         if (stub != null) {
-            views.actionsView = (ViewGroup) stub.inflate();
+            views.actionsView = stub.inflate();
         }
 
         ViewStub stub2 = (ViewStub)callLogItem.findViewById(R.id.call_log_entry_actions_stub2);
         if (stub2 != null) {
-            views.actions2View = (ViewGroup) stub2.inflate();
+            views.actions2View = stub2.inflate();
         }
 
         if (views.callBackButtonView == null) {
@@ -1023,7 +1047,7 @@ public class CallLogAdapter extends GroupingListAdapter
         boolean canPlaceCallToNumber =
                 PhoneNumberUtilsWrapper.canPlaceCallsTo(views.number, views.numberPresentation);
 
-        boolean canSendMessages = !TextUtils.isEmpty(views.sipAddress) && PhoneNumberHelper.isUriNumber(views.sipAddress);
+        boolean canSendMessages = !TextUtils.isEmpty(views.assertedId) && Utilities.isUriNumber(views.assertedId);
 
         // Set return call intent, otherwise null.
         if (canPlaceCallToNumber) {
@@ -1039,7 +1063,7 @@ public class CallLogAdapter extends GroupingListAdapter
 
         if (canSendMessages) {
             // Sets the primary action to call the number.
-            views.writeBackButtonView.setTag(IntentProvider.getReturnMessagingIntentProvider(views.sipAddress));
+            views.writeBackButtonView.setTag(IntentProvider.getReturnMessagingIntentProvider(views.assertedId));
             views.writeBackButtonView.setVisibility(View.VISIBLE);
             views.writeBackButtonView.setOnClickListener(mActionListener);
         } else {
@@ -1086,7 +1110,7 @@ public class CallLogAdapter extends GroupingListAdapter
 
         // check to see whether invite button should be displayed
         // if sipaddress empty (not an SC user) and number valid then allow invite
-        if (TextUtils.isEmpty(views.sipAddress) && !TextUtils.isEmpty(views.number) && PhoneNumberUtils.isWellFormedSmsAddress(views.number)) {
+        if (TextUtils.isEmpty(views.assertedId) && !TextUtils.isEmpty(views.number) && PhoneNumberUtils.isWellFormedSmsAddress(views.number)) {
             // Sets the primary action to call the number.
             views.inviteButtonView.setTag(IntentProvider.getInviteIntentProvider(views.number));
             views.inviteButtonView.setVisibility(View.VISIBLE);
@@ -1106,7 +1130,7 @@ public class CallLogAdapter extends GroupingListAdapter
         if (!mIsCallLog) {
             final ViewStub stub = (ViewStub) view.findViewById(R.id.link_stub);
             final CallLogListItemViews views = (CallLogListItemViews) view.getTag();
-            if (UriUtils.isEncodedContactUri(info.lookupUri) && !TextUtils.isEmpty(views.sipAddress)) {
+            if (UriUtils.isEncodedContactUri(info.lookupUri) && !TextUtils.isEmpty(views.assertedId)) {
                 if (stub != null) {
                     final View inflated = stub.inflate();
                     inflated.setVisibility(View.VISIBLE);
@@ -1119,7 +1143,7 @@ public class CallLogAdapter extends GroupingListAdapter
                     @Override
                     public void onClick(View v) {
                         final Intent intent =
-                                ContactsUtils.getAddNumberToContactIntent(mContext, details.number, views.sipAddress);
+                                ContactsUtils.getAddNumberToContactIntent(mContext, details.number, views.assertedId);
                         mContext.startActivity(intent);
                     }
                 });
@@ -1271,7 +1295,8 @@ public class CallLogAdapter extends GroupingListAdapter
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     private void setPhoto(CallLogListItemViews views, long photoId, Uri contactUri,
             String displayName, String identifier, int contactType) {
-        views.quickContactView.assignContactUri(contactUri);
+
+//        views.quickContactView.assignContactUri(contactUri);   // issue NGA-386
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
             views.quickContactView.setOverlay(null);
         DefaultImageRequest request = new DefaultImageRequest(displayName, identifier,
@@ -1282,7 +1307,8 @@ public class CallLogAdapter extends GroupingListAdapter
 
     private void setPhoto(CallLogListItemViews views, Uri photoUri, Uri contactUri,
             String displayName, String identifier, int contactType) {
-        views.quickContactView.assignContactUri(contactUri);
+
+//        views.quickContactView.assignContactUri(contactUri);   // issue NGA-386
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
             views.quickContactView.setOverlay(null);
         DefaultImageRequest request = new DefaultImageRequest(displayName, identifier,

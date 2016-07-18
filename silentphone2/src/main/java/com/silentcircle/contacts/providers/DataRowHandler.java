@@ -71,9 +71,9 @@ import net.sqlcipher.database.SQLiteDatabase;
 public abstract class DataRowHandler {
 
     public interface DataDeleteQuery {
-        public static final String TABLE = Tables.DATA_JOIN_MIMETYPES;
+        String TABLE = Tables.DATA_JOIN_MIMETYPES;
 
-        public static final String[] CONCRETE_COLUMNS = new String[] {
+        String[] CONCRETE_COLUMNS = new String[] {
             DataColumns.CONCRETE_ID,
             MimetypesColumns.MIMETYPE,
             Data.RAW_CONTACT_ID,
@@ -81,7 +81,7 @@ public abstract class DataRowHandler {
             Data.DATA1,
         };
 
-        public static final String[] COLUMNS = new String[] {
+        String[] COLUMNS = new String[] {
             Data._ID,
             MimetypesColumns.MIMETYPE,
             Data.RAW_CONTACT_ID,
@@ -89,11 +89,11 @@ public abstract class DataRowHandler {
             Data.DATA1,
         };
 
-        public static final int _ID = 0;
-        public static final int MIMETYPE = 1;
-        public static final int RAW_CONTACT_ID = 2;
-        public static final int IS_PRIMARY = 3;
-        public static final int DATA1 = 4;
+        int _ID = 0;
+        int MIMETYPE = 1;
+        int RAW_CONTACT_ID = 2;
+        int IS_PRIMARY = 3;
+        int DATA1 = 4;
     }
 
     public interface DataUpdateQuery {

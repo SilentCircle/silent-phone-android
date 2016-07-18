@@ -52,10 +52,7 @@ public class ContactUtil {
         };
         Uri uri = ContentUris.withAppendedId(URI, contactId);
         Cursor cursor = resolver.query(uri, projection, null, null, null);
-        if (cursor.moveToNext()) {
-            return true;
-        }
-        return false;
+        return cursor.moveToNext();
     }
 
     public static long queryContactLastUpdatedTimestamp(ContentResolver resolver, long contactId) {

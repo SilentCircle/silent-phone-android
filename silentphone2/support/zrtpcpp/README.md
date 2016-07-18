@@ -30,7 +30,7 @@ functions for these enhanced features.
 **Note:** The Elliptic curves Cure25519 and Curve3617 are available only if you
 select the crypto standalone mode during build.
 
-The newer verisons (starting with 4.1) implement an extensible mechanisms to
+The newer versions (starting with 4.1) implement an extensible mechanisms to
 define algorithm selection policies that control selection of Hash, symmetric
 cipher, and the SRTP authentication. Currently two policies exist: _Standard_
 and _PreferNonNist_. The Standard policy selects algorihms based on the
@@ -38,6 +38,10 @@ preferences (order) in the Hello packet, the PreferNonNist policy prefers
 non-NIST algorithms, for example Skein and Twofish, if the selected public key
 (Diffie-Hellman) algorithm is also one of the non-NIST algorithms. This is 
 fully backward compatible and in-line with RFC6189.
+
+Refer to new [NEWS][] file for a summary of changes.
+
+[NEWS]: NEWS.md
 
 ### SDES support
 This release also provides SDES support. The SDES implementation does not
@@ -62,7 +66,7 @@ course some Java adaptation were done, for example to overcome the problem of
 non-existing pointers :-), thus I use some non-obvious array handling. If you
 are interessted in the Java implementation of ZRTP then you may have a look
 [here][javazrtp]. The Jitsi project uses the Java implementation. Jitsi is a
-powerfull communication client and is definitely worth a [look][jitsi].
+powerful communication client and is definitely worth a [look][jitsi].
 
 To enable C based code to use ZRTP C++ I did a C wrapper that offers the same
 functionality to C based RTP implementations. The first use of the ZRTP C
@@ -152,4 +156,4 @@ and may give you an idea how to do it for other clients. The generated
 `Android.mk` generates `buildinfo_*.c` files in the root directory. You may
 delete these files after the Android static libraries are ready.
 
-Since version 4.1.1 the example Android build files require NDK r9c.
+Since version 4.1.1 the example Android build files require NDK r9c or better.

@@ -44,6 +44,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.silentcircle.messaging.activities.AxoRegisterActivity;
 import com.silentcircle.messaging.views.OnSwipeTouchListener;
 import com.silentcircle.silentphone2.R;
 
@@ -66,9 +67,10 @@ public class PdfViewerFragment extends FileViewerFragment implements View.OnClic
     private ImageButton mButtonNext;
     private TextView mPagePosition;
 
-    private ParcelFileDescriptor mFileDescriptor;
     private PdfRenderer mPdfRenderer;
     private PdfRenderer.Page mCurrentPage;
+
+    private float mRenderMultiplier;
 
     public static PdfViewerFragment create(Uri uri, String mimeType) {
         return instantiate(new PdfViewerFragment(), uri, mimeType);
@@ -102,6 +104,8 @@ public class PdfViewerFragment extends FileViewerFragment implements View.OnClic
             }
         });
 
+        mRenderMultiplier = Math.max(1.0f, getResources().getDisplayMetrics().scaledDensity);
+
         int index = 0;
         if (null != savedInstanceState) {
             index = savedInstanceState.getInt(STATE_CURRENT_PAGE_INDEX, 0);
@@ -118,13 +122,33 @@ public class PdfViewerFragment extends FileViewerFragment implements View.OnClic
         super.onDestroyView();
     }
 
+    @TargetApi(Build.VERSION_CODES.M)
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        commonOnAttach(context);
+    }
+
+    /*
+     * Deprecated on API 23
+     * Use onAttachToContext instead
+     */
+    @SuppressWarnings("deprecation")
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
+        commonOnAttach(activity);
+    }
+
+    private void commonOnAttach(Context context) {
+        if (mPdfRenderer != null) {
+            return;
+        }
+
         try {
-            openRenderer(activity);
+            openRenderer(context);
         } catch (IOException e) {
-            Toast.makeText(activity, "Failed to show PDF document [" + e.getMessage() + "]",
+            Toast.makeText(context, "Failed to show PDF document [" + e.getMessage() + "]",
                     Toast.LENGTH_SHORT).show();
             dispatchError();
         }
@@ -159,7 +183,7 @@ public class PdfViewerFragment extends FileViewerFragment implements View.OnClic
             case R.id.button_next:
                 showPage(mCurrentPage.getIndex() + 1);
                 break;
-            default:;
+            default:
         }
     }
 
@@ -170,8 +194,7 @@ public class PdfViewerFragment extends FileViewerFragment implements View.OnClic
 
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     private void openRenderer(Context context) throws IOException {
-        mFileDescriptor = getFileDescriptor(context);
-        mPdfRenderer = new PdfRenderer(mFileDescriptor);
+        mPdfRenderer = new PdfRenderer(getFileDescriptor(context));
     }
 
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
@@ -180,7 +203,6 @@ public class PdfViewerFragment extends FileViewerFragment implements View.OnClic
             mCurrentPage.close();
         }
         mPdfRenderer.close();
-        mFileDescriptor.close();
     }
 
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
@@ -195,7 +217,10 @@ public class PdfViewerFragment extends FileViewerFragment implements View.OnClic
 
         mCurrentPage = mPdfRenderer.openPage(index);
 
-        Bitmap bitmap = Bitmap.createBitmap(mCurrentPage.getWidth(), mCurrentPage.getHeight(),
+        int renderWidth = Math.round(mRenderMultiplier * mCurrentPage.getWidth());
+        int renderHeight = Math.round(mRenderMultiplier * mCurrentPage.getHeight());
+
+        Bitmap bitmap = Bitmap.createBitmap(renderWidth, renderHeight,
                 Bitmap.Config.ARGB_8888);
         mCurrentPage.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY);
         mImageView.setImageBitmap(bitmap);

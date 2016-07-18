@@ -19,6 +19,7 @@
 <!-- Note: explicitly override the default left and right padding on spinner -->
 <Spinner
     xmlns:android="http://schemas.android.com/apk/res/android"
+    style="@style/Widget.AppCompat.Spinner.DropDown"
     android:id="@+id/spinner"
     android:layout_gravity="bottom"
     android:layout_width="@dimen/editor_type_label_width"

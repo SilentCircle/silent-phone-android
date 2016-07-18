@@ -117,7 +117,7 @@
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">match_parent</item>
         <item name="android:background">?sp_drawer_background</item>
-        <item name="android:scrollbarStyle">insideInset</item>
+        <item name="android:scrollbarStyle">outsideOverlay</item>
         <!--
         <item name="android:scrollbarStyle">insideInset</item>
         <item name="android:scrollbarStyle">outsideInset</item>
@@ -139,6 +139,14 @@
     </style>
 
     <style name="Widget.Silent.DrawerCheckBox">
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:textColor">@color/sc_ng_text_grey_3</item>
+        <item name="android:textColorPrimary">@color/sc_ng_text_grey_3</item>
+        <item name="colorAccent">@color/sc_ng_text_green</item>
+        <item name="colorControlActivated">@color/sc_ng_text_green</item>
+        <item name="colorControlHighlight">@color/sc_ng_background_1</item>
+        <item name="colorControlNormal">@color/sc_ng_background_1</item>
     </style>
 
     <style name="Widget.Silent.DrawerSimpleText">
@@ -189,9 +197,24 @@
     </style>
 
     <style name="Widget.Silent.TransparentButton">
-        <item name="android:layout_width">fill_parent</item>
+        <item name="android:layout_width">match_parent</item>
         <item name="android:background">@null</item>
         <item name="android:gravity">start|center_vertical</item>
+    </style>
+
+    <style name="Widget.Silent.SettingsButton" parent="Widget.Silent.TransparentButton">
+        <item name="android:layout_marginLeft">@dimen/settings_item_margin_left</item>
+        <item name="android:layout_marginStart">@dimen/settings_item_margin_left</item>
+        <item name="android:layout_marginRight">@dimen/settings_item_margin_right</item>
+        <item name="android:layout_marginEnd">@dimen/settings_item_margin_right</item>
+        <item name="android:layout_marginBottom">0dp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textSize">@dimen/text_xlarge</item>
+        <item name="android:textAppearance">?android:attr/textAppearanceMedium</item>
+        <item name="android:textColor">@color/chat_options_text_color</item>
+        <item name="android:background">@drawable/bg_widget_options_item</item>
+        <item name="android:paddingLeft">@dimen/settings_item_padding_left</item>
+        <item name="android:paddingBottom">0dp</item>
     </style>
 
     <style name="Widget.Silent.TransparentButton.Medium">
@@ -217,6 +240,18 @@
         <item name="android:subtitleTextStyle">@color/sc_ng_text_dark</item>
     </style>
 
+    <style name="Widget.Silent.CryptoInfoText.Large" parent="Widget.Silent.SimpleText.Large">
+        <item name="android:textColor">?sp_dialog_text_color</item>
+    </style>
+
+    <style name="Widget.Silent.CryptoInfoText.Medium" parent="Widget.Silent.SimpleText.Medium">
+        <item name="android:textColor">?sp_dialog_text_color</item>
+    </style>
+
+
+    <style name="Widget.Silent.CryptoInfoText.Small" parent="Widget.Silent.SimpleText.Small">
+        <item name="android:textColor">?sp_dialog_text_color</item>
+    </style>
 
     <!-- ************ Styles for SCA part ************************* -->
 
@@ -369,13 +404,23 @@
         <item name="android:fontFamily">sans-serif-medium</item>
     </style>
 
+    <!-- Section headers have their text color visually changed on touch if the color has been explicitly defined,
+        even if there is no visual background color change behind the header. For those, use this style. Additionally,
+        I had no luck using a custom selector for the PinnedHeaderListView to keep the colors from changing. Probably
+        a bug. -->
+    <style name="SectionHeaderStyleAlt" parent="@android:style/TextAppearance.Large">
+        <item name="android:textSize">20sp</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+    </style>
+
     <style name="TextAppearanceSmall" parent="@android:style/TextAppearance.Small">
         <item name="android:textSize">14sp</item>
         <item name="android:textColor">@android:color/secondary_text_dark</item>
     </style>
 
     <style name="DirectoryHeaderStyle" parent="@android:style/TextAppearance.Small">
-        <item name="android:textSize">14sp</item>
+        <item name="android:textSize">16sp</item>
         <item name="android:textColor">?android:attr/textColorSecondary</item>
         <item name="android:fontFamily">sans-serif-medium</item>
     </style>
@@ -393,9 +438,16 @@
         <item name="android:layout_height">wrap_content</item>
     </style>
 
-    <style name="CallOrConversationDialogTheme" parent="@android:style/Theme.Dialog">
-        <item name="android:windowIsFloating">false</item>
+    <!-- @android:style/Theme.Dialog -->
+    <style name="CallOrConversationDialogTheme" parent="Theme.AppCompat.Light.Dialog">
+        <item name="android:windowIsFloating">true</item>
         <item name="android:windowNoTitle">true</item>
+
+        <item name="android:textColor">?sp_dialog_text_color</item>
+        <item name="android:textColorPrimary">?sp_dialog_text_color</item>
+        <item name="android:windowBackground">@null</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:padding">0dp</item>
     </style>
 
     <style name="SoundRecorderDialog" parent="android:Theme.Dialog">
@@ -409,6 +461,59 @@
         <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:windowSoftInputMode">stateUnspecified|adjustPan</item>
         <item name="android:colorBackgroundCacheHint">@null</item>
+    </style>
+
+    <style name="Widget.Switch" />
+
+    <style name="Widget.Switch.Light">
+        <item name="android:textColor">?sp_actionbar_title_text_color</item>
+        <!-- Inactive thumb color -->
+        <item name="colorSwitchThumbNormal">@color/sc_ng_text_grey_4</item>
+        <!-- Active thumb color -->
+        <item name="colorControlActivated">@color/sc_ng_text_green</item>
+        <item name="android:colorForeground">@color/sc_ng_background_3</item>
+        <!-- track has to be defined as app:track for each widget otherwise it is not used
+             instead colorAccent is applied.
+        <item name="track">@drawable/btn_switch_bg_selector</item>
+        -->
+        <!--<item name="track">@drawable/btn_switch_bg_selector</item> -->
+        <!-- Interesting attributes are colorControlNormal, colorControlActivated,
+            colorControlHighlight & colorSwitchThumbNormal. -->
+    </style>
+
+
+    <!-- Edit text widget style to be used on dark backgrounds -->
+    <style name="Widget.EditText.Dark" parent="Widget.Silent.SimpleText">
+        <item name="colorControlActivated">@color/sc_ng_text_grey</item>
+    </style>
+
+    <!-- Edit text widget style to be used on light (creme) backgrounds -->
+    <style name="Widget.EditText.Light" parent="Widget.Silent.SimpleText">
+        <item name="colorControlActivated">@color/sc_ng_text_grey_2</item>
+    </style>
+
+    <style name="Widget.Button" />
+    <style name="Widget.Button.Dark" parent="Widget.Button">
+        <item name="android:background">@drawable/bg_button_selector_dark</item>
+        <item name="android:gravity">center</item>
+        <item name="android:textColor">@drawable/button_text_selector_dark</item>
+        <item name="android:filterTouchesWhenObscured">true</item>
+    </style>
+
+    <style name="Widget.Button.Light" parent="Widget.Button">
+        <item name="android:background">@drawable/bg_button_selector_light</item>
+        <item name="android:gravity">center</item>
+        <item name="android:textColor">@drawable/button_text_selector_light</item>
+        <item name="android:filterTouchesWhenObscured">true</item>
+    </style>
+
+    <!-- Switch style to be used on dark background -->
+    <style name="Widget.Switch.Dark">
+        <item name="android:textColor">@color/sc_ng_text_grey</item>
+        <item name="colorSwitchThumbNormal">@color/sc_ng_text_grey</item>
+        <item name="colorControlActivated">@color/sc_ng_text_green</item>
+        <item name="android:colorForeground">@color/sc_ng_background_1</item>
+        <!--<item name="track">@drawable/btn_switch_bg_selector</item>-->
     </style>
 
 </resources>

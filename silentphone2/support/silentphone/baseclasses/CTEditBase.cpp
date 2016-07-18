@@ -1,7 +1,7 @@
 /*
 Created by Janis Narbuts
 Copyright (C) 2004-2012, Tivi LTD, www.tiviphone.com. All rights reserved.
-Copyright (C) 2012-2015, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2012-2016, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,6 +27,7 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+
 
 //#include "../os/CTOsGui.h"
 #if defined(__APPLE__) || defined(ANDROID_NDK) ||  defined(__linux__)
@@ -405,7 +406,8 @@ int CTStrBase::operator == (const char *p){
 int CTStrBase::operator==(CTStrBase *b){
    if(!b)return 0;
    int l=getLen();
-   if(b->getLen()!=l || !l)return 0;
+   if(b->getLen()!=l )return 0;
+   if(!l)return 1;
    short *pD=getText();
    short *ps=b->getText();
    if(ps[l>>1]!=pD[l>>1])return 0;

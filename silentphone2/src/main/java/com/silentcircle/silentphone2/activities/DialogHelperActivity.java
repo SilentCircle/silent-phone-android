@@ -29,21 +29,19 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package com.silentcircle.silentphone2.activities;
 
 import android.app.Activity;
-import android.app.AlertDialog;
+import android.support.v7.app.AlertDialog;
 import android.app.Dialog;
 import android.app.DialogFragment;
 import android.app.FragmentManager;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.v7.app.ActionBarActivity;
-
-import com.silentcircle.silentphone2.R;
+import android.support.v7.app.AppCompatActivity;
 
 /**
  * A very simple list to display some trace information
  */
-public class DialogHelperActivity extends ActionBarActivity {
+public class DialogHelperActivity extends AppCompatActivity {
     public static final String MESSAGE = "message";
     public static final String TITLE = "title";
     public static final String NEGATIVE_BUTTON = "negative_button";
@@ -107,8 +105,6 @@ public class DialogHelperActivity extends ActionBarActivity {
             mNegative = args.getInt(NEGATIVE_BUTTON, 0);
             mNeutral = args.getInt(NEUTRAL_BUTTON, 0);
 
-            if (args == null)
-                return null;
             builder.setTitle(args.getString(TITLE))
                     .setMessage(args.getString(MESSAGE))
                     .setPositiveButton(getString(mPositive), new DialogInterface.OnClickListener() {
@@ -139,5 +135,4 @@ public class DialogHelperActivity extends ActionBarActivity {
             return builder.create();
         }
     }
-
 }

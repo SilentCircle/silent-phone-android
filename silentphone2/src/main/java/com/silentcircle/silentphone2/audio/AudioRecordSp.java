@@ -30,7 +30,6 @@ package com.silentcircle.silentphone2.audio;
 
 import android.annotation.TargetApi;
 import android.media.AudioRecord;
-import android.media.AudioTrack;
 import android.media.MediaRecorder;
 import android.media.audiofx.AcousticEchoCanceler;
 import android.media.audiofx.AutomaticGainControl;

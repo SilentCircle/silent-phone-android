@@ -24,7 +24,8 @@
     <string name="provision_later">Later</string>
     <string name="crypto_padlock">Padlock to show security state</string>
     <string name="error_code">Error code: </string>
-    <string name="logout">Logout</string>
+    <string name="go_offline">Go offline</string>
+    <string name="wipe_phone">Wipe Silent Phone</string>
 
     <!-- Enable translation of server provided SIP message. -->
 
@@ -117,11 +118,22 @@
     <string name="provisioning_create">Create</string>
     <string name="provisioning_credentials">Username or password wrong. Please check.</string>
     <string name="provisioning_forgot_pwd">I forgot my password.</string>
-    <string name="thanks_number">Number:</string>
+    <string name="provisioning_auth_token_hint">Enter authentication token</string>
+    <string name="provisioning_auth_token_text">Two-factor authentication is enabled. Please enter an authentication token below.</string>
+    <string name="provisioning_auth_token_error">Provisioning Error: You have specified an incorrect authentication token.</string>
+    <string name="provisioning_all_fields_required">All fields are required</string>
+    <string name="provisioning_domain_error">An enterprise server could not be located, or could not be authenticated, for the %s domain</string>
+    <string name="provisioning_ssl_date_invalid">The date of the certificate is invalid</string>
+    <string name="provisioning_ssl_expired">The certificate has expired</string>
+    <string name="provisioning_ssl_idmismatch">Hostname mismatch</string>
+    <string name="provisioning_ssl_notyetvalid">The certificate is not yet valid</string>
+    <string name="provisioning_ssl_untrusted">The certificate authority is not trusted</string>
+    <string name="thanks_number">Phone:</string>
     <string name="thanks_name">Name:</string>
     <string name="preferred_sas_type">Preferred SAS type</string>
     <string name="sas_char_mode">SAS displayed as four characters</string>
     <string name="sas_word_mode">SAS displayed as two words</string>
+    <string name="sas_emoji_mode">SAS displayed as four emojis</string>
     <string name="sp_ringtone">Ringtone</string>
     <string name="no_ringtone">Default</string>
     <string name="preferred_algorithms">Prefer non-NIST suite</string>
@@ -138,6 +150,7 @@
      Used by AccessibilityService to announce the purpose of the button.
     -->
     <string name="description_delete_button">backspace</string>
+    <string name="description_pick_contact_button">Pick contact</string>
     <string name="contacts_image_button">Open contacts</string>
     <string name="zrtp_common_cmp">"You should verbally compare the authentication code with the person you are calling. If it doesn’t match, it indicates that someone may have intercepted the call."</string>
     <string name="zrtp_common_cls">Connection Error. Please close and call again.</string>
@@ -186,6 +199,7 @@
     <string name="account_creation_wrong_format">Account creation - server sent wrong data format: </string>
     <string name="account_creation_no_data">Account creation - server returned wrong data.</string>
     <string name="other_settings">Other options</string>
+    <string name="developer_options" translatable="false">Developer options</string>
     <string name="select_theme">Select theme</string>
     <string name="current_theme">Current theme: %s</string>
     <string name="theme_orange">Orange</string>
@@ -260,6 +274,9 @@
     <!-- Title for missed call details screen -->
     <string name="type_missed">Missed call</string>
 
+    <!-- Title bar for call history screen -->
+    <string name="callHistoryTitle">Call history</string>
+
     <!-- Title bar for call detail screen -->
     <string name="callDetailTitle">Call details</string>
 
@@ -301,7 +318,7 @@
     <string name="local_invisible_directory">Other</string>
 
     <!-- The label in section header in the contact list for a local contacts [CHAR LIMIT=128] -->
-    <string name="local_search_label">All contacts</string>
+    <string name="local_search_label">Contacts</string>
 
     <!-- String describing the text on the header of the profile contact in the contacts list
          This may be programatically capitalized. [CHAR LIMIT=20] -->
@@ -469,7 +486,7 @@
     <string name="call_mms">Call MMS</string>
 
     <!-- Generic action string for starting an IM chat -->
-    <string name="chat">TEXT</string>
+    <string name="chat">Text</string>
 
     <!-- Toast shown when text is copied to the clipboard [CHAR LIMIT=64] -->
     <string name="toast_text_copied">Text copied</string>
@@ -784,8 +801,17 @@
     <string name="setting_echo_option">Echo canceler</string>
     <string name="setting_echo_option_summary">Automatic control of echo canceler. If not selected the echo canceler is always active</string>
 
-    <string name="setting_errors_option">Show all errors</string>
+    <string name="setting_errors_option" translatable="false">Show all errors</string>
     <string name="setting_errors_option_summary">Minor software errors that don\'t affect your experience are hidden by default.</string>
+
+    <string name="setting_developer_option" translatable="false">Enable developer menus</string>
+    <string name="setting_developer_option_summary">If you aren\'t a developer, don\'t check this!</string>
+
+    <string name="developer_ssl_debug" translatable="false">SSL debug level</string>
+    <string name="developer_ssl_debug_explanation" translatable="false">Set the SSL debug level. 0 means debugging off, 4 means full verbose debugging.</string>
+
+    <string name="developer_axo_debug" translatable="false">Axolotl debug level</string>
+    <string name="developer_axo_debug_explanation" translatable="false">Set the Axolotl debug level. 0 means debugging off, 6 means epic.</string>
 
     <!-- ******* Strings for the dial assist activity -->
     <string name="sp_dial_helper_title">Dial assist</string>
@@ -887,7 +913,7 @@
     <string name="sign_in">Sign in</string>
     <string name="sign_in_to_sc">Sign in to your Silent Circle account</string>
 
-    <string name="sc_privacy_link"><a href="https://silentcircle.com/privacy/">Privacy Statement</a></string>
+    <string name="sc_privacy_link"><a href="https://accounts.silentcircle.com/privacy-policy/">Privacy Statement</a></string>
     <string name="sc_tos_link"><a href="https://accounts.silentcircle.com/terms/">Terms of Service</a></string>
 
     <plurals name="number_missed_calls">
@@ -904,12 +930,14 @@
     <string name="remaining_oca_minutes_fail">No Silent World information available</string>
 
     <string name="remaining_oca_minutes_zero">No call minutes used. Monthly plan: %1$d minutes.</string>
-    <string name="remaining_oca_minutes_dialog">Silent World minutes</string>
+    <string name="remaining_oca_minutes_dialog">Silent Circle account</string>
     <plurals name="remaining_oca_minutes_info">
         <item quantity="one">You used one minute of your %1$d minutes.</item>
         <!--<item quantity="other">You used %1$d minutes of your %2$d minutes.</item>-->
         <item quantity="other">Plan: %1$d minutes\nRemaining: %2$d minutes</item>
     </plurals>
+
+    <string name="remaining_credit">Remaining credit: %1$.2f %2$s</string>
 
     <string name="setting_p2p">Use media relay</string>
     <string name="setting_p2p_summary">Always use media relay server to conceal remote party\'s location. Adds latency.</string>
@@ -933,11 +961,11 @@
     -->
     <string name="tab_speed_dial">SPEED DIAL</string>
 
-    <string name="tab_recents">RECENTS</string>
+    <string name="tab_recents">CALLS</string>
 
     <string name="tab_all_contacts">CONTACTS</string>
 
-    <string name="tab_chat">TEXT</string>
+    <string name="tab_chat">CHATS</string>
 
     <!-- Button text for the "call back" button displayed underneath an entry in the call log.
      Tapping causes a call to be placed to the caller represented by the call log entry.
@@ -1109,7 +1137,7 @@
     <string name="status_busy">Busy</string>
     <!-- Message displayed when the Phone application has been disabled and a phone call cannot
          be made. [CHAR LIMIT=NONE] -->
-    <string name="call_not_available">Cannot make a phone call because the Silent Phone application is not available.</string>
+    <string name="call_not_available" translatable="false">Cannot make a phone call because the Silent Phone application is not available.</string>
     <!-- String a header on the call details screen.  Appears above the list calls to or from a
          particular number.
          [CHAR LIMIT=65] -->
@@ -1126,6 +1154,7 @@
     <string name="undisclosed_location">(undisclosed location)</string>
 
     <string name="optimizing">Optimizing…</string>
+    <string name="processing">Processing…</string>
     <string name="uploading">Uploading…</string>
     <string name="encrypting">Encrypting…</string>
     <string name="decrypting">Decrypting…</string>
@@ -1170,6 +1199,11 @@
     <string name="import_contact">Import contact</string>
     <string name="import_contacts">Import %d contacts</string>
     <string name="search">Search</string>
+    <string name="submit">Submit</string>
+    <string name="status_on">On</string>
+    <string name="status_off">Off</string>
+    <string name="settings">Settings</string>
+    <string name="wipe">Wipe</string>
 
     <!-- voiceovers for messages in conversation view -->
     <string name="messaging_burn_button_voiceover">Burn\u002E \u0020button</string>
@@ -1178,12 +1212,22 @@
     <string name="capture_audio_label">Record audio with Silent Phone</string>
     <string name="capture_video_label">Capture video with Silent Phone</string>
 
+    <string name="record_currently_on_call">Recording is not supported during a call</string>
+
     <string name="dialog_title_cannot_enable_location_sharing">Cannot enable location sharing</string>
     <string name="dialog_title_failed_to_send_message">Failed to send message</string>
+    <string name="dialog_title_unable_to_send_messages">Unable to send messages</string>
+    <string name="dialog_title_choose_action">Choose action</string>
+    <string name="dialog_title_error">Error</string>
+    <string name="dialog_title_select_notification_light">Select notification light</string>
+    <string name="dialog_title_select_notification_vibrate">Select vibrate pattern</string>
 
     <string name="dialog_message_enable_device_location">To use this option, enable Location under device Settings. Location may be empty if only GPS is used.</string>
     <string name="dialog_message_current_location_mode">Current location mode is \"%s\".</string>
     <string name="dialog_message_failed_to_send_to">Failed to send message to user %1$s\n\n%2$s</string>
+    <string name="dialog_message_unable_to_send_to">Unable to send messages to user %1$s. Check whether entered user name is correct.</string>
+    <string name="dialog_message_file_too_large">The file you have selected is too large.</string>
+    <string name="dialog_message_wipe_phone">This will clear conversations, call history, and other Silent Phone data. The application will exit. You will need to log back in when you restart Silent Phone.</string>
 
     <string name="dialog_button_ok">OK</string>
     <string name="dialog_button_yes">Yes</string>
@@ -1198,7 +1242,7 @@
 
     <string name="chat_view_empty">Conversations log is empty.</string>
 
-    <string name="conversation_with">Conversation with</string>
+    <string name="conversation_with">Conversation with %1$s</string>
     <string name="username_unknown">Unknown</string>
 
     <string name="toast_saved_to">Saved to <xliff:g id="file_path">%1$s</xliff:g></string>
@@ -1215,6 +1259,7 @@
     <string name="axo_menu_devices">Chat device management</string>
 
     <string name="axo_local_device">Fingerprint of local messaging device:</string>
+    <string name="axo_local_device_id_empty">Local device id empty</string>
 
     <plurals name="axo_devices">
         <item quantity="one">One device available for messaging</item>
@@ -1239,6 +1284,8 @@
 
     <string name="axo_device_explanation_remote">The list may show a device more than once if the app
          was removed and installed again on the partner\'s device.</string>
+
+    <string name="axo_force_re_register">Force Axolotl re-register</string>
 
     <string name="message_state_unknown">Unknown</string>
     <string name="message_state_resend_requested">Resend requested</string>
@@ -1277,6 +1324,7 @@
     <string name="message_error_sender_id_mismatch">Mismatch of sender\'s long term identity</string>
     <string name="message_error_recv_data_length">Expected length of data does not match received length</string>
     <string name="message_error_wrong_recv_dev_id">Expected device id does not match actual device id</string>
+    <string name="message_error_network_error">Network error or server request failed</string>
 
     <string name="message_error_pub_no_curve">Curve not supported</string>
     <string name="message_error_pub_key_type">Private and public key use different curves</string>
@@ -1294,6 +1342,7 @@
     <string name="messaging_pdf_viewer_showing_page_voiceover">Showing page %1$d of %2$d</string>
     <string name="messaging_pdf_viewer_button_previous_page_voiceover">Go to previous page</string>
     <string name="messaging_pdf_viewer_button_next_page_voiceover">Go to next page</string>
+    <string name="messaging_could_not_view_link">Could not open link.</string>
 
     <!-- Texts for messaging options in main drawer menu -->
     <string name="messaging_options">Messaging options</string>
@@ -1301,8 +1350,23 @@
     <string name="messaging_burn_animation_explanation">Show animation when burning messages.</string>
     <string name="messaging_attachment_export_warning">Warn when exporting</string>
     <string name="messaging_attachment_export_warn_explanation">Warn when exporting message attachments.</string>
-    <string name="messaging_sounds">Play sound for new message</string>
-    <string name="messaging_sounds_explanation">Play sound when a new message arrives.</string>
+    <string name="messaging_sounds">Play sound for messages</string>
+    <string name="messaging_sounds_explanation">Play sound when a new message arrives or a message is removed.</string>
+    <string name="messaging_protection">Chat protection configuration</string>
+    <string name="messaging_ringtone_title">Notification tone</string>
+    <string name="messaging_light_title">Notification light</string>
+    <string name="messaging_vibrate_title">Vibrate pattern</string>
+    <string name="messaging_vibrate_off">Off</string>
+    <string name="messaging_vibrate_default">Default</string>
+    <string name="messaging_vibrate_short">Short</string>
+    <string name="messaging_vibrate_long">Long</string>
+    <string name="messaging_light_off">Off</string>
+    <string name="messaging_light_default">Default</string>
+    <string name="messaging_light_red">Red</string>
+    <string name="messaging_light_blue">Blue</string>
+    <string name="messaging_light_green">Green</string>
+    <string name="messaging_light_white">White</string>
+    <string name="messaging_light_purple">Purple</string>
 
     <string name="addContactTitle">Add to Silent Circle Account</string>
     <string name="contactCreationFailure">Contact creation failed, check logs.</string>
@@ -1321,6 +1385,8 @@
     <string name="messaging_vcard_section_email">Email</string>
     <string name="messaging_vcard_section_im">IM</string>
     <string name="messaging_vcard_section_address">Address</string>
+    <string name="messaging_vcard_section_sip" translatable="false">Sip</string>
+    <string name="messaging_vcard_section_web" translatable="false">Web</string>
     <string name="messaging_vcard_section_organization">Organization</string>
     <string name="messaging_vcard_section_notes">Notes</string>
     <string name="messaging_vcard_address_type_home">Home</string>
@@ -1341,23 +1407,159 @@
     <string name="messaging_vcard_phone_type_silent">Silent Circle</string>
     <string name="messaging_vcard_phone_type_other">Other</string>
     <string name="messaging_vcard_importing_contact">Importing contact for %s</string>
+    <string name="messaging_vcard_cannot_show_selected_contact">Cannot show selected contact!</string>
 
     <string name="messaging_conversation_list_no_messages">No messages</string>
     <string name="messaging_conversation_select_recipient_hint">Enter recipient\'s username</string>
-    <string name="messaging_conversation_select_conversation_partner">Select conversation partner</string>
+    <string name="messaging_conversation_select_conversation_partner">Recipient\'s username</string>
     <string name="messaging_conversation_list_file_sent">%1$s sent</string>
     <string name="messaging_conversation_list_file_received">%1$s received</string>
     <string name="messaging_conversation_list_type_file">File</string>
-    <string name="messaging_conversation_list_type_pdf">PDF</string>
+    <string name="messaging_conversation_list_type_pdf" translatable="false">PDF</string>
     <string name="messaging_conversation_list_type_audio">Audio</string>
     <string name="messaging_conversation_list_type_video">Video</string>
     <string name="messaging_conversation_list_type_image">Image</string>
     <string name="messaging_conversation_list_type_contact">Contact</string>
+    <string name="messaging_conversation_list_failed_attachment">Failed attachment</string>
+
+    <string name="messaging_user_validation_generic_error">Failed to validate user name.</string>
+    <string name="messaging_user_validation_username_empty">Provided user name is empty.</string>
+    <string name="messaging_user_validation_no_connection">Cannot validate user name without network connection.</string>
+
+    <string name="messaging_message_information_title">Message information</string>
+    <string name="messaging_message_information_copied_to_clipboard">Copied to clipboard</string>
+    <string name="messaging_message_information_toggle_json_view">Toggle JSON view</string>
 
     <string name="invite_sms_not_setup">Sorry, this device doesn\'t appear to support SMS, so we can\'t send out an invitation.</string>
     <string name="invite_email_not_setup">Sorry, you need to setup an email account before we can send out invitations by email.</string>
     <string name="invite_no_phone_or_email">Sorry, the contact appears to have no phone or email, so we can\'t send out an invitation.</string>
 
+    <string name="freemium_user">Basic account</string>
+
     <string name="basic_account_info">With a basic account, you get unlimited secure messaging and free incoming calls.
-        \nVisit the Silent Circle website and upgrade your account to make outgoing calls.</string>
+        \n\nVisit the <a href="https://accounts.silentcircle.com/">Silent Circle website</a> and upgrade your account to make outgoing calls.</string>
+
+    <string name="basic_feature_info">With a basic account, you are limited in usage of features.
+        \n\nVisit the <a href="https://accounts.silentcircle.com/">Silent Circle website</a> and upgrade your account.</string>
+
+    <string name="expired_account_info">Your account has expired. Visit the <a href="https://accounts.silentcircle.com/">Silent Circle website</a> and renew your account to make outgoing secure calls.
+        \n\nIn the meantime, you can still receive secure calls and send/receive secure messages.</string>
+
+    <string name="minutes_gone_info">You have run out of minutes. Visit the <a href="https://accounts.silentcircle.com/">Silent Circle website</a> and add credit to your account to make outgoing secure calls.
+        \n\nIn the meantime, you can still receive secure calls and send/receive secure messages.</string>
+
+    <string name="credit_gone_info">You have run out of credit. Visit the <a href="https://accounts.silentcircle.com/">Silent Circle website</a> and add credit to your account to make outgoing secure calls.
+        \n\nIn the meantime, you can still receive secure calls and send/receive secure messages.</string>
+
+    <string name="minutes_low_info">You are running low on minutes. Visit the <a href="https://accounts.silentcircle.com/">Silent Circle website</a> and add credit to your account to make outgoing secure calls.
+        \n\nIn the meantime, you can still receive secure calls and send/receive secure messages.</string>
+
+    <string name="credit_low_info">You are running low on credit. Visit the <a href="https://accounts.silentcircle.com/">Silent Circle website</a> and add credit to your account to make outgoing secure calls.
+        \n\nIn the meantime, you can still receive secure calls and send/receive secure messages.</string>
+
+    <string name="dialog_title_need_funding">Funding required</string>
+    <string name="dialog_message_need_funding">To use Silent Circle\'s services, you must fund your account with a minimum of $5.00 USD.
+        \n\nClick below to begin.</string>
+    <string name="dialog_positive_need_funding">Fund account</string>
+
+    <string name="silent_world_contact_info">Silent World call</string>
+
+    <string name="battery_info">Please acknowledge the request in the next dialog to keep SilentPhone connected.
+        If SilentPhone is not connect then you cannot receive calls or text messages. SilentPhone has an advanced
+        power management if in standby mode and the impacts on battery lifetime are negligible.
+    </string>
+    <string name="provisioning_corp_email_hint">Corporate email address</string>
+
+    <string name="messaging_screen_lock_enter_password_label">Enter password to unlock:</string>
+    <string name="messaging_screen_lock_enter_password_hint">Password</string>
+    <string name="messaging_screen_lock_unlock">Unlock</string>
+
+    <string name="messaging_screen_lock_password_not_correct">Password not correct</string>
+    <string name="messaging_screen_lock_messaging_screen_protection">Chat screen protection: %s</string>
+    <string name="messaging_screen_lock_password_removed">Chat screen protection disabled</string>
+    <string name="messaging_screen_lock_password_enabled">Chat screen protection enabled</string>
+    <string name="messaging_screen_lock_password_update_failed">Chat screen protection update failed</string>
+    <string name="messaging_screen_lock_passwords_dont_match">Passwords do not match</string>
+    <string name="messaging_screen_lock_messaging_after">Lock chat view %s</string>
+    <string name="messaging_screen_lock_enabled">Chat lock enabled</string>
+    <string name="messaging_screen_locked">Chat locked</string>
+    <string name="messaging_screen_lock_set_password_and_timeout">Set password and timeout</string>
+    <string name="messaging_screen_lock_enter_password">Enter password</string>
+    <string name="messaging_screen_lock_enter_password_description">Enter password to change messaging protection configuration</string>
+    <string name="messaging_screen_lock_password_hint">Password</string>
+    <string name="messaging_screen_lock_repeat_password_hint">Repeat password</string>
+    <string name="messaging_screen_lock_timeout_updated">Timeout updated</string>
+
+    <!-- in-app purchase -->
+    <string name="in_app_purchase">In App Purchase</string>
+    <string name="select_amount">Please provide an amount to purchase</string>
+    <string name="select">SELECT</string>
+    <string name="purchase">PURCHASE</string>
+    <string name="select_a_card">Select a card</string>
+
+    <string name="select_card">Please select a card to purchase</string>
+    <string name="specified_amount">Please provide an amount to purchase</string>
+    <string name="amount">Amount</string>
+    <string name="new_card">New card</string>
+    <!--<string name="auto_refill_payment">Automatically make $10.00 payment when account balance is lower $10.00.</string>-->
+    <string name="make_payment">Make payment for secure calls</string>
+
+    <string name="creating_token">Creating Token&#8230;</string>
+    <string name="validationErrors">Validation Errors</string>
+    <string name="cardNumber">Card Number</string>
+    <string name="cvc" translatable="false">CVC</string>
+    <string name="invalid_card_info">Please provide correct credit card information</string>
+    <string name="invalid_card_number">The card number that you entered is invalid</string>
+    <string name="invalid_expiration_date">The expiration date that you entered is invalid</string>
+    <string name="invalid_cvc">The CVC code that you entered is invalid</string>
+    <string name="minimum_payment">The minimum amount is $5</string>
+
+    <string name="getting_cc_info">Getting Credit Cards&#8230;</string>
+    <string name="processing_payment">Processing Payment&#8230;</string>
+    <string name="payment_successful">Thanks for your payment.</string>
+    <string name="exception_occur">Please try it again. If it still exists, Please contact app provider.</string>
+
+    <string name="confirm_payment_title">Confirm Payment</string>
+    <string name="confirm_payment_message">%1$s will be charged to the credit card ending with %2$s</string>
+
+    <string name="amount_level_1" translatable="false">$5</string>
+    <string name="amount_level_2" translatable="false">$10</string>
+    <string name="amount_level_3" translatable="false">$15</string>
+    <string name="amount_level_4">Other</string>
+
+    <string name="default_payment_amount" translatable="false">$5.00</string>
+    <string name="card_ending_with">Ending: </string>
+
+    <!-- android:description -->
+    <string name="click_to_purchase">Click this button to continue purchasing</string>
+    <string name="input_card_number">Please provide your card number into the text edit</string>
+
+    <string name="expiration_year">Please select expiration year from drop down</string>
+    <string name="expiration_month">Please select expiration month from drop down</string>
+    <string name="cvc_number">Please provide cvc number on the back of your card into the text edit</string>
+    <string name="click_register_card_stripe">Please click the save button to register your card to Stripe and save this Stripe token</string>
+
+    <!-- payment menu -->
+    <string name="payment_history">Payment History</string>
+
+    <!-- Miscellaneous -->
+    <!-- Error when wiping data (dev devices only) -->
+    <string name="wipe_data_failed">Wiping data has failed - please uninstall manually!</string>
+
+    <string name="dial_drawer_remaining_oca_minutes_description">Show account status</string>
+    <string name="dial_drawer_settings_description">Configure the application</string>
+    <string name="dial_drawer_go_offline_description">Shut down the application</string>
+    <string name="dial_drawer_wipe_phone_description">Clear application data and log out</string>
+
+    <string name="redirect_uri_mismatch">Redirect URI does not match: %s</string>
+    <string name="redirect_uri_query_missing">Redirect URI does not contain a query string: %s.</string>
+    <string name="redirect_uri_malformed">Redirect URI does not contain necessary data.</string>
+    <string name="redirect_uri_error">Redirect URI error. Error code: %s.</string>
+    <string name="redirect_ssl_error">Got a SSL Error: %s</string>
+    <string name="redirect_wrong_uri">Server provided a wrong redirect URI: %s</string>
+
+    <string name="hw_device_id_mismatch">HW device identifiers do not match: \nStored: %1$s\nActual: %2$s
+        \n\nPlease uninstall and install the application.</string>
+    <string name="soft_device_id_mismatch">Instance device identifiers do not match: \nStored: %1$s\nActual: %2$s
+        \n\nPlease uninstall and install the application.</string>
 </resources>

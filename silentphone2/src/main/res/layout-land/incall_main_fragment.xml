@@ -73,6 +73,7 @@
                         <TextView
                                 android:id="@+id/verify_label"
                                 style="@style/Widget.Silent"
+                                android:filterTouchesWhenObscured="true"
                                 android:textSize="14sp"
                                 android:text="@string/verify_label"
                                 tools:text="Antippen, vergleiche Code"
@@ -81,6 +82,7 @@
                         <TextView
                                 android:id="@+id/sas_text"
                                 style="@style/Widget.Silent"
+                                android:filterTouchesWhenObscured="true"
                                 android:textSize="16sp"
                                 android:singleLine="true"
                                 android:visibility="gone"
@@ -141,24 +143,28 @@
                                         android:id="@+id/mute_image"
                                         style="@style/InCallCompoundButton"
                                         android:contentDescription="@string/mute_button"
+                                        android:filterTouchesWhenObscured="true"
                                         android:src="?sp_ic_mic"/>
 
                                 <ImageButton
                                         android:id="@+id/video_image"
                                         style="@style/InCallCompoundButton"
                                         android:contentDescription="@string/video_button"
+                                        android:filterTouchesWhenObscured="true"
                                         android:src="?sp_ic_video"/>
 
                                 <ImageButton
                                         android:id="@+id/add_image"
                                         style="@style/InCallCompoundButton"
                                         android:contentDescription="@string/add_call"
+                                        android:filterTouchesWhenObscured="true"
                                         android:src="?sp_ic_add_call"/>
 
                                 <ImageButton
                                         android:id="@+id/start_chat_image"
                                         style="@style/InCallCompoundButton"
                                         android:contentDescription="@string/chat"
+                                        android:filterTouchesWhenObscured="true"
                                         android:src="?sp_ic_start_chat"
                                         android:visibility="visible"/>
 
@@ -166,6 +172,7 @@
                                         android:id="@+id/audio_image"
                                         style="@style/InCallCompoundButton"
                                         android:contentDescription="@string/audio_options_button"
+                                        android:filterTouchesWhenObscured="true"
                                         android:src="?sp_ic_volume_on"/>
 
                             </LinearLayout>

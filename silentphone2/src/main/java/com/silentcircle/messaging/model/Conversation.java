@@ -27,8 +27,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 package com.silentcircle.messaging.model;
 
+import android.support.annotation.NonNull;
 import android.text.TextUtils;
-import android.util.Base64;
 
 import java.util.Arrays;
 
@@ -55,7 +55,7 @@ public class Conversation extends Burnable implements Comparable<Conversation> {
     @Override
     public void clear() {
         removeID();
-        removePartner();
+        clearPartner();
         locationEnabled = false;
         burnNotice = false;
         sendReadReceipts = false;
@@ -66,11 +66,31 @@ public class Conversation extends Burnable implements Comparable<Conversation> {
         failures = 0;
     }
 
+    /**
+     * Create a Conversation with a user id.
+     *
+     * A Conversation must have Contact data. The Contact's user id is the key into
+     * the database.
+     *
+     * @param uuid The partner's user id
+     */
+    public Conversation(final String uuid) {
+        partner = new Contact(uuid);
+    }
+
+    /**
+     * Create a Conversation with preset contact.
+     *
+     * A Conversation must have Contact data.
+     *
+     * @param contact The partner's contact data
+     */
+    public Conversation(final Contact contact) {
+        partner = contact;
+    }
+
     @Override
-    public int compareTo(Conversation other) {
-        if (other == null) {
-            return -1;
-        }
+    public int compareTo(@NonNull Conversation other) {
         return lastModified == 0 ? -1 : lastModified < other.lastModified ? 1 : lastModified == other.lastModified ? 0 : -1;
     }
 
@@ -103,6 +123,7 @@ public class Conversation extends Burnable implements Comparable<Conversation> {
         return lastModified;
     }
 
+    @NonNull
     public Contact getPartner() {
         return partner;
     }
@@ -126,9 +147,6 @@ public class Conversation extends Burnable implements Comparable<Conversation> {
     @Override
     public int hashCode() {
         if (id == null) {
-            if (partner == null) {
-                return 0;
-            }
             return partner.hashCode();
         }
         return Arrays.hashCode(id);
@@ -152,11 +170,8 @@ public class Conversation extends Burnable implements Comparable<Conversation> {
         id = null;
     }
 
-    public void removePartner() {
-        if (partner != null) {
-            partner.clear();
-            partner = null;
-        }
+    public void clearPartner() {
+        partner.clear();
     }
 
     public void removePreviewEventID() {
@@ -190,10 +205,6 @@ public class Conversation extends Burnable implements Comparable<Conversation> {
 
     public void setLocationEnabled(boolean locationEnabled) {
         this.locationEnabled = locationEnabled;
-    }
-
-    public void setPartner(Contact partner) {
-        this.partner = partner;
     }
 
     public void setPreviewEventID(byte[] previewEventID) {

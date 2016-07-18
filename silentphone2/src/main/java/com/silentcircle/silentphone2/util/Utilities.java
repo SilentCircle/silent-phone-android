@@ -44,6 +44,7 @@ import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.preference.PreferenceManager;
+import android.support.annotation.Nullable;
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -54,7 +55,12 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.google.i18n.phonenumbers.NumberParseException;
+import com.google.i18n.phonenumbers.PhoneNumberUtil;
+import com.google.i18n.phonenumbers.Phonenumber;
 import com.silentcircle.silentphone2.R;
+import com.silentcircle.silentphone2.activities.DialerActivity;
+import com.silentcircle.silentphone2.dialhelpers.FindDialHelper;
 import com.silentcircle.silentphone2.services.TiviPhoneService;
 
 import org.w3c.dom.Text;
@@ -105,7 +111,7 @@ public class Utilities {
         if (call == null)
             return;
 
-        if (!call.mContactsLoaderActive && call.image != null) {
+        if (call.image != null) {
             iw.setImageBitmap(call.image);
         }
         else { // No caller image, set dummy image
@@ -168,7 +174,7 @@ public class Utilities {
     }
 
     /**
-     * Check if a number contains SIP related parts and remove them
+     * Checks if a number/name contains SIP related parts and removes them.
      *
      * @param number to check and reformat
      * @return pure number string
@@ -178,7 +184,7 @@ public class Utilities {
         if (TextUtils.isEmpty(number))
             return number;
 
-        int idx;
+        int idx = -1;
         String n = number;
         if (n.startsWith("sip:") || n.startsWith("sips:" )) {
             idx = n.indexOf(':');
@@ -188,11 +194,35 @@ public class Utilities {
     }
 
     /**
-     * @return the "username" part of the specified SIP address,
-     *         i.e. the part before the "@" character (or "%40").
+     * Check if a string starts with a schema, removes it and selectively removes domain names.
+     *
+     * The functions always removes a scheme identifier. After removing this it calls
+     * {@link #getUsernameFromUriNumber(String)} to selectively remove the domain part.
+     *
+     * @param number to check and reformat
+     * @return pure number string or number with domain name.
+     */
+    public static String removeUriPartsSelective(final String number) {
+
+        if (TextUtils.isEmpty(number))
+            return number;
+
+        String n = number;
+        int idx = n.indexOf(':');
+        if (idx >= 0) {
+            n = n.substring(idx + 1);
+        }
+        return getUsernameFromUriNumberSelective(n);
+    }
+
+    /**
+     * Removes the domain part of the number/name.
      *
      * @param number SIP address of the form "username@domainname"
      *               (or the URI-escaped equivalent "username%40domainname")
+     * @return the "username" part of the specified SIP address,
+     *         i.e. the part before the "@" character (or "%40").
+     *
      * @see isUriNumber
      */
     public static String getUsernameFromUriNumber(String number) {
@@ -203,11 +233,41 @@ public class Utilities {
             delimiterIndex = number.indexOf("%40");
         }
         if (delimiterIndex < 0) {
-            delimiterIndex = number.length();
+            return number;
         }
         return number.substring(0, delimiterIndex);
     }
 
+    /**
+     * Removes the domain part of the number/name if the domain matches a specified domain
+     *
+     * @param number SIP address of the form "username@domainname"
+     *               (or the URI-escaped equivalent "username%40domainname")
+     *
+     * @return the "username" part of the specified address,
+     *         i.e. the part before the "@" character (or "%40") if the domain
+     *         part matches a domain part which should be removed
+     * @see isUriNumber
+     */
+    public static String getUsernameFromUriNumberSelective(String number) {
+        if (DialerActivity.mDomainsToRemove == null)
+            return number;
+
+        // The delimiter between username and domain name can be
+        // either "@" or "%40" (the URI-escaped equivalent.)
+        int delimiterIndex = number.indexOf('@');
+        if (delimiterIndex < 0) {
+            delimiterIndex = number.indexOf("%40");
+        }
+        if (delimiterIndex < 0) {
+            return number;
+        }
+        final String domain = number.substring(delimiterIndex);
+        if (!isAnyOf(domain, DialerActivity.mDomainsToRemove))
+            return number;
+
+        return number.substring(0, delimiterIndex);
+    }
     /**
      * Determines if the specified number is actually a URI  (i.e. a SIP address).
      *
@@ -522,6 +582,30 @@ public class Utilities {
         return new String(bytesToHexChars(hash, true));
     }
 
+    /**
+     * Hash a string with SHA256 to generate some id data
+     *
+     * @param input
+     * @return
+     */
+    public static String hashSha256(String input) {
+        final MessageDigest md;
+        try {
+            md = MessageDigest.getInstance("SHA256");
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+            return null;
+        }
+        final byte[] hash;
+        try {
+            hash = md.digest(input.getBytes("UTF-8"));
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+            return null;
+        }
+        return new String(bytesToHexChars(hash, true));
+    }
+
     public static boolean isNetworkConnected(Context context){
         ConnectivityManager connMgr = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
@@ -538,7 +622,10 @@ public class Utilities {
                 TextUtils.getLayoutDirectionFromLocale(Locale.getDefault()) == View.LAYOUT_DIRECTION_RTL;
     }
 
-    public static void setSubtitleColor(Resources res, View toolbar) {
+    public static void setSubtitleColor(Resources res, @Nullable View toolbar) {
+        if (toolbar == null) {
+            return;
+        }
         int registerStatus = TiviPhoneService.getPhoneState();
         TextView tv = (TextView)toolbar.findViewById(R.id.sub_title);
         switch (registerStatus) {
@@ -553,7 +640,7 @@ public class Utilities {
         }
     }
 
-    public static boolean isAnyOf( String input, String... possibleValues ) {
+    public static boolean isAnyOf(String input, String... possibleValues) {
         if( possibleValues == null ) {
             return false;
         }
@@ -571,30 +658,6 @@ public class Utilities {
             is = possibleValue != null && input.equals( possibleValue );
         }
         return is;
-    }
-
-    public static void asyncCommand(String command) {
-        AsynchronousCommandTask task = new AsynchronousCommandTask();
-        task.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, command);
-    }
-
-    public static class AsynchronousCommandTask extends AsyncTask<String, Void, Integer> {
-        private String mCommand;
-
-        @Override
-        protected Integer doInBackground(String... commands) {
-            mCommand = commands[0];
-            long startTime = System.currentTimeMillis();
-            if (mCommand != null) {
-                TiviPhoneService.doCmd(mCommand);
-            }
-            return (int)(System.currentTimeMillis() - startTime);
-        }
-
-        @Override
-        protected void onPostExecute(Integer time) {
-            if (ConfigurationUtilities.mTrace) Log.d(TAG, "Processing time for command '"+ mCommand + "': " + time);
-        }
     }
 
     private static final String PATTERN_USERNAME_STR = "^[a-z][a-z0-9]{1,}$";
@@ -616,4 +679,64 @@ public class Utilities {
         return matcher.matches();
     }
 
+    public static boolean isValidSipNumber(final String query) {
+        return isValidSipUsername(isUriNumber(query) ? removeSipParts(query) : query);
+    }
+
+    public static boolean isValidEmail(CharSequence target) {
+        return !TextUtils.isEmpty(target) && android.util.Patterns.EMAIL_ADDRESS.matcher(target).matches();
+    }
+
+    public static boolean isValidPhoneNumber(String query) {
+        if (TextUtils.isEmpty(query)) {
+            return false;
+        }
+        // assume a phone number if it has at least 1 digit
+        return PhoneNumberUtil.normalizeDigitsOnly(query).length() > 0;
+    }
+
+    /**
+     * Return a valid E.164 phone number formatted according E.123.
+     *
+     * This function uses the country that the user selected for DialAssist or 'ZZ' if the
+     * user did not select a country to parse a phone number. If phone number parsing fails
+     * then return {@code null}.
+     *
+     * @param number The phone number to check
+     * @return Formatted phone number or {@code null}
+     */
+    public static String getValidPhoneNumber(final String number) {
+        if (TextUtils.isEmpty(number))
+            return null;
+
+        FindDialHelper.CountryData country = FindDialHelper.getActiveCountry();
+        if (country == null) {
+            return null;
+        }
+        String region = country.shortName;
+
+        // Region names ending in "_" are virtual regions, thus indicates the user has
+        // not selected a specific country but a simple dial assist for example.
+        region = region.endsWith("_") ? "ZZ" : region.toUpperCase();
+        try {
+            PhoneNumberUtil pu = PhoneNumberUtil.getInstance();
+            Phonenumber.PhoneNumber phone = pu.parse(number, region);
+            if (pu.isValidNumber(phone))
+                return pu.format(phone, PhoneNumberUtil.PhoneNumberFormat.INTERNATIONAL);
+            else
+                return null;
+        } catch (NumberParseException e) {
+            return null;
+        }
+    }
+
+    public static String[] splitFields(String field, String separator) {
+        if (TextUtils.isEmpty(field))
+            return null;
+        String parts[] = field.split(separator);
+        if (parts.length < 1) {
+            return null;
+        }
+        return parts;
+    }
 }

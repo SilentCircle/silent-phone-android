@@ -28,18 +28,19 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 package com.silentcircle.silentphone2.fragments;
 
-import com.silentcircle.silentphone2.activities.InCallActivity;
-
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.Fragment;
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
+import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
+import android.support.v7.app.ActionBarDrawerToggle;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -52,6 +53,7 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 
 import com.silentcircle.silentphone2.R;
+import com.silentcircle.silentphone2.activities.InCallActivity;
 import com.silentcircle.silentphone2.services.TiviPhoneService;
 import com.silentcircle.silentphone2.util.CallState;
 import com.silentcircle.silentphone2.util.ConfigurationUtilities;
@@ -94,10 +96,10 @@ public class InCallDrawerFragment extends Fragment implements View.OnClickListen
     /**
      * Callbacks interface that all activities using this fragment must implement.
      */
-    public static interface DrawerCallbacks {
-        public static int OPENED = 1;
-        public static int CLOSED = 2;
-        public static int MOVING = 3;
+    public interface DrawerCallbacks {
+        int OPENED = 1;
+        int CLOSED = 2;
+        int MOVING = 3;
 
         /**
          * Called when an item in the navigation drawer is selected.
@@ -132,11 +134,27 @@ public class InCallDrawerFragment extends Fragment implements View.OnClickListen
         return mDrawerView;
     }
 
+    @TargetApi(Build.VERSION_CODES.M)
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        commonOnAttach(getActivity());
+    }
+
+    /*
+     * Deprecated on API 23
+     * Use onAttachToContext instead
+     */
+    @SuppressWarnings("deprecation")
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
-        mParent = (InCallActivity)activity;
+        commonOnAttach(activity);
+    }
+
+    private void commonOnAttach(Activity activity) {
         try {
+            mParent = (InCallActivity)activity;
             mCallbacks = (DrawerCallbacks) activity;
         } catch (ClassCastException e) {
             throw new ClassCastException("Activity must implement DrawerCallbacks.");
@@ -294,7 +312,7 @@ public class InCallDrawerFragment extends Fragment implements View.OnClickListen
                 editPeer.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        mParent.verifySasCb(call.bufSAS.toString());
+                        mParent.verifySasCb(call.bufSAS.toString(), call.iCallId);
                     }
                 });
             }

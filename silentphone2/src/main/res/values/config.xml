@@ -33,5 +33,12 @@
     <string name="sccps_did_selection_base" translatable="false">v1/me/numbers/available/</string>
     <string name="sccps_did_set_number" translatable="false">v1/me/numbers/</string>
 
-    <string name="sccps_directory_request" translatable="false">v1/people/?terms=</string>
+    <string name="sccps_directory_request" translatable="false">v2/people/?terms=</string>
+    <string name="sccps_authorization_request" translatable="false">v1/auth_domain/</string>
+
+    <!-- in app billing -->
+    <string name="sccps_stripe_tokens_request" translatable="false">v1/me/card/</string>
+    <string name="sccps_publishable_key_request" translatable="false">v1/settings</string>
+    <!-- /v1/me/card/{card_id}/charge/?api_key= -->
+    <string name="sccps_process_charge_request" translatable="false">v1/me/card/%1$s/charge/?api_key=%2$s</string>
 </resources>

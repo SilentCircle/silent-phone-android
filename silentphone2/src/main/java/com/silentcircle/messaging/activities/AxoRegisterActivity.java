@@ -28,35 +28,20 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 package com.silentcircle.messaging.activities;
 
-import android.app.Activity;
-import android.content.Context;
-import android.content.Intent;
-import android.content.SharedPreferences;
-import android.os.AsyncTask;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
-import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
-import android.util.Log;
 
 import com.silentcircle.messaging.fragments.AxoDevicesFragment;
 import com.silentcircle.messaging.services.AxoMessaging;
-import com.silentcircle.messaging.util.IOUtils;
 import com.silentcircle.silentphone2.R;
-import com.silentcircle.silentphone2.activities.DialHelperSelectorActivity;
-import com.silentcircle.silentphone2.dialhelpers.FindDialHelper;
-import com.silentcircle.silentphone2.fragments.DialHelperSelectorFragment;
-import com.silentcircle.silentphone2.fragments.ProvisioningUserPassword;
-import com.silentcircle.silentphone2.util.ConfigurationUtilities;
-
-import java.net.HttpURLConnection;
 
 /**
  * Support activity to handle Axolotl registration.
  *
  * Created by werner on 20.06.15.
  */
-public class AxoRegisterActivity  extends ActionBarActivity {
+public class AxoRegisterActivity  extends AppCompatActivity {
 
     @SuppressWarnings("unused")
     private static final String TAG = "AxoRegisterActivity";

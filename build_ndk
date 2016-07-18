@@ -1,0 +1,8 @@
+#!/bin/bash
+
+git submodule update --init
+cd silentphone2/
+export AUTOMATED_BUILD=1
+export NDK_PROJECT_PATH=`pwd`
+export JNI_ROOT=`pwd`/support
+ndk-build -C .

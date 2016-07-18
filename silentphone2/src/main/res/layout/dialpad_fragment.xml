@@ -42,7 +42,7 @@
                 android:id="@+id/digits_container"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="?list_item_background_color"
+                android:background="?sp_actionbar_color"
                 android:orientation="horizontal"
                 android:clickable="true"
                 android:gravity="center">
@@ -51,13 +51,15 @@
                     android:id="@+id/input_type_switch"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:filterTouchesWhenObscured="true"
                     android:layout_gravity="center_vertical"
                     android:paddingLeft="@dimen/dialpad_text_button_padding"
                     android:paddingRight="@dimen/dialpad_text_button_padding"
                     android:focusableInTouchMode="false"
                     android:state_enabled="false"
-                    android:background="?list_item_background_color"
+                    android:background="?sp_actionbar_color"
                     android:contentDescription="@string/description_delete_button"
+                    android:tint="?sp_icon_tint_color"
                     tools:src="?sp_ic_keyboard"/>
             <!--            <com.android.dialer.dialpad.DigitsEditText -->
             <com.silentcircle.silentphone2.views.FontFitEditText
@@ -75,21 +77,36 @@
                     android:inputType="textEmailAddress"
                     android:paddingRight="5dp"
                     android:paddingLeft="5dp"
-                    android:textColor="?sp_dial_text_color"
+                    android:textColor="?sp_actionbar_title_text_color"
                     android:textCursorDrawable="@null"
-                    android:background="?list_item_background_color"
+                    android:background="?sp_actionbar_color"
                     tools:text="+1 (203) 499-6427"/>
 
             <ImageButton
                     android:id="@+id/deleteButton"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:filterTouchesWhenObscured="true"
                     android:paddingLeft="@dimen/dialpad_text_button_padding"
                     android:paddingRight="@dimen/dialpad_text_button_padding"
                     android:state_enabled="false"
-                    android:background="?list_item_background_color"
+                    android:background="?sp_actionbar_color"
                     android:contentDescription="@string/description_delete_button"
+                    android:tint="?sp_icon_tint_color"
                     android:src="?sp_ic_backspace"/>
+
+            <ImageButton
+                    android:id="@+id/pickContact"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:filterTouchesWhenObscured="true"
+                    android:paddingLeft="@dimen/dialpad_text_button_padding"
+                    android:paddingRight="@dimen/dialpad_text_button_padding"
+                    android:state_enabled="false"
+                    android:background="?sp_actionbar_color"
+                    android:contentDescription="@string/description_pick_contact_button"
+                    android:tint="?sp_icon_tint_color"
+                    android:src="?sp_ic_contacts"/>
         </LinearLayout>
 
         <!-- rubber space -->
@@ -110,6 +127,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
+                android:visibility="gone"
+                tools:visibility="visible"
                 layout="@layout/dialpad"/>
 
         <!-- Helper view to switch focus and control soft key board-->
@@ -120,9 +139,10 @@
                 android:focusableInTouchMode="true"/>
 
         <View
+                android:id="@+id/dialpad_bottom_height"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/dialpad_bottom_key_height"
-                android:background="@color/black_background"/>
+                android:background="@color/sc_ng_background"/>
 
     </LinearLayout>
 
@@ -145,6 +165,7 @@
                 android:id="@+id/dialButton"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
+                android:filterTouchesWhenObscured="true"
                 android:background="@drawable/floating_action_button"
                 android:contentDescription="@string/description_dial_button"
                 android:src="?sp_ic_call"/>

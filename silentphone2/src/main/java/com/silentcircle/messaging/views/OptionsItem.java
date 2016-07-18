@@ -60,7 +60,8 @@ public class OptionsItem extends RelativeLayout implements Checkable {
     private Drawable mImageDrawable;
     private Drawable mImageDrawableChecked;
     private boolean mIsCheckable;
-    private int mImageMargin;
+    private int mImageMarginLeft;
+    private int mImageMarginRight;
     private int mCheckboxMargin;
     private int mDescriptionMarginTop;
     private int mDescriptionMarginLeft;
@@ -69,6 +70,9 @@ public class OptionsItem extends RelativeLayout implements Checkable {
 
     private boolean mChecked;
 
+    private int mTextColor;
+    private int mDescriptionColor;
+
     private OnCheckedChangeListener mOnCheckedChangeListener;
     private OnClickListener mOnClickListener;
 
@@ -76,7 +80,7 @@ public class OptionsItem extends RelativeLayout implements Checkable {
      * Interface definition for a callback to be invoked when the checked state
      * of a compound button changed.
      */
-    public static interface OnCheckedChangeListener {
+    public interface OnCheckedChangeListener {
         /**
          * Called when the checked state of a options item has changed.
          *
@@ -97,12 +101,15 @@ public class OptionsItem extends RelativeLayout implements Checkable {
         mImageDrawable = typedArray.getDrawable(com.silentcircle.silentphone2.R.styleable.OptionsItem_src);
         mImageDrawableChecked = typedArray.getDrawable(com.silentcircle.silentphone2.R.styleable.OptionsItem_srcChecked);
         mIsCheckable = typedArray.getBoolean(com.silentcircle.silentphone2.R.styleable.OptionsItem_isCheckable, true);
-        mImageMargin = typedArray.getDimensionPixelSize(R.styleable.OptionsItem_imageMargin, 0);
+        mImageMarginLeft = typedArray.getDimensionPixelSize(R.styleable.OptionsItem_imageMarginLeft, 0);
+        mImageMarginRight = typedArray.getDimensionPixelSize(R.styleable.OptionsItem_imageMarginRight, 0);
         mCheckboxMargin = typedArray.getDimensionPixelSize(R.styleable.OptionsItem_checkableMargin, 0);
         mDescriptionMarginTop = typedArray.getDimensionPixelSize(R.styleable.OptionsItem_descriptionMarginTop, 0);
         mDescriptionMarginLeft = typedArray.getDimensionPixelSize(R.styleable.OptionsItem_descriptionMarginLeft, 0);
         mTextSize = typedArray.getDimensionPixelSize(R.styleable.OptionsItem_textSize, 0);
         mDescriptionSize = typedArray.getDimensionPixelSize(R.styleable.OptionsItem_descriptionSize, 0);
+        mTextColor = typedArray.getColor(R.styleable.OptionsItem_textColor, 0);
+        mDescriptionColor = typedArray.getColor(R.styleable.OptionsItem_descriptionColor, 0);
         typedArray.recycle();
 
         inflate(context, R.layout.widget_options_item, this);
@@ -134,12 +141,19 @@ public class OptionsItem extends RelativeLayout implements Checkable {
         mItemDescription.setTextSize(TypedValue.COMPLEX_UNIT_PX, mDescriptionSize);
 
         LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) mImage.getLayoutParams();
-        params.setMargins(params.leftMargin, params.topMargin, mImageMargin, params.bottomMargin);
+        params.setMargins(mImageMarginLeft, params.topMargin, mImageMarginRight, params.bottomMargin);
         params = (LinearLayout.LayoutParams) mCheckBox.getLayoutParams();
         params.setMargins(mCheckboxMargin, params.topMargin, params.rightMargin, params.bottomMargin);
 
         RelativeLayout.LayoutParams rparams = (RelativeLayout.LayoutParams) mItemDescription.getLayoutParams();
         rparams.setMargins(mDescriptionMarginLeft, mDescriptionMarginTop, rparams.rightMargin, rparams.bottomMargin);
+
+        if (mTextColor != 0) {
+            mItemText.setTextColor(mTextColor);
+        }
+        if (mDescriptionColor != 0) {
+            mItemDescription.setTextColor(mDescriptionColor);
+        }
     }
 
     @Override

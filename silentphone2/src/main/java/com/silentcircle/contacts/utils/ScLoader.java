@@ -73,7 +73,7 @@ public class ScLoader<D> extends Loader<D> {
          *
          * @param loader the loader that canceled the load
          */
-        public void onLoadCanceled(ScLoader<D> loader);
+        void onLoadCanceled(ScLoader<D> loader);
     }
 
     /**

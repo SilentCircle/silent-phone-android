@@ -35,6 +35,10 @@ import com.silentcircle.silentphone2.R;
 import com.silentcircle.silentphone2.activities.ContactAdder;
 import com.silentcircle.silentphone2.activities.DialerActivity;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.List;
 
 public class ContactsUtils {
     private static final String TAG = "ContactsUtils";
@@ -80,7 +84,7 @@ public class ContactsUtils {
         return shouldCollapsePhoneNumbers(data1.toString(), data2.toString());
     }
 
-    private static final boolean shouldCollapsePhoneNumbers(
+    private static boolean shouldCollapsePhoneNumbers(
             String number1WithLetters, String number2WithLetters) {
         final String number1 = PhoneNumberUtils.convertKeypadLettersToDigits(number1WithLetters);
         final String number2 = PhoneNumberUtils.convertKeypadLettersToDigits(number2WithLetters);
@@ -256,6 +260,54 @@ public class ContactsUtils {
         final Intent intent = new Intent(Intent.ACTION_SENDTO, uri, context, ConversationActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         return intent;
+    }
+
+    // Supports either LOOKUP_KEY or display_name (for temporary contacts)
+    public static String getFlexibleLookupKey(Uri lookupUri) {
+        if(lookupUri == null) {
+            return null;
+        }
+
+        String lookup = null;
+        String lookupKey = null;
+
+        if(lookupUri != null) {
+            List<String> segments = lookupUri.getPathSegments();
+
+            if(segments.size() > 2) {
+                lookup = segments.get(1);
+                lookupKey = segments.get(2);
+
+                if (!TextUtils.isEmpty(lookupKey) && !TextUtils.isEmpty(lookup)
+                        && lookup.equals(ContactsContract.Contacts.LOOKUP_KEY)) {
+                    if (lookupKey.equals("encoded")) {
+                        // Temporary contact
+                        // content://com.android.contacts/contacts/lookup/encoded?directory=<DIRECTORY_ID>#{"display_name":"<DISPLAY_NAME>" ...
+                        // lookupKey = DISPLAY_NAME
+                        String fragmentString = lookupUri.getFragment();
+                        try {
+                            JSONObject fragmentJson = new JSONObject(fragmentString);
+
+                            if(fragmentJson.has(ContactsContract.Contacts.DISPLAY_NAME)) {
+                                String displayName = fragmentJson.getString(ContactsContract.Contacts.DISPLAY_NAME);
+
+                                lookupKey = displayName;
+                            }
+                        } catch (JSONException exception) {
+                            lookupKey = null;
+                        }
+                    } else {
+                        // Real contact
+                        // content://com.android.contacts/contacts/lookup/<LOOKUP_KEY>/<CONTACT_ID>
+                        // lookupKey = LOOKUP_KEY
+                    }
+                } else {
+                    lookupKey = null;
+                }
+            }
+        }
+
+        return lookupKey;
     }
 
     /**

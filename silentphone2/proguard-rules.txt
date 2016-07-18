@@ -12,6 +12,9 @@
 
 # The default rules covers most of the flags we need. More are below.
 
+# Don't obfuscate - good for stack traces
+-dontobfuscate
+
 # Implicit phone native callbacks
 -keep class com.silentcircle.silentphone2.services.PhoneServiceNative {
     abstract <methods>;
@@ -29,6 +32,10 @@
 
 # Classes referenced in "silentphone/tiviandroid/jni_glue2.cpp"
 -keep public class com.silentcircle.silentphone2.audio.** {
+    *;
+}
+
+-keep class com.silentcircle.userinfo.SipNotifyHandler {
     *;
 }
 

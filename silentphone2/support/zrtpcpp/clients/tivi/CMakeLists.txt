@@ -138,7 +138,16 @@ endif()
 #
 # Create the Android make files but do not execute them
 if(ANDROID)
+    if (SQLITE AND NOT SQLCIPHER)
+        set (sqlite_src clients/tivi/android/jni/sqlite3/sqlite3.c)
+        set (sql_include sqlite3)
+    endif()
+    if (SQLCIPHER)
+        set (sql_cipher_define "-DSQL_CIPHER -DSQLITE_HAS_CODEC")
+    endif()
+
     set(TIVI_ENV "-D_WITHOUT_TIVI_ENV")
+    set(axo_support -DAXO_SUPPORT)
 
     foreach(loop ${zrtpcpp_src})
         string(REPLACE "${CMAKE_SOURCE_DIR}/" "" o ${loop})
@@ -159,4 +168,3 @@ if(ANDROID)
     configure_file(${CMAKE_SOURCE_DIR}/clients/tivi/android/jni/Application.mk
                    ${CMAKE_BINARY_DIR}/clients/tivi/android/jni/Application.mk COPYONLY)
 endif()
-

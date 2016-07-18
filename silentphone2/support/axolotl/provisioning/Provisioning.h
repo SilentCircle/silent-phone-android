@@ -82,10 +82,10 @@ public:
      * sync.
      * 
      * @param name username of the other user
-     * @param authorization autorization data, may be needed for some servers
+     * @param authorization authorization data, may be needed for some servers
      * @return a list of available device ids (long device ids), @c NULL if the request to server failed.
      */
-    static list<pair<string, string> >* getAxoDeviceIds(const std::string& name, const std::string& authorization);
+    static list<pair<string, string> >* getAxoDeviceIds(const std::string& name, const std::string& authorization, int32_t* errorCode = NULL);
 
     /**
      * @brief Set new pre-keys.
@@ -103,6 +103,7 @@ public:
      */
     static int32_t newPreKeys(SQLiteStoreConv* store, const string& longDevId, const string& authorization, int32_t number, string* result);
 
+    static int32_t getUserInfo(const string& alias, const string& authorization, string* result);
 };
 } // namespace
 

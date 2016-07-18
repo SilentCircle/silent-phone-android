@@ -35,8 +35,6 @@ public abstract class ImageViewTouchBase extends ImageView implements IDisposabl
         void onDrawableChanged(Drawable drawable);
     }
 
-    ;
-
     public interface OnLayoutChangeListener {
         /**
          * Callback invoked when the layout bounds changed
@@ -49,8 +47,6 @@ public abstract class ImageViewTouchBase extends ImageView implements IDisposabl
          */
         void onLayoutChanged(boolean changed, int left, int top, int right, int bottom);
     }
-
-    ;
 
     /**
      * Use this to change the {@link ImageViewTouchBase#setDisplayType(DisplayType)} of
@@ -72,8 +68,6 @@ public abstract class ImageViewTouchBase extends ImageView implements IDisposabl
          */
         FIT_IF_BIGGER
     }
-
-    ;
 
 
     public static final String LOG_TAG = "ImageViewTouchBase";

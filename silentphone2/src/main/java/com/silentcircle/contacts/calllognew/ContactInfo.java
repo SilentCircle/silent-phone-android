@@ -72,6 +72,7 @@ public final class ContactInfo {
     public Uri photoUri;
     public boolean isBadData;
     public String objectId;
+    public String uuid;
 
     public static ContactInfo EMPTY = new ContactInfo();
 
@@ -106,8 +107,7 @@ public final class ContactInfo {
         if (!TextUtils.equals(normalizedNumber, other.normalizedNumber)) return false;
         if (photoId != other.photoId) return false;
         if (!UriUtils.areEqual(photoUri, other.photoUri)) return false;
-        if (!TextUtils.equals(objectId, other.objectId)) return false;
-        return true;
+        return TextUtils.equals(objectId, other.objectId);
     }
 
     @Override

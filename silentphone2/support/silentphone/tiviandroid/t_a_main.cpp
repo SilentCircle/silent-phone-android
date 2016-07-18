@@ -1,6 +1,32 @@
-//VoipPhone
-//Created by Janis Narbuts
-//Copyright (c) 2004-2012 Tivi LTD, www.tiviphone.com. All rights reserved.
+/*
+Created by Janis Narbuts
+Copyright (C) 2004-2012, Tivi LTD, www.tiviphone.com. All rights reserved.
+Copyright (C) 2012-2016, Silent Circle, LLC.  All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+    * Any redistribution, use, or modification is done solely for personal
+      benefit and not for any commercial purpose or for monetary gain
+    * Redistributions of source code must retain the above copyright
+      notice, this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above copyright
+      notice, this list of conditions and the following disclaimer in the
+      documentation and/or other materials provided with the distribution.
+    * Neither the name Silent Circle nor the
+      names of its contributors may be used to endorse or promote products
+      derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL SILENT CIRCLE, LLC BE LIABLE FOR ANY
+DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
 
 // tiviCons.cpp : Defines the entry point for the console application.
 //
@@ -32,7 +58,7 @@
 #include "../utils/utils_make_dtmf.h"
 
 
-#if defined(ANDROID_NDK) || defined(__APPLE__) || defined(__linux__) || defined(linux)
+#if defined(ANDROID_NDK) || defined(__APPLE__) || defined(__linux__)
 
 #include "../audio/CTAudioMacOSX_IOS.h"//TODO rename - apple and android
 
@@ -1351,7 +1377,31 @@ public:
             case '+':g_conf.addCall(ses);return 0;
             case '-':g_conf.remCall(ses);return 0;
             case 'a':CTEntropyCollector::onNewCall(); ph->answerCall(cid);return 0;
-            case 'e':ph->endCall(cid);return 0;
+            case 'e':
+             {
+#ifdef __APPLE__
+                 // Same code is executed when we receive a remote end call event
+                 // (METHOD_BYE)
+                 // This code makes sure that the t_setActiveAS method will be called last
+                 // so that we won't have any issues with the enabled VoiceOver.
+                 CTAudioOutVOIP *ao=(CTAudioOutVOIP*)ph->findSessionAO(ses);
+                 
+                 if(ao) {
+                 
+                     unsigned int uiBufSize=(unsigned int)ao->getBufSize();
+                     char *buf=new  char [uiBufSize+2];
+                     memset(buf,0,uiBufSize);
+                     
+                     ao->setIgnoreIncomingRtp(1);
+                     ao->setPlayPos(0);
+                     ao->update(buf,(int)uiBufSize,0,0);
+                     ao->stopAfter(1800);
+                 }
+#endif
+                 
+                 ph->endCall(cid);
+                 return 0;
+             }
             case 'm':puts("TODO mute");return 0;
             case 'h':ph->hold(1,cid);return 0;
             case 'u':ph->hold(0,cid);return 0;
@@ -1606,6 +1656,7 @@ public:
                return T_TRY_OTHER_ENG;
             }
             else if(iLen==14 && strcmp(p+1,"sock.recreate")==0){
+               t_logf(log_events, __FUNCTION__, "sockdebug: SPA code forcing socket recreation");
                if(ph)ph->sockSip.forceRecreate();
                return T_TRY_OTHER_ENG;
             }
@@ -1729,7 +1780,7 @@ public:
             {
 #define MAX_LOADSTRING 500
                unsigned short szHello[MAX_LOADSTRING];
-               iLen=ph->getInfo((char *)&szHello,MAX_LOADSTRING/2);
+               iLen=ph->getRegInfo((char *)&szHello,MAX_LOADSTRING/2);
                if(iLen)
                {
                   convert8_16((char *)&szHello,iLen);
@@ -3072,6 +3123,12 @@ public:
                   ret->bufLastErrMsg[0]=0;
                   return &buf[0];
                }
+               if(ret->ph){
+                  static char buf[1024];
+                  int r = ret->ph->getInfo(p, buf, sizeof(buf)-1);
+                  if(r)return &buf[0];
+               }
+               
                //return "";
             }
             
@@ -3671,7 +3728,7 @@ void g_sendDataFuncAxo(uint8_t* names[], uint8_t* devIds[], uint8_t* envelopes[]
       snprintf(bufDevIdAdd,sizeof(bufDevIdAdd), "xscdevid=%s", devIds[i]);
       
       //we have to send messages for one device via the same server, to avoid messages out of order
-      int iServerID = (devIds[i][4]>>2) & 1 ;//(msg_id>>10) & 1;
+      int iServerID = 0;// (devIds[i][4]>>2) & 1 ;//(msg_id>>10) & 1;
       //iServerID = engMain->getEngIDByPtr(engMain->getAccountByID(engMain->iCurrentDialOutIndex,1));
       //TODO check how healty is connection
       CPhoneCons *ret = (CPhoneCons*)engMain->getAccountByID(iServerID);// check online
@@ -3689,6 +3746,7 @@ void g_sendDataFuncAxo(uint8_t* names[], uint8_t* devIds[], uint8_t* envelopes[]
       b.setText((const char *)envelopes[i],(int)sizes[i] ,0);
       
       int ses_id = ret->ph->sendSipMsg(0, "MESSAGE",(char *)names[i], &bufDevIdAdd[0], "application/x-sc-axolotl", &b, &bufMsgId[0]);
+       t_logf(log_events, __FUNCTION__, "Called sendSipMsg [name: %s devid: %s return: %d]", (char *)names[i], bufDevIdAdd, ses_id);
 //      int ses_id = ret->ph->sendSipMsg(0, "MESSAGE",(char *)names[i], &bufDevIdAdd[0], "text/plain", &b, &bufMsgId[0]);
       CSesBase *spSes = ses_id ? ret->ph->findSessionByID(ses_id) : NULL;
       if(spSes){

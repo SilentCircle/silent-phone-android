@@ -24,7 +24,7 @@ import android.os.Handler;
 import android.support.v13.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.ActionBar;
-import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -37,7 +37,7 @@ import com.silentcircle.silentcontacts2.ScCallLog.ScCalls;
 import com.silentcircle.silentphone2.R;
 import com.silentcircle.silentphone2.activities.DialerActivity;
 
-public class CallLogActivity extends ActionBarActivity implements CallLogQueryHandler.Listener {
+public class CallLogActivity extends AppCompatActivity implements CallLogQueryHandler.Listener {
     private Handler mHandler;
     private ViewPager mViewPager;
     private ViewPagerAdapter mViewPagerAdapter;

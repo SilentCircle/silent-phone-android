@@ -29,7 +29,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package com.silentcircle.silentphone2.dialogs;
 
 import android.app.Activity;
-import android.app.AlertDialog;
+import android.support.v7.app.AlertDialog;
 import android.app.Dialog;
 import android.app.DialogFragment;
 import android.content.DialogInterface;
@@ -44,6 +44,7 @@ import com.silentcircle.silentphone2.R;
 import com.silentcircle.silentphone2.activities.InCallActivity;
 import com.silentcircle.silentphone2.services.TiviPhoneService;
 import com.silentcircle.silentphone2.util.CallState;
+import com.silentcircle.silentphone2.util.ManageCallStates;
 
 /**
  * Display dialog to verify ZRTP SAS and set ZRTP peername.
@@ -51,18 +52,17 @@ import com.silentcircle.silentphone2.util.CallState;
  * Created by werner on 02.04.14.
  */
 public class VerifyDialog extends DialogFragment {
-    private EditText peerName;
-
     private static String SAS_TEXT = "sas_text";
+    private static String CALL_ID = "call_id";
 
     private InCallActivity mParent;
 
-
-    public static VerifyDialog newInstance(String sasText) {
+    public static VerifyDialog newInstance(String sasText, int callId) {
         VerifyDialog f = new VerifyDialog();
 
         Bundle args = new Bundle();
         args.putString(SAS_TEXT, sasText);
+        args.putInt(CALL_ID, callId);
         f.setArguments(args);
         return f;
     }
@@ -88,23 +88,25 @@ public class VerifyDialog extends DialogFragment {
         View view = inflater.inflate(R.layout.incall_sas_verify, null, false);
         if (view == null)
             return null;
-        TextView sas = (TextView) view.findViewById(R.id.VerifyInfoTextSas);
-        peerName = (EditText) view.findViewById(R.id.VerifyPeerName);
 
         Bundle args = getArguments();
-        if (args != null)
-            sas.setText("\"" + getArguments().getString(SAS_TEXT) + "\"");
+        if (args == null)
+            return null;
 
-        CallState call = TiviPhoneService.calls.selectedCall;
+        final CallState call = TiviPhoneService.calls.findCallById(args.getInt(CALL_ID));
+        if (call == null)
+            return null;
+
+        TextView sas = (TextView) view.findViewById(R.id.VerifyInfoTextSas);
+        sas.setText("\"" + args.getString(SAS_TEXT) + "\"");
 
         // preset peer name edit field if we have some info available
-        if (call != null) {
-            if (call.zrtpPEER.getLen() > 0) {
-                peerName.setText(call.zrtpPEER.toString());
-            }
-            else {
-                peerName.setText(call.getNameFromAB());
-            }
+        final EditText peerName = (EditText) view.findViewById(R.id.VerifyPeerName);
+        if (call.zrtpPEER.getLen() > 0) {
+            peerName.setText(call.zrtpPEER.toString());
+        }
+        else {
+            peerName.setText(call.getNameFromAB());
         }
 
         // Add inflated view and action buttons
@@ -112,7 +114,7 @@ public class VerifyDialog extends DialogFragment {
                 .setPositiveButton(R.string.confirm_dialog, new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
                         Editable pn = peerName.getText();
-                        mParent.storePeerAndVerify(pn == null ? "" : pn.toString()); // Set peer name via phone service
+                        mParent.storePeerAndVerify(pn == null ? "" : pn.toString(), call); // Set peer name via phone service
                     }
                 })
                 .setNegativeButton(R.string.provision_later, new DialogInterface.OnClickListener() {

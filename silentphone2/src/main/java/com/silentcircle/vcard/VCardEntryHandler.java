@@ -60,7 +60,7 @@ public interface VCardEntryHandler {
     /**
      * Called when the parsing started.
      */
-    public void onStart();
+    void onStart();
 
     /**
      * The method called when one vCard entry is created. Children come before their parent in
@@ -77,11 +77,11 @@ public interface VCardEntryHandler {
      * END:VCARD
      * </code>
      */
-    public void onEntryCreated(final VCardEntry entry);
+    void onEntryCreated(final VCardEntry entry);
 
     /**
      * Called when the parsing ended.
      * Able to be use this method for showing performance log, etc.
      */
-    public void onEnd();
+    void onEnd();
 }

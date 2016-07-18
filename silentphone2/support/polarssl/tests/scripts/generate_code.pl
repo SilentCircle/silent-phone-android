@@ -6,11 +6,11 @@ use strict;
 my $suite_dir = shift or die "Missing suite directory";
 my $suite_name = shift or die "Missing suite name";
 my $data_name = shift or die "Missing data name";
+my $test_main_file = do { my $arg = shift; defined($arg) ? $arg :  $suite_dir."/main_test.function" };
 my $test_file = $data_name.".c";
 my $test_helper_file = $suite_dir."/helpers.function";
 my $test_case_file = $suite_dir."/".$suite_name.".function";
 my $test_case_data = $suite_dir."/".$data_name.".data";
-my $test_main_file = $suite_dir."/main_test.function";
 
 my $line_separator = $/;
 undef $/;
@@ -50,8 +50,9 @@ my %mapping_values;
 while (@var_req_arr)
 {
     my $req = shift @var_req_arr;
+    $req =~ s/(!?)(.*)/$1defined($2)/;
 
-    $suite_pre_code .= "#ifdef $req\n";
+    $suite_pre_code .= "#if $req\n";
     $suite_post_code .= "#endif /* $req */\n";
 }
 
@@ -65,11 +66,11 @@ print TEST_FILE << "END";
 #include POLARSSL_CONFIG_FILE
 #endif
 
+$test_helpers
+
 $suite_pre_code
 $suite_header
 $suite_post_code
-
-$test_helpers
 
 END
 
@@ -138,7 +139,7 @@ while($test_cases =~ /\/\* BEGIN_CASE *([\w:]*) \*\/\n(.*?)\n\/\* END_CASE \*\//
             $param_defs .= "    char *param$i = params[$i];\n";
             $param_checks .= "    if( verify_string( &param$i ) != 0 ) return( 2 );\n";
             push @dispatch_params, "param$i";
-            $mapping_regex .= ":[^:]+";
+            $mapping_regex .= ":[^:\n]+";
         }
         else
         {
@@ -172,7 +173,7 @@ $function_pre_code
 $param_defs
     if( cnt != $param_count )
     {
-        fprintf( stderr, "\\nIncorrect argument count (%d != %d)\\n", cnt, $param_count );
+        polarssl_fprintf( stderr, "\\nIncorrect argument count (%d != %d)\\n", cnt, $param_count );
         return( 2 );
     }
 

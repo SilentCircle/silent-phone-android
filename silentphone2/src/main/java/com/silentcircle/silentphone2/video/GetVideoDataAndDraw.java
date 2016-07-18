@@ -106,7 +106,7 @@ public class GetVideoDataAndDraw {
             mCanDraw = false;
             mWidth = sxy[0];
             mHeight = sxy[1];
-            if (ConfigurationUtilities.mTrace) Log.d(TAG, "++++ receive video - w: " + mWidth + ", h: " + mHeight + ", id: " + id);
+            if (ConfigurationUtilities.mTrace) Log.d(TAG, "Receive video - w: " + mWidth + ", h: " + mHeight + ", id: " + id);
             mRectSrc = new Rect(0, 0, mWidth, mHeight);
             if (videoData == null || videoData.length != mWidth * mHeight) {
                 videoData = new int[mWidth * mHeight];

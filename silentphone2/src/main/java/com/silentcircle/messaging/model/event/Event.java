@@ -33,11 +33,21 @@ import android.text.TextUtils;
 import com.silentcircle.messaging.model.Burnable;
 import com.silentcircle.messaging.util.IOUtils;
 
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.Date;
+import java.util.Locale;
 import java.util.UUID;
 
 public class Event extends Burnable implements Comparable<Event> {
+
+    protected static final SimpleDateFormat DATE_FORMAT =
+            new SimpleDateFormat("dd/MM/yy hh:mm:ss.SSS", Locale.getDefault());
+
+    /* UUID v1 timestamp epoch in unix time, millis at 00:00:00.000 15 Oct 1582 */
+    protected static final long START_EPOCH = -12219292800000L;
+
     public static final Event NONE = new Event();
     private byte[] conversationID;
     protected byte[] id;
@@ -47,32 +57,39 @@ public class Event extends Burnable implements Comparable<Event> {
     protected byte[] attributes;
     protected byte[] attachment;
 
+    protected long composeTime;
+
     /**
      * Compares two events by timestamps obtained from their UUID ids.
      *
-     * Sorts younger items below older items as this is used in conversation view.
+     * Sorts younger items after older items as this is used in conversation view.
      */
     public static class EventIdComparator implements Comparator<Event> {
 
         @Override
         public int compare(Event lhs, Event rhs) {
+            if (lhs == null && rhs == null) {
+                return 0;
+            }
             if (lhs == null || TextUtils.isEmpty(lhs.getId())) {
                 return -1;
             }
             if (rhs == null || TextUtils.isEmpty(rhs.getId())) {
                 return 1;
             }
-            UUID uuid1 = UUID.fromString(lhs.getId());
-            UUID uuid2 = UUID.fromString(rhs.getId());
-            long timestamp1 = uuid1.timestamp();
-            long timestamp2 = uuid2.timestamp();
-            return timestamp1 < timestamp2 ? 1 : (timestamp1 == timestamp2 ? 0 : -1);
+            long timestamp1 = lhs.getComposeTime();
+            long timestamp2 = rhs.getComposeTime();
+            return timestamp1 < timestamp2 ? -1 : (timestamp1 == timestamp2 ? 0 : 1);
         }
     }
 
     public static final EventIdComparator EVENT_ID_COMPARATOR = new EventIdComparator();
 
     public Event() {
+    }
+
+    public Event(String text) {
+        setText(text);
     }
 
     protected static String toString(byte[] value) {
@@ -86,6 +103,7 @@ public class Event extends Burnable implements Comparable<Event> {
         this.removeAttachment();
         this.removeAttribute();
         this.time = 0L;
+        composeTime = 0L;
     }
 
     public int compareTo(Event another) {
@@ -127,6 +145,18 @@ public class Event extends Burnable implements Comparable<Event> {
 
     public long getTime() {
         return this.time;
+    }
+
+    public long getComposeTime() {
+        if (composeTime == 0) {
+            try {
+                composeTime = (UUID.fromString(getId()).timestamp() / 10000) + START_EPOCH;
+            } catch (Exception e) {
+                // failed to determine compose time, return 0 for unknown
+                composeTime = 0;
+            }
+        }
+        return composeTime;
     }
 
     public int hashCode() {
@@ -226,4 +256,13 @@ public class Event extends Burnable implements Comparable<Event> {
     public void setTime(long time) {
         this.time = time;
     }
+
+    public String toFormattedString() {
+        long composeTime = getComposeTime();
+        return "Id: " + getId() + "\n"
+                + "Time: " + DATE_FORMAT.format(new Date(getTime())) + "\n"
+                + "Text: " + getText() + "\n"
+                + "Compose time: " + (composeTime  == 0 ? "Unknown" : DATE_FORMAT.format(new Date(composeTime))) + "\n";
+    }
+
 }

@@ -27,7 +27,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@color/background_dialer_list_items"
-            android:paddingTop="1dp"
+            android:paddingTop="0.0000001dp"
             android:clipToPadding="false"
             android:fadingEdge="none"
             android:divider="@null"/>

@@ -29,6 +29,7 @@ package com.silentcircle.silentphone2.list;
 
 import android.animation.LayoutTransition;
 import android.annotation.TargetApi;
+import android.app.Activity;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.content.BroadcastReceiver;
@@ -40,6 +41,7 @@ import android.database.Cursor;
 import android.media.MediaPlayer;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v13.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.util.Log;
@@ -48,29 +50,32 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AbsListView;
 import android.widget.ListView;
-import android.widget.TextView;
 
 import com.silentcircle.common.list.OnPhoneNumberPickerActionListener;
 import com.silentcircle.common.util.ObjectFactory;
 import com.silentcircle.contacts.ContactsUtils;
-import com.silentcircle.contacts.calllognew.ContactInfoHelper;
 import com.silentcircle.contacts.calllognew.CallLogAdapter;
 import com.silentcircle.contacts.calllognew.CallLogFragment;
 import com.silentcircle.contacts.calllognew.CallLogQuery;
 import com.silentcircle.contacts.calllognew.CallLogQueryHandler;
+import com.silentcircle.contacts.calllognew.ContactInfoHelper;
 import com.silentcircle.contacts.widget.SlidingTabLayout;
 import com.silentcircle.messaging.fragments.ConversationsFragment;
 import com.silentcircle.messaging.services.AxoMessaging;
 import com.silentcircle.messaging.util.Action;
+import com.silentcircle.messaging.util.AsyncUtils;
 import com.silentcircle.messaging.util.ConversationUtils;
 import com.silentcircle.messaging.util.MessagingPreferences;
+import com.silentcircle.messaging.util.SoundNotifications;
 import com.silentcircle.silentphone2.R;
 import com.silentcircle.silentphone2.activities.DialerActivity;
 import com.silentcircle.silentphone2.list.ShortcutCardsAdapter.SwipeableShortcutCard;
 import com.silentcircle.silentphone2.util.Utilities;
 import com.silentcircle.silentphone2.views.OverlappingPaneLayout;
 
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.concurrent.TimeUnit;
 
 /**
  * A simple {@link android.app.Fragment} subclass.
@@ -86,18 +91,18 @@ public class ListsFragment extends Fragment implements CallLogQueryHandler.Liste
     private static final boolean DEBUG = false; // ConfigurationUtilities.mTrace;
     private static final String TAG = "ListsFragment";
 
-    public static final int TAB_INDEX_SPEED_DIAL = 0;
-    public static final int TAB_INDEX_RECENTS = 1;
-    private static final int TAB_INDEX_ALL_CONTACTS = 2;
+//    public static final int TAB_INDEX_SPEED_DIAL = 0;
+    public static final int TAB_INDEX_RECENTS = 0;  // 1;
+    private static final int TAB_INDEX_ALL_CONTACTS = 1; // 2;
 
     // The CHAT fragment is optional, thus *must* have the highest index number.
-    public static final int TAB_INDEX_CHAT = 3;
+    public static final int TAB_INDEX_CHAT = 2; // 3;
 
-    private static final int TAB_INDEX_COUNT = 4;
+    private static final int TAB_INDEX_COUNT = 3; // 4;
 
-    private int[] mTabIndexNoAxo = {TAB_INDEX_SPEED_DIAL, TAB_INDEX_RECENTS, TAB_INDEX_ALL_CONTACTS};
-    private int[] mTabIndexAxo = {TAB_INDEX_SPEED_DIAL, TAB_INDEX_CHAT, TAB_INDEX_RECENTS, TAB_INDEX_ALL_CONTACTS};
-    private int[] mTabIndexMapAxo = {TAB_INDEX_SPEED_DIAL, TAB_INDEX_ALL_CONTACTS, TAB_INDEX_CHAT, TAB_INDEX_RECENTS};
+    private int[] mTabIndexNoAxo = {/*TAB_INDEX_SPEED_DIAL,*/ TAB_INDEX_RECENTS, TAB_INDEX_ALL_CONTACTS};
+    private int[] mTabIndexAxo = {/*TAB_INDEX_SPEED_DIAL,*/ TAB_INDEX_CHAT, TAB_INDEX_RECENTS, TAB_INDEX_ALL_CONTACTS};
+    private int[] mTabIndexMapAxo = {/*TAB_INDEX_SPEED_DIAL,*/ TAB_INDEX_ALL_CONTACTS, TAB_INDEX_CHAT, TAB_INDEX_RECENTS};
     private int[] mTabIndex;
     private int[] mTabIndexMap;
 
@@ -138,16 +143,21 @@ public class ListsFragment extends Fragment implements CallLogQueryHandler.Liste
      */
     private long mCurrentCallShortcutDate = 0;
 
-
-    private SpeedDialFragment mSpeedDialFragment;
     private CallLogFragment mRecentsFragment;
     private ConversationsFragment mConversationsFragment;
     private AllContactsFragment mAllContactsFragment;
 
     private boolean mAxoRegistered;
     protected BroadcastReceiver mViewUpdater;
-    /* new message sound notification player */
-    protected MediaPlayer mPlayer;
+    /* handler for failed messages runnable */
+    protected Handler mMessageHandler;
+
+    protected final Runnable mRunMessageFailureHandling = new Runnable() {
+        @Override
+        public void run() {
+            handleMessageFailures();
+        }
+    };
 
     public interface HostInterface {
         void showCallHistory();
@@ -228,29 +238,37 @@ public class ListsFragment extends Fragment implements CallLogQueryHandler.Liste
         mTabIndexMap = mAxoRegistered ? mTabIndexMapAxo : mTabIndexNoAxo;
 
         mTabTitles = new String[TAB_INDEX_COUNT];
-        mTabTitles[TAB_INDEX_SPEED_DIAL] = getResources().getString(R.string.tab_speed_dial);
+//        mTabTitles[TAB_INDEX_SPEED_DIAL] = getResources().getString(R.string.tab_speed_dial);
         mTabTitles[TAB_INDEX_RECENTS] = getResources().getString(R.string.tab_recents);
         mTabTitles[TAB_INDEX_CHAT] = getResources().getString(R.string.tab_chat);
         mTabTitles[TAB_INDEX_ALL_CONTACTS] = getResources().getString(R.string.tab_all_contacts);
+
+        mMessageHandler = new Handler();
     }
 
-
+    @SuppressWarnings("deprecation")
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         final View parentView = inflater.inflate(R.layout.lists_fragment, container, false);
         mViewPager = (ViewPager) parentView.findViewById(R.id.lists_pager);
         ViewPagerAdapter viewPagerAdapter = new ViewPagerAdapter(getFragmentManager());
         mViewPager.setAdapter(viewPagerAdapter);
-        mViewPager.setOffscreenPageLimit(2);
-        setPagerItem(TAB_INDEX_SPEED_DIAL);
+        mViewPager.setOffscreenPageLimit(3);
+        setPagerItem(/*TAB_INDEX_SPEED_DIAL*/ mAxoRegistered ? TAB_INDEX_CHAT : TAB_INDEX_RECENTS);
 
         // BEGIN_INCLUDE (setup_sliding tab layout)
         // Give the SlidingTabLayout the ViewPager, this must be done AFTER the ViewPager has had
         // it's PagerAdapter set.
         mSlidingTabLayout = (SlidingTabLayout)parentView.findViewById(R.id.sliding_tabs);
         mSlidingTabLayout.setCustomTabView(R.layout.tab_text, R.id.text_tab);
-        mSlidingTabLayout.setSelectedIndicatorColors(getResources().getColor(R.color.sc_ng_text_red));
-        mSlidingTabLayout.setDividerColors(getResources().getColor(android.R.color.transparent));
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+            mSlidingTabLayout.setSelectedIndicatorColors(getResources().getColor(R.color.sc_ng_text_red));
+            mSlidingTabLayout.setDividerColors(getResources().getColor(android.R.color.transparent));
+        }
+        else {
+            mSlidingTabLayout.setSelectedIndicatorColors(getResources().getColor(R.color.sc_ng_text_red, null));
+            mSlidingTabLayout.setDividerColors(getResources().getColor(android.R.color.transparent, null));
+        }
         mSlidingTabLayout.setDefaultTabTextColor(R.color.sc_ng_text_grey_2);
         mSlidingTabLayout.setSelectedTabTextColor(R.color.sc_ng_text_red);
         mSlidingTabLayout.setViewPager(mViewPager);
@@ -279,19 +297,15 @@ public class ListsFragment extends Fragment implements CallLogQueryHandler.Liste
         mCallLogAdapter.setLoading(true);
         registerViewUpdater();
         refreshTabView();
-        if (MessagingPreferences.getInstance(getActivity()).getMessageSoundsEnabled()) {
-            mPlayer = MediaPlayer.create(getActivity().getApplicationContext(), R.raw.received);
-        }
+        handleMessageFailures();
     }
 
     @Override
     public void onPause() {
         super.onPause();
         getActivity().unregisterReceiver(mViewUpdater);
-        if (mPlayer != null) {
-            mPlayer.release();
-            mPlayer = null;
-        }
+        mMessageHandler.removeCallbacks(mRunMessageFailureHandling);
+        mCallLogAdapter.stopRequestProcessing();
     }
 
     private void registerViewUpdater() {
@@ -303,8 +317,10 @@ public class ListsFragment extends Fragment implements CallLogQueryHandler.Liste
                 switch (Action.from(intent)) {
                     case RECEIVE_MESSAGE:
                         refreshTabView();
-                        if (mPlayer != null && !mPlayer.isPlaying()) {
-                            mPlayer.start();
+                        boolean soundsEnabled =
+                                MessagingPreferences.getInstance(context).getMessageSoundsEnabled();
+                        if (soundsEnabled ) {
+                            SoundNotifications.playReceiveMessageSound();
                         }
                         if (isOrderedBroadcast()) {
                             abortBroadcast();
@@ -328,6 +344,31 @@ public class ListsFragment extends Fragment implements CallLogQueryHandler.Liste
     private void setTabViewNotificationVisibility(int position, boolean visible) {
         if (mSlidingTabLayout != null) {
             mSlidingTabLayout.setTabHighlighted(position, visible);
+        }
+    }
+
+    private void handleMessageFailures() {
+        Activity activity = getActivity();
+        if (activity == null || activity.isFinishing()) {
+            return;
+        }
+
+        if (mMessageHandler != null) {
+            mMessageHandler.removeCallbacks(mRunMessageFailureHandling);
+        }
+
+        if (mAxoRegistered) {
+            AsyncUtils.execute(new HandleMessageFailuresTask(activity.getApplicationContext(), this));
+        }
+        else {
+            scheduleMessageFailuresTask();
+        }
+    }
+
+    private void scheduleMessageFailuresTask() {
+        if (mMessageHandler != null) {
+            mMessageHandler.removeCallbacks(mRunMessageFailureHandling);
+            mMessageHandler.postDelayed(mRunMessageFailureHandling, TimeUnit.MINUTES.toMillis(5));
         }
     }
 
@@ -356,15 +397,17 @@ public class ListsFragment extends Fragment implements CallLogQueryHandler.Liste
     @Override
     public void onDestroy() {
         super.onDestroy();
+        if (mMergedAdapter != null) {
+            mMergedAdapter.unregisterContentObserver();
+        }
         AxoMessaging axoMessaging = AxoMessaging.getInstance(getActivity().getApplicationContext());
         axoMessaging.removeStateChangeListener(this);
+        mCallLogAdapter.stopRequestProcessing();
     }
 
     private AbsListView getCurrentListView() {
         final int position = indexPosition(mViewPager.getCurrentItem());
         switch (getRtlPosition(position)) {
-            case TAB_INDEX_SPEED_DIAL:
-                return mSpeedDialFragment == null ? null : mSpeedDialFragment.getListView();
             case TAB_INDEX_RECENTS:
                 return mRecentsFragment == null ? null : mRecentsFragment.getListView();
             case TAB_INDEX_CHAT:
@@ -389,9 +432,6 @@ public class ListsFragment extends Fragment implements CallLogQueryHandler.Liste
         public Fragment getItem(int position) {
             Bundle args = new Bundle();
             switch (getRtlPosition(indexPosition(position))) {
-                case TAB_INDEX_SPEED_DIAL:
-                    mSpeedDialFragment = new SpeedDialFragment();
-                    return mSpeedDialFragment;
                 case TAB_INDEX_RECENTS:
                     args.putInt(CallLogFragment.FILTER_TYPE, CallLogQueryHandler.CALL_TYPE_ALL);
                     args.putInt(CallLogFragment.LOG_LIMIT, MAX_RECENTS_ENTRIES);
@@ -416,9 +456,7 @@ public class ListsFragment extends Fragment implements CallLogQueryHandler.Liste
             // Copy the fragments that the FragmentManager finds so that we can store them in
             // instance variables for later.
             final Fragment fragment = (Fragment) super.instantiateItem(container, position);
-            if (fragment instanceof SpeedDialFragment) {
-                mSpeedDialFragment = (SpeedDialFragment) fragment;
-            } else if (fragment instanceof CallLogFragment) {
+            if (fragment instanceof CallLogFragment) {
                 mRecentsFragment = (CallLogFragment) fragment;
             } else if (fragment instanceof AllContactsFragment) {
                 mAllContactsFragment = (AllContactsFragment) fragment;
@@ -434,6 +472,24 @@ public class ListsFragment extends Fragment implements CallLogQueryHandler.Liste
         @Override
         public CharSequence getPageTitle(int position) {
             return mTabTitles[indexPosition(position)];
+        }
+    }
+
+    private static class HandleMessageFailuresTask extends com.silentcircle.messaging.task.HandleMessageFailuresTask {
+
+        private final WeakReference<ListsFragment> mFragmentReference;
+
+        public HandleMessageFailuresTask(Context context, ListsFragment fragment) {
+            super(context);
+            mFragmentReference = new WeakReference<>(fragment);
+        }
+
+        @Override
+        protected void onPostExecute(Integer count) {
+            ListsFragment fragment = mFragmentReference.get();
+            if (count != 0 && fragment != null) {
+                fragment.scheduleMessageFailuresTask();
+            }
         }
     }
 
@@ -453,6 +509,7 @@ public class ListsFragment extends Fragment implements CallLogQueryHandler.Liste
             mViewPager.setAdapter(viewPagerAdapter);
             mSlidingTabLayout.setViewPager(mViewPager);
             refreshTabView();
+            handleMessageFailures();
         }
     }
 

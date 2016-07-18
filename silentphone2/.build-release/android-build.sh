@@ -46,6 +46,12 @@ git submodule status
 echo "sdk.dir=$ANDROID_SDK" > local.properties
 echo "ndk.dir=$ANDROID_NDK" >> local.properties
 
+# build static Axolotl lib and dependencies, copy resulting libs to
+# correct place (silentphone2/jni/armeabi-v7a), then run ndk-build
+pushd silentphone2/support/axolotl
+    sh -x axolotl-build.sh
+popd
+
 pushd silentphone2
 
 if [ ! -h local.properties ]; then

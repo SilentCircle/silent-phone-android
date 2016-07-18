@@ -61,8 +61,17 @@
         <attr name="sp_ic_view_list" format="integer|reference"/>
         <attr name="sp_ic_edit" format="integer|reference"/>
         <attr name="sp_ic_contact_picture" format="integer|reference"/>
+        <attr name="sp_ic_contacts" format="integer|reference"/>
+
+        <attr name="sp_ic_add_call_menu" format="integer|reference"/>
+        <attr name="sp_ic_mic_menu" format="integer|reference"/>
+        <attr name="sp_ic_mic_muted_menu" format="integer|reference"/>
+        <attr name="sp_ic_volume_muted_menu" format="integer|reference"/>
+        <attr name="sp_ic_volume_on_menu" format="integer|reference"/>
 
         <attr name="sp_call_manager_small_button" format="integer|reference"/>
+
+        <attr name="sp_ic_in_app_purchase" format="integer|reference"/>
 
         <!-- Icons for action bar. We may use the same or different icons on
          the AB -->
@@ -97,8 +106,11 @@
 
         <attr name="sp_ab_title_style" format="reference" />
         <attr name="sp_ab_subtitle_style" format="reference" />
+        <attr name="sp_ab_dark_title_style" format="reference" />
 
         <attr name="sp_icon_tint_color" format="reference|color"/>
+
+        <attr name="sp_dialog_text_color" format="reference|color"/>
 
     </declare-styleable>
 
@@ -252,14 +264,41 @@
         <attr name="src" format="reference" />
         <attr name="srcChecked" format="reference" />
         <attr name="text" format="reference|string" />
+        <attr name="textColor" format="reference|color" />
         <attr name="description" format="reference|string" />
         <attr name="textSize" format="reference|dimension" />
         <attr name="descriptionSize" format="reference|dimension" />
         <attr name="isCheckable" format="boolean" />
-        <attr name="imageMargin" format="reference|dimension" />
+        <attr name="imageMarginLeft" format="reference|dimension" />
+        <attr name="imageMarginRight" format="reference|dimension" />
         <attr name="checkableMargin" format="reference|dimension" />
         <attr name="descriptionMarginTop" format="reference|dimension" />
         <attr name="descriptionMarginLeft" format="reference|dimension" />
+        <attr name="descriptionColor" format="reference|color" />
+    </declare-styleable>
+
+    <declare-styleable name="SettingsItem" parent="OptionsItem">
+    </declare-styleable>
+
+    <!-- Attributes for custom drawable states to match
+         message state from com.silentcircle.messaging.model.MessageStates -->
+    <declare-styleable name="MessageState">
+        <attr name="state_message_unknown" format="boolean" />
+        <attr name="state_message_resend_requested" format="boolean" />
+        <attr name="state_message_composing" format="boolean" />
+        <attr name="state_message_composed" format="boolean" />
+        <attr name="state_message_sent" format="boolean" />
+        <attr name="state_message_sent_to_server" format="boolean" />
+        <attr name="state_message_delivered" format="boolean" />
+        <attr name="state_message_received" format="boolean" />
+        <attr name="state_message_read" format="boolean" />
+        <attr name="state_message_burned" format="boolean" />
+        <attr name="state_message_sync" format="boolean" />
+        <attr name="state_message_failed" format="boolean" />
+    </declare-styleable>
+
+    <declare-styleable name="AdjustingTextView">
+        <attr name="minTextSize" format="reference|dimension" />
     </declare-styleable>
 
 </resources>

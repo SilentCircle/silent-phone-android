@@ -76,11 +76,7 @@ public class LocationUtils {
 
         String provider = manager.getBestProvider(criteria, true);
 
-        if (provider == null || LocationManager.PASSIVE_PROVIDER.equals(provider)) {
-            return false;
-        }
-
-        return true;
+        return !(provider == null || LocationManager.PASSIVE_PROVIDER.equals(provider));
 
     }
 
@@ -218,7 +214,7 @@ public class LocationUtils {
      * @return .{@link org.json.JSONObject} with location fields stored as attributes in JSON.
      */
     public static JSONObject locationToJSON(final JSONObject jsonLocation, final Location location) {
-        if (location != null) {
+        if (location != null && jsonLocation != null) {
             try {
                 jsonLocation.put(FIELD_LATITUDE, location.getLatitude());   // "latitude"
                 jsonLocation.put(FIELD_LONGITUDE, location.getLongitude()); // "longitude"
@@ -250,6 +246,25 @@ public class LocationUtils {
         JSONObject jsonLocation = new JSONObject();
 
         if (location != null) {
+            messageLocationToJSON(jsonLocation, location);
+        }
+
+        return jsonLocation;
+    }
+
+    /**
+     * Store {@link com.silentcircle.messaging.model.Location}.fields in JSON object as
+     * attributes.
+     *
+     * @param jsonLocation A JSON object to store location in.
+     * @param location Instance of {@link com.silentcircle.messaging.model.Location}.
+     *
+     * @return .{@link org.json.JSONObject} with location fields stored as attributes in JSON.
+     *          JSON will be empty if passed location instance is null.
+     */
+    public static JSONObject messageLocationToJSON(final JSONObject jsonLocation,
+            final com.silentcircle.messaging.model.Location location) {
+        if (location != null && jsonLocation != null) {
             try {
                 jsonLocation.put(FIELD_LATITUDE, location.getLatitude());
                 jsonLocation.put(FIELD_LONGITUDE, location.getLongitude());
@@ -258,7 +273,6 @@ public class LocationUtils {
                 jsonLocation.put(FIELD_ACCURACY_HORIZONTAL, location.getHorizontalAccuracy());
                 jsonLocation.put(FIELD_ACCURACY_VERTICAL, location.getVerticalAccuracy());
             } catch (JSONException exception) {
-                ;
             }
         }
         return jsonLocation;

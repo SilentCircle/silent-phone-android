@@ -56,7 +56,7 @@ import android.support.annotation.NonNull;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
-import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
 import android.util.Log;
@@ -68,6 +68,7 @@ import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.silentcircle.common.util.AsyncTasks;
 import com.silentcircle.silentphone2.R;
 import com.silentcircle.silentphone2.dialogs.CryptoInfoDialog;
 import com.silentcircle.silentphone2.dialogs.VerifyDialog;
@@ -93,7 +94,7 @@ import java.util.concurrent.CountDownLatch;
  *
  * Created by werner on 13.02.14.
  */
-public class InCallActivity extends ActionBarActivity
+public class InCallActivity extends AppCompatActivity
         implements InCallDrawerFragment.DrawerCallbacks, TiviPhoneService.ServiceStateChangeListener,
         TiviPhoneService.DeviceStateChangeListener, InCallCallback,
         SensorEventListener {
@@ -807,8 +808,10 @@ public class InCallActivity extends ActionBarActivity
         endCall(true, call);
     }
 
-    public void verifySasCb(String Sas) {
-        verifySas(Sas);
+    public void verifySasCb(String Sas, int callId) {
+        FragmentManager fragmentManager = getFragmentManager();
+        VerifyDialog verify = VerifyDialog.newInstance(Sas, callId);
+        verify.show(fragmentManager, "com.silentcircle.silentphone2.verify_dialog");
     }
 
     public void activateVideoCb() {
@@ -835,7 +838,6 @@ public class InCallActivity extends ActionBarActivity
     }
 
     public void updateProximityCb(boolean onOrOff) {
-        Log.d(TAG, "++++ updateProximityCb: " + onOrOff);
         updateProximitySensorMode(onOrOff);
     }
 
@@ -928,21 +930,23 @@ public class InCallActivity extends ActionBarActivity
      *
      * @param peerName The peer name that the user typed.
      */
-    public void storePeerAndVerify(String peerName) {
-        CallState call = TiviPhoneService.calls.selectedCall;
-        if (call != null) {
-            String cmd = "*z" + call.iCallId + " " + peerName;
-            TiviPhoneService.doCmd(cmd);
-            call.zrtpPEER.setText(peerName);
-            call.iShowVerifySas = false;
-            mInCallMain.zrtpStateChange(call, TiviPhoneService.CT_cb_msg.eZRTP_peer);
-            mInCallMain.refreshScreen();
-            if (mCallManagerFragment != null) {
-                mCallManagerFragment.zrtpStateChange(call, TiviPhoneService.CT_cb_msg.eZRTP_peer);
-            }
-            if (isDrawerOpen())
-                mInCallDrawerFragment.setupCallSecurityInfo();
+    public void storePeerAndVerify(String peerName, CallState call) {
+        if (call == null)
+            return;
+
+        String cmd = "*z" + call.iCallId + " " + peerName;
+        TiviPhoneService.doCmd(cmd);
+        call.zrtpPEER.setText(peerName);
+        call.iShowVerifySas = false;
+        mInCallMain.zrtpStateChange(call, TiviPhoneService.CT_cb_msg.eZRTP_peer);
+        if(mVideoFragment != null)
+            mVideoFragment.zrtpStateChange(call, TiviPhoneService.CT_cb_msg.eZRTP_peer);
+        mInCallMain.refreshScreen();
+        if (mCallManagerFragment != null) {
+            mCallManagerFragment.zrtpStateChange(call, TiviPhoneService.CT_cb_msg.eZRTP_peer);
         }
+        if (isDrawerOpen())
+            mInCallDrawerFragment.setupCallSecurityInfo();
     }
 
 
@@ -961,6 +965,8 @@ public class InCallActivity extends ActionBarActivity
             call.zrtpPEER.setText("");
             call.iShowVerifySas = true;
             mInCallMain.zrtpStateChange(call, TiviPhoneService.CT_cb_msg.eZRTP_peer);
+            if(mVideoFragment != null)
+                mVideoFragment.zrtpStateChange(call, TiviPhoneService.CT_cb_msg.eZRTP_peer);
             mInCallMain.refreshScreen();
             if (mCallManagerFragment != null) {
                 mCallManagerFragment.zrtpStateChange(call, TiviPhoneService.CT_cb_msg.eZRTP_peer);
@@ -1006,9 +1012,8 @@ public class InCallActivity extends ActionBarActivity
         actionBar.setDisplayHomeAsUpEnabled(true);
         ((TextView)mToolbar.findViewById(R.id.title)).setText(getString(R.string.app_name));
 
-        if (!TextUtils.isEmpty(DialerActivity.mName)) {
-            ((TextView)mToolbar.findViewById(R.id.sub_title)).setText(DialerActivity.mName + 
-                    (!TextUtils.isEmpty(DialerActivity.mNumber) ? "/" + DialerActivity.mNumber : ""));
+        if (!TextUtils.isEmpty(DialerActivity.mDisplayName)) {
+            ((TextView)mToolbar.findViewById(R.id.sub_title)).setText(DialerActivity.mDisplayName);
             Utilities.setSubtitleColor(getResources(), mToolbar);
         }
     }
@@ -1030,7 +1035,7 @@ public class InCallActivity extends ActionBarActivity
         CallState call = TiviPhoneService.calls.selectedCall;
         if (userPressed) {
             String command = (call != null)? "*a" + call.iCallId : ":a";
-            Utilities.asyncCommand(command);
+            AsyncTasks.asyncCommand(command);
             mNotificationManager.cancel(ACTIVE_CALL_NOTIFICATION_ID);
         }
 
@@ -1057,7 +1062,7 @@ public class InCallActivity extends ActionBarActivity
             Log.w(TAG, "Null call during end call processing: " + userPressed);
             mPreviousUserPressed = userPressed;
             mTerminateEarly = true;
-            Utilities.asyncCommand("*e0");      // cancel the dialing and call setup, the monitoring thread terminates
+            AsyncTasks.asyncCommand("*e0");      // cancel the dialing and call setup, the monitoring thread terminates
             if(mPhoneService != null) {
                 mPhoneService.onStopCall();
             }
@@ -1083,7 +1088,7 @@ public class InCallActivity extends ActionBarActivity
         // that needs a specific handling.
         if (userPressed) {
             mPreviousUserPressed = true;
-            Utilities.asyncCommand("*e" + call.iCallId);
+            AsyncTasks.asyncCommand("*e" + call.iCallId);
             if (call.iCallId == 0) {                         // mark as ended and let monitor thread handle it
                 call.callEnded = true;
                 if(mPhoneService != null) {
@@ -1180,13 +1185,10 @@ public class InCallActivity extends ActionBarActivity
                 if (enable && !keepScreenOn && !mLeaveHint) {
                     // Phone is in use!  Arrange for the screen to turn off
                     // automatically when the sensor detects a close object.
-                    Log.d(TAG, "++++ acquire ProximityWakeLock: " + !mProximityWakeLock.isHeld());
                     if (!mProximityWakeLock.isHeld()) {
                         mProximityWakeLock.acquire();
-                        Log.d(TAG, "++++ acquired ProximityWakeLock");
                     }
                 } else {
-                    Log.d(TAG, "++++ release ProximityWakeLock: " + mProximityWakeLock.isHeld());
                     if (mProximityWakeLock.isHeld()) {
                         // Wait until user has moved the phone away from his head if we are
                         // releasing due to the phone call ending.
@@ -1195,7 +1197,6 @@ public class InCallActivity extends ActionBarActivity
 //                            (screenOnImmediately ? 0 : PowerManager.WAIT_FOR_PROXIMITY_NEGATIVE);
 //                        mProximityWakeLock.release(flags);
                         mProximityWakeLock.release();
-                        Log.d(TAG, "++++ released ProximityWakeLock");
                     }
                 }
             }
@@ -1433,9 +1434,9 @@ public class InCallActivity extends ActionBarActivity
         }
 
         // If video is currently not active and we got a new video media then
-        // activate the video fragment only if SAS was verified.
+        // activate the video fragment only if this is a ZRTP call.
         if (call.videoMediaActive) {
-            if (call.iShowVerifySas) {
+            if (TextUtils.isEmpty(call.bufSAS.toString())) {
                 return;
             }
             activateVideo(true);
@@ -1652,12 +1653,6 @@ public class InCallActivity extends ActionBarActivity
         Intent intent = new Intent(this, CallInfoActivity.class);
         intent.putExtra("message", message);
         startActivity(intent);
-    }
-
-    private void verifySas(String sasText) {
-        FragmentManager fragmentManager = getFragmentManager();
-        VerifyDialog verify = VerifyDialog.newInstance(sasText);
-        verify.show(fragmentManager, "com.silentcircle.silentphone2.verify_dialog");
     }
 
     private void hideFragment(FragmentTransaction ft, Fragment f) {

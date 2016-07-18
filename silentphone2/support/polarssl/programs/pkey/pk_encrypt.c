@@ -1,12 +1,9 @@
 /*
  *  RSA simple data encryption program
  *
- *  Copyright (C) 2006-2011, Brainspark B.V.
+ *  Copyright (C) 2006-2011, ARM Limited, All Rights Reserved
  *
- *  This file is part of PolarSSL (http://www.polarssl.org)
- *  Lead Maintainer: Paul Bakker <polarssl_maintainer at polarssl.org>
- *
- *  All rights reserved.
+ *  This file is part of mbed TLS (https://tls.mbed.org)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -29,23 +26,32 @@
 #include POLARSSL_CONFIG_FILE
 #endif
 
-#include <string.h>
+#if defined(POLARSSL_PLATFORM_C)
+#include "polarssl/platform.h"
+#else
 #include <stdio.h>
+#define polarssl_fprintf    fprintf
+#define polarssl_printf     printf
+#endif
 
+#if defined(POLARSSL_BIGNUM_C) && defined(POLARSSL_PK_PARSE_C) && \
+    defined(POLARSSL_ENTROPY_C) && defined(POLARSSL_FS_IO) && \
+    defined(POLARSSL_CTR_DRBG_C)
 #include "polarssl/error.h"
 #include "polarssl/pk.h"
 #include "polarssl/entropy.h"
 #include "polarssl/ctr_drbg.h"
 
+#include <stdio.h>
+#include <string.h>
+#endif
+
 #if !defined(POLARSSL_BIGNUM_C) || !defined(POLARSSL_PK_PARSE_C) ||  \
     !defined(POLARSSL_ENTROPY_C) || !defined(POLARSSL_FS_IO) || \
     !defined(POLARSSL_CTR_DRBG_C)
-int main( int argc, char *argv[] )
+int main( void )
 {
-    ((void) argc);
-    ((void) argv);
-
-    printf("POLARSSL_BIGNUM_C and/or POLARSSL_PK_PARSE_C and/or "
+    polarssl_printf("POLARSSL_BIGNUM_C and/or POLARSSL_PK_PARSE_C and/or "
            "POLARSSL_ENTROPY_C and/or POLARSSL_FS_IO and/or "
            "POLARSSL_CTR_DRBG_C not defined.\n");
     return( 0 );
@@ -67,16 +73,16 @@ int main( int argc, char *argv[] )
 
     if( argc != 3 )
     {
-        printf( "usage: pk_encrypt <key_file> <string of max 100 characters>\n" );
+        polarssl_printf( "usage: pk_encrypt <key_file> <string of max 100 characters>\n" );
 
 #if defined(_WIN32)
-        printf( "\n" );
+        polarssl_printf( "\n" );
 #endif
 
         goto exit;
     }
 
-    printf( "\n  . Seeding the random number generator..." );
+    polarssl_printf( "\n  . Seeding the random number generator..." );
     fflush( stdout );
 
     entropy_init( &entropy );
@@ -84,24 +90,24 @@ int main( int argc, char *argv[] )
                                (const unsigned char *) pers,
                                strlen( pers ) ) ) != 0 )
     {
-        printf( " failed\n  ! ctr_drbg_init returned -0x%04x\n", -ret );
+        polarssl_printf( " failed\n  ! ctr_drbg_init returned -0x%04x\n", -ret );
         goto exit;
     }
 
-    printf( "\n  . Reading public key from '%s'", argv[1] );
+    polarssl_printf( "\n  . Reading public key from '%s'", argv[1] );
     fflush( stdout );
 
     pk_init( &pk );
 
     if( ( ret = pk_parse_public_keyfile( &pk, argv[1] ) ) != 0 )
     {
-        printf( " failed\n  ! pk_parse_public_keyfile returned -0x%04x\n", -ret );
+        polarssl_printf( " failed\n  ! pk_parse_public_keyfile returned -0x%04x\n", -ret );
         goto exit;
     }
 
     if( strlen( argv[2] ) > 100 )
     {
-        printf( " Input data larger than 100 characters.\n\n" );
+        polarssl_printf( " Input data larger than 100 characters.\n\n" );
         goto exit;
     }
 
@@ -110,14 +116,14 @@ int main( int argc, char *argv[] )
     /*
      * Calculate the RSA encryption of the hash.
      */
-    printf( "\n  . Generating the encrypted value" );
+    polarssl_printf( "\n  . Generating the encrypted value" );
     fflush( stdout );
 
     if( ( ret = pk_encrypt( &pk, input, strlen( argv[2] ),
                             buf, &olen, sizeof(buf),
                             ctr_drbg_random, &ctr_drbg ) ) != 0 )
     {
-        printf( " failed\n  ! pk_encrypt returned -0x%04x\n", -ret );
+        polarssl_printf( " failed\n  ! pk_encrypt returned -0x%04x\n", -ret );
         goto exit;
     }
 
@@ -127,17 +133,17 @@ int main( int argc, char *argv[] )
     if( ( f = fopen( "result-enc.txt", "wb+" ) ) == NULL )
     {
         ret = 1;
-        printf( " failed\n  ! Could not create %s\n\n", "result-enc.txt" );
+        polarssl_printf( " failed\n  ! Could not create %s\n\n", "result-enc.txt" );
         goto exit;
     }
 
     for( i = 0; i < olen; i++ )
-        fprintf( f, "%02X%s", buf[i],
+        polarssl_fprintf( f, "%02X%s", buf[i],
                  ( i + 1 ) % 16 == 0 ? "\r\n" : " " );
 
     fclose( f );
 
-    printf( "\n  . Done (created \"%s\")\n\n", "result-enc.txt" );
+    polarssl_printf( "\n  . Done (created \"%s\")\n\n", "result-enc.txt" );
 
 exit:
     ctr_drbg_free( &ctr_drbg );
@@ -145,11 +151,11 @@ exit:
 
 #if defined(POLARSSL_ERROR_C)
     polarssl_strerror( ret, (char *) buf, sizeof(buf) );
-    printf( "  !  Last error was: %s\n", buf );
+    polarssl_printf( "  !  Last error was: %s\n", buf );
 #endif
 
 #if defined(_WIN32)
-    printf( "  + Press Enter to exit this program.\n" );
+    polarssl_printf( "  + Press Enter to exit this program.\n" );
     fflush( stdout ); getchar();
 #endif
 

@@ -12,15 +12,16 @@
 #define POLARSSL_CONFIG_H
 
 /* System support */
-//#define POLARSSL_HAVE_IPV6 /* Optional */
+#define POLARSSL_HAVE_IPV6 /* Now mandatory for NET_C */
 //#define POLARSSL_HAVE_TIME /* Optionnaly used in Hello messages */
 /* Other POLARSSL_HAVE_XXX flags irrelevant for this configuration */
 
-/* PolarSSL feature support */
+/* mbed TLS feature support */
 #define POLARSSL_KEY_EXCHANGE_PSK_ENABLED
 #define POLARSSL_SSL_PROTO_TLS1
+#define POLARSSL_SSL_DISABLE_RENEGOTIATION
 
-/* PolarSSL modules */
+/* mbed TLS modules */
 #define POLARSSL_AES_C
 #define POLARSSL_ARC4_C
 #define POLARSSL_CIPHER_C

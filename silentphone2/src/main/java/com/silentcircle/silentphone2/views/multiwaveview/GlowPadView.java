@@ -73,11 +73,11 @@ public class GlowPadView extends View {
     public interface OnTriggerListener {
         int NO_HANDLE = 0;
         int CENTER_HANDLE = 1;
-        public void onGrabbed(View v, int handle);
-        public void onReleased(View v, int handle);
-        public void onTrigger(View v, int target);
-        public void onGrabbedStateChange(View v, int handle);
-        public void onFinishFinalAnimation();
+        void onGrabbed(View v, int handle);
+        void onReleased(View v, int handle);
+        void onTrigger(View v, int target);
+        void onGrabbedStateChange(View v, int handle);
+        void onFinishFinalAnimation();
     }
 
     // Tuneable parameters for animation
@@ -160,7 +160,7 @@ public class GlowPadView extends View {
         public void setSuspended(boolean suspend) {
             mSuspended = suspend;
         }
-    };
+    }
 
     private AnimatorListener mResetListener = new AnimatorListenerAdapter() {
         public void onAnimationEnd(Animator animator) {

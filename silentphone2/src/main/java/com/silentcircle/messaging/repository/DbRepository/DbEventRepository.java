@@ -126,10 +126,23 @@ public class DbEventRepository implements EventRepository {
 
     @Override
     public List<Event> list() {
+        return list(new PagingContext(-1, -1));
+    }
+
+    @Override
+    public List<Event> list(PagingContext pagingContext) {
         int[] code = new int[2];
-        byte[][] events = AxolotlNative.loadEvents(repoId, -1, -1, code);
-        if (events == null || events.length == 0)
+        code[1] = pagingContext.getLastMessageNumber();
+
+        byte[][] events = AxolotlNative.loadEvents(repoId, pagingContext.getNextOffset(),
+                pagingContext.getPageSize(), pagingContext.getPagingDirection(), code);
+
+        if (events == null || events.length == 0
+                || pagingContext.isEndReached(code[1])) {
             return EMPTY_LIST;
+        }
+
+        pagingContext.setLastMessageNumber(code[1]);
 
         List<Event> eventsList = new ArrayList<>();
         for (byte[] eventData : events) {

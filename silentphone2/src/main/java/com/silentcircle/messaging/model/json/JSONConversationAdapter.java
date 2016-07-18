@@ -65,7 +65,7 @@ public class JSONConversationAdapter extends JSONAdapter {
 
     public Conversation adapt(JSONObject json) {
 
-        Conversation conversation = new Conversation();
+        Conversation conversation = new Conversation(contactAdapter.adapt(getJSONObject(json, "partner")));
 
         conversation.setBurnDelay(getLong(json, "burn_delay", BurnDelay.getDefaultDelay()));
         conversation.setBurnNotice(getBoolean(json, "burn_notice"));
@@ -77,8 +77,6 @@ public class JSONConversationAdapter extends JSONAdapter {
         conversation.setLastModified(getLong(json, "last_modified"));
         conversation.setFailures(getInt(json, "failures"));
         conversation.setUnsentText(getString(json, "unsent_text", null));
-
-        conversation.setPartner(contactAdapter.adapt(getJSONObject(json, "partner")));
 
         return conversation;
 

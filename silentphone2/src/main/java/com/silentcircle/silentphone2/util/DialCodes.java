@@ -31,6 +31,7 @@ package com.silentcircle.silentphone2.util;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Build;
+import android.util.Log;
 import android.widget.Toast;
 
 import com.silentcircle.messaging.services.AxoMessaging;
@@ -117,6 +118,10 @@ public class DialCodes {
             phoneService.enableDisableWifiLock(false);
             Toast.makeText(activity, "WiFi off", Toast.LENGTH_SHORT).show();
             return true;
+        }
+        if (ConfigurationUtilities.mTrace && internalCommand.startsWith("*##*775")) {
+            String level = internalCommand.substring("*##*775".length());
+            TiviPhoneService.doCmd("debug.option=ssl_level:" + level);
         }
         return false;
     }

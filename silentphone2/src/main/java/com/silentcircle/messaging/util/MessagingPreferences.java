@@ -30,7 +30,12 @@ package com.silentcircle.messaging.util;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.preference.PreferenceManager;
+import android.support.annotation.Nullable;
+import android.text.TextUtils;
+
+import java.util.concurrent.TimeUnit;
 
 /**
  * Preferences wrapper for messaging part of application.
@@ -41,17 +46,34 @@ public class MessagingPreferences {
     public static final String PREFERENCE_MESSAGE_SOUNDS_ENABLED = "sp_play_sound_for_new_message";
     public static final String PREFERENCE_WARN_WHEN_EXPORT_ATTACHMENT =
             "sp_warn_when_export_message_attachments";
+    public static final String PREFERENCE_LAST_UNLOCK_TIME = "sp_last_messaging_unlock_time";
+    public static final String PREFERENCE_LOCK_PERIOD = "sp_messaging_lock_period";
+    public static final String PREFERENCE_MESSAGE_VIBRATE = "sp_messaging_vibrate";
+    public static final String PREFERENCE_MESSAGE_RINGTONE = "sp_messaging_ringtone";
+    public static final String PREFERENCE_MESSAGE_LIGHT = "sp_messaging_light";
+
+    public static final int INDEX_VIBRATE_OFF = 0;
+    public static final int INDEX_VIBRATE_DEFAULT = 1;
+    public static final int INDEX_VIBRATE_SHORT = 2;
+    public static final int INDEX_VIBRATE_LONG = 3;
+
+    public static final int INDEX_LIGHT_OFF = 0;
+    public static final int INDEX_LIGHT_DEFAULT = 1;
+    public static final int INDEX_LIGHT_RED = 2;
+    public static final int INDEX_LIGHT_BLUE = 3;
+    public static final int INDEX_LIGHT_WHITE = 4;
+    public static final int INDEX_LIGHT_GREEN = 5;
+    public static final int INDEX_LIGHT_PURPLE = 6;
+
+    public static final long GRACE_PERIOD = TimeUnit.SECONDS.toMillis(20);
 
     private static MessagingPreferences sInstance;
-
-    private Context sContext;
 
     private final SharedPreferences sPreferences;
     private final SharedPreferences.Editor sEditor;
 
     @SuppressLint("CommitPrefEdits")
     private MessagingPreferences(Context context) {
-        sContext = context.getApplicationContext();
         sPreferences = PreferenceManager.getDefaultSharedPreferences(context);
         sEditor = sPreferences.edit();
     }
@@ -89,4 +111,61 @@ public class MessagingPreferences {
     public synchronized boolean getShowBurnAnimation() {
         return sPreferences.getBoolean(PREFERENCE_SHOW_BURN_ANIMATION, true);
     }
+
+    public synchronized void setLastMessagingUnlockTime(long timeStamp) {
+        sEditor.putLong(PREFERENCE_LAST_UNLOCK_TIME, timeStamp);
+        sEditor.commit();
+    }
+
+    public synchronized long getLastMessagingUnlockTime() {
+        return sPreferences.getLong(PREFERENCE_LAST_UNLOCK_TIME, 0);
+    }
+
+    public synchronized boolean isMessagingUnlockTimeExpired() {
+        /* if is locking enabled and last unlock time longer than timeout */
+        return ((System.currentTimeMillis() - getLastMessagingUnlockTime()) > getMessagingLockPeriod());
+    }
+
+    public synchronized void setMessagingLockPeriod(long lockPeriod) {
+        sEditor.putLong(PREFERENCE_LOCK_PERIOD, lockPeriod);
+        sEditor.commit();
+    }
+
+    public synchronized long getMessagingLockPeriod() {
+        return sPreferences.getLong(PREFERENCE_LOCK_PERIOD, GRACE_PERIOD);
+    }
+
+    public synchronized void setMessageVibrate(int vibrate) {
+        sEditor.putInt(PREFERENCE_MESSAGE_VIBRATE, vibrate);
+        sEditor.commit();
+    }
+
+    public synchronized int getMessageVibrate() {
+        return sPreferences.getInt(PREFERENCE_MESSAGE_VIBRATE, INDEX_VIBRATE_DEFAULT);
+    }
+
+    public synchronized void setMessageRingtone(Uri ringtone) {
+        sEditor.putString(PREFERENCE_MESSAGE_RINGTONE, ringtone.toString());
+        sEditor.commit();
+    }
+
+    @Nullable
+    public synchronized Uri getMessageRingtone() {
+        Uri result = null;
+        String ringtone = sPreferences.getString(PREFERENCE_MESSAGE_RINGTONE, null);
+        if (!TextUtils.isEmpty(ringtone)) {
+            result = Uri.parse(ringtone);
+        }
+        return result;
+    }
+
+    public synchronized void setMessageLight(int light) {
+        sEditor.putInt(PREFERENCE_MESSAGE_LIGHT, light);
+        sEditor.commit();
+    }
+
+    public synchronized int getMessageLight() {
+        return sPreferences.getInt(PREFERENCE_MESSAGE_LIGHT, INDEX_LIGHT_DEFAULT);
+    }
+
 }

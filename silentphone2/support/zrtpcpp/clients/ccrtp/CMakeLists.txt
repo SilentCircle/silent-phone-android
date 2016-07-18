@@ -79,7 +79,7 @@ add_library(${zrtplibName} ${LIBRARY_BUILD_TYPE} ${zrtpcpp_src})
 set_target_properties(${zrtplibName} PROPERTIES VERSION ${VERSION} SOVERSION ${SOVERSION})
 target_link_libraries(${zrtplibName} ${LIBS})
 
-add_dependencies(${zrtplibName} ccrtp)
+# add_dependencies(${zrtplibName} ccrtp)
 
 # **** Setup packing environment ****
 #

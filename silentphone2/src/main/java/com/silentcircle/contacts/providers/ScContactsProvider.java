@@ -4417,7 +4417,7 @@ public class ScContactsProvider extends ContentProvider implements SQLiteTransac
         return dataIds.size();
     }
 
-    private static final int getDataUsageFeedbackType(String type, Integer defaultType) {
+    private static int getDataUsageFeedbackType(String type, Integer defaultType) {
         if (DataUsageFeedback.USAGE_TYPE_CALL.equals(type)) {
             return DataUsageStatColumns.USAGE_TYPE_INT_CALL; // 0
         }
@@ -4845,6 +4845,7 @@ public class ScContactsProvider extends ContentProvider implements SQLiteTransac
         }
         final VCardComposer composer = new VCardComposer(context, vcardConfig, false);
         Writer writer = null;
+        Cursor cursor = null;
         final Uri rawContactsUri;
         rawContactsUri = RawContactsEntity.CONTENT_URI;
 
@@ -4862,15 +4863,18 @@ public class ScContactsProvider extends ContentProvider implements SQLiteTransac
             String contactId = uri.getPathSegments().get(2);
             final String selectionEntity = Data._ID + "=?";
             final String[] selectionArgsEntity = new String[] {contactId};
-            Cursor cursor = query(rawContactsUri, null, selectionEntity, selectionArgsEntity, null);
+            cursor = query(rawContactsUri, null, selectionEntity, selectionArgsEntity, null);
 
             EntityIterator entityIterator = RawContacts.newEntityIterator(cursor);
             while (!composer.isAfterLast()) {
                 writer.write(composer.createOneEntryWithIterator(entityIterator));
             }
+            entityIterator.close();
         } catch (IOException e) {
             Log.e(TAG, "IOException: " + e);
         } finally {
+            if(cursor != null)
+                cursor.close();
             composer.terminate();
             if (writer != null) {
                 try {

@@ -34,7 +34,8 @@ import android.accounts.AccountManagerFuture;
 import android.accounts.AuthenticatorException;
 import android.accounts.OperationCanceledException;
 import android.app.Activity;
-import android.app.AlertDialog;
+import android.preference.PreferenceManager;
+import android.support.v7.app.AlertDialog;
 import android.app.Dialog;
 import android.app.DialogFragment;
 import android.app.FragmentManager;
@@ -46,7 +47,7 @@ import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.text.Editable;
 import android.text.InputType;
@@ -57,6 +58,7 @@ import android.view.View;
 import android.widget.EditText;
 
 import com.silentcircle.accounts.AccountConstants;
+import com.silentcircle.common.util.AsyncTasks;
 import com.silentcircle.keymanagersupport.KeyManagerSupport;
 import com.silentcircle.silentphone2.R;
 import com.silentcircle.silentphone2.fragments.ProvisioningAutomatic;
@@ -71,14 +73,12 @@ import com.silentcircle.silentphone2.util.Constants;
 import com.silentcircle.silentphone2.util.DeviceDetectionVertu;
 import com.silentcircle.silentphone2.util.PinnedCertificateHandling;
 import com.silentcircle.silentphone2.util.Utilities;
+import com.silentcircle.userinfo.LoadUserInfo;
 
 import org.json.JSONObject;
 
 import java.io.BufferedInputStream;
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -88,7 +88,7 @@ import java.util.Locale;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 
-public class ProvisioningActivity extends ActionBarActivity {
+public class ProvisioningActivity extends AppCompatActivity {
 
     private static final String LOG_TAG = "ProvisioningActivity";
 
@@ -97,6 +97,9 @@ public class ProvisioningActivity extends ActionBarActivity {
     public static final String STEP1_TAG = "spa_step1_fragment";
     public static final String STEP2_TAG = "spa_step2_fragment";
     public static final String STEP3_TAG = "spa_step3_fragment";
+    public static final String STEPCORP1_TAG = "spa_corp_step1_fragment";
+    public static final String STEPCORP2_TAG = "spa_corp_step2_fragment";
+    public static final String STEPCORP3_TAG = "spa_corp_step3_fragment";
 
     public static final String AUTOMATIC_TAG = "spa_automatic_fragment";
 
@@ -134,6 +137,10 @@ public class ProvisioningActivity extends ActionBarActivity {
 
     private Activity mContext;
 
+    private boolean mIsPaused = false;
+    private boolean mIsDestroyed = false;
+    private CheckDeviceStatus mCheckDeviceStatusTask;
+
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mContext = this;
@@ -152,6 +159,10 @@ public class ProvisioningActivity extends ActionBarActivity {
         hasKeyManager = getIntent().getBooleanExtra("KeyManager", false);
 
         if (DeviceDetectionVertu.isVertu()) {
+            SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(this);
+            pref.edit().remove(ConfigurationUtilities.getInstanceDevIdSaveKey()).apply();
+            Log.d(LOG_TAG, "Remove stored device instance id - creating new one");
+
             deviceId = Utilities.hashMd5(TiviPhoneService.getInstanceDeviceId(this, true));
             if (deviceId == null) {
                 finish();                               // a major problem
@@ -165,12 +176,27 @@ public class ProvisioningActivity extends ActionBarActivity {
         final SharedPreferences prefs =  getSharedPreferences(PREF_KM_API_KEY, Context.MODE_PRIVATE);
         final String feature = prefs.getString(StatusProvider.BP_FEATURECODE, null);
         useAccountManager(feature);
+        mIsPaused = false;
+        mIsDestroyed = false;
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == DID_SELECTION_DONE)
             finalizeProvisionAfterDid();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        mIsPaused = true;
+        cancelCheckDeviceStatusTask();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        mIsDestroyed = true;
     }
 
     public void backStep() {
@@ -303,6 +329,10 @@ public class ProvisioningActivity extends ActionBarActivity {
     // and password: use the API key and forward it to the fragment which handles it like the other
     // provisioning methods. The fragment shows a progress bar only.
     private void automaticProvisioning(String devAuthorization) {
+        if (isFinishing() || mIsDestroyed) {
+            return;
+        }
+
         FragmentManager fm = getFragmentManager();
         FragmentTransaction ft = fm.beginTransaction();
         ProvisioningAutomatic automatic = (ProvisioningAutomatic)fm.findFragmentByTag(AUTOMATIC_TAG);
@@ -335,29 +365,6 @@ public class ProvisioningActivity extends ActionBarActivity {
         checkStartDidSelection();
     }
 
-    public static void readStream(InputStream in, StringBuilder content) {
-        BufferedReader reader;
-        content.delete(0, content.length()); // remove old content
-        reader = new BufferedReader(new InputStreamReader(in));
-
-        try {
-            for (String str = reader.readLine(); str != null; str = reader.readLine()) {
-                content.append(str).append('\n');
-            }
-            if (ConfigurationUtilities.mTrace) Log.d(LOG_TAG, "readStream: " + content);
-        } catch (IOException e) {
-            Log.w(LOG_TAG, "I/O Exception: " + e);
-            if (ConfigurationUtilities.mTrace) e.printStackTrace();
-        } finally {
-            try {
-                reader.close();
-            } catch (IOException e) {
-                Log.w(LOG_TAG, "I/O Exception close stream: " + e);
-                if (ConfigurationUtilities.mTrace) e.printStackTrace();
-            }
-        }
-    }
-
     public void showErrorInfo(String msg) {
         ErrorMsgDialogFragment errMsg = ErrorMsgDialogFragment.newInstance(msg);
         FragmentManager fragmentManager = getFragmentManager();
@@ -387,7 +394,7 @@ public class ProvisioningActivity extends ActionBarActivity {
         finish();
     }
 
-    // Called from either LoaderTaskGetRegionList
+    // Called after DID selection, either if no DID available or after user selected a DID
     private void finalizeProvisionAfterDid() {
         new Thread(new ProvisioningThreadAuthorization()).start();
         new Thread(new ProvisioningMonitorThread()).start();
@@ -495,6 +502,10 @@ public class ProvisioningActivity extends ActionBarActivity {
                 result = TiviPhoneService.getInfo(-1, -1, "prov.tryGetResult");
             }
             if (provisioningResult >= 0) {
+                // Start loading my user info asap, the authorization data is available in KeyManager
+                LoadUserInfo li = new LoadUserInfo(getApplicationContext(), true);
+                li.refreshUserInfo();
+
                 SharedPreferences prefs = getSharedPreferences(PREF_KM_API_KEY, Context.MODE_PRIVATE);
                 // provisioned, remove the feature code if it exists.
                 prefs.edit()
@@ -502,7 +513,7 @@ public class ProvisioningActivity extends ActionBarActivity {
                         .remove(StatusProvider.BP_FEATURECODE)
                         .apply();
             }
-            // The fragment handles this
+            // The fragment handles this and also finishes activity
             if (mProvCallback != null) {
                 runOnUiThread(new Runnable() {
                     public void run() {
@@ -694,10 +705,16 @@ public class ProvisioningActivity extends ActionBarActivity {
         loaderTask.execute(regionUrl);
     }
 
-    private void showDialog(String title, String msg, int positiveBtnLabel, int negativeBtnLabel) {
-        com.silentcircle.silentphone2.dialogs.InfoMsgDialogFragment infoMsg = com.silentcircle.silentphone2.dialogs.InfoMsgDialogFragment.newInstance(title, msg, positiveBtnLabel, negativeBtnLabel);
+    private void showDialog(int titleResId, int msgResId, int positiveBtnLabel, int negativeBtnLabel) {
+        if (isFinishing() || mIsDestroyed) {
+            return;
+        }
+
+        com.silentcircle.silentphone2.dialogs.InfoMsgDialogFragment infoMsg = com.silentcircle.silentphone2.dialogs.InfoMsgDialogFragment.newInstance(titleResId, msgResId, positiveBtnLabel, negativeBtnLabel);
         FragmentManager fragmentManager = mContext.getFragmentManager();
-        infoMsg.show(fragmentManager,LOG_TAG );
+        if (fragmentManager != null) {
+            infoMsg.show(fragmentManager, LOG_TAG);
+        }
     }
 
     private class LoaderTaskGetRegionList extends AsyncTask<URL, Integer, Integer> {
@@ -727,7 +744,7 @@ public class ProvisioningActivity extends ActionBarActivity {
                 int ret = urlConnection.getResponseCode();
                 if (ConfigurationUtilities.mTrace) Log.d(LOG_TAG, "HTTP code getRegions: " + ret);
                 if (ret == HttpsURLConnection.HTTP_OK) {
-                    ProvisioningActivity.readStream(new BufferedInputStream(urlConnection.getInputStream()), content);
+                    AsyncTasks.readStream(new BufferedInputStream(urlConnection.getInputStream()), content);
                 }
                 return ret;
 
@@ -761,7 +778,7 @@ public class ProvisioningActivity extends ActionBarActivity {
             }
             else if(result == Constants.NO_NETWORK_CONNECTION) {
                 provisioningCancel(null);
-                showDialog(mContext.getString(R.string.information_dialog), mContext.getString(R.string.connected_to_network), android.R.string.ok, -1);
+                showDialog(R.string.information_dialog, R.string.connected_to_network, android.R.string.ok, -1);
             }
             else {
                 // continue provisioning
@@ -772,8 +789,16 @@ public class ProvisioningActivity extends ActionBarActivity {
     }
 
     private void checkDeviceStatus(String authorization) {
-        CheckDeviceStatus statusTask = new CheckDeviceStatus(authorization);
-        statusTask.execute();
+        cancelCheckDeviceStatusTask();
+        mCheckDeviceStatusTask = new CheckDeviceStatus(authorization);
+        mCheckDeviceStatusTask.execute();
+    }
+
+    private void cancelCheckDeviceStatusTask() {
+        if (mCheckDeviceStatusTask != null) {
+            mCheckDeviceStatusTask.cancel(true);
+            mCheckDeviceStatusTask = null;
+        }
     }
 
     /**
@@ -845,7 +870,7 @@ public class ProvisioningActivity extends ActionBarActivity {
                 automaticProvisioning(mAuthorization);
             }
             else if(result == Constants.NO_NETWORK_CONNECTION) {
-                showDialog(getString(R.string.information_dialog), getString(R.string.connected_to_network), android.R.string.ok, -1);
+                showDialog(R.string.information_dialog, R.string.connected_to_network, android.R.string.ok, -1);
             }
             else if (result == HttpsURLConnection.HTTP_FORBIDDEN || result == HttpsURLConnection.HTTP_NOT_FOUND) {
                 if (ConfigurationUtilities.mTrace) Log.d(LOG_TAG, "Device status check - not found on provisioning server");
@@ -854,7 +879,7 @@ public class ProvisioningActivity extends ActionBarActivity {
                 usernamePassword();
             }
             else {
-                showDialog(getString(R.string.information_dialog), getString(R.string.connected_to_network),
+                showDialog(R.string.information_dialog, R.string.connected_to_network,
                         android.R.string.ok, -1);
             }
         }

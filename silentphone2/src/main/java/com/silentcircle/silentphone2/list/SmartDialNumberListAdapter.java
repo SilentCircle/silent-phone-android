@@ -20,7 +20,6 @@ import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
 import android.provider.ContactsContract;
-import android.text.TextUtils;
 import android.util.Log;
 
 import com.silentcircle.common.list.ContactListItemView;
@@ -118,7 +117,7 @@ public class SmartDialNumberListAdapter extends DialerPhoneNumberListAdapter {
 
     @Override
     public void setQueryString(String queryString) {
-        final boolean showNumberShortcuts = !TextUtils.isEmpty(getFormattedQueryString());
+//        final boolean showNumberShortcuts = !TextUtils.isEmpty(getFormattedQueryString());
         // For NGA: Don't show the "add to contacts option"
 //        boolean changed = setShortcutEnabled(SHORTCUT_ADD_NUMBER_TO_CONTACTS, showNumberShortcuts);
         boolean changed = setShortcutEnabled(SHORTCUT_ADD_NUMBER_TO_CONTACTS, false);

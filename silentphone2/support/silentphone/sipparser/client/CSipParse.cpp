@@ -1,8 +1,32 @@
-//VoipPhone
-//Created by Janis Narbuts
-//Copyright (c) 2004-2012 Tivi LTD, www.tiviphone.com. All rights reserved.
+/*
+Created by Janis Narbuts
+Copyright (C) 2004-2012, Tivi LTD, www.tiviphone.com. All rights reserved.
+Copyright (C) 2012-2016, Silent Circle, LLC.  All rights reserved.
 
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+    * Any redistribution, use, or modification is done solely for personal
+      benefit and not for any commercial purpose or for monetary gain
+    * Redistributions of source code must retain the above copyright
+      notice, this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above copyright
+      notice, this list of conditions and the following disclaimer in the
+      documentation and/or other materials provided with the distribution.
+    * Neither the name Silent Circle nor the
+      names of its contributors may be used to endorse or promote products
+      derived from this software without specific prior written permission.
 
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL SILENT CIRCLE, LLC BE LIABLE FOR ANY
+DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
 
 ///ADD to ren sipUri parse, contact params /contact 
 #include "CTSip.h"
@@ -94,6 +118,8 @@ const char  CSip::proxy_author[]=  "PROXY\rAUTHORIZATION";
 const char  CSip::WWW_aut[]   =    "WWW\rAUTHENTICATE";
 const char  CSip::rec_rout[]    =  "RECORD\rROUTE";
 const char  CSip::p_asserted_id[]    =  "P\rASSERTED\rIDENTITY";//P_Asserted_Identity
+const char  CSip::p_Associated_URI[] =  "P\rASSOCIATED\rURI";//P-Associated-URI
+
 
 int CSip::tryParseHdr()
 {
@@ -169,7 +195,7 @@ int CSip::tryParseHdr()
          if (CMP(strList[tokensParsed],content_type,12))
          {tokensParsed++; parseContentType();           return 0;}
          if  (CMP(strList[tokensParsed],rec_rout,12))
-         {tokensParsed++;parseRoutes(&gspSIPMsg->hldRecRoute);  return 0;}
+         {tokensParsed++;parseRoutes(&gspSIPMsg->hldRecRoute, 1);  return 0;}
          if  (CMP(strList[tokensParsed],"PORTABILLING",12))
          {tokensParsed++;parsePortaBilling();  return 0;}
          return UNKNOWN;
@@ -183,6 +209,9 @@ int CSip::tryParseHdr()
          return UNKNOWN;
       case 15:return UNKNOWN;
       case 16:
+
+         if  (CMP(strList[tokensParsed],p_Associated_URI,16))
+            {tokensParsed++;parseRoutes(&gspSIPMsg->hldAssociated_URI ,0);           return 0;}
          if  (CMP(strList[tokensParsed],WWW_aut,16))
          {tokensParsed++;parseAut(&gspSIPMsg->hdrWWWAuth);           return 0;}
          //  if  (CMP(strList[tokensParsed],cont_encod,16))
@@ -337,7 +366,9 @@ int CSip::splitSIP(char *pFrom)
 int CSip::parseSipUri(SIP_URI * sipUri, int j,int i, int iIsFirstLine)
 {
 
-   sipUri->dstrSipAddr=strList[j]; 
+   sipUri->dstrSipAddr=strList[j];
+   sipUri->dstrUriScheme = strList[j];
+   
    int iMaddrFound=0;
    {
       int iHostItem=j+1;
@@ -474,7 +505,7 @@ int CSip::parseFirstLine()
       
       if (strList[2].iFirst==':')
       {
-         if (CMP(strList[1],"SIP",3) || CMP(strList[1],"SIPS",4))// ((CMP(strList[1],"SIP",3)) || (CMP(strList[1],"SIPS",4)))
+         if (CMP(strList[1],"SIP",3) || CMP(strList[1],"SIPS",4) || CMP(strList[1],"TEL",3)|| CMP(strList[1],"MAILTO",6))// ((CMP(strList[1],"SIP",3)) || (CMP(strList[1],"SIPS",4)))
          {
             switch(*strList[0].strVal)
             {
@@ -1061,7 +1092,9 @@ int CSip::parseFromTo(HDR_TO_FROM * ft)
    }
    
    //TODO tel:
-   if ((CMP(strList[j],"SIP",3)) || (CMP(strList[j],"SIPS",4)))
+   //Should i support only
+   //CMP(strList[1],"SIP",3) || CMP(strList[1],"SIPS",4) || CMP(strList[1],"TEL",3)|| CMP(strList[1],"MAILTO",6) ?
+   if (strList[j].uiLen < 10)//(CMP(strList[j],"SIP",3)) || (CMP(strList[j],"SIPS",4)))
    {
       j=parseSipUri(&ft->sipUri, j, i);
       if(j<0){printError("ERROR From to ",j);return j;}
@@ -1107,8 +1140,8 @@ int CSip::parseP_Asserted_Identity(){
       gspSIPMsg->hldP_Asserted_id.uiCount++;
    }
    return res;
-   
 }
+
 
 int CSip::parsePortaBilling()
 {
@@ -1248,7 +1281,7 @@ int CSip::parseProxyRequire()
 }
 
 int CSip::parseRetryAfter(){ return 0; }
-int CSip::parseRoutes(HLD_ROUTE * rt)
+int CSip::parseRoutes(HLD_ROUTE * rt, int iMustBeSIP_scheme)
 { // =================kautkas jamaina=============
    int i,j;
    
@@ -1261,7 +1294,9 @@ int CSip::parseRoutes(HLD_ROUTE * rt)
    
    for (;j<i+tokensParsed-1;)
    {
-      if ((CMP(strList[j],"SIP",3)) || (CMP(strList[j],"SIPS",4)))
+      int ok = iMustBeSIP_scheme && ((CMP(strList[j],"SIP",3) || (CMP(strList[j],"SIPS",4))));
+                                     
+      if (strList[j].iLast==':' && (ok || !iMustBeSIP_scheme))
       {
          if (strList[j-1].iFirst==34)
          {

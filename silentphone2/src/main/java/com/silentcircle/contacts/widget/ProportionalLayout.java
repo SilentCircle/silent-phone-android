@@ -72,7 +72,7 @@ public class ProportionalLayout extends ViewGroup {
 
         public final String XmlName;
 
-        private Direction(String xmlName) {
+        Direction(String xmlName) {
             XmlName = xmlName;
         }
 

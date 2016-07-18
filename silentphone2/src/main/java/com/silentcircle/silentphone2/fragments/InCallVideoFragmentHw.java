@@ -61,6 +61,7 @@ import android.widget.TextView;
 
 import com.silentcircle.common.animation.AnimUtils;
 import com.silentcircle.common.animation.AnimationListenerAdapter;
+import com.silentcircle.common.util.AsyncTasks;
 import com.silentcircle.silentphone2.R;
 import com.silentcircle.silentphone2.activities.InCallActivity;
 import com.silentcircle.silentphone2.activities.InCallCallback;
@@ -76,7 +77,8 @@ import com.silentcircle.silentphone2.video.SpVideoViewHw;
  *
  * Created by werner on 22.02.14.
  */
-public class InCallVideoFragmentHw extends Fragment implements View.OnClickListener, CameraPreviewControllerHw.TouchListener {
+public class InCallVideoFragmentHw extends Fragment implements View.OnClickListener, CameraPreviewControllerHw.TouchListener,
+        TiviPhoneService.ServiceStateChangeListener {
 
     private static final String TAG = InCallVideoFragmentHw.class.getSimpleName();
 
@@ -107,7 +109,11 @@ public class InCallVideoFragmentHw extends Fragment implements View.OnClickListe
 
     private LinearLayout mControlLayoutBottom;
     private LinearLayout mControlLayoutTop;
+    private LinearLayout mVerifySas;
+    private TextView mNumberName;
     private TextView mControlExplanation;
+    private TextView mMainSecureState;
+    private TextView mPreviewSecureState;
     private boolean mVideoExplanationShown;
     private boolean mSupressAutoRemove;
 
@@ -325,7 +331,15 @@ public class InCallVideoFragmentHw extends Fragment implements View.OnClickListe
 
         mControlExplanation = (TextView)fragmentView.findViewById(R.id.video_explanation);
 
-        setCallerId(fragmentView);
+        mNumberName = (TextView)fragmentView.findViewById(R.id.number);
+
+        mMainSecureState = (TextView)fragmentView.findViewById(R.id.secure_state);
+        mPreviewSecureState = (TextView)fragmentView.findViewById(R.id.previewSecureState);
+
+        mVerifySas = (LinearLayout)fragmentView.findViewById(R.id.verify_sas);
+        mVerifySas.setOnClickListener(this);
+
+        setCallInformation();
 
         ViewTreeObserver vto = fragmentView.getViewTreeObserver();
         vto.addOnGlobalLayoutListener(
@@ -355,6 +369,7 @@ public class InCallVideoFragmentHw extends Fragment implements View.OnClickListe
         else if (mVideoAccepted) {              // Restored fragment, active video call
             setControlButtonsActive(false);
         }
+
         return fragmentView;
     }
 
@@ -371,12 +386,29 @@ public class InCallVideoFragmentHw extends Fragment implements View.OnClickListe
         deactivateVideoScreen();
     }
 
+    @TargetApi(Build.VERSION_CODES.M)
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        commonOnAttach(getActivity());
+    }
+
+    /*
+     * Deprecated on API 23
+     * Use onAttachToContext instead
+     */
+    @SuppressWarnings("deprecation")
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
-        mParent = (InCallActivity)activity;
+        commonOnAttach(activity);
+    }
+
+    private void commonOnAttach(Activity activity) {
         try {
+            mParent = (InCallActivity)activity;
             mCallback = (InCallCallback)activity;
+            mCallback.addStateChangeListener(this);
         } catch (ClassCastException e) {
             throw new ClassCastException("Activity must implement InCallCallback.");
         }
@@ -385,6 +417,7 @@ public class InCallVideoFragmentHw extends Fragment implements View.OnClickListe
     @Override
     public void onDetach() {
         super.onDetach();
+        mCallback.removeStateChangeListener(this);
         mParent = null;
         mCallback = null;
     }
@@ -448,12 +481,54 @@ public class InCallVideoFragmentHw extends Fragment implements View.OnClickListe
                 stopVideo();
                 break;
 
+            case R.id.verify_sas:
+                verifySas();
+                break;
+
             default: {
                 Log.wtf(TAG, "Unexpected onClick() event from: " + view);
                 break;
             }
         }
     }
+
+    /* ****************************************************************************
+     * Public functions used by InCallActivity
+     **************************************************************************** */
+    /**
+     * The ZRTP state change listener.
+     *
+     * @param call the call that changed its ZRTP state.
+     * @param msg  the message id of the ZRTP status change.
+     */
+    public void zrtpStateChange(CallState call, TiviPhoneService.CT_cb_msg msg) {
+        // The main call screen shows the current active call only
+        if (call != TiviPhoneService.calls.selectedCall)
+            return;
+        switch (msg) {
+            case eZRTP_sas:
+                setCallInformation(call);
+                break;
+
+            case eZRTP_peer:
+            case eZRTP_peer_not_verified:
+                setCallInformation(call);
+                break;
+
+            case eZRTPMsgV:
+            case eZRTPMsgA:
+            default:
+                setCallInformation(call);
+        }
+    }
+
+    /**
+     * The Call state change listener.
+     *
+     * @param call the call that changed its state.
+     * @param msg  the message id of the status change.
+     */
+    public void callStateChange(CallState call, TiviPhoneService.CT_cb_msg msg) { }
 
     public void stopVideo() {
         switchVideoOff();
@@ -534,20 +609,73 @@ public class InCallVideoFragmentHw extends Fragment implements View.OnClickListe
      * The following section contains private functions
      ***************************************************************************  */
 
-    private void setCallerId(View parentView) {
+    private void setCallInformation(CallState call) {
+        setCallerId(call);
+        setSecureText(call);
+    }
+
+    private void setCallInformation() {
         CallState call = TiviPhoneService.calls.selectedCall;
+
+        if(call == null) {
+            return;
+        }
+
+        setCallInformation(call);
+    }
+
+    private void setCallerId(CallState call) {
         String zrtpPeer = call.zrtpPEER.toString();
-        if (!TextUtils.isEmpty(zrtpPeer)) {
-            String nameNum = call.getNameFromAB();
-            TextView numberName = (TextView)parentView.findViewById(R.id.number);
+        String bufPeer = call.bufPeer.toString();
+        boolean verifySas = call.iShowVerifySas;
+
+        final String nameNum = call.getNameFromAB();
+        if (!TextUtils.isEmpty(zrtpPeer) && !verifySas) {
             if (zrtpPeer.equals(nameNum)) {
-                numberName.setTextColor(InCallMainFragment.mNameNumberTextColorPeerMatch);
+                mNumberName.setTextColor(InCallMainFragment.mNameNumberTextColorPeerMatch);
             }
             else {
-                numberName.setTextColor(InCallMainFragment.mNameNumberTextColorNormal);
+                mNumberName.setTextColor(InCallMainFragment.mNameNumberTextColorNormal);
             }
-            numberName.setText(call.zrtpPEER.toString());
+            mNumberName.setText(zrtpPeer);
+        } else if(!TextUtils.isEmpty(bufPeer)) {
+            mNumberName.setTextColor(InCallMainFragment.mNameNumberTextColorNormal);
+            mNumberName.setText(nameNum);
         }
+    }
+
+    private void setSecureText(CallState call) {
+        String bufSas = call.bufSAS.toString();
+        boolean verifySas = call.iShowVerifySas;
+
+        int secureTextId = verifySas ? R.string.secstate_secure_question
+                : R.string.secstate_secure;
+        int secureTextColor = verifySas ? InCallMainFragment.mNameNumberTextColorNormal
+                : InCallMainFragment.mNameNumberTextColorPeerMatch;
+
+        mMainSecureState.setText(secureTextId);
+        mPreviewSecureState.setText(secureTextId);
+        mMainSecureState.setTextColor(secureTextColor);
+        mPreviewSecureState.setTextColor(secureTextColor);
+
+        if(!TextUtils.isEmpty(bufSas)) {
+            mVerifySas.setVisibility(View.VISIBLE);
+
+            (mVerifySas.findViewById(R.id.verify_label)).setVisibility(verifySas ? View.VISIBLE : View.GONE);
+            ((TextView)mVerifySas.findViewById(R.id.sas_text)).setText(bufSas);
+            ((TextView)mVerifySas.findViewById(R.id.sas_text)).setTextColor(verifySas ? InCallMainFragment.mNameNumberTextColorNormal :
+                    InCallMainFragment.mSasVerifiedColor);
+        } else {
+            mVerifySas.setVisibility(View.GONE);
+        }
+    }
+
+    private void verifySas() {
+        CallState call = TiviPhoneService.calls.selectedCall;
+        String sas = call.bufSAS.toString();
+
+        if (!TextUtils.isEmpty(sas))
+            mCallback.verifySasCb(sas, call.iCallId);
     }
 
     private void endCall() {
@@ -555,7 +683,6 @@ public class InCallVideoFragmentHw extends Fragment implements View.OnClickListe
         hideMySelf();
         mCallback.endCallCb(TiviPhoneService.calls.selectedCall);
     }
-
 
     private void hideMySelf() {
         if (!isHidden() && mParent != null) {
@@ -593,7 +720,7 @@ public class InCallVideoFragmentHw extends Fragment implements View.OnClickListe
     private void switchVideoPause(boolean isVideoPause) {
         mPreviewSurface.setVisibility(isVideoPause ? View.INVISIBLE : View.VISIBLE);
         mPreviewContainer.setBackgroundResource(isVideoPause ? 0 : R.drawable.preview_background);
-        mPreviewContainer.findViewById(R.id.previewSecureState).setVisibility(isVideoPause ? View.INVISIBLE : View.VISIBLE);
+        mPreviewSecureState.setVisibility(isVideoPause ? View.INVISIBLE : View.VISIBLE);
     }
 
     private void switchMicMute(boolean isMute) {
@@ -612,14 +739,14 @@ public class InCallVideoFragmentHw extends Fragment implements View.OnClickListe
             return;
         setControlButtonsActive(supressAutoRemove);
         activateVideoScreen();
-        Utilities.asyncCommand("*C" + call.iCallId); // send re-invite for video on
+        AsyncTasks.asyncCommand("*C" + call.iCallId); // send re-invite for video on
     }
 
     synchronized public void switchVideoOff() {
         CallState call = TiviPhoneService.calls.selectedCall;
         if (call == null)
             return;
-        Utilities.asyncCommand("*c" + call.iCallId);                   // send re-invite for video off
+        AsyncTasks.asyncCommand("*c" + call.iCallId);                   // send re-invite for video off
         deactivateVideoScreen();
     }
 

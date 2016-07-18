@@ -153,6 +153,7 @@ void ZIDCacheFile::checkDoMigration(char* name) {
             ++errors;
 
     } while (numRead == 1);
+    fclose(fdOld);
     fflush(zidFile);
 }
 

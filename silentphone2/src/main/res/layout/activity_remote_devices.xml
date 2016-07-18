@@ -28,6 +28,7 @@
                  android:id="@+id/axo_devices_container"
                  android:layout_width="match_parent"
                  android:layout_height="match_parent"
-                 tools:context="com.silentcircle.messaging.activities.ShowRemoteDevicesActivity">
-    </FrameLayout>
+                 android:background="@drawable/bg_window_dark"
+                 tools:context="com.silentcircle.messaging.activities.ShowRemoteDevicesActivity" />
+
 </LinearLayout>

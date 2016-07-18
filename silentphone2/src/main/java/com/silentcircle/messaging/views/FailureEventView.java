@@ -28,8 +28,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package com.silentcircle.messaging.views;
 
 import android.content.Context;
-import android.content.SharedPreferences;
-import android.preference.PreferenceManager;
 import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.view.View;
@@ -39,8 +37,6 @@ import com.silentcircle.messaging.model.event.ErrorEvent;
 import com.silentcircle.messaging.util.MessageUtils;
 import com.silentcircle.silentphone2.BuildConfig;
 import com.silentcircle.silentphone2.R;
-import com.silentcircle.silentphone2.activities.DialerActivity;
-import com.silentcircle.silentphone2.fragments.DialDrawerFragment;
 
 public class FailureEventView extends CheckableRelativeLayout implements View.OnClickListener {
 
@@ -83,13 +79,6 @@ public class FailureEventView extends CheckableRelativeLayout implements View.On
             setText(errorEvent.getText());
         } else {
             setText(getResources().getString(failureTextId) + (errorEvent.isDuplicate() ? " (>1)" : ""));
-        }
-
-        // Always show errors 27 and 28
-        if(!DialerActivity.mShowErrors && (failureTextId != 27 && failureTextId != 28)) {
-            mText.setVisibility(View.GONE);
-        } else {
-            mText.setVisibility(View.VISIBLE);
         }
     }
 

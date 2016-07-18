@@ -28,9 +28,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 package com.silentcircle.silentphone2.fragments;
 
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.Fragment;
 import android.app.FragmentManager;
+import android.content.Context;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
@@ -48,9 +50,11 @@ import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import com.silentcircle.common.util.AsyncTasks;
 import com.silentcircle.silentphone2.BuildConfig;
 import com.silentcircle.silentphone2.R;
 import com.silentcircle.silentphone2.activities.ProvisioningActivity;
+import com.silentcircle.silentphone2.services.TiviPhoneService;
 import com.silentcircle.silentphone2.util.ConfigurationUtilities;
 import com.silentcircle.silentphone2.util.Constants;
 import com.silentcircle.silentphone2.util.DeviceDetectionVertu;
@@ -126,10 +130,30 @@ public class ProvisioningUserPassword extends Fragment implements ProvisioningAc
         }
     }
 
+    @TargetApi(Build.VERSION_CODES.M)
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        commonOnAttach(getActivity());
+    }
+
+    /*
+     * Deprecated on API 23
+     * Use onAttachToContext instead
+     */
+    @SuppressWarnings("deprecation")
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
-        mParent = (ProvisioningActivity)activity;
+        commonOnAttach(activity);
+    }
+
+    private void commonOnAttach(Activity activity) {
+        try {
+            mParent = (ProvisioningActivity) activity;
+        } catch (ClassCastException e) {
+            throw new ClassCastException("Activity must be ProvisioningActivity.");
+        }
     }
 
     @Override
@@ -184,7 +208,7 @@ public class ProvisioningUserPassword extends Fragment implements ProvisioningAc
     private boolean prepareJsonData() {
         CharSequence username = ((EditText)userPasswordView.findViewById(R.id.UsernameInput)).getText();
         CharSequence password = passwordInput.getText();
-        CheckBox ctv = (CheckBox)userPasswordView.findViewById(R.id.UsernamePasswordCheckBoxTC);
+//        CheckBox ctv = (CheckBox)userPasswordView.findViewById(R.id.UsernamePasswordCheckBoxTC);
 
         if (TextUtils.isEmpty(username)) {
             mParent.showInputInfo(getString(R.string.provisioning_user_req));
@@ -200,9 +224,12 @@ public class ProvisioningUserPassword extends Fragment implements ProvisioningAc
 //            mParent.showInputInfo(getString(R.string.provisioning_check_tc));
 //            return false;
 //        }
+        String hwDeviceId = Utilities.hashMd5(TiviPhoneService.getHwDeviceId(mParent));
+        if (ConfigurationUtilities.mTrace) Log.d(TAG, "Hardware device id: " + hwDeviceId );
         try {
             customerData.put("username", username);
             customerData.put("password", password);
+            customerData.put("persistent_device_id", hwDeviceId);
             customerData.put("device_name", Build.MODEL);
             customerData.put("app", "silent_phone");
             customerData.put("device_class", "android");
@@ -245,8 +272,8 @@ public class ProvisioningUserPassword extends Fragment implements ProvisioningAc
         return retMsg;
     }
 
-    private void showDialog(String title, String msg, int positiveBtnLabel, int nagetiveBtnLabel) {
-        com.silentcircle.silentphone2.dialogs.InfoMsgDialogFragment infoMsg = com.silentcircle.silentphone2.dialogs.InfoMsgDialogFragment.newInstance(title, msg, positiveBtnLabel, nagetiveBtnLabel);
+    private void showDialog(int titleResId, int msgResId, int positiveBtnLabel, int nagetiveBtnLabel) {
+        com.silentcircle.silentphone2.dialogs.InfoMsgDialogFragment infoMsg = com.silentcircle.silentphone2.dialogs.InfoMsgDialogFragment.newInstance(titleResId, msgResId, positiveBtnLabel, nagetiveBtnLabel);
         FragmentManager fragmentManager = mParent.getFragmentManager();
         infoMsg.show(fragmentManager,TAG );
     }
@@ -301,10 +328,10 @@ public class ProvisioningUserPassword extends Fragment implements ProvisioningAc
                 if (ConfigurationUtilities.mTrace) Log.d(TAG, "HTTP code-2: " + ret);
 
                 if (ret == HttpsURLConnection.HTTP_OK) {
-                    ProvisioningActivity.readStream(new BufferedInputStream(urlConnection.getInputStream()), mContent);
+                    AsyncTasks.readStream(new BufferedInputStream(urlConnection.getInputStream()), mContent);
                 }
                 else {
-                    ProvisioningActivity.readStream(new BufferedInputStream(urlConnection.getErrorStream()), mContent);
+                    AsyncTasks.readStream(new BufferedInputStream(urlConnection.getErrorStream()), mContent);
                 }
                 return ret;
 
@@ -345,7 +372,7 @@ public class ProvisioningUserPassword extends Fragment implements ProvisioningAc
                 mParent.usernamePasswordDone(mApiKey, ProvisioningUserPassword.this);
             }
             else if (result == Constants.NO_NETWORK_CONNECTION) {
-                showDialog(mParent.getString(R.string.information_dialog), mParent.getString(R.string.connected_to_network), android.R.string.ok, -1);
+                showDialog(R.string.information_dialog, R.string.connected_to_network, android.R.string.ok, -1);
                 cleanUp();
             }
             else {

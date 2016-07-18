@@ -851,7 +851,7 @@ public class ImportVCardActivity extends ActionBarActivity {
             items[i] = stringBuilder;
         }
         if (multipleSelect) {
-            builder.setMultiChoiceItems(items, (boolean[]) null, listener);
+            builder.setMultiChoiceItems(items, null, listener);
         }
         else {
             builder.setSingleChoiceItems(items, 0, listener);

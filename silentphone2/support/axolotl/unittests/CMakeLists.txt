@@ -22,8 +22,8 @@ target_link_libraries(staged_test gtest_main ${axoLibName})
 add_executable(zrtp_ratchet zrtpRatchet.cpp)
 target_link_libraries(zrtp_ratchet gtest_main ${axoLibName})
 
-# add_executable(crypto_test cryptoTests.cpp)
-# target_link_libraries(crypto_test gtest_main ${axoLibName})
+add_executable(crypto_test cryptoTests.cpp)
+target_link_libraries(crypto_test gtest_main ${axoLibName})
 # 
 add_executable(store_test storeTests.cpp)
 target_link_libraries(store_test gtest_main ${axoLibName})

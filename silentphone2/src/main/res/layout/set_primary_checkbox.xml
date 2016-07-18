@@ -14,8 +14,7 @@
      limitations under the License.
 -->
 
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:paddingStart="14dip"
@@ -24,11 +23,14 @@
     android:paddingRight="15dip"
     android:orientation="vertical">
 
-    <CheckBox
+    <android.support.v7.widget.AppCompatCheckBox
         android:id="@+id/setPrimary"
+        android:theme="@style/Widget.Silence.CheckBox.Light"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:textColor="?sp_dialog_text_color"
         android:focusable="true"
         android:clickable="true"
         android:text="@string/make_primary"/>
+
 </LinearLayout>

@@ -2,12 +2,10 @@
 #define UIINTERFACEIMPL_H
 
 /**
- * @file UiInterfaceImpl.h
+ * @file AppInterfaceImpl.h
  * @brief Implementation of the UI interface methods
  * @ingroup Axolotl++
  * @{
- * 
- * The implementation of this class is not thread safe.
  */
 
 #include <stdint.h>
@@ -27,7 +25,7 @@ class AppInterfaceImpl : public AppInterface
 {
 public:
 #ifdef UNITTESTS
-    AppInterfaceImpl(SQLiteStoreConv* store) : AppInterface(), tempBuffer_(NULL), store_(store), transport_(NULL) {}
+    explicit AppInterfaceImpl(SQLiteStoreConv* store) : AppInterface(), tempBuffer_(NULL), store_(store), transport_(NULL) {}
     AppInterfaceImpl(SQLiteStoreConv* store, const string& ownUser, const string& authorization, const string& scClientDevId) : 
                     AppInterface(), tempBuffer_(NULL), ownUser_(ownUser), authorization_(authorization), scClientDevId_(scClientDevId), 
                     store_(store), transport_(NULL), ownChecked_(false) {}
@@ -48,6 +46,8 @@ public:
 
     int32_t receiveMessage(const string& messageEnvelope);
 
+    int32_t receiveMessage(const string& messageEnvelope, const string& uid, const string& alias);
+
     void messageStateReport(int64_t messageIdentfier, int32_t statusCode, const string& stateInformation);
 
     string* getKnownUsers();
@@ -66,6 +66,7 @@ public:
 
     void rescanUserDevices(string& userName);
 
+    // **** Below are methods for this implementation, not part of AppInterface.h
     /**
      * @brief Return the stored error code.
      * 
@@ -118,13 +119,10 @@ public:
     bool isRegistered()           {return ((flags_ & 0x1) == 1); }
 
 private:
-    // not support for copy, assignment and equals
-    AppInterfaceImpl ( const AppInterfaceImpl& other ) {}
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wreturn-type"
-    AppInterfaceImpl& operator= ( const AppInterfaceImpl& other ) { }
-    bool operator== ( const AppInterfaceImpl& other ) const { }
-#pragma clang diagnostic pop
+    // do not support copy, assignment and equals
+    AppInterfaceImpl (const AppInterfaceImpl& other ) = delete;
+    AppInterfaceImpl& operator= ( const AppInterfaceImpl& other ) = delete;
+    bool operator== ( const AppInterfaceImpl& other ) const  = delete;
 
     vector<int64_t>* sendMessageInternal(const string& recipient, const string& msgId, const string& message,
                                          const string& attachementDescriptor, const string& messageAttributes);
@@ -147,9 +145,10 @@ private:
     SQLiteStoreConv* store_;
     Transport* transport_;
     int32_t flags_;
-    // If this is true then we checked own device and see only one device for
-    // this account. If another device registeres for this account it sends out
-    // a sync message, the client receives this and we have a second device
+    // If this is true then we checked own devices and see only one device for
+    // own account it's the sending device. If another device registers for this
+    // account it sends out a sync message, the client receives this and we have
+    // a second device
     bool ownChecked_;
 };
 } // namespace

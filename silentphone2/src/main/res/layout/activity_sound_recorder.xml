@@ -133,7 +133,7 @@
         android:padding="0.0dp">
 
         <Button
-            android:id="@+id/record_audio_control_button"
+            android:id="@+id/record_audio_cancel_button"
             style="@style/InCallButton"
             android:fontFamily="sans-serif-medium"
             android:textSize="17sp"
@@ -141,7 +141,7 @@
             android:layout_height="48.0dp"
             android:layout_margin="0dp"
             android:layout_weight="1.0"
-            android:text="@string/record_dialog"
+            android:text="@string/cancel_dialog"
             android:textColor="?android:textColorPrimary" />
 
         <View
@@ -153,7 +153,7 @@
             android:background="#ff484848" />
 
         <Button
-            android:id="@+id/record_audio_cancel_button"
+            android:id="@+id/record_audio_control_button"
             style="@style/InCallButton"
             android:fontFamily="sans-serif-medium"
             android:textSize="17sp"
@@ -161,7 +161,7 @@
             android:layout_height="48.0dp"
             android:layout_margin="0dp"
             android:layout_weight="1.0"
-            android:text="@string/cancel_dialog"
+            android:text="@string/record_dialog"
             android:textColor="?android:textColorPrimary" />
     </LinearLayout>
 </LinearLayout>

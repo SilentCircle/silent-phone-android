@@ -17,12 +17,14 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:singleLine="true"
-        android:textColor="?attr/call_log_primary_text_color"
+        android:textColor="@color/sc_ng_text_grey"
         android:textSize="@dimen/conversation_log_unread_message_notification_text_size"
-        tools:text="100"
+        android:ellipsize="none"
         android:maxLines="1"
         android:minLines="1"
         android:textStyle="bold"
-        android:layout_gravity="center" />
+        android:layout_gravity="center"
+        tools:text="100"
+        />
 
 </FrameLayout>

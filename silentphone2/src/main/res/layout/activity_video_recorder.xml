@@ -7,6 +7,7 @@
     <TextureView
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
+        android:layout_gravity="top|center_horizontal"
         android:id="@+id/video_preview_texture_view"/>
 
     <LinearLayout
@@ -45,21 +46,38 @@
         android:layout_height="80dp"
         android:paddingTop="25dp"
         android:paddingBottom="25dp"
-        android:id="@+id/video_record_flip_button"
-        android:layout_gravity="bottom|right"
-        android:layout_marginBottom="100dp"
+        android:id="@+id/video_flash_toggle_button"
+        android:layout_gravity="top|right"
         android:background="#00000000"
-        android:src="@drawable/ic_camera_rear_white_24dp"
-        android:scaleType="fitCenter"/>
+        android:src="@drawable/ic_flash_off_dark"
+        android:scaleType="center"/>
 
-    <ImageButton
-        android:layout_width="fill_parent"
-        android:layout_height="100dp"
-        android:paddingTop="25dp"
-        android:paddingBottom="25dp"
-        android:id="@+id/video_record_start_stop_button"
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         android:layout_gravity="bottom"
-        android:background="#55000000"
-        android:src="@drawable/ic_videocam_white_24dp"
-        android:scaleType="fitCenter"/>
+        android:orientation="vertical">
+
+        <ImageButton
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:paddingTop="25dp"
+            android:paddingBottom="25dp"
+            android:layout_gravity="right"
+            android:id="@+id/video_record_flip_button"
+            android:background="#00000000"
+            android:src="@drawable/ic_camera_rear_dark"
+            android:scaleType="center"/>
+
+        <ImageButton
+            android:layout_width="fill_parent"
+            android:layout_height="@dimen/camera_start_stop_button_height"
+
+            android:id="@+id/video_record_start_stop_button"
+            android:background="#55000000"
+            android:src="@drawable/ic_videocam_dark"
+            android:scaleType="centerInside"/>
+    </LinearLayout>
+
+
 </FrameLayout>

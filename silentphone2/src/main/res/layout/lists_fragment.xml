@@ -28,7 +28,8 @@
             android:id="@+id/shortcut_card_list"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:paddingTop="1dp"
+            android:filterTouchesWhenObscured="true"
+            android:paddingTop="0.0000001dp"
             android:clipToPadding="false"
             android:fadingEdge="none"
             android:divider="@null"/>

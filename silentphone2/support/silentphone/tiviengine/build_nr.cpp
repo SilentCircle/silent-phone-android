@@ -1,7 +1,7 @@
 /*
 Created by Janis Narbuts
 Copyright (C) 2004-2012, Tivi LTD, www.tiviphone.com. All rights reserved.
-Copyright (C) 2012-2015, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2012-2016, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -28,18 +28,17 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-
 #define T_BUILD_NR "15299"
 #pragma message("build nr")
-char *getBuildDate()
+const char *getBuildDate()
 {
    return __DATE__;
 }
-char *getBuildTime()
+const char *getBuildTime()
 {
    return __TIME__;
 }
-char *getBuildNr()
+const char *getBuildNr()
 {
    return T_BUILD_NR;
 }

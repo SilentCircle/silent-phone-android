@@ -13,31 +13,31 @@ public interface SmartDialMap {
     /*
      * Returns true if the provided character can be mapped to a key on the dialpad
      */
-    public boolean isValidDialpadCharacter(char ch);
+    boolean isValidDialpadCharacter(char ch);
 
     /*
      * Returns true if the provided character is a letter, and can be mapped to a key on the dialpad
      */
-    public boolean isValidDialpadAlphabeticChar(char ch);
+    boolean isValidDialpadAlphabeticChar(char ch);
 
     /*
      * Returns true if the provided character is a digit, and can be mapped to a key on the dialpad
      */
-    public boolean isValidDialpadNumericChar(char ch);
+    boolean isValidDialpadNumericChar(char ch);
 
     /*
      * Get the index of the key on the dialpad which the character corresponds to
      */
-    public byte getDialpadIndex(char ch);
+    byte getDialpadIndex(char ch);
 
     /*
      * Get the actual numeric character on the dialpad which the character corresponds to
      */
-    public char getDialpadNumericCharacter(char ch);
+    char getDialpadNumericCharacter(char ch);
 
     /*
      * Converts uppercase characters to lower case ones, and on a best effort basis, strips accents
      * from accented characters.
      */
-    public char normalizeCharacter(char ch);
+    char normalizeCharacter(char ch);
 }

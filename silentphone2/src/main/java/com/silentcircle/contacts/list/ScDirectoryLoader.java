@@ -34,17 +34,16 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.database.MatrixCursor;
 import android.net.Uri;
-import android.provider.ContactsContract;
 import android.provider.ContactsContract.CommonDataKinds.Phone;
 import android.text.TextUtils;
 import android.util.JsonReader;
 import android.util.Log;
 
+import com.silentcircle.common.util.AsyncTasks;
 import com.silentcircle.contacts.providers.NameSplitter;
 import com.silentcircle.keymanagersupport.KeyManagerSupport;
 import com.silentcircle.silentphone2.R;
 import com.silentcircle.silentphone2.activities.DialogHelperActivity;
-import com.silentcircle.silentphone2.activities.ProvisioningActivity;
 import com.silentcircle.silentphone2.services.PhoneServiceNative;
 import com.silentcircle.silentphone2.util.ConfigurationUtilities;
 import com.silentcircle.silentphone2.util.PinnedCertificateHandling;
@@ -77,12 +76,22 @@ public class ScDirectoryLoader extends AsyncTaskLoader<Cursor> {
 
     private static final String TAG = "ScDirectoryLoader";
 
+    /** Add every field to the returned cursor */
+    public static final int ALL = 0;
+
+    /** Add only the name field to the returned cursor */
+    public static final int NAMES_ONLY = 1;
+
+    /** Add only the number field to the returned cursor */
+    public static final int NUMBERS_ONLY = 2;
+
     private static final int MIN_SEARCH_LENGTH = 1;
     public static final int MAX_RECORDS = 20;
 
     private final static String MAX_RECORDS_SERVER = "&start=0&max=" + (MAX_RECORDS+1);
 
     public static final String SC_PRIVATE_FIELD = "sc_private_field";
+    public static final String SC_UUID_FIELD = "sc_uuid_field";
     /* *** IMPORTANT: Keep in-sync with PhoneNumberListAdapter projections, see also addRow() below *** */
     private static final String[] PROJECTION = new String[]{
             Phone._ID,                          // 0
@@ -94,7 +103,8 @@ public class ScDirectoryLoader extends AsyncTaskLoader<Cursor> {
             Phone.PHOTO_ID,                     // 6
             Phone.DISPLAY_NAME_PRIMARY,         // 7
             Phone.PHOTO_THUMBNAIL_URI,          // 8
-            SC_PRIVATE_FIELD,                   // 9 must be at the end, otherwise the adapters/fragments get confused
+            SC_PRIVATE_FIELD,                   // 9
+            SC_UUID_FIELD,                      // 10 // must be at the end, otherwise the adapters/fragments get confused
     };
 
     private StringBuilder mContent = new StringBuilder();
@@ -107,18 +117,20 @@ public class ScDirectoryLoader extends AsyncTaskLoader<Cursor> {
     private static int mNumberOfRows;
     private boolean mQueryChanged;
 
+    private int mFilterType = ALL;
+
     private static class UserData {
         private final String fullName;
         private String displayName;
         private final String userName;
-        private final String number;
+        private final String uuid;
         private String sortKey;
 
-        UserData(String full, String display, String un, String no, String sort) {
+        UserData(String full, String display, String un, String uid, String sort) {
             fullName = full;
             displayName = display;
             userName = un;
-            number = no;
+            uuid = uid;
             sortKey = sort;
         }
     }
@@ -164,6 +176,10 @@ public class ScDirectoryLoader extends AsyncTaskLoader<Cursor> {
         mNameSplitter = null;
         mSearchText = mPreviousSearchText = null;
         mNumberOfRows = 0;
+    }
+
+    public void setFilterType(final int filterType) {
+        mFilterType = filterType;
     }
 
     public static int getNumberOfRecords() {
@@ -259,7 +275,7 @@ public class ScDirectoryLoader extends AsyncTaskLoader<Cursor> {
             urlConnection.setDoInput(true);
             urlConnection.setRequestProperty("Content-Type", "application/json");
             urlConnection.setRequestProperty("Accept-Language", Locale.getDefault().getLanguage());
-            urlConnection.setConnectTimeout(2000);
+            urlConnection.setConnectTimeout(2500);
 
             int ret = urlConnection.getResponseCode();
             if (ConfigurationUtilities.mTrace) Log.d(TAG, "HTTP code SC directory loader: " + ret);
@@ -268,12 +284,12 @@ public class ScDirectoryLoader extends AsyncTaskLoader<Cursor> {
                     parseUserDataStream(new InputStreamReader(urlConnection.getInputStream(), "UTF-8"));
                 else {
                     //  Use the following code for testing to see the data (readStream dumps it)
-                    ProvisioningActivity.readStream(new BufferedInputStream(urlConnection.getInputStream()), mContent);
+                    AsyncTasks.readStream(new BufferedInputStream(urlConnection.getInputStream()), mContent);
                     parseUserDataStream(new StringReader(mContent.toString()));
                 }
             }
             else {
-                ProvisioningActivity.readStream(new BufferedInputStream(urlConnection.getErrorStream()), mContent);
+                AsyncTasks.readStream(new BufferedInputStream(urlConnection.getErrorStream()), mContent);
                 JSONObject jsonObj = new JSONObject(mContent.toString());
                 parseErrorMessage(jsonObj);
                 return mEmptyCursor;
@@ -384,18 +400,13 @@ public class ScDirectoryLoader extends AsyncTaskLoader<Cursor> {
         MatrixCursor cursor = new MatrixCursor(PROJECTION, size * 2);
         List<UserData> userList = new ArrayList<>(mUserList.values());
 
-//        String searchFold = UCharacter.foldCase(mSearchText, true);
         String searchFold = mSearchText.toLowerCase(Locale.getDefault());
         mNumberOfRows = 0;
         long _id = 3;
         for (UserData ud : userList) {
-//            String dpNameFold = UCharacter.foldCase(ud.displayName, true);
-//            String userNameFold = UCharacter.foldCase(ud.userName, true);
             String dpNameFold = ud.displayName.toLowerCase(Locale.getDefault());
             String userNameFold = ud.userName.toLowerCase(Locale.getDefault());
-            if (dpNameFold.contains(searchFold) || userNameFold.contains(searchFold) ||
-                    (!TextUtils.isEmpty(ud.number) && ud.number.contains(searchFold))) {
-
+            if (dpNameFold.contains(searchFold) || userNameFold.contains(searchFold)) {
                 addRow(cursor, ud, _id);
                 _id++;
                 mNumberOfRows++;
@@ -417,44 +428,22 @@ public class ScDirectoryLoader extends AsyncTaskLoader<Cursor> {
                 Phone.PHOTO_THUMBNAIL_URI,          // 8
 */
 
-        final String scField = !isInContacts(ud.userName)? ud.userName : null;
-        MatrixCursor.RowBuilder row = cursor.newRow();
-        row.add(_id);                               // _ID
-        row.add(Phone.TYPE_CUSTOM);                 // TYPE, must be an in-circle number
-        row.add(getContext().getString(R.string.phoneTypeSilent));
-        row.add(ud.userName);
-        row.add(_id);                               // CONTACT_ID
-        row.add(null);                              // LOOKUP-KEY
-        row.add(null);                              // PHOTO_ID
-        row.add(ud.displayName);
-        row.add(null);                              // Phone.PHOTO_THUMBNAIL_URI
-        row.add(scField);                           // SC_PRIVATE_FIELD
+        MatrixCursor.RowBuilder row;
 
-        if (!TextUtils.isEmpty(ud.number)) {
+        if (mFilterType == ALL || mFilterType == NAMES_ONLY) {
             row = cursor.newRow();
             row.add(_id);                               // _ID
             row.add(Phone.TYPE_CUSTOM);                 // TYPE, must be an in-circle number
             row.add(getContext().getString(R.string.phoneTypeSilent));
-            row.add(ud.number);
+            row.add(ud.userName);
             row.add(_id);                               // CONTACT_ID
             row.add(null);                              // LOOKUP-KEY
             row.add(null);                              // PHOTO_ID
             row.add(ud.displayName);
             row.add(null);                              // Phone.PHOTO_THUMBNAIL_URI
-            row.add(scField);                           // SC_PRIVATE_FIELD
+            row.add(null);                              // SC_PRIVATE_FIELD
+            row.add(ud.uuid);                           // SC_UUID_FIELD
         }
-    }
-
-    // This function checks if a name is in contacts as a SC contact
-    private boolean isInContacts(String name) {
-        String where = ContactsContract.Data.MIMETYPE + "='vnd.android.cursor.item/com.silentcircle.phone' AND " +
-                ContactsContract.Data.DATA1 + " LIKE 'sip:" + name + "@%'";
-        final Cursor cursor = getContext().getContentResolver().query(ContactsContract.Data.CONTENT_URI,
-                new String[] {ContactsContract.Data._ID}, where, null, null);
-        boolean retVal = cursor != null && cursor.getCount() == 1;
-        if (cursor != null)
-            cursor.close();
-        return retVal;
     }
 
     private void parseErrorMessage(JSONObject jsonObj) {
@@ -530,23 +519,24 @@ public class ScDirectoryLoader extends AsyncTaskLoader<Cursor> {
         while (reader.hasNext()) {
             String userName = null;
             String fullName = null;
-            String number = null;
+            String uuid = null;
 
             reader.beginObject();
             while (reader.hasNext()) {
                 String propertyName = reader.nextName();
 
                 switch (propertyName) {
-                    case "username":
+                    case "display_alias":
+                    case "default_alias":
                         userName = reader.nextString();
                         break;
-                    case "numbers":
-                        number = readNumberArray(reader);
-                        break;
-                    case "full_name":
+                    case "display_name":
                         fullName = reader.nextString();
                         if (TextUtils.isEmpty(fullName))
                             fullName = userName;
+                        break;
+                    case "uuid":
+                        uuid = reader.nextString();
                         break;
                     default:
                         reader.skipValue();
@@ -555,7 +545,7 @@ public class ScDirectoryLoader extends AsyncTaskLoader<Cursor> {
             }
             reader.endObject();
 
-            final String sortKeyAppend = !userName.equals(fullName) ? userName : null;
+            final String sortKeyAppend = (userName != null && !userName.equals(fullName)) ? userName : null;
 
             name.clear();
             mNameSplitter.split(name, fullName);
@@ -564,21 +554,9 @@ public class ScDirectoryLoader extends AsyncTaskLoader<Cursor> {
             final String sortKey =
                     mNameSplitter.join(name, !mSortAlternative, true).toLowerCase(Locale.getDefault()) + sortKeyAppend;
 
-            UserData user = new UserData(fullName, displayName, userName, number, sortKey);
+            UserData user = new UserData(fullName, displayName, userName, uuid, sortKey);
             mUserList.put(sortKey, user);
         }
         reader.endArray();
-    }
-
-    // If the array is not empty read the first number in the array, skip other numbers
-    private String readNumberArray(JsonReader reader) throws IOException {
-        reader.beginArray();
-        String numbers = null;
-        while (reader.hasNext()) {
-            if (numbers == null)
-                numbers = reader.nextString();
-        }
-        reader.endArray();
-        return numbers;
     }
 }

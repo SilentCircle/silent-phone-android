@@ -38,11 +38,13 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
         <!-- clipChildren=false is required to ensure shadows drawn
-            within list items aren't clipped by the list item bounds. -->
+            within list items aren't clipped by the list item bounds.
+             filterTouchesWhenObscured="true" also protects the list items -->
         <ListView
             android:id="@android:id/list"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:filterTouchesWhenObscured="true"
             android:clipChildren="false"
             android:divider="@null"
             android:fadingEdge="none"
@@ -56,7 +58,28 @@
             layout="@layout/empty_list_view"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:visibility="visible" />
+            android:visibility="visible"
+            />
+
+        <com.silentcircle.common.widget.ProgressBar
+            android:id="@+id/list_view_progress"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:indeterminate="true"
+            android:background="@drawable/bg_window_dark"
+            android:visibility="visible"
+            tools:visibility="visible"
+            />
+
+        <!-- The top level filterTouchesWhenObscured="true" view protects the embedded buttons, fields -->
+        <com.silentcircle.messaging.views.ScreenLockView
+            android:id="@+id/password_overlay"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:filterTouchesWhenObscured="true"
+            android:visibility="gone"
+            />
+
 
     </FrameLayout>
 

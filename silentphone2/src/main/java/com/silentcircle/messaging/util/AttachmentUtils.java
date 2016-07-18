@@ -46,12 +46,14 @@ import android.os.ParcelFileDescriptor;
 import android.provider.ContactsContract;
 import android.provider.MediaStore;
 import android.provider.OpenableColumns;
+import android.support.v7.app.AlertDialog;
 import android.text.TextUtils;
 import android.util.Base64;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.webkit.MimeTypeMap;
 
+import com.silentcircle.messaging.listener.DismissDialogOnClick;
 import com.silentcircle.messaging.providers.AudioProvider;
 import com.silentcircle.messaging.providers.PictureProvider;
 import com.silentcircle.messaging.providers.TextProvider;
@@ -82,8 +84,12 @@ public class AttachmentUtils {
     // Ends up being "/data/data/com.silentcircle.silentphone/app_attachments/{filename}"
     private static final String TEMP_DIR = "attachments";
 
+    private static final String SC_DOWNLOAD_SUBDIRECTORY = "Silent Circle Saved Files";
+
     public static final long FILE_SIZE_LIMIT = 100 * 1024 * 1024;
-    public static final long FILE_SIZE_WARNING_THRESHOLD = FILE_SIZE_LIMIT / 2;
+    public static final long FILE_SIZE_BIG = 50 * 1024 * 1024;
+    public static final long FILE_SIZE_MEDIUM = 10 * 1024 * 1024;
+    public static final long FILE_SIZE_SMALL = 1 * 1024 * 1024;
 
     public static final int MATCH_CONTACTS_URI = 1;
     public static final int MATCH_VCARD_URI = 2;
@@ -106,78 +112,6 @@ public class AttachmentUtils {
 
     private static String mTextPath;
 
-    /**
-     * Attempts to notify the system's download manager, if available, that a file has been
-     * downloaded.
-     *
-     * @see {@link DownloadManager#addCompletedDownload(String, String, boolean, String, String, long, boolean)}
-     */
-    @TargetApi(Build.VERSION_CODES.HONEYCOMB_MR1)
-    public static long addToDownloadManager(Context context, String title, String description, boolean isMediaScannerScannable, String mimeType, String path, long length, boolean showNotification) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR1) {
-            DownloadManager downloadManager = (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
-            if (downloadManager != null) {
-                return downloadManager.addCompletedDownload(title, description, isMediaScannerScannable, mimeType, path, length, showNotification);
-            }
-        }
-        return 0L;
-    }
-    /*
-        public static Attachment getAttachment(Context context, Siren siren) {
-            try {
-                SilentTextApplication application = SilentTextApplication.from(context);
-                Repository<Attachment> attachments = application.getAttachments();
-                return attachments.findByID(siren.getCloudLocator().toCharArray());
-            } catch (RuntimeException exception) {
-                LOG.warn(exception, "#getAttachment(Context,Siren)");
-                return null;
-            }
-        }
-
-        public static int getAttachmentLabelIcon(String contentType) {
-            if (MIME.isVideo(contentType) || UTI.isVideo(contentType)) {
-                return R.drawable.ic_action_video;
-            }
-            if (MIME.isAudio(contentType) || UTI.isAudio(contentType)) {
-                return R.drawable.ic_action_volume;
-            }
-            if (MIME.isImage(contentType) || UTI.isImage(contentType)) {
-                return R.drawable.ic_action_picture;
-            }
-            return R.drawable.ic_action_attachment_2;
-        }
-
-        public static String getContentType(Siren siren) {
-
-            if (siren == null) {
-                return null;
-            }
-
-            String contentType = siren.getMIMEType();
-
-            if (contentType == null) {
-                contentType = siren.getMediaType();
-            }
-
-            return contentType;
-
-        }
-
-        public static String getContentType(Siren siren, Attachment attachment) {
-
-            String contentType = getContentType(siren);
-
-            if (attachment != null) {
-                byte[] type = attachment.getType();
-                if (type != null) {
-                    contentType = new String(type);
-                }
-            }
-
-            return contentType;
-
-        }
-     */
     public static String getExtensionFromFileName(String fileName) {
         if(fileName == null) {
             return null;
@@ -192,12 +126,7 @@ public class AttachmentUtils {
         return extension;
     }
 
-    @TargetApi(Build.VERSION_CODES.FROYO)
     public static File getExternalStorageFile(String fileName) {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.FROYO) {
-            return null;
-        }
-
         if (!Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState())) {
             return null;
         }
@@ -206,27 +135,14 @@ public class AttachmentUtils {
             return null;
         }
 
-        /* TODO: this is not very clear
-        // Force requesting file to reside in cache
-        if (context instanceof SilentActivity) {
-            if (!StringUtils.equals(file.getParent(), ((SilentActivity) context).getCacheStagingDir().getPath())) {
-                return null;
-            }
+        File downloadDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+        File scDownloadDir = new File(downloadDir, SC_DOWNLOAD_SUBDIRECTORY);
+        scDownloadDir.mkdirs();
 
-        } else {
-            if (!StringUtils.equals(file.getParent(), String.format("%s/%s", context.getCacheDir(), ".temp"))) {
-                return null;
-            }
-        }
-         */
-
-        File externalCache = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
-        externalCache.mkdirs();
         String externalFileName = fileName;
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB) {
-            externalFileName = sanitizeFileName(externalFileName);
-        }
-        File externalFile = new File(externalCache, externalFileName);
+
+        File externalFile = new File(scDownloadDir, externalFileName);
+
         return externalFile;
     }
 
@@ -263,10 +179,10 @@ public class AttachmentUtils {
             if(file != null) {
                 fileName = file.getName();
             }
-
-            if(fromOurMediaProvider(uri)) {
-                fileName = decorateFilename(fileName, context);
-            }
+        }
+                                        // FIXME: Hotfix
+        if(fromOurMediaProvider(uri) || uri.toString().equals("content://com.silentcircle.files/captured_image/IMG.jpg")) {
+            fileName = decorateFilename(fileName, context);
         }
 
 //        if(getExtensionFromFileName(fileName) == null) {
@@ -394,27 +310,6 @@ public class AttachmentUtils {
         return path;
     }
 
-    public static String getPicturePath() {
-        return mPicturePath;
-    }
-/*
-    public static Bitmap getPreviewImage(Context context, Siren siren) {
-        return getPreviewImage(siren, getAttachment(context, siren), getResourceDisplayDensityDPI(context));
-    }
-
-    public static Bitmap getPreviewImage(Context context, Siren siren, Attachment attachment) {
-        return getPreviewImage(siren, attachment, getResourceDisplayDensityDPI(context));
-    }
-
-    public static Bitmap getPreviewImage(Siren siren, Attachment attachment, int targetDensity) {
-        return siren == null ? null : getPreviewImage(getContentType(siren, attachment), siren.getThumbnail(), targetDensity);
-    }
-
-    public static Bitmap getPreviewImage(Siren siren, int targetDensity) {
-        return siren == null ? null : getPreviewImage(getContentType(siren), siren.getThumbnail(), targetDensity);
-    }
- */
-
     public static Bitmap getPreviewImage(String contentType, String base64thumbnail, int targetDensity) {
 
         Bitmap bitmap = null;
@@ -523,13 +418,11 @@ public class AttachmentUtils {
         return mAudioPath;
     }
 
+    // TODO: Put these in a URI matcher when we deprecate the content providers
     public static boolean fromOurMediaProvider(Uri uri) {
-        if(uri.equals(PictureProvider.CONTENT_URI) || uri.equals(VideoProvider.CONTENT_URI)
-                || uri.equals(AudioProvider.CONTENT_URI) || uri.equals(TextProvider.CONTENT_URI)) {
-            return true;
-        }
+        return uri.equals(PictureProvider.CONTENT_URI) || uri.equals(VideoProvider.CONTENT_URI)
+                || uri.equals(AudioProvider.CONTENT_URI) || uri.equals(TextProvider.CONTENT_URI);
 
-        return false;
     }
 
     public static boolean isExported(String fileName) {
@@ -554,7 +447,7 @@ public class AttachmentUtils {
     }
 
     private static File getDir(Context context) {
-        return context.getDir(TEMP_DIR, context.MODE_PRIVATE);
+        return context.getDir(TEMP_DIR, Context.MODE_PRIVATE);
     }
 
     public static File getFile(String messageId, Context context) {
@@ -661,32 +554,13 @@ public class AttachmentUtils {
 
     public static void showFileSizeErrorDialog(Context context, DialogInterface.OnClickListener onDismissed) {
 
-//        AlertDialog.Builder alert = new AlertDialog.Builder(context);
-//
-//        alert.setTitle(R.string.error);
-//        alert.setMessage(R.string.error_large_file);
-//        alert.setNegativeButton(R.string.cancel, new DismissDialogOnClick(onDismissed));
-//
-//        alert.show();
+        AlertDialog.Builder alert = new AlertDialog.Builder(context);
 
-    }
+        alert.setTitle(R.string.dialog_title_error);
+        alert.setMessage(R.string.dialog_message_file_too_large);
+        alert.setNegativeButton(android.R.string.cancel, new DismissDialogOnClick(onDismissed));
 
-    public static void showFileSizeWarningDialog(Context context, String remoteUserID, String messageID) {
-        showFileSizeWarningDialog(context, remoteUserID, messageID, null);
-    }
-
-    public static void showFileSizeWarningDialog(Context context, String remoteUserID, String messageID, DialogInterface.OnClickListener onDismissed) {
-
-//        AlertDialog.Builder alert = new AlertDialog.Builder(context);
-//
-//        alert.setTitle(R.string.warning);
-//        alert.setMessage(R.string.warning_large_file);
-//
-//        alert.setNegativeButton(R.string.cancel, new CancelUploadOnClick(context, remoteUserID, messageID));
-//        alert.setPositiveButton(R.string.yes, new DismissDialogOnClick(onDismissed));
-//
-//        alert.show();
-
+        alert.show();
     }
 
     /**
@@ -706,11 +580,23 @@ public class AttachmentUtils {
         file.setWritable(true);
 
         // Rescan file to make it available
-        MediaScannerConnection.scanFile(context, new String[]{file.toString()}, null, null);
+        MediaScannerConnection.scanFile(context.getApplicationContext(),
+                new String[]{file.toString()}, null, null);
     }
 
+    /**
+     * Recognize passed uri as a specific attachment type from list contained in
+     * {@link #CONTENT_URI_MATCHER}.
+     *
+     * @param uri Uri to be matched.
+     * @return Id for specific uri or UriMatcher.NO_MATCH (-1) if uri was not recognized.
+     */
     public static int matchAttachmentUri(final Uri uri) {
-        return CONTENT_URI_MATCHER.match(uri);
+        int result = UriMatcher.NO_MATCH;
+        if (uri != null) {
+            result = CONTENT_URI_MATCHER.match(uri);
+        }
+        return result;
     }
 }
 

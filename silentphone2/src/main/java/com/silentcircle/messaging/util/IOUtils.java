@@ -51,6 +51,7 @@ import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
 import java.nio.charset.CodingErrorAction;
+import java.text.Normalizer;
 import java.util.Stack;
 
 /**
@@ -88,6 +89,19 @@ public class IOUtils {
         catch (Exception ex) {
             throw new Error(ex.getMessage() + ":" + s, ex);
         }
+    }
+
+    public static String flattenToPrintableAscii(String string) {
+        StringBuilder out = new StringBuilder(string.length());
+        if (!Normalizer.isNormalized(string, Normalizer.Form.NFD)) {
+            string = Normalizer.normalize(string, Normalizer.Form.NFD);
+        }
+        for (int i = 0, n = string.length(); i < n; ++i) {
+            char c = string.charAt(i);
+            if (c >= '\u0020' && c <= '\u007F')
+                out.append(c);
+        }
+        return out.toString();
     }
 
     public static byte[] concat(byte[] a, byte[] b) {

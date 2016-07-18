@@ -32,7 +32,6 @@ import android.telephony.PhoneNumberUtils;
 import android.text.Editable;
 import android.text.SpannableStringBuilder;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.widget.EditText;
 

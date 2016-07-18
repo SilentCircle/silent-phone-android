@@ -33,6 +33,8 @@ import android.view.Menu;
 import android.view.MenuItem;
 
 import com.silentcircle.messaging.listener.MultipleChoiceSelector;
+import com.silentcircle.messaging.model.MessageStates;
+import com.silentcircle.messaging.model.event.ErrorEvent;
 import com.silentcircle.messaging.model.event.Event;
 import com.silentcircle.messaging.model.event.Message;
 import com.silentcircle.messaging.views.adapters.HasChoiceMode;
@@ -54,7 +56,7 @@ public class ChatFragmentMultipleChoiceSelector extends MultipleChoiceSelector<E
         boolean result = super.onCreateActionMode(mode, menu);
         ChatFragment.Callback callback = mFragment.getCallback();
         if (callback != null) {
-            callback.onActionModeCreated();
+            callback.onActionModeCreated(mode);
         }
         return result;
     }
@@ -80,39 +82,61 @@ public class ChatFragmentMultipleChoiceSelector extends MultipleChoiceSelector<E
         MenuItem itemCopy = menu.findItem(R.id.copy);
         MenuItem itemForward = menu.findItem(R.id.forward);
         MenuItem itemInfo = menu.findItem(R.id.info);
+        MenuItem itemResend = menu.findItem(R.id.action_resend);
 
-        boolean before = itemCopy.isVisible();
+        int before = getMenuItemVisibilityMask(menu);
+
         boolean multipleChecked = mFragment.hasMultipleCheckedItems();
+        boolean hasMessageStateOtherThanFailed = false;
+        boolean hasErrorMessage = false;
+        boolean hasAttachmentMessage = false;
 
         itemCopy.setVisible(!multipleChecked);
 
-        if(!multipleChecked) {
-            SparseBooleanArray checkedItems = mFragment.getCheckedItemPositions();
+        SparseBooleanArray checkedItems = mFragment.getCheckedItemPositions();
+        if (checkedItems != null) {
+            for (int i = 0; i < checkedItems.size(); i++) {
+                int key = checkedItems.keyAt(i);
 
-            if(checkedItems != null) {
-                for(int i = 0; i < checkedItems.size(); i++) {
-                    int key = checkedItems.keyAt(i);
+                if (checkedItems.get(key, false)) {
+                    Event event = mFragment.getEvent(key);
 
-                    if(checkedItems.get(key, false)) {
-                        Event event = mFragment.getEvent(key);
-
-                        if(event != null && event instanceof Message) {
-                            if(((Message) event).hasAttachment()) {
-                                itemCopy.setVisible(false);
-                            }
+                    if (event != null && event instanceof Message) {
+                        if (((Message) event).hasAttachment()) {
+                            hasAttachmentMessage = true;
                         }
-
-                        break;
+                        hasMessageStateOtherThanFailed |=
+                                (((Message) event).getState() != MessageStates.FAILED);
+                    }
+                    if (event != null && event instanceof ErrorEvent) {
+                        hasErrorMessage = true;
                     }
                 }
             }
         }
 
-        itemForward.setVisible(!multipleChecked);
+        itemCopy.setVisible(!multipleChecked && !hasAttachmentMessage);
+        itemForward.setVisible(!multipleChecked && !hasErrorMessage);
         itemInfo.setVisible(!multipleChecked && BuildConfig.DEBUG);
-        boolean after = itemCopy.isVisible();
+        itemResend.setVisible(!hasMessageStateOtherThanFailed);
+
+        int after = getMenuItemVisibilityMask(menu);
 
         return super.onPrepareActionMode(mode, menu) || before != after;
+    }
+
+    private int getMenuItemVisibilityMask(Menu menu) {
+        /* probably unnecessary */
+        MenuItem itemCopy = menu.findItem(R.id.copy);
+        MenuItem itemForward = menu.findItem(R.id.forward);
+        MenuItem itemInfo = menu.findItem(R.id.info);
+        MenuItem itemResend = menu.findItem(R.id.action_resend);
+        MenuItem itemBurn = menu.findItem(R.id.burn);
+        return (itemCopy.isVisible() ? 1 : 0)
+                | (itemForward.isVisible() ? 2 : 0)
+                | (itemInfo.isVisible() ? 4 : 0)
+                | (itemResend.isVisible() ? 8 : 0)
+                | (itemBurn.isVisible() ? 16 : 0);
     }
 
 }

@@ -19,12 +19,15 @@ import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.Dialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.database.Cursor;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.v7.app.AlertDialog;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 import android.view.animation.Interpolator;
 import android.widget.AbsListView;
@@ -34,6 +37,7 @@ import android.widget.ListView;
 import com.silentcircle.common.animation.AnimUtils;
 import com.silentcircle.common.list.ContactListItemView;
 import com.silentcircle.common.list.OnPhoneNumberPickerActionListener;
+import com.silentcircle.common.util.AsyncTasks;
 import com.silentcircle.common.util.DialerUtils;
 import com.silentcircle.common.util.ViewUtil;
 import com.silentcircle.contacts.ContactsUtils;
@@ -42,13 +46,15 @@ import com.silentcircle.contacts.list.PhoneNumberPickerFragment;
 import com.silentcircle.contacts.list.ScContactEntryListAdapter;
 import com.silentcircle.contacts.list.ScDirectoryLoader;
 import com.silentcircle.messaging.services.AxoMessaging;
+import com.silentcircle.messaging.task.ValidationState;
+import com.silentcircle.messaging.util.AsyncUtils;
+import com.silentcircle.messaging.util.Extra;
 import com.silentcircle.messaging.views.CallOrConversationDialog;
 import com.silentcircle.silentphone2.R;
 import com.silentcircle.silentphone2.activities.ContactAdder;
 import com.silentcircle.silentphone2.util.Utilities;
 
-public class SearchFragment extends PhoneNumberPickerFragment
-        implements AxoMessaging.AxoMessagingStateCallback {
+public class SearchFragment extends PhoneNumberPickerFragment implements AxoMessaging.AxoMessagingStateCallback {
 
     @SuppressWarnings("unused")
     private static final String TAG = "SearchFragment";
@@ -88,9 +94,25 @@ public class SearchFragment extends PhoneNumberPickerFragment
         axoMessaging.addStateChangeListener(this);
     }
 
+    @TargetApi(Build.VERSION_CODES.M)
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        commonOnAttach(getActivity());
+    }
+
+    /*
+     * Deprecated on API 23
+     * Use onAttachToContext instead
+     */
+    @SuppressWarnings("deprecation")
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
+        commonOnAttach(activity);
+    }
+
+    private void commonOnAttach(Activity activity) {
 
         setQuickContactEnabled(true);
         setAdjustSelectionBoundsEnabled(false);
@@ -222,7 +244,7 @@ public class SearchFragment extends PhoneNumberPickerFragment
 //                }
 //                break;
             case DialerPhoneNumberListAdapter.SHORTCUT_DIRECT_CONVERSATION:
-                startConversation(getQueryString());
+                validateUser(getQueryString());
                 break;
         }
     }
@@ -300,7 +322,7 @@ public class SearchFragment extends PhoneNumberPickerFragment
          */
         if (axoRegistered && Character.isLetter(number.charAt(0))) {
             if (mStartConversationFlag) {
-                startConversation(number);
+                validateUser(number);
             }
             else {
                 buildCallConversationDialog(position, id, number)
@@ -313,8 +335,9 @@ public class SearchFragment extends PhoneNumberPickerFragment
     }
 
 
-    protected void startConversation(final String number) {
-        final Intent conversationIntent = ContactsUtils.getMessagingIntent(number, getActivity());
+    protected void startConversation(final String userName, final String uuid) {
+        final Intent conversationIntent = ContactsUtils.getMessagingIntent(uuid, getActivity());
+        Extra.ALIAS.to(conversationIntent, userName);
         DialerUtils.startActivityWithErrorToast(getActivity(), conversationIntent,
                 R.string.add_contact_not_available);
 
@@ -325,7 +348,7 @@ public class SearchFragment extends PhoneNumberPickerFragment
         final DialerPhoneNumberListAdapter adapter = (DialerPhoneNumberListAdapter) getAdapter();
 
         final Cursor cursor = (Cursor)adapter.getItem(position);
-        final int scIndex = cursor.getColumnIndex(ScDirectoryLoader.SC_PRIVATE_FIELD);
+        final int scIndex = cursor.getColumnIndex(ScDirectoryLoader.SC_UUID_FIELD);
         boolean withContact = false;
         final String scInfo;
         if (scIndex >= 0) {
@@ -347,7 +370,7 @@ public class SearchFragment extends PhoneNumberPickerFragment
 
                     @Override
                     public void onConversationSelected() {
-                        startConversation(number);
+                        validateUser(number);
                     }
 
                     @Override
@@ -357,12 +380,82 @@ public class SearchFragment extends PhoneNumberPickerFragment
         return dialog;
     }
 
+    protected void showValidationError(final String userName, ValidationState state) {
+        Activity activity = getActivity();
+        if (activity != null && !activity.isFinishing()) {
+            AlertDialog.Builder alert = new AlertDialog.Builder(activity);
+
+            alert.setTitle(R.string.dialog_title_unable_to_send_messages);
+            alert.setMessage(getString(R.string.dialog_message_unable_to_send_to, userName)
+                    + "\n\n" + getString(ValidationState.getStateDescriptionId(state)));
+
+            alert.setCancelable(false);
+            alert.setPositiveButton(R.string.dialog_button_ok, new DialogInterface.OnClickListener() {
+
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                }
+            });
+
+            alert.show();
+        }
+    }
+
+    /**
+     * Validate a user name (alias) and get its UUID, display name, and default alias.
+     *
+     * This function uses the build in name lookup function of the Axolotl library
+     * via the UserDataBackgroundTask. It checks if a name exists in SC directory
+     * and returns its UUID, default alias and display name.
+     *
+     * After a first check for an alias the name lookup caches the data and a subsequent
+     * verification with the same alias returns the data from the cache.
+     *
+     * @param userName a user alias name
+     */
+    public void validateUser(final String userName) {
+        if (TextUtils.isEmpty(userName)) {
+            showValidationError(userName, ValidationState.USERNAME_EMPTY);
+        }
+
+//        Context context = getActivity().getApplicationContext();
+//        AxoMessaging axoMessaging = AxoMessaging.getInstance(context);
+//        Conversation conversation = axoMessaging.getConversations().findById(userName);
+//        // TODO: conversation can have isValidated field which is set to true when conversation
+//        // partner's name has first been checked online.
+//
+//        /* if a conversation already exists, proceed to it, otherwise validate the user name */
+//        if (conversation != null) {
+//            startConversation(userName);
+//        }
+//        else {
+            // The getUserData _must not_ run on UI thread because it may trigger a network
+            // activity to do a lookup on provisioning server. The validation also fill the
+            // Name Lookup cache thus follow-up validations are fast.
+            AsyncTasks.UserDataBackgroundTask getUserDataTask = new AsyncTasks.UserDataBackgroundTask(getContext()) {
+
+                @Override
+                protected void onPostExecute(Integer time) {
+                    super.onPostExecute(time);
+                    if (mData != null && mUserInfo.mUuid != null) {
+                        ScDirectoryLoader.clearCachedData();
+                        startConversation(userName, mUserInfo.mUuid);
+                    }
+                    else {
+                        showValidationError(userName, ValidationState.VALIDATION_ERROR);
+
+                    }
+                }
+            };
+            AsyncUtils.execute(getUserDataTask, userName);
+//        }
+    }
+
     private void addContactToScAccount(Cursor cursor, String scName) {
 
         final Intent intent = new Intent(getContext(), ContactAdder.class);
         intent.putExtra("AssertedName", "sip:" + scName + getString(R.string.sc_sip_domain_0));
-        intent.putExtra("Text", scName);
-        intent.putExtra("DisplayName", cursor.getString(PhoneNumberListAdapter.PhoneQuery.DISPLAY_NAME));
+        intent.putExtra("Text", cursor.getString(PhoneNumberListAdapter.PhoneQuery.DISPLAY_NAME));
         getContext().startActivity(intent);
     }
 

@@ -1,12 +1,9 @@
 /*
  *  AES-256 file encryption program
  *
- *  Copyright (C) 2006-2013, Brainspark B.V.
+ *  Copyright (C) 2006-2013, ARM Limited, All Rights Reserved
  *
- *  This file is part of PolarSSL (http://www.polarssl.org)
- *  Lead Maintainer: Paul Bakker <polarssl_maintainer at polarssl.org>
- *
- *  All rights reserved.
+ *  This file is part of mbed TLS (https://tls.mbed.org)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -29,6 +26,24 @@
 #include POLARSSL_CONFIG_FILE
 #endif
 
+#if defined(POLARSSL_PLATFORM_C)
+#include "polarssl/platform.h"
+#else
+#include <stdio.h>
+#define polarssl_fprintf    fprintf
+#define polarssl_printf     printf
+#endif
+
+#if defined(POLARSSL_AES_C) && defined(POLARSSL_SHA256_C) && \
+ defined(POLARSSL_FS_IO)
+#include "polarssl/aes.h"
+#include "polarssl/sha256.h"
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#endif
+
 #if defined(_WIN32)
 #include <windows.h>
 #if !defined(_WIN32_WCE)
@@ -39,14 +54,6 @@
 #include <unistd.h>
 #endif
 
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <time.h>
-
-#include "polarssl/aes.h"
-#include "polarssl/sha256.h"
-
 #define MODE_ENCRYPT    0
 #define MODE_DECRYPT    1
 
@@ -56,12 +63,11 @@
     "\n  example: aescrypt2 0 file file.aes hex:E76B2413958B00E193\n" \
     "\n"
 
-#if !defined(POLARSSL_AES_C) || !defined(POLARSSL_SHA256_C)
-int main( int argc, char *argv[] )
+#if !defined(POLARSSL_AES_C) || !defined(POLARSSL_SHA256_C) || \
+    !defined(POLARSSL_FS_IO)
+int main( void )
 {
-    ((void) argc);
-    ((void) argv);
-    printf("POLARSSL_AES_C and/or POLARSSL_SHA256_C not defined.\n");
+    polarssl_printf("POLARSSL_AES_C and/or POLARSSL_SHA256_C and/or POLARSSL_FS_IO not defined.\n");
     return( 0 );
 }
 #else
@@ -101,10 +107,10 @@ int main( int argc, char *argv[] )
      */
     if( argc != 5 )
     {
-        printf( USAGE );
+        polarssl_printf( USAGE );
 
 #if defined(_WIN32)
-        printf( "\n  Press Enter to exit this program.\n" );
+        polarssl_printf( "\n  Press Enter to exit this program.\n" );
         fflush( stdout ); getchar();
 #endif
 
@@ -112,28 +118,32 @@ int main( int argc, char *argv[] )
     }
 
     mode = atoi( argv[1] );
+    memset(IV, 0, sizeof(IV));
+    memset(key, 0, sizeof(key));
+    memset(digest, 0, sizeof(digest));
+    memset(buffer, 0, sizeof(buffer));
 
     if( mode != MODE_ENCRYPT && mode != MODE_DECRYPT )
     {
-        fprintf( stderr, "invalide operation mode\n" );
+        polarssl_fprintf( stderr, "invalide operation mode\n" );
         goto exit;
     }
 
     if( strcmp( argv[2], argv[3] ) == 0 )
     {
-        fprintf( stderr, "input and output filenames must differ\n" );
+        polarssl_fprintf( stderr, "input and output filenames must differ\n" );
         goto exit;
     }
 
     if( ( fin = fopen( argv[2], "rb" ) ) == NULL )
     {
-        fprintf( stderr, "fopen(%s,rb) failed\n", argv[2] );
+        polarssl_fprintf( stderr, "fopen(%s,rb) failed\n", argv[2] );
         goto exit;
     }
 
     if( ( fout = fopen( argv[3], "wb+" ) ) == NULL )
     {
-        fprintf( stderr, "fopen(%s,wb+) failed\n", argv[3] );
+        polarssl_fprintf( stderr, "fopen(%s,wb+) failed\n", argv[3] );
         goto exit;
     }
 
@@ -186,7 +196,7 @@ int main( int argc, char *argv[] )
 
     if( li_size.LowPart == 0xFFFFFFFF && GetLastError() != NO_ERROR )
     {
-        fprintf( stderr, "SetFilePointer(0,FILE_END) failed\n" );
+        polarssl_fprintf( stderr, "SetFilePointer(0,FILE_END) failed\n" );
         goto exit;
     }
 
@@ -202,7 +212,7 @@ int main( int argc, char *argv[] )
 
     if( fseek( fin, 0, SEEK_SET ) < 0 )
     {
-        fprintf( stderr, "fseek(0,SEEK_SET) failed\n" );
+        polarssl_fprintf( stderr, "fseek(0,SEEK_SET) failed\n" );
         goto exit;
     }
 
@@ -238,7 +248,7 @@ int main( int argc, char *argv[] )
          */
         if( fwrite( IV, 1, 16, fout ) != 16 )
         {
-            fprintf( stderr, "fwrite(%d bytes) failed\n", 16 );
+            polarssl_fprintf( stderr, "fwrite(%d bytes) failed\n", 16 );
             goto exit;
         }
 
@@ -271,7 +281,7 @@ int main( int argc, char *argv[] )
 
             if( fread( buffer, 1, n, fin ) != (size_t) n )
             {
-                fprintf( stderr, "fread(%d bytes) failed\n", n );
+                polarssl_fprintf( stderr, "fread(%d bytes) failed\n", n );
                 goto exit;
             }
 
@@ -283,7 +293,7 @@ int main( int argc, char *argv[] )
 
             if( fwrite( buffer, 1, 16, fout ) != 16 )
             {
-                fprintf( stderr, "fwrite(%d bytes) failed\n", 16 );
+                polarssl_fprintf( stderr, "fwrite(%d bytes) failed\n", 16 );
                 goto exit;
             }
 
@@ -297,7 +307,7 @@ int main( int argc, char *argv[] )
 
         if( fwrite( digest, 1, 32, fout ) != 32 )
         {
-            fprintf( stderr, "fwrite(%d bytes) failed\n", 16 );
+            polarssl_fprintf( stderr, "fwrite(%d bytes) failed\n", 16 );
             goto exit;
         }
     }
@@ -317,13 +327,13 @@ int main( int argc, char *argv[] )
          */
         if( filesize < 48 )
         {
-            fprintf( stderr, "File too short to be encrypted.\n" );
+            polarssl_fprintf( stderr, "File too short to be encrypted.\n" );
             goto exit;
         }
 
         if( ( filesize & 0x0F ) != 0 )
         {
-            fprintf( stderr, "File size not a multiple of 16.\n" );
+            polarssl_fprintf( stderr, "File size not a multiple of 16.\n" );
             goto exit;
         }
 
@@ -337,7 +347,7 @@ int main( int argc, char *argv[] )
          */
         if( fread( buffer, 1, 16, fin ) != 16 )
         {
-            fprintf( stderr, "fread(%d bytes) failed\n", 16 );
+            polarssl_fprintf( stderr, "fread(%d bytes) failed\n", 16 );
             goto exit;
         }
 
@@ -370,7 +380,7 @@ int main( int argc, char *argv[] )
         {
             if( fread( buffer, 1, 16, fin ) != 16 )
             {
-                fprintf( stderr, "fread(%d bytes) failed\n", 16 );
+                polarssl_fprintf( stderr, "fread(%d bytes) failed\n", 16 );
                 goto exit;
             }
 
@@ -389,7 +399,7 @@ int main( int argc, char *argv[] )
 
             if( fwrite( buffer, 1, n, fout ) != (size_t) n )
             {
-                fprintf( stderr, "fwrite(%d bytes) failed\n", n );
+                polarssl_fprintf( stderr, "fwrite(%d bytes) failed\n", n );
                 goto exit;
             }
         }
@@ -401,7 +411,7 @@ int main( int argc, char *argv[] )
 
         if( fread( buffer, 1, 32, fin ) != 32 )
         {
-            fprintf( stderr, "fread(%d bytes) failed\n", 32 );
+            polarssl_fprintf( stderr, "fread(%d bytes) failed\n", 32 );
             goto exit;
         }
 
@@ -412,7 +422,7 @@ int main( int argc, char *argv[] )
 
         if( diff != 0 )
         {
-            fprintf( stderr, "HMAC check failed: wrong key, "
+            polarssl_fprintf( stderr, "HMAC check failed: wrong key, "
                              "or file corrupted.\n" );
             goto exit;
         }
@@ -434,4 +444,4 @@ exit:
 
     return( ret );
 }
-#endif /* POLARSSL_AES_C && POLARSSL_SHA256_C */
+#endif /* POLARSSL_AES_C && POLARSSL_SHA256_C && POLARSSL_FS_IO */

@@ -1,7 +1,7 @@
 /*
 Created by Janis Narbuts
 Copyright (C) 2004-2012, Tivi LTD, www.tiviphone.com. All rights reserved.
-Copyright (C) 2012-2015, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2012-2016, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -294,7 +294,7 @@ public:
                
                int iAdd=iDetectedPackBytes*3/4;
                iAdd&=~1;
-#if defined(ANDROID_NDK) || defined(__APPLE__) || defined(__linux__) || defined(linux)
+#if defined(ANDROID_NDK) || defined(__APPLE__) || defined(__linux__)
                iMinBuf=(iAudioCardReadBufSize&~1)+iAdd;
                iBytesToSetBuf=(((iMaxJit*5)>>2)+10)*iRate/500+iMinBuf;
                //  iMinBuf=320*iRate/8000+iAdd+200;

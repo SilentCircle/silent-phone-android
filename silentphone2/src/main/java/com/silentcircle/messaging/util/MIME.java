@@ -51,6 +51,7 @@ public class MIME {
             "text/pdf",
             "text/x-pdf"
     };
+    private static final String TYPE_APPLICATION_OGG = "application/ogg";
 
     private static final String[] TYPE_DOC = {
             "application/msword",
@@ -100,19 +101,12 @@ public class MIME {
     }
 
     public static boolean isAudio(String type) {
-        return type != null && type.startsWith(TYPE_AUDIO);
+        return type != null && (type.startsWith(TYPE_AUDIO)
+            || type.equals(TYPE_APPLICATION_OGG));
     }
 
     public static boolean isContact(String type) {
-        if (type == null) {
-            return false;
-        }
-        for (String t : TYPE_VCARD) {
-            if (type.equals(t)) {
-                return true;
-            }
-        }
-        return false;
+        return isType(type, TYPE_VCARD);
     }
 
     public static boolean isImage(String type) {

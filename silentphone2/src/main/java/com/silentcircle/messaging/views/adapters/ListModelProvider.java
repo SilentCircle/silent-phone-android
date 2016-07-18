@@ -67,4 +67,8 @@ public class ListModelProvider implements ModelProvider {
         return items.get(position).hashCode();
     }
 
+    @Override
+    public List<?> getItems() {
+        return items;
+    }
 }

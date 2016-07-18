@@ -13,7 +13,7 @@
     <string name="provision_later">Plus tard</string>
     <string name="crypto_padlock">Verrouillage pour afficher le statut sécurité</string>
     <string name="error_code">Code d\'erreur: </string>
-    <string name="logout">Déconnexion </string>
+    <string name="wipe_phone">Déconnexion </string>
     <string name="sip_state_calling">Appel en cours</string>
     <string name="sip_state_connecting">Connexion en cours</string>
     <string name="sip_state_ringing">Sonnerie en cours</string>

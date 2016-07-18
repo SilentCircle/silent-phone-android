@@ -279,7 +279,7 @@ public class ManageCallStates {
     public CallState findCallByNumberAndNoCallID(String number) {
 
         CallState call = null;
-        number = Utilities.removeSipParts(number);
+        number = Utilities.removeUriPartsSelective(number);
 
         if (TextUtils.isEmpty(number))
             return null;

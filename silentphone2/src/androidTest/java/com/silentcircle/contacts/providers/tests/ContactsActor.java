@@ -494,16 +494,16 @@ public class ContactsActor {
      * Various internal database projections.
      */
     private interface Projections {
-        static final String[] PROJ_ID = new String[] {
+        String[] PROJ_ID = new String[] {
                 BaseColumns._ID,
         };
 
-        static final int COL_ID = 0;
+        int COL_ID = 0;
 
-        static final String[] PROJ_RAW_CONTACTS = new String[] {
+        String[] PROJ_RAW_CONTACTS = new String[] {
                 RawContacts._ID
         };
 
-        static final int COL_CONTACTS_ID = 0;
+        int COL_CONTACTS_ID = 0;
     }
 }

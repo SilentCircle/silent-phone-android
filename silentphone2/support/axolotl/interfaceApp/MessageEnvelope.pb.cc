@@ -64,6 +64,7 @@ const int MessageEnvelope::kRecvIdHashFieldNumber;
 const int MessageEnvelope::kSenderIdHashFieldNumber;
 const int MessageEnvelope::kRecvDeviceIdFieldNumber;
 const int MessageEnvelope::kRecvDevIdBinFieldNumber;
+const int MessageEnvelope::kUidFieldNumber;
 #endif  // !_MSC_VER
 
 MessageEnvelope::MessageEnvelope()
@@ -95,6 +96,7 @@ void MessageEnvelope::SharedCtor() {
   senderidhash_ = const_cast< ::std::string*>(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   recvdeviceid_ = const_cast< ::std::string*>(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   recvdevidbin_ = const_cast< ::std::string*>(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  uid_ = const_cast< ::std::string*>(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
 }
 
@@ -130,6 +132,9 @@ void MessageEnvelope::SharedDtor() {
   }
   if (recvdevidbin_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
     delete recvdevidbin_;
+  }
+  if (uid_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
+    delete uid_;
   }
   #ifdef GOOGLE_PROTOBUF_NO_STATIC_INITIALIZER
   if (this != &default_instance()) {
@@ -198,7 +203,7 @@ void MessageEnvelope::Clear() {
       }
     }
   }
-  if (_has_bits_[8 / 32] & 768) {
+  if (_has_bits_[8 / 32] & 1792) {
     if (has_recvdeviceid()) {
       if (recvdeviceid_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
         recvdeviceid_->clear();
@@ -207,6 +212,11 @@ void MessageEnvelope::Clear() {
     if (has_recvdevidbin()) {
       if (recvdevidbin_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
         recvdevidbin_->clear();
+      }
+    }
+    if (has_uid()) {
+      if (uid_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
+        uid_->clear();
       }
     }
   }
@@ -355,6 +365,19 @@ bool MessageEnvelope::MergePartialFromCodedStream(
         } else {
           goto handle_unusual;
         }
+        if (input->ExpectTag(90)) goto parse_uid;
+        break;
+      }
+
+      // optional string uid = 11;
+      case 11: {
+        if (tag == 90) {
+         parse_uid:
+          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
+                input, this->mutable_uid()));
+        } else {
+          goto handle_unusual;
+        }
         if (input->ExpectAtEnd()) goto success;
         break;
       }
@@ -443,6 +466,12 @@ void MessageEnvelope::SerializeWithCachedSizes(
       10, this->recvdevidbin(), output);
   }
 
+  // optional string uid = 11;
+  if (has_uid()) {
+    ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
+      11, this->uid(), output);
+  }
+
   output->WriteRaw(unknown_fields().data(),
                    unknown_fields().size());
   // @@protoc_insertion_point(serialize_end:axolotl.MessageEnvelope)
@@ -524,6 +553,13 @@ int MessageEnvelope::ByteSize() const {
           this->recvdevidbin());
     }
 
+    // optional string uid = 11;
+    if (has_uid()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::StringSize(
+          this->uid());
+    }
+
   }
   total_size += unknown_fields().size();
 
@@ -573,6 +609,9 @@ void MessageEnvelope::MergeFrom(const MessageEnvelope& from) {
     if (from.has_recvdevidbin()) {
       set_recvdevidbin(from.recvdevidbin());
     }
+    if (from.has_uid()) {
+      set_uid(from.uid());
+    }
   }
   mutable_unknown_fields()->append(from.unknown_fields());
 }
@@ -600,6 +639,7 @@ void MessageEnvelope::Swap(MessageEnvelope* other) {
     std::swap(senderidhash_, other->senderidhash_);
     std::swap(recvdeviceid_, other->recvdeviceid_);
     std::swap(recvdevidbin_, other->recvdevidbin_);
+    std::swap(uid_, other->uid_);
     std::swap(_has_bits_[0], other->_has_bits_[0]);
     _unknown_fields_.swap(other->_unknown_fields_);
     std::swap(_cached_size_, other->_cached_size_);

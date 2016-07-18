@@ -6,6 +6,7 @@
 #include "../axolotl/crypto/EcCurve.h"
 #include "../axolotl/crypto/EcCurveTypes.h"
 #include "../axolotl/crypto/Ec255PublicKey.h"
+#include "../logging/AxoLogging.h"
 
 #include <iostream>
 using namespace axolotl;
@@ -19,23 +20,40 @@ static std::string bobDev("BobDevId");
 
 static const uint8_t keyInData[] = {0,1,2,3,4,5,6,7,8,9,19,18,17,16,15,14,13,12,11,10,20,21,22,23,24,25,26,27,28,20,31,30};
 
-static SQLiteStoreConv* store;
-void prepareStore()
-{
-    store = SQLiteStoreConv::getStore();
-    if (store->isReady())
-        return;
-    store->setKey(string((const char*)keyInData, 32));
-    store->openStore(string());
-}
+class StoreTestFixture: public ::testing::Test {
+public:
+    StoreTestFixture( ) {
+        // initialization code here
+    }
 
-TEST(Conversation, BasicEmpty) 
+    void SetUp() {
+        // code here will execute just before the test ensues
+        LOGGER_INSTANCE setLogLevel(ERROR);
+        store = SQLiteStoreConv::getStore();
+        store->setKey(std::string((const char*)keyInData, 32));
+        store->openStore(std::string());
+    }
+
+    void TearDown( ) {
+        // code here will be called just after the test completes
+        // ok to through exceptions from here if need be
+        SQLiteStoreConv::closeStore();
+    }
+
+    ~StoreTestFixture( )  {
+        // cleanup any pending stuff, but no exceptions allowed
+        LOGGER_INSTANCE setLogLevel(VERBOSE);
+    }
+
+    // put in any custom data members that you need
+    SQLiteStoreConv* store;
+};
+
+TEST_F(StoreTestFixture, BasicEmpty)
 {
-    prepareStore();
 
     // localUser, remote user, remote dev id
     AxoConversation conv(aliceName, bobName, bobDev);
-
     conv.storeConversation();
     ASSERT_FALSE(SQL_FAIL(store->getSqlCode())) << store->getLastError();    
 
@@ -45,10 +63,8 @@ TEST(Conversation, BasicEmpty)
     delete conv1;
 }
 
-TEST(Conversation, TestDHR) 
+TEST_F(StoreTestFixture, TestDHR)
 {
-    prepareStore();
-
     // localUser, remote user, remote dev id
     AxoConversation conv(aliceName,   bobName,   bobDev);
     conv.setRatchetFlag(true);
@@ -74,10 +90,8 @@ TEST(Conversation, TestDHR)
     delete conv1;
 }
 
-TEST(Conversation, TestDHI) 
+TEST_F(StoreTestFixture, TestDHI)
 {
-    prepareStore();
-
     // localUser, remote user, remote dev id
     AxoConversation conv(aliceName, bobName, bobDev);
     conv.setRatchetFlag(true);
@@ -103,10 +117,8 @@ TEST(Conversation, TestDHI)
     delete conv1;
 }
 
-TEST(Conversation, TestA0) 
+TEST_F(StoreTestFixture, TestA0)
 {
-    prepareStore();
-
     // localUser, remote user, remote dev id
     AxoConversation conv(aliceName,   bobName,   bobDev);
     conv.setRatchetFlag(true);
@@ -125,9 +137,8 @@ TEST(Conversation, TestA0)
     delete conv1;
 }
 
-TEST(Conversation, SimpleFields) 
+TEST_F(StoreTestFixture, SimpleFields)
 {
-    prepareStore();
     string RK("RootKey");
     string CKs("ChainKeyS 1");
     string CKr("ChainKeyR 1");

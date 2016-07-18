@@ -32,97 +32,168 @@ import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.Fragment;
 import android.app.FragmentManager;
+import android.app.FragmentTransaction;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.res.Configuration;
-import android.graphics.drawable.Drawable;
-import android.media.Ringtone;
-import android.media.RingtoneManager;
-import android.net.Uri;
+import android.content.res.Resources;
+import android.graphics.Bitmap;
+import android.graphics.ColorFilter;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffColorFilter;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
-import android.provider.Settings;
-import android.support.v4.view.GravityCompat;
-import android.support.v4.widget.DrawerLayout;
-import android.support.v7.app.ActionBar;
-import android.support.v7.app.ActionBarActivity;
-import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
 import android.text.method.LinkMovementMethod;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Display;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.CheckBox;
-import android.widget.CompoundButton;
-import android.widget.LinearLayout;
-import android.widget.PopupMenu;
+import android.widget.ImageView;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.silentcircle.keystore.KeyStoreActivity;
-import com.silentcircle.keystore.KeyStoreHelper;
-import com.silentcircle.messaging.activities.AxoRegisterActivity;
-import com.silentcircle.messaging.services.AxoMessaging;
-import com.silentcircle.messaging.util.MessagingPreferences;
+import com.silentcircle.common.util.ViewUtil;
+import com.silentcircle.messaging.fragments.AlertDialogFragment;
+import com.silentcircle.messaging.util.AsyncUtils;
+import com.silentcircle.purchase.activities.PaymentUseStripeActivity;
 import com.silentcircle.silentphone2.BuildConfig;
 import com.silentcircle.silentphone2.R;
 import com.silentcircle.silentphone2.activities.DialerActivity;
-import com.silentcircle.silentphone2.activities.ProvisioningActivity;
-import com.silentcircle.silentphone2.dialhelpers.FindDialHelper;
+import com.silentcircle.silentphone2.dialogs.InfoMsgDialogFragment;
 import com.silentcircle.silentphone2.services.TiviPhoneService;
 import com.silentcircle.silentphone2.util.ConfigurationUtilities;
-import com.silentcircle.silentphone2.util.LoadUserInfo;
-import com.silentcircle.silentphone2.util.Utilities;
+import com.silentcircle.userinfo.DownloadImageTask;
+import com.silentcircle.userinfo.LoadUserInfo;
+import com.silentcircle.userinfo.UserInfo;
+
+import java.util.Date;
 
 /**
  * Fragment used for managing interactions for and presentation of a navigation drawer.
  * See the <a href="https://developer.android.com/design/patterns/navigation-drawer.html#Interaction">
  * design guidelines</a> for a complete explanation of the behaviors implemented here.
  */
-public class DialDrawerFragment extends Fragment implements View.OnClickListener, LoadUserInfo.Listener, CompoundButton.OnCheckedChangeListener {
+public class DialDrawerFragment extends Fragment implements View.OnClickListener,
+        LoadUserInfo.Listener, AlertDialogFragment.OnAlertDialogConfirmedListener {
 
     private static final String TAG = DialDrawerFragment.class.getSimpleName();
 
-    public static String RINGTONE_KEY = "sp_ringtone";
-    public static String START_ON_BOOT = "start_on_boot";
-    public static String SHOW_ERRORS = "show_errors";
-    public static String NATIVE_CALL_CHECK = "native_call_check";
-    public static String ENABLE_FW_TRAVERSAL = "enable_fw_traversal";
-    public static String FORCE_FW_TRAVERSAL = "force_fw_traversal";
-    public static String ENABLE_UNDERFLOW_TONE = "enable_underflow_tone";
+    private static final String AVATAR_BITMAP =
+            "com.silentcircle.silentphone2.fragments.DialDrawerFragment.AVATAR_BITMAP";
+
+    private static final int WIPE_PHONE = 0;
 
     /**
      * A pointer to the current callbacks instance (the Activity).
      */
     private DrawerCallbacks mCallbacks;
 
-    private DrawerLayout mDrawerLayout;
     private ScrollView mDrawerView;
-    private View mFragmentContainerView;
-    private ActionBarDrawerToggle mDrawerToggle;
+    private AppCompatActivity mParent;
 
-    private ActionBarActivity mParent;
+    /* Used to show remaining OCA minutes */
+    private LoadUserInfo mLoadUserInfo;
+    /*
+     * Used for general information refresh in fragment.
+     * As DialerActivity is not calling onUserInfo, but fragment has to show the user name
+     * information, it has to listen to user info availability itself.
+     * But this listener is only needed when there is a slow network and drawer has been opened
+     * before user information has become available).
+     */
+    private LoadUserInfo mSilentLoadUserInfo;
 
-    private TextView mSecHeader;
-    private TextView mMsgHeader;
-    private TextView mOtherHeader;
-    private TextView mInfoHeader;
+    /*
+     * Colour filters to colour status indication
+     */
+    private ColorFilter mColorFilterOnline;
+    private ColorFilter mColorFilterOffline;
+    private ColorFilter mColorFilterUnknown;
 
-    private LinearLayout mSecContent;
-    private LinearLayout mMsgContent;
-    private LinearLayout mOtherContent;
-    private LinearLayout mInfoContent;
+    /* Self avatar */
+    private Bitmap mAvatarBitmap;
+    private AsyncTask mDownloadImageTask;
+    private float mImageWidth;
 
-    private Drawable mLess;
-    private Drawable mMore;
+    /**
+     * Listener that receives the data if OCA minutes are available from LoadUserInfo.
+     *
+     * @param userInfo A {@link UserInfo} object
+     * @param errorInfo   If not {@code null} then an error occurred, minutes data invalid,
+     *                    this shows the error reason
+     * @param silent      Should the user see anything?
+     */
+    public void onUserInfo(UserInfo userInfo, String errorInfo, boolean silent) {
+        if (ConfigurationUtilities.mTrace) Log.d(TAG, "onUserInfo");
+        // side drawer could open before LoadUserInfo task completed.
+        // onUserInfo callback will provide correct organization info
+        /*
+         * Temporarily disable in-app purchase UI.
+         *
+         *
+        if(LoadUserInfo.checkIfHasOrganization() == LoadUserInfo.INVALID){
+            mDrawerView.findViewById(R.id.show_in_app_purchase).setVisibility(View.VISIBLE);
+        }
+        else{
+            mDrawerView.findViewById(R.id.show_in_app_purchase).setVisibility(View.GONE);
+        }
+         */
+        /**
+         * Has to still be attached to be able to call {@link Fragment#getResources()}
+         */
+        if (!isAdded()) {
+            return;
+        }
+
+        if (errorInfo != null) {
+            if(!silent) {
+                showInputInfo(errorInfo);
+            }
+            return;
+        }
+
+        if (userInfo == null) {
+            return;
+        }
+
+        setNumberName();
+        setUserInfo();
+
+        if (silent) {
+            return;
+        }
+
+        if (LoadUserInfo.checkIfExpired() == LoadUserInfo.VALID) {
+            showInputInfo(R.string.expired_account_info);
+            return;
+        }
+
+        if (LoadUserInfo.checkIfUsesMinutes() == LoadUserInfo.VALID) {
+            // User is using minutes
+            final int baseMinutes = userInfo.getSubscription().getUsageDetails().getBaseMinutes()
+                    + userInfo.getSubscription().getUsageDetails().getCurrentModifier();
+            final int minutesLeft = userInfo.getSubscription().getUsageDetails().getMinutesLeft();
+            final int minutesUsed = baseMinutes - minutesLeft;
+
+            final String msg = (minutesUsed <= 0 && minutesLeft != 0)
+                    ? getString(R.string.remaining_oca_minutes_zero, baseMinutes) :
+                    getResources().getQuantityString(R.plurals.remaining_oca_minutes_info,
+                            minutesUsed, baseMinutes, minutesLeft);
+            showInputInfo(msg);
+        } else if (LoadUserInfo.checkIfUsesCredit() == LoadUserInfo.VALID) {
+            // User is using credit
+            showInputInfo(getString(R.string.remaining_credit,
+                    userInfo.getSubscription().getBalance().getAmount(),
+                    userInfo.getSubscription().getBalance().getUnit()));
+        }
+    }
+
     /**
      * Callbacks interface that all activities using this fragment must implement.
      */
@@ -135,6 +206,10 @@ public class DialDrawerFragment extends Fragment implements View.OnClickListener
         int DIAL_HELPER = 2;
         int KEY_STORE = 3;
         int RE_PROVISION = 4;
+        int MESSAGING_LOCK_SCREEN = 5;
+        int DEVELOPER_SSL_DEBUG = 6;
+        int DEVELOPER_AXO_DEBUG = 7;
+        int SETTINGS = 8;
 
         /**
          * Called when an item in the navigation drawer is selected.
@@ -168,57 +243,139 @@ public class DialDrawerFragment extends Fragment implements View.OnClickListener
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         mDrawerView = (ScrollView)inflater.inflate(R.layout.dialer_drawer, container, false);
 
-        mSecHeader = (TextView)mDrawerView.findViewById(R.id.drawer_sec_header);
-        mMsgHeader = (TextView)mDrawerView.findViewById(R.id.drawer_msg_header);
-        mOtherHeader = (TextView)mDrawerView.findViewById(R.id.drawer_other_header);
-        mInfoHeader = (TextView)mDrawerView.findViewById(R.id.drawer_info_header);
-
-        mSecHeader.setOnClickListener(this);
-        mMsgHeader.setOnClickListener(this);
-        mOtherHeader.setOnClickListener(this);
-        mInfoHeader.setOnClickListener(this);
-
-        mSecContent = (LinearLayout)mDrawerView.findViewById(R.id.drawer_sec_content);
-        mMsgContent = (LinearLayout)mDrawerView.findViewById(R.id.drawer_msg_content);
-        mOtherContent = (LinearLayout)mDrawerView.findViewById(R.id.drawer_other_content);
-        mInfoContent = (LinearLayout)mDrawerView.findViewById(R.id.drawer_info_content);
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            mLess = getResources().getDrawable(R.drawable.ic_expand_less_white_24dp, null);
-            mMore = getResources().getDrawable(R.drawable.ic_expand_more_white_24dp, null);
-        }
-        else {
-            mLess = getResources().getDrawable(R.drawable.ic_expand_less_white_24dp);
-            mMore = getResources().getDrawable(R.drawable.ic_expand_more_white_24dp);
-        }
-
-        setBuildInfo();
-        setNumberName();
-        prepareKeyStoreOptions();
-        prepareRingtone();
-        prepareOnBoot();
-        prepareShowErrors();
-        prepareReProvision();
-        prepareUiTheme();
-        prepareAdvancedSettings();
-        prepareMessagingSettings();
-
         ((TextView)mDrawerView.findViewById(R.id.sc_privacy)).setMovementMethod(LinkMovementMethod.getInstance());
         ((TextView)mDrawerView.findViewById(R.id.sc_tos)).setMovementMethod(LinkMovementMethod.getInstance());
 
         mDrawerView.findViewById(R.id.show_oca_minutes).setOnClickListener(this);
+        mDrawerView.findViewById(R.id.show_in_app_purchase).setOnClickListener(this);
+        mDrawerView.findViewById(R.id.dial_drawer_open_settings).setOnClickListener(this);
+        mDrawerView.findViewById(R.id.dial_drawer_exit_application).setOnClickListener(this);
+        mDrawerView.findViewById(R.id.dial_drawer_wipe_phone).setOnClickListener(this);
+        mDrawerView.findViewById(R.id.self_avatar).setOnClickListener(this);
+
+        mDrawerView.findViewById(R.id.dial_drawer_wipe_phone).setVisibility(
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT ? View.VISIBLE : View.GONE);
+
+        Resources resources = getResources();
+        mImageWidth = resources.getDimension(R.dimen.dial_drawer_avatar_size);
+
+        int colorConnecting, colorOnline, colorOffline;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            colorOnline = resources.getColor(R.color.black_green_dark_1, null);
+            colorOffline = resources.getColor(R.color.sc_ng_text_red, null);
+            colorConnecting = resources.getColor(R.color.sc_ng_background_3, null);
+        } else {
+            colorOnline = resources.getColor(R.color.black_green_dark_1);
+            colorOffline = resources.getColor(R.color.sc_ng_text_red);
+            colorConnecting = resources.getColor(R.color.sc_ng_background_3);
+        }
+        mColorFilterOnline = new PorterDuffColorFilter(colorOnline, PorterDuff.Mode.MULTIPLY);
+        mColorFilterOffline = new PorterDuffColorFilter(colorOffline, PorterDuff.Mode.MULTIPLY);
+        mColorFilterUnknown = new PorterDuffColorFilter(colorConnecting, PorterDuff.Mode.MULTIPLY);
+
+        // retrieve avatar image if set
+        if (savedInstanceState != null) {
+            mAvatarBitmap = savedInstanceState.getParcelable(AVATAR_BITMAP);
+        }
+
+        setBuildInfo();
+        setNumberName();
+        setUserInfo();
+
         return mDrawerView;
     }
 
+    @TargetApi(Build.VERSION_CODES.M)
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        commonOnAttach(getActivity());
+    }
+
+    /*
+     * Deprecated on API 23
+     * Use onAttachToContext instead
+     */
+    @SuppressWarnings("deprecation")
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
-        mParent = (ActionBarActivity)activity;
+        commonOnAttach(activity);
+    }
+
+    private void commonOnAttach(Activity activity) {
         try {
+            mParent = (AppCompatActivity) activity;
             mCallbacks = (DrawerCallbacks) activity;
         } catch (ClassCastException e) {
             throw new ClassCastException("Activity must implement DrawerCallbacks.");
         }
+    }
+
+    public void setUserInfo() {
+        if (mDrawerView == null) {
+            return;
+        }
+
+        String displayName = LoadUserInfo.getDisplayName();
+        String alias = LoadUserInfo.getDisplayAlias();
+
+        TextView textDisplayName = (TextView) mDrawerView.findViewById(R.id.self_avatar_display_name);
+        TextView textAliasName = (TextView) mDrawerView.findViewById(R.id.self_avatar_alias);
+        textAliasName.setVisibility(View.GONE);
+
+        textDisplayName.setText(TextUtils.isEmpty(displayName) ? alias : displayName);
+
+        if (!TextUtils.isEmpty(alias) && !TextUtils.isEmpty(displayName) && !alias.equals(displayName)) {
+            textAliasName.setVisibility(View.VISIBLE);
+            textAliasName.setText(alias);
+        }
+
+        setOnlineStatus();
+        setAvatarImage();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+
+        mSilentLoadUserInfo = new LoadUserInfo(mParent.getApplicationContext(), true);
+        mSilentLoadUserInfo.addUserInfoListener(this);
+        /* This is unnecessary(?) as DialerActivity initiates refresh itself
+        mSilentLoadUserInfo.refreshUserInfo();
+        */
+
+        setNumberName();
+        setUserInfo();
+    }
+
+    @Override
+    public void setUserVisibleHint(boolean isVisibleToUser) {
+        super.setUserVisibleHint(isVisibleToUser);
+        if (isVisibleToUser) {
+            setUserInfo();
+        }
+    }
+
+    @Override
+    public void onPause() {
+        // remove fragment from user info listeners
+        mSilentLoadUserInfo.removeUserInfoListener(this);
+        mSilentLoadUserInfo = null;
+        // fragment already removed as listener, just nullify
+        mLoadUserInfo = null;
+
+        // cancel running tasks
+        if (mDownloadImageTask != null) {
+            mDownloadImageTask.cancel(true);
+        }
+        super.onPause();
+    }
+
+    @Override
+    public void onDestroyView() {
+        mDrawerView = null;
+        super.onDestroyView();
     }
 
     @Override
@@ -230,6 +387,7 @@ public class DialDrawerFragment extends Fragment implements View.OnClickListener
     @Override
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
+        outState.putParcelable(AVATAR_BITMAP, mAvatarBitmap);
     }
 
     @Override
@@ -238,185 +396,36 @@ public class DialDrawerFragment extends Fragment implements View.OnClickListener
     }
 
     @Override
-    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-        super.onCreateOptionsMenu(menu, inflater);
-    }
-
-    @Override
-    public void onPrepareOptionsMenu (Menu menu) {
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.dial_menu_keystore: {
-                selectKeyStorePassword();
-                return true;
-            }
-            case R.id.dial_menu_re_provision:
-                mCallbacks.onDrawerItemSelected(DrawerCallbacks.RE_PROVISION);
-                return true;
-
-            case R.id.dial_menu_axo_register:
-                Intent intent = new Intent(mParent, AxoRegisterActivity.class);
-                intent.setAction(AxoRegisterActivity.ACTION_REGISTER);
-                mParent.startActivity(intent);
-                return true;
-
-            case R.id.dial_menu_axo_device:
-                intent = new Intent(mParent, AxoRegisterActivity.class);
-                intent.setAction(AxoRegisterActivity.ACTION_MANAGE);
-                mParent.startActivity(intent);
-                return true;
-
-            case R.id.dial_menu_axo_register_force:
-                AxoMessaging axoMessaging = AxoMessaging.getInstance(mParent);
-                axoMessaging.registerDeviceMessaging(true);
-                return true;
-
-            default:
-                break;
-        }
-        return mDrawerToggle.onOptionsItemSelected(item) || super.onOptionsItemSelected(item);
-    }
-
-    @Override
     public void onClick(View view) {
         switch (view.getId()) {
-            case R.id.nist_check:
-            case R.id.nist_check_title:
-                toggleNistCheckbox();
-                break;
-
-            case R.id.sas_type_title:
-            case R.id.sas_type_text:
-                selectSasType();
-                break;
-
-            case R.id.ringtone_title:
-            case R.id.ringtone_name:
-                selectRingtone();
-                break;
-
-            case R.id.boot_check:
-            case R.id.boot_check_title:
-                toggleBootCheckbox();
-                break;
-
-            case R.id.errors_option_check:
-            case R.id.errors_option_title:
-                toggleErrorsCheckbox();
-                break;
-
-            case R.id.native_call_checkbox:
-            case R.id.native_call_check_title:
-                toggleNativeCallCheck();
-                break;
-
-            case R.id.re_provision_title:
-            case R.id.re_provision_text:
-                doReProvision();
-                break;
-
-            case R.id.theme_title:
-            case R.id.theme_text:
-                selectUiTheme();
-                break;
-
-            case R.id.dial_helper:
-            case R.id.dial_helper_name:
-            case R.id.dial_helper_title:
-                selectDialHelper();
-                break;
-
-            case R.id.media_relay_check:
-            case R.id.media_relay_title:
-                toggleMediaRelayCheckbox();
-                break;
-
-            case R.id.underflow_check:
-            case R.id.underflow_title:
-                toggleUnderflowCheckbox();
-                break;
-
-            case R.id.keystore_title:
-            case R.id.keystore_type:
-                selectKeyStorePassword();
-                break;
-
-            case R.id.traversal_check:
-            case R.id.traversal_title:
-                toggleEnableTraversalBox();
-                break;
-
-            case R.id.force_traversal_check:
-            case R.id.force_traversal_title:
-                toggleForceTraversalBox();
-                break;
-
-            case R.id.burn_animation_title:
-                toggleMessageBurnAnimationCheckbox();
-                break;
-
-            case R.id.attachment_decrypt_warn_title:
-                toggleMessageAttachmentDecryptWarnCheckbox();
-                break;
-
-            case R.id.messaging_sounds_title:
-                toggleMessageSoundsCheckbox();
-                break;
-
             case R.id.show_oca_minutes:
-                LoadUserInfo loadUserInfo = new LoadUserInfo(mParent, this);
-                loadUserInfo.loadOcaMinutesInfo();
+                if (mLoadUserInfo == null) {
+                    mLoadUserInfo = new LoadUserInfo(mParent.getApplicationContext(), false);
+                    mLoadUserInfo.addUserInfoListener(this);
+                }
+                mLoadUserInfo.loadOcaMinutesInfo();
                 break;
 
-            case R.id.extended_menu:
-                selectExtendedMenu();
+            case R.id.show_in_app_purchase:
+                showInAppPurchase();
                 break;
 
-            case R.id.drawer_sec_header:
-                if (mSecContent.getVisibility() == View.VISIBLE) {
-                    mSecContent.setVisibility(View.GONE);
-                    mSecHeader.setCompoundDrawablesWithIntrinsicBounds(null, null, mMore, null);
-                }
-                else {
-                    mSecContent.setVisibility(View.VISIBLE);
-                    mSecHeader.setCompoundDrawablesWithIntrinsicBounds(null, null, mLess, null);
-                }
+            case R.id.dial_drawer_open_settings:
+                // open settings view
+                mCallbacks.onDrawerItemSelected(DrawerCallbacks.SETTINGS);
                 break;
 
-            case R.id.drawer_msg_header:
-                if (mMsgContent.getVisibility() == View.VISIBLE) {
-                    mMsgContent.setVisibility(View.GONE);
-                    mMsgHeader.setCompoundDrawablesWithIntrinsicBounds(null, null, mMore, null);
-                }
-                else {
-                    mMsgContent.setVisibility(View.VISIBLE);
-                    mMsgHeader.setCompoundDrawablesWithIntrinsicBounds(null, null, mLess, null);
-                }
+            case R.id.dial_drawer_exit_application:
+                // exit application
+                ((DialerActivity) getActivity()).exit();
                 break;
 
-            case R.id.drawer_other_header:
-                if (mOtherContent.getVisibility() == View.VISIBLE) {
-                    mOtherContent.setVisibility(View.GONE);
-                    mOtherHeader.setCompoundDrawablesWithIntrinsicBounds(null, null, mMore, null);
-                }
-                else {
-                    mOtherContent.setVisibility(View.VISIBLE);
-                    mOtherHeader.setCompoundDrawablesWithIntrinsicBounds(null, null, mLess, null);
-                }
+            case R.id.dial_drawer_wipe_phone:
+                // confirm, log out from service and exit application
+                wipePhone();
                 break;
 
-            case R.id.drawer_info_header:
-                if (mInfoContent.getVisibility() == View.VISIBLE) {
-                    mInfoContent.setVisibility(View.GONE);
-                    mInfoHeader.setCompoundDrawablesWithIntrinsicBounds(null, null, mMore, null);
-                }
-                else {
-                    mInfoContent.setVisibility(View.VISIBLE);
-                    mInfoHeader.setCompoundDrawablesWithIntrinsicBounds(null, null, mLess, null);
-                }
+            case R.id.self_avatar:
                 break;
 
             default: {
@@ -427,187 +436,56 @@ public class DialDrawerFragment extends Fragment implements View.OnClickListener
     }
 
     @Override
-    public void onCheckedChanged(CompoundButton view, boolean isChecked) {
-        switch (view.getId()) {
-            case R.id.burn_animation_check:
-                MessagingPreferences.getInstance(getActivity())
-                        .setShowBurnAnimation(mMessageBurnAnimationBox.isChecked());
-                break;
-
-            case R.id.attachment_decrypt_warn_check:
-                MessagingPreferences.getInstance(getActivity())
-                        .setWarnWhenDecryptAttachment(mMessageAttachmentDecryptWarnBox.isChecked());
-                break;
-
-            case R.id.messaging_sounds_check:
-                MessagingPreferences.getInstance(getActivity())
-                        .setMessageSoundsEnabled(mMessageSoundsBox.isChecked());
-                break;
-            default:
-                Log.wtf(TAG, "Unexpected onCheckChanged() event from: " + view);
+    public void onAlertDialogConfirmed(DialogInterface dialog, int requestCode, Bundle bundle, boolean saveChoice) {
+        if (requestCode == WIPE_PHONE) {
+            ((DialerActivity) getActivity()).wipePhone();
         }
-    }
-
-    /**
-     * Users of this fragment must call this method to set up the drawer interactions.
-     *
-     * Currently no specific Action bar settings
-     *
-     * @param drawerView   The view of this fragment in its activity's layout.
-     * @param drawerLayout The DrawerLayout containing this fragment's UI.
-     */
-    public void setUp(View drawerView, DrawerLayout drawerLayout) {
-        mFragmentContainerView = drawerView;
-        mDrawerLayout = drawerLayout;
-
-        // set a custom shadow that overlays the main content when the drawer opens
-        mDrawerLayout.setDrawerShadow(Utilities.mDrawerShadowId, GravityCompat.START);
-        // set up the drawer's list view with items and click listener
-
-        ActionBar actionBar = mParent.getSupportActionBar();
-        if (actionBar != null) {
-            actionBar.setDisplayHomeAsUpEnabled(true);
-            actionBar.setHomeButtonEnabled(true);
-        }
-
-        // ActionBarDrawerToggle ties together the the proper interactions
-        // between the navigation drawer and the action bar app icon.
-        mDrawerToggle = new ActionBarDrawerToggle(
-                mParent,                    /* host Activity */
-                mDrawerLayout,              /* DrawerLayout object */
-                R.string.navigation_drawer_open,   /* "open drawer" description for accessibility */
-                R.string.navigation_drawer_close   /* "close drawer" description for accessibility */
-        ) {
-            private boolean openState;
-
-            @Override
-            public void onDrawerClosed(View drawerView) {
-                super.onDrawerClosed(drawerView);
-                if (!isAdded()) {
-                    return;
-                }
-
-                mParent.invalidateOptionsMenu(); // calls onPrepareOptionsMenu()
-                openState = false;
-                if (mCallbacks != null)
-                    mCallbacks.onDrawerStateChange(DrawerCallbacks.CLOSED);
-
-            }
-
-            @Override
-            public void onDrawerStateChanged(int newState) {
-                super.onDrawerStateChanged(newState);
-                if (!openState &&
-                        (newState == DrawerLayout.STATE_SETTLING || newState == DrawerLayout.STATE_DRAGGING) && mCallbacks != null)
-                    mCallbacks.onDrawerStateChange(DrawerCallbacks.MOVING);
-
-            }
-
-            @Override
-            public void onDrawerOpened(View drawerView) {
-                super.onDrawerOpened(drawerView);
-                if (!isAdded()) {
-                    return;
-                }
-                mParent.invalidateOptionsMenu(); // calls onPrepareOptionsMenu()
-                openState = true;
-                setBuildInfo();
-                prepareSasOptions();
-                prepareNistCheckbox();
-                showAdvancedSettings();
-                prepareDialHelperOption();
-                prepareExtendedMenu();
-                prepareNativeCallCheck();
-                setNumberName();
-                if (mCallbacks != null)
-                    mCallbacks.onDrawerStateChange(DrawerCallbacks.OPENED);
-            }
-        };
-
-        // Defer code dependent on restoration of previous instance state.
-        mDrawerLayout.post(new Runnable() {
-            @Override
-            public void run() {
-                mDrawerToggle.syncState();
-            }
-        });
-        mDrawerLayout.setDrawerListener(mDrawerToggle);
-    }
-
-    public boolean isDrawerOpen() {
-        return mDrawerLayout != null && mDrawerLayout.isDrawerOpen(mFragmentContainerView);
-    }
-
-    /**
-     * Listener that receives the data if OCA minutes are available from LoadUserInfo.
-     *
-     * @param minutesLeft Remaining minutes
-     * @param baseMinutes Minutes available per month
-     * @param errorInfo   If not {@code null} then an error occurred, minutes data invalid,
-     *                    this shows the error reason
-     */
-    public void ocaMinutes(final int minutesLeft, final int baseMinutes, final String errorInfo) {
-        if (errorInfo != null) {
-            showInputInfo(errorInfo);
-            return;
-        }
-
-//        if(LoadUserInfo.checkIfFreemium() == LoadUserInfo.INVALID) {
-//            showInputInfo(getString(R.string.basic_account_info));
-//            return;
-//        }
-
-        if(!LoadUserInfo.isOutboundCallsEnabled(mParent.getApplicationContext())) {
-            showInputInfo(getString(R.string.basic_account_info));
-            return;
-        }
-
-        final int minutesUsed = baseMinutes - minutesLeft;
-        final String msg = (minutesUsed <= 0)? getString(R.string.remaining_oca_minutes_zero, baseMinutes) :
-                getResources().getQuantityString(R.plurals.remaining_oca_minutes_info, minutesUsed, baseMinutes, minutesLeft);
-        showInputInfo(msg);
     }
 
     public void setNumberName() {
         if (mDrawerView == null)
             return;
 
+        String phoneNumString = LoadUserInfo.getDisplayTn();
+
+        Date expirationDate = LoadUserInfo.getExpirationDate();
         String expirationDateString = LoadUserInfo.getExpirationDateString();
+
+        if (ConfigurationUtilities.mTrace) {
+            Log.d(TAG, "setNumberName expirationDate: " + expirationDate + " (" + expirationDateString + ")");
+        }
+
         if (LoadUserInfo.checkExpirationDateValid(expirationDateString)) {
-                View line = mDrawerView.findViewById(R.id.dial_drawer_valid);  // layout holds valid until line
-                line.setVisibility(View.VISIBLE);
+            if (expirationDate != null && expirationDate.before(LoadUserInfo.VALID_FOR_LIFETIME)) {
+                View expirationLayout = mDrawerView.findViewById(R.id.dial_drawer_valid);
+                expirationLayout.setVisibility(View.VISIBLE);
                 ((TextView) mDrawerView.findViewById(R.id.dial_drawer_valid_data)).setText(expirationDateString);
+            }
         }
-        if (!TextUtils.isEmpty(DialerActivity.mNumber))
-            mDrawerView.findViewById(R.id.show_oca_minutes).setVisibility(View.VISIBLE);
-    }
 
-    public void updateRingtone(Uri ringtone) {
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mParent);
-        String toneString;
+        if (!TextUtils.isEmpty(phoneNumString)) {
+            View numberLayout = mDrawerView.findViewById(R.id.dial_drawer_number);
+            numberLayout.setVisibility(View.VISIBLE);
 
-        if (ringtone != null) {
-            toneString = ringtone.toString();
-            SharedPreferences.Editor e = prefs.edit();
-            e.putString(RINGTONE_KEY, toneString).apply();
+            ((TextView) mDrawerView.findViewById(R.id.dial_drawer_number_data)).setText(phoneNumString);
         }
-        else
-            toneString = prefs.getString(RINGTONE_KEY, null);
 
-        Uri tone = Settings.System.DEFAULT_RINGTONE_URI;
-        if (!TextUtils.isEmpty(toneString))
-            tone = Uri.parse(toneString);
+        // Always show "Account Info" button
+        mDrawerView.findViewById(R.id.show_oca_minutes).setVisibility(View.VISIBLE);
 
-        Ringtone ring = RingtoneManager.getRingtone(mParent, tone);
-        if (ring != null)
-            mRingtoneName.setText(ring.getTitle(mParent));
-        else
-            mRingtoneName.setText(getString(R.string.no_ringtone));
-    }
+        // Enterprise users who have org name cannot have in-app purchase.
+        /*
+         * Temporarily disable in-app purchase UI.
+         *
+         *
+        if(LoadUserInfo.checkIfHasOrganization() == LoadUserInfo.INVALID){
 
-    public void updateDialHelper() {
-        if (FindDialHelper.showDialHelperOption())
-            ((TextView)mDrawerView.findViewById(R.id.dial_helper_name)).setText(FindDialHelper.getCountryName(mParent));
+            mDrawerView.findViewById(R.id.show_in_app_purchase).setVisibility(View.VISIBLE);
+        }
+        else{
+            mDrawerView.findViewById(R.id.show_in_app_purchase).setVisibility(View.GONE);
+        }
+         */
     }
 
     private String createDetailInfo() {
@@ -664,578 +542,108 @@ public class DialDrawerFragment extends Fragment implements View.OnClickListener
         }
     }
 
-    public void prepareKeyStoreOptions() {
-        TextView typeView = (TextView)mDrawerView.findViewById(R.id.keystore_type);
-        typeView.setOnClickListener(this);
-        mDrawerView.findViewById(R.id.keystore_title).setOnClickListener(this);
-
-        int type = KeyStoreHelper.getUserPasswordType(mParent);
-        String text = getString(R.string.key_store_type_default);
-        switch (type) {
-            case KeyStoreHelper.USER_PW_TYPE_PW:
-                text = getString(R.string.key_store_type_pw);
-                break;
-            case KeyStoreHelper.USER_PW_TYPE_PIN:
-                text = getString(R.string.key_store_type_pin);
-                break;
-        }
-        typeView.setText(text);
-    }
-
     /*
      * The following part contains private methods which handle 'settings'
      *
-     * Depending on the required visibility I define some private variables near the
-     * methods, not on top of the class
      */
-
-    /*
-     *** Key store password handling
-     */
-    private void selectKeyStorePassword() {
-        final int type = KeyStoreHelper.getUserPasswordType(mParent);
-        PopupMenu popupMenu = new PopupMenu(mParent, mDrawerView.findViewById(R.id.dial_drawer_name));
-        switch (type) {
-            case KeyStoreHelper.USER_PW_TYPE_NONE:
-                popupMenu.getMenu().add(Menu.NONE, R.string.key_store_set_pw, Menu.NONE, R.string.key_store_set_pw);
-                popupMenu.getMenu().add(Menu.NONE, R.string.key_store_set_pin, Menu.NONE, R.string.key_store_set_pin);
-                break;
-            case KeyStoreHelper.USER_PW_TYPE_PW:
-                popupMenu.getMenu().add(Menu.NONE, R.string.key_store_change_pw, Menu.NONE, R.string.key_store_change_pw);
-                popupMenu.getMenu().add(Menu.NONE, R.string.key_store_reset_default, Menu.NONE, R.string.key_store_reset_default);
-                break;
-            case KeyStoreHelper.USER_PW_TYPE_PIN:
-                popupMenu.getMenu().add(Menu.NONE, R.string.key_store_change_pin, Menu.NONE, R.string.key_store_change_pin);
-                popupMenu.getMenu().add(Menu.NONE, R.string.key_store_reset_default, Menu.NONE, R.string.key_store_reset_default);
-                break;
-        }
-        popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
-            @Override
-            public boolean onMenuItemClick(MenuItem item) {
-                String action;
-                switch (item.getItemId()) {
-                    case R.string.key_store_set_pw:
-                        action = KeyStoreActivity.KEY_STORE_SET_PASSWORD;
-                        break;
-                    case R.string.key_store_set_pin:
-                        action = KeyStoreActivity.KEY_STORE_SET_PIN;
-                        break;
-                    case R.string.key_store_change_pw:
-                        action = KeyStoreActivity.KEY_STORE_CHANGE_PASSWORD;
-                        break;
-                    case R.string.key_store_change_pin:
-                        action = KeyStoreActivity.KEY_STORE_CHANGE_PIN;
-                        break;
-                    case R.string.key_store_reset_default:
-                        action = (type == KeyStoreHelper.USER_PW_TYPE_PW) ?
-                                KeyStoreActivity.KEY_STORE_RESET_PASSWORD : KeyStoreActivity.KEY_STORE_RESET_PIN;
-                        break;
-                    default:
-                        return false;
-                }
-                mCallbacks.onDrawerItemSelected(DrawerCallbacks.KEY_STORE, action);
-                return true;
-            }
-        });
-        popupMenu.show();
-    }
-
-    /*
-     *** SAS type selection
-     */
-    private String sasTypeTexts[];
-    private TextView mSasType;
-    private boolean mSas256Enabled;
-    private static int CHAR_MODE = 0;
-    private static int WORD_MODE = 1;
-
-    private void prepareSasOptions() {
-        mSasType = (TextView)mDrawerView.findViewById(R.id.sas_type_text);
-        mSasType.setOnClickListener(this);
-        mDrawerView.findViewById(R.id.sas_type_title).setOnClickListener(this);
-        sasTypeTexts = new String[] {
-                getString(R.string.sas_char_mode),
-                getString(R.string.sas_word_mode),
-        };
-        String result = TiviPhoneService.getInfo(-1, -1, "cfg.iDisable256SAS");
-
-        mSas256Enabled = "0".equals(result);     // negative logic: if 0 then B256 is not disabled -> enabled :-)
-        String sasTypeText = (mSas256Enabled) ? sasTypeTexts[WORD_MODE] : sasTypeTexts[CHAR_MODE];
-        mSasType.setText(sasTypeText);
-    }
-
-    private void selectSasType() {
-        PopupMenu popupMenu = new PopupMenu(mParent, mDrawerView.findViewById(R.id.sas_type_text));
-        if (mSas256Enabled)
-            popupMenu.getMenu().add(Menu.NONE, R.string.sas_char_mode, Menu.NONE, sasTypeTexts[CHAR_MODE]);
-        else
-            popupMenu.getMenu().add(Menu.NONE, R.string.sas_word_mode, Menu.NONE, sasTypeTexts[WORD_MODE]);
-        popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
-            @Override
-            public boolean onMenuItemClick(MenuItem item) {
-                switch (item.getItemId()) {
-                    case R.string.sas_char_mode:
-                        mSasType.setText(sasTypeTexts[CHAR_MODE]);
-                        TiviPhoneService.doCmd("set cfg.iDisable256SAS=1");
-                        mSas256Enabled = false;
-                        return true;
-                    case R.string.sas_word_mode:
-                        mSasType.setText(sasTypeTexts[WORD_MODE]);
-                        TiviPhoneService.doCmd("set cfg.iDisable256SAS=0");
-                        mSas256Enabled = true;
-                        return true;
-                    default:
-                        return false;
-                }
-            }
-        });
-        popupMenu.show();
-    }
-
-    /*
-     *** NIST setting
-     */
-    private boolean mNistPreferred;
-    private CheckBox mNistBox;
-
-    private void prepareNistCheckbox() {
-        mNistBox = (CheckBox)mDrawerView.findViewById(R.id.nist_check);
-        mNistBox.setOnClickListener(this);
-        mDrawerView.findViewById(R.id.nist_check_title).setOnClickListener(this);
-
-        String result = TiviPhoneService.getInfo(-1, -1, "cfg.iPreferNIST");
-        mNistPreferred = "1".equals(result);             // 1 -> true, do prefer NIST
-        mNistBox.setChecked(!mNistPreferred);            // The checkbox title asks for the inverted intention
-    }
-
-    private void toggleNistCheckbox() {
-        mNistPreferred = !mNistPreferred;
-        if (mNistPreferred)
-            TiviPhoneService.doCmd("set cfg.iPreferNIST=1");
-        else
-            TiviPhoneService.doCmd("set cfg.iPreferNIST=0");
-        mNistBox.setChecked(!mNistPreferred);            // The checkbox title asks for the inverted intention
-    }
-
-    /*
-     *** Start On-boot checkbox handling
-     */
-    private boolean mStartOnBoot;
-    private CheckBox mBootBox;
-
-    private void prepareOnBoot() {
-        mBootBox = (CheckBox)mDrawerView.findViewById(R.id.boot_check);
-        mBootBox.setOnClickListener(this);
-        mDrawerView.findViewById(R.id.boot_check_title).setOnClickListener(this);
-
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mParent);
-        mStartOnBoot = prefs.getBoolean(START_ON_BOOT, true);
-        mBootBox.setChecked(mStartOnBoot);
-    }
-
-    private void toggleBootCheckbox() {
-        mStartOnBoot = !mStartOnBoot;
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mParent);
-        prefs.edit().putBoolean(START_ON_BOOT, mStartOnBoot).apply();
-        mBootBox.setChecked(mStartOnBoot);
-    }
-
-    /*
-     *** Start errors checkbox handling
-     */
-    private boolean mShowErrors;
-    private CheckBox mErrorsOptionBox;
-
-    private void prepareShowErrors() {
-        mErrorsOptionBox = (CheckBox)mDrawerView.findViewById(R.id.errors_option_check);
-        mErrorsOptionBox.setOnClickListener(this);
-        mDrawerView.findViewById(R.id.errors_option_title).setOnClickListener(this);
-
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mParent);
-        mShowErrors = prefs.getBoolean(SHOW_ERRORS, false);
-        mErrorsOptionBox.setChecked(mShowErrors);
-    }
-
-    private void toggleErrorsCheckbox() {
-        mShowErrors = !mShowErrors;
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mParent);
-        prefs.edit().putBoolean(SHOW_ERRORS, mShowErrors).apply();
-        DialerActivity.mShowErrors = mShowErrors;
-        mErrorsOptionBox.setChecked(mShowErrors);
-    }
-
-    /*
-     *** Option to monitor call from native contact application
-     */
-    private boolean mNativeCallCheck;
-    private CheckBox mNativeCallBox;
-
-    private void prepareNativeCallCheck() {
-        mNativeCallBox = (CheckBox)mDrawerView.findViewById(R.id.native_call_checkbox);
-        mNativeCallBox.setOnClickListener(this);
-        mDrawerView.findViewById(R.id.native_call_check_title).setOnClickListener(this);
-
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mParent);
-        mNativeCallCheck = prefs.getBoolean(NATIVE_CALL_CHECK, true);
-        mNativeCallBox.setChecked(mNativeCallCheck);
-    }
-
-    private void toggleNativeCallCheck() {
-        mNativeCallCheck = !mNativeCallCheck;
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mParent);
-        prefs.edit().putBoolean(NATIVE_CALL_CHECK, mNativeCallCheck).apply();
-        mNativeCallBox.setChecked(mNativeCallCheck);
-    }
-
-    /*
-     *** re-provisioning
-     */
-    private void prepareReProvision() {
-        mDrawerView.findViewById(R.id.re_provision_title).setOnClickListener(this);
-    }
-
-    private void doReProvision() {
-        mCallbacks.onDrawerItemSelected(DrawerCallbacks.RE_PROVISION);
-    }
-
-    /*
-     *** Ringtone selection
-     */
-    private TextView mRingtoneName;
-
-    private void prepareRingtone() {
-        mRingtoneName = (TextView)mDrawerView.findViewById(R.id.ringtone_name);
-        mRingtoneName.setOnClickListener(this);
-        mDrawerView.findViewById(R.id.ringtone_title).setOnClickListener(this);
-        updateRingtone(null);                           // shows current selection
-    }
-
-    private void selectRingtone() {
-        if (mCallbacks == null)
-            return;
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mParent);
-
-        String toneString = prefs.getString(RINGTONE_KEY, null);
-
-        Uri selected = Settings.System.DEFAULT_RINGTONE_URI;
-        if (!TextUtils.isEmpty(toneString))
-            selected = Uri.parse(toneString);
-
-        mCallbacks.onDrawerItemSelected(DrawerCallbacks.RINGTONE, selected);
-    }
-
-    /*
-     *** UI Theme selection
-     */
-    private void prepareUiTheme() {
-        TextView themeText = (TextView)mDrawerView.findViewById(R.id.theme_text);
-        themeText.setOnClickListener(this);
-        mDrawerView.findViewById(R.id.theme_title).setOnClickListener(this);
-
-        // Change here if standard (startup) theme changes
-        String theme = getString(R.string.current_theme, Utilities.getSelectedTheme(mParent));
-        themeText.setText(theme);
-    }
-
-    private void selectUiTheme() {
-        if (mCallbacks == null)
-            return;
-
-        PopupMenu popupMenu = new PopupMenu(mParent, mDrawerView.findViewById(R.id.theme_title));
-        popupMenu.getMenu().add(Menu.NONE, R.string.theme_orange, Menu.NONE, getString(R.string.theme_orange));
-        popupMenu.getMenu().add(Menu.NONE, R.string.theme_white, Menu.NONE, getString(R.string.theme_white));
-        popupMenu.getMenu().add(Menu.NONE, R.string.theme_dusk, Menu.NONE, getString(R.string.theme_dusk));
-        popupMenu.getMenu().add(Menu.NONE, R.string.theme_black, Menu.NONE, getString(R.string.theme_black));
-        popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
-            @Override
-            public boolean onMenuItemClick(MenuItem item) {
-                switch (item.getItemId()) {
-//                    case R.string.theme_orange:
-//                        Utilities.storeThemeSelection(mParent, getString(item.getItemId()), R.style.SilentPhoneThemeOrange);
-//                        return true;
-//                    case R.string.theme_white:
-//                        Utilities.storeThemeSelection(mParent, getString(item.getItemId()), R.style.SilentPhoneThemeWhite);
-//                        return true;
-//                    case R.string.theme_dusk:
-//                        Utilities.storeThemeSelection(mParent, getString(item.getItemId()), R.style.SilentPhoneThemeDusk);
-//                        return true;
-                    case R.string.theme_black:
-                        Utilities.storeThemeSelection(mParent, getString(item.getItemId()), R.style.SilentPhoneThemeBlack);
-                        return true;
-                    default:
-                        return false;
-                }
-            }
-        });
-        popupMenu.show();
-    }
-
-    /*
-     *** Dial assist handling
-     */
-    private void prepareDialHelperOption() {
-        if (FindDialHelper.showDialHelperOption() && (ConfigurationUtilities.mTrace || !TextUtils.isEmpty(DialerActivity.mNumber))) {
-            mDrawerView.findViewById(R.id.dial_helper).setVisibility(View.VISIBLE);
-            ((TextView)mDrawerView.findViewById(R.id.dial_helper_name)).setText(FindDialHelper.getCountryName(mParent));
-            mDrawerView.findViewById(R.id.dial_helper).setOnClickListener(this);
-            mDrawerView.findViewById(R.id.dial_helper_name).setOnClickListener(this);
-        }
-    }
-
-    private void selectDialHelper() {
-        mCallbacks.onDrawerItemSelected(DrawerCallbacks.DIAL_HELPER);
-    }
-
     private void showInputInfo(String msg) {
-        ProvisioningActivity.InfoMsgDialogFragment infoMsg = ProvisioningActivity.InfoMsgDialogFragment.newInstance(msg);
+        InfoMsgDialogFragment infoMsg = InfoMsgDialogFragment.newInstance(R.string.remaining_oca_minutes_dialog, msg, R.string.confirm_dialog, -1);
         FragmentManager fragmentManager = getFragmentManager();
         if (fragmentManager == null) {
-            Log.e(TAG, "Could not get Fragment manager to show error info: " + msg);
+            Log.e(TAG, "Could not get Fragment manager: " + msg);
             Toast.makeText(mParent, msg, Toast.LENGTH_LONG).show();
             return;
         }
-        infoMsg.show(fragmentManager, "SilentPhoneOcaInfo");
-        // Special dialog that requires a title other than "Information"
-        // TODO: Don't use InfoMsgDialogFragment
-        getFragmentManager().executePendingTransactions();
-        infoMsg.getDialog().setTitle(R.string.remaining_oca_minutes_dialog);
+
+        FragmentTransaction ft = getFragmentManager().beginTransaction();
+        ft.add(infoMsg, "SilentPhoneOcaInfo");
+        ft.commitAllowingStateLoss();
     }
 
-    private PopupMenu mExtendedMenu;
-    private void prepareExtendedMenu() {
-        if (mExtendedMenu == null) {
-            mExtendedMenu = new PopupMenu(mParent, mDrawerView.findViewById(R.id.extended_menu));
-            mDrawerView.findViewById(R.id.extended_menu).setOnClickListener(this);
-            mExtendedMenu.inflate(R.menu.dial_drawer);
-        }
-        Menu menu = mExtendedMenu.getMenu();
-        if (ConfigurationUtilities.mEnableDevDebOptions) {
-            menu.setGroupVisible(R.id.dial_group_develop, true);
-            MenuItem menuItem = menu.findItem(R.id.dial_menu_production);
-            menuItem.setVisible(ConfigurationUtilities.mUseDevelopConfiguration);
-
-            menuItem = menu.findItem(R.id.dial_menu_develop);
-            menuItem.setVisible(!ConfigurationUtilities.mUseDevelopConfiguration);
-
-            menuItem = menu.findItem(R.id.dial_menu_answer_on);
-            menuItem.setVisible(false /* !DialerActivity.mAutoAnswerForTesting */);
-
-            menuItem = menu.findItem(R.id.dial_menu_answer_off);
-            menuItem.setVisible(false /*DialerActivity.mAutoAnswerForTesting*/);
-
-            menuItem = menu.findItem(R.id.dial_menu_axo_register_force);
-            menuItem.setVisible(true /*DialerActivity.mAutoAnswerForTesting*/);
-        }
-        MenuItem menuItem = menu.findItem(R.id.dial_menu_axo_register);
-        AxoMessaging axoMessaging = AxoMessaging.getInstance(mParent.getApplicationContext());
-        menuItem.setVisible(!axoMessaging.isRegistered());
-
-        menuItem = menu.findItem(R.id.dial_menu_axo_device);
-        menuItem.setVisible(true);
-
-        mExtendedMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
-            @Override
-            public boolean onMenuItemClick(MenuItem item) {
-                return onOptionsItemSelected(item) || mParent.onOptionsItemSelected(item);
-            }
-        });
-    }
-
-    private void selectExtendedMenu() {
-        if (mExtendedMenu == null)
+    // This is a distinct function because of an issue with AlertDialog.Builder#set*(String) stripping links
+    private void showInputInfo(int msgResId) {
+        InfoMsgDialogFragment infoMsg = InfoMsgDialogFragment.newInstance(R.string.remaining_oca_minutes_dialog, msgResId, R.string.confirm_dialog, -1);
+        FragmentManager fragmentManager = getFragmentManager();
+        if (fragmentManager == null) {
+            Log.e(TAG, "Could not get Fragment manager: " + getString(msgResId));
+            Toast.makeText(mParent, getString(msgResId), Toast.LENGTH_LONG).show();
             return;
-        mExtendedMenu.show();
-    }
-    /*
-     *** Advanced setting, available after *##*123*
-     */
-    private boolean mUseMediaRelay;
-    private CheckBox mMediaRelayBox;
-
-    private boolean mUseUnderflow;
-    private CheckBox mUnderflowBox;
-
-    private boolean mEnableTraversal;
-    private CheckBox mEnableTraversalBox;
-
-    private boolean mForceTraversal;
-    private CheckBox mForceTraversalBox;
-
-    private void prepareAdvancedSettings() {
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mParent);
-
-        // Setup media relay check box
-        mMediaRelayBox = (CheckBox)mDrawerView.findViewById(R.id.media_relay_check);
-        mMediaRelayBox.setOnClickListener(this);
-        mDrawerView.findViewById(R.id.media_relay_title).setOnClickListener(this);
-
-        // Setup underflow check box
-        mUnderflowBox = (CheckBox)mDrawerView.findViewById(R.id.underflow_check);
-        mUnderflowBox.setOnClickListener(this);
-        mDrawerView.findViewById(R.id.underflow_title).setOnClickListener(this);
-        mUseUnderflow = prefs.getBoolean(ENABLE_UNDERFLOW_TONE, true);
-        mUnderflowBox.setChecked(mUseUnderflow);
-
-        // Enable FW traversal
-        mEnableTraversalBox = (CheckBox)mDrawerView.findViewById(R.id.traversal_check);
-        mEnableTraversalBox.setOnClickListener(this);
-        mDrawerView.findViewById(R.id.traversal_title).setOnClickListener(this);
-        mEnableTraversal = prefs.getBoolean(ENABLE_FW_TRAVERSAL, true);
-        mEnableTraversalBox.setChecked(mEnableTraversal);
-
-        // Prepare force FW traversal
-        mForceTraversalBox = (CheckBox)mDrawerView.findViewById(R.id.force_traversal_check);
-        mForceTraversalBox.setOnClickListener(this);
-        mDrawerView.findViewById(R.id.force_traversal_title).setOnClickListener(this);
-        mForceTraversal = prefs.getBoolean(FORCE_FW_TRAVERSAL, false);
-        if (!mEnableTraversal)
-            mForceTraversal = false;
-        mForceTraversalBox.setChecked(mForceTraversal);
-    }
-
-    public void activateTraversal() {
-        if (mEnableTraversal)
-            TiviPhoneService.doCmd("set cfg.iEnableFWTraversal=1");
-        else {
-            TiviPhoneService.doCmd("set cfg.iEnableFWTraversal=0");
-            TiviPhoneService.doCmd("set cfg.iForceFWTraversal=0");
         }
-        if (mForceTraversal)
-            TiviPhoneService.doCmd("set cfg.ForceFWTraversal=1");
-        else {
-            TiviPhoneService.doCmd("set cfg.iForceFWTraversal=0");
+
+        FragmentTransaction ft = getFragmentManager().beginTransaction();
+        ft.add(infoMsg, "SilentPhoneOcaInfo");
+        ft.commitAllowingStateLoss();
+
+        // Make possible links clickable
+        fragmentManager.executePendingTransactions();
+        ((TextView)infoMsg.getDialog().findViewById(android.R.id.message)).setMovementMethod(LinkMovementMethod.getInstance());
+    }
+
+    // In-app purchase
+    private void showInAppPurchase(){
+        Intent intent = new Intent(getActivity(), PaymentUseStripeActivity.class);
+        startActivity(intent);
+    }
+
+    @SuppressWarnings("deprecation")
+    public void setOnlineStatus() {
+        if (mDrawerView == null) {
+            return;
+        }
+
+        ImageView onlineStatus = (ImageView) mDrawerView.findViewById(R.id.self_avatar_online_status);
+        int registerStatus = TiviPhoneService.getPhoneState();
+        switch (registerStatus) {
+            case 1:             // connecting
+                onlineStatus.setColorFilter(mColorFilterUnknown);
+                break;
+            case 2:             // online
+                onlineStatus.setColorFilter(mColorFilterOnline);
+                break;
+            default:            // offline
+                onlineStatus.setColorFilter(mColorFilterOffline);
         }
     }
 
-    public void activateDropoutTone() {
-        TiviPhoneService.doCmd("set cfg.iAudioUnderflow=" + (mUseUnderflow ? "1" : "0"));
-    }
-
-    private void toggleEnableTraversalBox() {
-        mEnableTraversal = !mEnableTraversal;
-        boolean show = ((DialerActivity)mParent).isAdvancedSettings();
-        mEnableTraversalBox.setChecked(mEnableTraversal);
-        if (mEnableTraversal) {
-            TiviPhoneService.doCmd("set cfg.iEnableFWTraversal=1");
-            if (show)
-                mDrawerView.findViewById(R.id.force_traversal).setVisibility(View.VISIBLE);
+    private void setAvatarImage() {
+        if (mAvatarBitmap != null) {
+            ((ImageView) mDrawerView.findViewById(R.id.self_avatar)).setImageBitmap(mAvatarBitmap);
         }
         else {
-            TiviPhoneService.doCmd("set cfg.iEnableFWTraversal=0");
-            TiviPhoneService.doCmd("set cfg.iForceFWTraversal=0");
-            mForceTraversal = false;
-            if (show)
-                mDrawerView.findViewById(R.id.force_traversal).setVisibility(View.GONE);
+            if (mDownloadImageTask != null) {
+                mDownloadImageTask.cancel(false);
+            }
+            mDownloadImageTask = AsyncUtils.execute(new DownloadImageTask(mParent) {
+                @Override
+                protected void onPostExecute(Bitmap bitmap) {
+                    if (ConfigurationUtilities.mTrace) {
+                        Log.d(TAG, "Downloading of image finished, bitmap " + bitmap
+                                + ", isAdded: " + isAdded());
+                    }
+                    if (mDrawerView != null && bitmap != null) {
+                        bitmap = ViewUtil.getCircularBitmap(bitmap);
+                        int height = (int) (bitmap.getHeight() * (mImageWidth / bitmap.getWidth()));
+                        mAvatarBitmap = Bitmap.createScaledBitmap(bitmap, (int) mImageWidth, height, true);
+                        ((ImageView) mDrawerView.findViewById(R.id.self_avatar)).setImageBitmap(mAvatarBitmap);
+                        if (mDownloadImageTask == this) {
+                            mDownloadImageTask = null;
+                        }
+                    }
+                }
+            }, LoadUserInfo.getAvatarUrl());
         }
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mParent);
-        prefs.edit().putBoolean(ENABLE_FW_TRAVERSAL, mEnableTraversal)
-                .putBoolean(FORCE_FW_TRAVERSAL, mForceTraversal).apply();
     }
 
-    private void toggleForceTraversalBox() {
-        mForceTraversal = !mForceTraversal;
-        mForceTraversalBox.setChecked(mForceTraversal);
-        if (mForceTraversal) {
-            TiviPhoneService.doCmd("set cfg.iForceFWTraversal=1");
-        }
-        else {
-            TiviPhoneService.doCmd("set cfg.iForceFWTraversal=0");
-        }
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mParent);
-        prefs.edit().putBoolean(FORCE_FW_TRAVERSAL, mForceTraversal).apply();
+    private void wipePhone() {
+        AlertDialogFragment dialogFragment = AlertDialogFragment.getInstance(
+                R.string.are_you_sure,
+                R.string.dialog_message_wipe_phone,
+                R.string.dialog_button_cancel,
+                R.string.wipe,
+                null,
+                false);
+        dialogFragment.setTargetFragment(this, WIPE_PHONE);
+        dialogFragment.show(getFragmentManager(), AlertDialogFragment.TAG_ALERT_DIALOG);
     }
 
-    private void toggleUnderflowCheckbox() {
-        mUseUnderflow = !mUseUnderflow;
-        if (mUseUnderflow)
-            TiviPhoneService.doCmd("set cfg.iAudioUnderflow=1");
-        else
-            TiviPhoneService.doCmd("set cfg.iAudioUnderflow=0");
-        TiviPhoneService.doCmd(":s");
-        mUnderflowBox.setChecked(mUseUnderflow);
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mParent);
-        prefs.edit().putBoolean(ENABLE_UNDERFLOW_TONE, mUseUnderflow).apply();
-    }
-
-
-    private void toggleMediaRelayCheckbox() {
-        mUseMediaRelay = !mUseMediaRelay;
-        if (mUseMediaRelay)
-            TiviPhoneService.doCmd("set cfg.iCanUseP2Pmedia=0");
-        else
-            TiviPhoneService.doCmd("set cfg.iCanUseP2Pmedia=1");
-        TiviPhoneService.doCmd(":s");
-        mMediaRelayBox.setChecked(mUseMediaRelay);
-    }
-
-    /* messaging related settings */
-    private CheckBox mMessageSoundsBox;
-    private CheckBox mMessageAttachmentDecryptWarnBox;
-    private CheckBox mMessageBurnAnimationBox;
-
-    private void prepareMessagingSettings() {
-        // this section works only if chat option is enabled
-        // set up options
-        mDrawerView.findViewById(R.id.messaging_sounds).setVisibility(View.VISIBLE);
-        mMessageSoundsBox = (CheckBox) mDrawerView.findViewById(R.id.messaging_sounds_check);
-        mMessageSoundsBox.setChecked(MessagingPreferences.getInstance(getActivity()).getMessageSoundsEnabled());
-        mMessageSoundsBox.setOnCheckedChangeListener(this);
-        mDrawerView.findViewById(R.id.messaging_sounds_title).setOnClickListener(this);
-
-        mDrawerView.findViewById(R.id.attachment_decrypt_warn).setVisibility(View.VISIBLE);
-        mMessageAttachmentDecryptWarnBox = (CheckBox) mDrawerView.findViewById(R.id.attachment_decrypt_warn_check);
-        mMessageAttachmentDecryptWarnBox.setChecked(MessagingPreferences.getInstance(getActivity()).getWarnWhenDecryptAttachment());
-        mMessageAttachmentDecryptWarnBox.setOnCheckedChangeListener(this);
-        mDrawerView.findViewById(R.id.attachment_decrypt_warn_title).setOnClickListener(this);
-
-        /* As requested do not allow user to switch burn animation off */
-        mDrawerView.findViewById(R.id.burn_animation).setVisibility(View.GONE);
-        mMessageBurnAnimationBox = (CheckBox) mDrawerView.findViewById(R.id.burn_animation_check);
-        mMessageBurnAnimationBox.setChecked(MessagingPreferences.getInstance(getActivity()).getShowBurnAnimation());
-        mMessageBurnAnimationBox.setOnCheckedChangeListener(this);
-        mDrawerView.findViewById(R.id.burn_animation_title).setOnClickListener(this);
-    }
-
-    private void toggleMessageSoundsCheckbox() {
-        mMessageSoundsBox.toggle();
-    }
-
-    private void toggleErrorsOptionCheckbox() {
-        mErrorsOptionBox.toggle();
-    }
-
-    private void toggleMessageAttachmentDecryptWarnCheckbox() {
-        mMessageAttachmentDecryptWarnBox.toggle();
-    }
-
-    private void toggleMessageBurnAnimationCheckbox() {
-        mMessageBurnAnimationBox.toggle();
-    }
-
-    private void showAdvancedSettings() {
-        // Show dropout tone option (underflow) always
-        String result = TiviPhoneService.getInfo(-1, -1, "cfg.iAudioUnderflow");
-        mUseUnderflow = "1".equals(result);             // 1 -> true,
-        mUnderflowBox.setChecked(mUseUnderflow);
-
-        boolean show = ((DialerActivity)mParent).isAdvancedSettings();
-        View v = mDrawerView.findViewById(R.id.media_relay);
-        if (show) {
-            result = TiviPhoneService.getInfo(0, -1, "cfg.iCanUseP2Pmedia");
-            mUseMediaRelay = "0".equals(result);             // 1 -> true, client can use p2p
-            mMediaRelayBox.setChecked(mUseMediaRelay);      // The checkbox title asks for the inverted intention
-            v.setVisibility(View.VISIBLE);
-        }
-        else
-            v.setVisibility(View.GONE);
-
-        // Show force FW enable only if FW enabled is set
-        v = mDrawerView.findViewById(R.id.force_traversal);
-        if (show && mEnableTraversal) {
-            mForceTraversalBox.setChecked(mForceTraversal);
-            v.setVisibility(View.VISIBLE);
-        }
-        else
-            v.setVisibility(View.GONE);
-    }
 }

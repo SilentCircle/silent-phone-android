@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/bg_profile"
+        android:layout_alignTop="@+id/self_avatar_container"
+        android:layout_alignBottom="@id/self_avatar_container"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentRight="true"
+        />
+
+    <FrameLayout
+        android:id="@+id/self_avatar_container"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingLeft="@dimen/dial_drawer_avatar_padding_left"
+        android:paddingStart="@dimen/dial_drawer_avatar_padding_left"
+        android:paddingTop="@dimen/dial_drawer_avatar_padding_top"
+        android:paddingBottom="@dimen/dial_drawer_avatar_padding_bottom"
+        android:layout_centerVertical="true">
+
+        <ImageView
+            android:id="@+id/self_avatar"
+            android:layout_width="@dimen/dial_drawer_avatar_size"
+            android:layout_height="@dimen/dial_drawer_avatar_size"
+            android:scaleType="centerCrop"
+            android:src="@drawable/ic_avatar_placeholder_circular"
+            android:layout_gravity="center" />
+
+    </FrameLayout>
+
+    <LinearLayout
+        android:id="@+id/self_name_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="@dimen/space_large"
+        android:layout_marginLeft="@dimen/space_large"
+        android:layout_marginRight="@dimen/space_large"
+        android:layout_marginStart="@dimen/space_large"
+        android:layout_toEndOf="@+id/self_avatar_container"
+        android:layout_toRightOf="@+id/self_avatar_container"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentRight="true"
+        android:layout_centerVertical="true"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <com.silentcircle.common.widget.AdjustingTextView
+                android:id="@+id/self_avatar_display_name"
+                tools:text="Display name"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_gravity="center_vertical"
+                android:ellipsize="end"
+                android:singleLine="true"
+                android:textColor="@color/sc_ng_text_grey"
+                android:textSize="@dimen/text_xlarge"
+                android:textStyle="bold"
+                android:includeFontPadding="false"
+                app:minTextSize="@dimen/text_small"
+                />
+
+            <ImageView
+                android:id="@+id/self_avatar_online_status"
+                android:layout_width="@dimen/spacing_large"
+                android:layout_height="@dimen/spacing_large"
+                android:layout_marginLeft="@dimen/space_normal"
+                android:layout_marginStart="@dimen/space_normal"
+                android:layout_gravity="center_vertical"
+                android:scaleType="center"
+                android:src="@drawable/bg_online_status_indicator"
+                />
+
+        </LinearLayout>
+
+        <com.silentcircle.common.widget.AdjustingTextView
+            android:id="@+id/self_avatar_alias"
+            tools:text="username"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:includeFontPadding="false"
+            android:ellipsize="none"
+            android:singleLine="true"
+            android:textColor="@color/sc_ng_text_grey_5"
+            android:textSize="@dimen/text_xlarge"
+            app:minTextSize="@dimen/text_small"
+            />
+
+    </LinearLayout>
+
+</RelativeLayout>

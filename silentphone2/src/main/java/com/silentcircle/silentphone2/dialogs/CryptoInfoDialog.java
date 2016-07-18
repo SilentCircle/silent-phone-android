@@ -27,13 +27,16 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 package com.silentcircle.silentphone2.dialogs;
 
+import android.annotation.TargetApi;
 import android.app.Activity;
-import android.app.AlertDialog;
+import android.support.v7.app.AlertDialog;
 import android.app.Dialog;
 import android.app.DialogFragment;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
+import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
@@ -48,8 +51,6 @@ import com.silentcircle.silentphone2.services.TiviPhoneService;
 import com.silentcircle.silentphone2.util.CallState;
 import com.silentcircle.silentphone2.util.CompatibilityHelper;
 import com.silentcircle.silentphone2.util.ConfigurationUtilities;
-
-import org.w3c.dom.Text;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -213,6 +214,8 @@ public class CryptoInfoDialog extends DialogFragment implements View.OnClickList
      * @param secret which shared secret to check
      * @return the color to the status
      */
+    @TargetApi(Build.VERSION_CODES.M)
+    @SuppressWarnings("deprecation")
     private static Drawable getSharedSecretStatus(Context ctx, String secret) {
 
         String cmd = "media.zrtp." + secret;
@@ -223,14 +226,21 @@ public class CryptoInfoDialog extends DialogFragment implements View.OnClickList
         if (TextUtils.isEmpty(res))
             return null;
 
+        Resources resource = ctx.getResources();
         if ("0".compareTo(res) == 0)
-            return ctx.getResources().getDrawable(R.drawable.indicator_gray);            // Gray
+            return Build.VERSION.SDK_INT < Build.VERSION_CODES.M ?
+                    resource.getDrawable(R.drawable.indicator_gray) :
+                    resource.getDrawable(R.drawable.indicator_gray, null);            // Gray
 
         if ("1".compareTo(res) == 0)
-            return ctx.getResources().getDrawable(R.drawable.indicator_red);            // Red
+            return Build.VERSION.SDK_INT < Build.VERSION_CODES.M ?
+                    resource.getDrawable(R.drawable.indicator_red) :
+                    resource.getDrawable(R.drawable.indicator_red, null);            // Red
 
         if ("2".compareTo(res) == 0)
-            return ctx.getResources().getDrawable(R.drawable.indicator_green);          // Green
+            return Build.VERSION.SDK_INT < Build.VERSION_CODES.M ?
+                    resource.getDrawable(R.drawable.indicator_green) :
+                    resource.getDrawable(R.drawable.indicator_green, null);          // Green
 
         return null;
     }

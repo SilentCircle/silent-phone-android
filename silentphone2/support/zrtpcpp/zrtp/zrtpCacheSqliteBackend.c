@@ -24,7 +24,13 @@
 #include <stdint.h>
 #include <string.h>
 #include <time.h>
+
+#ifndef SQL_CIPHER
 #include <sqlite3.h>
+#else
+#include <sqlcipher/sqlite3.h>
+#endif
+
 
 #include <crypto/zrtpDH.h>
 

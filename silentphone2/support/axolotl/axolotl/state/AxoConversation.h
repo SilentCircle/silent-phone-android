@@ -23,6 +23,7 @@
 #include <string.h>    // for memset
 #include <list>
 #include <utility>
+#include <memory>
 
 #include "../crypto/DhPublicKey.h"
 #include "../crypto/DhKeyPair.h"
@@ -39,9 +40,9 @@ namespace axolotl {
 class AxoConversation
 {
 public:
-    AxoConversation(const string& localUser, const string& user, const string& deviceId) : partner_(user, emptyString), 
+    AxoConversation(const string& localUser, const string& user, const string& deviceId) : stagedMk(NULL), partner_(user, emptyString),
                     deviceId_(deviceId), localUser_(localUser), DHRs(NULL), DHRr(NULL), DHIs(NULL), DHIr(NULL), A0(NULL), Ns(0), 
-                    Nr(0), PNs(0), preKeyId(0), ratchetFlag(false), zrtpVerifyState(0), availablePreKeys(0)
+                    Nr(0), PNs(0), preKeyId(0), ratchetFlag(false), zrtpVerifyState(0), availablePreKeys(0), errorCode_(0)
                     { }
 
 
@@ -65,6 +66,21 @@ public:
      */
     static AxoConversation* loadConversation(const string& localUser, const string& user, const string& deviceId);
 
+    // Currently not used, maybe we need to re-enable it, depending on new user UID (canonical name) design
+#if 0
+    /**
+     * @brief Rename a conversation in the database.
+     * 
+     * @param localUserOld existing name of own user/account
+     * @param localUserNew new name of own user/account
+     * @param userOld existing name of the remote user
+     * @param userNew new name of the remote user
+     * @param deviceId The remote user's device id if it is available
+     * @return @c SQLITE_OK if renaming of conversation was OK, an SQLite error code on failure.
+     */
+    static int32_t renameConversation(const string& localUserOld, const string& localUserNew, 
+                                      const string& userOld, const string& userNew, const string& deviceId);
+#endif
     /**
      * @brief Store this conversation in persitent store
      */
@@ -72,7 +88,7 @@ public:
 
     void storeStagedMks();
 
-    list<string>* loadStagedMks();
+    shared_ptr<list<string> > loadStagedMks();
 
     void deleteStagedMk(string& mkiv);
 
@@ -121,8 +137,8 @@ public:
     void setPNs(int32_t number)             { PNs = number; }
     int32_t getPNs() const                  { return PNs; }
 
-    void setPreKeyId(uint32_t id)           { preKeyId = id; }
-    uint32_t getPreKeyId() const            { return preKeyId; }
+    void setPreKeyId(int32_t id)            { preKeyId = id; }
+    int32_t getPreKeyId() const             { return preKeyId; }
 
     void setRatchetFlag(bool flag)          { ratchetFlag = flag; }
     bool getRatchetFlag() const             { return ratchetFlag; }
@@ -130,8 +146,8 @@ public:
     void setZrtpVerifyState(int32_t state)  { zrtpVerifyState = state; }
     int32_t getZrtpVerifyState() const      { return zrtpVerifyState; }
 
-    void setPreKeysAvail(int32_t num)       { availablePreKeys = num; }
-    int32_t getPreKeysAvail() const         { return availablePreKeys; }
+    void setPreKeysAvail(size_t num)        { availablePreKeys = num; }
+    size_t getPreKeysAvail() const          { return availablePreKeys; }
 
     list<string>* stagedMk;
 
@@ -174,7 +190,7 @@ private:
     int32_t      preKeyId;      //!< Remote party's pre-key id
     bool      ratchetFlag;      //!< True if the party will send a new ratchet key in next message
     int32_t   zrtpVerifyState;
-    int32_t   availablePreKeys; //!< Only used in local conversation to track number of available pre-keys
+    size_t    availablePreKeys; //!< Only used in local conversation to track number of available pre-keys
     // ***** end of persitent data
 
     /*

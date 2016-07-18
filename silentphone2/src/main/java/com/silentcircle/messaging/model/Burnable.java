@@ -33,20 +33,20 @@ package com.silentcircle.messaging.model;
  */
 public abstract class Burnable {
 
-	// TODO: check if we need these functions, if yes implement randomize
-	protected static void burn( byte [] data ) {
-		//*IOUtils.randomize( data */);
-	}
+    // TODO: check if we need these functions, if yes implement randomize
+    protected static void burn(byte[] data) {
+        //*IOUtils.randomize( data */);
+    }
 
-	protected static void burn( char [] data ) {
-		/*IOUtils.randomize( data );*/
-	}
+    protected static void burn(char[] data) {
+        /*IOUtils.randomize( data );*/
+    }
 
-	protected static final byte AT = '@';
+    protected static final byte AT = '@';
 
-	/**
-	 * Randomizes and clears all mutable fields associated with this object.
-	 */
-	public abstract void clear();
+    /**
+     * Randomizes and clears all mutable fields associated with this object.
+     */
+    public abstract void clear();
 
 }

@@ -10,11 +10,12 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
       xmlns:app="http://schemas.android.com/apk/res-auto">
 
+    <item android:id="@+id/call_dev"
+          android:title="@string/call_other"
+          app:showAsAction="never"/>
+
     <item android:id="@+id/delete_dev"
           android:title="@string/delete"
           app:showAsAction="never"/>
 
-    <item android:id="@+id/call_dev"
-          android:title="@string/call_other"
-          app:showAsAction="never"/>
 </menu>

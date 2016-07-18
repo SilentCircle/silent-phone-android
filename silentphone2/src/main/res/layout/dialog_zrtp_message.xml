@@ -11,11 +11,13 @@
               xmlns:tools="http://schemas.android.com/tools"
               android:layout_width="match_parent"
               android:layout_height="match_parent"
+              android:paddingLeft="@dimen/spacing_large"
+              android:paddingRight="@dimen/spacing_large"
               android:orientation="vertical">
 
     <TextView
             android:id="@+id/ZrtpWEType"
-            style="@style/Widget.Silent.SimpleText.Large"
+            style="@style/Widget.Silent.CryptoInfoText.Large"
             android:layout_width="wrap_content"
             android:layout_marginTop="@dimen/activity_vertical_margin"
             android:layout_gravity="center_horizontal"
@@ -24,28 +26,31 @@
 
     <TextView
             android:id="@+id/ZrtpWEShortText"
-            style="@style/Widget.Silent.SimpleText.Medium"
+            style="@style/Widget.Silent.CryptoInfoText.Medium"
             android:layout_width="wrap_content"
             android:layout_marginTop="@dimen/activity_vertical_margin"
             tools:text="Some short error text"/>
 
     <Button
             android:id="@+id/ZrtpDetailsButton"
-            style="@style/Widget.Silent.SimpleText.Large"
+            style="@style/Widget.Button.Light"
             android:layout_marginTop="@dimen/activity_vertical_margin"
+            android:layout_width="match_parent"
             android:gravity="center_horizontal|center_vertical"
-            android:text="@string/zrtp_show_details"/>
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:text="@string/zrtp_show_details"
+            android:layout_height="wrap_content" />
 
-	<TextView
+    <TextView
             android:id="@+id/ZrtpWEText"
-            style="@style/Widget.Silent.SimpleText.Medium"
+            style="@style/Widget.Silent.CryptoInfoText.Medium"
             android:layout_width="wrap_content"
             android:layout_marginTop="@dimen/activity_vertical_margin"
             tools:text="sm_cNNN: Original ZRTP error text" />
 
-	<TextView
+    <TextView
             android:id="@+id/ZrtpWEExplanation"
-            style="@style/Widget.Silent.SimpleText.Medium"
+            style="@style/Widget.Silent.CryptoInfoText.Medium"
             android:layout_width="wrap_content"
             android:layout_marginTop="@dimen/activity_vertical_margin"
             tools:text="some nice longer explanation for the user" />

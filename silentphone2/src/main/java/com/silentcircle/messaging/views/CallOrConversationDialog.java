@@ -27,9 +27,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 package com.silentcircle.messaging.views;
 
-import android.app.Dialog;
 import android.content.Context;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatDialog;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.ImageButton;
@@ -39,7 +39,7 @@ import com.silentcircle.silentphone2.R;
 /**
  * Dialog for selection between call or conversation.
  */
-public class CallOrConversationDialog extends Dialog {
+public class CallOrConversationDialog extends AppCompatDialog {
 
     private final boolean mWithContact;
     public interface OnCallOrConversationSelectedListener {
@@ -49,12 +49,12 @@ public class CallOrConversationDialog extends Dialog {
         void onConversationSelected();
 
         void onAddContactSelected();
-    };
+    }
 
     private OnCallOrConversationSelectedListener mListener;
 
     public CallOrConversationDialog(final Context context, final boolean withContact) {
-        super(context, R.style.CallOrConversationDialogTheme);
+        super(context, R.style.Dialog_Spa4);
         mWithContact = withContact;
     }
 
@@ -62,6 +62,7 @@ public class CallOrConversationDialog extends Dialog {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.dialog_choose_call_conversation);
+        setTitle(R.string.dialog_title_choose_action);
 
         WindowManager.LayoutParams params = getWindow().getAttributes();
         params.height = WindowManager.LayoutParams.WRAP_CONTENT;

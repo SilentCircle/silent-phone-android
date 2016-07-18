@@ -28,22 +28,23 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 package com.silentcircle.messaging.services;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.os.AsyncTask;
+import android.os.Handler;
+import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+import android.support.annotation.WorkerThread;
 import android.text.TextUtils;
 import android.util.Log;
-import android.widget.Toast;
 
-import com.silentcircle.contacts.utils.PhoneNumberHelper;
+import com.silentcircle.common.util.AsyncTasks;
 import com.silentcircle.keymanagersupport.KeyManagerSupport;
 import com.silentcircle.keystore.KeyStoreHelper;
 import com.silentcircle.messaging.activities.AxoRegisterActivity;
-import com.silentcircle.messaging.activities.ConversationActivity;
-import com.silentcircle.messaging.model.Contact;
 import com.silentcircle.messaging.model.Conversation;
 import com.silentcircle.messaging.model.MessageErrorCodes;
 import com.silentcircle.messaging.model.MessageStates;
@@ -55,7 +56,9 @@ import com.silentcircle.messaging.model.event.OutgoingMessage;
 import com.silentcircle.messaging.repository.ConversationRepository;
 import com.silentcircle.messaging.repository.DbRepository.DbConversationRepository;
 import com.silentcircle.messaging.repository.EventRepository;
+import com.silentcircle.messaging.task.SendMessageTask;
 import com.silentcircle.messaging.util.Action;
+import com.silentcircle.messaging.util.AsyncUtils;
 import com.silentcircle.messaging.util.Extra;
 import com.silentcircle.messaging.util.IOUtils;
 import com.silentcircle.messaging.util.MessageUtils;
@@ -66,6 +69,7 @@ import com.silentcircle.silentphone2.services.TiviPhoneService;
 import com.silentcircle.silentphone2.util.ConfigurationUtilities;
 import com.silentcircle.silentphone2.util.PinnedCertificateHandling;
 import com.silentcircle.silentphone2.util.Utilities;
+import com.silentcircle.userinfo.LoadUserInfo;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -75,10 +79,10 @@ import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
@@ -86,6 +90,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Locale;
 import java.util.Map;
+import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
 import javax.net.ssl.HttpsURLConnection;
@@ -110,6 +115,7 @@ import axolotl.AxolotlNative;
  *
  * Created by werner on 26.05.15.
  */
+@SuppressLint("SimpleDateFormat")
 public class AxoMessaging extends AxolotlNative {
     public static final String TAG = "AxoMessaging";
 
@@ -121,12 +127,22 @@ public class AxoMessaging extends AxolotlNative {
     public static final int SQLITE_OK = 0;
     public static final int SQLITE_ROW = 100;
 
+    public static final int UPDATE_ACTION_MESSAGE_STATE_CHANGE = 1;
+    public static final int UPDATE_ACTION_MESSAGE_BURNED = 2;
+    public static final int UPDATE_ACTION_MESSAGE_SEND = 3;
+
+    /** Several modules use this format to define a common UTC date */
+    public static final SimpleDateFormat ISO8601;
+    static {
+        ISO8601 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+        ISO8601.setTimeZone(TimeZone.getTimeZone("UTC"));
+    }
+
     public static boolean mSuppressErrorView;
     private static AxoMessaging instance;
 
     private boolean mIsReady;
 
-    private String mNumber;
     private String mName;
 
     private byte[] mScDeviceId;
@@ -143,12 +159,14 @@ public class AxoMessaging extends AxolotlNative {
     private String mRegisteredKey;
     private String mAskRegisterKey;
 
+    private final Object syncObj = new Object();
     private final Collection<AxoMessagingStateCallback> msgStateListeners = new LinkedList<>();
 
     public interface AxoMessagingStateCallback {
         void axoRegistrationStateChange(boolean registered);
     }
 
+    @NonNull
     public static synchronized AxoMessaging getInstance(Context ctx) {
         if (instance == null)
             instance = new AxoMessaging(ctx);
@@ -175,7 +193,9 @@ public class AxoMessaging extends AxolotlNative {
         if (TiviPhoneService.phoneService == null || !TiviPhoneService.phoneService.isReady())
             return;
 
-        setupNameNumber();
+        if (TextUtils.isEmpty(mName))
+            mName = LoadUserInfo.getUuid();
+
         if (TextUtils.isEmpty(mName))
             return;
 
@@ -188,6 +208,10 @@ public class AxoMessaging extends AxolotlNative {
         String dbName = ConfigurationUtilities.getRepoDbName();
         File dbFile = mContext.getDatabasePath(dbName);
         byte[] keyData = getRepositoryKey();
+        if (keyData == null) {
+            throw new IllegalStateException("No key data for repository database.");
+        }
+
         int sqlCode = AxolotlNative.repoOpenDatabase(dbFile.getAbsolutePath(), keyData);
         Arrays.fill(keyData, (byte) 0);
         if (sqlCode > SQLITE_OK && sqlCode < SQLITE_ROW) {
@@ -199,6 +223,9 @@ public class AxoMessaging extends AxolotlNative {
         // No key yet - generate one and store it
         if (keyData == null) {
             keyData = KeyManagerSupport.randomPrivateKeyData(mContext.getContentResolver(), AXOLOTL_STORE_KEY, 32);
+        }
+        if (keyData == null) {
+            throw new IllegalStateException("No key data for Axolotl database.");
         }
         dbName = mName + ConfigurationUtilities.getConversationDbName();
         dbFile = mContext.getDatabasePath(dbName);
@@ -232,6 +259,10 @@ public class AxoMessaging extends AxolotlNative {
         return mIsReady;
     }
 
+    public void setReady(boolean isReady) {
+        mIsReady = isReady;
+    }
+
     public String getUserName() {
         return mName;
     }
@@ -239,6 +270,11 @@ public class AxoMessaging extends AxolotlNative {
     public boolean isRegistered() {
         final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mContext);
         return prefs.getBoolean(mRegisteredKey, false);
+    }
+
+    public void setRegistered(boolean isRegistered) {
+        final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mContext);
+        prefs.edit().putBoolean(mRegisteredKey, isRegistered).apply();
     }
 
     @SuppressWarnings("unused")
@@ -267,7 +303,7 @@ public class AxoMessaging extends AxolotlNative {
         final boolean registered = prefs.getBoolean(mRegisteredKey, false);
         if (!registered || force) {
             RegisterInBackground registerBackground = new RegisterInBackground(mContext);
-            registerBackground.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+            AsyncUtils.execute(registerBackground);
         }
     }
 
@@ -276,8 +312,9 @@ public class AxoMessaging extends AxolotlNative {
      * <p/>
      * Returns the ConversationRepository of the current active user.
      *
-     * @return
+     * @return the ConversationRepository of the current active user.
      */
+    @NonNull
     public ConversationRepository getConversations() {
         if (mConversationRepository == null) {
             mConversationRepository =
@@ -289,8 +326,9 @@ public class AxoMessaging extends AxolotlNative {
     /**
      * Return key data for the repository database.
      *
-     * @return a 32byte (256 bit) key or {@code null} if none is available.
+     * @return a 32byte (256 bit) key or {@code null} if none is available
      */
+    @Nullable
     public byte[] getRepositoryKey() {
         byte[] keyData = KeyManagerSupport.getPrivateKeyData(mContext.getContentResolver(), APP_CONV_REPO_KEY);
 
@@ -309,6 +347,7 @@ public class AxoMessaging extends AxolotlNative {
      *
      * @param msg the composed message.
      */
+    @WorkerThread
     public boolean sendMessage(final Message msg) {
         if (!isReady()) {
             initialize();
@@ -335,7 +374,9 @@ public class AxoMessaging extends AxolotlNative {
             if (ConfigurationUtilities.mTrace) Log.d(TAG, "Message sent, mark queued: " + Long.toHexString(netMsgId));
             markMessageQueued(netMsgId, msg);
         }
-        notifyConversationUpdated(msg.getConversationID());
+
+        MessageUtils.notifyConversationUpdated(mContext, msg.getConversationID(), false,
+                msg.getId(), UPDATE_ACTION_MESSAGE_STATE_CHANGE);
         return true;
     }
 
@@ -355,12 +396,15 @@ public class AxoMessaging extends AxolotlNative {
         final String sender;
 //        String scDevId;
         final String messageData;
+        String aliasName = "";         // Initialize to Empty, used to check in async task
+        String displayName;
         String msgId;
         try {
             // Parse and get information from message descriptor
             obj = new JSONObject(msg);
             if (ConfigurationUtilities.mTrace) Log.d(TAG, "Got a message: " + obj.toString());
-            sender = obj.getString("sender");
+            sender = obj.getString("sender");               // Sender is the UUID
+            displayName = obj.getString("display_name");    // Got this name from SIP PAI or From header
 //            scDevId = obj.getString("scClientDevId");
             msgId = obj.getString("msgId");
             messageData = obj.getString("message");
@@ -375,12 +419,38 @@ public class AxoMessaging extends AxolotlNative {
         }
 
         if (sender.equalsIgnoreCase(getUserName())) {
-            return processSyncMessage(messageData, msgId, attachmentDescriptor, messageAttributes);
+            processSyncMessage(messageData, msgId, attachmentDescriptor, messageAttributes);
+            return 0;
         }
 
         final ConversationRepository conversations = getConversations();
         final Conversation conversation = getOrCreateConversation(sender);
+
         final EventRepository events = conversations.historyOf(conversation);
+
+        // Try to get one of the sender's alias name, try cached data first.
+        byte[][] senderAliases = AxoMessaging.getAliases(sender);
+        if (senderAliases == null || senderAliases.length == 0) {   // None available, ask the server to get an alias
+            AsyncTasks.UserDataBackgroundTaskNotMain getAliasTask = new AsyncTasks.UserDataBackgroundTaskNotMain(sender) {
+                @Override
+                @WorkerThread
+                public void onPostRun() {
+                    if (ConfigurationUtilities.mTrace) Log.d(TAG, "onPostRun from receive");
+                    if (events != null && TextUtils.isEmpty(conversation.getPartner().getAlias())) {
+                        synchronized (syncObj) {
+                            conversation.getPartner().setAlias(mUserInfo.mAlias);
+                            conversations.save(conversation);
+                            final Intent intent = Action.RECEIVE_MESSAGE.intent();
+                            Extra.PARTNER.to(intent, sender);
+                        }
+                    }
+                }
+            };
+            AsyncUtils.execute(getAliasTask);
+        }
+        else {
+            aliasName = new String(senderAliases[0]);
+        }
 
         String attributes = null;
         if (messageAttributes != null && messageAttributes.length > 0) {
@@ -388,41 +458,68 @@ public class AxoMessaging extends AxolotlNative {
             if (ConfigurationUtilities.mTrace) Log.d(TAG, "Got message attributes: " + attributes);
         }
         if (events != null) {
-            // Check and process special attributes first, such a receipt acknowledgment, etc
-            // Dismiss other message data if such special attributes are available.
-            if (!TextUtils.isEmpty(attributes) && processSpecialAttributes(conversation, events, msgId, attributes)) {
-                return 0;
-            }
-            if (!events.exists(msgId)) {
-                final IncomingMessage message = new IncomingMessage(conversation.getPartner().getUsername(), msgId, messageData);
-                message.setState(MessageStates.RECEIVED);
-                message.setTime(System.currentTimeMillis());
-                // Check for location, request receive receipt, burn, etc
-                if (!TextUtils.isEmpty(attributes))
-                    MessageUtils.parseAttributes(attributes, message);
-                String attachment;
-                if(attachmentDescriptor != null) {
-                    attachment = new String(attachmentDescriptor);
-                    message.setAttachment(attachment);
-                    // Make sure the word "Attachment" is localized
-                    message.setText(mContext.getString(R.string.attachment));
+
+            synchronized (syncObj) {
+                // We need to do this here to be backward compatible with existing conversation
+                // and this also works for new conversations.
+                if (!TextUtils.isEmpty(aliasName))
+                    conversation.getPartner().setAlias(aliasName);
+                conversation.getPartner().setDisplayName(displayName);
+
+                // Check and process special attributes first, such a receipt acknowledgment, etc
+                // Dismiss other message data if such special attributes are available.
+                if (!TextUtils.isEmpty(attributes) && processSpecialAttributes(conversation, events, msgId, attributes)) {
+                    return 0;
                 }
-                events.save(message);
+                if (!events.exists(msgId)) {
+                    final IncomingMessage message = new IncomingMessage(conversation.getPartner().getUserId(), msgId, messageData);
+                    message.setState(MessageStates.RECEIVED);
+                    message.setTime(System.currentTimeMillis());
+                    // Check for location, request receive receipt, burn, etc
+                    if (!TextUtils.isEmpty(attributes))
+                        MessageUtils.parseAttributes(attributes, message);
+                    String attachment;
+                    if (attachmentDescriptor != null) {
+                        attachment = new String(attachmentDescriptor);
+                        message.setAttachment(attachment);
+                        // Make sure the word "Attachment" is localized
+                        message.setText(mContext.getString(R.string.attachment));
+                    }
+                    events.save(message);
 
-                conversation.offsetUnreadMessageCount(1);
-                conversation.setLastModified(System.currentTimeMillis());
-                conversations.save(conversation);
+                    conversation.offsetUnreadMessageCount(1);
+                    conversation.setLastModified(System.currentTimeMillis());
+                    conversations.save(conversation);
 
-                final Intent intent = Action.RECEIVE_MESSAGE.intent();
-                Extra.PARTNER.to(intent, sender);
-                if (message.isRequestReceipt())
-                    intent.putExtra("FORCE_REFRESH", true);
-                mContext.sendOrderedBroadcast(intent, Manifest.permission.READ);
+                    // Run the sendDeliveryNotification not in the same thread as SIP receive
+                    // processing. sendDeliveryNotification may take a long time and we should
+                    // not block the SIP receive thread.
+                    Runnable sendDeliveryAsync = new Runnable() {
+                        @Override
+                        @WorkerThread
+                        public void run () {
+                            long startTime = System.currentTimeMillis();
+                            sendDeliveryNotification(message);
+                            if (ConfigurationUtilities.mTrace)
+                                Log.d(TAG, "Processing time for sendDeliveryNotification: " + (System.currentTimeMillis() - startTime));
+                        }
+                    };
+                    AsyncUtils.execute(sendDeliveryAsync);
 
-                if(attachmentDescriptor != null) {
-                    // Do an initial request to download the thumbnail
-                    if(!TextUtils.isEmpty(message.getAttachment()) && !message.hasMetaData()) {
-                        mContext.startService(SCloudService.getDownloadThumbnailIntent(message, conversation.getPartner().getUsername(), mContext));
+                    final Intent intent = Action.RECEIVE_MESSAGE.intent();
+                    Extra.PARTNER.to(intent, sender);
+                    Extra.ALIAS.to(intent, aliasName);
+                    if (message.isRequestReceipt()) {
+                        Extra.FORCE.to(intent, true);
+                    }
+                    Extra.ID.to(intent, message.getId());
+                    mContext.sendOrderedBroadcast(intent, Manifest.permission.READ);
+
+                    if (attachmentDescriptor != null) {
+                        // Do an initial request to download the thumbnail
+                        if (!TextUtils.isEmpty(message.getAttachment()) && !message.hasMetaData()) {
+                            mContext.startService(SCloudService.getDownloadThumbnailIntent(message, conversation.getPartner().getUserId(), mContext));
+                        }
                     }
                 }
             }
@@ -430,21 +527,23 @@ public class AxoMessaging extends AxolotlNative {
         return 0;
     }
 
-    public Conversation getOrCreateConversation(final String sender) {
-        if (sender == null) {
-            return null;
-        }
-        Conversation conversation = getConversations().findById(sender);
+    @NonNull
+    public Conversation getOrCreateConversation(@NonNull final String senderUUID) {
+        Conversation conversation = getConversations().findById(senderUUID);
 
         if (conversation == null) {
-            conversation = new Conversation();
-            conversation.setPartner(new Contact(sender));
-//            conversation.getPartner().setAlias( getDisplayName( user ) );
+            conversation = new Conversation(senderUUID);
             /* by default enable burn notice for conversation and set burn delay to 3 days */
             conversation.setBurnNotice(true);
             conversation.setBurnDelay(TimeUnit.DAYS.toSeconds(3));
 
-            if (isSelf(sender)) {
+            // The sender's UUID is valid due to the SearchFragment#validateUser(String) function
+            // which also sets user's the display name in the name lookup cache.
+            byte[] displayName = getDisplayName(senderUUID);
+            if (displayName != null)
+                conversation.getPartner().setDisplayName(new String(displayName));
+
+            if (isSelf(senderUUID)) {
                 conversation.getPartner().setDevice(mScDeviceId);
                 getConversations().save(conversation);
             }
@@ -491,15 +590,12 @@ public class AxoMessaging extends AxolotlNative {
     }
 
     @Override
+    @Nullable
+    @WorkerThread
     public byte[] httpHelper(final byte[] requestUri, final String method, final byte[] requestData, final int[] code) {
         final StringBuilder content = new StringBuilder();
 
         String uri = new String(requestUri);
-//        String data = null;
-//        if (requestData != null)
-//            data = new String(requestData);
-//        Log.d(TAG, "++++ method: " + method);
-//        Log.d(TAG, "++++ data: " + data);
 
         URL requestUrl;
         final String resourceUrl = ConfigurationUtilities.getProvisioningBaseUrl(mContext) + uri.substring(1);
@@ -518,8 +614,10 @@ public class AxoMessaging extends AxolotlNative {
             if (context != null) {
                 urlConnection.setSSLSocketFactory(context.getSocketFactory());
             }
-            else
-                Log.e(TAG, "Cannot get a trusted/pinned SSL context, use normal SSL socket factory");
+            else {
+                Log.e(TAG, "Cannot get a trusted/pinned SSL context; failing");
+                throw new AssertionError("Failed to get pinned SSL context");
+            }
 
             urlConnection.setRequestMethod(method);
             urlConnection.setDoInput(true);
@@ -562,14 +660,98 @@ public class AxoMessaging extends AxolotlNative {
     }
 
     public void notifyCallback(final int notifyActionCode, final byte[] actionInformation, final byte[] deviceId) {
-        String actionInfo = null;
-        if (actionInformation != null)
-            actionInfo = new String(actionInformation);
+        final String actionInfo = (actionInformation != null) ? new String(actionInformation) : null;
         if (ConfigurationUtilities.mTrace) Log.d(TAG, "Notify action: " + notifyActionCode + ", info: " + actionInfo);
-        AxoCommandInBackground aib = new AxoCommandInBackground();
-        aib.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, "rescanUserDevices", actionInfo);
+
+        // actionInformation of DEVICE_SCAN is the name of the message receiver. Rescan devices for
+        // this partner and then resend the last message to the partner's devices.
+        if (notifyActionCode == AxolotlNative.DEVICE_SCAN && actionInformation != null) { // DEVICE_SCAN
+            AxoCommandInBackground aib = new AxoCommandInBackground("rescanUserDevices", actionInfo) {
+                @Override
+                @WorkerThread
+                public void onPostRun() {
+                    // Because partner devices changed, we resend the last outgoing message
+                    // (heuristic taken from Janis)
+                    final Message messageToResend = MessageUtils.getLastOutgoingMessage(mContext, actionInfo);
+
+                    if (messageToResend == null) {
+                        return;
+                    }
+
+                    if (messageToResend.getState() == MessageStates.BURNED
+                            || messageToResend.getState() == MessageStates.SYNC) {
+                        return;
+                    }
+
+                    Date now = new Date();
+                    Date messageComposePlus = new Date(messageToResend.getComposeTime() + 60000); // 60 seconds
+
+                    // Make sure the message being resent is not more than a minute old from composition
+                    if (now.after(messageComposePlus)) {
+                        return;
+                    }
+
+                    MessageUtils.setAttributes(messageToResend);
+
+                    // SendMessageTask extends AsyncTask and the execute should run from the main thread,
+                    // thus queue it with the MainLooper.
+                    Runnable msgSend = new Runnable() {
+                        @Override
+                        public void run() {
+                            SendMessageTask task = new SendMessageTask(mContext.getApplicationContext());
+                            AsyncUtils.execute(task, messageToResend);
+                        }
+                    };
+                    Handler uiHandler = new Handler(Looper.getMainLooper());
+                    uiHandler.post(msgSend);
+                }
+            };
+            AsyncUtils.execute(aib);
+        }
     }
 
+
+    /**
+     * Send a read notification for a message.
+     *
+     * The message in this case is an INCOMING message, thus use the "sender" to
+     * create the message descriptor.
+     *
+     * Don't call from UI thread.
+     *
+     * @param msg Send read notification for this message
+     */
+    @WorkerThread
+    public void sendReadNotification(final Message msg) {
+        // Create a message descriptor, use the message id of the received message
+        final JSONObject obj =  createMsgDescriptorJson(msg, msg.getSender());
+        final JSONObject attributeJson = new JSONObject();
+
+        // an empty message string
+        try {
+            obj.put("message", "");
+
+            // inform about the time the client got the message
+            attributeJson.put("cmd", "rr");
+            attributeJson.put("rr_time", ISO8601.format(new Date()));
+        } catch (JSONException ignore) {}
+
+        final byte[] msgBytes = IOUtils.encode(obj.toString());
+        final byte[] attributeBytes = IOUtils.encode(attributeJson.toString());
+
+        createSendSyncReadReceipt(msgBytes, msg);
+        final long[] netMsgIds = sendMessage(msgBytes, null, attributeBytes);
+        if (netMsgIds == null) {
+            Log.w(TAG, "ReadNotification to '" + msg.getSender() + "' could not be sent, code: " + getErrorCode() + ", info: " + getErrorInfo());
+            msg.setFailureFlag(Message.FAILURE_READ_NOTIFICATION);
+            return;
+        }
+        msg.clearFailureFlag(Message.FAILURE_READ_NOTIFICATION);
+        for (long netMsgId : netMsgIds) {
+            if (ConfigurationUtilities.mTrace) Log.d(TAG, "ReadNotification sent, mark queued: " + Long.toHexString(netMsgId));
+            markMessageQueued(netMsgId, null);
+        }
+    }
 
     /**
      * Send a delivery notification for a message.
@@ -581,6 +763,7 @@ public class AxoMessaging extends AxolotlNative {
      *
      * @param msg Send delivery notification for this message
      */
+    @WorkerThread
     public void sendDeliveryNotification(final Message msg) {
         // Create a message descriptor, use the message id of the received message
         final JSONObject obj =  createMsgDescriptorJson(msg, msg.getSender());
@@ -591,15 +774,15 @@ public class AxoMessaging extends AxolotlNative {
             obj.put("message", "");
 
             // inform about the time the client got the message
-            attributeJson.put("cmd", "rr");
-            attributeJson.put("rr_time", ConversationActivity.ISO8601.format(new Date()));
+            attributeJson.put("cmd", "dr");
+            attributeJson.put("dr_time", ISO8601.format(new Date()));
         } catch (JSONException ignore) {}
 
         final byte[] msgBytes = IOUtils.encode(obj.toString());
         final byte[] attributeBytes = IOUtils.encode(attributeJson.toString());
         final long[] netMsgIds = sendMessage(msgBytes, null, attributeBytes);
         if (netMsgIds == null) {
-            Log.w(TAG, "DeliverNotification to '" + msg.getConversationID() + "' could not be send, code: " + getErrorCode() + ", info: " + getErrorInfo());
+            Log.w(TAG, "DeliverNotification to '" + msg.getSender() + "' could not be send, code: " + getErrorCode() + ", info: " + getErrorInfo());
             return;
         }
         for (long netMsgId : netMsgIds) {
@@ -620,6 +803,7 @@ public class AxoMessaging extends AxolotlNative {
      * @param recipient Recipient for burn notice request. If null, message's conversation
      *                  id will be used.
      */
+    @WorkerThread
     public void sendBurnNoticeRequest(final Message msg, final String recipient) {
         // Create a message descriptor, use the message id of the message to burn
         final JSONObject obj =  createMsgDescriptorJson(msg, recipient);
@@ -633,15 +817,17 @@ public class AxoMessaging extends AxolotlNative {
         final byte[] msgBytes = IOUtils.encode(obj.toString());
         final byte[] attributeBytes = IOUtils.encode(attributeJson.toString());
 
-        createSendSyncBurnNotice(attributeJson, msgBytes, msg);
+        createSendSyncBurnNotice(msgBytes, msg);
         final long[] netMsgIds = sendMessage(msgBytes, null, attributeBytes);
         if (netMsgIds == null) {
-            Log.w(TAG, "BurnNotice request to '" + msg.getConversationID() + "' could not be send, code: " + getErrorCode() + ", info: " + getErrorInfo());
+            Log.w(TAG, "BurnNotice request to '" + msg.getConversationID() + "' could not be sent, code: " + getErrorCode() + ", info: " + getErrorInfo());
+            msg.setFailureFlag(Message.FAILURE_BURN_NOTIFICATION);
             return;
         }
         for (long netMsgId : netMsgIds) {
             if (ConfigurationUtilities.mTrace) Log.d(TAG, "BurnNotice request sent, mark queued: " + Long.toHexString(netMsgId));
             markMessageQueued(netMsgId, null);
+            msg.clearFailureFlag(Message.FAILURE_BURN_NOTIFICATION);
         }
     }
 
@@ -671,6 +857,7 @@ public class AxoMessaging extends AxolotlNative {
         }
     }
 
+    @WorkerThread
     public void sendEmptySyncToSiblings() {
         if (!isReady()) {
             initialize();
@@ -700,23 +887,12 @@ public class AxoMessaging extends AxolotlNative {
         byte[] msgBytes = IOUtils.encode(obj.toString());
         byte[] attributeBytes = IOUtils.encode(attributeJson.toString());
         SendCommandInBackground sndBackground = new SendCommandInBackground(msgBytes, null, attributeBytes, true);
-        sndBackground.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+        AsyncUtils.execute(sndBackground);
     }
 
     /* **********************************************************
      * Private functions
      ********************************************************** */
-
-    private void setupNameNumber() {
-        if (TextUtils.isEmpty(mNumber))
-            mNumber = TiviPhoneService.getInfo(0, -1, "cfg.nr");
-        if (!TextUtils.isEmpty(mNumber)) {
-            String number = PhoneNumberHelper.formatNumber(mNumber, Locale.getDefault().getCountry());
-            mNumber = TextUtils.isEmpty(number) ? mNumber : number;  // if format number eats all data show raw number
-        }
-        if (TextUtils.isEmpty(mName))
-            mName = TiviPhoneService.getInfo(0, -1, "cfg.un");
-    }
 
     /*
      * The message descriptor JSON data
@@ -739,10 +915,12 @@ public class AxoMessaging extends AxolotlNative {
         return IOUtils.encode(obj.toString());
     }
 
+    // The recipient has to be the real "recipient", i.e. the UUID, not an alias name
     @NonNull
     private JSONObject createMsgDescriptorJson(final Message msg, String recipient) {
         if (recipient == null)
-            recipient = Utilities.getUsernameFromUriNumber(msg.getConversationID());
+            recipient = Utilities.removeUriPartsSelective(msg.getConversationID());
+
         final JSONObject obj = new JSONObject();
         try {
             obj.put("version", 1);
@@ -756,6 +934,7 @@ public class AxoMessaging extends AxolotlNative {
     }
 
     // Function to check receipt ack, burn, etc - see consumePacket(...) in DefaultPacketOutput class in SilentText
+    @WorkerThread
     private boolean processSpecialAttributes(final Conversation conv, final EventRepository events, final String msgId,
                                              final String attributes) {
         try {
@@ -765,11 +944,12 @@ public class AxoMessaging extends AxolotlNative {
             if (TextUtils.isEmpty(command))
                 return false;
             switch (command) {
-                case "rr":
+                case "rr": {
                     final String dateTime = attributeJson.getString("rr_time");
                     final long dt = parseDate(dateTime);
                     markPacketAsRead(events, msgId, dt);
                     return true;
+                }
 
                 case "bn":
                     burnPacket(conv, events, msgId, true);
@@ -778,6 +958,13 @@ public class AxoMessaging extends AxolotlNative {
                 case "bnc":
                     // TODO - do the "burn confirmation handling" if necessary
                     return true;
+
+                case "dr": {
+                    final String dateTime = attributeJson.getString("dr_time");
+                    final long dt = parseDate(dateTime);
+                    markPacketAsDelivered(events, msgId, dt);
+                    return true;
+                }
 
                 case "ping":
                     return true;
@@ -811,14 +998,15 @@ public class AxoMessaging extends AxolotlNative {
                 //   it with a weaker state (DELIVERED (200) is stronger than SENT_TO_SERVER (202))
                 if (msg != null && msg.getState() != messageState && msg.getState() != MessageStates.DELIVERED) {
                     msg.setState(messageState);
-                    final String recipient = Utilities.getUsernameFromUriNumber(msg.getConversationID());
+                    final String recipient = Utilities.removeSipParts(msg.getConversationID());
                     final Conversation conversation = getConversations().findById(recipient);
                     final EventRepository events = getConversations().historyOf(conversation);
                     msg.addNetMessageId(netMsgId);
                     if (ConfigurationUtilities.mTrace) Log.d(TAG, "Message sent (mms): " + Long.toHexString(netMsgId));
                     events.save(msg);
 
-                    notifyConversationUpdated(msg.getConversationID());
+                    MessageUtils.notifyConversationUpdated(mContext, recipient, false,
+                            msg.getId(), UPDATE_ACTION_MESSAGE_STATE_CHANGE);
                 }
                 eventState.remove(netMsgId);
             }
@@ -837,14 +1025,15 @@ public class AxoMessaging extends AxolotlNative {
             if (eventState.containsKey(netMsgId)) { // Message state report already available for this msg
                 if (message != null) {
                     message.setState(MessageStates.SENT);
-                    final String recipient = Utilities.getUsernameFromUriNumber(message.getConversationID());
+                    final String recipient = Utilities.removeSipParts(message.getConversationID());
                     final Conversation conversation = getConversations().findById(recipient);
                     final EventRepository events = getConversations().historyOf(conversation);
                     message.addNetMessageId(netMsgId);
                     if (ConfigurationUtilities.mTrace) Log.d(TAG, "Message sent (mmq): " + Long.toHexString(netMsgId));
                     events.save(message);
 
-                    notifyConversationUpdated(message.getConversationID());
+                    MessageUtils.notifyConversationUpdated(mContext, recipient,
+                            false, message.getId(), UPDATE_ACTION_MESSAGE_STATE_CHANGE);
                 }
                 eventState.remove(netMsgId);
             }
@@ -854,22 +1043,38 @@ public class AxoMessaging extends AxolotlNative {
         }
     }
 
-    private void markPacketAsRead(final EventRepository events, final String deliveredPacketID, final long deliveryTime) {
+    private void markPacketAsRead(final EventRepository events, final String deliveredPacketID, final long readReceiptTime) {
         final Event event = events.findById(deliveredPacketID);
-        if( event instanceof OutgoingMessage) {
-            final OutgoingMessage message = (OutgoingMessage)event;
+        if (event instanceof Message) {
+            final Message message = (Message)event;
             message.setState(MessageStates.READ);
-            if (message.expires())
-                message.setExpirationTime(System.currentTimeMillis()
-                        + TimeUnit.SECONDS.toMillis(message.getBurnNotice()));
-
-            message.setDeliveryTime(deliveryTime);
+            if (message.expires()) {
+                final long rrTime = readReceiptTime <= 0 ? System.currentTimeMillis() : readReceiptTime;
+                message.setExpirationTime(rrTime + TimeUnit.SECONDS.toMillis(message.getBurnNotice()));
+//                message.setExpirationTime(System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(message.getBurnNotice()));
+            }
             events.save(message);
 
-            final Intent intent = Action.UPDATE_CONVERSATION.intent();
-            Extra.PARTNER.to(intent, message.getConversationID());
-            intent.putExtra("FORCE_REFRESH", true);
-            mContext.sendOrderedBroadcast(intent, Manifest.permission.READ);
+            MessageUtils.notifyConversationUpdated(mContext, MessageUtils.getConversationId(message),
+                    false, message.getId(), UPDATE_ACTION_MESSAGE_STATE_CHANGE);
+        }
+    }
+
+    private void markPacketAsDelivered(final EventRepository events, final String deliveredPacketID, final long deliveryTime) {
+        final Event event = events.findById(deliveredPacketID);
+        if (event instanceof OutgoingMessage) {
+            final OutgoingMessage message = (OutgoingMessage)event;
+            final int state = message.getState();
+            /* message can be marked as delivered when state report 200 is received */
+            if (state == MessageStates.SENT || state == MessageStates.SENT_TO_SERVER
+                    || state == MessageStates.DELIVERED) {
+                message.setState(MessageStates.DELIVERED);
+                message.setDeliveryTime(deliveryTime);
+                events.save(message);
+
+                MessageUtils.notifyConversationUpdated(mContext, message.getConversationID(), false,
+                        message.getId(), UPDATE_ACTION_MESSAGE_STATE_CHANGE);
+            }
         }
     }
 
@@ -886,17 +1091,21 @@ public class AxoMessaging extends AxolotlNative {
         final EventRepository events = getConversations().historyOf(conversation);
 
         // Check if the message with event.getMessageId() already exists. if yes and if error code is
-        // -13 or -23 the this a error because of "duplicate" message decryption. This is not possible
-        // in Axolotl. It also indicates that the server sent a message twice.
+        // NOT_DECRYPTABLE (-13) or MAC_CHECK_FAILED (-23) the this a error because of "duplicate"
+        // message decryption. This is not possible in Axolotl. It also indicates that the server
+        // sent a message twice.
         String messageId = event.getMessageId();        // Id of erroneous message as set by the sender
-        if (!TextUtils.isEmpty(messageId) && (errorCode == -13 || errorCode == -23) && events.exists(messageId)) {
+        if (!TextUtils.isEmpty(messageId) && events.exists(messageId)
+                && (errorCode == MessageErrorCodes.NOT_DECRYPTABLE
+                    || errorCode == MessageErrorCodes.MAC_CHECK_FAILED)) {
             event.setDuplicate(true);
         }
         event.setId(UUIDGen.makeType1UUID().toString());
         event.setTime(System.currentTimeMillis());
         events.save(event);
 
-        notifyConversationUpdated(sender);
+        MessageUtils.notifyConversationUpdated(mContext, sender,
+                true, event.getId(), UPDATE_ACTION_MESSAGE_STATE_CHANGE);
     }
 
     private void burnPacket(final Conversation conv, final EventRepository events, final String burnedPacketId,
@@ -930,7 +1139,7 @@ public class AxoMessaging extends AxolotlNative {
             conversationPartner = message.getConversationID();
         }
 
-        if (!conv.getPartner().getUsername().equals(conversationPartner)) {
+        if (!conv.getPartner().getUserId().equals(conversationPartner)) {
             Log.w(TAG, "Burn notice request - wrong caller");
             return;
         }
@@ -939,7 +1148,8 @@ public class AxoMessaging extends AxolotlNative {
         if (confirm)
             sendBurnNoticeConfirmation((Message)event, conversationPartner);
 
-        notifyConversationUpdated(conversationPartner);
+        MessageUtils.notifyConversationUpdated(mContext, conversationPartner, false, event.getId(),
+                UPDATE_ACTION_MESSAGE_BURNED);
 
         if(((Message) event).hasAttachment()) {
             /** Remove a possible temporary attachment file (rare)
@@ -951,23 +1161,6 @@ public class AxoMessaging extends AxolotlNative {
             Extra.ID.to(cleanupIntent, event.getId());
             mContext.startService(cleanupIntent);
         }
-
-//        if( event.getId().equals(conversation.getPreviewEventID())) {
-//
-//            if (MessageState.RECEIVED.equals(((IncomingMessage)event).getState())) {
-//                conversation.offsetUnreadMessageCount( -1 );
-//            }
-//
-//            List<Event> history = events.list();
-//            int count = history.size();
-//
-//            if( count > 0 ) {
-//                conversation.setPreviewEventID( history.get( count - 1 ).getId() );
-//            } else {
-//                conversation.setPreviewEventID( (byte []) null );
-//            }
-//            conversations.save( conversation );
-//        }
     }
 
     /**
@@ -976,6 +1169,7 @@ public class AxoMessaging extends AxolotlNative {
      * @param msg Send burn notice confirmation for this message.
      * @param recipient Recipient for burn notice confirmation.
      */
+    @WorkerThread
     private void sendBurnNoticeConfirmation(final Message msg, final String recipient) {
         // Create a message descriptor, use the message id of the message to burn
         JSONObject obj =  createMsgDescriptorJson(msg, recipient);
@@ -990,7 +1184,7 @@ public class AxoMessaging extends AxolotlNative {
         byte[] msgBytes = IOUtils.encode(obj.toString());
         byte[] attributeBytes = IOUtils.encode(attributeJson.toString());
         SendCommandInBackground sndBackground = new SendCommandInBackground(msgBytes, null, attributeBytes);
-        sndBackground.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+        AsyncUtils.execute(sndBackground);
     }
 
     /**
@@ -1008,7 +1202,7 @@ public class AxoMessaging extends AxolotlNative {
 
     public static long parseDate(final String dateTime) {
         try {
-            return ConversationActivity.ISO8601.parse(dateTime).getTime();
+            return ISO8601.parse(dateTime).getTime();
         } catch( Throwable exception ) {
             return 0;
         }
@@ -1020,7 +1214,9 @@ public class AxoMessaging extends AxolotlNative {
      * @param attributeJson The JSON object that already contains the normal burn command
      * @param msgBytes The message to attach to the attribute command data
      */
-    private void createSendSyncBurnNotice(final JSONObject attributeJson, final byte[] msgBytes, final Message msg) {
+    @WorkerThread
+    private void createSendSyncBurnNotice(final byte[] msgBytes, final Message msg) {
+        final JSONObject attributeJson = new JSONObject();
         try {
             attributeJson.put("syc", "bn");
             attributeJson.put("or", MessageUtils.getConversationId(msg));
@@ -1039,13 +1235,42 @@ public class AxoMessaging extends AxolotlNative {
     }
 
     /**
+     * Send a read receipt for incoming message to user's other devices.
+     *
+     * @param attributeJson The JSON object that already contains the normal burn command
+     * @param msgBytes The message to attach to the attribute command data
+     */
+    @WorkerThread
+    private void createSendSyncReadReceipt(final byte[] msgBytes, final Message msg) {
+        final JSONObject attributeJson = new JSONObject();
+        try {
+            attributeJson.put("syc", "rr");
+            attributeJson.put("or", MessageUtils.getConversationId(msg));
+            attributeJson.put("rr_time", ISO8601.format(new Date()));
+        } catch (JSONException ignore) {}
+
+        byte[] attributeBytes = IOUtils.encode(attributeJson.toString());
+        long[] netMsgIds = sendMessageToSiblings(msgBytes, null, attributeBytes);
+        if (netMsgIds == null) {
+            Log.w(TAG, "ReadReceipt sync request could not be sent, code: " + getErrorCode() + ", info: " + getErrorInfo());
+            return;
+        }
+        for (long netMsgId : netMsgIds) {
+            if (ConfigurationUtilities.mTrace) Log.d(TAG, "ReadReceipt sync request sent, mark queued: " + Long.toHexString(netMsgId));
+            markMessageQueued(netMsgId, null);
+        }
+    }
+
+    /**
      * Send an outgoing message to user's other devices.
      *
      * @param message The message descriptor data
      * @param msg  The outgoing message data structure
      * @return {@code true} if sync was successful
      */
+    @WorkerThread
     private boolean createSendSyncOutgoing(final byte[] message, final Message msg) {
+        final Conversation conversation = getOrCreateConversation(msg.getConversationID());
         String attributes = msg.getAttributes();
         JSONObject attributeJson;
         try {
@@ -1053,6 +1278,7 @@ public class AxoMessaging extends AxolotlNative {
             attributeJson =  new JSONObject(TextUtils.isEmpty(attributes) ? "{}" : attributes);
             attributeJson.put("syc", "om");
             attributeJson.put("or", msg.getConversationID());
+            attributeJson.put("dpn", conversation.getPartner().getDisplayName());
         } catch (JSONException ignore) {
             return false;
         }
@@ -1072,47 +1298,106 @@ public class AxoMessaging extends AxolotlNative {
         return true;
     }
 
-    private int processSyncMessage(final String messageData, final String msgId, final byte[] attachmentDescriptor,
+    @WorkerThread
+    private void processSyncMessage(final String messageData, final String msgId, final byte[] attachmentDescriptor,
                                    final byte[] messageAttributes) {
 
         if (messageAttributes == null || messageAttributes.length == 0) {
-            return -2;
+            return;
         }
-        String attributes = new String(messageAttributes);
+        final String attributes = new String(messageAttributes);
 
-        String attachment = null;
-        if(attachmentDescriptor != null)
-            attachment = new String(attachmentDescriptor);
+        final String attachment = (attachmentDescriptor != null) ? new String(attachmentDescriptor) : null;
         if (ConfigurationUtilities.mTrace) Log.d(TAG, "Got message attributes (sync): " + attributes);
         try {
             // Check for a command - if yes, process it, return true, message done.
-            JSONObject attributeJson = new JSONObject(attributes);
-            String command = attributeJson.optString("syc", null);
+            final JSONObject attributeJson = new JSONObject(attributes);
+            final String command = attributeJson.optString("syc", null);
             if (TextUtils.isEmpty(command))
-                return -2;
-            final String originalReceiver = attributeJson.getString("or");
-            switch (command) {
-                case "om":
-                    return processSyncOutgoingMessage(originalReceiver, messageData, msgId, attachment, attributes);
+                return;
+            final String displayName = attributeJson.optString("dpn", null);
+            final String originalReceiver = attributeJson.getString("or");  // The 'or' is a UUID
+            final Conversation conversation = getOrCreateConversation(originalReceiver);
 
-                case "bn":
-                    return processSyncOutgoingBurn(originalReceiver, msgId);
-
-                // Check for others, ignore unknown commands, however don't process message any more
-                default:
-                    return 0;
+            if (TextUtils.isEmpty(conversation.getPartner().getDisplayName()) && !TextUtils.isEmpty(displayName)) {
+                conversation.getPartner().setDisplayName(displayName);
+                ConversationRepository conversations = getConversations();
+                conversations.save(conversation);
             }
-        } catch (JSONException ignore) {
-            return -3;
-        }
+
+            // If the sender does not provide a display name for the sync conversation AND
+            // if one/both of the fields are empty we got a sync message for a yet unknown
+            // conversation. In this case we might need to contact the server, thus perform
+            // an async task to get the info, then process the command.
+            // If we already know the conversation just go on without the overhead of the
+            // async task handling.
+            if (TextUtils.isEmpty(displayName) &&
+                    (TextUtils.isEmpty(conversation.getPartner().getAlias()) ||
+                            TextUtils.isEmpty(conversation.getPartner().getDisplayName()))) {
+                AsyncTasks.UserDataBackgroundTaskNotMain getAliasTask = new AsyncTasks.UserDataBackgroundTaskNotMain(originalReceiver) {
+                    @Override
+                    @WorkerThread
+                    public void onPostRun() {
+                        if (ConfigurationUtilities.mTrace) Log.d(TAG, "onPostRun from processSyncMessage");
+                        if (mUserInfo != null) {
+                            ConversationRepository conversations = getConversations();
+                            conversation.getPartner().setAlias(mUserInfo.mAlias);
+                            conversation.getPartner().setDisplayName(mUserInfo.mDisplayName);
+                            conversations.save(conversation);
+                        }
+                        switch (command) {
+                            case "om":
+                                processSyncOutgoingMessage(conversation, messageData, msgId, attachment, attributes);
+                                break;
+
+                            case "bn":
+                                processSyncOutgoingBurn(conversation, msgId);
+                                break;
+
+                            case "rr":
+                                final String dateTime = attributeJson.optString("rr_time");
+                                final long dt = parseDate(dateTime);
+                                processSyncReadReceipt(conversation, msgId, dt);
+                                break;
+
+                            // Check for others, ignore unknown commands, however don't process message any more
+                            default:
+                                break;
+                        }
+                    }
+                };
+                AsyncUtils.execute(getAliasTask);
+            }
+            else {
+                switch (command) {
+                    case "om":
+                        processSyncOutgoingMessage(conversation, messageData, msgId, attachment, attributes);
+                        break;
+
+                    case "bn":
+                        processSyncOutgoingBurn(conversation, msgId);
+                        break;
+
+                    case "rr":
+                        final String dateTime = attributeJson.getString("rr_time");
+                        final long dt = parseDate(dateTime);
+                        processSyncReadReceipt(conversation, msgId, dt);
+                        break;
+
+                    // Check for others, ignore unknown commands, however don't process message any more
+                    default:
+                        break;
+                }
+            }
+        } catch (JSONException ignore) { }
     }
 
-    private int processSyncOutgoingMessage(final String receiver, final String messageData, final String msgId,
+    @WorkerThread
+    private void processSyncOutgoingMessage(final Conversation conversation, final String messageData, final String msgId,
                                            final String attachment,
                                            final String attributes) {
 
         ConversationRepository conversations = getConversations();
-        Conversation conversation = getOrCreateConversation(receiver);
         EventRepository events = conversations.historyOf(conversation);
 
         Message message = new OutgoingMessage(getUserName(), messageData);
@@ -1121,41 +1406,40 @@ public class AxoMessaging extends AxolotlNative {
             message.setAttachment(attachment);
         }
         message.setState(MessageStates.SYNC);
-        message.setConversationID(conversation.getPartner().getUsername());
+        message.setConversationID(conversation.getPartner().getUserId());
         message.setId(msgId);
 
         events.save(message);
         conversation.setLastModified(System.currentTimeMillis());
         conversations.save(conversation);
 
-        notifyConversationUpdated(message.getConversationID());
+        MessageUtils.notifyConversationUpdated(mContext, message.getConversationID(), true,
+                message.getId(), UPDATE_ACTION_MESSAGE_STATE_CHANGE);
 
         // Do an initial request to download the thumbnail
         if(attachment != null && !TextUtils.isEmpty(message.getAttachment()) && !message.hasMetaData()) {
-            mContext.startService(SCloudService.getDownloadThumbnailIntent(message, conversation.getPartner().getUsername(), mContext));
+            mContext.startService(SCloudService.getDownloadThumbnailIntent(message, conversation.getPartner().getUserId(), mContext));
         }
-
-        return 0;
     }
 
-    private int processSyncOutgoingBurn(final String receiver, final String msgId) {
+    @WorkerThread
+    private void processSyncOutgoingBurn(final Conversation conversation, final String msgId) {
 
         ConversationRepository conversations = getConversations();
-        Conversation conversation = getOrCreateConversation(receiver);
         EventRepository events = conversations.historyOf(conversation);
 
         burnPacket(conversation, events, msgId, false);
-
-        return 0;
     }
 
-    private void notifyConversationUpdated(final String conversationId) {
-        final Intent intent = Action.UPDATE_CONVERSATION.intent();
-        Extra.PARTNER.to(intent, conversationId);
-        mContext.sendOrderedBroadcast(intent, Manifest.permission.READ);
+    @WorkerThread
+    private void processSyncReadReceipt(final Conversation conversation, final String msgId, final long dt) {
+        ConversationRepository conversations = getConversations();
+        EventRepository events = conversations.historyOf(conversation);
+
+        markPacketAsRead(events, msgId, dt);
     }
 
-    private class RegisterInBackground extends AsyncTask<Void, Void, Integer> {
+    private class RegisterInBackground implements Runnable {
         final int[] code = new int[1];
         byte[] errorMsg;
         final Context mCtx;
@@ -1164,16 +1448,10 @@ public class AxoMessaging extends AxolotlNative {
             mCtx = ctx;
         }
 
-        @Override
-        protected Integer doInBackground(Void... commands) {
+        public void run() {
             long startTime = System.currentTimeMillis();
             errorMsg = registerAxolotlDevice(code);
-            return (int) (System.currentTimeMillis() - startTime);
-        }
-
-        @Override
-        protected void onPostExecute(Integer time) {
-            if (ConfigurationUtilities.mTrace) Log.d(TAG, "Processing time for AxoRegistration: " + time);
+            if (ConfigurationUtilities.mTrace) Log.d(TAG, "Processing time for AxoRegistration: " + (System.currentTimeMillis() - startTime));
 
             if (code[0] < 0 || code[0] >= HttpURLConnection.HTTP_NOT_FOUND) {
                 Log.e(TAG, "Axolotl registration failure: " + (errorMsg != null ? new String(errorMsg) : "null") + ", code: " + code[0]);
@@ -1183,11 +1461,19 @@ public class AxoMessaging extends AxolotlNative {
             sendEmptySyncToSiblings();
             SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mCtx);
             prefs.edit().putBoolean(mRegisteredKey, true).apply();
-            registerStateChanged(true);
+
+            Runnable stateChange = new Runnable() {
+                @Override
+                public void run() {
+                    registerStateChanged(true);
+                }
+            };
+            Handler uiHandler = new Handler(Looper.getMainLooper());
+            uiHandler.post(stateChange);
         }
     }
 
-    private class SendCommandInBackground extends AsyncTask<Void, Void, Integer> {
+    private class SendCommandInBackground implements Runnable {
         final byte[] mMsgDescriptor;
         final byte []mAttachmentDescriptor;
         final byte[] mAttributeDescriptor;
@@ -1206,7 +1492,7 @@ public class AxoMessaging extends AxolotlNative {
         }
 
         @Override
-        protected Integer doInBackground(Void... commands) {
+        public void run() {
             long startTime = System.currentTimeMillis();
             if (!mToSiblings)
                 mNetMsgIds = sendMessage(mMsgDescriptor, mAttachmentDescriptor, mAttributeDescriptor);
@@ -1229,34 +1515,28 @@ public class AxoMessaging extends AxolotlNative {
                     markMessageQueued(netMsgId, null);
                 }
             }
-            return (int) (System.currentTimeMillis() - startTime);
-        }
-
-        @Override
-        protected void onPostExecute(Integer time) {
-            if (ConfigurationUtilities.mTrace) Log.d(TAG, "Processing time for async command send: " + time);
+            if (ConfigurationUtilities.mTrace) Log.d(TAG, "Processing time for async command send: " + (System.currentTimeMillis() - startTime));
         }
     }
 
-    private class AxoCommandInBackground extends AsyncTask<String, Void, Integer> {
+    private class AxoCommandInBackground implements Runnable {
 
         private String mCommand;
+        private byte[] mData;
 
-        @Override
-        protected Integer doInBackground(String... commands) {
-            long startTime = System.currentTimeMillis();
-            byte[] data = null;
+        AxoCommandInBackground(String... commands) {
             if (commands.length >= 1)
-                data = IOUtils.encode(commands[1]);
+                mData = IOUtils.encode(commands[1]);
             mCommand = commands[0];
-            axoCommand(mCommand, data);
-            return (int) (System.currentTimeMillis() - startTime);
         }
-
         @Override
-        protected void onPostExecute(Integer time) {
-            if (ConfigurationUtilities.mTrace) Log.d(TAG, "Processing time for async command '" + mCommand + "': " + time);
+        public void run() {
+            long startTime = System.currentTimeMillis();
+            axoCommand(mCommand, mData);
+            if (ConfigurationUtilities.mTrace) Log.d(TAG, "Processing time for async command '" + mCommand + "': " + (System.currentTimeMillis() - startTime));
+            onPostRun();
         }
 
+        public void onPostRun() {}
     }
 }

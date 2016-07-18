@@ -36,18 +36,24 @@ import android.media.MediaRecorder;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.MotionEvent;
+import android.view.ScaleGestureDetector;
 import android.view.TextureView;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
+import android.widget.Toast;
 
 import com.silentcircle.common.media.CameraHelper;
+import com.silentcircle.common.util.ViewUtil;
 import com.silentcircle.messaging.views.TextView;
 import com.silentcircle.silentphone2.R;
+import com.silentcircle.silentphone2.services.TiviPhoneService;
 
 import java.io.FileDescriptor;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -61,24 +67,31 @@ public class VideoCaptureActivity extends Activity {
 
     private static final String TAG = VideoCaptureActivity.class.getSimpleName();
 
+    private static final String FILE_DESCRIPTOR_MODE = "rwt";
+
     private static final int MAX_DURATION_MS = 5 * 60 * 1000; // 5 minutes
 
+    private static final String BLACKPHONE_BP1 = "BP1";
+
     private static final int[] DESIRED_QUALITY_RANKING = {
-        CamcorderProfile.QUALITY_480P,
-        CamcorderProfile.QUALITY_720P,
-        CamcorderProfile.QUALITY_CIF,
-        CamcorderProfile.QUALITY_QVGA,
-        CamcorderProfile.QUALITY_QCIF,
-        CamcorderProfile.QUALITY_LOW
+//            CamcorderProfile.QUALITY_720P,
+            CamcorderProfile.QUALITY_480P,
+            CamcorderProfile.QUALITY_CIF,
+            CamcorderProfile.QUALITY_QVGA,
+            CamcorderProfile.QUALITY_QCIF,
+            CamcorderProfile.QUALITY_LOW
     };
 
     Uri mOutputUri;
     FileDescriptor mOutputFileDescriptor;
 
     TextureView mVideoPreviewTextureView;
+    int mPreviewMaxWidth;
+    int mPreviewMaxHeight;
 
     ImageButton mRecordStartStopButton;
     ImageButton mCameraFlipButton;
+    ImageButton mCameraFlashToggleButton;
     LinearLayout mRecordInfoLayout;
     TextView mCountDownTextView;
 
@@ -89,8 +102,11 @@ public class VideoCaptureActivity extends Activity {
     int mCameraId;
     CamcorderProfile mCamcorderProfile;
 
+    boolean mMultipleCameras;
     CameraFacing mCameraFacing = CameraFacing.BACK;
     CameraFacing mRequestedFacing = CameraFacing.BACK;
+    boolean mCameraSupportsZoom;
+    CameraFlash mCameraFlash = CameraFlash.OFF;
     PreviewState mCurrentPreviewState = PreviewState.NOT_STARTED;
 
     Timer mCountdownTimer;
@@ -98,9 +114,26 @@ public class VideoCaptureActivity extends Activity {
 
     View.OnClickListener mOnClickListener;
 
+    ScaleGestureDetector mScaleGestureDetector;
+
+    enum CameraFlash {
+        OFF(false, R.drawable.ic_flash_off_dark, Camera.Parameters.FLASH_MODE_OFF),
+        ON(true, R.drawable.ic_flash_on_dark, Camera.Parameters.FLASH_MODE_TORCH);
+
+        boolean value;
+        String cameraParameter;
+        int drawableResourceId;
+
+        CameraFlash(boolean value, int id, String cameraParameter) {
+            this.value = value;
+            this.drawableResourceId = id;
+            this.cameraParameter = cameraParameter;
+        }
+    }
+
     enum CameraFacing {
-        BACK(0, R.drawable.ic_camera_rear_white_24dp),
-        FRONT(1, R.drawable.ic_camera_front_white_24dp);
+        BACK(0, R.drawable.ic_camera_rear_dark),
+        FRONT(1, R.drawable.ic_camera_front_dark);
 
         int value;
         int drawableResourceId;
@@ -127,6 +160,15 @@ public class VideoCaptureActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        if (TiviPhoneService.calls.getCallCount() > 0) {
+            Log.e(TAG, "Video recording is not supported during a call");
+
+            Toast.makeText(this, R.string.record_currently_on_call, Toast.LENGTH_LONG).show();
+
+            finish();
+            return;
+        }
+
         setContentView(R.layout.activity_video_recorder);
 
         Intent recordIntent = getIntent();
@@ -151,19 +193,7 @@ public class VideoCaptureActivity extends Activity {
 
         mOutputUri = outputUri;
 
-        FileDescriptor fileDescriptor = null;
-        try {
-            fileDescriptor = getContentResolver().openFileDescriptor(mOutputUri, null).getFileDescriptor();
-        } catch (FileNotFoundException exception) {
-            Log.e(TAG, "Output URI is an invalid file", exception);
-        }
-
-        if(fileDescriptor == null || !fileDescriptor.valid()) {
-            finish();
-            return;
-        }
-
-        mOutputFileDescriptor = fileDescriptor;
+        mMultipleCameras = Camera.getNumberOfCameras() > 1;
 
         setupViews();
     }
@@ -197,6 +227,7 @@ public class VideoCaptureActivity extends Activity {
 
         mRecordStartStopButton = (ImageButton) findViewById(R.id.video_record_start_stop_button);
         mCameraFlipButton = (ImageButton) findViewById(R.id.video_record_flip_button);
+        mCameraFlashToggleButton = (ImageButton) findViewById(R.id.video_flash_toggle_button);
         mRecordInfoLayout = (LinearLayout) findViewById(R.id.video_record_info_layout);
         mCountDownTextView = (TextView) findViewById(R.id.video_countdown_text_view);
 
@@ -224,12 +255,89 @@ public class VideoCaptureActivity extends Activity {
                                 flipCamera();
                             break;
                         }
+                        break;
+
+                    case R.id.video_flash_toggle_button:
+                        toggleFlash();
                 }
             }
         };
 
         mRecordStartStopButton.setOnClickListener(mOnClickListener);
-        mCameraFlipButton.setOnClickListener(mOnClickListener);
+
+        mCameraFlashToggleButton.setVisibility(View.INVISIBLE);
+        mCameraFlashToggleButton.setOnClickListener(mOnClickListener);
+
+        if (mMultipleCameras) {
+            mCameraFlipButton.setOnClickListener(mOnClickListener);
+        }
+        else {
+            mCameraFlipButton.setVisibility(View.GONE);
+        }
+    }
+
+    private void updateInterfaceForCameraSize(int width, int height) {
+        float cameraAR = (float) width/height;
+        // Invert the camera's AR because the activity is is portrait and the preview is rotated.
+        cameraAR = 1/cameraAR;
+
+        if (mPreviewMaxHeight == 0) {
+            mPreviewMaxWidth = mVideoPreviewTextureView.getWidth();
+            mPreviewMaxHeight = mVideoPreviewTextureView.getHeight();
+            if (mPreviewMaxHeight == 0) {
+                // We still don't know the dimensions of the maximum available area
+                return;
+            }
+        }
+        /*
+         * The preview's aspect ratio (AR) will be set the same as the camera's AR, or else
+         * the preview will be stretched. The preview can fit in a rectangle with size
+         * [mPreviewMaxWidth, mPreviewMaxHeight], which in general has different AR than the camera.
+         * Depending on those 2 AR, the preview may fit horizontally or vertically in the available
+         * area. If it fits vertically, the buttons will be overlayed. Otherwise they will sit below
+         * the preview.
+         */
+        int previewWidth;
+        int previewHeight;
+        int buttonHeight;
+
+        float previewAR = (float) mPreviewMaxWidth / mPreviewMaxHeight;
+
+        if (previewAR >= cameraAR) {
+            // Preview fills the screen's height. Black bars on the sides. Buttons are overlayed.
+            previewHeight = mPreviewMaxHeight;
+            previewWidth = (int) (cameraAR * previewHeight);
+
+            buttonHeight = getResources().getDimensionPixelSize(R.dimen.camera_start_stop_button_height);
+        }
+        else {
+            // Preview will be placed on the area on top of the buttons. Button height is adjusted.
+            previewWidth = mPreviewMaxWidth;
+            previewHeight = (int) ((float) mPreviewMaxWidth /cameraAR);
+
+            buttonHeight= mPreviewMaxHeight - previewHeight;
+            int minButtonHeight = getResources().getDimensionPixelSize(R.dimen.camera_start_stop_button_min_height);
+            if (buttonHeight < minButtonHeight) {
+                // If the button gets shorter than what we want, we'll set it to minButtonHeight and
+                // adjust the preview size to fit on the area on top of it.
+                buttonHeight = minButtonHeight;
+
+                int availableWidth = mPreviewMaxWidth;
+                int availableHeight = mPreviewMaxHeight - buttonHeight;
+                previewAR = (float) availableWidth/availableHeight;
+                if (previewAR >= cameraAR) {
+                    previewHeight = availableHeight;
+                    previewWidth = (int) (cameraAR * availableHeight);
+                }
+                else {
+                    previewWidth = availableWidth;
+                    previewHeight = (int) ((float) availableWidth /cameraAR);
+                }
+            }
+
+        }
+        ViewUtil.setViewWidthHeight(mVideoPreviewTextureView, previewWidth, previewHeight);
+        ViewUtil.setViewHeight(mRecordStartStopButton, buttonHeight);
     }
 
     private void setup() {
@@ -266,7 +374,7 @@ public class VideoCaptureActivity extends Activity {
 
         for(int i = 0; i < DESIRED_QUALITY_RANKING.length; i++) {
             if(CamcorderProfile.hasProfile(mCameraId, DESIRED_QUALITY_RANKING[i])) {
-                quality = i;
+                quality = DESIRED_QUALITY_RANKING[i];
 
                 break;
             }
@@ -274,14 +382,61 @@ public class VideoCaptureActivity extends Activity {
 
         mCamcorderProfile = CamcorderProfile.get(mCameraId, quality);
 
-//        Camera.Parameters parameters = mCamera.getParameters();
-//        List<Camera.Size> mSupportedPreviewSizes = parameters.getSupportedPreviewSizes();
-//        Camera.Size optimalSize = CameraHelper.getOptimalPreviewSize(this, mSupportedPreviewSizes, (double) mCamcorderProfile.videoFrameWidth / mCamcorderProfile.videoFrameHeight);
+        Camera.Parameters parameters = mCamera.getParameters();
+
+        mCameraSupportsZoom = parameters.isZoomSupported();
+        if (mCameraSupportsZoom) {
+            MySimpleOnScaleGestureListener scaleListener = new MySimpleOnScaleGestureListener();
+            scaleListener.mMaxZoom = parameters.getMaxZoom();
+            mScaleGestureDetector = new ScaleGestureDetector(getBaseContext(), scaleListener);
+        }
+
+        List<String> flashModes = parameters.getSupportedFlashModes();
+        if (flashModes != null && flashModes.contains(Camera.Parameters.FLASH_MODE_TORCH)) {
+            mCameraFlashToggleButton.setVisibility(View.VISIBLE);
+            setCameraFlash(CameraFlash.OFF, false);
+        }
+        else {
+            mCameraFlashToggleButton.setVisibility(View.INVISIBLE);
+        }
+
+        List<Camera.Size> mSupportedPreviewSizes = parameters.getSupportedPreviewSizes();
+        Camera.Size optimalSize = CameraHelper.getOptimalPreviewSize2(mSupportedPreviewSizes, (double) mCamcorderProfile.videoFrameWidth / mCamcorderProfile.videoFrameHeight);
+        parameters.setPreviewSize(optimalSize.width, optimalSize.height);
+        Log.i(TAG, "Preview resolution is "
+                + String.format("%dx%d (ar=%.2f)", optimalSize.width,
+                optimalSize.height,
+                (float) optimalSize.width / optimalSize.height)
+                + " for camera resolution "
+                + String.format("%dx%d (ar=%.2f)", mCamcorderProfile.videoFrameWidth,
+                mCamcorderProfile.videoFrameHeight,
+                (float) mCamcorderProfile.videoFrameWidth / mCamcorderProfile.videoFrameHeight));
+        updateInterfaceForCameraSize(mCamcorderProfile.videoFrameWidth, mCamcorderProfile.videoFrameHeight);
+        //parameters.setPreviewFrameRate(mCamcorderProfile.videoFrameRate);
+
+//        /*
+//         * Hack!
+//         *
+//         * Workaround for stretched video preview on BP1 devices.
+//         * Choose a preview size that closely matches texture view dimensions.
+//         *
+//         * Approach works on all devices if this is done on surface view updates but is
+//         * unnecessary (only BP1 exhibits stretched camera preview). Using code below in this place
+//         * for other devices will stretch preview on them.
+//         */
 //
-//        parameters.setPreviewSize(optimalSize.width, optimalSize.height);
-//        parameters.setPreviewFrameRate(mCamcorderProfile.videoFrameRate);
-//
-//        mCamera.setParameters(parameters);
+//        if (Build.MODEL.equals(BLACKPHONE_BP1)) {
+//            List<Camera.Size> supportedPreviewSizes = parameters.getSupportedPreviewSizes();
+//            Camera.Size previewSize = getPreviewSizeFromView(mVideoPreviewTextureView, supportedPreviewSizes);
+//            parameters.setPreviewSize(previewSize.width, previewSize.height);
+//        }
+
+        List<String> focusModes = parameters.getSupportedFocusModes();
+        if (focusModes != null && focusModes.contains(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO)) {
+            parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO);
+        }
+
+        mCamera.setParameters(parameters);
 
         try {
             CameraHelper.setCameraDisplayOrientation(this, mCameraId, mCamera);
@@ -303,6 +458,18 @@ public class VideoCaptureActivity extends Activity {
         mMediaRecorder = new MediaRecorder();
 
         try {
+            // TODO: keep reference to ParcelFileDescriptor?
+            mOutputFileDescriptor = getContentResolver().openFileDescriptor(mOutputUri, FILE_DESCRIPTOR_MODE).getFileDescriptor();
+        } catch (FileNotFoundException exception) {
+            Log.e(TAG, "Output URI is an invalid file", exception);
+        }
+
+        if(mOutputFileDescriptor == null || !mOutputFileDescriptor.valid()) {
+            finish();
+            return;
+        }
+
+        try {
             if(mCamera == null) {
                 Log.e(TAG, "Recorder setup fail - no camera");
 
@@ -321,11 +488,11 @@ public class VideoCaptureActivity extends Activity {
         mCamcorderProfile.fileFormat = MediaRecorder.OutputFormat.MPEG_4;
         mCamcorderProfile.audioCodec = MediaRecorder.AudioEncoder.AAC;
         mCamcorderProfile.audioChannels = 1;
-        mCamcorderProfile.audioBitRate = 32000;
-        mCamcorderProfile.audioSampleRate = 48000;
+        mCamcorderProfile.audioBitRate = Math.min(32000, mCamcorderProfile.audioBitRate);
+        mCamcorderProfile.audioSampleRate = Math.min(48000, mCamcorderProfile.audioSampleRate);
 
         mCamcorderProfile.videoCodec = MediaRecorder.VideoEncoder.H264;
-        mCamcorderProfile.videoBitRate = 500000;
+        mCamcorderProfile.videoBitRate = Math.min(500000, mCamcorderProfile.videoBitRate);
 
         mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
         mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
@@ -334,10 +501,12 @@ public class VideoCaptureActivity extends Activity {
 
         mMediaRecorder.setProfile(mCamcorderProfile);
 
-        mMediaRecorder.setOrientationHint(90);
+        mMediaRecorder.setOrientationHint(CameraHelper.getOrientationHint(this, mCameraId, mCamera));
 
         try {
             mMediaRecorder.prepare();
+            // Lock the camera, so that we can access it (e.g. zooming)
+            mCamera.lock();
         } catch(Throwable exception) {
             Log.e(TAG, "Recorder setup exception", exception);
 
@@ -376,6 +545,31 @@ public class VideoCaptureActivity extends Activity {
         updateCameraIfNecessary();
     }
 
+    private void toggleFlash() {
+        CameraFlash requestedFlash;
+        if (mCameraFlash.equals(mCameraFlash.OFF)) {
+            requestedFlash = CameraFlash.ON;
+        }
+        else if(mCameraFlash.equals(mCameraFlash.ON)) {
+            requestedFlash = CameraFlash.OFF;
+        }
+        else {
+            requestedFlash = CameraFlash.OFF;
+        }
+        setCameraFlash(requestedFlash, true);
+    }
+
+    private void setCameraFlash(CameraFlash flash, boolean updateCameraParams) {
+        mCameraFlash = flash;
+        mCameraFlashToggleButton.setImageResource(mCameraFlash.drawableResourceId);
+
+        if (updateCameraParams) {
+            Camera.Parameters parameters = mCamera.getParameters();
+            parameters.setFlashMode(flash.cameraParameter);
+            mCamera.setParameters(parameters);
+        }
+    }
+
     private void restart() {
         tearDown();
         setup();
@@ -391,6 +585,8 @@ public class VideoCaptureActivity extends Activity {
 
     public void startRecording() {
         try {
+            // balance the lock() after MediaRecorder's prepare()
+            mCamera.unlock();
             mMediaRecorder.start();
         } catch(Throwable exception) {
             Log.e(TAG, "Recorder setup exception", exception);
@@ -403,8 +599,10 @@ public class VideoCaptureActivity extends Activity {
         setCurrentRecordingState(RecordingState.STARTED);
 
         mRecordInfoLayout.setVisibility(View.VISIBLE);
-        mRecordStartStopButton.setImageResource(R.drawable.ic_stop_white_24dp);
-        mCameraFlipButton.setVisibility(View.INVISIBLE);
+        mRecordStartStopButton.setImageResource(R.drawable.ic_stop_dark);
+        if (mMultipleCameras) {
+            mCameraFlipButton.setVisibility(View.INVISIBLE);
+        }
 
         startCountdownTimer();
     }
@@ -437,6 +635,9 @@ public class VideoCaptureActivity extends Activity {
             }
 
             mCamera = null;
+            mCameraSupportsZoom = false;
+
+            mScaleGestureDetector = null;
         }
     }
 
@@ -462,7 +663,7 @@ public class VideoCaptureActivity extends Activity {
             }
 
             try {
-                getContentResolver().openFileDescriptor(mOutputUri, null).close();
+                getContentResolver().openFileDescriptor(mOutputUri, FILE_DESCRIPTOR_MODE).close();
             } catch (IOException exception) {
                 Log.i(TAG, "Recording teardown exception (ignoring)", exception);
             }
@@ -484,10 +685,12 @@ public class VideoCaptureActivity extends Activity {
         stopPreview();
         tearDownCamera();
 
-        try {
-            getContentResolver().openFileDescriptor(mOutputUri, null).close();
-        } catch(IOException exception) {
-            Log.e(TAG, "Teardown exception (ignoring)", exception);
+        if (mOutputUri != null) {
+            try {
+                getContentResolver().openFileDescriptor(mOutputUri, FILE_DESCRIPTOR_MODE).close();
+            } catch (IOException exception) {
+                Log.e(TAG, "Teardown exception (ignoring)", exception);
+            }
         }
     }
 
@@ -563,4 +766,63 @@ public class VideoCaptureActivity extends Activity {
 
         onCancel();
     }
+
+    private Camera.Size getPreviewSizeFromView(View view, List<Camera.Size> sizes) {
+        view.requestLayout();
+        double ratio =
+                (double) Math.max(view.getWidth(), view.getHeight())
+                        / Math.min(view.getWidth(), view.getHeight());
+        Camera.Size size = CameraHelper.getOptimalPreviewSize(this, sizes, ratio);
+        return size;
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event){
+        if (mScaleGestureDetector != null) {
+            mScaleGestureDetector.onTouchEvent(event);
+        }
+        return super.onTouchEvent(event);
+    }
+
+    private class MySimpleOnScaleGestureListener extends ScaleGestureDetector.SimpleOnScaleGestureListener {
+        public int mMaxZoom;
+
+        int mZoomWhenScaleBegan;
+        int mCurrentZoom;
+        int mLastZoom;
+
+        @Override
+        public boolean onScale(ScaleGestureDetector detector) {
+            if (mCamera == null || !mCameraSupportsZoom) {
+                return false;
+            }
+            float scaleFactor = detector.getScaleFactor();
+            float ratio = (detector.getScaleFactor() >= 1.0f) ? (scaleFactor - 1.f) : -(1.f / scaleFactor - 1.f);
+            mCurrentZoom = (int) (mZoomWhenScaleBegan + (mMaxZoom * ratio));
+            mCurrentZoom = Math.min(mCurrentZoom, mMaxZoom);
+            mCurrentZoom = Math.max(0, mCurrentZoom);
+            mLastZoom = mCurrentZoom;
+
+            // TODO: instead of setting the parameters for every touch event, we could create a timer
+            // that updates them for every video frame
+            Camera.Parameters parameters = mCamera.getParameters();
+            parameters.setZoom(mCurrentZoom);
+            mCamera.setParameters(parameters);
+
+            return false;
+        }
+
+        @Override
+        public boolean onScaleBegin(ScaleGestureDetector detector) {
+            if (mCamera == null || !mCameraSupportsZoom) {
+                return false;
+            }
+            mZoomWhenScaleBegan = mLastZoom;
+            return true;
+        }
+
+        @Override
+        public void onScaleEnd(ScaleGestureDetector detector) {}
+    }
+
 }

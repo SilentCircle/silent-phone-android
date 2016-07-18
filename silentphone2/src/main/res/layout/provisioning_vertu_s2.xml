@@ -67,6 +67,7 @@
 
             <EditText
                     style="@style/Widget.Silent.SimpleText"
+                    android:theme="@style/Widget.EditText.Dark"
                     android:id="@+id/ProvisioningUsernameInput"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -80,6 +81,7 @@
 
             <EditText
                     style="@style/Widget.Silent.SimpleText"
+                    android:theme="@style/Widget.EditText.Dark"
                     android:id="@+id/ProvisioningPasswordInput"
                     android:layout_height="wrap_content"
                     android:layout_below="@+id/ProvisioningUsernameInput"
@@ -125,6 +127,7 @@
 
             <EditText
                     style="@style/Widget.Silent.SimpleText"
+                    android:theme="@style/Widget.EditText.Dark"
                     android:id="@+id/ProvisioningEmailInput"
                     android:layout_height="wrap_content"
                     android:layout_below="@+id/ProvisioningEmailInfo"
@@ -138,6 +141,7 @@
 
             <EditText
                     style="@style/Widget.Silent.SimpleText"
+                    android:theme="@style/Widget.EditText.Dark"
                     android:id="@+id/ProvisioningFirstNameInput"
                     android:layout_height="wrap_content"
                     android:layout_below="@+id/ProvisioningEmailInput"
@@ -151,6 +155,7 @@
 
             <EditText
                     style="@style/Widget.Silent.SimpleText"
+                    android:theme="@style/Widget.EditText.Dark"
                     android:id="@+id/ProvisioningLastNameInput"
                     android:layout_height="wrap_content"
                     android:layout_below="@+id/ProvisioningFirstNameInput"

@@ -28,21 +28,30 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 package com.silentcircle.silentphone2.fragments;
 
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.Fragment;
+import android.app.FragmentManager;
 import android.content.Context;
+import android.content.Intent;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
+import android.database.Cursor;
 import android.graphics.drawable.Drawable;
 import android.media.AudioManager;
 import android.media.ToneGenerator;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.provider.ContactsContract;
 import android.provider.Settings;
+import android.telephony.PhoneNumberFormattingTextWatcher;
 import android.telephony.PhoneNumberUtils;
 import android.text.Editable;
 import android.text.InputFilter;
 import android.text.TextUtils;
 import android.text.TextWatcher;
+import android.text.method.LinkMovementMethod;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.util.TypedValue;
@@ -60,16 +69,21 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.silentcircle.common.testing.NeededForReflection;
+import com.silentcircle.common.util.AsyncTasks;
 import com.silentcircle.common.util.DialerUtils;
 import com.silentcircle.common.util.SearchUtil;
 import com.silentcircle.common.widget.FloatingActionButtonController;
+import com.silentcircle.contacts.utils.PhoneNumberHelper;
+import com.silentcircle.messaging.util.AsyncUtils;
 import com.silentcircle.silentphone2.R;
 import com.silentcircle.silentphone2.activities.DialerActivity;
 import com.silentcircle.silentphone2.dialhelpers.FindDialHelper;
+import com.silentcircle.silentphone2.dialogs.InfoMsgDialogFragment;
 import com.silentcircle.silentphone2.services.TiviPhoneService;
 import com.silentcircle.silentphone2.util.CallState;
-import com.silentcircle.silentphone2.util.PhoneNumberFormatter;
+import com.silentcircle.silentphone2.util.ConfigurationUtilities;
 import com.silentcircle.silentphone2.util.Utilities;
+import com.silentcircle.userinfo.LoadUserInfo;
 
 /**
  * This Fragment handles the dial pad UI.
@@ -85,6 +99,9 @@ public class DialpadFragment extends Fragment implements View.OnClickListener,
     /** The length of DTMF tones in milliseconds */
     private static final int TONE_LENGTH_MS = 200;
 
+    // Pick contact intent request code
+    private static final int PICK_CONTACT = 1;
+
     // determines if we want to playback local DTMF tones.
     private boolean mDTMFToneEnabled;
 
@@ -96,17 +113,17 @@ public class DialpadFragment extends Fragment implements View.OnClickListener,
 
     private View mDelete;
     private View mDialPad;
+    private View mPickContact;
     private View mRequestHelper;
     private LinearLayout mTopLevel;
+    private View mDialPadBottomHeight;
     private FloatingActionButtonController mFloatingActionButtonController;
 
     private static String mLastDestination = "";
     private static String mSaveUserInput;
-    private static boolean mSavePstnViaOca;
     private String mPresetDestination;
-    private boolean mPstnViaOca;
 
-    private boolean mNoNumber;
+    private boolean mDialpadInvisible;
 
     private Activity mParent;
     private Drawable mDialPadIcon;
@@ -120,14 +137,15 @@ public class DialpadFragment extends Fragment implements View.OnClickListener,
     /**
      * Callbacks interface that all activities using this fragment must implement.
      */
-    public static interface DialpadCallbacks {
+    public interface DialpadCallbacks {
         /**
          * Call a destination.
          *
          * @param callCommand the command to perform call
          * @param destination the destination, could be formatted number or a name
+         * @param isOcaCall if the destination is over OCA
          */
-        void doCall(String callCommand, String destination);
+        void doCall(String callCommand, String destination, boolean isOcaCall);
 
         /**
          * Handle an internal command code.
@@ -194,6 +212,7 @@ public class DialpadFragment extends Fragment implements View.OnClickListener,
         mDialpadSlideInDuration = getResources().getInteger(R.integer.dialpad_slide_in_duration);
     }
 
+    @SuppressWarnings("deprecation")
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedState) {
         Resources.Theme theme = mParent.getTheme();
@@ -209,6 +228,7 @@ public class DialpadFragment extends Fragment implements View.OnClickListener,
             }
         }
         else {
+            // The deprecated version of the functions set the theme to null
             mDialPadIcon = getResources().getDrawable(R.drawable.ic_action_dial_pad_light);
             mKeyboardIcon = getResources().getDrawable(R.drawable.ic_action_keyboard_light);
         }
@@ -223,7 +243,13 @@ public class DialpadFragment extends Fragment implements View.OnClickListener,
         mDestination.setOnLongClickListener(this);
         mDestination.addTextChangedListener(this);
         mDestination.setFilters(new InputFilter[]{SearchUtil.LOWER_CASE_INPUT_FILTER});
-        PhoneNumberFormatter.setPhoneNumberFormattingTextWatcher(mDestination);
+        /**
+         * This async task is no longer used, because it will not format numbers added instantly
+         * using {@link #setDestination} from the {@link DialerActivity}. Instead, we will set
+         * the {@link PhoneNumberFormattingTextWatcher} sequentially.
+         */
+        // PhoneNumberFormatter.setPhoneNumberFormattingTextWatcher(mDestination);
+        mDestination.addTextChangedListener(new PhoneNumberFormattingTextWatcher());
         mDestination.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
             public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
@@ -258,6 +284,12 @@ public class DialpadFragment extends Fragment implements View.OnClickListener,
             mDelete.setOnClickListener(this);
             mDelete.setOnLongClickListener(this);
         }
+
+        mPickContact = fragmentView.findViewById(R.id.pickContact);
+        if (mPickContact != null) {
+            mPickContact.setOnClickListener(this);
+        }
+
         mInputSwitcher = (ImageButton)fragmentView.findViewById(R.id.input_type_switch);
         mInputSwitcher.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -285,6 +317,7 @@ public class DialpadFragment extends Fragment implements View.OnClickListener,
         mRequestHelper = fragmentView.findViewById(R.id.request_helper);
 
         mDialPad = fragmentView.findViewById(R.id.dialpad);  // This is null in landscape mode.
+        mDialPadBottomHeight = fragmentView.findViewById(R.id.dialpad_bottom_height); // Also null
         return fragmentView;
     }
 
@@ -301,7 +334,7 @@ public class DialpadFragment extends Fragment implements View.OnClickListener,
         if (mDestination != null && !isHidden()) {
             if (mDestination.hasFocus())
                 mRequestHelper.requestFocus();
-            if (mNoNumber && !drawerOpen)
+            if (mDialpadInvisible && !drawerOpen)
                 mDestination.requestFocus();
         }
         // retrieve the DTMF tone play back setting.
@@ -318,13 +351,13 @@ public class DialpadFragment extends Fragment implements View.OnClickListener,
             }
         }
         if (mSaveUserInput != null) {
-            setDestination(mSaveUserInput, mSavePstnViaOca);
+            setDestination(mSaveUserInput);
             mSaveUserInput = null;
         }
         // Check if the dialer got an Intent to set the destination and
         // perform auto-dialing. This overwrites a saved user input
         if (mPresetDestination != null) {
-            setDestination(mPresetDestination, mPstnViaOca);
+            setDestination(mPresetDestination);
             mPresetDestination = null;
         }
     }
@@ -347,16 +380,32 @@ public class DialpadFragment extends Fragment implements View.OnClickListener,
         }
     }
 
+    @TargetApi(Build.VERSION_CODES.M)
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        commonOnAttach(getActivity());
+    }
+
+    /*
+     * Deprecated on API 23
+     * Use onAttachToContext instead
+     */
+    @SuppressWarnings("deprecation")
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
+        commonOnAttach(activity);
+    }
+
+    private void commonOnAttach(Activity activity) {
         mParent = activity;
     }
 
     @Override
     public void onSaveInstanceState (Bundle outState) {
         super.onSaveInstanceState(outState);
-        outState.putBoolean("NO_NUMBER", mNoNumber);
+        outState.putBoolean("NO_NUMBER", mDialpadInvisible);
     }
 
     @Override
@@ -365,25 +414,20 @@ public class DialpadFragment extends Fragment implements View.OnClickListener,
         if (activity == null)
             return;
         if (!hidden && mDestination != null) {
-            mNoNumber = TextUtils.isEmpty(DialerActivity.mNumber);
+            mDialpadInvisible = true;
 
-            // In landscape mode we force the "noNumber mode to show the keyboard
+            // In landscape mode we force to show the keyboard
             if (mDialPad == null) {
-                mNoNumber = true;
                 mInputSwitcher.setVisibility(View.INVISIBLE);   // don't show the mode switch
                 mInputSwitcher.setEnabled(false);
             }
             else {
                 mDestination.setCursorVisible(false);
+                mDialPad.setVisibility(View.GONE);
             }
             mFloatingActionButtonController.scaleIn(mDialpadSlideInDuration);
             activity.onDialpadShown();
-            if (mNoNumber) {
-                mDestination.postDelayed(mShowKeyboard, 200); // show IME after all views are settled
-            }
-            else {
-                dialPadLayout();
-            }
+            mDestination.postDelayed(mShowKeyboard, 200); // show IME after all views are settled
         }
         if (hidden && mFloatingActionButtonController != null)
             mFloatingActionButtonController.scaleOut();
@@ -397,6 +441,13 @@ public class DialpadFragment extends Fragment implements View.OnClickListener,
                 if (mDialPad != null && mDialPad.getVisibility() == View.VISIBLE) {
                     playTone(ToneGenerator.TONE_DTMF_B, TONE_LENGTH_MS);
                 }
+                return;
+            }
+            case R.id.pickContact: {
+                Intent intent = new Intent(Intent.ACTION_PICK, ContactsContract.Contacts.CONTENT_URI);
+                intent.setType(ContactsContract.CommonDataKinds.Phone.CONTENT_TYPE);
+                startActivityForResult(intent, PICK_CONTACT);
+
                 return;
             }
             case R.id.dialButton: {
@@ -459,12 +510,55 @@ public class DialpadFragment extends Fragment implements View.OnClickListener,
         return false;
     }
 
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        switch (requestCode) {
+            case PICK_CONTACT: {
+                if (resultCode == Activity.RESULT_OK) {
+                    Uri contactUri = data.getData();
+
+                    String[] projection = {
+                            ContactsContract.CommonDataKinds.Phone.NUMBER
+                    };
+
+                    Cursor cursor = mParent.getContentResolver()
+                            .query(contactUri, projection, null, null, null);
+                    cursor.moveToFirst();
+
+                    int column = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER);
+                    String number = cursor.getString(column);
+
+                    // Apply the dial helper and format the number if necessary
+                    boolean wasModified = DialerActivity.checkCallToNr(number, this);
+
+                    if (!wasModified) {
+                        // Automatically call if the number was not modified, which basically
+                        // means we want the user to automatically call only what they expect to call (WYSIWYG)
+                        dialButtonPressed();
+                    }
+                }
+
+                break;
+            }
+        }
+
+    }
+
     public void dialButtonPressed() {
         FindDialHelper.getDialHelper().resetAnalyser();
+
         if (isDestinationEmpty()) { // No number entered.
             handleDialButtonClickWithEmptyDigits();
-        }
-        else {
+        } else {
+            if (!LoadUserInfo.canCallOutbound(mParent)) {
+                showDialog(R.string.information_dialog, R.string.basic_account_info,
+                        android.R.string.ok, -1);
+
+                return;
+            }
+
             final Editable text = mDestination.getText();
             if (text != null) {
                 final String destination = text.toString();
@@ -473,10 +567,8 @@ public class DialpadFragment extends Fragment implements View.OnClickListener,
         }
     }
 
-    public void setDestination(String destination, boolean pstnViaOca) {
+    public void setDestination(String destination) {
         mSaveUserInput = null;
-        mSavePstnViaOca = false;
-        mPstnViaOca = pstnViaOca;
         if (mDestination == null) {
             mPresetDestination = destination;
             return;
@@ -513,7 +605,7 @@ public class DialpadFragment extends Fragment implements View.OnClickListener,
      * Shows the keyboard if the dial-pad is not active.
      */
     public void showKeyboard() {
-        if (mNoNumber) {
+        if (mDialpadInvisible) {
             if (mDestination.hasFocus())
                 mRequestHelper.requestFocus();
             mDestination.requestFocus();
@@ -527,30 +619,29 @@ public class DialpadFragment extends Fragment implements View.OnClickListener,
         FindDialHelper.getDialHelper().resetAnalyser();
     }
 
-    /*
-     * Below are private helper functions
-     */
     private boolean isDestinationEmpty() {
         return mDestination.length() == 0;
     }
 
     private void makeCall(String dst) {
-        DialpadCallbacks activity = (DialpadCallbacks)getActivity();
+        final DialpadCallbacks activity = (DialpadCallbacks)getActivity();
         if (activity == null)
             return;
 
-        if (dst.indexOf("*##*") == 0) {
+        if (dst.startsWith("*##*")) {
             activity.internalCall(dst);
             mDestination.setText("");
             mDestination.setCursorVisible(false);
             return;
         }
 
+        final boolean specialNumber = dst.startsWith("*");
+
         // Remember the last destination dialed:
         // - store URIs as we get them
         // - if a "destination" starts with a letter then treat it as "name"
         // - treat other input as numbers and store without separators
-        int priority = CallState.NORMAL;
+        final int priority;
         if (dst.endsWith("!!")) {
             priority = CallState.EMERGENCY;
             dst = dst.replace("!!", "");
@@ -559,36 +650,128 @@ public class DialpadFragment extends Fragment implements View.OnClickListener,
             priority = CallState.URGENT;
             dst = dst.replace("!", "");
         }
+        else
+            priority = CallState.NORMAL;
 
-        if (Character.isLetter(dst.charAt(0)) || Utilities.isUriNumber(dst)) {
-            mLastDestination = dst;
-        }
-        else {
-            mLastDestination = PhoneNumberUtils.stripSeparators(dst);
-        }
-        String callCommand;
-        if (priority == CallState.NORMAL)
-            callCommand = ":c " + mLastDestination;        // Command to phone service
-        else {
-            callCommand = ":c " + mLastDestination + ((priority == CallState.URGENT) ? "!" : "!!");
-        }
-        mDestination.setText("");
-        mDestination.setCursorVisible(false);
-
-        CallState call = TiviPhoneService.calls.getEmptyCall();
-        if (call == null) {
+        // Beware of ";" character as "wait indicator" in some phone numbers, should
+        // not happen on SIP dialing at all. Part after ';' is the destination device id
+        // to address a specific device on the user's account.
+        String numberParts[] = dst.split(";");
+        if (numberParts.length < 1) {
             return;
         }
-        int idx = mLastDestination.indexOf(';');
-        String dest = mLastDestination;
-        if (idx > 0) {
-            dest = dest.substring(0, idx);
+        dst = numberParts[0];
+        final String deviceId = numberParts.length >= 2 ? ";" + numberParts[1] : null;
+        final String formattedNumber;
+        if (Character.isLetter(dst.charAt(0)) || Utilities.isUriNumber(dst)) {
+            formattedNumber = mLastDestination = dst;
         }
-        call.bufDialed.setText(dest);           // bufDialed holds normalized name/number
-        call.bufMsg.setText(getString(R.string.sip_state_calling));
-        call.mPstnViaOca = mPstnViaOca;
-        TiviPhoneService.calls.setCurCall(call);
-        activity.doCall(callCommand, mLastDestination);
+        else {
+            String normalizedNumber = mLastDestination = PhoneNumberHelper.normalizeNumber(dst.trim());
+            formattedNumber = Utilities.getValidPhoneNumber(normalizedNumber);
+            if (formattedNumber != null)
+                mLastDestination = PhoneNumberUtils.stripSeparators(formattedNumber);
+        }
+
+        // The getUid _must not_ run on UI thread because it may trigger a network
+        // activity to do a lookup on provisioning server.
+        AsyncTasks.UserDataBackgroundTask getUidTask = new AsyncTasks.UserDataBackgroundTask(mParent.getApplicationContext()) {
+
+            @Override
+            protected void onPostExecute(Integer time) {
+                super.onPostExecute(time);
+
+                // If we could not find a UID then use the data as typed by the user and
+                // create the call command. Otherwise use the UID.
+                String callCommand;
+                String calledDestination;
+                boolean isOcaCall = false;
+
+                if (mUserInfo == null || mUserInfo.mUuid == null) {
+                    if (ConfigurationUtilities.mTrace) Log.d(TAG, "The UUID for " + mLastDestination + " is null");
+                    calledDestination = mLastDestination;
+
+                    if (!specialNumber)
+                        isOcaCall = Utilities.isValidPhoneNumber(calledDestination);
+
+                    // In case we have no user info and this is not a valid number - then this is no
+                    // SC user - show this in the same way as if the server would return this message.
+                    if (!specialNumber && !isOcaCall) {
+                        showDialog(R.string.information_dialog, R.string.sip_error_no_user,
+                                android.R.string.ok, -1);
+                        return;
+                    }
+                    // This number did not resolve to a SIP number or a special number, and will cost
+                    // money if connected (OCA call)
+
+                    if(isOcaCall) {
+                        if(LoadUserInfo.checkIfUsesMinutes() == LoadUserInfo.VALID &&
+                                LoadUserInfo.checkIfLowMinutes(0) == LoadUserInfo.VALID) {
+                            showDialog(R.string.information_dialog, R.string.minutes_gone_info,
+                                    android.R.string.ok, -1);
+
+                            return;
+                        } else if(LoadUserInfo.checkIfUsesCredit() == LoadUserInfo.VALID &&
+                                LoadUserInfo.checkIfLowCredit(0.00) == LoadUserInfo.VALID) {
+                            showDialog(R.string.information_dialog, R.string.credit_gone_info,
+                                    android.R.string.ok, -1);
+
+                            return;
+                        }
+
+                        if(!LoadUserInfo.canCallOca(mParent)) {
+                            showDialog(R.string.information_dialog, R.string.basic_account_info,
+                                    android.R.string.ok, -1);
+
+                            return;
+                        }
+                        // For OCA calls set the display name to the formatted number because
+                        // no other information is available :-) .
+                        mUserInfo = new AsyncTasks.UserInfo();
+                        mUserInfo.mDisplayName = formattedNumber;
+                    }
+
+                    // The validation and formatting above may remove the starting '*' character. If that's
+                    // the case add it again
+                    if (specialNumber) {
+                        if (mLastDestination.charAt(0) != '*')
+                            mLastDestination = "*" + mLastDestination;
+                        mUserInfo = new AsyncTasks.UserInfo();
+                        mUserInfo.mDisplayName = mLastDestination;
+                    }
+
+                    if (priority == CallState.NORMAL)
+                        callCommand = ":c " + mLastDestination + (deviceId == null ? "" : deviceId); // Command to phone service
+                    else {
+                        callCommand = ":c " + mLastDestination + ((priority == CallState.URGENT) ? "!" : "!!");
+                    }
+                }
+                else {
+                    if (ConfigurationUtilities.mTrace) Log.d(TAG, "The UUID for " + mLastDestination + " is: " + mUserInfo.mUuid);
+                    calledDestination = mUserInfo.mUuid;
+                    if (priority == CallState.NORMAL)
+                        callCommand = ":c " + mUserInfo.mUuid + (deviceId == null ? "" : deviceId);    // Command to phone service
+                    else {
+                        callCommand = ":c " + mUserInfo.mUuid + ((priority == CallState.URGENT) ? "!" : "!!");
+                    }
+                }
+                mDestination.setText("");
+                mDestination.setCursorVisible(false);
+
+                CallState call = TiviPhoneService.calls.getEmptyCall();
+                if (call == null) {
+                    return;
+                }
+                call.bufDialed.setText(calledDestination);      // bufDialed holds string we use to dial, the UUID
+                call.setPeerName(mUserInfo.mDisplayName);       // Set peername to have a name to show until call setup
+                call.mDefaultDisplayName.setText(mUserInfo.mDisplayName);
+                call.bufMsg.setText(getString(R.string.sip_state_calling));
+                call.isOcaCall = isOcaCall;
+                TiviPhoneService.calls.setCurCall(call);
+                activity.doCall(callCommand, mUserInfo.mDisplayName, isOcaCall);
+            }
+        };
+        AsyncUtils.execute(getUidTask, mLastDestination);
     }
 
     private void handleDialButtonClickWithEmptyDigits() {
@@ -829,25 +1012,29 @@ public class DialpadFragment extends Fragment implements View.OnClickListener,
     private void inputSwitchClick() {
         if (mDialPad == null)                   // we are in landscape mode, we always show keyboard
             return;
-        if (mNoNumber) {
-            mNoNumber = false;
+        if (mDialpadInvisible) {
+            mDialpadInvisible = false;
             dialPadLayout();
         }
         else {
-            mNoNumber = true;
+            mDialpadInvisible = true;
             keyboardLayout();
         }
     }
 
+    // TODO: Merge some of this logic and keyboardLayout()
     private Runnable mShowImeRunnable = new Runnable() {
         public void run() {
             // Check if the mDestination field receives focus while showing the number dial pad. If
             // this is the case switch over to keyboard input. The code simulate a switch to keyboard
             // layout, but places the cursor always at the end.
-            if (!mNoNumber) {
-                mNoNumber = true;
-                if (mDialPad != null)                       // no dialpad in landscape mode anyway
-                    mDialPad.setVisibility(View.GONE);
+            if (!mDialpadInvisible) {
+                mDialpadInvisible = true;
+                if (mDialPad != null) {                       // no dialpad in landscape mode anyway
+                    setDialpadVisible(false);
+                    mDialPadBottomHeight.getLayoutParams().height =
+                            (int) getResources().getDimension(R.dimen.dialpad_bottom_key_height_larger);
+                }
                 mInputSwitcher.setImageDrawable(mDialPadIcon);
                 final Editable text = mDestination.getText();
                 if (text != null)
@@ -888,16 +1075,36 @@ public class DialpadFragment extends Fragment implements View.OnClickListener,
             mDestination.requestFocus();
         }
         mDestination.setCursorVisible(true);
-        if (mDialPad != null)                       // no dialpad in landscape mode anyway
-            mDialPad.setVisibility(View.GONE);
+        if (mDialPad != null) {                        // no dialpad in landscape mode anyway
+            setDialpadVisible(false);
+            mDialPadBottomHeight.getLayoutParams().height =
+                    (int) getResources().getDimension(R.dimen.dialpad_bottom_key_height_larger);
+        }
+
         mInputSwitcher.setImageDrawable(mDialPadIcon);
     }
 
     private void dialPadLayout() {
 //        mTopLevel.setVisibility(View.INVISIBLE);
-        mDialPad.setVisibility(View.VISIBLE);
+        setDialpadVisible(true);
+        mDialPadBottomHeight.getLayoutParams().height =
+                (int) getResources().getDimension(R.dimen.dialpad_bottom_key_height);
         mInputSwitcher.setImageDrawable(mKeyboardIcon);
         mRequestHelper.requestFocus();          // remove focus from other input fields
+    }
+
+    public boolean isDialpadVisible() {
+        if (mDialPad != null) {
+            return mDialPad.getVisibility() == View.VISIBLE;
+        }
+
+        return false;
+    }
+
+    public void setDialpadVisible(boolean visible) {
+        if (mDialPad != null) {
+            mDialPad.setVisibility(visible ? View.VISIBLE : View.GONE);
+        }
     }
 
     @Override
@@ -926,5 +1133,15 @@ public class DialpadFragment extends Fragment implements View.OnClickListener,
         if (mDialpadQueryListener != null) {
             mDialpadQueryListener.onDialpadQueryChanged(mDestination.getText().toString());
         }
+    }
+
+    private void showDialog(int titleResId, int msgResId, int positiveBtnLabel, int negativeBtnLabel) {
+        InfoMsgDialogFragment infoMsg = InfoMsgDialogFragment.newInstance(titleResId, msgResId, positiveBtnLabel, negativeBtnLabel);
+        FragmentManager fragmentManager = getFragmentManager();
+        infoMsg.show(fragmentManager, TAG);
+
+        // Make possible links clickable
+        fragmentManager.executePendingTransactions();
+        ((TextView) infoMsg.getDialog().findViewById(android.R.id.message)).setMovementMethod(LinkMovementMethod.getInstance());
     }
 }

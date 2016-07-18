@@ -28,20 +28,27 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package com.silentcircle.messaging.views;
 
 import android.content.Context;
-import android.support.v7.app.ActionBarActivity;
+import android.graphics.Canvas;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.view.ActionMode;
 import android.util.AttributeSet;
 import android.util.SparseBooleanArray;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListAdapter;
 
+import com.silentcircle.messaging.views.adapters.ModelViewAdapter;
+import com.silentcircle.silentphone2.R;
+
 import java.util.ArrayList;
 import java.util.List;
 
-public class ListView extends android.widget.ListView {
+public class ListView extends com.silentcircle.common.list.PinnedHeaderListView {
+
+    public static final int TAG_NO_DRAW = R.id.no_draw_flag;
 
     protected class MultiChoiceModeCallback implements com.silentcircle.messaging.views.MultiChoiceModeListener {
 
@@ -138,6 +145,11 @@ public class ListView extends android.widget.ListView {
                 return;
             }
 
+            // click on a header does not do anything
+            if (isHeaderPosition(position)) {
+                return;
+            }
+
             boolean checked = multiChoiceModeCallback.toggleItemCheckedState(position);
 
             if (parentView instanceof ListView) {
@@ -160,8 +172,13 @@ public class ListView extends android.widget.ListView {
         @Override
         public boolean onItemLongClick(AdapterView<?> parentView, View view, int position, long itemId) {
 
+            // long click on a header does not do anything
+            if (isHeaderPosition(position)) {
+                return false;
+            }
+
             if (multiChoiceModeCallback == null) {
-                return delegate == null ? false : delegate.onItemLongClick(parentView, view, position, itemId);
+                return delegate != null && delegate.onItemLongClick(parentView, view, position, itemId);
             }
 
             if (multiChoiceModeCallback.hasActionMode()) {
@@ -169,10 +186,8 @@ public class ListView extends android.widget.ListView {
             }
 
             Context context = getContext();
-
-            // TODO: anru
-            if (context instanceof ActionBarActivity) {
-                ((ActionBarActivity) context).startSupportActionMode(multiChoiceModeCallback);
+            if (context instanceof AppCompatActivity) {
+                ((AppCompatActivity) context).startSupportActionMode(multiChoiceModeCallback);
                 multiChoiceModeCallback.setItemCheckedState(position, true);
                 return true;
             }
@@ -189,17 +204,16 @@ public class ListView extends android.widget.ListView {
     protected MultiChoiceModeCallback multiChoiceModeCallback;
 
     public ListView(Context context) {
-        super(context);
-        prepareItemListeners();
+        this(context, null);
     }
 
     public ListView(Context context, AttributeSet attributes) {
-        super(context, attributes);
-        prepareItemListeners();
+        this(context, attributes, 0);
     }
 
     public ListView(Context context, AttributeSet attributes, int defaultStyle) {
         super(context, attributes, defaultStyle);
+        super.setHeaderTouchesEnabled(true);
         prepareItemListeners();
     }
 
@@ -243,12 +257,40 @@ public class ListView extends android.widget.ListView {
 
     @Override
     public void setOnItemClickListener(OnItemClickListener listener) {
-        ((SetCheckedStateOnItemClick) getOnItemClickListener()).setDelegate(listener);
+        OnItemClickListener currentListener = getOnItemClickListener();
+        if (currentListener != null) {
+            ((SetCheckedStateOnItemClick) currentListener).setDelegate(listener);
+        }
     }
 
     @Override
     public void setOnItemLongClickListener(OnItemLongClickListener listener) {
         ((StartActionModeOnItemLongClick) getOnItemLongClickListener()).setDelegate(listener);
+    }
+
+    @Override
+    protected boolean drawChild(Canvas canvas, View child, long drawingTime) {
+        boolean more = false;
+        Object drawTag = child.getTag(TAG_NO_DRAW);
+        if (drawTag == null) {
+            more = super.drawChild(canvas, child, drawingTime);
+        } else {
+            // don't draw child view but clear no-draw flag
+            // next pass draws headers where this view should be visible
+            child.setTag(TAG_NO_DRAW, null);
+        }
+        return more;
+    }
+
+    // check whether position is a header position
+    private boolean isHeaderPosition(int position) {
+        boolean result = false;
+        ListAdapter adapter = getAdapter();
+        if (adapter instanceof ModelViewAdapter
+                && !((ModelViewAdapter) adapter).isDataPosition(position)) {
+            result = true;
+        }
+        return result;
     }
 
 }

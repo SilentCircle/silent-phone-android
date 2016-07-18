@@ -36,7 +36,8 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
-import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
 import android.util.Log;
@@ -77,7 +78,7 @@ import java.util.List;
 /**
  * Activity which handles attachment viewing.
  */
-public class FileViewerActivity extends ActionBarActivity implements OnProgressUpdateListener,
+public class FileViewerActivity extends AppCompatActivity implements OnProgressUpdateListener,
         FileViewerFragment.Callback {
 
     private static final String TAG = FileViewerActivity.class.getSimpleName();
@@ -120,7 +121,7 @@ public class FileViewerActivity extends ActionBarActivity implements OnProgressU
         }
 
         @Override
-        public void onConfirm(Context context, boolean shouldNotShowAgain) {
+        public void onConfirm(DialogInterface dialog, int which, boolean shouldNotShowAgain) {
 
             // save user's choice from shouldNotShowAgain in preferences
             MessagingPreferences.getInstance(getApplicationContext())
@@ -160,6 +161,7 @@ public class FileViewerActivity extends ActionBarActivity implements OnProgressU
     protected boolean mExporting;
     protected long mFileSize;
     protected String mFileName;
+    protected String mDisplayName;
 
     private Uri mUri;
 
@@ -200,7 +202,12 @@ public class FileViewerActivity extends ActionBarActivity implements OnProgressU
             if (TextUtils.isEmpty(mFileName)) {
                 mFileName = mFile.getName();
             }
-            setTitle(mFileName);
+
+            mDisplayName = Extra.DISPLAY_NAME.from(intent);
+            if (TextUtils.isEmpty(mDisplayName)) {
+                mDisplayName = mFileName;
+            }
+            setTitle(mDisplayName);
 
             // check text/x-vcard before generic text/...
             if (MIME.isContact(mMimeType)) {
@@ -282,14 +289,13 @@ public class FileViewerActivity extends ActionBarActivity implements OnProgressU
 
             @Override
             public void run() {
-
                 UploadView view = (UploadView) findViewById(R.id.export);
 
                 if (view == null) {
                     return;
                 }
 
-                if (mExporting && mFileSize > 0) {
+                if (mExporting && mFileSize > AttachmentUtils.FILE_SIZE_MEDIUM) {
                     view.setProgress(R.string.exporting, percent, null);
                     view.setVisibility(View.VISIBLE);
                 } else {
@@ -456,12 +462,15 @@ public class FileViewerActivity extends ActionBarActivity implements OnProgressU
 
     protected void restoreActionBar() {
         mToolbar = (Toolbar) findViewById(R.id.file_viewer_toolbar);
-
         setSupportActionBar(mToolbar);
-        getSupportActionBar().setDisplayShowTitleEnabled(true);
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        getSupportActionBar().setDisplayShowHomeEnabled(true);
-        getSupportActionBar().setHomeButtonEnabled(true);
+
+        ActionBar actionBar = getSupportActionBar();
+        if (actionBar != null) {
+            actionBar.setDisplayShowTitleEnabled(true);
+            actionBar.setDisplayHomeAsUpEnabled(true);
+            actionBar.setDisplayShowHomeEnabled(true);
+            actionBar.setHomeButtonEnabled(true);
+        }
     }
 
     protected void clearTasks() {
@@ -485,10 +494,7 @@ public class FileViewerActivity extends ActionBarActivity implements OnProgressU
 
     private boolean launch(int labelResourceID, String filename, Intent intent, String type) {
         intent.setDataAndType(intent.getData(), type);
-        if (startExternalActivity(intent, labelResourceID, filename)) {
-            return true;
-        }
-        return false;
+        return startExternalActivity(intent, labelResourceID, filename);
     }
 
     private void burn(String fileName) {

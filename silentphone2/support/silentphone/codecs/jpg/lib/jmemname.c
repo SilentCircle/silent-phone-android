@@ -128,7 +128,7 @@ select_file_name (char * fname)
 LOCAL(void)
 select_file_name (char * fname)
 {
-#if !defined(__SYMBIAN32__) && !defined(_WIN32_WCE) && !defined(linux) && !defined(ARM) && !defined(ANDROID_NDK)&& !defined(__APPLE__)
+#if !defined(__SYMBIAN32__) && !defined(_WIN32_WCE) && !defined(__linux__) && !defined(ARM) && !defined(ANDROID_NDK)&& !defined(__APPLE__)
   next_file_num++;		/* advance counter */
   sprintf(fname, TEMP_FILE_NAME, TEMP_DIRECTORY, next_file_num);
   mktemp(fname);		/* make sure file name is unique */
@@ -328,7 +328,7 @@ METHODDEF(void)
 close_backing_store (j_common_ptr cinfo, backing_store_ptr info)
 {
   fclose(info->temp_file);	/* close the file */
-#if !defined(__SYMBIAN32__) && !defined(_WIN32_WCE) && !defined(linux) && !defined(ARM) && !defined(ANDROID_NDK) && !defined(__APPLE__)
+#if !defined(__SYMBIAN32__) && !defined(_WIN32_WCE) && !defined(__linux__) && !defined(ARM) && !defined(ANDROID_NDK) && !defined(__APPLE__)
 
   //deleteFile((const char *)info->temp_name);
   unlink(info->temp_name);	/* delete the file */ //janis

@@ -188,7 +188,7 @@ typedef int Bool;
 #define SUN
 #define PLATFORM "SUN"
 #undef LSBFIRST
-#elif defined(linux) && defined(i386)
+#elif defined(__linux__) && defined(i386)
 #define PC
 #define PLATFORM "PC"
 #define LSBFIRST

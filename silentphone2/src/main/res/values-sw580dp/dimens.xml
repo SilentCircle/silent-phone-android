@@ -91,4 +91,9 @@
     <!-- Left padding of the auto complete field to line hint text up with member list -->
     <dimen name="group_editor_autocomplete_left_padding">16dip</dimen>
     <dimen name="contact_detail_list_top_padding">8dip</dimen>
+
+    <!-- alert dialog size -->
+    <item type="dimen" name="dialog_min_width_minor">50%</item>
+    <item type="dimen" name="dialog_min_width_major">70%</item>
+
 </resources>

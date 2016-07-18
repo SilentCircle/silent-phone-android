@@ -50,7 +50,7 @@
             android:id="@+id/countries"
             android:layout_marginTop="@dimen/activity_vertical_margin"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
             android:layout_below="@+id/DialSelectorExplanation_1"
             android:layout_above="@+id/button"
             android:choiceMode="singleChoice"
@@ -58,12 +58,12 @@
             android:divider="?sp_dial_text_background"/>
 
     <Button
+            style="@style/Widget.Button.Dark"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_alignParentBottom="true"
             android:layout_marginTop="@dimen/activity_vertical_margin"
             android:text="@android:string/ok"
-            android:textColor="?sp_dial_text_color"
             android:id="@+id/button" />
 
 </RelativeLayout>

@@ -44,6 +44,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.silentcircle.silentphone2.R;
+import com.silentcircle.silentphone2.services.TiviPhoneService;
 
 import java.io.FileDescriptor;
 import java.io.FileNotFoundException;
@@ -54,6 +55,8 @@ import java.util.TimerTask;
 public class SoundRecorderActivity extends Activity {
 
     private static final String TAG = SoundRecorderActivity.class.getSimpleName();
+
+    private static final String FILE_DESCRIPTOR_MODE = "rwt";
 
     private static final int MAX_DURATION_MS = 3 * 60 * 1000; // 3 minutes
 
@@ -106,6 +109,15 @@ public class SoundRecorderActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        if (TiviPhoneService.calls.getCallCount() > 0) {
+            Log.e(TAG, "Sound recording is not supported during a call");
+
+            Toast.makeText(this, R.string.record_currently_on_call, Toast.LENGTH_LONG).show();
+
+            finish();
+            return;
+        }
+
         setContentView(R.layout.activity_sound_recorder);
 
         Intent recordIntent = getIntent();
@@ -130,7 +142,8 @@ public class SoundRecorderActivity extends Activity {
 
         FileDescriptor fileDescriptor = null;
         try {
-            fileDescriptor = getContentResolver().openFileDescriptor(mOutputUri, null).getFileDescriptor();
+            // TODO: keep reference to ParcelFileDescriptor?
+            fileDescriptor = getContentResolver().openFileDescriptor(mOutputUri, FILE_DESCRIPTOR_MODE).getFileDescriptor();
         } catch (FileNotFoundException exception) {
             Log.e(TAG, "Output URI is an invalid file", exception);
         }
@@ -356,7 +369,7 @@ public class SoundRecorderActivity extends Activity {
         });
 
         try {
-            mOutputFileDescriptor = getContentResolver().openFileDescriptor(mOutputUri, null).getFileDescriptor();
+            mOutputFileDescriptor = getContentResolver().openFileDescriptor(mOutputUri, FILE_DESCRIPTOR_MODE).getFileDescriptor();
 
             mMediaPlayer.setDataSource(mOutputFileDescriptor);
             mMediaPlayer.prepareAsync();
@@ -523,7 +536,7 @@ public class SoundRecorderActivity extends Activity {
             mMediaRecorder = null;
 
             try {
-                getContentResolver().openFileDescriptor(mOutputUri, null).close();
+                getContentResolver().openFileDescriptor(mOutputUri, FILE_DESCRIPTOR_MODE).close();
             } catch (IOException exception) {
                 Log.i(TAG, "Recording teardown exception (ignoring)", exception);
             }

@@ -31,7 +31,6 @@ package com.silentcircle.messaging.tests.repository;
 import android.test.AndroidTestCase;
 import android.util.Log;
 
-import com.silentcircle.messaging.model.Contact;
 import com.silentcircle.messaging.model.Conversation;
 import com.silentcircle.messaging.model.MessageStates;
 import com.silentcircle.messaging.model.SCloudObject;
@@ -47,8 +46,6 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.util.List;
-
-import javax.crypto.spec.SecretKeySpec;
 
 import axolotl.AxolotlNative;
 
@@ -79,6 +76,10 @@ public class RepositoryTester extends AndroidTestCase {
     private static final String[] partners = {"Alice", "Bob", "Trent", "Mallory"};
     private static final String[] events = {"event_1", "event_2", "event_3", "event_4"};
     private static final String[] objects = {"object_1", "object_2", "object_3", "object_4"};
+    private static final String FORMAT_EVENT_ID = "event_%d";
+
+    private static final int PAGE_SIZE = 10;
+    private static final int EVENT_COUNT_517 = 517;
 
     @Override
     protected void setUp() throws Exception {
@@ -100,14 +101,13 @@ public class RepositoryTester extends AndroidTestCase {
 
         assertFalse(testConv.exists(partners[0]));  // not yet
 
-        Conversation conversation = new Conversation();
-        conversation.setPartner(new Contact(partners[0]));  // a conversation *must* have a partner
+        Conversation conversation = new Conversation(partners[0]);
 
         testConv.save(conversation);
         assertTrue(testConv.exists(partners[0]));  //
 
         Conversation convRead = testConv.findById(partners[0]);
-        assertEquals(partners[0], convRead.getPartner().getUsername());
+        assertEquals(partners[0], convRead.getPartner().getUserId());
         assertFalse(conversation.hasBurnNotice());
 
         // *** Following tests cannot work here, they require full Axolotl setup
@@ -118,7 +118,7 @@ public class RepositoryTester extends AndroidTestCase {
         conversation.setBurnNotice(true);
         testConv.save(conversation);
         convRead = testConv.findById(partners[0]);
-        assertEquals(partners[0], convRead.getPartner().getUsername());
+        assertEquals(partners[0], convRead.getPartner().getUserId());
         assertTrue(conversation.hasBurnNotice());
 
         testConv.remove(conversation);
@@ -129,8 +129,7 @@ public class RepositoryTester extends AndroidTestCase {
         assertTrue(AxolotlNative.repoIsOpen());
 
         DbConversationRepository convRepo = new DbConversationRepository(getContext(), userName);
-        Conversation conversation = new Conversation();
-        conversation.setPartner(new Contact(partners[1]));
+        Conversation conversation = new Conversation(partners[1]);
         convRepo.save(conversation);
 
         // Get a event/message history for the partner (in this case Bob)
@@ -216,8 +215,7 @@ public class RepositoryTester extends AndroidTestCase {
 
         // First setup a conversation and a message inside the conversation
         DbConversationRepository convRepo = new DbConversationRepository(getContext(), userName);
-        Conversation conversation = new Conversation();
-        conversation.setPartner(new Contact(partners[2]));
+        Conversation conversation = new Conversation(partners[2]);
         convRepo.save(conversation);
 
         // Get a event/message history for the partner (in this case Trent)
@@ -419,4 +417,138 @@ public class RepositoryTester extends AndroidTestCase {
         assertEquals(2, msgIds.length);
     }
 
+    public void testEvengtHistoryPaging() throws Exception {
+        assertTrue(AxolotlNative.repoIsOpen());
+
+        DbConversationRepository convRepo = new DbConversationRepository(getContext(), userName);
+        Conversation conversation = new Conversation(partners[1]);
+        convRepo.save(conversation);
+
+        // Get a event/message history for the partner (in this case Bob)
+        EventRepository evHistory = convRepo.historyOf(conversation);
+        assertTrue(evHistory.exists());
+
+        assertFalse(evHistory.exists(events[0]));       // No such event yet
+
+        // create messages
+        for (int i = 0; i < EVENT_COUNT_517; i++) {
+            Message msg = new Message();
+            msg.setId(String.format(FORMAT_EVENT_ID, i));   // a message (event) *must* have an id
+            msg.setSender(partners[1]);
+            msg.setText(String.format(FORMAT_EVENT_ID, i));
+            evHistory.save(msg);                            // Save the message
+        }
+
+        int eventCount;
+        int totalEventCount = 0;
+
+        // going downwards from top, youngest element
+        EventRepository.PagingContext pagingContext =
+                new EventRepository.PagingContext(EventRepository.PagingContext.START_FROM_YOUNGEST,
+                        PAGE_SIZE);
+        do {
+            List<Event> eventList = evHistory.list(pagingContext);
+            eventCount = eventList.size();
+            totalEventCount += eventCount;
+        } while (eventCount > 0);
+        assertTrue(totalEventCount == EVENT_COUNT_517);
+
+        // going upwards from bottom, oldest element
+        pagingContext =
+                new EventRepository.PagingContext(EventRepository.PagingContext.START_FROM_OLDEST,
+                        PAGE_SIZE);
+        totalEventCount = 0;
+        do {
+            List<Event> eventList = evHistory.list(pagingContext);
+            eventCount = eventList.size();
+            totalEventCount += eventCount;
+        } while (eventCount > 0);
+        assertTrue(totalEventCount == EVENT_COUNT_517);
+
+        // retrieve whole list at once
+        List<Event> eventList = evHistory.list();
+        assertNotNull(eventList);
+        assertEquals(EVENT_COUNT_517, eventList.size());
+        for (Event ev: eventList) {
+            assertTrue(ev instanceof Message);
+            assertEquals(partners[1], ((Message) ev).getSender());
+        }
+
+        evHistory.clear();          // clear all
+        eventList = evHistory.list();
+        assertEquals(0, eventList.size());
+    }
+
+
+    public void testEvengtHistoryPagingWithDelete() throws Exception {
+        assertTrue(AxolotlNative.repoIsOpen());
+
+        DbConversationRepository convRepo = new DbConversationRepository(getContext(), userName);
+        Conversation conversation = new Conversation(partners[1]);
+        convRepo.save(conversation);
+
+        // Get a event/message history for the partner (in this case Bob)
+        EventRepository evHistory = convRepo.historyOf(conversation);
+        assertTrue(evHistory.exists());
+
+        assertFalse(evHistory.exists(events[0]));       // No such event yet
+
+        // create messages
+        for (int i = 0; i < EVENT_COUNT_517; i++) {
+            Message msg = new Message();
+            msg.setId(String.format(FORMAT_EVENT_ID, i));   // a message (event) *must* have an id
+            msg.setSender(partners[1]);
+            msg.setText(String.format(FORMAT_EVENT_ID, i));
+            evHistory.save(msg);                            // Save the message
+        }
+
+        // remove four pages of events in total
+        for (int i = EVENT_COUNT_517 - (2 * PAGE_SIZE); i < EVENT_COUNT_517; i++) {
+            Event event = evHistory.findById(String.format(FORMAT_EVENT_ID, i));
+            if (event != null) {
+                evHistory.remove(event);
+            }
+        }
+
+        for (int i = 200 - (2 * PAGE_SIZE); i < 200; i++) {
+            Event event = evHistory.findById(String.format(FORMAT_EVENT_ID, i));
+            if (event != null) {
+                evHistory.remove(event);
+            }
+        }
+
+        {
+            // retrieve whole list at once
+            List<Event> eventList = evHistory.list();
+            assertNotNull(eventList);
+            assertEquals(EVENT_COUNT_517 - (4 * PAGE_SIZE), eventList.size());
+        }
+
+        int eventCount;
+        int totalEventCount = 0;
+
+        // going downwards from top, youngest element
+        EventRepository.PagingContext pagingContext =
+                new EventRepository.PagingContext(EventRepository.PagingContext.START_FROM_YOUNGEST,
+                        PAGE_SIZE);
+        do {
+            List<Event> eventList = evHistory.list(pagingContext);
+            eventCount = eventList.size();
+            totalEventCount += eventCount;
+        } while (eventCount > 0);
+        assertTrue(totalEventCount == EVENT_COUNT_517 - (4 * PAGE_SIZE));
+
+        // retrieve whole list at once
+        List<Event> eventList = evHistory.list();
+        assertNotNull(eventList);
+        assertEquals(EVENT_COUNT_517 - (4 * PAGE_SIZE), eventList.size());
+        for (Event ev: eventList) {
+            assertTrue(ev instanceof Message);
+            assertEquals(partners[1], ((Message) ev).getSender());
+        }
+
+        evHistory.clear();          // clear all
+        eventList = evHistory.list();
+        assertEquals(0, eventList.size());
+    }
 }

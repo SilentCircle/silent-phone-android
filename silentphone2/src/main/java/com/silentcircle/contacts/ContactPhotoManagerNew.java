@@ -425,8 +425,12 @@ public abstract class ContactPhotoManagerNew implements ComponentCallbacks2 {
 
     public static final DefaultImageProvider DEFAULT_BLANK = new BlankDefaultImageProvider();
 
+    private static ContactPhotoManagerNew service;
+
     public static ContactPhotoManagerNew getInstance(Context context) {
-        ContactPhotoManagerNew service = createContactPhotoManager(context);
+        if (service == null) {
+            service = createContactPhotoManager(context.getApplicationContext());
+        }
         return service;
     }
 
@@ -717,7 +721,7 @@ class ContactPhotoManagerImplNew extends ContactPhotoManagerNew implements Callb
         return ((bytes + 1023) / 1024) + "K";
     }
 
-    private static final int safeDiv(int dividend, int divisor) {
+    private static int safeDiv(int dividend, int divisor) {
         return (divisor  == 0) ? 0 : (dividend / divisor);
     }
 

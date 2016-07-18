@@ -31,20 +31,18 @@ package com.silentcircle.silentphone2.util;
 import android.content.ContentUris;
 import android.content.Context;
 import android.database.Cursor;
-import android.database.DatabaseUtils;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
-import android.os.AsyncTask;
+import android.provider.ContactsContract;
+import android.provider.ContactsContract.Contacts;
+import android.provider.ContactsContract.PhoneLookup;
 import android.telephony.PhoneNumberUtils;
+import android.text.TextUtils;
 import android.util.Log;
 
-import android.provider.ContactsContract;
-import android.provider.ContactsContract.PhoneLookup;
-import android.provider.ContactsContract.Contacts;
-import android.provider.ContactsContract.CommonDataKinds.SipAddress;
-
-import com.silentcircle.silentphone2.R;
+import com.silentcircle.common.util.AsyncTasks;
+import com.silentcircle.messaging.services.AxoMessaging;
 import com.silentcircle.silentphone2.services.TiviPhoneService;
 
 import java.io.InputStream;
@@ -54,7 +52,6 @@ public class CallState {
 
     private static final String LOG_TAG = "CallState";
 
-    public final static int LOW = 0;
     public final static int NORMAL = 1;
     public final static int URGENT = 2;
     public final static int EMERGENCY = 3;
@@ -67,7 +64,8 @@ public class CallState {
 
     public StringBuildHelper bufDialed = new StringBuildHelper();
     public StringBuildHelper bufPeer = new StringBuildHelper();
-    public StringBuildHelper bufServerName = new StringBuildHelper();
+    public StringBuildHelper mDisplayNameForCallLog = new StringBuildHelper();
+    public StringBuildHelper mDefaultDisplayName = new StringBuildHelper();
     public StringBuildHelper bufMsg = new StringBuildHelper(512);
 
     public StringBuildHelper bufSAS = new StringBuildHelper();
@@ -117,11 +115,16 @@ public class CallState {
      */
     public boolean iMuted;
 
+    /**
+     * Set to true if this is an OCA (PSTN/PLMN) call.
+     */
+    public boolean isOcaCall = false;
+
     public boolean iShowVideoSrcWhenAudioIsSecure;
 
     public boolean isInConference;
 
-    public boolean iSipHasErrorMessage;
+    public boolean hasSipErrorMessage;
 
     public boolean iRecentsUpdated;
 
@@ -129,9 +132,6 @@ public class CallState {
      * Security via SDES not via ZRTP
      */
     public boolean sdesActive;
-
-    /** If true then the loader for the contact data is still running */
-    public boolean mContactsLoaderActive;
 
     public int iUserDataLoaded;
 
@@ -177,20 +177,23 @@ public class CallState {
     /** If no null then a background service saw an exception when accessing SCA data */
     public String secExceptionMsg;
 
-    private boolean contactsDataChecked;
-    
-    /** True if the user selected a number in native contacts and SPA calls this number via OCA */
-    public boolean mPstnViaOca;
+    public boolean contactsDataChecked;
 
     public boolean mAnsweredElsewhere;
 
     public int mPriority = NORMAL;
+
+    public boolean mPeerDisclosureFlag;
+
+    public TiviPhoneService.CT_cb_msg initialStates = TiviPhoneService.CT_cb_msg.eLast;
 
     CallState() {
         reset();
     }
 
     void reset() {
+
+        initialStates = TiviPhoneService.CT_cb_msg.eLast;
 
         contactsDataChecked = false;
   
@@ -201,7 +204,8 @@ public class CallState {
         mAssertedName.reset();
 
         bufDialed.reset();
-        bufServerName.reset();
+        mDisplayNameForCallLog.reset();
+        mDefaultDisplayName.reset();
         bufPeer.reset();
         bufMsg.reset();
 
@@ -218,12 +222,12 @@ public class CallState {
         iIsOnHold = false;
         isInConference = false;
         iMuted = false;
-        iSipHasErrorMessage = false;
+        isOcaCall = false;
+        hasSipErrorMessage = false;
         iRecentsUpdated = false;
         videoMediaActive = false;
         videoAccepted = false;
         sdesActive = false;
-        mContactsLoaderActive = false;
 
         iUserDataLoaded = 0;
 
@@ -246,19 +250,10 @@ public class CallState {
         customRingtoneUri = null;
         contactId = 0;
         secExceptionMsg = null;
-        mPstnViaOca = false;
         mAnsweredElsewhere = false;
 
         mPriority = NORMAL;
-    }
-
-    public static String createSipLookupClause(String sipAddress) {
-        final StringBuilder sb = new StringBuilder();
-        sb.append(SipAddress.SIP_ADDRESS + " LIKE ");
-        DatabaseUtils.appendEscapedSQLString(sb, sipAddress + '%');
-        sb.append(" AND " + SipAddress.MIMETYPE + "='" + SipAddress.CONTENT_ITEM_TYPE + "'");
-
-        return sb.toString();
+        mPeerDisclosureFlag = false;
     }
 
     public void fillDataFromContacts(TiviPhoneService service) {
@@ -269,32 +264,58 @@ public class CallState {
         String phoneLookUpId;
         Context ctx = service.getBaseContext();
 
-        String selection = null;
         String[] projection = null;
 
-        if (!PhoneNumberUtils.isGlobalPhoneNumber(bufPeer.toString())) {
-            // number is a SIP address: use customized lookup
-            lookupUri = ContactsContract.Data.CONTENT_URI;
-            phoneLookUpId = ContactsContract.Data.CONTACT_ID;
-            selection = createSipLookupClause(bufPeer.toString() + ctx.getString(R.string.sc_sip_domain_0));
-            projection = new String[] {ContactsContract.Data._ID, ContactsContract.Data.CONTACT_ID,
-                    ContactsContract.Data.DISPLAY_NAME};
+        // - The callerUuid for an incoming OCA call is the bufPeer (the 'From' header) name part
+        //   of the SIP URI.
+        // - For an incoming SC call we use the PAI header.
+        // - For an outgoing call we always use the bufPeer which is the request SIP URI in this case.
+        String callerUuid = Utilities.removeUriPartsSelective((iIsIncoming && !isOcaCall) ? mAssertedName.toString() : bufPeer.toString());
+        byte[] callerData = AxoMessaging.getUserInfoFromCache(callerUuid);
+
+        AsyncTasks.UserInfo callerInfo = AsyncTasks.parseUserInfo(callerData);
+
+        // if it's not an OCA call and we have no caller info then set the display name to use when
+        // storing call log. For an outgoing non-OCA call we always have a user info, set by
+        // DialpadFragment#makeCall(String) .
+        if (!isOcaCall && callerInfo == null) {
+            mDisplayNameForCallLog.setText(getNameFromAB());
         }
-        else {
-            lookupUri = Uri.withAppendedPath(PhoneLookup.CONTENT_FILTER_URI, bufPeer.toString());
+        // For OCA calls the 'UUID' is actually the caller's phone number (part of the SIP request URI)
+        // thus OCA call always use the 'UUID'
+
+        // If it's an in-circle call and we have some cached data: use the stored lookup URI to read the
+        // contact data.
+        if (!isOcaCall && callerInfo != null) {
+            lookupUri = Uri.parse(callerInfo.mLookupUri);
+            phoneLookUpId = ContactsContract.Contacts._ID;
+            projection = new String[]{ContactsContract.Contacts._ID, ContactsContract.Contacts.DISPLAY_NAME,
+                    Contacts.CUSTOM_RINGTONE,};
+        }
+        else if (PhoneNumberUtils.isGlobalPhoneNumber(callerUuid)) {
+            mDefaultDisplayName.setText(callerUuid);
+            lookupUri = Uri.withAppendedPath(PhoneLookup.CONTENT_FILTER_URI, callerUuid);
             phoneLookUpId = PhoneLookup._ID;
         }
-        if (ConfigurationUtilities.mTrace) Log.d(LOG_TAG, "SPA lookup uri: " + lookupUri);
-
-        mContactsLoaderActive = true;
+        // This happens on an incoming call that does not have a global phone number, e.g. a SSO name,
+        // and if we have no cached user information (may happen on incoming calls). In this case we
+        // already set the display name for call log buffer. It will use the display name from SIP.
+        else {
+            contactsDataChecked = true;
+            return;
+        }
         contactsDataChecked = true;
-        LoaderTaskLoadContactData loaderTask = new LoaderTaskLoadContactData(phoneLookUpId, ctx, projection, selection);
-        loaderTask.execute(lookupUri);
+        loadContactData(lookupUri, phoneLookUpId, ctx, projection);
     }
 
+    // Return either "peername" (in case of incoming call) of the default display name (on outgoing).
+    // "peername" has precedence if it becomes available, even on outgoing calls
+    // Contact loader below may overwrite the buffer with the display name of a contact entry.
     public String getNameFromAB() {
         if (nameFromAB.getLen() == 0){
             String s = TiviPhoneService.getInfo(iEngID, iCallId, "peername");
+            if (TextUtils.isEmpty(s))
+                return mDefaultDisplayName.toString();
             nameFromAB.setText(s);
         }
         return nameFromAB.toString();
@@ -314,80 +335,53 @@ public class CallState {
         if (!iInUse) {
             return;
         }
-        bufPeer.setText(Utilities.removeSipParts(s));
+        bufPeer.setText(Utilities.removeUriPartsSelective(s));
     }
 
-    private class LoaderTaskLoadContactData extends AsyncTask<Uri, Void, Void> {
+    private void loadContactData(Uri uri, final String phoneId, final Context ctx, final String[] projection) {
 
-        String mPhoneLookUpId;
-        Context mCtx;
-        String mSelection;
-        String[] mProjection;
-
-        LoaderTaskLoadContactData(String phoneId, Context ctx, String[] projection, String selection) {
-            mPhoneLookUpId = phoneId;
-            mCtx = ctx;
-            mProjection = projection;
-            mSelection = selection;
+        Cursor c;
+        try {
+            c = ctx.getContentResolver().query(uri, projection, null, null, null);
+        } catch (Exception e) {
+            secExceptionMsg = "Cannot read contact data.";
+            Log.w(LOG_TAG, "Contacts query Exception, not using contacts data.");
+            return;
         }
-
-        @Override
-        protected Void doInBackground(Uri... uri) {
-            Cursor c = null;
-            try {
-                c = mCtx.getContentResolver().query(uri[0], mProjection, mSelection, null, null);
-            } catch (Exception e) {
-                secExceptionMsg = "Cannot read contact data.";
-                Log.w(LOG_TAG, "Contacts query Exception, not using contacts data.");
-            }
-            if (c != null) {
+        if (c == null)
+            return;
 //                DatabaseUtils.dumpCursor(c);
-                if (c.moveToFirst()) {
-                    int idx = c.getColumnIndex(Contacts.DISPLAY_NAME);
-                    if (idx != -1) {
-                        String name = c.getString(idx);
-                        if (name != null && name.length() > 0)
-                            nameFromAB.setText(name);
-                    }
+        if (c.moveToFirst()) {
+            int idx = c.getColumnIndex(Contacts.DISPLAY_NAME);
+            if (idx != -1) {
+                String name = c.getString(idx);
+                if (name != null && name.length() > 0)
+                    nameFromAB.setText(name);
+            }
 
-                    // Check for a photo, hi-res preferred
-                    idx = c.getColumnIndex(mPhoneLookUpId);
-                    if (idx != -1) {
-                        contactId = c.getLong(idx);
-                        if (contactId != 0) {
-                            // Get photo of contactId as input stream:
-                            Uri uriStream = ContentUris.withAppendedId(Contacts.CONTENT_URI, contactId);
-                            if (uriStream != null) {
-                                InputStream input =
-                                        Contacts.openContactPhotoInputStream(mCtx.getContentResolver(), uriStream, true);
-                                if (input != null)
-                                    image = BitmapFactory.decodeStream(input);
-                            }
-                        }
-                    }
-
-                    idx = c.getColumnIndex(PhoneLookup.CUSTOM_RINGTONE);
-                    if (idx != -1) {
-                        String customRing = c.getString(idx);
-                        if (customRing != null)
-                            customRingtoneUri = Uri.parse(customRing);
+            // Check for a photo, hi-res preferred
+            idx = c.getColumnIndex(phoneId);
+            if (idx != -1) {
+                contactId = c.getLong(idx);
+                if (contactId != 0) {
+                    // Get photo of contactId as input stream:
+                    Uri uriStream = ContentUris.withAppendedId(Contacts.CONTENT_URI, contactId);
+                    if (uriStream != null) {
+                        InputStream input =
+                                Contacts.openContactPhotoInputStream(ctx.getContentResolver(), uriStream, true);
+                        if (input != null)
+                            image = BitmapFactory.decodeStream(input);
                     }
                 }
-                c.close();
             }
-            return null;
-        }
 
-        protected void onProgressUpdate(Void... progress) {}
-
-        @Override
-        protected void onCancelled(Void result) {
-            mContactsLoaderActive = false;
+            idx = c.getColumnIndex(PhoneLookup.CUSTOM_RINGTONE);
+            if (idx != -1) {
+                String customRing = c.getString(idx);
+                if (customRing != null)
+                    customRingtoneUri = Uri.parse(customRing);
+            }
         }
-
-        @Override
-        protected void onPostExecute(Void result) {
-            mContactsLoaderActive = false;
-        }
+        c.close();
     }
 }

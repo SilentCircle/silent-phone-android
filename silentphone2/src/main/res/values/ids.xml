@@ -9,4 +9,8 @@
 
     <!-- id for list item's position tag -->
     <item type="id" name="position" />
+
+    <!-- id for no-draw flag -->
+    <item type="id" name="no_draw_flag" />
+
 </resources>

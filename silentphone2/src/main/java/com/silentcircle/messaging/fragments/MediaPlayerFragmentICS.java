@@ -32,13 +32,14 @@ import android.content.Context;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
 import android.graphics.SurfaceTexture;
 import android.media.MediaMetadataRetriever;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.app.ActionBar;
-import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.AppCompatActivity;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -47,6 +48,7 @@ import android.view.Surface;
 import android.view.TextureView;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.widget.ImageView;
 import android.widget.MediaController;
 import android.widget.RelativeLayout;
@@ -79,23 +81,6 @@ public class MediaPlayerFragmentICS extends FileViewerFragment implements
 
     private static String extractMetadata(MediaMetadataRetriever metaData, int metaDataKey) {
         return metaData.extractMetadata(metaDataKey);
-    }
-
-    private static void setViewBounds(final int width, final int height, final View view) {
-
-        view.post(new Runnable() {
-
-            @Override
-            public void run() {
-                ViewGroup.LayoutParams dimensions = view.getLayoutParams();
-                if (dimensions != null) {
-                    dimensions.width = width;
-                    dimensions.height = height <= 0 ? 1 : height;
-                    view.requestLayout();
-                }
-            }
-        });
-
     }
 
     protected static final int CONTROLS_TIMEOUT = 3000;
@@ -162,10 +147,8 @@ public class MediaPlayerFragmentICS extends FileViewerFragment implements
         mPlayerWrapper = new MediaPlayerWrapper(mPlayer);
         try {
             AttachmentUtils.makePublic(getActivity(), getFile());
-            // TODO: It may be necessary to use FileDescriptor as source for player
-            // TODO: Usually cannot get content from getFile()
-            // mPlayer.setDataSource(getFile().getAbsolutePath());
-            mPlayer.setDataSource(getActivity(), getURI());
+
+            mPlayer.setDataSource(getFileDescriptor(getActivity()).getFileDescriptor());
             mPlayer.setSurface(new Surface(mTexture));
             mPlayer.setOnBufferingUpdateListener(mPlayerWrapper);
             mPlayer.setOnPreparedListener(this);
@@ -287,6 +270,31 @@ public class MediaPlayerFragmentICS extends FileViewerFragment implements
     }
 
     @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        if (mTexture != null) {
+            if (mPlayer != null) {
+                ViewTreeObserver observer = mTextureView.getViewTreeObserver();
+                observer.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+
+                    @Override
+                    public void onGlobalLayout() {
+                        Log.v(TAG,
+                                String.format("new width=%d; new height=%d", mTextureView.getWidth(),
+                                        mTextureView.getHeight()));
+                        if (mTexture != null) {
+                            if (mPlayer != null) {
+                                resetViewBounds();
+                            }
+                        }
+                        mTextureView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                    }
+                });
+            }
+        }
+
+    }
+
+    @Override
     public void onPause() {
         super.onPause();
         Log.d(TAG, "onPause");
@@ -367,26 +375,32 @@ public class MediaPlayerFragmentICS extends FileViewerFragment implements
     }
 
     private void setViewBounds(int videoWidth, int videoHeight) {
-
-        DisplayMetrics dm = getResources().getDisplayMetrics();
-
-        double rd, rv;
-
-        rd = (double) dm.widthPixels / dm.heightPixels;
-        rv = (double) videoWidth / videoHeight;
-
-        final int wf, hf;
-
-        if (rd > rv) {
-            wf = (int) ((double) videoWidth * dm.heightPixels / videoHeight + 0.5);
-            hf = dm.heightPixels;
-        } else {
-            wf = dm.widthPixels;
-            hf = (int) ((double) videoHeight * dm.widthPixels / videoWidth + 0.5);
+        int viewWidth = mTextureView.getWidth();
+        int viewHeight = mTextureView.getHeight();
+        if (viewWidth == 0) {
+            return;
         }
+        double viewAspectRatio = (double) viewWidth / viewHeight;
+        double aspectRatio = (double) videoWidth / videoHeight;
 
-        setViewBounds(wf, hf, mTextureView);
+        int newWidth, newHeight;
+        if (viewAspectRatio < aspectRatio) {
+            // limited by narrow width; set width and restrict height; black bars on top/bottom
+            newWidth = viewWidth;
+            newHeight = (int) (viewWidth / aspectRatio);
+        } else {
+            // limited by short height; set height and restrict width; black bars on the sides
+            newWidth = (int) (viewHeight * aspectRatio);
+            newHeight = viewHeight;
+        }
+        int xoff = (viewWidth - newWidth) / 2;
+        int yoff = (viewHeight - newHeight) / 2;
 
+        Matrix txform = new Matrix();
+        mTextureView.getTransform(txform);
+        txform.setScale((float) newWidth / viewWidth, (float) newHeight / viewHeight);
+        txform.postTranslate(xoff, yoff);
+        mTextureView.setTransform(txform);
     }
 
     protected void showAudioMetaData() {
@@ -410,7 +424,7 @@ public class MediaPlayerFragmentICS extends FileViewerFragment implements
             String subtitle = artist == null && album == null ? null : artist == null ? album : album == null ? artist : String.format("%s - %s", artist, album);
 
 
-            ActionBar actionBar = ((ActionBarActivity)getActivity()).getSupportActionBar();
+            ActionBar actionBar = ((AppCompatActivity)getActivity()).getSupportActionBar();
             if (actionBar != null) {
                 if (title != null) {
                     actionBar.setTitle(title);

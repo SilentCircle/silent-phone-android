@@ -3,16 +3,19 @@
               xmlns:tools="http://schemas.android.com/tools"
     android:orientation="horizontal"
     android:layout_width="wrap_content"
-    android:layout_height="match_parent"
-    android:background="@android:color/transparent">
+    android:layout_height="wrap_content"
+    android:background="@color/sc_ng_background_1"
+    android:layout_centerInParent="true"
+    android:layout_gravity="center"
+    android:padding="@dimen/spacing_large"
+    android:gravity="center_vertical">
 
     <ImageButton
         android:id="@+id/button_call"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginRight="@dimen/messaging_chooser_dialog_button_margin"
-        android:layout_marginEnd="@dimen/messaging_chooser_dialog_button_margin"
-        android:src="@drawable/ic_launcher_sp"/>
+        android:src="@drawable/ic_launcher_sp"
+        />
 
     <ImageButton
         android:id="@+id/button_chat"
@@ -20,19 +23,20 @@
         android:layout_height="wrap_content"
         android:layout_marginLeft="@dimen/messaging_chooser_dialog_button_margin"
         android:layout_marginStart="@dimen/messaging_chooser_dialog_button_margin"
-        android:layout_marginRight="@dimen/messaging_chooser_dialog_button_margin"
-        android:layout_marginEnd="@dimen/messaging_chooser_dialog_button_margin"
-        android:src="@drawable/ic_launcher_st"/>
+        android:src="@drawable/ic_launcher_st"
+        />
 
-    <ImageButton android:id="@+id/button_add"
-                 android:layout_width="wrap_content"
-                 android:layout_height="wrap_content"
-                 android:layout_marginLeft="@dimen/messaging_chooser_dialog_button_margin"
-                 android:layout_marginStart="@dimen/messaging_chooser_dialog_button_margin"
-                 android:src="@drawable/ic_person_add_24dp"
-                 android:tint="@color/call_log_extras_text_color"
-                 android:visibility="gone"
-                 android:padding="22dp"
-                 tools:visibility="visible"
-            />
+    <ImageButton
+        android:id="@+id/button_add"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="@dimen/messaging_chooser_dialog_button_margin"
+        android:layout_marginStart="@dimen/messaging_chooser_dialog_button_margin"
+        android:padding="@dimen/messaging_chooser_dialog_button_padding"
+        android:src="@drawable/ic_person_add_24dp"
+        android:tint="@color/call_log_extras_text_color"
+        android:visibility="gone"
+        tools:visibility="visible"
+        />
+
 </LinearLayout>

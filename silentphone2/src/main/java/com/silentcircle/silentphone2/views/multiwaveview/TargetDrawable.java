@@ -221,7 +221,7 @@ public class TargetDrawable {
         canvas.scale(mScaleX, mScaleY, mPositionX, mPositionY);
         canvas.translate(mTranslationX + mPositionX, mTranslationY + mPositionY);
         canvas.translate(-0.5f * getWidth(), -0.5f * getHeight());
-        mDrawable.setAlpha((int) Math.round(mAlpha * 255f));
+        mDrawable.setAlpha(Math.round(mAlpha * 255f));
         mDrawable.draw(canvas);
         canvas.restore();
     }

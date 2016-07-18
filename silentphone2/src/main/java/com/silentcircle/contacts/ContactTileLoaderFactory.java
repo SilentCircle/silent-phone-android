@@ -64,34 +64,31 @@ import com.google.common.annotations.VisibleForTesting;
  */
 public final class ContactTileLoaderFactory {
 
-    public final static int CONTACT_ID = 0;
-    public final static int DISPLAY_NAME = 1;
-    public final static int STARRED = 2;
-    public final static int PHOTO_URI = 3;
-    public final static int LOOKUP_KEY = 4;
-    public final static int CONTACT_PRESENCE = 5;
-    public final static int CONTACT_STATUS = 6;
+    public final static int DISPLAY_NAME = 0;
+    public final static int STARRED = 1;
+    public final static int PHOTO_URI = 2;
+    public final static int LOOKUP_KEY = 3;
+    public final static int CONTACT_PRESENCE = 4;
+    public final static int CONTACT_STATUS = 5;
 
     // Only used for StrequentPhoneOnlyLoader
-    public final static int PHONE_NUMBER = 5;
-    public final static int PHONE_NUMBER_TYPE = 6;
-    public final static int PHONE_NUMBER_LABEL = 7;
-    public final static int IS_DEFAULT_NUMBER = 8;
-//    public final static int PINNED = 9;
+    public final static int PHONE_NUMBER = 4;
+    public final static int PHONE_NUMBER_TYPE = 5;
+    public final static int PHONE_NUMBER_LABEL = 6;
+    public final static int IS_DEFAULT_NUMBER = 7;
 
     // The _ID field returned for strequent items actually contains data._id instead of
     // contacts._id because the query is performed on the data table. In order to obtain the
     // contact id for strequent items, we thus have to use Phone.contact_id instead.
-    public final static int CONTACT_ID_FOR_DATA = 9;
+    public final static int CONTACT_ID_FOR_DATA = 8;
 
     private static final String[] COLUMNS = new String[] {
-        Contacts._ID, // ..........................................0
-        Contacts.DISPLAY_NAME, // .................................1
-        Contacts.STARRED, // ......................................2
-        Contacts.PHOTO_URI, // ....................................3
-        Contacts.LOOKUP_KEY, // ...................................4
-        Contacts.CONTACT_PRESENCE, // .............................5
-        Contacts.CONTACT_STATUS, // ...............................6
+        Contacts.DISPLAY_NAME, // .................................0
+        Contacts.STARRED, // ......................................1
+        Contacts.PHOTO_URI, // ....................................2
+        Contacts.LOOKUP_KEY, // ...................................3
+        Contacts.CONTACT_PRESENCE, // .............................4
+        Contacts.CONTACT_STATUS, // ...............................5
     };
 
     /**
@@ -102,26 +99,25 @@ public final class ContactTileLoaderFactory {
      */
     @VisibleForTesting
     public static final String[] COLUMNS_PHONE_ONLY = new String[] {
-        Contacts._ID, // ..........................................0
-        Contacts.DISPLAY_NAME, // .................................1
-        Contacts.STARRED, // ......................................2
-        Contacts.PHOTO_URI, // ....................................3
-        Contacts.LOOKUP_KEY, // ...................................4
-        Phone.NUMBER, // ..........................................5
-        Phone.TYPE, // ............................................6
-        Phone.LABEL, // ...........................................7
+//        Contacts._ID, // ..........................................0
+        Contacts.DISPLAY_NAME, // .................................0
+        Contacts.STARRED, // ......................................1
+        Contacts.PHOTO_URI, // ....................................2
+        Contacts.LOOKUP_KEY, // ...................................3
+        Phone.NUMBER, // ..........................................4
+        Phone.TYPE, // ............................................5
+        Phone.LABEL, // ...........................................6
         // Special handling: API < 19 don't return the IS_SUPER_PRIMARY,
         // replace with a simple other field. Adjust the code handling accordingly
         // in PhoneFavoritesTileAdapter
 //        Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT ?
 //                Phone.IS_SUPER_PRIMARY :
-        Contacts.STARRED, //.......................................8
-//        Contacts.PINNED, // .....................................9
+        Contacts.STARRED, //.......................................7
         // Special handling: API < 19 don't return the CONTACT_ID field,
         // replace with a simple other field. ContactsCache and PhoneFavoriteTileAdapter
         // were previously adjusted not to use the CONTACT_ID field
         Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT ?
-                Phone.CONTACT_ID : Phone.NAME_RAW_CONTACT_ID  //...9
+                Phone.CONTACT_ID : Phone.NAME_RAW_CONTACT_ID  //...8
     };
 
     private static final String STARRED_ORDER = Contacts.DISPLAY_NAME+" COLLATE NOCASE ASC";

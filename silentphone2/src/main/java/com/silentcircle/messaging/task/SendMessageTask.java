@@ -38,7 +38,10 @@ import com.silentcircle.messaging.repository.ConversationRepository;
 import com.silentcircle.messaging.services.AxoMessaging;
 import com.silentcircle.messaging.util.Action;
 import com.silentcircle.messaging.util.Extra;
+import com.silentcircle.messaging.util.MessageUtils;
 import com.silentcircle.silentphone2.Manifest;
+
+import axolotl.AxolotlNative;
 
 /**
  * Async task to send a composed message.
@@ -69,8 +72,8 @@ public class SendMessageTask extends AsyncTask<Message, Void, Message> {
 
             if (!mResultStatus) {
                 message.setState(MessageStates.FAILED);
-                mResultCode = msgService.getErrorCode();
-                mResultInfo = msgService.getErrorInfo();
+                mResultCode = AxolotlNative.getErrorCode();
+                mResultInfo = AxolotlNative.getErrorInfo();
                 // Save message with new state here
                 repository.historyOf(conversation).save(message);
             } else {
@@ -81,17 +84,9 @@ public class SendMessageTask extends AsyncTask<Message, Void, Message> {
                 repository.save(conversation);
             }
 
-            /*
-              FIXME: save it all here?
-              message.setState(sendOk ? MessageStates.SENT : MessageStates.UNKNOWN);
-              msgService.getConversations().historyOf(
-                    msgService.getOrCreateConversation(message.getConversationID())).save(message);
-             */
-
             // notify about conversation changes
-            Intent intent = Action.UPDATE_CONVERSATION.intent();
-            Extra.PARTNER.to(intent, message.getConversationID());
-            mContext.sendOrderedBroadcast(intent, Manifest.permission.READ);
+            MessageUtils.notifyConversationUpdated(mContext, message.getConversationID(), false,
+                    message.getId(), AxoMessaging.UPDATE_ACTION_MESSAGE_SEND);
         }
 
         return message;

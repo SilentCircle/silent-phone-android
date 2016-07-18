@@ -76,7 +76,8 @@ public final class CallLogQuery {
             ScCalls.CACHED_PHOTO_ID,           // 13
             ScCalls.CACHED_FORMATTED_NUMBER,   // 14
             ScCalls.IS_READ,                   // 15
-            ScCalls.SC_OPTION_TEXT1            // 16
+            ScCalls.SC_OPTION_TEXT1,           // 16
+            ScCalls.SC_OPTION_TEXT2            // 17
     };
 
     public static final int ID = 0;
@@ -96,5 +97,6 @@ public final class CallLogQuery {
     public static final int CACHED_FORMATTED_NUMBER = 14;
     public static final int IS_READ = 15;
     public static final int SC_OPTION_TEXT1 = 16;
+    public static final int SC_OPTION_TEXT2 = 17;
     /** The indices of the synthetic "section" and relative date columns in the extended projection. */
 }

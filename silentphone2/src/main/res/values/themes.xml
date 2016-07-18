@@ -25,7 +25,9 @@
         <item name="android:textColorPrimary">@color/sc_ng_text_dark</item>
     </style>
 
-    <style name="SilentPhoneThemeBlack"  parent="SilentPhoneThemeBase">
+    <style name="InAppPaymentTheme" parent="@style/SilentPhonePurchaseTheme">
+    </style>
+    <style name="SilentPhonePurchaseTheme"  parent="SilentPhoneThemeBase">
         <item name="android:windowBackground">@color/black_background</item>
 
         <!-- Actionbar styling -->
@@ -34,6 +36,58 @@
         <item name="drawerArrowStyle">@style/DrawerArrowToggle.Spa4</item>
         <item name="colorControlNormal">@color/sc_ng_text_dark</item>
         <item name="android:colorControlNormal" tools:ignore="NewApi">@color/sc_ng_text_dark</item>
+
+        <item name="textAppearanceLargePopupMenu">@style/PopupMenuText.Large.Spa4</item>
+        <item name="textAppearanceSmallPopupMenu">@style/PopupMenuText.Small.Spa4</item>
+        <item name="android:textAppearanceLargePopupMenu">@style/PopupMenuText.Large.Spa4</item>
+        <item name="android:textAppearanceSmallPopupMenu">@style/PopupMenuText.Small.Spa4</item>
+
+        <item name="android:actionMenuTextColor">@color/sc_ng_text_dark</item>
+        <item name="actionMenuTextColor">@color/sc_ng_text_dark</item>
+        <item name="android:itemTextAppearance">@color/sc_ng_text_dark</item>
+        <!-- Actionbar styling, end  -->
+
+        <!-- Alert dialog styling -->
+        <item name="android:alertDialogStyle">@style/Dialog.Spa4</item>
+        <item name="android:alertDialogTheme">@style/Dialog.Spa4</item>
+        <item name="alertDialogTheme">@style/Dialog.Spa4</item>
+
+        <item name="sp_actionbar_color">@color/sc_ng_background_1</item>
+        <item name="sp_actionbar_title_text_color">@color/sc_ng_text_dark</item>
+
+        <item name="sp_ic_in_app_purchase">@drawable/ic_shopping_cart_white_24dp</item>
+
+        <item name="sp_decline_button_background">@android:color/holo_red_dark</item>
+        <item name="sp_accept_button_background">@android:color/holo_green_dark</item>
+
+        <item name="sp_divider_color">@color/black_dark_gray</item>
+
+        <item name="sp_ab_title_style">@style/ActionBarBlackTitle</item>
+        <item name="sp_ab_subtitle_style">@style/ActionBarBlackTitleSmall</item>
+        <item name="sp_ab_dark_title_style">@style/ActionBarLightTitle</item>
+
+        <item name="sp_icon_tint_color">@color/sc_ng_text_dark</item>
+        <item name="sp_dialog_text_color">@color/sc_ng_text_dark</item>
+    </style>
+
+    <style name="SilentPhoneThemeBlack"  parent="SilentPhoneThemeBase">
+        <item name="android:windowBackground">@color/black_background</item>
+        <!-- remove black screen on start up -->
+        <item name="android:windowDisablePreview">true</item>
+
+        <!-- Actionbar styling -->
+        <item name="android:actionBarStyle">@style/ActionBar.Spa4</item>
+        <item name="actionBarStyle">@style/ActionBar.Spa4</item>
+        <item name="drawerArrowStyle">@style/DrawerArrowToggle.Spa4</item>
+        <item name="colorControlNormal">@color/sc_ng_text_dark</item>
+        <item name="android:colorControlNormal" tools:ignore="NewApi">@color/sc_ng_text_dark</item>
+        <!-- Inactive thumb color -->
+        <item name="colorSwitchThumbNormal">@color/sc_ng_text_dark</item>
+        <item name="android:colorAccent" tools:ignore="NewApi">@color/sc_ng_background_1</item>
+        <item name="colorAccent">@color/sc_ng_text_green</item>
+        <item name="colorControlActivated">@color/sc_ng_text_green</item>
+        <!-- Others are colorControlNormal, colorControlActivated
+        colorControlHighlight & colorSwitchThumbNormal. -->
 
         <item name="android:dropDownListViewStyle">@style/DropDownListView.Spa4</item>
         <item name="dropDownListViewStyle">@style/DropDownListView.Spa4</item>
@@ -48,6 +102,12 @@
         <item name="android:itemTextAppearance">@color/sc_ng_text_dark</item>
         <!-- Actionbar styling, end  -->
 
+        <!-- Alert dialog styling -->
+        <item name="android:alertDialogStyle">@style/Dialog.Spa4</item>
+        <!-- <item name="alertDialogStyle">@style/Dialog.Spa4</item> -->
+        <item name="android:alertDialogTheme">@style/Dialog.Spa4</item>
+        <item name="alertDialogTheme">@style/Dialog.Spa4</item>
+
         <!-- Text color of decline, answer, end call buttons -->
         <item name="sp_call_btn_text_color">@android:color/white</item>
 
@@ -60,7 +120,7 @@
         <item name="sp_sec_info_yellow">@color/black_yellow</item>
 
         <!-- Settings for the drawers, they should all look the same, very similar -->
-        <item name="sp_drawer_background">@color/black_background</item>
+        <item name="sp_drawer_background">@color/sc_ng_background</item>
         <item name="sp_drawer_header_background">@color/sc_ng_background_3</item>
         <item name="sp_drawer_header_text_color">@color/sc_ng_text_grey_1</item>
 
@@ -77,6 +137,9 @@
         <item name="sp_ic_view_list">@drawable/ic_action_view_as_list_dark</item>
         <item name="sp_ic_edit">@drawable/ic_action_edit_dark</item>
         <item name="sp_ic_contact_picture">@drawable/ic_contact_picture_holo_dark</item>
+        <item name="sp_ic_contacts">@drawable/ic_contacts_dark</item>
+
+        <item name="sp_ic_in_app_purchase">@drawable/ic_shopping_cart_white_24dp</item>
 
         <!-- Icons on In-call main screen -->
         <item name="sp_ic_add_call">@drawable/ic_add_call_dark</item>
@@ -89,6 +152,12 @@
         <item name="sp_ic_volume_on">@drawable/ic_action_volume_on_dark</item>
         <item name="sp_ic_volume_bt">@drawable/ic_action_volume_bt_dark</item>
         <item name="sp_ic_volume_bt_muted">@drawable/ic_action_volume_bt_muted_dark</item>
+        <!-- Icons on In-call action bar -->
+        <item name="sp_ic_add_call_menu">@drawable/ic_add_call_light</item>
+        <item name="sp_ic_mic_menu">@drawable/ic_action_mic_light</item>
+        <item name="sp_ic_mic_muted_menu">@drawable/ic_action_mic_muted_light</item>
+        <item name="sp_ic_volume_muted_menu">@drawable/ic_action_volume_muted_light</item>
+        <item name="sp_ic_volume_on_menu">@drawable/ic_action_volume_on_light</item>
 
         <!-- Icons for call manager entry -->
         <item name="sp_ic_call_hold">@drawable/ic_action_call_hold_on</item>
@@ -101,16 +170,16 @@
         <item name="sp_call_manager_small_button">@drawable/button_rnd_small_null_white</item>
 
         <!-- Icons for action bar. We may use the same or different icons on the AB -->
-        <item name="sp_ic_call_manager_ab">@drawable/ic_action_call_manager_dark</item>
-        <item name="sp_ic_dial_pad_ab">@drawable/ic_action_dial_pad_dark</item>
+        <item name="sp_ic_call_manager_ab">@drawable/ic_action_call_manager_light</item>
+        <item name="sp_ic_dial_pad_ab">@drawable/ic_action_dial_pad_light</item>
         <item name="sp_ic_ab_video">@drawable/ic_action_video_dark</item>
 
         <!-- Icons for video screen -->
         <item name="sp_ic_switch_camera">@drawable/ic_action_switch_camera_dark</item>
 
         <!-- Attributes for round dial buttons -->
-        <item name="sp_dial_button_primary_color">@color/black_yellow</item>
-        <item name="sp_dial_button_secondary_color">@android:color/white</item>
+        <item name="sp_dial_button_primary_color">@color/sc_ng_text_grey</item>
+        <item name="sp_dial_button_secondary_color">@color/sc_ng_text_grey_3</item>
         <item name="sp_dial_button">@drawable/dial_button_round_white</item>
 
         <item name="sp_call_button_background">@android:color/holo_green_dark</item>
@@ -130,8 +199,10 @@
 
         <item name="sp_ab_title_style">@style/ActionBarBlackTitle</item>
         <item name="sp_ab_subtitle_style">@style/ActionBarBlackTitleSmall</item>
+        <item name="sp_ab_dark_title_style">@style/ActionBarLightTitle</item>
 
         <item name="sp_icon_tint_color">@color/sc_ng_text_dark</item>
+        <item name="sp_dialog_text_color">@color/sc_ng_text_dark</item>
 
         <!-- ************ Theme items for SCA part ************************* -->
 
@@ -224,6 +295,11 @@
         <item name="android:textColor">?sp_actionbar_title_text_color</item>
     </style>
 
+    <style name="ActionBarLightTitle"
+        parent="android:TextAppearance.Medium">
+        <item name="android:textColor">@color/sc_ng_text_grey</item>
+    </style>
+
     <style name="ActionBarBlackTitleSmall"
            parent="android:TextAppearance.Small">
         <item name="android:textColor">@color/black_yellow</item>
@@ -272,4 +348,29 @@
         <item name="android:listSelector">@drawable/bg_options_menu_selectable</item>
     </style>
 
+    <style name="Dialog.Spa4" parent="Theme.AppCompat.Light.Dialog.Alert">
+        <item name="android:textColor">?sp_dialog_text_color</item>
+        <item name="android:textColorPrimary">?sp_dialog_text_color</item>
+        <item name="android:windowBackground">@color/sc_ng_background_1</item>
+        <item name="android:windowTitleStyle">@style/DialogWindowTitle.Spa4</item>
+        <item name="colorAccent">@color/sc_ng_text_red</item>
+        <item name="android:windowMinWidthMajor" type="dimen">@dimen/dialog_min_width_major</item>
+        <item name="android:windowMinWidthMinor" type="dimen">@dimen/dialog_min_width_minor</item>
+        <item name="windowMinWidthMajor" type="dimen">@dimen/dialog_min_width_major</item>
+        <item name="windowMinWidthMinor" type="dimen">@dimen/dialog_min_width_minor</item>
+    </style>
+
+    <style name="DialogWindowTitle.Spa4" parent="TextAppearance.AppCompat.Title">
+        <item name="android:textColor">?sp_dialog_text_color</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="WidgetHighlightColors" >
+        <item name="colorAccent">@color/sc_ng_text_red</item>
+        <item name="colorControlActivated">@color/sc_ng_text_grey</item>
+    </style>
+
+    <style name="PaymentDialogWidgetHighlightColors" >
+        <item name="colorControlActivated">?sp_dialog_text_color</item>
+    </style>
 </resources>

@@ -1,6 +1,32 @@
-//VoipPhone
-//Created by Janis Narbuts
-//Copyright (c) 2004-2012 Tivi LTD, www.tiviphone.com. All rights reserved.
+/*
+Created by Janis Narbuts
+Copyright (C) 2004-2012, Tivi LTD, www.tiviphone.com. All rights reserved.
+Copyright (C) 2012-2016, Silent Circle, LLC.  All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+    * Any redistribution, use, or modification is done solely for personal
+      benefit and not for any commercial purpose or for monetary gain
+    * Redistributions of source code must retain the above copyright
+      notice, this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above copyright
+      notice, this list of conditions and the following disclaimer in the
+      documentation and/or other materials provided with the distribution.
+    * Neither the name Silent Circle nor the
+      names of its contributors may be used to endorse or promote products
+      derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL SILENT CIRCLE, LLC BE LIABLE FOR ANY
+DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
 
 #include "../baseclasses/CTBase.h"
 #include "../baseclasses/CTEditBase.h"
@@ -8,6 +34,8 @@
 #include "../os/CTThread.h"
 #include "../os/CTTcp.h"
 #include "../encrypt/tls/CTTLS.h"
+#include "axolotl/../util/cJSON.h"
+#include <stdlib.h>
 
 #ifdef ANDROID
 void androidLog(const char* format, ...);
@@ -416,8 +444,9 @@ int getDomainAuthURL(const char *pLink, const char *pUsername, char *auth_url, i
    cb(cbRet, 1, pLink);
    if (p == NULL) {
       // Failed to download JSON
-      cb(cbRet, 0, "Please check network connection.");
-      return -1;
+//      cb(cbRet, 0, "Please check network connection.");
+       cb(cbRet, 0, "getDomainAuthURL: ERR: Failed to download JSON");
+      return -4;
    }
 
    /* FIXME: We should *really* be using a proper JSON library in tiviengine/. */
@@ -436,20 +465,24 @@ int getDomainAuthURL(const char *pLink, const char *pUsername, char *auth_url, i
    memset(bufJSonValue, 0, sizeof(bufJSonValue));
    len = findJSonToken(p, iRespContentLen, "auth_type", bufJSonValue, sizeof(bufJSonValue) - 1);
    if(len <= 0) {
-      cb(cbRet, -1, "ERR: JSon field 'auth_type' not found");
-      return -1;
+//      cb(cbRet, -1, "ERR: JSon field 'auth_type' not found");
+       cb(cbRet, -1, "getDomainAuthURL: ERR: JSON field 'auth_type' not found");
+      return -3;
    }
 
    if (strcmp(bufJSonValue, "adfs") != 0) {
-      cb(cbRet, -1, "Server reported auth_type other than adfs!");
-      return -1;
+//      cb(cbRet, -1, "Server reported auth_type other than adfs!");
+       cb(cbRet, -1, "getDomainAuthURL: ERR: Server reported auth_type other than adfs!");
+      return -2;
    }
 
    /* get the authentication URL */
    memset(bufJSonValue, 0, sizeof(bufJSonValue));
    len = findJSonToken(p, iRespContentLen, "auth_url", auth_url, auth_sz - 1);
    if(len <= 0) {
-      cb(cbRet, -1, "ERR: JSon field 'auth_url' not found");
+//      cb(cbRet, -1, "ERR: JSon field 'auth_url' not found");
+       cb(cbRet, -1, "getDomainAuthURL: ERR: JSON field 'auth_url' not found");
+
       return -1;
    }
 
@@ -460,7 +493,7 @@ int getDomainAuthURL(const char *pLink, const char *pUsername, char *auth_url, i
    len = findJSonToken(p, iRespContentLen, "can_do_username", bufJSonValue, sizeof(bufJSonValue) - 1);
    if(len <= 0) {
       /* No need to hard fail here, we just don't get to auto-fill the username on the webpage */
-      cb(cbRet, 0, "WARN: JSon field 'can_do_username' not found");
+      cb(cbRet, 0, "getDomainAuthURL: WARN: JSon field 'can_do_username' not found");
       return 0;
    }
 
@@ -469,7 +502,7 @@ int getDomainAuthURL(const char *pLink, const char *pUsername, char *auth_url, i
       unsigned int maxlen = auth_sz - (pUN - auth_url + 1);
 
       if (strnlen(pUsername, maxlen - strlen("&username=")) == maxlen - strlen("&username=")) {
-         cb(cbRet, 0, "Username would have been truncated, not auto-filling webpage");
+         cb(cbRet, 0, "getDomainAuthURL: INFO: Username would have been truncated, not auto-filling webpage");
          return 0;
       }
 
@@ -483,10 +516,7 @@ static int getToken(const char *pLink, char *resp, int iMaxLen, void (*cb)(void 
    
    int iRespContentLen=0;
    
-   int l;
-   
    char bufResp[4096];
-   char bufJSonValue[1024];
    
 #if 0
    const char *pTest="{\"api_key\": \"z46d3856f8ff292f2eb8dab4e5e51edf5b951fb6e6eb01c80662157z\", \"result\": \"success\"}";
@@ -510,7 +540,7 @@ static int getToken(const char *pLink, char *resp, int iMaxLen, void (*cb)(void 
       cb(cbRet,0,"Please check network connection.");//download json fail
       return -1;
    }
-#ifdef PROV_TEST
+#if 1//def PROV_TEST
     
     //09/08/15 per JC in Messages
     printf("pLink = [%s]\n", pLink); 
@@ -520,30 +550,83 @@ static int getToken(const char *pLink, char *resp, int iMaxLen, void (*cb)(void 
    printf("rec[%.*s]\n",iRespContentLen,p);//rem
    printf("rec-t[%s]\n",bufResp);//rem
 #endif
-   l=findJSonToken(p,iRespContentLen,"result",&bufJSonValue[0],1023);
-   if(l<=0){
-      cb(cbRet,0,"ERR: Result is not found");
-      return -1;
-   }
-   if(strcmp(&bufJSonValue[0],"success")){
-      l=findJSonToken(p,iRespContentLen,"error_msg",&bufJSonValue[0],1023);
-      if(l>0)
-         cb(cbRet,-1,&bufJSonValue[0]);
-      else{
-         cb(cbRet,-1,"Could not download configuration!");
-      }
-      return -1;
-   }
-   
-   
-   l=findJSonToken(p,iRespContentLen,"api_key",&bufJSonValue[0],1023);
-   if(l<=0 || l>256 || l>iMaxLen){
-      cb(cbRet,0,"ERR: Find api_key failed");
-      return -1;
-   }
-   int ret=snprintf(resp,iMaxLen,"%s",&bufJSonValue[0]);
-   resp[iMaxLen]=0;
-   
+    
+    cJSON* root = cJSON_Parse(p);
+    
+    if(!root) {
+        
+        cb(cbRet, 0, "ERR: Malformed response");
+        
+        cJSON_Delete(root);
+        
+        return -1;
+    }
+    
+    cJSON *result = cJSON_GetObjectItem(root,"result");
+    
+    if(!result) {
+        
+        cb(cbRet, 0, "ERR: Result is not found");
+        
+        
+        cJSON_Delete(root);
+        
+        return -1;
+    }
+    
+    if(strcmp(result->valuestring, "success")) {
+        
+        cJSON *error_msg = cJSON_GetObjectItem(root, "error_msg");
+        
+        if(error_msg) {
+            
+            cJSON *error_code = cJSON_GetObjectItem(root, "error_code");
+            
+            int code = -1;
+            
+            // If the user is required to enter his two factor authentication code
+            if(error_code->valueint == 4)
+                code = -4;
+
+            cb(cbRet, code, error_msg->valuestring);
+        }
+        else {
+         
+            cb(cbRet, -1, "Could not download configuration");
+        }
+        
+        cJSON_Delete(root);
+        
+        return -1;
+    }
+    
+    cJSON *apiKey = cJSON_GetObjectItem(root, "api_key");
+    
+    if(!apiKey) {
+        
+        cb(cbRet, 0, "ERR: API key not found");
+        
+        cJSON_Delete(root);
+        
+        return -1;
+    }
+    
+    char *apiKeyStr = apiKey->valuestring;
+    
+    if(strlen(apiKeyStr) <= 0 || strlen(apiKeyStr) > 256 || strlen(apiKeyStr) > iMaxLen) {
+        
+        cb(cbRet, 0, "ERR: Find api_key failed");
+        
+        cJSON_Delete(root);
+        
+        return -1;
+    }
+    
+    int ret=snprintf(resp,iMaxLen,"%s", &apiKeyStr[0]);
+    resp[iMaxLen]=0;
+    
+    cJSON_Delete(root);
+    
 #if defined(__APPLE__)
 #ifndef PROV_TEST
    int storeAPIKeyToKC(const char *p);
@@ -828,7 +911,7 @@ return -1;\
    return checkProvWithAPIKey(&bufAPIKey[0],cb, cbRet);;
 }
 
-int checkProvUserPass(const char *pUN, const char *pPWD, const char *pdevID, void (*cb)(void *p, int ok, const char *pMsg), void *cbRet){
+int checkProvUserPass(const char *pUN, const char *pPWD, const char *pTFA, const char *pdevID, void (*cb)(void *p, int ok, const char *pMsg), void *cbRet){
    /*
     /v1/me/device/[device_id]/
     http://sccps.silentcircle.com/provisioning/silent_phone/tivi_cfg.xml?api_key=12345
@@ -849,7 +932,7 @@ if(l+100>sizeof(bufReq)){\
 return -1;\
 }
    
-   int l=snprintf(bufReq,sizeof(bufReq)-10,"%s/v1/me/device/%s/",provisioningLink,dev_id);
+   int l=snprintf(bufReq,sizeof(bufReq)-10,"%s/v1/me/device/%s/?enable_tfa=1",provisioningLink,dev_id);
    
    CHK_BUF
    
@@ -874,28 +957,36 @@ return -1;\
    char locUN[128];
    copyJSON_value(locUN, pUN, sizeof(locUN)-1);
    
-   
-   l = snprintf(bufContent, sizeof(bufContent),
-                "{\r\n"
-                   "\"username\": \"%s\",\r\n"
-                   "\"password\": \"%s\",\r\n"
-                   "\"device_name\": \"%s\",\r\n"
+    cJSON *root;
+    root = cJSON_CreateObject();
+    cJSON_AddStringToObject(root, "username", locUN);
+    cJSON_AddStringToObject(root, "password", pPWD);//locPassword);//TODO encode pwd
+    cJSON_AddStringToObject(root, "device_name", dev_name);
 #if defined (_WIN32) || defined(_WIN64)
-				   "\"app\": \"silent_phone_free\",\r\n"
+    cJSON_AddStringToObject(root, "app", "silent_phone_free");
 #else
-				   "\"app\": \"silent_phone\",\r\n"
+    cJSON_AddStringToObject(root, "app", "silent_phone");
 #endif
-                 "\"persistent_device_id\": \"%s\",\r\n"
-                   "\"device_class\": \"%s\",\r\n"
-                   "\"version\": \"%s\"\r\n"
-                "}\r\n",locUN, locPassword, dev_name, pdevID, dev_class, t_getVersion());//TODO encode pwd
-   
+    cJSON_AddStringToObject(root, "persistent_device_id", pdevID);
+    cJSON_AddStringToObject(root, "device_class", dev_class);
+    cJSON_AddStringToObject(root, "version", t_getVersion());
+    
+    if(pTFA != NULL)
+        cJSON_AddStringToObject(root, "tfa_code", pTFA);
+    
+   char * rendered = cJSON_Print(root);
+    
+    cJSON_Delete(root);
+    
    CHK_BUF
 
 #undef CHK_BUF
    
    
-   int r=getToken(&bufReq[0], &bufAPIKey[0],255,cb,cbRet,"PUT",bufContent);
+   int r=getToken(&bufReq[0], &bufAPIKey[0],255,cb,cbRet,"PUT",rendered);
+    
+    free(rendered);
+    
    if(r<0){
       return -1;
    }
@@ -1009,7 +1100,7 @@ int checkUserCreate(const char *pUN, const char *pPWD, const char *pdevID,
    int r = createUserOnWeb(pUN, pPWD, pEM, pFN, pLN, cb, cbRet);
    if(r < 0)return r;
    
-   return checkProvUserPass(pUN, pPWD, pdevID, cb, cbRet);
+   return checkProvUserPass(pUN, pPWD, NULL, pdevID, cb, cbRet);
 }
 
 int checkProvWithAPIKey(const char *pAPIKey, void (*cb)(void *p, int ok, const char *pMsg), void *cbRet){
@@ -1123,6 +1214,7 @@ void saveCfgFile(const char *fn, void *p, int iLen){
 void tivi_log1(const char *p, int val);
 
 int isProvisioned(int iCheckNow){
+
 #ifdef PROV_TEST
    return 0;
 #endif

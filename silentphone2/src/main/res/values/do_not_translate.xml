@@ -17,8 +17,8 @@
     <string name="by_silent_circle" translatable="false">by Silent Circle</string>
     <string name="app_name_sca" translatable="false">Silent Phone Contacts</string>
 
-    <string name="switch_to_production" translatable="false">Production configuration</string>
-    <string name="switch_to_develop" translatable="false">Development configuration</string>
+    <string name="switch_to_production" translatable="false">Use production environment</string>
+    <string name="switch_to_develop" translatable="false">Use development environment</string>
     <string name="switch_auto_answer_on" translatable="false">Auto answer on</string>
     <string name="switch_auto_answer_off" translatable="false">Auto answer off</string>
     <string name="switch_log_on" translatable="false">Logging on</string>
@@ -299,4 +299,6 @@
     <string name="s5_c004" translatable="false">Trusted MitM enrollment OK</string>
     <string name="s5_c004_explanation" translatable="false">Intentionally left empty</string>
 
+    <!-- action bar overflow -->
+    <string name="action_bar_overflow" translatable="false">Action Bar Overflow</string>
 </resources>

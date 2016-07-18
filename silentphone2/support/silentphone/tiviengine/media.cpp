@@ -1,7 +1,32 @@
-//VoipPhone
-//Created by Janis Narbuts
-//Copyright (c) 2004-2012 Tivi LTD, www.tiviphone.com. All rights reserved.
+/*
+Created by Janis Narbuts
+Copyright (C) 2004-2012, Tivi LTD, www.tiviphone.com. All rights reserved.
+Copyright (C) 2012-2016, Silent Circle, LLC.  All rights reserved.
 
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+    * Any redistribution, use, or modification is done solely for personal
+      benefit and not for any commercial purpose or for monetary gain
+    * Redistributions of source code must retain the above copyright
+      notice, this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above copyright
+      notice, this list of conditions and the following disclaimer in the
+      documentation and/or other materials provided with the distribution.
+    * Neither the name Silent Circle nor the
+      names of its contributors may be used to endorse or promote products
+      derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL SILENT CIRCLE, LLC BE LIABLE FOR ANY
+DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
 
 #ifdef __SYMBIAN32__
 #include  <libc\ctype.h> //isalpha
@@ -629,6 +654,8 @@ int CRTPA::getInfo(const char *key, char *p, int iMax){
       return pzrtp?pzrtp->getInfoX(key+5,p,iMax,iIsVideo):0;
    }
    
+   
+   
    if(l==6 && strcmp(key,"codecs")==0){
       CTAudioOutBase *a=cAO;
       ret=0;
@@ -691,6 +718,20 @@ int CRTPA::getInfo(const char *key, char *p, int iMax){
       
       //p_cfg.iIndex
       
+      return ret;
+   }
+   else if(strcmp(key, "P-RTP-Stat")==0){
+      CTAudioOutBase *a=cAO;
+      ret = t_snprintf(p, iMax, "PS=%u,PR=%u,PL=%u",rtp.packetsSent,rtp.packetsRec, rtp.rtpPackLost);
+   
+      if(rtp.ice.canUseP2PNow()){
+         ret+=t_snprintf(p+ret, iMax-ret, ",LA=%d",rtp.ice.pingTime());
+      }
+      
+      if(a){
+         ret+=t_snprintf(p+ret, iMax-ret, ",JI=");
+         ret+=a->msg("jit",3, (char*)p+ret, iMax-ret);
+      }
       return ret;
    }
    else {
@@ -917,6 +958,7 @@ int CRTPA::onSendUAlawSpliter(char *p, int iLen, int iPartSize, int iCurType, vo
 
 int CRTPA::sendPacket(CTSock *s, char *p, unsigned int uiLen, ADDR *a, int iIsVideo){
 
+   rtp.packetsSent++;
    if(pCallStatus->eTMRState && pMediaIDS && pMediaIDS->tmrTunnel){
       //TODO video
       return pMediaIDS->tmrTunnel->sendRTP((unsigned char *)p, (int)uiLen, iIsVideo);
@@ -1179,6 +1221,7 @@ int CRTPA::onData(char *p, int iLen, ADDR *a)
          rtp.uiPrevRecTS=uiPos;
          onReceiveAudio(rtp.rtpRec.ts*c->getTSMult());
          uiStopMediaAt=cbEng->uiGT+T_GT_SECOND*3;
+         rtp.packetsRec++;
          iPacketsDecoded++;
          iCantDecodePrevPack=0;
          return CRTPX::eRtpOk;

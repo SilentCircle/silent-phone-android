@@ -28,6 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 package com.silentcircle.silentphone2.fragments;
 
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.Fragment;
 import android.content.ClipData;
@@ -36,6 +37,7 @@ import android.content.Context;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.graphics.drawable.Drawable;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.v7.widget.CardView;
 import android.text.TextUtils;
@@ -116,12 +118,10 @@ public class CallManagerFragment extends Fragment implements TiviPhoneService.Se
         super.onCreate(savedInstanceState);
         // Indicate that this fragment would like to influence the set of actions in the action bar.
         setHasOptionsMenu(true);
-        mNormalColor = getResources().getColor(R.color.incall_call_banner_background_color);
-        mActiveColor = getResources().getColor(R.color.black_blue);
-        mDragActiveColor = getResources().getColor(R.color.dialpad_secondary_text_color_dark);
-        mDragEnteredColor = getResources().getColor(R.color.black_green);
     }
 
+    @TargetApi(Build.VERSION_CODES.M)
+    @SuppressWarnings("deprecation")
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         Resources.Theme theme = mParent.getTheme();
@@ -129,18 +129,48 @@ public class CallManagerFragment extends Fragment implements TiviPhoneService.Se
             TypedArray array = theme.obtainStyledAttributes(R.styleable.SpaStyle);
 
             if (array != null) {
-                mSasVerifiedColor = array.getColor(R.styleable.SpaStyle_sp_sas_verified_color, getResources().getColor(R.color.white_translucent));
-                mSecurityTextColorNormal = array.getColor(R.styleable.SpaStyle_sp_dial_text_color, getResources().getColor(android.R.color.white));
-                mSecurityTextColorGreen = array.getColor(R.styleable.SpaStyle_sp_sec_info_green, getResources().getColor(R.color.indicator_green));
-                mSecurityTextColorYellow = array.getColor(R.styleable.SpaStyle_sp_sec_info_yellow, getResources().getColor(R.color.indicator_amber));
+                if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.M) {
+                    mNormalColor = getResources().getColor(R.color.incall_call_banner_background_color);
+                    mActiveColor = getResources().getColor(R.color.black_blue);
+                    mDragActiveColor = getResources().getColor(R.color.dialpad_secondary_text_color_dark);
+                    mDragEnteredColor = getResources().getColor(R.color.black_green);
 
-                mMicOpen = array.getDrawable(R.styleable.SpaStyle_sp_ic_mic);
-                mMicMute = array.getDrawable(R.styleable.SpaStyle_sp_ic_mic_muted);
-                mSpeakerOn = array.getDrawable(R.styleable.SpaStyle_sp_ic_volume_on);
-                mSpeakerOff = array.getDrawable(R.styleable.SpaStyle_sp_ic_volume_muted);
+                    mSasVerifiedColor = array.getColor(R.styleable.SpaStyle_sp_sas_verified_color, getResources().getColor(R.color.white_translucent));
+                    mSecurityTextColorNormal = array.getColor(R.styleable.SpaStyle_sp_dial_text_color, getResources().getColor(android.R.color.white));
+                    mSecurityTextColorGreen = array.getColor(R.styleable.SpaStyle_sp_sec_info_green, getResources().getColor(R.color.indicator_green));
+                    mSecurityTextColorYellow = array.getColor(R.styleable.SpaStyle_sp_sec_info_yellow, getResources().getColor(R.color.indicator_amber));
+                }
+                else {
+                    mNormalColor = getResources().getColor(R.color.incall_call_banner_background_color, theme);
+                    mActiveColor = getResources().getColor(R.color.black_blue, theme);
+                    mDragActiveColor = getResources().getColor(R.color.dialpad_secondary_text_color_dark, theme);
+                    mDragEnteredColor = getResources().getColor(R.color.black_green, theme);
+
+                    mSasVerifiedColor = array.getColor(R.styleable.SpaStyle_sp_sas_verified_color, getResources().getColor(R.color.white_translucent, theme));
+                    mSecurityTextColorNormal = array.getColor(R.styleable.SpaStyle_sp_dial_text_color, getResources().getColor(android.R.color.white, theme));
+                    mSecurityTextColorGreen = array.getColor(R.styleable.SpaStyle_sp_sec_info_green, getResources().getColor(R.color.indicator_green, theme));
+                    mSecurityTextColorYellow = array.getColor(R.styleable.SpaStyle_sp_sec_info_yellow, getResources().getColor(R.color.indicator_amber, theme));
+                }
+                mMicOpen = array.getDrawable(R.styleable.SpaStyle_sp_ic_mic_menu);
+                mMicMute = array.getDrawable(R.styleable.SpaStyle_sp_ic_mic_muted_menu);
+                mSpeakerOn = array.getDrawable(R.styleable.SpaStyle_sp_ic_volume_on_menu);
+                mSpeakerOff = array.getDrawable(R.styleable.SpaStyle_sp_ic_volume_muted_menu);
                 array.recycle();
             }
         }
+        else {
+            // The deprecated version of the functions set the theme to null
+            mSasVerifiedColor = getResources().getColor(R.color.white_translucent);
+            mSecurityTextColorNormal = getResources().getColor(android.R.color.white);
+            mSecurityTextColorGreen = getResources().getColor(R.color.black_green);
+            mSecurityTextColorYellow = getResources().getColor(R.color.black_yellow);
+
+            mMicOpen = getResources().getDrawable(R.drawable.ic_action_mic_light);
+            mMicMute = getResources().getDrawable(R.drawable.ic_action_mic_muted_light);
+            mSpeakerOn = getResources().getDrawable(R.drawable.ic_action_volume_on_light);
+            mSpeakerOff = getResources().getDrawable(R.drawable.ic_action_volume_muted_light);
+        }
+
         View view = inflater.inflate(R.layout.call_manager_fragment, container, false);
         mMainLayout = (LinearLayout)view.findViewById(R.id.main_layout);
         if (mMainLayout == null)
@@ -183,9 +213,27 @@ public class CallManagerFragment extends Fragment implements TiviPhoneService.Se
     }
 
 
+
+
+    @TargetApi(Build.VERSION_CODES.M)
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        commonOnAttach(getActivity());
+    }
+
+    /*
+     * Deprecated on API 23
+     * Use onAttachToContext instead
+     */
+    @SuppressWarnings("deprecation")
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
+        commonOnAttach(activity);
+    }
+
+    private void commonOnAttach(Activity activity) {
         mParent = activity;
         try {
             mCallback = (InCallCallback)activity;
@@ -319,9 +367,6 @@ public class CallManagerFragment extends Fragment implements TiviPhoneService.Se
         }
         ImageButton btn = (ImageButton)rowView.findViewById(R.id.CallMngEndCall);
         CircleImageSelectable image = (CircleImageSelectable) rowView.findViewById(R.id.caller_image);
-        // if call.mContentLoaderActive -> schedule a delayed lookup to possibly overwrite the default avatar
-        if (call.mContactsLoaderActive)
-            image.postDelayed(new SetImageHelper(call, image), 100);
         Utilities.setCallerImage(call, image);
         btn.setTag(call);
         btn.setOnClickListener(new View.OnClickListener() {
@@ -412,32 +457,10 @@ public class CallManagerFragment extends Fragment implements TiviPhoneService.Se
         mLastCallUnHold = call;
     }
 
-    /* **************************************************************************************
-     * Private functions
-     ************************************************************************************** */
-
-    private class SetImageHelper implements Runnable {
-        CallState mCall;
-        CircleImageSelectable mImage;
-
-        SetImageHelper(CallState call, CircleImageSelectable image) {
-            mCall = call;
-            mImage = image;
-        }
-        @Override
-        public void run() {
-            if (mCall.mContactsLoaderActive)
-                mImage.postDelayed(new SetImageHelper(mCall, mImage), 100);
-            else
-                Utilities.setCallerImage(mCall, mImage);
-        }
-    }
-
-
     private void verifySas(CallState call) {
         if (call.iIsOnHold)
             return;
-        mCallback.verifySasCb(call.bufSAS.toString());
+        mCallback.verifySasCb(call.bufSAS.toString(), call.iCallId);
     }
 
     /* *********************************************************************
@@ -1030,6 +1053,8 @@ public class CallManagerFragment extends Fragment implements TiviPhoneService.Se
         }
     }
 
+    @TargetApi(Build.VERSION_CODES.M)
+    @SuppressWarnings("deprecation")
     private void setDragElementBackground(final CallState call, final int color) {
         View childView;
         if (!call.isInConference) {
@@ -1038,11 +1063,17 @@ public class CallManagerFragment extends Fragment implements TiviPhoneService.Se
                 return;
             if (color != mNormalColor) {
                 childView.setBackgroundColor(color);
-                ((TextView)childView).setTextAppearance(mParent, android.R.style.TextAppearance_Large);
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M)
+                    ((TextView)childView).setTextAppearance(mParent, android.R.style.TextAppearance_Large);
+                else
+                    ((TextView)childView).setTextAppearance(android.R.style.TextAppearance_Large);
             }
             else {
                 childView.setBackgroundResource(0);
-                ((TextView)childView).setTextAppearance(mParent, android.R.style.TextAppearance_Small);
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M)
+                    ((TextView)childView).setTextAppearance(mParent, android.R.style.TextAppearance_Small);
+                else
+                    ((TextView)childView).setTextAppearance(android.R.style.TextAppearance_Small);
             }
             childView.invalidate();
         }
@@ -1052,11 +1083,17 @@ public class CallManagerFragment extends Fragment implements TiviPhoneService.Se
                 return;
             if (color != mNormalColor) {
                 childView.setBackgroundColor(color);
-                ((TextView)childView).setTextAppearance(mParent, android.R.style.TextAppearance_Large);
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M)
+                    ((TextView)childView).setTextAppearance(mParent, android.R.style.TextAppearance_Large);
+                else
+                    ((TextView)childView).setTextAppearance(android.R.style.TextAppearance_Large);
             }
             else {
                 childView.setBackgroundResource(0);
-                ((TextView)childView).setTextAppearance(mParent, android.R.style.TextAppearance_Small);
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M)
+                    ((TextView)childView).setTextAppearance(mParent, android.R.style.TextAppearance_Small);
+                else
+                    ((TextView)childView).setTextAppearance(android.R.style.TextAppearance_Small);
             }
             childView.invalidate();
         }

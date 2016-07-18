@@ -115,7 +115,6 @@ public class ImageViewerFragment extends FileViewerFragment {
         try {
             result = BitmapFactory.decodeByteArray(content, 0, content.length);
         } catch (OutOfMemoryError error) {
-            ;
         }
         return result;
     }

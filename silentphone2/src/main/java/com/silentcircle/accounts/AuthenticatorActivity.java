@@ -33,9 +33,9 @@ import android.accounts.AccountAuthenticatorResponse;
 import android.accounts.AccountManager;
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.DialogFragment;
+import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.content.Context;
@@ -44,7 +44,9 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.support.v7.app.ActionBarActivity;
+import android.preference.PreferenceManager;
+import android.support.v7.app.AlertDialog;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.text.InputType;
 import android.text.TextUtils;
@@ -62,9 +64,6 @@ import com.silentcircle.silentphone2.util.Utilities;
 import org.json.JSONObject;
 
 import java.io.UnsupportedEncodingException;
-import java.math.BigInteger;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 
 /**
@@ -72,7 +71,7 @@ import java.util.Arrays;
  *
  * Created by werner on 09.04.15.
  */
-public class AuthenticatorActivity extends ActionBarActivity {
+public class AuthenticatorActivity extends AppCompatActivity {
     private AccountAuthenticatorResponse mAccountAuthenticatorResponse;
     private Bundle mResultBundle;
 
@@ -150,6 +149,24 @@ public class AuthenticatorActivity extends ActionBarActivity {
             mAccountAuthenticatorResponse = null;
         }
         super.finish();
+    }
+
+    /*
+     * Handle hardware back button properly during provisioning flows
+     */
+    @Override
+    public void onBackPressed() {
+        if (getFragmentManager().getBackStackEntryCount() > 0) {
+            backStep();
+        } else {
+            // when backing out of SSO login screen return to welcome screen
+            Fragment fragment = getFragmentManager().findFragmentByTag(ProvisioningActivity.STEPCORP2_TAG);
+            if (fragment != null && fragment.isVisible()) {
+                accountStep1();
+            } else {
+                super.onBackPressed();
+            }
+        }
     }
 
     @Override
@@ -246,6 +263,11 @@ public class AuthenticatorActivity extends ActionBarActivity {
         setSupportActionBar(toolbar);
 
         setResult(Activity.RESULT_CANCELED);        // assume failure unless provisioning threads set it to OK
+
+        SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(this);
+        pref.edit().remove(ConfigurationUtilities.getInstanceDevIdSaveKey()).apply();
+        Log.d(TAG, "Remove stored device instance id - creating new one");
+
         mDeviceId = TiviPhoneService.getInstanceDeviceId(this, true);
 
         if (mDeviceId != null) {
@@ -308,6 +330,49 @@ public class AuthenticatorActivity extends ActionBarActivity {
 
     // The blackPhoneStepX functions control the BlackPhone provisioning flow. Step1 needs to call
     // Step2 to go forward or the 'backStep()' function to go backward.
+
+    public void accountCorpEmailEntry1(String username) {
+        FragmentManager fm = getFragmentManager();
+        FragmentTransaction ft = fm.beginTransaction();
+        AccountCorpEmailEntry1 step = (AccountCorpEmailEntry1)fm.findFragmentByTag(ProvisioningActivity.STEPCORP1_TAG);
+        if (step == null) {
+            Bundle b = (Bundle)mBlackPhoneArgs.clone();
+            b.putString(ProvisioningActivity.USERNAME, username);
+            step = AccountCorpEmailEntry1.newInstance(b);
+        }
+        ft.replace(R.id.ProvisioningMainContainer, step, ProvisioningActivity.STEPCORP1_TAG).commitAllowingStateLoss();
+    }
+
+    public void accountCorpEmailEntry2(String path, String domain, String username, String redirectUri, boolean can_append_username) {
+        FragmentManager fm = getFragmentManager();
+        FragmentTransaction ft = fm.beginTransaction();
+        AccountCorpEmailEntry2 step = (AccountCorpEmailEntry2)fm.findFragmentByTag(ProvisioningActivity.STEPCORP2_TAG);
+        if (step == null) {
+            Bundle b = (Bundle)mBlackPhoneArgs.clone();
+            b.putString(ProvisioningActivity.USERNAME, username);
+            b.putString(AccountCorpEmailEntry2.ADFS_PATH, path);
+            b.putString(AccountCorpEmailEntry2.DOMAIN, domain);
+            b.putString(AccountCorpEmailEntry2.REDIRECT_URI, redirectUri);
+            b.putBoolean(AccountCorpEmailEntry2.CAN_DO_USERNAME, can_append_username);
+            step = AccountCorpEmailEntry2.newInstance(b);
+        }
+        ft.replace(R.id.ProvisioningMainContainer, step, ProvisioningActivity.STEPCORP2_TAG).commitAllowingStateLoss();
+    }
+
+    public void accountCorpEmailEntry3(String username, String auth_code) {
+        mUsername = username;
+        FragmentManager fm = getFragmentManager();
+        FragmentTransaction ft = fm.beginTransaction();
+        AccountCorpEmailEntry3 step = (AccountCorpEmailEntry3)fm.findFragmentByTag(ProvisioningActivity.STEPCORP3_TAG);
+        if (step == null) {
+            Bundle b = (Bundle)mBlackPhoneArgs.clone();
+            b.putString(ProvisioningActivity.USERNAME, username);
+            b.putString(AccountCorpEmailEntry2.AUTH_CODE, auth_code);
+            step = AccountCorpEmailEntry3.newInstance(b);
+        }
+        ft.replace(R.id.ProvisioningMainContainer, step, ProvisioningActivity.STEPCORP3_TAG).commitAllowingStateLoss();
+    }
+
     public void accountStep1() {
         FragmentManager fm = getFragmentManager();
         FragmentTransaction ft = fm.beginTransaction();

@@ -28,15 +28,16 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 package com.silentcircle.silentphone2.dialogs;
 
+import android.annotation.TargetApi;
 import android.app.Activity;
-import android.app.AlertDialog;
+import android.support.v7.app.AlertDialog;
 import android.app.Dialog;
 import android.app.DialogFragment;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.util.Log;
 import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -174,6 +175,8 @@ public class ZrtpMessageDialog extends DialogFragment {
         mParent = (InCallActivity) activity;
     }
 
+    @TargetApi(Build.VERSION_CODES.M)
+    @SuppressWarnings("deprecation")
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
 
@@ -208,11 +211,11 @@ public class ZrtpMessageDialog extends DialogFragment {
 
         errorMessage = (TextView) view.findViewById(R.id.ZrtpWEText);
         errorMessage.setText(getArguments().getString(ERROR_TEXT));
-        errorMessage.setVisibility(View.INVISIBLE);
+        errorMessage.setVisibility(View.GONE);
 
         explanation = (TextView) view.findViewById(R.id.ZrtpWEExplanation);
         explanation.setText(getArguments().getString(EXPLAIN_TEXT));
-        explanation.setVisibility(View.INVISIBLE);
+        explanation.setVisibility(View.GONE);
 
         Button showHide = (Button) view.findViewById(R.id.ZrtpDetailsButton);
         showHide.setOnClickListener(new View.OnClickListener() {
@@ -223,8 +226,8 @@ public class ZrtpMessageDialog extends DialogFragment {
                     ((Button) view).setText(getString(R.string.zrtp_hide_details));
                 }
                 else {
-                    errorMessage.setVisibility(View.INVISIBLE);
-                    explanation.setVisibility(View.INVISIBLE);
+                    errorMessage.setVisibility(View.GONE);
+                    explanation.setVisibility(View.GONE);
                     ((Button) view).setText(getString(R.string.zrtp_show_details));
                 }
                 showDetail = !showDetail;
@@ -233,7 +236,9 @@ public class ZrtpMessageDialog extends DialogFragment {
 
         if (type == TiviPhoneService.CT_cb_msg.eZRTPErrA.ordinal()) {
             weType.setText(R.string.zrtp_we_error);
-            shortText.setTextColor(getResources().getColor(R.color.solid_red));
+            shortText.setTextColor(Build.VERSION.SDK_INT < Build.VERSION_CODES.M ?
+                    getResources().getColor(R.color.solid_red) :
+                    getResources().getColor(R.color.solid_red, null));
         }
         else {
             String errTxt = getArguments().getString(ERROR_TEXT);

@@ -48,6 +48,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 package com.silentcircle.contacts.list;
 
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.Fragment;
 import android.app.LoaderManager;
@@ -57,6 +58,7 @@ import android.content.CursorLoader;
 import android.content.Intent;
 import android.content.Loader;
 import android.database.Cursor;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -83,9 +85,12 @@ import com.silentcircle.contacts.ContactListEmptyView;
 import com.silentcircle.contacts.ContactPhotoManagerNew;
 import com.silentcircle.contacts.preference.ContactsPreferences;
 import com.silentcircle.contacts.widget.CompositeCursorAdapter;
+import com.silentcircle.messaging.activities.AxoRegisterActivity;
 import com.silentcircle.silentcontacts2.ScContactsContract;
 import com.silentcircle.silentcontacts2.ScContactsContract.Directory;
 import com.silentcircle.silentphone2.R;
+
+import java.util.Arrays;
 
 /**
  * Common base class for various contact-related list fragments.
@@ -115,6 +120,12 @@ public abstract class ScContactEntryListFragment<T extends ScContactEntryListAda
     private static final String KEY_DARK_THEME = "darkTheme";
     private static final String KEY_LEGACY_COMPATIBILITY = "legacyCompatibility";
     private static final String KEY_DIRECTORY_RESULT_LIMIT = "directoryResultLimit";
+
+    private static final String KEY_SC_PRE_SELECTOR = "sc_pre_selector";
+    private static final String KEY_SC_PRE_SELECTOR_ARGS = "sc_pre_selector_args";
+
+    private static final String KEY_SC_FILTER_PATTERN = "sc_filter_pattern";
+    private static final String KEY_SC_CONTENT_COLUMN = "sc_content_column";
 
     private static final String DIRECTORY_ID_ARG_KEY = "directoryId";
 
@@ -201,9 +212,25 @@ public abstract class ScContactEntryListFragment<T extends ScContactEntryListAda
      */
     protected abstract void onItemClick(int position, long id);
 
+    @TargetApi(Build.VERSION_CODES.M)
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        commonOnAttach(getActivity());
+    }
+
+    /*
+     * Deprecated on API 23
+     * Use onAttachToContext instead
+     */
+    @SuppressWarnings("deprecation")
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
+        commonOnAttach(activity);
+    }
+
+    private void commonOnAttach(Activity activity) {
         setContext(activity);
         setLoaderManager(super.getLoaderManager());
     }
@@ -373,7 +400,7 @@ public abstract class ScContactEntryListFragment<T extends ScContactEntryListAda
                     ? args.getLong(DIRECTORY_ID_ARG_KEY) : Directory.DEFAULT;
             if (directoryId == Directory.DEFAULT) {
                 loader = createCursorLoader();
-                mAdapter.configureLoader((CursorLoader) loader, directoryId);
+                mAdapter.configureLoader((CursorLoaderSc)loader, directoryId);
             }
             else if (directoryId == ScContactEntryListAdapter.SC_DIRECTORY) {
                 loader = new ScDirectoryLoader(mContext);
@@ -383,8 +410,8 @@ public abstract class ScContactEntryListFragment<T extends ScContactEntryListAda
         }
     }
 
-    public CursorLoader createCursorLoader() {
-        return new CursorLoader(mContext, null, null, null, null, null);
+    public CursorLoaderSc createCursorLoader() {
+        return new CursorLoaderSc(mContext, null, null, null, null, null);
     }
 
     private void startLoadingDirectoryPartition(int partitionIndex) {
@@ -621,16 +648,18 @@ public abstract class ScContactEntryListFragment<T extends ScContactEntryListAda
             mListView.setFastScrollAlwaysVisible(hasScrollbar);
             mListView.setVerticalScrollbarPosition(mVerticalScrollbarPosition);
             mListView.setScrollBarStyle(ListView.SCROLLBARS_OUTSIDE_OVERLAY);
-            int leftPadding = 0;
-            int rightPadding = 0;
-            if (mVerticalScrollbarPosition == View.SCROLLBAR_POSITION_LEFT) {
-                leftPadding = mContext.getResources().getDimensionPixelOffset(
-                        R.dimen.list_visible_scrollbar_padding);
-            } else {
-                rightPadding = mContext.getResources().getDimensionPixelOffset(
-                        R.dimen.list_visible_scrollbar_padding);
-            }
-            mListView.setPadding(leftPadding, mListView.getPaddingTop(), rightPadding, mListView.getPaddingBottom());
+
+            // Visually it is too much, and functionally it is unnecessary
+//            int leftPadding = 0;
+//            int rightPadding = 0;
+//            if (mVerticalScrollbarPosition == View.SCROLLBAR_POSITION_LEFT) {
+//                leftPadding = mContext.getResources().getDimensionPixelOffset(
+//                        R.dimen.list_visible_scrollbar_padding);
+//            } else {
+//                rightPadding = mContext.getResources().getDimensionPixelOffset(
+//                        R.dimen.list_visible_scrollbar_padding);
+//            }
+//            mListView.setPadding(leftPadding, mListView.getPaddingTop(), rightPadding, mListView.getPaddingBottom());
         }
     }
 

@@ -242,7 +242,13 @@ class __EXPORT ZRtp {
      */
     void resetSASVerified();
 
-    /**
+     /**
+      * Check if SAS verfied by both parties, valid after received Confirm1 or Confirm2.
+      *
+      */
+     bool isSASVerified();
+
+     /**
      * Get the ZRTP Hello Hash data.
      *
      * Use this method to get the ZRTP Hello hash data. The method
@@ -686,6 +692,11 @@ class __EXPORT ZRtp {
       */
      int32_t getZrtpRole() { return myRole; }
 
+     /**
+      * @brief Get status of our peer's disclosure flag
+      */
+     bool isPeerDisclosureFlag(){ return peerDisclosureFlagSeen; }
+
 private:
      typedef union _hashCtx {
          SkeinCtx_t  skeinCtx;
@@ -1016,7 +1027,7 @@ private:
     /**
      * Save record
      * 
-     * If false don't save record until user vrified and confirmed the SAS.
+     * If false don't save record until user verified and confirmed the SAS.
      */
     bool saveZidRecord;
     /**
@@ -1077,6 +1088,11 @@ private:
      * example useing larger fonts, different colours and other display features.
      */
     bool paranoidMode;
+
+    /**
+     * Is true if the other peer sent a Disclosure flag in its Confirm packet.
+     */
+    bool peerDisclosureFlagSeen;
 
     /**
      * Find the best Hash algorithm that is offered in Hello.

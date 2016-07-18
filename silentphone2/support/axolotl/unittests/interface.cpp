@@ -101,30 +101,13 @@ TEST(RegisterRequest, Basic)
 
 // This simulates an answer from the provisioning server repsoning to a get pre key request
 //
+//  {"axolotl": {
+//      "prekey": {"id": 560544384, "key": "AcmSyjsgM6q7dhD1qMAp4chKYJEK3U/B6XYSfdrefsr"},
+//      "identity_key": "AUIXDEamRULpGsdG1spm9uFdSgi2V+iUjhszedfhsafjd"
+//      }
+//  }
 static int32_t helper1(const std::string& requestUrl, const std::string& method, const std::string& reqData, std::string* response)
 {
-/*
-{
-    "version" :        <int32_t>,        # Version of JSON get pre-key, 1 for the first implementation
-    "username" :       <string>,         # the user name for this account, enables mapping from optional E.164 number to name
-    "scClientDevId"  : <string>,         # optional, the same string as used to register the device (v1/me/device/{device_id}/)
-    "registrationId" : <int32_t>,        # the client's Axolotl registration id
-    "identityKey" :    <string>,         # public part encoded base64 data
-    "deviceId" :       <int32_t>,        # the TextSecure (Axolotl) device id if available, default 1
-    "domain":          <string>,         # optional, domain identifier, in set then 'scClientDevId' my be missing (federation support)
-    "signedPreKey" :
-    {
-        "keyId" :     <int32_t>,         # The key id of the signed pre key
-        "key" :       <string>,          # public part encoded base64 data
-        "signature" : <string>           # base64 encoded signature data"
-    }
-    "preKey" : 
-    {
-        "keyId" :     <int32_t>,         # The key id of the signed pre key
-        "key" :       <string>,          # public part encoded base64 data
-    }
-}
-*/
 
 //    cerr << method << " " << requestUrl << '\n';
 
@@ -139,14 +122,14 @@ static int32_t helper1(const std::string& requestUrl, const std::string& method,
 
     std::string data = bobIdpublicKey.serialize();
     int32_t b64Len = b64Encode((const uint8_t*)data.data(), data.size(), b64Buffer, MAX_KEY_BYTES_ENCODED*2);
-    cJSON_AddStringToObject(root, "identityKey", b64Buffer);
+    cJSON_AddStringToObject(root, "identity_key", b64Buffer);
 //    cJSON_AddNumberToObject(root, "deviceId", 1);
 
     bobPreKey = PreKeys::generatePreKey(store);
 
     cJSON* jsonPkr;
     cJSON_AddItemToObject(root, "preKey", jsonPkr = cJSON_CreateObject());
-    cJSON_AddNumberToObject(jsonPkr, "keyId", bobPreKey.first);
+    cJSON_AddNumberToObject(jsonPkr, "id", bobPreKey.first);
 
     // Get pre-key's public key data, serialized and add it to JSON
     const DhKeyPair* ecPair = bobPreKey.second;
@@ -228,6 +211,13 @@ static int32_t helper2(const std::string& requestUrl, const std::string& method,
 // This simulates an answer from the provisioning server repsonding a user's available Axolotl devices
 //
 /*
+ * {"devices":
+ * [
+ *  {"version": 1, "id": "longDevId_1", "device_name": "Blackphone 2"},
+ *  {"version": 1, "id": "longDevId_2", "device_name": "iPad"},
+ *  {"version": 1, "id": "longDevId_3", "device_name": "Signature Touch"},
+   ]
+ * }
  {
     "version" :        <int32_t>,        # Version of JSON new pre-keys, 1 for the first implementation
     "scClientDevIds" : [<string>, ..., <string>]   # array of known Axolotl ScClientDevIds for this user/account

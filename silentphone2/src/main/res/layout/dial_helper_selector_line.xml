@@ -32,7 +32,6 @@ http://code.google.com/p/android/issues/detail?id=3414, comments 56 and 57
               android:ellipsize="marquee"
               android:marqueeRepeatLimit ="3"
               android:scrollHorizontally="true"
-              android:background="@drawable/list_item_selection_dark"
               tools:text="North America"
               tools:context=".activities.DialHelperSelectorActivity"/>
 

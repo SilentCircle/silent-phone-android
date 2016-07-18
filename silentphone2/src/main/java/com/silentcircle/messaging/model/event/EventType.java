@@ -68,7 +68,7 @@ public enum EventType {
         return null;
     }
 
-    private EventType(int value, Class<? extends Event> _class) {
+    EventType(int value, Class<? extends Event> _class) {
         this.value = value;
         this._class = _class;
     }

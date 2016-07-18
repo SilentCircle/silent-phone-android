@@ -1,7 +1,5 @@
 #include "Ec255PrivateKey.h"
 
-#include <string.h>
-
 static void *(*volatile memset_volatile)(void *, int, size_t) = memset;
 
 using namespace axolotl;

@@ -117,9 +117,10 @@ public class CameraPreviewControllerHw implements PreviewCallback, TextureView.S
         }
         setupCamera();
         if (ConfigurationUtilities.mTrace) Log.d(TAG, "onSurfaceTextureAvailable, camera: " + camera);
-        if (camera != null)
+        if (camera != null) {
             sizeChanged(176 * 2, 144 * 2);       // We try to use this or a slightly smaller camera resolution
             startCameraPreview();
+        }
     }
 
     public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {

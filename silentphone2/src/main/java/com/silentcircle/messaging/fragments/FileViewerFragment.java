@@ -42,6 +42,7 @@ import com.silentcircle.silentphone2.R;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
 
 /**
@@ -50,11 +51,12 @@ import java.io.InputStream;
 public class FileViewerFragment extends BaseFragment {
 
     public interface Callback {
-
         void onError(Uri uri, String mimeType);
     }
 
     public static final String EXTRA_TYPE = "type";
+
+    private ParcelFileDescriptor mFileDescriptor; // populated if necessary
 
     public static FileViewerFragment create(Uri uri, String mimeType) {
         return instantiate(new FileViewerFragment(), uri, mimeType);
@@ -95,8 +97,14 @@ public class FileViewerFragment extends BaseFragment {
     }
 
     protected ParcelFileDescriptor getFileDescriptor(Context context) throws FileNotFoundException {
+        if (mFileDescriptor != null) {
+            return mFileDescriptor;
+        }
+
         Uri uri = getURI();
-        return context.getContentResolver().openFileDescriptor(uri, "r");
+        mFileDescriptor = context.getContentResolver().openFileDescriptor(uri, "r");
+
+        return mFileDescriptor;
     }
 
     protected InputStream getStream(Context context) throws FileNotFoundException {
@@ -116,6 +124,17 @@ public class FileViewerFragment extends BaseFragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         return inflater.inflate(R.layout.messaging_file_viewer_fragment, container, false);
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+
+        if (mFileDescriptor != null) {
+            try {
+                mFileDescriptor.close();
+            } catch (IOException ignore) {}
+        }
     }
 
     protected InputStream openFileForReading() {

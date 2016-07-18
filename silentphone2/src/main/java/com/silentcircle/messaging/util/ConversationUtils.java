@@ -28,7 +28,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package com.silentcircle.messaging.util;
 
 import android.content.Context;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+import android.text.TextUtils;
 
+import com.silentcircle.common.list.ContactEntry;
 import com.silentcircle.messaging.model.Conversation;
 import com.silentcircle.messaging.model.event.Event;
 import com.silentcircle.messaging.repository.ConversationRepository;
@@ -105,4 +109,33 @@ public class ConversationUtils {
         return result;
     }
 
+    @Nullable
+    public static ConversationRepository getConversations(Context ctx) {
+        AxoMessaging axoMessaging = AxoMessaging.getInstance(ctx);
+        if (!axoMessaging.isRegistered()) {
+            return null;
+        }
+        return axoMessaging.getConversations();
+    }
+
+    @NonNull
+    public static String resolveDisplayName(ContactEntry contactEntry, Conversation conversation) {
+
+        String displayName = null;
+        if (contactEntry != null) {
+            displayName = contactEntry.name;        // Use name on contact entry if available
+        }
+        if (TextUtils.isEmpty(displayName) && conversation != null) { // If empty try to get it from name lookup cache
+            byte[] dpName = AxoMessaging.getDisplayName(conversation.getPartner().getUserId());
+            if (dpName != null) {
+                displayName = new String(dpName);
+            }
+            else {
+                // Here we may fall back to a save "display name" we got from the SIP
+                // stack when receiving a message
+                displayName = conversation.getPartner().getDisplayName();
+            }
+        }
+        return (displayName != null) ? displayName : "";
+    }
 }

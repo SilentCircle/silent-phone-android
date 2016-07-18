@@ -28,28 +28,41 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package com.silentcircle.messaging.views;
 
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.os.Handler;
+import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.support.v4.util.Pair;
+import android.support.v7.app.AlertDialog;
 import android.text.TextUtils;
 import android.util.AttributeSet;
-import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.CheckBox;
 import android.widget.Checkable;
 import android.widget.CompoundButton;
-import android.widget.PopupMenu;
+import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.SeekBar;
+import android.widget.Toast;
 
+import com.silentcircle.messaging.activities.ConversationActivity;
 import com.silentcircle.messaging.activities.ShowRemoteDevicesActivity;
 import com.silentcircle.messaging.listener.DismissDialogOnClick;
 import com.silentcircle.messaging.location.LocationUtils;
+import com.silentcircle.messaging.model.Conversation;
+import com.silentcircle.messaging.model.event.Message;
+import com.silentcircle.messaging.repository.ConversationRepository;
+import com.silentcircle.messaging.task.ComposeMessageTask;
+import com.silentcircle.messaging.task.SendMessageTask;
+import com.silentcircle.messaging.util.AsyncUtils;
 import com.silentcircle.messaging.util.BurnDelay;
+import com.silentcircle.messaging.util.ConversationUtils;
 import com.silentcircle.silentphone2.R;
+import com.silentcircle.silentphone2.fragments.SettingsFragment;
 
 public class ConversationOptionsDrawer extends ScrollView  {
 
@@ -323,6 +336,86 @@ public class ConversationOptionsDrawer extends ScrollView  {
 
         OptionsItem remoteDeviceButton = (OptionsItem) findViewById(R.id.remote_devices);
         remoteDeviceButton.setOnClickListener(mRemoveDevicesClickListener);
+
+        boolean developer = false;
+
+        if(mParent != null) {
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mParent);
+            developer = prefs.getBoolean(SettingsFragment.DEVELOPER, false);
+        }
+
+        if(developer) {
+            LinearLayout spamLayout = (LinearLayout) findViewById(R.id.spam_options);
+            final EditText spamNumEditText = (EditText) findViewById(R.id.spam_num);
+            final EditText spamDelayEditText = (EditText) findViewById(R.id.spam_delay);
+
+            final OptionsItem spam = (OptionsItem) findViewById(R.id.spam);
+            spam.setVisibility(VISIBLE);
+            spamLayout.setVisibility(VISIBLE);
+
+            if(!TextUtils.isEmpty(spamNumEditText.getText())) {
+                spamNumEditText.setSelection(spamNumEditText.getText().length());
+            }
+
+            spam.setOnClickListener(new OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    String spamNumString = spamNumEditText.getText().toString();
+                    String spamDelayString = spamDelayEditText.getText().toString();
+
+                    int spamNum = spamNumString != null ? Integer.valueOf(spamNumString) : 0;
+                    final int spamDelay = spamDelayString != null ? Integer.valueOf(spamDelayString) : 0;
+
+                    final ConversationActivity activity = (ConversationActivity) mParent;
+                    String partner = activity.getPartner();
+                    ConversationRepository repository = ConversationUtils.getConversations(mParent.getApplicationContext());
+                    Conversation conversation = activity.getConversation();
+
+                    for (int i = 0; i < spamNum; i++) {
+                        final ComposeMessageTask composeTask = new ComposeMessageTask(partner, conversation, repository,
+                                null, true) {
+
+                            @Override
+                            protected void onPostExecute(Message message) {
+                                SendMessageTask sendTask = new SendMessageTask(mParent.getApplicationContext()) {
+
+                                    @Override
+                                    protected void onPostExecute(Message message) {
+                                        if (!getResultStatus() && getResultCode() < 0) {
+                                            Toast.makeText(activity, "A message failed to send, consider increasing the delay", Toast.LENGTH_SHORT).show();
+                                        }
+
+                                        activity.updateConversation();
+                                    }
+                                };
+
+                                AsyncUtils.execute(sendTask, message);
+                            }
+                        };
+
+                         Handler handler = new Handler();
+                         Runnable spamRunnable = new SpamRunnable(i + 1) {
+                             @Override
+                             public void run() {
+                                AsyncUtils.execute(composeTask, "Test Message " + this.num);
+                             }
+                        };
+
+                        handler.postDelayed(spamRunnable, i * spamDelay);
+                    }
+                }
+            });
+        }
+    }
+
+    public class SpamRunnable implements Runnable {
+        public int num;
+
+        public SpamRunnable(int num) {
+            this.num = num;
+        }
+
+        public void run() {}
     }
 
     protected void setCheckedIf(boolean condition, int... viewResourceIDs) {

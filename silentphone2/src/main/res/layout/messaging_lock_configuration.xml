@@ -1,0 +1,160 @@
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    tools:context="com.silentcircle.keymngr.KeyManagerActivity"
+    android:baselineAligned="false"
+    android:focusable="false"
+    android:orientation="vertical"
+    android:visibility="visible">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        >
+
+        <android.support.v7.widget.SwitchCompat
+            android:theme="@style/Widget.Switch.Light"
+            app:track="@drawable/btn_switch_bg_selector"
+            android:id="@+id/enableMessagingScreenLock"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="@dimen/activity_horizontal_margin"
+            android:background="@color/sc_ng_background_1"
+            android:text="@string/messaging_screen_lock_messaging_screen_protection"
+            android:textSize="@dimen/text_xlarge"
+            android:textStyle="bold"
+            android:textColor="?sp_actionbar_title_text_color"
+            />
+
+        <RelativeLayout
+            android:id="@+id/messagingScreenLockOptions"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/activity_horizontal_margin"
+            android:layout_marginLeft="@dimen/activity_horizontal_margin"
+            android:layout_marginRight="@dimen/activity_horizontal_margin"
+            android:animateLayoutChanges="true"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/messagingScreenLockHeader"
+                style="@style/Widget.Silent.SimpleText.Large"
+                android:layout_marginTop="@dimen/activity_vertical_margin"
+                android:layout_height="wrap_content"
+                android:gravity="center_horizontal"
+                android:textColor="@color/sc_ng_text_grey"
+                android:textSize="@dimen/text_xxlarge"
+                android:text="@string/messaging_screen_lock_set_password_and_timeout"
+                />
+
+            <RelativeLayout
+                android:id="@+id/messagingPasswordFields"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/messagingScreenLockHeader"
+                android:orientation="vertical">
+
+                <EditText
+                    style="@style/Widget.Silent.SimpleText"
+                    android:theme="@style/Widget.EditText.Dark"
+                    android:id="@+id/messagingPasswordInput1"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/activity_vertical_margin_large"
+                    android:layout_marginLeft="@dimen/activity_horizontal_margin_large"
+                    android:layout_marginRight="@dimen/activity_horizontal_margin_large"
+                    android:hint="@string/messaging_screen_lock_password_hint"
+                    android:imeOptions="actionNext"
+                    android:inputType="textPassword"
+                    android:privateImeOptions="nm"
+                    android:singleLine="true"
+                    android:tag="password"
+                    android:textColor="@color/sc_ng_text_grey"
+                    android:textSize="@dimen/text_large"
+                    />
+
+                <EditText
+                    style="@style/Widget.Silent.SimpleText"
+                    android:theme="@style/Widget.EditText.Dark"
+                    android:id="@+id/messagingPasswordInput2"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/messagingPasswordInput1"
+                    android:layout_marginTop="@dimen/activity_vertical_margin"
+                    android:layout_marginLeft="@dimen/activity_horizontal_margin_large"
+                    android:layout_marginRight="@dimen/activity_horizontal_margin_large"
+                    android:hint="@string/messaging_screen_lock_repeat_password_hint"
+                    android:imeOptions="actionGo"
+                    android:inputType="textPassword"
+                    android:singleLine="true"
+                    android:tag="password"
+                    android:textColor="@color/sc_ng_text_grey"
+                    android:textSize="@dimen/text_large"
+                    />
+
+                <CheckBox
+                    android:id="@+id/messagingShowPassword"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/messagingPasswordInput2"
+                    android:gravity="center_vertical|start"
+                    android:layout_marginLeft="@dimen/activity_horizontal_margin_large"
+                    android:layout_marginStart="@dimen/activity_horizontal_margin_large"
+                    android:layout_marginTop="@dimen/activity_vertical_margin_small"
+                    android:textColor="@color/sc_ng_text_grey"
+                    android:textSize="@dimen/text_normal"
+                    android:text="@string/provisioning_show_pw"
+                    android:contentDescription="@string/provisioning_show_pw"
+                    android:visibility="gone"
+                    />
+
+            </RelativeLayout>
+
+            <SeekBar
+                android:id="@+id/messagingPasswordGracePeriod"
+                style="@android:style/Widget.DeviceDefault.SeekBar"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/messagingPasswordFields"
+                android:layout_marginLeft="@dimen/activity_horizontal_margin"
+                android:layout_marginStart="@dimen/activity_horizontal_margin"
+                android:layout_marginTop="@dimen/activity_vertical_margin_small"
+                android:max="11"
+                android:progress="5"
+                android:indeterminate="false"
+                />
+
+            <TextView
+                android:id="@+id/messagingPasswordGracePeriodText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/messagingPasswordGracePeriod"
+                android:layout_marginLeft="@dimen/activity_horizontal_margin"
+                android:layout_marginStart="@dimen/activity_horizontal_margin"
+                android:layout_marginTop="@dimen/spacing_normal"
+                android:gravity="center_vertical|start"
+                android:textColor="@color/sc_ng_text_grey"
+                android:textSize="@dimen/text_normal"
+                tools:text="Lock messaging in 15 seconds"
+                />
+
+            <Button
+                style="@style/Widget.Button.Dark"
+                android:id="@+id/passwordSubmit"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/messagingPasswordGracePeriodText"
+                android:layout_marginTop="@dimen/activity_horizontal_margin"
+                android:layout_centerHorizontal="true"
+                android:text="@string/submit"
+                android:textSize="@dimen/text_large"
+                android:filterTouchesWhenObscured="true"
+                />
+
+        </RelativeLayout>
+
+    </LinearLayout>
+
+</ScrollView>

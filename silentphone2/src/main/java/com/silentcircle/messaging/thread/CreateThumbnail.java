@@ -41,6 +41,7 @@ import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Paint.Style;
 import android.graphics.Path;
+import android.media.MediaMetadataRetriever;
 import android.media.ThumbnailUtils;
 import android.net.Uri;
 import android.os.Build;
@@ -65,7 +66,7 @@ import java.io.InputStream;
 
 public class CreateThumbnail  {
 
-    private static enum ContentType {
+    private enum ContentType {
 
         UNKNOWN,
         IMAGE,
@@ -83,7 +84,7 @@ public class CreateThumbnail  {
             if( name.startsWith( "video/" ) ) {
                 return VIDEO;
             }
-            if( name.startsWith( "audio/" ) ) {
+            if( name.startsWith( "audio/" ) || MIME.isAudio(name) ) {
                 return AUDIO;
             }
             if( MIME.isContact( name )) {
@@ -106,13 +107,43 @@ public class CreateThumbnail  {
         return bitmap;
     }
 
-    private static Bitmap createVideoThumbnail( Uri uri ) {
+    /*
+     * Create bitmap from first frame of the video
+     * Size matching MediaStore.Video.Thumbnails.MINI_KIND is assumed.
+     *
+     * This function is copied from Android's ThumbnailUtils.
+     */
+    public static Bitmap createVideoThumbnail(Context context, Uri file) {
         Bitmap bitmap = null;
-        // MediaMetadataRetriever media = new MediaMetadataRetriever();
-        // media.setDataSource( AttachmentUtils.getVideoPath() );
-        // bitmap = media.getFrameAtTime( 0, MediaMetadataRetriever.OPTION_CLOSEST );
+        MediaMetadataRetriever retriever = new MediaMetadataRetriever();
+        try {
+            retriever.setDataSource(context, file);
+            bitmap = retriever.getFrameAtTime(-1);
+        } catch (IllegalArgumentException ex) {
+            // Assume this is a corrupt video file
+        } catch (RuntimeException ex) {
+            // Assume this is a corrupt video file.
+        } finally {
+            try {
+                retriever.release();
+            } catch (RuntimeException ex) {
+                // Ignore failures while cleaning up.
+            }
+        }
 
-        bitmap = ThumbnailUtils.createVideoThumbnail( uri.getPath(), MediaStore.Video.Thumbnails.MINI_KIND );
+        if (bitmap == null) return null;
+
+        // Scale down the bitmap if it's too large.
+        int width = bitmap.getWidth();
+        int height = bitmap.getHeight();
+        int max = Math.max(width, height);
+        if (max > 512) {
+            float scale = 512f / max;
+            int w = Math.round(scale * width);
+            int h = Math.round(scale * height);
+            bitmap = Bitmap.createScaledBitmap(bitmap, w, h, true);
+        }
+
         return bitmap;
     }
 
@@ -124,7 +155,24 @@ public class CreateThumbnail  {
         int outerRadius = innerBound / 4;
         int innerRadius = innerBound / 8;
 
-        Canvas canvas = new Canvas( bitmap );
+        Bitmap mutableBitmap = null;
+
+        if(!bitmap.isMutable()) {
+            try {
+                Bitmap immutableBitmap = Bitmap.createBitmap(bitmap);
+
+                if (immutableBitmap == null) {
+                    return bitmap;
+                }
+
+                mutableBitmap = immutableBitmap.copy(Bitmap.Config.ARGB_8888, true);
+                immutableBitmap.recycle();
+            } catch (OutOfMemoryError exception) {
+                // Just continue with original bitmap
+            }
+        }
+
+        Canvas canvas = new Canvas( mutableBitmap != null ? mutableBitmap : bitmap );
         Paint paint = new Paint( Paint.ANTI_ALIAS_FLAG );
         paint.setStrokeWidth( 2 );
 
@@ -150,7 +198,28 @@ public class CreateThumbnail  {
     }
 
     private static Bitmap resize( Bitmap bitmap, int targetWidth, int targetHeight ) {
-        return bitmap == null ? bitmap : Bitmap.createScaledBitmap( bitmap, targetWidth, targetHeight, false );
+        if(bitmap == null) {
+            return null;
+        }
+
+        Bitmap mutableBitmap = null;
+
+        if(!bitmap.isMutable()) {
+            try {
+                Bitmap immutableBitmap = Bitmap.createScaledBitmap(bitmap, targetWidth, targetHeight, false);
+
+                if (immutableBitmap == null) {
+                    return bitmap;
+                }
+
+                mutableBitmap = immutableBitmap.copy(Bitmap.Config.ARGB_8888, true);
+                immutableBitmap.recycle();
+            } catch (OutOfMemoryError exception) {
+                return bitmap;
+            }
+        }
+
+        return mutableBitmap != null ? mutableBitmap : bitmap;
     }
 
     protected final PackageManager packageManager;
@@ -255,6 +324,7 @@ public class CreateThumbnail  {
         options.inPreferredConfig = Bitmap.Config.ARGB_8888;
         options.outWidth = 96;
         options.outHeight = 128;
+        options.inMutable = true;
         return BitmapFactory.decodeResource(mContext.getResources(), resourceId, options);
     }
 
@@ -365,7 +435,7 @@ public class CreateThumbnail  {
     private Bitmap getVideoThumbnail() {
         Bitmap bitmap = null;
         if( uri.equals(VideoProvider.CONTENT_URI) ) {
-            bitmap = createVideoThumbnail( uri );
+            bitmap = createVideoThumbnail( mContext, uri );
         } else if( uri.equals(AudioProvider.CONTENT_URI) ) {
             return decorateAudioThumbnail(resize(bitmap));
         } else {
@@ -375,11 +445,15 @@ public class CreateThumbnail  {
             if( cursor != null ) {
                 if( cursor.moveToNext() ) {
                     BitmapFactory.Options options = new BitmapFactory.Options();
+                    options.inMutable = true;
                     bitmap = MediaStore.Video.Thumbnails.getThumbnail( resolver, cursor.getInt( 0 ), MediaStore.Video.Thumbnails.MINI_KIND, options );
                 } else {
                     bitmap = getVideoThumbnailFroyo();
                 }
                 cursor.close();
+            }
+            if( bitmap == null ) {
+                bitmap = createVideoThumbnail( mContext, uri );
             }
         }
         return decorateVideoThumbnail( resize( bitmap ) );

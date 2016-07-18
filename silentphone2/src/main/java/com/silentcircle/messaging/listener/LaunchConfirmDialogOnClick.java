@@ -27,15 +27,20 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 package com.silentcircle.messaging.listener;
 
-import android.app.AlertDialog;
+import android.app.Fragment;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+import android.support.v7.app.AlertDialog;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.LinearLayout;
 
+import com.silentcircle.messaging.fragments.AlertDialogFragment;
 import com.silentcircle.silentphone2.R;
 
 public class LaunchConfirmDialogOnClick implements View.OnClickListener {
@@ -108,10 +113,12 @@ public class LaunchConfirmDialogOnClick implements View.OnClickListener {
         alert.setPositiveButton(confirmLabelResourceID, new ConfirmOnClick(onConfirmListener));
 
         if (flagSaveChoice) {
-            ConfirmDialogNoRepeatListener listener = new ConfirmDialogNoRepeatListener(onConfirmNoRepeatListener);
+            ConfirmDialogNoRepeatListener listener =
+                    new ConfirmDialogNoRepeatListener(onConfirmNoRepeatListener);
             alert.setPositiveButton(confirmLabelResourceID, listener);
 
-            LinearLayout layout = (LinearLayout) LayoutInflater.from(context).inflate(R.layout.dialog_with_checkbox, null);
+            LinearLayout layout = (LinearLayout) LayoutInflater.from(context).inflate(
+                    R.layout.dialog_with_checkbox, null);
             CheckBox checkbox = (CheckBox) layout.findViewById(R.id.checkbox);
             checkbox.setOnCheckedChangeListener(listener);
             checkbox.setChecked(false);
@@ -125,13 +132,40 @@ public class LaunchConfirmDialogOnClick implements View.OnClickListener {
         alert.show();
     }
 
-    protected class ConfirmDialogNoRepeatListener implements DialogInterface.OnClickListener,
+    /*
+     * TODO
+    public void show(@NonNull final Activity activity, final boolean flagSaveChoice) {
+        AlertDialogFragment dialogFragment = AlertDialogFragment.getInstance(
+                titleResourceID, messageResourceID, cancelLabelResourceID, confirmLabelResourceID,
+                flagSaveChoice);
+        dialogFragment.show(activity.getFragmentManager(), AlertDialogFragment.TAG_ALERT_DIALOG);
+    }
+
+    public void show(@NonNull final Activity activity) {
+        show(activity, false);
+    }
+     */
+
+    public void show(@NonNull final Fragment fragment, final int requestCode, final Bundle bundle,
+            final boolean flagSaveChoice) {
+        AlertDialogFragment dialogFragment = AlertDialogFragment.getInstance(
+                titleResourceID, messageResourceID, cancelLabelResourceID, confirmLabelResourceID,
+                bundle, flagSaveChoice);
+        dialogFragment.setTargetFragment(fragment, requestCode);
+        dialogFragment.show(fragment.getFragmentManager(), AlertDialogFragment.TAG_ALERT_DIALOG);
+    }
+
+    public void show(@NonNull final Fragment fragment, final int requestCode, final Bundle bundle) {
+        show(fragment, requestCode, bundle, false);
+    }
+
+    public static class ConfirmDialogNoRepeatListener implements DialogInterface.OnClickListener,
             CompoundButton.OnCheckedChangeListener {
 
         private final OnConfirmNoRepeatListener mConfirmListener;
         private boolean mShouldNotShowAgain;
 
-        public ConfirmDialogNoRepeatListener(OnConfirmNoRepeatListener listener) {
+        public ConfirmDialogNoRepeatListener(@Nullable OnConfirmNoRepeatListener listener) {
             mShouldNotShowAgain = false;
             mConfirmListener = listener;
         }
@@ -143,7 +177,9 @@ public class LaunchConfirmDialogOnClick implements View.OnClickListener {
 
         @Override
         public void onClick(DialogInterface dialog, int which) {
-            mConfirmListener.onConfirm(((AlertDialog) dialog).getContext(), mShouldNotShowAgain);
+            if (mConfirmListener != null) {
+                mConfirmListener.onConfirm(dialog, which, mShouldNotShowAgain);
+            }
         }
 
     }

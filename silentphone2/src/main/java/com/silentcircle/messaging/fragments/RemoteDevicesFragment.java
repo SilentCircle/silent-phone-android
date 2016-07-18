@@ -28,12 +28,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 package com.silentcircle.messaging.fragments;
 
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.Fragment;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Base64;
@@ -54,8 +56,10 @@ import com.silentcircle.contacts.ContactsUtils;
 import com.silentcircle.messaging.activities.ShowRemoteDevicesActivity;
 import com.silentcircle.messaging.services.AxoMessaging;
 import com.silentcircle.messaging.util.IOUtils;
+import com.silentcircle.silentphone2.BuildConfig;
 import com.silentcircle.silentphone2.R;
 import com.silentcircle.silentphone2.activities.DialerActivity;
+import com.silentcircle.silentphone2.services.TiviPhoneService;
 import com.silentcircle.silentphone2.util.ConfigurationUtilities;
 import com.silentcircle.silentphone2.util.Utilities;
 
@@ -117,10 +121,30 @@ public class RemoteDevicesFragment extends Fragment implements View.OnClickListe
         setHasOptionsMenu(true);
     }
 
+    @TargetApi(Build.VERSION_CODES.M)
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        commonOnAttach(getActivity());
+    }
+
+    /*
+     * Deprecated on API 23
+     * Use onAttachToContext instead
+     */
+    @SuppressWarnings("deprecation")
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
-        mParent = (ShowRemoteDevicesActivity) activity;
+        commonOnAttach(activity);
+    }
+
+    private void commonOnAttach(Activity activity) {
+        try {
+            mParent = (ShowRemoteDevicesActivity) activity;
+        } catch (ClassCastException e) {
+            throw new ClassCastException("Activity must be ShowRemoteDevicesActivity.");
+        }
     }
 
     @Override
@@ -134,7 +158,6 @@ public class RemoteDevicesFragment extends Fragment implements View.OnClickListe
         mRootView = inflater.inflate(R.layout.axo_remote_devices, container, false);
         if (mRootView == null)
             return null;
-        mRootView.findViewById(R.id.ok).setOnClickListener(this);
         mProgressBar = (ProgressBar)mRootView.findViewById(R.id.progressBar);
         mDevicesList = (ListView)mRootView.findViewById(R.id.AxoDeviceList);
         return mRootView;
@@ -149,10 +172,6 @@ public class RemoteDevicesFragment extends Fragment implements View.OnClickListe
     @Override
     public void onClick(View view) {
         switch (view.getId()) {
-            case R.id.ok:
-                mParent.finish();
-                break;
-
             case R.id.call:
                 DeviceData devData = (DeviceData)view.getTag();
                 String directDial = mPartner + ";xscdevid=" + devData.devId;
@@ -168,6 +187,16 @@ public class RemoteDevicesFragment extends Fragment implements View.OnClickListe
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         inflater.inflate(R.menu.axo_remote_devices, menu);
         super.onCreateOptionsMenu(menu, inflater);
+
+        if(!BuildConfig.DEBUG) {
+            String self = getUsername();
+
+            if(self != null) {
+                if(self.equals(mPartner)) {
+                    menu.findItem(R.id.axo_renew).setVisible(false);
+                }
+            }
+        }
     }
 
     // InCallActivity handles the Menu selection
@@ -201,10 +230,22 @@ public class RemoteDevicesFragment extends Fragment implements View.OnClickListe
         aib.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, "rescanUserDevices", mPartner);
     }
 
+    private String getUsername() {
+        AxoMessaging axo = AxoMessaging.getInstance(mParent);
+        if(axo != null) {
+            return axo.getUserName();
+        }
+
+        return null;
+    }
+
     /** Request the identity key and associated device info from Axolotl conversation */
     private void getDevicesInfo() {
         byte[] ownDevice = AxoMessaging.getOwnIdentityKey();
-        parseSetOwnDevice(new String(ownDevice));
+        if (ownDevice != null)
+            parseSetOwnDevice(new String(ownDevice));
+
+        setOwnDeviceId(Utilities.hashMd5(TiviPhoneService.getInstanceDeviceId(mParent, false)));
 
         byte[][] devices = AxoMessaging.getIdentityKeys(IOUtils.encode(mPartner));
         if (devices.length == 0) {
@@ -266,6 +307,16 @@ public class RemoteDevicesFragment extends Fragment implements View.OnClickListe
         final String idKeyFingerprint = fingerprint(idKey);
         TextView tv = (TextView) view.findViewById(R.id.AxoLocalDeviceKey);
         tv.setText(idKeyFingerprint);
+    }
+
+    private void setOwnDeviceId(String ownDeviceId) {
+        View view = getView();
+        if (view == null)
+            return;
+        TextView tv = (TextView) view.findViewById(R.id.AxoLocalDeviceId);
+        tv.setText(TextUtils.isEmpty(ownDeviceId)
+                ? getString(R.string.axo_local_device_id_empty)
+                : ownDeviceId);
     }
 
     // identityKey:device name:device id:verify state

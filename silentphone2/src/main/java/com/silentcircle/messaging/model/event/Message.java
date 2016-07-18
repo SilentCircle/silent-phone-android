@@ -29,14 +29,24 @@ package com.silentcircle.messaging.model.event;
 
 import com.silentcircle.messaging.model.Location;
 import com.silentcircle.messaging.model.MessageStates;
+import com.silentcircle.messaging.util.DateUtils;
 import com.silentcircle.messaging.util.IOUtils;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 public class Message extends Event {
 
     public static final long DEFAULT_EXPIRATION_TIME = java.lang.Long.MAX_VALUE;
+
+    public static final long FAILURE_READ_NOTIFICATION = 1;
+    public static final long FAILURE_BURN_NOTIFICATION = 2;
+
     @MessageStates.MessageState protected int state;
     protected byte[] sender;
     protected byte[] ciphertext;
@@ -45,6 +55,7 @@ public class Message extends Event {
     private long deliveryTime;
     private List<Long> netMessageIds = new ArrayList<>();
     private Location location;
+    private Set<Long> failures = new HashSet<>();
 
     private String metaData;
 
@@ -64,6 +75,7 @@ public class Message extends Event {
         this.expirationTime = DEFAULT_EXPIRATION_TIME;
         this.deliveryTime = 0L;
         this.netMessageIds = new ArrayList<>();
+        this.failures = new HashSet<>();
     }
 
     public boolean expires() {
@@ -88,6 +100,12 @@ public class Message extends Event {
 
     public long getExpirationTime() {
         return this.expirationTime;
+    }
+
+    public long getReadTime() {
+        /* When burn will be optional, a separate field will be necessary */
+        return (DEFAULT_EXPIRATION_TIME == getExpirationTime())
+                ? 0 : (getExpirationTime() - TimeUnit.SECONDS.toMillis(getBurnNotice()));
     }
 
     public String getSender() {
@@ -125,7 +143,17 @@ public class Message extends Event {
         return mRequestReceipt;
     }
 
-    public boolean hasAttachment() { return attachment != null; }
+    public boolean hasBurnNotice() {
+        return this.getBurnNotice() > 0L;
+    }
+
+    public boolean hasLocation() {
+        return this.getLocation() != null;
+    }
+
+    public boolean hasAttachment() {
+        return attachment != null;
+    }
 
     public boolean hasMetaData() {
         return metaData != null;
@@ -192,5 +220,45 @@ public class Message extends Event {
     public void addNetMessageId(long netMessageId) {
         this.netMessageIds.add(netMessageId);
     }
-}
 
+    public void setFailureFlag(long failure) {
+        failures.add(failure);
+    }
+
+    public void clearFailureFlag(long failure) {
+        failures.remove(failure);
+    }
+
+    public Long[] getFailureFlags() {
+        return failures.toArray(new Long[failures.size()]);
+    }
+
+    public boolean hasFailureFlagSet(long flag) {
+        return failures.contains(flag);
+    }
+
+    public void setFailureFlags(Long[] flags) {
+        failures = new HashSet<>();
+        Collections.addAll(failures, flags);
+    }
+
+    public String toFormattedString() {
+        long deliveryTime = getDeliveryTime();
+        return super.toFormattedString()
+                + "Sender: " + getSender() + "\n"
+                + (deliveryTime == 0
+                    ? ""
+                    : "Delivery time: " + DATE_FORMAT.format(new Date(getDeliveryTime())) + "\n")
+                + ((DEFAULT_EXPIRATION_TIME == getExpirationTime())
+                    ? ""
+                    : "Expiration time: " + android.text.format.DateUtils.getRelativeTimeSpanString(
+                        getExpirationTime(),
+                        System.currentTimeMillis(),
+                        android.text.format.DateUtils.MINUTE_IN_MILLIS) + "\n"
+                    + "Read time: " + DATE_FORMAT.format(new Date(getReadTime())) + "\n")
+                + "Burn time: " + DateUtils.getShortTimeString(TimeUnit.SECONDS.toMillis(getBurnNotice())) + "\n"
+                /* + "Read receipt requested: " + isRequestReceipt() + "\n" */
+                + "Has attachment: " + hasAttachment() + "\n";
+    }
+
+}

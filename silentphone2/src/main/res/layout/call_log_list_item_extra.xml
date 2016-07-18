@@ -40,7 +40,7 @@
         <ImageView android:id="@+id/badge_image"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:tint="@color/call_log_extras_text_color"
+            android:tint="@color/sc_ng_text_grey"
             android:padding="@dimen/call_log_outer_margin" />
 
         <TextView android:id="@+id/badge_text"
@@ -48,7 +48,7 @@
             android:layout_height="wrap_content"
             android:paddingStart="@dimen/call_log_start_margin"
             android:paddingLeft="@dimen/call_log_start_margin"
-            android:textColor="@color/call_log_extras_text_color"
+            android:textColor="@color/sc_ng_text_grey"
             android:layout_gravity="center_vertical"
             android:layout_weight="1" />
 
@@ -59,11 +59,11 @@
             android:layout_marginEnd="@dimen/call_log_icon_margin"
             android:layout_marginRight="@dimen/call_log_icon_margin"
             android:src="@drawable/ic_close_dk"
-            android:tint="@color/recent_call_log_item_phone_icon_tint"
+            android:tint="@color/sc_ng_text_grey"
             android:alpha="0.3"
             android:visibility="gone"
             android:contentDescription="@string/description_dismiss"
-                tools:visibility="visible"/>
+            tools:visibility="visible"/>
 
     </LinearLayout>
 

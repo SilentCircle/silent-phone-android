@@ -48,7 +48,7 @@ public class DragDropController {
      * {@link com.silentcircle.silentphone2.list.DragDropController} controls.
      */
     public interface DragItemContainer {
-        public PhoneFavoriteSquareTileView getViewForLocation(int x, int y);
+        PhoneFavoriteSquareTileView getViewForLocation(int x, int y);
     }
 
     public DragDropController(DragItemContainer dragItemContainer) {

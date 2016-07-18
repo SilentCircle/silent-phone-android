@@ -31,17 +31,17 @@ import java.util.List;
 
 public interface Repository<T> {
 
-	void clear();
+    void clear();
 
-	boolean exists();
+    boolean exists();
 
-	boolean exists(String id);
+    boolean exists(String id);
 
-	T findById(String id);
+    T findById(String id);
 
-	List<T> list();
+    List<T> list();
 
-	void remove(T object);
+    void remove(T object);
 
-	void save(T object);
+    void save(T object);
 }

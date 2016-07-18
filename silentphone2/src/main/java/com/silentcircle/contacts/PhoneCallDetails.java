@@ -80,6 +80,8 @@ public class PhoneCallDetails {
     public final CharSequence numberLabel;
     /** The URI of the contact associated with this phone call. */
     public final Uri contactUri;
+
+    public final String uuid;
     /**
      * The photo URI of the picture of the contact that is associated with this phone call or
      * null if there is none.
@@ -92,14 +94,14 @@ public class PhoneCallDetails {
     public PhoneCallDetails(CharSequence number, CharSequence formattedNumber,
             String countryIso, String geocode, int[] callTypes, long date, long duration) {
         this(number, formattedNumber, countryIso, geocode, callTypes, date, duration, "", 0, "",
-                null, null);
+                null, null, null);
     }
 
     /** Create the details for a call with a number associated with a contact. */
     public PhoneCallDetails(CharSequence number, CharSequence formattedNumber,
             String countryIso, String geocode, int[] callTypes, long date, long duration,
             CharSequence name, int numberType, CharSequence numberLabel, Uri contactUri,
-            Uri photoUri) {
+            Uri photoUri, String uuid) {
         this.number = number;
         this.formattedNumber = formattedNumber;
         this.countryIso = countryIso;
@@ -112,5 +114,6 @@ public class PhoneCallDetails {
         this.numberLabel = numberLabel;
         this.contactUri = contactUri;
         this.photoUri = photoUri;
+        this.uuid = uuid;
     }
 }

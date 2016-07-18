@@ -15,6 +15,8 @@
 -->
 
 <paths xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- Offer access to files under Context.getCacheDir() -->
-    <cache-path name="my_cache" />
+     <!-- Offer access to files under Context.getCacheDir() -->
+     <cache-path name="my_cache" />
+
+     <files-path name="captured_image" path="captured/image/"/>
 </paths>

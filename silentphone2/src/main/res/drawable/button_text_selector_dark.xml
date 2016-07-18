@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- pressed -->
+    <item android:state_pressed="true" android:color="@color/sc_ng_text_grey"/>
+    <item android:color="@color/sc_ng_background" />
+</selector>

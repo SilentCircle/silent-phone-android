@@ -1,57 +1,64 @@
 
 DESTDIR=/usr/local
-PREFIX=polarssl_
+PREFIX=mbedtls_
+OLDPREFIX=polarssl_
 
 .SILENT:
 
-all:
-	cd library  && $(MAKE) all && cd ..
-	cd programs && $(MAKE) all && cd ..
-	cd tests    && $(MAKE) all && cd ..
+all:	programs tests
 
-no_test:
-	cd library  && $(MAKE) all && cd ..
-	cd programs && $(MAKE) all && cd ..
+no_test:	programs
+
+programs:	lib
+	$(MAKE) -C programs
 
 lib:
-	cd library  && $(MAKE) all && cd ..
+	$(MAKE) -C library
+
+tests:	lib
+	$(MAKE) -C tests
 
 install:
 	mkdir -p $(DESTDIR)/include/polarssl
 	cp -r include/polarssl $(DESTDIR)/include
 	
 	mkdir -p $(DESTDIR)/lib
-	cp library/libpolarssl.* $(DESTDIR)/lib
+	cp -RP library/libpolarssl.* library/libmbedtls.* $(DESTDIR)/lib
 	
 	mkdir -p $(DESTDIR)/bin
 	for p in programs/*/* ; do              \
 	    if [ -x $$p ] && [ ! -d $$p ] ;     \
 	    then                                \
 	        f=$(PREFIX)`basename $$p` ;     \
+	        o=$(OLDPREFIX)`basename $$p` ;  \
 	        cp $$p $(DESTDIR)/bin/$$f ;     \
+	        ln -sf $$f $(DESTDIR)/bin/$$o ; \
 	    fi                                  \
 	done
 
 uninstall:
 	rm -rf $(DESTDIR)/include/polarssl
 	rm -f $(DESTDIR)/lib/libpolarssl.*
+	rm -f $(DESTDIR)/lib/libmbedtls.*
 	
 	for p in programs/*/* ; do              \
 	    if [ -x $$p ] && [ ! -d $$p ] ;     \
 	    then                                \
 	        f=$(PREFIX)`basename $$p` ;     \
+	        o=$(OLDPREFIX)`basename $$p` ;  \
 	        rm -f $(DESTDIR)/bin/$$f ;      \
+	        rm -f $(DESTDIR)/bin/$$o ;      \
 	    fi                                  \
 	done
 
 clean:
-	cd library  && $(MAKE) clean && cd ..
-	cd programs && $(MAKE) clean && cd ..
-	cd tests    && $(MAKE) clean && cd ..
+	$(MAKE) -C library clean
+	$(MAKE) -C programs clean
+	$(MAKE) -C tests clean
 	find . \( -name \*.gcno -o -name \*.gcda -o -name *.info \) -exec rm {} +
 
-check: lib
-	( cd tests && $(MAKE) && $(MAKE) check )
+check: tests
+	$(MAKE) -C tests check
 
 test-ref-configs:
 	tests/scripts/test-ref-configs.pl
@@ -71,12 +78,12 @@ lcov:
 	lcov --add-tracefile files.info --add-tracefile tests.info -o all.info
 	lcov --remove all.info -o final.info '*.h'
 	gendesc tests/Descriptions.txt -o descriptions
-	genhtml --title PolarSSL --description-file descriptions --keep-descriptions --legend --no-branch-coverage -o Coverage final.info
+	genhtml --title "mbed TLS" --description-file descriptions --keep-descriptions --legend --no-branch-coverage -o Coverage final.info
 	rm -f files.info tests.info all.info final.info descriptions
 
 apidoc:
 	mkdir -p apidoc
-	doxygen doxygen/polarssl.doxyfile
+	doxygen doxygen/mbedtls.doxyfile
 
 apidoc_clean:
 	if [ -d apidoc ] ;			\

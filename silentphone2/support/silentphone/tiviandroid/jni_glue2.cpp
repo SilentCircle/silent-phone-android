@@ -1,7 +1,32 @@
-// VoipPhone
-// Created by Janis Narbuts
-// Copyright (c) 2004-2012 Tivi LTD, www.tiviphone.com. All rights reserved.
-//
+/*
+Created by Janis Narbuts
+Copyright (C) 2004-2012, Tivi LTD, www.tiviphone.com. All rights reserved.
+Copyright (C) 2012-2016, Silent Circle, LLC.  All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+    * Any redistribution, use, or modification is done solely for personal
+      benefit and not for any commercial purpose or for monetary gain
+    * Redistributions of source code must retain the above copyright
+      notice, this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above copyright
+      notice, this list of conditions and the following disclaimer in the
+      documentation and/or other materials provided with the distribution.
+    * Neither the name Silent Circle nor the
+      names of its contributors may be used to endorse or promote products
+      derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL SILENT CIRCLE, LLC BE LIABLE FOR ANY
+DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
 // Modified by Werner Dittmann
 
 #include <stdio.h>
@@ -11,8 +36,10 @@
 
 
 #include <zrtp/libzrtpcpp/ZIDCache.h>
+#include <common/icuUtf.h>
 
 #include <android/log.h>
+#include <polarssl/debug.h>
 
 #include "com_silentcircle_silentphone2_services_PhoneServiceNative.h"
 
@@ -391,6 +418,93 @@ void wakeCallback(int iLock) {
     env->CallVoidMethod(thisTiviPhoneService, wakupCallBackMethod, iLock);
 }
 
+static jbyteArray stringToArray(JNIEnv* env, const uint8_t* input, size_t length)
+{
+    if (length == 0 || input == NULL)
+        return NULL;
+
+    jbyteArray data = env->NewByteArray(static_cast<jsize>(length));
+    if (data == NULL)
+        return NULL;
+    env->SetByteArrayRegion(data, 0, static_cast<jsize>(length), (jbyte*)input);
+    return data;
+}
+
+static jobject sipNotifyHandler = NULL;
+static jmethodID onGenericSipNotify = NULL;
+
+// Create and store (with global reference) a SipNotifyHandler Java object,
+// Create a method id to 'onGenericSipNotify(byte[] content, byte[] event, byte[] contentType)'
+// in SipNotifyHandler
+//
+void initSipNotifyClassHelper(JNIEnv *env, const char* path)
+{
+    // Get the SipNotifyHandler class
+    jclass cls = env->FindClass(path);
+    if (!cls) {
+        __android_log_print(ANDROID_LOG_ERROR, "native", "initSipNotifyClassHelper: failed to get %s class reference", path);
+        return;
+    }
+    jmethodID constr = env->GetMethodID(cls, "<init>", "()V");
+    if (!constr) {
+        __android_log_print(ANDROID_LOG_ERROR, "native", "initSipNotifyClassHelper: failed to get %s empty constructor", path);
+        return;
+    }
+    jobject obj = env->NewObject(cls, constr);
+    if (!obj) {
+        __android_log_print(ANDROID_LOG_ERROR, "native", "initSipNotifyClassHelper: failed to create a %s object", path);
+        return;
+    }
+    sipNotifyHandler = env->NewGlobalRef(obj);
+    onGenericSipNotify = env->GetMethodID(cls, "onGenericSipNotify", "([B[B[B)V");
+    if (onGenericSipNotify == NULL) {
+        __android_log_print(ANDROID_LOG_ERROR, "native", "initSipNotifyClassHelper: failed to get onGenericSipNotify method id");
+
+    }
+}
+
+/**
+ * @brief Callback for SIP stack if it receives a SIP NOTIFY event
+ *
+ * This function checks the parameters and prepares the data for a callback
+ * to a Java functions that handles the call. The Java function should be
+ * as short as possible to avoid blocking of the SIP thread.
+ *
+ * @param content The content of the NOTIFY packet or @c NULL if no content
+ *                is available. The content data should be UNICODE
+ * @param contentLength the length of the content data in bytes, not UNICODE
+ *                      characters
+ * @param event The event type of the NOTIFY packet or @c NULL if no event type
+ *              is available. The event data should be ASCII
+ * @param eventLength the length of the event data in bytes
+ * @param contentType The content type of the NOTIFY packet or @c NULL if no
+ *                    content type is available. The content data should be ASCII
+ * @param typeLength the length of the conten type data in bytes
+ */
+void notifyGeneric(const uint8_t* content, size_t contentLength,
+                   const uint8_t* event, size_t eventLength,
+                   const uint8_t* contentType, size_t typeLength)
+{
+    CTJNIEnv jni;
+    JNIEnv *env = jni.getEnv();
+    if (!env)
+        return;
+
+    jbyteArray jContent = stringToArray(env, content, contentLength);
+    jbyteArray jEvent = stringToArray(env, event, eventLength);
+    jbyteArray jContentType = stringToArray(env, contentType, typeLength);
+
+    env->CallVoidMethod(sipNotifyHandler, onGenericSipNotify, jContent, jEvent, jContentType);
+
+    if (jContent != NULL)
+        env->DeleteLocalRef(jContent);
+    if (jEvent != NULL)
+        env->DeleteLocalRef(jEvent);
+    if (jContentType != NULL)
+        env->DeleteLocalRef(jContentType);
+}
+
+
 #define min(_A,_B) ((_A) < (_B) ? (_A) : (_B))
 
 static int fncCBRet(void *ret, void *ph, int iCallID, int msgid, const char *psz, int iSZLen) {
@@ -411,8 +525,27 @@ static int fncCBRet(void *ret, void *ph, int iCallID, int msgid, const char *psz
 
     char bufTmp[256];
     const char *p = createZeroTerminated(bufTmp, sizeof(bufTmp)-1, psz, iSZLen);
+    
+    jstring msg;
+    if (p) {
+        UChar tmpUtf16[256];
+        UChar* utf16;
+        UErrorCode error = U_ZERO_ERROR;
+        int32_t length = 0;
+        utf16 = u_strFromUTF8(tmpUtf16, 256, &length, p, strlen(p), &error);
+        androidLog("UTF16 length: %d, error: %d", length, error);
+        
+        msg = (error == U_ZERO_ERROR) ? env->NewString(tmpUtf16, length) : NULL;
+    }
+    else
+        msg = NULL;
+    
     int iEngID = getEngIDByPtr(ph);
-    env->CallVoidMethod(thisTiviPhoneService, stateCallBackMethod, iEngID, iCallID, msgid, p ? env->NewStringUTF(p) : NULL);
+
+    env->CallVoidMethod(thisTiviPhoneService, stateCallBackMethod, iEngID, iCallID, msgid, msg);
+    if (msg != NULL)
+        env->DeleteLocalRef(msg);
+
     return 0;
 }
 
@@ -515,6 +648,27 @@ JNI_FUNCTION(savePath)(JNIEnv* env, jclass thiz, jstring str)
     return 0;
 }
 
+#define DEBUG_OPTION_SSL  "ssl_level:"
+#define DEBUG_OPTION_AXO  "axo_level:"
+
+static void handleDebugOptions(const char *options)
+{
+    void setAxoLogLevel(int32_t level);
+
+    debug_set_log_mode(POLARSSL_DEBUG_LOG_RAW);
+    if (t_isEqual(options, DEBUG_OPTION_SSL, sizeof(DEBUG_OPTION_SSL)-1 )) {
+        int ret = atoi(options + sizeof(DEBUG_OPTION_SSL)-1);
+        if (ret >= 0 && ret <= 4)
+            debug_set_threshold(ret);
+        else
+            debug_set_threshold(0);
+    }
+    if (t_isEqual(options, DEBUG_OPTION_AXO, sizeof(DEBUG_OPTION_AXO)-1 )) {
+        int ret = atoi(options + sizeof(DEBUG_OPTION_AXO)-1);
+        setAxoLogLevel(ret);
+    }
+}
+
 
 JNIEXPORT jint JNICALL
 JNI_FUNCTION(doInit)( JNIEnv* env, jobject thiz, jint iDebugFlag)
@@ -540,6 +694,9 @@ JNI_FUNCTION(doInit)( JNIEnv* env, jobject thiz, jint iDebugFlag)
             return com_silentcircle_silentphone2_services_PhoneServiceNative_NO_STATE_CALLBACK;
         }
     }
+    debug_set_log_mode(POLARSSL_DEBUG_LOG_RAW);
+    if (iDebugable > 0 && iDebugable <= 4)
+        debug_set_threshold(iDebugable);
     return 0;
 }
 
@@ -551,6 +708,8 @@ JNI_FUNCTION(doInit)( JNIEnv* env, jobject thiz, jint iDebugFlag)
 #define T_SET_GAIN_REDUCTION "set.gainReduction="
 #define T_SET_LANGUAGE       "set.language="
 #define T_END_ENGINE         ".exit"
+#define T_SET_DEBUG_OPTIONS  "debug.option="
+
 
 JNIEXPORT jint JNICALL
 JNI_FUNCTION(doCmd)(JNIEnv* env, jclass thiz, jstring command)
@@ -587,6 +746,9 @@ JNI_FUNCTION(doCmd)(JNIEnv* env, jclass thiz, jstring command)
     }
     else if (t_isEqual(b, T_PROV_START_STR, sizeof(T_PROV_START_STR)-1 )) {
         ret = checkProvNoCallBack(b + sizeof(T_PROV_START_STR)-1);
+    }
+    else if (t_isEqual(b, T_SET_DEBUG_OPTIONS, sizeof(T_SET_DEBUG_OPTIONS)-1 )) {
+        handleDebugOptions(b + sizeof(T_SET_DEBUG_OPTIONS)-1);
     }
     else if (t_isEqual(b, T_SET_GAIN_REDUCTION, sizeof(T_SET_GAIN_REDUCTION)-1 )) {
         ret = atoi(b + sizeof(T_SET_GAIN_REDUCTION)-1);
@@ -722,6 +884,9 @@ jint JNI_OnLoad(JavaVM* vm, void* reserved)
     // The function is in audio/android_audio.cpp
     initAudioClassHelper(env, "com/silentcircle/silentphone2/audio/AudioRecordSp", true);
     initAudioClassHelper(env, "com/silentcircle/silentphone2/audio/AudioTrackSp", false);
+
+    // Create/get and store an object of Java SipNotifyHandler
+    initSipNotifyClassHelper(env, "com/silentcircle/userinfo/SipNotifyHandler");
 
     return JNI_VERSION_1_6;
 }

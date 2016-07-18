@@ -44,12 +44,12 @@ public:
     /**
      * @brief Get encoded key size in bytes.
      */
-    virtual int32_t getEncodedSize() const = 0;
+    virtual size_t getEncodedSize() const = 0;
 
     /**
      * @brief Get key size in bytes.
      */
-    virtual int32_t getSize() const = 0;
+    virtual size_t getSize() const = 0;
 
     /**
      * @brief get raw public key data.

@@ -102,7 +102,7 @@ public class DateUtils {
         return null;
     }
 
-    private static final Calendar getUtcDate(Date date, boolean noYear) {
+    private static Calendar getUtcDate(Date date, boolean noYear) {
         final Calendar calendar = Calendar.getInstance(UTC_TIMEZONE, Locale.US);
         calendar.setTime(date);
         if (noYear) {
@@ -111,7 +111,7 @@ public class DateUtils {
         return calendar;
     }
 
-    private static final Calendar getUtcDate(int year, int month, int dayOfMonth) {
+    private static Calendar getUtcDate(int year, int month, int dayOfMonth) {
         final Calendar calendar = Calendar.getInstance(UTC_TIMEZONE, Locale.US);
         calendar.clear();
         calendar.set(Calendar.YEAR, year);

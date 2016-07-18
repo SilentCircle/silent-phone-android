@@ -1,5 +1,5 @@
 set(libs
-     polarssl
+     mbedtls
 )
 
 if(USE_PKCS11_HELPER_LIBRARY)
@@ -20,7 +20,7 @@ function(add_test_suite suite_name)
     add_custom_command(
         OUTPUT test_suite_${data_name}.c
         COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/scripts/generate_code.pl ${CMAKE_CURRENT_SOURCE_DIR}/suites test_suite_${suite_name} test_suite_${data_name}
-        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/scripts/generate_code.pl polarssl suites/helpers.function suites/main_test.function suites/test_suite_${suite_name}.function suites/test_suite_${data_name}.data
+        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/scripts/generate_code.pl mbedtls suites/helpers.function suites/main_test.function suites/test_suite_${suite_name}.function suites/test_suite_${data_name}.data
     )
 
     include_directories(${CMAKE_CURRENT_SOURCE_DIR})
@@ -29,11 +29,7 @@ function(add_test_suite suite_name)
     add_test(${data_name}-suite test_suite_${data_name})
 endfunction(add_test_suite)
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-unused-function -Wno-unused-value")
-set(CMAKE_C_FLAGS_CHECK "${CMAKE_C_FLAGS_CHECK} -Wno-unused-function -Wno-unused-value")
-if(CMAKE_COMPILER_IS_CLANG)
-    set(CMAKE_C_FLAGS_CHECK "${CMAKE_C_FLAGS_CHECK} -Wno-unreachable-code")
-endif(CMAKE_COMPILER_IS_CLANG)
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-unused-function")
 
 add_test_suite(aes aes.ecb)
 add_test_suite(aes aes.cbc)
@@ -77,6 +73,7 @@ add_test_suite(hmac_drbg hmac_drbg.pr)
 add_test_suite(hmac_shax)
 add_test_suite(md)
 add_test_suite(mdx)
+add_test_suite(memory_buffer_alloc)
 add_test_suite(mpi)
 add_test_suite(pbkdf2)
 add_test_suite(pem)

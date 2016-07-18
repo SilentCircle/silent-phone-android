@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/bg_window_dark">
+
+    <android.support.v7.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="?sp_actionbar_color"
+        android:minHeight="?attr/actionBarSize"
+        app:titleTextAppearance="?sp_ab_title_style"
+        app:subtitleTextAppearance="?sp_ab_subtitle_style"
+        />
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/in_app_payment_margin_large"
+        android:layout_gravity="center_horizontal"
+        android:gravity="center_horizontal"
+        android:layout_marginLeft="@dimen/spacing_small"
+        android:layout_marginRight="@dimen/spacing_small"
+        >
+
+        <ImageView
+            android:id="@+id/credit_card_img_id"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:src="@drawable/creditcard"
+            android:tint="@color/sc_ng_text_grey"/>
+
+        <TextView
+            android:id="@+id/select_card_tv_id"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_toRightOf="@id/credit_card_img_id"
+            android:layout_toEndOf="@id/credit_card_img_id"
+            android:paddingLeft="@dimen/spacing_normal"
+            android:paddingStart="@dimen/spacing_normal"
+            android:paddingRight="@dimen/spacing_normal"
+            android:paddingEnd="@dimen/spacing_normal"
+            android:text="@string/select_a_card"
+            android:textSize="@dimen/text_xxlarge"
+            android:textColor="@color/silent_white"/>
+
+        <Spinner
+            android:id="@+id/card_spinner_id"
+            style="@style/Widget.AppCompat.Spinner.Underlined"
+            android:theme="@style/WidgetHighlightColors"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_toRightOf="@id/select_card_tv_id"
+            android:layout_toEndOf="@id/select_card_tv_id"
+            android:layout_alignBaseline="@id/select_card_tv_id"
+            android:entries="@array/card_array"
+            android:description="@string/select_card"
+            />
+
+    </RelativeLayout>
+
+    <FrameLayout
+        android:id="@+id/payment_form_container_id"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/in_app_payment_margin_large"/>
+
+    <Button
+        android:id="@+id/purchase_btn_id"
+        android:layout_width="@dimen/in_app_payment_button_size"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/in_app_payment_margin_large"
+        android:text="@string/purchase"
+        android:textColor="@color/primary_text_color"
+        android:background="@color/silent_white"
+        android:layout_marginBottom="@dimen/in_app_payment_margin_medium"
+        android:layout_gravity="center_horizontal"
+        />
+
+</LinearLayout>

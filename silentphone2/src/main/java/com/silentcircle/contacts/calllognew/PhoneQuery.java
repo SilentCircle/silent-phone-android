@@ -45,6 +45,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package com.silentcircle.contacts.calllognew;
 
 import android.provider.ContactsContract.Data;
+import android.provider.ContactsContract.CommonDataKinds.Email;
 import android.provider.ContactsContract.CommonDataKinds.SipAddress;
 import android.provider.ContactsContract.PhoneLookup;
 
@@ -75,6 +76,17 @@ final class PhoneQuery {
             SipAddress.LOOKUP_KEY,
             SipAddress.PHOTO_URI};
 
+    public static final String[] _PROJECTION_EMAIL = new String[] {
+            Email._ID,
+            Email.CONTACT_ID,
+            Data.DISPLAY_NAME,
+            Email.TYPE,
+            Email.LABEL,
+            Email.ADDRESS,
+            Email.PHOTO_ID,
+            Email.LOOKUP_KEY,
+            Email.PHOTO_URI};
+
     public static final int PERSON_ID = 0;
     public static final int NAME = 1;
     public static final int PHONE_TYPE = 2;
@@ -93,4 +105,13 @@ final class PhoneQuery {
     public static final int SIP_PHOTO_ID = 6;
     public static final int SIP_LOOKUP_KEY = 7;
     public static final int SIP_PHOTO_URI = 8;
+
+    public static final int EMAIL_PERSON_ID = 1;   // CONTACT_ID, same a PhoneLookup_ID
+    public static final int EMAIL_NAME = 2;
+    public static final int EMAIL_PHONE_TYPE = 3;
+    public static final int EMAIL_LABEL = 4;
+    public static final int EMAIL_ADDRESS = 5;
+    public static final int EMAIL_PHOTO_ID = 6;
+    public static final int EMAIL_LOOKUP_KEY = 7;
+    public static final int EMAIL_PHOTO_URI = 8;
 }

@@ -68,7 +68,7 @@ public class KeyStoreDatabase extends SQLiteOpenHelper  {
 
     public KeyStoreDatabase(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
-        this.context = context;
+        KeyStoreDatabase.context = context;
     }
 
     @Override
@@ -96,10 +96,7 @@ public class KeyStoreDatabase extends SQLiteOpenHelper  {
 
     static boolean isDbFileAvailable() {
         File dbFile = context.getDatabasePath(DATABASE_NAME);
-        if (!dbFile.exists() || !dbFile.canWrite()) {
-            return false;
-        }
-        return true;
+        return !(!dbFile.exists() || !dbFile.canWrite());
     }
 
     /**

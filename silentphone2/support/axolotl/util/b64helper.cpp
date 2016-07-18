@@ -4,7 +4,7 @@
 static int base64encode(const void* data_buf, size_t dataLength, char* result, size_t resultSize);
 static int base64decode (const char *in, size_t inLen, unsigned char *out, size_t *outLen);
 
-int b64Encode(const uint8_t *binData, int32_t binLength, char *b64Data, size_t b64length)
+size_t b64Encode(const uint8_t *binData, size_t binLength, char *b64Data, size_t b64length)
 {
     if (binLength == 0) {
         b64Data[0] = 0;
@@ -15,7 +15,7 @@ int b64Encode(const uint8_t *binData, int32_t binLength, char *b64Data, size_t b
     return strlen(b64Data);
 }
 
-int b64Decode(const char *b64Data, int32_t b64length, uint8_t *binData, size_t binLength)
+size_t b64Decode(const char *b64Data, size_t b64length, uint8_t *binData, size_t binLength)
 {
     if (b64length == 0)
         return 0;
@@ -32,66 +32,61 @@ static int base64encode(const void* data_buf, size_t dataLength, char* result, s
    const uint8_t *data = (const uint8_t *)data_buf;
    size_t resultIndex = 0;
    size_t x;
-   uint32_t n = 0;
-   int padCount = dataLength % 3;
-   uint8_t n0, n1, n2, n3;
- 
+   size_t padCount = dataLength % 3;
+
    /* increment over the length of the string, three characters at a time */
-   for (x = 0; x < dataLength; x += 3) 
-   {
-      /* these three 8-bit (ASCII) characters become one 24-bit number */
-      n = ((uint32_t)data[x]) << 16; //parenthesis needed, compiler depending on flags can do the shifting before conversion to uint32_t, resulting to 0
+   for (x = 0; x < dataLength; x += 3) {
+       uint32_t n = 0;
+       uint8_t n0, n1, n2, n3;
+       /* these three 8-bit (ASCII) characters become one 24-bit number */
+       n = ((uint32_t)data[x]) << 16; //parenthesis needed, compiler depending on flags can do the shifting before conversion to uint32_t, resulting to 0
  
-      if((x+1) < dataLength)
-         n += ((uint32_t)data[x+1]) << 8;//parenthesis needed, compiler depending on flags can do the shifting before conversion to uint32_t, resulting to 0
+       if((x+1) < dataLength)
+           n += ((uint32_t)data[x+1]) << 8;//parenthesis needed, compiler depending on flags can do the shifting before conversion to uint32_t, resulting to 0
  
-      if((x+2) < dataLength)
-         n += data[x+2];
+       if((x+2) < dataLength)
+           n += data[x+2];
  
-      /* this 24-bit number gets separated into four 6-bit numbers */
-      n0 = (uint8_t)(n >> 18) & 63;
-      n1 = (uint8_t)(n >> 12) & 63;
-      n2 = (uint8_t)(n >> 6) & 63;
-      n3 = (uint8_t)n & 63;
+       /* this 24-bit number gets separated into four 6-bit numbers */
+       n0 = (uint8_t)((n >> 18) & 63);
+       n1 = (uint8_t)((n >> 12) & 63);
+       n2 = (uint8_t)((n >> 6) & 63);
+       n3 = (uint8_t)(n & 63);
  
-      /*
+       /*
        * if we have one byte available, then its encoding is spread
        * out over two characters
        */
-      if(resultIndex >= resultSize) return 1;   /* indicate failure: buffer too small */
-      result[resultIndex++] = base64chars[n0];
-      if(resultIndex >= resultSize) return 1;   /* indicate failure: buffer too small */
-      result[resultIndex++] = base64chars[n1];
+       if(resultIndex >= resultSize) return 1;   /* indicate failure: buffer too small */
+       result[resultIndex++] = base64chars[n0];
+       if(resultIndex >= resultSize) return 1;   /* indicate failure: buffer too small */
+       result[resultIndex++] = base64chars[n1];
  
-      /*
+       /*
        * if we have only two bytes available, then their encoding is
        * spread out over three chars
        */
-      if((x+1) < dataLength)
-      {
-         if(resultIndex >= resultSize) return 1;   /* indicate failure: buffer too small */
-         result[resultIndex++] = base64chars[n2];
-      }
+       if((x+1) < dataLength) {
+           if(resultIndex >= resultSize) return 1;   /* indicate failure: buffer too small */
+           result[resultIndex++] = base64chars[n2];
+       }
  
-      /*
+       /*
        * if we have all three bytes available, then their encoding is spread
        * out over four characters
        */
-      if((x+2) < dataLength)
-      {
-         if(resultIndex >= resultSize) return 1;   /* indicate failure: buffer too small */
-         result[resultIndex++] = base64chars[n3];
-      }
+       if((x+2) < dataLength){
+           if(resultIndex >= resultSize) return 1;   /* indicate failure: buffer too small */
+           result[resultIndex++] = base64chars[n3];
+       }
    }  
  
-   /*
+    /*
     * create and add padding that is required if we did not have a multiple of 3
     * number of characters available
     */
-   if (padCount > 0) 
-   { 
-      for (; padCount < 3; padCount++) 
-      { 
+   if (padCount > 0) {
+      for (; padCount < 3; padCount++)  {
          if(resultIndex >= resultSize) return 1;   /* indicate failure: buffer too small */
          result[resultIndex++] = '=';
       } 
@@ -120,7 +115,7 @@ static const unsigned char d[] = {
     66,66,66,66,66,66
 };
  
-static int base64decode (const char *in, size_t inLen, unsigned char *out, size_t *outLen) { 
+static int base64decode (const char *in, size_t inLen, uint8_t *out, size_t *outLen) {
     const char *end = in + inLen;
     char iter = 0;
     size_t buf = 0, len = 0;
@@ -140,9 +135,9 @@ static int base64decode (const char *in, size_t inLen, unsigned char *out, size_
             /* If the buffer is full, split it into bytes */
             if (iter == 4) {
                 if ((len += 3) > *outLen) return 1; /* buffer overflow */
-                *(out++) = (buf >> 16) & 255;
-                *(out++) = (buf >> 8) & 255;
-                *(out++) = buf & 255;
+                *(out++) = (uint8_t)((buf >> 16) & 255);
+                *(out++) = (uint8_t)((buf >> 8) & 255);
+                *(out++) = (uint8_t)(buf & 255);
                 buf = 0; iter = 0;
 
             }
@@ -151,12 +146,12 @@ static int base64decode (const char *in, size_t inLen, unsigned char *out, size_
 
     if (iter == 3) {
         if ((len += 2) > *outLen) return 1; /* buffer overflow */
-        *(out++) = (buf >> 10) & 255;
-        *(out++) = (buf >> 2) & 255;
+        *(out++) = (uint8_t)((buf >> 10) & 255);
+        *(out) = (uint8_t)((buf >> 2) & 255);
     }
     else if (iter == 2) {
         if (++len > *outLen) return 1; /* buffer overflow */
-        *(out++) = (buf >> 4) & 255;
+        *(out) = (uint8_t)((buf >> 4) & 255);
     }
 
     *outLen = len; /* modify to reflect the actual output size */
@@ -188,14 +183,14 @@ void bin2hex(const uint8_t* inBuf, size_t inLen, char* outBuf, size_t* outLen)
 }
 
 
-int32_t hex2bin(const char* src, uint8_t* target)
+size_t hex2bin(const char* src, uint8_t* target)
 {
     while (*src && src[1]) {
         int32_t dh = char2int(*src);
         int32_t dl = char2int(src[1]);
         if (dh == -1 || dl == -1)
-            return -1;
-        *(target++) = dh << 4 | (dl & 0xf);
+            return (size_t)-1;
+        *(target++) = (uint8_t)(dh << 4 | (dl & 0xf));
         src += 2;
     }
     return 0;

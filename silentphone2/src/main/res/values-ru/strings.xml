@@ -13,7 +13,7 @@
     <string name="provision_later">Позднее</string>
     <string name="crypto_padlock">Заблокировать, чтобы показать статус безопасности</string>
     <string name="error_code">до сервера: </string>
-    <string name="logout">Выйти из системы</string>
+    <string name="wipe_phone">Выйти из системы</string>
     <string name="sip_state_calling">Вызывает…</string>
     <string name="sip_state_connecting">Соединяется…</string>
     <string name="sip_state_ringing">Звонит</string>

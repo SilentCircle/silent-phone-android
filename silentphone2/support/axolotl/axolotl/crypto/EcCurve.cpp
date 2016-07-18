@@ -1,15 +1,15 @@
 #include <cryptcommon/ZrtpRandom.h>
-#include <string.h>
 
 #include "EcCurve.h"
-#include "Ec255PrivateKey.h"
 #include "Ec255PublicKey.h"
 #include "../Constants.h"
+#include "../../logging/AxoLogging.h"
 
 using namespace axolotl;
 
 static void ecGenerateRandomNumber25519(uint8_t* outBuffer)
 {
+    LOGGER(INFO, __func__, " -->");
     unsigned char random[Ec255PrivateKey::KEY_LENGTH];
     ZrtpRandom::getRandomData(random, Ec255PrivateKey::KEY_LENGTH);
 
@@ -19,12 +19,14 @@ static void ecGenerateRandomNumber25519(uint8_t* outBuffer)
     random[31] |= 64;
 
     memcpy(outBuffer, random, Ec255PrivateKey::KEY_LENGTH);
+    LOGGER(INFO, __func__, " <--");
     return;
 }
 
 const DhKeyPair* EcCurve::generateKeyPair(int32_t curveType)
 {
-     if (curveType == EcCurveTypes::Curve25519) {
+    LOGGER(INFO, __func__, " -->");
+    if (curveType == EcCurveTypes::Curve25519) {
         uint8_t privateKeyData[Ec255PrivateKey::KEY_LENGTH];
         ecGenerateRandomNumber25519(privateKeyData);    // get some random data for private key
 
@@ -39,27 +41,34 @@ const DhKeyPair* EcCurve::generateKeyPair(int32_t curveType)
         memset(privateKeyData, 0, Ec255PrivateKey::KEY_LENGTH);  // clear temporary buffer
 
         DhKeyPair* ecPair = new DhKeyPair(ecPublic, ecPrivate);
+        LOGGER(INFO, __func__, " <--");
         return ecPair;
-     }
-     return NULL;
+    }
+    LOGGER(INFO, __func__, " <-- unsupported curve type");
+    return NULL;
 }
 
 
 int32_t EcCurve::calculateAgreement(const DhPublicKey& publicKey, const DhPrivateKey& privateKey, uint8_t* agreement, size_t length )
 {
+    LOGGER(INFO, __func__, " -->");
     if (publicKey.getType() != privateKey.getType()) {
+        LOGGER(ERROR, __func__, " <-- key types don't match");
         return KEY_TYPE_MISMATCH;
     }
 
     int32_t curveType = publicKey.getType();
     if (curveType == EcCurveTypes::Curve25519) {
-        if (length < Ec255PrivateKey::KEY_LENGTH)
+        if (length < Ec255PrivateKey::KEY_LENGTH) {
+            LOGGER(ERROR, __func__, " <-- key buffer too small");
             return BUFFER_TOO_SMALL;
+        }
 
         // curve25519_donna always returns 0, thus ignore the return code
         curve25519_donna(agreement, privateKey.privateData(), publicKey.getPublicKeyPointer());
         return Ec255PublicKey::KEY_LENGTH;
     }
+    LOGGER(INFO, __func__, " <-- unsupported curve type");
     return NO_SUCH_CURVE;
 }
 
@@ -94,10 +103,13 @@ int32_t EcCurve::calculateAgreement(const DhPublicKey& publicKey, const DhPrivat
 // 
 const DhPublicKey* EcCurve::decodePoint(const uint8_t* bytes) 
 {
+    LOGGER(INFO, __func__, " -->");
     int32_t type = *bytes & 0xFF;
 
     if (type == EcCurveTypes::Curve25519) {
+        LOGGER(INFO, __func__, " <--");
         return new Ec255PublicKey(bytes+1);
     }
+    LOGGER(WARNING, __func__, " <-- unsupported curve type");
     return NULL;
 }

@@ -14,23 +14,9 @@
 // The fixed strings used in the SC implementation to form the request URLs
 // /v1/<user>/axolotl/prekey/<scClientDevId>/?api_key=<API_key> - GET
 
-static const std::string uriVersion ("/v1/");
-static const std::string uriMe      ("me");
-static const std::string uriUser    ("user");
-static const std::string uriAxolotl ("/axolotl");
-static const std::string uriPreKey  ("/prekey/");
-static const std::string uriPreKeys ("/prekeys");
-static const std::string uriKeys    ("/keys");
-static const std::string uriDevices ("/devices");
-static const std::string uriDevice  ("/device/");
-static const std::string uriRegister("/register");
-static const std::string uriSgnPky  ("/signedprekey");
-static const std::string uriApiKey  ("/?api_key=");
-
 static const std::string GET("GET");
 static const std::string PUT("PUT");
 static const std::string DELETE("DELETE");
-
 
 typedef int32_t (*HTTP_FUNC)(const std::string& requestUri, const std::string& method, const std::string& requestData, std::string* response);
 
@@ -68,12 +54,11 @@ private:
     static HTTP_FUNC httpHelper_;
 
     ScProvisioning() {}
-    ScProvisioning(const ScProvisioning& other) {}
     ~ScProvisioning() {}
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wreturn-type"
-    ScProvisioning& operator=(const ScProvisioning& other) {}
-#pragma clang diagnostic pop
+
+    ScProvisioning(const ScProvisioning& other)  = delete;
+    ScProvisioning& operator=(const ScProvisioning& other)  = delete;
+    bool operator==(const ScProvisioning& other) const = delete;
 
 };
 } // namespace

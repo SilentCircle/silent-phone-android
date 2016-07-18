@@ -34,7 +34,7 @@ public:
      * 
      * The buffer must contain at least @c getKeysize - 1 bytes.
      */
-    Ec255PrivateKey(const uint8_t* data);
+    explicit Ec255PrivateKey(const uint8_t* data);
 
     /**
      * @brief Destructor clears internal data (set to 0)
@@ -46,7 +46,7 @@ public:
     DhPrivateKey& operator=(const DhPrivateKey& other);
 
     /**
-     * @brief Comprare with another generic private key, could be of different type.
+     * @brief Compare with another generic private key, could be of different type.
      */
     bool operator== (const Ec255PrivateKey& other) const;
 
@@ -55,7 +55,7 @@ public:
     const std::string serialize() const { return std::string((const char*)keyData_, KEY_LENGTH); }
 
     int32_t getType() const {return EcCurveTypes::Curve25519;}
-    int32_t getEncodedSize() const {return KEY_LENGTH;}
+    size_t getEncodedSize() const {return KEY_LENGTH;}
 
     void getPrivateKey(uint8_t* outBuffer) const {memcpy(outBuffer, keyData_, KEY_LENGTH);}
 

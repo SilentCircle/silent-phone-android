@@ -20,7 +20,6 @@ import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.accounts.AccountManagerCallback;
 import android.accounts.AccountManagerFuture;
-import android.accounts.AuthenticatorDescription;
 import android.accounts.AuthenticatorException;
 import android.accounts.OnAccountsUpdateListener;
 import android.accounts.OperationCanceledException;
@@ -29,8 +28,7 @@ import android.app.FragmentTransaction;
 import android.content.ContentProviderOperation;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.graphics.drawable.Drawable;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.ContactsContract;
@@ -38,50 +36,39 @@ import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ImageView;
-import android.widget.Spinner;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.silentcircle.accounts.AccountConstants;
-import com.silentcircle.contacts.utils.PhoneNumberHelper;
+import com.silentcircle.contacts.UpdateScContactDataService;
 import com.silentcircle.keymanagersupport.KeyManagerSupport;
+import com.silentcircle.messaging.services.AxoMessaging;
 import com.silentcircle.silentphone2.R;
 import com.silentcircle.silentphone2.fragments.ContactAdderFragment;
 import com.silentcircle.silentphone2.util.ConfigurationUtilities;
 import com.silentcircle.silentphone2.util.Utilities;
-
-import org.w3c.dom.Text;
+import com.silentcircle.userinfo.LoadUserInfo;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Iterator;
 
-public final class ContactAdder extends Activity implements OnAccountsUpdateListener
-{
+public final class ContactAdder extends Activity implements OnAccountsUpdateListener {
     public static final String TAG = "ContactsAdder";
 
     private EditText mContactNameEditText;
-    private TextView mContactPhoneText;
-    private TextView mContactScText;
-    private ArrayList<Integer> mContactPhoneTypes;
-    private Spinner mContactPhoneTypeSpinner;
     private Button mContactSaveButton;
     private Account mSelectedAccount;
 
     private String mAssertedName;
     private String mText;
-    private String mDisplayName;
 
     private ContactAdderFragment mAdderFragment;
     private String mSearchQuery;
     private boolean mSearchUiActive;
+
+    private long mOtherRawId;
 
     /**
      * Listener used to send search queries to the phone search fragment.
@@ -135,50 +122,14 @@ public final class ContactAdder extends Activity implements OnAccountsUpdateList
             return;
         }
         // Obtain handles and setup UI objects
-        mContactPhoneText = (TextView) findViewById(R.id.contactPhoneEditText);
         mContactSaveButton = (Button) findViewById(R.id.contactSaveButton);
 
         mContactNameEditText = (EditText) findViewById(R.id.contactNameEditText);
-        if (mDisplayName != null) {
-            mContactNameEditText.setText(mDisplayName);
+        if (mText != null) {
+            mContactNameEditText.setText(mText);
             mContactSaveButton.setVisibility(View.VISIBLE);
         }
         mContactNameEditText.addTextChangedListener(mTextListener);
-//        mContactScText = (TextView) findViewById(R.id.contactScName);
-
-        mContactPhoneTypeSpinner = (Spinner) findViewById(R.id.spinner);
-        if (Character.isLetter(mText.charAt(0))) {
-            mContactPhoneText.setText(Utilities.removeSipParts(mText));
-        }
-        else {
-            mContactPhoneText.setText(mText);
-//            mContactScText.setText(Utilities.removeSipParts(mAssertedName));
-        }
-
-        // Prepare list of supported account types
-        // Note: Other types are available in ContactsContract.CommonDataKinds
-        //       Also, be aware that type IDs differ between Phone and Email, and MUST be computed
-        //       separately.
-        mContactPhoneTypes = new ArrayList<>();
-        mContactPhoneTypes.add(ContactsContract.CommonDataKinds.Phone.TYPE_HOME);
-        mContactPhoneTypes.add(ContactsContract.CommonDataKinds.Phone.TYPE_WORK);
-        mContactPhoneTypes.add(ContactsContract.CommonDataKinds.Phone.TYPE_MOBILE);
-        mContactPhoneTypes.add(ContactsContract.CommonDataKinds.Phone.TYPE_OTHER);
-
-        // Populate list of account types for phone
-        ArrayAdapter<String> adapter;
-        adapter = new ArrayAdapter<>(this, R.layout.spinner_item);
-
-        Iterator<Integer> iter;
-        iter = mContactPhoneTypes.iterator();
-        while (iter.hasNext()) {
-            adapter.add(ContactsContract.CommonDataKinds.Phone.getTypeLabel(
-                    this.getResources(),
-                    iter.next(),
-                    getString(R.string.undefinedTypeLabel)).toString());
-        }
-        mContactPhoneTypeSpinner.setAdapter(adapter);
-        mContactPhoneTypeSpinner.setPrompt(getString(R.string.selectLabel));
 
         // Prepare the system account manager. On registering the listener below, we also ask for
         // an initial callback to pre-populate the account list.
@@ -193,6 +144,7 @@ public final class ContactAdder extends Activity implements OnAccountsUpdateList
         getFragmentManager().beginTransaction()
                 .add(R.id.list_fragment, mAdderFragment).hide(mAdderFragment)
                 .commit();
+        mOtherRawId = 0;
     }
 
     public void setContactName(String name) {
@@ -207,7 +159,6 @@ public final class ContactAdder extends Activity implements OnAccountsUpdateList
      * activity.
      */
     private void onSaveButtonClicked() {
-        Log.v(TAG, "Save button clicked");
         createContactEntry();
         finish();
     }
@@ -215,11 +166,11 @@ public final class ContactAdder extends Activity implements OnAccountsUpdateList
     private boolean parseIntent(Intent intent) {
         mAssertedName = intent.getStringExtra("AssertedName");
         mText = intent.getStringExtra("Text");
-        mDisplayName = intent.hasExtra("DisplayName") ? intent.getStringExtra("DisplayName") : null;
         Log.i(TAG, "Intent data: " + mAssertedName + " (" + mText + ")");
-
+        mText = Utilities.removeUriPartsSelective(mText);
         return !(TextUtils.isEmpty(mAssertedName) || TextUtils.isEmpty(mText));
     }
+
     /**
      * Creates a contact entry from the current UI values in the account named by mSelectedAccount.
      */
@@ -228,12 +179,10 @@ public final class ContactAdder extends Activity implements OnAccountsUpdateList
         String name = mContactNameEditText.getText().toString();
         if (TextUtils.isEmpty(name))
             return;
-        int phoneType = mContactPhoneTypes.get(mContactPhoneTypeSpinner.getSelectedItemPosition());
-        final String scName = Utilities.removeSipParts(mText);
 
         // Prepare contact creation request
         //
-        // Note: We use RawContacts because this data must be associated with a particular account.
+        // Note: We create a new RawContact because this data must be associated with the SC account.
         //       The system will aggregate this with any other data for this contact and create a
         //       corresponding entry in the ContactsContract.Contacts provider for us.
         ArrayList<ContentProviderOperation> ops = new ArrayList<>();
@@ -248,49 +197,42 @@ public final class ContactAdder extends Activity implements OnAccountsUpdateList
                 .withValue(ContactsContract.CommonDataKinds.StructuredName.DISPLAY_NAME, name)
                 .build());
 
-        if (Character.isLetter(mText.charAt(0))) {
-            String newAddress =  (!PhoneNumberHelper.isUriNumber(mText)) ? mText + getString(R.string.sc_sip_domain_0) : mText;
-            ops.add(ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
-                    .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0)
-                    .withValue(ContactsContract.Data.MIMETYPE,
-                            ContactsContract.CommonDataKinds.SipAddress.CONTENT_ITEM_TYPE)
-                    .withValue(ContactsContract.CommonDataKinds.SipAddress.SIP_ADDRESS, newAddress)
-                    .withValue(ContactsContract.CommonDataKinds.SipAddress.TYPE, phoneType)
+        if (mOtherRawId != 0) {
+            ops.add(ContentProviderOperation.newUpdate(ContactsContract.AggregationExceptions.CONTENT_URI)
+                    .withValue(ContactsContract.AggregationExceptions.TYPE, ContactsContract.AggregationExceptions.TYPE_KEEP_TOGETHER)
+                    .withValue(ContactsContract.AggregationExceptions.RAW_CONTACT_ID1, mOtherRawId)
+                    .withValueBackReference(ContactsContract.AggregationExceptions.RAW_CONTACT_ID2, 0)
                     .build());
         }
-        else {
-//        if (Character.isDigit(mText.charAt(0)) || mText.charAt(0) == '+') {
-            ops.add(ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
-                    .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0)
-                    .withValue(ContactsContract.Data.MIMETYPE,
-                            ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE)
-                    .withValue(ContactsContract.CommonDataKinds.Phone.NUMBER, mText)
-                    .withValue(ContactsContract.CommonDataKinds.Phone.TYPE, phoneType)
-                    .build());
-        }
-        String phoneName = scName;
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
-            phoneName = name + " (" + (getResources().getString(R.string.call_other) + ")");
-        }
-        ops.add(ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
-                .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0)
-                .withValue(ContactsContract.Data.MIMETYPE, "vnd.android.cursor.item/com.silentcircle.phone")
+
+        String phoneName = UpdateScContactDataService.formatWithTags(name, false /*discovered*/, true /*isSip*/);
+
+        ContentProviderOperation.Builder opBuilder = ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI);
+        opBuilder.withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0)
+                .withValue(ContactsContract.Data.MIMETYPE, UpdateScContactDataService.SC_PHONE_CONTENT_TYPE)
                 .withValue(ContactsContract.Data.DATA1, mAssertedName)
                 .withValue(ContactsContract.Data.DATA2, "Silent Circle")
                 .withValue(ContactsContract.Data.DATA3, phoneName)
-                .build());
+                .withValue(ContactsContract.Data.SYNC1, 1);
+        ops.add(opBuilder.build());
 
-        String msgName = scName;
+        // Enable this for numbers also once we provide messaging via numbers. A discovered contact may
+        // be a number. 'isSip' also covers discovered e-mail addresses.
+        String msgName = name;
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
-            msgName = name + " (" + (getResources().getString(R.string.chat) + ")");
+            msgName = msgName + " (" + UpdateScContactDataService.SC_TEXT +")";
         }
-        ops.add(ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
-                .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0)
-                .withValue(ContactsContract.Data.MIMETYPE, "vnd.android.cursor.item/com.silentcircle.message")
+        opBuilder = ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI);
+        opBuilder.withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0)
+                .withValue(ContactsContract.Data.MIMETYPE, UpdateScContactDataService.SC_MSG_CONTENT_TYPE)
                 .withValue(ContactsContract.Data.DATA1, mAssertedName)
                 .withValue(ContactsContract.Data.DATA2, "Silent Circle")
                 .withValue(ContactsContract.Data.DATA3, msgName)
-                .build());
+                .withValue(ContactsContract.Data.SYNC1, 1);
+//                Log.d(TAG, "++++ operation: " + msgName + ", name: " + mAssertedName);
+        ops.add(opBuilder.build());
+
+
 
         // Ask the Contact provider to create a new contact
         if (ConfigurationUtilities.mTrace) {
@@ -335,9 +277,17 @@ public final class ContactAdder extends Activity implements OnAccountsUpdateList
             return;
         }
         mSelectedAccount = accounts[0];
-        if (ConfigurationUtilities.mTrace) Log.d(TAG, "Selected account: " + mSelectedAccount.name + " (" + mSelectedAccount.type + ")");
+        if (ConfigurationUtilities.mTrace)
+            Log.d(TAG, "Selected account: " + mSelectedAccount.name + " (" + mSelectedAccount.type + ")");
     }
 
+    public Account getAccountInfo() {
+        return mSelectedAccount;
+    }
+
+    public void setOtherRawId(long id) {
+        mOtherRawId = id;
+    }
 
     private void createScAccount() {
         // Check if user correctly provisioned the device
@@ -350,7 +300,7 @@ public final class ContactAdder extends Activity implements OnAccountsUpdateList
         final AccountManager am = AccountManager.get(this);
 
         final Bundle addAccountOptions = new Bundle();
-        addAccountOptions.putString(AccountConstants.SC_ACCOUNT_NAME, DialerActivity.mName);
+        addAccountOptions.putString(AccountConstants.SC_ACCOUNT_NAME, LoadUserInfo.getDisplayAlias());
 
         // This convenience helper combines the functionality of
         // getAccountsByTypeAndFeatures(String, String[], AccountManagerCallback, Handler),
@@ -411,5 +361,26 @@ public final class ContactAdder extends Activity implements OnAccountsUpdateList
                 .hide(mAdderFragment).commit();
         mSearchUiActive = false;
         mContactSaveButton.setVisibility(View.INVISIBLE);
+    }
+
+    private static class UidBackgroundTask extends AsyncTask<String, Void, Integer> {
+        private String mAlias;
+        protected byte[] mUserInfo;
+        protected int[] errorCode = new int[1];
+
+        @Override
+        protected Integer doInBackground(String... alias) {
+            mAlias = alias[0];
+            long startTime = System.currentTimeMillis();
+            if (mAlias != null) {
+                mUserInfo = AxoMessaging.getUserInfo(mAlias, null, errorCode);
+            }
+            return (int) (System.currentTimeMillis() - startTime);
+        }
+
+        @Override
+        protected void onPostExecute(Integer time) {
+            if (ConfigurationUtilities.mTrace) Log.d(TAG, "Processing time for getUserInfo '" + mAlias + "': " + time);
+        }
     }
 }

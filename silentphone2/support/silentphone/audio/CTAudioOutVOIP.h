@@ -329,6 +329,12 @@ public:
          return sprintf((char*)p,"%1.1f%% Loss",(float)(iPackLostInfo[0]*5+iPackLostPrevV*2+iPackLostPrevPrevV)/(8*LOST_DIV));
          
       }
+      
+      if(iLen==3 && strcmp(pid,"jit")==0){
+         int j = (int)(rtp_q.getJit()*1000.);
+         return sprintf((char*)p, "%d", j);
+      }
+      
       return ao->msg(pid,iLen,p,iSizeofP);
    }
    void setIgnoreIncomingRtp(int bFlag){

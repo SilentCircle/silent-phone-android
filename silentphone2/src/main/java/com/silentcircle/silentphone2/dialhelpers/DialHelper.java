@@ -54,7 +54,7 @@ public interface DialHelper {
      * @param out an empty StringBuilder where the function stores a modified number string
      * @return {@code true} if functions created a modified number, {@code false} otherwise
      */
-    public boolean analyseModifyNumberString(String in, StringBuilder out);
+    boolean analyseModifyNumberString(String in, StringBuilder out);
 
     /**
      * Analyse characters as they are typed and modify the EditText field.

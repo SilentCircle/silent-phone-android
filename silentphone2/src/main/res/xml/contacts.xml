@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ContactsSource
         xmlns:android="http://schemas.android.com/apk/res/android">
-        createContactActivity="com.silentcircle.silentphone2.activities.ContactAdder"
+<!--        createContactActivity="com.silentcircle.silentphone2.activities.ContactAdder" -->
 
     <ContactsDataKind
             android:mimeType="vnd.android.cursor.item/com.silentcircle.phone"
+            android:icon="@drawable/ic_launcher_sp"
+            android:summaryColumn="data2"
+            android:detailColumn="data3"
+            />
+    <ContactsDataKind
+            android:mimeType="vnd.android.cursor.item/com.silentcircle.message"
             android:icon="@drawable/ic_launcher_st"
             android:summaryColumn="data2"
             android:detailColumn="data3"
             />
-        <ContactsDataKind
-                android:mimeType="vnd.android.cursor.item/com.silentcircle.message"
-                android:icon="@drawable/ic_launcher_st"
-                android:summaryColumn="data2"
-                android:detailColumn="data3"
-                />
 </ContactsSource>

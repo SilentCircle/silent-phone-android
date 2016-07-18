@@ -18,31 +18,22 @@ package com.silentcircle.silentphone2.fragments;
 
 import android.accounts.Account;
 import android.app.Activity;
-import android.app.Fragment;
+import android.content.ContentUris;
 import android.database.Cursor;
 import android.net.Uri;
-import android.os.Bundle;
 import android.provider.ContactsContract;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.Spinner;
-import android.widget.TextView;
 
-import com.silentcircle.common.util.DialerUtils;
-import com.silentcircle.common.util.ViewUtil;
 import com.silentcircle.contacts.list.ContactListFilter;
 import com.silentcircle.contacts.list.ScContactEntryListAdapter;
 import com.silentcircle.contacts.list.ScContactEntryListFragment;
+import com.silentcircle.contacts.list.ScContactListAdapter;
 import com.silentcircle.contacts.list.ScDefaultContactListAdapter;
 import com.silentcircle.silentphone2.R;
 import com.silentcircle.silentphone2.activities.ContactAdder;
-
-import java.util.ArrayList;
 
 public final class ContactAdderFragment extends ScContactEntryListFragment<ScDefaultContactListAdapter>
 {
@@ -79,7 +70,7 @@ public final class ContactAdderFragment extends ScContactEntryListFragment<ScDef
             @Override
             protected void bindView(View itemView, int partition, Cursor cursor, int position) {
                 super.bindView(itemView, partition, cursor, position);
-                itemView.setTag(this.getContactUri(partition, cursor));
+                itemView.setTag(cursor.getLong(ContactQuery.CONTACT_ID));
             }
         };
         adapter.setDisplayPhotos(true);
@@ -90,7 +81,7 @@ public final class ContactAdderFragment extends ScContactEntryListFragment<ScDef
 
     @Override
     protected View inflateView(LayoutInflater inflater, ViewGroup container) {
-        return inflater.inflate(R.layout.contact_adder_fragment, null);
+        return inflater.inflate(R.layout.contact_adder_fragment, container, false);
     }
 
     @Override
@@ -101,25 +92,47 @@ public final class ContactAdderFragment extends ScContactEntryListFragment<ScDef
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        final Uri uri = (Uri) view.getTag();
-        getContactName(uri);
+        final String name = getAdapter().getContactDisplayName(position);
+        mParent.setContactName(name);
+        final long contactId = (Long) view.getTag();
+        getOtherRawId(contactId);
     }
 
     private String[] projection = {
-            ContactsContract.Contacts.DISPLAY_NAME_PRIMARY
+            ContactsContract.RawContacts._ID,
+            ContactsContract.RawContacts.ACCOUNT_NAME,
+            ContactsContract.RawContacts.ACCOUNT_TYPE,
     };
-    private static final int DISPLAY_NAME = 0;
+    private static final int ID = 0;
+    private static final int ACCOUNT_NAME = 1;
+    private static final int ACCOUNT_TYPE = 2;
 
-    private void getContactName(Uri lookupUri) {
-        final Cursor cursor = mParent.getContentResolver().query(lookupUri, projection, null, null, null);
-        if (cursor != null && cursor.getCount() > 0) {
-            cursor.moveToFirst();
-            String name = cursor.getString(DISPLAY_NAME);
+    private final static String rawQuery = ContactsContract.RawContacts.CONTACT_ID + "=?";
+
+    // Check if the selected account already has another (non-SC) associated raw account. If
+    // yes then report the first found raw contact id to the parent. The parent then joins this
+    // raw contact id with the newly created SC raw contact.
+    private void getOtherRawId(long id) {
+        final Cursor cursor = mParent.getContentResolver().query(ContactsContract.RawContacts.CONTENT_URI,
+                projection, rawQuery, new String[] {Long.toString(id)}, null);
+
+        if (cursor == null)
+            return;
+
+        Account account = mParent.getAccountInfo();
+        if (account == null) {
             cursor.close();
-            mParent.setContactName(name);
+            return;
         }
-        if (cursor != null && !cursor.isClosed())
-            cursor.close();
+        while (cursor.moveToNext()) {
+            String accountName = cursor.getString(ACCOUNT_NAME);
+            String accountType = cursor.getString(ACCOUNT_TYPE);
+            if (account.name.equals(accountName) && account.type.equals(accountType))
+                continue;
+            mParent.setOtherRawId(cursor.getLong(ID));
+            break;
+        }
+        cursor.close();
     }
 
     @Override

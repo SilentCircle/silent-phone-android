@@ -17,4 +17,8 @@
 
     <string name="sw_setting" translatable="false">720</string>
 
+     <!-- alert dialog size -->
+     <item type="dimen" name="dialog_min_width_minor">45%</item>
+     <item type="dimen" name="dialog_min_width_major">72%</item>
+
 </resources>

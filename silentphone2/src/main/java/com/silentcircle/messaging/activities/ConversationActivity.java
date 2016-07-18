@@ -27,48 +27,61 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 package com.silentcircle.messaging.activities;
 
-import android.app.AlertDialog;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.content.BroadcastReceiver;
-import android.content.ContentResolver;
+import android.content.ClipData;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.media.MediaPlayer;
+import android.content.ServiceConnection;
 import android.net.Uri;
 import android.os.AsyncTask;
-import android.os.Build;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.provider.ContactsContract;
 import android.provider.MediaStore;
+import android.support.annotation.NonNull;
+import android.support.v4.content.FileProvider;
+import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
-import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.AlertDialog;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.view.ActionMode;
 import android.support.v7.widget.Toolbar;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
+import android.text.method.LinkMovementMethod;
 import android.util.Log;
 import android.view.Gravity;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.QuickContactBadge;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.silentcircle.SilentPhoneApplication;
 import com.silentcircle.common.list.ContactEntry;
 import com.silentcircle.common.util.DialerUtils;
+import com.silentcircle.common.util.SearchUtil;
 import com.silentcircle.common.util.ViewUtil;
 import com.silentcircle.contacts.ContactPhotoManagerNew;
+import com.silentcircle.contacts.ContactsUtils;
 import com.silentcircle.contacts.calllognew.IntentProvider;
 import com.silentcircle.contacts.utils.ClipboardUtils;
 import com.silentcircle.contacts.utils.Constants;
+import com.silentcircle.keymanagersupport.KeyManagerSupport;
 import com.silentcircle.messaging.fragments.ChatFragment;
-import com.silentcircle.messaging.fragments.SearchFragment;
+import com.silentcircle.messaging.fragments.SearchAgainFragment;
 import com.silentcircle.messaging.listener.ClickSendOnEditorSendAction;
 import com.silentcircle.messaging.listener.LaunchConfirmDialogOnClick;
 import com.silentcircle.messaging.listener.OnConfirmListener;
@@ -77,7 +90,6 @@ import com.silentcircle.messaging.location.LocationUtils;
 import com.silentcircle.messaging.model.Conversation;
 import com.silentcircle.messaging.model.MessageErrorCodes;
 import com.silentcircle.messaging.model.MessageStates;
-import com.silentcircle.messaging.model.event.ErrorEvent;
 import com.silentcircle.messaging.model.event.Event;
 import com.silentcircle.messaging.model.event.IncomingMessage;
 import com.silentcircle.messaging.model.event.Message;
@@ -96,34 +108,41 @@ import com.silentcircle.messaging.task.SendMessageTask;
 import com.silentcircle.messaging.util.Action;
 import com.silentcircle.messaging.util.AsyncUtils;
 import com.silentcircle.messaging.util.AttachmentUtils;
+import com.silentcircle.messaging.util.AvatarUtils;
 import com.silentcircle.messaging.util.BurnDelay;
 import com.silentcircle.messaging.util.ContactsCache;
+import com.silentcircle.messaging.util.ConversationUtils;
 import com.silentcircle.messaging.util.Extra;
 import com.silentcircle.messaging.util.IOUtils;
 import com.silentcircle.messaging.util.MessageUtils;
 import com.silentcircle.messaging.util.MessagingPreferences;
 import com.silentcircle.messaging.util.Notifications;
-import com.silentcircle.messaging.util.UUIDGen;
+import com.silentcircle.messaging.util.SoundNotifications;
 import com.silentcircle.messaging.views.ConversationOptionsDrawer;
+import com.silentcircle.messaging.views.ScreenLockView;
 import com.silentcircle.messaging.views.UploadView;
-import com.silentcircle.silentphone2.Manifest;
 import com.silentcircle.silentphone2.R;
+import com.silentcircle.silentphone2.activities.DialerActivity;
+import com.silentcircle.silentphone2.dialogs.InfoMsgDialogFragment;
+import com.silentcircle.silentphone2.list.OnListFragmentScrolledListener;
+import com.silentcircle.silentphone2.list.SearchFragment;
+import com.silentcircle.silentphone2.services.TiviPhoneService;
+import com.silentcircle.silentphone2.util.CallState;
 import com.silentcircle.silentphone2.util.ConfigurationUtilities;
 import com.silentcircle.silentphone2.util.Utilities;
+import com.silentcircle.silentphone2.views.SearchEditTextLayout;
+import com.silentcircle.userinfo.LoadUserInfo;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
 import java.io.IOException;
-import java.text.SimpleDateFormat;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
+import java.util.ListIterator;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
@@ -131,7 +150,10 @@ import java.util.concurrent.TimeUnit;
 /**
  *
  */
-public class ConversationActivity extends ActionBarActivity implements ChatFragment.Callback {
+public class ConversationActivity extends AppCompatActivity implements
+        ChatFragment.Callback, OnListFragmentScrolledListener, SearchFragment.HostInterface,
+        AxoMessaging.AxoMessagingStateCallback, ScreenLockView.OnUnlockListener,
+        TiviPhoneService.ServiceStateChangeListener {
 
     @SuppressWarnings("unused")
     private static final String TAG = ConversationActivity.class.getSimpleName();
@@ -145,12 +167,23 @@ public class ConversationActivity extends ActionBarActivity implements ChatFragm
     /* Limit single message input text to 5000 symbols */
     private static final int MESSAGE_TEXT_INPUT_LENGTH_LIMIT = 5000;
 
+    /** Limit after which unread message count is displayed with greater than sign */
+    public static final int UNREAD_MESSAGE_COUNT_DISPLAY_LIMIT = 10;
+
     protected Conversation mConversation;
-    protected String mConversationPartner;
+    protected String mConversationPartnerId;
 
     protected BroadcastReceiver mViewUpdater;
-    /* new message sound notification player */
-    protected MediaPlayer mPlayer;
+
+    /*
+    protected Handler mHandler;
+    protected Runnable mLockViewRunnable = new Runnable() {
+        @Override
+        public void run() {
+            lockViewIfNecessary();
+        }
+    };
+     */
 
     /* variables for attachment handling */
     private Uri mPendingImageCaptureUri;
@@ -158,15 +191,15 @@ public class ConversationActivity extends ActionBarActivity implements ChatFragm
     private Uri mPendingAudioCaptureUri;
     private static final int R_id_share = 0xFFFF & R.id.share;
 
-    /** Several modules use this format to define a common UTC date */
-    public static final SimpleDateFormat ISO8601 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
-
     private Toolbar mToolbar;
     private QuickContactBadge mAvatarView;
     private TextView mTitle;
+    private View mHome;
+    private View mUnreadMessageNotification;
+    private TextView mUnreadMessageCount;
     private DrawerLayout mDrawerLayout;
     private MenuItem mOptionsMenuItem;
-    private SearchFragment mSearchFragment;
+    private SearchAgainFragment mSearchFragment;
 
     private boolean mInSearchView;
     private String mTextToForward;
@@ -176,13 +209,26 @@ public class ConversationActivity extends ActionBarActivity implements ChatFragm
     private UploadView mProgressBar;
     private ViewGroup mComposeLayout;
     private EditText mComposeText;
+    private ScreenLockView mPasswordOverlay;
+    private ActionMode mActionMode;
+    private boolean mLockTimePersisted = true;
+
+    private List<Event> mEvents;
 
     /* State variables for refreshing timed messages, etc */
     private Timer mTimer;
     private boolean mRefreshing;
+    private boolean mRerunRefresh;
+    private boolean mRerunForcedRefresh;
     private boolean mIsVisible;
+    private boolean mDestroyed;
+    private boolean mIsViewLocked;
+
+    private boolean mIsAxolotlRegistered;
 
     protected Bundle mSavedInstanceState;
+
+    private ContactPhotoManagerNew mContactPhotoManager;
 
     public static final String [] SUPPORTED_IMTO_HOSTS = {
 //            "jabber",
@@ -192,6 +238,24 @@ public class ConversationActivity extends ActionBarActivity implements ChatFragm
 //            "silentcircle.com",
 //            "com.silentcircle",
 //            "silent circle"
+    };
+
+    private int mActionBarHeight;
+    private EditText mSearchView;
+    private String mSearchQuery;
+
+    private Runnable mOpenActionBarRunnable = new Runnable() {
+        public void run() {
+            openActionBarQueryField();
+        }
+    };
+
+    private Runnable mOpenMessageInputRunnable = new Runnable() {
+        public void run() {
+            if(mComposeText != null) {
+                DialerUtils.showInputMethod(mComposeText);
+            }
+        }
     };
 
     private TextWatcher mTextWatcher = new TextWatcher() {
@@ -206,7 +270,14 @@ public class ConversationActivity extends ActionBarActivity implements ChatFragm
                         : R.drawable.ic_action_attachment_dark;
                 if (imageResource == null || imageResource != newImageResource) {
                     buttonSend.setTag(newImageResource);
-                    ViewUtil.animateImageChange(ConversationActivity.this, buttonSend, newImageResource);
+
+                    if (imageResource == null && newImageResource == R.drawable.ic_action_attachment_dark) {
+                        // Special case
+                        // Don't animate to the attachment icon on activity creation - it is
+                        // already that icon by default (tag (imageResource) is null at this point)
+                    } else {
+                        ViewUtil.animateImageChange(ConversationActivity.this, buttonSend, newImageResource);
+                    }
                 }
 
                 if(editable.toString().length() > MESSAGE_TEXT_INPUT_LENGTH_LIMIT) {
@@ -229,6 +300,57 @@ public class ConversationActivity extends ActionBarActivity implements ChatFragm
         }
     };
 
+    /**
+     * Listener used to send search queries to the phone search fragment.
+     */
+    private final TextWatcher mPhoneSearchQueryTextListener = new TextWatcher() {
+        @Override
+        public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+        }
+
+        @Override
+        public void onTextChanged(CharSequence s, int start, int before, int count) {
+            final String newText = s.toString();
+            if (newText.equals(mSearchQuery)) {
+                // If the query hasn't changed (perhaps due to activity being destroyed
+                // and restored, or user launching the same DIAL intent twice), then there is
+                // no need to do anything here.
+                return;
+            }
+            mSearchQuery = newText;
+
+            // Show search fragment only when the query string is changed to non-empty text.
+            if (!TextUtils.isEmpty(newText)) {
+                if (!mInSearchView) {
+                    enterSearchUI();
+                }
+            }
+
+            if (mSearchFragment != null && mSearchFragment.isVisible()) {
+                mSearchFragment.setQueryString(mSearchQuery, false /* delaySelection */);
+            }
+        }
+
+        @Override
+        public void afterTextChanged(Editable s) {
+        }
+    };
+
+    TextView.OnEditorActionListener mPhoneSearchQueryEditorActionListener = new TextView.OnEditorActionListener() {
+        @Override
+        public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+            if (actionId == EditorInfo.IME_ACTION_GO) {
+                if (!mInSearchView)
+                    return false;
+                String query = mSearchFragment.getQueryString();
+                if (!TextUtils.isEmpty(query) && Utilities.isValidSipUsername(query))
+                    mSearchFragment.validateUser(query);
+                return true;
+            }
+            return false;
+        }
+    };
+
     private View.OnFocusChangeListener mTextFocusListener = new View.OnFocusChangeListener() {
 
         @Override
@@ -245,8 +367,22 @@ public class ConversationActivity extends ActionBarActivity implements ChatFragm
         @Override
         public void onClick(View v) {
             if (mComposeText.length() <= 0) {
+                if(!LoadUserInfo.canSendAttachments(getApplicationContext())) {
+                    showDialog(R.string.information_dialog, R.string.basic_feature_info,
+                            android.R.string.ok, -1);
+                    return;
+                }
+
                 selectFile();
             }
+        }
+    };
+
+    /* Listener for attach button to start file selection. */
+    private View.OnClickListener mHomeButtonListener = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            onBackPressed();
         }
     };
 
@@ -318,17 +454,69 @@ public class ConversationActivity extends ActionBarActivity implements ChatFragm
         }
     };
 
+    /**
+     * If the search term is empty and the user closes the soft keyboard, close the search UI.
+     */
+    private final View.OnKeyListener mSearchEditTextLayoutListener = new View.OnKeyListener() {
+        @Override
+        public boolean onKey(View v, int keyCode, KeyEvent event) {
+            if (keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_DOWN &&
+                    TextUtils.isEmpty(mSearchView.getText())) {
+                maybeExitSearchUi();
+            }
+            return false;
+        }
+    };
+
+    /* *********************************************************************
+     * Functions and variables to bind this activity to the TiviPhoneService
+     * This uses standard Android mechanism.
+     * ******************************************************************* */
+    private boolean mPhoneIsBound;
+    private TiviPhoneService mPhoneService;
+
+    private ServiceConnection phoneConnection = new ServiceConnection() {
+        public void onServiceConnected(ComponentName className, IBinder service) {
+            // This is called when the connection with the service has been
+            // established, giving us the service object we can use to
+            // interact with the service.  Because we have bound to a explicit
+            // service that we know is running in our own process, we can
+            // cast its IBinder to a concrete class and directly access it.
+            mPhoneService = ((TiviPhoneService.LocalBinder)service).getService();
+            mPhoneIsBound = true;
+            if (mDestroyed) {
+                doUnbindService();
+                return;
+            }
+            mPhoneService.addStateChangeListener(ConversationActivity.this);
+        }
+
+        public void onServiceDisconnected(ComponentName className) {
+            // This is called when the connection with the service has been
+            // unexpectedly disconnected -- that is, its process crashed.
+            // Because it is running in our same process, we should never
+            // see this happen.
+            mPhoneService = null;
+            mPhoneIsBound = false;
+        }
+    };
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         mSavedInstanceState = savedInstanceState;
 
+        mActionBarHeight = getResources().getDimensionPixelSize(R.dimen.action_bar_height_large);
+
+        mContactPhotoManager = ContactPhotoManagerNew.getInstance(getApplicationContext());
+
         setContentView(R.layout.activity_conversation_with_drawer);
 
-        ContactsCache.buildContactsCache(this);
+        initConversationView(false);
 
-        initConversationView();
+        doBindService();
 
         // TODO: Is this worth going here?
         //runAttachmentManager();
@@ -340,37 +528,32 @@ public class ConversationActivity extends ActionBarActivity implements ChatFragm
         setIntent(intent);
 
         if (mInSearchView) {
-            exitSearchUI();
+            exitSearchUI(true);
         }
 
-        initConversationView();
+        initConversationView(true);
 
         // check if we need to forward a message and do it here
-        if (mMessageToForward != null) {
-            MessageUtils.forwardMessage(this, getUsername(), getPartner(), mMessageToForward);
-            mMessageToForward = null;
-        } else if (!TextUtils.isEmpty(mTextToForward)) {
-            mComposeText.setText(mTextToForward);
-            mTextToForward = null;
-        }
+        doMessageForward();
     }
 
     @Override
     public void onResume() {
         super.onResume();
         mIsVisible = true;
+
+        mIsViewLocked = lockViewIfNecessary();
         registerViewUpdater();
         updateViews();
+
         Notifications.cancelMessageNotification(this, getPartner());
 
-        if (mConversationPartner == null) {
-            mConversationPartner = getPartner();
+        if (mConversationPartnerId == null) {
+            mConversationPartnerId = getPartner();
         }
-        if (MessagingPreferences.getInstance(this).getMessageSoundsEnabled()) {
-            mPlayer = MediaPlayer.create(getApplicationContext(), R.raw.received);
-        }
+
         if (getConversation() != null) {
-            refresh();
+            refresh(false);
 
             if (mComposeText.length() == 0) {
                 mComposeText.setText(getConversation().getUnsentText());
@@ -384,11 +567,26 @@ public class ConversationActivity extends ActionBarActivity implements ChatFragm
         mIsVisible = false;
         mProgressBar.setVisibility(View.GONE);
         unregisterReceiver(mViewUpdater);
-        if (mPlayer != null) {
-            mPlayer.release();
-            mPlayer = null;
-        }
         saveUnsentText();
+        mEvents = null;
+        updateLastLockTimeIfNecessary();
+        /*
+        mHandler.removeCallbacks(mLockViewRunnable);
+         */
+
+    }
+
+    private void updateLastLockTimeIfNecessary() {
+        if (!mLockTimePersisted) {
+            MessagingPreferences.getInstance(getApplicationContext())
+                    .setLastMessagingUnlockTime(System.currentTimeMillis());
+        }
+        mLockTimePersisted = true;
+    }
+
+    @Override
+    protected void onUserLeaveHint() {
+        super.onUserLeaveHint();
     }
 
     @Override
@@ -396,34 +594,53 @@ public class ConversationActivity extends ActionBarActivity implements ChatFragm
         getMenuInflater().inflate(R.menu.conversation, menu);
         Conversation conversation = getConversation();
 
+        byte[] chatKeyData =
+                KeyManagerSupport.getPrivateKeyData(getContentResolver(),
+                        ConfigurationUtilities.getChatProtectionKey());
+        MessagingPreferences preferences = MessagingPreferences.getInstance(this);
+        boolean visible = (!(preferences.isMessagingUnlockTimeExpired()
+                && chatKeyData != null)
+                && !mInSearchView && hasChatFragment());
+
         MenuItem shareLocation = menu.findItem(R.id.action_share_location);
         boolean locationSharingEnabled = LocationUtils.isLocationSharingAvailable(this)
                 && (conversation != null && conversation.isLocationEnabled())
-                && !mInSearchView;
+                && visible;
         shareLocation.setIcon(locationSharingEnabled
                 ? R.drawable.ic_location_selected : R.drawable.ic_location_unselected);
         shareLocation.setVisible(locationSharingEnabled);
 
         MenuItem burnNotice = menu.findItem(R.id.action_burn_notice);
         boolean burnNoticeEnabled = (conversation != null && conversation.hasBurnNotice())
-                && !mInSearchView;
+                && visible;
         burnNotice.setIcon(burnNoticeEnabled
                 ? R.drawable.ic_burn_enabled : R.drawable.ic_burn_disabled);
         burnNotice.setVisible(burnNoticeEnabled);
 
+        // TODO: determine whether call is with particular person
+        boolean hasCall = TiviPhoneService.calls.getCallCount() > 0;
         MenuItem silentPhoneCall = menu.findItem(R.id.action_silent_phone_call);
-        silentPhoneCall.setVisible(!mInSearchView);
-        // TODO: check validity of partner's name before showing this item
+        silentPhoneCall.setVisible(visible && !hasCall);
 
         // keep reference to this item
         mOptionsMenuItem = menu.findItem(R.id.options);
-        mOptionsMenuItem.setVisible(!mInSearchView);
+        mOptionsMenuItem.setVisible(visible);
         if (mDrawerLayout != null) {
-            mOptionsMenuItem.setIcon(mDrawerLayout.isDrawerOpen(Gravity.END)
+            mOptionsMenuItem.setIcon(mDrawerLayout.isDrawerOpen(GravityCompat.END)
                     ? R.drawable.ic_drawer_open : R.drawable.ic_drawer_closed);
         }
 
         return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onPrepareOptionsMenu(final Menu menu) {
+        /* do not create options menu when axolotl has not been initialised */
+        if (!mIsAxolotlRegistered) {
+            return false;
+        }
+
+        return super.onPrepareOptionsMenu(menu);
     }
 
     @Override
@@ -468,7 +685,7 @@ public class ConversationActivity extends ActionBarActivity implements ChatFragm
         }
         else if (mInSearchView && !TextUtils.isEmpty(getPartner())) {
             // close search view
-            exitSearchUI();
+            exitSearchUI(true);
         }
         else {
             super.onBackPressed();
@@ -477,10 +694,32 @@ public class ConversationActivity extends ActionBarActivity implements ChatFragm
 
     @Override
     protected void onDestroy() {
+        mDestroyed = true;
+        cancelAutoRefresh();
+        doUnbindService();
         super.onDestroy();
     }
 
-    protected void initConversationView() {
+    protected boolean isAxolotlInitialised() {
+        // verify that Axolotl has been initialised
+        AxoMessaging axoMessaging = AxoMessaging.getInstance(getApplicationContext());
+        boolean axoRegistered = axoMessaging.isRegistered();
+        if (!axoRegistered) {
+            axoMessaging.addStateChangeListener(this);
+            /*
+             * TODO: waiting for Axolotl to initialise works only once if deliberately crashing
+             * in SoundRecorderActivity.
+             *
+             * And calling axoMessaging.initialize(); will not initialise Axolotl
+             * as keystorehelper is not ready.
+             */
+        }
+        return axoRegistered;
+    }
+
+    protected void initConversationView(boolean fromIntent) {
+        mIsAxolotlRegistered = isAxolotlInitialised();
+
         String partner = getPartner();
 
         mConversation = getConversation(getPartner());
@@ -502,43 +741,124 @@ public class ConversationActivity extends ActionBarActivity implements ChatFragm
         createOptionsDrawer();
         restoreActionBar();
 
-        if (TextUtils.isEmpty(partner)) {
-            enterSearchUI();
-        } else {
-            getChatFragment();
+        if (mIsAxolotlRegistered) {
+            if (TextUtils.isEmpty(partner)) {
+                enterSearchUI();
+            } else {
+                getChatFragment(true);
+
+                String pendingAttachmentFile = getPendingAttachmentFile();
+                String pendingAttachmentText = getPendingAttachmentText();
+
+                boolean hasPendingAttachment = !TextUtils.isEmpty(pendingAttachmentFile)
+                        || !TextUtils.isEmpty(pendingAttachmentText);
+
+                boolean canSendAttachments =
+                        LoadUserInfo.canSendAttachments(getApplicationContext());
+
+                if (hasPendingAttachment && !canSendAttachments) {
+                    showDialog(R.string.information_dialog, R.string.basic_feature_info,
+                            android.R.string.ok, -1);
+                }
+
+                if(!TextUtils.isEmpty(pendingAttachmentFile) && canSendAttachments) {
+                    handleAttachment(new Intent().setData(Uri.parse(pendingAttachmentFile)), false);
+                } else if(!TextUtils.isEmpty(pendingAttachmentText) && canSendAttachments) {
+                    mComposeText.setText(pendingAttachmentText);
+                } else if(fromIntent) {
+                    mComposeText.post(mOpenMessageInputRunnable);
+                }
+            }
         }
+
+        mPasswordOverlay = (ScreenLockView) findViewById(R.id.password_overlay);
+        mPasswordOverlay.setOnUnlockListener(this);
+
+        ViewGroup overlay = (ViewGroup) findViewById(R.id.overlay);
+        overlay.setVisibility(mIsAxolotlRegistered ? View.GONE : View.VISIBLE);
     }
 
+    @Override
+    public void onListFragmentScrollStateChange(int scrollState) {
+    }
+
+    @Override
+    public void onListFragmentScroll(int firstVisibleItem, int visibleItemCount,
+                                     int totalItemCount) {
+    }
+
+    @Override
+    public int getActionBarHeight() {
+        return mActionBarHeight;
+    }
+
+    @Override
+    public boolean isDialpadShown() {
+        return false;
+    }
+
+    @Override
+    public int getActionBarHideOffset() {
+        return getSupportActionBar().getHideOffset();
+    }
+
+    @Override
+    public boolean isActionBarShowing() {
+        return true;
+    }
+
+    @Override
+    public void onUnlock() {
+        mLockTimePersisted = false;
+        updateLastLockTimeIfNecessary();
+        mIsViewLocked = lockViewIfNecessary();
+        /* start refresh task as some messages can be in unread state, switch to read is necessary */
+        refresh(true);
+    }
+
+
     protected void setLocationSharing(boolean enabled) {
+        ConversationRepository repository = ConversationUtils.getConversations(getApplicationContext());
         Conversation conversation = getConversation();
-        conversation.setLocationEnabled(enabled);
-        getConversations().save(conversation);
+        if (repository != null && conversation != null) {
+            conversation.setLocationEnabled(enabled);
+            repository.save(conversation);
+        }
 
         invalidateOptionsMenu();
         updateConversation();
     }
 
     protected void setSendReadReceipts(boolean enabled) {
+        ConversationRepository repository = ConversationUtils.getConversations(getApplicationContext());
         Conversation conversation = getConversation();
-        conversation.setSendReadReceipts(enabled);
-        getConversations().save(conversation);
+        if (repository != null && conversation != null) {
+            conversation.setSendReadReceipts(enabled);
+            repository.save(conversation);
+        }
 
         updateConversation();
     }
 
     protected void setBurnDelay(long burnDelay) {
+        ConversationRepository repository = ConversationUtils.getConversations(getApplicationContext());
         Conversation conversation = getConversation();
-        conversation.setBurnDelay(burnDelay);
-        getConversations().save(conversation);
+        if (repository != null && conversation != null) {
+            conversation.setBurnDelay(burnDelay);
+            repository.save(conversation);
+        }
     }
 
     protected void setBurnNotice(boolean enabled) {
+        ConversationRepository repository = ConversationUtils.getConversations(getApplicationContext());
         Conversation conversation = getConversation();
-        conversation.setBurnNotice(enabled);
-        if (enabled && conversation.getBurnDelay() <= 0) {
-            conversation.setBurnDelay(BurnDelay.getDefaultDelay());
+        if (repository != null && conversation != null) {
+            conversation.setBurnNotice(enabled);
+            if (enabled && conversation.getBurnDelay() <= 0) {
+                conversation.setBurnDelay(BurnDelay.getDefaultDelay());
+            }
+            repository.save(conversation);
         }
-        getConversations().save(conversation);
 
         invalidateOptionsMenu();
         updateConversation();
@@ -547,7 +867,7 @@ public class ConversationActivity extends ActionBarActivity implements ChatFragm
     protected void confirmClearConversation() {
         OnConfirmListener onConfirm = new OnConfirmListener() {
             @Override
-            public void onConfirm(Context context) {
+            public void onConfirm(Context context, int which) {
                 clearConversation();
             }
         };
@@ -557,13 +877,18 @@ public class ConversationActivity extends ActionBarActivity implements ChatFragm
     }
 
     protected void clearConversation() {
+        ConversationRepository repository = ConversationUtils.getConversations(getApplicationContext());
         Conversation conversation = getConversation();
+        if (repository != null && conversation != null) {
 
-        for(Event event : getConversations().historyOf(conversation).list()) {
-            deleteEvent(event);
+            for (Event event : repository.historyOf(conversation).list()) {
+                deleteEvent(event);
+            }
+
+            repository.historyOf(conversation).clear();
         }
-
-        getConversations().historyOf(conversation).clear();
+        // clear events cache
+        mEvents = null;
 
         updateConversation();
     }
@@ -571,7 +896,7 @@ public class ConversationActivity extends ActionBarActivity implements ChatFragm
     protected void confirmSaveConversation() {
         OnConfirmListener onConfirm = new OnConfirmListener() {
             @Override
-            public void onConfirm(Context context) {
+            public void onConfirm(Context context, int which) {
                 List<Event> messages = getConversationHistory();
                 String messagesAsString = MessageUtils.getPrintableHistory(messages);
                 if (!TextUtils.isEmpty(messagesAsString)
@@ -598,10 +923,11 @@ public class ConversationActivity extends ActionBarActivity implements ChatFragm
     protected void saveUnsentText() {
         // save unsent text
         String unsentText = mComposeText.getText().toString();
+        ConversationRepository repository = ConversationUtils.getConversations(getApplicationContext());
         Conversation conversation = getConversation();
-        if (conversation != null) {
+        if (repository != null && conversation != null) {
             conversation.setUnsentText(unsentText);
-            getConversations().save(conversation);
+            repository.save(conversation);
         }
     }
 
@@ -609,9 +935,23 @@ public class ConversationActivity extends ActionBarActivity implements ChatFragm
         if (!isFinishing()) {
             AlertDialog.Builder alert = new AlertDialog.Builder(this);
 
+            String partner = message.getConversationID();
+
+            if (SearchUtil.isUuid(partner)) {
+                byte[] partnerName = AxoMessaging.getDisplayName(partner);
+
+                if (partnerName != null) {
+                    partner = new String(partnerName);
+                }
+            }
+
             alert.setTitle(R.string.dialog_title_failed_to_send_message);
             alert.setMessage(getString(R.string.dialog_message_failed_to_send_to,
-                    message.getConversationID(),
+                    /* FIXME: Uncomment when we don't care about 4.1.3 clients - this is so we try
+                       not to show the UUID on error
+                    */
+//                    message.getConversationID(),
+                    partner,
                     getString(MessageErrorCodes.messageErrorToStringId(errorCode))));
 
             alert.setCancelable(false);
@@ -621,31 +961,75 @@ public class ConversationActivity extends ActionBarActivity implements ChatFragm
         }
     }
 
-    protected void restoreActionBar() {
+    private void showDialog(int titleResId, int msgResId, int positiveBtnLabel, int negativeBtnLabel) {
+        InfoMsgDialogFragment infoMsg = InfoMsgDialogFragment.newInstance(titleResId, msgResId, positiveBtnLabel, negativeBtnLabel);
+        FragmentManager fragmentManager = getFragmentManager();
+        infoMsg.show(fragmentManager, TAG);
 
+        // Make possible links clickable
+        fragmentManager.executePendingTransactions();
+        ((TextView) infoMsg.getDialog().findViewById(android.R.id.message)).setMovementMethod(LinkMovementMethod.getInstance());
+    }
+
+    protected void restoreActionBar() {
         mToolbar = (Toolbar) findViewById(R.id.conversation_toolbar);
+        mToolbar.setContentInsetsAbsolute(0, 0);
         ContactEntry contactEntry = ContactsCache.getContactEntryFromCache(getPartner());
 
+        String displayName = ConversationUtils.resolveDisplayName(contactEntry, getConversation());
         mTitle = (TextView) mToolbar.findViewById(R.id.title);
-        mTitle.setText(
-                contactEntry != null ? contactEntry.name : getPartner());
+        mTitle.setText(displayName);
+//                contactEntry != null ? contactEntry.name : getPartner());
+        mHome = mToolbar.findViewById(R.id.home);
+        mHome.setOnClickListener(mHomeButtonListener);
+        mUnreadMessageNotification = mToolbar.findViewById(R.id.unread_message_notification);
+        mUnreadMessageCount = (TextView) mToolbar.findViewById(R.id.unread_message_count);
+        mUnreadMessageNotification.setVisibility(View.VISIBLE);
 
         mAvatarView = (QuickContactBadge) mToolbar.findViewById(R.id.message_avatar);
         mAvatarView.setVisibility(View.VISIBLE);
-        setPhoto(mAvatarView,
-                contactEntry != null ? contactEntry.photoId : 0,
-                contactEntry != null ? contactEntry.lookupUri : null,
-                contactEntry != null ? contactEntry.name : null,
-                null,
-                ContactPhotoManagerNew.TYPE_DEFAULT);
+        AvatarUtils.setPhoto(mContactPhotoManager, mAvatarView,
+                contactEntry);
 
         setSupportActionBar(mToolbar);
-        getSupportActionBar().setDisplayShowTitleEnabled(false);
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        ActionBar actionBar = getSupportActionBar();
+        if (actionBar != null) {
+            actionBar.setCustomView(R.layout.search_edittext);
+            actionBar.setDisplayShowTitleEnabled(false);
+            actionBar.setDisplayHomeAsUpEnabled(false);
+            SearchEditTextLayout searchEditTextLayout =
+                    (SearchEditTextLayout) actionBar.getCustomView();
+            searchEditTextLayout.setPreImeKeyListener(mSearchEditTextLayoutListener);
+
+            mSearchView = (EditText) searchEditTextLayout.findViewById(R.id.search_view);
+            mSearchView.addTextChangedListener(mPhoneSearchQueryTextListener);
+            mSearchView.setOnEditorActionListener(mPhoneSearchQueryEditorActionListener);
+            mSearchView.setHint(R.string.messaging_conversation_select_conversation_partner);
+            mSearchView.setImeOptions(EditorInfo.IME_ACTION_GO);
+        }
+
+        setUnreadMessageCount();
     }
 
-    protected void invalidateActionBar() {
-        mAvatarView.setVisibility(mInSearchView ? View.GONE : View.VISIBLE);
+    private void setUnreadMessageCount() {
+        int unreadMessageCount = ConversationUtils.getUnreadMessageCount(getApplicationContext());
+        Conversation conversation = getConversation();
+        if (conversation != null) {
+            unreadMessageCount -= conversation.getUnreadMessageCount();
+        }
+        if (mUnreadMessageNotification != null) {
+            mUnreadMessageNotification.setVisibility(unreadMessageCount > 0 ? View.VISIBLE : View.GONE);
+        }
+        if (mUnreadMessageCount != null) {
+            mUnreadMessageCount.setText(unreadMessageCount > UNREAD_MESSAGE_COUNT_DISPLAY_LIMIT
+                    ? ">" + UNREAD_MESSAGE_COUNT_DISPLAY_LIMIT
+                    : String.valueOf(unreadMessageCount));
+        }
+    }
+
+    protected void invalidateActionBar(boolean hidden) {
+        mAvatarView.setVisibility(hidden ? View.GONE : View.VISIBLE);
+        mUnreadMessageNotification.setVisibility(hidden ? View.GONE : View.VISIBLE);
     }
 
     protected ConversationOptionsDrawer getOptionsDrawer() {
@@ -657,27 +1041,21 @@ public class ConversationActivity extends ActionBarActivity implements ChatFragm
     /**
      * Sends broadcast event with action UPDATE_CONVERSATION, forcing conversation update in views.
      */
-    private void updateConversation() {
-        Intent intent = Action.UPDATE_CONVERSATION.intent();
-        Extra.PARTNER.to(intent, getPartner());
-        sendOrderedBroadcast(intent, Manifest.permission.READ);
+    public void updateConversation() {
+        MessageUtils.notifyConversationUpdated(this, getPartner(), true);
 
         // TODO: this will get called also when broadcast above is received.
         updateViews();
     }
 
-    private ChatFragment getChatFragment() {
+    private ChatFragment getChatFragment(boolean createIfNull) {
 
         if (isFinishing()) {
             return null;
         }
 
         if (mInSearchView) {
-            exitSearchUI();
-        }
-
-        if(mSavedInstanceState != null) {
-            return null;
+            exitSearchUI(true);
         }
 
         FragmentManager manager = getFragmentManager();
@@ -687,6 +1065,10 @@ public class ConversationActivity extends ActionBarActivity implements ChatFragm
                 (ChatFragment) manager.findFragmentByTag(ChatFragment.TAG_CONVERSATION_CHAT_FRAGMENT);
 
         if (fragment == null) {
+            if(!createIfNull) {
+                return null;
+            }
+
             fragment = new ChatFragment();
             transaction.replace(R.id.chat, fragment, ChatFragment.TAG_CONVERSATION_CHAT_FRAGMENT);
         }
@@ -706,23 +1088,32 @@ public class ConversationActivity extends ActionBarActivity implements ChatFragm
         return fragment;
     }
 
-    private Conversation getConversation() {
+    private boolean hasChatFragment() {
+        FragmentManager manager = getFragmentManager();
+
+        ChatFragment fragment =
+                (ChatFragment) manager.findFragmentByTag(ChatFragment.TAG_CONVERSATION_CHAT_FRAGMENT);
+
+        return fragment != null;
+    }
+
+
+    public Conversation getConversation() {
         mConversation = getConversation(getPartner());
         return mConversation;
     }
 
     private Conversation getConversation(String conversationPartner) {
-        ConversationRepository conversations =
-                AxoMessaging.getInstance(getApplicationContext()).getConversations();
+        AxoMessaging axoMessaging = AxoMessaging.getInstance(getApplicationContext());
+        if (!axoMessaging.isRegistered()) {
+            return null;
+        }
+
+        ConversationRepository conversations = axoMessaging.getConversations();
         Conversation conversation = AxoMessaging.getInstance(getApplicationContext())
                 .getOrCreateConversation(conversationPartner);
 
         if (conversation != null) {
-            if (conversation.containsUnreadMessages()) {
-                conversation.setUnreadMessageCount(0);
-                conversations.save(conversation);
-            }
-
             /*
              * For now all conversations will have burn notice for all messages
              * If a conversation does not have burn notice set it to 3 days by default.
@@ -737,43 +1128,52 @@ public class ConversationActivity extends ActionBarActivity implements ChatFragm
         return conversation;
     }
 
-    protected String getPartner() {
+    /**
+     * Get the partner's UUID.
+     *
+     * This function parses the Intent if it's an SENDTO and stores the partners UUID
+     * and th partners alias. Users of the the SENDTO should set the alias string.
+     *
+     * @return The partners UUID
+     */
+    public String getPartner() {
         Intent intent = getIntent();
         if (intent != null) {
             if( Intent.ACTION_SENDTO.equals( intent.getAction() ) ) {
                 Uri uri = intent.getData();
                 if (uri != null) {
                     if (Constants.SCHEME_IMTO.equals(uri.getScheme()) && Utilities.isAnyOf(uri.getHost(), SUPPORTED_IMTO_HOSTS)) {
-                        mConversationPartner = uri.getLastPathSegment();
+                        mConversationPartnerId = uri.getLastPathSegment();
                     }
                 }
             }
             else {
-                mConversationPartner = Extra.PARTNER.from(intent);
+                mConversationPartnerId = Extra.PARTNER.from(intent);
             }
             /*
-             * TODO: handle case when conversation activity does not have conversation
-             * partner in its intent
+             * TODO: handle case when conversation activity does not have conversation partner in its intent
              */
         }
-        if (mConversationPartner == null && mConversation != null) {
-            mConversationPartner = mConversation.getPartner().getUsername();
+        if (mConversationPartnerId == null && mConversation != null) {
+            mConversationPartnerId = mConversation.getPartner().getUserId();
+
         }
 
-        if (mConversationPartner != null) {
-            mConversationPartner = mConversationPartner.trim();
-            mConversationPartner = Utilities.removeSipParts(mConversationPartner);
+        if (mConversationPartnerId != null) {
+            mConversationPartnerId = mConversationPartnerId.trim();
+            mConversationPartnerId = Utilities.removeUriPartsSelective(mConversationPartnerId);
         }
-        Log.d(TAG, "Conversation partner: " + mConversationPartner);
+//        if (ConfigurationUtilities.mTrace) Log.d(TAG, "Conversation partner: " + mConversationPartnerId +
+//                ", (" + mConversationPartnerAlias + ")");
 
-        return mConversationPartner;
+        return mConversationPartnerId;
     }
 
     protected SendMessageOnClick createSendMessageOnClickListener(Conversation conversation) {
 
         TextView composeText = (TextView) findViewById(R.id.compose_text);
 
-        return new SendMessageOnClick(composeText, getUsername(), conversation, getConversations(),
+        return new SendMessageOnClick(composeText, getUsername(), conversation, ConversationUtils.getConversations(getApplicationContext()),
                 shouldRequestDeliveryNotification()) {
 
             @Override
@@ -787,13 +1187,23 @@ public class ConversationActivity extends ActionBarActivity implements ChatFragm
                 mConversation = getConversation();
 
                 if (text.length() <= 0) {
+                    if(!LoadUserInfo.canSendAttachments(getApplicationContext())) {
+                        showDialog(R.string.information_dialog, R.string.basic_feature_info,
+                                android.R.string.ok, -1);
+
+                        super.onClick(button);
+
+                        return;
+                    }
+
                     hideSoftKeyboard(R.id.compose_text);
                     selectFile();
-                } else if(text.length() > MESSAGE_TEXT_LENGTH_LIMIT) {
+                } else if (text.length() > MESSAGE_TEXT_LENGTH_LIMIT) {
                     // Message is too long to send itself over SIP - send it as an attachment
                     handleTextAttachment(text.toString());
 
                     mSource.setText(null);
+
                     super.onClick(button);
                 } else {
                     super.onClick(button);
@@ -802,7 +1212,7 @@ public class ConversationActivity extends ActionBarActivity implements ChatFragm
 
             @Override
             protected void withMessage(Message message) {
-                updateViews();
+                updateViewsWithMessage(message);
                 scrollToBottom();
 
                 SendMessageTask task = new SendMessageTask(getApplicationContext()) {
@@ -816,6 +1226,7 @@ public class ConversationActivity extends ActionBarActivity implements ChatFragm
                 };
                 AsyncUtils.execute(task, message);
             }
+
         };
     }
 
@@ -840,29 +1251,50 @@ public class ConversationActivity extends ActionBarActivity implements ChatFragm
     protected void toggleOptionsDrawer() {
         if (mDrawerLayout.isDrawerOpen(Gravity.RIGHT)) {
             mDrawerLayout.closeDrawer(Gravity.RIGHT);
-
         } else {
             mDrawerLayout.openDrawer(Gravity.RIGHT);
         }
     }
 
-    protected void updateViews() {
+    protected void updateViews(List<Event> events) {
+        mEvents = events;
         if (!isFinishing() && !mInSearchView) {
-            ChatFragment fragment = getChatFragment();
-
-            if(fragment != null) {
-                fragment.setEvents(getConversationHistory());
+            ChatFragment fragment = getChatFragment(true);
+            if (fragment != null) {
+                fragment.setEvents(events);
             }
             createOptionsDrawer();
         }
     }
 
-    protected String getUsername() {
-        return AxoMessaging.getInstance(this).getUserName();
+    protected void updateViews() {
+        updateViews(getConversationHistory());
     }
 
-    public ConversationRepository getConversations() {
-        return AxoMessaging.getInstance(getApplicationContext()).getConversations();
+    protected void updateViewsWithMessage(Message message) {
+        if (mEvents != null) {
+            boolean messagePresent = false;
+            ListIterator<Event> iterator = mEvents.listIterator();
+            while (iterator.hasNext()) {
+                Event event = iterator.next();
+                if (event.getId().equals(message.getId())) {
+                    iterator.set(message);
+                    messagePresent = true;
+                    break;
+                }
+            }
+            if (!messagePresent) {
+                mEvents.add(message);
+            }
+            updateViews(mEvents);
+        }
+        else {
+            updateViews();
+        }
+    }
+
+    protected String getUsername() {
+        return AxoMessaging.getInstance(this).getUserName();
     }
 
     protected boolean shouldRequestDeliveryNotification() {
@@ -873,9 +1305,6 @@ public class ConversationActivity extends ActionBarActivity implements ChatFragm
     }
 
     protected boolean shouldSendDeliveryNotification(Message message) {
-        //if (!OptionsDrawer.isSendReceiptsEnabled(this)) {
-        //    return false;
-        // }
         return message.isRequestReceipt();
     }
 
@@ -929,16 +1358,24 @@ public class ConversationActivity extends ActionBarActivity implements ChatFragm
         chooser.intent(createCaptureImageIntent());
         chooser.intent(createCaptureVideoIntent(), R.string.capture_video_label);
         chooser.intent(createSelectContactIntent());
-        chooser.ignore(new String[] { "com.android.soundrecorder", "com.cyanogenmod.filemanager", "com.borqs.blackphone.music" });
+        chooser.ignore(new String[]{"com.android.soundrecorder", "com.cyanogenmod.filemanager", "com.borqs.blackphone.music"});
         startActivityForResult(chooser.build(), R_id_share);
     }
 
     private Intent createCaptureImageIntent() {
         Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-        Uri uri = PictureProvider.CONTENT_URI;
+        //FIXME: Hotfix
+        File imagePath = new File(getFilesDir(), "captured/image");
+        if(!imagePath.exists()) imagePath.mkdirs();
+        Uri uri = FileProvider.getUriForFile(this, "com.silentcircle.files", new File(imagePath, PictureProvider.JPG_FILE_NAME));
         mPendingImageCaptureUri = uri;
+
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        intent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+        intent.setClipData(ClipData.newRawUri(null, uri));
         intent.putExtra(MediaStore.EXTRA_OUTPUT, uri);
         intent.putExtra(MediaStore.EXTRA_SIZE_LIMIT, 10 * 1024 * 1024L);
+
         return intent;
     }
 
@@ -993,6 +1430,7 @@ public class ConversationActivity extends ActionBarActivity implements ChatFragm
 
                     String mimeType = attachmentMetaDataJson.getString("MimeType");
                     String fileName = attachmentMetaDataJson.getString("FileName");
+                    String displayName = attachmentMetaDataJson.optString("DisplayName");
 
                     if(!exported) {
                         attachmentFile = AttachmentUtils.getFile(messageId, this);
@@ -1008,6 +1446,7 @@ public class ConversationActivity extends ActionBarActivity implements ChatFragm
                     Extra.ID.to(fileViewerIntent, messageId);
                     if (event != null && event instanceof Message) {
                         Extra.TEXT.to(fileViewerIntent, fileName);
+                        Extra.DISPLAY_NAME.to(fileViewerIntent, displayName);
                     }
                     startActivity(fileViewerIntent);
                 } catch (JSONException exception) {
@@ -1018,27 +1457,35 @@ public class ConversationActivity extends ActionBarActivity implements ChatFragm
     }
 
     public JSONObject getAttachment(String messageId) {
-        ConversationRepository conversations = AxoMessaging.getInstance(this).getConversations();
+        JSONObject attachment = null;
 
-        Conversation conversation = conversations.findByPartner(getPartner());
-        EventRepository events = conversations.historyOf(conversation);
-        Message message = (Message) events.findById(messageId);
+        ConversationRepository repository = ConversationUtils.getConversations(getApplicationContext());
+        if (repository != null) {
+            Conversation conversation = repository.findByPartner(getPartner());
+            EventRepository events = repository.historyOf(conversation);
+            Message message = (Message) events.findById(messageId);
 
-        try {
-            return new JSONObject(message.getAttachment());
-        } catch (JSONException exception) {
-            Log.e(TAG, "Message attachment JSON error (rare)", exception);
+            try {
+                attachment = new JSONObject(message.getAttachment());
+            } catch (JSONException exception) {
+                Log.e(TAG, "Message attachment JSON error (rare)", exception);
+            }
         }
 
-        return null;
+        return attachment;
     }
 
     private List<Event> getConversationHistory() {
+        if (mEvents != null) {
+            return mEvents;
+        }
+
+        ConversationRepository repository = ConversationUtils.getConversations(getApplicationContext());
         Conversation conversation = getConversation();
         List<Event> items;
-        if (conversation != null) {
-            items = filter(getConversations().historyOf(conversation).list());
-            Collections.reverse(items);
+        if (repository != null && conversation != null) {
+            items = MessageUtils.filter(repository.historyOf(conversation).list(),
+                    DialerActivity.mShowErrors);
         }
         else {
             // return empty list if conversation is not available
@@ -1083,6 +1530,11 @@ public class ConversationActivity extends ActionBarActivity implements ChatFragm
     }
 
     private void composeMessageWithAttachment(final Intent attachment, final boolean isUnique) {
+        ConversationRepository repository = ConversationUtils.getConversations(getApplicationContext());
+        if (repository == null) {
+            return;
+        }
+
         if (attachment == null) {
             return;
         }
@@ -1109,11 +1561,15 @@ public class ConversationActivity extends ActionBarActivity implements ChatFragm
 
         Message message = MessageUtils.composeMessage(getUsername(), "",
                 shouldRequestDeliveryNotification(), getConversation(), null);
-        EventRepository events = getConversations().historyOf(getConversation());
+        EventRepository events = repository.historyOf(getConversation());
 
         message.setState(MessageStates.COMPOSING);
         message.setAttachment("");
         events.save(message);
+
+        // message has been saved, refresh view to show it
+        // alternative would be to MessageUtils.notifyConversationUpdated
+        updateViewsWithMessage(message);
 
         Intent serviceIntent = Action.UPLOAD.intent(this, SCloudService.class);
         Extra.PARTNER.to(serviceIntent, message.getConversationID());
@@ -1138,20 +1594,19 @@ public class ConversationActivity extends ActionBarActivity implements ChatFragm
                          * Sound notification for an arrived message for another conversation
                          * Play sound and stop broadcast insetad of showing message alarm notification.
                          */
-                        if (!forCurrentConversation && mPlayer != null && !mPlayer.isPlaying()) {
-                            mPlayer.start();
+                        boolean soundsEnabled =
+                                MessagingPreferences.getInstance(context).getMessageSoundsEnabled();
+                        if (!forCurrentConversation && soundsEnabled) {
+                            SoundNotifications.playReceiveMessageSound();
+                            setUnreadMessageCount();
                         }
                     case UPDATE_CONVERSATION:
                         /* update view with new message information */
                         if (forCurrentConversation) {
-                            boolean forceRefresh = intent.getBooleanExtra("FORCE_REFRESH", false);
-                            if (mIsVisible && forceRefresh)  // if not visible the next onResume will refresh()
-                                refresh();
-                            else
-                                updateViews();
-                        }
-                        if (isOrderedBroadcast()) {
-                            abortBroadcast();
+                            handleUpdateNotification(intent);
+                            if (isOrderedBroadcast()) {
+                                abortBroadcast();
+                            }
                         }
                         break;
                     case PROGRESS:
@@ -1194,13 +1649,35 @@ public class ConversationActivity extends ActionBarActivity implements ChatFragm
         registerReceiver(mViewUpdater, Action.RECEIVE_ATTACHMENT.filter(), MESSAGE_PRIORITY);
     }
 
+    private void handleUpdateNotification(Intent intent) {
+        // clear events cache
+        mEvents = null;
+
+        boolean forceRefresh = Extra.FORCE.getBoolean(intent);
+        // if not visible the next onResume will refresh()
+        if (mIsVisible) {
+            if (!refresh(forceRefresh)) {
+                mRerunRefresh = !forceRefresh;
+                mRerunForcedRefresh = forceRefresh;
+                if (ConfigurationUtilities.mTrace) {
+                    Log.d(TAG, "Refresh task already running, rise flag to re-run it "
+                        + "(rerun: " + mRerunRefresh + ", rerun forced: " + mRerunForcedRefresh + ").");
+                }
+            }
+        }
+        else {
+            updateViews();
+        }
+    }
+
     private Intent registerReceiver(BroadcastReceiver receiver, IntentFilter filter, int priority) {
         filter.setPriority(priority);
         return registerReceiver(receiver, filter);
     }
 
     @Override
-    public void onActionModeCreated() {
+    public void onActionModeCreated(ActionMode mode) {
+        mActionMode = mode;
         findViewById(R.id.compose).setVisibility(View.GONE);
         hideSoftKeyboard(R.id.compose_text);
         mDrawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
@@ -1208,6 +1685,7 @@ public class ConversationActivity extends ActionBarActivity implements ChatFragm
 
     @Override
     public void onActionModeDestroyed() {
+        mActionMode = null;
         findViewById(R.id.compose).setVisibility(mInSearchView ? View.GONE : View.VISIBLE);
         if (!mInSearchView) {
             mDrawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED);
@@ -1220,23 +1698,44 @@ public class ConversationActivity extends ActionBarActivity implements ChatFragm
     }
 
     @Override
-    public void performAction(int actionID, List targets) {
-        for (Object target : targets) {
-            if (target instanceof Event) {
-                performAction(actionID, (Event) target);
-            }
+    public void performAction(int actionID, List<Event> targets) {
+        for (Event target : targets) {
+            performAction(actionID, target);
         }
+    }
+
+    @Override
+    public void axoRegistrationStateChange(boolean registered) {
+        mIsAxolotlRegistered = registered;
+        if (registered && !isFinishing()) {
+            AxoMessaging axoMessaging = AxoMessaging.getInstance(getApplicationContext());
+            axoMessaging.removeStateChangeListener(this);
+
+            // restart activity with its own intent
+            Intent messagingIntent = ContactsUtils.getMessagingIntent(getPartner(), this);
+            startActivity(messagingIntent);
+        }
+    }
+
+    @Override
+    public void zrtpStateChange(CallState call, TiviPhoneService.CT_cb_msg msg) {
+    }
+
+    @Override
+    public void callStateChange(CallState call, TiviPhoneService.CT_cb_msg msg) {
+        invalidateOptionsMenu();
     }
 
     protected void performAction(int actionID, final Event event) {
         switch (actionID) {
             case R.id.burn:
-                if (event instanceof Message && MessageUtils.isBurnable((Message) event)) {
-                    MessageUtils.burnMessage(this, (Message) event);
+                boolean soundsEnabled =
+                        MessagingPreferences.getInstance(
+                                SilentPhoneApplication.getAppContext()).getMessageSoundsEnabled();
+                if (soundsEnabled) {
+                    SoundNotifications.playBurnMessageSound();
                 }
-                else {
-                    deleteEvent(event);
-                }
+                MessageUtils.burnMessage(this, event);
                 break;
             case R.id.delete:
                 deleteEvent(event);
@@ -1251,7 +1750,6 @@ public class ConversationActivity extends ActionBarActivity implements ChatFragm
                 MessageUtils.showEventInfoDialog(this, event);
                 break;
             case R.id.forward:
-                Log.d(TAG, "Message forwarding not implemented");
                 forwardMessage(event);
                 break;
             default:
@@ -1261,7 +1759,11 @@ public class ConversationActivity extends ActionBarActivity implements ChatFragm
     }
 
     protected void deleteEvent(final Event event) {
-        getConversations().historyOf(getConversation()).remove(event);
+        ConversationRepository repository = ConversationUtils.getConversations(getApplicationContext());
+        Conversation conversation = getConversation();
+        if (repository != null && conversation != null) {
+            repository.historyOf(conversation).remove(event);
+        }
 
         if(event instanceof Message) {
             if(((Message) event).hasAttachment()) {
@@ -1278,13 +1780,17 @@ public class ConversationActivity extends ActionBarActivity implements ChatFragm
         if (event instanceof OutgoingMessage) {
             OutgoingMessage message = (OutgoingMessage) event;
             if (/* !isTalkingToSelf() */ true) {
-                EventRepository events = getConversations().historyOf(getConversation());
-                events.remove(message);
-                message.setId(UUIDGen.makeType1UUID().toString());
-                message.setState(MessageStates.COMPOSED);
-                events.save(event);
-                SendMessageTask task = new SendMessageTask(getApplicationContext());
-                AsyncUtils.execute(task, message);
+                ConversationRepository repository = ConversationUtils.getConversations(getApplicationContext());
+                if (repository != null) {
+                    EventRepository events = repository.historyOf(getConversation());
+                    message.setState(MessageStates.COMPOSED);
+                    message.setAttributes(
+                            MessageUtils.getMessageAttributesJSON(message.getBurnNotice(),
+                                    message.isRequestReceipt(), message.getLocation()));
+                    events.save(message);
+                    SendMessageTask task = new SendMessageTask(getApplicationContext());
+                    AsyncUtils.execute(task, message);
+                }
             }
         }
         else {
@@ -1309,38 +1815,84 @@ public class ConversationActivity extends ActionBarActivity implements ChatFragm
         }
     }
 
+    /*
+     * Do the actual forward action:
+     *
+     * If message a message with an attachment is being forwarded, send it,
+     * If a text message is being forwarded, populate compose field.
+     */
+    protected void doMessageForward() {
+        if (mMessageToForward != null) {
+            MessageUtils.forwardMessage(this, getUsername(), getPartner(), mMessageToForward);
+            mMessageToForward = null;
+        } else if (!TextUtils.isEmpty(mTextToForward)) {
+            mComposeText.setText(mTextToForward);
+            mTextToForward = null;
+        }
+    }
+
+    private void openActionBarQueryField() {
+        ActionBar actionBar = getSupportActionBar();
+        actionBar.setDisplayShowCustomEnabled(true);
+        ((TextView)mToolbar.findViewById(R.id.title)).setText(null);
+        ((TextView)mToolbar.findViewById(R.id.sub_title)).setText(null);
+        ((SearchEditTextLayout)actionBar.getCustomView()).expand(false /* animate */, true /* requestFocus */);
+        ((SearchEditTextLayout)actionBar.getCustomView()).showBackButton(false);
+    }
+
+    private void maybeExitSearchUi() {
+        if (mInSearchView && TextUtils.isEmpty(mSearchQuery)) {
+            exitSearchUI(false);
+            DialerUtils.hideInputMethod(mSearchView);
+        }
+    }
+
     protected void enterSearchUI() {
         FragmentManager manager = getFragmentManager();
         final FragmentTransaction transaction = manager.beginTransaction();
         mSearchFragment =
-                (SearchFragment) manager.findFragmentByTag(
-                        SearchFragment.TAG_CONVERSATION_CONTACT_SEARCH_FRAGMENT);
-        transaction.setCustomAnimations(android.R.animator.fade_in, 0);
+                (SearchAgainFragment) manager.findFragmentByTag(
+                        SearchAgainFragment.TAG_CONVERSATION_CONTACT_SEARCH_FRAGMENT);
+
         if (mSearchFragment == null) {
-            mSearchFragment = new SearchFragment();
+            mSearchFragment = new SearchAgainFragment();
+
+            // We store these pending attachment strings temporarily in the search fragment
+            // They are passed back to the activity when a recipient is selected
+            String pendingDataFile = getPendingAttachmentFile();
+
+            if(!TextUtils.isEmpty(pendingDataFile)) {
+                mSearchFragment.setArguments(Extra.DATA.to(new Bundle(), pendingDataFile));
+            } else {
+                String pendingDataText = getPendingAttachmentText();
+
+                if (!TextUtils.isEmpty(pendingDataText)) {
+                    mSearchFragment.setArguments(Extra.TEXT.to(new Bundle(), pendingDataText));
+                }
+            }
+
             transaction.add(R.id.chat, mSearchFragment,
-                    SearchFragment.TAG_CONVERSATION_CONTACT_SEARCH_FRAGMENT);
+                    SearchAgainFragment.TAG_CONVERSATION_CONTACT_SEARCH_FRAGMENT);
         }
         else {
             transaction.show(mSearchFragment);
         }
         transaction.commit();
+        mSearchView.post(mOpenActionBarRunnable);
 
         mInSearchView = true;
         mComposeLayout.setVisibility(View.GONE);
         hideSoftKeyboard(R.id.compose_text);
         mDrawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
-        mTitle.setText(R.string.messaging_conversation_select_conversation_partner);
-        invalidateOptionsMenu();
-        invalidateActionBar();
+        invalidateActionBar(mInSearchView);
     }
 
-    protected void exitSearchUI() {
+    protected void exitSearchUI(boolean transitioning) {
         FragmentManager manager = getFragmentManager();
 
-        SearchFragment fragment =
-                (SearchFragment) manager.findFragmentByTag(
-                        SearchFragment.TAG_CONVERSATION_CONTACT_SEARCH_FRAGMENT);
+        SearchAgainFragment fragment =
+                (SearchAgainFragment) manager.findFragmentByTag(
+                        SearchAgainFragment.TAG_CONVERSATION_CONTACT_SEARCH_FRAGMENT);
 
         if (fragment != null) {
             final FragmentTransaction transaction = manager.beginTransaction();
@@ -1350,10 +1902,92 @@ public class ConversationActivity extends ActionBarActivity implements ChatFragm
         }
 
         mInSearchView = false;
-        mComposeLayout.setVisibility(View.VISIBLE);
+        if (transitioning) {
+            mComposeLayout.setVisibility(View.VISIBLE);
+        }
         mDrawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED);
+
+        ActionBar actionBar = getSupportActionBar();
+        if (actionBar != null) {
+            actionBar.setDisplayShowCustomEnabled(false);
+
+            SearchEditTextLayout seTextLayout = (SearchEditTextLayout) actionBar.getCustomView();
+            if (seTextLayout.isExpanded()) {
+                seTextLayout.collapse(true /* animate */);
+            }
+            if (seTextLayout.isFadedOut()) {
+                seTextLayout.fadeIn();
+            }
+        }
         invalidateOptionsMenu();
-        restoreActionBar();
+
+        if (transitioning) {
+            restoreActionBar();
+        }
+    }
+
+    // Get a possible pending attachment file to send
+    private String getPendingAttachmentFile() {
+        Intent intent = getIntent();
+
+        if(Intent.ACTION_SEND.equals(intent.getAction())) {
+            // We have some type of send intent for a file
+            Uri fileUri = (Uri) intent.getExtras().get(Intent.EXTRA_STREAM);
+
+            // Check if we have a file
+            if (fileUri != null) {
+                return fileUri.toString();
+            }
+
+            return null;
+        } else if(Intent.ACTION_SENDTO.equals(intent.getAction())) {
+            // We store and retrieve this data internally from the search fragment
+            return Extra.DATA.from(intent);
+        }
+
+        return null;
+    }
+
+    // Get a possible pending attachment plaintext to send
+    private String getPendingAttachmentText() {
+        Intent intent = getIntent();
+
+        if(Intent.ACTION_SEND.equals(intent.getAction())) {
+            // Check if we have plaintext
+            if (intent.getType().equals("text/plain")) {
+                ClipData attachmentClipData = intent.getClipData();
+
+                if (attachmentClipData != null) {
+                    if (attachmentClipData.getItemCount() == 0) {
+                        return null;
+                    }
+
+                    StringBuilder sb = new StringBuilder();
+
+                    for (int i = 0; i < attachmentClipData.getItemCount(); i++) {
+                        CharSequence text = attachmentClipData.getItemAt(i).getText();
+
+                        if (!TextUtils.isEmpty(text)) {
+                            sb.append(text);
+                            sb.append("\n");
+                        }
+                    }
+
+                    if (sb.length() != 0) {
+                        return sb.toString().trim();
+                    } else {
+                        return null;
+                    }
+                }
+            }
+
+            return null;
+        } else if(Intent.ACTION_SENDTO.equals(intent.getAction())) {
+            // We store and retrieve this data internally from the search fragment
+            return Extra.TEXT.from(intent);
+        }
+
+        return null;
     }
 
     protected void hideSoftKeyboard(int... viewResourceIDs) {
@@ -1367,113 +2001,72 @@ public class ConversationActivity extends ActionBarActivity implements ChatFragm
     }
 
     private void scrollToBottom() {
-        ChatFragment fragment = getChatFragment();
+        ChatFragment fragment = getChatFragment(false);
         if (fragment != null) {
             fragment.scrollToBottom();
         }
     }
 
-    private void setPhoto(QuickContactBadge view, long photoId, Uri contactUri,
-                          String displayName, String identifier, int contactType) {
-        ContactPhotoManagerNew contactPhotoManager = ContactPhotoManagerNew.getInstance(this);
-        view.assignContactUri(contactUri);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
-            view.setOverlay(null);
-        ContactPhotoManagerNew.DefaultImageRequest request =
-                new ContactPhotoManagerNew.DefaultImageRequest(displayName, identifier,
-                        contactType, true /* isCircular */);
-        contactPhotoManager.loadThumbnail(view, photoId, false /* darkTheme */,
-                true /* isCircular */, request);
-    }
+    protected boolean refresh(final boolean forceRefresh) {
 
-
-    private static List<Event> filter(List<Event> events) {
-        Iterator<Event> iterator = events.iterator();
-        Set<String> messageIds = new HashSet<>();
-        List<ErrorEvent> errorEvents = new ArrayList<>();
-        while (iterator.hasNext()) {
-            Event event = iterator.next();
-            if (event instanceof Message) {
-                Message message = (Message) event;
-                if (message instanceof IncomingMessage) {
-                    messageIds.add(message.getId());
-                }
-                switch (message.getState()) {
-                    case MessageStates.BURNED:
-                        iterator.remove();
-                        break;
-                    case MessageStates.COMPOSED:
-                        // TODO: remove if 'isOutgoingResendRequest'
-                        break;
-                    default:
-                        break;
-                }
-                // TODO: remove incoming messages which are not chat messages
-                // or not messages with attachment
-            }
-            else if (event instanceof ErrorEvent) {
-                // to avoid showing errors for existing incoming/outgoing messages
-                // keep track of error events.
-                ErrorEvent errorEvent = (ErrorEvent) event;
-                String messageId = errorEvent.getMessageId();
-                if (!TextUtils.isEmpty(messageId)) {
-                    errorEvents.add(errorEvent);
-                }
-            }
+        if (mRefreshing) {
+            return false;
         }
 
-        // clear those error events for which a message has been received
-        for (ErrorEvent errorEvent : errorEvents) {
-            String messageId = errorEvent.getMessageId();
-            if (messageId != null && messageIds.contains(messageId)) {
-                events.remove(errorEvent);
-            }
-        }
-
-        Collections.sort(events);
-        Collections.reverse(events);
-
-        /*
-         * at this point messages are sorted by the time set when arrived on local device
-         * sort incoming messages in order they have been created on sender's device
-         */
-        List<Event> result = new ArrayList<>();
-        List<Event> incomingEventsGroup = new ArrayList<>();
-        for (Event event : events) {
-            if (event instanceof IncomingMessage) {
-                incomingEventsGroup.add(event);
-            }
-            else {
-                Collections.sort(incomingEventsGroup, Event.EVENT_ID_COMPARATOR);
-                result.addAll(incomingEventsGroup);
-                incomingEventsGroup.clear();
-
-                result.add(event);
-            }
-        }
-        Collections.sort(incomingEventsGroup, Event.EVENT_ID_COMPARATOR);
-        result.addAll(incomingEventsGroup);
-
-        return result;
-    }
-
-    protected void refresh() {
-
-        if( mRefreshing ) {
-            return;
-        }
+        mRerunRefresh = false;
+        mRerunForcedRefresh = false;
         mRefreshing = true;
-        runOnUiThread( new Runnable() {
+        runOnUiThread(new Runnable() {
 
             @Override
             public void run() {
-                AsyncUtils.execute(new RefreshTask(), getPartner());
+                AsyncUtils.execute(new RefreshTask(ConversationUtils.getConversations(getApplicationContext()), getConversation(), forceRefresh), getPartner());
             }
-        } );
+        });
 
+        return true;
     }
 
-    protected void cancelAutoRefresh() {
+    protected boolean lockViewIfNecessary() {
+        MessagingPreferences preferences = MessagingPreferences.getInstance(this);
+        byte[] chatKeyData =
+                KeyManagerSupport.getPrivateKeyData(getContentResolver(),
+                        ConfigurationUtilities.getChatProtectionKey());
+
+        boolean lockingEnabled = chatKeyData != null && !mInSearchView;
+        boolean isViewLocked = lockingEnabled && preferences.isMessagingUnlockTimeExpired();
+
+        mPasswordOverlay.setVisibility(isViewLocked ? View.VISIBLE : View.GONE);
+        if (!mInSearchView) {
+            invalidateActionBar(isViewLocked);
+        }
+        invalidateOptionsMenu();
+
+        if (isViewLocked) {
+            mTitle.setText(R.string.messaging_screen_locked);
+            mPasswordOverlay.focus();
+            if (mActionMode != null) {
+                mActionMode.finish();
+            }
+        }
+        else {
+            if (!mInSearchView) {
+                restoreActionBar();
+            }
+        }
+
+        /*
+         * If periodic locks are necessary (while on the chat view, without leaving)
+         *
+        if (!isViewLocked) {
+            mHandler.postDelayed(mLockViewRunnable, preferences.getMessagingLockPeriod());
+        }
+         */
+
+        return isViewLocked;
+    }
+
+    protected synchronized void cancelAutoRefresh() {
         if( mTimer != null ) {
             mTimer.cancel();
             mTimer = null;
@@ -1481,70 +2074,94 @@ public class ConversationActivity extends ActionBarActivity implements ChatFragm
         }
     }
 
-    protected void scheduleAutoRefresh(long autoRefreshTime) {
+    protected synchronized void scheduleAutoRefresh(long autoRefreshTime) {
         cancelAutoRefresh();
         mTimer = new Timer( "conversation:auto-refresh" );
-        mTimer.schedule(new AutoRefresh(), new Date(autoRefreshTime));
+        mTimer.schedule(new AutoRefresh(this), new Date(autoRefreshTime));
     }
 
-    private class AutoRefresh extends TimerTask {
+    private void doBindService() {
+        // Establish a connection with the service.  We use an explicit
+        // class name because we want a specific service implementation that
+        // we know will be running in our own process (and thus won't be
+        // supporting component replacement by other applications).
+        bindService(new Intent(ConversationActivity.this, TiviPhoneService.class), phoneConnection, Context.BIND_AUTO_CREATE);
+    }
 
-        public AutoRefresh() { }
+    private void doUnbindService() {
+        if (mPhoneIsBound) {
+            mPhoneService.removeStateChangeListener(this);
+            // Detach our existing connection.
+            unbindService(phoneConnection);
+            mPhoneIsBound = false;
+        }
+    }
+
+    private static class AutoRefresh extends TimerTask {
+
+        private WeakReference<ConversationActivity> mConversationActivity;
+
+        public AutoRefresh(ConversationActivity activity) {
+            mConversationActivity = new WeakReference<>(activity);
+        }
 
         @Override
         public void run() {
-            refresh();
+            ConversationActivity activity = mConversationActivity.get();
+            if (activity != null) {
+                activity.refresh(false);
+            }
         }
     }
 
     class RefreshTask extends AsyncTask<String, Void, List<Event>> {
 
+        final Conversation mConversation;
+        final ConversationRepository mRepository;
+        final boolean mForceRefresh;
+
+        private int mUnreadMessageCount = 0;
+
+        public RefreshTask(ConversationRepository repository, Conversation conversation, boolean forceRefresh) {
+            mRepository = repository;
+            mConversation = conversation;
+            mForceRefresh = forceRefresh;
+        }
+
         @Override
-        protected List<Event> doInBackground( String... args ) {
+        protected List<Event> doInBackground(String... args) {
 
             String partner = args[0];
 
-            if( partner == null ) {
+            if (partner == null) {
                 partner = getPartner();
             }
 
-            mConversation = getConversation(partner);
-            if (mConversation == null) {
+            if (mConversation == null || mRepository == null) {
                 // cannot proceed with refresh here
                 return new ArrayList<>();
             }
-            ConversationActivity.this.mConversationPartner = partner;
+            ConversationActivity.this.mConversationPartnerId = partner;
 
-            EventRepository history = getConversations().historyOf(mConversation);
+            EventRepository history = mRepository.historyOf(mConversation);
             List<Event> events = history.list();
             events = removeExpiredMessages(history, events);
 
+            mUnreadMessageCount = 0;
             long autoRefreshTime = Long.MAX_VALUE;
-            for (Event event : events ) {
-                if( event instanceof Message ) {
+            for (Event event : events) {
+                if (event instanceof Message) {
                     Message message = (Message) event;
                     boolean save = false;
-                    if( event instanceof IncomingMessage) {
-                        if( MessageStates.RECEIVED == message.getState() ) {
-                            message.setState(MessageStates.READ);
-                            save = true;
-                            if (shouldSendDeliveryNotification(message)) {
-                                AxoMessaging.getInstance(getBaseContext()).sendDeliveryNotification(message);
-                            }
-                        }
+                    if (event instanceof IncomingMessage) {
+                        save = handleMessageByState(message);
 
-                        if(message.hasAttachment() && !message.hasMetaData()) {
-                            startService(SCloudService.getDownloadThumbnailIntent(event, partner, ConversationActivity.this));
+                        if (message.hasAttachment() && !message.hasMetaData()) {
+                            startService(SCloudService.getDownloadThumbnailIntent(event, partner,
+                                    ConversationActivity.this));
                         }
                     }
-
                     long currentMillis = System.currentTimeMillis();
-                    if (MessageStates.READ == message.getState()
-                            && message.expires()
-                            && message.getExpirationTime() == Message.DEFAULT_EXPIRATION_TIME) {
-                        save = true;
-                        message.setExpirationTime(currentMillis + message.getBurnNotice() * 1000L);
-                    }
                     /*
                      * calculate next timeslot for refresh,
                      * do not refresh sooner than after one second
@@ -1558,59 +2175,105 @@ public class ConversationActivity extends ActionBarActivity implements ChatFragm
                         history.save(message);
                 }
             }
-            if( autoRefreshTime < Long.MAX_VALUE ) {
+            if (autoRefreshTime < Long.MAX_VALUE) {
                 scheduleAutoRefresh(autoRefreshTime);
             }
-            if( mConversation.getUnreadMessageCount() > 0 ) {
-                mConversation.setUnreadMessageCount( 0 );
-                getConversations().save(mConversation);
-            }
-//            empty = events.isEmpty();
-            filter( events );
-            return events;
+
+            // attempt to correct unread message count for conversation
+            checkUnreadMessageCount(partner);
+
+            return MessageUtils.filter(events, DialerActivity.mShowErrors);
         }
 
         @Override
-        protected void onPostExecute( List<Event> events ) {
+        protected void onPostExecute(List<Event> events) {
 
             try {
-//                updateDisplayName();
-//                setText( R.id.device_name, conversation.getPartner().getDevice() );
+                if (ConfigurationUtilities.mTrace) {
+                    Log.d(TAG, "RefreshTask.onPostExecute: force refresh " + mForceRefresh
+                            + ", rerun required: " + mRerunRefresh
+                            + ", rerun forced: " + mRerunForcedRefresh);
+                }
 
-                updateViews(/* events */);
+                if (mForceRefresh && !(mRerunRefresh | mRerunForcedRefresh)) {
+                    if (ConfigurationUtilities.mTrace)
+                        Log.d(TAG, "RefreshTask forces view update");
+                    updateViews(events);
+                }
 
-                findViewById(R.id.compose_send).setOnClickListener(createSendMessageOnClickListener(mConversation) );
-
-//                updateActionBar();
-//                updateOptionsDrawer();
-//                invalidateSupportOptionsMenu();
+                findViewById(R.id.compose_send).setOnClickListener(createSendMessageOnClickListener(mConversation));
                 mRefreshing = false;
-            } catch( Exception e ) {
-                Log.e( "ConversationActivity", "RefreshTask.onPostExecute try to catch null pointer : " + e.getMessage() );
+
+                if (mRerunRefresh || mRerunForcedRefresh) {
+                    refresh(mForceRefresh | mRerunForcedRefresh);
+                }
+            } catch (Exception e) {
+                Log.e("ConversationActivity", "RefreshTask.onPostExecute try to catch null pointer : " + e.getMessage());
             }
         }
+
+        private boolean handleMessageByState(Message message) {
+            boolean save = false;
+            int state = message.getState();
+            if (MessageStates.RECEIVED == state) {
+                mUnreadMessageCount += 1;
+            } else if (MessageStates.READ == state
+                    && message.hasFailureFlagSet(Message.FAILURE_READ_NOTIFICATION)) {
+                Log.d(TAG, "Message has a failed read notification flag, resending");
+                save = true;
+                AxoMessaging.getInstance(getBaseContext()).sendReadNotification(message);
+            } else if (MessageStates.BURNED == state
+                    && message.hasFailureFlagSet(Message.FAILURE_BURN_NOTIFICATION)) {
+                Log.d(TAG, "Message has a failed burn notification flag, resending");
+                save = true;
+                String conversationId = MessageUtils.getConversationId(message);
+                AxoMessaging.getInstance(getBaseContext()).sendBurnNoticeRequest(
+                        message, conversationId);
+            }
+            return save;
+        }
+
         private List<Event> removeExpiredMessages(EventRepository history, List<Event> events) {
             List<Event> newList = new ArrayList<>();
             for (Event event : events) {
                 if (event instanceof Message) {
                     Message message = (Message) event;
-                    if (message.isExpired()) {
-                        if (ConfigurationUtilities.mTrace) Log.d(TAG, "#list removing expired id: " + message.getId());
-                        history.remove(message);
 
-                        if(((Message) event).hasAttachment()) {
-                            Intent cleanupIntent = Action.PURGE_ATTACHMENTS.intent(ConversationActivity.this, SCloudCleanupService.class);
-                            cleanupIntent.putExtra("KEEP_STATUS", false);
-                            Extra.PARTNER.to(cleanupIntent, getPartner());
-                            Extra.ID.to(cleanupIntent, event.getId());
-                            startService(cleanupIntent);
-                        }
+                    if (MessageStates.BURNED == message.getState()
+                            && message.hasFailureFlagSet(Message.FAILURE_BURN_NOTIFICATION)) {
+                        String conversationId = MessageUtils.getConversationId(message);
+                        AxoMessaging.getInstance(getBaseContext()).sendBurnNoticeRequest(
+                                message, conversationId);
+                        history.save(message);
+                        continue;
+                    }
+
+                    if (message.isExpired()) {
+                        if (ConfigurationUtilities.mTrace)
+                            Log.d(TAG, "#list removing expired id: " + message.getId());
+
+                        history.remove(message);
+                        MessageUtils.startAttachmentCleanUp(getApplicationContext(), getPartner(), message);
                         continue;
                     }
                 }
                 newList.add(event);
             }
             return newList;
+        }
+
+        private void checkUnreadMessageCount(@NonNull final String partner) {
+            // re-read conversation to avoid using possibly stale version
+            Conversation conversation = mRepository.findById(partner);
+            if (conversation != null) {
+                int unreadMessageCount = conversation.getUnreadMessageCount();
+                if (unreadMessageCount != mUnreadMessageCount) {
+                    Log.w(TAG, "Discrepancy between actual and reported unread message count for conversation: "
+                            + mUnreadMessageCount + "/" + unreadMessageCount);
+                    conversation.setUnreadMessageCount(mUnreadMessageCount);
+                    mRepository.save(conversation);
+                }
+            }
         }
     }
 

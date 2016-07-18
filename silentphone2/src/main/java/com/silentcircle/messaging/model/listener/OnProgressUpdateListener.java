@@ -29,6 +29,6 @@ package com.silentcircle.messaging.model.listener;
 
 public interface OnProgressUpdateListener {
 
-	public void onProgressUpdate(long progress);
+	void onProgressUpdate(long progress);
 
 }

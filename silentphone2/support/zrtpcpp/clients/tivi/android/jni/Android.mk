@@ -25,11 +25,13 @@ dummy := $(shell echo "char zrtpBuildInfo[] = \"@VERSION@:$(commit):$(TARGET_ARC
 
 # include paths for zrtpcpp modules
 LOCAL_C_INCLUDES += $(ROOT_SRC_PATH) $(ROOT_SRC_PATH)/srtp $(ROOT_SRC_PATH)/zrtp $(ROOT_SRC_PATH)/bnlib \
-                    $(ROOT_SRC_PATH)/clients/tivi $(ROOT_SRC_PATH)/clients/tivi/android/jni/sqlite3
+                    $(ROOT_SRC_PATH)/clients/tivi $(ROOT_SRC_PATH)/clients/tivi/android/jni/@sql_include@
 
-LOCAL_CFLAGS := -DSUPPORT_NON_NIST -DAXO_SUPPORT
-LOCAL_SRC_FILES := clients/tivi/android/jni/sqlite3/sqlite3.c
-LOCAL_SRC_FILES += buildinfo_$(TARGET_ARCH_ABI).c
+LOCAL_CFLAGS := -DSUPPORT_NON_NIST @sql_cipher_define@
+LOCAL_CFLAGS += @axo_support@
+
+LOCAL_SRC_FILES := buildinfo_$(TARGET_ARCH_ABI).c
+LOCAL_SRC_FILES += @sqlite_src@
 LOCAL_SRC_FILES += @zrtpcpp_src_spc@
 
 include $(BUILD_STATIC_LIBRARY)

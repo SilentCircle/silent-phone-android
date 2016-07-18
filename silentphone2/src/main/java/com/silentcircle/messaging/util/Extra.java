@@ -36,25 +36,15 @@ public enum Extra {
 
     ID("ID"),
     DATA("DATA"),
-    MASK("MASK"),
     PARTNER("PARTNER"),
-    RESOURCE("RESOURCE"),
-    LOCATOR("LOCATOR"),
     FORCE("FORCE"),
-    URL("URL"),
-    KEY("KEY"),
     TEXT("TEXT"),
-    NEXT("NEXT"),
     PROGRESS("PROGRESS"),
-    TIMESTAMP("TIMESTAMP"),
-    SILENT("SILENT"),
-    ACTIVATION_CODE("ACTIVATION_CODE"),
-    USERNAME("USERNAME"),
-    PASSWORD("PASSWORD"),
-    FOR_RESULT("FOR_RESULT"),
     EXPORTED("EXPORTED"),
-    DEACTIVATED("DEACTIVATED"),
-    STATE("STATE");
+    STATE("STATE"),
+    REASON("REASON"),
+    ALIAS("ALIAS"),
+    DISPLAY_NAME("DISPLAY_NAME");
 
     public final String INTENT_EXTRA_NAME_FORMAT = "com.silentcircle.messaging.extra.%s";
 
@@ -115,7 +105,7 @@ public enum Extra {
     }
 
     public boolean getBoolean(Intent intent) {
-        return intent == null ? false : intent.getBooleanExtra(getName(), false);
+        return intent != null && intent.getBooleanExtra(getName(), false);
     }
 
     public String getName() {

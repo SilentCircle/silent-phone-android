@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+// +++LICENSE_BEGIN+++
+/*
+ * Copyright © 2014, Silent Circle
+ * All rights reserved.
+ */
+// +++LICENSE_END+++
+ -->
+
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/developer_axo_debug"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="@dimen/spacing_normal"
+    tools:context=".activities.DialerActivity">
+
+    <TextView
+        android:id="@+id/developer_axo_debug_title"
+        style="@style/Widget.Silent.SimpleText.Medium"
+        android:paddingTop="@dimen/spacing_normal"
+        android:text="@string/developer_axo_debug" />
+
+    <RadioGroup
+        android:id="@+id/developer_axo_debug_radio_group"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/developer_axo_debug_title"
+        android:orientation="horizontal">
+        <android.support.v7.widget.AppCompatRadioButton
+            android:id="@+id/developer_axo_debug_radio_button_0"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="0"/>
+        <android.support.v7.widget.AppCompatRadioButton
+            android:id="@+id/developer_axo_debug_radio_button_1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="1"/>
+        <android.support.v7.widget.AppCompatRadioButton
+            android:id="@+id/developer_axo_debug_radio_button_2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="2"/>
+        <android.support.v7.widget.AppCompatRadioButton
+            android:id="@+id/developer_axo_debug_radio_button_3"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="3"/>
+        <android.support.v7.widget.AppCompatRadioButton
+            android:id="@+id/developer_axo_debug_radio_button_4"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="4"/>
+        <android.support.v7.widget.AppCompatRadioButton
+                android:id="@+id/developer_axo_debug_radio_button_5"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="5"/>
+        <android.support.v7.widget.AppCompatRadioButton
+                android:id="@+id/developer_axo_debug_radio_button_6"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="6"/>
+    </RadioGroup>
+
+    <TextView
+        style="@style/Widget.Silent.SimpleText.Small"
+        android:layout_below="@id/developer_axo_debug_radio_group"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:maxLines="5"
+        android:text="@string/developer_axo_debug_explanation"/>
+
+</RelativeLayout>

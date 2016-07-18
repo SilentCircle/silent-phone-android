@@ -1,4 +1,4 @@
-/*
+92/*
 Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -81,6 +81,29 @@ public class CameraHelper {
         return size;
     }
 
+    public static Camera.Size getOptimalPreviewSize2(List<Camera.Size> sizes, double targetRatio) {
+        final double SMALL_VALUE = 0.001;
+        if (sizes == null) return null;
+
+        Camera.Size optimalSize = null;
+        double optimalRatio = 0;
+        double minRatioDiff = Double.MAX_VALUE;
+
+        // Try to find a size which is close to the targetRatio and has the biggest possible resolution
+        for (Camera.Size size : sizes) {
+            double ratio = (double) size.width / size.height;
+            if (Math.abs(targetRatio - ratio) <= minRatioDiff) {
+                if (optimalSize != null && Math.abs(ratio - optimalRatio) < SMALL_VALUE) {
+                    if (size.width < optimalSize.width) continue;
+                }
+                optimalSize = size;
+                optimalRatio = (double) size.width/size.height;
+                minRatioDiff = Math.abs(targetRatio - ratio);
+            }
+        }
+        return optimalSize;
+    }
+
     public static Camera.Size getOptimalPreviewSize(Activity currentActivity,
                                                     List<Camera.Size> sizes, double targetRatio) {
         // Use a very small tolerance because we want an exact match.
@@ -143,6 +166,30 @@ public class CameraHelper {
             result = (info.orientation - degrees + 360) % 360;
         }
         camera.setDisplayOrientation(result);
+    }
+
+    public static int getOrientationHint(Activity activity,
+                                         int cameraId, android.hardware.Camera camera) {
+        android.hardware.Camera.CameraInfo info =
+                new android.hardware.Camera.CameraInfo();
+        android.hardware.Camera.getCameraInfo(cameraId, info);
+        int rotation = activity.getWindowManager().getDefaultDisplay()
+                .getRotation();
+        int degrees = 0;
+        switch (rotation) {
+            case Surface.ROTATION_0: degrees = 0; break;
+            case Surface.ROTATION_90: degrees = 90; break;
+            case Surface.ROTATION_180: degrees = 180; break;
+            case Surface.ROTATION_270: degrees = 270; break;
+        }
+
+        int result;
+        if (info.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
+            result = (info.orientation + degrees) % 360;
+        } else {  // back-facing
+            result = (info.orientation - degrees + 360) % 360;
+        }
+        return result;
     }
 
 }

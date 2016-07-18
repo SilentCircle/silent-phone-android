@@ -21,9 +21,15 @@ import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Resources;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.Outline;
+import android.graphics.Paint;
 import android.graphics.Point;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffXfermode;
+import android.graphics.Rect;
 import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Build;
@@ -40,6 +46,7 @@ import android.view.animation.AnimationUtils;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.silentcircle.messaging.activities.ChooserBuilder;
 import com.silentcircle.messaging.util.IOUtils;
@@ -196,7 +203,6 @@ public class ViewUtil {
         view.setCompoundDrawablesRelativeWithIntrinsicBounds(drawableResourceID, 0, 0, 0);
     }
 
-
     public static Intent createIntentForLinks(TextView view) {
 
         CharSequence text = view.getText();
@@ -219,6 +225,22 @@ public class ViewUtil {
             }
         }
         return null;
+    }
+
+    public static boolean startActivityForTextLinks(final Context context, final TextView view) {
+        boolean linksHandled = false;
+        Intent links = createIntentForLinks(view);
+        if (links != null) {
+            linksHandled = true;
+            try {
+                context.startActivity(links);
+            }
+            catch (Exception e) {
+                Log.d(TAG, "Could not start activity for links in message text: " + e.getMessage());
+                Toast.makeText(context, R.string.messaging_could_not_view_link, Toast.LENGTH_SHORT).show();
+            }
+        }
+        return linksHandled;
     }
 
     /**
@@ -332,5 +354,47 @@ public class ViewUtil {
             }
         });
         imageView.startAnimation(animOut);
+    }
+
+    public static void setViewWidthHeight(View view, int width, int height) {
+        ViewGroup.LayoutParams params = view.getLayoutParams();
+        params.width = width;
+        params.height = height;
+        view.setLayoutParams(params);
+    }
+
+    public static void setViewHeight(View view, int height) {
+        ViewGroup.LayoutParams params = view.getLayoutParams();
+        params.height = height;
+        view.setLayoutParams(params);
+    }
+
+    /**
+     * Cut a circular image from provided bitmap.
+     *
+     * @param bitmap Bitmap from which to cut the circle.
+     *
+     */
+    public static Bitmap getCircularBitmap(final Bitmap bitmap) {
+        int width = bitmap.getWidth();
+        if (bitmap.getWidth() > bitmap.getHeight()) {
+            width = bitmap.getHeight();
+        }
+        Bitmap output = Bitmap.createBitmap(width, width, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(output);
+
+        final float radius = width / 2.0f;
+        final int color = 0xffff00ff;
+        final Paint paint = new Paint();
+        final Rect rect = new Rect(0, 0, bitmap.getWidth(), bitmap.getHeight());
+
+        canvas.drawARGB(0, 0, 0, 0);
+        paint.setAntiAlias(true);
+        paint.setColor(color);
+        canvas.drawCircle(radius, radius, radius, paint);
+        paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_IN));
+        canvas.drawBitmap(bitmap, rect, rect, paint);
+
+        return output;
     }
 }

@@ -13,7 +13,7 @@
     <string name="provision_later">後で</string>
     <string name="crypto_padlock">セキュリティ状況を示す南京錠</string>
     <string name="error_code">エラーコード：</string>
-    <string name="logout">ログアウト</string>
+    <string name="wipe_phone">ログアウト</string>
     <string name="sip_state_calling">呼び出し</string>
     <string name="sip_state_connecting">接続する</string>
     <string name="sip_state_ringing">リンギング</string>

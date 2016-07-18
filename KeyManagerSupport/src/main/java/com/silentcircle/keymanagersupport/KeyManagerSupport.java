@@ -28,7 +28,7 @@ public class KeyManagerSupport {
         /**
          * The key manager read data during a {@code store*} or {@code update*} call.
          */
-        public void onKeyDataRead();
+        void onKeyDataRead();
 
         /**
          * The support provider received a lock request from the key manager.
@@ -40,7 +40,7 @@ public class KeyManagerSupport {
          * <p/>
          * An applications may take more actions, such as deleting sensitive data or closing connections.
          */
-        public void onKeyManagerLockRequest();
+        void onKeyManagerLockRequest();
 
         /**
          * The support provider received an unlock request from the key manager.
@@ -50,7 +50,7 @@ public class KeyManagerSupport {
          * <p/>
          * An applications may take more actions, such as reading their key data, shared data etc.
          */
-        public void onKeyManagerUnlockRequest();
+        void onKeyManagerUnlockRequest();
     }
 
     @SuppressWarnings("unused")

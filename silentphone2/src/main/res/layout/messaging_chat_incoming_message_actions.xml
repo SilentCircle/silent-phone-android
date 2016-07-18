@@ -19,6 +19,7 @@
             style="@style/Widget.Silence.ImageView.ActionButton"
             android:contentDescription="@string/messaging_burn_button_voiceover"
             android:src="@drawable/burn_button_incoming"
+            android:filterTouchesWhenObscured="true"
             android:visibility="visible" />
 
         <com.silentcircle.messaging.views.TextView
@@ -26,9 +27,10 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textColor="@color/sc_ng_text_grey"
+            android:paddingLeft="5dp"
+            android:paddingStart="5dp"
             android:textSize="@dimen/messaging_message_info_small_text_size"
-            android:text="@string/sample_burn_notice"
-            android:layout_below="@+id/message_burn_icon" />
+            android:text="@string/sample_burn_notice"/>
 
     </LinearLayout>
 

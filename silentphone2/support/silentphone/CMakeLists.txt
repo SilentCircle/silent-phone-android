@@ -21,13 +21,24 @@ set (SOVERSION 3)
 # ***** SETUP section *****
 # see README
 #
+# This is not a production ready cmake file, it mainly exists to build a Linux
+# command line client for some testing. This is a 'development' cmake that's
+# currently adjusted to my (Werner's) development environment.
+#
 # Setup of variable that point to additional directories, libraries, etc.
-# Set the 'otherlibs' variable accouring to you environment
+# Set the 'otherlibs' variable according to you environment
+#
+# In my (Werner's) environment the libs/axolotl and libs/zrtpcpp are just
+# symbolic links to the Axolotl and zrtpcpp directories.
+#
+# Note: also check the linux/CMakeLists.txt. The 'target_link_libraries'
+# also use directories and use libraries inside the directories.
 #
 set(otherLibs ${CMAKE_SOURCE_DIR}/../libs) ## adjust this setting if necessary
 
 set(zrtpDir ${otherLibs}/zrtpcpp)          ## adjust this setting if necessary
 set(polarDir ${otherLibs}/polarssl)        ## adjust this setting if necessary
+set(axoDir ${otherLibs}/axolotl)           ## adjust this setting if necessary
 
 # set base directory of tivi sources - usually not necessary to change this
 set(tiviBase ${CMAKE_SOURCE_DIR})
@@ -49,9 +60,9 @@ else()
 endif()
 
 
-MESSAGE(STATUS "Configuring Tivi client for ${tiviSystem}. Base settings: zrtp: ${zrtpDir}, polar: ${polarDir}")
+MESSAGE(STATUS "Configuring Tivi client for ${tiviSystem}. Base settings: zrtp: ${zrtpDir}, polar: ${polarDir}, axolotl: ${axoDir}")
 
-include_directories (${zrtpDir} ${zrtpDir}/zrtp ${zrtpDir}/clients/tivi ${polarDir}/include)
+include_directories (${zrtpDir} ${zrtpDir}/zrtp ${zrtpDir}/clients/tivi ${polarDir}/include ${axoDir})
 
 set(encryptDir 
     ${tiviBase}/encrypt/md5/md5.cpp 
@@ -190,6 +201,7 @@ set(tiviEngine
     ${tiviBase}/tiviengine/tivi_log.cpp
     ${tiviBase}/tiviengine/release.cpp
     ${tiviBase}/tiviengine/sip_reason_translator.cpp
+    ${tiviBase}/tiviengine/axolotl_glue.cpp
 )
 
 set(rtp 
@@ -244,6 +256,9 @@ set(vTivi ${tiviBase}/codecs/vTiVi/
     ${tiviBase}/codecs/vTiVi/tabs.cpp
     ${tiviBase}/codecs/vTiVi/t_filter.cpp
     ${tiviBase}/codecs/vTiVi/t_ssim.c)
+
+set(tmr ${tiviBase}/tmr/CTMRTunnel.cpp 
+    ${tiviBase}/tmr/tmr_parse.cpp)
 
 #set(aec
 #    ${tiviBase}/audio/ec/speex_aec/speex_aec.cpp)

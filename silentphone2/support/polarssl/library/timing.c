@@ -1,12 +1,9 @@
 /*
  *  Portable interface to the CPU cycle counter
  *
- *  Copyright (C) 2006-2014, Brainspark B.V.
+ *  Copyright (C) 2006-2014, ARM Limited, All Rights Reserved
  *
- *  This file is part of PolarSSL (http://www.polarssl.org)
- *  Lead Maintainer: Paul Bakker <polarssl_maintainer at polarssl.org>
- *
- *  All rights reserved.
+ *  This file is part of mbed TLS (https://tls.mbed.org)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -80,8 +77,10 @@ unsigned long hardclock( void )
 #endif /* !POLARSSL_HAVE_HARDCLOCK && POLARSSL_HAVE_ASM &&
           ( _MSC_VER && _M_IX86 ) || __WATCOMC__ */
 
+/* some versions of mingw-64 have 32-bit longs even on x84_64 */
 #if !defined(POLARSSL_HAVE_HARDCLOCK) && defined(POLARSSL_HAVE_ASM) &&  \
-    defined(__GNUC__) && defined(__i386__)
+    defined(__GNUC__) && ( defined(__i386__) || (                       \
+    ( defined(__amd64__) || defined( __x86_64__) ) && __SIZEOF_LONG__ == 4 ) )
 
 #define POLARSSL_HAVE_HARDCLOCK
 
@@ -252,9 +251,13 @@ unsigned long get_timer( struct hr_time *val, int reset )
     return( delta );
 }
 
-DWORD WINAPI TimerProc( LPVOID uElapse )
+/* It's OK to use a global because alarm() is supposed to be global anyway */
+static DWORD alarmMs;
+
+static DWORD WINAPI TimerProc( LPVOID TimerContext )
 {
-    Sleep( (DWORD) uElapse );
+    ((void) TimerContext);
+    Sleep( alarmMs );
     alarmed = 1;
     return( TRUE );
 }
@@ -264,8 +267,8 @@ void set_alarm( int seconds )
     DWORD ThreadId;
 
     alarmed = 0;
-    CloseHandle( CreateThread( NULL, 0, TimerProc,
-        (LPVOID) ( seconds * 1000 ), 0, &ThreadId ) );
+    alarmMs = seconds * 1000;
+    CloseHandle( CreateThread( NULL, 0, TimerProc, NULL, 0, &ThreadId ) );
 }
 
 void m_sleep( int milliseconds )
@@ -283,14 +286,15 @@ unsigned long get_timer( struct hr_time *val, int reset )
 
     gettimeofday( &offset, NULL );
 
-    delta = ( offset.tv_sec  - t->start.tv_sec  ) * 1000
-          + ( offset.tv_usec - t->start.tv_usec ) / 1000;
-
     if( reset )
     {
         t->start.tv_sec  = offset.tv_sec;
         t->start.tv_usec = offset.tv_usec;
+        return( 0 );
     }
+
+    delta = ( offset.tv_sec  - t->start.tv_sec  ) * 1000
+          + ( offset.tv_usec - t->start.tv_usec ) / 1000;
 
     return( delta );
 }
@@ -332,7 +336,7 @@ void m_sleep( int milliseconds )
 #if defined(POLARSSL_SELF_TEST)
 
 /* To test net_usleep against our functions */
-#if defined(POLARSSL_NET_C)
+#if defined(POLARSSL_NET_C) && defined(POLARSSL_HAVE_TIME)
 #include "polarssl/net.h"
 #endif
 
@@ -378,11 +382,11 @@ int timing_self_test( int verbose )
     {
         (void) get_timer( &hires, 1 );
 
-        m_sleep( 500 * secs );
+        m_sleep( (int)( 500 * secs ) );
 
         millisecs = get_timer( &hires, 0 );
 
-        if( millisecs < 450 * secs || millisecs > 550 * secs )
+        if( millisecs < 400 * secs || millisecs > 600 * secs )
         {
             if( verbose != 0 )
                 polarssl_printf( "failed\n" );
@@ -401,13 +405,15 @@ int timing_self_test( int verbose )
     {
         (void) get_timer( &hires, 1 );
 
-        set_alarm( secs );
+        set_alarm( (int) secs );
         while( !alarmed )
             ;
 
         millisecs = get_timer( &hires, 0 );
 
-        if( millisecs < 900 * secs || millisecs > 1100 * secs )
+        /* For some reason on Windows it looks like alarm has an extra delay
+         * (maybe related to creating a new thread). Allow some room here. */
+        if( millisecs < 800 * secs || millisecs > 1200 * secs + 300 )
         {
             if( verbose != 0 )
                 polarssl_printf( "failed\n" );
@@ -433,9 +439,9 @@ hard_test:
     if( hardfail > 1 )
     {
         if( verbose != 0 )
-            polarssl_printf( "failed\n" );
+            polarssl_printf( "failed (ignored)\n" );
 
-        return( 1 );
+        goto hard_test_done;
     }
 
     /* Get a reference ratio cycles/ms */
@@ -464,7 +470,9 @@ hard_test:
     if( verbose != 0 )
         polarssl_printf( "passed\n" );
 
-#if defined(POLARSSL_NET_C)
+hard_test_done:
+
+#if defined(POLARSSL_NET_C) && defined(POLARSSL_HAVE_TIME)
     if( verbose != 0 )
         polarssl_printf( "  TIMING test #4 (net_usleep/ get_timer): " );
 
@@ -476,7 +484,7 @@ hard_test:
 
         millisecs = get_timer( &hires, 0 );
 
-        if( millisecs < 450 * secs || millisecs > 550 * secs )
+        if( millisecs < 400 * secs || millisecs > 600 * secs )
         {
             if( verbose != 0 )
                 polarssl_printf( "failed\n" );

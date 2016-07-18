@@ -1469,7 +1469,7 @@ public class ScContactsProviderTest extends ProviderTestBase<SynchronousContacts
         v3.put(Email.ADDRESS, "address3@email.com");
 
         Uri filterUri = Uri.withAppendedPath(Email.CONTENT_FILTER_URI, "address");
-        assertStoredValuesOrderly(filterUri, new ContentValues[]{v1, v2, v3});
+        assertStoredValuesOrderly(filterUri, v1, v2, v3);
     }
 
     /**
@@ -1485,7 +1485,7 @@ public class ScContactsProviderTest extends ProviderTestBase<SynchronousContacts
         v2.put(Email.ADDRESS, "address2@email.com");
 
         Uri filterUri = Uri.withAppendedPath(Email.CONTENT_FILTER_URI, "address");
-        assertStoredValuesOrderly(filterUri, new ContentValues[] { v2, v1 });
+        assertStoredValuesOrderly(filterUri, v2, v1);
     }
 
     public void testPostalsQuery() {
@@ -1520,7 +1520,7 @@ public class ScContactsProviderTest extends ProviderTestBase<SynchronousContacts
         assertStoredValues(ContentUris.withAppendedId(StructuredPostal.CONTENT_URI, dataId2),values2);
         assertStoredValues(ContentUris.withAppendedId(dedupeUri, dataId2), values2);
 
-        assertStoredValues(StructuredPostal.CONTENT_URI, new ContentValues[] {values, values2});
+        assertStoredValues(StructuredPostal.CONTENT_URI, values, values2);
 
         // If requested to remove duplicates, the query should return just one result,
         // whose _ID won't be deterministic.

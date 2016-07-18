@@ -20,13 +20,14 @@
 #define POLARSSL_HAVE_TIME
 #define POLARSSL_HAVE_IPV6
 
-/* PolarSSL feature support */
+/* mbed TLS feature support */
 #define POLARSSL_ECP_DP_SECP256R1_ENABLED
 #define POLARSSL_ECP_DP_SECP384R1_ENABLED
 #define POLARSSL_KEY_EXCHANGE_ECDHE_ECDSA_ENABLED
 #define POLARSSL_SSL_PROTO_TLS1_2
+#define POLARSSL_SSL_DISABLE_RENEGOTIATION
 
-/* PolarSSL modules */
+/* mbed TLS modules */
 #define POLARSSL_AES_C
 #define POLARSSL_ASN1_PARSE_C
 #define POLARSSL_ASN1_WRITE_C
@@ -67,8 +68,8 @@
 #define POLARSSL_ECP_WINDOW_SIZE        2
 #define POLARSSL_ECP_FIXED_POINT_OPTIM  0
 
-/* Uncomment for a significant speed benefit at the expense of some ROM */
-//#define POLARSSL_ECP_NIST_OPTIM
+/* Significant speed benefit at the expense of some ROM */
+#define POLARSSL_ECP_NIST_OPTIM
 
 /*
  * You should adjust this to the exact number of sources you're using: default

@@ -46,7 +46,7 @@ close(FORMAT_FILE);
 
 $/ = $line_separator;
 
-open(GREP, "/bin/grep \"define POLARSSL_ERR_\" $include_dir/* |") || die("Failure when calling grep: $!");
+open(GREP, "grep \"define POLARSSL_ERR_\" $include_dir/* |") || die("Failure when calling grep: $!");
 
 my $ll_old_define = "";
 my $hl_old_define = "";
@@ -56,13 +56,22 @@ my $hl_code_check = "";
 
 my $headers = "";
 
+my %error_codes_seen;
+
 while (my $line = <GREP>)
 {
     next if ($line =~ /compat-1.2.h/);
     my ($error_name, $error_code) = $line =~ /(POLARSSL_ERR_\w+)\s+\-(0x\w+)/;
     my ($description) = $line =~ /\/\*\*< (.*?)\.? \*\//;
+
+    die "Duplicated error code: $error_code ($error_name)\n"
+        if( $error_codes_seen{$error_code}++ );
+
     $description =~ s/\\/\\\\/g;
-    $description = "DESCRIPTION MISSING" if ($description eq "");
+    if ($description eq "") {
+        $description = "DESCRIPTION MISSING";
+        warn "Missing description for $error_name\n";
+    }
 
     my ($module_name) = $error_name =~ /^POLARSSL_ERR_([^_]+)/;
 
@@ -85,7 +94,7 @@ while (my $line = <GREP>)
     my $found_hl = grep $_ eq $module_name, @high_level_modules;
     if (!$found_ll && !$found_hl)
     {
-        printf("Error: Do not know how to handle: $module_name\n");
+        polarssl_printf("Error: Do not know how to handle: $module_name\n");
         exit 1;
     }
 
@@ -143,14 +152,14 @@ while (my $line = <GREP>)
     {
         ${$code_check} .= "${white_space}if( use_ret == -($error_name) )\n".
                           "${white_space}\{\n".
-                          "${white_space}    snprintf( buf, buflen, \"$module_name - $description\" );\n".
+                          "${white_space}    polarssl_snprintf( buf, buflen, \"$module_name - $description\" );\n".
                           "${white_space}    return;\n".
                           "${white_space}}\n"
     }
     else
     {
         ${$code_check} .= "${white_space}if( use_ret == -($error_name) )\n".
-                          "${white_space}    snprintf( buf, buflen, \"$module_name - $description\" );\n"
+                          "${white_space}    polarssl_snprintf( buf, buflen, \"$module_name - $description\" );\n"
     }
 };
 

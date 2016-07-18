@@ -1,12 +1,9 @@
 /*
  *  Benchmark demonstration program
  *
- *  Copyright (C) 2006-2013, Brainspark B.V.
+ *  Copyright (C) 2006-2013, ARM Limited, All Rights Reserved
  *
- *  This file is part of PolarSSL (http://www.polarssl.org)
- *  Lead Maintainer: Paul Bakker <polarssl_maintainer at polarssl.org>
- *
- *  All rights reserved.
+ *  This file is part of mbed TLS (https://tls.mbed.org)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -29,9 +26,25 @@
 #include POLARSSL_CONFIG_FILE
 #endif
 
-#include <string.h>
-#include <stdlib.h>
+#if defined(POLARSSL_PLATFORM_C)
+#include "polarssl/platform.h"
+#else
 #include <stdio.h>
+#define polarssl_exit       exit
+#define polarssl_printf     printf
+#define polarssl_snprintf   snprintf
+#define polarssl_free       free
+#endif
+
+#if !defined(POLARSSL_TIMING_C)
+int main( void )
+{
+    polarssl_printf("POLARSSL_TIMING_C not defined.\n");
+    return( 0 );
+}
+#else
+
+#include <string.h>
 
 #include "polarssl/timing.h"
 
@@ -57,24 +70,128 @@
 #include "polarssl/ecdh.h"
 #include "polarssl/error.h"
 
+#if defined(POLARSSL_MEMORY_BUFFER_ALLOC_C)
+#include "polarssl/memory_buffer_alloc.h"
+#endif
+
 #if defined _MSC_VER && !defined snprintf
 #define snprintf _snprintf
 #endif
+
+/*
+ * For heap usage estimates, we need an estimate of the overhead per allocated
+ * block. ptmalloc2/3 (used in gnu libc for instance) uses 2 size_t per block,
+ * so use that as our baseline.
+ */
+#define MEM_BLOCK_OVERHEAD  ( 2 * sizeof( size_t ) )
+
+/*
+ * Size to use for the malloc buffer if MEMORY_BUFFER_ALLOC_C is defined.
+ */
+#define HEAP_SIZE       (1u << 16)  // 64k
 
 #define BUFSIZE         1024
 #define HEADER_FORMAT   "  %-24s :  "
 #define TITLE_LEN       25
 
-#if !defined(POLARSSL_TIMING_C)
-int main( int argc, char *argv[] )
-{
-    ((void) argc);
-    ((void) argv);
+#define DHM_SIZES 3
 
-    printf("POLARSSL_TIMING_C not defined.\n");
-    return( 0 );
-}
+#define OPTIONS                                                         \
+    "md4, md5, ripemd160, sha1, sha256, sha512,\n"                      \
+    "arc4, des3, des, aes_cbc, aes_gcm, aes_ccm, camellia, blowfish,\n" \
+    "havege, ctr_drbg, hmac_drbg\n"                                     \
+    "rsa, dhm, ecdsa, ecdh.\n"
+
+#if defined(POLARSSL_ERROR_C)
+#define PRINT_ERROR                                                     \
+        polarssl_strerror( ret, ( char * )tmp, sizeof( tmp ) );         \
+        polarssl_printf( "FAILED: %s\n", tmp );
 #else
+#define PRINT_ERROR                                                     \
+        polarssl_printf( "FAILED: -0x%04x\n", -ret );
+#endif
+
+#define TIME_AND_TSC( TITLE, CODE )                                     \
+do {                                                                    \
+    unsigned long ii, jj, tsc;                                          \
+                                                                        \
+    polarssl_printf( HEADER_FORMAT, TITLE );                            \
+    fflush( stdout );                                                   \
+                                                                        \
+    set_alarm( 1 );                                                     \
+    for( ii = 1; ! alarmed; ii++ )                                      \
+    {                                                                   \
+        CODE;                                                           \
+    }                                                                   \
+                                                                        \
+    tsc = hardclock();                                                  \
+    for( jj = 0; jj < 1024; jj++ )                                      \
+    {                                                                   \
+        CODE;                                                           \
+    }                                                                   \
+                                                                        \
+    polarssl_printf( "%9lu Kb/s,  %9lu cycles/byte\n",                  \
+                     ii * BUFSIZE / 1024,                               \
+                     ( hardclock() - tsc ) / ( jj * BUFSIZE ) );        \
+} while( 0 )
+
+#if defined(POLARSSL_ERROR_C)
+#define PRINT_ERROR                                                     \
+        polarssl_strerror( ret, ( char * )tmp, sizeof( tmp ) );         \
+        polarssl_printf( "FAILED: %s\n", tmp );
+#else
+#define PRINT_ERROR                                                     \
+        polarssl_printf( "FAILED: -0x%04x\n", -ret );
+#endif
+
+#if defined(POLARSSL_MEMORY_BUFFER_ALLOC_C) && defined(POLARSSL_MEMORY_DEBUG)
+
+#define MEMORY_MEASURE_INIT                                             \
+    size_t max_used, max_blocks, max_bytes;                             \
+    size_t prv_used, prv_blocks;                                        \
+    memory_buffer_alloc_cur_get( &prv_used, &prv_blocks );              \
+    memory_buffer_alloc_max_reset( );
+
+#define MEMORY_MEASURE_PRINT( title_len )                               \
+    memory_buffer_alloc_max_get( &max_used, &max_blocks );              \
+    for( ii = 12 - title_len; ii != 0; ii-- ) polarssl_printf( " " );   \
+    max_used -= prv_used;                                               \
+    max_blocks -= prv_blocks;                                           \
+    max_bytes = max_used + MEM_BLOCK_OVERHEAD * max_blocks;             \
+    polarssl_printf( "%6u heap bytes", (unsigned) max_bytes );
+
+#else
+#define MEMORY_MEASURE_INIT
+#define MEMORY_MEASURE_PRINT( title_len )
+#endif
+
+#define TIME_PUBLIC( TITLE, TYPE, CODE )                                \
+do {                                                                    \
+    unsigned long ii;                                                   \
+    int ret;                                                            \
+    MEMORY_MEASURE_INIT;                                                \
+                                                                        \
+    polarssl_printf( HEADER_FORMAT, TITLE );                            \
+    fflush( stdout );                                                   \
+    set_alarm( 3 );                                                     \
+                                                                        \
+    ret = 0;                                                            \
+    for( ii = 1; ! alarmed && ! ret ; ii++ )                            \
+    {                                                                   \
+        CODE;                                                           \
+    }                                                                   \
+                                                                        \
+    if( ret != 0 )                                                      \
+    {                                                                   \
+        PRINT_ERROR;                                                    \
+    }                                                                   \
+    else                                                                \
+    {                                                                   \
+        polarssl_printf( "%6lu " TYPE "/s", ii / 3 );                   \
+        MEMORY_MEASURE_PRINT( sizeof( TYPE ) + 1 );                     \
+        polarssl_printf( "\n" );                                        \
+    }                                                                   \
+} while( 0 )
 
 static int myrand( void *rng_state, unsigned char *output, size_t len )
 {
@@ -99,60 +216,25 @@ static int myrand( void *rng_state, unsigned char *output, size_t len )
     return( 0 );
 }
 
-#define TIME_AND_TSC( TITLE, CODE )                                     \
-do {                                                                    \
-    unsigned long i, j, tsc;                                            \
-                                                                        \
-    printf( HEADER_FORMAT, TITLE );                                     \
-    fflush( stdout );                                                   \
-                                                                        \
-    set_alarm( 1 );                                                     \
-    for( i = 1; ! alarmed; i++ )                                        \
-    {                                                                   \
-        CODE;                                                           \
-    }                                                                   \
-                                                                        \
-    tsc = hardclock();                                                  \
-    for( j = 0; j < 1024; j++ )                                         \
-    {                                                                   \
-        CODE;                                                           \
-    }                                                                   \
-                                                                        \
-    printf( "%9lu Kb/s,  %9lu cycles/byte\n", i * BUFSIZE / 1024,       \
-                    ( hardclock() - tsc ) / ( j * BUFSIZE ) );          \
-} while( 0 )
-
-#if defined(POLARSSL_ERROR_C)
-#define PRINT_ERROR                                                     \
-        polarssl_strerror( ret, ( char * )tmp, sizeof( tmp ) );         \
-        printf( "FAILED: %s\n", tmp );
+/*
+ * Clear some memory that was used to prepare the context
+ */
+#if defined(POLARSSL_ECP_C)
+void ecp_clear_precomputed( ecp_group *grp )
+{
+    if( grp->T != NULL )
+    {
+        size_t i;
+        for( i = 0; i < grp->T_size; i++ )
+            ecp_point_free( &grp->T[i] );
+        polarssl_free( grp->T );
+    }
+    grp->T = NULL;
+    grp->T_size = 0;
+}
 #else
-#define PRINT_ERROR                                                     \
-        printf( "FAILED: -0x%04x\n", -ret );
+#define ecp_clear_precomputed( g )
 #endif
-
-#define TIME_PUBLIC( TITLE, TYPE, CODE )                                \
-do {                                                                    \
-    unsigned long i;                                                    \
-    int ret;                                                            \
-                                                                        \
-    printf( HEADER_FORMAT, TITLE );                                     \
-    fflush( stdout );                                                   \
-    set_alarm( 3 );                                                     \
-                                                                        \
-    ret = 0;                                                            \
-    for( i = 1; ! alarmed && ! ret ; i++ )                              \
-    {                                                                   \
-        CODE;                                                           \
-    }                                                                   \
-                                                                        \
-    if( ret != 0 )                                                      \
-    {                                                                   \
-PRINT_ERROR;                                                            \
-    }                                                                   \
-    else                                                                \
-        printf( "%9lu " TYPE "/s\n", i / 3 );                           \
-} while( 0 )
 
 unsigned char buf[BUFSIZE];
 
@@ -163,21 +245,20 @@ typedef struct {
          rsa, dhm, ecdsa, ecdh;
 } todo_list;
 
-#define OPTIONS                                                         \
-    "md4, md5, ripemd160, sha1, sha256, sha512,\n"                      \
-    "arc4, des3, des, aes_cbc, aes_gcm, aes_ccm, camellia, blowfish,\n" \
-    "havege, ctr_drbg, hmac_drbg\n"                                     \
-    "rsa, dhm, ecdsa, ecdh.\n"
-
 int main( int argc, char *argv[] )
 {
-    int keysize, i;
+    int i;
     unsigned char tmp[200];
     char title[TITLE_LEN];
     todo_list todo;
+#if defined(POLARSSL_MEMORY_BUFFER_ALLOC_C)
+    unsigned char malloc_buf[HEAP_SIZE] = { 0 };
+#endif
 
-    if( argc == 1 )
+    if( argc <= 1 )
+    {
         memset( &todo, 1, sizeof( todo ) );
+    }
     else
     {
         memset( &todo, 0, sizeof( todo ) );
@@ -228,14 +309,17 @@ int main( int argc, char *argv[] )
                 todo.ecdh = 1;
             else
             {
-                printf( "Unrecognized option: %s\n", argv[i] );
-                printf( "Available options: " OPTIONS );
+                polarssl_printf( "Unrecognized option: %s\n", argv[i] );
+                polarssl_printf( "Available options: " OPTIONS );
             }
         }
     }
 
-    printf( "\n" );
+    polarssl_printf( "\n" );
 
+#if defined(POLARSSL_MEMORY_BUFFER_ALLOC_C)
+    memory_buffer_alloc_init( malloc_buf, sizeof( malloc_buf ) );
+#endif
     memset( buf, 0xAA, sizeof( buf ) );
     memset( tmp, 0xBB, sizeof( tmp ) );
 
@@ -306,11 +390,12 @@ int main( int argc, char *argv[] )
 #if defined(POLARSSL_CIPHER_MODE_CBC)
     if( todo.aes_cbc )
     {
+        int keysize;
         aes_context aes;
         aes_init( &aes );
         for( keysize = 128; keysize <= 256; keysize += 64 )
         {
-            snprintf( title, sizeof( title ), "AES-CBC-%d", keysize );
+            polarssl_snprintf( title, sizeof( title ), "AES-CBC-%d", keysize );
 
             memset( buf, 0, sizeof( buf ) );
             memset( tmp, 0, sizeof( tmp ) );
@@ -325,10 +410,11 @@ int main( int argc, char *argv[] )
 #if defined(POLARSSL_GCM_C)
     if( todo.aes_gcm )
     {
+        int keysize;
         gcm_context gcm;
         for( keysize = 128; keysize <= 256; keysize += 64 )
         {
-            snprintf( title, sizeof( title ), "AES-GCM-%d", keysize );
+            polarssl_snprintf( title, sizeof( title ), "AES-GCM-%d", keysize );
 
             memset( buf, 0, sizeof( buf ) );
             memset( tmp, 0, sizeof( tmp ) );
@@ -345,10 +431,11 @@ int main( int argc, char *argv[] )
 #if defined(POLARSSL_CCM_C)
     if( todo.aes_ccm )
     {
+        int keysize;
         ccm_context ccm;
         for( keysize = 128; keysize <= 256; keysize += 64 )
         {
-            snprintf( title, sizeof( title ), "AES-CCM-%d", keysize );
+            polarssl_snprintf( title, sizeof( title ), "AES-CCM-%d", keysize );
 
             memset( buf, 0, sizeof( buf ) );
             memset( tmp, 0, sizeof( tmp ) );
@@ -367,11 +454,12 @@ int main( int argc, char *argv[] )
 #if defined(POLARSSL_CAMELLIA_C) && defined(POLARSSL_CIPHER_MODE_CBC)
     if( todo.camellia )
     {
+        int keysize;
         camellia_context camellia;
         camellia_init( &camellia );
         for( keysize = 128; keysize <= 256; keysize += 64 )
         {
-            snprintf( title, sizeof( title ), "CAMELLIA-CBC-%d", keysize );
+            polarssl_snprintf( title, sizeof( title ), "CAMELLIA-CBC-%d", keysize );
 
             memset( buf, 0, sizeof( buf ) );
             memset( tmp, 0, sizeof( tmp ) );
@@ -388,12 +476,13 @@ int main( int argc, char *argv[] )
 #if defined(POLARSSL_BLOWFISH_C) && defined(POLARSSL_CIPHER_MODE_CBC)
     if( todo.blowfish )
     {
+        int keysize;
         blowfish_context blowfish;
         blowfish_init( &blowfish );
 
         for( keysize = 128; keysize <= 256; keysize += 64 )
         {
-            snprintf( title, sizeof( title ), "BLOWFISH-CBC-%d", keysize );
+            polarssl_snprintf( title, sizeof( title ), "BLOWFISH-CBC-%d", keysize );
 
             memset( buf, 0, sizeof( buf ) );
             memset( tmp, 0, sizeof( tmp ) );
@@ -424,17 +513,17 @@ int main( int argc, char *argv[] )
         ctr_drbg_context ctr_drbg;
 
         if( ctr_drbg_init( &ctr_drbg, myrand, NULL, NULL, 0 ) != 0 )
-            exit(1);
+            polarssl_exit(1);
         TIME_AND_TSC( "CTR_DRBG (NOPR)",
                 if( ctr_drbg_random( &ctr_drbg, buf, BUFSIZE ) != 0 )
-                exit(1) );
+                polarssl_exit(1) );
 
         if( ctr_drbg_init( &ctr_drbg, myrand, NULL, NULL, 0 ) != 0 )
-            exit(1);
+            polarssl_exit(1);
         ctr_drbg_set_prediction_resistance( &ctr_drbg, CTR_DRBG_PR_ON );
         TIME_AND_TSC( "CTR_DRBG (PR)",
                 if( ctr_drbg_random( &ctr_drbg, buf, BUFSIZE ) != 0 )
-                exit(1) );
+                polarssl_exit(1) );
         ctr_drbg_free( &ctr_drbg );
     }
 #endif
@@ -447,43 +536,43 @@ int main( int argc, char *argv[] )
 
 #if defined(POLARSSL_SHA1_C)
         if( ( md_info = md_info_from_type( POLARSSL_MD_SHA1 ) ) == NULL )
-            exit(1);
+            polarssl_exit(1);
 
         if( hmac_drbg_init( &hmac_drbg, md_info, myrand, NULL, NULL, 0 ) != 0 )
-            exit(1);
+            polarssl_exit(1);
         TIME_AND_TSC( "HMAC_DRBG SHA-1 (NOPR)",
                 if( hmac_drbg_random( &hmac_drbg, buf, BUFSIZE ) != 0 )
-                exit(1) );
+                polarssl_exit(1) );
         hmac_drbg_free( &hmac_drbg );
 
         if( hmac_drbg_init( &hmac_drbg, md_info, myrand, NULL, NULL, 0 ) != 0 )
-            exit(1);
+            polarssl_exit(1);
         hmac_drbg_set_prediction_resistance( &hmac_drbg,
                                              POLARSSL_HMAC_DRBG_PR_ON );
         TIME_AND_TSC( "HMAC_DRBG SHA-1 (PR)",
                 if( hmac_drbg_random( &hmac_drbg, buf, BUFSIZE ) != 0 )
-                exit(1) );
+                polarssl_exit(1) );
         hmac_drbg_free( &hmac_drbg );
 #endif
 
 #if defined(POLARSSL_SHA256_C)
         if( ( md_info = md_info_from_type( POLARSSL_MD_SHA256 ) ) == NULL )
-            exit(1);
+            polarssl_exit(1);
 
         if( hmac_drbg_init( &hmac_drbg, md_info, myrand, NULL, NULL, 0 ) != 0 )
-            exit(1);
+            polarssl_exit(1);
         TIME_AND_TSC( "HMAC_DRBG SHA-256 (NOPR)",
                 if( hmac_drbg_random( &hmac_drbg, buf, BUFSIZE ) != 0 )
-                exit(1) );
+                polarssl_exit(1) );
         hmac_drbg_free( &hmac_drbg );
 
         if( hmac_drbg_init( &hmac_drbg, md_info, myrand, NULL, NULL, 0 ) != 0 )
-            exit(1);
+            polarssl_exit(1);
         hmac_drbg_set_prediction_resistance( &hmac_drbg,
                                              POLARSSL_HMAC_DRBG_PR_ON );
         TIME_AND_TSC( "HMAC_DRBG SHA-256 (PR)",
                 if( hmac_drbg_random( &hmac_drbg, buf, BUFSIZE ) != 0 )
-                exit(1) );
+                polarssl_exit(1) );
         hmac_drbg_free( &hmac_drbg );
 #endif
     }
@@ -492,10 +581,11 @@ int main( int argc, char *argv[] )
 #if defined(POLARSSL_RSA_C) && defined(POLARSSL_GENPRIME)
     if( todo.rsa )
     {
+        int keysize;
         rsa_context rsa;
         for( keysize = 1024; keysize <= 4096; keysize *= 2 )
         {
-            snprintf( title, sizeof( title ), "RSA-%d", keysize );
+            polarssl_snprintf( title, sizeof( title ), "RSA-%d", keysize );
 
             rsa_init( &rsa, RSA_PKCS_V15, 0 );
             rsa_gen_key( &rsa, myrand, NULL, keysize, 65537 );
@@ -516,7 +606,6 @@ int main( int argc, char *argv[] )
 #if defined(POLARSSL_DHM_C) && defined(POLARSSL_BIGNUM_C)
     if( todo.dhm )
     {
-#define DHM_SIZES 3
         int dhm_sizes[DHM_SIZES] = { 1024, 2048, 3072 };
         const char *dhm_P[DHM_SIZES] = {
             POLARSSL_DHM_RFC5114_MODP_1024_P,
@@ -538,22 +627,22 @@ int main( int argc, char *argv[] )
             if( mpi_read_string( &dhm.P, 16, dhm_P[i] ) != 0 ||
                 mpi_read_string( &dhm.G, 16, dhm_G[i] ) != 0 )
             {
-                exit( 1 );
+                polarssl_exit( 1 );
             }
 
             dhm.len = mpi_size( &dhm.P );
             dhm_make_public( &dhm, (int) dhm.len, buf, dhm.len, myrand, NULL );
             if( mpi_copy( &dhm.GY, &dhm.GX ) != 0 )
-                exit( 1 );
+                polarssl_exit( 1 );
 
-            snprintf( title, sizeof( title ), "DHE-%d", dhm_sizes[i] );
+            polarssl_snprintf( title, sizeof( title ), "DHE-%d", dhm_sizes[i] );
             TIME_PUBLIC( title, "handshake",
                     olen = sizeof( buf );
                     ret |= dhm_make_public( &dhm, (int) dhm.len, buf, dhm.len,
                                             myrand, NULL );
                     ret |= dhm_calc_secret( &dhm, buf, &olen, myrand, NULL ) );
 
-            snprintf( title, sizeof( title ), "DH-%d", dhm_sizes[i] );
+            polarssl_snprintf( title, sizeof( title ), "DH-%d", dhm_sizes[i] );
             TIME_PUBLIC( title, "handshake",
                     olen = sizeof( buf );
                     ret |= dhm_calc_secret( &dhm, buf, &olen, myrand, NULL ) );
@@ -579,14 +668,34 @@ int main( int argc, char *argv[] )
             ecdsa_init( &ecdsa );
 
             if( ecdsa_genkey( &ecdsa, curve_info->grp_id, myrand, NULL ) != 0 )
-                exit( 1 );
+                polarssl_exit( 1 );
+            ecp_clear_precomputed( &ecdsa.grp );
 
-            snprintf( title, sizeof( title ), "ECDSA-%s",
+            polarssl_snprintf( title, sizeof( title ), "ECDSA-%s",
                                               curve_info->name );
             TIME_PUBLIC( title, "sign",
                     ret = ecdsa_write_signature( &ecdsa, buf, curve_info->size,
                                                 tmp, &sig_len, myrand, NULL ) );
 
+            ecdsa_free( &ecdsa );
+        }
+
+        for( curve_info = ecp_curve_list();
+             curve_info->grp_id != POLARSSL_ECP_DP_NONE;
+             curve_info++ )
+        {
+            ecdsa_init( &ecdsa );
+
+            if( ecdsa_genkey( &ecdsa, curve_info->grp_id, myrand, NULL ) != 0 ||
+                ecdsa_write_signature( &ecdsa, buf, curve_info->size,
+                                               tmp, &sig_len, myrand, NULL ) != 0 )
+            {
+                polarssl_exit( 1 );
+            }
+            ecp_clear_precomputed( &ecdsa.grp );
+
+            polarssl_snprintf( title, sizeof( title ), "ECDSA-%s",
+                                              curve_info->name );
             TIME_PUBLIC( title, "verify",
                     ret = ecdsa_read_signature( &ecdsa, buf, curve_info->size,
                                                 tmp, sig_len ) );
@@ -600,6 +709,9 @@ int main( int argc, char *argv[] )
     if( todo.ecdh )
     {
         ecdh_context ecdh;
+#if defined(POLARSSL_ECP_DP_M255_ENABLED)
+        mpi z;
+#endif
         const ecp_curve_info *curve_info;
         size_t olen;
 
@@ -614,30 +726,97 @@ int main( int argc, char *argv[] )
                                   myrand, NULL ) != 0 ||
                 ecp_copy( &ecdh.Qp, &ecdh.Q ) != 0 )
             {
-                exit( 1 );
+                polarssl_exit( 1 );
             }
+            ecp_clear_precomputed( &ecdh.grp );
 
-            snprintf( title, sizeof( title ), "ECDHE-%s",
+            polarssl_snprintf( title, sizeof( title ), "ECDHE-%s",
                                               curve_info->name );
             TIME_PUBLIC( title, "handshake",
                     ret |= ecdh_make_public( &ecdh, &olen, buf, sizeof( buf),
                                              myrand, NULL );
                     ret |= ecdh_calc_secret( &ecdh, &olen, buf, sizeof( buf ),
                                              myrand, NULL ) );
+            ecdh_free( &ecdh );
+        }
 
-            snprintf( title, sizeof( title ), "ECDH-%s",
+        /* Curve25519 needs to be handled separately */
+#if defined(POLARSSL_ECP_DP_M255_ENABLED)
+        ecdh_init( &ecdh );
+        mpi_init( &z );
+
+        if( ecp_use_known_dp( &ecdh.grp, POLARSSL_ECP_DP_M255 ) != 0 ||
+            ecdh_gen_public( &ecdh.grp, &ecdh.d, &ecdh.Qp, myrand, NULL ) != 0 )
+        {
+            polarssl_exit( 1 );
+        }
+
+        TIME_PUBLIC(  "ECDHE-Curve25519", "handshake",
+                ret |= ecdh_gen_public( &ecdh.grp, &ecdh.d, &ecdh.Q,
+                                        myrand, NULL );
+                ret |= ecdh_compute_shared( &ecdh.grp, &z, &ecdh.Qp, &ecdh.d,
+                                            myrand, NULL ) );
+
+        ecdh_free( &ecdh );
+        mpi_free( &z );
+#endif
+
+        for( curve_info = ecp_curve_list();
+             curve_info->grp_id != POLARSSL_ECP_DP_NONE;
+             curve_info++ )
+        {
+            ecdh_init( &ecdh );
+
+            if( ecp_use_known_dp( &ecdh.grp, curve_info->grp_id ) != 0 ||
+                ecdh_make_public( &ecdh, &olen, buf, sizeof( buf),
+                                  myrand, NULL ) != 0 ||
+                ecp_copy( &ecdh.Qp, &ecdh.Q ) != 0 ||
+                ecdh_make_public( &ecdh, &olen, buf, sizeof( buf),
+                                  myrand, NULL ) != 0 )
+            {
+                polarssl_exit( 1 );
+            }
+            ecp_clear_precomputed( &ecdh.grp );
+
+            polarssl_snprintf( title, sizeof( title ), "ECDH-%s",
                                               curve_info->name );
             TIME_PUBLIC( title, "handshake",
                     ret |= ecdh_calc_secret( &ecdh, &olen, buf, sizeof( buf ),
                                              myrand, NULL ) );
             ecdh_free( &ecdh );
         }
+
+        /* Curve25519 needs to be handled separately */
+#if defined(POLARSSL_ECP_DP_M255_ENABLED)
+        ecdh_init( &ecdh );
+        mpi_init( &z );
+
+        if( ecp_use_known_dp( &ecdh.grp, POLARSSL_ECP_DP_M255 ) != 0 ||
+            ecdh_gen_public( &ecdh.grp, &ecdh.d, &ecdh.Qp,
+                             myrand, NULL ) != 0 ||
+            ecdh_gen_public( &ecdh.grp, &ecdh.d, &ecdh.Q, myrand, NULL ) != 0 )
+        {
+            polarssl_exit( 1 );
+        }
+
+        TIME_PUBLIC(  "ECDH-Curve25519", "handshake",
+                ret |= ecdh_compute_shared( &ecdh.grp, &z, &ecdh.Qp, &ecdh.d,
+                                            myrand, NULL ) );
+
+        ecdh_free( &ecdh );
+        mpi_free( &z );
+#endif
     }
 #endif
-    printf( "\n" );
+
+    polarssl_printf( "\n" );
+
+#if defined(POLARSSL_MEMORY_BUFFER_ALLOC_C)
+    memory_buffer_alloc_free();
+#endif
 
 #if defined(_WIN32)
-    printf( "  Press Enter to exit this program.\n" );
+    polarssl_printf( "  Press Enter to exit this program.\n" );
     fflush( stdout ); getchar();
 #endif
 

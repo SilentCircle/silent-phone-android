@@ -28,20 +28,19 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package com.silentcircle.messaging.repository.DbRepository;
 
 import android.content.Context;
+import android.support.annotation.Nullable;
 import android.util.Log;
 
 import com.silentcircle.messaging.model.Conversation;
 import com.silentcircle.messaging.model.json.JSONConversationAdapter;
 import com.silentcircle.messaging.repository.ConversationRepository;
 import com.silentcircle.messaging.repository.EventRepository;
-import com.silentcircle.messaging.util.CryptoUtil;
 import com.silentcircle.messaging.util.IOUtils;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.security.Key;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -181,7 +180,9 @@ public class DbConversationRepository /*extends BaseFileRepository<Conversation>
         byte[] usersJson = AxolotlNative.getKnownUsers();
         if ((usersJson != null && usersJson.length > 0)) {
             List<String> partners = parseKnownUsers(new String(usersJson));
-            conversationPartners.addAll(partners);
+            if (partners != null) {
+                conversationPartners.addAll(partners);
+            }
         }
         if (conversationPartners.size() == 0)
             return EMPTY_CONVERSATION_LIST;
@@ -225,7 +226,7 @@ public class DbConversationRepository /*extends BaseFileRepository<Conversation>
     }
 
     private String identify(Conversation conversation) {
-        return conversation == null ? null : conversation.getPartner() == null ? null : conversation.getPartner().getUsername();
+        return conversation == null ? null : conversation.getPartner() == null ? null : conversation.getPartner().getUserId();
     }
 
     public void remove(Conversation conversation) {
@@ -259,6 +260,7 @@ public class DbConversationRepository /*extends BaseFileRepository<Conversation>
      * Known users JSON data:
      *    {"version":1,"users":["name_1", ...., "name_n"]}
      */
+    @Nullable
     private List<String> parseKnownUsers(String usersJson) {
         try {
             JSONObject jsonObj = new JSONObject(usersJson);

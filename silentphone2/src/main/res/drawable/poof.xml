@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <animation-list xmlns:android="http://schemas.android.com/apk/res/android"
     android:oneshot="false">
-    <item android:drawable="@drawable/poof0" android:duration="200" />
-    <item android:drawable="@drawable/poof1" android:duration="70" />
-    <item android:drawable="@drawable/poof2" android:duration="70" />
-    <item android:drawable="@drawable/poof3" android:duration="70" />
-    <item android:drawable="@drawable/poof4" android:duration="70" />
-    <item android:drawable="@drawable/poof5" android:duration="70" />
+    <item android:drawable="@drawable/poof0wrapper" android:duration="70" />
+    <item android:drawable="@drawable/poof1wrapper" android:duration="70" />
+    <item android:drawable="@drawable/poof2wrapper" android:duration="70" />
+    <item android:drawable="@drawable/poof3wrapper" android:duration="70" />
+    <item android:drawable="@drawable/poof4wrapper" android:duration="70" />
+    <item android:drawable="@drawable/poof5wrapper" android:duration="70" />
 </animation-list>

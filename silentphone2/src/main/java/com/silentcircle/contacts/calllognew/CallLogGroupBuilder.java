@@ -47,7 +47,7 @@ public class CallLogGroupBuilder {
          * @param size The size of the group.
          * @param expanded Whether the group is expanded; always false for the call log.
          */
-        public void addGroup(int cursorPosition, int size, boolean expanded);
+        void addGroup(int cursorPosition, int size, boolean expanded);
 
         /**
          * Defines the interface for tracking the day group each call belongs to.  Calls in a call
@@ -57,12 +57,12 @@ public class CallLogGroupBuilder {
          * @param rowId The row Id of the current call.
          * @param dayGroup The day group the call belongs in.
          */
-        public void setDayGroup(long rowId, int dayGroup);
+        void setDayGroup(long rowId, int dayGroup);
 
         /**
          * Defines the interface for clearing the day groupings information on rebind/regroup.
          */
-        public void clearDayGroups();
+        void clearDayGroups();
     }
 
     /**

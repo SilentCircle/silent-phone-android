@@ -13,11 +13,13 @@
 #include <string>
 #include <stdint.h>
 
+using namespace std;
+
 namespace axolotl {
 class AxoContact
 {
 public:
-    AxoContact(const std::string& name, const std::string alias) : name_(name), alias_(alias) {};
+    AxoContact(const string& name, const string& alias) : name_(name), alias_(alias) {};
     ~AxoContact() {};
 
     const std::string& getName() const { return name_; }

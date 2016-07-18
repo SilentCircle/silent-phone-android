@@ -46,7 +46,7 @@ public class MessageErrorCodes {
             GENERIC_ERROR, VERSION_NO_SUPPORTED, BUFFER_TOO_SMALL, NOT_DECRYPTABLE, NO_OWN_ID,
             JS_FIELD_MISSING, NO_DEVS_FOUND, NO_PRE_KEY_FOUND, NO_SESSION_USER, SESSION_NOT_INITED, OLD_MESSAGE,
             CORRUPT_DATA, AXO_CONV_EXISTS, MAC_CHECK_FAILED, MSG_PADDING_FAILED, SUP_PADDING_FAILED, NO_STAGED_KEYS,
-            RECEIVE_ID_WRONG, SENDER_ID_WRONG, RECV_DATA_LENGTH, WRONG_RECV_DEV_ID,
+            RECEIVE_ID_WRONG, SENDER_ID_WRONG, RECV_DATA_LENGTH, WRONG_RECV_DEV_ID, NETWORK_ERROR,
             NO_SUCH_CURVE, KEY_TYPE_MISMATCH, IDENTITY_KEY_TYPE_MISMATCH, WRONG_BLK_SIZE, UNSUPPORTED_KEY_SIZE})
     @Retention(RetentionPolicy.SOURCE)
     public @interface MessageErrorCode {}
@@ -77,9 +77,10 @@ public class MessageErrorCodes {
     public static final int SENDER_ID_WRONG = -28;       //!< Sender's long term id key hash mismatch
     public static final int RECV_DATA_LENGTH = -29;      //!< Expected length of data does not match received length
     public static final int WRONG_RECV_DEV_ID = -30;     //!< Expected device id does not match actual device id
+    public static final int NETWORK_ERROR = -31;         //!< The HTTP request returned an code >400 or SIP failed
     // ****** Ranges to simplify mapping of error codes, all positive
     private static final int MIN_MSG_ERROR = GENERIC_ERROR * -1;
-    private static final int MAX_MSG_ERROR = WRONG_RECV_DEV_ID * -1;
+    private static final int MAX_MSG_ERROR = NETWORK_ERROR * -1;
 
     // Error codes for public key modules, between -100 and -199
     public static final int NO_SUCH_CURVE     = -100;    //!< Curve not supported
@@ -121,6 +122,7 @@ public class MessageErrorCodes {
             R.string.message_error_sender_id_mismatch,      // 28
             R.string.message_error_recv_data_length,        // 29
             R.string.message_error_wrong_recv_dev_id,       // 30
+            R.string.message_error_network_error,           // 31
     };
 
     private static final int[] PUB_TO_STRING_IDS = {

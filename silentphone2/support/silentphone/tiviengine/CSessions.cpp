@@ -1,6 +1,32 @@
-//VoipPhone
-//Created by Janis Narbuts
-//Copyright (c) 2004-2012 Tivi LTD, www.tiviphone.com. All rights reserved.
+/*
+Created by Janis Narbuts
+Copyright (C) 2004-2012, Tivi LTD, www.tiviphone.com. All rights reserved.
+Copyright (C) 2012-2016, Silent Circle, LLC.  All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+    * Any redistribution, use, or modification is done solely for personal
+      benefit and not for any commercial purpose or for monetary gain
+    * Redistributions of source code must retain the above copyright
+      notice, this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above copyright
+      notice, this list of conditions and the following disclaimer in the
+      documentation and/or other materials provided with the distribution.
+    * Neither the name Silent Circle nor the
+      names of its contributors may be used to endorse or promote products
+      derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL SILENT CIRCLE, LLC BE LIABLE FOR ANY
+DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
 
 #include "CSessions.h"
 #include "../encrypt/md5/md5.h"
@@ -62,6 +88,37 @@ int getCountersZrtp(int iCallID, int* counters) {
       return m->getCountersZrtp(counters);
    }
    return -2;
+}
+
+int CPhSesions::getInfo(const char *key, char *p, int iMax){
+   
+   int al = sizeof("AssociatedURI") - 1;
+   if(strncmp(key, "AssociatedURI", al)==0){
+
+      if(key[al]==0){
+         int l = 0;
+         for(int i=0;i<sMsg_200okReg.hldAssociated_URI.uiCount;i++){
+            l+=t_snprintf(p+l,iMax-l, "%.*s,",
+                         sMsg_200okReg.hldAssociated_URI.x[i].sipUri.dstrSipAddr.uiLen,
+                         sMsg_200okReg.hldAssociated_URI.x[i].sipUri.dstrSipAddr.strVal);
+         }
+         if(l)l--;
+         p[l] = 0;
+         return l;
+      }
+      else if(key[al]=='='){
+         userPreferdSipAddr.set(key+al+1);
+         int l = t_snprintf(p, iMax, "%s","ok");
+         return l;
+      }
+   }
+   
+   if(strcmp(key, "getFreeSesCnt")==0){
+      int l = t_snprintf(p, iMax, "%d",getFreeSesCnt());
+      return l;
+   }
+   
+   return 0;
 }
 
 int getCallInfo(int iCallID, const char *key, char *p, int iMax){
@@ -677,7 +734,7 @@ int CPhSesions::onSipMsgSes(CSesBase *spSes, SIP_MSG *sMsg)
       {
 
          spSes->sSendTo.stopRetransmit();
-         CMakeSip ms1(sockSip,200,sMsg);
+         CMakeSip ms1(sockSip,200,sMsg, spSes);
          if(iMeth==METHOD_CANCEL){
             CMakeSip ms(sockSip,spSes,&spSes->sSIPMsg);
             ms.makeResp(487,&p_cfg);
@@ -965,7 +1022,13 @@ int CPhSesions::onSipMsg(CSesBase *spSes, SIP_MSG *sMsg)
             if(ok==1 && b)
                uiExpTime=b;
             
+            memset(&sMsg_200okReg,0,sizeof(SIP_MSG));
+            //parsing again, because we use pointers in spSes->sSIPMsg.rawDataBuffer
+            cSip.parseSip(sMsg->rawDataBuffer, (int)(sMsg->uiOffset-MSG_BUFFER_TAIL_SIZE), &sMsg_200okReg);
             
+            for(int z=0;z<sMsg_200okReg.hldAssociated_URI.uiCount;z++){
+               printf("[%.*s]\n",sMsg_200okReg.hldAssociated_URI.x[z].sipUri.dstrSipAddr.uiLen, sMsg_200okReg.hldAssociated_URI.x[z].sipUri.dstrSipAddr.strVal);
+            }
             
             uiNextRegTry = uiGT+((uiExpTime*10*T_GT_SECOND)>>4);
             p_cfg.reg.uiRegUntil=uiGT+(uiExpTime*15*T_GT_SECOND>>4);
@@ -1272,6 +1335,7 @@ void CPhSesions::onKillSes(CSesBase *spSes, int iReason, SIP_MSG *sMsg ,int iMet
                      
                         
                      if(iMeth==METHOD_REGISTER && (sockSip.isTCP() || sockSip.isTLS())){
+                        t_logf(log_events, __FUNCTION__, "sockdebug: Recreating socket due to timeout");
                         this->sockSip.reCreate();//new 08032012,TODO do it if data is not received for more than 5 sec
                         //TODO send options, reregister
                         

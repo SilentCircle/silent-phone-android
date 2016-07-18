@@ -29,10 +29,12 @@
         <TextView
                 android:id="@+id/dialpad_key_number"
                 style="@style/DialKeyNumberStyle"
+                android:filterTouchesWhenObscured="true"
                 tools:text="2"/>
         <TextView
                 android:id="@+id/dialpad_key_letters"
                 style="@style/DialKeyLetterStyle"
+                android:filterTouchesWhenObscured="true"
                 tools:text="ABC"/>
         </LinearLayout>
 <!--    </RelativeLayout> -->

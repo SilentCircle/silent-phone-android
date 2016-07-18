@@ -19,10 +19,10 @@ if(CMAKE_HAVE_PTHREAD_H)
 endif()
 set(LIBS ${LIBS} ${CMAKE_THREAD_LIBS_INIT})
 
-pkg_check_modules(SQLITE3 sqlite3>=3.7)
+pkg_check_modules(SQLITE3 sqlcipher>=3.7)
 if (SQLITE3_FOUND)
     check_include_files(sqlite3.h HAVE_SQLITE_H)
-    set(LIBS ${LIBS} -lsqlite3)
+    set(LIBS ${LIBS} -lsqlcipher)
 else()
     message(FATAL_ERROR "SQLite3 library not found")
 endif()
@@ -34,17 +34,26 @@ else()
     message(FATAL_ERROR "PulseAudio library not found")
 endif()
 
+pkg_check_modules(PROTO protobuf-lite>=2.6.1)
+if (PROTO_FOUND)
+    include_directories(${PROTO_INCLUDE_DIRS})
+    set(LIBS ${LIBS} ${PROTO_LDFLAGS})
+else()
+    message(FATAL_ERROR "ProtocolBuffer library not found")
+endif()
+
 add_definitions(-g -O2 -fno-strict-aliasing)
 if(CMAKE_COMPILER_IS_GNUCXX)
-    add_definitions(-Wno-long-long -Wno-char-subscripts)
+    add_definitions(-Wno-long-long -Wno-char-subscripts -std=c++11)
     add_definitions(-fpermissive)  ############### Don't use this for production code !!!!
 #   add_definitions(-Wall -ansi -pedantic)
 endif()
 
 set(linuxObjs
     ${encryptDir} ${os} ${baseClasses} ${sipParser} ${tiviEngine} ${rtp} ${sdp} ${xml} ${codecsG711}
-    ${codecsG722} ${codecsG729float} ${codecsGsm} ${vad} ${codecsJpeg} ${aec}
+    ${codecsG722} ${codecsG729float} ${codecsGsm} ${vad} ${codecsJpeg} ${aec} ${tmr}
     ${tiviBase}/utils/utils.cpp
+    ${tiviBase}/utils/CTCoutryCode.cpp
     ${tiviBase}/video/CTRTPVideoPlayer.cpp
     ${tiviBase}/audio/audio_in_out_linux.cpp
     ${tiviBase}/tiviandroid/t_a_main.cpp
@@ -54,6 +63,7 @@ set(linuxObjs
 add_executable(tivilinux ${linuxObjs})
 target_link_libraries(tivilinux ${zrtpDir}/build/clients/tivi/libzrtptivi.so)
 target_link_libraries(tivilinux ${polarDir}/library/libpolarssl.a)
+target_link_libraries(tivilinux ${axoDir}/buildStatic/libaxolotl++.a)
 target_link_libraries(tivilinux ${LIBS})
 # SET_TARGET_PROPERTIES(tivilinux PROPERTIES LINK_FLAGS -m32)
 

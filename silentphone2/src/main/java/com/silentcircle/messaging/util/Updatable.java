@@ -29,5 +29,5 @@ package com.silentcircle.messaging.util;
 
 public interface Updatable {
 
-    public void update();
+    void update();
 }

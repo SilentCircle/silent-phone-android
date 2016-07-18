@@ -28,6 +28,7 @@ http://code.google.com/p/android/issues/detail?id=3414, comments 56 and 57
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:orientation="vertical">
+
                 <TextView
                         android:id="@+id/dev_name"
                         style="@style/Widget.Silent.SimpleText.Medium"
@@ -37,9 +38,9 @@ http://code.google.com/p/android/issues/detail?id=3414, comments 56 and 57
                         android:ellipsize="marquee"
                         android:marqueeRepeatLimit ="3"
                         android:scrollHorizontally="true"
-                        android:background="@drawable/list_item_selection_dark"
                         tools:text="Nexus 6"
                         tools:context="com.silentcircle.messaging.activities.AxoRegisterActivity"/>
+
                 <TextView
                         android:id="@+id/dev_id"
                         style="@style/Widget.Silent.SimpleText.Small"
@@ -49,11 +50,12 @@ http://code.google.com/p/android/issues/detail?id=3414, comments 56 and 57
                         android:ellipsize="marquee"
                         android:marqueeRepeatLimit ="3"
                         android:scrollHorizontally="true"
-                        android:background="@drawable/list_item_selection_dark"
                         android:textColor="@color/translucent_white"
                         tools:text="device id string"
                         tools:context="com.silentcircle.messaging.activities.AxoRegisterActivity"/>
+
         </LinearLayout>
+
         <ImageButton
                 android:id="@+id/menu"
                 android:layout_width="wrap_content"
@@ -79,4 +81,5 @@ http://code.google.com/p/android/issues/detail?id=3414, comments 56 and 57
                 android:visibility="invisible"
                 android:src="@drawable/ic_check_white_24dp"
                 tools:visibility="visible"/>
+
 </LinearLayout>

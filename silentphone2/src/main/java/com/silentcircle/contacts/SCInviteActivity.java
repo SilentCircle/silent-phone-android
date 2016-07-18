@@ -28,7 +28,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package com.silentcircle.contacts;
 
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -39,13 +38,15 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.ContactsContract;
+import android.support.v7.app.AlertDialog;
 import android.telephony.SmsManager;
 import android.text.TextUtils;
 import android.widget.Toast;
-import java.util.ArrayList;
 
 import com.silentcircle.silentphone2.R;
-import com.silentcircle.silentphone2.services.TiviPhoneService;
+import com.silentcircle.userinfo.LoadUserInfo;
+
+import java.util.ArrayList;
 
 public class SCInviteActivity extends Activity {
     final int REQUEST_PHONE_CODE = 0;
@@ -59,12 +60,7 @@ public class SCInviteActivity extends Activity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        try {
-            if (TextUtils.isEmpty(userName))
-                userName = TiviPhoneService.getInfo(0, -1, "cfg.un");
-        } catch (Exception ex) {
-            /* ignore */
-        }
+        userName = LoadUserInfo.getDisplayAlias();
 
         // did we get passed a phone number ?
         String phoneNumber = getIntent().getStringExtra(INVITE_PHONE_NUMBER);
@@ -77,11 +73,13 @@ public class SCInviteActivity extends Activity {
         Uri data = getIntent().getData();
         if (data != null) {
             Cursor cursor = getContentResolver().query(data, null, null, null, null);
-            if (cursor.moveToFirst()) {
-                contactId = cursor.getString(cursor.getColumnIndex("contact_id"));
-                contactName = cursor.getString(cursor.getColumnIndex("display_name"));
+            if (cursor != null) {
+                if (cursor.moveToFirst()) {
+                    contactId = cursor.getString(cursor.getColumnIndex("contact_id"));
+                    contactName = cursor.getString(cursor.getColumnIndex("display_name"));
+                }
+                cursor.close();
             }
-            cursor.close();
         }
 
         // if we have no contact let the user pick one
@@ -150,13 +148,15 @@ public class SCInviteActivity extends Activity {
                     Cursor cursor = getContentResolver().query(contactUri, projection,
                             null, null, null);
                     // If the cursor returned is valid, get the phone number
-                    if (cursor.moveToFirst()) {
-                        String phoneNumber = cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
-                        contactName = cursor.getString(cursor.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME));
-                        // send invite via sms
-                        openSendInviteSMS(phoneNumber);
+                    if (cursor != null) {
+                        if (cursor.moveToFirst()) {
+                            String phoneNumber = cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
+                            contactName = cursor.getString(cursor.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME));
+                            // send invite via sms
+                            openSendInviteSMS(phoneNumber);
+                        }
+                        cursor.close();
                     }
-                    cursor.close();
                 } else { finish(); }
                 break;
             case REQUEST_EMAIL_CODE:
@@ -170,13 +170,15 @@ public class SCInviteActivity extends Activity {
                     Cursor cursor = getContentResolver().query(contactUri, projection,
                             null, null, null);
                     // If the cursor returned is valid, get the phone number
-                    if (cursor.moveToFirst()) {
-                        String email = cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
-                        contactName = cursor.getString(cursor.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME));
-                        // send invite via email
-                        sendInviteEmail(email);
+                    if (cursor != null) {
+                        if (cursor.moveToFirst()) {
+                            String email = cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
+                            contactName = cursor.getString(cursor.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME));
+                            // send invite via email
+                            sendInviteEmail(email);
+                        }
+                        cursor.close();
                     }
-                    cursor.close();
                 } else { finish(); }
                 break;
             default:
@@ -187,17 +189,17 @@ public class SCInviteActivity extends Activity {
 
     private void pickContact(String contact_id) {
         final ArrayList<String> arrayPhoneEmail = new ArrayList<>();
-        try {
-            Uri uri = ContactsContract.CommonDataKinds.Phone.CONTENT_URI;
-            String selection = ContactsContract.CommonDataKinds.StructuredName.CONTACT_ID + " = ?";
-            String[] selectionArgs = new String[]{contact_id};
-            String[] projection = new String[]{
-                    ContactsContract.Contacts.DISPLAY_NAME,
-                    ContactsContract.CommonDataKinds.Phone.NUMBER
-            };
+        Uri uri = ContactsContract.CommonDataKinds.Phone.CONTENT_URI;
+        String selection = ContactsContract.CommonDataKinds.StructuredName.CONTACT_ID + " = ?";
+        String[] selectionArgs = new String[]{contact_id};
+        String[] projection = new String[]{
+                ContactsContract.Contacts.DISPLAY_NAME,
+                ContactsContract.CommonDataKinds.Phone.NUMBER
+        };
 
-            Cursor curPhone = getContentResolver().query(uri, projection, selection, selectionArgs, null);
+        Cursor curPhone = getContentResolver().query(uri, projection, selection, selectionArgs, null);
 
+        if (curPhone != null) {
             int indexNumber = curPhone.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER);
             int indexName = curPhone.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME);
             String number;
@@ -206,23 +208,21 @@ public class SCInviteActivity extends Activity {
                 contactName = curPhone.getString(indexName);
                 for (int b = 0; b < curPhone.getCount(); b++) {
                     number = curPhone.getString(indexNumber);
-                    arrayPhoneEmail.add(number);
+                    if (!TextUtils.isEmpty(number))
+                        arrayPhoneEmail.add(number);
                 }
             }
             curPhone.close();
-        } catch (Exception ex) {
-            // ignore
         }
+        uri = ContactsContract.CommonDataKinds.Email.CONTENT_URI;
+        selection = ContactsContract.CommonDataKinds.StructuredName.CONTACT_ID + " = ?";
+        selectionArgs = new String[]{contact_id};
+        projection = new String[]{
+                ContactsContract.Contacts.DISPLAY_NAME,
+                ContactsContract.CommonDataKinds.Email.ADDRESS};
 
-        try {
-            Uri uri = ContactsContract.CommonDataKinds.Email.CONTENT_URI;
-            String selection = ContactsContract.CommonDataKinds.StructuredName.CONTACT_ID + " = ?";
-            String[] selectionArgs = new String[]{contact_id};
-            String[] projection = new String[]{
-                    ContactsContract.Contacts.DISPLAY_NAME,
-                    ContactsContract.CommonDataKinds.Email.ADDRESS};
-
-            Cursor curEmail = getContentResolver().query(uri, projection, selection, selectionArgs, null);
+        Cursor curEmail = getContentResolver().query(uri, projection, selection, selectionArgs, null);
+        if (curEmail != null) {
             int indexAddress = curEmail.getColumnIndex(ContactsContract.CommonDataKinds.Email.ADDRESS);
             int indexName = curEmail.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME);
 
@@ -231,12 +231,11 @@ public class SCInviteActivity extends Activity {
                 contactName = curEmail.getString(indexName);
                 for (int b = 0; b < curEmail.getCount(); b++) {
                     email = curEmail.getString(indexAddress);
-                    arrayPhoneEmail.add(email);
+                    if (!TextUtils.isEmpty(email))
+                        arrayPhoneEmail.add(email);
                 }
             }
             curEmail.close();
-        } catch (Exception ex) {
-            // ignore
         }
 
         DialogInterface.OnClickListener selectItemListener = new DialogInterface.OnClickListener()
@@ -286,10 +285,8 @@ public class SCInviteActivity extends Activity {
     }
 
     private boolean isValidEmail(CharSequence target) {
-        if (target == null)
-            return false;
+        return target != null && android.util.Patterns.EMAIL_ADDRESS.matcher(target).matches();
 
-        return android.util.Patterns.EMAIL_ADDRESS.matcher(target).matches();
     }
 
     // this method actually sends an SMS without further action by the user

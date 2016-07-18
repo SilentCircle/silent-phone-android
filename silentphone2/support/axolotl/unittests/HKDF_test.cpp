@@ -1,5 +1,6 @@
 #include <limits.h>
 #include "../axolotl/crypto/HKDF.h"
+#include "../logging/AxoLogging.h"
 #include "gtest/gtest.h"
 
 uint8_t ikm_t1[] = {
@@ -82,9 +83,30 @@ static void hexdump(const char* title, const std::string& in)
 {
     hexdump(title, (uint8_t*)in.data(), in.size());
 }
+class HkdfTestFixture: public ::testing::Test {
+public:
+    HkdfTestFixture( ) {
+        // initialization code here
+    }
+
+    void SetUp() {
+        // code here will execute just before the test ensues
+        LOGGER_INSTANCE setLogLevel(ERROR);
+    }
+
+    void TearDown( ) {
+        // code here will be called just after the test completes
+        // ok to through exceptions from here if need be
+    }
+
+    ~HkdfTestFixture( )  {
+        // cleanup any pending stuff, but no exceptions allowed
+        LOGGER_INSTANCE setLogLevel(VERBOSE);
+    }
+};
 
 
-TEST(HKDF, Test1) {
+TEST_F(HkdfTestFixture, HKDFTest1) {
     uint8_t output[42] = {0};
 
     axolotl::HKDF::deriveSecrets(ikm_t1, sizeof(ikm_t1), salt_t1, sizeof(salt_t1), info_t1, sizeof(info_t1), output, 42);
@@ -93,7 +115,7 @@ TEST(HKDF, Test1) {
     }
 }
 
-TEST(HKDF, Test2) {
+TEST_F(HkdfTestFixture, HKDFTest2) {
     uint8_t output[82] = {0};
 
     axolotl::HKDF::deriveSecrets(ikm_t2, sizeof(ikm_t2), salt_t2, sizeof(salt_t2), info_t2, sizeof(info_t2), output, 82);

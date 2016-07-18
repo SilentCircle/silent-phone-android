@@ -3,12 +3,9 @@
  *
  * \brief  Multi-precision integer library
  *
- *  Copyright (C) 2006-2014, Brainspark B.V.
+ *  Copyright (C) 2006-2014, ARM Limited, All Rights Reserved
  *
- *  This file is part of PolarSSL (http://www.polarssl.org)
- *  Lead Maintainer: Paul Bakker <polarssl_maintainer at polarssl.org>
- *
- *  All rights reserved.
+ *  This file is part of mbed TLS (https://tls.mbed.org)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -27,13 +24,16 @@
 #ifndef POLARSSL_BIGNUM_H
 #define POLARSSL_BIGNUM_H
 
-#include <stdio.h>
-#include <string.h>
-
 #if !defined(POLARSSL_CONFIG_FILE)
 #include "config.h"
 #else
 #include POLARSSL_CONFIG_FILE
+#endif
+
+#include <stddef.h>
+
+#if defined(POLARSSL_FS_IO)
+#include <stdio.h>
 #endif
 
 #if defined(_MSC_VER) && !defined(EFIX64) && !defined(EFI32)
@@ -90,7 +90,7 @@ typedef UINT64 uint64_t;
  * Note: Calculations can results temporarily in larger MPIs. So the number
  * of limbs required (POLARSSL_MPI_MAX_LIMBS) is higher.
  */
-#define POLARSSL_MPI_MAX_SIZE                              512      /**< Maximum number of bytes for usable MPIs. */
+#define POLARSSL_MPI_MAX_SIZE                              1024     /**< Maximum number of bytes for usable MPIs. */
 #endif /* !POLARSSL_MPI_MAX_SIZE */
 
 #define POLARSSL_MPI_MAX_BITS                              ( 8 * POLARSSL_MPI_MAX_SIZE )    /**< Maximum number of bits for usable MPIs. */
@@ -148,10 +148,11 @@ typedef uint32_t t_udbl;
           defined(__ppc64__) || defined(__powerpc64__) || \
           defined(__ia64__)  || defined(__alpha__)     || \
           (defined(__sparc__) && defined(__arch64__))  || \
-          defined(__s390x__) ) )
+          defined(__s390x__) || defined(__mips64) ) )
        #define POLARSSL_HAVE_INT64
        typedef  int64_t t_sint;
        typedef uint64_t t_uint;
+       /* mbedtls_t_udbl defined as 128-bit unsigned int */
        typedef unsigned int t_udbl __attribute__((mode(TI)));
        #define POLARSSL_HAVE_UDBL
     #else
@@ -188,7 +189,9 @@ typedef struct
 mpi;
 
 /**
- * \brief           Initialize one MPI
+ * \brief           Initialize one MPI (make internal references valid)
+ *                  This just makes it ready to be set or freed,
+ *                  but does not define a value for the MPI.
  *
  * \param X         One MPI to initialize.
  */

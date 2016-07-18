@@ -30,14 +30,13 @@ package com.silentcircle.messaging.activities;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
 import android.view.MenuItem;
 
 import com.silentcircle.messaging.fragments.RemoteDevicesFragment;
-import com.silentcircle.messaging.services.AxoMessaging;
-import com.silentcircle.messaging.util.IOUtils;
 import com.silentcircle.silentphone2.R;
 
 /**
@@ -45,7 +44,7 @@ import com.silentcircle.silentphone2.R;
  *
  * Created by werner on 20.06.15.
  */
-public class ShowRemoteDevicesActivity extends ActionBarActivity {
+public class ShowRemoteDevicesActivity extends AppCompatActivity {
 
     @SuppressWarnings("unused")
     private static final String TAG = "ShowRemote";
@@ -66,6 +65,13 @@ public class ShowRemoteDevicesActivity extends ActionBarActivity {
 
         Toolbar toolbar = (Toolbar)findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+        ActionBar actionBar = getSupportActionBar();
+        if (actionBar != null) {
+            actionBar.setDisplayShowTitleEnabled(true);
+            actionBar.setDisplayHomeAsUpEnabled(true);
+            actionBar.setDisplayShowHomeEnabled(true);
+            actionBar.setHomeButtonEnabled(true);
+        }
 
         if (savedInstanceState == null) {
             Bundle arg = new Bundle();
@@ -82,4 +88,15 @@ public class ShowRemoteDevicesActivity extends ActionBarActivity {
     protected void onDestroy() {
         super.onDestroy();
     }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        boolean consumed = false;
+        if (item.getItemId() == android.R.id.home) {
+            consumed = true;
+            onBackPressed();
+        }
+        return consumed ? consumed : super.onOptionsItemSelected(item);
+    }
+
 }

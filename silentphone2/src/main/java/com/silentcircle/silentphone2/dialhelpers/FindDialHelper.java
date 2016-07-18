@@ -40,6 +40,7 @@ import com.silentcircle.silentphone2.util.ConfigurationUtilities;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.TreeMap;
 
 /**
@@ -130,9 +131,6 @@ public class FindDialHelper {
         // we used the transcription according to ISO 233 to avoid problems with right-to-left writing.
         // For languages that use/allow left-to-right writing we use the correct character set if available,
         // for example cyrillic, chinese signs, etc.
-
-        // This a a dial plan region, not only a single country. Handle as a virtual country
-        mCountryList.put("no_", new CountryData("North America",       "no_",   "+1", "nanp", "011", ""));
 
         mCountryList.put("af", new CountryData("Afghānestān (Afghanistan)","af",  "+93", "00_0", "00", "0"));
         mCountryList.put("al", new CountryData("Shqipëri (Albania)",       "al", "+355", "00_0", "00", "0"));
@@ -435,7 +433,7 @@ public class FindDialHelper {
      *
      * @param ctx Context required for shared preferences.
      */
-    public static void setDialHelper(Context ctx) {
+    public static void setDialHelper(final Context ctx, final boolean runUpdater) {
         if (ctx == null)
             return;
 
@@ -455,9 +453,28 @@ public class FindDialHelper {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(ctx);
         String country = prefs.getString(PREFERRED_COUNTRY, null);
 
-        // If no preference set then initialize with the default country that's defined for
-        // the partner
-        CountryData cd = TextUtils.isEmpty(country) ? mCountryList.get(partner.countryName) : mCountryList.get(country);
+        // If no preference set then initialize with the locale
+        // Previously: the default country that's defined for the partner
+        // FIXME: KPN? - For KPN we don't offer the dial assist in the settings
+        CountryData cd = null;
+
+        if (TextUtils.isEmpty(country)) {
+            String localeCountry = Locale.getDefault().getCountry();
+
+            // Set to "us" if there is a null or empty locale
+            country = TextUtils.isEmpty(localeCountry) ? "us"
+                    : localeCountry.toLowerCase();
+
+            cd = mCountryList.get(country);
+
+            // If the locale country is not supported, default to "us"
+            if (cd == null) {
+                cd = mCountryList.get("us");
+            }
+        } else {
+            cd = mCountryList.get(country);
+        }
+
         if (cd == null)
             return;
 
@@ -468,6 +485,10 @@ public class FindDialHelper {
 
             mActiveCountry = cd;
             mDialHelper = tmpHelper;
+
+            if (runUpdater) {
+                TiviPhoneService.phoneService.runContactsUpdater(true);
+            }
         }
     }
 
@@ -502,7 +523,7 @@ public class FindDialHelper {
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(ctx);
         prefs.edit().putString(PREFERRED_COUNTRY, country).apply();
-        setDialHelper(ctx);       // load and update internal data
+        setDialHelper(ctx, true);       // load and update internal data
         return true;
     }
 

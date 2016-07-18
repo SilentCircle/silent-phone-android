@@ -27,6 +27,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 package com.silentcircle.silentphone2.views;
 
+import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
@@ -41,6 +42,7 @@ import android.graphics.drawable.Drawable;
 import android.graphics.drawable.ShapeDrawable;
 import android.graphics.drawable.StateListDrawable;
 import android.graphics.drawable.shapes.OvalShape;
+import android.os.Build;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.widget.ImageView;
@@ -82,7 +84,8 @@ public class CircleImageSelectable extends ImageView {
         super(context);
     }
 
-    @SuppressWarnings("unused")
+    @TargetApi(Build.VERSION_CODES.M)
+    @SuppressWarnings("deprecation, unused")
     public CircleImageSelectable(Context context, AttributeSet attrs) {
         super(context, attrs);
         TypedArray a = context.obtainStyledAttributes(attrs, new int[] { android.R.attr.background });
@@ -100,8 +103,14 @@ public class CircleImageSelectable extends ImageView {
             if (a != null) {
                 mGivenDiameter = a.getDimension(R.styleable.CircleImageSelectable_sp_round_image_diameter, mGivenDiameter);
                 mStrokeWidth = a.getDimension(R.styleable.CircleImageSelectable_sp_round_image_stroke_width, 0);
-                mStrokeColor = a.getColor(R.styleable.CircleImageSelectable_sp_round_image_stroke_color, getResources().getColor(android.R.color.white));
-                mShadowColor = a.getColor(R.styleable.CircleImageSelectable_sp_round_image_shadow_color, getResources().getColor(android.R.color.black));
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+                    mStrokeColor = a.getColor(R.styleable.CircleImageSelectable_sp_round_image_stroke_color, getResources().getColor(android.R.color.white));
+                    mShadowColor = a.getColor(R.styleable.CircleImageSelectable_sp_round_image_shadow_color, getResources().getColor(android.R.color.black));
+                }
+                else {
+                    mStrokeColor = a.getColor(R.styleable.CircleImageSelectable_sp_round_image_stroke_color, getResources().getColor(android.R.color.white, theme));
+                    mShadowColor = a.getColor(R.styleable.CircleImageSelectable_sp_round_image_shadow_color, getResources().getColor(android.R.color.black, theme));
+                }
                 a.recycle();
             }
         }

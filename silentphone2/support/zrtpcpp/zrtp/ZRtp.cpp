@@ -38,6 +38,7 @@
 #include <libzrtpcpp/ZrtpStateClass.h>
 #include <libzrtpcpp/ZIDCache.h>
 #include <libzrtpcpp/Base32.h>
+#include <libzrtpcpp/EmojiBase32.h>
 
 using namespace GnuZrtpCodes;
 
@@ -79,7 +80,8 @@ ZRtp::ZRtp(uint8_t *myZid, ZrtpCallback *cb, std::string id, ZrtpConfigure* conf
         callback(cb), dhContext(NULL), DHss(NULL), auxSecret(NULL), auxSecretLength(0), rs1Valid(false),
         rs2Valid(false), msgShaContext(NULL), hash(NULL), cipher(NULL), pubKey(NULL), sasType(NULL), authLength(NULL),
         multiStream(false), multiStreamAvailable(false), peerIsEnrolled(false), mitmSeen(false), pbxSecretTmp(NULL),
-        enrollmentMode(false), configureAlgos(*config), zidRec(NULL), saveZidRecord(true), masterStream(NULL) {
+        enrollmentMode(false), configureAlgos(*config), zidRec(NULL), saveZidRecord(true), signSasSeen(false),
+        masterStream(NULL), peerDisclosureFlagSeen(false) {
 
 #ifdef ZRTP_SAS_RELAY_SUPPORT
     enableMitmEnrollment = config->isTrustedMitM();
@@ -795,6 +797,9 @@ ZrtpPacketConfirm* ZRtp::prepareConfirm1(ZrtpPacketDHPart* dhPart2, uint32_t* er
     if (zidRec->isSasVerified() && !paranoidMode) {
         zrtpConfirm1.setSASFlag();
     }
+    if (configureAlgos.isDisclosureFlag()) {
+        zrtpConfirm1.setDisclosureFlag();
+    }
     zrtpConfirm1.setExpTime(0xFFFFFFFF);
     zrtpConfirm1.setIv(randomIV);
     zrtpConfirm1.setHashH0(H0);
@@ -923,6 +928,9 @@ ZrtpPacketConfirm* ZRtp::prepareConfirm1MultiStream(ZrtpPacketCommit* commit, ui
 
     // Fill in Confirm1 packet.
     zrtpConfirm1.setMessageType((uint8_t*)Confirm1Msg);
+    if (configureAlgos.isDisclosureFlag()) {
+        zrtpConfirm1.setDisclosureFlag();
+    }
     zrtpConfirm1.setExpTime(0xFFFFFFFF);
     zrtpConfirm1.setIv(randomIV);
     zrtpConfirm1.setHashH0(H0);
@@ -979,13 +987,6 @@ ZrtpPacketConfirm* ZRtp::prepareConfirm2(ZrtpPacketConfirm* confirm1, uint32_t* 
         *errMsg = CriticalSWError;
         return NULL;
     }
-    signatureLength = confirm1->getSignatureLength();
-
-    if (signSasSeen && signatureLength > 0 && confirm1->isSignatureLengthOk()) {
-        signatureData = confirm1->getSignatureData();
-        callback->checkSASSignature(sasHash);
-        // TODO: error handling if checkSASSignature returns false.
-    }
     /*
      * The Confirm1 is ok, handle the Retained secret stuff and inform
      * GUI about state.
@@ -997,10 +998,20 @@ ZrtpPacketConfirm* ZRtp::prepareConfirm2(ZrtpPacketConfirm* confirm1, uint32_t* 
     if (!sasFlag || paranoidMode) {
         zidRec->resetSasVerified();
     }
+
+    // Store the status of the Disclosure flag
+    peerDisclosureFlagSeen = confirm1->isDisclosureFlag();
+
     // get verified flag from current RS1 before set a new RS1. This
     // may not be set even if peer's flag is set in confirm1 message.
     sasFlag = zidRec->isSasVerified();
 
+    signatureLength = confirm1->getSignatureLength();
+    if (signSasSeen && signatureLength > 0 && confirm1->isSignatureLengthOk()) {
+        signatureData = confirm1->getSignatureData();
+        callback->checkSASSignature(sasHash);
+        // TODO: error handling if checkSASSignature returns false.
+    }
     // now we are ready to save the new RS1 which inherits the verified
     // flag from old RS1
     zidRec->setNewRs1((const uint8_t*)newRs1);
@@ -1011,6 +1022,9 @@ ZrtpPacketConfirm* ZRtp::prepareConfirm2(ZrtpPacketConfirm* confirm1, uint32_t* 
 
     if (sasFlag) {
         zrtpConfirm2.setSASFlag();
+    }
+    if (configureAlgos.isDisclosureFlag()) {
+        zrtpConfirm2.setDisclosureFlag();
     }
     zrtpConfirm2.setExpTime(0xFFFFFFFF);
     zrtpConfirm2.setIv(randomIV);
@@ -1122,8 +1136,14 @@ ZrtpPacketConfirm* ZRtp::prepareConfirm2MultiStream(ZrtpPacketConfirm* confirm1,
         *errMsg = CriticalSWError;
         return NULL;
     }
+    // Store the status of the Disclosure flag
+    peerDisclosureFlagSeen = confirm1->isDisclosureFlag();
+
     // now generate my Confirm2 message
     zrtpConfirm2.setMessageType((uint8_t*)Confirm2Msg);
+    if (configureAlgos.isDisclosureFlag()) {
+        zrtpConfirm2.setDisclosureFlag();
+    }
     zrtpConfirm2.setHashH0(H0);
     zrtpConfirm2.setExpTime(0xFFFFFFFF);
     zrtpConfirm2.setIv(randomIV);
@@ -1178,23 +1198,22 @@ ZrtpPacketConf2Ack* ZRtp::prepareConf2Ack(ZrtpPacketConfirm *confirm2, uint32_t*
             *errMsg = CriticalSWError;
             return NULL;
         }
-        signatureLength = confirm2->getSignatureLength();
-        if (signSasSeen && signatureLength > 0 && confirm2->isSignatureLengthOk() ) {
-            signatureData = confirm2->getSignatureData();
-            callback->checkSASSignature(sasHash);
-            // TODO: error handling if checkSASSignature returns false.
-        }
         /*
-        * The Confirm2 is ok, handle the Retained secret stuff and inform
-        * GUI about state.
-        */
+         * The Confirm2 is ok, handle the Retained secret stuff and inform
+         * GUI about state.
+         */
         bool sasFlag = confirm2->isSASFlag();
         // Our peer did not confirm the SAS in last session, thus reset
         // our SAS flag too. Reset the flag also if paranoidMode is true.
         if (!sasFlag || paranoidMode) {
             zidRec->resetSasVerified();
         }
-
+        signatureLength = confirm2->getSignatureLength();
+        if (signSasSeen && signatureLength > 0 && confirm2->isSignatureLengthOk() ) {
+            signatureData = confirm2->getSignatureData();
+            callback->checkSASSignature(sasHash);
+            // TODO: error handling if checkSASSignature returns false.
+        }
         // save new RS1, this inherits the verified flag from old RS1
         zidRec->setNewRs1((const uint8_t*)newRs1);
         if (saveZidRecord)
@@ -1231,6 +1250,9 @@ ZrtpPacketConf2Ack* ZRtp::prepareConf2Ack(ZrtpPacketConfirm *confirm2, uint32_t*
             return NULL;
         }
     }
+    // Store the status of the Disclosure flag
+    peerDisclosureFlagSeen = confirm2->isDisclosureFlag();
+
     return &zrtpConf2Ack;
 }
 
@@ -1330,6 +1352,9 @@ ZrtpPacketRelayAck* ZRtp::prepareRelayAck(ZrtpPacketSASrelay* srly, uint32_t* er
         sasBytes[3] = 0;
         if (*(int32_t*)b32 == *(int32_t*)(renderAlgo->getName())) {
             SAS = Base32(sasBytes, 20).getEncoded();
+        }
+        else if (*(int32_t*)b32e == *(int32_t*)(renderAlgo->getName())) {
+            SAS = *EmojiBase32::u32StringToUtf8(EmojiBase32(sasBytes, 20).getEncoded());
         }
         else {
             SAS.assign(sas256WordsEven[sasBytes[0]]).append(":").append(sas256WordsOdd[sasBytes[1]]);
@@ -2345,6 +2370,9 @@ void ZRtp::computeSRTPKeys() {
         if (*(int32_t*)b32 == *(int32_t*)(sasType->getName())) {
             SAS = Base32(sasBytes, 20).getEncoded();
         }
+        else if (*(int32_t*)b32e == *(int32_t*)(sasType->getName())) {
+            SAS = *EmojiBase32::u32StringToUtf8(EmojiBase32(sasBytes, 20).getEncoded());
+        }
         else {
             SAS.assign(sas256WordsEven[sasBytes[0]]).append(":").append(sas256WordsOdd[sasBytes[1]]);
         }
@@ -2489,6 +2517,10 @@ void ZRtp::resetSASVerified() {
 
     zidRec->resetSasVerified();
     getZidCacheInstance()->saveRecord(zidRec);
+}
+
+bool ZRtp::isSASVerified() {
+    return zidRec->isSasVerified();
 }
 
 void ZRtp::setRs2Valid() {

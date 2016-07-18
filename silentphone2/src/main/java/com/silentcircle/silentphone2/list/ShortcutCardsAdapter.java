@@ -41,7 +41,6 @@ import android.widget.TextView;
 import com.silentcircle.contacts.calllognew.CallLogAdapter;
 import com.silentcircle.contacts.calllognew.CallLogListItemView;
 import com.silentcircle.contacts.calllognew.CallLogQueryHandler;
-import com.silentcircle.silentcontacts2.ScCallLog;
 import com.silentcircle.silentphone2.R;
 import com.silentcircle.silentphone2.list.SwipeHelper.OnItemGestureListener;
 import com.silentcircle.silentphone2.list.SwipeHelper.SwipeHelperCallback;
@@ -139,6 +138,8 @@ public class ShortcutCardsAdapter extends BaseAdapter {
         }
     };
 
+    @TargetApi(Build.VERSION_CODES.M)
+    @SuppressWarnings("deprecation")
     public ShortcutCardsAdapter(Context context, ListsFragment fragment, CallLogAdapter callLogAdapter) {
         final Resources resources = context.getResources();
         mContext = context;
@@ -150,7 +151,8 @@ public class ShortcutCardsAdapter extends BaseAdapter {
         mCallLogPaddingTop = resources.getDimensionPixelSize(R.dimen.recent_call_log_item_padding_top);
         mCallLogPaddingBottom = resources.getDimensionPixelSize(R.dimen.recent_call_log_item_padding_bottom);
 //        mShortCardBackgroundColor = resources.getColor(R.color.call_log_expanded_background_color);
-        mShortCardBackgroundColor = resources.getColor(R.color.background_dialer_list_items);
+        mShortCardBackgroundColor = Build.VERSION.SDK_INT < Build.VERSION_CODES.M ?
+                resources.getColor(R.color.background_dialer_list_items) : resources.getColor(R.color.background_dialer_list_items, null);
 
 
         mCallLogAdapter = callLogAdapter;
@@ -232,6 +234,12 @@ public class ShortcutCardsAdapter extends BaseAdapter {
     @Override
     public boolean isEnabled(int position) {
         return mCallLogAdapter.isEnabled(position);
+    }
+
+    public void unregisterContentObserver() {
+        if (mContext != null && mChangeObserver != null) {
+            mContext.getContentResolver().unregisterContentObserver(mChangeObserver);
+        }
     }
 
     /**

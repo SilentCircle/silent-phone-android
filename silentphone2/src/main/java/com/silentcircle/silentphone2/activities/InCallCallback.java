@@ -44,7 +44,7 @@ public interface InCallCallback {
      * @param l
      *            the <tt>CallStateChangeListener</tt> to add
      */
-    public void addStateChangeListener(TiviPhoneService.ServiceStateChangeListener l);
+    void addStateChangeListener(TiviPhoneService.ServiceStateChangeListener l);
 
     /**
      * Removes the given <tt>CallStateChangeListener</tt> from the list of call state change listeners.
@@ -52,7 +52,7 @@ public interface InCallCallback {
      * @param l
      *            the <tt>CallStateChangeListener</tt> to remove
      */
-    public void removeStateChangeListener(TiviPhoneService.ServiceStateChangeListener l);
+    void removeStateChangeListener(TiviPhoneService.ServiceStateChangeListener l);
 
     /**
      * Adds the given <tt>DeviceStateChangeListener</tt> to the list of device state change listeners.
@@ -60,7 +60,7 @@ public interface InCallCallback {
      * @param l
      *            the <tt>DeviceStateChangeListener</tt> to add
      */
-    public void addDeviceChangeListener(TiviPhoneService.DeviceStateChangeListener l);
+    void addDeviceChangeListener(TiviPhoneService.DeviceStateChangeListener l);
 
     /**
      * Removes the given <tt>DeviceStateChangeListener</tt> from the list of device state change listeners.
@@ -68,50 +68,51 @@ public interface InCallCallback {
      * @param l
      *            the <tt>DeviceStateChangeListener</tt> to remove
      */
-    public void removeDeviceChangeListener(TiviPhoneService.DeviceStateChangeListener l);
+    void removeDeviceChangeListener(TiviPhoneService.DeviceStateChangeListener l);
 
     /**
      * Fragments call this if user answers a call.
      */
-    public void answerCallCb();
+    void answerCallCb();
 
     /**
      * Show dialer to add another call.
      *
      * @param call the currently active call.
      */
-    public void addCallCb(CallState call);
+    void addCallCb(CallState call);
 
     /**
      * Fragments call this if user ends a call.
      *
      * @param call the call to stop.
      */
-    public void endCallCb(CallState call);
+    void endCallCb(CallState call);
 
     /**
      * Handle the SAS verification dialog.
      *
      * @param Sas the SAS string
+     * @param callId The call id of the call state
      */
-    public void verifySasCb(String Sas);
+    void verifySasCb(String Sas, int callId);
 
     /**
      * The user starts a video call.
      */
-    public void activateVideoCb();
+    void activateVideoCb();
 
     /**
      * Remove video fragment after user stopped a video call.
      */
-    public void removeVideoCb();
+    void removeVideoCb();
 
     /**
      * Fragments call this if they need to update the proximity wake lock.
      *
      * @param onOrOff tells to acquire or release the wake lock.
      */
-    public void updateProximityCb(boolean onOrOff);
+    void updateProximityCb(boolean onOrOff);
 
     /**
      * The call manager changed the active (selected) call.
@@ -125,36 +126,36 @@ public interface InCallCallback {
      *                only terminates old call in case userAction is true.
      * @param endOldCall terminate the old call also
      */
-    public void activeCallChangedCb(CallState oldCall, CallState newCall, boolean endOldCall);
+    void activeCallChangedCb(CallState oldCall, CallState newCall, boolean endOldCall);
 
     /**
      * Hide the call manager.
      */
-    public void hideCallManagerCb();
+    void hideCallManagerCb();
 
     /**
      * Fragments call this to set the global microphone mute status.
      *
      * @param onOrOff mute on or off.
      */
-    public void setMuteStatusCb(boolean onOrOff);
+    void setMuteStatusCb(boolean onOrOff);
 
     /**
      * Get the global microphone mute status.
      *
      * @return true if microphone is muted, false otherwise.
      */
-    public boolean getMuteStateCb();
+    boolean getMuteStateCb();
 
     /**
      * Get the phone service
      */
-    public TiviPhoneService getPhoneService();
+    TiviPhoneService getPhoneService();
 
     /**
      * Show an incoming call notification.
      *
      * @param call the incoming call.
      */
-    public void setActiveCallNotificationCb(CallState call);
+    void setActiveCallNotificationCb(CallState call);
 }

@@ -28,8 +28,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 package com.silentcircle.silentphone2.fragments;
 
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.Fragment;
+import android.content.Context;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -54,10 +57,30 @@ public class ProvisioningVertuStep1 extends Fragment implements View.OnClickList
         super.onCreate(savedInstanceState);
     }
 
+    @TargetApi(Build.VERSION_CODES.M)
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        commonOnAttach(getActivity());
+    }
+
+    /*
+     * Deprecated on API 23
+     * Use onAttachToContext instead
+     */
+    @SuppressWarnings("deprecation")
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
-        mParent = (ProvisioningActivity)activity;
+        commonOnAttach(activity);
+    }
+
+    private void commonOnAttach(Activity activity) {
+        try {
+            mParent = (ProvisioningActivity) activity;
+        } catch (ClassCastException e) {
+            throw new ClassCastException("Activity must be ProvisioningActivity.");
+        }
     }
 
     @Override

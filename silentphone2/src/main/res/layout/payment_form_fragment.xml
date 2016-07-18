@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    >
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:gravity="center_horizontal"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingLeft="@dimen/spacing_xlarge"
+    android:paddingRight="@dimen/spacing_xlarge">
+    <android.support.design.widget.TextInputLayout
+        android:id="@+id/card_number_til_id"
+        android:theme="@style/WidgetHighlightColors"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <EditText android:id="@+id/card_number_id"
+            android:theme="@style/WidgetHighlightColors"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="numberDecimal"
+            android:hint="@string/cardNumber"
+            android:nextFocusDown="@+id/expMonth"
+            android:nextFocusRight="@+id/expMonth"
+            android:nextFocusForward="@+id/expMonth"
+            android:description="@string/input_card_number"
+            />
+    </android.support.design.widget.TextInputLayout>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <Spinner android:id="@+id/expMonth_id"
+            android:theme="@style/WidgetHighlightColors"
+            android:layout_width="0dp"
+            android:layout_weight="1.0"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom"
+            android:entries="@array/month_array"
+            android:nextFocusForward="@+id/expYear"
+            android:description="@string/expiration_month"
+            />
+
+        <Spinner android:id="@+id/expYear_id"
+            android:theme="@style/WidgetHighlightColors"
+            android:layout_width="0dp"
+            android:layout_weight="1.0"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="@dimen/in_app_payment_margin_medium"
+            android:layout_gravity="bottom"
+            android:entries="@array/year_array"
+            android:nextFocusForward="@+id/cvc"
+            android:description="@string/expiration_year"
+            />
+
+        <android.support.design.widget.TextInputLayout
+            android:id="@+id/cvc_til_id"
+            android:theme="@style/WidgetHighlightColors"
+            android:layout_width="0dp"
+            android:layout_weight="1.0"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="@dimen/in_app_payment_margin_medium">
+            <EditText android:id="@+id/cvc_id"
+                android:theme="@style/WidgetHighlightColors"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="numberDecimal"
+                android:hint="@string/cvc"
+                android:nextFocusForward="@+id/save"
+                android:description="@string/cvc_number"/>
+        </android.support.design.widget.TextInputLayout>
+    </LinearLayout>
+
+    <Button android:id="@+id/save"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/in_app_payment_margin_large"
+        android:text="@string/save"
+        android:textColor="@color/primary_text_color"
+        android:background="@color/silent_white"
+        android:layout_marginBottom="@dimen/in_app_payment_margin_medium"
+        android:description="@string/click_register_card_stripe" />
+
+</LinearLayout>
+</ScrollView>

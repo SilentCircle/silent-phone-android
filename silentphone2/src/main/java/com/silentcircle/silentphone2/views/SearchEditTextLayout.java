@@ -26,7 +26,6 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 
@@ -79,7 +78,7 @@ public class SearchEditTextLayout extends FrameLayout {
      * Listener for the back button next to the search view being pressed
      */
     public interface OnBackButtonClickedListener {
-        public void onBackButtonClicked();
+        void onBackButtonClicked();
     }
 
     public SearchEditTextLayout(Context context, AttributeSet attrs) {
@@ -252,6 +251,13 @@ public class SearchEditTextLayout extends FrameLayout {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
             setElevation(mCollapsedElevation);
 //        setBackgroundResource(R.drawable.rounded_corner);     // wrong background color
+    }
+
+    public void showBackButton(boolean yes) {
+        if (yes)
+            mBackButtonView.setVisibility(VISIBLE);
+        else
+            mBackButtonView.setVisibility(GONE);
     }
 
     /**

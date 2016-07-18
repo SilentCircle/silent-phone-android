@@ -7,6 +7,8 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+#undef axolotl_AxolotlNative_DEVICE_SCAN
+#define axolotl_AxolotlNative_DEVICE_SCAN 1L
 /*
  * Class:     axolotl_AxolotlNative
  * Method:    doInit
@@ -226,10 +228,10 @@ JNIEXPORT jboolean JNICALL Java_axolotl_AxolotlNative_existEvent
 /*
  * Class:     axolotl_AxolotlNative
  * Method:    loadEvents
- * Signature: ([BII[I)[[B
+ * Signature: ([BIII[I)[[B
  */
 JNIEXPORT jobjectArray JNICALL Java_axolotl_AxolotlNative_loadEvents
-  (JNIEnv *, jclass, jbyteArray, jint, jint, jintArray);
+  (JNIEnv *, jclass, jbyteArray, jint, jint, jint, jintArray);
 
 /*
  * Class:     axolotl_AxolotlNative
@@ -414,6 +416,62 @@ JNIEXPORT jbyteArray JNICALL Java_axolotl_AxolotlNative_cloudGetDecryptedMetaDat
  */
 JNIEXPORT void JNICALL Java_axolotl_AxolotlNative_cloudFree
   (JNIEnv *, jclass, jlong);
+
+/*
+ * Class:     axolotl_AxolotlNative
+ * Method:    getUid
+ * Signature: (Ljava/lang/String;[B)Ljava/lang/String;
+ */
+JNIEXPORT jstring JNICALL Java_axolotl_AxolotlNative_getUid
+  (JNIEnv *, jclass, jstring, jbyteArray);
+
+/*
+ * Class:     axolotl_AxolotlNative
+ * Method:    getUserInfo
+ * Signature: (Ljava/lang/String;[B[I)[B
+ */
+JNIEXPORT jbyteArray JNICALL Java_axolotl_AxolotlNative_getUserInfo
+  (JNIEnv *, jclass, jstring, jbyteArray, jintArray);
+
+/*
+ * Class:     axolotl_AxolotlNative
+ * Method:    refreshUserData
+ * Signature: (Ljava/lang/String;[B)[B
+ */
+JNIEXPORT jbyteArray JNICALL Java_axolotl_AxolotlNative_refreshUserData
+  (JNIEnv *, jclass, jstring, jbyteArray);
+
+/*
+ * Class:     axolotl_AxolotlNative
+ * Method:    getUserInfoFromCache
+ * Signature: (Ljava/lang/String;)[B
+ */
+JNIEXPORT jbyteArray JNICALL Java_axolotl_AxolotlNative_getUserInfoFromCache
+  (JNIEnv *, jclass, jstring);
+
+/*
+ * Class:     axolotl_AxolotlNative
+ * Method:    getAliases
+ * Signature: (Ljava/lang/String;)[[B
+ */
+JNIEXPORT jobjectArray JNICALL Java_axolotl_AxolotlNative_getAliases
+  (JNIEnv *, jclass, jstring);
+
+/*
+ * Class:     axolotl_AxolotlNative
+ * Method:    addAliasToUuid
+ * Signature: (Ljava/lang/String;Ljava/lang/String;[B)I
+ */
+JNIEXPORT jint JNICALL Java_axolotl_AxolotlNative_addAliasToUuid
+  (JNIEnv *, jclass, jstring, jstring, jbyteArray);
+
+/*
+ * Class:     axolotl_AxolotlNative
+ * Method:    getDisplayName
+ * Signature: (Ljava/lang/String;)[B
+ */
+JNIEXPORT jbyteArray JNICALL Java_axolotl_AxolotlNative_getDisplayName
+  (JNIEnv *, jclass, jstring);
 
 #ifdef __cplusplus
 }

@@ -20,4 +20,61 @@
         <item>@null</item>
     </array>
 
+    <!-- in app purchase -->
+    <array name="amount_array">
+        <item>@string/amount_level_1</item>
+    </array>
+    <array name="card_array">
+        <item>@string/new_card</item>
+    </array>
+
+    <string-array name="year_array">
+        <item>2015</item>
+        <item>2016</item>
+        <item>2017</item>
+        <item>2018</item>
+        <item>2019</item>
+        <item>2020</item>
+        <item>2021</item>
+        <item>2022</item>
+        <item>2023</item>
+        <item>2024</item>
+        <item>2025</item>
+    </string-array>
+
+    <string-array name="month_array">
+        <item>Month</item>
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+        <item>5</item>
+        <item>6</item>
+        <item>7</item>
+        <item>8</item>
+        <item>9</item>
+        <item>10</item>
+        <item>11</item>
+        <item>12</item>
+    </string-array>
+
+    <!--lights labels -->
+    <array name="lights_array">
+        <item>@string/messaging_light_off</item>
+        <item>@string/messaging_light_default</item>
+        <item>@string/messaging_light_red</item>
+        <item>@string/messaging_light_blue</item>
+        <item>@string/messaging_light_white</item>
+        <item>@string/messaging_light_green</item>
+        <item>@string/messaging_light_purple</item>
+    </array>
+
+    <!-- vibration pattern labels -->
+    <array name="vibrate_array">
+        <item>@string/messaging_vibrate_off</item>
+        <item>@string/messaging_vibrate_default</item>
+        <item>@string/messaging_vibrate_short</item>
+        <item>@string/messaging_vibrate_long</item>
+    </array>
+
 </resources>

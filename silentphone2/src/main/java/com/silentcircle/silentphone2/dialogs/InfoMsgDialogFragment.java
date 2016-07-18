@@ -28,13 +28,15 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package com.silentcircle.silentphone2.dialogs;
 
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.DialogFragment;
 import android.content.DialogInterface;
 import android.os.Bundle;
+import android.support.v7.app.AlertDialog;
 
 /**
+ * Simple dialog fragment.
+ *
  * Created by rli on 10/29/14.
  */
 public class InfoMsgDialogFragment extends DialogFragment {
@@ -44,11 +46,54 @@ public class InfoMsgDialogFragment extends DialogFragment {
     private static String NEGATIVE_BTN_LABEL = "negative_button_label";
     private Activity mParent;
 
+    // There are 4 constructors because of an issue with AlertDialog.Builder#set*(String) stripping links
     public static InfoMsgDialogFragment newInstance(String title, String msg, int positiveBtnLabel, int negativeBtnLabel) {
         InfoMsgDialogFragment f = new InfoMsgDialogFragment();
 
         Bundle args = new Bundle();
         args.putString(TITLE, title);
+        args.putString(MESSAGE, msg);
+        args.putInt(POSITIVE_BTN_LABEL, positiveBtnLabel);
+        args.putInt(NEGATIVE_BTN_LABEL, negativeBtnLabel);
+
+        f.setArguments(args);
+
+        return f;
+    }
+
+    public static InfoMsgDialogFragment newInstance(int titleResId, int msgResId, int positiveBtnLabel, int negativeBtnLabel) {
+        InfoMsgDialogFragment f = new InfoMsgDialogFragment();
+
+        Bundle args = new Bundle();
+        args.putInt(TITLE, titleResId);
+        args.putInt(MESSAGE, msgResId);
+        args.putInt(POSITIVE_BTN_LABEL, positiveBtnLabel);
+        args.putInt(NEGATIVE_BTN_LABEL, negativeBtnLabel);
+
+        f.setArguments(args);
+
+        return f;
+    }
+
+    public static InfoMsgDialogFragment newInstance(String title, int msgResId, int positiveBtnLabel, int negativeBtnLabel) {
+        InfoMsgDialogFragment f = new InfoMsgDialogFragment();
+
+        Bundle args = new Bundle();
+        args.putString(TITLE, title);
+        args.putInt(MESSAGE, msgResId);
+        args.putInt(POSITIVE_BTN_LABEL, positiveBtnLabel);
+        args.putInt(NEGATIVE_BTN_LABEL, negativeBtnLabel);
+
+        f.setArguments(args);
+
+        return f;
+    }
+
+    public static InfoMsgDialogFragment newInstance(int titleResId, String msg, int positiveBtnLabel, int negativeBtnLabel) {
+        InfoMsgDialogFragment f = new InfoMsgDialogFragment();
+
+        Bundle args = new Bundle();
+        args.putInt(TITLE, titleResId);
         args.putString(MESSAGE, msg);
         args.putInt(POSITIVE_BTN_LABEL, positiveBtnLabel);
         args.putInt(NEGATIVE_BTN_LABEL, negativeBtnLabel);
@@ -74,8 +119,26 @@ public class InfoMsgDialogFragment extends DialogFragment {
         Bundle args = getArguments();
         if (args == null)
             return null;
-        builder.setTitle(args.getString(TITLE))
-                .setMessage(args.getString(MESSAGE));
+
+        Object title = args.get(TITLE);
+        Object message = args.get(MESSAGE);
+
+        if(title instanceof String) {
+            builder.setTitle((String) title);
+        } else {
+            if(args.getInt(TITLE, -1) > 0) {
+                builder.setTitle(args.getInt(TITLE));
+            }
+        }
+
+        if(message instanceof String) {
+            builder.setMessage((String) message);
+        } else {
+            if(args.getInt(MESSAGE, -1) > 0) {
+                builder.setMessage(args.getInt(MESSAGE));
+            }
+        }
+
         if(args.getInt(POSITIVE_BTN_LABEL, -1) > 0) {
             builder.setPositiveButton(args.getInt(POSITIVE_BTN_LABEL), new DialogInterface.OnClickListener() {
                 public void onClick(DialogInterface dialog, int id) {

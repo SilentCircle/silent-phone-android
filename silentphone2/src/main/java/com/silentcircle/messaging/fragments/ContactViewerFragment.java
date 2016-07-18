@@ -180,7 +180,7 @@ public class ContactViewerFragment extends FileViewerFragment {
             VCardEntry.NameData nameData = entry.getNameData();
             if (nameData != null && !nameData.isEmpty()) {
                 mCard.setPhoneticName(TextUtils.join(" ",
-                        new String[] {nameData.getGiven(), nameData.getMiddle(),
+                        new String[]{nameData.getGiven(), nameData.getMiddle(),
                                 nameData.getFamily()}));
             }
             // TODO: entry.getNickNameList();
@@ -243,6 +243,22 @@ public class ContactViewerFragment extends FileViewerFragment {
                     }
                     mCard.add(getString(R.string.messaging_vcard_section_address),
                             label, address.getFormattedAddress(0));
+                }
+            }
+
+            List<VCardEntry.SipData> sipList = entry.getSipList();
+            if (sipList != null) {
+                for (VCardEntry.SipData sipEntry : sipList) {
+                    mCard.add(getString(R.string.messaging_vcard_section_sip),
+                            sipEntry.getLabel(), sipEntry.getAddress());
+                }
+            }
+
+            List<VCardEntry.WebsiteData> webSites = entry.getWebsiteList();
+            if (webSites != null) {
+                for (VCardEntry.WebsiteData webSite : webSites) {
+                    mCard.add(getString(R.string.messaging_vcard_section_web),
+                            null, webSite.getWebsite());
                 }
             }
 
@@ -317,7 +333,7 @@ public class ContactViewerFragment extends FileViewerFragment {
                 v.setEnabled(true);
             }
         }
-    };
+    }
 
     public static ContactViewerFragment create(Uri uri, String mimeType) {
         return create(uri, mimeType, -1);
@@ -429,7 +445,8 @@ public class ContactViewerFragment extends FileViewerFragment {
                 possibleVCardVersions);
 
         if (!successful) {
-            Toast.makeText(getActivity(), "Cannot show selected contact.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getActivity(), R.string.messaging_vcard_cannot_show_selected_contact,
+                    Toast.LENGTH_SHORT).show();
         }
         else {
             // allow to import just one vcard

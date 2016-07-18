@@ -1,12 +1,9 @@
 /*
  *  TCP networking functions
  *
- *  Copyright (C) 2006-2014, Brainspark B.V.
+ *  Copyright (C) 2006-2014, ARM Limited, All Rights Reserved
  *
- *  This file is part of PolarSSL (http://www.polarssl.org)
- *  Lead Maintainer: Paul Bakker <polarssl_maintainer at polarssl.org>
- *
- *  All rights reserved.
+ *  This file is part of mbed TLS (https://tls.mbed.org)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -32,6 +29,8 @@
 #if defined(POLARSSL_NET_C)
 
 #include "polarssl/net.h"
+
+#include <string.h>
 
 #if (defined(_WIN32) || defined(_WIN32_WCE)) && !defined(EFIX64) && \
     !defined(EFI32)
@@ -130,6 +129,12 @@ typedef UINT32 uint32_t;
                            (((unsigned long )(n) & 0xFF000000) >> 24))
 #endif
 
+#if defined(POLARSSL_PLATFORM_C)
+#include "polarssl/platform.h"
+#else
+#define polarssl_snprintf snprintf
+#endif
+
 unsigned short net_htons( unsigned short n );
 unsigned long  net_htonl( unsigned long  n );
 #define net_htons(n) POLARSSL_HTONS(n)
@@ -174,7 +179,7 @@ int net_connect( int *fd, const char *host, int port )
 
     /* getaddrinfo expects port as a string */
     memset( port_str, 0, sizeof( port_str ) );
-    snprintf( port_str, sizeof( port_str ), "%d", port );
+    polarssl_snprintf( port_str, sizeof( port_str ), "%d", port );
 
     /* Do name resolution with both IPv6 and IPv4, but only TCP */
     memset( &hints, 0, sizeof( hints ) );
@@ -260,7 +265,7 @@ int net_bind( int *fd, const char *bind_ip, int port )
 
     /* getaddrinfo expects port as a string */
     memset( port_str, 0, sizeof( port_str ) );
-    snprintf( port_str, sizeof( port_str ), "%d", port );
+    polarssl_snprintf( port_str, sizeof( port_str ), "%d", port );
 
     /* Bind to IPv6 and/or IPv4, but only in TCP */
     memset( &hints, 0, sizeof( hints ) );
@@ -423,7 +428,7 @@ int net_accept( int bind_fd, int *client_fd, void *client_ip )
 #endif
 
 #if defined(__socklen_t_defined) || defined(_SOCKLEN_T) ||  \
-    defined(_SOCKLEN_T_DECLARED)
+    defined(_SOCKLEN_T_DECLARED) || defined(__DEFINED_socklen_t)
     socklen_t n = (socklen_t) sizeof( client_addr );
 #else
     int n = (int) sizeof( client_addr );
@@ -434,7 +439,7 @@ int net_accept( int bind_fd, int *client_fd, void *client_ip )
 
     if( *client_fd < 0 )
     {
-        if( net_would_block( *client_fd ) != 0 )
+        if( net_would_block( bind_fd ) != 0 )
             return( POLARSSL_ERR_NET_WANT_READ );
 
         return( POLARSSL_ERR_NET_ACCEPT_FAILED );
@@ -496,8 +501,13 @@ int net_set_nonblock( int fd )
 void net_usleep( unsigned long usec )
 {
     struct timeval tv;
-    tv.tv_sec  = 0;
-    tv.tv_usec = usec;
+    tv.tv_sec  = usec / 1000000;
+#if !defined(_WIN32) && ( defined(__unix__) || defined(__unix) || \
+    ( defined(__APPLE__) && defined(__MACH__) ) )
+    tv.tv_usec = (suseconds_t) usec % 1000000;
+#else
+    tv.tv_usec = usec % 1000000;
+#endif
     select( 0, NULL, NULL, NULL, &tv );
 }
 #endif /* POLARSSL_HAVE_TIME */
@@ -508,7 +518,7 @@ void net_usleep( unsigned long usec )
 int net_recv( void *ctx, unsigned char *buf, size_t len )
 {
     int fd = *((int *) ctx);
-    int ret = read( fd, buf, len );
+    int ret = (int) read( fd, buf, len );
 
     if( ret < 0 )
     {
@@ -539,7 +549,7 @@ int net_recv( void *ctx, unsigned char *buf, size_t len )
 int net_send( void *ctx, const unsigned char *buf, size_t len )
 {
     int fd = *((int *) ctx);
-    int ret = write( fd, buf, len );
+    int ret = (int) write( fd, buf, len );
 
     if( ret < 0 )
     {

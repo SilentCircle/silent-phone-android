@@ -515,6 +515,24 @@ public:
      */
     bool isParanoidMode();
 
+    /**
+     * Enables or disables setting of Disclosure flag.
+     *
+     * For further explanation of the disclosure flage refer to RFC6189, chaper 11
+     *
+     * @param yesNo
+     *    If set to true then set the disclosure flag in confirm packets.
+     */
+    void setDisclosureFlag(bool yesNo);
+
+    /**
+     * Check if the protocol should set the disclosure flag.
+     *
+     * @return
+     *    Returns true if disclosure falg should be set.
+     */
+    bool isDisclosureFlag();
+
     /// Helper function to print some internal data
     void printConfiguredAlgos(AlgoTypes algoTyp);
 
@@ -531,6 +549,7 @@ public:
     bool enableTrustedMitM;
     bool enableSasSignature;
     bool enableParanoidMode;
+    bool enableDisclosureFlag;
 
 
     AlgorithmEnum& getAlgoAt(std::vector<AlgorithmEnum* >& a, int32_t index);

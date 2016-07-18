@@ -13,10 +13,10 @@ cmake_minimum_required(VERSION 2.6)
 PROJECT(libzrtpcpp)
 
 SET(CPACK_PACKAGE_VERSION_MAJOR 4)
-SET(CPACK_PACKAGE_VERSION_MINOR 4)
+SET(CPACK_PACKAGE_VERSION_MINOR 6)
 SET(CPACK_PACKAGE_VERSION_PATCH 0)
 
-set (VERSION 4.4.0)
+set (VERSION 4.6.0)
 set (SOVERSION 4)
 
 # Define supported command line parameters.
@@ -29,6 +29,7 @@ option(CORE_LIB "Build core library only, no spcific client support." OFF)
 option(CRYPTO_STANDALONE "Use embedded crypto and big number modules." ON)
 option(TIVI "Build library for the tivi client, implies '-DCRYPTO_STNDALONE=true'." OFF)
 option(SQLITE "Use SQLite DB as backend for ZRTP cache." OFF)
+option(SQLCIPHER "Use SQLCipher DB as backend for ZRTP cache." OFF)
 option(SDES "Include SDES when not building for CCRTP." OFF)
 option(AXO "Include Axolotl support when not building for CCRTP." OFF)
 
@@ -47,6 +48,10 @@ if (CCRTP AND TIVI AND CORE_LIB)
     MESSAGE(FATAL_ERROR "Cannot build more than one client at once. Use different build directories.")
 endif()
 
+if (SQLITE AND SQLCIPHER)
+    MESSAGE(FATAL_ERROR "Cannot build with two DB backends.")
+endif()
+
 if (CCRTP)
     set (PACKAGE libzrtpcpp)
     set(zrtplibName zrtpcpp)
@@ -54,7 +59,7 @@ elseif (TIVI)
     set (PACKAGE libzrtptivi)
     set(zrtplibName zrtptivi)
     set(CRYPTO_STANDALONE true)
-    set(SQLITE true)
+    set(SQLCIPHER true)
     set(SDES true) 
 elseif (CORE_LIB)
     set (PACKAGE libzrtpcore)
@@ -157,7 +162,18 @@ if (SQLITE)
         set(LIBS ${LIBS} -lsqlite3)
         MESSAGE(STATUS "Using SQLite based ZRTP cache")
     else()
-      message(FATAL_ERROR "SQLite3 library not found")
+        message(FATAL_ERROR "SQLite3 library not found")
+    endif()
+elseif(SQLCIPHER)
+    pkg_check_modules(SQLCIPHER sqlcipher>=3.7)
+    if (SQLCIPHER_FOUND)
+        set(CMAKE_REQUIRED_INCLUDES ${CMAKE_REQUIRED_INCLUDES} ${SQLCIPHER_INCLUDE_DIRS}) 
+        check_include_files(sqlite3.h HAVE_SQLCIPHER_H)
+        set(LIBS ${LIBS} -lsqlcipher)
+        MESSAGE(STATUS "Using SQlCipher based ZRTP cache")
+        add_definitions(-DSQL_CIPHER -DSQLITE_HAS_CODEC)
+    else()
+        message(FATAL_ERROR "SQLCipher library not found")
     endif()
 else()
     MESSAGE(STATUS "Using file based ZRTP cache")
@@ -217,8 +233,10 @@ set(zrtp_src_no_cache
     ${CMAKE_SOURCE_DIR}/zrtp/ZrtpConfigure.cpp
     ${CMAKE_SOURCE_DIR}/zrtp/ZrtpCWrapper.cpp
     ${CMAKE_SOURCE_DIR}/zrtp/Base32.cpp
+    ${CMAKE_SOURCE_DIR}/zrtp/EmojiBase32.cpp
     ${CMAKE_SOURCE_DIR}/zrtp/zrtpB64Encode.c
     ${CMAKE_SOURCE_DIR}/zrtp/zrtpB64Decode.c
+    ${CMAKE_SOURCE_DIR}/common/icuUtf8.c
     ${CMAKE_SOURCE_DIR}/common/osSpecifics.c ${sdes_src})
 
 set(bnlib_src
@@ -252,7 +270,7 @@ set(zrtp_crypto_src
     ${CMAKE_SOURCE_DIR}/zrtp/crypto/twoCFB.cpp
     ${CMAKE_SOURCE_DIR}/zrtp/crypto/sha2.c)
 
-if (NOT SQLITE)
+if (NOT SQLITE AND NOT SQLCIPHER)
     set(zrtp_src ${zrtp_src_no_cache}
         ${CMAKE_SOURCE_DIR}/zrtp/ZIDCacheFile.cpp
         ${CMAKE_SOURCE_DIR}/zrtp/ZIDRecordFile.cpp)

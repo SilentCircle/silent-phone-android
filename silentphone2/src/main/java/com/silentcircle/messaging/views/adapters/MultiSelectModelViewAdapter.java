@@ -30,7 +30,12 @@ package com.silentcircle.messaging.views.adapters;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.silentcircle.messaging.util.ComparableWeakReference;
+
+import java.lang.ref.WeakReference;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Extends {@link ModelViewAdapter} to implement {@link HasChoiceMode} and apply its mode to
@@ -38,7 +43,13 @@ import java.util.List;
  */
 public class MultiSelectModelViewAdapter extends ModelViewAdapter implements HasChoiceMode {
 
-    private boolean inChoiceMode;
+    private boolean mInChoiceMode;
+    private Set<ComparableWeakReference<View>> mViews = new HashSet<>();
+
+    public interface OnClearViewListener {
+
+        void onClearView(final View view);
+    }
 
     public MultiSelectModelViewAdapter(List<?> models, ViewType[] viewTypes) {
         super(models, viewTypes);
@@ -58,17 +69,28 @@ public class MultiSelectModelViewAdapter extends ModelViewAdapter implements Has
         if (view instanceof HasChoiceMode) {
             ((HasChoiceMode) view).setInChoiceMode(isInChoiceMode());
         }
+
+        mViews.add(new ComparableWeakReference<>(view));
         return view;
     }
 
     @Override
     public boolean isInChoiceMode() {
-        return inChoiceMode;
+        return mInChoiceMode;
     }
 
     @Override
     public void setInChoiceMode(boolean inChoiceMode) {
-        this.inChoiceMode = inChoiceMode;
+        mInChoiceMode = inChoiceMode;
     }
 
+    public void clearViews(final OnClearViewListener listener) {
+        for (WeakReference<View> viewReference : mViews) {
+            View view = viewReference.get();
+            if (view != null && listener != null) {
+                listener.onClearView(view);
+            }
+        }
+        mViews.clear();
+    }
 }

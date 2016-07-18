@@ -3,5 +3,19 @@
     <style name="SilentPhoneThemeBase" parent="@style/Theme.AppCompat.NoActionBar">
         <item name="android:windowDrawsSystemBarBackgrounds">true</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:colorPrimaryDark">@color/black_background</item>
     </style>
+
+    <style name="Dialog.Spa4" parent="Theme.AppCompat.Light.Dialog.Alert">
+        <item name="android:textColor">@color/sc_ng_text_dark</item>
+        <item name="android:textColorPrimary">@color/sc_ng_text_dark</item>
+        <item name="android:windowBackground">@color/sc_ng_background_1</item>
+        <item name="android:colorAccent">@color/sc_ng_text_red</item>
+        <item name="android:windowTitleStyle">@style/DialogWindowTitle.Spa4</item>
+        <item name="android:windowMinWidthMajor" type="dimen">@dimen/dialog_min_width_major</item>
+        <item name="android:windowMinWidthMinor" type="dimen">@dimen/dialog_min_width_minor</item>
+        <item name="windowMinWidthMajor" type="dimen">@dimen/dialog_min_width_major</item>
+        <item name="windowMinWidthMinor" type="dimen">@dimen/dialog_min_width_minor</item>
+    </style>
+
 </resources>

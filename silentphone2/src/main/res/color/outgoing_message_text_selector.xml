@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android" xmlns:custom="http://schemas.android.com/apk/res/com.silentcircle.silentphone">
+    <item android:state_pressed="true" android:color="@color/chat_outgoing_message_text_color" />
+    <item android:state_checked="true" android:color="@color/chat_outgoing_message_text_color" />
+
+    <item custom:state_message_unknown="true" android:color="@color/chat_outgoing_message_disabled_text_color" />
+    <item custom:state_message_failed="true" android:color="@color/chat_outgoing_message_disabled_text_color" />
+    <item custom:state_message_composing="true" android:color="@color/chat_outgoing_message_disabled_text_color" />
+    <item custom:state_message_composed="true" android:color="@color/chat_outgoing_message_disabled_text_color" />
+    <item custom:state_message_sent="true" android:color="@color/chat_outgoing_message_disabled_text_color" />
+    <item custom:state_message_sent_to_server="true" android:color="@color/chat_outgoing_message_disabled_text_color" />
+
+    <item android:color="@color/chat_outgoing_message_text_color" />
+</selector>

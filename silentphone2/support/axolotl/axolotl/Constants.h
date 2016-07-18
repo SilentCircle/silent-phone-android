@@ -14,12 +14,14 @@
  */
 
 #include <string>
+using namespace std;
 namespace axolotl {
+    static string Empty;                              //!< For default return of an empty string
     static const int MAX_KEY_BYTES         = 128;     //!< This would cover a EC with a prime of 1024 bits
     static const int MAX_KEY_BYTES_ENCODED = 130;     //!< Max two bytes for encoding information per key
     static const int SYMMETRIC_KEY_LENGTH  = 32;      //!< Use 256 bit keys for symmetric crypto
 
-    static const int MK_STORE_TIME      = 100*86400;    //!< cleanup stored MKs after 100 days
+    static const int MK_STORE_TIME      = 31*86400;    //!< cleanup stored MKs and message hashes after 31 days
 
     static const int NUM_PRE_KEYS          = 100;
     static const int MIN_NUM_PRE_KEYS      = 30;
@@ -53,6 +55,7 @@ namespace axolotl {
     static const int32_t SENDER_ID_WRONG = -28;       //!< Sender''s long term id key hash mismatch
     static const int32_t RECV_DATA_LENGTH = -29;      //!< Expected length of data does not match received length
     static const int32_t WRONG_RECV_DEV_ID = -30;     //!< Expected device id does not match actual device id
+    static const int32_t NETWORK_ERROR = -31;         //!< The HTTP request returned an code >400 or SIP failed
 
     // Error codes for public key modules, between -100 and -199
     static const int32_t NO_SUCH_CURVE     = -100;    //!< Curve not supported

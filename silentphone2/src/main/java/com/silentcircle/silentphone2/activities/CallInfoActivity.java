@@ -28,16 +28,16 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 package com.silentcircle.silentphone2.activities;
 
-import android.app.AlertDialog;
+import android.support.v7.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
 
 import com.silentcircle.silentphone2.R;
 
-public class CallInfoActivity extends ActionBarActivity {
+public class CallInfoActivity extends AppCompatActivity {
 
     @SuppressWarnings("unused")
     private static final String TAG = CallInfoActivity.class.getSimpleName();

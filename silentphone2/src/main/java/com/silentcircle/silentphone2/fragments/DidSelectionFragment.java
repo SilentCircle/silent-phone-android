@@ -1,12 +1,16 @@
 package com.silentcircle.silentphone2.fragments;
 
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.Fragment;
 import android.app.FragmentManager;
+import android.content.Context;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.v7.app.ActionBar;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
@@ -18,6 +22,7 @@ import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import com.silentcircle.common.util.AsyncTasks;
 import com.silentcircle.silentphone2.R;
 import com.silentcircle.silentphone2.activities.DidSelectionActivity;
 import com.silentcircle.silentphone2.activities.ProvisioningActivity;
@@ -72,6 +77,8 @@ public class DidSelectionFragment extends Fragment implements AdapterView.OnItem
     private State mState;
     private Fragment mFragment;
 
+    private boolean mStateSaved = false;
+
 
     public static DidSelectionFragment newInstance(String regions, String apiKey) {
         DidSelectionFragment f = new DidSelectionFragment();
@@ -100,7 +107,12 @@ public class DidSelectionFragment extends Fragment implements AdapterView.OnItem
         mDevAuthorization = args.getString(DidSelectionActivity.API_KEY);
         setHasOptionsMenu(true);
         try {
-            JSONObject jsonObj = new JSONObject(args.getString(DidSelectionActivity.REGIONS));
+            String regions = args.getString(DidSelectionActivity.REGIONS);
+            if (TextUtils.isEmpty(regions)) {
+                mParent.finish();
+                return;
+            }
+            JSONObject jsonObj = new JSONObject(regions);
             JSONArray jsonArray = jsonObj.getJSONArray("regions");
             if (jsonArray.length() < 1) {
                 mParent.finish();
@@ -119,6 +131,19 @@ public class DidSelectionFragment extends Fragment implements AdapterView.OnItem
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         mRootView = inflater.inflate(R.layout.did_selection_fragment, container, false);
+        mState = State.RegionSelect;
+        return mRootView;
+    }
+
+    @Override
+    public void onViewCreated(View view, Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+
+        Activity activity = getActivity();
+        if (activity != null) {
+            commonOnAttach(activity);
+        }
+
         mListView = (ListView) mRootView.findViewById(R.id.listView);
         mListView.setOnItemClickListener(this);
 
@@ -130,7 +155,6 @@ public class DidSelectionFragment extends Fragment implements AdapterView.OnItem
         mOkButton = (Button) mRootView.findViewById(R.id.did_ok_button);
         mOkButton.setOnClickListener(this);
 
-        mState = State.RegionSelect;
         if (mRegions.length > 1) {
             TextView explanation = (TextView) mRootView.findViewById(R.id.did_explanation);
             explanation.setText(R.string.did_region_area_explanation);
@@ -140,18 +164,40 @@ public class DidSelectionFragment extends Fragment implements AdapterView.OnItem
             mListTitle.setVisibility(View.VISIBLE);
             mRegionAdapter = new ArrayAdapter<>(mParent, android.R.layout.simple_list_item_1, mRegions);
             mListView.setAdapter(mRegionAdapter);
-            mActionBar.setTitle(R.string.did_region_list);
+            if (mActionBar != null) {
+                mActionBar.setTitle(R.string.did_region_list);
+            }
         }
-        else
+        else {
             processRegion(mRegions[0]);
-        return mRootView;
+        }
     }
 
+    @TargetApi(Build.VERSION_CODES.M)
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        commonOnAttach(getActivity());
+    }
+
+    /*
+     * Deprecated on API 23
+     * Use onAttachToContext instead
+     */
+    @SuppressWarnings("deprecation")
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
-        mParent = (DidSelectionActivity) activity;
-        mActionBar = mParent.getSupportActionBar();
+        commonOnAttach(activity);
+    }
+
+    private void commonOnAttach(Activity activity) {
+        try {
+            mParent = (DidSelectionActivity) activity;
+            mActionBar = mParent.getSupportActionBar();
+        } catch (ClassCastException e) {
+            throw new ClassCastException("Activity must be DidSelectionActivity.");
+        }
     }
 
     @Override
@@ -164,11 +210,18 @@ public class DidSelectionFragment extends Fragment implements AdapterView.OnItem
     @Override
     public void onResume() {
         super.onResume();
+        mStateSaved = false;
     }
 
     @Override
     public void onPause() {
         super.onPause();
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        mStateSaved = true;
     }
 
     @Override
@@ -332,6 +385,10 @@ public class DidSelectionFragment extends Fragment implements AdapterView.OnItem
     }
 
     private void parseAndShowArea(StringBuilder content) {
+        if (mParent == null) {
+            return;
+        }
+
         try {
             JSONObject jsonObj = new JSONObject(content.toString());
             JSONArray jsonArray = jsonObj.getJSONArray("areas");
@@ -354,14 +411,20 @@ public class DidSelectionFragment extends Fragment implements AdapterView.OnItem
             mAreaAdapter.notifyDataSetChanged();
             mListTitle.setText(getString(R.string.did_area_list));
             mListTitle.setVisibility(View.VISIBLE);
-            mActionBar.setTitle(R.string.did_area_list);
-            mActionBar.setDisplayHomeAsUpEnabled(true);
+            if (mActionBar != null) {
+                mActionBar.setTitle(R.string.did_area_list);
+                mActionBar.setDisplayHomeAsUpEnabled(true);
+            }
         } catch (JSONException e) {
             Log.w(TAG, "JSON exception reading areas: " + e);
         }
     }
 
     private void parseAndShowNumber(StringBuilder content) {
+        if (mParent == null) {
+            return;
+        }
+
         try {
             JSONObject jsonObj = new JSONObject(content.toString());
             JSONArray jsonArray = jsonObj.getJSONArray("numbers");
@@ -384,8 +447,10 @@ public class DidSelectionFragment extends Fragment implements AdapterView.OnItem
             numberAdapter.notifyDataSetChanged();
             mListTitle.setText(getString(R.string.did_number_list));
             mListTitle.setVisibility(View.VISIBLE);
-            mActionBar.setTitle(R.string.did_number_list);
-            mActionBar.setDisplayHomeAsUpEnabled(true);
+            if (mActionBar != null) {
+                mActionBar.setTitle(R.string.did_number_list);
+                mActionBar.setDisplayHomeAsUpEnabled(true);
+            }
         } catch (JSONException e) {
             Log.w(TAG, "JSON exception reading numbers: " + e);
         }
@@ -394,7 +459,9 @@ public class DidSelectionFragment extends Fragment implements AdapterView.OnItem
     private void showInputInfo(String msg) {
         ProvisioningActivity.InfoMsgDialogFragment infoMsg = ProvisioningActivity.InfoMsgDialogFragment.newInstance(msg);
         FragmentManager fragmentManager = getFragmentManager();
-        infoMsg.show(fragmentManager, "SilentPhoneDidInfo");
+        if (fragmentManager != null && !mStateSaved) {
+            infoMsg.show(fragmentManager, "SilentPhoneDidInfo");
+        }
     }
 
     private String parseAndShowError(StringBuilder content) {
@@ -409,10 +476,12 @@ public class DidSelectionFragment extends Fragment implements AdapterView.OnItem
         return msg;
     }
 
-    private void showDialog(String title, String msg, int positiveBtnLabel, int nagetiveBtnLabel) {
-        com.silentcircle.silentphone2.dialogs.InfoMsgDialogFragment infoMsg = com.silentcircle.silentphone2.dialogs.InfoMsgDialogFragment.newInstance(title, msg, positiveBtnLabel, nagetiveBtnLabel);
+    private void showDialog(int titleResId, int msgResId, int positiveBtnLabel, int nagetiveBtnLabel) {
+        com.silentcircle.silentphone2.dialogs.InfoMsgDialogFragment infoMsg = com.silentcircle.silentphone2.dialogs.InfoMsgDialogFragment.newInstance(titleResId, msgResId, positiveBtnLabel, nagetiveBtnLabel);
         FragmentManager fragmentManager = mFragment.getFragmentManager();
-        infoMsg.show(fragmentManager,TAG );
+        if (fragmentManager != null && !mStateSaved) {
+            infoMsg.show(fragmentManager, TAG);
+        }
     }
 
     private class LoaderTask extends AsyncTask<URL, Integer, Integer> {
@@ -457,10 +526,10 @@ public class DidSelectionFragment extends Fragment implements AdapterView.OnItem
                 int ret = urlConnection.getResponseCode();
                 if (ConfigurationUtilities.mTrace) Log.d(TAG, "HTTP code DID loader: " + ret + ", (" + mState + ")");
                 if (ret == HttpsURLConnection.HTTP_OK) {
-                    ProvisioningActivity.readStream(new BufferedInputStream(urlConnection.getInputStream()), content);
+                    AsyncTasks.readStream(new BufferedInputStream(urlConnection.getInputStream()), content);
                 }
                 else {
-                    ProvisioningActivity.readStream(new BufferedInputStream(urlConnection.getErrorStream()), content);
+                    AsyncTasks.readStream(new BufferedInputStream(urlConnection.getErrorStream()), content);
                 }
                 return ret;
 
@@ -492,13 +561,15 @@ public class DidSelectionFragment extends Fragment implements AdapterView.OnItem
                         parseAndShowNumber(content);
                         break;
                     case NumberSelect:
-                        mParent.setResult(Activity.RESULT_OK);
-                        mParent.finish();
+                        if (mParent != null) {
+                            mParent.setResult(Activity.RESULT_OK);
+                            mParent.finish();
+                        }
                         break;
                 }
             }
             else if(result == Constants.NO_NETWORK_CONNECTION) {
-                showDialog(mFragment.getActivity().getString(R.string.information_dialog), mFragment.getActivity().getString(R.string.connected_to_network), android.R.string.ok, -1);
+                showDialog(R.string.information_dialog, R.string.connected_to_network, android.R.string.ok, -1);
             }
             else {
                 showInputInfo(parseAndShowError(content));

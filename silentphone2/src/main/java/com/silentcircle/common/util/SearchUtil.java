@@ -23,6 +23,8 @@ import android.text.TextUtils;
 
 import com.google.common.annotations.VisibleForTesting;
 
+import java.util.regex.Pattern;
+
 /**
  * Methods related to search.
  */
@@ -277,5 +279,12 @@ public class SearchUtil {
 
         // end is a letter or digit.
         return query.substring(start, end + 1);
+    }
+
+    private static String uuidRegex = "u[a-z0-9]{24,25}";
+    private static Pattern uuidPattern = Pattern.compile(uuidRegex);
+
+    public static boolean isUuid(String name) {
+        return !TextUtils.isEmpty(name) && uuidPattern.matcher(name).matches();
     }
 }

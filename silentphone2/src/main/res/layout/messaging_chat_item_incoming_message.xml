@@ -4,6 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:filterTouchesWhenObscured="true"
     android:paddingBottom="@dimen/messaging_message_padding_bottom">
 
     <com.silentcircle.messaging.views.BoundedCheckableRelativeLayout
@@ -24,42 +25,64 @@
             android:layout_height="wrap_content"
             style="@style/Widget.Layout.Card.Incoming.Message">
 
-        <RelativeLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content">
-            <ImageView
-                android:id="@+id/message_preview"
-                style="@style/Widget.Image.Preview"
-                android:layout_marginLeft="@dimen/messaging_message_thumbnail_margin_left"
-                android:layout_marginStart="@dimen/messaging_message_thumbnail_margin_left"
-                android:layout_marginTop="@dimen/messaging_message_thumbnail_margin_top"
-                android:layout_marginRight="@dimen/messaging_incoming_message_thumbnail_margin_right"
-                android:layout_marginEnd="@dimen/messaging_incoming_message_thumbnail_margin_right"
-                android:contentDescription="@string/thumbnail" />
-
-            <ImageView
-                android:id="@+id/message_icon"
-                style="@style/Widget.Image.Preview"
-                android:scaleType="fitCenter"
-                android:layout_marginLeft="@dimen/messaging_message_thumbnail_margin_left"
-                android:layout_marginStart="@dimen/messaging_message_thumbnail_margin_left"
-                android:layout_marginTop="@dimen/messaging_message_thumbnail_margin_top"
-                android:layout_marginRight="@dimen/messaging_incoming_message_thumbnail_margin_right"
-                android:layout_marginEnd="@dimen/messaging_incoming_message_thumbnail_margin_right"
-                android:contentDescription="@string/thumbnail" />
-
-            <ProgressBar
-                android:id="@+id/message_preview_progress"
-                style="?android:attr/progressBarStyleSmall"
+            <FrameLayout
+                android:id="@+id/attachment_layout"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_centerInParent="true"
-                android:minHeight="50dp"
-                android:minWidth="50dp"
-                android:visibility="visible"/>
-        </RelativeLayout>
+                android:layout_height="wrap_content">
+
+                <RelativeLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content">
+
+                    <ImageView
+                        android:id="@+id/message_preview"
+                        style="@style/Widget.Image.Preview"
+                        android:layout_marginLeft="@dimen/messaging_message_thumbnail_margin_left"
+                        android:layout_marginStart="@dimen/messaging_message_thumbnail_margin_left"
+                        android:layout_marginTop="@dimen/messaging_message_thumbnail_margin_top"
+                        android:layout_marginRight="@dimen/messaging_incoming_message_thumbnail_margin_right"
+                        android:layout_marginEnd="@dimen/messaging_incoming_message_thumbnail_margin_right"
+                        android:contentDescription="@string/thumbnail" />
+
+                    <ImageView
+                        android:id="@+id/message_icon"
+                        style="@style/Widget.Image.Preview"
+                        android:scaleType="fitCenter"
+                        android:layout_marginLeft="@dimen/messaging_message_thumbnail_margin_left"
+                        android:layout_marginStart="@dimen/messaging_message_thumbnail_margin_left"
+                        android:layout_marginTop="@dimen/messaging_message_thumbnail_margin_top"
+                        android:layout_marginRight="@dimen/messaging_incoming_message_thumbnail_margin_right"
+                        android:layout_marginEnd="@dimen/messaging_incoming_message_thumbnail_margin_right"
+                        android:contentDescription="@string/thumbnail" />
+
+                    <ProgressBar
+                        android:id="@+id/message_preview_progress"
+                        style="?android:attr/progressBarStyleSmall"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_centerInParent="true"
+                        android:minHeight="@dimen/messaging_message_attachment_progress_height"
+                        android:minWidth="@dimen/messaging_message_attachment_progress_width"
+                        android:visibility="visible"/>
+                </RelativeLayout>
+
+                <ImageView
+                    android:id="@+id/message_attachment_status"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/messaging_message_thumbnail_margin_top"
+                    android:layout_marginRight="@dimen/messaging_incoming_message_thumbnail_margin_right"
+                    android:layout_marginEnd="@dimen/messaging_incoming_message_thumbnail_margin_right"
+                    android:layout_gravity="right"
+                    android:src="@drawable/ic_attachment_error_incoming"
+                    android:visibility="gone"
+                    tools:visibility="visible"
+                    />
+
+            </FrameLayout>
 
             <com.silentcircle.messaging.views.TextView
+                style="@style/Widget.Text.Incoming"
                 android:id="@+id/message_attachment_text"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -68,7 +91,6 @@
                 android:layout_marginRight="@dimen/messaging_incoming_message_thumbnail_margin_right"
                 android:layout_marginEnd="@dimen/messaging_incoming_message_thumbnail_margin_right"
                 android:layout_centerVertical="true"
-                style="@style/Widget.Text.Primary"
                 android:text="@string/attachment"
                 android:ellipsize="middle"
                 android:maxLines="1"
@@ -78,6 +100,7 @@
                 android:maxWidth="@dimen/messaging_message_attachment_text_width" />
 
             <com.silentcircle.messaging.views.TextView
+                style="@style/Widget.Text.Incoming"
                 android:id="@+id/message_body"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -85,7 +108,6 @@
                 android:layout_marginStart="@dimen/messaging_message_thumbnail_margin_left"
                 android:layout_marginRight="@dimen/messaging_incoming_message_thumbnail_margin_right"
                 android:layout_marginEnd="@dimen/messaging_incoming_message_thumbnail_margin_right"
-                style="@style/Widget.Text.Primary"
                 tools:text="@string/sample_message" />
 
             <com.silentcircle.messaging.views.TextView
@@ -106,6 +128,7 @@
             android:layout_height="wrap_content"
             android:layout_below="@+id/message_card"
             android:layout_alignLeft="@+id/message_card"
+            android:layout_alignStart="@+id/message_card"
             android:layout_marginLeft="@dimen/messaging_message_time_margin"
             android:layout_marginStart="@dimen/messaging_message_time_margin"
             android:textColor="@color/sc_ng_text_grey"
@@ -121,7 +144,9 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_toRightOf="@+id/message_content"
+        android:layout_toEndOf="@+id/message_content"
         android:layout_marginLeft="@dimen/messaging_message_buttons_margin"
+        android:layout_marginStart="@dimen/messaging_message_buttons_margin"
         style="@style/Widget.Silence.ActionTray.Incoming" />
 
 </com.silentcircle.messaging.views.MessageEventView>

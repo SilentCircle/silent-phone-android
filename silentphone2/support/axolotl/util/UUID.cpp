@@ -33,11 +33,7 @@
 #include "UUID.h"
 #include <cryptcommon/ZrtpRandom.h>
 
-#include <stdint.h>
-#include <string.h>
 #include <stdio.h>
-
-#include <sys/time.h>
 
 // RFC4122 defines the time in 100ns steps
 
@@ -52,17 +48,15 @@ read_node(uint8_t *node)
     node[0] |= 0x01;
 }
 
-static uint64_t
-read_time(void)
+static uint64_t read_time(void)
 {
     struct timeval tv;
     uint64_t clock_reg;
 
     gettimeofday(&tv, 0);
 
-    clock_reg = tv.tv_usec * 10;
+    clock_reg = static_cast<uint64_t>(tv.tv_usec * 10);
     clock_reg += ((uint64_t) tv.tv_sec)*10000000;
-//    clock_reg += (((uint64_t) 0x01B21DD2) << 32) + 0x13814000;
     clock_reg += 0x01B21DD213814000ULL;
 
     if (clock_reg > lastNanos)
@@ -96,8 +90,8 @@ uuid_generate_random(uuid_t out)
 {
     ZrtpRandom::getRandomData(out, sizeof(uuid_t));
 
-    out[6] = (out[6] & 0x0F) | 0x40;
-    out[8] = (out[8] & 0x3F) | 0x80;
+    out[6] = static_cast<uint8_t>((out[6] & 0x0F) | 0x40);
+    out[8] = static_cast<uint8_t>((out[8] & 0x3F) | 0x80);
 }
 
 void
@@ -118,8 +112,8 @@ uuid_generate_time(uuid_t out)
     out[6] = (uint8_t)(time >> 56);
     out[7] = (uint8_t)(time >> 48);
  
-    out[6] = (out[6] & 0x0F) | 0x10;
-    out[8] = (out[8] & 0x3F) | 0x80;
+    out[6] = static_cast<uint8_t>((out[6] & 0x0F) | 0x10);
+    out[8] = static_cast<uint8_t>((out[8] & 0x3F) | 0x80);
 }
 
 void
@@ -203,10 +197,9 @@ time_t uuid_time(const uuid_t uu, struct timeval *ret_tv)
 
     uuid_unpack(uu, &uuid);
 
-    high = uuid.time_mid | ((uuid.time_hi_and_version & 0xFFF) << 16);
+    high = uuid.time_mid | ((uuid.time_hi_and_version & 0xFFFU) << 16);
     clock_reg = uuid.time_low | ((uint64_t) high << 32);
-
-    clock_reg -= (((uint64_t) 0x01B21DD2) << 32) + 0x13814000;
+    clock_reg -= 0x01B21DD213814000ULL;
     tv.tv_sec = clock_reg / 10000000;
     tv.tv_usec = (clock_reg % 10000000) / 10;
 
@@ -254,15 +247,15 @@ void uuid_unpack(const uuid_t in, struct uuid *uu)
 
     tmp = *ptr++;
     tmp = (tmp << 8) | *ptr++;
-    uu->time_mid = tmp;
+    uu->time_mid = static_cast<uint16_t>(tmp);
 
     tmp = *ptr++;
     tmp = (tmp << 8) | *ptr++;
-    uu->time_hi_and_version = tmp;
+    uu->time_hi_and_version = static_cast<uint16_t>(tmp);
 
     tmp = *ptr++;
     tmp = (tmp << 8) | *ptr++;
-    uu->clock_seq = tmp;
+    uu->clock_seq =static_cast<uint16_t>(tmp);
 
     memcpy(uu->node, ptr, 6);
 }

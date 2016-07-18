@@ -31,33 +31,31 @@ package com.silentcircle.silentphone2.services;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
-import android.content.ContentProviderOperation;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
-import android.content.OperationApplicationException;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.AsyncTask;
-import android.os.RemoteException;
-import android.provider.ContactsContract;
-import android.provider.ContactsContract.PhoneLookup;
+import android.support.annotation.WorkerThread;
 import android.support.v4.app.NotificationCompat;
+import android.telephony.PhoneNumberUtils;
+import android.text.TextUtils;
 import android.util.Log;
 
-import com.silentcircle.common.util.DataUsageStatUpdater;
-import com.silentcircle.contacts.utils.PhoneNumberHelper;
+import com.silentcircle.messaging.services.AxoMessaging;
 import com.silentcircle.silentcontacts2.ScCallLog;
 import com.silentcircle.silentphone2.R;
-import com.silentcircle.silentphone2.list.PhoneFavoritesTileAdapter;
 import com.silentcircle.silentphone2.list.ShortcutCardsAdapter;
 import com.silentcircle.silentphone2.util.CallState;
 import com.silentcircle.silentphone2.util.ConfigurationUtilities;
+import com.silentcircle.silentphone2.util.Utilities;
 
-import java.util.ArrayList;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 /**
  * Counts the number of missed new calls in the call log and creates a Notification if
@@ -69,7 +67,7 @@ public class InsertCallLogHelper extends AsyncTask<Uri, Void, Cursor> {
 
     @SuppressWarnings("unused")
     private static final String TAG = "InsertCallLogHelper";
-    private static final long NO_CONTACT_FOUND = -1;
+//    private static final long NO_CONTACT_FOUND = -1;
 
     public static final int MISSED_CALL_NOTIFICATION_ID = 47120815;
     private static Bitmap mNotifyLargeIcon;
@@ -79,15 +77,17 @@ public class InsertCallLogHelper extends AsyncTask<Uri, Void, Cursor> {
     private CallState mCall;
     private ContentValues mInsertValues;
 
-    InsertCallLogHelper(Context ctx, CallState call, ContentValues values) {
+    InsertCallLogHelper(Context ctx, CallState call) {
         mCtx = ctx;
         mCall = call;
-        mInsertValues = values;
+        mInsertValues = new android.content.ContentValues(10);
     }
 
     public static void removeMissedCallNotifications(Context ctx) {
-        NotificationManager notificationManager = (NotificationManager)ctx.getSystemService(Context.NOTIFICATION_SERVICE);
-        notificationManager.cancel(MISSED_CALL_NOTIFICATION_ID);
+        if (ctx != null) {
+            NotificationManager notificationManager = (NotificationManager) ctx.getSystemService(Context.NOTIFICATION_SERVICE);
+            notificationManager.cancel(MISSED_CALL_NOTIFICATION_ID);
+        }
     }
 
     private int removeExpiredEntries() {
@@ -101,24 +101,13 @@ public class InsertCallLogHelper extends AsyncTask<Uri, Void, Cursor> {
     protected Cursor doInBackground(Uri... uri) {
         ContentResolver resolver = mCtx.getContentResolver();
 
+        if (!prepareCallLog(mCall))
+            return null;
+
         resolver.insert(uri[0], mInsertValues);
         int removed = removeExpiredEntries();
         if (ConfigurationUtilities.mTrace) Log.d(TAG, "Removed " + removed + " old/expired call log entries");
 
-        // Update usage counter for this number and contact
-        String called = mInsertValues.getAsString(ScCallLog.ScCalls.NUMBER);
-        DataUsageStatUpdater updater = new DataUsageStatUpdater(mCtx);
-        updater.updateWithPhoneNumber(called, mCall.contactId);
-
-        // Now check if we should un-demote this contact because it was used again to make an outgoing call
-        int type = mInsertValues.getAsInteger(ScCallLog.ScCalls.TYPE);
-        if (type == ScCallLog.ScCalls.OUTGOING_TYPE) {
-            long id = getContactIdFromPhoneNumber(mCtx, mInsertValues.getAsString(ScCallLog.ScCalls.NUMBER));
-            if (id != NO_CONTACT_FOUND) {
-                unDemote(id);
-            }
-        }
-        resolver.notifyChange(ShortcutCardsAdapter.AUTHORITY_URI, null, false);
         // Query new and missed call log entries
         // TODO: request ScCallLog.ScCalls.DATE field and sort by this field. Use field from first record to build the notification below (setWhen(...))
         return resolver.query(ScCallLog.ScCalls.CONTENT_URI, new String[] {ScCallLog.ScCalls._ID},
@@ -135,6 +124,9 @@ public class InsertCallLogHelper extends AsyncTask<Uri, Void, Cursor> {
 
     @Override
     protected void onPostExecute(Cursor result) {
+        ContentResolver resolver = mCtx.getContentResolver();
+        resolver.notifyChange(ShortcutCardsAdapter.AUTHORITY_URI, null, false);
+
         int count = 0;
         if (result != null) {
             count = result.getCount();
@@ -172,54 +164,124 @@ public class InsertCallLogHelper extends AsyncTask<Uri, Void, Cursor> {
 
     }
 
-    private long getContactIdFromPhoneNumber(Context context, String number) {
-        final Uri lookupUri;
-        final String phoneLookUpId;
+    @WorkerThread
+    private boolean prepareCallLog(CallState call) {
 
-        String selection = null;
-        String[] projection = null;
+        long duration = 0;
+        String caller;
 
-        if (PhoneNumberHelper.isUriNumber(number)) {
-            // number is a SIP address: use customized lookup
-            lookupUri = ContactsContract.Data.CONTENT_URI;
-            phoneLookUpId = ContactsContract.Data.CONTACT_ID;
-            selection = CallState.createSipLookupClause(number);
-            projection = new String[] {ContactsContract.Data._ID, ContactsContract.Data.CONTACT_ID,
-                    ContactsContract.Data.DISPLAY_NAME, ContactsContract.CommonDataKinds.SipAddress.SIP_ADDRESS};
+        if (call.uiStartTime != 0) {
+            duration = System.currentTimeMillis() - call.uiStartTime;
+            call.uiStartTime = 0;
+        }
+
+        // Here we can use the same values for CallLog and SCCallLog: kept in sync
+        int iType = call.iIsIncoming ? ScCallLog.ScCalls.INCOMING_TYPE : ScCallLog.ScCalls.OUTGOING_TYPE;
+
+        if (!call.mAnsweredElsewhere && duration == 0 && iType != ScCallLog.ScCalls.OUTGOING_TYPE) {
+            iType = ScCallLog.ScCalls.MISSED_TYPE;
+        }
+
+        // If mDisplayNameFromSip is set then, on an incoming call, we have no contact
+        // entry of the caller, thus 'fillFromContacts' sets this buffer with the peername
+        // it got from the SIP stack. Usually the peername of PAI.
+        // The buffer may also be empty in case of an outgoing call if the SIP stack reports
+        // and error.
+
+        // Depending of the call mode:
+        // - on outgoing call bufPeer is set to the display name first to have something nice
+        //   to show to the user, on eCalling replaces it with the data we get from SIP during
+        //   the callback, usually the UUID SIP URI.
+        // - on incoming SC calls it's the PAI data (UUID) that we use to lookup other data
+        //   of the caller if available. On incoming OCA calls this is the caller's PSTN number
+        // - on incoming OCA calls the bufPeer contains the From header data which is usually
+        //   the caller's phone number or SIP URI
+        //
+        // On outgoing calls bufDialed always contains the string we use to create the call
+        // command, the UUID of the called party
+        if (call.iIsIncoming && !call.isOcaCall) {
+            caller = call.mAssertedName.toString();
         }
         else {
-            lookupUri = Uri.withAppendedPath(PhoneLookup.CONTENT_FILTER_URI, Uri.encode(number));
-            phoneLookUpId = PhoneLookup._ID;
-            projection = new String[] {phoneLookUpId};
+            if (call.bufPeer.getLen() > 0)
+                caller = call.bufPeer.toString();
+            else if (call.bufDialed.getLen() > 0)
+                caller = call.bufDialed.toString();
+            else
+                caller = "";                    // must not be here
         }
-        final Cursor cursor = context.getContentResolver().query(lookupUri, projection, selection, null, null);
-        if (cursor == null) {
-            return NO_CONTACT_FOUND;
-        }
-        try {
-            int idx = cursor.getColumnIndex(phoneLookUpId);
-            if (idx == -1)
-                return NO_CONTACT_FOUND;
-            if (cursor.moveToFirst()) {
-                return cursor.getLong(idx);
+
+        if (Utilities.isUriNumber(caller)) {
+            if (caller.startsWith("sip:")) {
+                mInsertValues.put(ScCallLog.ScCalls.NUMBER, caller);
             }
             else {
-                return NO_CONTACT_FOUND;
+                mInsertValues.put(ScCallLog.ScCalls.NUMBER, "sip:" + caller);
             }
-        } finally {
-            cursor.close();
         }
-    }
+        else {
+            if (PhoneNumberUtils.isGlobalPhoneNumber(caller))
+                mInsertValues.put(ScCallLog.ScCalls.NUMBER, caller);
+            else
+                mInsertValues.put(ScCallLog.ScCalls.NUMBER, "sip:" + caller + mCtx.getString(R.string.sc_sip_domain_0));
+        }
+        mInsertValues.put(ScCallLog.ScCalls.TYPE, iType);
+        mInsertValues.put(ScCallLog.ScCalls.DATE, System.currentTimeMillis() - duration);
+        mInsertValues.put(ScCallLog.ScCalls.DURATION, duration / 1000);
+        mInsertValues.put(ScCallLog.ScCalls.NEW, true);
+        if (iType == ScCallLog.ScCalls.MISSED_TYPE)
+            mInsertValues.put(ScCallLog.ScCalls.IS_READ, 0);
 
-    private void unDemote(long id) {
-        ArrayList<ContentProviderOperation> ops = new ArrayList<>();
-        PhoneFavoritesTileAdapter.updatePinnedForContact(mCtx, id, PhoneFavoritesTileAdapter.UNPINNED, ops);
-        try {
-            mCtx.getContentResolver().applyBatch(ContactsContract.AUTHORITY, ops);
-        } catch (RemoteException e) {
-            e.printStackTrace();
-        } catch (OperationApplicationException e) {
-            e.printStackTrace();
+        // SIP error handling on outgoing calls cannot provide enough information, thus try
+        // construct some meaningful data here and create an asserted name URI. Construct
+        // an asserted name in an error case only if it's not an OCA call
+        final String assertedName;
+        if (!call.isOcaCall && call.hasSipErrorMessage && call.mAssertedName.getLen() == 0 && call.bufDialed.getLen() != 0) {
+            assertedName = "sip:" + call.bufDialed.toString() + mCtx.getString(R.string.sc_sip_domain_0);
         }
+        else {
+            final String[] fields = Utilities.splitFields(call.mAssertedName.toString(), ";");
+            assertedName = fields != null ? fields[0] : null;
+
+            // If call reached ringing state then handle a SIP error as "soft" error, usually call decline
+            // of user not answering. In this case we have user data from SIP, like asserted id etc.
+            if (call.initialStates == TiviPhoneService.CT_cb_msg.eRinging)
+                call.hasSipErrorMessage = false;
+        }
+        if (!TextUtils.isEmpty(assertedName)) {
+            mInsertValues.put(ScCallLog.ScCalls.SC_OPTION_TEXT1, assertedName);
+        }
+        final String displayName = call.mDisplayNameForCallLog.toString();
+        final boolean displayNameAvailable = !TextUtils.isEmpty(displayName);
+        if (displayNameAvailable) {
+            mInsertValues.put(ScCallLog.ScCalls.SC_OPTION_TEXT2, displayName);
+        }
+
+        // This is a call with an error condition where we only know the UUID, have no
+        // SIP display name (peername): get the default display name for it.
+        // OCA calls to a illegal/not permitted number will not return an error, the
+        // OCA gateway plays an announcement. In case the OCA gateway returns an error
+        // and we have no SIP display name then don't add a call log yet.
+        if (call.hasSipErrorMessage && !displayNameAvailable) {
+            // get the uuid from dialed buf
+            int[] errorCode = new int[1];
+            final byte[] userData = AxoMessaging.getUserInfo(call.bufDialed.toString(), null, errorCode);
+
+            String displayNameUserInfo = null;
+            if (userData != null) {
+                try {
+                    JSONObject data = new JSONObject(new String(userData));
+                    displayNameUserInfo = data.has("display_name") ? data.getString("display_name") : null;
+                } catch (JSONException ignore) { }
+            }
+            else {
+                Log.w(TAG, "No user info found for: '" + call.bufDialed.toString() + "'");
+                return false;
+            }
+            if (!TextUtils.isEmpty(displayNameUserInfo)) {
+                mInsertValues.put(ScCallLog.ScCalls.SC_OPTION_TEXT2, displayNameUserInfo);
+            }
+        }
+        return true;
     }
 }

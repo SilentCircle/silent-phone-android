@@ -19,6 +19,6 @@
     <gradient
         android:type="linear"
         android:startColor="@color/black_background_transparent"
-        android:endColor="@color/black_light_gray_transparent"
+        android:endColor="@android:color/transparent"
         android:angle="90"/>
 </shape>

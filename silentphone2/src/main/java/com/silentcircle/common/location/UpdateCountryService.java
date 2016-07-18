@@ -70,7 +70,7 @@ public class UpdateCountryService extends IntentService {
             return;
         }
         if (ACTION_UPDATE_COUNTRY.equals(intent.getAction())) {
-            final Location location = (Location) intent.getParcelableExtra(KEY_INTENT_LOCATION);
+            final Location location = intent.getParcelableExtra(KEY_INTENT_LOCATION);
             final String country = getCountryFromLocation(getApplicationContext(), location);
 
             if (country == null) {

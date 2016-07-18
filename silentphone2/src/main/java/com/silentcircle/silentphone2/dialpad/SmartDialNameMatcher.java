@@ -412,7 +412,7 @@ public class SmartDialNameMatcher {
     public ArrayList<SmartDialMatchPosition> getMatchPositions() {
         // Return a clone of mMatchPositions so that the caller can use it without
         // worrying about it changing
-        return new ArrayList<SmartDialMatchPosition>(mMatchPositions);
+        return new ArrayList<>(mMatchPositions);
     }
 
     public void setQuery(String query) {

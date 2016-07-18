@@ -33,14 +33,7 @@ import android.util.Log;
 
 import com.silentcircle.messaging.model.Contact;
 import com.silentcircle.messaging.model.Conversation;
-import com.silentcircle.messaging.model.MessageStates;
-import com.silentcircle.messaging.model.SCloudObject;
-import com.silentcircle.messaging.model.event.Event;
-import com.silentcircle.messaging.model.event.Message;
-import com.silentcircle.messaging.model.json.JSONEventAdapter;
 import com.silentcircle.messaging.repository.DbRepository.DbConversationRepository;
-import com.silentcircle.messaging.repository.EventRepository;
-import com.silentcircle.messaging.repository.ObjectRepository;
 
 import java.io.File;
 import java.util.concurrent.ExecutorService;
@@ -100,8 +93,7 @@ public class FindLoadTester extends AndroidTestCase {
 
         assertFalse(testConv.exists(partners[0]));  // not yet
 
-        Conversation conversation = new Conversation();
-        conversation.setPartner(new Contact(partners[0]));  // a conversation *must* have a partner
+        Conversation conversation = new Conversation(partners[0]);
         conversation.setBurnNotice(true);
         conversation.setBurnDelay(TimeUnit.DAYS.toSeconds(7));
         conversation.setLastModified(System.currentTimeMillis());
@@ -144,7 +136,7 @@ public class FindLoadTester extends AndroidTestCase {
 
         Conversation convRead = testConv.findById(partners[0]);
         assertNotNull(convRead);
-        assertEquals(partners[0], convRead.getPartner().getUsername());
+        assertEquals(partners[0], convRead.getPartner().getUserId());
         assertTrue(convRead.hasBurnNotice());
 
         // Conversation was always found

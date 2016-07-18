@@ -42,6 +42,7 @@ import android.view.ViewGroup.LayoutParams;
 import android.view.ViewTreeObserver;
 import android.widget.ListView;
 
+import com.silentcircle.SilentPhoneApplication;
 import com.silentcircle.common.list.OnPhoneNumberPickerActionListener;
 import com.silentcircle.common.util.DialerUtils;
 import com.silentcircle.common.util.EmptyLoader;
@@ -127,17 +128,10 @@ public class CallLogFragment extends ListFragment
         @Override
         public void onChange(boolean selfChange, Uri uri) {
             mRefreshDataRequired = true;
-
-            // need to manually re-trigger refresh data in this case because somehow
-            // the cursor did not notice the data change (maybe because we use sqlCipher?) and
-            // onResume was not call because the delete dialog is a simple Dialog only.
-            if (ClearCallLogDialog.justDeletingData()) {
-                refreshData();
-            }
+            refreshData();
         }
     }
 
-    // See issue 6363009
     private final ContentObserver mCallLogObserver = new CustomContentObserver();
     private final ContentObserver mContactsObserver = new CustomContentObserver();
     private final ContentObserver mVoicemailStatusObserver = new CustomContentObserver();
@@ -511,7 +505,7 @@ public class CallLogFragment extends ListFragment
             if (!onEntry) {
                 mCallLogQueryHandler.markMissedCallsAsRead();
             }
-            InsertCallLogHelper.removeMissedCallNotifications(getActivity());
+            InsertCallLogHelper.removeMissedCallNotifications(SilentPhoneApplication.getAppContext());
 //            CallLogNotificationsHelper.updateVoicemailNotifications(getActivity());
         }
     }
@@ -620,7 +614,8 @@ public class CallLogFragment extends ListFragment
                         view.getLayoutParams().height = (int) (value * distance + baseHeight);
                         float z = mExpandedItemTranslationZ * value;
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                            viewHolder.callLogEntryView.setTranslationZ(z);
+                            // TODO: Do we need this? It causes a visually buggy black line when expanding
+                            // viewHolder.callLogEntryView.setTranslationZ(z);
                             view.setTranslationZ(z); // WAR
                         }
                         view.requestLayout();

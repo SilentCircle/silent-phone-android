@@ -1,4 +1,7 @@
 */Makefile
+*.sln
+*.vcxproj
+
 aes/aescrypt2
 aes/crypt_and_hash
 hash/generic_sum
@@ -35,6 +38,7 @@ ssl/ssl_mail_client
 ssl/ssl_pthread_server
 ssl/ssl_server
 ssl/ssl_server2
+ssl/mini_client
 test/benchmark
 test/ecp-bench
 test/o_p_test

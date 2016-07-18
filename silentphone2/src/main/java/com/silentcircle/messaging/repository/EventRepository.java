@@ -30,8 +30,57 @@ package com.silentcircle.messaging.repository;
 
 import com.silentcircle.messaging.model.event.Event;
 
+import java.util.List;
+
 public interface EventRepository extends Repository<Event> {
 
-	public ObjectRepository objectsOf(Event event);
+    ObjectRepository objectsOf(Event event);
 
+    List<Event> list(PagingContext pagingContext);
+
+    class PagingContext {
+
+        public static final int START_FROM_YOUNGEST = -1;
+        public static final int START_FROM_OLDEST = 1;
+
+        private int mLastPosition;
+        private final int mStartPosition;
+        private final int mPageSize;
+
+        public PagingContext(int startPosition, int pageSize) {
+            mStartPosition = startPosition;
+            mLastPosition = startPosition;
+            mPageSize = pageSize;
+        }
+
+        public int getNextOffset() {
+            return mStartPosition == START_FROM_YOUNGEST
+                    ? (mLastPosition != mStartPosition ? (mLastPosition - 1) : START_FROM_YOUNGEST)
+                    : ((mLastPosition != mStartPosition) ? (mLastPosition + 1): START_FROM_OLDEST);
+        }
+
+        public void setLastMessageNumber(int lastPosition) {
+            mLastPosition = lastPosition;
+        }
+
+        public int getLastMessageNumber() {
+            return mLastPosition;
+        }
+
+        public int getPagingDirection() {
+            return mStartPosition;
+        }
+
+        public boolean isEndReached(int lastPosition) {
+            return (mLastPosition == lastPosition);
+        }
+
+        public int getStartPosition() {
+            return mStartPosition;
+        }
+
+        public int getPageSize() {
+            return mPageSize;
+        }
+    }
 }

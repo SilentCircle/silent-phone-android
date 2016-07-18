@@ -15,10 +15,13 @@
  */
 package com.silentcircle.silentphone2.list;
 
+import android.annotation.TargetApi;
 import android.app.Activity;
+import android.content.Context;
 import android.content.Loader;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 
 import com.silentcircle.contacts.list.ScContactEntryListAdapter;
@@ -31,9 +34,25 @@ public class SmartDialSearchFragment extends SearchFragment {
     @SuppressWarnings("unused")
     private static final String TAG = SmartDialSearchFragment.class.getSimpleName();
 
+    @TargetApi(Build.VERSION_CODES.M)
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        commonOnAttach();
+    }
+
+    /*
+     * Deprecated on API 23
+     * Use onAttachToContext instead
+     */
+    @SuppressWarnings("deprecation")
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
+        commonOnAttach();
+    }
+
+    private void commonOnAttach() {
         setShowScDirectoryOption(false);
     }
 

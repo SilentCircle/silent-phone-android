@@ -31,6 +31,7 @@
                 android:layout_width="0dip"
                 android:layout_weight="0"
                 android:layout_height="match_parent"
+                android:filterTouchesWhenObscured="true"
                 android:background="?list_item_background_color"
                 android:contentDescription="@string/description_delete_button"
                 android:visibility="gone"/>
@@ -101,6 +102,7 @@
                 android:id="@+id/dialButton"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
+                android:filterTouchesWhenObscured="true"
                 android:background="@drawable/floating_action_button"
                 android:contentDescription="@string/description_dial_button"
                 android:src="?sp_ic_call"/>

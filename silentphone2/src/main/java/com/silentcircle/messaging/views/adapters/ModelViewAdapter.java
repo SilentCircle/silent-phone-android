@@ -75,6 +75,14 @@ public class ModelViewAdapter extends BaseAdapter {
         this(Arrays.asList(models), viewTypes);
     }
 
+    public ViewType[] getViewTypes() {
+        return viewTypes;
+    }
+
+    public ModelProvider getModelProvider() {
+        return modelProvider;
+    }
+
     @Override
     public int getCount() {
         return modelProvider.getCount();
@@ -95,11 +103,11 @@ public class ModelViewAdapter extends BaseAdapter {
         return getItemViewTypeIndex(getItem(position));
     }
 
-    private ViewType getItemViewType(Object item) {
+    protected ViewType getItemViewType(Object item) {
         return viewTypes[getItemViewTypeIndex(item)];
     }
 
-    private int getItemViewTypeIndex(Object item) {
+    protected int getItemViewTypeIndex(Object item) {
         for (int i = 0; i < viewTypes.length; i++) {
             ViewType viewType = viewTypes[i];
             if (viewType.isModel(item)) {
@@ -116,7 +124,6 @@ public class ModelViewAdapter extends BaseAdapter {
      */
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
-
         Object item = getItem(position);
         ViewType viewType = getItemViewType(item);
         View view = viewType.get(convertView, parent);
@@ -124,7 +131,6 @@ public class ModelViewAdapter extends BaseAdapter {
         view.setTag(item);
 
         return view;
-
     }
 
     @Override
@@ -142,6 +148,27 @@ public class ModelViewAdapter extends BaseAdapter {
 
     public void setModels(Object... models) {
         setModelProvider(new ListModelProvider(models));
+    }
+
+    /**
+     * Check whether position is a position for item from models.
+     */
+    public boolean isDataPosition(int position) {
+        return true;
+    }
+
+    /**
+     * Translate given list position to a corresponding position for model item.
+     */
+    public int getDataPosition(int position) {
+        return position;
+    }
+
+    /**
+     * Translate given model position to a corresponding position for list item.
+     */
+    public int getScreenPosition(int position) {
+        return position;
     }
 
 }

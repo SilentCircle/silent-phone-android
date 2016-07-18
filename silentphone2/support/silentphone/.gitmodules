@@ -1,9 +1,0 @@
-[submodule "support/polarssl"]
-	path = support/polarssl
-	url = ssh://git@code-ssh.silentcircle.org:7999/VEN/polarssl.git
-[submodule "support/zrtpcpp"]
-	path = support/zrtpcpp
-	url = ssh://git@code-ssh.silentcircle.org:7999/VEN/zrtpcpp.git
-[submodule "support/werner_zrtp"]
-	path = support/werner_zrtp
-	url = ssh://git@code-ssh.silentcircle.org:7999/SP/zrtp-ios-proj.git

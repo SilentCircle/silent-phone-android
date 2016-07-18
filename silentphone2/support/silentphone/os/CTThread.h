@@ -1,7 +1,7 @@
 /*
 Created by Janis Narbuts
 Copyright (C) 2004-2012, Tivi LTD, www.tiviphone.com. All rights reserved.
-Copyright (C) 2012-2015, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2012-2016, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -188,7 +188,7 @@ unsigned int getTickCount();
 #include <windows.h>
 #endif
 
-#if defined(linux) ||  defined(__APPLE__)
+#if defined(__linux__) ||  defined(__APPLE__)
 #include <pthread.h>   
 #endif
 /*

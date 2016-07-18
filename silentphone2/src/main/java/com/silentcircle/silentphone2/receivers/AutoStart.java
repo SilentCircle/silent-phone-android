@@ -9,11 +9,9 @@ import android.text.TextUtils;
 import android.util.Log;
 
 import com.silentcircle.messaging.services.SCloudCleanupService;
-import com.silentcircle.messaging.services.SCloudService;
 import com.silentcircle.messaging.util.Action;
-import com.silentcircle.messaging.util.Extra;
 import com.silentcircle.silentphone2.activities.DialerActivity;
-import com.silentcircle.silentphone2.fragments.DialDrawerFragment;
+import com.silentcircle.silentphone2.fragments.SettingsFragment;
 import com.silentcircle.silentphone2.util.ConfigurationUtilities;
 
 public class AutoStart extends BroadcastReceiver {
@@ -36,7 +34,7 @@ public class AutoStart extends BroadcastReceiver {
         // Run cleanup for any possible leftover attachment files (rare)
         runScloudCleanup(context);
 
-        boolean startOnBoot = prefs.getBoolean(DialDrawerFragment.START_ON_BOOT, true);
+        boolean startOnBoot = prefs.getBoolean(SettingsFragment.START_ON_BOOT, true);
 
         if (ConfigurationUtilities.mTrace) Log.d(TAG, "Auto start action: " + action + ", startOnBoot: " + startOnBoot);
 

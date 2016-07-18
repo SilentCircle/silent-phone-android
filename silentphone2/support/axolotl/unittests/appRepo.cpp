@@ -2,6 +2,9 @@
 #include "gtest/gtest.h"
 
 #include "../appRepository/AppRepository.h"
+#include "../axolotl/Constants.h"
+#include "../logging/AxoLogging.h"
+
 #include <list>
 
 using namespace axolotl;
@@ -9,14 +12,38 @@ using namespace std;
 
 static const uint8_t keyInData[] = {0,1,2,3,4,5,6,7,8,9,19,18,17,16,15,14,13,12,11,10,20,21,22,23,24,25,26,27,28,20,31,30};
 
-TEST(AppRestore, Conversation)
+class AppRepoTestFixture: public ::testing::Test {
+public:
+    AppRepoTestFixture( ) {
+        // initialization code here
+    }
+
+    void SetUp() {
+        // code here will execute just before the test ensues
+        LOGGER_INSTANCE setLogLevel(ERROR);
+        store = AppRepository::getStore();
+        store->setKey(std::string((const char*)keyInData, 32));
+        store->openStore(std::string());
+        ASSERT_TRUE(NULL != store);
+    }
+
+    void TearDown( ) {
+        // code here will be called just after the test completes
+        // ok to through exceptions from here if need be
+        AppRepository::closeStore();
+    }
+
+    ~AppRepoTestFixture( )  {
+        // cleanup any pending stuff, but no exceptions allowed
+        LOGGER_INSTANCE setLogLevel(VERBOSE);
+    }
+
+    // put in any custom data members that you need
+    AppRepository* store;
+};
+
+TEST_F(AppRepoTestFixture, Conversation)
 {
-    AppRepository* store = AppRepository::getStore();
-    store->setKey(std::string((const char*)keyInData, 32));
-    store->openStore(string());
-    
-    ASSERT_TRUE(NULL != store);
-    
     std::string data("This is some test data");
     std::string name("partner");
     
@@ -37,18 +64,17 @@ TEST(AppRestore, Conversation)
     delete names;
 }
 
-TEST(AppRestore, Event)
+TEST_F(AppRepoTestFixture, Event)
 {
-    AppRepository* store = AppRepository::getStore();
-
-    ASSERT_TRUE(NULL != store);
-
     string data("This is some test data");
     string name("partner");
 
+    int32_t sqlCode = store->storeConversation(name, data);
+    ASSERT_FALSE(SQL_FAIL(sqlCode)) << store->getLastError();
+
     string msg("some message data");
     string msgId("first");
-    int32_t sqlCode = store->insertEvent(name, msgId, msg);
+    sqlCode = store->insertEvent(name, msgId, msg);
     ASSERT_FALSE(SQL_FAIL(sqlCode)) << store->getLastError();
 
     int32_t msgNumber;
@@ -130,17 +156,10 @@ TEST(AppRestore, Event)
     // Now the delete of the conversation should succeed.
     sqlCode = store->deleteConversation(name);
     ASSERT_FALSE(SQL_FAIL(sqlCode)) << store->getLastError();
-
-    AppRepository::closeStore();
 }
 
-TEST(AppRestore, Object)
+TEST_F(AppRepoTestFixture, Object)
 {
-    AppRepository* store = AppRepository::getStore();
-    store->setKey(std::string((const char*)keyInData, 32));
-    store->openStore(string());
-    ASSERT_TRUE(NULL != store);
-
     std::string data("This is some test data");
     std::string name("partner");
     
@@ -191,14 +210,9 @@ TEST(AppRestore, Object)
     ASSERT_FALSE(SQL_FAIL(sqlCode)) << store->getLastError();
 }
 
-static string Empty;
-TEST(AppRestore, AttachmentStatus)
+TEST_F(AppRepoTestFixture, AttachmentStatus)
 {
-    AppRepository* store = AppRepository::getStore();
-    store->setKey(string((const char*)keyInData, 32));
-    int32_t sqlCode = store->openStore(string());
-    ASSERT_FALSE(SQL_FAIL(sqlCode)) << store->getLastError();
-    ASSERT_TRUE(NULL != store);
+    int32_t sqlCode;
 
     string msgId_1("msgid_1");
     string msgId_2("msgid_2");
@@ -271,14 +285,9 @@ TEST(AppRestore, AttachmentStatus)
 }
 
 static string Partner("partner");
-TEST(AppRestore, AttachmentStatusPartner)
+TEST_F(AppRepoTestFixture, AttachmentStatusPartner)
 {
-    AppRepository* store = AppRepository::getStore();
-    store->setKey(string((const char*)keyInData, 32));
-    int32_t sqlCode = store->openStore(string());
-    ASSERT_FALSE(SQL_FAIL(sqlCode)) << store->getLastError();
-    ASSERT_TRUE(NULL != store);
-
+    int32_t sqlCode;
     string msgId_1("msgid_1");
     string msgId_2("msgid_2");
     string msgId_3("msgid_3");

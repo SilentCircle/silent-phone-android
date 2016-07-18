@@ -58,23 +58,3 @@ LOCAL_C_INCLUDES := \
 LOCAL_CFLAGS := -DGOOGLE_PROTOBUF_NO_RTTI $(IGNORED_WARNINGS)
 
 include $(BUILD_STATIC_LIBRARY)
-
-
-# axo++ library
-# ========================================================
-include $(CLEAR_VARS)
-
-LOCAL_MODULE := axolotl
-
-LOCAL_CPP_EXTENSION := .cc .cpp
-LOCAL_STATIC_LIBRARIES := protobuf-cpp-lite
-LOCAL_SRC_FILES := $(TEST_SRC_FILES)
-
-# points to the local protobuffer source directory
-LOCAL_C_INCLUDES := \
-    $(LOCAL_PATH)/../../src
-LOCAL_LDLIBS := -llog
-
-LOCAL_CFLAGS := -DANDROID_NDK
-
-include $(BUILD_SHARED_LIBRARY)

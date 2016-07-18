@@ -42,6 +42,9 @@ public class UTI {
         if( mimeType.startsWith( "audio/" ) ) {
             return "public.audio";
         }
+        if( mimeType.equals( "text/plain" ) ) {
+            return "public.plain-text";
+        }
         if( mimeType.equals( "text/vcard" ) || mimeType.equals( "text/x-vcard" ) ) {
             return "public.vcard";
         }

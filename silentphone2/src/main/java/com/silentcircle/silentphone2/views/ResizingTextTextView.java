@@ -29,6 +29,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package com.silentcircle.silentphone2.views;
 
 /**
+ * Resize text if string gets longer.
+ *
  * Created by werner on 21.01.15.
  */
 import android.content.Context;

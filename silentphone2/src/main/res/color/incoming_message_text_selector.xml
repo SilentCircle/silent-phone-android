@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android" xmlns:custom="http://schemas.android.com/apk/res/com.silentcircle.silentphone">
+    <!-- incoming message text colour currently does not depend on message state -->
+    <item android:state_pressed="true" android:color="@color/sc_ng_text_grey"/>
+    <item android:state_checked="true" android:color="@color/sc_ng_text_grey"/>
+    <item custom:state_message_received="true" android:color="@color/chat_incoming_message_text_received_color" />
+    <item android:color="@color/sc_ng_text_dark" />
+</selector>

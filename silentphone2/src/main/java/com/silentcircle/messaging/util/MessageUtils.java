@@ -27,22 +27,20 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 package com.silentcircle.messaging.util;
 
-import android.app.AlertDialog;
 import android.content.ActivityNotFoundException;
-import android.content.ClipData;
-import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Environment;
+import android.support.annotation.Nullable;
+import android.support.v7.app.AlertDialog;
 import android.text.TextUtils;
-import android.view.View;
-import android.widget.TextView;
-import android.widget.Toast;
 
+import com.silentcircle.SilentPhoneApplication;
 import com.silentcircle.messaging.location.LocationUtils;
 import com.silentcircle.messaging.model.Conversation;
+import com.silentcircle.messaging.model.MessageErrorCodes;
 import com.silentcircle.messaging.model.MessageStates;
 import com.silentcircle.messaging.model.event.ErrorEvent;
 import com.silentcircle.messaging.model.event.Event;
@@ -53,7 +51,10 @@ import com.silentcircle.messaging.model.json.JSONEventAdapter;
 import com.silentcircle.messaging.repository.ConversationRepository;
 import com.silentcircle.messaging.repository.EventRepository;
 import com.silentcircle.messaging.services.AxoMessaging;
+import com.silentcircle.messaging.services.SCloudCleanupService;
+import com.silentcircle.messaging.services.SCloudService;
 import com.silentcircle.messaging.task.SendMessageTask;
+import com.silentcircle.messaging.views.MessageInformationView;
 import com.silentcircle.silentphone2.Manifest;
 import com.silentcircle.silentphone2.R;
 import com.silentcircle.silentphone2.util.Utilities;
@@ -67,9 +68,14 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -88,7 +94,7 @@ public class MessageUtils {
             boolean shouldRequestDeliveryNotification, Conversation conversation,
             Location location) {
         Message message = new OutgoingMessage(sender, text);
-        message.setConversationID(conversation.getPartner().getUsername());
+        message.setConversationID(conversation.getPartner().getUserId());
         message.setId(UUIDGen.makeType1UUID().toString());
 
         if (conversation.hasBurnNotice()) {
@@ -137,6 +143,31 @@ public class MessageUtils {
         return message;
     }
 
+    @Nullable
+    public static String getMessageAttributesJSON(long burnDelay,
+            boolean shouldRequestDeliveryNotification,
+            @Nullable com.silentcircle.messaging.model.Location location) {
+        String result = "{}";
+        try {
+            JSONObject attributeJson = new JSONObject();
+
+            if (shouldRequestDeliveryNotification) {
+                attributeJson.put("r", true);       // "request_receipt"
+            }
+
+            if (burnDelay != 0) {
+                attributeJson.put("s", burnDelay);  // "shred_after"
+            }
+
+            LocationUtils.messageLocationToJSON(attributeJson, location);
+
+            result = attributeJson.toString();
+        } catch (JSONException exception) {
+            // Failed to prepare message attributes, return empty json
+        }
+        return result;
+    }
+
     public static void forwardMessage(final Context context, final String sender,
             final String recipient, final Message forwardedMessage) {
 
@@ -165,6 +196,24 @@ public class MessageUtils {
         AsyncUtils.execute(task, message);
     }
 
+    public static OutgoingMessage getLastOutgoingMessage(final Context context, final String partner) {
+        EventRepository eventRepository = getEventRepository(context, partner);
+
+        if (eventRepository == null) {
+            return null;
+        }
+
+        List<Event> events = sortEventsById(eventRepository.list());
+
+        for (Event event : events) {
+            if (event instanceof OutgoingMessage) {
+                return (OutgoingMessage) event;
+            }
+        }
+
+        return null;
+    }
+
     public static String getPrintableHistory(final List<Event> events) {
         StringBuilder history = new StringBuilder();
         for (int i = 0; i < events.size(); i++) {
@@ -175,7 +224,7 @@ public class MessageUtils {
             history.append("[").append(DATE_FORMAT.format(new Date(event.getTime()))).append("] ");
             if (event instanceof Message) {
                 Message message = (Message) event;
-                history.append(Utilities.getUsernameFromUriNumber(message.getSender())).append(": ");
+                history.append(Utilities.removeSipParts(message.getSender())).append(": ");
                 try {
                     JSONObject json = new JSONObject(message.getText());
                     if (json.has("message")) {
@@ -200,7 +249,7 @@ public class MessageUtils {
         intent.setType("text/plain");
         intent.putExtra(Intent.EXTRA_TEXT, messages);
         intent.putExtra(Intent.EXTRA_SUBJECT, context.getString(R.string.conversation_with,
-                Utilities.getUsernameFromUriNumber(partner)));
+                Utilities.removeSipParts(partner)));
         try {
             context.startActivity(intent);
         } catch (ActivityNotFoundException ignore) {
@@ -258,6 +307,34 @@ public class MessageUtils {
         return event;
     }
 
+    public static EventRepository getEventRepository(Context context, String partner) {
+        if(context == null || partner == null) {
+            return null;
+        }
+
+        AxoMessaging axoMessaging = AxoMessaging.getInstance(context);
+        if (axoMessaging == null) {
+            return null;
+        }
+
+        ConversationRepository conversationRepository = axoMessaging.getConversations();
+        if (conversationRepository == null) {
+            return null;
+        }
+
+        Conversation conversation = conversationRepository.findByPartner(partner);
+        if (conversation == null) {
+            return null;
+        }
+
+        EventRepository eventRepository = conversationRepository.historyOf(conversation);
+        if(eventRepository == null || !eventRepository.exists()) {
+            return null;
+        }
+
+        return eventRepository;
+    }
+
     public static void parseAttributes(String attributes, Message msg) {
         try {
             JSONObject attributeJson = new JSONObject(attributes);
@@ -269,6 +346,31 @@ public class MessageUtils {
             msg.setLocation(LocationUtils.jsonToMessageLocation(attributeJson));
         } catch (JSONException exception) {
             // In practice, this superfluous exception can never actually happen.
+        }
+    }
+
+    public static void setAttributes(Message msg) {
+        try {
+            JSONObject attributeJson = new JSONObject();
+
+            if (msg.hasLocation()) {
+                attributeJson = LocationUtils.messageLocationToJSON(msg.getLocation());
+            }
+
+            if (msg.isRequestReceipt()) {
+                attributeJson.put("r", true);
+            }
+
+            if (msg.hasBurnNotice()) {
+                attributeJson.put("s", msg.getBurnNotice());
+            }
+
+            if (attributeJson.length() > 0) {
+                msg.setAttributes(attributeJson.toString());
+            }
+
+        } catch (JSONException exception) {
+            // Failed to set message attributes
         }
     }
 
@@ -312,46 +414,126 @@ public class MessageUtils {
         return event;
     }
 
-    public static void burnMessage(final Context context, final Message message) {
+    /**
+     * Mark passed messages as read and send read receipt if message requires that.
+     *
+     * @param events Array of events to remove from conversation. Assumption is that all events are
+     *               from one and the same conversation.
+     */
+
+    public static void removeMessage(@Nullable final Event... events) {
+        AsyncUtils.execute(new AsyncTask<Event, String, String>() {
+
+            @Override
+            protected String doInBackground(Event... events) {
+
+                if (events == null || events.length < 1) {
+                    return null;
+                }
+
+                AxoMessaging axoMessaging = AxoMessaging.getInstance(SilentPhoneApplication.getAppContext());
+                if (!axoMessaging.isRegistered()) {
+                    return null;
+                }
+
+                String conversationId = null;
+                ConversationRepository repository = axoMessaging.getConversations();
+                Conversation conversation = null;
+                EventRepository history = null;
+
+                for (Event event : events) {
+                    if (conversation == null) {
+                        conversationId = MessageUtils.getConversationId(event);
+                        conversation = repository.findByPartner(conversationId);
+                        history = repository.historyOf(conversation);
+                    }
+
+                    if (event instanceof Message) {
+                        Message message = (Message) event;
+                        deleteEvent(SilentPhoneApplication.getAppContext(), repository, conversation, message);
+                    }
+                    else {
+                        if (history != null) {
+                            history.remove(event);
+                        }
+                    }
+                }
+                return conversationId;
+            }
+
+            @Override
+            protected void onPostExecute(String conversationId) {
+                /*
+                 * TODO: instead of updating all conversation pass event ids that were removed to caller
+                 * If an animation is running during such full update, it is cancelled. Granular approach
+                 * would allow for smoother animations in chat fragment.
+                 */
+                if (!TextUtils.isEmpty(conversationId)) {
+                    notifyConversationUpdated(SilentPhoneApplication.getAppContext(), conversationId, true);
+                }
+            }
+
+        }, events);
+    }
+
+    public static void burnMessage(final Context context, final Event event) {
 
         // Recipient for burn notice is sender for incoming message and
         // conversation partner for outgoing message.
-        final String conversationId = getConversationId(message);
+        final String conversationId = getConversationId(event);
 
         if (!TextUtils.isEmpty(conversationId)) {
 
-            AsyncUtils.execute(new AsyncTask<Message, String, Message[]>() {
+            AsyncUtils.execute(new AsyncTask<Event, String, Event>() {
 
                 @Override
-                protected Message[] doInBackground(Message... msg) {
+                protected Event doInBackground(Event... msg) {
 
                     final ConversationRepository repository =
                             AxoMessaging.getInstance(context.getApplicationContext()).getConversations();
                     final Conversation conversation = repository.findByPartner(conversationId);
+                    EventRepository events = repository.historyOf(conversation);
 
                     // We may need so send some request to the SIP server in case it has
                     // the message still in its store-forward-queue
-                    Message message = msg[0];
-                    if (isBurnable(message)) {
-                        AxoMessaging.getInstance(context).sendBurnNoticeRequest(
-                                message, conversationId);
+                    Event event = msg[0];
+                    if (event instanceof Message) {
+                        Message message = (Message) event;
+                        if (isBurnable(message)) {
+                            AxoMessaging.getInstance(context).sendBurnNoticeRequest(
+                                    (Message) event, conversationId);
+                        }
+
+                        // if message is already expired, it can be already removed
+                        if (events != null) {
+                            if (!message.hasFailureFlagSet(Message.FAILURE_BURN_NOTIFICATION)) {
+                                deleteEvent(context, repository, conversation, message);
+                            }
+                            else {
+                                message.setState(MessageStates.BURNED);
+                                events.save(message);
+                            }
+                        }
+                    }
+                    else {
+                        events.remove(event);
                     }
 
-
-                    // if message is already expired, it can be already removed
-                    EventRepository events = repository.historyOf(conversation);
-                    if (events != null) {
-                        events.remove(message);
-                    }
-                    return msg;
+                    return event;
                 }
 
                 @Override
-                protected void onPostExecute(Message[] result) {
-                    notifyConversationUpdated(context, conversationId);
+                protected void onPostExecute(Event event) {
+                    if (event != null) {
+                        notifyConversationUpdated(context, conversationId, false, event.getId(),
+                                AxoMessaging.UPDATE_ACTION_MESSAGE_BURNED);
+                    }
+                    else {
+                        notifyConversationUpdated(context, conversationId, true);
+                    }
                 }
 
-            }, message);
+            }, event);
         }
     }
 
@@ -361,13 +543,16 @@ public class MessageUtils {
      * @return Conversation partner for message or null if passed message is null or not of type
      *         IncomingMessage or OutgoingMessage.
      */
-    public static String getConversationId(final Message message) {
+    @Nullable
+    public static String getConversationId(final Event message) {
         String conversationId = null;
         if (message != null) {
             if (message instanceof OutgoingMessage) {
                 conversationId = message.getConversationID();
             } else if (message instanceof IncomingMessage) {
-                conversationId = message.getSender();
+                conversationId = ((Message) message).getSender();
+            } else if (message instanceof  ErrorEvent) {
+                conversationId = ((ErrorEvent) message).getSender();
             }
         }
         return conversationId;
@@ -378,10 +563,54 @@ public class MessageUtils {
      * Send an UPDATE_CONVERSATION broadcast for given conversationId.
      *
      */
-    public static void notifyConversationUpdated(final Context context, final String conversationId) {
+    public static void notifyConversationUpdated(final Context context, final String conversationId, boolean forceRefresh) {
         final Intent intent = Action.UPDATE_CONVERSATION.intent();
         Extra.PARTNER.to(intent, conversationId);
+        Extra.FORCE.to(intent, forceRefresh);
         context.sendOrderedBroadcast(intent, Manifest.permission.READ);
+    }
+
+    /**
+     * Send an UPDATE_CONVERSATION broadcast for given conversationId with details which message
+     * is affected by what action.
+     */
+    public static void notifyConversationUpdated(final Context context, final String conversationId,
+            boolean forceRefresh, final String messageId, int updateAction) {
+        final Intent intent = Action.UPDATE_CONVERSATION.intent();
+        Extra.PARTNER.to(intent, conversationId);
+        Extra.FORCE.to(intent, forceRefresh);
+        Extra.ID.to(intent, messageId);
+        Extra.REASON.to(intent, updateAction);
+        context.sendOrderedBroadcast(intent, Manifest.permission.READ);
+    }
+
+
+    /**
+     * Delete event from repository.
+     */
+    public static void deleteEvent(final Context context, final ConversationRepository repository,
+            final Conversation conversation, final Event event) {
+
+        if (repository != null && conversation != null) {
+            repository.historyOf(conversation).remove(event);
+
+            if (event instanceof Message) {
+                startAttachmentCleanUp(context, conversation.getPartner().getUserId(), ((Message) event));
+            }
+        }
+    }
+
+    /**
+     * Remove a possible temporary attachment files (rare).
+     */
+    public static void startAttachmentCleanUp(Context context, String conversationId, Message message) {
+        if (message.hasAttachment()) {
+            Intent cleanupIntent = Action.PURGE_ATTACHMENTS.intent(context, SCloudCleanupService.class);
+            cleanupIntent.putExtra("KEEP_STATUS", false);
+            Extra.PARTNER.to(cleanupIntent, conversationId);
+            Extra.ID.to(cleanupIntent, message.getId());
+            context.startService(cleanupIntent);
+        }
     }
 
     public static boolean isBurnable(final Message message) {
@@ -392,18 +621,17 @@ public class MessageUtils {
                 || MessageStates.SYNC == messageState);
     }
 
-
     public static void showEventInfoDialog(final Context context, final Event event) {
-        TextView textView = new TextView(context);
+
         JSONObject json = new JSONEventAdapter().adapt(event);
 
-        if(json.has("metaData")) {
+        if (json.has("metaData")) {
             JSONObject metaDataJson;
 
             try {
                 metaDataJson = new JSONObject(json.get("metaData").toString());
 
-                if(metaDataJson.has("preview")) {
+                if (metaDataJson.has("preview")) {
                     metaDataJson.remove("preview");
                     metaDataJson.put("preview", "<removed>");
 
@@ -413,30 +641,183 @@ public class MessageUtils {
             } catch(JSONException ignore) {}
         }
 
-        try {
-            textView.setText(json.toString(4));
+        String formattedInfo = event.toFormattedString();
+
+        AlertDialog.Builder alert = new AlertDialog.Builder(context);
+        alert.setTitle(R.string.messaging_message_information_title);
+        alert.setView(new MessageInformationView(context, formattedInfo, json));
+        alert.show();
+    }
+
+    public static SCloudService.AttachmentState getAttachmentState(final Message message) {
+        SCloudService.AttachmentState state =
+                SCloudService.DB.getAttachmentState(message.getId(),
+                        message.getConversationID() != null
+                                ? message.getConversationID() : message.getSender());
+        return state;
+    }
+
+    public static List<Event> filter(List<Event> events, boolean keepErrorEvents) {
+        Iterator<Event> iterator = events.iterator();
+        Set<String> messageIds = new HashSet<>();
+        List<ErrorEvent> errorEvents = new ArrayList<>();
+        while (iterator.hasNext()) {
+            Event event = iterator.next();
+            if (event instanceof Message) {
+                Message message = (Message) event;
+                if (message instanceof IncomingMessage) {
+                    messageIds.add(message.getId());
+                }
+                switch (message.getState()) {
+                    case MessageStates.BURNED:
+                        iterator.remove();
+                        break;
+                    case MessageStates.COMPOSED:
+                        // TODO: remove if 'isOutgoingResendRequest'
+                        break;
+                    default:
+                        if (message.isExpired()) {
+                            iterator.remove();
+                        }
+                        break;
+                }
+
+                // TODO: remove incoming messages which are not chat messages
+                // or not messages with attachment
+            }
+            else if (event instanceof ErrorEvent) {
+                // to avoid showing errors for existing incoming/outgoing messages
+                // keep track of error events.
+                ErrorEvent errorEvent = (ErrorEvent) event;
+                int errorId = errorEvent.getError();
+                // show error events only if allowed or a critical error
+                if (keepErrorEvents
+                        || errorId == MessageErrorCodes.RECEIVE_ID_WRONG
+                        || errorId == MessageErrorCodes.SENDER_ID_WRONG) {
+                    String messageId = errorEvent.getMessageId();
+                    if (!TextUtils.isEmpty(messageId)) {
+                        errorEvents.add(errorEvent);
+                    }
+                }
+                else {
+                    iterator.remove();
+                }
+            }
         }
-        catch (Exception e) {
-            textView.setText(json.toString());
+
+        // clear those error events for which a message has been received
+        for (ErrorEvent errorEvent : errorEvents) {
+            String messageId = errorEvent.getMessageId();
+            if (messageId != null && messageIds.contains(messageId)) {
+                events.remove(errorEvent);
+            }
         }
-        textView.setTextIsSelectable(true);
-        textView.setOnLongClickListener(new View.OnLongClickListener() {
+
+        Collections.sort(events);
+
+        /*
+         * at this point messages are sorted by the time set when arrived on local device
+         * sort incoming messages in order they have been created on sender's device
+         */
+        return sortEventsById(events);
+    }
+
+    public static List<Event> sortEventsById(List<Event> events) {
+        List<Event> result = new ArrayList<>();
+        List<Event> incomingEventsGroup = new ArrayList<>();
+        for (Event event : events) {
+            if (event instanceof IncomingMessage) {
+                incomingEventsGroup.add(event);
+            }
+            else {
+                Collections.sort(incomingEventsGroup, Event.EVENT_ID_COMPARATOR);
+                result.addAll(incomingEventsGroup);
+                incomingEventsGroup.clear();
+
+                result.add(event);
+            }
+        }
+        Collections.sort(incomingEventsGroup, Event.EVENT_ID_COMPARATOR);
+        result.addAll(incomingEventsGroup);
+
+        return result;
+    }
+
+    /**
+     * Mark passed messages as read and send read receipt if message requires that.
+     *
+     * @param messages Array of messages to mark as read. Assumption is that all messages are from
+     *                 one and the same conversation.
+     */
+    public static void markMessagesAsRead(@Nullable Message... messages) {
+
+        AsyncUtils.execute(new AsyncTask<Message, String, String>() {
 
             @Override
-            public boolean onLongClick(View v) {
-                ClipboardManager manager =
-                        (ClipboardManager) v.getContext().getSystemService(Context.CLIPBOARD_SERVICE);
-                manager.setPrimaryClip(ClipData.newPlainText(null, ((TextView) v).getText()));
-                Toast.makeText(v.getContext(), "Copied to clipboard", Toast.LENGTH_SHORT).show();
-                return true;
+            protected String doInBackground(Message... messages) {
+                if (messages == null || messages.length < 1) {
+                    return null;
+                }
+
+                AxoMessaging axoMessaging = AxoMessaging.getInstance(SilentPhoneApplication.getAppContext());
+                if (!axoMessaging.isRegistered()) {
+                    return null;
+                }
+
+                String conversationId = null;
+                ConversationRepository repository = axoMessaging.getConversations();
+                Conversation conversation = null;
+                EventRepository history = null;
+
+                long currentMillis = System.currentTimeMillis();
+                for (Message message : messages) {
+                    if (message.getState() != MessageStates.RECEIVED) {
+                        continue;
+                    }
+                    message.setState(MessageStates.READ);
+                    if (message.expires() && message.getExpirationTime() == Message.DEFAULT_EXPIRATION_TIME) {
+                        message.setExpirationTime(currentMillis + message.getBurnNotice() * 1000L);
+                    }
+                    if (message.isRequestReceipt()) {
+                        axoMessaging.sendReadNotification(message);
+                        /* Sleep after sending a message to avoid congestion */
+                        Utilities.Sleep(150L);
+                    }
+
+                    if (conversation == null) {
+                        conversationId = MessageUtils.getConversationId(message);
+                        conversation = repository.findByPartner(conversationId);
+                        history = repository.historyOf(conversation);
+                    }
+
+                    if (history != null) {
+                        history.save(message);
+                    }
+                }
+
+                /* update unread message count - decrement by messages read */
+                int unreadMessageCount = conversation != null ? conversation.getUnreadMessageCount() : 0;
+                if (unreadMessageCount > 0) {
+                    unreadMessageCount = Math.max(0, unreadMessageCount - messages.length);
+                    conversation.setUnreadMessageCount(unreadMessageCount);
+                    repository.save(conversation);
+                }
+
+                return conversationId;
             }
-        });
-        AlertDialog.Builder alert = new AlertDialog.Builder(context);
 
-        alert.setTitle(event.getTime() == 0
-                ? "" : DEBUG_DATE_FORMAT.format(event.getTime()));
+            @Override
+            protected void onPostExecute(String conversationId) {
+                /*
+                 * TODO: instead of updating all conversation pass event ids that were removed to caller
+                 * If an animation is running during such full update, it is cancelled. Granular approach
+                 * would allow for smoother animations in chat fragment.
+                 */
+                if (!TextUtils.isEmpty(conversationId)) {
+                    notifyConversationUpdated(SilentPhoneApplication.getAppContext(), conversationId, true);
+                }
+            }
 
-        alert.setView(textView);
-        alert.show();
+        }, messages);
     }
 }

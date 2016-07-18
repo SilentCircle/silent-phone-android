@@ -43,7 +43,7 @@ import com.silentcircle.silentphone2.R;
 import com.silentcircle.silentphone2.activities.ProvisioningActivity;
 import com.silentcircle.silentphone2.services.TiviPhoneService;
 import com.silentcircle.silentphone2.util.ConfigurationUtilities;
-import com.silentcircle.silentphone2.util.LoadUserInfo;
+import com.silentcircle.userinfo.LoadUserInfo;
 
 /**
  *
@@ -96,7 +96,7 @@ public class StatusProvider extends ContentProvider {
 
     /**
      * SilentPhone is offline and not registered with SilentCircle's SIP servers.
-     * This is the case if the user selected 'Logout' from the menu or if no
+     * This is the case if the user selected 'Go offline' from the menu or if no
      * network is available.
      */
     private static final int OFFLINE = 3;
@@ -165,7 +165,7 @@ public class StatusProvider extends ContentProvider {
                 Context ctx = getContext();
                 if (ctx == null)
                     return null;
-                if (valid == LoadUserInfo.INVALID) {
+                if (valid == LoadUserInfo.VALID) {
                     bp_status = BP_EXPIRED;
                     statusText = ctx.getString(R.string.subscription_expired);
                 }

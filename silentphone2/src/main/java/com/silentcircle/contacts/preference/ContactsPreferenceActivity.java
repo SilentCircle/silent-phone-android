@@ -113,8 +113,6 @@ public final class ContactsPreferenceActivity extends PreferenceActivity {
 
     protected boolean isValidFragment (String fragmentName)
     {
-        if(DisplayOptionsPreferenceFragment.class.getName().equals(fragmentName))
-            return true;
-        return false;
+        return DisplayOptionsPreferenceFragment.class.getName().equals(fragmentName);
     }
 }

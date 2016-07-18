@@ -1,14 +1,15 @@
 
 # Also see "include/polarssl/config.h"
 
-# To compile on MinGW: add "-lws2_32" to LDFLAGS or define WINDOWS in your
-# environment
-#
-CFLAGS	+= -I../include -D_FILE_OFFSET_BITS=64 -Wall -W -Wdeclaration-after-statement
-OFLAGS	= -O2
+CFLAGS	?= -O2
+WARNING_CFLAGS ?=  -Wall -W -Wdeclaration-after-statement
+LDFLAGS ?=
+
+LOCAL_CFLAGS = $(WARNING_CFLAGS) -I../include -D_FILE_OFFSET_BITS=64
+LOCAL_LDFLAGS =
 
 ifdef DEBUG
-CFLAGS += -g3
+LOCAL_CFLAGS += -g3
 endif
 
 # MicroBlaze specific options:
@@ -17,21 +18,28 @@ endif
 # To compile on Plan9:
 # CFLAGS += -D_BSD_EXTENSION
 
-# To compile as a shared library:
-ifdef SHARED
-CFLAGS += -fPIC
+# if were running on Windows build for Windows
+ifdef WINDOWS
+WINDOWS_BUILD=1
 endif
 
-SONAME=libpolarssl.so.7
+# To compile as a shared library:
+ifdef SHARED
+# all code is position-indep with mingw, avoid warning about useless flag
+ifndef WINDOWS_BUILD
+LOCAL_CFLAGS += -fPIC -fpic
+endif
+endif
 
-DLEXT=so.7
+SOEXT=so.9
+
+DLEXT=so
 # OSX shared library extension:
 # DLEXT=dylib
 
 # Windows shared library extension:
-ifdef WINDOWS
+ifdef WINDOWS_BUILD
 DLEXT=dll
-LDFLAGS += -lws2_32
 endif
 
 OBJS=	aes.o		aesni.o		arc4.o			\
@@ -68,43 +76,66 @@ OBJS=	aes.o		aesni.o		arc4.o			\
 ifndef SHARED
 all: static
 else
-all: shared
+all: shared static
 endif
 
 static: libpolarssl.a
 
-shared: libpolarssl.$(DLEXT) libpolarssl.so
+shared: libpolarssl.$(DLEXT)
 
-libpolarssl.a: $(OBJS)
+libpolarssl.a: libmbedtls.a
+	echo "  LN    $@ -> $?"
+ifndef WINDOWS
+	ln -sf $? $@
+else
+	copy /y /b $? $@
+endif
+
+libmbedtls.a: $(OBJS)
 	echo "  AR    $@"
-	$(AR) r $@ $(OBJS)
+	$(AR) rc $@ $(OBJS)
 	echo "  RL    $@"
 	$(AR) s $@
 
-libpolarssl.${DLEXT}: libpolarssl.a
-	echo "  LD    $@"
-	$(CC) ${LDFLAGS} -shared -Wl,-soname,$(SONAME) -o $@ $(OBJS)
+libpolarssl.$(DLEXT): libmbedtls.$(DLEXT)
+	echo "  LN    $@ -> $?"
+ifndef WINDOWS
+	ln -sf $? $@
+else
+	copy /y /b $? $@
+endif
+ifdef WINDOWS_BUILD
+ifndef WINDOWS
+	ln -sf $?.a $@.a
+else
+	copy /y /b $?.a $@.a
+endif
+endif
 
-libpolarssl.so: libpolarssl.${DLEXT}
-	echo "  LN    $@ -> libpolarssl.${DLEXT}"
-	ln -sf libpolarssl.${DLEXT} $@
-
-libpolarssl.dylib: libpolarssl.a
+libmbedtls.$(SOEXT): $(OBJS)
 	echo "  LD    $@"
-	$(CC) ${LDFLAGS} -dynamiclib -o $@ $(OBJS)
+	$(CC) -shared -Wl,-soname,$@ $(LOCAL_LDFLAGS) $(LDFLAGS) -o $@ $(OBJS)
 
-libpolarssl.dll: libpolarssl.a
+libmbedtls.so: libmbedtls.$(SOEXT)
+	echo "  LN    $@ -> libmbedtls.$(SOEXT)"
+	ln -sf libmbedtls.$(SOEXT) $@
+
+libmbedtls.dylib: $(OBJS)
 	echo "  LD    $@"
-	$(CC) -shared -Wl,-soname,$@ -o $@ $(OBJS) -lws2_32 -lwinmm -lgdi32
+	$(CC) -dynamiclib $(LOCAL_LDFLAGS) $(LDFLAGS) -o $@ $(OBJS)
+
+libmbedtls.dll: $(OBJS)
+	echo "  LD    $@"
+	$(CC) -shared -Wl,-soname,$@ -Wl,--out-implib,$@.a -o $@ $(OBJS) -lws2_32 -lwinmm -lgdi32 -static-libgcc $(LOCAL_LDFLAGS) $(LDFLAGS)
 
 .c.o:
 	echo "  CC    $<"
-	$(CC) $(CFLAGS) $(OFLAGS) -c $<
+	$(CC) $(LOCAL_CFLAGS) $(CFLAGS) -c $<
 
 clean:
 ifndef WINDOWS
-	rm -f *.o libpolarssl.*
+	rm -f *.o libpolarssl.* libmbedtls.*
 endif
 ifdef WINDOWS
-	del /Q /F *.o libpolarssl.*
+	del /Q /F *.o libpolarssl.* libmbedtls.*
 endif

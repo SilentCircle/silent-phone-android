@@ -2,38 +2,47 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:orientation="horizontal"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:background="@null">
+    android:layout_width="@dimen/messaging_vcard_preview_width"
+    android:layout_height="@dimen/messaging_vcard_preview_height"
+    android:background="@color/sc_ng_background_outgoing"
+    tools:ignore="PxUsage">
 
     <FrameLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content">
+        android:layout_width="@dimen/messaging_vcard_preview_photo_width"
+        android:layout_height="@dimen/messaging_vcard_preview_photo_height"
+        android:layout_gravity="center_vertical"
+        android:layout_marginLeft="@dimen/messaging_vcard_preview_photo_margin_left"
+        android:layout_marginStart="@dimen/messaging_vcard_preview_photo_margin_left">
 
         <ImageView
             android:id="@+id/vcard_preview_avatar"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:layout_marginTop="3dp"
-            android:layout_marginLeft="5dp"
+            android:layout_width="@dimen/messaging_vcard_preview_photo_width"
+            android:layout_height="@dimen/messaging_vcard_preview_photo_height"
             android:src="@drawable/ic_contact_picture_holo_dark" />
 
         <ImageView
             android:id="@+id/vcard_preview_background"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:src="@drawable/bg_vcard" />
+            android:layout_height="match_parent"
+            android:src="@drawable/ic_vcard_circle" />
 
     </FrameLayout>
 
     <TextView
         android:id="@+id/vcard_preview_name"
-        android:layout_gravity="center"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textSize="20sp"
-        android:layout_marginRight="@dimen/messaging_actionbar_photo_margin_right"
-        android:visibility="gone"
+        android:layout_gravity="center_vertical"
+        android:layout_marginLeft="@dimen/messaging_vcard_preview_text_margin_left"
+        android:layout_marginStart="@dimen/messaging_vcard_preview_text_margin_left"
+        android:layout_marginRight="@dimen/messaging_vcard_preview_text_margin_right"
+        android:layout_marginEnd="@dimen/messaging_vcard_preview_text_margin_right"
+        android:gravity="center"
+        android:textSize="@dimen/messaging_vcard_preview_text_size"
+        android:textStyle="italic"
+        android:textColor="@color/sc_ng_text_dark"
+        android:maxLines="2"
+        android:ellipsize="none"
         tools:text="My Uber vcard" />
 
 </LinearLayout>

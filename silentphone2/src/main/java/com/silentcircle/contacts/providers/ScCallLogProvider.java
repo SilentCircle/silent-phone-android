@@ -94,6 +94,7 @@ public class ScCallLogProvider extends ContentProvider {
         sCallsProjectionMap.put(ScCalls.CACHED_PHOTO_ID, ScCalls.CACHED_PHOTO_ID);
         sCallsProjectionMap.put(ScCalls.CACHED_FORMATTED_NUMBER, ScCalls.CACHED_FORMATTED_NUMBER);
         sCallsProjectionMap.put(ScCalls.SC_OPTION_TEXT1, ScCalls.SC_OPTION_TEXT1);
+        sCallsProjectionMap.put(ScCalls.SC_OPTION_TEXT2, ScCalls.SC_OPTION_TEXT2);
     }
 
     private ScContactsDatabaseHelper mDbHelper;

@@ -272,7 +272,7 @@ public class SearchIndexManager {
 
     public SearchIndexManager(ScContactsProvider contactsProvider) {
         this.mContactsProvider = contactsProvider;
-        mDbHelper = (ScContactsDatabaseHelper) mContactsProvider.getDatabaseHelper();
+        mDbHelper = mContactsProvider.getDatabaseHelper();
     }
 
     public void updateIndex(boolean force) {

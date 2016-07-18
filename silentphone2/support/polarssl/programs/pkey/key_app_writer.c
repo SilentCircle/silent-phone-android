@@ -1,12 +1,9 @@
 /*
  *  Key writing application
  *
- *  Copyright (C) 2006-2013, Brainspark B.V.
+ *  Copyright (C) 2006-2013, ARM Limited, All Rights Reserved
  *
- *  This file is part of PolarSSL (http://www.polarssl.org)
- *  Lead Maintainer: Paul Bakker <polarssl_maintainer at polarssl.org>
- *
- *  All rights reserved.
+ *  This file is part of mbed TLS (https://tls.mbed.org)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -29,24 +26,44 @@
 #include POLARSSL_CONFIG_FILE
 #endif
 
-#include <string.h>
-#include <stdlib.h>
+#if defined(POLARSSL_PLATFORM_C)
+#include "polarssl/platform.h"
+#else
 #include <stdio.h>
+#define polarssl_printf     printf
+#endif
 
+#if defined(POLARSSL_PK_WRITE_C) && defined(POLARSSL_FS_IO)
 #include "polarssl/error.h"
 #include "polarssl/pk.h"
 #include "polarssl/error.h"
 
-#if !defined(POLARSSL_PK_WRITE_C) || !defined(POLARSSL_FS_IO)
-int main( int argc, char *argv[] )
-{
-    ((void) argc);
-    ((void) argv);
+#include <stdio.h>
+#include <string.h>
+#endif
 
-    printf( "POLARSSL_PK_WRITE_C and/or POLARSSL_FS_IO not defined.\n" );
-    return( 0 );
-}
+#if defined(POLARSSL_PEM_WRITE_C)
+#define USAGE_OUT \
+    "    output_file=%%s      default: keyfile.pem\n"   \
+    "    output_format=pem|der default: pem\n"
 #else
+#define USAGE_OUT \
+    "    output_file=%%s      default: keyfile.der\n"   \
+    "    output_format=der     default: der\n"
+#endif
+
+#if defined(POLARSSL_PEM_WRITE_C)
+#define DFL_OUTPUT_FILENAME     "keyfile.pem"
+#define DFL_OUTPUT_FORMAT       OUTPUT_FORMAT_PEM
+#else
+#define DFL_OUTPUT_FILENAME     "keyfile.der"
+#define DFL_OUTPUT_FORMAT       OUTPUT_FORMAT_DER
+#endif
+
+#define DFL_MODE                MODE_NONE
+#define DFL_FILENAME            "keyfile.key"
+#define DFL_DEBUG_LEVEL         0
+#define DFL_OUTPUT_MODE         OUTPUT_MODE_NONE
 
 #define MODE_NONE               0
 #define MODE_PRIVATE            1
@@ -59,18 +76,22 @@ int main( int argc, char *argv[] )
 #define OUTPUT_FORMAT_PEM              0
 #define OUTPUT_FORMAT_DER              1
 
-#define DFL_MODE                MODE_NONE
-#define DFL_FILENAME            "keyfile.key"
-#define DFL_DEBUG_LEVEL         0
-#define DFL_OUTPUT_MODE         OUTPUT_MODE_NONE
-#if defined(POLARSSL_PEM_WRITE_C)
-#define DFL_OUTPUT_FILENAME     "keyfile.pem"
-#define DFL_OUTPUT_FORMAT       OUTPUT_FORMAT_PEM
-#else
-#define DFL_OUTPUT_FILENAME     "keyfile.der"
-#define DFL_OUTPUT_FORMAT       OUTPUT_FORMAT_DER
-#endif
+#define USAGE \
+    "\n usage: key_app param=<>...\n"                   \
+    "\n acceptable parameters:\n"                       \
+    "    mode=private|public default: none\n"           \
+    "    filename=%%s         default: keyfile.key\n"   \
+    "    output_mode=private|public default: none\n"    \
+    USAGE_OUT                                           \
+    "\n"
 
+#if !defined(POLARSSL_PK_WRITE_C) || !defined(POLARSSL_FS_IO)
+int main( void )
+{
+    polarssl_printf( "POLARSSL_PK_WRITE_C and/or POLARSSL_FS_IO not defined.\n" );
+    return( 0 );
+}
+#else
 /*
  * global options
  */
@@ -167,25 +188,6 @@ static int write_private_key( pk_context *key, const char *output_file )
     return( 0 );
 }
 
-#if defined(POLARSSL_PEM_WRITE_C)
-#define USAGE_OUT \
-    "    output_file=%%s      default: keyfile.pem\n"   \
-    "    output_format=pem|der default: pem\n"
-#else
-#define USAGE_OUT \
-    "    output_file=%%s      default: keyfile.der\n"   \
-    "    output_format=der     default: der\n"
-#endif
-
-#define USAGE \
-    "\n usage: key_app param=<>...\n"                   \
-    "\n acceptable parameters:\n"                       \
-    "    mode=private|public default: none\n"           \
-    "    filename=%%s         default: keyfile.key\n"   \
-    "    output_mode=private|public default: none\n"    \
-    USAGE_OUT                                           \
-    "\n"
-
 int main( int argc, char *argv[] )
 {
     int ret = 0;
@@ -204,7 +206,7 @@ int main( int argc, char *argv[] )
     {
     usage:
         ret = 1;
-        printf( USAGE );
+        polarssl_printf( USAGE );
         goto exit;
     }
 
@@ -261,13 +263,13 @@ int main( int argc, char *argv[] )
 
     if( opt.mode == MODE_NONE && opt.output_mode != OUTPUT_MODE_NONE )
     {
-        printf( "\nCannot output a key without reading one.\n");
+        polarssl_printf( "\nCannot output a key without reading one.\n");
         goto exit;
     }
 
     if( opt.mode == MODE_PUBLIC && opt.output_mode == OUTPUT_MODE_PRIVATE )
     {
-        printf( "\nCannot output a private key from a public key.\n");
+        polarssl_printf( "\nCannot output a private key from a public key.\n");
         goto exit;
     }
 
@@ -276,7 +278,7 @@ int main( int argc, char *argv[] )
         /*
          * 1.1. Load the key
          */
-        printf( "\n  . Loading the private key ..." );
+        polarssl_printf( "\n  . Loading the private key ..." );
         fflush( stdout );
 
         ret = pk_parse_keyfile( &key, opt.filename, NULL );
@@ -284,16 +286,16 @@ int main( int argc, char *argv[] )
         if( ret != 0 )
         {
             polarssl_strerror( ret, (char *) buf, sizeof(buf) );
-            printf( " failed\n  !  pk_parse_keyfile returned -0x%04x - %s\n\n", -ret, buf );
+            polarssl_printf( " failed\n  !  pk_parse_keyfile returned -0x%04x - %s\n\n", -ret, buf );
             goto exit;
         }
 
-        printf( " ok\n" );
+        polarssl_printf( " ok\n" );
 
         /*
          * 1.2 Print the key
          */
-        printf( "  . Key information    ...\n" );
+        polarssl_printf( "  . Key information    ...\n" );
 
 #if defined(POLARSSL_RSA_C)
         if( pk_get_type( &key ) == POLARSSL_PK_RSA )
@@ -321,7 +323,7 @@ int main( int argc, char *argv[] )
         }
         else
 #endif
-            printf("key type not supported yet\n");
+            polarssl_printf("key type not supported yet\n");
 
     }
     else if( opt.mode == MODE_PUBLIC )
@@ -329,7 +331,7 @@ int main( int argc, char *argv[] )
         /*
          * 1.1. Load the key
          */
-        printf( "\n  . Loading the public key ..." );
+        polarssl_printf( "\n  . Loading the public key ..." );
         fflush( stdout );
 
         ret = pk_parse_public_keyfile( &key, opt.filename );
@@ -337,16 +339,16 @@ int main( int argc, char *argv[] )
         if( ret != 0 )
         {
             polarssl_strerror( ret, (char *) buf, sizeof(buf) );
-            printf( " failed\n  !  pk_parse_public_key returned -0x%04x - %s\n\n", -ret, buf );
+            polarssl_printf( " failed\n  !  pk_parse_public_key returned -0x%04x - %s\n\n", -ret, buf );
             goto exit;
         }
 
-        printf( " ok\n" );
+        polarssl_printf( " ok\n" );
 
         /*
          * 1.2 Print the key
          */
-        printf( "  . Key information    ...\n" );
+        polarssl_printf( "  . Key information    ...\n" );
 
 #if defined(POLARSSL_RSA_C)
         if( pk_get_type( &key ) == POLARSSL_PK_RSA )
@@ -367,7 +369,7 @@ int main( int argc, char *argv[] )
         }
         else
 #endif
-            printf("key type not supported yet\n");
+            polarssl_printf("key type not supported yet\n");
     }
     else
         goto usage;
@@ -387,16 +389,16 @@ exit:
     {
 #ifdef POLARSSL_ERROR_C
         polarssl_strerror( ret, buf, sizeof( buf ) );
-        printf( " - %s\n", buf );
+        polarssl_printf( " - %s\n", buf );
 #else
-        printf("\n");
+        polarssl_printf("\n");
 #endif
     }
 
     pk_free( &key );
 
 #if defined(_WIN32)
-    printf( "  + Press Enter to exit this program.\n" );
+    polarssl_printf( "  + Press Enter to exit this program.\n" );
     fflush( stdout ); getchar();
 #endif
 

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:orientation="horizontal"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:background="@null">
+
+    <FrameLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
+
+        <ImageView
+            android:id="@+id/vcard_preview_avatar"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginTop="3dp"
+            android:layout_marginLeft="5dp"
+            android:src="@drawable/ic_contact_picture_holo_dark" />
+
+        <ImageView
+            android:id="@+id/vcard_preview_background"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/bg_vcard" />
+
+    </FrameLayout>
+
+    <TextView
+        android:id="@+id/vcard_preview_name"
+        android:layout_gravity="center"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="20sp"
+        android:layout_marginRight="@dimen/messaging_actionbar_photo_margin_right"
+        android:visibility="gone"
+        tools:text="My Uber vcard" />
+
+</LinearLayout>

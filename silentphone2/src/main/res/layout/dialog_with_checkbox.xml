@@ -4,12 +4,14 @@
     style="@style/Widget.Silence.LinearLayout.Vertical"
     android:layout_height="match_parent">
 
-    <CheckBox
+    <android.support.v7.widget.AppCompatCheckBox
         android:id="@+id/checkbox"
-        style="@style/Widget.Silence.CheckBox"
-        android:text=""
-        tools:text="Save choice"
+        android:theme="@style/Widget.Silence.CheckBox.Light"
         android:layout_height="wrap_content"
-        android:layout_width="match_parent"/>
+        android:layout_width="match_parent"
+        android:layout_margin="@dimen/spacing_large"
+        android:textColor="@color/sc_ng_text_dark"
+        tools:text="Save choice"
+        />
 
 </LinearLayout>

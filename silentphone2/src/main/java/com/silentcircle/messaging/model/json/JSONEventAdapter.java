@@ -80,6 +80,7 @@ public class JSONEventAdapter extends JSONAdapter {
         //noinspection ResourceType
         to.setState(getInt(from, "state", MessageStates.UNKNOWN));
         to.setExpirationTime(getLong(from, "expiration_time", Message.DEFAULT_EXPIRATION_TIME));
+        to.setDeliveryTime(getLong(from, "delivery_time", 0));
         to.setRequestReceipt(from.optBoolean("request_receipt", false));
         to.setLocation(LocationUtils.stringToMessageLocation(from.optString("location")));
 
@@ -99,6 +100,9 @@ public class JSONEventAdapter extends JSONAdapter {
                 to.addNetMessageId(id);
             }
         }
+
+        to.setFailureFlags(fromArrayOfLongs(getJSONArray(from, "failureFlags")));
+
         return to;
     }
 
@@ -125,10 +129,12 @@ public class JSONEventAdapter extends JSONAdapter {
                 json.put("sender", message.getSender());
                 json.put("state", message.getState());
                 json.put("expiration_time", message.getExpirationTime());
+                json.put("delivery_time", message.getDeliveryTime());
                 json.put("request_receipt", message.isRequestReceipt());
                 json.put("location", LocationUtils.messageLocationToJSON(message.getLocation()));
                 json.put("attachment", message.getAttachment());
                 json.put("metaData", message.getMetaData());
+                json.put("failureFlags", toArray(message.getFailureFlags()));
                 List<Long> netIds = message.getNetMessageIds();
                 if (!netIds.isEmpty()) {
                     JSONArray ids = new JSONArray();
@@ -173,5 +179,4 @@ public class JSONEventAdapter extends JSONAdapter {
                 return adapt(json, new Event());
         }
     }
-
 }

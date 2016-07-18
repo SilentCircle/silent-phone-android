@@ -18,6 +18,7 @@
 #include <polarssl/entropy.h>
 #include <polarssl/ctr_drbg.h>
 #include <polarssl/error.h>
+#include <polarssl/debug.h>
 
 static void * (*volatile memset_volatile)(void *, int, size_t) = memset;
 
@@ -48,23 +49,15 @@ public:
    }
 };
 
+static void my_ssl_debug(void *ctx, int level, const char *str)
+{
+    t_logf(log_events, "ssl_debug", "%d - %s", level, str);
+}
 
 
 void tivi_slog(const char* format, ...);
 
 void tmp_log(const char *p);
-
-void my_debug( void *ctx, int level, const char *str )
-{
-   /*
-    {
-    fprintf( (FILE *) ctx, "%s", str );
-    fflush(  (FILE *) ctx  );
-    }
-    */
-   //if( level < DEBUG_LEVEL )
-   //tivi_slog("lev[%d]%s",level,str);
-}
 
 void *getEncryptedPtr_debug(void *p){
    
@@ -118,8 +111,13 @@ CTTLS::CTTLS(CTSockCB &c):addrConnected(){
    iCertFailed=0;
    iEntropyInicialized=0;
    iCallingConnect=0;
+   bIsVoipSock = 0;
    
    
+}
+
+void CTTLS::enableBackgroundForVoip(int bTrue){
+   bIsVoipSock = bTrue;
 }
 
 void CTTLS::initEntropy(){
@@ -129,8 +127,8 @@ void CTTLS::initEntropy(){
    char *getEntropyFromZRTP_tmp(unsigned char *p, int iBytes);
    unsigned char br[64];
 	
-   unsigned int getTickCount();
-   unsigned int ui=getTickCount();
+  // unsigned int getTickCount(void);
+  // unsigned int ui=getTickCount();
    
 	entropy_init( &((T_SSL*)pSSL)->entropy );
 	if( ( ret = ctr_drbg_init( &((T_SSL*)pSSL)->ctr_drbg, entropy_func, &((T_SSL*)pSSL)->entropy,
@@ -142,7 +140,7 @@ void CTTLS::initEntropy(){
 }
 
 CTTLS::~CTTLS(){
-   
+   t_logf(log_events, __FUNCTION__, "sockdebug: Closing socket in destructor");
    closeSocket();
    
    if(iEntropyInicialized)
@@ -159,6 +157,8 @@ int CTTLS::createSock(){
 
 int CTTLS::closeSocket(){
    
+    t_logf(log_events, __FUNCTION__, "sockdebug: Closing a socket [iConnected=%d, iPeerClosed=%d, iClosed=%d, iNeedCallCloseSocket=%d]",
+           iConnected, iPeerClosed, iClosed, iNeedCallCloseSocket);
 	if((!iConnected && iPeerClosed==0)  || iClosed){
       if(iNeedCallCloseSocket && pSSL && ((T_SSL*)pSSL)->sock){
          SOCKET server_fd=((T_SSL*)pSSL)->sock;
@@ -174,7 +174,7 @@ int CTTLS::closeSocket(){
    iClosed=1;
 	
 	ssl_context *ssl=&((T_SSL*)pSSL)->ssl;
-   
+    t_logf(log_events, __FUNCTION__, "sockdebug: Sending ssl_close_notify");
 	ssl_close_notify( ssl );
    
    Sleep(60);
@@ -200,7 +200,7 @@ void CTTLS::setCert(char *p, int iLen, char *pCertBufHost){
    if(!cert)return;
    memcpy(cert,p,iLen);
    cert[iLen]=0;
-   int l=strlen(pCertBufHost);
+   int l = (int)strlen(pCertBufHost);
    if(l>sizeof(bufCertHost)-1)l=sizeof(bufCertHost)-1;
    strncpy(bufCertHost,pCertBufHost,l);
    bufCertHost[l]=0;
@@ -424,6 +424,7 @@ int CTTLS::_connect(ADDR *address){
     CTAutoIntUnlock _a(&iCallingConnect);
 
     if(!iClosed) {
+        t_logf(log_events, __FUNCTION__, "sockdebug: Closing socket while trying to make new connection");
         closeSocket();
         Sleep(100);
     }
@@ -517,8 +518,9 @@ int CTTLS::_connect(ADDR *address){
         //TODO set this if need backgr only
 #endif
         relTcpBGSock(((T_SSL*)pSSL)->voipBCKGR);
-        ((T_SSL*)pSSL)->voipBCKGR=prepareTcpSocketForBg(((T_SSL*)pSSL)->sock);//ios sets to non-blocking socket here.
-
+        if(bIsVoipSock){
+           ((T_SSL*)pSSL)->voipBCKGR=prepareTcpSocketForBg(((T_SSL*)pSSL)->sock);//ios sets to non-blocking socket here.
+        }
         //make sure to have blocking socket, the iOS defualts to non-blocking for voip
         net_set_block(((T_SSL*)pSSL)->sock);//
        
@@ -537,12 +539,14 @@ int CTTLS::_connect(ADDR *address){
 //       ssl_set_authmode( ssl, iCertErr == 0 ? SSL_VERIFY_REQUIRED: SSL_VERIFY_NONE );
 
         ssl_set_rng(ssl, ctr_drbg_random, &((T_SSL*)pSSL)->ctr_drbg);
-        ssl_set_dbg(ssl, my_debug, stdout);
         ssl_set_bio(ssl, net_recv, (void*)&(((T_SSL*)pSSL)->sock), net_send, (void*)&(((T_SSL*)pSSL)->sock));
 
         ssl_set_ciphersuites(ssl, ssl_list_ciphersuites());
         //ssl_set_session( ssl, 1, 600, &((T_SSL*)pSSL)->ssn );//will  timeout after 600, and will be resumed
         //ssl_set_session( ssl, 1, 0, &((T_SSL*)pSSL)->ssn );//will never timeout, and will be resumed
+
+        
+        ssl_set_dbg(ssl, my_ssl_debug, NULL);                   // *** SSLDEBUG
 
         iCertFailed=0;
         if (1|| iCertErr == 0){
@@ -562,6 +566,7 @@ int CTTLS::_connect(ADDR *address){
         iConnected=1;
         addrConnected=*address;
     } while(0);
+
     return 0;
 }
 
@@ -672,6 +677,8 @@ int CTTLS::_send(const char *buf, int iLen){
     int iShouldDisconnect=0;
     while((ret = ssl_write( ssl, (const unsigned char *)buf, iLen ) ) <= 0 )
     {
+        sleep(20);
+
         if (ret != POLARSSL_ERR_NET_WANT_READ && ret != POLARSSL_ERR_NET_WANT_WRITE ) {
             iShouldDisconnect=1;
             Sleep(5);
@@ -729,7 +736,7 @@ int CTTLS::_recv(char *buf, int iMaxSize){
             Sleep(50);
          iPOLARSSL_ERR_NET_WANT_cnt++;
          
-         if(iPOLARSSL_ERR_NET_WANT_cnt<20)printf("[sock rw]");
+         if(iPOLARSSL_ERR_NET_WANT_cnt<20) t_logf(log_events, __FUNCTION__,"[sock rw]");
          iPrevReadRet=ret;
          continue;
          //break;

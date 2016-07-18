@@ -7,4 +7,8 @@
     <dimen name="video_preview_width_inner">156dp</dimen>
     <dimen name="video_preview_height_inner">114dp</dimen>      <!-- 3dp less on each side -->
 
+    <!-- alert dialog size -->
+    <item type="dimen" name="dialog_min_width_minor">35%</item>
+    <item type="dimen" name="dialog_min_width_major">52%</item>
+
 </resources>

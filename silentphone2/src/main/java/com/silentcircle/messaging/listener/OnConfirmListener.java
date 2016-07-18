@@ -31,6 +31,6 @@ import android.content.Context;
 
 public interface OnConfirmListener {
 
-    void onConfirm(Context context);
+    void onConfirm(Context context, int which);
 
 }

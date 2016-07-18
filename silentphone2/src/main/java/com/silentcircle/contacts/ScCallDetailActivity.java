@@ -50,13 +50,15 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.database.Cursor;
+import android.database.DatabaseUtils;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.ContactsContract.CommonDataKinds.Phone;
+import android.support.annotation.WorkerThread;
 import android.support.v7.app.ActionBar;
-import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.telephony.TelephonyManager;
 import android.text.BidiFormatter;
@@ -76,6 +78,7 @@ import android.widget.Toast;
 
 import com.silentcircle.common.GeoUtil;
 import com.silentcircle.common.util.DialerUtils;
+import com.silentcircle.common.util.SearchUtil;
 import com.silentcircle.contacts.calllognew.CallDetailHistoryAdapter;
 import com.silentcircle.contacts.calllognew.CallTypeHelper;
 import com.silentcircle.contacts.calllognew.ContactInfo;
@@ -88,6 +91,7 @@ import com.silentcircle.contacts.utils.Constants;
 import com.silentcircle.silentcontacts2.ScCallLog;
 import com.silentcircle.silentcontacts2.ScCallLog.ScCalls;
 import com.silentcircle.silentphone2.R;
+import com.silentcircle.silentphone2.util.Utilities;
 
 /**
  * Displays the details of a specific call log entry.
@@ -95,7 +99,7 @@ import com.silentcircle.silentphone2.R;
  * This activity can be either started with the URI of a single call log entry, or with the
  * {@link #EXTRA_CALL_LOG_IDS} extra to specify a group of call log entries.
  */
-public class ScCallDetailActivity extends ActionBarActivity /*implements ProximitySensorAware */ {
+public class ScCallDetailActivity extends AppCompatActivity /*implements ProximitySensorAware */ {
     private static final String TAG = "ScCallDetail";
 
     private static final char LEFT_TO_RIGHT_EMBEDDING = '\u202A';
@@ -136,6 +140,7 @@ public class ScCallDetailActivity extends ActionBarActivity /*implements Proximi
 
     private String mNumber = null;
     private String mDefaultCountryIso;
+    private String mUuid;
 
     LayoutInflater mInflater;
     Resources mResources;
@@ -223,6 +228,7 @@ public class ScCallDetailActivity extends ActionBarActivity /*implements Proximi
         ScCallLog.ScCalls.TYPE,
         ScCallLog.ScCalls.COUNTRY_ISO,
         ScCallLog.ScCalls.GEOCODED_LOCATION,
+        ScCalls.SC_OPTION_TEXT2
 //        CallLog.Calls.NUMBER_PRESENTATION,
 //        CallLog.Calls.PHONE_ACCOUNT_COMPONENT_NAME,
 //        CallLog.Calls.PHONE_ACCOUNT_ID,
@@ -237,6 +243,7 @@ public class ScCallDetailActivity extends ActionBarActivity /*implements Proximi
     static final int CALL_TYPE_COLUMN_INDEX = 3;
     static final int COUNTRY_ISO_COLUMN_INDEX = 4;
     static final int GEOCODED_LOCATION_COLUMN_INDEX = 5;
+    public static final int SC_OPTION_TEXT2 = 6;
     static final int NUMBER_PRESENTATION_COLUMN_INDEX = 6;
     static final int ACCOUNT_COMPONENT_NAME = 7;
     static final int ACCOUNT_ID = 8;
@@ -440,6 +447,7 @@ public class ScCallDetailActivity extends ActionBarActivity /*implements Proximi
                 // first.
                 PhoneCallDetails firstDetails = details[0];
                 mNumber = firstDetails.number.toString();
+                mUuid = firstDetails.uuid;
 //                final int numberPresentation = firstDetails.numberPresentation;
                 final Uri contactUri = firstDetails.contactUri;
                 final Uri photoUri = firstDetails.photoUri;
@@ -451,10 +459,12 @@ public class ScCallDetailActivity extends ActionBarActivity /*implements Proximi
 //                final PhoneNumberUtilsWrapper phoneUtils = PhoneNumberUtilsWrapper.INSTANCE; // new PhoneNumberUtilsWrapper(context);
 //                final boolean isVoicemailNumber = phoneUtils.isVoicemailNumber(accountHandle, mNumber);
                 final boolean isSipNumber = com.silentcircle.contacts.utils.PhoneNumberHelper.isUriNumber(mNumber);
+                final boolean isUuid = !TextUtils.isEmpty(mUuid);
 
                 final CharSequence callLocationOrType = getNumberTypeOrLocation(firstDetails);
 
-                final CharSequence displayNumber =
+                // Don't show the UUID string in the header
+                final CharSequence displayNumber = isUuid ?  "" :
                         mPhoneNumberHelper.getDisplayNumber(
                                 firstDetails.number,
                                 1, // presentation allowed
@@ -516,8 +526,7 @@ public class ScCallDetailActivity extends ActionBarActivity /*implements Proximi
 //                    mainActionDescription = null;
 //                }
 
-                mHasEditNumberBeforeCallOption =
-                        canPlaceCallsTo && !isSipNumber; // && !isVoicemailNumber;
+                mHasEditNumberBeforeCallOption = canPlaceCallsTo && !isSipNumber && !isUuid; // && !isVoicemailNumber;
                 mHasTrashOption = hasVoicemail();
                 mHasRemoveFromCallLogOption = !hasVoicemail();
                 invalidateOptionsMenu();
@@ -576,6 +585,7 @@ public class ScCallDetailActivity extends ActionBarActivity /*implements Proximi
     }
 
     /** Return the phone call details for a given call log URI. */
+    @WorkerThread
     private PhoneCallDetails getPhoneCallDetailsForUri(Uri callUri) {
         ContentResolver resolver = getContentResolver();
         Cursor callCursor = resolver.query(callUri, CALL_LOG_PROJECTION, null, null, null);
@@ -584,8 +594,9 @@ public class ScCallDetailActivity extends ActionBarActivity /*implements Proximi
                 throw new IllegalArgumentException("Cannot find content: " + callUri);
             }
 
+            DatabaseUtils.dumpCursor(callCursor);
             // Read call log specifics.
-            final String number = callCursor.getString(NUMBER_COLUMN_INDEX);
+            String number = callCursor.getString(NUMBER_COLUMN_INDEX);
 //            final int numberPresentation = callCursor.getInt(
 //                    NUMBER_PRESENTATION_COLUMN_INDEX);
             final long date = callCursor.getLong(DATE_COLUMN_INDEX);
@@ -593,6 +604,8 @@ public class ScCallDetailActivity extends ActionBarActivity /*implements Proximi
             final int callType = callCursor.getInt(CALL_TYPE_COLUMN_INDEX);
             String countryIso = callCursor.getString(COUNTRY_ISO_COLUMN_INDEX);
             final String geocode = callCursor.getString(GEOCODED_LOCATION_COLUMN_INDEX);
+            final String displayNameSip = callCursor.getString(SC_OPTION_TEXT2);
+
 //            final String transcription = callCursor.getString(TRANSCRIPTION_COLUMN_INDEX);
 
 //            final PhoneAccountHandle accountHandle = PhoneAccountUtils.getAccount(
@@ -604,7 +617,7 @@ public class ScCallDetailActivity extends ActionBarActivity /*implements Proximi
             }
 
             // Formatted phone number.
-            final CharSequence formattedNumber;
+            CharSequence formattedNumber;
             // Read contact specifics.
             final CharSequence nameText;
             final int numberType;
@@ -618,7 +631,7 @@ public class ScCallDetailActivity extends ActionBarActivity /*implements Proximi
                             ? mContactInfoHelper.lookupNumber(number, countryIso)
                             : null;
             if (info == null) {
-                formattedNumber = mPhoneNumberHelper.getDisplayNumber(number, 1, null);
+                formattedNumber = number;
                 nameText = "";
                 numberType = 0;
                 numberLabel = "";
@@ -627,12 +640,18 @@ public class ScCallDetailActivity extends ActionBarActivity /*implements Proximi
             }
             else {
                 formattedNumber = info.formattedNumber;
+                if (SearchUtil.isUuid(formattedNumber.toString())) {
+                    info.uuid = info.number;
+                    if (info.name != null)
+                        number = info.name;                 // Don't show the UUID URI as number
+                }
                 nameText = info.name;
                 numberType = info.type;
                 numberLabel = info.label;
                 photoUri = info.photoUri;
                 lookupUri = info.lookupUri;
             }
+            formattedNumber = TextUtils.isEmpty(displayNameSip) ? formattedNumber : displayNameSip;
 //            final int features = callCursor.getInt(FEATURES);
 //            Long dataUsage = null;
 //            if (!callCursor.isNull(DATA_USAGE)) {
@@ -641,7 +660,7 @@ public class ScCallDetailActivity extends ActionBarActivity /*implements Proximi
             return new PhoneCallDetails(number,
                     formattedNumber, countryIso, geocode,
                     new int[]{ callType }, date, duration,
-                    nameText, numberType, numberLabel, lookupUri, photoUri );
+                    nameText, numberType, numberLabel, lookupUri, photoUri, info.uuid );
         } finally {
             if (callCursor != null) {
                 callCursor.close();
@@ -656,7 +675,7 @@ public class ScCallDetailActivity extends ActionBarActivity /*implements Proximi
         final ContactPhotoManagerNew.DefaultImageRequest request = new ContactPhotoManagerNew.DefaultImageRequest(displayName, lookupKey,
                 contactType, true /* isCircular */);
 
-        mQuickContactBadge.assignContactUri(contactUri);
+// issue NGA-386        mQuickContactBadge.assignContactUri(contactUri);
         mQuickContactBadge.setContentDescription(
                 mResources.getString(R.string.description_contact_details, displayName));
 
@@ -786,8 +805,9 @@ public class ScCallDetailActivity extends ActionBarActivity /*implements Proximi
                 new AsyncTask<Void, Void, Void>() {
                     @Override
                     public Void doInBackground(Void... params) {
+                        String[] selectArg = TextUtils.isEmpty(mUuid) ? new String[]{mNumber} : new String[]{mUuid};
                         getContentResolver().delete(ScCalls.CONTENT_URI,
-                                ScCallLog.ScCalls.NUMBER + " =?", new String[]{mNumber});
+                                ScCallLog.ScCalls.NUMBER + " =?", selectArg);
                         return null;
                     }
 

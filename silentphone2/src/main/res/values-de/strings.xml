@@ -15,7 +15,7 @@
     <string name="provision_later">Später</string>
     <string name="crypto_padlock">Schloß zeigt den Sicherheitsstatus</string>
     <string name="error_code">Fehlercode: </string>
-    <string name="logout">Abmelden</string>
+    <string name="wipe_phone">Abmelden</string>
     <string name="sip_state_calling">Anrufen…</string>
     <string name="sip_state_connecting">Verbinden…</string>
     <string name="sip_state_ringing">Läuten</string>
@@ -98,6 +98,7 @@
     <string name="preferred_sas_type">SAS Typ einstellen</string>
     <string name="sas_char_mode">SAS mit 4 Zeichen anzeigen</string>
     <string name="sas_word_mode">SAS als 2 englische Worte anzeigen</string>
+    <string name="sas_emoji_mode">SAS mit 4 Emojis anzeigen</string>
     <string name="sp_ringtone">Klingelton</string>
     <string name="no_ringtone">Standard</string>
     <string name="preferred_algorithms">Bevorzuge Non-NIST-Paket</string>
@@ -808,7 +809,7 @@
 
     <string name="chat_view_empty">Konversations Log ist leer.</string>
 
-    <string name="conversation_with">Konversation mit</string>
+    <string name="conversation_with">Konversation mit %1$s</string>
     <string name="username_unknown">Unbekannt</string>
 
     <string name="toast_saved_to">Gesichert nach </string>
@@ -908,7 +909,7 @@
     <string name="messaging_burn_animation_text">Animation Nachricht verbrennen</string>
     <string name="messaging_burn_button_voiceover">Verbrenne Nachricht</string>
     <string name="messaging_conversation_list_no_messages">Keine Nachrichten</string>
-    <string name="messaging_conversation_select_conversation_partner">Gesprächspartner auswählen</string>
+    <string name="messaging_conversation_select_conversation_partner">Name des Gesprächspartners</string>
     <string name="messaging_conversation_select_recipient_hint">Empfängername eingeben</string>
     <string name="messaging_file_viewer_failure">Die Datei kann nicht geöffent werden. Möglicherweise von einer anderen Anwendung geöffnet.</string>
     <string name="messaging_pdf_viewer_button_next_page_voiceover">Nächste Seite</string>
@@ -958,4 +959,157 @@
     <string name="basic_account_info">Mit dem kostenlosen Basiskonto können sie unbegrenzt Nachrichten senden und
         empfangen sowie Anrufe entgegennehmen.
         \nAuf der Silent Circle Webseite können Sie die Funktionen ihres Kontos erweitern.</string>
+    <string name="amount">Betrag</string>
+    <string name="amount_level_4">Anderer</string>
+        <string name="basic_feature_info">Mit dem Basiskonto können sie nicht alle Funktionen verwenden.
+        \n\nAuf der <a href="https://accounts.silentcircle.com/">Silent Circle Webseite</a> können Sie Ihr Konto erweitern.</string>
+    <string name="battery_info">Bitte bestätigen Sie die Aufforderung im nächsten Dialogfenster.
+        Wenn SilentPhone nicht online ist können Sie keine Anrufe oder Nachrichten empfangen. SilentPhone verbraucht sehr
+        wenig Strom im Standby-Mode.
+    </string>
+    <string name="callHistoryTitle">Anrufe</string>
+    <string name="cardNumber">Kreditkartennummer</string>
+    <string name="card_ending_with">endet mit:</string>
+    <string name="confirm_payment_message">%1$s wird der Kreditkarte belastet, die mit %2$s endet.</string>
+    <string name="confirm_payment_title">Zahlung bestätigen</string>
+    <string name="creating_token">Token erstellen…</string>
+    <string name="credit_gone_info">Sie haben kein Guthaben mehr. Bitte gehen Sie zur <a href="https://accounts.silentcircle.com/">Silent Circle Webseite</a> um Guthaben auf Ihr Konto einzuzahlen.
+        \n\nAuch ohne Guthaben können Sie weiterhin sichere Anrufe bekommen und Nachrichten senden und empfangen.</string>
+
+    <string name="credit_low_info">Ihr Guthaben ist sehr niedrig. Bitte gehen Sie zur <a href="https://accounts.silentcircle.com/">Silent Circle Webseite</a> um Guthaben auf Ihr Konto einzuzahlen.
+        \n\nAuch ohne Guthaben können Sie weiterhin sichere Anrufe bekommen und Nachrichten senden und empfangen.</string>
+    <string name="cvc_number">Bitte die CVC Nummer der Kreditkarte eingeben. Die Nummer finden sie auf der Rückseite der Karte.</string>
+    <string name="description_pick_contact_button">Kontakt auswählen</string>
+    <string name="dial_drawer_go_offline_description">Silent Phone beenden</string>
+    <string name="dial_drawer_remaining_oca_minutes_description">Kontostatus anzeigen</string>
+    <string name="dial_drawer_settings_description">Silent Phone konfigurieren</string>
+    <string name="dial_drawer_wipe_phone_description">Löschen aller Daten von Silent Phone und beenden</string>
+    <string name="dialog_message_file_too_large">Die Datei ist zu groß</string>
+    <string name="dialog_message_need_funding">Damit sie Silent Circle Dienste verwenden können muß Ihr Konto ein Guthaben von mindestens $5,00 (USD) haben. </string>
+    <string name="dialog_message_unable_to_send_to">Es können keine Nachrichten an %1$s gesendet werden. Bitte prüfen Sie ob der Name korrekt ist.</string>
+    <string name="dialog_positive_need_funding">Guthaben einzahlen</string>
+    <string name="dialog_title_choose_action">Aktion auswählen</string>
+    <string name="dialog_title_error">Fehler</string>
+    <string name="dialog_title_need_funding">Guthaben erforderlich</string>
+    <string name="dialog_title_select_notification_light">Blinken bei neuer Nachricht</string>
+    <string name="dialog_title_select_notification_vibrate">Vibrationsmuster auswählen</string>
+    <string name="dialog_title_unable_to_send_messages">Nachrichten können nicht gesendet werden</string>
+    <string name="error_attachment_unavailable">Die Datei ist nicht mehr verfügbar. Bitte kontaktieren Sie den Absender.</string>
+    <string name="exception_occur">Bitte Nochmals versuchen. Sollte es trotzdem nicht gehen bitte den Service kontaktieren.</string>
+    <string name="expiration_month">Bitte Ablaufmonat auswählen</string>
+    <string name="expiration_year">Bitte Ablaufjahr auswählen</string>
+
+        <string name="expired_account_info">Ihr Konto ist abgelaufen. Bitte gehen Sie zur <a href="https://accounts.silentcircle.com/">Silent Circle Webseite</a> um Ihr Konto zu erneuern.
+        \n\nSie können weiterhin sichere Anrufe bekommen und Nachrichten senden und empfangen.</string>
+
+    <string name="exporting">Exportieren…</string>
+    <string name="freemium_user">Basiskonto</string>
+    <string name="go_offline">Offline gehen</string>
+    <string name="getting_cc_info">Krditkarteninformation abholen…</string>
+    <string name="import_contacts">%d Kontakte importieren</string>
+    <string name="input_card_number">Bitte Kreditkartennummer eingeben</string>
+    <string name="invalid_card_info">Kedtikartendaten sind nicht richtig, bitte korrigieren</string>
+    <string name="invalid_card_number">Die Kreditkartennummer ist nicht richtig</string>
+    <string name="invalid_cvc">Die CVC Nummer ist nicht richtig</string>
+    <string name="invalid_expiration_date">Das eingegebene Ablaufdatum ist nicht richtig</string>
+    <string name="invite_email_not_setup">Sie benötigen eine E-Mail Addresse bevor Silent Phone eine Einladung per E-Mail senden kann.</string>
+    <string name="invite_no_phone_or_email">Der Kontakt hat keine gültige Telefonnummer oder keine E-Mail Adresse, Silent Phone kann keine Einladung senden.</string>
+    <string name="invite_sms_not_setup">Diese Gerät hate keine SMS Funktion, Silent Phone kann keine Einladung senden.</string>
+    <string name="make_payment">Für sichere Anrufe ist ein Guthaben erforderlich</string>
+    <string name="message_state_failed">Fehlgeschlagen</string>
+    <string name="messaging_compose_length_error">Die maximale Zeichenanzahl ist erreicht.</string>
+    <string name="messaging_conversation_list_failed_attachment">Anhang ist fehlgeschlagen</string>
+    <string name="messaging_conversation_list_file_received">%1$s empfangen</string>
+    <string name="messaging_conversation_list_file_sent">%1$s gesendet</string>
+    <string name="messaging_conversation_list_type_audio">Sprache</string>
+    <string name="messaging_conversation_list_type_contact">Kontakt</string>
+    <string name="messaging_conversation_list_type_file">Datei</string>
+    <string name="messaging_conversation_list_type_image">Bild</string>
+    <string name="messaging_conversation_list_type_video">Video</string>
+    <string name="messaging_could_not_view_link">Der Link kann nicht geöffnet werden</string>
+    <string name="messaging_light_blue">Blau</string>
+    <string name="messaging_light_default">Standard</string>
+    <string name="messaging_light_green">Grün</string>
+    <string name="messaging_light_off">Aus</string>
+    <string name="messaging_light_purple">Lila</string>
+    <string name="messaging_light_red">Rot</string>
+    <string name="messaging_light_title">Hinweislicht</string>
+    <string name="messaging_light_white">Weiß</string>
+    <string name="messaging_message_information_copied_to_clipboard">Zur Zwischenablage kopiert</string>
+    <string name="messaging_message_information_title">Nachrichteninformation</string>
+    <string name="messaging_message_information_toggle_json_view">JSON Ansicht ein/aus</string>
+    <string name="messaging_protection">Konfigurieren des Nachrichtenschutzes</string>
+    <string name="messaging_ringtone_title">Hinweiston</string>
+    <string name="messaging_screen_lock_enabled">Nachrichtenschutz ist aktiv</string>
+    <string name="messaging_screen_lock_enter_password">Passwort eingeben</string>
+    <string name="messaging_screen_lock_enter_password_description">Zum Ändern des Nachrichtenschutzes Passwort eingeben</string>
+    <string name="messaging_screen_lock_enter_password_hint">Passwort</string>
+    <string name="messaging_screen_lock_enter_password_label">Zur Freigabe Passwort eingeben</string>
+    <string name="messaging_screen_lock_password_hint">Passwort</string>
+    <string name="messaging_screen_lock_password_not_correct">Passwort falsch</string>
+    <string name="messaging_screen_lock_password_removed">Nachrichtenschutz ist nicht aktiv</string>
+    <string name="messaging_screen_lock_passwords_dont_match">Passwörter stimmen nicht überein</string>
+    <string name="messaging_screen_lock_repeat_password_hint">Passwort wiederholen</string>
+    <string name="messaging_screen_lock_set_password_and_timeout">Passwort und Timeout setzen</string>
+    <string name="messaging_screen_lock_timeout_updated">Timeout neu eingestellt</string>
+    <string name="messaging_screen_lock_unlock">Freigeben</string>
+    <string name="messaging_screen_locked">Nachrichten gesperrt</string>
+    <string name="messaging_screen_lock_password_enabled">Nachrichtenschutz ist aktiv</string>
+    <string name="messaging_screen_lock_messaging_screen_protection">Nachrichtenschutz: %s</string>
+    <string name="messaging_screen_lock_messaging_after">Nachrichtenansicht sperren %s</string>
+    <string name="messaging_screen_lock_password_update_failed">Ändern des Nachrichtenschutzes fehlgeschlagen</string>
+    <string name="messaging_user_validation_generic_error">Falscher/ungültiger Nutzername</string>
+    <string name="messaging_user_validation_no_connection">Keine Netzwerkverbindung um den Nutzernamen zu prüfen</string>
+    <string name="messaging_user_validation_username_empty">Kein Nutzername eingegeben</string>
+    <string name="messaging_vcard_cannot_show_selected_contact">Ausgewählter Kontakt kann nicht angezeigt werden</string>
+    <string name="messaging_vcard_importing_contact">Kontakt für %s wird importiert</string>
+    <string name="messaging_vibrate_default">Standard</string>
+    <string name="messaging_vibrate_long">Lang</string>
+    <string name="messaging_vibrate_off">Aus</string>
+    <string name="messaging_vibrate_short">Kurz</string>
+    <string name="messaging_vibrate_title">Vibrationsmuster</string>
+    <string name="minimum_payment">Das Minimumguthaben is $5,00 (USD)</string>
+
+    <string name="minutes_gone_info">Keine Gesprächsminuten mehr verfügbar. Bitte gehen Sie zur <a href="https://accounts.silentcircle.com/">Silent Circle Webseite</a> um Guthaben auf Ihr Konto einzuzahlen.
+        \n\nSie weiterhin sichere Anrufe bekommen und Nachrichten senden und empfangen.</string>
+
+    <string name="minutes_low_info">Nur noch wenige Gesprächsminuten verfügbar. Bitte gehen Sie zur <a href="https://accounts.silentcircle.com/">Silent Circle Webseite</a> um Guthaben auf Ihr Konto einzuzahlen.
+        \n\nSie weiterhin sichere Anrufe bekommen und Nachrichten senden und empfangen.</string>
+    <string name="new_card">Neue Kreditkarte</string>
+    <string name="payment_history">Zahlungsverlauf</string>
+    <string name="payment_successful">Danke für Ihre Zahlung</string>
+    <string name="processing">In Arbeit…</string>
+    <string name="processing_payment">Zahlung wird bearbeitet…</string>
+    <string name="provisioning_all_fields_required">Bitte alle Felder aufüllen</string>
+    <string name="provisioning_auth_token_error">Provisioning Error: Fehlerhafter Authentifizierungstoken/Code.</string>
+    <string name="provisioning_auth_token_hint">Authentifizierungstoken/Code eingeben</string>
+    <string name="provisioning_auth_token_text">2-Faktor Authentifizierung ist aktiv. Bitte Authentifizierungstoken/Code eingeben.</string>
+    <string name="provisioning_corp_email_hint">E-Mail Adresse der Firma</string>
+    <string name="provisioning_domain_error">Für die %s Doamin kann kein Server gefunden oder authentifiziert werden.</string>
+    <string name="provisioning_ssl_date_invalid">Datum des TLS Zertifikates ist ungültig</string>
+    <string name="provisioning_ssl_expired">Das TLS Zertifikate ist abgelaufen</string>
+    <string name="provisioning_ssl_idmismatch">Rechnername stimmt nicht überein</string>
+    <string name="provisioning_ssl_notyetvalid">Das TLS Zertifikate ist noch nicht gültig</string>
+    <string name="provisioning_ssl_untrusted">Der TLS Zertifizierung wird nicht vertraut.</string>
+    <string name="purchase">Kaufen</string>
+    <string name="remaining_credit">Verfügbares Guthaben: %1$.2f %2$s</string>
+    <string name="remaining_oca_minutes_dialog">Silent World Minuten</string>
+    <string name="select_a_card">Kreditkarte auswählen</string>
+    <string name="select_amount">Bitte Betrag eingeben</string>
+    <string name="select_card">Kreditkarte für Einkauf auswählen</string>
+    <string name="setting_errors_option_summary">Geringfügige Fehler werden nicht angzeigt - keine Auswirkung auf die Sicherheit</string>
+    <string name="settings">Einstellungen</string>
+    <string name="silent_world_contact_info">Silent World Anruf</string>
+    <string name="specified_amount">Bitte Betrag für den Einkauf eingeben</string>
+    <string name="status_off">Aus</string>
+    <string name="status_on">An</string>
+    <string name="submit">Absenden</string>
+    <string name="validationErrors">Fehler bei der Überprüfung</string>
+    <string name="wipe_data_failed">Löschen der Daten fehlgeschlagen - bitte Silent Phone normal de-installieren</string>
+    <string name="message_error_network_error">Netwerkfehler oder Server antworted nicht</string>
+    <string name="messaging_checked_only">Verglichen, nicht verifiziert</string>
+    <string name="messaging_checked_verified">Verifiziert</string>
+    <string name="wipe">Alle Silent Phone Daten löschen</string>
+
+
 </resources>

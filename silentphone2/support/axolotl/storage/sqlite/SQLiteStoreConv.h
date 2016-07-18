@@ -11,6 +11,7 @@
 #include <string>
 #include <stdint.h>
 #include <list>
+#include <memory>
 
 #ifdef ANDROID
 #include "android/jni/sqlcipher/sqlite3.h"
@@ -45,10 +46,6 @@ public:
      */
     static void closeStore() { delete instance_; instance_ = NULL;}
 
-#ifdef UNITTESTS
-    static SQLiteStoreConv* getStoreForTesting() {return new SQLiteStoreConv(); }
-    static SQLiteStoreConv* closeStoreForTesting(SQLiteStoreConv* store) {delete store; }
-#endif
     /**
      * @brief Is store ready for use?
      */
@@ -104,7 +101,7 @@ public:
      * @return a new list with the names, an empty list if now identities available,
      *         NULL in case of error
      */
-    list<string>* getKnownConversations(const string& ownName);
+    shared_ptr<list<string> > getKnownConversations(const string& ownName, int32_t* sqlCode = NULL);
 
     /**
      * @brief Get a list of long device ids for a name.
@@ -115,39 +112,65 @@ public:
      * @param name the user's name.
      * @return a new list with the long device ids, NULL in case of error
      */
-    list<string>* getLongDeviceIds(const string& name, const string& ownName);
+    shared_ptr<list<string> > getLongDeviceIds(const string& name, const string& ownName, int32_t* sqlCode = NULL);
 
 
     // ***** Conversation store
-    string* loadConversation(const string& name, const string& longDevId, const string& ownName) const;
+    string* loadConversation(const string& name, const string& longDevId, const string& ownName, int32_t* sqlCode = NULL) const;
 
-    void storeConversation(const string& name, const string& longDevId, const string& ownName, const string& data);
+    void storeConversation(const string& name, const string& longDevId, const string& ownName, const string& data, int32_t* sqlCode = NULL);
 
-    bool hasConversation(const string& name, const string& longDevId, const string& ownName) const;
+    bool hasConversation(const string& name, const string& longDevId, const string& ownName, int32_t* sqlCode = NULL) const;
 
-    void deleteConversation(const string& name, const string& longDevId, const string& ownName);
+    void deleteConversation(const string& name, const string& longDevId, const string& ownName, int32_t* sqlCode = NULL);
 
-    void deleteConversationsName(const string& name, const string& ownName);
+    void deleteConversationsName(const string& name, const string& ownName, int32_t* sqlCode = NULL);
 
     // ***** staged message keys store
-    list<string>* loadStagedMks(const string& name, const string& longDevId, const string& ownName) const;
+    shared_ptr<list<string> > loadStagedMks(const string& name, const string& longDevId, const string& ownName, int32_t* sqlCode = NULL) const;
 
-    void insertStagedMk(const string& name, const string& longDevId, const string& ownName, const string& MKiv);
+    void insertStagedMk(const string& name, const string& longDevId, const string& ownName, const string& MKiv, int32_t* sqlCode = NULL);
 
-    void deleteStagedMk(const string& name, const string& longDevId, const string& ownName, string& MKiv);
+    void deleteStagedMk(const string& name, const string& longDevId, const string& ownName, const string& MKiv, int32_t* sqlCode = NULL);
 
-    void deleteStagedMk(time_t timestamp);
+    void deleteStagedMk(time_t timestamp, int32_t* sqlCode = NULL);
 
     // Pre key storage. The functions encrypt, decrypt and store/retrive Pre-key JSON strings
-    string* loadPreKey(int32_t preKeyId) const;
+    string* loadPreKey(int32_t preKeyId, int32_t* sqlCode = NULL) const;
 
-    void storePreKey(int32_t preKeyId, const string& preKeyData);
+    void storePreKey(int32_t preKeyId, const string& preKeyData, int32_t* sqlCode = NULL);
 
-    bool containsPreKey(int32_t preKeyId) const;
+    bool containsPreKey(int32_t preKeyId, int32_t* sqlCode = NULL) const;
 
-    void removePreKey(int32_t preKeyId);
+    void removePreKey(int32_t preKeyId, int32_t* sqlCode = NULL);
 
     void dumpPreKeys() const;
+
+    // ***** Message hash / time table to detect duplicate message from server
+    /**
+     * @brief Insert a message hash into the table.
+     * 
+     * @param msgHash the hash to insert, no duplicates allowed
+     * @return SQLite code
+     */
+    int32_t insertMsgHash( const string& msgHash );
+
+    /**
+     * @brief Check if a message hash is in the table.
+     * 
+     * @param msgHash the hash to insert, no duplicates allowed
+     * @return SQLite code
+     */
+    int32_t hasMsgHash(const string& msgHash);
+
+    /**
+     * @brief Delete message hashes old than the timestamp.
+     * 
+     * @param timestamp the timestamp of oldest hash
+     * @return SQLite code, @c SQLITE_ROW indicates the message hash exists in the table
+     */
+    int32_t deleteMsgHashes(time_t timestamp);
+
     /*
      * @brief For use for debugging and development only
      */
@@ -157,12 +180,9 @@ private:
     SQLiteStoreConv();
     ~SQLiteStoreConv();
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wreturn-type"
-    SQLiteStoreConv(const SQLiteStoreConv& other) {};
-    SQLiteStoreConv& operator=(const SQLiteStoreConv& other) {};
-    bool operator==(const SQLiteStoreConv& other) const {};
-#pragma clang diagnostic pop
+    SQLiteStoreConv(const SQLiteStoreConv& other) = delete;
+    SQLiteStoreConv& operator=(const SQLiteStoreConv& other) = delete;
+    bool operator==(const SQLiteStoreConv& other) const = delete;
 
     /**
      * Create Axolotl tables in database.
@@ -171,17 +191,9 @@ private:
      * that Axolotl tables are available in the database.
      */
     int createTables();
-
-    /**
-     * Initialize the other Axolotl tables.
-     *
-     * First drop all tables and create them again.
-     * All information regarding remote peers, session state etc is lost.
-     */
-    int initializeOtherTables();
-
     int beginTransaction();
     int commitTransaction();
+    int rollbackTransaction();
 
     /**
      * @brief Update database version.
@@ -193,7 +205,7 @@ private:
      * @param newVersion the target version for the database
      * @return SQLITE_OK to commit any changes, any other code closes the database with rollback.
      */
-    int32_t updateDb(int32_t oldVersion, int32_t newVersion) {return SQLITE_OK; }
+    int32_t updateDb(int32_t oldVersion, int32_t newVersion);
 
     static SQLiteStoreConv* instance_;
     sqlite3* db;

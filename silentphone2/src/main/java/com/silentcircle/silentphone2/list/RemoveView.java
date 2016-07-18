@@ -27,9 +27,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 package com.silentcircle.silentphone2.list;
 
+import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
+import android.os.Build;
 import android.util.AttributeSet;
 import android.view.DragEvent;
 import android.widget.FrameLayout;
@@ -59,15 +61,24 @@ public class RemoveView extends FrameLayout {
         super(context, attrs, defStyle);
     }
 
+    @TargetApi(Build.VERSION_CODES.M)
+    @SuppressWarnings("deprecation")
     @Override
     protected void onFinishInflate() {
         super.onFinishInflate();
         mRemoveText = (TextView) findViewById(R.id.remove_view_text);
         mRemoveIcon = (ImageView) findViewById(R.id.remove_view_icon);
         final Resources r = getResources();
-        mUnHighlightedColor = r.getColor(R.color.remove_text_color);
-        mHighlightedColor = r.getColor(R.color.remove_highlighted_text_color);
-        mRemoveDrawable = r.getDrawable(R.drawable.ic_close_dk);
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+            mUnHighlightedColor = r.getColor(R.color.remove_text_color);
+            mHighlightedColor = r.getColor(R.color.remove_highlighted_text_color);
+            mRemoveDrawable = r.getDrawable(R.drawable.ic_close_dk);
+        }
+        else {
+            mUnHighlightedColor = r.getColor(R.color.remove_text_color, null);
+            mHighlightedColor = r.getColor(R.color.remove_highlighted_text_color, null);
+            mRemoveDrawable = r.getDrawable(R.drawable.ic_close_dk, null);
+        }
     }
 
     public void setDragDropController(DragDropController controller) {

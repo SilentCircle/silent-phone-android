@@ -41,14 +41,16 @@ public class Contact extends Burnable {
 	}
 
 	protected byte [] alias;
-	protected byte [] username;
+	protected byte [] userId;
 	protected byte [] device;
+	protected byte [] displayName;
 
-	public Contact() {
-	}
 
-	public Contact( byte [] username ) {
-		this.username = username;
+//	public Contact() {
+//	}
+
+	public Contact( byte [] userId ) {
+		this.userId = userId;
 	}
 
 	public Contact( CharSequence username ) {
@@ -59,7 +61,8 @@ public class Contact extends Burnable {
 	public void clear() {
 		removeAlias();
 		removeDevice();
-		removeUsername();
+		removeUserId();
+        removeDisplayName();
 	}
 
 	@Override
@@ -70,61 +73,52 @@ public class Contact extends Burnable {
 	public String getAlias() {
 		return toString( getAliasAsByteArray() );
 	}
-
 	public byte [] getAliasAsByteArray() {
-		if( alias == null ) {
-			if( username == null ) {
-				return UNKNOWN_ALIAS;
-			}
-			int index = IOUtils.indexOf( username, AT );
-			if( index >= 0 ) {
-				alias = new byte [index];
-				System.arraycopy( username, 0, alias, 0, alias.length );
-			}
-		}
 		return alias;
 	}
 
 	public String getDevice() {
 		return toString( getDeviceAsByteArray() );
 	}
-
 	public byte [] getDeviceAsByteArray() {
 		return device;
 	}
 
-	public String getUsername() {
-		return toString( getUsernameAsByteArray() );
+	public String getUserId() {
+		return toString( getUserIdAsByteArray() );
+	}
+	public byte [] getUserIdAsByteArray() {
+		return userId;
 	}
 
-	public byte [] getUsernameAsByteArray() {
-		return username;
-	}
+    public String getDisplayName() {
+        return toString( getDisplayNameAsByteArray() );
+    }
+    public byte [] getDisplayNameAsByteArray() {
+        return displayName;
+    }
 
 	@Override
 	public int hashCode() {
-		return username == null ? 0 : Arrays.hashCode( username );
+		return userId == null ? 0 : Arrays.hashCode(userId);
 	}
 
 	public void removeAlias() {
 		burn( alias );
-		alias = null;
 	}
-
 	public void removeDevice() {
 		burn( device );
-		device = null;
 	}
-
-	public void removeUsername() {
-		burn( username );
-		username = null;
+	public void removeUserId() {
+		burn(userId);
 	}
+    public void removeDisplayName() {
+        burn(displayName);
+    }
 
 	public void setAlias( byte [] alias ) {
 		this.alias = alias;
 	}
-
 	public void setAlias( CharSequence alias ) {
 		setAlias( IOUtils.toByteArray( alias ) );
 	}
@@ -132,16 +126,21 @@ public class Contact extends Burnable {
 	public void setDevice( byte [] device ) {
 		this.device = device;
 	}
-
 	public void setDevice( CharSequence device ) {
 		setDevice( IOUtils.toByteArray( device ) );
 	}
 
-	public void setUsername( byte [] username ) {
-		this.username = username;
+	public void setUserId(byte[] userId) {
+		this.userId = userId;
+	}
+	public void setUserId(CharSequence userId) {
+		setUserId(IOUtils.toByteArray(userId));
 	}
 
-	public void setUsername( CharSequence username ) {
-		setUsername( IOUtils.toByteArray( username ) );
-	}
+    public void setDisplayName(byte[] dpName) {
+        this.displayName = dpName;
+    }
+    public void setDisplayName(CharSequence dpName) {
+        setDisplayName(IOUtils.toByteArray(dpName));
+    }
 }

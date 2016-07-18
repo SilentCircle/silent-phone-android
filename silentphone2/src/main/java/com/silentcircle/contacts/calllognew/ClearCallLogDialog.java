@@ -16,7 +16,7 @@
 
 package com.silentcircle.contacts.calllognew;
 
-import android.app.AlertDialog;
+import android.support.v7.app.AlertDialog;
 import android.app.Dialog;
 import android.app.DialogFragment;
 import android.app.FragmentManager;

@@ -90,6 +90,7 @@
                 android:focusable="false"
                 android:clickable="false"
                 android:addStatesFromChildren="true"
+                android:filterTouchesWhenObscured="true"
                 android:descendantFocusability="blocksDescendants">
 
                 <TextView

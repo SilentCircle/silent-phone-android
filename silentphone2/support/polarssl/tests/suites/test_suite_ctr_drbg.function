@@ -1,5 +1,5 @@
 /* BEGIN_HEADER */
-#include <polarssl/ctr_drbg.h>
+#include "polarssl/ctr_drbg.h"
 
 int test_offset_idx;
 int entropy_func( void *data, unsigned char *buf, size_t len )
@@ -140,6 +140,10 @@ void ctr_drbg_entropy_usage( )
                                                 add, sizeof( add ) ) == 0 );
     }
     TEST_ASSERT( last_idx == test_offset_idx );
+
+    /* Call update with too much data (sizeof entropy > MAX(_SEED)_INPUT)
+     * (just make sure it doesn't cause memory corruption) */
+    ctr_drbg_update( &ctx, entropy, sizeof( entropy ) );
 
     /* Now enable PR, so the next few calls should all reseed */
     ctr_drbg_set_prediction_resistance( &ctx, CTR_DRBG_PR_ON );

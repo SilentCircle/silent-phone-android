@@ -19,7 +19,7 @@ the FrameLayout that wraps the button construction.
         android:id="@+id/dialpad"
         style="@style/DialpadTableStyle"
         android:clickable="true"
-        android:background="@color/black_background"
+        android:background="@drawable/bg_window_dark"
         tools:visibility="visible"
         tools:ignore="DuplicateIncludedIds"
         tools:context=".activities.DialerActivity">

@@ -44,6 +44,8 @@ public class BurnDelay {
         private static final long MONTH = 30 * DAY;
         private static final long YEAR = 365 * DAY;
 
+        private static final long DEFAULT_MAX_DELAY = 3 * MONTH;
+
         public DefaultBurnDelay() {
             int level = 0;
             /*
@@ -65,20 +67,18 @@ public class BurnDelay {
             put(level++, WEEK);
             put(level++, 2 * WEEK);
             put(level++, MONTH);
-            put(level++, 3 * MONTH);
+            put(level++, DEFAULT_MAX_DELAY);
             /*
              * For now leave maximum to 3 months
              * put(level++, 6 * MONTH);
              * put(level++, YEAR);
              */
         }
-
     }
 
     public static final BurnDelay Defaults = new DefaultBurnDelay();
 
     private static final int DEFAULT_LEVEL = 10; // 3 day default
-
 
     private static CharSequence _pluralize(long value, CharSequence word) {
         return value == 1 ? word : word + "s"; // localize??
@@ -143,5 +143,9 @@ public class BurnDelay {
 
     public void put(int level, long delay) {
         levels.put(level, Long.valueOf(delay));
+    }
+
+    public void setMaxDelay(long delay) {
+        put(numLevels() - 1, delay);
     }
 }

@@ -18,11 +18,9 @@
 /*
  * Authors: Werner Dittmann <Werner.Dittmann@t-online.de>
  */
-#include <stdint.h>
-#include <libzrtpcpp/ZrtpConfigure.h>
 //                             1
 //                    1234567890123456
-char clientId[] =    "GNU ZRTP 4.2.2  "; // 16 chars max.
+char clientId[] =    "GNU ZRTP 4.5.0  "; // 16 chars max.
 char zrtpVersion_11[] = "1.10";          // must be 4 chars
 char zrtpVersion_12[] = "1.20";          // must be 4 chars
 /**
@@ -94,6 +92,8 @@ const char* mandatoryPubKey = dh3k;
 
 char b32[] =  "B32 ";
 char b256[] = "B256";
+char b32e[] = "B32E";       // Use Emojis instead of letters/digits
+
 const char* mandatorySasType = b32;
 
 char hs32[] = "HS32";

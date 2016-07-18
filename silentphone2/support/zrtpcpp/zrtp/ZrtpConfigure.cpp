@@ -207,6 +207,7 @@ PubKeyEnum::~PubKeyEnum() {}
 SasTypeEnum::SasTypeEnum() : EnumBase(SasType) {
     insert(b32);
     insert(b256);
+    insert(b32e);
 }
 
 SasTypeEnum::~SasTypeEnum() {}
@@ -487,6 +488,14 @@ void ZrtpConfigure::setParanoidMode(bool yesNo) {
 
 bool ZrtpConfigure::isParanoidMode() {
     return enableParanoidMode;
+}
+
+void ZrtpConfigure::setDisclosureFlag(bool yesNo) {
+    enableDisclosureFlag = yesNo;
+}
+
+bool ZrtpConfigure::isDisclosureFlag() {
+    return enableDisclosureFlag;
 }
 
 #if 0

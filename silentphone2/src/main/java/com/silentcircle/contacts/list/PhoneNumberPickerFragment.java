@@ -34,7 +34,7 @@ import com.silentcircle.common.list.ContactListItemView.PhotoPosition;
 import com.silentcircle.common.list.OnPhoneNumberPickerActionListener;
 import com.silentcircle.contacts.list.ShortcutIntentBuilder.OnShortcutIntentCreatedListener;
 import com.silentcircle.silentphone2.R;
-import com.silentcircle.silentphone2.util.LoadUserInfo;
+import com.silentcircle.userinfo.LoadUserInfo;
 // import com.silentcircle.contacts.utils.AccountFilterUtil;
 
 /**
@@ -121,8 +121,15 @@ public class PhoneNumberPickerFragment extends ScContactEntryListFragment<ScCont
     public void onStart() {
         super.onStart();                // super: ScContactEntryListFragment - configures loader etc
         if (mShowScDirectoryOption) {
-            useScDirectory(true);
-            useScDirectoryOrganization(false);
+            if (!ScDirectoryLoader.mErrorOnPreviousSearch) {
+                useScDirectory(true);
+                useScDirectoryOrganization(false);
+            }
+            else {
+                useScDirectory(false);
+                useScDirectoryOrganization(false);
+                ScDirectoryLoader.mErrorOnPreviousSearch = false;
+            }
         }
 //        if (mScDirectoryBox != null && mScDirectoryBox.isChecked()) {
 //            if (!ScDirectoryLoader.mErrorOnPreviousSearch) {
@@ -235,7 +242,7 @@ public class PhoneNumberPickerFragment extends ScContactEntryListFragment<ScCont
                 checked = cb.isChecked();
                 if (!useScDirectory(checked))
                     return;
-                if (checked && LoadUserInfo.hasOrganization())
+                if (checked)
                     mScInOrgBox.setVisibility(View.VISIBLE);
                 else
                     mScInOrgBox.setVisibility(View.GONE);

@@ -37,7 +37,6 @@ http://code.google.com/p/android/issues/detail?id=3414, comments 56 and 57
                         android:ellipsize="marquee"
                         android:marqueeRepeatLimit ="3"
                         android:scrollHorizontally="true"
-                        android:background="@drawable/list_item_selection_dark"
                         tools:text="Nexus 6"
                         tools:context="com.silentcircle.messaging.activities.ShowRemoteDevicesActivity"/>
                 <TextView
@@ -45,7 +44,6 @@ http://code.google.com/p/android/issues/detail?id=3414, comments 56 and 57
                         style="@style/Widget.Silent.SimpleText.Small"
                         android:layout_width="wrap_content"
                         android:typeface="monospace"
-                        android:background="@drawable/list_item_selection_dark"
                         tools:text="ab:12:34:56:78:9a:89:76:\nab:12:34:56:78:9a:89:76:\nab:12:34:56:78:9a:89:76:\nab:12:34:56:78:9a:89:76"
                         tools:context="com.silentcircle.messaging.activities.ShowRemoteDevicesActivity"/>
                 <TextView
@@ -57,7 +55,6 @@ http://code.google.com/p/android/issues/detail?id=3414, comments 56 and 57
                         android:ellipsize="marquee"
                         android:marqueeRepeatLimit ="3"
                         android:scrollHorizontally="true"
-                        android:background="@drawable/list_item_selection_dark"
                         android:textColor="@color/translucent_white"
                         tools:text="device id string"
                         tools:context="com.silentcircle.messaging.activities.ShowRemoteDevicesActivity"/>

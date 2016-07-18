@@ -1,12 +1,9 @@
 /*
  *  X.509 base functions for creating certificates / CSRs
  *
- *  Copyright (C) 2006-2014, Brainspark B.V.
+ *  Copyright (C) 2006-2014, ARM Limited, All Rights Reserved
  *
- *  This file is part of PolarSSL (http://www.polarssl.org)
- *  Lead Maintainer: Paul Bakker <polarssl_maintainer at polarssl.org>
- *
- *  All rights reserved.
+ *  This file is part of mbed TLS (https://tls.mbed.org)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -34,6 +31,8 @@
 #include "polarssl/x509.h"
 #include "polarssl/asn1write.h"
 #include "polarssl/oid.h"
+
+#include <string.h>
 
 #if defined(_MSC_VER) && !defined strncasecmp && !defined(EFIX64) && \
     !defined(EFI32)
@@ -100,6 +99,8 @@ int x509_string_to_names( asn1_named_data **head, const char *name )
     const char *end = s + strlen( s );
     const char *oid = NULL;
     int in_tag = 1;
+    char data[X509_MAX_DN_NAME_SIZE];
+    char *d = data;
 
     /* Clear existing chain if present */
     asn1_free_named_data_list( head );
@@ -116,13 +117,25 @@ int x509_string_to_names( asn1_named_data **head, const char *name )
 
             s = c + 1;
             in_tag = 0;
+            d = data;
         }
 
-        if( !in_tag && ( *c == ',' || c == end ) )
+        if( !in_tag && *c == '\\' && c != end )
+        {
+            c++;
+
+            /* Check for valid escaped characters */
+            if( c == end || *c != ',' )
+            {
+                ret = POLARSSL_ERR_X509_INVALID_NAME;
+                goto exit;
+            }
+        }
+        else if( !in_tag && ( *c == ',' || c == end ) )
         {
             if( asn1_store_named_data( head, oid, strlen( oid ),
-                                       (unsigned char *) s,
-                                       c - s ) == NULL )
+                                       (unsigned char *) data,
+                                       d - data ) == NULL )
             {
                 return( POLARSSL_ERR_X509_MALLOC_FAILED );
             }
@@ -133,6 +146,18 @@ int x509_string_to_names( asn1_named_data **head, const char *name )
             s = c + 1;
             in_tag = 1;
         }
+
+        if( !in_tag && s != c + 1 )
+        {
+            *(d++) = *c;
+
+            if( d - data == X509_MAX_DN_NAME_SIZE )
+            {
+                ret = POLARSSL_ERR_X509_INVALID_NAME;
+                goto exit;
+            }
+        }
+
         c++;
     }
 
@@ -240,12 +265,15 @@ int x509_write_sig( unsigned char **p, unsigned char *start,
     int ret;
     size_t len = 0;
 
-    if( *p - start < (int) size + 1 )
+    if( *p < start || (size_t)( *p - start ) < size )
         return( POLARSSL_ERR_ASN1_BUF_TOO_SMALL );
 
     len = size;
     (*p) -= len;
     memcpy( *p, sig, len );
+
+    if( *p - start < 1 )
+        return( POLARSSL_ERR_ASN1_BUF_TOO_SMALL );
 
     *--(*p) = 0;
     len += 1;
