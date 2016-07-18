@@ -241,7 +241,7 @@ void AxoConversation::deserialize(const std::string& data)
 
     jsonItem = cJSON_GetObjectItem(root, "preKeysAvail");
     if (jsonItem != NULL)
-        availablePreKeys = static_cast<size_t>(jsonItem->valueint);
+        availablePreKeys = jsonItem->valueint;
     cJSON_Delete(root);
     LOGGER(INFO, __func__, " <--");
 }

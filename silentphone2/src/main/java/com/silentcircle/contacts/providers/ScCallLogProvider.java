@@ -214,7 +214,7 @@ public class ScCallLogProvider extends ContentProvider {
         final SQLiteDatabase db = mDbHelper.getDatabase(false);
         final Cursor c = qb.query(db, projection, selectionBuilder.build(), selectionArgs, null, null, sortOrder, limitClause);
         if (c != null) {
-            c.setNotificationUri(getContext().getContentResolver(), CallLog.CONTENT_URI);
+            c.setNotificationUri(getContext().getContentResolver(), ScCallLog.CONTENT_URI);
         }
         return c;
     }

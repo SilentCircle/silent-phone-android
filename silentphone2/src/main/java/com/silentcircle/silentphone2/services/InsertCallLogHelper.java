@@ -124,9 +124,6 @@ public class InsertCallLogHelper extends AsyncTask<Uri, Void, Cursor> {
 
     @Override
     protected void onPostExecute(Cursor result) {
-        ContentResolver resolver = mCtx.getContentResolver();
-        resolver.notifyChange(ShortcutCardsAdapter.AUTHORITY_URI, null, false);
-
         int count = 0;
         if (result != null) {
             count = result.getCount();

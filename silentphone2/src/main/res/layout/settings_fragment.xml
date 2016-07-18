@@ -72,6 +72,15 @@
                     app:description="@string/nist_preferred"
                     />
 
+                <com.silentcircle.silentphone2.views.SettingsItem
+                        style="@style/Widget.SettingsItem"
+                        android:id="@+id/settings_set_passphrase"
+                        app:isCheckable="false"
+                        app:text="@string/key_store_title"
+                        app:description="@string/key_store_type_default"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent" />
+
             </LinearLayout>
 
             <TextView
@@ -289,15 +298,6 @@
                     app:description="@string/setting_developer_option_summary"
                     android:visibility="gone"
                     />
-
-                <com.silentcircle.silentphone2.views.SettingsItem
-                    style="@style/Widget.SettingsItem"
-                    android:id="@+id/settings_set_passphrase"
-                    app:isCheckable="false"
-                    app:text="@string/key_store_title"
-                    app:description="@string/key_store_type_default"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent" />
 
                 <Button
                     style="@style/Widget.Silent.SettingsButton"

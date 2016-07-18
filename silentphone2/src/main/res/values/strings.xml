@@ -801,11 +801,11 @@
     <string name="setting_echo_option">Echo canceler</string>
     <string name="setting_echo_option_summary">Automatic control of echo canceler. If not selected the echo canceler is always active</string>
 
-    <string name="setting_errors_option" translatable="false">Show all errors</string>
+    <string name="setting_errors_option">Show all errors</string>
     <string name="setting_errors_option_summary">Minor software errors that don\'t affect your experience are hidden by default.</string>
 
     <string name="setting_developer_option" translatable="false">Enable developer menus</string>
-    <string name="setting_developer_option_summary">If you aren\'t a developer, don\'t check this!</string>
+    <string name="setting_developer_option_summary" translatable="false">If you aren\'t a developer, don\'t check this!</string>
 
     <string name="developer_ssl_debug" translatable="false">SSL debug level</string>
     <string name="developer_ssl_debug_explanation" translatable="false">Set the SSL debug level. 0 means debugging off, 4 means full verbose debugging.</string>
@@ -832,19 +832,17 @@
     <string name="sp_dial_helper_00_x_explanation">Adds \'%2$s\' to dialed digits and replaces a leading \'%3$s\' with the \'+\' sign.</string>
 
     <!-- ******* Strings for the key store management activity -->
-    <string name="key_store_set_pw_explanation">Enter a new password to enhance key store protection.\nYou need to enter
-        this password every time you start Silent Phone. You can reset to default protection at any time.</string>
+    <string name="key_store_set_pw_explanation">Set this password to encrypt Silent Phone. You will need to enter this password to start the application. Silent Circle cannot reset this password for you.</string>
 
-    <string name="key_store_change_pw_explanation">Change your own key store password.</string>
-    <string name="key_store_reset_pw_explanation">The client resets key store protection to default after you entered your password.</string>
-    <string name="key_store_enter_pw_explanation">Enter your key store password.</string>
+    <string name="key_store_change_pw_explanation">Change your encryption password.</string>
+    <string name="key_store_reset_pw_explanation">Stop using password encryption of Silent Phone.</string>
+    <string name="key_store_enter_pw_explanation">Enter your encryption password.</string>
 
-    <string name="key_store_set_pin_explanation">Enter a new PIN to enhance key store protection.\nYou need to enter
-        this PIN every time you start Silent Phone. You can reset to default protection at any time.</string>
+    <string name="key_store_set_pin_explanation">Set this PIN to encrypt Silent Phone. You will need to enter this PIN to start the application. Silent Circle cannot reset this PIN for you.</string>
 
-    <string name="key_store_change_pin_explanation">Change your own key store PIN.</string>
-    <string name="key_store_reset_pin_explanation">The client resets key store protection to default after you entered your PIN.</string>
-    <string name="key_store_enter_pin_explanation">Enter your key store PIN.</string>
+    <string name="key_store_change_pin_explanation">Change your encryption PIN.</string>
+    <string name="key_store_reset_pin_explanation">Stop using PIN encryption of Silent Phone.</string>
+    <string name="key_store_enter_pin_explanation">Enter your encryption PIN.</string>
 
     <string name="pin_hint">Enter PIN</string>
     <string name="pin_hint_old">Enter old PIN</string>
@@ -856,17 +854,17 @@
     <string name="pin_match">PINs do not match. Please check.</string>
     <string name="pin_short">PIN is too short. Enter at least %d digits </string>
 
-    <string name="key_store_title">Set passphrase/PIN</string>
-    <string name="key_store_type_default">Default password</string>
-    <string name="key_store_type_pw">User password</string>
-    <string name="key_store_type_pin">User PIN</string>
+    <string name="key_store_title">Encrypt Silent Phone</string>
+    <string name="key_store_type_default">Not encrypted</string>
+    <string name="key_store_type_pw">Password set</string>
+    <string name="key_store_type_pin">PIN set</string>
 
-    <string name="key_store_set_pw">Set a password</string>
-    <string name="key_store_set_pin">Set a PIN</string>
+    <string name="key_store_set_pw">Set password</string>
+    <string name="key_store_set_pin">Set PIN</string>
 
     <string name="key_store_change_pin">Change PIN</string>
 
-    <string name="key_store_reset_default">Reset to default protection</string>
+    <string name="key_store_reset_default">Clear password/PIN</string>
 
     <string name="re_provision">Reload account data</string>
     <string name="re_provision_explanation">Reload Silent Phone\'s account and configuration data.</string>

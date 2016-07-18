@@ -416,7 +416,7 @@ int32_t AppInterfaceImpl::registerAxolotlDevice(string* result)
     list<pair<int32_t, const DhKeyPair* > >* preList = PreKeys::generatePreKeys(store_);
 
     // Update number of available pre-keys on server
-    size_t size = preList->size();
+    int32_t size = static_cast<int32_t>(preList->size());
     ownConv->setPreKeysAvail(size);
     ownConv->storeConversation();
     delete ownConv;
@@ -597,10 +597,12 @@ vector<int64_t>* AppInterfaceImpl::sendMessageInternal(const string& recipient, 
     // Check number of available pre-keys and if below threshold create new pre-keys.
     AxoConversation* localConv = AxoConversation::loadLocalConversation(ownUser_);
     if (localConv != NULL) {
-        size_t numPreKeys = localConv->getPreKeysAvail();
+        int32_t numPreKeys = localConv->getPreKeysAvail();
+        LOGGER(DEBUGGING, "Client's pre-key count: ", numPreKeys);
         if (numPreKeys < MIN_NUM_PRE_KEYS) {
             string result;
             int32_t code = Provisioning::newPreKeys(store_, scClientDevId_, authorization_, NUM_PRE_KEYS, &result);
+            LOGGER(WARNING, __func__, "Added new pre-keys, server returned: ", code);
             if (code == 200) {
                 numPreKeys += NUM_PRE_KEYS;
                 localConv->setPreKeysAvail(numPreKeys);

@@ -32,9 +32,12 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
 
+import com.silentcircle.SilentPhoneApplication;
 import com.silentcircle.common.list.ContactEntry;
 import com.silentcircle.messaging.model.Conversation;
+import com.silentcircle.messaging.model.MessageStates;
 import com.silentcircle.messaging.model.event.Event;
+import com.silentcircle.messaging.model.event.Message;
 import com.silentcircle.messaging.repository.ConversationRepository;
 import com.silentcircle.messaging.services.AxoMessaging;
 
@@ -107,6 +110,36 @@ public class ConversationUtils {
             }
         }
         return result;
+    }
+
+    public static void updateUnreadMessageCount(@NonNull final Context context,
+        @Nullable final CharSequence conversationId) {
+        if (TextUtils.isEmpty(conversationId)) {
+            return;
+        }
+
+        final AxoMessaging axoMessaging = AxoMessaging.getInstance(SilentPhoneApplication.getAppContext());
+        boolean axoRegistered = axoMessaging.isRegistered();
+        if (!axoRegistered) {
+            return;
+        }
+
+        ConversationRepository repository = axoMessaging.getConversations();
+        Conversation conversation = repository.findById(conversationId.toString());
+        List<Event> events = repository.historyOf(conversation).list();
+
+        // Count messages with MessageStates.RECEIVED which represents an unread message
+        int unreadMessageCount = 0;
+        for (Event event : events) {
+            if (event instanceof Message) {
+                int state = ((Message)event).getState();
+                if (state == MessageStates.RECEIVED) {
+                    unreadMessageCount += 1;
+                }
+            }
+        }
+        conversation.setUnreadMessageCount(unreadMessageCount);
+        repository.save(conversation);
     }
 
     @Nullable

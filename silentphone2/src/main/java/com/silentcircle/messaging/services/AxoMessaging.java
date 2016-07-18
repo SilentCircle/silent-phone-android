@@ -1047,6 +1047,9 @@ public class AxoMessaging extends AxolotlNative {
         final Event event = events.findById(deliveredPacketID);
         if (event instanceof Message) {
             final Message message = (Message)event;
+            if (message.getState() == MessageStates.RECEIVED) {
+                decrementUnreadMessages(message);
+            }
             message.setState(MessageStates.READ);
             if (message.expires()) {
                 final long rrTime = readReceiptTime <= 0 ? System.currentTimeMillis() : readReceiptTime;
@@ -1122,6 +1125,7 @@ public class AxoMessaging extends AxolotlNative {
             return;
         }
 
+        boolean isMessageUnread = false;
         /*
          * Determine whether correct event is being removed, whether conversation partner
          * for message does not match the conversation itself.
@@ -1130,9 +1134,12 @@ public class AxoMessaging extends AxolotlNative {
          * in conversation id.
          */
         String conversationPartner;
-        if (event instanceof  IncomingMessage) {
+        if (event instanceof IncomingMessage) {
             IncomingMessage message = (IncomingMessage) event;
             conversationPartner = message.getSender();
+            if (message.getState() == MessageStates.RECEIVED) {
+                isMessageUnread = true;
+            }
         }
         else {
             OutgoingMessage message = (OutgoingMessage) event;
@@ -1142,6 +1149,14 @@ public class AxoMessaging extends AxolotlNative {
         if (!conv.getPartner().getUserId().equals(conversationPartner)) {
             Log.w(TAG, "Burn notice request - wrong caller");
             return;
+        }
+
+        /*
+         * If a received message is burned and it is unread, decrement unread message count for
+         * conversation.
+         */
+        if (isMessageUnread) {
+            decrementUnreadMessages((Message) event);
         }
 
         events.remove(event);
@@ -1437,6 +1452,18 @@ public class AxoMessaging extends AxolotlNative {
         EventRepository events = conversations.historyOf(conversation);
 
         markPacketAsRead(events, msgId, dt);
+    }
+
+    /*
+     * Decrement unread message count for a conversation
+     */
+    private void decrementUnreadMessages(Message message) {
+        Conversation conversation = getConversations().findById(MessageUtils.getConversationId(message));
+        if (conversation != null) {
+            int unreadMessageCount = conversation.getUnreadMessageCount();
+            conversation.setUnreadMessageCount(unreadMessageCount > 0 ? (unreadMessageCount - 1) : 0);
+            getConversations().save(conversation);
+        }
     }
 
     private class RegisterInBackground implements Runnable {

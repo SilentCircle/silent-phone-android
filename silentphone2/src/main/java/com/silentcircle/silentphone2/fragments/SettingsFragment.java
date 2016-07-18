@@ -663,7 +663,7 @@ public class SettingsFragment extends Fragment implements View.OnClickListener,
                 popupMenu.getMenu().add(Menu.NONE, R.string.sas_char_mode, Menu.NONE, sasTypeTexts[CHAR_MODE]);
             }
             else {
-                popupMenu.getMenu().add(Menu.NONE, R.string.sas_char_mode, Menu.NONE, sasTypeTexts[WORD_MODE]);
+                popupMenu.getMenu().add(Menu.NONE, R.string.sas_word_mode, Menu.NONE, sasTypeTexts[WORD_MODE]);
             }
         }
         popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {

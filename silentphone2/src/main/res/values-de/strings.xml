@@ -616,8 +616,9 @@
 
     <string name="remaining_oca_minutes_zero">Kein Minuten verbraucht. Es verbleiben: %1$d Minuten.</string>
     <plurals name="remaining_oca_minutes_info">
-        <item quantity="one">Sie haben eine Minute von %2$d Minuten verbraucht.</item>
-        <item quantity="other">Sie haben %1$d Minuten von %2$d Minuten verbraucht.</item>
+        <item quantity="one">Sie haben eine Minute von %1$d Minuten verbraucht.</item>
+        <!--<item quantity="other">You used %1$d minutes of your %2$d minutes.</item>-->
+        <item quantity="other">Tarif: %1$d Minuten\nZur Verfügung: %2$d Minuten</item>
     </plurals>
 
     
@@ -1110,6 +1111,7 @@
     <string name="messaging_checked_only">Verglichen, nicht verifiziert</string>
     <string name="messaging_checked_verified">Verifiziert</string>
     <string name="wipe">Alle Silent Phone Daten löschen</string>
+    <string name="setting_errors_option">Geringfügige Fehler anzeigen</string>
 
 
 </resources>

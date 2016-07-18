@@ -594,7 +594,7 @@ public class ScCallDetailActivity extends AppCompatActivity /*implements Proximi
                 throw new IllegalArgumentException("Cannot find content: " + callUri);
             }
 
-            DatabaseUtils.dumpCursor(callCursor);
+//            DatabaseUtils.dumpCursor(callCursor);
             // Read call log specifics.
             String number = callCursor.getString(NUMBER_COLUMN_INDEX);
 //            final int numberPresentation = callCursor.getInt(

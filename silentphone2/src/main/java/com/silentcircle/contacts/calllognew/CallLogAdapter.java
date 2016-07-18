@@ -521,7 +521,7 @@ public class CallLogAdapter extends GroupingListAdapter
 
         // Exception: Photo uris for contacts from remote sources are not cached in the call log
         // cache, so we have to force a redraw for these contacts regardless.
-        boolean updated = (!mIsCallLog || existingInfo != ContactInfo.EMPTY) && !info.equals(existingInfo);
+        boolean updated = existingInfo != ContactInfo.EMPTY && !info.equals(existingInfo);
 
         // Store the data in the cache so that the UI thread can use to display it. Store it
         // even if it has not changed so that it is marked as not expired.

@@ -476,7 +476,7 @@ shared_ptr<const string> AxoRatchet::decrypt(AxoConversation* conv, const string
         // We got a message with embedded pre-key, thus the partner fetched one of our pre-keys from
         // the server. Countdown available pre keys.
         if (localConv != NULL) {
-            size_t numPreKeys = localConv->getPreKeysAvail();
+            int32_t numPreKeys = localConv->getPreKeysAvail();
             numPreKeys--;
             localConv->setPreKeysAvail(numPreKeys);
             localConv->storeConversation();

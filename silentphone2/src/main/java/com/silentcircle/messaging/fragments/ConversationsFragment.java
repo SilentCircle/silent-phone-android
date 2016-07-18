@@ -422,6 +422,10 @@ public class ConversationsFragment extends ListFragment implements Updatable,
                 switch (Action.from(intent)) {
                     case RECEIVE_MESSAGE:
                     case UPDATE_CONVERSATION:
+                        /*
+                        CharSequence conversationId = Extra.PARTNER.getCharSequence(intent);
+                        ConversationUtils.updateUnreadMessageCount(context, conversationId);
+                         */
                     case PROGRESS:
                     case CANCEL:
                         refreshConversations(context);

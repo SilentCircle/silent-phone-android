@@ -1553,6 +1553,8 @@ public class InCallActivity extends AppCompatActivity
                 Utilities.setSubtitleColor(getResources(), mToolbar);
                 return;
             }
+            if (call == null)       // This may happen in case of eError, PhoneService handles this
+                return;
             String sipMessage = call.bufMsg.toString();
             if (!DialerActivity.mAutoAnswerForTesting &&
                     !TextUtils.isEmpty(sipMessage) && sipMessage.startsWith(TiviPhoneService.ERROR_MSG_PREFIX)) {

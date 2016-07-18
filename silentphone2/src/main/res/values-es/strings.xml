@@ -375,14 +375,14 @@
   <string name="force_traversal_explanation">Usa un método de conexión más confiable, pero de menor calidad, para el audio de llamada, lo que puede ser necesario en redes particularmente defectuosas.</string>
   <string name="monitor_native_calls">Preguntar si se aseguran otras llamadas</string>
   <string name="monitor_native_calls_explanation">Silent Phone preguntará si quiere asegurar llamadas hechas desde afuera de Silent Phone.</string>
-  <string name="setting_underflow">Tone de Caida</string>
+  <string name="setting_underflow">Tono de Caida</string>
   <string name="setting_underflow_summary">Reproduce un tono bajo si no hay paquetes llegando desde la red. Indica red lenta.</string>
   <string name="setting_echo_option">Cancelador de eco</string>
   <string name="setting_echo_option_summary">Control automático del cancelador de eco. Si no se selecciona, el cancelador de eco estará siempre activo.</string>
   <string name="setting_errors_option_summary">Los errores menores de software que no afectan su experiencia se ocultan de forma predeterminada.</string>
   <string name="setting_developer_option_summary">Si no eres un desarrollador, ¡no marques esta opción!</string>
   <string name="sp_dial_helper_title">Asistente de marcado</string>
-  <string name="sp_dial_helper_select_explanation">Para simplificar el marcado, active Dial Assist y seleccione un
+  <string name="sp_dial_helper_select_explanation">Para simplificar el marcado, activar asistente de marcado y seleccione un
 país. Se cambiará automáticamente el formato del número con su código de país. De lo contrario, marque \'+\' y
 el código de país.</string>
   <string name="sp_dial_helper_select_explanation_1">Para llamar a otros suscriptores de Silent Circle, simplemente marque su

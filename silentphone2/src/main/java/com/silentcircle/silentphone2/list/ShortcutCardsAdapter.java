@@ -52,9 +52,6 @@ import com.silentcircle.silentphone2.services.InsertCallLogHelper;
  */
 public class ShortcutCardsAdapter extends BaseAdapter {
 
-    public static final String AUTHORITY = "com.silentcircle.shortcuts";
-    public static final Uri AUTHORITY_URI = Uri.parse("content://" + AUTHORITY + "/calllog");
-
     private class CustomDataSetObserver extends DataSetObserver {
         @Override
         public void onChanged() {
@@ -160,7 +157,6 @@ public class ShortcutCardsAdapter extends BaseAdapter {
         mCallLogQueryHandler = new CallLogQueryHandler(mContext.getContentResolver(), mCallLogQueryHandlerListener);
 
         mContext.getContentResolver().registerContentObserver(ContactsContract.Contacts.CONTENT_URI, true, mChangeObserver);
-        mContext.getContentResolver().registerContentObserver(AUTHORITY_URI, true, mChangeObserver);
     }
 
     /**
