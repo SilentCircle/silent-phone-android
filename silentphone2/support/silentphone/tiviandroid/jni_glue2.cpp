@@ -574,20 +574,23 @@ JNI_FUNCTION(nv21ToRGB32)(JNIEnv* env, jclass thiz, jbyteArray byteArray, jintAr
 {
     //TODO check send FPS and skip some frames
     //int willSendThisFrame(); if(!willSendThisFrame())return;
-    unsigned char *b = (unsigned char *)env->GetByteArrayElements(byteArray, 0);
+    unsigned char *b = byteArray ? (unsigned char *)env->GetByteArrayElements(byteArray, 0) : NULL;
     jint *idata = intArray ? env->GetIntArrayElements(intArray, 0) : NULL;
     unsigned short *sdata = shortArray ? (unsigned short *)env->GetShortArrayElements(shortArray, 0) : NULL;
 
-    convertNV21toRGB(b, w, h, idata, sdata);
+    if (b != NULL)
+        convertNV21toRGB(b, w, h, idata, sdata);
 
     if (idata)
+        // Actually the function does not use 'b' aka yuv buffer
         onNewVideoData((int*)idata, (unsigned char *)b, w, h, angle);
 
     if (shortArray)
         env->ReleaseShortArrayElements(shortArray, (jshort*)sdata, 0);
     if (intArray)
         env->ReleaseIntArrayElements(intArray, idata, 0);
-    env->ReleaseByteArrayElements(byteArray, (jbyte*)b, 0);
+    if (byteArray != NULL)
+        env->ReleaseByteArrayElements(byteArray, (jbyte*)b, 0);
 
     return;
 }

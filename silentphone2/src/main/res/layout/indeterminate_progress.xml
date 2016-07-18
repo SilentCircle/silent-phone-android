@@ -7,7 +7,7 @@
     android:layout_alignParentLeft="true"
     android:layout_alignParentRight="true"
     android:layout_alignParentTop="true"
-    android:background="@drawable/bg_window_dark"
+    android:background="?sp_activity_background_color"
     android:gravity="center">
 
     <ProgressBar

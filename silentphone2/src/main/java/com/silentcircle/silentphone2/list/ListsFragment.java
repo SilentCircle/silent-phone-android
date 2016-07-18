@@ -43,6 +43,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v13.app.FragmentPagerAdapter;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewPager;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -126,9 +127,6 @@ public class ListsFragment extends Fragment implements CallLogQueryHandler.Liste
     private CallLogAdapter mCallLogAdapter;
     private CallLogQueryHandler mCallLogQueryHandler;
     private ShortcutCardsAdapter mMergedAdapter;
-
-    private RemoveView mRemoveView;
-    private View mRemoveViewContent;
 
     private final ArrayList<ViewPager.OnPageChangeListener> mOnPageChangeListeners = new ArrayList<>();
 
@@ -227,7 +225,7 @@ public class ListsFragment extends Fragment implements CallLogQueryHandler.Liste
         mCallLogQueryHandler = new CallLogQueryHandler(getActivity().getContentResolver(), this, 1);
         final String currentCountryIso = ContactsUtils.getCurrentCountryIso(getActivity()); //  GeoUtil.getCurrentCountryIso(getActivity());
         mCallLogAdapter = ObjectFactory.newCallLogAdapter(getActivity(), this,
-                new ContactInfoHelper(getActivity(), currentCountryIso), null, null, 
+                new ContactInfoHelper(getActivity(), currentCountryIso), null,
                 (OnPhoneNumberPickerActionListener)getActivity(), false);
 
         mMergedAdapter = new ShortcutCardsAdapter(getActivity(), this, mCallLogAdapter);
@@ -261,14 +259,8 @@ public class ListsFragment extends Fragment implements CallLogQueryHandler.Liste
         // it's PagerAdapter set.
         mSlidingTabLayout = (SlidingTabLayout)parentView.findViewById(R.id.sliding_tabs);
         mSlidingTabLayout.setCustomTabView(R.layout.tab_text, R.id.text_tab);
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-            mSlidingTabLayout.setSelectedIndicatorColors(getResources().getColor(R.color.sc_ng_text_red));
-            mSlidingTabLayout.setDividerColors(getResources().getColor(android.R.color.transparent));
-        }
-        else {
-            mSlidingTabLayout.setSelectedIndicatorColors(getResources().getColor(R.color.sc_ng_text_red, null));
-            mSlidingTabLayout.setDividerColors(getResources().getColor(android.R.color.transparent, null));
-        }
+        mSlidingTabLayout.setSelectedIndicatorColors(ContextCompat.getColor(getActivity(), R.color.sc_ng_text_red));
+        mSlidingTabLayout.setDividerColors(ContextCompat.getColor(getActivity(), android.R.color.transparent));
         mSlidingTabLayout.setDefaultTabTextColor(R.color.sc_ng_text_grey_2);
         mSlidingTabLayout.setSelectedTabTextColor(R.color.sc_ng_text_red);
         mSlidingTabLayout.setViewPager(mViewPager);
@@ -278,9 +270,6 @@ public class ListsFragment extends Fragment implements CallLogQueryHandler.Liste
 
         mShortcutCardsListView = (ListView)parentView.findViewById(R.id.shortcut_card_list);
         mShortcutCardsListView.setAdapter(mMergedAdapter);
-
-        mRemoveView = (RemoveView) parentView.findViewById(R.id.remove_view);
-        mRemoveViewContent = parentView.findViewById(R.id.remove_view_content);
 
         if (parentView instanceof OverlappingPaneLayout)
             setupPaneLayout((OverlappingPaneLayout) parentView);
@@ -317,11 +306,7 @@ public class ListsFragment extends Fragment implements CallLogQueryHandler.Liste
                 switch (Action.from(intent)) {
                     case RECEIVE_MESSAGE:
                         refreshTabView();
-                        boolean soundsEnabled =
-                                MessagingPreferences.getInstance(context).getMessageSoundsEnabled();
-                        if (soundsEnabled ) {
-                            SoundNotifications.playReceiveMessageSound();
-                        }
+                        SoundNotifications.playReceiveMessageSound();
                         if (isOrderedBroadcast()) {
                             abortBroadcast();
                         }
@@ -540,36 +525,11 @@ public class ListsFragment extends Fragment implements CallLogQueryHandler.Liste
         }
     }
 
-    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-    public void showRemoveView(boolean show) {
-        mRemoveViewContent.setVisibility(show ? View.VISIBLE : View.GONE);
-        mRemoveView.setAlpha(show ? 0 : 1);
-        mRemoveView.animate().alpha(show ? 1 : 0).start();
-
-        if (mShortcutCardsListView.getChildCount() > 0) {
-            View v = mShortcutCardsListView.getChildAt(0);
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-                v.animate().withLayer()
-                        .alpha(show ? REMOVE_VIEW_SHOWN_ALPHA : REMOVE_VIEW_HIDDEN_ALPHA)
-                        .start();
-            }
-            else {
-                v.animate()
-                        .alpha(show ? REMOVE_VIEW_SHOWN_ALPHA : REMOVE_VIEW_HIDDEN_ALPHA)
-                        .start();
-            }
-        }
-    }
-
     public int getRtlPosition(int position) {
         if (Utilities.isRtl()) {
             return TAB_INDEX_COUNT - 1 - position;
         }
         return position;
-    }
-
-    public RemoveView getRemoveView() {
-        return mRemoveView;
     }
 
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN)

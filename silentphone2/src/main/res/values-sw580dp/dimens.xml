@@ -50,47 +50,17 @@
     <dimen name="in_call_avatar_width">270dp</dimen>
     <dimen name="end_call_button_margin_bottom">16dp</dimen>
 
-    <dimen name="in_call_avatar_button_top_margin">100dp</dimen>
-    <dimen name="in_call_mute_top_margin">60dp</dimen>
     <dimen name="in_call_card_width">340dp</dimen>
 
-
-    <dimen name="editor_padding_top">32dip</dimen>
-    <dimen name="editor_type_label_width">122dip</dimen>
-    <dimen name="editor_round_button_padding_left">16dip</dimen>
-    <dimen name="editor_round_button_padding_right">16dip</dimen>
-    <dimen name="editor_add_field_label_left_padding">16dip</dimen>
-    <dimen name="detail_item_side_margin">0dip</dimen>
-    <dimen name="detail_item_vertical_margin">16dip</dimen>
-    <dimen name="detail_item_icon_margin">8dip</dimen>
     <dimen name="shortcut_icon_size">64dip</dimen>
-    <dimen name="group_detail_border_padding">16dip</dimen>
     <dimen name="detail_update_section_side_padding">0dip</dimen>
-    <dimen name="detail_update_section_item_horizontal_padding">8dip</dimen>
-    <dimen name="detail_update_section_item_vertical_padding">16dip</dimen>
-    <dimen name="detail_contact_photo_size">192dip</dimen>
-    <dimen name="detail_contact_photo_margin">16dip</dimen>
 
-    <dimen name="search_view_width">400dip</dimen>
-    <dimen name="contact_tile_list_padding_top">16dip</dimen>
-    <!-- Center vertically -->
-    <dimen name="quick_contact_top_position">-1px</dimen>
     <!-- Contact list (vertical scroll bar comes left) -->
     <dimen name="contact_browser_list_top_margin">16dip</dimen>
-    <dimen name="list_visible_scrollbar_padding">32dip</dimen>
     <dimen name="list_header_extra_top_padding">@dimen/contact_browser_list_top_margin</dimen>
 
-    <dimen name="quick_contact_photo_container_height">360dip</dimen>
-
-    <!-- Left padding for a group member list item -->
-    <dimen name="group_member_item_left_padding">12dip</dimen>
-    <!-- Left margin for the group member list to match the built in margin in the autocomplete asset -->
-    <dimen name="group_editor_member_list_left_margin">4dip</dimen>
-    <!-- Right margin for the group member list to match the built in margin in the autocomplete asset -->
-    <dimen name="group_editor_member_list_right_margin">4dip</dimen>
     <!-- Left padding of the auto complete field to line hint text up with member list -->
     <dimen name="group_editor_autocomplete_left_padding">16dip</dimen>
-    <dimen name="contact_detail_list_top_padding">8dip</dimen>
 
     <!-- alert dialog size -->
     <item type="dimen" name="dialog_min_width_minor">50%</item>

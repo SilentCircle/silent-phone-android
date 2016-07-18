@@ -27,15 +27,20 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 package com.silentcircle.messaging.activities;
 
+import android.Manifest;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -46,6 +51,8 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
 
+import com.silentcircle.common.util.ExplainPermissionDialog;
+import com.silentcircle.common.util.ViewUtil;
 import com.silentcircle.messaging.fragments.ContactViewerFragment;
 import com.silentcircle.messaging.fragments.FileViewerFragment;
 import com.silentcircle.messaging.fragments.ImageViewerFragment;
@@ -72,16 +79,22 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 /**
  * Activity which handles attachment viewing.
  */
 public class FileViewerActivity extends AppCompatActivity implements OnProgressUpdateListener,
-        FileViewerFragment.Callback {
+        FileViewerFragment.Callback, ExplainPermissionDialog.AfterReading {
 
     private static final String TAG = FileViewerActivity.class.getSimpleName();
+
+    // Identifiers and flags for permission handling
+    public static final int PERMISSIONS_REQUEST_STORAGE = 1;
+    private boolean mStoragePermissionAsked;
 
     class ExportFileTask extends AsyncTask<MenuItem, Void, MenuItem> {
 
@@ -101,8 +114,6 @@ public class FileViewerActivity extends AppCompatActivity implements OnProgressU
         protected void onPostExecute(MenuItem item) {
             super.onPostExecute(item);
             item.setEnabled(true);
-
-            export(mFile);
         }
     }
 
@@ -157,6 +168,7 @@ public class FileViewerActivity extends AppCompatActivity implements OnProgressU
     private Toolbar mToolbar;
 
     protected File mFile;
+    protected String mHash;
     protected String mMimeType;
     protected boolean mExporting;
     protected long mFileSize;
@@ -181,19 +193,63 @@ public class FileViewerActivity extends AppCompatActivity implements OnProgressU
         super.onActivityResult(requestCode, resultCode, data);
     }
 
+    /**
+     * Callback from ExplainPermissionDialog after user read the explanation.
+     *
+     * After we explained the facts and the user read the explanation ask for permission again.
+     * This will eventually call onRequestPermissionsResult which will check the result.
+     *
+     * @param token The token from ExplainPermissionDialog#showExplanation() call
+     * @param callerBundle the optional bundle from ExplainPermissionDialog#showExplanation() call
+     */
+    @Override
+    public void explanationRead(final int token, final Bundle callerBundle) {
+        switch (token) {
+            case PERMISSIONS_REQUEST_STORAGE:
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, token);
+                break;
+            default:
+                break;
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String permissions[], @NonNull int[] grantResults) {
+        switch (requestCode) {
+            case PERMISSIONS_REQUEST_STORAGE: {
+                if (grantResults.length > 0 && grantResults[0] != PackageManager.PERMISSION_GRANTED) {
+                    checkStoragePermissions();  // If user denied access at first, re-check which displays the rationale
+                }
+                else {
+                    onCreateAfterPermissions();
+                }
+            }
+            break;
+        }
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
         super.onCreate(savedInstanceState);
+
+        ViewUtil.setBlockScreenshots(this);
+
         setContentView(R.layout.activity_file_viewer);
         restoreActionBar();
 
         Intent intent = getIntent();
 
         if (intent != null) {
+            checkStoragePermissions();
+        }
+    }
 
+    private void onCreateAfterPermissions() {
+        Intent intent = getIntent();
             mUri = intent.getData();
             mFile = new File(mUri.getPath());
+            mHash = Extra.ALIAS.from(intent);
             mMimeType = intent.getType();
             mPartner = Extra.PARTNER.from(intent);
             mMessageId = Extra.ID.from(intent);
@@ -204,10 +260,11 @@ public class FileViewerActivity extends AppCompatActivity implements OnProgressU
             }
 
             mDisplayName = Extra.DISPLAY_NAME.from(intent);
-            if (TextUtils.isEmpty(mDisplayName)) {
-                mDisplayName = mFileName;
+            if (!TextUtils.isEmpty(mDisplayName)) {
+                setTitle(mDisplayName);
+            } else {
+                setTitle(mFileName);
             }
-            setTitle(mDisplayName);
 
             // check text/x-vcard before generic text/...
             if (MIME.isContact(mMimeType)) {
@@ -237,6 +294,25 @@ public class FileViewerActivity extends AppCompatActivity implements OnProgressU
             } else {
                 setContentFragment(FileViewerFragment.create(mUri, mMimeType));
             }
+    }
+
+    private void checkStoragePermissions() {
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+                ExplainPermissionDialog.showExplanation(this, PERMISSIONS_REQUEST_STORAGE,
+                        getString(R.string.permission_storage_title), getString(R.string.permission_storage_explanation), null);
+            }
+            else {
+                if (!mStoragePermissionAsked) {
+                    ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                            PERMISSIONS_REQUEST_STORAGE);
+                    mStoragePermissionAsked = true;     // Avoid a possible third, ..., permission request if user set "don't ask anymore"
+                }
+            }
+        }
+        else {
+            onCreateAfterPermissions();
         }
     }
 
@@ -251,7 +327,7 @@ public class FileViewerActivity extends AppCompatActivity implements OnProgressU
 
         getMenuInflater().inflate(R.menu.file_view_player, menu);
 
-        boolean exported = AttachmentUtils.isExported(mFileName);
+        boolean exported = AttachmentUtils.isExported(mFileName, mHash);
 
         menu.findItem(R.id.view).setVisible(AttachmentUtils.resolves(getPackageManager(), Intent.ACTION_VIEW, mUri, mMimeType));
         menu.findItem(R.id.share).setVisible(AttachmentUtils.resolves(getPackageManager(), Intent.ACTION_SEND, mUri, mMimeType));
@@ -317,10 +393,19 @@ public class FileViewerActivity extends AppCompatActivity implements OnProgressU
 
     protected File copyToExternalStorage(Context context, File file,
             OnProgressUpdateListener onProgressUpdate) {
-        final File externalFile = AttachmentUtils.getExternalStorageFile(mFileName);
-        if (externalFile == null || externalFile.exists()) {
-            return externalFile;
+        File externalFile = AttachmentUtils.getExternalStorageFile(mFileName);
+
+        DecimalFormat nf3 = new DecimalFormat("#000");
+        while (externalFile.exists()) {
+            int i = mFileName.contains(".") ? mFileName.lastIndexOf('.') : mFileName.length();
+            int suffix = new Random().nextInt(1000 - 1) + 1;
+            mFileName = mFileName.substring(0, i) + " - " + nf3.format(suffix) + mFileName.substring(i);
+
+            externalFile = AttachmentUtils.getExternalStorageFile(mFileName);
         }
+
+        AttachmentUtils.setExportedFilename(this, mPartner, mMessageId, mFileName);
+
         mFileSize = AttachmentUtils.getFileSize(this, Uri.fromFile(file));
         InputStream in = null;
         OutputStream out = null;
@@ -334,11 +419,7 @@ public class FileViewerActivity extends AppCompatActivity implements OnProgressU
             AttachmentUtils.makePublic(context, externalFile);
             // setVisibleIf(false, R.id.export);
 
-            this.runOnUiThread(new Runnable() {
-                public void run() {
-                    Toast.makeText(FileViewerActivity.this, getString(R.string.toast_saved_to, externalFile.getAbsolutePath()), Toast.LENGTH_SHORT).show();
-                }
-            });
+            showExportToast(externalFile.getAbsolutePath());
 
             invalidateOptionsMenu();
             return externalFile;
@@ -349,6 +430,19 @@ public class FileViewerActivity extends AppCompatActivity implements OnProgressU
             IOUtils.close(in, out);
         }
         return null;
+    }
+
+    protected void showExportToast(final String exportPath) {
+        this.runOnUiThread(new Runnable() {
+            public void run() {
+                if (TextUtils.isEmpty(mDisplayName)) {
+                    setTitle(mFileName);
+                }
+
+                Toast.makeText(FileViewerActivity.this, getString(R.string.toast_saved_to, exportPath), Toast.LENGTH_SHORT).show();
+            }
+        });
+
     }
 
     protected File export(File originalFile) {
@@ -455,7 +549,6 @@ public class FileViewerActivity extends AppCompatActivity implements OnProgressU
 
             result = false;
         }
-
         return result;
 
     }

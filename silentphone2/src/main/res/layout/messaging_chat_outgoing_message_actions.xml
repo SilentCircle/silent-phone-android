@@ -5,43 +5,84 @@
     android:layout_height="wrap_content"
     android:gravity="top">
 
-    <ImageView
+    <FrameLayout
         android:id="@+id/message_action_location"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
         style="@style/Widget.Silence.ImageView.ActionButton"
-        android:contentDescription="@string/location"
-        android:src="@drawable/location_button_outgoing"
-        android:visibility="visible" />
-
-    <LinearLayout
-        android:id="@+id/message_action_burn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:layout_toEndOf="@+id/message_action_location"
-        android:layout_toRightOf="@+id/message_action_location"
-        android:gravity="center_horizontal">
+        android:background="@null"
+        android:contentDescription="@string/messaging_location_button_voiceover">
 
         <ImageView
-            android:id="@+id/message_burn_icon"
+            android:layout_width="47dp"
+            android:layout_height="47dp"
+            android:layout_gravity="center"
+            android:importantForAccessibility="no"
+            android:scaleType="center"
+            android:src="@drawable/bg_online_status_indicator"
+            android:tint="?attr/sp_message_action_button_background" />
+
+        <ImageView
+            android:layout_width="35dp"
+            android:layout_height="35dp"
+            android:layout_gravity="center"
+            android:filterTouchesWhenObscured="true"
+            android:importantForAccessibility="no"
+            android:scaleType="center"
+            android:src="@drawable/bg_online_status_indicator"
+            android:tint="?attr/sp_outgoing_message_background" />
+
+        <ImageView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            style="@style/Widget.Silence.ImageView.ActionButton"
-            android:contentDescription="@string/messaging_burn_button_voiceover"
-            android:src="@drawable/burn_button_outgoing"
+            android:layout_gravity="center"
+            android:duplicateParentState="true"
+            android:filterTouchesWhenObscured="true"
+            android:importantForAccessibility="no"
+            android:src="@drawable/message_location_button"
             android:visibility="visible" />
 
-        <com.silentcircle.messaging.views.TextView
-            android:id="@+id/message_burn_notice"
+    </FrameLayout>
+
+    <FrameLayout
+        android:id="@+id/message_action_burn"
+        style="@style/Widget.Silence.ImageView.ActionButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_toEndOf="@+id/message_action_location"
+        android:layout_toRightOf="@+id/message_action_location"
+        android:background="@null"
+        android:contentDescription="@string/messaging_burn_button_voiceover">
+
+        <ImageView
+            android:layout_width="47dp"
+            android:layout_height="47dp"
+            android:layout_gravity="center"
+            android:importantForAccessibility="no"
+            android:scaleType="center"
+            android:src="@drawable/bg_online_status_indicator"
+            android:tint="?attr/sp_message_action_button_background" />
+
+        <ImageView
+            android:layout_width="35dp"
+            android:layout_height="35dp"
+            android:layout_gravity="center"
+            android:filterTouchesWhenObscured="true"
+            android:importantForAccessibility="no"
+            android:scaleType="center"
+            android:src="@drawable/bg_online_status_indicator"
+            android:tint="?attr/sp_outgoing_message_background" />
+
+        <ImageView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="@color/sc_ng_text_grey"
-            android:paddingRight="5dp"
-            android:paddingEnd="5dp"
-            android:textSize="@dimen/messaging_message_info_small_text_size"
-            android:text="@string/sample_burn_notice"/>
+            android:layout_gravity="center"
+            android:duplicateParentState="true"
+            android:filterTouchesWhenObscured="true"
+            android:importantForAccessibility="no"
+            android:src="@drawable/message_burn_button"
+            android:visibility="visible" />
 
-    </LinearLayout>
+    </FrameLayout>
 
 </RelativeLayout>

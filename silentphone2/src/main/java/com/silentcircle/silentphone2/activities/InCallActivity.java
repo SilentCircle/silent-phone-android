@@ -1014,7 +1014,7 @@ public class InCallActivity extends AppCompatActivity
 
         if (!TextUtils.isEmpty(DialerActivity.mDisplayName)) {
             ((TextView)mToolbar.findViewById(R.id.sub_title)).setText(DialerActivity.mDisplayName);
-            Utilities.setSubtitleColor(getResources(), mToolbar);
+            Utilities.setSubtitleColor(this, mToolbar);
         }
     }
 
@@ -1550,7 +1550,7 @@ public class InCallActivity extends AppCompatActivity
         public void run() {
 
             if (call == null && msg == TiviPhoneService.CT_cb_msg.eReg) {
-                Utilities.setSubtitleColor(getResources(), mToolbar);
+                Utilities.setSubtitleColor(InCallActivity.this, mToolbar);
                 return;
             }
             if (call == null)       // This may happen in case of eError, PhoneService handles this

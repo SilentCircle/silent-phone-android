@@ -28,6 +28,7 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+
 #ifndef _C_TIVI_SES_H
 #define _C_TIVI_SES_H 
 
@@ -1218,6 +1219,8 @@ public:
    int iIsTCP;
    int fToTagIgnore;
    int iContactId;
+   
+   int iMustSendFromSIPRecvThread;
 
    CTEngineCallBack *cPhoneCallback;
    
@@ -1231,6 +1234,7 @@ public:
       ,iContentAdded(0),uiPosToContentLen(0)
       ,iBufMalloced(0)
    {
+      iMustSendFromSIPRecvThread=0;
       pSipHdrUriAdd=NULL;
       cPhoneCallback=NULL;
       fToTagIgnore=0;
@@ -1266,6 +1270,7 @@ public:
    :spSes(NULL),sMsg(psMsg),iRetLen(NULL),uiLen(0)
    ,iContentAdded(0),uiPosToContentLen(0)
    {
+      iMustSendFromSIPRecvThread=0;
       pSipHdrUriAdd=NULL;
       cPhoneCallback=NULL;
       iContactId=fToTagIgnore=0;
@@ -1277,6 +1282,7 @@ public:
       :spSes(NULL),sMsg(psMsg),iRetLen(NULL),uiLen(0)
       ,iContentAdded(0),uiPosToContentLen(0)
    {
+      iMustSendFromSIPRecvThread=0;
       pSipHdrUriAdd=NULL;
       cPhoneCallback=NULL;
       iContactId=fToTagIgnore=0;
@@ -1287,6 +1293,7 @@ public:
       :spSes(pSes),uiLen(0),iContentAdded(0),uiPosToContentLen(0)
       ,uiPosContentStart(0),iBufMalloced(0)
    {
+      iMustSendFromSIPRecvThread=0;
       pSipHdrUriAdd=NULL;
       cPhoneCallback=NULL;
       iContactId=fToTagIgnore=0;
@@ -1387,12 +1394,12 @@ public:
          cPhoneCallback->dbg(buf,(int)uiLen);;
       }
       
-      return sc.sendTo(buf,(int)uiLen,addr);
+      return sc.sendTo(buf,(int)uiLen,addr,iMustSendFromSIPRecvThread);
    }
-   inline  static int sendSip(CTSipSock &sc, char *buf, int iLen, ADDR *addr)
+   inline int sendSip(CTSipSock &sc, char *buf, int iLen, ADDR *addr)
    {
 
-      return sc.sendTo(buf,iLen,addr);
+      return sc.sendTo(buf,iLen,addr,iMustSendFromSIPRecvThread);
    }
 private:
    int iBufMalloced;

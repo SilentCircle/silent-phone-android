@@ -1,0 +1,62 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:animateLayoutChanges="true">
+
+    <LinearLayout
+        android:id="@+id/burn_delay_inner_container"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:animateLayoutChanges="true"
+        android:background="@drawable/bg_vertical_slider"
+        android:gravity="center_horizontal"
+        android:orientation="vertical">
+
+        <com.silentcircle.messaging.views.VerticalSeekBar
+            android:id="@+id/burn_delay_value"
+            android:layout_width="@dimen/messaging_burn_seekbar_width"
+            android:layout_height="@dimen/messaging_burn_seekbar_height"
+            android:minHeight="@dimen/messaging_burn_seekbar_height"
+            android:minWidth="@dimen/messaging_burn_seekbar_width"
+            android:indeterminate="false"
+            android:progressDrawable="@drawable/messaging_seeker_progress_vertical"
+            android:thumb="@drawable/messaging_seeker_vertical"
+            android:visibility="gone"
+            tools:visibility="visible" />
+
+        <ImageView
+            android:id="@+id/burn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:contentDescription="@string/messaging_burn_delay_voiceover"
+            android:filterTouchesWhenObscured="true"
+            android:paddingLeft="@dimen/spacing_small"
+            android:paddingRight="@dimen/spacing_small"
+            android:paddingTop="@dimen/messaging_burn_button_padding_bottom"
+            android:paddingBottom="@dimen/messaging_burn_button_padding_top"
+            android:src="@drawable/ic_burn" />
+
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/burn_delay_description"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="@dimen/spacing_normal"
+        android:layout_marginStart="@dimen/spacing_normal"
+        android:layout_toEndOf="@+id/burn_delay_inner_container"
+        android:layout_toRightOf="@+id/burn_delay_inner_container"
+        android:background="@drawable/bg_button"
+        android:gravity="center"
+        android:includeFontPadding="false"
+        android:maxLines="1"
+        android:paddingLeft="@dimen/spacing_small"
+        android:paddingRight="@dimen/spacing_small"
+        android:textColor="@color/sc_ng_text_dark"
+        android:visibility="gone"
+        tools:text="30 Minutes"
+        tools:visibility="visible" />
+
+</RelativeLayout>

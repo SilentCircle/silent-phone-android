@@ -53,9 +53,8 @@ import android.content.ContentResolver;
 import android.content.OperationApplicationException;
 import android.net.Uri;
 import android.os.RemoteException;
+import android.provider.ContactsContract;
 import android.util.Log;
-
-import com.silentcircle.silentcontacts2.ScContactsContract;
 
 import java.util.ArrayList;
 
@@ -113,7 +112,7 @@ public class VCardEntryCommitter implements VCardEntryHandler {
 
     private Uri pushIntoContentResolver(ArrayList<ContentProviderOperation> operationList) {
         try {
-            final ContentProviderResult[] results = mContentResolver.applyBatch(ScContactsContract.AUTHORITY, operationList);
+            final ContentProviderResult[] results = mContentResolver.applyBatch(ContactsContract.AUTHORITY, operationList);
 
             // the first result is always the raw_contact. return it's uri so
             // that it can be found later. do null checking for badly behaving

@@ -39,6 +39,7 @@ import com.silentcircle.messaging.repository.ConversationRepository;
 import com.silentcircle.messaging.services.AxoMessaging;
 import com.silentcircle.messaging.util.MessageUtils;
 import com.silentcircle.silentphone2.util.ConfigurationUtilities;
+import com.silentcircle.silentphone2.util.Utilities;
 
 import java.util.Iterator;
 import java.util.List;
@@ -64,12 +65,19 @@ public class HandleMessageFailuresTask extends AsyncTask<String, Void, Integer> 
     protected Integer doInBackground(String... params) {
         int count = 0;
 
+        if (!Utilities.isNetworkConnected(mContext)) {
+            // return indication for re-run if no network available
+            if (ConfigurationUtilities.mTrace) Log.d(TAG, "Network not available, returning");
+            return -1;
+        }
+
         // check Axolotl registration state
         AxoMessaging axoMessaging = AxoMessaging.getInstance(mContext);
         boolean axoRegistered = axoMessaging.isRegistered();
 
         if (!axoRegistered) {
             // return indication for re-run if Axolotl has not been registered yet
+            if (ConfigurationUtilities.mTrace) Log.d(TAG, "AxoMessaging not ready, returning");
             return -1;
         }
 

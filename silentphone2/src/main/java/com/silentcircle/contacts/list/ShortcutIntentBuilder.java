@@ -36,6 +36,7 @@ import android.provider.ContactsContract.CommonDataKinds.Phone;
 import android.provider.ContactsContract.CommonDataKinds.Photo;
 import android.provider.ContactsContract.Contacts;
 import android.provider.ContactsContract.Data;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.graphics.drawable.RoundedBitmapDrawable;
 import android.support.v4.graphics.drawable.RoundedBitmapDrawableFactory;
 import android.text.TextPaint;
@@ -126,7 +127,7 @@ public class ShortcutIntentBuilder {
             mIconSize = am.getLauncherLargeIconSize();
         }
         mIconDensity = am.getLauncherLargeIconDensity();
-        mOverlayTextBackgroundColor = mResources.getColor(R.color.shortcut_overlay_text_background);
+        mOverlayTextBackgroundColor = ContextCompat.getColor(mContext, R.color.shortcut_overlay_text_background);
     }
 
     public void createContactShortcutIntent(Uri contactUri) {
@@ -375,8 +376,8 @@ public class ShortcutIntentBuilder {
         if (overlay != null) {
             TextPaint textPaint = new TextPaint(Paint.ANTI_ALIAS_FLAG | Paint.DEV_KERN_TEXT_FLAG);
             textPaint.setTextSize(r.getDimension(R.dimen.shortcut_overlay_text_size));
-            textPaint.setColor(r.getColor(R.color.textColorIconOverlay));
-            textPaint.setShadowLayer(4f, 0, 2f, r.getColor(R.color.textColorIconOverlayShadow));
+            textPaint.setColor(ContextCompat.getColor(mContext, R.color.textColorIconOverlay));
+            textPaint.setShadowLayer(4f, 0, 2f, ContextCompat.getColor(mContext, R.color.textColorIconOverlayShadow));
 
             final FontMetricsInt fmi = textPaint.getFontMetricsInt();
 

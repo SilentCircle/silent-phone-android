@@ -21,7 +21,6 @@ import android.animation.AnimatorListenerAdapter;
 import android.animation.ValueAnimator;
 import android.annotation.TargetApi;
 import android.app.Activity;
-import android.app.DialogFragment;
 import android.app.KeyguardManager;
 import android.app.ListFragment;
 import android.content.Context;
@@ -49,8 +48,8 @@ import com.silentcircle.common.util.EmptyLoader;
 import com.silentcircle.common.util.ObjectFactory;
 import com.silentcircle.common.util.ViewUtil;
 import com.silentcircle.contacts.ContactsUtils;
-import com.silentcircle.silentcontacts2.ScCallLog;
-import com.silentcircle.silentcontacts2.ScCallLog.ScCalls;
+import com.silentcircle.contacts.ScCallLog;
+import com.silentcircle.contacts.ScCallLog.ScCalls;
 import com.silentcircle.silentphone2.R;
 import com.silentcircle.silentphone2.list.ListsFragment.HostInterface;
 import com.silentcircle.silentphone2.services.InsertCallLogHelper;
@@ -67,14 +66,13 @@ import com.silentcircle.silentphone2.services.InsertCallLogHelper;
  * (all, missed or voicemails), specify it in the constructor.
  */
 public class CallLogFragment extends ListFragment
-        implements CallLogQueryHandler.Listener, CallLogAdapter.OnReportButtonClickListener,
+        implements CallLogQueryHandler.Listener,
         CallLogAdapter.CallFetcher,
         CallLogAdapter.CallItemExpandedListener {
+    @SuppressWarnings("unused")
     private static final String TAG = "CallLogFragment";
 
-    private static final String REPORT_DIALOG_TAG = "report_dialog";
     private String mReportDialogNumber;
-    private boolean mIsReportDialogShowing;
 
     public static final String FILTER_TYPE = "filter_type";
     public static final String LOG_LIMIT   = "log_limit";
@@ -88,20 +86,12 @@ public class CallLogFragment extends ListFragment
     private static final String KEY_LOG_LIMIT = "log_limit";
     private static final String KEY_DATE_LIMIT = "date_limit";
     private static final String KEY_SHOW_FOOTER = "show_footer";
-    private static final String KEY_IS_REPORT_DIALOG_SHOWING = "is_report_dialog_showing";
     private static final String KEY_REPORT_DIALOG_NUMBER = "report_dialog_number";
 
     private CallLogAdapter mAdapter;
     private CallLogQueryHandler mCallLogQueryHandler;
     private boolean mScrollToTop;
 
-    /** Whether there is at least one voicemail source installed. */
-    private boolean mVoicemailSourcesAvailable = false;
-
-//    private VoicemailStatusHelper mVoicemailStatusHelper;
-//    private View mStatusMessageView;
-//    private TextView mStatusMessageText;
-//    private TextView mStatusMessageAction;
     private KeyguardManager mKeyguardManager;
     private View mFooterView;
 
@@ -191,13 +181,12 @@ public class CallLogFragment extends ListFragment
             mLogLimit = state.getInt(KEY_LOG_LIMIT, mLogLimit);
             mDateLimit = state.getLong(KEY_DATE_LIMIT, mDateLimit);
             mHasFooterView = state.getBoolean(KEY_SHOW_FOOTER, mHasFooterView);
-            mIsReportDialogShowing = state.getBoolean(KEY_IS_REPORT_DIALOG_SHOWING, mIsReportDialogShowing);
             mReportDialogNumber = state.getString(KEY_REPORT_DIALOG_NUMBER, mReportDialogNumber);
         }
 
         String currentCountryIso = ContactsUtils.getCurrentCountryIso(getActivity());// GeoUtil.getCurrentCountryIso(getActivity());
         mAdapter = ObjectFactory.newCallLogAdapter(getActivity(), this,
-                new ContactInfoHelper(getActivity(), currentCountryIso), this, this, mPhoneNumberPickerActionListener, true);
+                new ContactInfoHelper(getActivity(), currentCountryIso), this, mPhoneNumberPickerActionListener, true);
         setListAdapter(mAdapter);
         mCallLogQueryHandler = new CallLogQueryHandler(getActivity().getContentResolver(),
                 this, mLogLimit);
@@ -214,14 +203,6 @@ public class CallLogFragment extends ListFragment
         mFadeInStartDelay = getResources().getInteger(R.integer.call_log_actions_fade_start);
         mFadeOutDuration = getResources().getInteger(R.integer.call_log_actions_fade_out_duration);
         mExpandCollapseDuration = getResources().getInteger(R.integer.call_log_expand_collapse_duration);
-
-        if (mIsReportDialogShowing) {
-            DialogFragment df = ObjectFactory.getReportDialogFragment(mReportDialogNumber);
-            if (df != null) {
-                df.setTargetFragment(this, 0);
-                df.show(getActivity().getFragmentManager(), REPORT_DIALOG_TAG);
-            }
-        }
     }
 
     /** Called by the CallLogQueryHandler when the list of calls has been fetched or updated. */
@@ -410,7 +391,6 @@ public class CallLogFragment extends ListFragment
         outState.putInt(KEY_LOG_LIMIT, mLogLimit);
         outState.putLong(KEY_DATE_LIMIT, mDateLimit);
         outState.putBoolean(KEY_SHOW_FOOTER, mHasFooterView);
-        outState.putBoolean(KEY_IS_REPORT_DIALOG_SHOWING, mIsReportDialogShowing);
         outState.putString(KEY_REPORT_DIALOG_NUMBER, mReportDialogNumber);
     }
 
@@ -683,24 +663,5 @@ public class CallLogFragment extends ListFragment
         }
 
         return null;
-    }
-
-    public void onBadDataReported(String number) {
-        mIsReportDialogShowing = false;
-        if (number == null) {
-            return;
-        }
-        mAdapter.onBadDataReported(number);
-        mAdapter.notifyDataSetChanged();
-    }
-
-    public void onReportButtonClick(String number) {
-        DialogFragment df = ObjectFactory.getReportDialogFragment(number);
-        if (df != null) {
-            df.setTargetFragment(this, 0);
-            df.show(getActivity().getFragmentManager(), REPORT_DIALOG_TAG);
-            mReportDialogNumber = number;
-            mIsReportDialogShowing = true;
-        }
     }
 }

@@ -41,13 +41,12 @@ import android.graphics.drawable.Drawable;
 import android.media.AudioManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
+import android.support.v4.content.ContextCompat;
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.util.TypedValue;
 import android.view.KeyEvent;
 import android.view.View;
@@ -58,16 +57,18 @@ import android.widget.TextView;
 import com.google.i18n.phonenumbers.NumberParseException;
 import com.google.i18n.phonenumbers.PhoneNumberUtil;
 import com.google.i18n.phonenumbers.Phonenumber;
+import com.silentcircle.messaging.util.IOUtils;
 import com.silentcircle.silentphone2.R;
 import com.silentcircle.silentphone2.activities.DialerActivity;
 import com.silentcircle.silentphone2.dialhelpers.FindDialHelper;
 import com.silentcircle.silentphone2.services.TiviPhoneService;
 
-import org.w3c.dom.Text;
-
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.Security;
 import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -344,20 +345,12 @@ public class Utilities {
         return true;
     }
 
-    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-    @SuppressWarnings("deprecation")
     public static void setStyledAttributes(Context context) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
-            mDefaultAvatar = context.getResources().getDrawable(R.drawable.ic_contact_picture_holo_dark, null);
-        else
-            mDefaultAvatar = context.getResources().getDrawable(R.drawable.ic_contact_picture_holo_dark);
-
+        mDefaultAvatar = ContextCompat.getDrawable(context, R.drawable.ic_contact_picture_holo_dark);
         mDrawerShadowId = R.drawable.drawer_shadow_dark;
 
-        Resources.Theme theme = context.getTheme();
-        if (theme == null)
-            return;
-        TypedArray a = theme.obtainStyledAttributes(R.styleable.SpaStyle);
+        final Resources.Theme theme = context.getTheme();
+        final TypedArray a = theme != null ? theme.obtainStyledAttributes(R.styleable.SpaStyle) : null;
         if (a != null) {
             mDefaultAvatar = a.getDrawable(R.styleable.SpaStyle_sp_ic_contact_picture);
             mDrawerShadowId = a.getResourceId(R.styleable.SpaStyle_sp_drawer_shadow, R.drawable.drawer_shadow_dark);
@@ -606,6 +599,39 @@ public class Utilities {
         return new String(bytesToHexChars(hash, true));
     }
 
+    /**
+     * Hash an {@link InputStream} to generate some id data
+     *
+     * @param is  the {@link InputStream}
+     * @param algorithm one supported from {@link Security#getProviders()}
+     * @return
+     */
+    public static String hash(InputStream is, String algorithm) {
+        try {
+            MessageDigest md = MessageDigest.getInstance(algorithm);
+
+            byte[] data = new byte[1024];
+            int read;
+            while ((read = is.read(data)) != -1) {
+                md.update(data, 0, read);
+            }
+
+            byte[] hashBytes = md.digest();
+
+            StringBuilder sb = new StringBuilder();
+            for (byte b : hashBytes) {
+                sb.append(Integer.toString((b & 0xff) + 0x100, 16).substring(1));
+            }
+
+            return sb.toString();
+        } catch (NoSuchAlgorithmException | IOException e) {
+            e.printStackTrace();
+            return null;
+        } finally {
+            IOUtils.close(is);
+        }
+    }
+
     public static boolean isNetworkConnected(Context context){
         ConnectivityManager connMgr = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
@@ -622,7 +648,7 @@ public class Utilities {
                 TextUtils.getLayoutDirectionFromLocale(Locale.getDefault()) == View.LAYOUT_DIRECTION_RTL;
     }
 
-    public static void setSubtitleColor(Resources res, @Nullable View toolbar) {
+    public static void setSubtitleColor(final Context ctx, @Nullable final View toolbar) {
         if (toolbar == null) {
             return;
         }
@@ -630,13 +656,13 @@ public class Utilities {
         TextView tv = (TextView)toolbar.findViewById(R.id.sub_title);
         switch (registerStatus) {
             case 1:             // connecting
-                tv.setTextColor(res.getColor(R.color.sc_ng_background_3));
+                tv.setTextColor(ContextCompat.getColor(ctx, R.color.sc_ng_background_3));
                 break;
             case 2:             // online
-                tv.setTextColor(res.getColor(R.color.black_green_dark_1));
+                tv.setTextColor(ContextCompat.getColor(ctx, R.color.black_green_dark_1));
                 break;
             default:            // offline
-                tv.setTextColor(res.getColor(R.color.sc_ng_text_red));
+                tv.setTextColor(ContextCompat.getColor(ctx, R.color.sc_ng_text_red));
         }
     }
 

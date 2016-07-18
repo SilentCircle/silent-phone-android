@@ -69,6 +69,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.silentcircle.common.util.RingtoneUtils;
+import com.silentcircle.common.util.ViewUtil;
 import com.silentcircle.keystore.KeyStoreActivity;
 import com.silentcircle.keystore.KeyStoreHelper;
 import com.silentcircle.messaging.activities.AxoRegisterActivity;
@@ -108,9 +109,11 @@ public class SettingsFragment extends Fragment implements View.OnClickListener,
     public static String DEVELOPER = "developer";
     public static String DEVELOPER_SSL_DEBUG = "developer_ssl_debug";
     public static String DEVELOPER_AXO_DEBUG = "developer_axo_debug";
+    public static String BLOCK_SCREENSHOTS = "block_screenshots";
 
     public static final int MESSAGE_LIGHTS_SELECTION_DIALOG = 1000;
     public static final int MESSAGE_VIBRATE_SELECTION_DIALOG = 1010;
+    public static final int MESSAGE_THEME_SELECTION_DIALOG = 1020;
 
     @SuppressWarnings("unused")
     private static final String TAG = SettingsFragment.class.getSimpleName();
@@ -181,6 +184,7 @@ public class SettingsFragment extends Fragment implements View.OnClickListener,
         prepareAdvancedSettings();
         prepareMessagingSettings();
         prepareExtendedMenu();
+        prepareBlockScreenshots();
         if (ConfigurationUtilities.mEnableDevDebOptions) {
             prepareDeveloper();
             prepareDeveloperMenu();
@@ -323,6 +327,11 @@ public class SettingsFragment extends Fragment implements View.OnClickListener,
                         R.array.vibrate_array, mMessageVibrateIndex, MESSAGE_VIBRATE_SELECTION_DIALOG);
                 break;
 
+            case R.id.messaging_theme:
+                showSelectionDialog(R.string.dialog_title_select_messaging_theme,
+                        R.array.message_theme_array, mMessageThemeIndex, MESSAGE_THEME_SELECTION_DIALOG);
+                break;
+
             case R.id.extended_menu:
                 selectExtendedMenu();
                 break;
@@ -369,6 +378,10 @@ public class SettingsFragment extends Fragment implements View.OnClickListener,
 
             case R.id.developer_option:
                 toggleDeveloperCheckbox();
+                break;
+
+            case R.id.settings_block_screenshots:
+                toggleBlockScreenshots();
                 break;
 
             default: {
@@ -793,6 +806,29 @@ public class SettingsFragment extends Fragment implements View.OnClickListener,
         mDeveloperContent.setVisibility(mDeveloper ? View.VISIBLE : View.GONE);
     }
 
+    /**
+     * Block screenshots handling
+     */
+    private boolean mBlockScreenshots;
+    private SettingsItem mBlockScreenshotsBox;
+
+    private void prepareBlockScreenshots() {
+        mBlockScreenshotsBox = (SettingsItem) mDrawerView.findViewById(R.id.settings_block_screenshots);
+        mBlockScreenshotsBox.setOnClickListener(this);
+
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mParent);
+        mBlockScreenshots = prefs.getBoolean(BLOCK_SCREENSHOTS, false);
+        mBlockScreenshotsBox.setChecked(mBlockScreenshots);
+    }
+
+    private void toggleBlockScreenshots() {
+        mBlockScreenshots = !mBlockScreenshots;
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mParent);
+        prefs.edit().putBoolean(BLOCK_SCREENSHOTS, mBlockScreenshots).apply();
+        mBlockScreenshotsBox.setChecked(mBlockScreenshots);
+        ViewUtil.setBlockScreenshots(getActivity());
+    }
+
     /*
      *** Start developer menu handling
      */
@@ -1210,8 +1246,10 @@ public class SettingsFragment extends Fragment implements View.OnClickListener,
     private SettingsItem mMessageRingtone;
     private SettingsItem mMessageLight;
     private SettingsItem mMessageVibration;
+    private SettingsItem mMessageTheme;
     private int mMessageLightIndex = -1;
     private int mMessageVibrateIndex = -1;
+    private int mMessageThemeIndex = -1;
 
     private void prepareMessagingSettings() {
         // this section works only if chat option is enabled
@@ -1240,12 +1278,22 @@ public class SettingsFragment extends Fragment implements View.OnClickListener,
         mMessageVibration.setOnClickListener(this);
         updateMessageVibratePattern();
 
+        mMessageTheme = (SettingsItem) mDrawerView.findViewById(R.id.messaging_theme);
+        mMessageTheme.setOnClickListener(this);
+        updateMessageTheme();
+
         if (ConfigurationUtilities.mEnableDevDebOptions) {
             mDrawerView.findViewById(R.id.messaging_lock_configuration).setVisibility(View.VISIBLE);
             mDrawerView.findViewById(R.id.messaging_lock_configuration).setOnClickListener(this);
         }
 
-        mDrawerView.findViewById(R.id.settings_chat_device_management).setOnClickListener(this);
+        if (AxoMessaging.getInstance(mParent.getApplicationContext()).isReady()) {
+            mDrawerView.findViewById(R.id.settings_chat_device_management).setVisibility(View.VISIBLE);
+            mDrawerView.findViewById(R.id.settings_chat_device_management).setOnClickListener(this);
+        }
+        else {
+            mDrawerView.findViewById(R.id.settings_chat_device_management).setVisibility(View.GONE);
+        }
     }
 
     private void toggleMessageSoundsCheckbox() {
@@ -1299,7 +1347,16 @@ public class SettingsFragment extends Fragment implements View.OnClickListener,
         CharSequence[] vibrates = getResources().getTextArray(R.array.vibrate_array);
         mMessageVibrateIndex = index < vibrates.length && index >= 0
                 ? index : MessagingPreferences.INDEX_VIBRATE_DEFAULT;
-        mMessageVibration.setDescription(vibrates[index]);
+        mMessageVibration.setDescription(vibrates[mMessageVibrateIndex]);
+    }
+
+    public void updateMessageTheme() {
+        MessagingPreferences preferences = MessagingPreferences.getInstance(mParent);
+        int index = preferences.getMessageTheme();
+        CharSequence[] themes = getResources().getTextArray(R.array.message_theme_array);
+        mMessageThemeIndex = index < themes.length && index >= 0
+                ? index : MessagingPreferences.INDEX_THEME_DARK;
+        mMessageTheme.setDescription(themes[mMessageThemeIndex]);
     }
 
     private void selectMessageRingtone() {
@@ -1378,6 +1435,14 @@ public class SettingsFragment extends Fragment implements View.OnClickListener,
 
                 preferences.setMessageVibrate(index);
                 updateMessageVibratePattern();
+                break;
+            case MESSAGE_THEME_SELECTION_DIALOG:
+                if (ConfigurationUtilities.mTrace) {
+                    Log.d(TAG, "Setting theme to index " + index);
+                }
+
+                preferences.setMessageTheme(index);
+                updateMessageTheme();
                 break;
         }
     }

@@ -48,9 +48,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 package com.silentcircle.contacts.calllognew;
 
+import android.content.Context;
 import android.content.res.Resources;
+import android.support.v4.content.ContextCompat;
 
-import com.silentcircle.silentcontacts2.ScCallLog.ScCalls;
+import com.silentcircle.contacts.ScCallLog.ScCalls;
 import com.silentcircle.silentphone2.R;
 
 
@@ -67,12 +69,12 @@ public class CallTypeHelper {
     /** Color used to identify new missed calls. */
     private final int mNewMissedColor;
 
-    public CallTypeHelper(Resources resources) {
+    public CallTypeHelper(Context ctx) {
         // Cache these values so that we do not need to look them up each time.
-        mIncomingName = resources.getString(R.string.type_incoming);
-        mOutgoingName = resources.getString(R.string.type_outgoing);
-        mMissedName = resources.getString(R.string.type_missed);
-        mNewMissedColor = resources.getColor(R.color.call_log_missed_call_highlight_color);
+        mIncomingName = ctx.getString(R.string.type_incoming);
+        mOutgoingName = ctx.getString(R.string.type_outgoing);
+        mMissedName = ctx.getString(R.string.type_missed);
+        mNewMissedColor = ContextCompat.getColor(ctx, R.color.call_log_missed_call_highlight_color);
     }
 
     /** Returns the text used to represent the given call type. */

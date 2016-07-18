@@ -47,6 +47,7 @@ import android.util.Base64;
 import android.util.Log;
 
 import com.silentcircle.keystore.KeyStoreHelper.AppInfo;
+import com.silentcircle.silentphone2.BuildConfig;
 
 import net.sqlcipher.database.SQLiteDatabase;
 
@@ -63,7 +64,7 @@ public class ProviderDbBackend extends ContentProvider {
     private static final int SHARED_DATA = 4;
     private static final int PRIVATE_DATA_NEW = 5;
 
-    public static final String AUTHORITY = "com.silentcircle.keystore";
+    public static final String AUTHORITY = BuildConfig.AUTHORITY_BASE + ".keystore";
 
     private static final String SUPPORT_NAME = ".keymanagersupport";    // last part of application's support provider
 

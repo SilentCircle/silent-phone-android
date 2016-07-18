@@ -15,6 +15,27 @@
     gradle build script may overwrite the package name - this does not affect
     the manifest package name
     -->
+    <!-- Permission group: Contacts -->
+    <uses-permission android:name="android.permission.READ_CONTACTS" />
+    <uses-permission android:name="android.permission.WRITE_CONTACTS" />
+    <uses-permission android:name="android.permission.GET_ACCOUNTS"/>
+
+    <!-- Permission group: Camera -->
+    <uses-permission android:name="android.permission.CAMERA" />
+
+    <!-- Permission group: Location -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+
+    <!-- Permission Group: Storage -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+
+    <!-- Permission group: Phone -->
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <!-- Silent Phone uses an own Call log implementation, does not use Android's call log
+    <uses-permission android:name="android.permission.WRITE_CALL_LOG" />
+    <uses-permission android:name="android.permission.READ_CALL_LOG" />
+    -->
 
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.INTERNET" />
@@ -23,27 +44,16 @@
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
-    <uses-permission android:name="android.permission.READ_CONTACTS" />
-    <uses-permission android:name="android.permission.WRITE_CONTACTS" />
-    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
-    <uses-permission android:name="android.permission.CAMERA" />
-    <uses-permission android:name="android.permission.WRITE_CALL_LOG" />
-    <uses-permission android:name="android.permission.READ_CALL_LOG" />
     <uses-permission android:name="android.permission.BLUETOOTH" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
     <uses-permission android:name="com.android.launcher.permission.INSTALL_SHORTCUT"/>
-
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
 
     <!-- To enable the AuthenticatorService -->
     <uses-permission android:name="android.permission.AUTHENTICATE_ACCOUNTS"/>
 
     <!-- Enable the client to use AccountManager functions -->
     <uses-permission android:name="android.permission.USE_CREDENTIALS"/>
-    <uses-permission android:name="android.permission.GET_ACCOUNTS"/>
     <uses-permission android:name="android.permission.MANAGE_ACCOUNTS"/>
 
     <!-- use this permission until we solved all Android M doze problems -->
@@ -107,7 +117,7 @@
         android:icon="@drawable/ic_launcher_sp"
         android:label="@string/app_name"
         android:theme="@style/SilentPhoneTheme">
-<!--        android:name="android.support.multidex.MultiDexApplication"> -->
+<!--  android:name="android.support.multidex.MultiDexApplication"> -->
 
         <service android:name=".services.TiviPhoneService" />
 
@@ -231,7 +241,7 @@
             android:name="com.silentcircle.keymanagersupport.SupportProvider"
             android:authorities="${applicationId}.keymanagersupport"
             android:enabled="true"
-            android:exported="true"
+            android:exported="false"
             android:initOrder="3"
             android:permission="com.silentcircle.keymngr.permission.WRITE_SC_KEY" />
 
@@ -244,17 +254,6 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </receiver>
-
-        <!--
-        **** provider for old key manager, this is migration support ****
-        -->
-        <provider
-                android:name="com.silentcircle.keymngrsupport.SupportProvider"
-                android:authorities="${applicationId}.keymngrsupport"
-                android:enabled="true"
-                android:exported="true"
-                android:initOrder="4"
-                android:permission="com.silentcircle.keymngr.permission.WRITE_SC_KEY" />
 
         <!--
         *************** Activity and provider of Key store *************************
@@ -271,17 +270,15 @@
 
         <provider
                 android:name="com.silentcircle.keystore.ProviderDbBackend"
-                android:authorities="com.silentcircle.keystore"
+                android:authorities="${AUTHORITY_BASE}.keystore"
                 android:permission="com.silentcircle.keymngr.permission.WRITE_SC_KEY"
                 android:initOrder="2"
                 android:enabled="true"
-                android:exported="true"/>
+                android:exported="false"/>
 
         <!--
-        ******************** The SCA part ****************************************
+        ******************** The call log part ****************************************
         -->
-
-
 
         <activity
                 android:name="com.silentcircle.contacts.calllognew.CallLogActivity"
@@ -300,20 +297,11 @@
 
         <provider
                 android:name="com.silentcircle.contacts.providers.ScCallLogProvider"
-                android:authorities="com.silentcircle.calls2"
+                android:authorities="${AUTHORITY_BASE}.calls2"
                 android:permission="com.silentcircle.silentcontacts.permission.WRITE"
                 android:initOrder="3"
                 android:enabled="true"
                 android:exported="true"/>
-
-        <provider
-                android:name="com.silentcircle.contacts.providers.ScContactsProvider"
-                android:authorities="com.silentcircle.contacts2"
-                android:writePermission="com.silentcircle.silentcontacts.permission.WRITE"
-                android:initOrder="4"
-                android:enabled="true"
-                android:exported="true">
-        </provider>
 
         <activity
                 android:name="com.silentcircle.contacts.ScCallDetailActivity"
@@ -329,37 +317,7 @@
 
         <service android:name="com.silentcircle.contacts.UpdateScContactDataService"/>
 
-        <activity android:name="com.silentcircle.contacts.vcard.CancelActivity"
-                  android:exported="false"
-                  android:theme="@style/SilentPhoneTheme"/>
-
-        <activity android:name="com.silentcircle.contacts.vcard.ExportVCardActivity"
-                  android:exported="false"
-                  android:theme="@style/SilentPhoneTheme"/>
-
-        <activity android:name="com.silentcircle.contacts.vcard.ManageVCardActivity"
-                  android:exported="false"
-                  android:theme="@style/SilentPhoneTheme"/>
-
-        <activity android:name="com.silentcircle.contacts.vcard.MigrateByVCardActivity"
-                  android:exported="false"
-                  android:theme="@style/SilentPhoneTheme"/>
-
-        <service
-                android:name="com.silentcircle.contacts.vcard.VCardService"
-                android:exported="false"/>
-
-        <activity android:name="com.silentcircle.contacts.vcard.NfcImportVCardActivity"
-                  android:configChanges="orientation|screenSize|keyboardHidden"
-                  android:theme="@style/SilentPhoneTheme">
-            <intent-filter>
-                <action android:name="android.nfc.action.NDEF_DISCOVERED" />
-                <data android:mimeType="text/x-silentvcard" />
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
-        </activity>
-
-        <receiver android:name="com.silentcircle.contacts.providers.LocaleChangeReceiver">
+        <receiver android:name="com.silentcircle.contacts.utils.LocaleChangeReceiver">
             <intent-filter>
                 <action android:name="android.intent.action.LOCALE_CHANGED"/>
             </intent-filter>
@@ -368,7 +326,7 @@
 
         <provider
                 android:name="android.support.v4.content.FileProvider"
-                android:authorities="com.silentcircle.files"
+                android:authorities="${AUTHORITY_BASE}.files"
                 android:grantUriPermissions="true"
                 android:exported="false">
             <meta-data
@@ -378,31 +336,31 @@
 
         <provider
             android:name="com.silentcircle.messaging.providers.PictureProvider"
-            android:authorities="com.silentcircle.messaging.provider.picture"
+            android:authorities="${AUTHORITY_BASE}.messaging.provider.picture"
             android:enabled="true"
             android:exported="false" />
 
         <provider
             android:name="com.silentcircle.messaging.providers.VideoProvider"
-            android:authorities="com.silentcircle.messaging.provider.video"
+            android:authorities="${AUTHORITY_BASE}.messaging.provider.video"
             android:enabled="true"
             android:exported="false" />
 
         <provider
             android:name="com.silentcircle.messaging.providers.AudioProvider"
-            android:authorities="com.silentcircle.messaging.provider.audio"
+            android:authorities="${AUTHORITY_BASE}.messaging.provider.audio"
             android:enabled="true"
             android:exported="false" />
 
         <provider
             android:name="com.silentcircle.messaging.providers.TextProvider"
-            android:authorities="com.silentcircle.messaging.provider.text"
+            android:authorities="${AUTHORITY_BASE}.messaging.provider.text"
             android:enabled="true"
             android:exported="false" />
 
         <provider
             android:name="com.silentcircle.messaging.providers.VCardProvider"
-            android:authorities="com.silentcircle.messaging.provider.vcard"
+            android:authorities="${AUTHORITY_BASE}.messaging.provider.vcard"
             android:enabled="true"
             android:exported="false" />
 
@@ -475,7 +433,7 @@
         <activity android:name="com.silentcircle.messaging.activities.ConversationActivity"
             android:screenOrientation="portrait"
             android:windowSoftInputMode="adjustResize"
-            android:theme="@style/SilentPhoneConversationTheme"
+            android:theme="@style/SilentPhoneConversationThemeDark"
             android:icon="@drawable/ic_launcher_st"
             android:launchMode="singleTop">
             <intent-filter>
@@ -499,7 +457,7 @@
 
         <!-- Activity to view multimedia content from conversation messages -->
         <activity android:name="com.silentcircle.messaging.activities.FileViewerActivity"
-            android:theme="@style/SilentPhoneConversationTheme"
+            android:theme="@style/SilentPhoneConversationThemeDark"
             android:configChanges="screenSize|orientation"
             android:uiOptions="splitActionBarWhenNarrow"/>
 

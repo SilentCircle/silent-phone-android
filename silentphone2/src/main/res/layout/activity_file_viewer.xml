@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     style="@style/Widget.Silence.RelativeLayout"
-    android:background="@drawable/bg_window_dark">
+    android:background="?sp_activity_background_color">
 
     <include
         android:id="@+id/file_viewer_toolbar"

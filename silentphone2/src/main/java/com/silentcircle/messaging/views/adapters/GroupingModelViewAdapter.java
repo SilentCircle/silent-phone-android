@@ -47,8 +47,8 @@ import java.util.List;
 public class GroupingModelViewAdapter extends MultiSelectModelViewAdapter implements SectionIndexer,
         PinnedHeaderListView.PinnedHeaderAdapter {
 
-    private static final Integer VALUE_NO_DRAW = 1;
-    private static final int INVALID_POSITION = -1;
+    protected static final Integer VALUE_NO_DRAW = 1;
+    protected static final int INVALID_POSITION = -1;
 
     private SectionIndexer mIndexer;
     private boolean mHeaderVisibility[];

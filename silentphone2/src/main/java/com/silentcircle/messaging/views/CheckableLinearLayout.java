@@ -79,8 +79,6 @@ public class CheckableLinearLayout extends LinearLayout implements Checkable {
          *
          * When using drawable selector for everything works fine.
          */
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            invalidate();
-        }
+        invalidate();
     }
 }

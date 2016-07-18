@@ -110,7 +110,10 @@ public class PdfViewerFragment extends FileViewerFragment implements View.OnClic
         if (null != savedInstanceState) {
             index = savedInstanceState.getInt(STATE_CURRENT_PAGE_INDEX, 0);
         }
-        showPage(index);
+
+        if (mPdfRenderer != null) {
+            showPage(index);
+        }
     }
 
     @Override
@@ -195,6 +198,10 @@ public class PdfViewerFragment extends FileViewerFragment implements View.OnClic
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     private void openRenderer(Context context) throws IOException {
         mPdfRenderer = new PdfRenderer(getFileDescriptor(context));
+
+        if (mPdfRenderer == null) {
+            throw new IOException();
+        }
     }
 
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
@@ -202,7 +209,10 @@ public class PdfViewerFragment extends FileViewerFragment implements View.OnClic
         if (null != mCurrentPage) {
             mCurrentPage.close();
         }
-        mPdfRenderer.close();
+
+        if (mPdfRenderer != null) {
+            mPdfRenderer.close();
+        }
     }
 
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)

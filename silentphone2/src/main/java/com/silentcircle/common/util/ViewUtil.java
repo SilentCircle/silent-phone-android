@@ -18,8 +18,10 @@ package com.silentcircle.common.util;
 
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -30,19 +32,27 @@ import android.graphics.Point;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
+import android.graphics.drawable.Drawable;
 import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Build;
+import android.preference.PreferenceManager;
+import android.support.annotation.NonNull;
+import android.support.v4.content.ContextCompat;
 import android.text.Spannable;
 import android.text.style.URLSpan;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.Display;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewOutlineProvider;
 import android.view.WindowManager;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
+import android.view.animation.ScaleAnimation;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -51,9 +61,11 @@ import android.widget.Toast;
 import com.silentcircle.messaging.activities.ChooserBuilder;
 import com.silentcircle.messaging.util.IOUtils;
 import com.silentcircle.silentphone2.R;
+import com.silentcircle.silentphone2.fragments.SettingsFragment;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Field;
 
 /**
  * Provides static functions to work with views
@@ -65,6 +77,8 @@ public class ViewUtil {
     public static final int ROTATE_90 = 90;
     public static final int ROTATE_180 = 180;
     public static final int ROTATE_270 = 270;
+
+    private static int statusBarHeight = 0;
 
     private ViewUtil() {
     }
@@ -256,6 +270,53 @@ public class ViewUtil {
         display.getSize(size);
     }
 
+    public static Point getScreenDimensions(final Context context) {
+        Point point = new Point();
+        getScreenDimensions(context, point);
+        return point;
+    }
+
+    public static int getStatusBarHeight(Context context) {
+        if (statusBarHeight == 0) {
+            int resourceId = context.getResources().getIdentifier("status_bar_height", "dimen", "android");
+            if (resourceId > 0) {
+                statusBarHeight = context.getResources().getDimensionPixelSize(resourceId);
+            }
+        }
+        return statusBarHeight;
+    }
+
+    public static Rect getViewInset(View view) {
+        Point screenSize = getScreenDimensions(view.getContext());
+        if (view == null || Build.VERSION.SDK_INT < 21 || view.getHeight() == screenSize.y || view.getHeight() == screenSize.y - statusBarHeight) {
+            return null;
+        }
+        try {
+            Field mAttachInfoField = View.class.getDeclaredField("mAttachInfo");
+            mAttachInfoField.setAccessible(true);
+            Object mAttachInfo = mAttachInfoField.get(view);
+            if (mAttachInfo != null) {
+                Field mStableInsetsField = mAttachInfo.getClass().getDeclaredField("mStableInsets");
+                mStableInsetsField.setAccessible(true);
+                Rect insets = (Rect)mStableInsetsField.get(mAttachInfo);
+                return insets;
+            }
+        } catch (Exception e) {
+        }
+        return null;
+    }
+
+    public static int dp(float value, Context context) {
+        if (value == 0) {
+            return 0;
+        }
+        return (int) Math.ceil(density(context) * value);
+    }
+
+    public static float density(Context context) {
+        return context.getResources().getDisplayMetrics().density;
+    }
+
     /**
      * Sets state (enabled/disabled) for viewGroup and its children.
      *
@@ -356,6 +417,24 @@ public class ViewUtil {
         imageView.startAnimation(animOut);
     }
 
+    public static void scaleToInvisible(View view) {
+        ScaleAnimation animate = new ScaleAnimation(1.0f, 0.0f, 1.0f, 0.5f,
+                Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f);
+        animate.setDuration(100);
+        animate.setFillAfter(true);
+        view.startAnimation(animate);
+        view.setVisibility(View.GONE);
+    }
+
+    public static void scaleToVisible(View view) {
+        ScaleAnimation animate = new ScaleAnimation(0.0f, 1.0f, 0.5f, 1.0f,
+                Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f);
+        animate.setDuration(100);
+        animate.setFillAfter(true);
+        view.startAnimation(animate);
+        view.setVisibility(View.VISIBLE);
+    }
+
     public static void setViewWidthHeight(View view, int width, int height) {
         ViewGroup.LayoutParams params = view.getLayoutParams();
         params.width = width;
@@ -377,16 +456,18 @@ public class ViewUtil {
      */
     public static Bitmap getCircularBitmap(final Bitmap bitmap) {
         int width = bitmap.getWidth();
-        if (bitmap.getWidth() > bitmap.getHeight()) {
-            width = bitmap.getHeight();
+        int height = bitmap.getHeight();
+        int dimens = width;
+        if (width > height) {
+            dimens = height;
         }
-        Bitmap output = Bitmap.createBitmap(width, width, Bitmap.Config.ARGB_8888);
+        Bitmap output = Bitmap.createBitmap(dimens, dimens, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(output);
 
         final float radius = width / 2.0f;
         final int color = 0xffff00ff;
         final Paint paint = new Paint();
-        final Rect rect = new Rect(0, 0, bitmap.getWidth(), bitmap.getHeight());
+        final Rect rect = new Rect(0, 0, width, height);
 
         canvas.drawARGB(0, 0, 0, 0);
         paint.setAntiAlias(true);
@@ -397,4 +478,38 @@ public class ViewUtil {
 
         return output;
     }
+
+    public static void setBlockScreenshots(final Activity activity) {
+        if (activity == null) {
+            return;
+        }
+
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(activity);
+        boolean areScreenshotsDisabled = prefs.getBoolean(SettingsFragment.BLOCK_SCREENSHOTS, false);
+
+        if (areScreenshotsDisabled) {
+            activity.getWindow().setFlags(WindowManager.LayoutParams.FLAG_SECURE,
+                    WindowManager.LayoutParams.FLAG_SECURE);
+        }
+        else {
+            activity.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_SECURE);
+        }
+    }
+
+    public static void tintMenuIcons(@NonNull Context context, @NonNull Menu menu) {
+        TypedValue typedValue = new TypedValue();
+        context.getTheme().resolveAttribute(R.attr.sp_actionbar_title_text_color, typedValue, true);
+        int color = ContextCompat.getColor(context, typedValue.resourceId);
+        tintMenuIcons(menu, color);
+    }
+
+    public static void tintMenuIcons(@NonNull Menu menu, final int color) {
+        for (int i = 0; i < menu.size(); ++i) {
+            final MenuItem item = menu.getItem(i);
+            Drawable icon = item.getIcon();
+            icon.mutate().setColorFilter(color, PorterDuff.Mode.SRC_IN);
+            item.setIcon(icon);
+        }
+    }
+
 }

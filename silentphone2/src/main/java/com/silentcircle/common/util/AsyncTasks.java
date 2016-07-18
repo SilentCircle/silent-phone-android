@@ -104,15 +104,12 @@ public class AsyncTasks {
     }
 
     public static class UserDataBackgroundTask extends AsyncTask<String, Void, Integer> {
-        final private Context mContext;
         private String mUidIn;
         protected byte[] mData;
         protected UserInfo mUserInfo = new UserInfo();
         protected int[] errorCode = new int[1];
 
-        public UserDataBackgroundTask(Context ctx) {
-            mContext = ctx;
-        }
+        public UserDataBackgroundTask() { }
 
         @Override
         protected Integer doInBackground(String... uid) {

@@ -42,6 +42,7 @@ import android.text.TextUtils;
 import android.util.Log;
 
 import com.silentcircle.messaging.util.IOUtils;
+import com.silentcircle.silentphone2.BuildConfig;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -61,10 +62,12 @@ public class VCardProvider extends ContentProvider {
     public static final String VCARD_NAME = "contact";
     public static final String VCARD_FILE_EXTENSION = ".vcf";
 
-    public static final String AUTHORITY = "com.silentcircle.messaging.provider.vcard";
+    public static final String AUTHORITY = BuildConfig.AUTHORITY_BASE + ".messaging.provider.vcard";
     public static final Uri CONTENT_URI = Uri.parse("content://" + AUTHORITY);
 
     private static final HashMap<String, String> MIME_TYPES = new HashMap<>();
+
+    private Context mContext;
 
     static {
         MIME_TYPES.put(VCARD_FILE_EXTENSION, "text/vcard");
@@ -86,7 +89,10 @@ public class VCardProvider extends ContentProvider {
 
     @Override
     public boolean onCreate() {
-        getContext().getContentResolver().notifyChange(CONTENT_URI, null);
+        mContext = getContext();
+        if (mContext == null)
+            return false;
+        mContext.getContentResolver().notifyChange(CONTENT_URI, null);
         return true;
     }
 
@@ -113,7 +119,7 @@ public class VCardProvider extends ContentProvider {
     @Override
     public int delete(Uri uri, String selection, String[] selectionArgs) {
         String name = getContactName(uri);
-        File file = new File(getContext().getFilesDir(), name + VCARD_FILE_EXTENSION);
+        File file = new File(mContext.getFilesDir(), name + VCARD_FILE_EXTENSION);
         if (file.exists()) {
             file.delete();
         }
@@ -139,7 +145,7 @@ public class VCardProvider extends ContentProvider {
 
     private File getVCardFile(final Uri uri) {
         String name = getContactName(uri);
-        File file = new File(getContext().getFilesDir(), name + VCARD_FILE_EXTENSION);
+        File file = new File(mContext.getFilesDir(), name + VCARD_FILE_EXTENSION);
         if (file.exists()) {
             file.delete();
         }
@@ -171,7 +177,7 @@ public class VCardProvider extends ContentProvider {
         String name = null;
 
         String lookupKey = uri.getLastPathSegment();
-        ContentResolver resolver = getContext().getContentResolver();
+        ContentResolver resolver = mContext.getContentResolver();
         Uri lookupUri = Uri.withAppendedPath(ContactsContract.Contacts.CONTENT_LOOKUP_URI, lookupKey);
         Uri contactUri = ContactsContract.Contacts.lookupContact(resolver, lookupUri);
         Cursor cursor =  resolver.query(contactUri, null, null, null, null);
@@ -190,12 +196,10 @@ public class VCardProvider extends ContentProvider {
         Uri vCardUri = Uri.withAppendedPath(ContactsContract.Contacts.CONTENT_VCARD_URI, lookupKey);
 
         AssetFileDescriptor descriptor;
-        descriptor = getContext().getContentResolver().openAssetFileDescriptor(vCardUri, "r");
+        descriptor = mContext.getContentResolver().openAssetFileDescriptor(vCardUri, "r");
         FileInputStream inputStream = descriptor.createInputStream();
         byte[] buffer = new byte[(int) descriptor.getDeclaredLength()];
         inputStream.read(buffer);
-        String vCard = new String(buffer);
-        return vCard;
+        return new String(buffer);
     }
-
 }

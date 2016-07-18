@@ -1,17 +1,60 @@
 #include "SipTransport.h"
 #include "../../storage/sqlite/SQLiteStoreConv.h"
 #include "../../logging/AxoLogging.h"
+#include <stdlib.h>
 #include <map>
+#include <thread>
+#include <chrono>
+
+#ifndef MAX_TIME_WAIT_FOR_SLOTS
+#define MAX_TIME_WAIT_FOR_SLOTS 1500
+#endif
 
 
 using namespace axolotl;
 
-void Log(const char* format, ...);
+#if defined (EMBEDDED)
+static int32_t getNumOfSlots()
+{
+    void *getAccountByID(int id);
+    int getInfo(void *pEng, const char *key, char *p, int iMax);
+
+    char tmp[10] = {0};
+
+    void *pEngine = getAccountByID(0);
+    if (getInfo(pEngine, "getFreeSesCnt", tmp, 8) <= 0) {
+        LOGGER(ERROR, __func__, " Get free sessions returned <= 0");
+        return -1;
+    }
+
+    return atoi(tmp);
+}
+#endif
 
 vector<int64_t>* SipTransport::sendAxoMessage(const string& recipient, vector<pair<string, string> >* msgPairs)
 {
     LOGGER(INFO, __func__, " -->");
-    size_t numPairs = msgPairs->size();
+    int32_t numPairs = static_cast<int32_t>(msgPairs->size());
+
+    vector<int64_t>* msgIdsReturn = new std::vector<int64_t>;
+
+#if defined (EMBEDDED)
+    int32_t availableSlots = getNumOfSlots();
+    int32_t sumWaitTime = 0;
+
+    LOGGER(INFO, __func__, " Number of session slots: ", availableSlots, ", required: ", numPairs );
+    while (availableSlots < numPairs) {
+        LOGGER(INFO, __func__, " Wait for session slots, available: ", availableSlots, ", required: ", numPairs );
+        if (sumWaitTime > MAX_TIME_WAIT_FOR_SLOTS) {
+            msgPairs->clear();
+            LOGGER(ERROR, __func__, " Cannot get session slots to send messages: ", availableSlots, ", required: ", numPairs);
+            return msgIdsReturn;        // return an empty vector, telling nothing sent
+        }
+        std::this_thread::sleep_for (std::chrono::milliseconds(150));
+        sumWaitTime += 150;
+        availableSlots = getNumOfSlots();
+    }
+#endif
 
     uint8_t** names = new uint8_t*[numPairs+1];
     uint8_t** devIds = new uint8_t*[numPairs+1];
@@ -35,7 +78,6 @@ vector<int64_t>* SipTransport::sendAxoMessage(const string& recipient, vector<pa
     msgPairs->clear();
     delete[] names; delete[] devIds; delete[] envelopes; delete[] sizes;
 
-    vector<int64_t>* msgIdsReturn = new std::vector<int64_t>;
     for (int32_t i = 0; i < numPairs; i++) {
         if (msgIds[i] != 0)
             msgIdsReturn->push_back(msgIds[i]);

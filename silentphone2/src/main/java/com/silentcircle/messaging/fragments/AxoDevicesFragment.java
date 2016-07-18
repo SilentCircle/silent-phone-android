@@ -37,6 +37,7 @@ import android.content.res.Resources;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
@@ -103,8 +104,6 @@ public class AxoDevicesFragment extends Fragment implements View.OnClickListener
         return f;
     }
 
-    @TargetApi(Build.VERSION_CODES.M)
-    @SuppressWarnings("deprecation")
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -115,15 +114,8 @@ public class AxoDevicesFragment extends Fragment implements View.OnClickListener
         }
         String action = args.getString(AxoRegisterActivity.ACTION, AxoRegisterActivity.ACTION_MANAGE);
         mManage = AxoRegisterActivity.ACTION_MANAGE.equals(action);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            mNormalTextColor = mParent.getResources().getColor(android.R.color.white, null);
-            mThisDevTextColor = mParent.getResources().getColor(R.color.black_yellow, null);
-        }
-        else {
-            mNormalTextColor = mParent.getResources().getColor(android.R.color.white);
-            mThisDevTextColor = mParent.getResources().getColor(R.color.black_yellow);
-
-        }
+        mNormalTextColor = ContextCompat.getColor(mParent, android.R.color.white);
+        mThisDevTextColor = ContextCompat.getColor(mParent, R.color.black_yellow);
     }
 
     @TargetApi(Build.VERSION_CODES.M)
@@ -360,7 +352,7 @@ public class AxoDevicesFragment extends Fragment implements View.OnClickListener
 
     private ArrayList<DeviceData> getSiblingDeviceInfo() {
         byte[][] devices = AxoMessaging.getIdentityKeys(IOUtils.encode(AxoMessaging.getInstance(mParent).getUserName()));
-        if (devices.length == 0) {
+        if (devices == null || devices.length == 0) {
             return null;
         }
         ArrayList<DeviceData> devData = new ArrayList<>(devices.length);

@@ -27,7 +27,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 package com.silentcircle.messaging.listener;
 
-import android.content.Intent;
 import android.location.Location;
 import android.text.TextUtils;
 import android.view.View;
@@ -40,13 +39,11 @@ import com.silentcircle.messaging.model.Conversation;
 import com.silentcircle.messaging.model.MessageStates;
 import com.silentcircle.messaging.model.event.Message;
 import com.silentcircle.messaging.repository.ConversationRepository;
+import com.silentcircle.messaging.services.AxoMessaging;
 import com.silentcircle.messaging.task.ComposeMessageTask;
 import com.silentcircle.messaging.task.SaveMessageTask;
-import com.silentcircle.messaging.util.Action;
 import com.silentcircle.messaging.util.AsyncUtils;
-import com.silentcircle.messaging.util.Extra;
 import com.silentcircle.messaging.util.MessageUtils;
-import com.silentcircle.silentphone2.Manifest;
 
 public class SendMessageOnClick implements OnClickListener {
 
@@ -105,9 +102,9 @@ public class SendMessageOnClick implements OnClickListener {
 
                 if (mConversation.isLocationEnabled()) {
                     // notify about conversation changes now, we want to see message as soon as possible
-                    Intent intent = Action.UPDATE_CONVERSATION.intent();
-                    Extra.PARTNER.to(intent, message.getConversationID());
-                    mSource.getContext().sendOrderedBroadcast(intent, Manifest.permission.READ);
+                    MessageUtils.notifyConversationUpdated(mSource.getContext(),
+                            MessageUtils.getConversationId(message), true, message.getId(),
+                            AxoMessaging.UPDATE_ACTION_MESSAGE_SEND);
 
                     LocationObserver.observe(mSource.getContext(),
                             new SendMessageOnLocationReceived(message));

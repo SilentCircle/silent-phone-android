@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="silent_text" translatable="false">Silent Text</string>
     <string name="security_rating_hint_2_to_3" translatable="false">&#9733;&#9733;&#9734;&#8594;&#9733;&#9733;&#9733;</string>
     <string name="support_email_address" translatable="false">support@silentcircle.com</string>
     <string name="support_email_subject" translatable="false">[User Feedback] Silent Text for Android</string>

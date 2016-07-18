@@ -24,7 +24,6 @@ import com.silentcircle.contacts.calllognew.ContactInfoHelper;
 import com.silentcircle.contacts.calllognew.CallLogAdapter;
 import static com.silentcircle.contacts.calllognew.CallLogAdapter.CallFetcher;
 import com.silentcircle.contacts.calllognew.CallLogAdapter.CallItemExpandedListener;
-import com.silentcircle.contacts.calllognew.CallLogAdapter.OnReportButtonClickListener;
 
 /**
  * Default static binding for various objects.
@@ -47,10 +46,9 @@ public class ObjectFactory {
     public static CallLogAdapter newCallLogAdapter(Context context,
             CallFetcher callFetcher, ContactInfoHelper contactInfoHelper,
             CallItemExpandedListener callItemExpandedListener,
-            OnReportButtonClickListener onReportButtonClickListener, 
             OnPhoneNumberPickerActionListener actionListener, boolean isCallLog) {
         return new CallLogAdapter(context, callFetcher, contactInfoHelper,
-                callItemExpandedListener, onReportButtonClickListener, actionListener, isCallLog);
+                callItemExpandedListener, actionListener, isCallLog);
     }
 
     public static DialogFragment getReportDialogFragment(String number) {

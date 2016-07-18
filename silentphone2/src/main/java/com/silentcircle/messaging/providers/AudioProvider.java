@@ -27,23 +27,28 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 package com.silentcircle.messaging.providers;
 
+import android.content.ContentProvider;
+import android.content.ContentValues;
+import android.content.Context;
+import android.database.Cursor;
+import android.net.Uri;
+import android.os.ParcelFileDescriptor;
+
+import com.silentcircle.silentphone2.BuildConfig;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.HashMap;
 
-import android.content.ContentProvider;
-import android.content.ContentValues;
-import android.database.Cursor;
-import android.net.Uri;
-import android.os.ParcelFileDescriptor;
-
 public class AudioProvider extends ContentProvider {
 
     public static final String MP4_FILE_NAME = "AUDIO.mp4";
 
-    public static final Uri CONTENT_URI =  Uri.parse("content://com.silentcircle.messaging.provider.audio/");
+    public static final Uri CONTENT_URI =  Uri.parse("content://" + BuildConfig.AUTHORITY_BASE + ".messaging.provider.audio/");
     private static final HashMap<String, String> MIME_TYPES = new HashMap<>();
+
+    private Context mContext;
 
     static {
         MIME_TYPES.put( ".mp4", "audio/mp4" );
@@ -51,7 +56,7 @@ public class AudioProvider extends ContentProvider {
 
     @Override
     public int delete( Uri uri, String where, String [] whereArgs ) {
-        File file = new File(getContext().getFilesDir(), MP4_FILE_NAME);
+        File file = new File(mContext.getFilesDir(), MP4_FILE_NAME);
 
         if(file.exists()) {
             file.delete();
@@ -78,12 +83,15 @@ public class AudioProvider extends ContentProvider {
 
     @Override
     public boolean onCreate() {
+        mContext = getContext();
+        if (mContext == null)
+            return false;
         try {
-            File mFile = new File(getContext().getFilesDir(), MP4_FILE_NAME);
+            File mFile = new File(mContext.getFilesDir(), MP4_FILE_NAME);
             if (!mFile.exists()) {
                 mFile.createNewFile();
             }
-            getContext().getContentResolver().notifyChange(CONTENT_URI, null);
+            mContext.getContentResolver().notifyChange(CONTENT_URI, null);
             return true;
 
         } catch (Exception e) {
@@ -99,7 +107,7 @@ public class AudioProvider extends ContentProvider {
 
             throws FileNotFoundException {
 
-        File f = new File(getContext().getFilesDir(), MP4_FILE_NAME);
+        File f = new File(mContext.getFilesDir(), MP4_FILE_NAME);
         if (!f.exists()) {
             try {
                 f.createNewFile();

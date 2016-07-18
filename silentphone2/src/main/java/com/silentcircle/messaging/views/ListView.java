@@ -35,7 +35,6 @@ import android.util.AttributeSet;
 import android.util.SparseBooleanArray;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListAdapter;
@@ -137,16 +136,15 @@ public class ListView extends com.silentcircle.common.list.PinnedHeaderListView 
 
         @Override
         public void onItemClick(AdapterView<?> parentView, View view, int position, long itemId) {
+            // click on a header does not do anything
+            if (isHeaderPosition(position)) {
+                return;
+            }
 
             if (multiChoiceModeCallback == null || !multiChoiceModeCallback.hasActionMode()) {
                 if (delegate != null) {
                     delegate.onItemClick(parentView, view, position, itemId);
                 }
-                return;
-            }
-
-            // click on a header does not do anything
-            if (isHeaderPosition(position)) {
                 return;
             }
 
@@ -248,6 +246,20 @@ public class ListView extends com.silentcircle.common.list.PinnedHeaderListView 
         for (int i = 0; i < length; i++) {
             setItemChecked(i, checked);
         }
+    }
+
+    @Override
+    public void setItemChecked(int position, boolean value) {
+        if (!isHeaderPosition(position)) {
+            super.setItemChecked(position, value);
+        }
+    }
+
+    @Override
+    public boolean performItemClick(View view, int position, long id) {
+        // do not allow clicks on headers beyond this point
+        // for accessibility, header's text is read out
+        return !isHeaderPosition(position) && super.performItemClick(view, position, id);
     }
 
     public void setMultiChoiceModeListener(com.silentcircle.messaging.views.MultiChoiceModeListener listener) {

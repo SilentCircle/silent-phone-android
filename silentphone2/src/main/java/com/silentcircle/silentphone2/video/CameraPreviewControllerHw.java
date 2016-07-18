@@ -33,6 +33,8 @@ import android.graphics.Point;
 import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
 import android.hardware.Camera.PreviewCallback;
+import android.hardware.camera2.params.StreamConfigurationMap;
+import android.media.ImageReader;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.TextureView;
@@ -46,7 +48,7 @@ import com.silentcircle.silentphone2.util.Utilities;
 import java.io.IOException;
 import java.util.List;
 
-public class CameraPreviewControllerHw implements PreviewCallback, TextureView.SurfaceTextureListener {
+public class CameraPreviewControllerHw implements CameraPreviewController, PreviewCallback, TextureView.SurfaceTextureListener {
 
     private static final String TAG = CameraPreviewControllerHw.class.getSimpleName();
 
@@ -71,20 +73,6 @@ public class CameraPreviewControllerHw implements PreviewCallback, TextureView.S
     private byte[] mBuffer1, mBuffer2, mBuffer3;
 
     final private TouchListener mTouchListener;
-
-    public interface TouchListener {
-        /**
-         * Call listener if  the user touches the preview window
-         */
-        void onTouchDown();
-
-        /**
-         * Call listener if user releases the preview window.
-         *
-         * @param view the view to position to the quadrants.
-         */
-        void onTouchUp(View view);
-    }
 
     public CameraPreviewControllerHw(TextureView textureView, FrameLayout container, TouchListener listener) {
         mTouchListener = listener;
@@ -137,10 +125,12 @@ public class CameraPreviewControllerHw implements PreviewCallback, TextureView.S
         return true;
     }
 
+    @Override
     public void setFrontCamera(boolean yesNo) {
         setCameraFacing(yesNo);
     }
 
+    @Override
     synchronized public void stop() {
         if (camera == null) {
             mIsStarted = false;
@@ -164,10 +154,12 @@ public class CameraPreviewControllerHw implements PreviewCallback, TextureView.S
         camera = null;
     }
 
+    @Override
     public boolean isCapturing() {
         return mIsStarted;
     }
 
+    @Override
     synchronized public boolean start(int orientation) {
 
         if (mIsStarted)
@@ -180,7 +172,8 @@ public class CameraPreviewControllerHw implements PreviewCallback, TextureView.S
         return true;
     }
 
-    public static int getNumCameras() {
+    @Override
+    public int getNumCameras() {
         return Camera.getNumberOfCameras();
     }
 
@@ -188,6 +181,10 @@ public class CameraPreviewControllerHw implements PreviewCallback, TextureView.S
         bUseFrontCamera = bFront;
     }
 
+    @Override
+    public boolean isCamera2Usable() {
+        return false;
+    }
 
     private int getCameraID(boolean bFront) {
         int numCameras = Camera.getNumberOfCameras();

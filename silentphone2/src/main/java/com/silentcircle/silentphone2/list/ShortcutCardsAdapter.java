@@ -28,7 +28,7 @@ import android.os.Build;
 import android.os.Handler;
 import android.provider.ContactsContract;
 import android.support.annotation.NonNull;
-import android.util.Log;
+import android.support.v4.content.ContextCompat;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
@@ -148,8 +148,7 @@ public class ShortcutCardsAdapter extends BaseAdapter {
         mCallLogPaddingTop = resources.getDimensionPixelSize(R.dimen.recent_call_log_item_padding_top);
         mCallLogPaddingBottom = resources.getDimensionPixelSize(R.dimen.recent_call_log_item_padding_bottom);
 //        mShortCardBackgroundColor = resources.getColor(R.color.call_log_expanded_background_color);
-        mShortCardBackgroundColor = Build.VERSION.SDK_INT < Build.VERSION_CODES.M ?
-                resources.getColor(R.color.background_dialer_list_items) : resources.getColor(R.color.background_dialer_list_items, null);
+        mShortCardBackgroundColor = ContextCompat.getColor(mContext, R.color.background_dialer_list_items);
 
 
         mCallLogAdapter = callLogAdapter;

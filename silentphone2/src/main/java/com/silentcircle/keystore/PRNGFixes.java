@@ -16,6 +16,7 @@ package com.silentcircle.keystore;
 
 import android.os.Build;
 import android.os.Process;
+import android.util.Log;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
@@ -209,17 +210,25 @@ public final class PRNGFixes {
 
         @Override
         protected void engineSetSeed(byte[] bytes) {
+            OutputStream out = null;
             try {
-                OutputStream out;
                 synchronized (sLock) {
                     out = getUrandomOutputStream();
                 }
                 out.write(bytes);
                 out.flush();
-                mSeeded = true;
             } catch (IOException e) {
-                throw new SecurityException(
-                        "Failed to mix seed into " + URANDOM_FILE, e);
+                // On a small fraction of devices /dev/urandom is not writable.
+                // Log and ignore. Fix according to
+                // http://android-developers.blogspot.de/2013/08/some-securerandom-thoughts.html
+                Log.w(PRNGFixes.class.getSimpleName(),
+                        "Failed to mix seed into " + URANDOM_FILE);
+            } finally {
+                mSeeded = true;
+                try {
+                    if (out != null)
+                        out.close();
+                } catch (IOException ignore) { }
             }
         }
 

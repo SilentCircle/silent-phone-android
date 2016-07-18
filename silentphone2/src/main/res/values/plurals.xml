@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
 
+
   <plurals name="notify_new_messages_title">
     <item quantity="zero"><xliff:g id="quantity">%1$d</xliff:g> new messages</item>
     <item quantity="one">New message received</item>
@@ -52,5 +53,26 @@
   <plurals name="short_time_days">
       <item quantity="other"><xliff:g id="count">%1$d</xliff:g>d</item>
   </plurals>
+
+    <plurals name="duration_seconds">
+        <item quantity="one">1 second</item>
+        <item quantity="other"><xliff:g id="count">%d</xliff:g> seconds</item>
+    </plurals>
+
+    <plurals name="duration_minutes">
+        <item quantity="one">1 minute</item>
+        <item quantity="other"><xliff:g id="count">%d</xliff:g> minutes</item>
+    </plurals>
+
+    <plurals name="duration_hours">
+        <item quantity="zero">0 hours</item>
+        <item quantity="one">1 hour</item>
+        <item quantity="other"><xliff:g id="count">%d</xliff:g> hours</item>
+    </plurals>
+
+    <plurals name="duration_days">
+        <item quantity="one">1 day</item>
+        <item quantity="other"><xliff:g id="count">%d</xliff:g> days</item>
+    </plurals>
 
 </resources>

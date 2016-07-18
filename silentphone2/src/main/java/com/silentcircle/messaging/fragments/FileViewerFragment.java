@@ -37,12 +37,12 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.silentcircle.messaging.util.IOUtils;
 import com.silentcircle.silentphone2.R;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.io.InputStream;
 
 /**
@@ -98,7 +98,19 @@ public class FileViewerFragment extends BaseFragment {
 
     protected ParcelFileDescriptor getFileDescriptor(Context context) throws FileNotFoundException {
         if (mFileDescriptor != null) {
-            return mFileDescriptor;
+            boolean isClosed = true;
+            try {
+                int fd = mFileDescriptor.getFd();
+                // file descriptor with value -1 indicates that this ParcelFileDescriptor
+                // has been closed
+                isClosed = (fd == -1);
+            } catch (IllegalStateException ex) {
+                // file descriptor closed
+            }
+
+            if (!isClosed) {
+                return mFileDescriptor;
+            }
         }
 
         Uri uri = getURI();
@@ -130,11 +142,8 @@ public class FileViewerFragment extends BaseFragment {
     public void onDestroy() {
         super.onDestroy();
 
-        if (mFileDescriptor != null) {
-            try {
-                mFileDescriptor.close();
-            } catch (IOException ignore) {}
-        }
+        IOUtils.close(mFileDescriptor);
+        mFileDescriptor = null;
     }
 
     protected InputStream openFileForReading() {

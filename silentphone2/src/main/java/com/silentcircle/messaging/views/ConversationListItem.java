@@ -40,16 +40,12 @@ import android.widget.QuickContactBadge;
 import android.widget.TextView;
 
 import com.silentcircle.common.list.ContactEntry;
-import com.silentcircle.common.util.AsyncTasks;
-import com.silentcircle.common.util.SearchUtil;
 import com.silentcircle.contacts.ContactPhotoManagerNew;
 import com.silentcircle.messaging.model.Conversation;
 import com.silentcircle.messaging.model.event.Event;
 import com.silentcircle.messaging.model.event.IncomingMessage;
 import com.silentcircle.messaging.model.event.Message;
 import com.silentcircle.messaging.model.event.OutgoingMessage;
-import com.silentcircle.messaging.repository.ConversationRepository;
-import com.silentcircle.messaging.services.AxoMessaging;
 import com.silentcircle.messaging.services.SCloudService;
 import com.silentcircle.messaging.util.AvatarUtils;
 import com.silentcircle.messaging.util.ContactsCache;
@@ -119,7 +115,6 @@ public class ConversationListItem extends LinearLayout {
         }
     };
 
-    private View mMessageCardView;
     private TextView mMessageText;
     private TextView mNameView;
     private TextView mMessageTimeView;
@@ -143,7 +138,6 @@ public class ConversationListItem extends LinearLayout {
         inflate(context, R.layout.messaging_log_list_item_new, this);
 
         mMessageText = (TextView) findViewById(R.id.message_text);
-        mMessageCardView = findViewById(R.id.message_summary_card);
         mNameView = (TextView) findViewById(R.id.name);
         mContactButton =
                 (QuickContactBadge) findViewById(R.id.quick_contact_photo);
@@ -215,20 +209,13 @@ public class ConversationListItem extends LinearLayout {
         mMessageText.setText(text);
     }
 
-    public void setMessageBackground(final int drawable) {
-        mMessageCardView.setBackgroundResource(drawable);
-    }
-
     public void setEvent(final Event event) {
         String messageText = null;
-        int backgroundResource = R.drawable.bg_empty_card_summary;
         if (event != null) {
             messageText = event.getText();
             if (event instanceof IncomingMessage) {
-                backgroundResource = R.drawable.bg_card_summary;
                 messageText = getAttachmentDescription((Message) event);
             } else if (event instanceof OutgoingMessage) {
-                backgroundResource = R.drawable.bg_my_card_summary;
                 messageText = getAttachmentDescription((Message) event);
             }
         }
@@ -236,7 +223,6 @@ public class ConversationListItem extends LinearLayout {
             messageText = getResources().getString(R.string.messaging_conversation_list_no_messages);
         }
         setMessageText(messageText);
-        setMessageBackground(backgroundResource);
     }
 
     private String getAttachmentDescription(Message message) {
@@ -291,7 +277,6 @@ public class ConversationListItem extends LinearLayout {
     @Override
     public void setSelected(boolean selected) {
         super.setSelected(selected);
-        mMessageCardView.setSelected(selected);
         mMessageText.setSelected(selected);
     }
 

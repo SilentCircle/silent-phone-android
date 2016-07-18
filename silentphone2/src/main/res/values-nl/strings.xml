@@ -12,12 +12,8 @@
     <string name="confirm_dialog">Bevestigen</string>
     <string name="provision_later">Later</string>
     <string name="crypto_padlock">Hangslot geeft beveiligingsstatus aan</string>
-
     <string name="error_code">Foutcode: </string>
     <string name="wipe_phone">Afmelden</string>
-
-    
-
     <string name="sip_state_calling">Bellen…</string>
     <string name="sip_state_connecting">Verbinding wordt gemaakt……</string>
     <string name="sip_state_ringing">Gaat over</string>
@@ -30,18 +26,11 @@
     <string name="sip_error_no_user">Gebruiker niet gevonden</string>
     <string name="sip_error_no_cover">Geen radiodekking</string>
     <string name="sip_error_no_server">Kan server niet bereiken</string>
-
-    
-    <string name="call_type_audio">Binnenkomend gesprek</string>
     <string name="call_error">Fout</string>
-
-    
     <string name="secstate_looking">Beveiliging testen</string>
     <string name="secstate_going_sec">De beveiliging aanmaken</string>
     <string name="secstate_sec_disabled">NIET safe - niet configureerde</string>
     <string name="to_server_only">Tot de server</string>
-
-    
     <string name="crypto_peer_name">Naam peer</string>
     <string name="crypto_peer_client">ZRTP peer client</string>
     <string name="crypto_peer_client_id">ZRTP client ID</string>
@@ -54,20 +43,14 @@
     <string name="crypto_crypto_components_hash">Hash:</string>
     <string name="crypto_crypto_components_sauth">SRTP Auth-tag:</string>
     <string name="crypto_shared_secrets">Gedeelde geheimen</string>
-
-    
     <string name="call_mng_conference">Vergadering</string>
     <string name="call_mng_private">Privé</string>
     <string name="call_mng_in_out">Binnenkomend, uitgaand</string>
-
-    
     <string name="zrtp_we_error">ZRTP fout</string>
     <string name="zrtp_we_warn">ZRTP waarschuwing</string>
     <string name="srtp_we_warn">SRTP waarschuwing</string>
     <string name="zrtp_show_details">Details weergeven</string>
     <string name="zrtp_hide_details">Details verbergen</string>
-
-    
     <string name="provisioning_welcome">Welkom bij Silent Circle</string>
     <string name="provisioning_vertu_welcome">Welkom bij Silent Circle, in samenwerking met Vertu</string>
     <string name="provisioning_username_hint">Gebruikersnaam</string>
@@ -91,13 +74,12 @@
     <string name="pwstrength_good">Sterkte wachtwoord: GOED</string>
     <string name="pwstrength_strong">Sterkte wachtwoord: STERK</string>
     <string name="provisioning_show_pw">Wachtwoord weergeven</string>
+
     <string name="provisioning_privacy_tc">Ik heb het privacybeleid en de leveringsvoorwaarden van <a href="https://accounts.silentcircle.com/terms/">Silent Circle</a> gelezen</string>
     <string name="provisioning_get_news">Ik zou graag meer exclusief nieuws en uitnodigingen willen ontvangen van Services</string>
     <string name="provisioning_new_account">Nieuwe account aanmaken</string>
     <string name="provisioning_existing_account">Aanmelden bij bestaande account</string>
     <string name="provisioning_create">Aanmaken</string>
-    <string name="provisioning_credentials">Gebruikersnaam of wachtwoord onjuist. Controleer dit a.u.b.</string>
-
     <string name="thanks_number">Nummer:</string>
     <string name="thanks_name">Naam:</string>
     <string name="preferred_sas_type">Voorkeurtype SAS</string>
@@ -108,40 +90,25 @@
     <string name="preferred_algorithms">Non-NIST suite heeft voorkeur</string>
     <string name="nist_preferred">Non-NIST algoritmen hebben altijd voorkeur indien beschikbaar: Twofish-, Skein- en Bernstein-curve.</string>
     <string name="description_dial_button">Bellen</string>
-    
     <string name="description_delete_button">backspace</string>
-
-    <string name="contacts_image_button">Contacten openen</string>
     <string name="zrtp_common_cmp">"Vergelijk de verificatiecode verbaal met de gebelde persoon. Als de codes niet overeenstemmen, betekent dit dat iemand het gesprek misschien heeft onderschept."</string>
     <string name="zrtp_common_cls">Verbindingsfout. Hang op en bel opnieuw.</string>
     <string name="zrtp_common_upd">De persoon die u belt moet zijn/haar Silent Phone-applicatie naar de nieuwste versie updaten.</string>
     <string name="zrtp_common_app">Applicatiefout. Installeer Silent Phone opnieuw.</string>
-
-    
     <string name="permission_read">Beveiligde contacten lezen</string>
     <string name="permission_write">Beveiligde contacten schrijven</string>
-
-    
     <string name="permission_read_km">Leesbevoegdheid voor Silent Circle Key Manager</string>
     <string name="permission_write_km">Schrijfbevoegdheid voor Silent Circle Key Manager</string>
-
-    
     <string name="provisioning_stepInfo_1">Stap 1 van 3</string>
     <string name="provisioning_stepInfo_2">Stap 2 van 3</string>
     <string name="provisioning_stepInfo_3">Stap 3 van 3</string>
     <string name="provisioning_vertu_email_info">Voor het ontvangen van belangrijke updates en informatie over uw account is een tweede e-mailadres vereist.</string>
     <string name="provisioning_vertu_welcome_long">Als Vertu-klant krijgt u 12 maanden lang gratis toegang tot de gecodeerde communicatieservice van Silent Circle.</string>
-
     <string name="video_audio_mute">Toggle mute audio</string>
-    <string name="video_switch_camera">Switch cameras</string>
-
-
-    
     <string name="provisioning_infoText">Account aanmaken</string>
     <string name="provisioning_bp_email_info">Voor het ontvangen van belangrijke updates en informatie over uw account is een e-mailadres vereist.</string>
     <string name="mute_button">Mute</string>
     <string name="video_button">Video</string>
-    <string name="video_control">Videoregelaar</string>
     <string name="add_call">Gesprek toevoegen</string>
     <string name="audio_options_button">Audio-\nopties</string>
     <string name="verify_label">Aanraken en verifiëren</string>
@@ -160,57 +127,36 @@
     <string name="account_creation_wrong_format">Aanmaken account - server heeft gegevens in verkeerd formaat gestuurd: </string>
     <string name="account_creation_no_data">Aanmaken account - server heeft verkeerde gegevens teruggestuurd.</string>
     <string name="other_settings">Overige instellingen</string>
-    <string name="select_theme">Selecteer thema</string>
-    <string name="current_theme">Huidig thema: %s</string>
-    <string name="theme_orange">Orange</string>
-    <string name="theme_white">White</string>
-    <string name="theme_dusk">Dusk</string>
     <string name="theme_black">Black</string>
-
-    
-
     <string name="bp_is_online">Silent Phone online</string>
     <string name="bp_is_offline">Silent Phone momenteel offline</string>
     <string name="bp_not_started">Silent Phone niet gestart</string>
     <string name="bp_registering">Silent Phone wordt geregistreerd</string>
     <string name="bp_status_unknown">Status onbekend</string>
-
-    
-
     <string name="audio_bt">BlueTooth-headset</string>
     <string name="audio_speaker">Luidspreker</string>
     <string name="audio_ear_phone">Oortelefoon</string>
     <string name="end_call_button">Gesprek beëindigen</string>
-
     <string name="call_quality">Kwaliteit</string>
     <string name="call_quality_bad">slecht</string>
     <string name="call_quality_weak">zwak</string>
     <string name="call_quality_acceptable">aanvaardbaar</string>
     <string name="call_quality_good">goed</string>
     <string name="call_quality_very_good">zeer goed</string>
-
     <string name="in_call_drawer_zrtp_confirmed">ja, bevestigd</string>
     <string name="in_call_drawer_zrtp_not_confirmed">ja, niet bevestigd</string>
     <string name="in_call_drawer_sdes_active">actief</string>
-
     <string name="navigation_drawer_open">Navigatielade openen</string>
     <string name="navigation_drawer_close">Navigatielade sluiten</string>
-
     <string name="valid_until">Geldig tot:</string>
     <string name="subscription_expired">Uw Silent Circle-abonnement is verlopen.</string>
-
     <string name="sip_error_not_online">Gebruiker niet online</string>
-
-    
-
     <string name="recentCalls_addToContact">"Toevoegen aan contacten"</string>
     <string name="recentCalls_empty">"Gesprekken is leeg"</string>
     <string name="recentCalls_deleteAll">"Gesprekken wissen"</string>
     <string name="recentCalls_editNumberBeforeCall">"Nummer bewerken voor bellen"</string>
     <string name="recentCalls_removeFromRecentList">"Verwijderen uit Gesprekken"</string>
-    
     <string name="recentCalls_removeSameFromRecentList">Verwante vermeldingen verwijderen</string>
-
     <string name="type_incoming">"Inkomende oproep"</string>
     <string name="type_outgoing">"Uitgaand gesprek"</string>
     <string name="type_missed">"Oproep gemist"</string>
@@ -225,52 +171,25 @@
     <string name="clearCallLogConfirmation_title">"Oproeplog wissen?"</string>
     <string name="clearCallLogConfirmation">"Al uw oproepgegevens worden verwijderd."</string>
     <string name="phoneTypeSilent">Silent Phone</string>
-
     <string name="contactsList">"Contacten"</string>
     <string name="local_invisible_directory">"Overig"</string>
     <string name="local_search_label">"Alle contacten"</string>
     <string name="user_profile_contacts_list_header">"Ik"</string>
     <string name="directory_search_label">"Directory"</string>
     <string name="search_results_searching">"Zoeken..."</string>
-
     <string name="foundTooManyContacts">"Meer dan %d gevonden."</string>
     <string name="listFoundAllContactsZero">"Geen contacten"</string>
+
     <plurals name="searchFoundContacts">
         <item quantity="one">"1 gevonden"</item>
         <item quantity="other">"%d gevonden"</item>
     </plurals>
 
-    <string name="no_contact_details">"Geen aanvullende gegevens voor dit contact."</string>
-    <string name="noContactsWithPhoneNumbers">"Geen contacten met telefoonnummers."</string>
-    <string name="noFavoritesHelpText">"U heeft geen favorieten."\n\n"U kunt als volgt een contact toevoegen aan uw lijst met favorieten:"\n\n"        "<li>"Raak het tabblad \'"<b>"Contacten"</b>"\' aan."\n</li>" "\n<li>"Raak het contact aan dat u wilt toevoegen aan uw favorieten."\n</li>" "\n<li>"Raak de ster aan die wordt weergegeven naast de naam van het contact."\n</li></string>
-    <string name="noMatchingContacts">"Kan geen overeenkomende contacten vinden."</string>
-    <string name="no_contacts_selected">"Geen contacten geselecteerd."</string>
-    <string name="noContactsHelpTextWithSyncForCreateShortcut">"U heeft geen contacten om weer te geven. Als u zojuist een account heeft toegevoegd, kan het enkele minuten duren voordat de contacten zijn gesynchroniseerd."</string>
 
-    <string name="noContactsHelpTextWithSync">"U heeft geen contacten om weer te geven. (Als u net een account heeft toegevoegd, kan het enkele minuten duren voordat de contacten zijn gesynchroniseerd.)"\n\n"Als u contacten wilt toevoegen, drukt u op "<font fgcolor="#ffffffff"><b>"Menu"</b></font>" en raakt u de volgende opties aan:"\n" "\n<li><font fgcolor="#ffffffff"><b>"Accounts"</b></font>" om een account toe te voegen of te configureren met contacten die u kunt synchroniseren met de tablet"\n</li>" "\n<li><font fgcolor="#ffffffff"><b>"Weergaveopties"</b></font>" om de zichtbaarheid van contacten te wijzigen"\n</li>" "\n<li><font fgcolor="#ffffffff"><b>"Nieuw contact"</b></font>" om een nieuw contact toe te voegen"\n</li>" "\n<li><font fgcolor="#ffffffff"><b>"Importeren/exporteren"</b></font>" om contacten van uw sim- of SD-kaart te importeren"\n</li></string>
-
-    <string name="noContactsNoSimHelpTextWithSync">"U heeft geen contacten om weer te geven. (Als u net een account heeft toegevoegd, kan het enkele minuten duren voordat de contacten zijn gesynchroniseerd.)"\n\n"Als u contacten wilt toevoegen, drukt u op "<font fgcolor="#ffffffff"><b>"Menu"</b></font>" en raakt u de volgende opties aan:"\n" "\n<li><font fgcolor="#ffffffff"><b>"Accounts"</b></font>" om een account toe te voegen of te configureren met contacten die u kunt synchroniseren met de tablet"\n</li>" "\n<li><font fgcolor="#ffffffff"><b>"Weergaveopties"</b></font>" om de zichtbaarheid van contacten te wijzigen"\n</li>" "\n<li><font fgcolor="#ffffffff"><b>"Nieuw contact"</b></font>" om een nieuw contact te maken"\n</li>" "\n<li><font fgcolor="#ffffffff"><b>"Importeren/exporteren"</b></font>" om contacten van uw SD-kaart te importeren"\n</li></string>
-    <string name="noContactsHelpTextForCreateShortcut">"U heeft geen contacten om weer te geven."</string>
-
-    <string name="noContactsHelpText">"U heeft geen contacten om weer te geven."\n\n"Voor het toevoegen van contacten raakt u "<font fgcolor="#ffffffff"><b>"Menu"</b></font>" aan en vervolgens een van deze opties:"\n" "\n<li><font fgcolor="#ffffffff"><b>"Accounts"</b></font>" om een account toe te voegen of in te stellen met contacten die u kunt synchroniseren met de tablet"\n</li>" "\n<li><font fgcolor="#ffffffff"><b>"Nieuw contact"</b></font>" om een nieuw contact te maken"\n</li>" "\n<li><font fgcolor="#ffffffff"><b>"Importeren/exporteren"</b></font>" om het contact van uw sim-kaart of SD-kaart te importeren"\n</li></string>
-
-    <string name="noContactsNoSimHelpText">"U heeft geen contacten om weer te geven."\n\n"Voor het toevoegen van contacten raakt u "<font fgcolor="#ffffffff"><b>"Menu"</b></font>" aan en vervolgens een van deze opties:"\n" "\n<li><font fgcolor="#ffffffff"><b>"Accounts"</b></font>" om een account toe te voegen of in te stellen met contacten die u kunt synchroniseren met de tablet"\n</li>" "\n<li><font fgcolor="#ffffffff"><b>"Nieuw contact"</b></font>" om een nieuw contact te maken"\n</li>" "\n<li><font fgcolor="#ffffffff"><b>"Importeren/exporteren"</b></font>" om contacten te importeren van uw SD-kaart"\n</li></string>
     <string name="missing_name">"(Geen naam)"</string>
     <string name="menu_done">"Gereed"</string>
     <string name="menu_doNotSave">"Annuleren"</string>
-    <string name="profile_display_name">"Mijn profiel instellen"</string>
     <string name="menu_search">"Zoeken"</string>
-    <string name="menu_new_contact_action_bar">"Nieuw"</string>
-    <string name="menu_new_group_action_bar">"Nieuw"</string>
-    <string name="menu_clear_frequents">"Regelmatige contacten wissen"</string>
-    <string name="menu_import_export">"Importeren/exporteren"</string>
-
-    <string name="menu_remove_vcard_files">vCards verwijderen</string>
-    <string name="menu_export_database">"Databasebestanden exporteren"</string>
-    <string name="menu_settings">"Instellingen"</string>
-    <string name="menu_help">"Help"</string>
-
-    <string name="menu_about">Info</string>
     <string name="call_custom">"%s bellen"</string>
     <string name="call_home">"Bellen naar huis"</string>
     <string name="call_mobile">"Bellen naar mobiel"</string>
@@ -294,75 +213,9 @@
     <string name="call_mms">"Bellen via MMS"</string>
     <string name="chat">"Chat"</string>
     <string name="toast_text_copied">"Tekst gekopieerd"</string>
-    <string name="contacts_unavailable_create_contact">"Een nieuw contact maken"</string>
-    <string name="contacts_unavailable_import_contacts">"Contacten importeren"</string>
-    <string name="upgrade_out_of_memory_uninstall">"Verwijder enkele apps"</string>
-    <string name="upgrade_out_of_memory_retry">"Upgrade opnieuw proberen"</string>
-    <string name="menu_create_contact_shortcut">"Op startscherm plaatsen"</string>
-    <string name="menu_share">"Delen"</string>
-    <string name="menu_discard">"Annuleren"</string>
-    <string name="pickerNewContactText">"Nieuw contact maken"</string>
     <string name="list_filter_phones">"Alle contacten met telefoonnummers"</string>
-    <string name="display_options_sort_list_by">"Lijst sorteren op"</string>
-    <string name="display_options_view_names_as">"Contactnamen weergeven als"</string>
     <string name="display_options_view_given_name_first">"Roepnaam eerst"</string>
     <string name="display_options_view_family_name_first">"Achternaam eerst"</string>
-    <string name="display_options_sort_by_given_name">"Roepnaam"</string>
-    <string name="display_options_sort_by_family_name">"Achternaam"</string>
-    <string name="no_sdcard_message">"Er is geen opslag gevonden."</string>
-    <string name="import_from_sdcard">"Importeren uit opslag"</string>
-    <string name="import_one_vcard_string">"Eén vCard-bestand importeren"</string>
-    <string name="import_multiple_vcard_string">"Meerdere vCard-bestanden importeren"</string>
-    <string name="import_all_vcard_string">"Alle vCard-bestanden importeren"</string>
-    <string name="searching_vcard_message">"Zoeken naar vCard-gegevens in opslag..."</string>
-    <string name="scanning_sdcard_failed_message">"De opslag kan niet worden gescand. (Reden: \'%s\')"</string>
-    <string name="fail_reason_io_error">"I/O-fout"</string>
-    <string name="fail_reason_low_memory_during_import">"Onvoldoende geheugen. Het bestand is mogelijk te groot."</string>
-    <string name="fail_reason_not_supported">"De indeling wordt niet ondersteund."</string>
-    <string name="vcard_import_failed">"Kan vCard niet importeren."</string>
-    <string name="import_failure_no_vcard_file">"Geen vCard-bestand gevonden in opslag."</string>
-    <string name="fail_reason_unknown">"Onbekende fout."</string>
-    <string name="select_vcard_title">"vCard-bestand kiezen"</string>
-
-    <string name="select_vcard_title_remove">vCard-bestand verwijderen</string>
-    <string name="caching_vcard_title">"In cachegeheugen opslaan"</string>
-    <string name="caching_vcard_message">"Bezig met opslaan van vCard(s) in de lokale tijdelijke opslag. Het daadwerkelijke importeren begint binnenkort."</string>
-    <string name="progress_notifier_message">"Importeren %1$s/%2$s: %3$s"</string>
-    <string name="importing_vcard_description">"%s importeren"</string>
-    <string name="reading_vcard_failed_title">"Kan vCard-gegevens niet lezen"</string>
-    <string name="importing_vcard_finished_title">"Importeren van vCard %s voltooid"</string>
-    <string name="importing_vcard_canceled_title">"Importeren van %s geannuleerd"</string>
-    <string name="vcard_import_will_start_message">"%s wordt binnenkort geïmporteerd."</string>
-    <string name="vcard_import_will_start_message_with_default_name">"Het bestand wordt binnenkort geïmporteerd."</string>
-    <string name="vcard_import_request_rejected_message">"Verzoek voor vCard-import is geweigerd. Probeer het later opnieuw."</string>
-    <string name="vcard_export_will_start_message">"%s wordt binnenkort geëxporteerd."</string>
-    <string name="vcard_export_request_rejected_message">"Verzoek voor vCard-export is geweigerd. Probeer het later opnieuw."</string>
-    <string name="vcard_unknown_filename">"contact"</string>
-
-    <string name="percentage">"%1$s%%"</string>
-    <string name="confirm_export_title">"Contacten export.?"</string>
-    <string name="confirm_export_message">"Uw lijst met contacten wordt geëxporteerd naar het bestand: %s."</string>
-    <string name="exporting_contact_failed_title">"Kan niet exporteren"</string>
-    <string name="exporting_contact_failed_message">"De contactgegevens zijn niet geëxporteerd."\n"Reden: \'%s\'"</string>
-    <string name="fail_reason_no_exportable_contact">"Er is geen contact dat kan worden geëxporteerd."</string>
-    <string name="fail_reason_too_many_vcard">"Er staan te veel vCard-bestanden in de opslag."</string>
-    <string name="fail_reason_too_long_filename">"Vereiste bestandsnaam is te lang (\'%s\')."</string>
-    <string name="exporting_vcard_finished_title">"Exporteren van %s voltooid."</string>
-    <string name="exporting_vcard_canceled_title">"Exporteren van %s geannuleerd."</string>
-    <string name="exporting_contact_list_title">"Contactgegevens exporteren"</string>
-    <string name="exporting_contact_list_message">"Uw contactgegevens worden geëxporteerd naar: %s."</string>&gt;
-    <string name="fail_reason_could_not_initialize_exporter">"Kan het exportprogramma niet starten: \'%s\'."</string>
-    <string name="fail_reason_error_occurred_during_export">"Er is een fout opgetreden tijdens het exporteren: \'%s\'."</string>
-    <string name="composer_failed_to_get_database_infomation">"Kan databasegegevens niet ophalen."</string>
-    <string name="composer_has_no_exportable_contact">"Er zijn geen exporteerbare contacten. Als u wel contacten op uw tablet heeft opgeslagen, staat uw gegevensprovider het exporteren van contacten van de tablet mogelijk niet toe."</string>
-    <string name="composer_not_initialized">"De vCard-editor is niet correct gestart."</string>
-    <string name="fail_reason_could_not_open_file">"Kan \'%1$s\' niet openen: %2$s."</string>
-    <string name="cancel_import_confirmation_message">"Import van %s annuleren?"</string>
-    <string name="cancel_export_confirmation_message">"Export van %s annuleren?"</string>
-    <string name="nfc_vcard_file_name">"Contact via NFC"</string>
-    <string name="cancel_vcard_import_or_export_failed">"Kan vCard-import/export niet annuleren"</string>
-    <string name="description_view_contact_detail">"Contact weergeven"</string>
-    <string name="preference_displayOptions">"Weergaveopties"</string>
     <string name="description_quick_contact_for">"Snelcontact voor %1$s"</string>
     <string name="cannot_load_store">Kan key store niet laden.</string>
     <string name="password_hint">Voer wachtwoord in</string>
@@ -375,31 +228,28 @@
     <string name="information_dialog">Informatie</string>
     <string name="show_pw">Wachtwoord weergeven</string>
     <string name="password_match">Wachtwoorden stemmen niet overeen. Controleer dit a.u.b.</string>
-    <string name="video_control_explanation">Tik op het scherm om te schakelen tussen de videoknoppen.
+<string name="video_control_explanation">Tik op het scherm om te schakelen tussen de videoknoppen.
 \n\nRaak het kleine voorbeeldvenster aan om het te verplaatsen.</string>
     <string name="start_on_boot">Silent Phone starten bij het booten</string>
     <string name="start_on_boot_explanation">Silent Phone starten tijdens de opstartprocedure van het toestel.</string>
-    
     <string name="sp_dial_helper_title">Dial Assist</string>
     <string name="sp_dial_helper_select_explanation">Schakel om het kiezen te vereenvoudigen Dial Assist in en selecteer een land. Het nummer wordt automatisch geformatteerd met uw landcode. U kunt ook \'+\' kiezen en de landcode.</string>
-  <string name="sp_dial_helper_select_explanation_1">Om andere Silent Circle-abonnees te bellen, kiest u gewoon hun
+<string name="sp_dial_helper_select_explanation_1">Om andere Silent Circle-abonnees te bellen, kiest u gewoon hun
 Silent Circle-abonneenaam.</string>
     <string name="sp_dial_helper_select">Selecteer uw land</string>
     <string name="sp_dial_helper_none">Geen Dial Assist</string>
     <string name="sp_dial_helper_simple">Eenvoudige Dial Assist</string>
-    
     <string name="sp_dial_helper_null_explanation">Dial Assist uitgeschakeld.</string>
     <string name="sp_dial_helper_simple_explanation">Voegt \'+\' toe om een internationaal telefoonnummer te vormen.</string>
     <string name="sp_dial_helper_nanp_explanation">Voegt \'+\' of \'+1\' toe of vervangt een \'011\' aan het begin door een \'+\'-teken.</string>
     <string name="sp_dial_helper_00_0_explanation">Vervangt een \'%1$s\' aan het begin met de landcode %2$s en een \'%3$s\' aan het begin met het \'+\'-teken.</string>
     <string name="sp_dial_helper_00_x_explanation">Voegt \'%2$s\' toe aan gekozen cijfers en vervangt een \'%3$s\' aan het begin met het \'+\'-teken.</string>
-    
-  <string name="key_store_set_pw_explanation">Voer een eigen wachtwoord in om de sleutelopslag beter te beschermen.\nTelkens
+<string name="key_store_set_pw_explanation">Voer een eigen wachtwoord in om de sleutelopslag beter te beschermen.\nTelkens
 wanneer u Silent Phone start, moet u dit wachtwoord invoeren. U kunt steeds de standaard bescherming opnieuw instellen.</string>
     <string name="key_store_change_pw_explanation">Wijzig uw eigen sleutelopslagwachtwoord.</string>
     <string name="key_store_reset_pw_explanation">De klant stelt de sleutelopslagbescherming opnieuw in op standaard nadat u uw wachtwoord hebt ingevoerd.</string>
     <string name="key_store_enter_pw_explanation">Voer uw sleutelopslagwachtwoord in.</string>
-  <string name="key_store_set_pin_explanation">Voer een eigen pin in om de sleutelopslag beter te beschermen.\nTelkens
+<string name="key_store_set_pin_explanation">Voer een eigen pin in om de sleutelopslag beter te beschermen.\nTelkens
 wanneer u Silent Phone start, moet u deze pin invoeren. U kunt steeds de standaard bescherming opnieuw instellen.</string>
     <string name="key_store_change_pin_explanation">Wijzig uw eigen sleutelopslag-pin.</string>
     <string name="key_store_reset_pin_explanation">De klant stelt de sleutelopslagbescherming opnieuw in op standaard nadat u uw pin hebt ingevoerd.</string>
@@ -422,12 +272,6 @@ wanneer u Silent Phone start, moet u deze pin invoeren. U kunt steeds de standaa
     <string name="key_store_reset_default">Opnieuw instellen op standaard bescherming</string>
     <string name="re_provision">Opnieuw configureren van Silent Phone</string>
     <string name="re_provision_explanation">Silent Phone-configuratiegegevens opnieuw laden</string>
-    
-    
-  <string name="migrate_start">Migratie van Silent Contact-gegevens beginnen.</string>
-    <string name="migrate_export">Bestaande Silent Contacts exporteren.</string>
-    <string name="migrate_done">Migratie voltooid.</string>
-    <string name="migrate_not_ready">Ingebedde contactprovider niet klaar.</string>
     <string name="did_title">Telefoonnummerselectie</string>
     <string name="did_region_area_explanation">Kies uw telefoonnummer uit een regio en zone</string>
     <string name="did_currently_selected">Momenteel geselecteerd</string>
@@ -442,124 +286,75 @@ wanneer u Silent Phone start, moet u deze pin invoeren. U kunt steeds de standaa
     <string name="did_no_number">Momenteel geen telefoonnummer beschikbaar, selecteer een andere regio of zone.</string>
     <string name="did_ask_to_complete">Voltooi de telefoonnummerselectie.</string>
     <string name="no_internet">Geen internetverbinding</string>
-    <string name="mobile_internet_blocked">Mobiel internet geblokkeerd</string>
     <string name="mobile_internet_available">Mobiel internet beschikbaar</string>
     <string name="directory_use_sc">Silent Circle-directory</string>
     <string name="directory_own_org_only">Eigen organisatie</string>
     <string name="sign_in">Aanmelden</string>
+
     <string name="sc_privacy_link"><a href="https://silentcircle.com/privacy/">Privacyverklaring</a></string>
+
     <string name="sc_tos_link"><a href="https://accounts.silentcircle.com/terms/">Algemene voorwaarden</a></string>
+
     <plurals name="number_missed_calls">
         <item quantity="one">Gemiste oproep</item>
         <item quantity="other">%d gemiste oproepen</item>
     </plurals>
+
     <string name="no_video_available">Video is niet beschikbaar voor deze oproep.</string>
     <string name="call_in_progress">Lopend gesprek</string>
     <string name="server_cert_failure">Certificaatcontrole mislukt - nieuwe poging</string>
     <string name="remaining_oca_minutes">Resterende OCA-minuten</string>
     <string name="remaining_oca_minutes_fail">Geen OCA-informatie beschikbaar</string>
     <string name="remaining_oca_minutes_zero">Geen belminuten gebruikt. Uw saldo is %1$d minuten.</string>
+
     <plurals name="remaining_oca_minutes_info">
-        <item quantity="one">U hebt één minuut gebruikt van uw saldo van %2$d minuten.</item>
+        <item quantity="one">U hebt &#233;&#233;n minuut gebruikt van uw saldo van %2$d minuten.</item>
         <item quantity="other">U hebt %1$d minuten gebruikt van uw saldo van %2$d minuten.</item>
     </plurals>
-    
-    <string name="tab_speed_dial">SNELKEUZE</string>
+
+
     <string name="tab_recents">RECENT</string>
     <string name="tab_all_contacts">CONTACTEN</string>
     <string name="tab_chat">TEXT</string>
-
     <string name="call_log_action_call_back">TERUGBELLEN</string>
-
-    
     <string name="call_log_action_details">DETAILS</string>
-
-    
     <string name="call_log_action_report">MELDEN</string>
-
-    
     <string name="description_dismiss">Sluiten</string>
-
-    
     <string name="activity_not_available">Geen geïnstalleerde activiteit beschikbaar om de geselecteerde actie te verwerken.</string>
 
-    Note: AccessibilityServices use this attribute to announce what the view represents.
-    This is especially valuable for views without textual representation like ImageView.
-    --&gt;
-    <string name="description_num_calls"><xliff:g id="numberOfCalls">%1$s</xliff:g> telefoongesprekken.</string>
+    <string name="description_num_calls">%1$s telefoongesprekken.</string>
 
-    
-    <string name="description_call_back_action"><xliff:g example="John Smith" id="nameOrNumber">%1$s</xliff:g> terugbellen</string>
+    <string name="description_call_back_action">%1$s terugbellen</string>
 
-    
-    <string name="description_details_action">Oproepgegevens voor <xliff:g example="John Smith" id="nameOrNumber">%1$s</xliff:g></string>
+    <string name="description_details_action">Oproepgegevens voor %1$s</string>
 
-    
-    <string name="description_contact_details">Contactgegevens voor <xliff:g id="nameOrNumber">%1$s</xliff:g></string>
+    <string name="description_contact_details">Contactgegevens voor %1$s</string>
 
-    
-    <string name="description_incoming_missed_call">Gemiste oproep van <xliff:g example="John Smith" id="nameOrNumber">%1$s</xliff:g>, <xliff:g example="Mobile" id="typeOrLocation">%2$s</xliff:g>, <xliff:g example="2 min ago" id="timeOfCall">%3$s</xliff:g>.</string>
+    <string name="description_incoming_missed_call">Gemiste oproep van %1$s, %2$s, %3$s.</string>
 
-    
-    <string name="description_incoming_answered_call">Beantwoorde oproep van <xliff:g example="John Smith" id="nameOrNumber">%1$s</xliff:g>, <xliff:g example="Mobile" id="typeOrLocation">%2$s</xliff:g>, <xliff:g example="2 min ago" id="timeOfCall">%3$s</xliff:g>.</string>
+    <string name="description_incoming_answered_call">Beantwoorde oproep van %1$s, %2$s, %3$s.</string>
 
-    
-    <string name="description_outgoing_call">Oproep aan <xliff:g example="John Smith" id="nameOrNumber">%1$s</xliff:g>, <xliff:g example="Mobile" id="typeOrLocation">%2$s</xliff:g>, <xliff:g example="2 min ago" id="timeOfCall">%3$s</xliff:g>.</string>
-
-    
+    <string name="description_outgoing_call">Oproep aan %1$s, %2$s, %3$s.</string>
     <string name="list_delimeter">", "</string>
-
-    
     <string name="call_log_header_today">Vandaag</string>
-
-    
     <string name="call_log_header_yesterday">Gisteren</string>
-
-    
     <string name="call_log_header_other">Ouder</string>
-
-    
     <string name="recentMissed_empty">U heeft geen recente gemiste oproepen.</string>
-
-    
     <string name="recents_footer_text">Volledige oproepgeschiedenis bekijken</string>
-
-    
-    <string name="remove_contact">Verwijderen</string>
-
-    
-    <string name="speed_dial_empty">Snelkeuze is kiezen met één tik op een toets\nvoor favorieten en nummers\ndie u vaak belt.</string>
-
-    
     <string name="all_contacts_empty">U heeft geen contacten.</string>
-
-    
     <string name="call_log_all_title">Alle</string>
-
-    
     <string name="call_log_missed_title">Gemist</string>
 
-    <string name="search_shortcut_call_number">Bel <xliff:g id="number">%s</xliff:g>
+<string name="search_shortcut_call_number">Bel %s
     </string>
-
-    
     <string name="search_shortcut_add_to_contacts">Toevoegen aan contacten</string>
-
-    
     <string name="add_contact_not_available">Schakel de app Silent Contacts opnieuw in om deze functie te gebruiken.</string>
-
-    
     <string name="action_menu_back_from_search">stoppen met zoeken</string>
-
-    
     <string name="description_clear_search">Zoekopdracht wissen</string>
-
-    
     <string name="dialer_hint_find_contact">Typ een naam of telefoonnummer</string>
-
-    
     <string name="sms_disambig_title">"Nummer kiezen"</string>
     <string name="call_disambig_title">"Nummer kiezen"</string>
     <string name="make_primary">"Deze keuze onthouden"</string>
 
+    <string name="percentage">"%s%%"</string>
 </resources>

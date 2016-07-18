@@ -875,7 +875,7 @@ void CTiViPhone::checkServDomainName(int iHasNewIP, int iNow){
          
          if(addrPx.ip==0)
          {
-            printf("[res_px %s ts=%u]",addrPx.bufAddr, getTickCount()-ts);
+            t_logf(log_events, __FUNCTION__,"[DNS resp for <%s>=%ums]",addrPx.bufAddr, getTickCount()-ts);
             addrPx.ip=this->cPhoneCallback->getIpByHost(addrPx.bufAddr,0);
          }
          
@@ -1823,6 +1823,12 @@ int CTiViPhone::remRegister(char *uri){
 
 int CTiViPhone::addMsgToWin(SIP_MSG *sMsg, char *p)//pec shis fnc sMsg lietot nedriikst
 {
+   
+   void *findGlobalCfgKey(const char *key);
+   static int *piExitingAndDoSaveNothingOnDisk= (int *)findGlobalCfgKey("iExitingAndDoSaveNothingOnDisk");
+   if(piExitingAndDoSaveNothingOnDisk && *piExitingAndDoSaveNothingOnDisk)return 0;
+   
+   
   if(sMsg->dstrContLen.uiVal &&
      !cChatMem.hasItem(
      (int)sMsg->hdrCSeq.uiMethodID,
@@ -2348,6 +2354,7 @@ int CTiViPhone::recMsg(SIP_MSG *sMsg, int rec, ADDR &addr)//called from thread
                   
                   break;
                }
+               mm.iMustSendFromSIPRecvThread = 1;
                mm.sendResp(sockSip,200,sMsg);
                UNLOCK_MUTEX_SES
              //   printf("axo=[%s]\n",cSip.getContent());

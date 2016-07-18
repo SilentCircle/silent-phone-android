@@ -5,10 +5,4 @@
     
     <string name="display_options_view_family_name_first">Last name first</string>
 		
-<string name="display_options_sort_by_given_name">First name</string>
-
-    
-    <string name="display_options_sort_by_family_name">Last name</string>
-
-    
-    </resources>
+</resources>

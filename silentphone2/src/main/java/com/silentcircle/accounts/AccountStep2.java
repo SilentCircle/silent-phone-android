@@ -37,6 +37,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.design.widget.TextInputLayout;
+import android.support.v4.content.ContextCompat;
 import android.text.Editable;
 import android.text.InputFilter;
 import android.text.TextUtils;
@@ -374,7 +375,7 @@ public class AccountStep2 extends Fragment implements View.OnClickListener{
         stepView.findViewById(R.id.next).setOnClickListener(this);
         stepView.findViewById(R.id.ShowPassword).setOnClickListener(this);
 
-        stepView.setBackgroundColor(getResources().getColor(R.color.auth_background_grey));
+        stepView.setBackgroundColor(ContextCompat.getColor(mParent, R.color.auth_background_grey));
 
         if (mUseExistingAccount) {
             mHeaderText.setText(getString(R.string.sign_in_to_sc));

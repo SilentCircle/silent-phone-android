@@ -47,7 +47,7 @@ import android.text.TextUtils;
 import android.util.Log;
 
 import com.silentcircle.messaging.services.AxoMessaging;
-import com.silentcircle.silentcontacts2.ScCallLog;
+import com.silentcircle.contacts.ScCallLog;
 import com.silentcircle.silentphone2.R;
 import com.silentcircle.silentphone2.list.ShortcutCardsAdapter;
 import com.silentcircle.silentphone2.util.CallState;

@@ -34,16 +34,21 @@ import java.util.HashMap;
 
 import android.content.ContentProvider;
 import android.content.ContentValues;
+import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.ParcelFileDescriptor;
+
+import com.silentcircle.silentphone2.BuildConfig;
 
 public class TextProvider extends ContentProvider {
 
     public static final String TXT_FILE_NAME = "TEXT.txt";
 
-    public static final Uri CONTENT_URI =  Uri.parse("content://com.silentcircle.messaging.provider.text/");
+    public static final Uri CONTENT_URI =  Uri.parse("content://" + BuildConfig.AUTHORITY_BASE + ".messaging.provider.text/");
     private static final HashMap<String, String> MIME_TYPES = new HashMap<>();
+
+    private Context mContext;
 
     static {
         MIME_TYPES.put( ".txt", "text/plain" );
@@ -51,7 +56,7 @@ public class TextProvider extends ContentProvider {
 
     @Override
     public int delete( Uri uri, String where, String [] whereArgs ) {
-        File file = new File(getContext().getFilesDir(), TXT_FILE_NAME);
+        File file = new File(mContext.getFilesDir(), TXT_FILE_NAME);
 
         if(file.exists()) {
             file.delete();
@@ -78,12 +83,15 @@ public class TextProvider extends ContentProvider {
 
     @Override
     public boolean onCreate() {
+        mContext = getContext();
+        if (mContext == null)
+            return false;
         try {
-            File mFile = new File(getContext().getFilesDir(), TXT_FILE_NAME);
+            File mFile = new File(mContext.getFilesDir(), TXT_FILE_NAME);
             if (!mFile.exists()) {
                 mFile.createNewFile();
             }
-            getContext().getContentResolver().notifyChange(CONTENT_URI, null);
+            mContext.getContentResolver().notifyChange(CONTENT_URI, null);
             return true;
 
         } catch (Exception e) {
@@ -99,7 +107,7 @@ public class TextProvider extends ContentProvider {
 
             throws FileNotFoundException {
 
-        File f = new File(getContext().getFilesDir(), TXT_FILE_NAME);
+        File f = new File(mContext.getFilesDir(), TXT_FILE_NAME);
         if (!f.exists()) {
             try {
                 f.createNewFile();

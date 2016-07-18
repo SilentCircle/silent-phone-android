@@ -12,5 +12,6 @@
 
     <!-- id for no-draw flag -->
     <item type="id" name="no_draw_flag" />
+    <item type="id" name="new_group_flag" />
 
 </resources>

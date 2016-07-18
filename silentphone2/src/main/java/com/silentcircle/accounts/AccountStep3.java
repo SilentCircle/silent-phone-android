@@ -37,6 +37,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.v4.content.ContextCompat;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
@@ -213,7 +214,7 @@ public class AccountStep3 extends Fragment implements View.OnClickListener {
         stepView.findViewById(R.id.create).setOnClickListener(this);
 
         TextView headerText = (TextView)stepView.findViewById(R.id.HeaderText);
-        stepView.setBackgroundColor(getResources().getColor(R.color.auth_background_grey));
+        stepView.setBackgroundColor(ContextCompat.getColor(mParent, R.color.auth_background_grey));
         if (mUseExistingAccount) {
             headerText.setText(getString(R.string.sign_in));
             ((TextView)stepView.findViewById(R.id.create)).setText(getText(R.string.next));
@@ -483,6 +484,7 @@ public class AccountStep3 extends Fragment implements View.OnClickListener {
                 mParent.showErrorInfo(getString(R.string.account_creation_wrong_format));
                 return -1;
             }
+            OutputStream out = null;
             try {
                 // For an existing account we add the license code to the account, thus PUT to modify
                 // the existing account.
@@ -502,7 +504,7 @@ public class AccountStep3 extends Fragment implements View.OnClickListener {
                 urlConnection.setRequestProperty("Accept-Language", Locale.getDefault().getLanguage());
                 urlConnection.setFixedLengthStreamingMode(contentLength);
 
-                OutputStream out = new BufferedOutputStream(urlConnection.getOutputStream());
+                out = new BufferedOutputStream(urlConnection.getOutputStream());
                 out.write(body.getBytes());
                 out.flush();
 
@@ -525,6 +527,10 @@ public class AccountStep3 extends Fragment implements View.OnClickListener {
                 Log.e(TAG, "Network connection problem: " + e.getMessage());
                 return -1;
             } finally {
+                try {
+                    if (out != null)
+                        out.close();
+                } catch (IOException ignore) { }
                 if (urlConnection != null)
                     urlConnection.disconnect();
             }
@@ -558,7 +564,7 @@ public class AccountStep3 extends Fragment implements View.OnClickListener {
     private void startLoadingRegisterDevice() {
         JSONObject data = null;
         // Setup other JSON and fill it with data we need for device provisioning
-        if (mParent == null)
+        if (mParent == null || mParent.getJsonHolder() == null)
             return;
         String hwDeviceId = Utilities.hashMd5(TiviPhoneService.getHwDeviceId(mParent));
         if (ConfigurationUtilities.mTrace) Log.d(TAG, "Hardware device id: " + hwDeviceId );
@@ -676,6 +682,7 @@ public class AccountStep3 extends Fragment implements View.OnClickListener {
                 errorMessage = getString(R.string.provisioning_wrong_format);
                 return -1;
             }
+            OutputStream out = null;
             try {
                 urlConnection = (HttpsURLConnection) mRequestUrlProvisionDevice.openConnection();
                 SSLContext context = PinnedCertificateHandling.getPinnedSslContext(ConfigurationUtilities.mNetworkConfiguration);
@@ -693,7 +700,7 @@ public class AccountStep3 extends Fragment implements View.OnClickListener {
                 urlConnection.setRequestProperty("Accept-Language", Locale.getDefault().getLanguage());
                 urlConnection.setFixedLengthStreamingMode(contentLength);
 
-                OutputStream out = new BufferedOutputStream(urlConnection.getOutputStream());
+                out = new BufferedOutputStream(urlConnection.getOutputStream());
                 out.write(body.getBytes());
                 out.flush();
 
@@ -720,6 +727,10 @@ public class AccountStep3 extends Fragment implements View.OnClickListener {
                 Log.e(TAG, "Network connection problem: " + e.getMessage());
                 return -1;
             } finally {
+                try {
+                    if (out != null)
+                        out.close();
+                } catch (IOException ignore) { }
                 urlConnection.disconnect();
             }
         }

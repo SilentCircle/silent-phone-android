@@ -48,9 +48,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 package com.silentcircle.contacts.calllognew;
 
-import android.database.Cursor;
-
-import com.silentcircle.silentcontacts2.ScCallLog.ScCalls;
+import com.silentcircle.contacts.ScCallLog.ScCalls;
 
 
 /**

@@ -45,6 +45,7 @@ import android.graphics.PorterDuffColorFilter;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
 import android.text.method.LinkMovementMethod;
@@ -260,15 +261,10 @@ public class DialDrawerFragment extends Fragment implements View.OnClickListener
         mImageWidth = resources.getDimension(R.dimen.dial_drawer_avatar_size);
 
         int colorConnecting, colorOnline, colorOffline;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            colorOnline = resources.getColor(R.color.black_green_dark_1, null);
-            colorOffline = resources.getColor(R.color.sc_ng_text_red, null);
-            colorConnecting = resources.getColor(R.color.sc_ng_background_3, null);
-        } else {
-            colorOnline = resources.getColor(R.color.black_green_dark_1);
-            colorOffline = resources.getColor(R.color.sc_ng_text_red);
-            colorConnecting = resources.getColor(R.color.sc_ng_background_3);
-        }
+        colorOnline = ContextCompat.getColor(mParent, R.color.black_green_dark_1);
+        colorOffline = ContextCompat.getColor(mParent, R.color.sc_ng_text_red);
+        colorConnecting = ContextCompat.getColor(mParent, R.color.sc_ng_background_3);
+
         mColorFilterOnline = new PorterDuffColorFilter(colorOnline, PorterDuff.Mode.MULTIPLY);
         mColorFilterOffline = new PorterDuffColorFilter(colorOffline, PorterDuff.Mode.MULTIPLY);
         mColorFilterUnknown = new PorterDuffColorFilter(colorConnecting, PorterDuff.Mode.MULTIPLY);

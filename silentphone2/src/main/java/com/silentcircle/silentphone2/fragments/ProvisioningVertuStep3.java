@@ -269,6 +269,7 @@ public class ProvisioningVertuStep3 extends Fragment implements View.OnClickList
 //                }
 //                return HttpsURLConnection.HTTP_OK;
 //            }
+            OutputStream out = null;
             try {
                 urlConnection = (HttpsURLConnection) requestUrl.openConnection();
                 SSLContext context = PinnedCertificateHandling.getPinnedSslContext(ConfigurationUtilities.mNetworkConfiguration);
@@ -286,7 +287,7 @@ public class ProvisioningVertuStep3 extends Fragment implements View.OnClickList
                 urlConnection.setRequestProperty("Accept-Language", Locale.getDefault().getLanguage());
                 urlConnection.setFixedLengthStreamingMode(contentLength);
 
-                OutputStream out = new BufferedOutputStream(urlConnection.getOutputStream());
+                out = new BufferedOutputStream(urlConnection.getOutputStream());
                 out.write(body.getBytes());
                 out.flush();
 
@@ -312,6 +313,10 @@ public class ProvisioningVertuStep3 extends Fragment implements View.OnClickList
                 Log.e(TAG, "Network connection problem: " + e.getMessage());
                 return -1;
             } finally {
+                try {
+                    if (out != null)
+                        out.close();
+                } catch (IOException ignore) { }
                 if (urlConnection != null)
                     urlConnection.disconnect();
             }

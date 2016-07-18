@@ -31,6 +31,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.graphics.Bitmap;
+import android.graphics.PorterDuff;
 import android.graphics.Rect;
 import android.graphics.drawable.AnimationDrawable;
 import android.graphics.drawable.Drawable;
@@ -38,10 +39,12 @@ import android.location.Location;
 import android.os.Build;
 import android.os.Handler;
 import android.support.annotation.NonNull;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.graphics.drawable.DrawableCompat;
 import android.text.TextUtils;
 import android.text.util.Linkify;
 import android.util.AttributeSet;
+import android.util.TypedValue;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -50,10 +53,12 @@ import android.widget.Checkable;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
+import android.widget.QuickContactBadge;
 import android.widget.RelativeLayout;
 
-import com.silentcircle.common.list.ContactEntry;
+import com.silentcircle.SilentPhoneApplication;
 import com.silentcircle.common.util.ViewUtil;
+import com.silentcircle.contacts.ContactPhotoManagerNew;
 import com.silentcircle.messaging.location.LocationUtils;
 import com.silentcircle.messaging.model.MessageStates;
 import com.silentcircle.messaging.model.event.IncomingMessage;
@@ -67,7 +72,6 @@ import com.silentcircle.messaging.util.DateUtils;
 import com.silentcircle.messaging.util.Extra;
 import com.silentcircle.messaging.util.MIME;
 import com.silentcircle.messaging.util.MessageUtils;
-import com.silentcircle.messaging.util.MessagingPreferences;
 import com.silentcircle.messaging.util.SoundNotifications;
 import com.silentcircle.messaging.util.Updatable;
 import com.silentcircle.messaging.views.adapters.HasChoiceMode;
@@ -111,7 +115,7 @@ public class MessageEventView extends RelativeLayout implements Updatable, Check
 
     static class Views {
 
-        public final AvatarView avatar;
+        public final QuickContactBadge avatar;
         public final LinearLayout card;
         public final TextView attachment_text;
         public final ImageView attachment_status;
@@ -121,7 +125,6 @@ public class MessageEventView extends RelativeLayout implements Updatable, Check
         public final TextView text;
         public final TextView time;
         public final TextView burn_notice;
-        public final View delivered;
         public final View action_location;
         public final ViewGroup action_burn;
         public final View action_send;
@@ -132,7 +135,7 @@ public class MessageEventView extends RelativeLayout implements Updatable, Check
 
         public Views(MessageEventView parent) {
 
-            avatar = (AvatarView) parent.findViewById(R.id.message_avatar);
+            avatar = (QuickContactBadge) parent.findViewById(R.id.message_avatar);
             card = (LinearLayout) parent.findViewById(R.id.message_card);
             attachment_text = (TextView) parent.findViewById(R.id.message_attachment_text);
             attachment_status = (ImageView) parent.findViewById(R.id.message_attachment_status);
@@ -142,28 +145,20 @@ public class MessageEventView extends RelativeLayout implements Updatable, Check
             text = (TextView) parent.findViewById(R.id.message_body);
             time = (TextView) parent.findViewById(R.id.message_time);
             burn_notice = (TextView) parent.findViewById(R.id.message_burn_notice);
-            delivered = parent.findViewById(R.id.message_delivered);
 
             message_actions = (RelativeLayout) parent.findViewById(R.id.message_actions);
-
             action_location = parent.findViewById(R.id.message_action_location);
             action_location.setOnClickListener(parent);
-
             action_burn = (ViewGroup) parent.findViewById(R.id.message_action_burn);
             action_burn.setOnClickListener(parent);
-
             action_send = parent.findViewById(R.id.message_action_send);
-
             if (action_send != null) {
                 action_send.setOnClickListener(parent);
             }
 
-            // view to debug message state
             message_state = (TextView) parent.findViewById(R.id.message_state);
-            // Left for debug: use this to debug message states
-            message_state.setVisibility(View.GONE);
 
-            clickable_views = new View[] {card, action_burn, action_location, action_send};
+            clickable_views = new View[]{card, action_burn, action_location, action_send};
         }
 
         public void setInformationViewVisibility(int visibility) {
@@ -173,8 +168,9 @@ public class MessageEventView extends RelativeLayout implements Updatable, Check
             text.setVisibility(visibility);
             time.setVisibility(visibility);
             burn_notice.setVisibility(visibility);
+            message_state.setVisibility(visibility);
             action_location.setVisibility(visibility);
-            action_burn.setVisibility(visibility);
+            action_burn.setVisibility(View.GONE);
             if (visibility == View.GONE) {
                 text.setText(null);
                 time.setText(null);
@@ -216,6 +212,12 @@ public class MessageEventView extends RelativeLayout implements Updatable, Check
             }
             actionView.setVisibility(visibility);
         }
+    }
+
+    private static ContactPhotoManagerNew sContactPhotoManager;
+
+    static {
+        sContactPhotoManager = ContactPhotoManagerNew.getInstance(SilentPhoneApplication.getAppContext());
     }
 
     private Views views;
@@ -321,11 +323,7 @@ public class MessageEventView extends RelativeLayout implements Updatable, Check
         }
 
         if (v.action_burn == view && message.expires()) {
-            boolean soundsEnabled =
-                    MessagingPreferences.getInstance(context).getMessageSoundsEnabled();
-            if (soundsEnabled) {
-                SoundNotifications.playBurnMessageSound();
-            }
+            SoundNotifications.playBurnMessageSound();
             MessageUtils.burnMessage(context.getApplicationContext(), message);
             return;
         }
@@ -392,7 +390,7 @@ public class MessageEventView extends RelativeLayout implements Updatable, Check
         Handler handler = getHandler();
         if (handler != null) {
             handler.removeCallbacks(updater);
-            handler.postDelayed(updater, TimeUnit.SECONDS.toMillis(1));
+            handler.postDelayed(updater, getNextUpdateTime());
         }
     }
 
@@ -418,6 +416,10 @@ public class MessageEventView extends RelativeLayout implements Updatable, Check
 
     public void setMessage(Message message) {
 
+        if (isInEditMode()) {
+            return;
+        }
+
         boolean isExpired =  isExpired(message);
         setVisibility(isExpired ? GONE : VISIBLE);
 
@@ -440,10 +442,9 @@ public class MessageEventView extends RelativeLayout implements Updatable, Check
 
         restoreViews(message instanceof IncomingMessage);
 
-        setStatusAndTime(message, v.time);
+        setStatusAndTime(message);
         updateBurnNotice();
         toggleEnabledState(message);
-        // toggleDeliveredState(message, v.delivered);
         toggleSendActionVisibility(message, v.action_send);
 
         // set text or attachment preview only if it won't be immediately replaced by burn animation
@@ -454,46 +455,40 @@ public class MessageEventView extends RelativeLayout implements Updatable, Check
         }
 
         setLocation(message.getLocation());
-
-        // debug information for message
-        v.message_state.setText(
-                getResources().getString(MessageStates.messageStateToStringId(message.getState()))
-                        + " " + sDebugDateFormatter.format(message.getComposeTime()));
-
         refreshDrawableState();
     }
 
     /**
      * Restore visibility of possibly hidden views.
      */
-    @SuppressWarnings("deprecation")
     public void restoreViews(boolean incoming) {
         Views v = getViews();
         v.setInformationViewVisibility(View.VISIBLE);
-        Drawable background = getResources().getDrawable(
-                incoming ? R.drawable.bg_card_light_default : R.drawable.bg_my_card_light_default);
+        v.avatar.setVisibility(incoming ? View.INVISIBLE : View.GONE);
+        Drawable background = ContextCompat.getDrawable(getContext(),
+                incoming ? R.drawable.bg_card_light_second : R.drawable.bg_my_card_light_second);
 
-        int backgroundColorSelectorId =
-                incoming
-                        ? R.color.incoming_message_background_selector
-                        : R.color.outgoing_message_background_selector;
+        Boolean newGroup = (Boolean) getTag(R.id.new_group_flag);
+        if (newGroup != null && newGroup) {
+            background = ContextCompat.getDrawable(getContext(),
+                    incoming ? R.drawable.bg_card_light_default : R.drawable.bg_my_card_light_default);
+        }
+
+        int backgroundColorSelectorId = incoming
+            ? R.attr.sp_incoming_message_background_selector
+            : R.attr.sp_outgoing_message_background_selector;
 
         ColorStateList backgroundTintColor;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            backgroundTintColor = getResources().getColorStateList(backgroundColorSelectorId, null);
-        } else {
-            backgroundTintColor = getResources().getColorStateList(backgroundColorSelectorId);
-        }
+        TypedValue typedValue = new TypedValue();
+        getContext().getTheme().resolveAttribute(backgroundColorSelectorId, typedValue, true);
+        backgroundTintColor = ContextCompat.getColorStateList(getContext(), typedValue.resourceId);
 
         background = DrawableCompat.wrap(background);
         DrawableCompat.setTintList(background, backgroundTintColor);
+        DrawableCompat.setTintMode(background, PorterDuff.Mode.MULTIPLY);
         v.card.setBackground(background);
+        mBackgroundDrawable = background;
     }
-
-//    public void setContact(ContactEntry contactEntry) {
-//        Views v = getViews();
-//        v.avatar.setContact(contactEntry);
-//    }
 
     public void setText(final String text) {
         Views v = getViews();
@@ -509,6 +504,11 @@ public class MessageEventView extends RelativeLayout implements Updatable, Check
     }
 
     public void setAttachmentInfo(String metaData) {
+
+        if (isInEditMode()) {
+            return;
+        }
+
         Views v = getViews();
 
         v.preview.setVisibility(INVISIBLE);
@@ -599,28 +599,20 @@ public class MessageEventView extends RelativeLayout implements Updatable, Check
         }
     }
 
-    private void setStatusAndTime(Message message, TextView time) {
-        CharSequence statusAndTime;
+    private void setStatusAndTime(Message message) {
+        Views v = getViews();
 
         /*
          * Instead of DateUtils.getRelativeTimeSpanString(getContext(), message.getTime()) show
          * just time for messages as date is visible in header
          */
-        if (message instanceof IncomingMessage) {
-            /*
-             * TODO
-             * Use message.getComposeTime() to show time when message was composed
-             * on partner's device. This may be different time than that which is on receiving
-             * device.
-             */
-            statusAndTime = DateUtils.getMessageTimeFormat(message.getComposeTime());
-        } else {
-            statusAndTime = String.format("%s %s",
-                    getResources().getString(MessageStates.messageStateToStringId(message.getState())),
-                    DateUtils.getMessageTimeFormat(message.getTime()));
+        CharSequence statusAndTime = DateUtils.getMessageTimeFormat(message.getComposeTime());
+        v.time.setText(statusAndTime);
+        v.message_state.setText("");
+        if (message instanceof OutgoingMessage) {
+            v.message_state.setText(MessageStates.messageStateToStringId(message.getState()));
         }
 
-        time.setText(statusAndTime);
     }
 
     @Override
@@ -668,7 +660,8 @@ public class MessageEventView extends RelativeLayout implements Updatable, Check
 
         // get duration of the animation
         int duration = 0;
-        for (int i = 0; i < drawable.getNumberOfFrames(); i++, duration += drawable.getDuration(i));
+        for (int i = 0; i < drawable.getNumberOfFrames(); i++, duration += drawable.getDuration(i))
+            ;
 
         // schedule actions to be performed when it finishes
         Runnable postAnimationRunnable = new Runnable() {
@@ -682,8 +675,7 @@ public class MessageEventView extends RelativeLayout implements Updatable, Check
         };
         if (handler != null) {
             handler.postDelayed(postAnimationRunnable, duration);
-        }
-        else {
+        } else {
             // run the passed runnable immediately, it won't be run otherwise
             if (runnable != null) {
                 runnable.run();
@@ -702,9 +694,8 @@ public class MessageEventView extends RelativeLayout implements Updatable, Check
                 || MessageStates.DELIVERED == message.getState()
                 || MessageStates.READ == message.getState();
 
-        // TODO: set alpha according to message status
         // TODO: handle MessageStates.RESEND_REQUESTED
-        ViewUtil.setAlpha(getViews().card, enabled ? 1 : 0.5f);
+        ViewUtil.setAlpha(getViews().card, enabled ? 1.0f : 0.5f);
     }
 
     private void updateBurnNotice() {
@@ -719,12 +710,15 @@ public class MessageEventView extends RelativeLayout implements Updatable, Check
 
         if (message.expires()) {
             v.burn_notice.setVisibility(VISIBLE);
-            v.action_burn.setVisibility(VISIBLE);
+            v.action_burn.setVisibility(GONE);
             ViewUtil.setEnabled(v.action_burn, !isInChoiceMode());
 
             if (message.getState() == MessageStates.READ) {
                 long millisecondsToExpiry = message.getExpirationTime() - System.currentTimeMillis();
-                v.burn_notice.setText(DateUtils.getShortTimeString(context, millisecondsToExpiry));
+                CharSequence newText = DateUtils.getShortTimeString(context, millisecondsToExpiry);
+                if (!newText.equals(v.burn_notice.getText())) {
+                    v.burn_notice.setText(newText);
+                }
                 /*
                  * Show burn animation for message if it is expired
                  */
@@ -788,6 +782,24 @@ public class MessageEventView extends RelativeLayout implements Updatable, Check
             result |= mHitRectangle.contains((int) event.getRawX(), (int) event.getRawY());
         }
         return result;
+    }
+
+    private long getNextUpdateTime() {
+        long nextUpdateTime = TimeUnit.DAYS.toMillis(1);
+        Message message = getMessage();
+        if (message != null) {
+            nextUpdateTime = message.getExpirationTime() - System.currentTimeMillis();
+            if (nextUpdateTime > TimeUnit.DAYS.toMillis(1)) {
+                nextUpdateTime = Math.min(nextUpdateTime % TimeUnit.HOURS.toMillis(1), TimeUnit.HOURS.toMillis(1));
+            }
+            else if (nextUpdateTime > TimeUnit.HOURS.toMillis(1)) {
+                nextUpdateTime = Math.min(nextUpdateTime % TimeUnit.MINUTES.toMillis(1), TimeUnit.MINUTES.toMillis(1));
+            }
+            else {
+                nextUpdateTime = TimeUnit.SECONDS.toMillis(1);
+            }
+        }
+        return nextUpdateTime;
     }
 
 }

@@ -27,6 +27,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 package com.silentcircle.messaging.thread;
 
+import android.Manifest;
 import android.annotation.TargetApi;
 import android.content.ContentResolver;
 import android.content.ContentUris;
@@ -48,6 +49,7 @@ import android.os.Build;
 import android.provider.BaseColumns;
 import android.provider.MediaStore;
 import android.provider.MediaStore.Audio.AudioColumns;
+import android.support.v4.content.ContextCompat;
 import android.util.Log;
 
 import com.silentcircle.common.util.ViewUtil;
@@ -286,6 +288,9 @@ public class CreateThumbnail  {
         if( uri.equals(AudioProvider.CONTENT_URI) ) {
             return decorateAudioThumbnail(resize(bitmap));
         } else {
+            if (!hasMediaPermission()) {
+                return decorateAudioThumbnail(resize(bitmap));
+            }
 
             Cursor cursor = resolver.query(uri, new String[]{
                     AudioColumns.ALBUM_ID
@@ -439,21 +444,28 @@ public class CreateThumbnail  {
         } else if( uri.equals(AudioProvider.CONTENT_URI) ) {
             return decorateAudioThumbnail(resize(bitmap));
         } else {
-            Cursor cursor = MediaStore.Video.query( resolver, uri, new String [] {
-                    BaseColumns._ID
-            } );
-            if( cursor != null ) {
-                if( cursor.moveToNext() ) {
-                    BitmapFactory.Options options = new BitmapFactory.Options();
-                    options.inMutable = true;
-                    bitmap = MediaStore.Video.Thumbnails.getThumbnail( resolver, cursor.getInt( 0 ), MediaStore.Video.Thumbnails.MINI_KIND, options );
-                } else {
-                    bitmap = getVideoThumbnailFroyo();
-                }
-                cursor.close();
-            }
-            if( bitmap == null ) {
+            if (!hasMediaPermission()) {
                 bitmap = createVideoThumbnail( mContext, uri );
+            } else {
+                Cursor cursor = MediaStore.Video.query(resolver, uri, new String[]{
+                        BaseColumns._ID
+                });
+
+                if (cursor != null) {
+                    if (cursor.moveToNext()) {
+                        BitmapFactory.Options options = new BitmapFactory.Options();
+                        options.inMutable = true;
+                        bitmap = MediaStore.Video.Thumbnails.getThumbnail(resolver, cursor.getInt(0), MediaStore.Video.Thumbnails.MINI_KIND, options);
+                    } else {
+                        bitmap = getVideoThumbnailFroyo();
+                    }
+
+                    cursor.close();
+                }
+
+                if (bitmap == null) {
+                    bitmap = createVideoThumbnail(mContext, uri);
+                }
             }
         }
         return decorateVideoThumbnail( resize( bitmap ) );
@@ -496,6 +508,12 @@ public class CreateThumbnail  {
         if( options.inSampleSize < 1 ) {
             options.inSampleSize = 1;
         }
+    }
+
+    // Used for generating thumbnails
+    private boolean hasMediaPermission() {
+        return ContextCompat.checkSelfPermission(mContext,
+                Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
     }
 
 }

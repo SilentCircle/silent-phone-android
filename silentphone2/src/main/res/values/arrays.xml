@@ -77,4 +77,10 @@
         <item>@string/messaging_vibrate_long</item>
     </array>
 
+    <!-- theme labels -->
+    <array name="message_theme_array">
+        <item>@string/messaging_theme_dark</item>
+        <item>@string/messaging_theme_light</item>
+    </array>
+
 </resources>

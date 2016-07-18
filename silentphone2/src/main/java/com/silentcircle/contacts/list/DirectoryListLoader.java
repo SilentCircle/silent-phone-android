@@ -54,12 +54,12 @@ import android.database.Cursor;
 import android.database.MatrixCursor;
 import android.net.Uri;
 import android.os.Handler;
+import android.provider.ContactsContract.Directory;
 import android.text.TextUtils;
 import android.util.Log;
 
-import com.silentcircle.silentphone2.R;
 import com.silentcircle.contacts.utils.AsyncTaskLoader;
-import com.silentcircle.silentcontacts2.ScContactsContract.Directory;
+import com.silentcircle.silentphone2.R;
 
 /**
  * A specialized loader for the list of directories, see {@link com.silentcircle.silentcontacts.ScContactsContract.Directory}.

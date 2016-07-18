@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:background="@drawable/bg_window_dark">
+    android:background="?sp_activity_background_color">
 
     <android.support.v7.widget.Toolbar
         android:id="@+id/toolbar"

@@ -425,19 +425,6 @@
         <item name="android:fontFamily">sans-serif-medium</item>
     </style>
 
-    <style name="ExpandingEntryCardStyle">
-        <item name="android:elevation">@dimen/expanding_entry_card_elevation</item>
-        <item name="android:background">@color/expanding_entry_card_background_color</item>
-        <item name="android:layout_marginBottom">@dimen/expanding_entry_card_marginBottom</item>
-        <item name="android:layout_marginEnd">@dimen/expanding_entry_card_marginStartEnd</item>
-        <item name="android:layout_marginStart">@dimen/expanding_entry_card_marginStartEnd</item>
-        <item name="android:layout_marginRight">@dimen/expanding_entry_card_marginStartEnd</item>
-        <item name="android:layout_marginLeft">@dimen/expanding_entry_card_marginStartEnd</item>
-        <item name="android:orientation">vertical</item>
-        <item name="android:layout_width">match_parent</item>
-        <item name="android:layout_height">wrap_content</item>
-    </style>
-
     <!-- @android:style/Theme.Dialog -->
     <style name="CallOrConversationDialogTheme" parent="Theme.AppCompat.Light.Dialog">
         <item name="android:windowIsFloating">true</item>

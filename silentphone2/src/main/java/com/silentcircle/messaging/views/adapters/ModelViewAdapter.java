@@ -28,9 +28,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package com.silentcircle.messaging.views.adapters;
 
 
+import android.support.annotation.Nullable;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
+
+import com.silentcircle.messaging.model.event.Message;
+import com.silentcircle.silentphone2.R;
 
 import java.util.Arrays;
 import java.util.List;
@@ -40,6 +44,8 @@ import java.util.List;
  * model with the appropriate view and recycling previously constructed views wherever possible.
  */
 public class ModelViewAdapter extends BaseAdapter {
+
+    public static final Boolean NEW_GROUP = true;
 
     private ModelProvider modelProvider;
     private final ViewType[] viewTypes;
@@ -128,6 +134,10 @@ public class ModelViewAdapter extends BaseAdapter {
         ViewType viewType = getItemViewType(item);
         View view = viewType.get(convertView, parent);
 
+        view.setTag(R.id.new_group_flag, null);
+        if (isNewGroup(position, item)) {
+            view.setTag(R.id.new_group_flag, NEW_GROUP);
+        }
         view.setTag(item);
 
         return view;
@@ -169,6 +179,31 @@ public class ModelViewAdapter extends BaseAdapter {
      */
     public int getScreenPosition(int position) {
         return position;
+    }
+
+    private boolean isNewGroup(int position, @Nullable final Object item) {
+        boolean result = false;
+        if (item != null && item instanceof Message) {
+            int i = position - 1;
+            if (i <= 0) {
+                result = true;
+            }
+            while (i > 0) {
+                Object previousItem = getItem(i);
+                if (previousItem instanceof Message) {
+                    boolean sameGroup = item.getClass().equals(previousItem.getClass());
+                    if (sameGroup) {
+                        sameGroup = ((Message) item).getSender().equals(((Message) previousItem).getSender());
+                    }
+                    if (!sameGroup) {
+                        result = true;
+                    }
+                    break;
+                }
+                i--;
+            }
+        }
+        return result;
     }
 
 }

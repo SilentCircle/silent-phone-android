@@ -31,7 +31,7 @@ import android.util.Log;
 
 import com.google.common.collect.Lists;
 import com.silentcircle.common.database.NoNullCursorAsyncQueryHandler;
-import com.silentcircle.silentcontacts2.ScCallLog.ScCalls;
+import com.silentcircle.contacts.ScCallLog.ScCalls;
 
 import java.lang.ref.WeakReference;
 import java.util.List;

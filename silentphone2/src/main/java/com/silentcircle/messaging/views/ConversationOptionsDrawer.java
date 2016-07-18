@@ -27,13 +27,17 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 package com.silentcircle.messaging.views;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.util.Pair;
 import android.support.v7.app.AlertDialog;
 import android.text.TextUtils;
@@ -49,6 +53,8 @@ import android.widget.ScrollView;
 import android.widget.SeekBar;
 import android.widget.Toast;
 
+import com.silentcircle.SilentPhoneApplication;
+import com.silentcircle.common.util.ExplainPermissionDialog;
 import com.silentcircle.messaging.activities.ConversationActivity;
 import com.silentcircle.messaging.activities.ShowRemoteDevicesActivity;
 import com.silentcircle.messaging.listener.DismissDialogOnClick;
@@ -56,6 +62,7 @@ import com.silentcircle.messaging.location.LocationUtils;
 import com.silentcircle.messaging.model.Conversation;
 import com.silentcircle.messaging.model.event.Message;
 import com.silentcircle.messaging.repository.ConversationRepository;
+import com.silentcircle.messaging.services.AxoMessaging;
 import com.silentcircle.messaging.task.ComposeMessageTask;
 import com.silentcircle.messaging.task.SendMessageTask;
 import com.silentcircle.messaging.util.AsyncUtils;
@@ -69,6 +76,8 @@ public class ConversationOptionsDrawer extends ScrollView  {
     private final static String TAG = "ConversationOptions";
     private String mPartner;
     private Activity mParent;
+
+    private boolean mLocationPermissionAsked;
 
     public interface ConversationOptionsChangeListener {
 
@@ -132,24 +141,51 @@ public class ConversationOptionsDrawer extends ScrollView  {
         }
     };
 
+    public void checkLocationAfterPermission(boolean enabled) {
+        if (enabled) {
+            boolean locationSharingAvailable =
+                    LocationUtils.isLocationSharingAvailable(getContext());
+            if (!locationSharingAvailable) {
+                OptionsItem locationSharing = (OptionsItem) findViewById(R.id.location_sharing);
+                locationSharing.setChecked(false);
+                new AlertDialog.Builder(getContext())
+                        .setTitle(R.string.dialog_title_cannot_enable_location_sharing)
+                        .setMessage(R.string.dialog_message_enable_device_location)
+                        .setNegativeButton(R.string.dialog_button_ok, new DismissDialogOnClick())
+                        .show();
+                return;
+            }
+        }
+
+        toggleLocationSharing(enabled);
+    }
+
     OptionsItem.OnCheckedChangeListener mLocationSharingChangedListener =
             new OptionsItem.OnCheckedChangeListener() {
 
                 @Override
                 public void onCheckedChanged(OptionsItem buttonView, boolean isChecked) {
-                    boolean locationSharingAvailable =
-                            LocationUtils.isLocationSharingAvailable(getContext());
-                    if (!locationSharingAvailable && isChecked) {
-                        buttonView.setChecked(false);
-                        new AlertDialog.Builder(getContext())
-                                .setTitle(R.string.dialog_title_cannot_enable_location_sharing)
-                                .setMessage(R.string.dialog_message_enable_device_location)
-                                .setNegativeButton(R.string.dialog_button_ok, new DismissDialogOnClick())
-                                .show();
-                        return;
+                    if (isChecked && mParent != null &&
+                            ContextCompat.checkSelfPermission(mParent,
+                                    Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                        if (ActivityCompat.shouldShowRequestPermissionRationale(mParent, Manifest.permission.ACCESS_COARSE_LOCATION)) {
+                            ExplainPermissionDialog.showExplanation(mParent, ConversationActivity.PERMISSIONS_REQUEST_LOCATION,
+                                    mParent.getString(R.string.permission_location_title), mParent.getString(R.string.permission_location_explanation), null);
+                        }
+                        else {
+                            if (!mLocationPermissionAsked) {
+                                ActivityCompat.requestPermissions(mParent, new String[]{Manifest.permission.ACCESS_COARSE_LOCATION},
+                                        ConversationActivity.PERMISSIONS_REQUEST_LOCATION);
+                                mLocationPermissionAsked = true;
+                            }
+                            else {
+                                buttonView.setChecked(false);
+                            }
+                        }
                     }
-
-                    toggleLocationSharing(isChecked);
+                    else {
+                        checkLocationAfterPermission(isChecked);
+                    }
                 }
             };
 
@@ -367,12 +403,12 @@ public class ConversationOptionsDrawer extends ScrollView  {
                     final int spamDelay = spamDelayString != null ? Integer.valueOf(spamDelayString) : 0;
 
                     final ConversationActivity activity = (ConversationActivity) mParent;
-                    String partner = activity.getPartner();
+                    String self = AxoMessaging.getInstance(SilentPhoneApplication.getAppContext()).getUserName();
                     ConversationRepository repository = ConversationUtils.getConversations(mParent.getApplicationContext());
                     Conversation conversation = activity.getConversation();
 
                     for (int i = 0; i < spamNum; i++) {
-                        final ComposeMessageTask composeTask = new ComposeMessageTask(partner, conversation, repository,
+                        final ComposeMessageTask composeTask = new ComposeMessageTask(self, conversation, repository,
                                 null, true) {
 
                             @Override

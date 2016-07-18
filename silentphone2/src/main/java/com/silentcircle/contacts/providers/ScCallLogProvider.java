@@ -40,12 +40,11 @@ import android.content.UriMatcher;
 import android.net.Uri;
 import android.provider.CallLog;
 
-import com.silentcircle.contacts.providers.ScContactsDatabaseHelper.Tables;
+import com.silentcircle.contacts.providers.ScCallLogDatabaseHelper.Tables;
 import com.silentcircle.contacts.utils.DbQueryUtils;
 import com.silentcircle.contacts.utils.SelectionBuilder;
-import com.silentcircle.silentcontacts2.ScCallLog;
-import com.silentcircle.silentcontacts2.ScCallLog.ScCalls;
-import com.silentcircle.silentcontacts2.ScContactsContract;
+import com.silentcircle.contacts.ScCallLog;
+import com.silentcircle.contacts.ScCallLog.ScCalls;
 
 import net.sqlcipher.Cursor;
 import net.sqlcipher.database.SQLiteDatabase;
@@ -97,7 +96,7 @@ public class ScCallLogProvider extends ContentProvider {
         sCallsProjectionMap.put(ScCalls.SC_OPTION_TEXT2, ScCalls.SC_OPTION_TEXT2);
     }
 
-    private ScContactsDatabaseHelper mDbHelper;
+    private ScCallLogDatabaseHelper mDbHelper;
     private boolean mUseStrictPhoneNumberComparation = false;
 
     public ScCallLogProvider() {
@@ -105,10 +104,6 @@ public class ScCallLogProvider extends ContentProvider {
 
     @Override
     public int delete(Uri uri, String selection, String[] selectionArgs) {
-        // Don't block caller if NON_BLOCK parameter is true and if DB is not ready
-        if (returnOnBlocking(uri))
-            return 0;
-
         SelectionBuilder selectionBuilder = new SelectionBuilder(selection);
 
         final SQLiteDatabase db = mDbHelper.getDatabase(true);
@@ -142,10 +137,6 @@ public class ScCallLogProvider extends ContentProvider {
 
     @Override
     public Uri insert(Uri uri, ContentValues values) {
-        // Don't block caller if NON_BLOCK parameter is true and if DB is not ready
-        if (returnOnBlocking(uri))
-            return null;
-
         DbQueryUtils.checkForSupportedColumns(sCallsProjectionMap, values);
 
         SQLiteDatabase db = mDbHelper.getDatabase(true);
@@ -171,10 +162,6 @@ public class ScCallLogProvider extends ContentProvider {
 
     @Override
     public Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder) {
-        // Don't block caller if NON_BLOCK parameter is true and if DB is not ready
-        if (returnOnBlocking(uri))
-            return null;
-
         final SQLiteQueryBuilder qb = new SQLiteQueryBuilder();
         qb.setTables(Tables.CALLS);
         qb.setProjectionMap(sCallsProjectionMap);
@@ -221,10 +208,6 @@ public class ScCallLogProvider extends ContentProvider {
 
     @Override
     public int update(Uri uri, ContentValues values, String selection, String[] selectionArgs) {
-        // Don't block caller if NON_BLOCK parameter is true and if DB is not ready
-        if (returnOnBlocking(uri))
-            return 0;
-
         DbQueryUtils.checkForSupportedColumns(sCallsProjectionMap, values);
 
         SelectionBuilder selectionBuilder = new SelectionBuilder(selection);
@@ -250,20 +233,14 @@ public class ScCallLogProvider extends ContentProvider {
         return count;
     }
     
-    protected ScContactsDatabaseHelper getDatabaseHelper(final Context context) {
-        return ScContactsDatabaseHelper.getInstance(context);
+    protected ScCallLogDatabaseHelper getDatabaseHelper(final Context context) {
+        return ScCallLogDatabaseHelper.getInstance(context);
     }
 
     // Work around to let the test code override the context. getContext() is final so cannot be
     // overridden.
     protected Context context() {
         return getContext();
-    }
-
-    private boolean returnOnBlocking(Uri uri) {
-        boolean nonBlock = ScContactsProvider.readBooleanQueryParameter(uri, ScCallLog.NON_BLOCKING, false);
-        boolean dbReady = mDbHelper.isReady();
-        return !dbReady && nonBlock;
     }
 
     /**

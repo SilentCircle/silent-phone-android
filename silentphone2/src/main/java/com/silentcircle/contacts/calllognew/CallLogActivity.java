@@ -22,6 +22,7 @@ import android.database.Cursor;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v13.app.FragmentPagerAdapter;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
@@ -32,8 +33,9 @@ import android.view.MenuItem;
 import android.view.MotionEvent;
 
 import com.silentcircle.common.interactions.TouchPointManager;
+import com.silentcircle.common.util.ViewUtil;
+import com.silentcircle.contacts.ScCallLog.ScCalls;
 import com.silentcircle.contacts.widget.SlidingTabLayout;
-import com.silentcircle.silentcontacts2.ScCallLog.ScCalls;
 import com.silentcircle.silentphone2.R;
 import com.silentcircle.silentphone2.activities.DialerActivity;
 
@@ -119,6 +121,8 @@ public class CallLogActivity extends AppCompatActivity implements CallLogQueryHa
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        ViewUtil.setBlockScreenshots(this);
+
         mHandler = new Handler();
 
         setContentView(R.layout.call_log_activity_new);
@@ -160,8 +164,8 @@ public class CallLogActivity extends AppCompatActivity implements CallLogQueryHa
         // it's PagerAdapter set.
         mSlidingTabLayout = (SlidingTabLayout)findViewById(R.id.sliding_tabs);
         mSlidingTabLayout.setCustomTabView(R.layout.tab_text, R.id.text_tab);
-        mSlidingTabLayout.setSelectedIndicatorColors(getResources().getColor(R.color.sc_ng_text_red));
-        mSlidingTabLayout.setDividerColors(getResources().getColor(android.R.color.transparent));
+        mSlidingTabLayout.setSelectedIndicatorColors(ContextCompat.getColor(this, R.color.sc_ng_text_red));
+        mSlidingTabLayout.setDividerColors(ContextCompat.getColor(this, android.R.color.transparent));
         mSlidingTabLayout.setDefaultTabTextColor(R.color.sc_ng_text_grey_2);
         mSlidingTabLayout.setSelectedTabTextColor(R.color.sc_ng_text_red);
 

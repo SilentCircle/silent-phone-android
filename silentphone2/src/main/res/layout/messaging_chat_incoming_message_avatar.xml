@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<QuickContactBadge xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/message_avatar"
+    android:layout_width="@dimen/contact_photo_size"
+    android:layout_height="@dimen/contact_photo_size"
+    android:layout_gravity="center"
+    android:layout_marginLeft="@dimen/messaging_actionbar_photo_margin_right" />

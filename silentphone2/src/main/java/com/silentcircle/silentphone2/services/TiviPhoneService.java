@@ -43,6 +43,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.database.ContentObserver;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -77,19 +78,17 @@ import android.util.Log;
 
 import com.silentcircle.common.util.AsyncTasks;
 import com.silentcircle.common.util.RingtoneUtils;
+import com.silentcircle.contacts.ScCallLog;
 import com.silentcircle.contacts.UpdateScContactDataService;
-import com.silentcircle.contacts.providers.LocaleChangeReceiver;
+import com.silentcircle.contacts.utils.LocaleChangeReceiver;
 import com.silentcircle.googleservices.RegistrationIntentService;
 import com.silentcircle.messaging.services.AxoMessaging;
 import com.silentcircle.messaging.services.SCloudService;
 import com.silentcircle.messaging.util.Action;
-import com.silentcircle.silentcontacts2.ScCallLog;
 import com.silentcircle.silentphone2.BuildConfig;
 import com.silentcircle.silentphone2.R;
 import com.silentcircle.silentphone2.activities.DialerActivity;
-import com.silentcircle.silentphone2.activities.DialogHelperActivity;
 import com.silentcircle.silentphone2.activities.InCallActivity;
-import com.silentcircle.silentphone2.fragments.DialDrawerFragment;
 import com.silentcircle.silentphone2.fragments.SettingsFragment;
 import com.silentcircle.silentphone2.receivers.AutoStart;
 import com.silentcircle.silentphone2.util.CallState;
@@ -484,6 +483,26 @@ public class TiviPhoneService extends PhoneServiceNative {
     }
 
     @Override
+    public void onTaskRemoved (Intent rootIntent) {
+        if (ConfigurationUtilities.mTrace) {
+            Log.d(LOG_TAG, "Got a 'onTaskRemoved', root intent: " + rootIntent);
+        }
+        // Send this Intent to circumvent a bug in Android Lollipop and a few
+        // version before Lollipop, Android issue #53313 . If necessary we can
+        // send this Intent even on M and above, it doesn't do any harm, just
+        // doing the normal ON_BOOT processing which is sort of a reduced "launch"
+        // and does not even bind DialerActivity to the service. Looks like just
+        // sending the Intent and starting the DialerActivity again prevents the
+        // erroneous behavior of Android L and below.
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+            final Intent i = new Intent(this, DialerActivity.class);
+            i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            i.setAction(AutoStart.ON_BOOT);
+            startActivity(i);
+        }
+    }
+
+    @Override
     public void onDestroy() {
 
         telephonyManager.listen(phoneStateReceiver, PhoneStateListener.LISTEN_NONE);
@@ -503,32 +522,33 @@ public class TiviPhoneService extends PhoneServiceNative {
     @Override
     public synchronized int onStartCommand(final Intent intent, final int flags, final int startId) {
         if (ConfigurationUtilities.mTrace)Log.d(LOG_TAG, "onStart intent: " + intent + ", startId: " + startId);
-        // If this is a restart then send an auto_start action to our main activity and stop this service.
+
+        // If this is a restart then send an start intent to our main activity and stop this service.
         // DialerActivity performs all necessary actions to perform the re-start
         if (intent == null) {
             final Intent i = new Intent(this, DialerActivity.class);
-            i.setAction(AutoStart.ON_BOOT);
             i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            Log.w(LOG_TAG, "Restarting phone service due to unknown reasons");
             startActivity(i);
             return START_STICKY;
         }
         if (iInitialized)
             return START_STICKY;
         iInitialized = true;
+//        PreferenceManager.getDefaultSharedPreferences(ctx).edit().putBoolean("ON_REMOVED", false).apply();
 
         doInit(ConfigurationUtilities.mTrace ? 1 : 0);
         initJNI(getBaseContext());
         checkNet(getBaseContext());
-        AsyncTasks.asyncCommand(":reg"); // doCmd(":reg"); - do it async to avoid ANR in case network is slow
         notificationReceiver = DialerActivity.class;
         if (!mIsReady)
             startForeground(R.drawable.ic_launcher_sp, setNewInfo());
         getPhoneState();
         LocaleChangeReceiver.setPhoneService(this);
 
-        mIsReady = true;
-
-        mHandler.sendEmptyMessageDelayed(START_MESSAGING, 100);
+        // The start messaging handler registers once AxoMessaging is ready and also
+        // sets the ready flag.
+        mHandler.sendEmptyMessage(START_MESSAGING);
         reScheduleGcmRegistration(200);
 
         return START_STICKY;
@@ -543,11 +563,19 @@ public class TiviPhoneService extends PhoneServiceNative {
         try {
             AxoMessaging axoMessaging = AxoMessaging.getInstance(getApplicationContext());
             axoMessaging.initialize();
-            if (!axoMessaging.isReady())
+            if (!axoMessaging.isReady()) {
                 mHandler.sendEmptyMessageDelayed(START_MESSAGING, 1000);
+            }
+            else {
+                AsyncTasks.asyncCommand(":reg"); // doCmd(":reg"); - do it async to avoid ANR in case network is slow
+                mIsReady = true;
+            }
         } catch (Exception e) {
+            // If something happens during Axo initialization then at least register
+            // to be able to receive calls.
+            AsyncTasks.asyncCommand(":reg"); // doCmd(":reg"); - do it async to avoid ANR in case network is slow
+            mIsReady = true;
             Log.e(LOG_TAG, "Initialization of messaging failed", e);
-            e.printStackTrace();
         }
     }
 
@@ -662,7 +690,7 @@ public class TiviPhoneService extends PhoneServiceNative {
             mSipWakeLock.start();
         }
         else {
-            mSipWakeLock.start();
+            mSipWakeLock.stop();
         }
     }
 
@@ -1007,7 +1035,11 @@ public class TiviPhoneService extends PhoneServiceNative {
         // Event if we got the stored HW device id create it from the system data. We
         // just do some consistency checks to report problems.
         TelephonyManager tm = (TelephonyManager) ctx.getSystemService(Context.TELEPHONY_SERVICE);
-        String idData = tm.getDeviceId();
+        PackageManager pm = ctx.getPackageManager();
+        boolean hasPhone = pm.hasSystemFeature(PackageManager.FEATURE_TELEPHONY);
+
+        String idData = (hasPhone) ? tm.getDeviceId() : null;
+
         if (idData == null) {
             idData = Build.SERIAL
                     + " "
@@ -1530,7 +1562,10 @@ public class TiviPhoneService extends PhoneServiceNative {
             if (msg.what == CHECK_NET) {
                 parent.mSysNetObserver.stopWatching();
                 parent.handleSysNetChange();
-                parent.mSysNetObserver.startWatching();
+                // This is a hack: if we install multiple APK for testing purposes the restart
+                // only for the main APK, for other APKs run it only once
+                if (BuildConfig.MAIN_PACKAGE)
+                    parent.mSysNetObserver.startWatching();
                 return;
             }
 

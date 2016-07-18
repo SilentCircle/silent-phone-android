@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<com.silentcircle.common.widget.KeyboardNotifierLinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/conversation_root"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:tools="http://schemas.android.com/tools"
+    android:background="?sp_activity_background_color"
     android:orientation="vertical">
 
     <include
@@ -40,34 +42,15 @@
 
         </android.support.v4.widget.DrawerLayout>
 
-        <RelativeLayout
-            android:id="@+id/overlay"
+        <com.silentcircle.common.widget.ProgressBar
+            android:id="@+id/conversation_progress"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:indeterminate="true"
             android:background="@color/sc_ng_text_dark"
-            android:clickable="true"
-            tools:ignore="PxUsage"
-            >
-
-            <ImageView
-                android:id="@+id/ProvisioningInProgress"
-                android:layout_width="175px"
-                android:layout_height="175px"
-                android:layout_centerInParent="true"
-                android:contentDescription="@string/silent_circle"
-                android:src="@drawable/dot_circle"
-                />
-
-            <ProgressBar
-                android:id="@+id/ProgressBar"
-                android:layout_width="203px"
-                android:layout_height="203px"
-                android:layout_centerInParent="true"
-                android:indeterminate="true"
-                android:indeterminateDrawable="@drawable/progressbar_sc"
-                />
-
-        </RelativeLayout>
+            android:visibility="visible"
+            tools:visibility="visible"
+            />
 
         <com.silentcircle.messaging.views.ScreenLockView
             android:id="@+id/password_overlay"
@@ -78,4 +61,4 @@
 
     </FrameLayout>
 
-</LinearLayout>
+</com.silentcircle.common.widget.KeyboardNotifierLinearLayout>

@@ -17,6 +17,7 @@
         android:layout_marginEnd="@dimen/space_normal"
         android:paddingBottom="@dimen/space_normal"
         android:paddingTop="@dimen/space_normal"
+        android:textColor="?sp_error_message_text_selector"
         android:text="@string/sample_error"/>
 
 </com.silentcircle.messaging.views.FailureEventView>

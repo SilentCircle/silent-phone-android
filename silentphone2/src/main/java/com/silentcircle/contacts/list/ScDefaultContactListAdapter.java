@@ -85,9 +85,6 @@ public class ScDefaultContactListAdapter extends ScContactListAdapter {
 
     @Override
     public void configureLoader(CursorLoader loader, long directoryId) {
-        if (loader instanceof ProfileAndContactsLoader) {
-            ((ProfileAndContactsLoader) loader).setLoadProfile(shouldIncludeProfile());
-        }
 
         ContactListFilter filter = getFilter();
         if (isSearchMode()) {

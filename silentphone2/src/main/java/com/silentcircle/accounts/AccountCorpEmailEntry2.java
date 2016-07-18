@@ -147,7 +147,7 @@ public class AccountCorpEmailEntry2 extends Fragment {
             //Toast.makeText(mParent.getApplicationContext(),
             //        "Big fat warning: SSL error on "+sslc.getIssuedTo().toString()+", see logcat; bypass for demo purposes", Toast.LENGTH_LONG).show();
 
-            handler.proceed();
+            handler.cancel();
         }
 
         @Override

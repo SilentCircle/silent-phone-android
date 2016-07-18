@@ -28,13 +28,15 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 package com.silentcircle.accounts;
 
+import com.silentcircle.silentphone2.BuildConfig;
+
 /**
  * Constants that we use for the Silent Circle Authenticator and Account manager handling.
  *
  * Created by werner on 09.04.15.
  */
 public interface AccountConstants {
-    String ACCOUNT_TYPE = "com.silentcircle.account";
+    String ACCOUNT_TYPE = BuildConfig.AUTHORITY_BASE + ".account";
     String ACCOUNT_ACCESS = "account_access";
 
     String SC_AUTHORIZATION = "sc_authorization";

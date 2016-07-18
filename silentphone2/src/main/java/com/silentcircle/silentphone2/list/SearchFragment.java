@@ -27,7 +27,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.support.v7.app.AlertDialog;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.View;
 import android.view.animation.Interpolator;
 import android.widget.AbsListView;
@@ -310,7 +309,7 @@ public class SearchFragment extends PhoneNumberPickerFragment implements AxoMess
     protected void startCallOrConversation(final int position, final long id,
                                            final String number) {
         AxoMessaging axoMessaging =
-                AxoMessaging.getInstance(getContext().getApplicationContext());
+                AxoMessaging.getInstance(getOwnContext().getApplicationContext());
         boolean axoRegistered = axoMessaging.isRegistered();
 
         /*
@@ -432,7 +431,7 @@ public class SearchFragment extends PhoneNumberPickerFragment implements AxoMess
             // The getUserData _must not_ run on UI thread because it may trigger a network
             // activity to do a lookup on provisioning server. The validation also fill the
             // Name Lookup cache thus follow-up validations are fast.
-            AsyncTasks.UserDataBackgroundTask getUserDataTask = new AsyncTasks.UserDataBackgroundTask(getContext()) {
+            AsyncTasks.UserDataBackgroundTask getUserDataTask = new AsyncTasks.UserDataBackgroundTask() {
 
                 @Override
                 protected void onPostExecute(Integer time) {
@@ -453,10 +452,10 @@ public class SearchFragment extends PhoneNumberPickerFragment implements AxoMess
 
     private void addContactToScAccount(Cursor cursor, String scName) {
 
-        final Intent intent = new Intent(getContext(), ContactAdder.class);
+        final Intent intent = new Intent(getOwnContext(), ContactAdder.class);
         intent.putExtra("AssertedName", "sip:" + scName + getString(R.string.sc_sip_domain_0));
         intent.putExtra("Text", cursor.getString(PhoneNumberListAdapter.PhoneQuery.DISPLAY_NAME));
-        getContext().startActivity(intent);
+        getOwnContext().startActivity(intent);
     }
 
     /**

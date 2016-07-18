@@ -67,7 +67,8 @@ public:
       int dif=(int)(uiPos-uiPosPrev);
       if(dif<0)dif=-dif;
       if(dif<iFrameEveryMS)return;
-      
+      uiPosPrev = (getTickCount()&~1);
+
       if(angle == 0 || angle == 180){
          setXY_priv(nw,nh);
          int i,sz=w*h;

@@ -28,6 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 package com.silentcircle.silentphone2.activities;
 
+import android.Manifest;
 import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.annotation.SuppressLint;
@@ -45,6 +46,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
@@ -60,6 +62,8 @@ import android.preference.PreferenceManager;
 import android.provider.ContactsContract;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
@@ -68,7 +72,9 @@ import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.Toolbar;
 import android.telephony.PhoneNumberUtils;
+import android.telephony.TelephonyManager;
 import android.text.Editable;
+import android.text.Html;
 import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.text.method.LinkMovementMethod;
@@ -98,14 +104,16 @@ import com.silentcircle.common.list.OnPhoneNumberPickerActionListener;
 import com.silentcircle.common.util.AsyncTasks;
 import com.silentcircle.common.util.DatabaseHelperManager;
 import com.silentcircle.common.util.DialerUtils;
+import com.silentcircle.common.util.ExplainPermissionDialog;
+import com.silentcircle.common.util.ViewUtil;
 import com.silentcircle.common.widget.FloatingActionButtonController;
 import com.silentcircle.contacts.ContactsUtils;
 import com.silentcircle.contacts.calllognew.CallLogActivity;
-import com.silentcircle.contacts.vcard.MigrateByVCardActivity;
 import com.silentcircle.keymanagersupport.KeyManagerSupport;
 import com.silentcircle.keystore.KeyStoreActivity;
 import com.silentcircle.keystore.KeyStoreHelper;
 import com.silentcircle.messaging.activities.ConversationActivity;
+import com.silentcircle.messaging.services.SCloudService;
 import com.silentcircle.messaging.util.Action;
 import com.silentcircle.messaging.util.AsyncUtils;
 import com.silentcircle.messaging.util.Extra;
@@ -120,9 +128,7 @@ import com.silentcircle.silentphone2.fragments.DialpadFragment;
 import com.silentcircle.silentphone2.fragments.SettingsFragment;
 import com.silentcircle.silentphone2.interactions.PhoneNumberInteraction;
 import com.silentcircle.silentphone2.list.ListsFragment;
-import com.silentcircle.silentphone2.list.OnDragDropListener;
 import com.silentcircle.silentphone2.list.OnListFragmentScrolledListener;
-import com.silentcircle.silentphone2.list.PhoneFavoriteSquareTileView;
 import com.silentcircle.silentphone2.list.RegularSearchFragment;
 import com.silentcircle.silentphone2.list.SearchFragment;
 import com.silentcircle.silentphone2.list.SmartDialSearchFragment;
@@ -152,10 +158,9 @@ import javax.net.ssl.SSLContext;
 public class DialerActivity extends TransactionSafeActivity
         implements DialDrawerFragment.DrawerCallbacks, DialpadFragment.DialpadCallbacks,
         KeyManagerSupport.KeyManagerListener, View.OnClickListener, ListsFragment.HostInterface,
-        SearchFragment.HostInterface, OnDragDropListener,
-        ViewPager.OnPageChangeListener, DialpadFragment.OnDialpadQueryChangedListener,
+        SearchFragment.HostInterface, ViewPager.OnPageChangeListener, DialpadFragment.OnDialpadQueryChangedListener,
         OnListFragmentScrolledListener, OnPhoneNumberPickerActionListener, TiviPhoneService.ServiceStateChangeListener,
-        LoadUserInfo.Listener {
+        LoadUserInfo.Listener, ExplainPermissionDialog.AfterReading {
 
     private static final String TAG = DialerActivity.class.getSimpleName();
 
@@ -181,6 +186,12 @@ public class DialerActivity extends TransactionSafeActivity
     private static final String KEY_IN_SETTINGS_UI = "in_settings_ui";
 
     public static final String SHARED_PREFS_NAME = "com.silentcircle.dialer_preferences";
+
+    // Identifiers for permission handling
+    public static final int PERMISSIONS_REQUEST_SP = 1;
+    public static final int PERMISSIONS_REQUEST_EXIT = 2;
+    public static final int PERMISSIONS_REQUEST_READ_PHONE_STATE = 3;
+    public static final String KEY_PERMISSIONS_EXPLAINED = "is_permissions_explained";
 
     /*
      * Codes for startActivityWithResult Intents
@@ -225,6 +236,9 @@ public class DialerActivity extends TransactionSafeActivity
     private boolean mRemoveAccount;         // received a remove account action
     private boolean mStartForMessaging;     // Initialize and start service for messaging
 
+    // If true, we already explained the main permissions to the user
+    private boolean mPermissionsExplained;
+
     /*
      * Manage and monitor the KeyManager
      */
@@ -242,7 +256,6 @@ public class DialerActivity extends TransactionSafeActivity
     // some internal features, usually not visible to user
     private boolean mEnableShowZid;
     private boolean mAdvancedSettings;
-    private boolean mReProvisioningRequested;
 
     private boolean mDestroyed;             // Activity being destroyed, don't do delayed actions (service bind)
 
@@ -303,6 +316,8 @@ public class DialerActivity extends TransactionSafeActivity
     private Drawable mDialPadIcon;
     private Drawable mNewChatIcon;
 
+    private Bundle mSavedInstanceState;
+
     /**
      * Listener for after slide out animation completes on dialer fragment.
      */
@@ -348,11 +363,6 @@ public class DialerActivity extends TransactionSafeActivity
             if (mDialDrawerFragment != null) {
                 mDialDrawerFragment.setNumberName();
             }
-
-            /* Initialize TiVi library from settings in the preferences */
-            activateTraversal();
-            activateDropoutTone();
-            activateDebugSettings();
 
             if (!mForceUpdates) {
                 FindDialHelper.setDialHelper(DialerActivity.this, false);
@@ -466,20 +476,110 @@ public class DialerActivity extends TransactionSafeActivity
         }
     };
 
+    /**
+     * Callback from ExplainPermissionDialog after user read the explanation.
+     *
+     * After we explained the facts and the user read the explanation ask for permission again.
+     *
+     * @param token The token from ExplainPermissionDialog#showExplanation() call
+     * @param callerBundle the optional bundle from ExplainPermissionDialog#showExplanation() call
+     */
+    @Override
+    public void explanationRead(final int token, final Bundle callerBundle) {
+        switch (token) {
+            case PERMISSIONS_REQUEST_READ_PHONE_STATE:
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_PHONE_STATE}, token);
+                break;
+            case PERMISSIONS_REQUEST_SP:
+                ActivityCompat.requestPermissions(this, SP_PERMISSIONS, token);
+                break;
+            case PERMISSIONS_REQUEST_EXIT:
+                exitApplication();
+                break;
+            default:
+                break;
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String permissions[], @NonNull int[] grantResults) {
+        // Occurs on rotation of permission dialog
+        if (permissions.length == 0) {
+            return;
+        }
+
+        switch (requestCode) {
+            case PERMISSIONS_REQUEST_READ_PHONE_STATE: {
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    onCreateAfterPermission();
+                }
+                else {
+                    ExplainPermissionDialog.showExplanation(this, PERMISSIONS_REQUEST_EXIT,
+                            getString(R.string.permission_main_not_granted_title), getString(R.string.permission_main_not_granted_explanation), null);
+                }
+                break;
+            }
+            case PERMISSIONS_REQUEST_SP: {
+                if (grantResults.length == SP_PERMISSIONS.length) {
+                    boolean fail = false;
+                    for (int result : grantResults) {
+                        if (result != PackageManager.PERMISSION_GRANTED) {
+                            fail = true;
+                            ExplainPermissionDialog.showExplanation(this, PERMISSIONS_REQUEST_EXIT,
+                                    getString(R.string.permission_main_not_granted_title), getString(R.string.permission_main_not_granted_explanation), null);
+                            break;
+                        }
+                    }
+                    if (!fail)
+                        requiredPermissionGranted();
+                }
+                else {
+                    ExplainPermissionDialog.showExplanation(this, PERMISSIONS_REQUEST_EXIT,
+                            getString(R.string.permission_main_not_granted_title), getString(R.string.permission_main_not_granted_explanation), null);
+                }
+            }
+        }
+    }
+
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     @SuppressWarnings("deprecation")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        AutoStart.setDisableAutoStart(true);                            // Don't auto start if we are started once
+        AutoStart.setDisableAutoStart(true);            // Don't auto start if we are started once
 
         super.onCreate(savedInstanceState);
+        mSavedInstanceState = savedInstanceState;       // Copy it because we use it later after permission checks
 
-        //register for push notification if registration id has not been saved yet.
-        //This may not need to unregister as Ed suggested in the email.
-//        String regId = SPAPreferences.getInstance(this).getRegistrationId();
-//        if(TextUtils.isEmpty(regId)) {
-//            C2DMUtil.registerC2DM(this);
-//        }
+        // We need to phone state permission early because we register phone state monitoring
+        // and use the IMEI (plus some other data) and hash them to construct a device id. Thus
+        // the phone state permission is required before starting/initializing the phone service.
+        checkPhoneStatePermissions();
+    }
+
+    private void checkPhoneStatePermissions() {
+        TelephonyManager tm = (TelephonyManager)getSystemService(Context.TELEPHONY_SERVICE);
+        PackageManager pm = getPackageManager();
+
+        boolean needPhoneStatePermission = pm.hasSystemFeature(PackageManager.FEATURE_TELEPHONY);
+        if (needPhoneStatePermission &&
+                (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_PHONE_STATE) != PackageManager.PERMISSION_GRANTED)) {
+
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.READ_PHONE_STATE)) {
+                ExplainPermissionDialog.showExplanation(this, PERMISSIONS_REQUEST_READ_PHONE_STATE,
+                        getString(R.string.permission_phone_title), getString(R.string.permission_phone_explanation), null);
+            }
+            else {
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_PHONE_STATE},
+                        PERMISSIONS_REQUEST_READ_PHONE_STATE);
+            }
+        }
+        else {
+            onCreateAfterPermission();
+        }
+    }
+
+    private void onCreateAfterPermission() {
+        ViewUtil.setBlockScreenshots(this);
 
         String action = getIntent().getAction();
 
@@ -487,6 +587,11 @@ public class DialerActivity extends TransactionSafeActivity
 
         mStartOnBoot = AutoStart.ON_BOOT.equals(action);
         mStartForMessaging = START_FOR_MESSAGING.equals(action);
+
+        /* Initialize TiVi library from settings in the preferences */
+        activateTraversal(getApplicationContext());
+        activateDropoutTone(getApplicationContext());
+        activateDebugSettings(getApplicationContext());
 
         if ((InCallActivity.ADD_CALL_ACTION.equals(action)
                 || Action.VIEW_CONVERSATIONS.equals(Action.from(getIntent())))
@@ -500,7 +605,7 @@ public class DialerActivity extends TransactionSafeActivity
         ConfigurationUtilities.initializeDebugSettings(getBaseContext());
 
         if (Build.VERSION.SDK_INT >= 21 && ConfigurationUtilities.mUseDevelopConfiguration) {
-            getWindow().setStatusBarColor(getResources().getColor(android.R.color.holo_red_dark));
+            getWindow().setStatusBarColor(ContextCompat.getColor(this, android.R.color.holo_red_dark));
         }
 
         if (mDomainsToRemove == null)
@@ -550,43 +655,38 @@ public class DialerActivity extends TransactionSafeActivity
         // an Activity for result. The result action may call the layout function. On a new
         // start this is not a problem.
         setResult(RESULT_CANCELED);
-        if (savedInstanceState == null) {
+        if (mSavedInstanceState == null) {
             checkAndSetKeyManager();
         }
         else {
-            hasKeyManager = savedInstanceState.getBoolean("KEY_MANAGER");
+            hasKeyManager = mSavedInstanceState.getBoolean("KEY_MANAGER");
+            mPermissionsExplained = mSavedInstanceState.getBoolean(KEY_PERMISSIONS_EXPLAINED);
             keyManagerChecked();
-            mSearchQuery = savedInstanceState.getString(KEY_SEARCH_QUERY);
-            mInRegularSearch = savedInstanceState.getBoolean(KEY_IN_REGULAR_SEARCH_UI);
-            mInDialpadSearch = savedInstanceState.getBoolean(KEY_IN_DIALPAD_SEARCH_UI);
-            mShowDialpadOnResume = savedInstanceState.getBoolean(KEY_IS_DIALPAD_SHOWN);
-            mAutoDialRequested = savedInstanceState.getBoolean(KEY_IS_AUTO_DIAL);
-            mIsInSettingsUi = savedInstanceState.getBoolean(KEY_IN_SETTINGS_UI);
+            mSearchQuery = mSavedInstanceState.getString(KEY_SEARCH_QUERY);
+            mInRegularSearch = mSavedInstanceState.getBoolean(KEY_IN_REGULAR_SEARCH_UI);
+            mInDialpadSearch = mSavedInstanceState.getBoolean(KEY_IN_DIALPAD_SEARCH_UI);
+            mShowDialpadOnResume = mSavedInstanceState.getBoolean(KEY_IS_DIALPAD_SHOWN);
+            mAutoDialRequested = mSavedInstanceState.getBoolean(KEY_IS_AUTO_DIAL);
+            mIsInSettingsUi = mSavedInstanceState.getBoolean(KEY_IN_SETTINGS_UI);
         }
+        mSavedInstanceState = null;             // Not needed anymore
         // Register even if not key manager may not be active
         KeyManagerSupport.addListener(this);
 
-        Resources.Theme theme = getTheme();
-        if (theme != null) {
-            TypedArray array = theme.obtainStyledAttributes(new int[]{
-                    R.attr.sp_ic_dial_pad,
-                    R.attr.sp_ic_new_chat,
-            });
-            if (array != null) {
-                mDialPadIcon = array.getDrawable(0);
-                mNewChatIcon = array.getDrawable(1);
-                array.recycle();
-            }
+        final Resources.Theme theme = getTheme();
+        final TypedArray array = theme != null ? theme.obtainStyledAttributes(new int[]{
+                R.attr.sp_ic_dial_pad,
+                R.attr.sp_ic_new_chat,
+        }) : null;
+
+        if (array != null) {
+            mDialPadIcon = array.getDrawable(0);
+            mNewChatIcon = array.getDrawable(1);
+            array.recycle();
         }
         else {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                mDialPadIcon = getResources().getDrawable(R.drawable.ic_action_dial_pad_light, null);
-                mNewChatIcon = getResources().getDrawable(R.drawable.ic_action_new_chat_dark, null);
-            }
-            else {
-                mDialPadIcon = getResources().getDrawable(R.drawable.ic_action_dial_pad_light);
-                mNewChatIcon = getResources().getDrawable(R.drawable.ic_action_new_chat_dark);
-            }
+            mDialPadIcon = ContextCompat.getDrawable(this, R.drawable.ic_action_dial_pad_light);
+            mNewChatIcon = ContextCompat.getDrawable(this, R.drawable.ic_action_new_chat_dark);
         }
 
         // Store this in a static variable to not call PreferenceManager#getDefaultSharedPreferences
@@ -599,7 +699,8 @@ public class DialerActivity extends TransactionSafeActivity
     public void onResume() {
         super.onResume();
 
-        if(mDialerDatabaseHelper != null) {
+        if(mDialerDatabaseHelper != null &&
+                ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_CONTACTS) == PackageManager.PERMISSION_GRANTED) {
             mDialerDatabaseHelper.startSmartDialUpdateThread();
         }
 
@@ -636,6 +737,7 @@ public class DialerActivity extends TransactionSafeActivity
     @Override
     public void onSaveInstanceState (@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
+        outState.putBoolean(KEY_PERMISSIONS_EXPLAINED, mPermissionsExplained);
         outState.putBoolean("KEY_MANAGER", hasKeyManager);
         outState.putString(KEY_SEARCH_QUERY, mSearchQuery);
         outState.putBoolean(KEY_IN_REGULAR_SEARCH_UI, mInRegularSearch);
@@ -707,7 +809,6 @@ public class DialerActivity extends TransactionSafeActivity
 
             case DialDrawerFragment.DrawerCallbacks.RE_PROVISION:
                 mDrawerLayout.closeDrawer(mDrawerView);
-                mReProvisioningRequested = true;
                 exitSettingsUi();
                 findViewById(R.id.floating_action_button_container).setVisibility(View.INVISIBLE);
                 FragmentManager fm = getFragmentManager();
@@ -933,11 +1034,14 @@ public class DialerActivity extends TransactionSafeActivity
         // Delete the account from the account manager
         AccountManager am = AccountManager.get(this);
         Account[] accounts = am.getAccountsByType(AccountConstants.ACCOUNT_TYPE);
-        // We force only one account to be created of {@link AccountConstants#ACCOUNT_TYPE}
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
-            am.removeAccountExplicitly(accounts[0]);
-        } else {
-            am.removeAccount(accounts[0], null, null);
+        if (accounts.length > 0) {
+            // We force only one account to be created of {@link AccountConstants#ACCOUNT_TYPE}
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
+                am.removeAccountExplicitly(accounts[0]);
+            }
+            else {
+                am.removeAccount(accounts[0], null, null);
+            }
         }
 
         // Clear app data (only for API 19+)
@@ -1049,7 +1153,7 @@ public class DialerActivity extends TransactionSafeActivity
                     (!TextUtils.isEmpty(mDisplayTn) ? "/" + mDisplayTn : "");
 
             ((TextView) mToolbar.findViewById(R.id.sub_title)).setText(subtitle);
-            Utilities.setSubtitleColor(getResources(), mToolbar);
+            Utilities.setSubtitleColor(this, mToolbar);
         }
     }
 
@@ -1064,6 +1168,32 @@ public class DialerActivity extends TransactionSafeActivity
         }
         else if (TiviPhoneService.phoneService != null && TiviPhoneService.phoneService.isReady())
             AsyncTasks.asyncCommand(":reg"); // doCmd(":reg"); - do it async to avoid ANR in case network is slow
+    }
+
+    // We may need to enhance the "checkKeyManager" process in case we use keys to encrypt
+    // the config files. Then we may need to check more often and at different places, needs to
+    // be investigated.
+    private void checkAndSetKeyManager() {
+        hasKeyManager = true;
+        final long token = KeyManagerSupport.registerWithKeyManager(getContentResolver(), getPackageName(), getString(R.string.app_name));
+        if (token == 0) {
+            Log.w(TAG, "Cannot register with KeyManager.");
+            hasKeyManager = false;
+        }
+        // the onActivityResult calls keyManagerChecked if SKA is ready to use. Otherwise we proceed
+        // without key manager
+        if (hasKeyManager) {  // add check if !ready ??
+            // Don't auto start if the user protected the key store with own password or PIN
+            if (mStartOnBoot && KeyStoreHelper.getUserPasswordType(this) != KeyStoreHelper.USER_PW_TYPE_NONE) {
+                finish();
+                return;
+            }
+            mKeyManagerCheckActive = true;
+            startActivityForResult(KeyManagerSupport.getKeyManagerReadyIntent(), KEY_STORE_CHECK);
+        }
+        else {
+            keyManagerChecked();
+        }
     }
 
     // This is the second step of the of onCreate flow.
@@ -1092,6 +1222,63 @@ public class DialerActivity extends TransactionSafeActivity
             return;
         }
 
+        checkRequiredPermissions();
+    }
+
+    private String[] SP_PERMISSIONS = {
+            Manifest.permission.WRITE_CONTACTS,
+            Manifest.permission.RECORD_AUDIO,
+            Manifest.permission.CAMERA};
+
+    private boolean hasPermissionsGranted(String[] permissions) {
+        for (String permission : permissions) {
+            if (ActivityCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private void checkRequiredPermissions() {
+        if (!hasPermissionsGranted(SP_PERMISSIONS)) {
+            if (shouldShowRequestPermissionRationale(SP_PERMISSIONS)) {
+                if (mPermissionsExplained) {
+                    return;
+                }
+
+                String text = getString(R.string.permission_sp_main_explanation);
+                CharSequence styledText = Html.fromHtml(text);
+
+                ExplainPermissionDialog.showExplanation(this, PERMISSIONS_REQUEST_SP,
+                        getString(R.string.permission_sp_main_title), styledText, null);
+
+                mPermissionsExplained = true;
+            }
+            else {
+                ActivityCompat.requestPermissions(this, SP_PERMISSIONS, PERMISSIONS_REQUEST_SP);
+            }
+        }
+        else {
+            requiredPermissionGranted();
+        }
+    }
+
+    /**
+     * Gets whether you should show UI with rationale for requesting permissions.
+     *
+     * @param permissions The permissions your app wants to request.
+     * @return Whether you can show permission rationale UI.
+     */
+    private boolean shouldShowRequestPermissionRationale(String[] permissions) {
+        for (String permission : permissions) {
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this, permission)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void requiredPermissionGranted() {
         startPhoneService();             // start phone service
         if (mStartOnBoot || mStartForMessaging) {
             finish();
@@ -1100,7 +1287,6 @@ public class DialerActivity extends TransactionSafeActivity
         doLayout();
         doBindService();
 //        mHandler.sendEmptyMessageDelayed(HIDE_WELCOME, 1500);
-        checkMigration();               // **** Migration support contacts data
     }
 
     ActionBarDrawerToggle mDrawerToggle;
@@ -1238,47 +1424,6 @@ public class DialerActivity extends TransactionSafeActivity
 //        }
     }
 
-    // We may need to enhance the "checkKeyManager" process in case we use keys to encrypt
-    // the config files. Then we may need to check more often and at different places, needs to
-    // be investigated.
-    private void checkAndSetKeyManager() {
-        hasKeyManager = true;
-        final long token = KeyManagerSupport.registerWithKeyManager(getContentResolver(), getPackageName(), getString(R.string.app_name));
-        if (token == 0) {
-            Log.w(TAG, "Cannot register with KeyManager.");
-            hasKeyManager = false;
-        }
-        // the onActivityResult calls keyManagerChecked if SKA is ready to use. Otherwise we proceed
-        // without key manager
-        if (hasKeyManager) {  // add check if !ready ??
-            // Don't auto start if the user protected the key store with own password or PIN
-            if (mStartOnBoot && KeyStoreHelper.getUserPasswordType(this) != KeyStoreHelper.USER_PW_TYPE_NONE) {
-                finish();
-                return;
-            }
-            mKeyManagerCheckActive = true;
-            startActivityForResult(KeyManagerSupport.getKeyManagerReadyIntent(), KEY_STORE_CHECK);
-        }
-        else {
-            keyManagerChecked();
-        }
-    }
-
-    private static boolean mMigrationChecked;
-
-    // **** Migration support function ****
-    // Check if we need to migrate/save data from old Silent Contacts
-    private void checkMigration() {
-        if (mMigrationChecked)
-            return;
-        mMigrationChecked = true;
-        if (!MigrateByVCardActivity.doMigration(this)) {
-            if (ConfigurationUtilities.mTrace) Log.d(TAG, "Do not start migration.");
-            return;
-        }
-        startActivity(MigrateByVCardActivity.getStartMigrationIntent(this));
-    }
-
     /**
      * Read encryption key from key manager to encrypt/decrypt the SIP password.
      *
@@ -1336,6 +1481,7 @@ public class DialerActivity extends TransactionSafeActivity
      * Perform an orderly application shutdown and exit.
      */
     private void exitApplication() {
+        stopService(new Intent(this, SCloudService.class));
         new Thread(new Runnable() {
             public void run() {
                 TiviPhoneService.doCmd(".exit");
@@ -1638,7 +1784,6 @@ public class DialerActivity extends TransactionSafeActivity
         @SuppressWarnings("unused")
         private final CallState call;
         private final TiviPhoneService.CT_cb_msg msg;
-
         /*
          * we get the ZRTP state changes here as well, but ignore them. Processed in separate
          * state change callback.
@@ -1656,7 +1801,7 @@ public class DialerActivity extends TransactionSafeActivity
 
             if (msg != TiviPhoneService.CT_cb_msg.eReg)
                 return;
-            Utilities.setSubtitleColor(getResources(), mToolbar);
+            Utilities.setSubtitleColor(DialerActivity.this, mToolbar);
             if (mDialDrawerFragment != null) {
                 mDialDrawerFragment.setOnlineStatus();
             }
@@ -1819,6 +1964,7 @@ public class DialerActivity extends TransactionSafeActivity
     }
 
     // Called only for Android M or above
+    @SuppressWarnings("unused")
     private void showBatteryOptInfo() {
         IgnoreBatteryOptInfo infoMsg = IgnoreBatteryOptInfo.newInstance(getString(R.string.battery_info));
         FragmentManager fragmentManager = getFragmentManager();
@@ -2107,35 +2253,6 @@ public class DialerActivity extends TransactionSafeActivity
     public boolean isActionBarShowing() {
         return true;
     }
-
-    /**
-     * Called when the user has long-pressed a contact tile to start a drag operation.
-     */
-    @Override
-    public void onDragStarted(int x, int y, PhoneFavoriteSquareTileView view) {
-//        if (mListsFragment.isPaneOpen()) {
-//            mActionBarController.setAlpha(ListsFragment.REMOVE_VIEW_SHOWN_ALPHA);
-//        }
-        mListsFragment.showRemoveView(true);
-    }
-
-    @Override
-    public void onDragHovered(int x, int y, PhoneFavoriteSquareTileView view) {
-    }
-
-    /**
-     * Called when the user has released a contact tile after long-pressing it.
-     */
-    @Override
-    public void onDragFinished(int x, int y) {
-//        if (mListsFragment.isPaneOpen()) {
-//            mActionBarController.setAlpha(ListsFragment.REMOVE_VIEW_HIDDEN_ALPHA);
-//        }
-        mListsFragment.showRemoveView(false);
-    }
-
-    @Override
-    public void onDroppedOnRemove() {}
 
     @Override
     public void onListFragmentScrollStateChange(int scrollState) {
@@ -2433,7 +2550,7 @@ public class DialerActivity extends TransactionSafeActivity
     }
 
     private void startConversationFromContacts(final String aliasName) {
-        AsyncTasks.UserDataBackgroundTask getUserDataTask = new AsyncTasks.UserDataBackgroundTask(getApplicationContext()) {
+        AsyncTasks.UserDataBackgroundTask getUserDataTask = new AsyncTasks.UserDataBackgroundTask() {
             @Override
             protected void onPostExecute(Integer time) {
                 super.onPostExecute(time);
@@ -2451,8 +2568,8 @@ public class DialerActivity extends TransactionSafeActivity
         AsyncUtils.execute(getUserDataTask, Utilities.removeUriPartsSelective(aliasName));
     }
 
-    private void activateTraversal() {
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+    public static void activateTraversal(Context ctx) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(ctx);
         boolean enableTraversal = prefs.getBoolean(SettingsFragment.ENABLE_FW_TRAVERSAL, true);
         boolean forceTraversal = prefs.getBoolean(SettingsFragment.FORCE_FW_TRAVERSAL, false);
 
@@ -2469,16 +2586,16 @@ public class DialerActivity extends TransactionSafeActivity
         }
     }
 
-    public static String ENABLE_UNDERFLOW_TONE = "enable_underflow_tone";
+    private static String ENABLE_UNDERFLOW_TONE = "enable_underflow_tone";
 
-    public void activateDropoutTone() {
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+    public static void activateDropoutTone(Context ctx) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(ctx);
         boolean mUseUnderflow = prefs.getBoolean(ENABLE_UNDERFLOW_TONE, true);
         TiviPhoneService.doCmd("set cfg.iAudioUnderflow=" + (mUseUnderflow ? "1" : "0"));
     }
 
-    private void activateDebugSettings() {
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+    public static void activateDebugSettings(Context ctx) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(ctx);
         int sslDebugLevel = prefs.getInt(SettingsFragment.DEVELOPER_SSL_DEBUG, 0);
         int axoDebugLevel = prefs.getInt(SettingsFragment.DEVELOPER_AXO_DEBUG, 2);
 

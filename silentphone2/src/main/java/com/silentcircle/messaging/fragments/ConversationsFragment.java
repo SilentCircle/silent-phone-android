@@ -646,7 +646,6 @@ public class ConversationsFragment extends ListFragment implements Updatable,
                 }
                 List<Event> events = null;
 
-
                 // going downwards from top, youngest element
                 EventRepository.PagingContext pagingContext =
                         new EventRepository.PagingContext(

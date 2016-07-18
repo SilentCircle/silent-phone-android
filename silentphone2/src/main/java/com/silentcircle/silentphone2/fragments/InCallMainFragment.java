@@ -39,6 +39,7 @@ import android.content.res.TypedArray;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.v4.content.ContextCompat;
 import android.telephony.PhoneNumberUtils;
 import android.text.TextUtils;
 import android.util.Log;
@@ -134,67 +135,53 @@ public class InCallMainFragment extends Fragment implements View.OnClickListener
         super.onCreate(state);
     }
 
-    @SuppressWarnings("deprecation")
-    @TargetApi(Build.VERSION_CODES.M)
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedState) {
-        Resources.Theme theme = mParent.getTheme();
-        if (theme != null) {
-            final TypedArray array = theme.obtainStyledAttributes(new int[]{
-                    R.attr.sp_ic_mic,
-                    R.attr.sp_ic_mic_muted,
-                    R.attr.sp_ic_volume_on,
-                    R.attr.sp_ic_volume_muted,
-                    R.attr.sp_ic_volume_bt,
-                    R.attr.sp_ic_volume_bt_muted,
-                    R.attr.sp_sas_verified_color,
-                    R.attr.sp_dial_text_color,
-                    R.attr.sp_name_text_peer_match,
-                    R.attr.sp_sec_info_green,
-                    R.attr.sp_sec_info_yellow
-            });
-            if (array != null) {
-                mMicOpen = array.getDrawable(0);
-                mMicMute = array.getDrawable(1);
-                mSpeakerOn = array.getDrawable(2);
-                mSpeakerOff = array.getDrawable(3);
-                mSpeakerBt = array.getDrawable(4);
-                mSpeakerBtOff = array.getDrawable(5);
-                if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.M) {
-                    mSasVerifiedColor = array.getColor(6, getResources().getColor(R.color.white_translucent));
-                    mNameNumberTextColorNormal = array.getColor(7, getResources().getColor(android.R.color.white));
-                    mNameNumberTextColorPeerMatch = array.getColor(8, getResources().getColor(R.color.black_green));
+        final Resources.Theme theme = mParent.getTheme();
+        final TypedArray array = theme != null ? theme.obtainStyledAttributes(new int[]{
+                R.attr.sp_ic_mic,
+                R.attr.sp_ic_mic_muted,
+                R.attr.sp_ic_volume_on,
+                R.attr.sp_ic_volume_muted,
+                R.attr.sp_ic_volume_bt,
+                R.attr.sp_ic_volume_bt_muted,
+                R.attr.sp_sas_verified_color,
+                R.attr.sp_dial_text_color,
+                R.attr.sp_name_text_peer_match,
+                R.attr.sp_sec_info_green,
+                R.attr.sp_sec_info_yellow
+        }) : null;
 
-                    mSecurityTextColorGreen = array.getColor(9, getResources().getColor(R.color.black_green));
-                    mSecurityTextColorYellow = array.getColor(10, getResources().getColor(R.color.black_yellow));
-                }
-                else {
-                    mSasVerifiedColor = array.getColor(6, getResources().getColor(R.color.white_translucent, theme));
-                    mNameNumberTextColorNormal = array.getColor(7, getResources().getColor(android.R.color.white, theme));
-                    mNameNumberTextColorPeerMatch = array.getColor(8, getResources().getColor(R.color.black_green, theme));
+        if (array != null) {
+            mMicOpen = array.getDrawable(0);
+            mMicMute = array.getDrawable(1);
+            mSpeakerOn = array.getDrawable(2);
+            mSpeakerOff = array.getDrawable(3);
+            mSpeakerBt = array.getDrawable(4);
+            mSpeakerBtOff = array.getDrawable(5);
+            mSasVerifiedColor = array.getColor(6, ContextCompat.getColor(mParent, R.color.white_translucent));
+            mNameNumberTextColorNormal = array.getColor(7, ContextCompat.getColor(mParent, android.R.color.white));
+            mNameNumberTextColorPeerMatch = array.getColor(8, ContextCompat.getColor(mParent, R.color.black_green));
 
-                    mSecurityTextColorGreen = array.getColor(9, getResources().getColor(R.color.black_green, theme));
-                    mSecurityTextColorYellow = array.getColor(10, getResources().getColor(R.color.black_yellow, theme));
-
-                }
-                mSecurityTextColorNormal = mNameNumberTextColorNormal;
-                array.recycle();
-            }
+            mSecurityTextColorGreen = array.getColor(9, ContextCompat.getColor(mParent, R.color.black_green));
+            mSecurityTextColorYellow = array.getColor(10, ContextCompat.getColor(mParent, R.color.black_yellow));
+            mSecurityTextColorNormal = mNameNumberTextColorNormal;
+            array.recycle();
         }
         else {
             // The deprecated version of the functions set the theme to null
-            mMicOpen = getResources().getDrawable(R.drawable.ic_action_mic_dark);
-            mMicMute = getResources().getDrawable(R.drawable.ic_action_mic_muted_dark);
-            mSpeakerOn = getResources().getDrawable(R.drawable.ic_action_volume_on_dark);
-            mSpeakerOff = getResources().getDrawable(R.drawable.ic_action_volume_muted_dark);
-            mSpeakerBt = getResources().getDrawable(R.drawable.ic_action_volume_bt_dark);
-            mSpeakerBtOff = getResources().getDrawable(R.drawable.ic_action_volume_bt_muted_dark);
-            mSasVerifiedColor = getResources().getColor(R.color.white_translucent);
-            mNameNumberTextColorNormal = getResources().getColor(android.R.color.white);
-            mNameNumberTextColorPeerMatch = getResources().getColor(android.R.color.holo_green_dark);
+            mMicOpen = ContextCompat.getDrawable(mParent, R.drawable.ic_action_mic_dark);
+            mMicMute = ContextCompat.getDrawable(mParent, R.drawable.ic_action_mic_muted_dark);
+            mSpeakerOn = ContextCompat.getDrawable(mParent, R.drawable.ic_action_volume_on_dark);
+            mSpeakerOff = ContextCompat.getDrawable(mParent, R.drawable.ic_action_volume_muted_dark);
+            mSpeakerBt = ContextCompat.getDrawable(mParent, R.drawable.ic_action_volume_bt_dark);
+            mSpeakerBtOff = ContextCompat.getDrawable(mParent, R.drawable.ic_action_volume_bt_muted_dark);
+            mSasVerifiedColor = ContextCompat.getColor(mParent, R.color.white_translucent);
+            mNameNumberTextColorNormal = ContextCompat.getColor(mParent, android.R.color.white);
+            mNameNumberTextColorPeerMatch = ContextCompat.getColor(mParent, android.R.color.holo_green_dark);
 
-            mSecurityTextColorGreen = getResources().getColor(R.color.black_green);
-            mSecurityTextColorYellow = getResources().getColor(R.color.black_yellow);
+            mSecurityTextColorGreen = ContextCompat.getColor(mParent, R.color.black_green);
+            mSecurityTextColorYellow = ContextCompat.getColor(mParent, R.color.black_yellow);
             mSecurityTextColorNormal = mNameNumberTextColorNormal;
         }
 
@@ -566,8 +553,6 @@ public class InCallMainFragment extends Fragment implements View.OnClickListener
      * may change the active (selected) call. Call manager reports this to InCall activity
      * which takes appropriate actions.
      */
-    @TargetApi(Build.VERSION_CODES.M)
-    @SuppressWarnings("deprecation")
     public void showCall(CallState call) {
         // No need to update the view if this is not the selected call
         if (call == null || call != TiviPhoneService.calls.selectedCall)
@@ -589,19 +574,16 @@ public class InCallMainFragment extends Fragment implements View.OnClickListener
             switch (call.mPriority) {
                 case CallState.NORMAL:
                     priority.setVisibility(View.GONE);
-                    mStateLabel.setTextColor(Build.VERSION.SDK_INT <= Build.VERSION_CODES.M ?
-                            res.getColor(R.color.incall_accent_color) : res.getColor(R.color.incall_accent_color, mParent.getTheme()));
+                    mStateLabel.setTextColor(ContextCompat.getColor(mParent, R.color.incall_accent_color));
                     break;
                 case CallState.URGENT:
                     priority.setVisibility(View.VISIBLE);
-                    priority.setTextColor(Build.VERSION.SDK_INT <= Build.VERSION_CODES.M ?
-                            res.getColor(R.color.black_yellow) : res.getColor(R.color.black_yellow, mParent.getTheme()));
+                    priority.setTextColor(ContextCompat.getColor(mParent, R.color.black_yellow));
                     priority.setText(getString(R.string.urgent_call));
                     break;
                 case CallState.EMERGENCY:
                     priority.setVisibility(View.VISIBLE);
-                    priority.setTextColor(Build.VERSION.SDK_INT <= Build.VERSION_CODES.M ?
-                            res.getColor(R.color.q_orange) : res.getColor(R.color.q_orange, mParent.getTheme()));
+                    priority.setTextColor(ContextCompat.getColor(mParent, R.color.q_orange));
                     priority.setText(getString(R.string.emergency_call));
                     break;
             }

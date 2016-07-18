@@ -36,12 +36,14 @@ import android.text.TextUtils;
 import android.util.Log;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.silentcircle.common.util.AsyncTasks;
 import com.silentcircle.keymanagersupport.KeyManagerSupport;
+import com.silentcircle.messaging.services.AxoMessaging;
+import com.silentcircle.messaging.util.AsyncUtils;
 import com.silentcircle.messaging.util.BurnDelay;
 import com.silentcircle.silentphone2.R;
 import com.silentcircle.silentphone2.activities.ProvisioningActivity;
-import com.silentcircle.silentphone2.util.CallState;
 import com.silentcircle.silentphone2.util.ConfigurationUtilities;
 import com.silentcircle.silentphone2.util.PinnedCertificateHandling;
 
@@ -99,6 +101,7 @@ public class LoadUserInfo {
     private static final String CONFERENCE_PERMISSION = "CONFERENCE_PERMISSION";
     private static final String SEND_ATTACHMENT_PERMISSION = "SEND_ATTACHMENT_PERMISSION";
     private static final String INITIATE_VIDEO_PERMISSION = "INITIATE_VIDEO_PERMISSION";
+    private static final String AVAILABLE_PRE_KEYS = "AVAILABLE_PRE_KEYS";
 
     public static final String URL_AVATAR_NOT_SET = "null";
 
@@ -114,14 +117,14 @@ public class LoadUserInfo {
 
     private StringBuilder mContent = new StringBuilder();
 
-    private Context mContext;
+    private final Context mContext;
 
     // When to perform the user info load/check
 //    private long mNextCheck;
     private boolean mLoaderActive;
 
     // Should the user see anything?
-    private boolean mSilent;
+    private final boolean mSilent;
 
     private static String sExpirationString;
     private static String sExpirationStringLocal;
@@ -142,6 +145,8 @@ public class LoadUserInfo {
     private static String sDisplayAlias;
     private static String sDisplayName;
     private static String sUuid;
+
+    private static int sAvailablePreKeys;
 
     /**
      * Listener interface to report if data loading is complete.
@@ -198,23 +203,7 @@ public class LoadUserInfo {
         } catch (MalformedURLException e) {
             e.printStackTrace();
         }
-        
-        SharedPreferences prefs =  mContext.getSharedPreferences(ProvisioningActivity.PREF_KM_API_KEY, Context.MODE_PRIVATE);
-        sExpirationString = prefs.getString(SUBS_EXPIRATION_DATE, null);
-        sState = prefs.getString(SUBS_STATE, null);
-        sModel = prefs.getString(SUBS_MODEL, null);
-        sBaseMinutes = prefs.getString(BASE_MINUTES, null);
-        sRemainingMinutes = prefs.getString(REMAINING_MINUTES, null);
-        sRemainingCredit = prefs.getString(REMAINING_CREDIT, null);
-        sDisplayTn = prefs.getString(DISPLAY_TN, null);
-        sDisplayAlias = prefs.getString(DISPLAY_ALIAS, null);
-        sDisplayName = prefs.getString(DISPLAY_NAME, null);
-        sAvatarUrl = prefs.getString(AVATAR_URL, null);
-        sUuid = prefs.getString(USER_ID, null);
-
-        if (sExpirationDate == null) {
-            setExpirationDate();
-        }
+        loadPreferences(context);
     }
 
     /**
@@ -227,6 +216,26 @@ public class LoadUserInfo {
         mLoaderActive = true;
         LoaderTask mLoaderTask = new LoaderTask();
         mLoaderTask.execute();
+    }
+
+    public static synchronized void loadPreferences(Context ctx) {
+        SharedPreferences prefs =  ctx.getSharedPreferences(ProvisioningActivity.PREF_KM_API_KEY, Context.MODE_PRIVATE);
+        sExpirationString = prefs.getString(SUBS_EXPIRATION_DATE, null);
+        sState = prefs.getString(SUBS_STATE, null);
+        sModel = prefs.getString(SUBS_MODEL, null);
+        sBaseMinutes = prefs.getString(BASE_MINUTES, null);
+        sRemainingMinutes = prefs.getString(REMAINING_MINUTES, null);
+        sRemainingCredit = prefs.getString(REMAINING_CREDIT, null);
+        sDisplayTn = prefs.getString(DISPLAY_TN, null);
+        sDisplayAlias = prefs.getString(DISPLAY_ALIAS, null);
+        sDisplayName = prefs.getString(DISPLAY_NAME, null);
+        sAvatarUrl = prefs.getString(AVATAR_URL, null);
+        sUuid = prefs.getString(USER_ID, "");
+        sAvailablePreKeys = prefs.getInt(AVAILABLE_PRE_KEYS, -1);   // -1 : Never stored this value before. >=0 are a valid values
+
+        if (sExpirationDate == null) {
+            setExpirationDate();
+        }
     }
 
     /**
@@ -370,7 +379,7 @@ public class LoadUserInfo {
     }
 
     @SuppressLint("SimpleDateFormat")           // date/time is a computer generated string
-    private void setExpirationDate() {
+    private static void setExpirationDate() {
         if (!TextUtils.isEmpty(sExpirationString)) {
             try {
                 sExpirationDate = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss").parse(sExpirationString);
@@ -390,7 +399,9 @@ public class LoadUserInfo {
         if (mContent.length() < MIN_CONTENT_LENGTH)
             return;
 
-        Gson gson = new Gson();
+        GsonBuilder gsonBuilder = new GsonBuilder();
+        gsonBuilder.registerTypeHierarchyAdapter(DeviceInfoMe.class, new UserInfo.DevicesDeserializer(mContext));
+        Gson gson = gsonBuilder.create();
         UserInfo info = gson.fromJson(mContent.toString(), UserInfo.class);
 
         sExpirationString = info.getSubscription().getExpires();
@@ -413,7 +424,12 @@ public class LoadUserInfo {
             sAvatarUrl = null;
         }
 
+        DeviceInfoMe deviceInfo = info.getDevices();
+        sAvailablePreKeys = (deviceInfo != null) ? deviceInfo.getPreKeys() : -2;
+
         callUserInfo(info, null, mSilent);
+
+        checkPreKeys(mContext);
 
         SharedPreferences prefs =  mContext.getSharedPreferences(ProvisioningActivity.PREF_KM_API_KEY, Context.MODE_PRIVATE);
         prefs.edit().putString(SUBS_EXPIRATION_DATE, sExpirationString)
@@ -431,10 +447,25 @@ public class LoadUserInfo {
             .putBoolean(OUTBOUND_OCA_PERMISSION, info.getPermissions().isOutboundCallingPstn())
             .putBoolean(CONFERENCE_PERMISSION, info.getPermissions().isCreateConference())
             .putBoolean(SEND_ATTACHMENT_PERMISSION, info.getPermissions().isSendAttachment())
-            .putBoolean(INITIATE_VIDEO_PERMISSION, info.getPermissions().isInitiateVideo()).apply();
+            .putBoolean(INITIATE_VIDEO_PERMISSION, info.getPermissions().isInitiateVideo())
+            .putInt(AVAILABLE_PRE_KEYS, sAvailablePreKeys)
+            .apply();
 
         BurnDelay.Defaults.setMaxDelay(info.getPermissions().getMaximumBurnSec());
         setExpirationDate();
+    }
+
+    private static void checkPreKeys(Context ctx) {
+        if (!AxoMessaging.getInstance(ctx).isReady())
+            return;
+        if (sAvailablePreKeys > 0 && sAvailablePreKeys < AxoMessaging.MIN_NUM_PRE_KEYS) {
+            AsyncUtils.execute(new Runnable() {
+                @Override
+                public void run() {
+                    AxoMessaging.newPreKeys(AxoMessaging.CREATE_NEW_PRE_KEYS);
+                }
+            });
+        }
     }
 
     private class LoaderTask extends AsyncTask<Void, Integer, Integer> {

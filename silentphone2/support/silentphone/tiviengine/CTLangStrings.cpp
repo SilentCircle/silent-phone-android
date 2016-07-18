@@ -54,7 +54,7 @@ void initLang(const char *pDef){
    
    if(pDef && strncmp(pDef,"en",2)==0)pDef="en";
    
-   if(pDef && strcmp(pDef,"en")){
+   if(pDef){// && strcmp(pDef,"en")){
       iLangIsEN=0;
       if(strncmp(pDef,"zh",2)==0)pDef="zh";
       else if(strncmp(pDef,"ja",2)==0)pDef="jp";

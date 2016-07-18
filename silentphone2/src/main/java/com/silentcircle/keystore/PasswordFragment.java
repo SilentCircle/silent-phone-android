@@ -253,7 +253,7 @@ public class PasswordFragment extends Fragment implements View.OnClickListener {
                 if (checkPassword(passwordInput.getText(), passwordInput2.getText())) {
                     KeyStoreHelper.closeDatabase();
                     if (!KeyStoreHelper.openOrCreateDatabase(KeyStoreActivity.toCharArray(passwordInputOld), mParent)) {
-                        mParent.showInputInfo(getString(R.string.old_password_wrong));
+                        mParent.showInputInfo(getString(mUsePin ? R.string.old_pin_wrong : R.string.old_password_wrong));
                         passwordInputOld.setText(null);
                         passwordInputOld.requestFocus();
                         if (!lockedDuringPwChange) {
@@ -311,7 +311,7 @@ public class PasswordFragment extends Fragment implements View.OnClickListener {
 
                 KeyStoreHelper.closeDatabase();
                 if (!KeyStoreHelper.openOrCreateDatabase(KeyStoreActivity.toCharArray(passwordInputOld), mParent)) {
-                    mParent.showInputInfo(getString(R.string.old_password_wrong));
+                    mParent.showInputInfo(getString(mUsePin ? R.string.old_pin_wrong : R.string.old_password_wrong));
                     passwordInputOld.setText(null);
                     passwordInputOld.requestFocus();
                     if (!lockedDuringPwChange) {
@@ -341,7 +341,7 @@ public class PasswordFragment extends Fragment implements View.OnClickListener {
 
     private void passwordReady() {
         if (passwordInput.getText() == null || passwordInput.getText().length() == 0) {
-            mParent.showInputInfo(getString(R.string.no_password));
+            mParent.showInputInfo(getString(mUsePin ? R.string.no_pin : R.string.no_password));
             return;
         }
         if (KeyStoreHelper.openOrCreateDatabase(KeyStoreActivity.toCharArray(passwordInput), mParent)) {

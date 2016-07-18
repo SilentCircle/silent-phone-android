@@ -131,6 +131,9 @@ public class AxoMessaging extends AxolotlNative {
     public static final int UPDATE_ACTION_MESSAGE_BURNED = 2;
     public static final int UPDATE_ACTION_MESSAGE_SEND = 3;
 
+    public static final int MIN_NUM_PRE_KEYS = 30;
+    public static final int CREATE_NEW_PRE_KEYS = 100;
+
     /** Several modules use this format to define a common UTC date */
     public static final SimpleDateFormat ISO8601;
     static {
@@ -187,17 +190,20 @@ public class AxoMessaging extends AxolotlNative {
         if (mIsReady)
             return;
 
-        if (!KeyStoreHelper.isReady())
+        if (!KeyStoreHelper.isReady()) {
             return;
+        }
 
-        if (TiviPhoneService.phoneService == null || !TiviPhoneService.phoneService.isReady())
+        if (TiviPhoneService.phoneService == null)
             return;
 
         if (TextUtils.isEmpty(mName))
+            LoadUserInfo.loadPreferences(mContext);
             mName = LoadUserInfo.getUuid();
 
-        if (TextUtils.isEmpty(mName))
+        if (TextUtils.isEmpty(mName)) {
             return;
+        }
 
         String computedDevId = Utilities.hashMd5(TiviPhoneService.getInstanceDeviceId(mContext, false));
         mScDeviceId = IOUtils.encode(computedDevId);
@@ -606,8 +612,9 @@ public class AxoMessaging extends AxolotlNative {
             code[0] = 400;
             return null;
         }
-        if (ConfigurationUtilities.mTrace) Log.d(TAG, "request url: " + requestUrl);
+        if (ConfigurationUtilities.mTrace) Log.d(TAG, "request url: " + method + " " + requestUrl);
         HttpsURLConnection urlConnection = null;
+        OutputStream out = null;
         try {
             urlConnection = (HttpsURLConnection) requestUrl.openConnection();
             final SSLContext context = PinnedCertificateHandling.getPinnedSslContext(ConfigurationUtilities.mNetworkConfiguration);
@@ -627,7 +634,7 @@ public class AxoMessaging extends AxolotlNative {
 
             if (requestData != null && requestData.length > 0) {
                 urlConnection.setDoOutput(true);
-                OutputStream out = new BufferedOutputStream(urlConnection.getOutputStream());
+                out = new BufferedOutputStream(urlConnection.getOutputStream());
                 out.write(requestData);
                 out.flush();
             }
@@ -654,6 +661,10 @@ public class AxoMessaging extends AxolotlNative {
             code[0] = 418;
             return null;
         } finally {
+            try {
+                if (out != null)
+                    out.close();
+            } catch (IOException ignore) { }
             if (urlConnection != null)
                 urlConnection.disconnect();
         }

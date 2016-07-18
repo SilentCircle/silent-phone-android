@@ -160,7 +160,10 @@ public class DbConversationRepository /*extends BaseFileRepository<Conversation>
     @Override
     public List<Conversation> list() {
         Set<String> conversationPartners = new HashSet<>();
-        for (byte[] conversation : AxolotlNative.listConversations()) {
+        byte[][] conversationsArray = AxolotlNative.listConversations();
+        if (conversationsArray == null)
+            return EMPTY_CONVERSATION_LIST;
+        for (byte[] conversation : conversationsArray) {
             try {
                 /*
                  * avoid conversations which are not my own (starting with something else than

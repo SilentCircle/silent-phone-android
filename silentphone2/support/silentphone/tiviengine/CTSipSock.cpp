@@ -494,7 +494,7 @@ int CTSipSock::closeSocket(){
 
 
 
-int CTTCP_TLS_SendQ::addToQueue(const char *buf, int iLen, ADDR *address, int iSockType)
+int CTTCP_TLS_SendQ::addToQueue(const char *buf, int iLen, ADDR *address, int iSockType, int iFromSIPThread)
 {
    // mq.
  //nedriikst saglabaat sock
@@ -523,7 +523,8 @@ int CTTCP_TLS_SendQ::addToQueue(const char *buf, int iLen, ADDR *address, int iS
 
          AA_SEND_Q *p=&sendQ[i];
          
-         if(!sendQ[i].iBusy){ 
+         if(!sendQ[i].iBusy){
+            p->iSentFromSIPThread = iFromSIPThread;
             p->msg_id = s_msg_id;s_msg_id++;
             p->iSockType=iSockType;
             p->iBusy=ePrepearing;
@@ -556,7 +557,7 @@ void CTSipSock::emptyQueue(){
    
 }
 
-CTTCP_TLS_SendQ::AA_SEND_Q *CTTCP_TLS_SendQ::getOldest(){
+CTTCP_TLS_SendQ::AA_SEND_Q *CTTCP_TLS_SendQ::getOldest(int mustBeFromSIPThread){
    AA_SEND_Q *ret=NULL;
    
    int pp=iPrevSendPos;
@@ -577,7 +578,7 @@ CTTCP_TLS_SendQ::AA_SEND_Q *CTTCP_TLS_SendQ::getOldest(){
          
          AA_SEND_Q *q=&sendQ[i];
          
-         if(q->iBusy==CTTCP_TLS_SendQ::eReadyToSend){
+         if(q->iBusy==CTTCP_TLS_SendQ::eReadyToSend && (!q->iSentFromSIPThread || q->iSentFromSIPThread == mustBeFromSIPThread)){
             
             if(!ret){ret = q;sp = i;continue;}
             if(q->msg_id  < ret->msg_id){ret = q;sp = i;}//select older first
@@ -604,7 +605,7 @@ public:
 
 
 
-int CTSipSock::sendQueue(){
+int CTSipSock::sendQueue(int isSIPRecvThread){
    
    if(iExiting)return -1;
    
@@ -625,7 +626,7 @@ int CTSipSock::sendQueue(){
 
    for(i=0;i<Q_CNT;i++){
    
-      CTTCP_TLS_SendQ::AA_SEND_Q *q=sq.getOldest();
+      CTTCP_TLS_SendQ::AA_SEND_Q *q=sq.getOldest(isSIPRecvThread);
    
       if(iExiting || !q)break;
    
@@ -676,7 +677,7 @@ int CTSipSock::sendQueue(){
    return c;
 }
 
-int CTSipSock::sendTo(const char *buf, int iLen, ADDR *address){
+int CTSipSock::sendTo(const char *buf, int iLen, ADDR *address, int iFromSIPThread){
    
    if(iLen > 10){ //ignore SIP keepalive
       t_logf(log_sip, __FUNCTION__, "ADDR=%08x LEN=%d\n[%.*s]",address->ip, iLen, iLen, buf);
@@ -685,7 +686,7 @@ int CTSipSock::sendTo(const char *buf, int iLen, ADDR *address){
    if(iType==eUDP){
       return sendToReal(buf,iLen,address);
    }
-   if(sq.addToQueue(buf,iLen,address,iType)<0){
+   if(sq.addToQueue(buf,iLen,address,iType, iFromSIPThread)<0){
       //this will never happen, queue is big enough
       return -1;
    }

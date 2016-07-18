@@ -35,6 +35,7 @@ import android.os.Bundle;
 import android.util.Log;
 
 import com.google.android.gms.gcm.GcmListenerService;
+import com.silentcircle.common.util.AsyncTasks;
 import com.silentcircle.silentphone2.R;
 import com.silentcircle.silentphone2.services.TiviPhoneService;
 import com.silentcircle.silentphone2.util.ConfigurationUtilities;
@@ -57,7 +58,7 @@ public class C2DMReceiver extends GcmListenerService {
         Log.d(TAG, "bundle: " + data);
 
         if (TiviPhoneService.isInitialized())
-            TiviPhoneService.doCmd(":reg");
+            AsyncTasks.asyncCommand(":reg");
         if (ConfigurationUtilities.mTrace)
             sendNotification(message);
     }

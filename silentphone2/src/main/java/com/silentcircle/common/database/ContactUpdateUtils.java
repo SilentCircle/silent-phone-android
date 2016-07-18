@@ -19,9 +19,8 @@ package com.silentcircle.common.database;
 import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
+import android.provider.ContactsContract;
 import android.util.Log;
-
-import com.silentcircle.silentcontacts2.ScContactsContract;
 
 /**
  * Static methods to update contact information.
@@ -38,11 +37,11 @@ public class ContactUpdateUtils {
 
         // Update the primary values in the data record.
         ContentValues values = new ContentValues(2);
-        values.put(ScContactsContract.Data.IS_SUPER_PRIMARY, 1);
-        values.put(ScContactsContract.Data.IS_PRIMARY, 1);
+        values.put(ContactsContract.Data.IS_SUPER_PRIMARY, 1);
+        values.put(ContactsContract.Data.IS_PRIMARY, 1);
 
         context.getContentResolver().update(
-                ContentUris.withAppendedId(ScContactsContract.Data.CONTENT_URI, dataId),
+                ContentUris.withAppendedId(ContactsContract.Data.CONTENT_URI, dataId),
                 values, null, null);
     }
 }

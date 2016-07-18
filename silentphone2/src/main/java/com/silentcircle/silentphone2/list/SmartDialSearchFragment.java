@@ -82,7 +82,7 @@ public class SmartDialSearchFragment extends SearchFragment {
             return super.onCreateLoader(id, args);
         } else {
             final SmartDialNumberListAdapter adapter = (SmartDialNumberListAdapter) getAdapter();
-            SmartDialCursorLoader loader = new SmartDialCursorLoader(super.getContext());
+            SmartDialCursorLoader loader = new SmartDialCursorLoader(super.getOwnContext());
             adapter.configureLoader(loader);
             return loader;
         }

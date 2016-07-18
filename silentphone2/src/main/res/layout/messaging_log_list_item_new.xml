@@ -8,7 +8,9 @@
     android:layout_height="wrap_content"
     android:background="@drawable/bg_action"
     android:addStatesFromChildren="true"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:paddingTop="@dimen/spacing_small"
+    android:paddingBottom="@dimen/spacing_small">
 
     <!-- Day group heading. Used to show a "today", "yesterday", "last week" or "other" heading
          above a group of messaging log entries. -->
@@ -26,6 +28,8 @@
         android:paddingTop="@dimen/conversation_log_day_group_padding_top"
         android:textColor="@color/sc_ng_text_grey"
         android:textSize="@dimen/conversation_log_secondary_text_size"
+        tools:visibility="visible"
+        tools:text="Today"
         android:visibility="gone"/>
 
     <!-- Linear layout to separate the primary area containing the contact badge and caller
@@ -60,6 +64,7 @@
             <FrameLayout
                 android:layout_width="@dimen/conversation_log_contact_photo_size"
                 android:layout_height="@dimen/conversation_log_contact_photo_size"
+                android:layout_gravity="center_vertical"
                 android:id="@+id/icon_group">
 
                 <QuickContactBadge
@@ -93,56 +98,60 @@
                 android:filterTouchesWhenObscured="true"
                 android:descendantFocusability="blocksDescendants">
 
-                <TextView
-                    android:id="@+id/name"
-                    android:layout_width="wrap_content"
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="@dimen/conversation_log_name_margin_bottom"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <TextView
+                        android:id="@+id/name"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginBottom="@dimen/conversation_log_name_margin_bottom"
+                        android:layout_marginEnd="@dimen/conversation_log_icon_margin"
+                        android:layout_marginRight="@dimen/conversation_log_icon_margin"
+                        android:layout_marginLeft="@dimen/conversation_log_name_margin_left"
+                        android:layout_marginStart="@dimen/conversation_log_name_margin_left"
+                        android:singleLine="true"
+                        android:maxLines="1"
+                        android:textColor="@color/sc_ng_text_grey"
+                        android:textSize="@dimen/conversation_log_name_text_size"
+                        tools:text="Name" />
+
+                    <TextView
+                        android:id="@+id/message_time"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="@dimen/conversation_log_time_margin_right"
+                        android:layout_marginRight="@dimen/conversation_log_time_margin_right"
+                        android:ellipsize="marquee"
+                        android:singleLine="true"
+                        android:textColor="@color/sc_ng_text_grey_4"
+                        android:textSize="@dimen/conversation_log_message_info_small_text_size"
+                        android:visibility="visible"
+                        tools:text="Yesterday"
+                        android:layout_gravity="end" />
+
+                </LinearLayout>
+
+
+                <TextView
+                    android:id="@+id/message_text"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
                     android:layout_marginEnd="@dimen/conversation_log_icon_margin"
                     android:layout_marginRight="@dimen/conversation_log_icon_margin"
                     android:layout_marginLeft="@dimen/conversation_log_name_margin_left"
                     android:layout_marginStart="@dimen/conversation_log_name_margin_left"
-                    android:singleLine="true"
-                    android:textColor="@color/sc_ng_text_grey"
-                    android:textSize="@dimen/conversation_log_name_text_size"
-                    tools:text="Name" />
-
-                <LinearLayout
-                    android:id="@+id/message_summary_card"
-                    android:layout_height="wrap_content"
-                    android:layout_width="match_parent"
-                    android:background="@drawable/bg_card_summary">
-
-                    <TextView
-                        android:id="@+id/message_text"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginEnd="@dimen/conversation_log_icon_margin"
-                        android:layout_marginRight="@dimen/conversation_log_icon_margin"
-                        android:ellipsize="end"
-                        android:singleLine="true"
-                        android:textColor="@drawable/message_summary_text_color"
-                        android:textSize="@dimen/conversation_log_secondary_text_size"
-                        android:visibility="visible"
-                        tools:text="Message text"
-                        android:paddingTop="@dimen/conversation_log_message_summary_text_padding"
-                        android:paddingBottom="@dimen/conversation_log_message_summary_text_padding" />
-
-                </LinearLayout>
-
-                <TextView
-                    android:id="@+id/message_time"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginEnd="@dimen/conversation_log_time_margin_right"
-                    android:layout_marginRight="@dimen/conversation_log_time_margin_right"
-                    android:ellipsize="marquee"
-                    android:singleLine="true"
-                    android:textColor="@color/sc_ng_text_grey"
-                    android:textSize="@dimen/conversation_log_message_info_small_text_size"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:lines="1"
+                    android:textColor="@drawable/message_summary_text_color"
+                    android:textSize="@dimen/conversation_log_secondary_text_size"
                     android:visibility="visible"
-                    tools:text="Yesterday"
-                    android:layout_gravity="right" />
+                    tools:text="Message text" />
 
             </LinearLayout>
 
@@ -157,11 +166,17 @@
             android:layout="@layout/call_log_list_item_actions" />
 
     </LinearLayout>
-    <!-- Displays the extra link section -->
-    <ViewStub
-        android:id="@+id/link_stub"
+
+    <View
+        android:id="@+id/conversation_log_divider"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout="@layout/call_log_list_item_extra" />
+        android:layout_height="1px"
+        android:layout_gravity="bottom"
+        android:layout_marginEnd="@dimen/conversation_log_outer_margin"
+        android:layout_marginRight="@dimen/conversation_log_outer_margin"
+        android:layout_marginLeft="@dimen/conversation_log_outer_margin_left"
+        android:layout_marginStart="@dimen/conversation_log_outer_margin_left"
+        android:visibility="gone"
+        android:background="#55ffffff" />
 
 </LinearLayout>

@@ -59,21 +59,23 @@ import android.net.Uri;
 import android.text.TextUtils;
 import android.util.Log;
 
-import com.silentcircle.silentcontacts2.ScContactsContract;
-import com.silentcircle.silentcontacts2.ScContactsContract.CommonDataKinds.Email;
-import com.silentcircle.silentcontacts2.ScContactsContract.CommonDataKinds.Event;
-import com.silentcircle.silentcontacts2.ScContactsContract.CommonDataKinds.Im;
-import com.silentcircle.silentcontacts2.ScContactsContract.CommonDataKinds.Nickname;
-import com.silentcircle.silentcontacts2.ScContactsContract.CommonDataKinds.Note;
-import com.silentcircle.silentcontacts2.ScContactsContract.CommonDataKinds.Organization;
-import com.silentcircle.silentcontacts2.ScContactsContract.CommonDataKinds.Phone;
-import com.silentcircle.silentcontacts2.ScContactsContract.CommonDataKinds.Photo;
-import com.silentcircle.silentcontacts2.ScContactsContract.CommonDataKinds.SipAddress;
-import com.silentcircle.silentcontacts2.ScContactsContract.CommonDataKinds.StructuredName;
-import com.silentcircle.silentcontacts2.ScContactsContract.CommonDataKinds.StructuredPostal;
-import com.silentcircle.silentcontacts2.ScContactsContract.Data;
-import com.silentcircle.silentcontacts2.ScContactsContract.RawContacts;
-import com.silentcircle.silentcontacts2.ScContactsContract.RawContactsEntity;
+import android.provider.ContactsContract;
+import android.provider.ContactsContract.CommonDataKinds.Email;
+import android.provider.ContactsContract.CommonDataKinds.Event;
+import android.provider.ContactsContract.CommonDataKinds.Im;
+import android.provider.ContactsContract.CommonDataKinds.Nickname;
+import android.provider.ContactsContract.CommonDataKinds.Note;
+import android.provider.ContactsContract.CommonDataKinds.Organization;
+import android.provider.ContactsContract.CommonDataKinds.Phone;
+import android.provider.ContactsContract.CommonDataKinds.Photo;
+import android.provider.ContactsContract.CommonDataKinds.SipAddress;
+import android.provider.ContactsContract.CommonDataKinds.StructuredName;
+import android.provider.ContactsContract.CommonDataKinds.StructuredPostal;
+import android.provider.ContactsContract.Data;
+import android.provider.ContactsContract.RawContacts;
+import android.provider.ContactsContract.RawContactsEntity;
+
+import com.silentcircle.contacts.PhoneImTypes;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -149,7 +151,7 @@ public class VCardComposer {
 
     static {
         sImMap = new HashMap<Integer, String>();
-        sImMap.put(Im.PROTOCOL_SILENT, VCardConstants.PROPERTY_X_SILENT);
+        sImMap.put(PhoneImTypes.PROTOCOL_SILENT, VCardConstants.PROPERTY_X_SILENT);
         sImMap.put(Im.PROTOCOL_AIM, VCardConstants.PROPERTY_X_AIM);
         sImMap.put(Im.PROTOCOL_MSN, VCardConstants.PROPERTY_X_MSN);
         sImMap.put(Im.PROTOCOL_YAHOO, VCardConstants.PROPERTY_X_YAHOO);
@@ -353,7 +355,7 @@ public class VCardComposer {
     public boolean init(final Uri contentUri, final String[] projection,  final String selection, final String[] selectionArgs,
             final String sortOrder, Uri contentUriForRawContactsEntity) {
 
-        if (!ScContactsContract.AUTHORITY.equals(contentUri.getAuthority())) {
+        if (!ContactsContract.AUTHORITY.equals(contentUri.getAuthority())) {
             if (DEBUG) Log.d(LOG_TAG, "Unexpected contentUri: " + contentUri);
             mErrorReason = FAILURE_REASON_UNSUPPORTED_URI;
             return false;

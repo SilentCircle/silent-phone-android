@@ -88,8 +88,11 @@ public class AccountCorpEmailEntry1 extends Fragment {
                         Log.e(TAG, "Cannot get a trusted/pinned SSL context; failing");
                         throw new AssertionError("Failed to get pinned SSL context");
                     }
-                    return AccountCorpUtil.httpsGet(context,
-                            getString(R.string.sccps_production_base_url) +
+                    String burl = getString(R.string.sccps_production_base_url);
+                    if (ConfigurationUtilities.mUseDevelopConfiguration) {
+                        burl = getString(R.string.sccps_development_base_url);
+                    }
+                    return AccountCorpUtil.httpsGet(context, burl +
                                     ConfigurationUtilities.getAuthBase(mParent.getBaseContext()) +
                                     URLEncoder.encode(dom, "UTF-8") + "/", 0);
 

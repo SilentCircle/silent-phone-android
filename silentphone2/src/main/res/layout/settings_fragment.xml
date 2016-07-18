@@ -81,6 +81,15 @@
                         android:layout_width="match_parent"
                         android:layout_height="match_parent" />
 
+                <com.silentcircle.silentphone2.views.SettingsItem
+                    style="@style/Widget.SettingsItem"
+                    android:id="@+id/settings_block_screenshots"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    app:isCheckable="true"
+                    app:text="@string/block_screenshots_title"
+                    app:description="@string/block_screenshots_description" />
+
             </LinearLayout>
 
             <TextView
@@ -135,6 +144,16 @@
                     android:layout_height="wrap_content"
                     app:isCheckable="false"
                     app:text="@string/messaging_vibrate_title"
+                    app:description="Default"
+                    />
+
+                <com.silentcircle.silentphone2.views.SettingsItem
+                    style="@style/Widget.SettingsItem"
+                    android:id="@+id/messaging_theme"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:isCheckable="false"
+                    app:text="@string/messaging_theme_title"
                     app:description="Default"
                     />
 

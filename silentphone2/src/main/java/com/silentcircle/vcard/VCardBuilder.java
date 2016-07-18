@@ -55,17 +55,19 @@ import android.text.TextUtils;
 import android.util.Base64;
 import android.util.Log;
 
-import com.silentcircle.silentcontacts2.ScContactsContract.CommonDataKinds.Email;
-import com.silentcircle.silentcontacts2.ScContactsContract.CommonDataKinds.Event;
-import com.silentcircle.silentcontacts2.ScContactsContract.CommonDataKinds.Im;
-import com.silentcircle.silentcontacts2.ScContactsContract.CommonDataKinds.Nickname;
-import com.silentcircle.silentcontacts2.ScContactsContract.CommonDataKinds.Note;
-import com.silentcircle.silentcontacts2.ScContactsContract.CommonDataKinds.Organization;
-import com.silentcircle.silentcontacts2.ScContactsContract.CommonDataKinds.Phone;
-import com.silentcircle.silentcontacts2.ScContactsContract.CommonDataKinds.Photo;
-import com.silentcircle.silentcontacts2.ScContactsContract.CommonDataKinds.SipAddress;
-import com.silentcircle.silentcontacts2.ScContactsContract.CommonDataKinds.StructuredName;
-import com.silentcircle.silentcontacts2.ScContactsContract.CommonDataKinds.StructuredPostal;
+import android.provider.ContactsContract.CommonDataKinds.Email;
+import android.provider.ContactsContract.CommonDataKinds.Event;
+import android.provider.ContactsContract.CommonDataKinds.Im;
+import android.provider.ContactsContract.CommonDataKinds.Nickname;
+import android.provider.ContactsContract.CommonDataKinds.Note;
+import android.provider.ContactsContract.CommonDataKinds.Organization;
+import android.provider.ContactsContract.CommonDataKinds.Phone;
+import android.provider.ContactsContract.CommonDataKinds.Photo;
+import android.provider.ContactsContract.CommonDataKinds.SipAddress;
+import android.provider.ContactsContract.CommonDataKinds.StructuredName;
+import android.provider.ContactsContract.CommonDataKinds.StructuredPostal;
+
+import com.silentcircle.contacts.PhoneImTypes;
 import com.silentcircle.vcard.VCardUtils.PhoneNumberUtilsPort;
 
 import java.io.ByteArrayOutputStream;
@@ -1639,7 +1641,7 @@ public class VCardBuilder {
 
         ArrayList<String> parameterList = new ArrayList<String>();
         switch (type) {
-        case Phone.TYPE_SILENT: {
+        case PhoneImTypes.TYPE_SILENT: {
             parameterList.addAll(Arrays.asList(VCardConstants.PARAM_TYPE_SILENT));
             break;
         }

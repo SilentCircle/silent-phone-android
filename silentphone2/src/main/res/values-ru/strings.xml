@@ -26,7 +26,6 @@
     <string name="sip_error_no_user">Пользователь не найден</string>
     <string name="sip_error_no_cover">Нет покрытия сети</string>
     <string name="sip_error_no_server">Не удалось соединиться с сервером</string>
-    <string name="call_type_audio">Входящий вызов</string>
     <string name="call_error">Ошибка</string>
     <string name="secstate_secure">ЗАЩИТА</string>
     <string name="secstate_not_secure">Нет ЗАЩИТЫ</string>
@@ -77,26 +76,23 @@
     <string name="pwstrength_good">Надежность пароля: ХОРОШАЯ</string>
     <string name="pwstrength_strong">Надежность пароля: ВЫСОКАЯ</string>
     <string name="provisioning_show_pw">Показать пароль</string>
-    
+
     <string name="provisioning_privacy_tc">Я прочитал и принял правила соблюдения конфиденциальности и условия на <a href="https://accounts.silentcircle.com/terms/">Silent Circle</a></string>
     <string name="provisioning_get_news">Я бы хотел получать эксклюзивные новости и приглашения от Сервисов</string>
     <string name="provisioning_new_account">Создать новый счет</string>
     <string name="provisioning_existing_account">Зайдите на существующий счет</string>
     <string name="provisioning_create">Создать</string>
-    <string name="provisioning_credentials">Имя пользователя или пароль неправильный. Проверьте, пожалуйста</string>
     <string name="thanks_number">Номер:</string>
     <string name="thanks_name">Имя:</string>
     <string name="preferred_sas_type">Предпочтительный тип SAS</string>
     <string name="sas_char_mode">SAS отображается в виде четырех символов</string>
     <string name="sas_word_mode">SAS отображается в виде двух слов</string>
     <string name="sp_ringtone">Рингтон</string>
-    
     <string name="no_ringtone">Нет рингтона</string>
     <string name="preferred_algorithms">Предпочитаю Non-NIST набор</string>
     <string name="nist_preferred">Всегда предпочитать алгоритмы non-NIST, если возможно: Twofish, Skein, и Bernstein curves.</string>
     <string name="description_dial_button">набор</string>
     <string name="description_delete_button">возврат</string>
-    <string name="contacts_image_button">Открыть контакты</string>
     <string name="zrtp_common_cmp">Вы должны устно сравнить этот аутентификационный код с вызываемым лицом. Если он не совпадает, то это указывает, что вызов, возможно, кем-то перехвачен.</string>
     <string name="zrtp_common_cls">Ошибка при соединении. Закройте и потом повторите звонок.</string>
     <string name="zrtp_common_upd">Лицу, которому вы звоните, необходимо обновить приложение Silent Phone, установив последнюю версию.</string>
@@ -110,18 +106,11 @@
     <string name="provisioning_stepInfo_3">Этап 3 из 3</string>
     <string name="provisioning_vertu_email_info">Необходим альтернативный электронный адрес, чтобы получать  важные обновления и выгодные предложения для вашего аккуанта.</string>
     <string name="provisioning_vertu_welcome_long">Как пользователю Vertu, вам предоставляется 12-месячный бесплатный доступ к зашифрованным коммуникационным сервисам Silent Circle</string>
-
-
-    
     <string name="video_audio_mute">Переключить заглушение аудио</string>
-    <string name="video_switch_camera">Переключить камеры</string>
-
-    
     <string name="provisioning_infoText">Создание счета</string>
     <string name="provisioning_bp_email_info">Адрес электронной почты необходим для получения важных обновлений и информации, касающейся вашего счета.</string>
     <string name="mute_button">Без звука</string>
     <string name="video_button">Видео</string>
-    <string name="video_control">Регул. видео</string>
     <string name="add_call">Все вызовы</string>
     <string name="audio_options_button">Audio опции</string>
     <string name="verify_label">Касание/подтв.</string>
@@ -140,64 +129,42 @@
     <string name="account_creation_wrong_format">Создание счета: сервер отправляет неверный формат данных.</string>
     <string name="account_creation_no_data">Создание счета: сервер возвращает неверные данные.</string>
     <string name="other_settings">Другие установки</string>
-    <string name="select_theme">Выбрать тему</string>
-    <string name="current_theme">Текущая тема: %s</string>
-    <string name="theme_orange">Orange</string>
-    <string name="theme_white">White</string>
-    <string name="theme_dusk">Dusk</string>
     <string name="theme_black">Black</string>
-
-    
-
     <string name="bp_is_online">Silent Phone онлайн</string>
     <string name="bp_is_offline">Silent Phone в настоящий момент в режиме офлайн</string>
     <string name="bp_not_started">Silent Phone не включен</string>
     <string name="bp_registering">Silent Phone регистрируется</string>
     <string name="bp_status_unknown">Неизвестное состояние</string>
-
-    
-
     <string name="audio_bt">Гарнитура BlueTooth</string>
     <string name="audio_speaker">Звуковая  колонка</string>
     <string name="audio_ear_phone">Наушники</string>
     <string name="end_call_button">Оконч. вызова</string>
-
     <string name="call_quality">Качество звука</string>
     <string name="call_quality_bad">плохое</string>
     <string name="call_quality_weak">слабое</string>
     <string name="call_quality_acceptable">приемлемое</string>
     <string name="call_quality_good">хорошее</string>
     <string name="call_quality_very_good">очень хорошее</string>
-
     <string name="in_call_drawer_zrtp_confirmed">да, подтверждено</string>
     <string name="in_call_drawer_zrtp_not_confirmed">нет, не подтверждено</string>
     <string name="in_call_drawer_sdes_active">активный</string>
-
     <string name="navigation_drawer_open">Открыть панель навигации</string>
     <string name="navigation_drawer_close">Закрыть панель навигации</string>
-
     <string name="valid_until">Действительно до:</string>
     <string name="subscription_expired">Срок действия вашей подписки на Silent Circle  истек.</string>
-
     <string name="sip_error_not_online">Пользователь не онлайн</string>
-
-    <string name="license_code_invalid">Этот код лицензии, очевидно, недействителен. При затруднениях с активизацией
+<string name="license_code_invalid">Этот код лицензии, очевидно, недействителен. При затруднениях с активизацией
         выших счетов Blackphone and Silent Circle, обращайтесь в Службу сопровождения клиентов по
         адресу support@blackphone.ch</string>
-    <string name="license_code_duplicate">Этот код лицензии, очевидно, уже активизирован.  Если вы переустанавливаете
+<string name="license_code_duplicate">Этот код лицензии, очевидно, уже активизирован.  Если вы переустанавливаете
         ваш телефон, нужно просто зайти на счет Silent Circle в обычном порядке. При затруднениях с активизацией
         ваших счетов Blackphone и Silent Circle обращайтесь в Службу сопровождения клиентов по
         адресу support@blackphone.ch</string>
-
-    
-
     <string name="recentCalls_addToContact">"Добавить в контакты"</string>
     <string name="recentCalls_empty">"Список вызовов пуст."</string>
     <string name="recentCalls_deleteAll">"Очистить список"</string>
-    
     <string name="recentCalls_editNumberBeforeCall">"Изменить номер и вызвать"</string>
     <string name="recentCalls_removeFromRecentList">"Удалить из списка вызовов"</string>
-
     <string name="recentCalls_removeSameFromRecentList">Удалить соответствующие записи</string>
     <string name="type_incoming">"Входящий вызов"</string>
     <string name="type_outgoing">"Исходящий вызов"</string>
@@ -207,195 +174,35 @@
     <string name="private_num">"Скрытый номер"</string>
     <string name="payphone">"Телефон-автомат"</string>
     <string name="call_log_item_count_and_date">"(%1$d) %2$s"</string>
-    
     <string name="callDetailsDurationFormat">"%1$s:%2$s"</string>
     <string name="toast_call_detail_error">"Не удается получить сведения о вызове."</string>
-    
     <string name="clearCallLogProgress_title">"Очистка списка вызовов..."</string>
     <string name="clearCallLogConfirmation_title">"Удаление данных"</string>
     <string name="clearCallLogConfirmation">"Журнал звонков будет очищен."</string>
-    
     <string name="phoneTypeSilent">Silent Phone</string>
-
-
     <string name="contactsList">"Контакты"</string>
     <string name="local_invisible_directory">"Другое"</string>
     <string name="local_search_label">"Все контакты"</string>
     <string name="user_profile_contacts_list_header">"Я"</string>
     <string name="directory_search_label">"Каталог"</string>
     <string name="search_results_searching">"Поиск…"</string>
-    
     <string name="foundTooManyContacts">"Найдено более %d."</string>
     <string name="listFoundAllContactsZero">"Нет контактов"</string>
+
     <plurals name="searchFoundContacts">
-        <item quantity="one">"Найдено: 1"</item>
-        <item quantity="other">"Найдено: %d"</item>
+        <item quantity="one">"&#1053;&#1072;&#1081;&#1076;&#1077;&#1085;&#1086;: 1"</item>
+        <item quantity="other">"&#1053;&#1072;&#1081;&#1076;&#1077;&#1085;&#1086;: %d"</item>
     </plurals>
 
-    <string name="no_contact_details">"Нет других данных об этом контакте."</string>
-    <string name="noContactsWithPhoneNumbers">"Нет контактов с номерами телефонов."</string>
-
-    <string msgid="3744655776704833277" name="noFavoritesHelpText">"У вас нет избранных контактов."\n\n"Чтобы сделать
-        контакт избранным,"\n\n" "
-        <li>"нажмите вкладку "<b>"Контакты"</b>";"\n
-        </li>
-        " "\n<li>"нажмите контакт, который нужно сделать избранным;"\n</li>" "\n
-        <li>"нажмите звездочку возле имени контакта."\n</li>
-    </string>
-
-    <string name="noMatchingContacts">"Подходящие контакты не найдены."</string>
-    <string name="no_contacts_selected">"Контакты не выбраны."</string>
-    <string name="noContactsHelpTextWithSyncForCreateShortcut">"Отсутствуют контакты для отображения. (Если аккаунт был
-        только что добавлен, потребуется несколько минут для синхронизации контактов.)"
-    </string>
-
-    <string name="noContactsHelpTextWithSync">"Нет контактов для показа. Если вы только что добавили аккаунт,
-        синхронизация контактов может занять несколько минут."\n\n"Чтобы добавить контакты, нажмите "
-        <font fgcolor="#ffffffff">
-            <b>"Меню"</b>
-        </font>
-        " и выберите один из вариантов."\n\n
-        <li>
-            <font fgcolor="#ffffffff">
-                <b>"Аккаунты"</b>
-            </font>
-            ": добавление или настройка аккаунта с контактами, которые можно синхронизировать с телефоном."\n
-        </li>
-        \n
-        <li>
-            <font fgcolor="#ffffffff">
-                <b>"Фильтр контактов"</b>
-            </font>
-            ": настройка параметров показа контактов."\n
-        </li>
-        \n
-        <li>
-            <font fgcolor="#ffffffff">
-                <b>"Новый контакт"</b>
-            </font>
-            ": добавление контакта."\n
-        </li>
-        " "\n
-        <li>
-            <font fgcolor="#ffffffff">
-                <b>"Импорт/экспорт"</b>
-            </font>
-            ": импорт контактов с SIM- или SD-карты."\n
-        </li>
-    </string>
-
-    <string name="noContactsNoSimHelpTextWithSync">"Нет контактов для показа. Если вы только что добавили аккаунт,
-        синхронизация контактов может занять несколько минут."\n\n"Чтобы добавить контакты, нажмите "
-        <font fgcolor="#ffffffff">
-            <b>"Меню"</b>
-        </font>
-        " и выберите один из вариантов."\n\n
-        <li>
-            <font fgcolor="#ffffffff">
-                <b>"Аккаунты"</b>
-            </font>
-            ": добавление или настройка аккаунта с контактами, которые можно синхронизировать с телефоном."\n
-        </li>
-        \n
-        <li>
-            <font fgcolor="#ffffffff">
-                <b>"Фильтр контактов"</b>
-            </font>
-            ": настройка параметров показа контактов."\n
-        </li>
-        \n
-        <li>
-            <font fgcolor="#ffffffff">
-                <b>"Новый контакт"</b>
-            </font>
-            ": добавление контакта."\n
-        </li>
-        " "\n
-        <li>
-            <font fgcolor="#ffffffff">
-                <b>"Импорт/экспорт"</b>
-            </font>
-            ": импорт контактов с SD-карты."\n
-        </li>
-    </string>
-
-    <string name="noContactsHelpTextForCreateShortcut">"Отсутствуют контакты для отображения."</string>
-
-    <string name="noContactsHelpText">"Нет контактов для показа."\n\n"Чтобы добавить контакты, нажмите "
-        <font fgcolor="#ffffffff">
-            <b>"Меню"</b>
-        </font>
-        " и выберите один из вариантов."\n" "\n
-        <li>
-            <font fgcolor="#ffffffff">
-                <b>"Аккаунты"</b>
-            </font>
-            ": добавление или настройка аккаунта с контактами, которые можно синхронизировать с телефоном."\n
-        </li>
-        " "\n
-        <li>
-            <font fgcolor="#ffffffff">
-                <b>"Новый контакт"</b>
-            </font>
-            ": добавление контакта."\n
-        </li>
-        " "\n
-        <li>
-            <font fgcolor="#ffffffff">
-                <b>"Импорт/экспорт"</b>
-            </font>
-            ": импорт контактов с SIM- или SD-карты."\n
-        </li>
-    </string>
-
-    <string name="noContactsNoSimHelpText">"Нет контактов для показа."\n\n"Чтобы добавить контакты, нажмите "
-        <font fgcolor="#ffffffff">
-            <b>"Меню"</b>
-        </font>
-        " и выберите один из вариантов."\n" "\n
-        <li>
-            <font fgcolor="#ffffffff">
-                <b>"Аккаунты"</b>
-            </font>
-            ": добавление или настройка аккаунта с контактами, которые можно синхронизировать с телефоном."\n
-        </li>
-        " "\n
-        <li>
-            <font fgcolor="#ffffffff">
-                <b>"Новый контакт"</b>
-            </font>
-            ": добавление контакта."\n
-        </li>
-        " "\n
-        <li>
-            <font fgcolor="#ffffffff">
-                <b>"Импорт/экспорт"</b>
-            </font>
-            ": импорт контактов с SD-карты."\n
-        </li>
-    </string>
 
     <string name="missing_name">"Имя не указано"</string>
     <string name="menu_done">"Готово"</string>
     <string name="menu_doNotSave">"Отмена"</string>
-    <string name="profile_display_name">"Настроить профиль"</string>
     <string name="menu_search">"Поиск"</string>
-    <string name="menu_new_contact_action_bar">"Добавить контакт"</string>
-    <string name="menu_new_group_action_bar">"Добавить группу"</string>
-    <string name="menu_clear_frequents">"Очистить популярные контакты"</string>
-    <string name="menu_import_export">"Импорт/экспорт"</string>
-
-    <string name="menu_remove_vcard_files">Удалить  электронные визитки</string>
-    <string name="menu_export_database">"Экспорт файлов базы данных"</string>
-    <string name="menu_settings">"Настройки"</string>
-    <string name="menu_help">"Справка"</string>
-
-    <string name="menu_about">О</string>
     <string name="call_custom">"Позвонить (%s)"</string>
     <string name="call_home">"Домашний тел."</string>
     <string name="call_mobile">"Мобильный тел."</string>
     <string name="call_work">"Рабочий тел."</string>
-
     <string name="call_fax_work">"Рабочий факс"</string>
     <string name="call_fax_home">"Домашний факс"</string>
     <string name="call_pager">"Пейджер"</string>
@@ -411,110 +218,13 @@
     <string name="call_tty_tdd">"Телетайп"</string>
     <string name="call_work_mobile">"Рабочий мобильный"</string>
     <string name="call_work_pager">"Рабочий пейджер"</string>
-    
     <string name="call_assistant">"Вызов: %s"</string>
     <string name="call_mms">"MMS-центр"</string>
-    
     <string name="chat">"Чат"</string>
     <string name="toast_text_copied">"Текст скопирован"</string>
-    <string name="contacts_unavailable_create_contact">"Создать новый контакт"</string>
-    <string name="contacts_unavailable_import_contacts">"Импортировать контакты"</string>
-    <string name="upgrade_out_of_memory_uninstall">"Удалить некоторые приложения"</string>
-    <string name="upgrade_out_of_memory_retry">"Повторить попытку обновления"</string>
-    <string name="menu_create_contact_shortcut">"Поместить на главный экран"</string>
-    <string name="menu_share">"Отправить"</string>
-    <string name="menu_discard">"Отменить"</string>
-    <string name="pickerNewContactText">"Добавить контакт"</string>
     <string name="list_filter_phones">"Все контакты с номерами телефонов"</string>
-    <string name="display_options_sort_list_by">"Упорядочить контакты"</string>
-    <string name="display_options_view_names_as">"Показывать в контактах"</string>
     <string name="display_options_view_given_name_first">"Сначала имя"</string>
     <string name="display_options_view_family_name_first">"Сначала фамилию"</string>
-    <string name="display_options_sort_by_given_name">"По имени"</string>
-    <string name="display_options_sort_by_family_name">"По фамилии"</string>
-    <string name="no_sdcard_message">"Хранилище не найдено."</string>
-    <string name="import_from_sdcard">"Импорт из накопителя"</string>
-    <string name="import_one_vcard_string">"Импорт одного файла VCard"</string>
-    <string name="import_multiple_vcard_string">"Импорт нескольких файлов vCard"</string>
-    <string name="import_all_vcard_string">"Импорт всех файлов VCard"</string>
-    <string name="searching_vcard_message">"Поиск данных vCard на накопителе..."</string>
-    
-    <string name="scanning_sdcard_failed_message">"Не удалось просканировать накопитель. Причина: %s"</string>
-    <string name="fail_reason_io_error">"Ошибка ввода-вывода"</string>
-    <string name="fail_reason_low_memory_during_import">"Недостаточно памяти. Возможно, файл слишком большой."</string>
-    <string name="fail_reason_not_supported">"Формат не поддерживается."</string>
-    <string name="vcard_import_failed">"Не удалось импортировать данные vCard."</string>
-    <string name="import_failure_no_vcard_file">"На накопителе нет файлов vCard."</string>
-    <string name="fail_reason_unknown">"Неизвестная ошибка"</string>
-    <string name="select_vcard_title">"Выбор файла vCard"</string>
-
-    <string name="select_vcard_title_remove">Удалить файл электронной визитки</string>
-    <string name="caching_vcard_title">"Кэширование"</string>
-    <string name="caching_vcard_message">"Выполняется кэширование файлов vCard в локальное временное хранилище. Импорт
-        скоро начнется."
-    </string>
-    
-    <string name="progress_notifier_message">"Импорт %1$s/%2$s: %3$s"</string>
-    
-    <string name="importing_vcard_description">"Импорт: %s"</string>
-    <string name="reading_vcard_failed_title">"Ошибка чтения vCard-файла"</string>
-    <string name="importing_vcard_finished_title">"Импорт файла vCard %s завершен"</string>
-    
-    <string name="importing_vcard_canceled_title">"Импорт файла \"%s\" отменен"</string>
-    
-    <string name="vcard_import_will_start_message">"Импорт %s начнется в ближайшее время."</string>
-    <string name="vcard_import_will_start_message_with_default_name">"Файл будет импортирован в ближайшее время."
-    </string>
-    <string name="vcard_import_request_rejected_message">"Запрос на импорт данных vCard отклонен. Повторите попытку
-        позже."
-    </string>
-    
-    <string name="vcard_export_will_start_message">"Экспорт %s начнется в ближайшее время."</string>
-    <string name="vcard_export_request_rejected_message">"Запрос на экспорт данных vCard отклонен. Повторите попытку
-        позже."
-    </string>
-    <string name="vcard_unknown_filename">"контакт"</string>
-    
-    <string name="percentage">"%s%%"</string>
-    <string name="confirm_export_title">"Экспорт контактов"</string>
-    
-    <string name="confirm_export_message">"Список контактов будет экспортирован в файл \"%s\"."</string>
-    <string name="exporting_contact_failed_title">"Сбой экспорта"</string>
-    
-    <string name="exporting_contact_failed_message">"Не удалось экспортировать данные."\n"Причина: %s"</string>
-    <string name="fail_reason_no_exportable_contact">"Нет контактов для экспорта."</string>
-    <string name="fail_reason_too_many_vcard">"Слишком много файлов vCard в хранилище."</string>
-    
-    <string name="fail_reason_too_long_filename">"Слишком длинное название: %s."</string>
-    
-    <string name="exporting_vcard_finished_title">"Экспорт файла \"%s\" завершен."</string>
-    
-    <string name="exporting_vcard_canceled_title">"Экспорт файла \"%s\" отменен."</string>
-    <string name="exporting_contact_list_title">"Экспорт данных контакта"</string>
-    
-    <string name="exporting_contact_list_message">"Контактные данные экспортируются в файл \"%s\"."</string>
-    
-    <string name="fail_reason_could_not_initialize_exporter">"Не удалось запустить функцию экспорта. Причина: %s"
-    </string>
-    
-    <string name="fail_reason_error_occurred_during_export">"Ошибка при экспорте. Причина: %s"</string>
-    <string name="composer_failed_to_get_database_infomation">"База данных недоступна."</string>
-    <string name="composer_has_no_exportable_contact">"Не найдены контакты для экспорта. Возможно, экспорт контактов с
-        телефона не поддерживается поставщиком услуг передачи данных."
-    </string>
-    <string name="composer_not_initialized">"Сбой при запуске редактора vCard."</string>
-    
-    <string name="fail_reason_could_not_open_file">"Не удалось открыть файл \"%1$s\". Причина: %2$s"</string>
-    
-    <string name="cancel_import_confirmation_message">"Отменить импорт файла \"%s\"?"</string>
-    
-    <string name="cancel_export_confirmation_message">"Отменить экспорт файла \"%s\"?"</string>
-    <string name="nfc_vcard_file_name">"Получено по NFC"</string>
-    <string name="cancel_vcard_import_or_export_failed">"Не удалось отменить импорт/экспорт vCard"</string>
-    <string name="description_view_contact_detail">"Данные контакта"</string>
-    
-    <string name="preference_displayOptions">"Варианты отображения"</string>
-    
     <string name="description_quick_contact_for">"Быстрый вызов, контакт: %1$s"</string>
     <string name="cannot_load_store">Не удается загрузить хранилище ключей.</string>
     <string name="password_hint">Введите пароль</string>
@@ -523,37 +233,31 @@
     <string name="password_hint2">Введите пароль (подтвердите)</string>
     <string name="cannot_change_password">Ошибка изменения пароля. Использование существующего пароля.</string>
     <string name="old_password_wrong">Старый пароль неверный. Блокировка ключей.</string>
-
     <string name="no_password">Пароль отсутствует.</string>
-
     <string name="information_dialog">Информация</string>
     <string name="show_pw">Показать пароль</string>
     <string name="password_match">Пароли не совпадают. Проверьте, пожалуйста.</string>
-
-    <string name="video_control_explanation">Щелкнуть на экране для переключения кнопок регулировки видеосигнала.
+<string name="video_control_explanation">Щелкнуть на экране для переключения кнопок регулировки видеосигнала.
 \n\nКоснуться маленького окна предварительного просмотра для его перемещения.</string>
     <string name="start_on_boot">Запустить загрузку Silent Phone </string>
     <string name="start_on_boot_explanation">Запустить Silent Phone во время инициализации устройства.</string>
-    
     <string name="sp_dial_helper_title">Функция помощи набора</string>
     <string name="sp_dial_helper_select_explanation">Для упрощения набора, включить функцию помощи набора и выбрать страну.  Номер будет автоматически отформатирован по коду вашей страны.  Или же наберите  \'+\' и код страны.</string>
     <string name="sp_dial_helper_select_explanation_1">Для вызова других абонентов  Silent Circle, просто наберите их имя абонента Silent Circle.</string>
     <string name="sp_dial_helper_select">Выберите нужную страну.</string>
     <string name="sp_dial_helper_none">Нет функции помощи набора.</string>
     <string name="sp_dial_helper_simple">Простая функция помощи набора.</string>
-    
     <string name="sp_dial_helper_null_explanation">Функция помощи набора выключена</string>
     <string name="sp_dial_helper_simple_explanation">Добавить  \'+\' для образования международного телефонного номера </string>
     <string name="sp_dial_helper_nanp_explanation">Добавить \'+\' или \'+1\', или заменить \'011\' знаком  \'+\'   </string>
     <string name="sp_dial_helper_00_0_explanation">Заменить просвет \'%1$s\' кодом страны %2$s и просвет \'%3$s\' знаком   \'+\' </string>
     <string name="sp_dial_helper_00_x_explanation">Добавить \'%2$s\' к набираемым цифрам и заменить просвет \'%3$s\'  знаком  \'+\'</string>
-    
-  <string name="key_store_set_pw_explanation">Ввести собственный пароль для лучшей защиты файла ключей.\nНеобходимо вводить
+<string name="key_store_set_pw_explanation">Ввести собственный пароль для лучшей защиты файла ключей.\nНеобходимо вводить
 этот пароль каждый раз при включении Silent Phone.  Вы можете в любой момент переустановить защиту по умолчанию.</string>
     <string name="key_store_change_pw_explanation">Измените ваш собственный пароль файла ключей.</string>
     <string name="key_store_reset_pw_explanation">После введения пароля, клиент переустанавливает защиту файла ключей на защиту по умолчанию.</string>
     <string name="key_store_enter_pw_explanation">Введите ваш пароль файла ключей.</string>
-  <string name="key_store_set_pin_explanation">Введите собственный PIN для улучшения защиты файла ключей\nНеобходимо вводить
+<string name="key_store_set_pin_explanation">Введите собственный PIN для улучшения защиты файла ключей\nНеобходимо вводить
 этот PIN  каждый раз, когда вы включаете Silent Phone.  Вы можете переустанавливать на защиту по умолчанию в любое время.   </string>
     <string name="key_store_change_pin_explanation">Измените ваш PIN файла ключей.</string>
     <string name="key_store_reset_pin_explanation">Клиент переустанавливает защиту файла ключей на защиту по умолчанию после того, как вы вводите ваш PIN.</string>
@@ -576,12 +280,6 @@
     <string name="key_store_reset_default">Переустановить на защиту по умолчанию.</string>
     <string name="re_provision">Удаление всех данных Silent Phone</string>
     <string name="re_provision_explanation">Перезагрузка конфигурационных данных Silent Phone </string>
-    
-    
-  <string name="migrate_start">Начните миграцию данных Silent Contacts.</string>
-    <string name="migrate_export">Экспортировать имеющиеся Silent Contacts.</string>
-    <string name="migrate_done">Миграция осуществлена.</string>
-    <string name="migrate_not_ready">Встроенный провайдер контактов не готов.</string>
     <string name="did_title">Выбор номера телефона</string>
     <string name="did_region_area_explanation">Выберите ваш номер телефона в регионе или зоне</string>
     <string name="did_currently_selected">Выбран в настоящее время</string>
@@ -596,124 +294,77 @@
     <string name="did_no_number">В настоящее время нет в наличии номера телефона, выберите другой регион или зону.</string>
     <string name="did_ask_to_complete">Выполните выбор номера телефона.</string>
     <string name="no_internet">Нет связи с Интернетом</string>
-    <string name="mobile_internet_blocked">Мобильный Интернет заблокирован.</string>
     <string name="mobile_internet_available">Мобильный Интернет доступен</string>
     <string name="directory_use_sc">Каталог Silent Circle </string>
     <string name="directory_own_org_only">Собственная организация</string>
     <string name="sign_in">Зарегистрируйтесь</string>
+
     <string name="sc_privacy_link"><a href="https://silentcircle.com/privacy/">Декларация о конфиденциальности</a></string>
+
     <string name="sc_tos_link"><a href="https://accounts.silentcircle.com/terms/">Условия сервиса</a></string>
+
     <plurals name="number_missed_calls">
-        <item quantity="one">пропущенные вызов</item>
-        <item quantity="few">%d пропущенные вызовы</item>
-        <item quantity="other">%d пропущенные вызовы</item>
+        <item quantity="one">&#1087;&#1088;&#1086;&#1087;&#1091;&#1097;&#1077;&#1085;&#1085;&#1099;&#1077; &#1074;&#1099;&#1079;&#1086;&#1074;</item>
+        <item quantity="few">%d &#1087;&#1088;&#1086;&#1087;&#1091;&#1097;&#1077;&#1085;&#1085;&#1099;&#1077; &#1074;&#1099;&#1079;&#1086;&#1074;&#1099;</item>
+        <item quantity="other">%d &#1087;&#1088;&#1086;&#1087;&#1091;&#1097;&#1077;&#1085;&#1085;&#1099;&#1077; &#1074;&#1099;&#1079;&#1086;&#1074;&#1099;</item>
     </plurals>
+
     <string name="no_video_available">Видео недоступно для этого вызова.</string>
     <string name="call_in_progress">Осуществляется вызов</string>
     <string name="server_cert_failure">Сбой проверки сертификата — выполняется повтор</string>
     <string name="remaining_oca_minutes">Оставшиеся минуты ОСА</string>
     <string name="remaining_oca_minutes_fail">Отсутствует информация OCA</string>
     <string name="remaining_oca_minutes_zero">Не использованы минуты звонка. Вам причитается %1$d минуты.</string>
+
     <plurals name="remaining_oca_minutes_info">
-        <item quantity="one">Вы использовали один минут из причитающихся вам %2$d минут.</item>
-        <item quantity="few">Вы использовали %1$d минуты из причитающихся вам %2$d минут.</item>
-        <item quantity="other">Вы использовали %1$d минуты из причитающихся вам %2$d минут.</item>
+        <item quantity="one">&#1042;&#1099; &#1080;&#1089;&#1087;&#1086;&#1083;&#1100;&#1079;&#1086;&#1074;&#1072;&#1083;&#1080; &#1086;&#1076;&#1080;&#1085; &#1084;&#1080;&#1085;&#1091;&#1090; &#1080;&#1079; &#1087;&#1088;&#1080;&#1095;&#1080;&#1090;&#1072;&#1102;&#1097;&#1080;&#1093;&#1089;&#1103; &#1074;&#1072;&#1084; %2$d &#1084;&#1080;&#1085;&#1091;&#1090;.</item>
+        <item quantity="few">&#1042;&#1099; &#1080;&#1089;&#1087;&#1086;&#1083;&#1100;&#1079;&#1086;&#1074;&#1072;&#1083;&#1080; %1$d &#1084;&#1080;&#1085;&#1091;&#1090;&#1099; &#1080;&#1079; &#1087;&#1088;&#1080;&#1095;&#1080;&#1090;&#1072;&#1102;&#1097;&#1080;&#1093;&#1089;&#1103; &#1074;&#1072;&#1084; %2$d &#1084;&#1080;&#1085;&#1091;&#1090;.</item>
+        <item quantity="other">&#1042;&#1099; &#1080;&#1089;&#1087;&#1086;&#1083;&#1100;&#1079;&#1086;&#1074;&#1072;&#1083;&#1080; %1$d &#1084;&#1080;&#1085;&#1091;&#1090;&#1099; &#1080;&#1079; &#1087;&#1088;&#1080;&#1095;&#1080;&#1090;&#1072;&#1102;&#1097;&#1080;&#1093;&#1089;&#1103; &#1074;&#1072;&#1084; %2$d &#1084;&#1080;&#1085;&#1091;&#1090;.</item>
     </plurals>
-    
-    <string name="tab_speed_dial">БЫСТРЫЙ НАБОР</string>
+
+
     <string name="tab_recents">НЕДАВНИЕ</string>
     <string name="tab_all_contacts">КОНТАКТЫ</string>
     <string name="tab_chat">ТЕКСТ</string>
     <string name="call_log_action_call_back">ВЫЗОВ</string>
-    
     <string name="call_log_action_details">ПОДРОБНЕЕ</string>
-
-    
     <string name="call_log_action_report">СООБЩИТЬ ОБ ОШИБКЕ</string>
-
-    
     <string name="description_dismiss">Закрыть</string>
-
-    
     <string name="activity_not_available">На устройстве нет приложения для этого действия.</string>
 
-    Note: AccessibilityServices use this attribute to announce what the view represents.
-    This is especially valuable for views without textual representation like ImageView.
-    --&gt;
-    <string name="description_num_calls">Вызовов: <xliff:g id="NUMBEROFCALLS">%1$s</xliff:g>.</string>
+    <string name="description_num_calls">Вызовов: %1$s.</string>
 
-    
-    <string name="description_call_back_action">Перезвонить контакту <xliff:g id="NAMEORNUMBER">%1$s</xliff:g>.</string>
+    <string name="description_call_back_action">Перезвонить контакту %1$s.</string>
 
-    
-    <string name="description_details_action"><xliff:g id="NAMEORNUMBER">%1$s</xliff:g> – сведения о вызове</string>
+    <string name="description_details_action">%1$s – сведения о вызове</string>
 
-    
-    <string name="description_contact_details">Сведения о контакте <xliff:g id="NAMEORNUMBER">%1$s</xliff:g></string>
+    <string name="description_contact_details">Сведения о контакте %1$s</string>
 
-    
-    <string name="description_incoming_missed_call">Пропущен вызов от контакта <xliff:g id="NAMEORNUMBER">%1$s</xliff:g>. <xliff:g id="TYPEORLOCATION">%2$s</xliff:g>, <xliff:g id="TIMEOFCALL">%3$s</xliff:g>.</string>
+    <string name="description_incoming_missed_call">Пропущен вызов от контакта %1$s. %2$s, %3$s.</string>
 
-    
-    <string name="description_incoming_answered_call">Принят вызов от контакта <xliff:g id="NAMEORNUMBER">%1$s</xliff:g>. <xliff:g id="TYPEORLOCATION">%2$s</xliff:g>, <xliff:g id="TIMEOFCALL">%3$s</xliff:g>.</string>
+    <string name="description_incoming_answered_call">Принят вызов от контакта %1$s. %2$s, %3$s.</string>
 
-    
-    <string name="description_outgoing_call">Звонок контакту <xliff:g id="NAMEORNUMBER">%1$s</xliff:g>. <xliff:g id="TYPEORLOCATION">%2$s</xliff:g>, <xliff:g id="TIMEOFCALL">%3$s</xliff:g>.</string>
-
-    
+    <string name="description_outgoing_call">Звонок контакту %1$s. %2$s, %3$s.</string>
     <string name="list_delimeter">", "</string>
-
-    
     <string name="call_log_header_today">Сегодня</string>
-
-    
     <string name="call_log_header_yesterday">Вчера</string>
-
-    
     <string name="call_log_header_other">Предыдущие записи</string>
-
-    
     <string name="recentMissed_empty">Пропущенных вызовов нет.</string>
-
-    
     <string name="recents_footer_text">Посмотреть весь журнал звонков</string>
-
-    
-    <string name="remove_contact">Удалить</string>
-
-    
-    <string name="speed_dial_empty">Быстрый набор позволяет звонить\nна избранные и часто используемые номера\n, нажимая всего одну кнопку.</string>
-
-    
     <string name="all_contacts_empty">Контактов нет.</string>
-
-    
     <string name="call_log_all_title">Все</string>
-
-    
     <string name="call_log_missed_title">Пропущенные</string>
 
-    <string name="search_shortcut_call_number">Позвонить: <xliff:g id="NUMBER">%s</xliff:g>
+<string name="search_shortcut_call_number">Позвонить: %s
     </string>
-
-    
     <string name="search_shortcut_add_to_contacts">Добавить в контакты</string>
-
-    
     <string name="add_contact_not_available">Чтобы использовать эту функцию, включите приложение \"Silent Contacts\".</string>
-
-    
     <string name="action_menu_back_from_search">прекратить поиск</string>
-
-    
     <string name="description_clear_search">Очистить условия поиска</string>
-
-    
     <string name="dialer_hint_find_contact">Введите имя или номер телефона</string>
-
-    
     <string name="sms_disambig_title">"Выбор номера"</string>
     <string name="call_disambig_title">"Выбор номера"</string>
     <string name="make_primary">"Запомнить выбранное"</string>
 
+    <string name="percentage">"%s%%"</string>
 </resources>

@@ -27,15 +27,18 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 package com.silentcircle.common.location;
 
+import android.Manifest;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationManager;
 import android.preference.PreferenceManager;
+import android.support.v4.content.ContextCompat;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 
@@ -128,8 +131,11 @@ public class CountryDetector {
         final PendingIntent pendingIntent = PendingIntent.getBroadcast(context, 0, activeIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT);
 
-        locationManager.requestLocationUpdates(LocationManager.PASSIVE_PROVIDER,
-                TIME_BETWEEN_UPDATES_MS, DISTANCE_BETWEEN_UPDATES_METERS, pendingIntent);
+        if (ContextCompat.checkSelfPermission(context,
+                Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            locationManager.requestLocationUpdates(LocationManager.PASSIVE_PROVIDER,
+                    TIME_BETWEEN_UPDATES_MS, DISTANCE_BETWEEN_UPDATES_METERS, pendingIntent);
+        }
     }
 
     /**

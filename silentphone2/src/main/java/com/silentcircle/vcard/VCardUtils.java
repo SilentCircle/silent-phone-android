@@ -48,13 +48,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package com.silentcircle.vcard;
 
 import android.annotation.SuppressLint;
+import android.provider.ContactsContract.CommonDataKinds.Im;
+import android.provider.ContactsContract.CommonDataKinds.Phone;
 import android.telephony.PhoneNumberUtils;
 import android.text.SpannableStringBuilder;
 import android.text.TextUtils;
 import android.util.Log;
 
-import com.silentcircle.silentcontacts2.ScContactsContract.CommonDataKinds.Im;
-import com.silentcircle.silentcontacts2.ScContactsContract.CommonDataKinds.Phone;
+import com.silentcircle.contacts.PhoneImTypes;
 import com.silentcircle.vcard.exception.VCardException;
 
 import java.io.ByteArrayOutputStream;
@@ -167,7 +168,7 @@ public class VCardUtils {
         sKnownPhoneTypeMap_StoI.put(VCardConstants.PARAM_TYPE_HOME, Phone.TYPE_HOME);
         sKnownPhoneTypeMap_StoI.put(VCardConstants.PARAM_TYPE_WORK, Phone.TYPE_WORK);
         sKnownPhoneTypeMap_StoI.put(VCardConstants.PARAM_TYPE_CELL, Phone.TYPE_MOBILE);
-        sKnownPhoneTypeMap_StoI.put(VCardConstants.PARAM_TYPE_SILENT, Phone.TYPE_SILENT);
+        sKnownPhoneTypeMap_StoI.put(VCardConstants.PARAM_TYPE_SILENT, PhoneImTypes.TYPE_SILENT);
 
         // OTHER (default in Android) should correspond to VOICE (default in vCard).
         sKnownPhoneTypeMap_StoI.put(VCardConstants.PARAM_TYPE_VOICE, Phone.TYPE_CUSTOM);
@@ -179,7 +180,7 @@ public class VCardUtils {
         sPhoneTypesUnknownToContactsSet.add(VCardConstants.PARAM_TYPE_VIDEO);
 
         sKnownImPropNameMap_ItoS = new HashMap<Integer, String>();
-        sKnownImPropNameMap_ItoS.put(Im.PROTOCOL_SILENT, VCardConstants.PROPERTY_X_SILENT);
+        sKnownImPropNameMap_ItoS.put(PhoneImTypes.PROTOCOL_SILENT, VCardConstants.PROPERTY_X_SILENT);
         sKnownImPropNameMap_ItoS.put(Im.PROTOCOL_AIM, VCardConstants.PROPERTY_X_AIM);
         sKnownImPropNameMap_ItoS.put(Im.PROTOCOL_MSN, VCardConstants.PROPERTY_X_MSN);
         sKnownImPropNameMap_ItoS.put(Im.PROTOCOL_YAHOO, VCardConstants.PROPERTY_X_YAHOO);
@@ -266,7 +267,7 @@ public class VCardUtils {
         }
         if (type < 0) {
             if (hasPref) {
-                type = Phone.TYPE_SILENT;
+                type = PhoneImTypes.TYPE_SILENT;
             }
             else {
                 // default to TYPE_HOME

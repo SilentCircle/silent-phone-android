@@ -601,6 +601,7 @@ class HandlePaymentTask extends AsyncTask<String, Void, String> {
                     while ((line = reader.readLine()) != null){
                         builder.append(line);
                     }
+                    reader.close();
                     return builder.toString();
                 }
                 else {
@@ -610,6 +611,7 @@ class HandlePaymentTask extends AsyncTask<String, Void, String> {
                     while ((line = reader.readLine()) != null) {
                         builder.append(line);
                     }
+                    reader.close();
                     if (ConfigurationUtilities.mTrace) {
                         Log.e(TAG, "Server Respons is not HTTP_OK (200): " + builder.toString());
                     }

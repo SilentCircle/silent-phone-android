@@ -17,14 +17,16 @@
 package com.silentcircle.contacts.calllognew;
 
 import android.content.Context;
+import android.content.res.Resources;
 import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
+import android.support.v4.content.ContextCompat;
 import android.util.AttributeSet;
 import android.view.View;
 
 import com.google.common.collect.Lists;
 import com.silentcircle.common.testing.NeededForTesting;
-import com.silentcircle.silentcontacts2.ScCallLog.ScCalls;
+import com.silentcircle.contacts.ScCallLog.ScCalls;
 import com.silentcircle.silentphone2.R;
 
 import java.util.List;
@@ -37,7 +39,7 @@ import java.util.List;
 public class CallTypeIconsView extends View {
     private List<Integer> mCallTypes = Lists.newArrayListWithCapacity(3);
     private boolean mShowVideo = false;
-    private Resources mResources;
+    private ResourcesLogView mResources;
     private int mWidth;
     private int mHeight;
 
@@ -47,7 +49,7 @@ public class CallTypeIconsView extends View {
 
     public CallTypeIconsView(Context context, AttributeSet attrs) {
         super(context, attrs);
-        mResources = new Resources(context);
+        mResources = new ResourcesLogView(context);
     }
 
     public void clear() {
@@ -141,7 +143,7 @@ public class CallTypeIconsView extends View {
 //        }
     }
 
-    private static class Resources {
+    private static class ResourcesLogView {
 
         /**
          * Drawable representing an incoming answered call.
@@ -175,12 +177,12 @@ public class CallTypeIconsView extends View {
          *
          * @param context The current context.
          */
-        public Resources(Context context) {
-            final android.content.res.Resources r = context.getResources();
+        public ResourcesLogView(Context context) {
+            final Resources r = context.getResources();
 
-            incoming = r.getDrawable(R.drawable.ic_call_incoming_holo_dark);
-            outgoing = r.getDrawable(R.drawable.ic_call_outgoing_holo_dark);
-            missed = r.getDrawable(R.drawable.ic_call_missed_holo_dark);
+            incoming = ContextCompat.getDrawable(context, R.drawable.ic_call_incoming_holo_dark);
+            outgoing = ContextCompat.getDrawable(context, R.drawable.ic_call_outgoing_holo_dark);
+            missed = ContextCompat.getDrawable(context, R.drawable.ic_call_missed_holo_dark);
             iconMargin = r.getDimensionPixelSize(R.dimen.call_log_icon_margin);
 
             /* Original code -- maybe we can use it later */

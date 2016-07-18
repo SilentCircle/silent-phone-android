@@ -230,6 +230,9 @@ const string getOwnAxoIdKey()
         return string();
     AppInterface* appIf = getAppIf();
 
+    if (appIf == NULL)
+        return string();
+
     const string& localUser = appIf->getOwnUser();
 
     AxoConversation* local = AxoConversation::loadLocalConversation(localUser);
@@ -253,6 +256,10 @@ void checkRemoteAxoIdKey(const string user, const string deviceId, const string 
     if (getAppIf == NULL)
         return;
     AppInterface* appIf = getAppIf();
+
+    if (appIf == NULL)
+        return;
+
     const string& localUser = appIf->getOwnUser();
 
     string remoteName = extractNameFromUri(user);

@@ -177,4 +177,21 @@ public class DateUtils {
                 ? MESSAGE_TIME_FORMAT : MESSAGE_TIME_FORMAT_JELLYBEAN;
         return DateFormat.format(format, time);
     }
+
+    public static CharSequence formatDuration(Context context, long millis) {
+        final Resources res = context.getResources();
+        if (millis >= DAY) {
+            final int days = (int) ((millis + (DAY / 2)) / DAY);
+            return res.getQuantityString(R.plurals.duration_days, days, days);
+        } else if (millis >= HOUR) {
+            final int hours = (int) ((millis + (HOUR / 2)) / HOUR);
+            return res.getQuantityString(R.plurals.duration_hours, hours, hours);
+        } else if (millis >= MINUTE) {
+            final int minutes = (int) ((millis + (MINUTE / 2)) / MINUTE);
+            return res.getQuantityString(R.plurals.duration_minutes, minutes, minutes);
+        } else {
+            final int seconds = (int) ((millis + (SECOND / 2)) / SECOND);
+            return res.getQuantityString(R.plurals.duration_seconds, seconds, seconds);
+        }
+    }
 }

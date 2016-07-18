@@ -55,6 +55,7 @@ import android.widget.TextView;
 import com.silentcircle.contacts.ContactsUtils;
 import com.silentcircle.messaging.activities.ShowRemoteDevicesActivity;
 import com.silentcircle.messaging.services.AxoMessaging;
+import com.silentcircle.messaging.util.DeviceInfo;
 import com.silentcircle.messaging.util.IOUtils;
 import com.silentcircle.silentphone2.BuildConfig;
 import com.silentcircle.silentphone2.R;
@@ -63,8 +64,6 @@ import com.silentcircle.silentphone2.services.TiviPhoneService;
 import com.silentcircle.silentphone2.util.ConfigurationUtilities;
 import com.silentcircle.silentphone2.util.Utilities;
 
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -84,19 +83,6 @@ public class RemoteDevicesFragment extends Fragment implements View.OnClickListe
     private View mRootView;
     private boolean mNameMissing;
 
-    private static class DeviceData {
-        final String name;
-        final String devId;
-        final String identityKey;
-        final String zrtpVerificationState;
-
-        DeviceData(String name, String id, String key, String verifyState) {
-            this.name = name;
-            this.devId = id;
-            identityKey = key;
-            zrtpVerificationState = verifyState;
-        }
-    }
 
     public static RemoteDevicesFragment newInstance(Bundle args) {
         RemoteDevicesFragment f = new RemoteDevicesFragment();
@@ -173,7 +159,7 @@ public class RemoteDevicesFragment extends Fragment implements View.OnClickListe
     public void onClick(View view) {
         switch (view.getId()) {
             case R.id.call:
-                DeviceData devData = (DeviceData)view.getTag();
+                DeviceInfo.DeviceData devData = (DeviceInfo.DeviceData)view.getTag();
                 String directDial = mPartner + ";xscdevid=" + devData.devId;
                 Intent intent = ContactsUtils.getCallIntent(directDial);
                 intent.putExtra(DialerActivity.NO_NUMBER_CHECK, true);
@@ -232,11 +218,7 @@ public class RemoteDevicesFragment extends Fragment implements View.OnClickListe
 
     private String getUsername() {
         AxoMessaging axo = AxoMessaging.getInstance(mParent);
-        if(axo != null) {
-            return axo.getUserName();
-        }
-
-        return null;
+        return axo.getUserName();
     }
 
     /** Request the identity key and associated device info from Axolotl conversation */
@@ -248,20 +230,20 @@ public class RemoteDevicesFragment extends Fragment implements View.OnClickListe
         setOwnDeviceId(Utilities.hashMd5(TiviPhoneService.getInstanceDeviceId(mParent, false)));
 
         byte[][] devices = AxoMessaging.getIdentityKeys(IOUtils.encode(mPartner));
-        if (devices.length == 0) {
+        if (devices == null || devices.length == 0) {
             emptyDeviceInfo();
             return;
         }
-        ArrayList<DeviceData> devData = new ArrayList<>(5);
+        ArrayList<DeviceInfo.DeviceData> devData = new ArrayList<>(5);
         boolean rescan = false;
         for (byte[] device : devices) {
-            DeviceData devInfo = parseDeviceInfo(new String(device));
+            DeviceInfo.DeviceData devInfo = DeviceInfo.parseDeviceInfo(new String(device));
             if (devInfo != null && TextUtils.isEmpty(devInfo.name) && !mNameMissing) {
                 rescan = true;
                 mNameMissing = true;
                 break;
             }
-            devData.add(parseDeviceInfo(new String(device)));
+            devData.add(devInfo);
         }
         if (rescan) {
             doRescan();
@@ -276,7 +258,7 @@ public class RemoteDevicesFragment extends Fragment implements View.OnClickListe
         mRootView.findViewById(R.id.AxoDeviceHeader).setVisibility(View.VISIBLE);
     }
 
-    private void setupDeviceList(ArrayList<DeviceData> devData) {
+    private void setupDeviceList(ArrayList<DeviceInfo.DeviceData> devData) {
         TextView tv = (TextView) mRootView.findViewById(R.id.AxoDeviceHeader);
         tv.setVisibility(View.VISIBLE);
 
@@ -304,7 +286,7 @@ public class RemoteDevicesFragment extends Fragment implements View.OnClickListe
             return;
         // Convert id key to hex string with leading zeros
         byte[] idKey = Base64.decode(elements[0], Base64.DEFAULT);
-        final String idKeyFingerprint = fingerprint(idKey);
+        final String idKeyFingerprint = DeviceInfo.fingerprint(idKey);
         TextView tv = (TextView) view.findViewById(R.id.AxoLocalDeviceKey);
         tv.setText(idKeyFingerprint);
     }
@@ -319,49 +301,10 @@ public class RemoteDevicesFragment extends Fragment implements View.OnClickListe
                 : ownDeviceId);
     }
 
-    // identityKey:device name:device id:verify state
-    private DeviceData parseDeviceInfo(String devData) {
-        String elements[] = devData.split(":");
-        if (elements.length != 4) {
-            return null;
-        }
-        // Convert id key to hex string with leading zeros
-        byte[] idKey = Base64.decode(elements[0], Base64.DEFAULT);
-        final String idKeyFingerprint = fingerprint(idKey);
-        return new DeviceData(elements[1], elements[2], idKeyFingerprint, elements[3]);
-    }
-
-    private String fingerprint(byte[] data) {
-        final MessageDigest md;
-        try {
-            md = MessageDigest.getInstance("SHA-256");
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-            return null;
-        }
-        final byte[] hash = md.digest(data);
-
-        final String hexString = new String(Utilities.bytesToHexChars(hash, true));
-        final int len = hexString.length();
-        final StringBuilder sb = new StringBuilder(80);
-        for (int i = 1; i <= len; i++) {
-            sb.append(hexString.charAt(i-1));
-            if ((i % 2) == 0)
-                sb.append(':');
-            if ((i % 16) == 0)
-                sb.append('\n');
-        }
-        if (sb.charAt(sb.length()-2) == ':') {
-            sb.deleteCharAt(sb.length() - 2);
-            sb.deleteCharAt(sb.length() - 1);
-        }
-        return sb.toString();
-    }
-
-    private class DevicesArrayAdapter extends ArrayAdapter<DeviceData> {
+    private class DevicesArrayAdapter extends ArrayAdapter<DeviceInfo.DeviceData> {
         private final Context context;
 
-        public DevicesArrayAdapter(Context context, List<DeviceData> values) {
+        public DevicesArrayAdapter(Context context, List<DeviceInfo.DeviceData> values) {
             super(context, R.layout.axo_remote_devices_line, values);
             this.context = context;
         }
@@ -372,7 +315,7 @@ public class RemoteDevicesFragment extends Fragment implements View.OnClickListe
             if (convertView == null)
                 convertView = inflater.inflate(R.layout.axo_remote_devices_line, parent, false);
             View rowView = convertView;
-            DeviceData devData = getItem(position);
+            DeviceInfo.DeviceData devData = getItem(position);
 
             TextView tv = (TextView)rowView.findViewById(R.id.dev_name);
             tv.setText(devData.name);
@@ -385,10 +328,13 @@ public class RemoteDevicesFragment extends Fragment implements View.OnClickListe
             ImageView iv = (ImageView)rowView.findViewById(R.id.verify_check);
             switch (devData.zrtpVerificationState) {
                 case "0":
+                    iv.setVisibility(View.INVISIBLE);
+                    tv.setVisibility(View.VISIBLE);
                     break;
                 case "1":
                     iv.setImageResource(R.drawable.ic_check_white_24dp);
                     iv.setVisibility(View.VISIBLE);
+                    tv.setVisibility(View.VISIBLE);
                     break;
                 case "2":
                     iv.setImageResource(R.drawable.ic_check_green_24dp);

@@ -30,8 +30,12 @@ package com.silentcircle.messaging.views.adapters;
 
 import android.content.Context;
 import android.graphics.Rect;
+import android.graphics.drawable.Drawable;
 import android.support.annotation.Nullable;
+import android.support.v4.content.ContextCompat;
+import android.support.v4.graphics.drawable.DrawableCompat;
 import android.util.AttributeSet;
+import android.util.TypedValue;
 import android.view.MotionEvent;
 
 import com.silentcircle.messaging.util.DateUtils;
@@ -72,6 +76,25 @@ public class DateHeaderView extends RelativeLayout {
     protected void onFinishInflate() {
         super.onFinishInflate();
         mText = (TextView) findViewById(R.id.message_group_header);
+
+        // paddings are ignored with this
+        // if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+        int paddingLeft = mText.getPaddingLeft();
+        int paddingTop = mText.getPaddingTop();
+        int paddingRight = mText.getPaddingRight();
+        int paddingBottom = mText.getPaddingBottom();
+
+        int backgroundTintColor;
+        TypedValue typedValue = new TypedValue();
+        getContext().getTheme().resolveAttribute(R.attr.sp_date_header_background_tint_color,
+                typedValue, true);
+        backgroundTintColor = ContextCompat.getColor(getContext(), typedValue.resourceId);
+
+        final Drawable originalDrawable = mText.getBackground();
+        final Drawable wrappedDrawable = DrawableCompat.wrap(originalDrawable);
+        DrawableCompat.setTint(wrappedDrawable, backgroundTintColor);
+        mText.setBackground(wrappedDrawable);
+        mText.setPadding(paddingLeft, paddingTop, paddingRight, paddingBottom);
     }
 
     public void setDate(@Nullable Date date) {

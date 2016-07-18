@@ -37,6 +37,7 @@ import android.net.Uri;
 import android.provider.Settings;
 import android.support.v4.util.Pair;
 import android.text.TextUtils;
+import android.util.Log;
 
 import com.silentcircle.silentphone2.R;
 
@@ -66,7 +67,6 @@ public class LocationUtils {
         if (manager == null) {
             return false;
         }
-
         Criteria criteria = new Criteria();
         criteria.setAccuracy(Criteria.ACCURACY_FINE);
         criteria.setAltitudeRequired(false);

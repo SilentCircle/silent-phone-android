@@ -54,13 +54,21 @@ import android.util.Log;
 import android.webkit.MimeTypeMap;
 
 import com.silentcircle.messaging.listener.DismissDialogOnClick;
+import com.silentcircle.messaging.model.event.Event;
+import com.silentcircle.messaging.model.event.Message;
 import com.silentcircle.messaging.providers.AudioProvider;
 import com.silentcircle.messaging.providers.PictureProvider;
 import com.silentcircle.messaging.providers.TextProvider;
 import com.silentcircle.messaging.providers.VCardProvider;
 import com.silentcircle.messaging.providers.VideoProvider;
+import com.silentcircle.messaging.repository.EventRepository;
 import com.silentcircle.messaging.services.SCloudService;
+import com.silentcircle.silentphone2.BuildConfig;
 import com.silentcircle.silentphone2.R;
+import com.silentcircle.silentphone2.util.Utilities;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -181,7 +189,7 @@ public class AttachmentUtils {
             }
         }
                                         // FIXME: Hotfix
-        if(fromOurMediaProvider(uri) || uri.toString().equals("content://com.silentcircle.files/captured_image/IMG.jpg")) {
+        if(fromOurMediaProvider(uri) || uri.toString().equals("content://" + BuildConfig.AUTHORITY_BASE + ".files/captured_image/IMG.jpg")) {
             fileName = decorateFilename(fileName, context);
         }
 
@@ -425,9 +433,26 @@ public class AttachmentUtils {
 
     }
 
-    public static boolean isExported(String fileName) {
+    public static boolean isExported(String fileName, String integrityHash) {
         File externalFile = getExternalStorageFile(fileName);
-        return externalFile != null && externalFile.exists();
+
+        if (externalFile == null || !externalFile.exists()) {
+            return false;
+        }
+
+        if (!TextUtils.isEmpty(integrityHash)) {
+            try {
+                String foundHash = Utilities.hash(new FileInputStream(externalFile), "SHA256");
+
+                if (!integrityHash.equals(foundHash)) {
+                    return false;
+                }
+            } catch (FileNotFoundException exception) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**
@@ -474,8 +499,6 @@ public class AttachmentUtils {
             fos.write(data);
             fos.flush();
 
-            fos.close();
-
             return true;
         } catch (FileNotFoundException exception) {
             Log.e(TAG, "Temp file not found", exception);
@@ -485,6 +508,11 @@ public class AttachmentUtils {
             Log.e(TAG, "Temp file I/O error", exception);
 
             return false;
+        } finally {
+            try {
+                if (fos != null)
+                    fos.close();
+            } catch (IOException ignore) { }
         }
     }
 
@@ -539,6 +567,30 @@ public class AttachmentUtils {
         Intent intent = new Intent(action);
         intent.setDataAndType(uri, mimeType);
         return intent.resolveActivity(packageManager) != null;
+    }
+
+    public static void setExportedFilename(Context context, String partner, String messageId, String exportedFilename) {
+        EventRepository eventRepository = MessageUtils.getEventRepository(context, partner);
+
+        if (eventRepository == null) {
+            return;
+        }
+
+        Event event = eventRepository.findById(messageId);
+
+        if (event != null && event instanceof Message && ((Message) event).hasMetaData()) {
+            JSONObject metaDataJson;
+            try {
+                metaDataJson = new JSONObject(((Message) event).getMetaData());
+                metaDataJson.put("ExportedFileName", exportedFilename);
+
+                ((Message) event).setMetaData(metaDataJson.toString());
+            } catch (JSONException e) {
+                return;
+            }
+        }
+
+        eventRepository.save(event);
     }
 
     private static String sanitizeFileName(String fileName) {

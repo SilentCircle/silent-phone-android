@@ -36,10 +36,6 @@
         <item name="android:drawableRight">@drawable/ic_location</item>
     </style>
 
-    <style name="Widget.Silence.CheckBox.BurnNotice">
-        <item name="android:drawableRight">@drawable/ic_burn</item>
-    </style>
-
     <style name="Widget.Silence.RelativeLayout">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">match_parent</item>
@@ -189,13 +185,13 @@
     <style name="Widget.Text.Primary"/>
 
     <style name="Widget.Text.Outgoing" parent="Widget.Text.Primary">
-        <item name="android:textColor">@color/outgoing_message_text_selector</item>
+        <item name="android:textColor">?attr/sp_outgoing_message_text_selector</item>
         <item name="android:textColorLink">@color/chat_message_text_link_color</item>
         <item name="android:duplicateParentState">true</item>
     </style>
 
     <style name="Widget.Text.Incoming" parent="Widget.Text.Primary">
-        <item name="android:textColor">@color/incoming_message_text_selector</item>
+        <item name="android:textColor">?attr/sp_incoming_message_text_selector</item>
         <item name="android:textColorLink">@color/chat_message_text_link_color</item>
         <item name="android:duplicateParentState">true</item>
     </style>
@@ -282,7 +278,10 @@
 
     <style name="Widget.Silence.ImageView.Avatar.IncomingMessage"
             parent="Widget.Silence.ImageView.Avatar.__IncomingMessage">
-        <item name="android:padding">@dimen/spacing_normal</item>
+        <item name="android:layout_marginTop">@dimen/space_small</item>
+        <item name="android:layout_marginLeft">@dimen/spacing_small</item>
+        <item name="android:layout_width">45dp</item>
+        <item name="android:layout_height">45dp</item>
     </style>
 
     <style name="Widget.Layout"/>
@@ -335,6 +334,7 @@
 
     <style name="Widget.Layout.Card.Incoming.Message">
         <item name="android:layout_toRightOf">@+id/message_avatar</item>
+        <item name="android:layout_marginLeft">-5dp</item>
     </style>
 
     <style name="Widget.Layout.Card.Outgoing.Message">

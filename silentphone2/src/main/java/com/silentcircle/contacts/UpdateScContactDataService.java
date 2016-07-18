@@ -52,6 +52,7 @@ import com.silentcircle.common.util.AsyncTasks;
 import com.silentcircle.contacts.utils.PhoneNumberHelper;
 import com.silentcircle.messaging.services.AxoMessaging;
 import com.silentcircle.messaging.util.IOUtils;
+import com.silentcircle.silentphone2.BuildConfig;
 import com.silentcircle.silentphone2.R;
 import com.silentcircle.silentphone2.services.TiviPhoneService;
 import com.silentcircle.silentphone2.util.ConfigurationUtilities;
@@ -285,7 +286,11 @@ public class UpdateScContactDataService extends IntentService {
         mCachedScContacts = new ArrayList<>();
 
         processContacts();
-        TiviPhoneService.phoneService.contactObserverRegister();
+
+        // This is a hack: if we install multiple APK for testing purposes the re-register
+        // the contact updater only for the main APK, for other APKs run it only once
+        if (BuildConfig.MAIN_PACKAGE)
+            TiviPhoneService.phoneService.contactObserverRegister();
     }
 
 
@@ -770,7 +775,7 @@ public class UpdateScContactDataService extends IntentService {
             e.printStackTrace();
             return -1;
         }
-
+        OutputStream out = null;
         try {
             if (ConfigurationUtilities.mTrace) Log.d(TAG, "Discovery request URL: " + mRequestUrlDiscoverContact);
             // For an existing account we add the license code to the account, thus PUT to modify
@@ -792,7 +797,7 @@ public class UpdateScContactDataService extends IntentService {
             urlConnection.setFixedLengthStreamingMode(contentLength);
             urlConnection.setConnectTimeout(2000);
 
-            OutputStream out = new BufferedOutputStream(urlConnection.getOutputStream());
+            out = new BufferedOutputStream(urlConnection.getOutputStream());
             out.write(body.getBytes());
             out.flush();
 
@@ -805,6 +810,7 @@ public class UpdateScContactDataService extends IntentService {
             else {
                 AsyncTasks.readStream(new BufferedInputStream(urlConnection.getErrorStream()), mContent);
             }
+            out.close();
             if (ret == HttpsURLConnection.HTTP_OK) {
                 parseAndProcessHashResult();
                 if (ConfigurationUtilities.mTrace) Log.d(TAG, "Found matching contacts: " + foundHashMatches);
@@ -817,6 +823,10 @@ public class UpdateScContactDataService extends IntentService {
             Log.e(TAG, "Network connection problem: " + e.getMessage(), e);
             return -1;
         } finally {
+            try {
+                if (out != null)
+                    out.close();
+            } catch (IOException ignore) { }
             if (urlConnection != null)
                 urlConnection.disconnect();
         }

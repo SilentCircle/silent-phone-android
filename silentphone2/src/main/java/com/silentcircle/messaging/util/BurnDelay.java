@@ -128,6 +128,15 @@ public class BurnDelay {
         return context.getResources().getString(R.string.messages_expire, getTimeSpanString(time, now));
     }
 
+    public String getAlternateLabel(Context context, int level) {
+        long delay = getDelay(level);
+        if (delay <= 0) {
+            return context.getResources().getString(R.string.no_expiration);
+        }
+        long time = delay * 1000;
+        return com.silentcircle.messaging.util.DateUtils.formatDuration(context, time).toString();
+    }
+
     public int getLevel(long delay) {
         for (int i = 0; i < levels.size(); i++) {
             if (levels.valueAt(i).longValue() == delay) {

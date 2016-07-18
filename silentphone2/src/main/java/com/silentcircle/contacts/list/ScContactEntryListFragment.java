@@ -54,7 +54,6 @@ import android.app.Fragment;
 import android.app.LoaderManager;
 import android.app.LoaderManager.LoaderCallbacks;
 import android.content.Context;
-import android.content.CursorLoader;
 import android.content.Intent;
 import android.content.Loader;
 import android.database.Cursor;
@@ -63,9 +62,9 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.os.Parcelable;
+import android.provider.ContactsContract.Directory;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -79,18 +78,14 @@ import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ListView;
 import android.widget.ProgressBar;
-import android.widget.TextView;
 
-import com.silentcircle.contacts.ContactListEmptyView;
 import com.silentcircle.contacts.ContactPhotoManagerNew;
+import com.silentcircle.contacts.calllognew.CallLogAdapter;
 import com.silentcircle.contacts.preference.ContactsPreferences;
 import com.silentcircle.contacts.widget.CompositeCursorAdapter;
-import com.silentcircle.messaging.activities.AxoRegisterActivity;
-import com.silentcircle.silentcontacts2.ScContactsContract;
-import com.silentcircle.silentcontacts2.ScContactsContract.Directory;
 import com.silentcircle.silentphone2.R;
 
-import java.util.Arrays;
+import java.lang.ref.WeakReference;
 
 /**
  * Common base class for various contact-related list fragments.
@@ -166,7 +161,7 @@ public abstract class ScContactEntryListFragment<T extends ScContactEntryListAda
     private int mDirectoryResultLimit = DEFAULT_DIRECTORY_RESULT_LIMIT;
 
     private ContactPhotoManagerNew mPhotoManager;
-    private ContactListEmptyView mEmptyView;
+//    private ContactListEmptyView mEmptyView;
     private ContactsPreferences mContactsPrefs;
 
     private boolean mForceLoad;
@@ -193,14 +188,23 @@ public abstract class ScContactEntryListFragment<T extends ScContactEntryListAda
 
     private boolean mUseScDirLoader;
 
-    private Handler mDelayedDirectorySearchHandler = new Handler() {
+    private static class DirectoryDirectorySearchHandler extends Handler {
+        private final WeakReference<ScContactEntryListFragment> mFragment;
+
+        public DirectoryDirectorySearchHandler(ScContactEntryListFragment adapter) {
+            mFragment = new WeakReference<>(adapter);
+        }
+
         @Override
         public void handleMessage(Message msg) {
+            ScContactEntryListFragment fragment = mFragment.get();
             if (msg.what == DIRECTORY_SEARCH_MESSAGE) {
-                loadDirectoryPartition(msg.arg1, (DirectoryPartition) msg.obj);
+                fragment.loadDirectoryPartition(msg.arg1, (DirectoryPartition) msg.obj);
             }
         }
-    };
+    }
+
+    private Handler mDelayedDirectorySearchHandler = new DirectoryDirectorySearchHandler(this);
 
     protected abstract View inflateView(LayoutInflater inflater, ViewGroup container);
     protected abstract T createListAdapter();
@@ -243,7 +247,7 @@ public abstract class ScContactEntryListFragment<T extends ScContactEntryListAda
         configurePhotoLoader();
     }
 
-    public Context getContext() {
+    public Context getOwnContext() {
         return mContext;
     }
 
@@ -284,9 +288,9 @@ public abstract class ScContactEntryListFragment<T extends ScContactEntryListAda
         return mListView;
     }
 
-    public ContactListEmptyView getEmptyView() {
-        return mEmptyView;
-    }
+//    public ContactListEmptyView getEmptyView() {
+//        return mEmptyView;
+//    }
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
@@ -826,8 +830,8 @@ public abstract class ScContactEntryListFragment<T extends ScContactEntryListAda
             setContactNameDisplayOrder(mContactsPrefs.getDisplayOrder());
             changed = true;
             if (this instanceof PhoneNumberPickerFragment) {
-                boolean displayAlternative = !(getContactNameDisplayOrder() == ScContactsContract.Preferences.DISPLAY_ORDER_PRIMARY);
-                ScDirectoryLoader.reDisplay(displayAlternative, this.getContext());
+                boolean displayAlternative = !(getContactNameDisplayOrder() == ContactsPreferences.DISPLAY_ORDER_PRIMARY);
+                ScDirectoryLoader.reDisplay(displayAlternative, this.getOwnContext());
             }
         }
 
@@ -835,8 +839,8 @@ public abstract class ScContactEntryListFragment<T extends ScContactEntryListAda
             setSortOrder(mContactsPrefs.getSortOrder());
             changed = true;
             if (this instanceof PhoneNumberPickerFragment) {
-                boolean sortAlternative = !(getSortOrder() == ScContactsContract.Preferences.SORT_ORDER_PRIMARY);
-                ScDirectoryLoader.reSort(sortAlternative, getContext());
+                boolean sortAlternative = !(getSortOrder() == ContactsPreferences.SORT_ORDER_PRIMARY);
+                ScDirectoryLoader.reSort(sortAlternative, getOwnContext());
             }
         }
         return changed;
@@ -871,9 +875,9 @@ public abstract class ScContactEntryListFragment<T extends ScContactEntryListAda
         View emptyView = mView.findViewById(android.R.id.empty);
         if (emptyView != null) {
             mListView.setEmptyView(emptyView);
-            if (emptyView instanceof ContactListEmptyView) {
-                mEmptyView = (ContactListEmptyView)emptyView;
-            }
+//            if (emptyView instanceof ContactListEmptyView) {
+//                mEmptyView = (ContactListEmptyView)emptyView;
+//            }
         }
         mListView.setOnItemClickListener(this);
         mListView.setOnFocusChangeListener(this);
@@ -1015,11 +1019,11 @@ public abstract class ScContactEntryListFragment<T extends ScContactEntryListAda
         }
     }
 
-    protected void setEmptyText(int resourceId) {
-        TextView empty = (TextView) getEmptyView().findViewById(R.id.emptyText);
-        empty.setText(mContext.getText(resourceId));
-        empty.setVisibility(View.VISIBLE);
-    }
+//    protected void setEmptyText(int resourceId) {
+//        TextView empty = (TextView) getEmptyView().findViewById(R.id.emptyText);
+//        empty.setText(mContext.getText(resourceId));
+//        empty.setVisibility(View.VISIBLE);
+//    }
 
     // TODO redesign into an async task or loader
     protected boolean isSyncActive() {

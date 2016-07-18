@@ -30,6 +30,7 @@ package com.silentcircle.silentphone2.dialogs;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.app.Dialog;
 import android.app.DialogFragment;
@@ -236,9 +237,7 @@ public class ZrtpMessageDialog extends DialogFragment {
 
         if (type == TiviPhoneService.CT_cb_msg.eZRTPErrA.ordinal()) {
             weType.setText(R.string.zrtp_we_error);
-            shortText.setTextColor(Build.VERSION.SDK_INT < Build.VERSION_CODES.M ?
-                    getResources().getColor(R.color.solid_red) :
-                    getResources().getColor(R.color.solid_red, null));
+            shortText.setTextColor(ContextCompat.getColor(mParent, R.color.solid_red));
         }
         else {
             String errTxt = getArguments().getString(ERROR_TEXT);

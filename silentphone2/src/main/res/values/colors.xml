@@ -9,8 +9,6 @@
  -->
 
 <resources>
-    <color name="green">#7700ff00</color>
-
     <color name="solid_red">#f00</color>
     <color name="solid_gray_light">#cccccc</color>
 
@@ -32,10 +30,6 @@
     <!-- Basic colors for light designs
      -->
     <color name="button_stroke_color_dark_gray">#99333333</color>
-    <!-- Primary color of dialpad text, including the call button -->
-    <color name="dialpad_primary_text_color_light">#ff333333</color>
-    <!-- Secondary color of dialpad text (used for the letters corresponding to each digit -->
-    <color name="dialpad_secondary_text_color_light">#ff444444</color>
 
     <!-- Basic colors for dark designs
      -->
@@ -45,10 +39,8 @@
 
 
     <!-- Colors for Dusk theme -->
-    <color name="dusk_background">#ff282b35</color>
     <color name="dusk_light_gray">#e5aaaaaa</color>
     <color name="dusk_dark_gray">#e53f3f3f</color>
-    <color name="dusk_orange">#ffff8000</color>
 
     <!-- Colors for Black theme - adopted from BP color palette -->
     <color name="black_background">#ff212121</color>  <!-- BP black -->
@@ -65,11 +57,8 @@
     <color name="black_dark_gray_transparent">#1b545454</color>   <!-- BP Charcoal -->
 
     <!-- Colors for Q design -->
-    <color name="q_white">#fffdfc</color>
     <color name="q_black">#272727</color>
-    <color name="q_red">#cc0000</color>
     <color name="q_orange">#ff9900</color>
-    <color name="q_gray">#c8c8c8</color>
 
 
     <!-- ************* Colors for SCA part ******************* -->
@@ -86,63 +75,21 @@
     <color name="primary_text_color">@android:color/black</color>
     <color name="secondary_text_color">#888888</color>
 
-    <color name="background_social_updates">#ffeeeeee</color>
-
     <!-- Color of image view placeholder. -->
     <color name="image_placeholder">#DDDDDD</color>
-
-    <!--  Color of the vertical stripe that goes on the left of a block quote inside a stream item -->
-    <color name="stream_item_stripe_color">#CCCCCC</color>
-
-    <!-- Color of the text in the updates tab in the tab carousel on the contact detail page -->
-    <color name="detail_update_tab_text_color">#777777</color>
-
-    <!-- Color of the text of the tab carousel in the contact details  -->
-    <color name="detail_tab_carousel_tab_label_color">#EEEEEE</color>
-
-    <!-- Color of the text for buttons in the action bar  -->
-    <color name="action_bar_button_text_color">#FFFFFF</color>
-
-    <drawable name="blue">#770000ff</drawable>
-
-    <!-- Transparent drawable -->
-    <drawable name="transparent_draw">#00000000</drawable>
 
     <color name="textColorIconOverlay">#fff</color>
     <color name="textColorIconOverlayShadow">#000</color>
 
     <color name="shortcut_overlay_text_background">#7f000000</color>
 
-    <!--  Color of the semi-transparent shadow box on contact tiles -->
-    <color name="contact_tile_shadow_box_color">#7F000000</color>
-
-    <!--  Color of the status message for starred contacts in the People app -->
-    <color name="people_contact_tile_status_color">#CCCCCC</color>
-
-    <!-- The same value as silent_black in SilentPhone -->
-    <color name="quickcontact_list_background">#ff111111</color>
     <color name="quickcontact_tab_indicator">#ff33b5e6</color>
-
-    <!-- Color of the background of the contact detail and editor pages
-     Adjust this to the main theme background: attributable?-->
-    <color name="background_primary">#ff282b35</color>
-    <color name="contact_all_list_background_color">@color/black_dark_gray</color>
 
 
     <!-- From Android Phone Common -->
     <!-- Colors for the dialpad -->
     <color name="dialer_theme_color">#0288d1</color>
-    <color name="dialer_theme_color_dark">@color/black_dark_gray</color>
-    <color name="background_dialpad">#fcfcfc</color>
-    <color name="background_dialpad_pressed">#ececec</color>
-    <color name="dialpad_primary_text_color">@color/dialer_theme_color</color>
-    <color name="dialpad_secondary_text_color">#737373</color>
-    <color name="dialpad_digits_text_color">#333</color>
-    <color name="dialpad_separator_line_color">#dadada</color>
-    <color name="dialpad_icon_tint">#b3b3b3</color>
-    <color name="dialpad_voicemail_tint">#919191</color>
-    <!-- until here -->
-    
+
     <color name="incall_call_banner_subtext_color">#ccffffff</color>
     <color name="incall_call_banner_text_color">#ffffff</color>
     <color name="incall_accent_color">@color/sc_ng_text_grey_1</color>
@@ -159,12 +106,7 @@
     <color name="glowpad_incoming_widget_background_tint">#ffffff</color>
     <color name="floating_action_button_touch_tint">#80ffffff</color>
 
-    <color name="actionbar_background_color">#0fc6dc</color>
-
     <color name="recent_call_log_item_phone_icon_tint">#000000</color>
-    <!-- Color of actions in expanded call log entries.  This text color represents actions such
-         as call back, play voicemail, etc. -->
-    <color name="call_log_action_text">@color/dialer_theme_color</color>
     <color name="call_log_extras_text_color">#0277bd</color>
     <!-- Color of the 1dp divider that separates favorites -->
     <color name="favorite_contacts_separator_color">#d0d0d0</color>
@@ -226,15 +168,8 @@
 
     <color name="letter_tile_font_color">#ffffff</color>
 
-    <!-- White background for dialer -->
-    <color name="background_dialer_white">#ffffff</color>
-    <!-- Background color of new dialer activity -->
-    <color name="background_dialer_light">#fafafa</color>
-    <!-- Background color for search results and call details -->
-    <color name="background_dialer_results">@color/black_dark_gray</color>
     <!-- Background color of dialer list items (contacts, call log entries) -->
     <color name="background_dialer_list_items">@color/sc_ng_background</color>
-    <color name="background_dialer_details_list_items">@color/black_light_gray</color>
 
     <color name="call_log_expanded_background_color">@color/black_light_gray</color>
 
@@ -242,28 +177,11 @@
 
     <color name="remove_text_color">#ffffff</color>
 
-    <!-- Text color of the search box text as entered by user  -->
-    <color name="searchbox_text_color">#000000</color>
-    <!-- Background color of the search box -->
-    <color name="searchbox_background_color">#ffffff</color>
 
     <color name="searchbox_hint_text_color">#737373</color>
-    <color name="searchbox_icon_tint">@color/searchbox_hint_text_color</color>
 
     <color name="search_shortcut_background_color">#b6b6b6</color>
     <color name="search_shortcut_icon_color">#f8f8f8</color>
-
-    <!-- Color of the contact name in favorite tiles -->
-    <color name="contact_tile_name_color">#ffffff</color>
-
-    <!-- Undo dialogue color -->
-    <color name="undo_dialogue_text_color">#4d4d4d</color>
-
-    <!-- Sound recorder dialog background color -->
-    <color name="sound_recorder_background_color">#424242</color>
-
-    <!-- Text color for the "Remove" text when a contact is dragged on top of the remove view -->
-    <color name="remove_highlighted_text_color">#FF3F3B</color>
 
     <color name="contact_list_name_text_color">@android:color/primary_text_dark</color>
 
@@ -273,21 +191,6 @@
     <!-- Color for icons in the actionbar -->
     <color name="actionbar_icon_color">#ffffff</color>
 
-    <color name="quickcontact_name_detail_background">#66000000</color>
-    <color name="quickcontact_entry_sub_header_text_color">#737373</color>
-    <color name="quickcontact_entry_header_text_color">#202020</color>
-
-    <!-- Color of the separator between entries in an ExpandingEntryCardView -->
-    <color name="expanding_entry_card_item_separator_color">#e4e4e4</color>
-
-    <!-- Color of the text on an ExpandingEntryCard button -->
-    <color name="expanding_entry_card_button_text_color">@android:color/black</color>
-
-    <!-- Background color for an ExpandingEntryCard -->
-    <color name="expanding_entry_card_background_color">#ffffff</color>
-
-    <!-- Color of the margin for cards -->
-    <color name="card_margin_color">#f4f4f4</color>
 
     <color name="dialer_green_highlight_color">@color/sc_ng_text_green</color>
 
@@ -351,6 +254,8 @@
     <color name="chat_compose_text">@color/sc_ng_text_dark</color>
     <color name="chat_compose_hint">#ada9a3</color>
 
+    <color name="chat_attachment_grid_color">#43454b</color>
+
     <color name="chat_options_drawer_background">@color/sc_ng_background_2</color>
     <color name="chat_options_text_color">@color/sc_ng_text_grey</color>
     <color name="chat_options_description_text_color">@color/sc_ng_background_3</color>
@@ -358,17 +263,20 @@
     <color name="chat_error_message_text_color">@color/sc_ng_text_grey</color>
     <color name="chat_outgoing_message_text_color">#ede9e3</color>
     <color name="chat_outgoing_message_disabled_text_color">#cdcac6</color>
+    <color name="chat_outgoing_message_disabled_text_color_light">#adaaa6</color>
 
     <color name="chat_outgoing_message_disabled_color">#bb454545</color>
     <color name="chat_outgoing_message_color">#5d5f66</color>
     <color name="chat_outgoing_message_pressed_color">#7c2525</color>
     <color name="chat_outgoing_message_checked_color">#7f0e0e</color>
+    <color name="chat_outgoing_message_color_light">#eee9de</color>
 
     <color name="chat_incoming_message_disabled_color">#bb454545</color>
     <color name="chat_incoming_message_color">#f6f3eb</color>
     <color name="chat_incoming_message_received_color">#c4c2bc</color>
     <color name="chat_incoming_message_pressed_color">#7c2525</color>
     <color name="chat_incoming_message_checked_color">#7f0e0e</color>
+    <color name="chat_incoming_message_color_light">#bfbfbf</color>
 
     <color name="chat_incoming_message_text_received_color">#8a4947</color>
 
@@ -378,6 +286,9 @@
     <!-- colour for unread message count indicator -->
     <color name="chat_message_notification_color">@color/sc_ng_text_red</color>
 
+    <color name="chat_background_color_light">#fefdf9</color>
+    <color name="chat_background_color_dark">#fefdf9</color>
+
     <array name="message_lights">
         <item>#FF0000</item>
         <item>#0000FF</item>
@@ -385,6 +296,5 @@
         <item>#00FF00</item>
         <item>#FF00FF</item>
     </array>
-
 
 </resources>

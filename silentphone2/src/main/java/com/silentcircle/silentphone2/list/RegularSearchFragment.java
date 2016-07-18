@@ -57,7 +57,7 @@ public class RegularSearchFragment extends SearchFragment {
         if (mCachedNumberLookupService != null) {
             final RegularSearchListAdapter adapter =
                 (RegularSearchListAdapter) getAdapter();
-            mCachedNumberLookupService.addContact(getContext(),
+            mCachedNumberLookupService.addContact(getOwnContext(),
                     adapter.getContactInfo(mCachedNumberLookupService, position));
         }
     }

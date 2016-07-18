@@ -26,7 +26,6 @@
     <string name="sip_error_no_user">ユーザが見つかりませんr</string>
     <string name="sip_error_no_cover">無線受信可能エリア外</string>
     <string name="sip_error_no_server">サーバに到達できませんでした</string>
-    <string name="call_type_audio">着信コール</string>
     <string name="call_error">エラー</string>
     <string name="secstate_secure">セキュアです</string>
     <string name="secstate_not_secure">セキュアではありません</string>
@@ -77,25 +76,23 @@
     <string name="pwstrength_good">パスワードの強さ：良い</string>
     <string name="pwstrength_strong">パスワードの強さ：強い</string>
     <string name="provisioning_show_pw">パスワードを表示する</string>
+
     <string name="provisioning_privacy_tc">私は<a href="https://accounts.silentcircle.com/terms/">Silent Circle</a>のプライバシーポリシーと利用規約を読み同意しました。</string>
     <string name="provisioning_get_news">私はサービスから独占ニュースや招待状の受け取りを希望します</string>
     <string name="provisioning_new_account">新規アカウントの作成</string>
     <string name="provisioning_existing_account">既存のアカウントにログインします</string>
     <string name="provisioning_create">作成</string>
-    <string name="provisioning_credentials">ユーザ名またはパスワードが間違っています。チェックしてください。</string>
     <string name="thanks_number">番号： </string>
     <string name="thanks_name">名前： </string>
     <string name="preferred_sas_type">好適なSASタイプ</string>
     <string name="sas_char_mode">SASは4文字で表示</string>
     <string name="sas_word_mode">SASはふたつの言葉で表示</string>
     <string name="sp_ringtone">着メロ</string>
-    
     <string name="no_ringtone">着メロなし</string>
     <string name="preferred_algorithms">非NISTパッケージソフトが好適です</string>
     <string name="nist_preferred">可能なら常に非NISTアルゴリズムが好適です：Twofish、Skein、およびBernstein curves。</string>
     <string name="description_dial_button">ダイヤル</string>
     <string name="description_delete_button">バックスペース</string>
-    <string name="contacts_image_button">コンタクトを開く</string>
     <string name="zrtp_common_cmp">あなたが呼び出そうとしている人と認証コードを口頭で比較する必要があります。一致しない場合、誰かが電話を盗聴している可能性があることを示しています。</string>
     <string name="zrtp_common_cls">接続エラー。閉じてもう一度呼び出してください。</string>
     <string name="zrtp_common_upd">あなたが通話中の人はSilent Phoneのアプリを最新バージョンに更新する必要があります</string>
@@ -109,17 +106,11 @@
     <string name="provisioning_stepInfo_3">ステップ3</string>
     <string name="provisioning_vertu_email_info">アカウントに関する重要なアップデートや特典のお知らせをお送りするには別のEメールアドレスが必要です。</string>
     <string name="provisioning_vertu_welcome_long">Vertu CustomerとしてSilent Circleの暗号化された通信サービスを１２ヶ月間無料でお楽しみください。</string>
-
-    
     <string name="video_audio_mute">ミュートオーディオを切り換える</string>
-    <string name="video_switch_camera">カメラを切り換える</string>
-
-    
     <string name="provisioning_infoText">アカウント作成</string>
     <string name="provisioning_bp_email_info">Eメールアドレスはアカウントに関する重要な更新情報を受信するために必要です。</string>
     <string name="mute_button">ミュート</string>
     <string name="video_button">ビデオ</string>
-    <string name="video_control">ビデオコントロール</string>
     <string name="add_call">呼出しを追加</string>
     <string name="audio_options_button">オーディオ 選択</string>
     <string name="verify_label">タッチして認証してください</string>
@@ -138,61 +129,38 @@
     <string name="account_creation_wrong_format">アカウント作成 - サーバが間違ったデータ形式を送信しました: </string>
     <string name="account_creation_no_data">アカウント作成 - サーバが間違ったデータを返しました。</string>
     <string name="other_settings">その他の設定</string>
-    <string name="select_theme">テーマを選択</string>
-    <string name="current_theme">現在のテーマ: %s</string>
-    <string name="theme_orange">Orange</string>
-    <string name="theme_white">White</string>
-    <string name="theme_dusk">Dusk</string>
     <string name="theme_black">Black</string>
-
-    
-
     <string name="bp_is_online">Silent Phoneオンライン</string>
     <string name="bp_is_offline">Silent Phone現在オフライン</string>
     <string name="bp_not_started">Silent Phoneが開始しません</string>
     <string name="bp_registering">Silent Phone登録</string>
     <string name="bp_status_unknown">未確認状態</string>
-
-    
-
     <string name="audio_bt">BlueToothヘッドセット</string>
     <string name="audio_speaker">スピーカー</string>
     <string name="audio_ear_phone">イヤホン</string>
     <string name="end_call_button">呼出し終了</string>
-
     <string name="call_quality">質</string>
     <string name="call_quality_bad">悪い</string>
     <string name="call_quality_weak">弱い</string>
     <string name="call_quality_acceptable">受諾可能</string>
     <string name="call_quality_good">良い</string>
     <string name="call_quality_very_good">とても良い</string>
-
     <string name="in_call_drawer_zrtp_confirmed">はい、認証されました</string>
     <string name="in_call_drawer_zrtp_not_confirmed">はい、認証されません</string>
     <string name="in_call_drawer_sdes_active">有効</string>
-
     <string name="navigation_drawer_open">ナビゲーションの引き出しを開ける</string>
     <string name="navigation_drawer_close">ナビゲーションの引き出しを締める</string>
-
     <string name="valid_until">有効期限</string>
     <string name="subscription_expired">Silent Circleのサブスクリプションが期限切れです</string>
-
     <string name="sip_error_not_online">ユーザーはオンラインではありません</string>
-
     <string name="license_code_invalid">このライセンスコードは有効ではありません。あなたのBlackphoneとSilent Circleの有効化が困難な場合は、support@blackphone.chのカスタマーサポートまでご連絡ください。</string>
     <string name="license_code_duplicate">このライセンスコードはすでに有効化されているようです。お使いの電話機をリセットする場合、Silent Circleに通常どおりログインしてください。Blackphone とSilent Circleの有効化が困難な場合は、support@blackphone.chまでご連絡ください。 </string>
-
-
-    
-
     <string name="recentCalls_addToContact">"連絡先に追加"</string>
     <string name="recentCalls_empty">"通話履歴なし"</string>
     <string name="recentCalls_deleteAll">"通話履歴を全件消去"</string>
     <string name="recentCalls_editNumberBeforeCall">"発信前に番号を編集"</string>
     <string name="recentCalls_removeFromRecentList">"通話履歴から消去"</string>
-    
     <string name="recentCalls_removeSameFromRecentList">関連するエントリを除去する</string>
-
     <string name="type_incoming">"通話着信"</string>
     <string name="type_outgoing">"発信履歴"</string>
     <string name="type_missed">"不在着信"</string>
@@ -207,7 +175,6 @@
     <string name="clearCallLogConfirmation_title">"通話履歴を消しますか？"</string>
     <string name="clearCallLogConfirmation">"すべての通話記録は削除されます。"</string>
     <string name="phoneTypeSilent">Silent Phone</string>
-
     <string name="contactsList">"連絡先"</string>
     <string name="local_invisible_directory">"その他"</string>
     <string name="local_search_label">"すべての連絡先"</string>
@@ -216,48 +183,20 @@
     <string name="search_results_searching">"検索しています…"</string>
     <string name="foundTooManyContacts">"%d件以上見つかりました。"</string>
     <string name="listFoundAllContactsZero">"連絡先はありません"</string>
+
     <plurals name="searchFoundContacts">
-        <item quantity="one">"1件見つかりました"</item>
-        <item quantity="other">"%d件見つかりました"</item>
+        <item quantity="one">"1&#20214;&#35211;&#12388;&#12363;&#12426;&#12414;&#12375;&#12383;"</item>
+        <item quantity="other">"%d&#20214;&#35211;&#12388;&#12363;&#12426;&#12414;&#12375;&#12383;"</item>
     </plurals>
-    <string name="no_contact_details">"この連絡先の詳細情報はありません。"</string>
-    <string name="noContactsWithPhoneNumbers">"電話番号付きの連絡先はありません。"</string>
-    <string name="noFavoritesHelpText">"お気に入りはありません。"\n\n"お気に入りのリストに連絡先を追加するには: "\n\n<li>"["<b>"連絡先"</b>"]タブをタップします"\n</li>" "\n<li>"お気に入りに追加する連絡先をタップします"\n</li>" "\n<li>"連絡先名の横にあるスターをタップします"\n</li></string>
-    <string name="noMatchingContacts">"一致する連絡先が見つかりません。"</string>
-    <string name="no_contacts_selected">"連絡先が選択されていません。"</string>
-    <string name="noContactsHelpTextWithSyncForCreateShortcut">"表示する連絡先がありません（アカウントを追加した直後の場合は、連絡先の同期に数分かかることがあります）。"</string>
-    <string name="noContactsHelpTextWithSync">"表示できる連絡先がありません（アカウントを追加した直後の場合は、連絡先が同期されるまでに数分かかることがあります）。"\n\n"連絡先を追加するには、"<font fgcolor="#ffffffff"><b>"MENU"</b></font>"キーをタップして次の操作を行います:"\n\n<li>"携帯端末と同期可能な連絡先を使ってアカウントを追加またはセットアップする場合は["<font fgcolor="#ffffffff"><b>"アカウント"</b></font>"]をタップします"\n</li>\n<li>"連絡先の表示方法を変更するには["<font fgcolor="#ffffffff"><b>"表示オプション"</b></font>"]をタップします"\n</li>\n<li>"新しい連絡先を最初から作成する場合は["<font fgcolor="#ffffffff"><b>"連絡先を新規登録"</b></font>"]をタップします"\n</li>\n<li>"SIMカードまたはSDカードから連絡先をインポートする場合は["<font fgcolor="#ffffffff"><b>"インポート/エクスポート"</b></font>"]をタップします"\n</li></string>
-    <string name="noContactsNoSimHelpTextWithSync">"表示できる連絡先がありません（アカウントを追加した直後の場合は、連絡先が同期されるまでに数分かかることがあります）。"\n\n"連絡先を追加するには、"<font fgcolor="#ffffffff"><b>"MENU"</b></font>"キーをタップして次の操作を行います:"\n\n<li>"携帯端末と同期可能な連絡先を使ってアカウントを追加またはセットアップする場合は["<font fgcolor="#ffffffff"><b>"アカウント"</b></font>"]をタップします"\n</li>\n<li>"連絡先の表示方法を変更するには["<font fgcolor="#ffffffff"><b>"表示オプション"</b></font>"]をタップします"\n</li>\n<li>"新しい連絡先を最初から作成する場合は["<font fgcolor="#ffffffff"><b>"連絡先を新規登録"</b></font>"]をタップします"\n</li>\n<li>"SDカードから連絡先をインポートする場合は["<font fgcolor="#ffffffff"><b>"インポート/エクスポート"</b></font>"]をタップします"\n</li></string>
-
-    <string name="noContactsHelpTextForCreateShortcut">"表示する連絡先がありません。"</string>
-
-    <string name="noContactsHelpText">"表示できる連絡先がありません。"\n\n"連絡先を追加するには、"<font fgcolor="#ffffffff"><b>"MENU"</b></font>"キーをタップして次の操作を行います:"\n\n<li>"携帯端末と同期可能な連絡先を使ってアカウントを追加またはセットアップする場合は["<font fgcolor="#ffffffff"><b>"アカウント"</b></font>"]をタップします"\n</li>\n<li>"新しい連絡先を最初から作成する場合は["<font fgcolor="#ffffffff"><b>"連絡先を新規登録"</b></font>"]をタップします"\n</li>\n<li>"SIMカードまたはSDカードから連絡先をインポートする場合は["<font fgcolor="#ffffffff"><b>"インポート/エクスポート"</b></font>"]をタップします"\n</li></string>
-
-    <string name="noContactsNoSimHelpText">"表示できる連絡先がありません。"\n\n"連絡先を追加するには、"<font fgcolor="#ffffffff"><b>"MENU"</b></font>"キーをタップして次の操作を行います:"\n\n<li>"携帯端末と同期可能な連絡先を使ってアカウントを追加またはセットアップする場合は["<font fgcolor="#ffffffff"><b>"アカウント"</b></font>"]をタップします"\n</li>\n<li>"新しい連絡先を最初から作成する場合は["<font fgcolor="#ffffffff"><b>"連絡先を新規登録"</b></font>"]をタップします"\n</li>\n<li>"SDカードから連絡先をインポートする場合は["<font fgcolor="#ffffffff"><b>"インポート/エクスポート"</b></font>"]をタップします"\n</li></string>
 
     <string name="missing_name">"（名前なし）"</string>
     <string name="menu_done">"完了"</string>
     <string name="menu_doNotSave">"キャンセル"</string>
-    <string name="profile_display_name">"プロフィールを設定"</string>
     <string name="menu_search">"検索"</string>
-    <string name="menu_new_contact_action_bar">"新規"</string>
-    <string name="menu_new_group_action_bar">"新規"</string>
-    <string name="menu_clear_frequents">"よく使う連絡先のクリア"</string>
-    <string name="menu_import_export">"インポート/エクスポート"</string>
-    
-    <string name="menu_remove_vcard_files">vCardを除去する</string>
-
-    <string name="menu_export_database">"データベースファイルをエクスポート"</string>
-    <string name="menu_settings">"設定"</string>
-    <string name="menu_help">"ヘルプ"</string>
-    
-    <string name="menu_about">について</string>
-
     <string name="call_custom">"%sに発信"</string>
     <string name="call_home">"自宅に発信"</string>
     <string name="call_mobile">"携帯電話に発信"</string>
     <string name="call_work">"勤務先に発信"</string>
-    
     <string name="call_fax_work">"勤務先FAXに発信"</string>
     <string name="call_fax_home">"自宅のFAXに発信"</string>
     <string name="call_pager">"ポケベルに発信"</string>
@@ -277,76 +216,9 @@
     <string name="call_mms">"MMSに発信"</string>
     <string name="chat">"チャット"</string>
     <string name="toast_text_copied">"テキストをコピーしました"</string>
-    <string name="contacts_unavailable_create_contact">"新しい連絡先を作成"</string>
-    <string name="contacts_unavailable_import_contacts">"連絡先をインポート"</string>
-    <string name="upgrade_out_of_memory_uninstall">"一部のアプリケーションをアンインストール"</string>
-    <string name="upgrade_out_of_memory_retry">"アップグレードを再試行"</string>
-    <string name="menu_create_contact_shortcut">"ホーム画面に配置"</string>
-    <string name="menu_share">"共有"</string>
-    <string name="menu_discard">"キャンセル"</string>
-    <string name="pickerNewContactText">"新しい連絡先を作成"</string>
     <string name="list_filter_phones">"電話番号のあるすべての連絡先"</string>
-    <string name="display_options_sort_list_by">"並び替え順"</string>
-    <string name="display_options_view_names_as">"名前の表示形式"</string>
     <string name="display_options_view_given_name_first">"名が先"</string>
     <string name="display_options_view_family_name_first">"姓が先"</string>
-    <string name="display_options_sort_by_given_name">"名"</string>
-    <string name="display_options_sort_by_family_name">"姓"</string>
-    <string name="no_sdcard_message">"ストレージはありませんでした。"</string>
-    <string name="import_from_sdcard">"ストレージからインポート"</string>
-    <string name="import_one_vcard_string">"vCardファイルを1つインポート"</string>
-    <string name="import_multiple_vcard_string">"複数のvCardファイルをインポート"</string>
-    <string name="import_all_vcard_string">"すべてのvCardファイルをインポート"</string>
-    <string name="searching_vcard_message">"ストレージ内でvCardデータを検索しています…"</string>
-    <string name="scanning_sdcard_failed_message">"ストレージをスキャンできませんでした（理由: 「%s」）。"</string>
-    <string name="fail_reason_io_error">"送受信エラー"</string>
-    <string name="fail_reason_low_memory_during_import">"メモリが不足しています。ファイルが大きすぎる可能性があります。"</string>
-    <string name="fail_reason_not_supported">"このフォーマットには対応していません。"</string>
-    <string name="vcard_import_failed">"vCardをインポートできませんでした。"</string>
-    <string name="import_failure_no_vcard_file">"ストレージ内にvCardファイルが見つかりません。"</string>
-    <string name="fail_reason_unknown">"不明なエラーです。"</string>
-    <string name="select_vcard_title">"vCardファイルを選択"</string>
-
-    
-    <string name="select_vcard_title_remove">vCardファイルを除去する</string>
-
-    <string name="caching_vcard_title">"キャッシュしています"</string>
-    <string name="caching_vcard_message">"vCardをローカル一時ストレージにキャッシュしています。まもなくインポート処理を開始します。"</string>
-    <string name="progress_notifier_message">"%1$s/%2$s件（%3$s）をインポート中"</string>
-    <string name="importing_vcard_description">"%sをインポート中"</string>
-    <string name="reading_vcard_failed_title">"vCardデータを読み取れませんでした"</string>
-    <string name="importing_vcard_finished_title">"vCard%sのインポートが終了しました"</string>
-    <string name="importing_vcard_canceled_title">"%sのインポートをキャンセルしました"</string>
-    <string name="vcard_import_will_start_message">"%sはまもなくインポートされます。"</string>
-    <string name="vcard_import_will_start_message_with_default_name">"ファイルはまもなくインポートされます。"</string>
-    <string name="vcard_import_request_rejected_message">"vCardのインポートリクエストは拒否されました。しばらくしてからもう一度お試しください。"</string>
-    <string name="vcard_export_will_start_message">"%sはまもなくエクスポートされます。"</string>
-    <string name="vcard_export_request_rejected_message">"vCardのエクスポートリクエストは拒否されました。しばらくしてからもう一度お試しください。"</string>
-    <string name="vcard_unknown_filename">"連絡先"</string>
-    <string name="percentage">"%s%%"</string>
-    <string name="confirm_export_title">"エクスポートしますか？"</string>
-    <string name="confirm_export_message">"連絡先リストをファイル「%s」にエクスポートします。"</string>
-    <string name="exporting_contact_failed_title">"エクスポート失敗"</string>
-    <string name="exporting_contact_failed_message">"連絡先データはエクスポートされませんでした。"\n"理由: 「%s」"</string>
-    <string name="fail_reason_no_exportable_contact">"エクスポートできる連絡先がありません。"</string>
-    <string name="fail_reason_too_many_vcard">"ストレージ内のvCardファイルが多すぎます。"</string>
-    <string name="fail_reason_too_long_filename">"ファイル名（必須）が長すぎます（「%s」）。"</string>
-    <string name="exporting_vcard_finished_title">"%sのエクスポートが完了しました。"</string>
-    <string name="exporting_vcard_canceled_title">"%sのエクスポートをキャンセルしました。"</string>
-    <string name="exporting_contact_list_title">"連絡先データのエクスポート"</string>
-    <string name="exporting_contact_list_message">"連絡先データを%sにエクスポートします。"</string>
-    <string name="fail_reason_could_not_initialize_exporter">"エクスポータを起動できませんでした: 「%s」。"</string>
-    <string name="fail_reason_error_occurred_during_export">"エクスポート中にエラーが発生しました: 「%s」。"</string>
-    <string name="composer_failed_to_get_database_infomation">"データベース情報を取得できませんでした。"</string>
-    <string name="composer_has_no_exportable_contact">"エクスポートできる連絡先がありません。タブレットに連絡先がある場合でも、データプロバイダによってはタブレットから連絡先をエクスポートできないことがあります。"</string>
-    <string name="composer_not_initialized">"vCardコンポーザーが正しく起動しませんでした。"</string>
-    <string name="fail_reason_could_not_open_file">"「%1$s」を開けませんでした: %2$s。"</string>
-    <string name="cancel_import_confirmation_message">"%sのインポートをキャンセルしますか？"</string>
-    <string name="cancel_export_confirmation_message">"%sのエクスポートをキャンセルしますか？"</string>
-    <string name="nfc_vcard_file_name">"NFC受信の連絡先"</string>
-    <string name="cancel_vcard_import_or_export_failed">"vCardインポート/エクスポート取り消し不可"</string>
-    <string name="description_view_contact_detail">"連絡先を表示"</string>
-    <string name="preference_displayOptions">"表示オプション"</string>
     <string name="description_quick_contact_for">"%1$sさんのクイックコンタクト"</string>
     <string name="cannot_load_store">キーストアを読み込めません。</string>
     <string name="password_hint">パスワードを入力してください</string>
@@ -355,40 +227,34 @@
     <string name="password_hint2">パスワードを入力してください（認証する）</string>
     <string name="cannot_change_password">パスワードを変更できませんでした。既存のパスワードを使用してください。</string>
     <string name="old_password_wrong">古いパスワードが間違っています。キーストアをロックします。</string>
-
     <string name="no_password">パスワードがありません。</string>
-
     <string name="information_dialog">情報</string>
     <string name="show_pw">パスワードを表示する</string>
     <string name="password_match">パスワードが一致しません。チェックしてください。</string>
-
-    <string name="video_control_explanation">画面をタップするとビデオコントロールボタンが切り替わります。
+<string name="video_control_explanation">画面をタップするとビデオコントロールボタンが切り替わります。
         \n\nT小さなプレビューウィンドウをタッチして移動させてください。 </string>
     <string name="start_on_boot">ブートでSilent Phoneを開始します</string>
     <string name="start_on_boot_explanation">デバイスの起動手順の間にSilent Phoneを起動します。</string>
-    
     <string name="sp_dial_helper_title">ダイヤルアシスト</string>
-  <string name="sp_dial_helper_select_explanation">ダイヤルを簡単にするために、ダイヤルアシストをオンにして
+<string name="sp_dial_helper_select_explanation">ダイヤルを簡単にするために、ダイヤルアシストをオンにして
         国を選択します。番号は自動的にあなたの国コードでフォーマットされます。それ以外の場合は「+」と国コードを
         ダイヤルしてください。</string>
-  <string name="sp_dial_helper_select_explanation_1">他のSilent Circle加入者を呼び出すには
+<string name="sp_dial_helper_select_explanation_1">他のSilent Circle加入者を呼び出すには
 Silent Circle加入者名をダイヤルします。</string>
     <string name="sp_dial_helper_select">国を選択してください</string>
     <string name="sp_dial_helper_none">ダイヤルアシストがありません</string>
     <string name="sp_dial_helper_simple">シンプルダイヤルアシスト</string>
-    
     <string name="sp_dial_helper_null_explanation">ダイヤルアシストが無効です。</string>
     <string name="sp_dial_helper_simple_explanation">国際電話番号にするには「＋」を追加してください。</string>
     <string name="sp_dial_helper_nanp_explanation">「+」または「+1」を追加するか、最初の「011」を「+」サインに置き換えます。</string>
     <string name="sp_dial_helper_00_0_explanation">最初の「%1$s」を 国番号 %2$s に置き換え、 最初の 「%3$s」を「+」サインに置き換えます。</string>
     <string name="sp_dial_helper_00_x_explanation">ダイヤルした番号に「%2$s」を追加し、最初の「%3$s」を「+」サインに置き換えます。</string>
-    
-  <string name="key_store_set_pw_explanation">キーストアの保護を強化するために独自のパスワードを入力します。 \nSilent Phoneを起動するたびに
+<string name="key_store_set_pw_explanation">キーストアの保護を強化するために独自のパスワードを入力します。 \nSilent Phoneを起動するたびに
         独自のパスワードを入力する必要があります。いつでも保護をデフォルトにリセットできます。</string>
     <string name="key_store_change_pw_explanation">キーストアのパスワードを変更します。</string>
     <string name="key_store_reset_pw_explanation">あなたがパスワードを入力した後、クライアントはキーストアの保護をデフォルトにリセットします。 </string>
     <string name="key_store_enter_pw_explanation">キーストアのパスワードを入力してください。</string>
-  <string name="key_store_set_pin_explanation">キーストアの保護を強化するために独自のPINを入力します。 \nSilent Phoneを起動するたびに
+<string name="key_store_set_pin_explanation">キーストアの保護を強化するために独自のPINを入力します。 \nSilent Phoneを起動するたびに
         独自のPINを入力します。いつでも保護をデフォルトにリセットすることができます。</string>
     <string name="key_store_change_pin_explanation">キーストアのPINを変更します。</string>
     <string name="key_store_reset_pin_explanation">あなたがPINを入力した後、クライアントはキーストアの保護をデフォルトにリセットします。 </string>
@@ -411,12 +277,6 @@ Silent Circle加入者名をダイヤルします。</string>
     <string name="key_store_reset_default">保護をデフォルトにリセットします</string>
     <string name="re_provision">Silent Phone再プロビジョニング</string>
     <string name="re_provision_explanation">Silent Phone コンフィギレーションデータをリロードします</string>
-    
-    
-  <string name="migrate_start">Silent Contactデータの移行を開始します。</string>
-    <string name="migrate_export">既存のSilent Contactsをエクスポートします。</string>
-    <string name="migrate_done">移行完了。</string>
-    <string name="migrate_not_ready">埋め込みコンタクトプロバイダーの準備ができていません。 </string>
     <string name="did_title">選択できる電話番号</string>
     <string name="did_region_area_explanation">地域とエリアから電話番号を選択する</string>
     <string name="did_currently_selected">現在の選択　</string>
@@ -431,124 +291,72 @@ Silent Circle加入者名をダイヤルします。</string>
     <string name="did_no_number">現在利用可能な電話番号がありません。べつの地域かエリアを選択してください。</string>
     <string name="did_ask_to_complete">電話番号の選択を完了してください。 </string>
     <string name="no_internet">インターネットの接続がありません</string>
-    <string name="mobile_internet_blocked">モバイルインターネットがブロックされています </string>
     <string name="mobile_internet_available">モバイルインターネットが利用可能です</string>
     <string name="directory_use_sc">Silent Circle ディレクトリ</string>
     <string name="directory_own_org_only">自分の組織</string>
     <string name="sign_in">サインイン</string>
+
     <string name="sc_privacy_link"><a href="https://silentcircle.com/privacy/">プライバシー保護方針</a></string>
+
     <string name="sc_tos_link"><a href="https://accounts.silentcircle.com/terms/">利用規約</a></string>
+
     <plurals name="number_missed_calls">
-        <item quantity="other">%d 不在着信</item>
+        <item quantity="other">%d &#19981;&#22312;&#30528;&#20449;</item>
     </plurals>
+
     <string name="no_video_available">この呼び出しにビデオは使用できません。</string>
     <string name="call_in_progress">呼び出し中</string>
     <string name="server_cert_failure">証明書の確認が失敗しました - 再試行してください</string>
     <string name="remaining_oca_minutes">OCAの残りの分数</string>
     <string name="remaining_oca_minutes_fail">利用可能なOCA情報がありません</string>
     <string name="remaining_oca_minutes_zero">使用された通話分数がありません。 使用可能な分数は %1$d です。</string>
+
     <plurals name="remaining_oca_minutes_info">
-        <item quantity="other">%2$d分中 %1$d 分を使用しました。</item>
+        <item quantity="other">%2$d&#20998;&#20013; %1$d &#20998;&#12434;&#20351;&#29992;&#12375;&#12414;&#12375;&#12383;&#12290;</item>
     </plurals>
-    
-    <string name="tab_speed_dial">クイックアクセス</string>
+
 
     <string name="tab_recents">最近</string>
-
     <string name="tab_all_contacts">連絡先</string>
-
-    
     <string name="call_log_action_call_back">コールバック</string>
-
-    
     <string name="call_log_action_details">詳細</string>
-
-    
     <string name="call_log_action_report">レポート</string>
-
-    
     <string name="description_dismiss">閉じる</string>
-
-    
     <string name="activity_not_available">"選択した操作を処理できるアクティビティがインストールされていません。</string>
 
-    Note: AccessibilityServices use this attribute to announce what the view represents.
-    This is especially valuable for views without textual representation like ImageView.
-    --&gt;
-    <string name="description_num_calls">通話回数は<xliff:g id="NUMBEROFCALLS">%1$s</xliff:g>回。</string>
+    <string name="description_num_calls">通話回数は%1$s回。</string>
 
-    
-    <string name="description_call_back_action"><xliff:g id="NAMEORNUMBER">%1$s</xliff:g>にコールバック</string>
+    <string name="description_call_back_action">%1$sにコールバック</string>
 
-    
-    <string name="description_details_action"><xliff:g id="NAMEORNUMBER">%1$s</xliff:g>の通話の詳細"</string>
+    <string name="description_details_action">%1$sの通話の詳細"</string>
 
-    
-    <string name="description_contact_details"><xliff:g id="NAMEORNUMBER">%1$s</xliff:g>の連絡先の詳細"</string>
+    <string name="description_contact_details">%1$sの連絡先の詳細"</string>
 
-    
-    <string name="description_incoming_missed_call"><xliff:g id="TIMEOFCALL">%3$s</xliff:g>の<xliff:g id="TYPEORLOCATION">%2$s</xliff:g><xliff:g id="NAMEORNUMBER">%1$s</xliff:g>からの不在着信。</string>
+    <string name="description_incoming_missed_call">%3$sの%2$s%1$sからの不在着信。</string>
 
-    
-    <string name="description_incoming_answered_call"><xliff:g id="TIMEOFCALL">%3$s</xliff:g>の<xliff:g id="TYPEORLOCATION">%2$s</xliff:g><xliff:g id="NAMEORNUMBER">%1$s</xliff:g>からの着信。</string>
+    <string name="description_incoming_answered_call">%3$sの%2$s%1$sからの着信。</string>
 
-    
-    <string name="description_outgoing_call"><xliff:g id="TIMEOFCALL">%3$s</xliff:g>の<xliff:g id="TYPEORLOCATION">%2$s</xliff:g><xliff:g id="NAMEORNUMBER">%1$s</xliff:g>への発信。</string>
-
-    
+    <string name="description_outgoing_call">%3$sの%2$s%1$sへの発信。</string>
     <string name="list_delimeter">"、 "</string>
-
-    
     <string name="call_log_header_today">今日</string>
-
-    
     <string name="call_log_header_yesterday">昨日</string>
-
-    
     <string name="call_log_header_other">以前の着信</string>
-
-    
     <string name="recentMissed_empty">最近の不在着信はありません。</string>
-
-    
     <string name="recents_footer_text">通話履歴をすべて表示</string>
-
-    
-    <string name="remove_contact">削除</string>
-
-    
-    <string name="speed_dial_empty">クイックアクセスは、よく通話する\nお気に入りや番号にワンタップでダイヤルする\n機能です。</string>
-
-    
     <string name="all_contacts_empty">連絡先はありません。</string>
-
-    
     <string name="call_log_all_title">すべて</string>
-
-    
     <string name="call_log_missed_title">不在着信</string>
 
-    <string name="search_shortcut_call_number"><xliff:g id="NUMBER">%s</xliff:g>に発信
+<string name="search_shortcut_call_number">%sに発信
     </string>
-
-    
     <string name="search_shortcut_add_to_contacts">連絡先に追加</string>
-
-    
     <string name="add_contact_not_available">この機能を使用するには、連絡先アプリを再び有効にしてください。</string>
-
-    
     <string name="action_menu_back_from_search">検索を停止</string>
-
-    
     <string name="description_clear_search">検索をクリア</string>
-
-    
     <string name="dialer_hint_find_contact">名前または電話番号を入力</string>
-
-    
     <string name="sms_disambig_title">"番号を選択"</string>
     <string name="call_disambig_title">"番号を選択"</string>
     <string name="make_primary">"この選択を保存"</string>
 
+    <string name="percentage">"%s%%"</string>
 </resources>

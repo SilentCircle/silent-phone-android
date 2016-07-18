@@ -126,7 +126,9 @@ public final class ContactsCache {
             return;
         mDoUpdate = false;
 
-        mContactCache.clear();
+        synchronized (mContactCache) {
+            mContactCache.clear();
+        }
 
         Uri lookupUri = ContactsContract.Data.CONTENT_URI;
         String selection = ContactsContract.Data.MIMETYPE + "='" +
@@ -137,6 +139,10 @@ public final class ContactsCache {
         Cursor cursor = context.getContentResolver().query(lookupUri, COLUMNS, selection, null, null);
         if (cursor != null) {
             while (cursor.moveToNext()) {
+
+                // NGA-497: if the cursor has a wrong column count (why?) then skip it (Sam S.)
+                if (cursor.getColumnCount() != COLUMNS.length)
+                    continue;
                 ContactEntry contactEntry = new ContactEntry();
                 contactEntry.name = cursor.getString(COLUMN_INDEX_DISPLAY_NAME);
                 contactEntry.phoneLabel = cursor.getString(COLUMN_INDEX_PHONE_LABEL);
@@ -206,7 +212,9 @@ public final class ContactsCache {
                 // to the phone name. If another cache lookup with the same name shows up we find
                 // the stub entry.
                 if (result == null) {
-                    byte[] dpName = AxoMessaging.getDisplayName(name);
+                    byte[] dpName = null;
+                    if (AxoMessaging.getInstance(mContext).isReady())
+                        dpName = AxoMessaging.getDisplayName(name);
                     if (dpName != null) {
                         result = createTemporaryContactEntry(new String(dpName));
                         result.phoneNumber = name;

@@ -71,43 +71,6 @@
                         android:layout_height="match_parent"/>
         </LinearLayout>
 
-        <com.silentcircle.silentphone2.list.RemoveView
-            android:id="@+id/remove_view"
-            android:layout_width="match_parent"
-            android:layout_height="@dimen/tab_height"
-            android:layout_alignParentTop="true" >
-
-            <LinearLayout
-                android:id="@+id/remove_view_content"
-                android:layout_height="match_parent"
-                android:layout_width="match_parent"
-                android:background="@color/actionbar_background_color"
-                android:gravity="center"
-                android:orientation="horizontal"
-                android:visibility="gone" >
-
-                <ImageView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:layout_marginBottom="8dp"
-                    android:id="@+id/remove_view_icon"
-                    android:src="@drawable/ic_close_dk"
-                    android:contentDescription="@string/remove_contact"
-                    android:tint="@color/remove_text_color" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:id="@+id/remove_view_text"
-                    android:textSize="@dimen/remove_text_size"
-                    android:textColor="@color/remove_text_color"
-                    android:text="@string/remove_contact" />
-
-            </LinearLayout>
-
-        </com.silentcircle.silentphone2.list.RemoveView>
-
     </FrameLayout>
 
 </com.silentcircle.silentphone2.views.OverlappingPaneLayout>

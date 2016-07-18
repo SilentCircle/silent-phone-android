@@ -79,6 +79,7 @@ import android.widget.Toast;
 import com.silentcircle.common.GeoUtil;
 import com.silentcircle.common.util.DialerUtils;
 import com.silentcircle.common.util.SearchUtil;
+import com.silentcircle.common.util.ViewUtil;
 import com.silentcircle.contacts.calllognew.CallDetailHistoryAdapter;
 import com.silentcircle.contacts.calllognew.CallTypeHelper;
 import com.silentcircle.contacts.calllognew.ContactInfo;
@@ -88,8 +89,7 @@ import com.silentcircle.contacts.calllognew.PhoneNumberUtilsWrapper;
 import com.silentcircle.contacts.utils.AsyncTaskExecutor;
 import com.silentcircle.contacts.utils.AsyncTaskExecutors;
 import com.silentcircle.contacts.utils.Constants;
-import com.silentcircle.silentcontacts2.ScCallLog;
-import com.silentcircle.silentcontacts2.ScCallLog.ScCalls;
+import com.silentcircle.contacts.ScCallLog.ScCalls;
 import com.silentcircle.silentphone2.R;
 import com.silentcircle.silentphone2.util.Utilities;
 
@@ -255,6 +255,8 @@ public class ScCallDetailActivity extends AppCompatActivity /*implements Proximi
     protected void onCreate(Bundle icicle) {
         super.onCreate(icicle);
 
+        ViewUtil.setBlockScreenshots(this);
+
         setContentView(R.layout.call_detail);
 
         final Toolbar toolbar = (Toolbar)findViewById(R.id.main_toolbar);
@@ -266,7 +268,7 @@ public class ScCallDetailActivity extends AppCompatActivity /*implements Proximi
         mInflater = (LayoutInflater) getSystemService(LAYOUT_INFLATER_SERVICE);
         mResources = getResources();
 
-        mCallTypeHelper = new CallTypeHelper(getResources());
+        mCallTypeHelper = new CallTypeHelper(this);
         mPhoneNumberHelper = new PhoneNumberDisplayHelper(/*this,*/ mResources);
 //        mVoicemailStatusHelper = new VoicemailStatusHelperImpl();
 //        mAsyncQueryHandler = new CallDetailActivityQueryHandler(this);

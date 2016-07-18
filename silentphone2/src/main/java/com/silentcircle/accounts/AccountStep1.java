@@ -39,6 +39,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.design.widget.TextInputLayout;
+import android.support.v4.content.ContextCompat;
 import android.text.Editable;
 import android.text.Html;
 import android.text.InputType;
@@ -108,7 +109,7 @@ public class AccountStep1 extends Fragment implements View.OnClickListener {
         super.onCreate(savedInstanceState);
 
         if (Build.VERSION.SDK_INT >= 21 && ConfigurationUtilities.mUseDevelopConfiguration) {
-            getActivity().getWindow().setStatusBarColor(getResources().getColor(android.R.color.holo_red_dark));
+            getActivity().getWindow().setStatusBarColor(ContextCompat.getColor(getActivity(), android.R.color.holo_red_dark));
         }
     }
 

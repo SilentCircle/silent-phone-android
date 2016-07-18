@@ -275,6 +275,7 @@ public class AccountCorpEmailEntry3 extends Fragment {
                 errorMessage = getString(R.string.provisioning_wrong_format);
                 return -1;
             }
+            OutputStream out = null;
             try {
                 urlConnection = (HttpsURLConnection) mRequestUrlProvisionDevice.openConnection();
                 SSLContext context = PinnedCertificateHandling.getPinnedSslContext(ConfigurationUtilities.mNetworkConfiguration);
@@ -292,7 +293,7 @@ public class AccountCorpEmailEntry3 extends Fragment {
                 urlConnection.setRequestProperty("Accept-Language", Locale.getDefault().getLanguage());
                 urlConnection.setFixedLengthStreamingMode(contentLength);
 
-                OutputStream out = new BufferedOutputStream(urlConnection.getOutputStream());
+                out = new BufferedOutputStream(urlConnection.getOutputStream());
                 out.write(body.getBytes());
                 out.flush();
 
@@ -319,7 +320,12 @@ public class AccountCorpEmailEntry3 extends Fragment {
                 Log.e(TAG, "Network connection problem: " + e.getMessage());
                 return -1;
             } finally {
-                urlConnection.disconnect();
+                try {
+                    if (out != null)
+                        out.close();
+                } catch (IOException ignore) { }
+                if (urlConnection != null)
+                    urlConnection.disconnect();
             }
         }
 

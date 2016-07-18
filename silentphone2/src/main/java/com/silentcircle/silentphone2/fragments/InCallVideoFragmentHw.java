@@ -40,6 +40,7 @@ import android.content.res.TypedArray;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.v4.content.ContextCompat;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.Display;
@@ -69,15 +70,18 @@ import com.silentcircle.silentphone2.services.TiviPhoneService;
 import com.silentcircle.silentphone2.util.CallState;
 import com.silentcircle.silentphone2.util.ConfigurationUtilities;
 import com.silentcircle.silentphone2.util.Utilities;
+import com.silentcircle.silentphone2.video.CameraPreviewControl2;
+import com.silentcircle.silentphone2.video.CameraPreviewController;
 import com.silentcircle.silentphone2.video.CameraPreviewControllerHw;
 import com.silentcircle.silentphone2.video.SpVideoViewHw;
+import com.silentcircle.silentphone2.video.TouchListener;
 
 /**
  * Handle the video display and control.
  *
  * Created by werner on 22.02.14.
  */
-public class InCallVideoFragmentHw extends Fragment implements View.OnClickListener, CameraPreviewControllerHw.TouchListener,
+public class InCallVideoFragmentHw extends Fragment implements View.OnClickListener, TouchListener,
         TiviPhoneService.ServiceStateChangeListener {
 
     private static final String TAG = InCallVideoFragmentHw.class.getSimpleName();
@@ -118,7 +122,7 @@ public class InCallVideoFragmentHw extends Fragment implements View.OnClickListe
     private boolean mSupressAutoRemove;
 
     private SpVideoViewHw mVideoScreen;
-    private CameraPreviewControllerHw mCamera;
+    private CameraPreviewController mCamera;
 
     // Holds the icons that we change depending on state
     private Drawable mMicOpen;
@@ -224,9 +228,6 @@ public class InCallVideoFragmentHw extends Fragment implements View.OnClickListe
             mEndCall = a.getDrawable(R.styleable.SpaStyle_sp_ic_end_call);
             a.recycle();
         }
-        if (CameraPreviewControllerHw.getNumCameras() <= 1)
-            mFrontCamera = false;
-
         if (savedInstanceState != null) {
             mVideoAccepted = savedInstanceState.getBoolean(ACCEPTED);
             mPauseVideo = savedInstanceState.getBoolean(PAUSED);
@@ -327,7 +328,17 @@ public class InCallVideoFragmentHw extends Fragment implements View.OnClickListe
         mPreviewSurface = (TextureView)fragmentView.findViewById(R.id.VideoSurfacePreview);
         mPreviewContainer = (FrameLayout)fragmentView.findViewById(R.id.VideoPreviewContainer);
         mPreviewMuteIcon = (ImageView)mPreviewContainer.findViewById(R.id.previewMuteState);
-        mCamera = new CameraPreviewControllerHw(mPreviewSurface, mPreviewContainer, this);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            mCamera = new CameraPreviewControl2(mParent.getApplicationContext(), mPreviewSurface, mPreviewContainer, this);
+            if (!mCamera.isCamera2Usable())
+                mCamera = new CameraPreviewControllerHw(mPreviewSurface, mPreviewContainer, this);
+        }
+        else {
+            mCamera = new CameraPreviewControllerHw(mPreviewSurface, mPreviewContainer, this);
+        }
+        if (mCamera.getNumCameras() <= 1)
+            mFrontCamera = false;
 
         mControlExplanation = (TextView)fragmentView.findViewById(R.id.video_explanation);
 
@@ -727,7 +738,7 @@ public class InCallVideoFragmentHw extends Fragment implements View.OnClickListe
         mCallback.setMuteStatusCb(isMute);
         mMuteButton.setImageDrawable(isMute ? mMicMute : mMicOpen);
         if (isMute)
-            mMuteButton.setBackgroundColor(getResources().getColor(R.color.black_blue));
+            mMuteButton.setBackgroundColor(ContextCompat.getColor(mParent, R.color.black_blue));
         else
             mMuteButton.setBackgroundResource(0);
         mPreviewMuteIcon.setVisibility(isMute ? View.VISIBLE : View.INVISIBLE);
@@ -797,7 +808,7 @@ public class InCallVideoFragmentHw extends Fragment implements View.OnClickListe
     }
 
     public void switchCamera() {
-        if (CameraPreviewControllerHw.getNumCameras() <= 1)
+        if (mCamera.getNumCameras() <= 1)
             return;
         if (mPauseVideo)         // Don't switch cameras if video is set to pause
             return;

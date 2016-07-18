@@ -26,7 +26,6 @@
     <string name="sip_error_no_user">Utilisateur non trouvé</string>
     <string name="sip_error_no_cover">Pas de couverture radio</string>
     <string name="sip_error_no_server">Le serveur n\'a pas pu être contacté</string>
-    <string name="call_type_audio">Appel entrant</string>
     <string name="call_error">Erreur</string>
     <string name="secstate_secure">SÉCURISÉ</string>
     <string name="secstate_secure_question">SÉCURISÉ?</string>
@@ -73,6 +72,7 @@
     <string name="provisioning_firstname_req">Un prénom est requis. Veuillez vérifier.</string>
     <string name="provisioning_lastname_req">Un nom de famille est requis. Veuillez vérifier.</string>
     <string name="provisioning_email_req">Une adresse e-mail est requise. Veuillez vérifier.</string>
+
     <string name="provisioning_email_invalid"><mrk mid="39" mtype="seg">Adresse e-mail non valide.</mrk> <mrk mid="40" mtype="seg">Veuillez vérifier.</mrk></string>
     <string name="provisioning_already_registered">Appareil déjà enregistré.</string>
     <string name="provisioning_agreement">En vous connectant, vous acceptez nos</string>
@@ -80,6 +80,7 @@
     <string name="pwstrength_good">Solidité du mot de passe : BONNE</string>
     <string name="pwstrength_strong">Solidité du mot de passe : FORTE</string>
     <string name="provisioning_show_pw">Afficher mot de passe</string>
+
     <string name="provisioning_privacy_tc">Je reconnais avoir lu et j\'accepte la politique de confidentialité et les conditions d\'utilisation de <a href="https://accounts.silentcircle.com/terms/">Silent Circle</a></string>
     <string name="provisioning_terms">conditions générales de service</string>
     <string name="provisioning_privacy">politique de confidentialité</string>
@@ -88,10 +89,8 @@
     <string name="provisioning_existing_account">Se connecter à un compte existant</string>
     <string name="provisioning_existing_account_bp">Se connecter</string>
     <string name="provisioning_create">Créer</string>
-    <string name="provisioning_credentials">Nom d\'utilisateur ou mot de passe erroné. Veuillez vérifier.</string>
     <string name="provisioning_forgot_pwd">J\'ai oublié mon mot de passe.</string>
     <string name="thanks_number">Numéro :</string>
-
     <string name="thanks_name">Nom :</string>
     <string name="preferred_sas_type">Type SAS préféré</string>
     <string name="sas_char_mode">SAS affiché sous la forme de quatre caractères</string>
@@ -102,7 +101,6 @@
     <string name="nist_preferred">Toujours préférer des algorithmes non-NIST si disponibles : Twofish, Skein et courbes de Bernstein.</string>
     <string name="description_dial_button">Numéroter</string>
     <string name="description_delete_button">touche retour</string>
-    <string name="contacts_image_button">Ouvrir les contacts</string>
     <string name="zrtp_common_cmp">Il vous est conseillé de comparer verbalement le code d\'authentification avec celui de votre correspondant. L\'absence de correspondance indique qu\'il est possible que votre appel ait pu être intercepté.</string>
     <string name="zrtp_common_cls">Erreur de connexion. Veuillez raccrocher et renouveler votre appel.</string>
     <string name="zrtp_common_upd">La personne que vous appelez doit mettre à jour son application Silent Phone pour disposer de la dernière version.</string>
@@ -116,17 +114,11 @@
     <string name="provisioning_stepInfo_3">Etape 3 de 3</string>
     <string name="provisioning_vertu_email_info">Une deuxième adresse e-mail est requise pour vous permettre de recevoir des informations et des avantages importants concernant votre compte.</string>
     <string name="provisioning_vertu_welcome_long">En tant que client de Vertu, vous bénéficiez de douze mois d\'accès gratuit aux services de communications cryptés de Silent Circle.</string>
-
-
     <string name="video_audio_mute">Basculer en mode audio muet</string>
-    <string name="video_switch_camera">Baculer d\'une caméra à l\'autre</string>
-
-    
     <string name="provisioning_infoText">Création de compte</string>
     <string name="provisioning_bp_email_info">Une adresse e-mail est requise pour recevoir des mises à jour et des informations importantes concernant votre compte</string>
     <string name="mute_button">Muet</string>
     <string name="video_button">Vidéo</string>
-    <string name="video_control">Contrôle vidéo</string>
     <string name="add_call">Ajoutez un appel</string>
     <string name="audio_options_button">Options Audio</string>
     <string name="verify_label">Touchez et vérifiez</string>
@@ -145,65 +137,43 @@
     <string name="account_creation_wrong_format">Création de compte - le serveur à envoyé un format de données erroné: </string>
     <string name="account_creation_no_data">Création de compte - le serveur à renvoyé des données erronées.</string>
     <string name="other_settings">Autres paramètres</string>
-    <string name="select_theme">Sélectionnez un thème</string>
-    <string name="current_theme">Thème actuel: %s</string>
-    <string name="theme_orange">Orange</string>
-    <string name="theme_white">White</string>
-    <string name="theme_dusk">Dusk</string>
     <string name="theme_black">Black</string>
-
-    
-
     <string name="bp_is_online">Silent Phone en-ligne</string>
     <string name="bp_is_offline">Silent Phone actuellement hors-ligne</string>
     <string name="bp_not_started">Silent Phone non démarré</string>
     <string name="bp_registering">Inscription en cours du Silent Phone </string>
     <string name="bp_status_unknown">Statut inconnu</string>
-
-    
-
     <string name="audio_bt">Oreillette Bluetooth</string>
     <string name="audio_speaker">Haut-parleur</string>
     <string name="audio_ear_phone">Oreillette</string>
     <string name="end_call_button">Fin d\'appel</string>
-
     <string name="call_quality">Qualité</string>
     <string name="call_quality_bad">Médiocre</string>
     <string name="call_quality_weak">Faible</string>
     <string name="call_quality_acceptable">Raisonnable</string>
     <string name="call_quality_good">Bonne</string>
     <string name="call_quality_very_good">Très bonne</string>
-
     <string name="in_call_drawer_zrtp_confirmed">Oui, vérifié</string>
     <string name="in_call_drawer_zrtp_not_confirmed">Oui, non vérifié</string>
     <string name="in_call_drawer_sdes_active">Actif</string>
-
     <string name="navigation_drawer_open">Ouverture du tiroir de navigation</string>
     <string name="navigation_drawer_close">Fermeture du tiroir de navigation</string>
-
     <string name="valid_until">Valable jusqu\'au:</string>
     <string name="subscription_expired">Votre abonnement à Silent Circle est expiré.</string>
-
     <string name="sip_error_not_online">Utiliisateur hors-ligne</string>
-
-    <string name="license_code_invalid">Ce code de licence ne semble pas être valide. Si vous rencontrez des
+<string name="license_code_invalid">Ce code de licence ne semble pas être valide. Si vous rencontrez des
         difficultés à activer vos comptes Blackphone et Silent Circle, veuillez contacter le support
         client à l\'adresse suivante support@blackphone.ch</string>
-    <string name="license_code_duplicate">Ce code de licence semble avoir déjà été activé. Si vous réinitialisez
+<string name="license_code_duplicate">Ce code de licence semble avoir déjà été activé. Si vous réinitialisez
         votre téléphone, il vous suffit de vous connecter à votre compte Silent Circle comme d\'habitude. Si vous
         rencontrez des difficultés à activer vos comptes Blackphone et Silent Circle, veuillez contacter le support
         client à l\'adresse suivante support@blackphone.ch</string>
-
-    
-
     <string name="recentCalls_addToContact">"Ajouter aux contacts"</string>
     <string name="recentCalls_empty">"Aucun appel."</string>
     <string name="recentCalls_deleteAll">"Effacer tous les appels"</string>
     <string name="recentCalls_editNumberBeforeCall">"Modifier le numéro avant d\'effectuer l\'appel"</string>
     <string name="recentCalls_removeFromRecentList">"Supprimer du journal d\'appels"</string>
-    
     <string name="recentCalls_removeSameFromRecentList">Supprimer les entrées connexes</string>
-
     <string name="type_incoming">"Appel entrant"</string>
     <string name="type_outgoing">"Appel sortant"</string>
     <string name="type_missed">"Appel manqué"</string>
@@ -218,7 +188,6 @@
     <string name="clearCallLogConfirmation_title">"Effacer les appels ?"</string>
     <string name="clearCallLogConfirmation">"Votre journal d\'appels va être supprimé."</string>
     <string name="phoneTypeSilent">Silent Phone</string>
-
     <string name="contactsList">"Contacts"</string>
     <string name="local_invisible_directory">"Autre"</string>
     <string name="local_search_label">"Tous les contacts"</string>
@@ -227,52 +196,21 @@
     <string name="search_results_searching">"Recherche…"</string>
     <string name="foundTooManyContacts">"Plus de %d résultats trouvés."</string>
     <string name="listFoundAllContactsZero">"Aucun contact"</string>
+
     <plurals name="searchFoundContacts">
-        <item quantity="one">"1 contact trouvé"</item>
-        <item quantity="other">"%d contact(s) trouvé(s)"</item>
+        <item quantity="one">"1&#160;contact trouv&#233;"</item>
+        <item quantity="other">"%d&#160;contact(s) trouv&#233;(s)"</item>
     </plurals>
 
-    
-    <string name="no_contact_details">"Aucune autre information n\'est disponible pour ce contact."</string>
-    <string name="noContactsWithPhoneNumbers">"Aucun contact disposant d\'un numéro téléphone."</string>
-
-    <string name="noFavoritesHelpText">"Vous ne disposez d\'aucun favoris."\n\n"Pour ajouter un contact à la liste de favoris :"\n\n"        "<li>"Appuyez sur l\'onglet "<b>"Contacts"</b>"."\n</li>" "\n<li>"Appuyez sur le contact à ajouter à vos favoris."\n</li>" "\n<li>"Appuyez sur l\'étoile en regard du nom du contact."\n</li></string>
-    <string name="noMatchingContacts">"Aucun contact correspondant n\'a été trouvé."</string>
-    <string name="no_contacts_selected">"Aucun contact sélectionné"</string>
-    <string name="noContactsHelpTextWithSyncForCreateShortcut">"Vous n\'avez aucun contact à afficher. Si vous venez d\'ajouter un compte, la synchronisation des contacts peut prendre quelques minutes."</string>
-    <string name="noContactsHelpTextWithSync">"Vous n\'avez aucun contact à afficher (si vous venez d\'ajouter un compte, la synchronisation des contacts peut prendre quelques minutes)."\n\n"Pour ajouter des contacts, appuyez sur "<font fgcolor="#ffffffff"><b>"Menu"</b></font>", puis sur :"\n" "\n<li><font fgcolor="#ffffffff"><b>"Comptes"</b></font>" pour ajouter ou configurer un compte dont vous pourrez synchroniser les contacts avec le téléphone"\n</li>" "\n<li><font fgcolor="#ffffffff"><b>"Options d\'affichage"</b></font>" pour modifier les paramètres de visibilité des contacts"\n</li>" "\n<li><font fgcolor="#ffffffff"><b>"Nouveau contact"</b></font>" pour créer un nouveau contact"\n</li>" "\n<li><font fgcolor="#ffffffff"><b>"Importer/Exporter"</b></font>" pour importer des contacts depuis votre carte SIM ou votre carte SD"\n</li></string>
-
-    <string name="noContactsNoSimHelpTextWithSync">"Vous n\'avez aucun contact à afficher (si vous venez d\'ajouter un compte, la synchronisation des contacts peut prendre quelques minutes)."\n\n"Pour ajouter des contacts, appuyez sur "<font fgcolor="#ffffffff"><b>"Menu"</b></font>", puis sur :"\n" "\n<li><font fgcolor="#ffffffff"><b>"Comptes"</b></font>" pour ajouter ou configurer un compte dont vous pourrez synchroniser les contacts avec le téléphone"\n</li>" "\n<li><font fgcolor="#ffffffff"><b>"Options d\'affichage"</b></font>" pour modifier les paramètres de visibilité des contacts"\n</li>" "\n<li><font fgcolor="#ffffffff"><b>"Nouveau contact"</b></font>" pour créer un nouveau contact"\n</li>" "\n<li><font fgcolor="#ffffffff"><b>"Importer/Exporter"</b></font>" pour importer les contacts depuis votre carte SD"\n</li></string>
-
-    <string name="noContactsHelpTextForCreateShortcut">"Vous n\'avez aucun contact à afficher."</string>
-
-    <string name="noContactsHelpText">"Vous n\'avez aucun contact à afficher."\n\n"Pour ajouter des contacts, appuyez sur "<font fgcolor="#ffffffff"><b>"Menu"</b></font>", puis sur :"\n" "\n<li><font fgcolor="#ffffffff"><b>"Comptes"</b></font>" pour ajouter ou configurer un compte dont vous pourrez synchroniser les contacts avec votre téléphone"\n</li>" "\n<li><font fgcolor="#ffffffff"><b>"Nouveau contact"</b></font>" pour créer un nouveau contact"\n</li>" "\n<li><font fgcolor="#ffffffff"><b>"Importer/Exporter"</b></font>" pour importer les contacts depuis votre carte SIM ou votre carte SD"\n</li></string>
-
-    <string name="noContactsNoSimHelpText">"Vous n\'avez aucun contact à afficher."\n\n"Pour ajouter des contacts, appuyez sur "<font fgcolor="#ffffffff"><b>"Menu"</b></font>", puis sur :"\n" "\n<li><font fgcolor="#ffffffff"><b>"Comptes"</b></font>" pour ajouter ou configurer un compte dont vous pourrez synchroniser les contacts avec votre téléphone"\n</li>" "\n<li><font fgcolor="#ffffffff"><b>"Nouveau contact"</b></font>" pour créer un nouveau contact"\n</li>" "\n<li><font fgcolor="#ffffffff"><b>"Importer/Exporter"</b></font>" pour importer les contacts depuis votre carte SD"\n</li></string>
 
     <string name="missing_name">"(Sans nom)"</string>
     <string name="menu_done">"OK"</string>
     <string name="menu_doNotSave">"Annuler"</string>
-    <string name="profile_display_name">"Configurer mon profil"</string>
     <string name="menu_search">"Rechercher"</string>
-    <string name="menu_new_contact_action_bar">"Nouveau"</string>
-    <string name="menu_new_group_action_bar">"Nouveau"</string>
-    <string name="menu_clear_frequents">"Effacer les contacts fréquents"</string>
-    <string name="menu_import_export">"Importer/Exporter"</string>
-    
-    <string name="menu_remove_vcard_files">Supprimer vCards</string>
-
-    <string name="menu_export_database">"Exporter les fichiers de la base de données"</string>
-    <string name="menu_settings">"Paramètres"</string>
-    <string name="menu_help">"Aide"</string>
-    
-    <string name="menu_about">A propos de</string>
-
     <string name="call_custom">"Appeler %s"</string>
     <string name="call_home">"Appeler domicile"</string>
     <string name="call_mobile">"Appeler mobile"</string>
     <string name="call_work">"Appeler bureau"</string>
-    
     <string name="call_fax_work">"Composer télécopie (bureau)"</string>
     <string name="call_fax_home">"Composer fax (domicile)"</string>
     <string name="call_pager">"Appeler téléavertisseur"</string>
@@ -292,75 +230,9 @@
     <string name="call_mms">"Appeler MMS"</string>
     <string name="chat">"Chatter"</string>
     <string name="toast_text_copied">"Texte copié"</string>
-    <string name="contacts_unavailable_create_contact">"Créer un contact"</string>
-    <string name="contacts_unavailable_import_contacts">"Importer des contacts"</string>
-    <string name="upgrade_out_of_memory_uninstall">"Désinstaller certaines applications"</string>
-    <string name="upgrade_out_of_memory_retry">"Réessayer la mise à niveau"</string>
-    <string name="menu_create_contact_shortcut">"Placer sur l\'écran d\'accueil"</string>
-    <string name="menu_share">"Partager"</string>
-    <string name="menu_discard">"Ignorer"</string>
-    <string name="pickerNewContactText">"Créer un nouveau contact"</string>
     <string name="list_filter_phones">"Tous les contacts disposant d\'un numéro de téléphone"</string>
-    <string name="display_options_sort_list_by">"Trier la liste par"</string>
-    <string name="display_options_view_names_as">"Afficher les contacts par"</string>
     <string name="display_options_view_given_name_first">"Le prénom en premier"</string>
     <string name="display_options_view_family_name_first">"Le nom en premier"</string>
-    <string name="display_options_sort_by_given_name">"Prénom"</string>
-    <string name="display_options_sort_by_family_name">"Nom"</string>
-    <string name="no_sdcard_message">"Aucune mémoire stock. trouvée."</string>
-    <string name="import_from_sdcard">"Importer depuis mémoire"</string>
-    <string name="import_one_vcard_string">"Importer un fichier vCard"</string>
-    <string name="import_multiple_vcard_string">"Importer plusieurs fichiers vCard"</string>
-    <string name="import_all_vcard_string">"Importer tous les fichiers vCard"</string>
-    <string name="searching_vcard_message">"Recherche de données vCard dans la mémoire de stockage…"</string>
-    <string name="scanning_sdcard_failed_message">"Impossible d\'explorer la mémoire de stockage pour la raison suivante : %s."</string>
-    <string name="fail_reason_io_error">"Erreur d\'E/S."</string>
-    <string name="fail_reason_low_memory_during_import">"Mémoire insuffisante. Le fichier est peut-être trop volumineux."</string>
-    <string name="fail_reason_not_supported">"Ce format n\'est pas compatible."</string>
-    <string name="vcard_import_failed">"Impossible d\'importer le fichier vCard."</string>
-    <string name="import_failure_no_vcard_file">"Aucun fichier vCard trouvé dans la mémoire de stockage."</string>
-    <string name="fail_reason_unknown">"Erreur inconnue."</string>
-    <string name="select_vcard_title">"Sélectionner vCard"</string>
-    
-    <string name="select_vcard_title_remove">Supprimer le fichier vCard</string>
-
-    <string name="caching_vcard_title">"Mise en cache…"</string>
-    <string name="caching_vcard_message">"Mise en cache des fichiers vCard dans l\'espace de stockage temporaire local. L\'importation va bientôt démarrer."</string>
-    <string name="progress_notifier_message">"Importation en cours %1$s/%2$s : %3$s"</string>
-    <string name="importing_vcard_description">"Importation en cours : %s"</string>
-    <string name="reading_vcard_failed_title">"Impossible de lire les données vCard."</string>
-    <string name="importing_vcard_finished_title">"Fichier vCard %s importé"</string>
-    <string name="importing_vcard_canceled_title">"Importation de \"%s\" annulée"</string>
-    <string name="vcard_import_will_start_message">"Importation du fichier %s imminente"</string>
-    <string name="vcard_import_will_start_message_with_default_name">"Le fichier va bientôt être importé."</string>
-    <string name="vcard_import_request_rejected_message">"La demande d\'importation du fichier vCard a été rejetée. Veuillez réessayer ultérieurement."</string>
-    <string name="vcard_export_will_start_message">"Exportation du fichier %s imminente"</string>
-    <string name="vcard_export_request_rejected_message">"La demande d\'exportation du fichier vCard a été rejetée. Veuillez réessayer ultérieurement."</string>
-    <string name="vcard_unknown_filename">"contact"</string>
-    <string name="percentage">"%s %%"</string>
-    <string name="confirm_export_title">"Exporter contacts ?"</string>
-    <string name="confirm_export_message">"Votre liste de contacts va être exportée vers le fichier \"%s\"."</string>
-    <string name="exporting_contact_failed_title">"Échec exportation"</string>
-    <string name="exporting_contact_failed_message">"Les données du contact n\'ont pas été exportées."\n"Motif : \"%s\"."</string>
-    <string name="fail_reason_no_exportable_contact">"Aucun contact ne peut être exporté."</string>
-    <string name="fail_reason_too_many_vcard">"La mémoire de stockage contient trop de fichiers vCard."</string>
-    <string name="fail_reason_too_long_filename">"Le nom de fichier requis est trop long (\"%s\")."</string>
-    <string name="exporting_vcard_finished_title">"Exportation de \"%s\" terminée"</string>
-    <string name="exporting_vcard_canceled_title">"Exportation de \"%s\" annulée"</string>
-    <string name="exporting_contact_list_title">"Exportation des données des contacts"</string>
-    <string name="exporting_contact_list_message">"Vos données de contact sont en cours d\'exportation vers : \"%s\"."</string>
-    <string name="fail_reason_could_not_initialize_exporter">"Impossible de démarrer le programme d\'exportation : \"%s\"."</string>
-    <string name="fail_reason_error_occurred_during_export">"Une erreur s\'est produite lors de l\'exportation : \"%s\"."</string>
-    <string name="composer_failed_to_get_database_infomation">"Impossible d\'obtenir les informations concernant la base de données."</string>
-    <string name="composer_has_no_exportable_contact">"Aucun contact ne peut être exporté. Si des contacts sont enregistrés sur votre tablette, il est possible qu\'un fournisseur de données n\'autorise pas l\'exportation de contacts vers un autre appareil."</string>
-    <string name="composer_not_initialized">"Le système de composition vCard n\'a pas démarré correctement."</string>
-    <string name="fail_reason_could_not_open_file">"Impossible d\'ouvrir \"%1$s\" pour la raison suivante : %2$s."</string>
-    <string name="cancel_import_confirmation_message">"Annuler l\'importation de \"%s\" ?"</string>
-    <string name="cancel_export_confirmation_message">"Annuler l\'exportation de \"%s\" ?"</string>
-    <string name="nfc_vcard_file_name">"Contact reçu via NFC"</string>
-    <string name="cancel_vcard_import_or_export_failed">"Impossible annuler import./export. vCard"</string>
-    <string name="description_view_contact_detail">"Afficher le contact"</string>
-    <string name="preference_displayOptions">"Options d\'affichage"</string>
     <string name="description_quick_contact_for">"Liens rapides vers %1$s"</string>
     <string name="cannot_load_store">Chargement de stockage de clés impossible.</string>
     <string name="password_hint">Saisir le mot de passe</string>
@@ -373,24 +245,21 @@
     <string name="information_dialog">Information</string>
     <string name="show_pw">Afficher mot de passe</string>
     <string name="password_match">Les mots de passe ne concordent pas. Veuillez vérifier.</string>
-    <string name="video_control_explanation">Touchez l\'écran pour faire apparaître les boutons de contrôle vidéo.
+<string name="video_control_explanation">Touchez l\'écran pour faire apparaître les boutons de contrôle vidéo.
 \n\n Touchez la petite fenêtre d\'aperçu pour la déplacer.</string>
     <string name="start_on_boot">Lancer Silent Phone au démarrage</string>
     <string name="start_on_boot_explanation">Lancer Silent Phone pendant la procédure de démarrage de l\'appareil.</string>
-    
     <string name="sp_dial_helper_title">Assistant de composition</string>
     <string name="sp_dial_helper_select_explanation">Pour simplifier la composition, activer Dial Assist et sélectionner un pays. Le numéro sera automatiquement formaté en intégrant l\'indicatif de votre pays. Autrement, composer \'+\'  et l\'indicatif du pays.</string>
     <string name="sp_dial_helper_select_explanation_1">Pour contacter d\'autres abonnés Silent Circle, il vous suffit de composer leur nom d\'abonné Silent Circle.</string>
     <string name="sp_dial_helper_select">Sélectionner votre pays</string>
     <string name="sp_dial_helper_none">Pas d\'assistant de composition</string>
     <string name="sp_dial_helper_simple">Assistant de composition simple</string>
-    
     <string name="sp_dial_helper_null_explanation">Assistant de composition désactivé</string>
     <string name="sp_dial_helper_simple_explanation">Ajouter \'+\'  pour composer un numéro de téléphone international.</string>
     <string name="sp_dial_helper_nanp_explanation">Ajouter \'+\'  ou \'+1\' ou remplacer un numéro commençant par \'011\' par un signe \'+\' . </string>
     <string name="sp_dial_helper_00_0_explanation">Remplacer le début  \'%1$s\' par votre indicatif pays  %2$s et le début \'%3$s\' par le signe \'+\'.</string>
     <string name="sp_dial_helper_00_x_explanation">Ajouter \'%2$s\' aux numéros composés et remplacer le début  \'%3$s\'  par le signe \'+\'.</string>
-    
     <string name="key_store_set_pw_explanation">Saisissez un vrai mot de passe pour renforcer la protection de votre base de stockage de clés. \n Vous devez saisir ce mot de passe à chaque démarrage de votre Silent Phone. Vous pouvez re-paramétrer la protection par défaut à tout moment.</string>
     <string name="key_store_change_pw_explanation">Modifier votre propre mot de passe de la base de stockage de clés</string>
     <string name="key_store_reset_pw_explanation">Le client re-paramètre la protection de la base de stockage de clés sur la position par défaut après avoir saisi votre mot de passe.</string>
@@ -417,12 +286,6 @@
     <string name="key_store_reset_default">Revenir à la protection par défaut</string>
     <string name="re_provision">Réapprovisionner Silent Phone</string>
     <string name="re_provision_explanation">Recharger les données de configuration de Silent Phone</string>
-    
-    
-    <string name="migrate_start">Démarrer la migration des données de Silent Contact.</string>
-    <string name="migrate_export">Exporter les Silent Contacts existants</string>
-    <string name="migrate_done">Migration effectuée.</string>
-    <string name="migrate_not_ready">Fournisseur du contact intégré non prêt.</string>
     <string name="did_title">Sélection du numéro de téléphone</string>
     <string name="did_region_area_explanation">Sélectionner votre numéro de téléphone d\'une région ou d\'une zone</string>
     <string name="did_currently_selected">Actuellement sélectionné</string>
@@ -437,7 +300,6 @@
     <string name="did_no_number">Aucun numéro de téléphone actuellement disponible, sélectionner une autre région ou zone.</string>
     <string name="did_ask_to_complete">Terminer la sélection du numéro de téléphone.</string>
     <string name="no_internet">Aucune connexion Internet</string>
-    <string name="mobile_internet_blocked">Internet mobile bloqué</string>
     <string name="mobile_internet_available">Internet mobile disponible</string>
     <string name="directory_use_sc">Annuaire Silent Circle</string>
     <string name="directory_own_org_only">Votre propre organisation</string>
@@ -445,119 +307,69 @@
     <string name="sign_in_to_sc">Connectez-vous à votre compte Silent Circle </string>
 
     <string name="sc_privacy_link"><a href="https://silentcircle.com/privacy/">Déclaration de confidentialité</a></string>
+
     <string name="sc_tos_link"><a href="https://accounts.silentcircle.com/terms/">Conditions de Service</a></string>
+
     <plurals name="number_missed_calls">
-        <item quantity="one">Appel manqué</item>
-        <item quantity="other">%d appels manqués</item>
+        <item quantity="one">Appel manqu&#233;</item>
+        <item quantity="other">%d appels manqu&#233;s</item>
     </plurals>
+
     <string name="no_video_available">Service vidéo non disponible pour cet appel.</string>
     <string name="call_in_progress">Appel en cours</string>
     <string name="server_cert_failure">Échec de la vérification du certificat - nouvel essai en cours</string>
     <string name="remaining_oca_minutes">Minutes OCA restantes</string>
     <string name="remaining_oca_minutes_fail">Aucune information OCA disponible</string>
     <string name="remaining_oca_minutes_zero">Aucune minute d\'appel utilisée. Votre solde restant est de %1$d minutes.</string>
+
     <plurals name="remaining_oca_minutes_info">
-        <item quantity="one">Vous avez utilisé une minute de votre solde de %2$d minutes.</item>
-        <item quantity="other">Vous avez utilisé %1$d minutes de votre solde de %2$d minutes.</item>
+        <item quantity="one">Vous avez utilis&#233; une minute de votre solde de %2$d minutes.</item>
+        <item quantity="other">Vous avez utilis&#233; %1$d minutes de votre solde de %2$d minutes.</item>
     </plurals>
-    
-    <string name="tab_speed_dial">NUMÉROTATION ABRÉGÉE</string>
+
+
     <string name="tab_recents">RÉCENTS</string>
     <string name="tab_all_contacts">CONTACTS</string>
     <string name="tab_chat">TEXTE</string>
-
-    
     <string name="call_log_action_call_back">RAPPELER</string>
-
-    
     <string name="call_log_action_details">DÉTAILS</string>
-
-    
     <string name="call_log_action_report">SIGNALER</string>
-
-    
     <string name="description_dismiss">Ignorer</string>
-
-    
     <string name="activity_not_available">Aucune application installée n\'est disponible pour effectuer l\'action sélectionnée.</string>
 
-    Note: AccessibilityServices use this attribute to announce what the view represents.
-    This is especially valuable for views without textual representation like ImageView.
-    --&gt;
-    <string name="description_num_calls"><xliff:g id="numberOfCalls">%1$s</xliff:g> appels</string>
+    <string name="description_num_calls">%1$s appels</string>
 
-    
-    <string name="description_call_back_action">"Rappeler le numéro ou le contact \"<xliff:g id="NAMEORNUMBER">%1$s</xliff:g>\""</string>
+    <string name="description_call_back_action">"Rappeler le numéro ou le contact \"%1$s\""</string>
 
-    
-    <string name="description_details_action">"Informations sur l\'appel pour <xliff:g id="NAMEORNUMBER">%1$s</xliff:g>"</string>
+    <string name="description_details_action">"Informations sur l\'appel pour %1$s"</string>
 
-    
-    <string name="description_contact_details">Coordonnées associées à <xliff:g id="nameOrNumber">%1$s</xliff:g></string>
+    <string name="description_contact_details">Coordonnées associées à %1$s</string>
 
-    
-    <string name="description_incoming_missed_call">"Appel manqué <xliff:g id="TIMEOFCALL">%3$s</xliff:g> (appelant : <xliff:g id="NAMEORNUMBER">%1$s</xliff:g>, <xliff:g id="TYPEORLOCATION">%2$s</xliff:g>)"</string>
+    <string name="description_incoming_missed_call">"Appel manqué %3$s (appelant : %1$s, %2$s)"</string>
 
-    
-    <string name="description_incoming_answered_call">"Appel reçu <xliff:g id="TIMEOFCALL">%3$s</xliff:g> (appelant : <xliff:g id="NAMEORNUMBER">%1$s</xliff:g>, <xliff:g id="TYPEORLOCATION">%2$s</xliff:g>)"</string>
+    <string name="description_incoming_answered_call">"Appel reçu %3$s (appelant : %1$s, %2$s)"</string>
 
-    
-    <string name="description_outgoing_call">"Appel émis <xliff:g id="TIMEOFCALL">%3$s</xliff:g> (destinataire : <xliff:g id="NAMEORNUMBER">%1$s</xliff:g>, <xliff:g id="TYPEORLOCATION">%2$s</xliff:g>)"</string>
-
-    
+    <string name="description_outgoing_call">"Appel émis %3$s (destinataire : %1$s, %2$s)"</string>
     <string name="list_delimeter">", "</string>
-
-    
     <string name="call_log_header_today">Aujourd\'hui</string>
-
-    
     <string name="call_log_header_yesterday">Hier</string>
-
-    
     <string name="call_log_header_other">Plus anciens</string>
-
-    
     <string name="recentMissed_empty">Vous n\'avez aucun appel manqué récent.</string>
-
-    
     <string name="recents_footer_text">Afficher tout l\'historique des appels</string>
-
-    
-    <string name="remove_contact">Supprimer</string>
-
-    
-    <string name="speed_dial_empty">La numérotation abrégée vous permet d\'appeler\nvos contacts favoris et les numéros que vous appelez fréquemment\n d\'une simple pression du doigt."</string>
-
-    
     <string name="all_contacts_empty">Vous n\'avez aucun contact.</string>
-
-    
     <string name="call_log_all_title">Tous</string>
-
-    
     <string name="call_log_missed_title">Manqués</string>
 
-    <string name="search_shortcut_call_number">Appeler le <xliff:g id="NUMBER">%s</xliff:g>
+<string name="search_shortcut_call_number">Appeler le %s
     </string>
-
-    
     <string name="search_shortcut_add_to_contacts">Ajouter aux contacts</string>
-
-    
     <string name="add_contact_not_available">Réactivez l\'application Silent Contacts pour utiliser cette fonctionnalité.</string>
-
-    
     <string name="action_menu_back_from_search">arrêter la recherche</string>
-
-    
     <string name="description_clear_search">Effacer la recherche</string>
-
-    
     <string name="dialer_hint_find_contact">Saisissez nom/numéro de tél.</string>
-
-    
     <string name="sms_disambig_title">"Sélectionner un numéro"</string>
     <string name="call_disambig_title">"Sélectionner un numéro"</string>
     <string name="make_primary">"Mémoriser ce choix"</string>
 
+    <string name="percentage">"%s%%"</string>
 </resources>

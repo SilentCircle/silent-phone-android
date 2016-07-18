@@ -38,6 +38,7 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.provider.ContactsContract;
+import android.support.v4.content.ContextCompat;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.View;
@@ -45,6 +46,7 @@ import android.view.View;
 import com.silentcircle.messaging.util.IOUtils;
 import com.silentcircle.messaging.views.VCardPreview;
 import com.silentcircle.silentphone2.R;
+import com.silentcircle.silentphone2.util.ConfigurationUtilities;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -58,10 +60,10 @@ public class VCardProviderUtils {
     private static final String TAG = VCardProviderUtils.class.getSimpleName();
 
     public static Bitmap getVCardPreviewForContact(final Context context, final Uri uri) {
-        Log.d(TAG, "Generating vCard preview for: " + uri);
+        if (ConfigurationUtilities.mTrace) Log.d(TAG, "Generating vCard preview for: " + uri);
 
         Drawable drawable =
-                context.getResources().getDrawable(R.drawable.ic_contact_picture_holo_dark);
+                ContextCompat.getDrawable(context, R.drawable.ic_contact_picture_holo_dark);
         String displayName = null;
 
         String lookupKey = uri.getLastPathSegment();

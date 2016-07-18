@@ -23,7 +23,7 @@ import android.content.Intent;
 import com.silentcircle.contacts.ContactsUtils;
 import com.silentcircle.contacts.SCInviteActivity;
 import com.silentcircle.contacts.ScCallDetailActivity;
-import com.silentcircle.silentcontacts2.ScCallLog;
+import com.silentcircle.contacts.ScCallLog;
 
 /**
  * Used to create an intent to attach to an action in the call log.

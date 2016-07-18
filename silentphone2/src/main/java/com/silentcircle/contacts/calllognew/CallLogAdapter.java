@@ -27,9 +27,9 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.Message;
 import android.support.annotation.WorkerThread;
+import android.support.v4.content.ContextCompat;
 import android.telephony.PhoneNumberUtils;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.AccessibilityDelegate;
@@ -52,15 +52,13 @@ import com.silentcircle.contacts.ContactsUtils;
 import com.silentcircle.contacts.utils.ExpirableCache;
 import com.silentcircle.contacts.utils.UriUtils;
 import com.silentcircle.contacts.widget.GroupingListAdapter;
-import com.silentcircle.messaging.services.AxoMessaging;
-import com.silentcircle.silentcontacts2.ScCallLog.ScCalls;
+import com.silentcircle.contacts.ScCallLog.ScCalls;
 import com.silentcircle.silentphone2.R;
 import com.silentcircle.silentphone2.util.Utilities;
 
+import java.lang.ref.WeakReference;
 import java.util.HashMap;
 import java.util.LinkedList;
-
-//import android.telecom.PhoneAccountHandle;
 
 /**
  * Adapter class to fill in data for the Call Log.
@@ -98,11 +96,6 @@ public class CallLogAdapter extends GroupingListAdapter
     /** Interface used to initiate a refresh of the content. */
     public interface CallFetcher {
         void fetchCalls();
-    }
-
-    /** Implements onClickListener for the report button. */
-    public interface OnReportButtonClickListener {
-        void onReportButtonClick(String number);
     }
 
     /**
@@ -148,8 +141,6 @@ public class CallLogAdapter extends GroupingListAdapter
     protected final Context mContext;
     private final ContactInfoHelper mContactInfoHelper;
     private final CallFetcher mCallFetcher;
-    private final Toast mReportedToast;
-    private final OnReportButtonClickListener mOnReportButtonClickListener;
     private ViewTreeObserver mViewTreeObserver = null;
 
     /**
@@ -346,23 +337,31 @@ public class CallLogAdapter extends GroupingListAdapter
         return true;
     }
 
-    private Handler mHandler = new Handler() {
+    private static class RedrawHandler extends Handler {
+        private final WeakReference<CallLogAdapter> mAdapter;
+
+        public RedrawHandler(CallLogAdapter adapter) {
+            mAdapter = new WeakReference<>(adapter);
+        }
+
         @Override
         public void handleMessage(Message msg) {
+            CallLogAdapter adapter = mAdapter.get();
             switch (msg.what) {
                 case REDRAW:
-                    notifyDataSetChanged();
+                    adapter.notifyDataSetChanged();
                     break;
                 case START_THREAD:
-                    startRequestProcessing();
+                    adapter.startRequestProcessing();
                     break;
             }
         }
-    };
+    }
+    private Handler mHandler = new RedrawHandler(this);
 
     public CallLogAdapter(Context context, CallFetcher callFetcher,
             ContactInfoHelper contactInfoHelper, CallItemExpandedListener callItemExpandedListener,
-            OnReportButtonClickListener onReportButtonClickListener, OnPhoneNumberPickerActionListener actionListener,
+             OnPhoneNumberPickerActionListener actionListener,
             boolean isCallLog) {
         super(context);
 
@@ -373,17 +372,13 @@ public class CallLogAdapter extends GroupingListAdapter
         mCallItemExpandedListener = callItemExpandedListener;
         mPhoneNumberPickerActionListener = actionListener;
 
-        mOnReportButtonClickListener = onReportButtonClickListener;
-        mReportedToast = Toast.makeText(mContext, "Caller id reported", /*R.string.toast_caller_id_reported,*/
-                Toast.LENGTH_SHORT);
-
         mContactInfoCache = ExpirableCache.create(CONTACT_INFO_CACHE_SIZE);
         mRequests = new LinkedList<ContactInfoRequest>();
 
         Resources resources = mContext.getResources();
-        CallTypeHelper callTypeHelper = new CallTypeHelper(resources);
-        mCallLogBackgroundColor = resources.getColor(R.color.background_dialer_list_items);
-        mExpandedBackgroundColor = resources.getColor(R.color.call_log_expanded_background_color);
+        CallTypeHelper callTypeHelper = new CallTypeHelper(context);
+        mCallLogBackgroundColor = ContextCompat.getColor(context, R.color.background_dialer_list_items);
+        mExpandedBackgroundColor = ContextCompat.getColor(context, R.color.call_log_expanded_background_color);
         mExpandedTranslationZ = resources.getDimension(R.dimen.call_log_expanded_translation_z);
 
         mContactPhotoManager = ContactPhotoManagerNew.getInstance(mContext);
@@ -803,11 +798,6 @@ public class CallLogAdapter extends GroupingListAdapter
         final PhoneCallDetails details;
 //
 //        views.reported = info.isBadData;
-
-        // The entry can only be reported as invalid if it has a valid ID and the source of the
-        // entry supports marking entries as invalid.
-        views.canBeReportedAsInvalid = false; // mContactInfoHelper.canReportAsInvalid(info.sourceType, info.objectId);
-
         // Restore expansion state of the row on rebind.  Inflate the actions ViewStub if required,
         // and set its visibility state accordingly.
         expandOrCollapseActions(callLogItemView, isExpanded(rowId));
@@ -1002,29 +992,9 @@ public class CallLogAdapter extends GroupingListAdapter
         if (views.callBackButtonView == null) {
             views.callBackButtonView = (TextView)views.actionsView.findViewById(R.id.call_back_action);
         }
-//        if (views.videoCallButtonView == null) {
-//            views.videoCallButtonView = (TextView)views.actionsView.findViewById(
-//                    R.id.video_call_action);
-//        }
-
-//        if (views.voicemailButtonView == null) {
-//            views.voicemailButtonView = (TextView)views.actionsView.findViewById(R.id.voicemail_action);
-//        }
 
         if (views.detailsButtonView == null) {
             views.detailsButtonView = (TextView)views.actionsView.findViewById(R.id.details_action);
-        }
-
-        if (views.reportButtonView == null) {
-            views.reportButtonView = (TextView)views.actionsView.findViewById(R.id.report_action);
-            views.reportButtonView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    if (mOnReportButtonClickListener != null) {
-                        mOnReportButtonClickListener.onReportButtonClick(views.number);
-                    }
-                }
-            });
         }
 
         if (views.writeBackButtonView == null) {
@@ -1100,13 +1070,6 @@ public class CallLogAdapter extends GroupingListAdapter
         views.detailsButtonView.setTag(
                 IntentProvider.getCallDetailIntentProvider(views.rowId, views.callIds, null)
         );
-
-        if (views.canBeReportedAsInvalid && !views.reported) {
-            views.reportButtonView.setVisibility(View.VISIBLE);
-        } else {
-            views.reportButtonView.setVisibility(View.GONE);
-        }
-//        }
 
         // check to see whether invite button should be displayed
         // if sipaddress empty (not an SC user) and number valid then allow invite
@@ -1451,11 +1414,6 @@ public class CallLogAdapter extends GroupingListAdapter
        } else {
            return mContext.getResources().getString(R.string.call_log_header_other);
        }
-    }
-
-    public void onBadDataReported(String number) {
-        mContactInfoCache.expireAll();
-        mReportedToast.show();
     }
 
     /**

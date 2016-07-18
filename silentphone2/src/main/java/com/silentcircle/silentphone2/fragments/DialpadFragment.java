@@ -45,6 +45,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.provider.ContactsContract;
 import android.provider.Settings;
+import android.support.v4.content.ContextCompat;
 import android.telephony.PhoneNumberFormattingTextWatcher;
 import android.telephony.PhoneNumberUtils;
 import android.text.Editable;
@@ -212,25 +213,22 @@ public class DialpadFragment extends Fragment implements View.OnClickListener,
         mDialpadSlideInDuration = getResources().getInteger(R.integer.dialpad_slide_in_duration);
     }
 
-    @SuppressWarnings("deprecation")
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedState) {
-        Resources.Theme theme = mParent.getTheme();
-        if (theme != null) {
-            TypedArray array = theme.obtainStyledAttributes(new int[]{
-                    R.attr.sp_ic_dial_pad,
-                    R.attr.sp_ic_keyboard,
-            });
-            if (array != null) {
-                mDialPadIcon = array.getDrawable(0);
-                mKeyboardIcon = array.getDrawable(1);
-                array.recycle();
-            }
+        final Resources.Theme theme = mParent.getTheme();
+        final TypedArray array = theme != null ? theme.obtainStyledAttributes(new int[]{
+                R.attr.sp_ic_dial_pad,
+                R.attr.sp_ic_keyboard,
+        }) : null;
+
+        if (array != null) {
+            mDialPadIcon = array.getDrawable(0);
+            mKeyboardIcon = array.getDrawable(1);
+            array.recycle();
         }
         else {
-            // The deprecated version of the functions set the theme to null
-            mDialPadIcon = getResources().getDrawable(R.drawable.ic_action_dial_pad_light);
-            mKeyboardIcon = getResources().getDrawable(R.drawable.ic_action_keyboard_light);
+            mDialPadIcon = ContextCompat.getDrawable(mParent, R.drawable.ic_action_dial_pad_light);
+            mKeyboardIcon = ContextCompat.getDrawable(mParent, R.drawable.ic_action_keyboard_light);
         }
 
         final View fragmentView = inflater.inflate(R.layout.dialpad_fragment, container, false);
@@ -523,12 +521,14 @@ public class DialpadFragment extends Fragment implements View.OnClickListener,
                             ContactsContract.CommonDataKinds.Phone.NUMBER
                     };
 
-                    Cursor cursor = mParent.getContentResolver()
-                            .query(contactUri, projection, null, null, null);
+                    Cursor cursor = mParent.getContentResolver().query(contactUri, projection, null, null, null);
+                    if (cursor == null)
+                        break;
                     cursor.moveToFirst();
 
                     int column = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER);
                     String number = cursor.getString(column);
+                    cursor.close();
 
                     // Apply the dial helper and format the number if necessary
                     boolean wasModified = DialerActivity.checkCallToNr(number, this);
@@ -675,7 +675,7 @@ public class DialpadFragment extends Fragment implements View.OnClickListener,
 
         // The getUid _must not_ run on UI thread because it may trigger a network
         // activity to do a lookup on provisioning server.
-        AsyncTasks.UserDataBackgroundTask getUidTask = new AsyncTasks.UserDataBackgroundTask(mParent.getApplicationContext()) {
+        AsyncTasks.UserDataBackgroundTask getUidTask = new AsyncTasks.UserDataBackgroundTask() {
 
             @Override
             protected void onPostExecute(Integer time) {

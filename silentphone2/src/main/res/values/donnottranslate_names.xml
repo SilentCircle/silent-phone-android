@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Various locale-specific string resources for Contacts -->
-    <string-array name="common_nicknames"></string-array>
     <string name="common_name_prefixes"></string>
     <string name="common_name_suffixes"></string>
     <string name="common_last_name_prefixes"></string>
@@ -16,11 +15,5 @@
         <item>%40sip.silentcircle.net</item>
         <item>%40sc.im</item>
     </string-array>
-
-    <!--
-        Strings for ScContactProvider
-     -->
-    <!-- The name of the default contact directory -->
-    <string name="default_directory" translatable="false">Contacts</string>
 
 </resources>

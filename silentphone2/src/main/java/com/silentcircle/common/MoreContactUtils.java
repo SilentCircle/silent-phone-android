@@ -163,60 +163,6 @@ public class MoreContactUtils {
         return true;
     }
 
-    /**
-     * Returns the {@link android.graphics.Rect} with left, top, right, and bottom coordinates
-     * that are equivalent to the given {@link android.view.View}'s bounds. This is equivalent to
-     * how the target {@link android.graphics.Rect} is calculated in
-     * {@link android.provider.ContactsContract.QuickContact#showQuickContact}.
-     */
-    public static Rect getTargetRectFromView(View view) {
-        final int[] pos = new int[2];
-        view.getLocationOnScreen(pos);
-
-        final Rect rect = new Rect();
-        rect.left = pos[0];
-        rect.top = pos[1];
-        rect.right = pos[0] + view.getWidth();
-        rect.bottom = pos[1] + view.getHeight();
-        return rect;
-    }
-
-    /**
-     * Returns a header view based on the R.layout.list_separator, where the
-     * containing {@link android.widget.TextView} is set using the given textResourceId.
-     */
-    public static TextView createHeaderView(Context context, int textResourceId) {
-        final TextView textView = (TextView) View.inflate(context, R.layout.list_separator, null);
-        textView.setText(context.getString(textResourceId));
-        return textView;
-    }
-
-    /**
-     * Set the top padding on the header view dynamically, based on whether the header is in
-     * the first row or not.
-     */
-    @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
-    public static void setHeaderViewBottomPadding(Context context, TextView textView,
-            boolean isFirstRow) {
-        final int topPadding;
-        if (isFirstRow) {
-            topPadding = (int) context.getResources().getDimension(
-                    R.dimen.frequently_contacted_title_top_margin_when_first_row);
-        } else {
-            topPadding = (int) context.getResources().getDimension(
-                    R.dimen.frequently_contacted_title_top_margin);
-        }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
-            textView.setPaddingRelative(textView.getPaddingStart(), topPadding,
-                    textView.getPaddingEnd(), textView.getPaddingBottom());
-        }
-        else {
-            textView.setPadding(textView.getPaddingLeft(), topPadding,
-                    textView.getPaddingRight(), textView.getPaddingBottom());
-        }
-    }
-
-
 //    /**
 //     * Returns the intent to launch for the given invitable account type and contact lookup URI.
 //     * This will return null if the account type is not invitable (i.e. there is no

@@ -429,7 +429,7 @@ int findJSonToken(const char *p, int iPLen, const char *key, char *resp, int iMa
  * into a WebView.
  */
 
-int getDomainAuthURL(const char *pLink, const char *pUsername, char *auth_url, int auth_sz, void (*cb)(void *p, int ok, const char *pMsg), void *cbRet) {
+int getDomainAuthURL(const char *pLink, const char *pUsername, char *auth_url, int auth_sz, char *redirect_url, int redirect_sz, void (*cb)(void *p, int ok, const char *pMsg), void *cbRet) {
    int iRespContentLen=0;
    char bufJSonValue[32]; /* "auth_url" -> authURL */
    char bufResp[4096];
@@ -478,7 +478,7 @@ int getDomainAuthURL(const char *pLink, const char *pUsername, char *auth_url, i
 
    /* get the authentication URL */
    memset(bufJSonValue, 0, sizeof(bufJSonValue));
-   len = findJSonToken(p, iRespContentLen, "auth_url", auth_url, auth_sz - 1);
+   len = findJSonToken(p, iRespContentLen, "auth_uri", auth_url, auth_sz - 1);
    if(len <= 0) {
 //      cb(cbRet, -1, "ERR: JSon field 'auth_url' not found");
        cb(cbRet, -1, "getDomainAuthURL: ERR: JSON field 'auth_url' not found");
@@ -507,6 +507,14 @@ int getDomainAuthURL(const char *pLink, const char *pUsername, char *auth_url, i
       }
 
       snprintf(pUN, maxlen, "&username=%s", pUsername);
+   }
+   
+   len = findJSonToken(p, iRespContentLen, "redirect_uri", redirect_url, redirect_sz - 1);
+   if(len <= 0) {
+      //      cb(cbRet, -1, "ERR: JSon field 'auth_url' not found");
+      cb(cbRet, -1, "getDomainAuthURL: ERR: JSON field 'redirect_uri' not found");
+      
+      return -1;
    }
 
    return 0;

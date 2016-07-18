@@ -35,7 +35,7 @@
             android:layout_marginStart="?attr/contact_browser_list_padding_left"
             android:layout_marginRight="?attr/contact_browser_list_padding_right"
             android:layout_marginEnd="?attr/contact_browser_list_padding_right"
-            android:background="@color/background_dialer_list_items"
+            android:background="?attr/sp_activity_background_color"
             android:clickable="true"
             android:visibility="gone"
             tools:visibility="visible">
@@ -73,7 +73,7 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:background="@drawable/bg_window_dark">
+        android:background="?sp_activity_background_color">
         <view
             class="com.silentcircle.common.list.PinnedHeaderListView"
             android:id="@android:id/list"

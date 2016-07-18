@@ -46,6 +46,7 @@ public class SoundNotifications {
     protected static SoundPool sSoundPool;
     protected static int sReceivedSoundId;
     protected static int sBurnedSoundId;
+    protected static int sSentSoundId;
 
     public static SoundPool getSoundPool() {
         if (sSoundPool == null) {
@@ -62,7 +63,17 @@ public class SoundNotifications {
         playSound(sBurnedSoundId);
     }
 
+    public static void playSentMessageSound() {
+        playSound(sSentSoundId);
+    }
+
     private static void playSound(int soundId) {
+        final Context context = SilentPhoneApplication.getAppContext();
+        final boolean soundsEnabled = MessagingPreferences.getInstance(context).getMessageSoundsEnabled();
+        if (!soundsEnabled) {
+            return;
+        }
+
         SoundPool soundPool = getSoundPool();
         if (soundPool != null) {
             soundPool.play(soundId, 1f, 1f, 0, 0, 1);
@@ -86,6 +97,7 @@ public class SoundNotifications {
         }
         sReceivedSoundId = soundPool.load(context, R.raw.received, 1);
         sBurnedSoundId = soundPool.load(context, R.raw.poof, 1);
+        sSentSoundId = soundPool.load(context, R.raw.sent, 1);
 
         return soundPool;
     }

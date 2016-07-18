@@ -43,6 +43,7 @@ import android.graphics.drawable.ShapeDrawable;
 import android.graphics.drawable.StateListDrawable;
 import android.graphics.drawable.shapes.OvalShape;
 import android.os.Build;
+import android.support.v4.content.ContextCompat;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.widget.ImageView;
@@ -84,8 +85,6 @@ public class CircleImageSelectable extends ImageView {
         super(context);
     }
 
-    @TargetApi(Build.VERSION_CODES.M)
-    @SuppressWarnings("deprecation, unused")
     public CircleImageSelectable(Context context, AttributeSet attrs) {
         super(context, attrs);
         TypedArray a = context.obtainStyledAttributes(attrs, new int[] { android.R.attr.background });
@@ -93,26 +92,19 @@ public class CircleImageSelectable extends ImageView {
             mBackgroundColor = a.getColor(0, 0);
             a.recycle();
         }
-        Resources.Theme theme = context.getTheme();
+        final Resources.Theme theme = context.getTheme();
         mGivenDiameter = Utilities.convertDpToPixel(MINiMUM_DIAMETER, getContext());
         mStrokeWidth = 0;
         mStrokeColor = android.R.color.white;
         mShadowColor = android.R.color.black;
-        if (theme != null) {
-            a = theme.obtainStyledAttributes(attrs, R.styleable.CircleImageSelectable, 0, 0);
-            if (a != null) {
-                mGivenDiameter = a.getDimension(R.styleable.CircleImageSelectable_sp_round_image_diameter, mGivenDiameter);
-                mStrokeWidth = a.getDimension(R.styleable.CircleImageSelectable_sp_round_image_stroke_width, 0);
-                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-                    mStrokeColor = a.getColor(R.styleable.CircleImageSelectable_sp_round_image_stroke_color, getResources().getColor(android.R.color.white));
-                    mShadowColor = a.getColor(R.styleable.CircleImageSelectable_sp_round_image_shadow_color, getResources().getColor(android.R.color.black));
-                }
-                else {
-                    mStrokeColor = a.getColor(R.styleable.CircleImageSelectable_sp_round_image_stroke_color, getResources().getColor(android.R.color.white, theme));
-                    mShadowColor = a.getColor(R.styleable.CircleImageSelectable_sp_round_image_shadow_color, getResources().getColor(android.R.color.black, theme));
-                }
-                a.recycle();
-            }
+
+        a = theme != null ? theme.obtainStyledAttributes(attrs, R.styleable.CircleImageSelectable, 0, 0) : null;
+        if (a != null) {
+            mGivenDiameter = a.getDimension(R.styleable.CircleImageSelectable_sp_round_image_diameter, mGivenDiameter);
+            mStrokeWidth = a.getDimension(R.styleable.CircleImageSelectable_sp_round_image_stroke_width, 0);
+            mStrokeColor = a.getColor(R.styleable.CircleImageSelectable_sp_round_image_stroke_color, ContextCompat.getColor(context, android.R.color.white));
+            mShadowColor = a.getColor(R.styleable.CircleImageSelectable_sp_round_image_shadow_color, ContextCompat.getColor(context, android.R.color.black));
+            a.recycle();
         }
     }
 

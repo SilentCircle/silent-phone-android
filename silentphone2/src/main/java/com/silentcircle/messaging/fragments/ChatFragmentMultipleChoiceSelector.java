@@ -115,10 +115,10 @@ public class ChatFragmentMultipleChoiceSelector extends MultipleChoiceSelector<E
             }
         }
 
-        itemCopy.setVisible(!multipleChecked && !hasAttachmentMessage);
+        itemCopy.setVisible(!multipleChecked && !hasAttachmentMessage && !hasErrorMessage);
         itemForward.setVisible(!multipleChecked && !hasErrorMessage);
         itemInfo.setVisible(!multipleChecked && BuildConfig.DEBUG);
-        itemResend.setVisible(!hasMessageStateOtherThanFailed);
+        itemResend.setVisible(!hasMessageStateOtherThanFailed && !hasErrorMessage);
 
         int after = getMenuItemVisibilityMask(menu);
 

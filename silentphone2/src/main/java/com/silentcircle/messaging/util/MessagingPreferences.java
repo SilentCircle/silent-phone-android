@@ -51,6 +51,7 @@ public class MessagingPreferences {
     public static final String PREFERENCE_MESSAGE_VIBRATE = "sp_messaging_vibrate";
     public static final String PREFERENCE_MESSAGE_RINGTONE = "sp_messaging_ringtone";
     public static final String PREFERENCE_MESSAGE_LIGHT = "sp_messaging_light";
+    public static final String PREFERENCE_MESSAGE_THEME = "sp_messaging_theme";
 
     public static final int INDEX_VIBRATE_OFF = 0;
     public static final int INDEX_VIBRATE_DEFAULT = 1;
@@ -64,6 +65,9 @@ public class MessagingPreferences {
     public static final int INDEX_LIGHT_WHITE = 4;
     public static final int INDEX_LIGHT_GREEN = 5;
     public static final int INDEX_LIGHT_PURPLE = 6;
+
+    public static final int INDEX_THEME_DARK = 0;
+    public static final int INDEX_THEME_LIGHT = 1;
 
     public static final long GRACE_PERIOD = TimeUnit.SECONDS.toMillis(20);
 
@@ -166,6 +170,15 @@ public class MessagingPreferences {
 
     public synchronized int getMessageLight() {
         return sPreferences.getInt(PREFERENCE_MESSAGE_LIGHT, INDEX_LIGHT_DEFAULT);
+    }
+
+    public synchronized void setMessageTheme(int theme) {
+        sEditor.putInt(PREFERENCE_MESSAGE_THEME, theme);
+        sEditor.commit();
+    }
+
+    public synchronized int getMessageTheme() {
+        return sPreferences.getInt(PREFERENCE_MESSAGE_THEME, INDEX_THEME_DARK);
     }
 
 }

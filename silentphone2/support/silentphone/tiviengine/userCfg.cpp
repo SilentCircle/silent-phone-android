@@ -28,6 +28,7 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+
 #if  1
 
 #ifdef _WIN32
@@ -734,6 +735,10 @@ int saveCfg(void *cfg, int iIndex)
 {
    if(((PHONE_CFG*)cfg)->iDontReadSaveCfg)return 0;
    
+   void *findGlobalCfgKey(const char *key);
+   int *piExitingAndDoSaveNothingOnDisk= (int *)findGlobalCfgKey("iExitingAndDoSaveNothingOnDisk");
+   if(piExitingAndDoSaveNothingOnDisk && *piExitingAndDoSaveNothingOnDisk)return 0;
+   
    if(iIndex<0)iIndex=-1;
    
    CTEditBase b(1024);
@@ -746,8 +751,6 @@ int saveCfg(void *cfg, int iIndex)
    setOwnerAccessOnly(b.getText());
    
    setFileBackgroundReadable(b);
-   
-
 
    return 0;
 }

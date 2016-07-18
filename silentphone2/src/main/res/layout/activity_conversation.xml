@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.silentcircle.messaging.views.RelativeLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<com.silentcircle.messaging.views.RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/activity"
     android:layout_width="match_parent"
@@ -11,8 +11,8 @@
         android:id="@+id/chat"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@+id/conversation_toolbar"
-        android:layout_above="@+id/upload" />
+        android:layout_above="@+id/upload"
+        android:layout_below="@+id/conversation_toolbar" />
 
     <include
         android:id="@+id/upload"
@@ -23,8 +23,41 @@
         android:layout_margin="@dimen/spacing_normal" />
 
     <include
+        android:id="@+id/burn_delay_container"
+        layout="@layout/compose_burn_delay_container"
+        android:layout_above="@+id/attachment_grid_placehodler"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_marginBottom="@dimen/spacing_large"
+        android:layout_marginLeft="@dimen/spacing_normal"
+        android:layout_marginStart="@dimen/spacing_normal"
+        android:layout_marginRight="@dimen/spacing_small"
+        android:layout_marginEnd="@dimen/spacing_small" />
+
+    <include
         android:id="@+id/compose"
-        layout="@layout/compose" />
+        layout="@layout/compose"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/spacing_normal"
+        android:layout_above="@+id/attachment_grid_placehodler"
+        android:layout_marginEnd="@dimen/spacing_normal"
+        android:layout_marginRight="@dimen/spacing_normal" />
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/attachment_grid_placehodler"
+        android:layout_alignParentBottom="true">
+        <include
+            android:id="@+id/attachment_grid"
+            layout="@layout/messaging_attachement_grid"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+    </FrameLayout>
+
 
     <include
         android:id="@+id/progress"

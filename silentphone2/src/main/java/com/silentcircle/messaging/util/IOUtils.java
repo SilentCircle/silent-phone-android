@@ -29,6 +29,8 @@ package com.silentcircle.messaging.util;
 
 import android.content.Context;
 import android.net.Uri;
+import android.support.annotation.NonNull;
+import android.text.TextUtils;
 import android.util.Log;
 
 import com.silentcircle.messaging.model.listener.OnProgressUpdateListener;
@@ -82,7 +84,17 @@ public class IOUtils {
         }
     }
 
+    /**
+     * Encode a String into a byte array using UTF-8 encoding.
+     *
+     * @param s The String to encode.
+     * @return Byte array, an empty array if the input is null or empty.
+     */
+    @NonNull
     public static byte[] encode(String s) {
+        if (TextUtils.isEmpty(s))
+            return new byte[0];
+
         try {
             return s.getBytes("UTF-8");
         }
@@ -519,24 +531,6 @@ public class IOUtils {
             outputFile = null;
         } finally {
             IOUtils.close(input);
-        }
-        return outputFile;
-    }
-
-    public static File writeStringContentToTempFile(Context context, String data) {
-        File outputFile = null;
-        try {
-            File outputDir = context.getCacheDir();
-            outputFile =
-                    File.createTempFile(UUIDGen.makeType1UUID().toString(), "tmp", outputDir);
-            PrintWriter out = new PrintWriter(outputFile);
-            out.print(data);
-        } catch (IOException | SecurityException exception) {
-            Log.w(TAG, "#writeUriContentToTempFile", exception);
-            if (outputFile != null) {
-                outputFile.delete();
-            }
-            outputFile = null;
         }
         return outputFile;
     }

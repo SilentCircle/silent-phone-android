@@ -272,8 +272,8 @@ public class ProvisioningUserPassword extends Fragment implements ProvisioningAc
         return retMsg;
     }
 
-    private void showDialog(int titleResId, int msgResId, int positiveBtnLabel, int nagetiveBtnLabel) {
-        com.silentcircle.silentphone2.dialogs.InfoMsgDialogFragment infoMsg = com.silentcircle.silentphone2.dialogs.InfoMsgDialogFragment.newInstance(titleResId, msgResId, positiveBtnLabel, nagetiveBtnLabel);
+    private void showDialog(int titleResId, int msgResId, int positiveBtnLabel, int negativeBtnLabel) {
+        com.silentcircle.silentphone2.dialogs.InfoMsgDialogFragment infoMsg = com.silentcircle.silentphone2.dialogs.InfoMsgDialogFragment.newInstance(titleResId, msgResId, positiveBtnLabel, negativeBtnLabel);
         FragmentManager fragmentManager = mParent.getFragmentManager();
         infoMsg.show(fragmentManager,TAG );
     }
@@ -303,6 +303,7 @@ public class ProvisioningUserPassword extends Fragment implements ProvisioningAc
 //                }
 //                return HttpsURLConnection.HTTP_OK;
 //            }
+            OutputStream out = null;
             try {
                 urlConnection = (HttpsURLConnection) requestUrl.openConnection();
                 SSLContext context = PinnedCertificateHandling.getPinnedSslContext(ConfigurationUtilities.mNetworkConfiguration);
@@ -320,7 +321,7 @@ public class ProvisioningUserPassword extends Fragment implements ProvisioningAc
                 urlConnection.setRequestProperty("Accept-Language", Locale.getDefault().getLanguage());
                 urlConnection.setFixedLengthStreamingMode(contentLength);
 
-                OutputStream out = new BufferedOutputStream(urlConnection.getOutputStream());
+                out = new BufferedOutputStream(urlConnection.getOutputStream());
                 out.write(body.getBytes());
                 out.flush();
 
@@ -347,7 +348,12 @@ public class ProvisioningUserPassword extends Fragment implements ProvisioningAc
                 Log.e(TAG, "Network connection problem: " + e.getMessage());
                 return -1;
             } finally {
-                urlConnection.disconnect();
+                try {
+                    if (out != null)
+                        out.close();
+                } catch (IOException ignore) { }
+                if (urlConnection != null)
+                    urlConnection.disconnect();
             }
         }
 

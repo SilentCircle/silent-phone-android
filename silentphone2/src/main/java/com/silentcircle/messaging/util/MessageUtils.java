@@ -780,8 +780,6 @@ public class MessageUtils {
                     }
                     if (message.isRequestReceipt()) {
                         axoMessaging.sendReadNotification(message);
-                        /* Sleep after sending a message to avoid congestion */
-                        Utilities.Sleep(150L);
                     }
 
                     if (conversation == null) {

@@ -112,6 +112,22 @@
 
         <attr name="sp_dialog_text_color" format="reference|color"/>
 
+        <attr name="sp_activity_background_color" format="reference|color"/>
+
+        <!-- Message bubble background and text colours -->
+        <attr name="sp_incoming_message_background_selector" format="reference|color"/>
+        <attr name="sp_incoming_message_text_selector" format="reference|color"/>
+        <attr name="sp_outgoing_message_background_selector" format="reference|color"/>
+        <attr name="sp_outgoing_message_text_selector" format="reference|color"/>
+        <attr name="sp_message_description_text_color" format="reference|color"/>
+        <attr name="sp_error_message_text_selector" format="reference|color"/>
+        <attr name="sp_date_header_text_color" format="reference|color"/>
+        <attr name="sp_date_header_background_tint_color" format="reference|color"/>
+        <attr name="sp_message_send_tint_color" format="reference|color"/>
+        <attr name="sp_message_action_button_background" format="reference|color"/>
+        <attr name="sp_outgoing_message_background" format="reference|color"/>
+        <attr name="sp_incoming_message_background" format="reference|color"/>
+
     </declare-styleable>
 
     <declare-styleable name="CircleImageSelectable">

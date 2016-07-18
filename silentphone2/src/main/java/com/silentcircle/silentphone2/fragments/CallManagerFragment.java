@@ -39,6 +39,7 @@ import android.content.res.TypedArray;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.CardView;
 import android.text.TextUtils;
 import android.util.Log;
@@ -120,55 +121,39 @@ public class CallManagerFragment extends Fragment implements TiviPhoneService.Se
         setHasOptionsMenu(true);
     }
 
-    @TargetApi(Build.VERSION_CODES.M)
-    @SuppressWarnings("deprecation")
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         Resources.Theme theme = mParent.getTheme();
-        if (theme != null) {
-            TypedArray array = theme.obtainStyledAttributes(R.styleable.SpaStyle);
 
-            if (array != null) {
-                if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.M) {
-                    mNormalColor = getResources().getColor(R.color.incall_call_banner_background_color);
-                    mActiveColor = getResources().getColor(R.color.black_blue);
-                    mDragActiveColor = getResources().getColor(R.color.dialpad_secondary_text_color_dark);
-                    mDragEnteredColor = getResources().getColor(R.color.black_green);
+        mNormalColor = ContextCompat.getColor(mParent, R.color.incall_call_banner_background_color);
+        mActiveColor = ContextCompat.getColor(mParent, R.color.black_blue);
+        mDragActiveColor = ContextCompat.getColor(mParent, R.color.dialpad_secondary_text_color_dark);
+        mDragEnteredColor = ContextCompat.getColor(mParent, R.color.black_green);
 
-                    mSasVerifiedColor = array.getColor(R.styleable.SpaStyle_sp_sas_verified_color, getResources().getColor(R.color.white_translucent));
-                    mSecurityTextColorNormal = array.getColor(R.styleable.SpaStyle_sp_dial_text_color, getResources().getColor(android.R.color.white));
-                    mSecurityTextColorGreen = array.getColor(R.styleable.SpaStyle_sp_sec_info_green, getResources().getColor(R.color.indicator_green));
-                    mSecurityTextColorYellow = array.getColor(R.styleable.SpaStyle_sp_sec_info_yellow, getResources().getColor(R.color.indicator_amber));
-                }
-                else {
-                    mNormalColor = getResources().getColor(R.color.incall_call_banner_background_color, theme);
-                    mActiveColor = getResources().getColor(R.color.black_blue, theme);
-                    mDragActiveColor = getResources().getColor(R.color.dialpad_secondary_text_color_dark, theme);
-                    mDragEnteredColor = getResources().getColor(R.color.black_green, theme);
+        final TypedArray array = theme != null ? theme.obtainStyledAttributes(R.styleable.SpaStyle) : null;
 
-                    mSasVerifiedColor = array.getColor(R.styleable.SpaStyle_sp_sas_verified_color, getResources().getColor(R.color.white_translucent, theme));
-                    mSecurityTextColorNormal = array.getColor(R.styleable.SpaStyle_sp_dial_text_color, getResources().getColor(android.R.color.white, theme));
-                    mSecurityTextColorGreen = array.getColor(R.styleable.SpaStyle_sp_sec_info_green, getResources().getColor(R.color.indicator_green, theme));
-                    mSecurityTextColorYellow = array.getColor(R.styleable.SpaStyle_sp_sec_info_yellow, getResources().getColor(R.color.indicator_amber, theme));
-                }
-                mMicOpen = array.getDrawable(R.styleable.SpaStyle_sp_ic_mic_menu);
-                mMicMute = array.getDrawable(R.styleable.SpaStyle_sp_ic_mic_muted_menu);
-                mSpeakerOn = array.getDrawable(R.styleable.SpaStyle_sp_ic_volume_on_menu);
-                mSpeakerOff = array.getDrawable(R.styleable.SpaStyle_sp_ic_volume_muted_menu);
-                array.recycle();
-            }
+        if (array != null) {
+            mSasVerifiedColor = array.getColor(R.styleable.SpaStyle_sp_sas_verified_color, ContextCompat.getColor(mParent, R.color.white_translucent));
+            mSecurityTextColorNormal = array.getColor(R.styleable.SpaStyle_sp_dial_text_color, ContextCompat.getColor(mParent, android.R.color.white));
+            mSecurityTextColorGreen = array.getColor(R.styleable.SpaStyle_sp_sec_info_green, ContextCompat.getColor(mParent, R.color.black_green));
+            mSecurityTextColorYellow = array.getColor(R.styleable.SpaStyle_sp_sec_info_yellow, ContextCompat.getColor(mParent, R.color.black_yellow));
+
+            mMicOpen = array.getDrawable(R.styleable.SpaStyle_sp_ic_mic_menu);
+            mMicMute = array.getDrawable(R.styleable.SpaStyle_sp_ic_mic_muted_menu);
+            mSpeakerOn = array.getDrawable(R.styleable.SpaStyle_sp_ic_volume_on_menu);
+            mSpeakerOff = array.getDrawable(R.styleable.SpaStyle_sp_ic_volume_muted_menu);
+            array.recycle();
         }
         else {
-            // The deprecated version of the functions set the theme to null
-            mSasVerifiedColor = getResources().getColor(R.color.white_translucent);
-            mSecurityTextColorNormal = getResources().getColor(android.R.color.white);
-            mSecurityTextColorGreen = getResources().getColor(R.color.black_green);
-            mSecurityTextColorYellow = getResources().getColor(R.color.black_yellow);
+            mSasVerifiedColor = ContextCompat.getColor(mParent, R.color.white_translucent);
+            mSecurityTextColorNormal = ContextCompat.getColor(mParent, android.R.color.white);
+            mSecurityTextColorGreen = ContextCompat.getColor(mParent, R.color.black_green);
+            mSecurityTextColorYellow = ContextCompat.getColor(mParent, R.color.black_yellow);
 
-            mMicOpen = getResources().getDrawable(R.drawable.ic_action_mic_light);
-            mMicMute = getResources().getDrawable(R.drawable.ic_action_mic_muted_light);
-            mSpeakerOn = getResources().getDrawable(R.drawable.ic_action_volume_on_light);
-            mSpeakerOff = getResources().getDrawable(R.drawable.ic_action_volume_muted_light);
+            mMicOpen = ContextCompat.getDrawable(mParent, R.drawable.ic_action_mic_light);
+            mMicMute = ContextCompat.getDrawable(mParent, R.drawable.ic_action_mic_muted_light);
+            mSpeakerOn = ContextCompat.getDrawable(mParent, R.drawable.ic_action_volume_on_light);
+            mSpeakerOff = ContextCompat.getDrawable(mParent, R.drawable.ic_action_volume_muted_light);
         }
 
         View view = inflater.inflate(R.layout.call_manager_fragment, container, false);

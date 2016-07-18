@@ -29,6 +29,7 @@ package com.silentcircle.silentphone2.dialogs;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.app.Dialog;
 import android.app.DialogFragment;
@@ -226,21 +227,14 @@ public class CryptoInfoDialog extends DialogFragment implements View.OnClickList
         if (TextUtils.isEmpty(res))
             return null;
 
-        Resources resource = ctx.getResources();
         if ("0".compareTo(res) == 0)
-            return Build.VERSION.SDK_INT < Build.VERSION_CODES.M ?
-                    resource.getDrawable(R.drawable.indicator_gray) :
-                    resource.getDrawable(R.drawable.indicator_gray, null);            // Gray
+            return ContextCompat.getDrawable(ctx, R.drawable.indicator_gray);   // Gray
 
         if ("1".compareTo(res) == 0)
-            return Build.VERSION.SDK_INT < Build.VERSION_CODES.M ?
-                    resource.getDrawable(R.drawable.indicator_red) :
-                    resource.getDrawable(R.drawable.indicator_red, null);            // Red
+            return ContextCompat.getDrawable(ctx, R.drawable.indicator_red);    // Red
 
         if ("2".compareTo(res) == 0)
-            return Build.VERSION.SDK_INT < Build.VERSION_CODES.M ?
-                    resource.getDrawable(R.drawable.indicator_green) :
-                    resource.getDrawable(R.drawable.indicator_green, null);          // Green
+            return ContextCompat.getDrawable(ctx, R.drawable.indicator_green);  // Green
 
         return null;
     }

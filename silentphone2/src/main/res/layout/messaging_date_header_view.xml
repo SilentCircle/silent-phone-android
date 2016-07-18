@@ -18,11 +18,13 @@
         android:paddingTop="@dimen/spacing_small"
         android:paddingLeft="@dimen/spacing_large"
         android:paddingRight="@dimen/spacing_large"
-        android:textColor="@color/sc_ng_text_dark"
+        android:textColor="?sp_date_header_text_color"
         android:duplicateParentState="true"
         android:addStatesFromChildren="true"
         android:background="@drawable/bg_message_group_header"
+        android:backgroundTint="?attr/sp_date_header_background_tint_color"
         tools:text="12 September 2015"
+        tools:ignore="UnusedAttribute"
         />
 
 </com.silentcircle.messaging.views.adapters.DateHeaderView>

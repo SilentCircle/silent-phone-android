@@ -5,14 +5,14 @@ Copyright (C) 2012-2016, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
-    * Any redistribution, use, or modification is done solely for personal
+* Any redistribution, use, or modification is done solely for personal
       benefit and not for any commercial purpose or for monetary gain
-    * Redistributions of source code must retain the above copyright
+* Redistributions of source code must retain the above copyright
       notice, this list of conditions and the following disclaimer.
-    * Redistributions in binary form must reproduce the above copyright
+* Redistributions in binary form must reproduce the above copyright
       notice, this list of conditions and the following disclaimer in the
       documentation and/or other materials provided with the distribution.
-    * Neither the name Silent Circle nor the
+* Neither the name Silent Circle nor the
       names of its contributors may be used to endorse or promote products
       derived from this software without specific prior written permission.
 
@@ -52,6 +52,7 @@ public:
       int iBusy;
       unsigned int uiTS;
       long long msg_id;
+      int iSentFromSIPThread;
       
       int *onSentCB(void *p, int iLen);//TODO
       void *pRet;
@@ -73,9 +74,9 @@ public:
    }
    
    
-   int addToQueue(const char *buf, int iLen, ADDR *address, int iSockType);
+   int addToQueue(const char *buf, int iLen, ADDR *address, int iSockType, int iFromSIPThread);
    
-   CTTCP_TLS_SendQ::AA_SEND_Q *getOldest();
+   CTTCP_TLS_SendQ::AA_SEND_Q *getOldest(int mustBeFromSIPThread);
 };
 
 
@@ -126,9 +127,9 @@ public:
    SOCKET createSockBind(int iBind);
    void checkCert(ADDR *address);
    int closeSocket();
-   int sendQueue();
+   int sendQueue(int isSIPRecvThread);
    int sendToReal(const char *buf, int iLen, ADDR *address);
-   int sendTo(const char *buf, int iLen, ADDR *address);
+   int sendTo(const char *buf, int iLen, ADDR *address, int iFromSIPThread = 0);
    int recvFrom(char *buf, int iLen, ADDR *address);
    inline int Bind(int port, BOOL toAny)
    {

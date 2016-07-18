@@ -28,7 +28,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package com.silentcircle.messaging.task;
 
 import android.content.Context;
-import android.content.Intent;
 import android.os.AsyncTask;
 
 import com.silentcircle.messaging.model.Conversation;
@@ -36,10 +35,8 @@ import com.silentcircle.messaging.model.MessageStates;
 import com.silentcircle.messaging.model.event.Message;
 import com.silentcircle.messaging.repository.ConversationRepository;
 import com.silentcircle.messaging.services.AxoMessaging;
-import com.silentcircle.messaging.util.Action;
-import com.silentcircle.messaging.util.Extra;
 import com.silentcircle.messaging.util.MessageUtils;
-import com.silentcircle.silentphone2.Manifest;
+import com.silentcircle.messaging.util.SoundNotifications;
 
 import axolotl.AxolotlNative;
 
@@ -82,6 +79,8 @@ public class SendMessageTask extends AsyncTask<Message, Void, Message> {
                 // update and persist conversation modification time
                 conversation.setLastModified(System.currentTimeMillis());
                 repository.save(conversation);
+
+                SoundNotifications.playSentMessageSound();
             }
 
             // notify about conversation changes

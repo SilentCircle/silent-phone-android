@@ -93,4 +93,5 @@ public class FailureEventView extends CheckableRelativeLayout implements View.On
     public void setText(String text) {
         mText.setText(text);
     }
+
 }

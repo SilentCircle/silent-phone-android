@@ -21,12 +21,10 @@
             android:id="@+id/burn_notice"
             style="@style/Widget.OptionsItem"
             android:layout_marginBottom="@dimen/conversation_option_burn_margin_bottom"
-            app:src="@drawable/ic_burn_wide_enabled"
-            app:srcChecked="@drawable/ic_burn_wide_enabled"
             app:isCheckable="false"
             app:text="@string/burn_notice"
-            app:description="@string/sample_duration" />
-
+            app:description="@string/sample_duration"
+            android:visibility="gone" />
 
         <LinearLayout
             style="@style/Widget.Silence.LinearLayout.Horizontal"
@@ -34,7 +32,8 @@
             android:layout_height="match_parent"
             android:layout_marginLeft="@dimen/conversation_option_seeker_layout_margin_left"
             android:layout_marginBottom="@dimen/conversation_option_seeker_layout_margin_bottom"
-            android:padding="@dimen/spacing_normal">
+            android:padding="@dimen/spacing_normal"
+            android:visibility="gone" >
 
             <ImageView
                 android:id="@+id/inactivity_timeout_icon"

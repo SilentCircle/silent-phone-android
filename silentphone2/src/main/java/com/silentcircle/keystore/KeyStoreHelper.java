@@ -33,7 +33,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.util.Log;
 
-import com.silentcircle.contacts.providers.ScContactsDatabaseHelper;
+import com.silentcircle.contacts.providers.ScCallLogDatabaseHelper;
 import com.silentcircle.messaging.services.AxoMessaging;
 import com.silentcircle.silentphone2.util.ConfigurationUtilities;
 
@@ -126,7 +126,7 @@ public class KeyStoreHelper {
             return false;
         }
         ready = true;
-        ScContactsDatabaseHelper db = ScContactsDatabaseHelper.getInstance(ctx);
+        ScCallLogDatabaseHelper db = ScCallLogDatabaseHelper.getInstance(ctx);
         if (!db.isReady())
             db.onKeyManagerUnlockRequest();
 

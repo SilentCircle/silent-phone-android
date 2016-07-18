@@ -405,7 +405,10 @@ int32_t AppInterfaceImpl::registerAxolotlDevice(string* result)
         LOGGER(ERROR, __func__, " Own conversation not correctly initialized.");
         return NO_OWN_ID;
     }
+
     string data = myIdPair->getPublicKey().serialize();
+
+    delete ownConv;
 
     b64Encode((const uint8_t*)data.data(), data.size(), b64Buffer, MAX_KEY_BYTES_ENCODED*2);
     cJSON_AddStringToObject(root, "identity_key", b64Buffer);
@@ -415,11 +418,7 @@ int32_t AppInterfaceImpl::registerAxolotlDevice(string* result)
 
     list<pair<int32_t, const DhKeyPair* > >* preList = PreKeys::generatePreKeys(store_);
 
-    // Update number of available pre-keys on server
     int32_t size = static_cast<int32_t>(preList->size());
-    ownConv->setPreKeysAvail(size);
-    ownConv->storeConversation();
-    delete ownConv;
 
     for (int32_t i = 0; i < size; i++) {
         pair< int32_t, const DhKeyPair* >pkPair = preList->front();
@@ -594,23 +593,6 @@ vector<int64_t>* AppInterfaceImpl::sendMessageInternal(const string& recipient, 
 
     errorCode_ = OK;
 
-    // Check number of available pre-keys and if below threshold create new pre-keys.
-    AxoConversation* localConv = AxoConversation::loadLocalConversation(ownUser_);
-    if (localConv != NULL) {
-        int32_t numPreKeys = localConv->getPreKeysAvail();
-        LOGGER(DEBUGGING, "Client's pre-key count: ", numPreKeys);
-        if (numPreKeys < MIN_NUM_PRE_KEYS) {
-            string result;
-            int32_t code = Provisioning::newPreKeys(store_, scClientDevId_, authorization_, NUM_PRE_KEYS, &result);
-            LOGGER(WARNING, __func__, "Added new pre-keys, server returned: ", code);
-            if (code == 200) {
-                numPreKeys += NUM_PRE_KEYS;
-                localConv->setPreKeysAvail(numPreKeys);
-                localConv->storeConversation();
-            }
-        }
-        delete localConv;
-    }
     bool toSibling = recipient == ownUser_;
 
     shared_ptr<list<string> > devices = store_->getLongDeviceIds(recipient, ownUser_);
@@ -625,7 +607,9 @@ vector<int64_t>* AppInterfaceImpl::sendMessageInternal(const string& recipient, 
             LOGGER(INFO, __func__, " <--");
             return NULL;
         }
+        unique_lock<mutex> lck(convLock);
         vector<int64_t>* returnMsgIds = transport_->sendAxoMessage(recipient, msgPairs);
+        lck.unlock();
         LOGGER(DEBUGGING, "Sent initial pre-key messages to # devices: ", returnMsgIds->size());
         delete msgPairs;
 
@@ -714,13 +698,13 @@ vector<int64_t>* AppInterfaceImpl::sendMessageInternal(const string& recipient, 
 
         supplementsEncrypted->clear();
     }
-    lck.unlock();
 
     vector<int64_t>* returnMsgIds = NULL;
     if (!msgPairs->empty()) {
         returnMsgIds = transport_->sendAxoMessage(recipient, msgPairs);
         LOGGER(DEBUGGING, "Sent messages to # devices: ", returnMsgIds->size());
     }
+    lck.unlock();
     delete msgPairs;
     LOGGER(INFO, __func__, " <--");
 

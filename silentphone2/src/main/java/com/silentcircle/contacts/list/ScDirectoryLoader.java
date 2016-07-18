@@ -40,7 +40,7 @@ import android.util.JsonReader;
 import android.util.Log;
 
 import com.silentcircle.common.util.AsyncTasks;
-import com.silentcircle.contacts.providers.NameSplitter;
+import com.silentcircle.contacts.utils.NameSplitter;
 import com.silentcircle.keymanagersupport.KeyManagerSupport;
 import com.silentcircle.silentphone2.R;
 import com.silentcircle.silentphone2.activities.DialogHelperActivity;

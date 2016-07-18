@@ -49,7 +49,6 @@ import android.content.Context;
 import android.preference.ListPreference;
 import android.util.AttributeSet;
 
-import com.silentcircle.silentcontacts2.ScContactsContract;
 import com.silentcircle.silentphone2.R;
 
 /**
@@ -78,8 +77,8 @@ public final class DisplayOrderPreference extends ListPreference {
                 mContext.getString(R.string.display_options_view_family_name_first),
         });
         setEntryValues(new String[]{
-                String.valueOf(ScContactsContract.Preferences.DISPLAY_ORDER_PRIMARY),
-                String.valueOf(ScContactsContract.Preferences.DISPLAY_ORDER_ALTERNATIVE),
+                String.valueOf(ContactsPreferences.DISPLAY_ORDER_PRIMARY),
+                String.valueOf(ContactsPreferences.DISPLAY_ORDER_ALTERNATIVE),
         });
         setValue(String.valueOf(mPreferences.getDisplayOrder()));
     }
@@ -92,9 +91,9 @@ public final class DisplayOrderPreference extends ListPreference {
     @Override
     public CharSequence getSummary() {
         switch (mPreferences.getDisplayOrder()) {
-            case ScContactsContract.Preferences.DISPLAY_ORDER_PRIMARY:
+            case ContactsPreferences.DISPLAY_ORDER_PRIMARY:
                 return mContext.getString(R.string.display_options_view_given_name_first);
-            case ScContactsContract.Preferences.DISPLAY_ORDER_ALTERNATIVE:
+            case ContactsPreferences.DISPLAY_ORDER_ALTERNATIVE:
                 return mContext.getString(R.string.display_options_view_family_name_first);
         }
         return null;

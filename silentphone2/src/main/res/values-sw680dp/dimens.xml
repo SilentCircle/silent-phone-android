@@ -20,17 +20,6 @@
  https://developer.android.com/design/patterns/navigation-drawer.html -->
     <dimen name="navigation_drawer_width">320dp</dimen>
 
-    <dimen name="in_call_avatar_button_top_margin">200dp</dimen>
-
-    <dimen name="editor_type_label_width">180dip</dimen>
-    <dimen name="editor_round_button_padding_left">8dip</dimen>
-    <dimen name="editor_round_button_padding_right">8dip</dimen>
-    <dimen name="group_editor_side_padding">16dip</dimen>
-    <dimen name="quick_contact_photo_container_height">360dip</dimen>
-    <dimen name="contact_picker_contact_list_min_height">650dip</dimen>
-    <dimen name="list_visible_scrollbar_padding">48dip</dimen>
-    <dimen name="detail_contact_photo_size">256dip</dimen>
-
     <!-- alert dialog size -->
     <item type="dimen" name="dialog_min_width_minor">45%</item>
     <item type="dimen" name="dialog_min_width_major">72%</item>

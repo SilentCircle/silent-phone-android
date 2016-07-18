@@ -2978,6 +2978,20 @@ public:
    
    #define CMP_SZ(_P,_SZ) (l+1==sizeof(_SZ) && p && strcmp(_P,_SZ)==0)
    
+   int getInfo(void *pEng, const char *key, char *p, int iMax){
+      if(p) p[0] = 0;
+      for(int i=0;i<eAccountCount;i++){
+         CPhoneCons *ret=getAccountByID(i);
+         if(ret == pEng){
+            if(!ret->ph){
+               return 0;
+            }
+            return ret->ph->getInfo(key, p, iMax);
+         }
+      }
+      return 0;
+   }
+   
    const char* sendEngMsg(void *pEng, const char *p){
       
       if(!iStarted || iExiting)return "";
@@ -3328,6 +3342,7 @@ public:
             exit(0);
             return 0;
          }
+         /*
          if(strcmp(p+4,"3357768*")==0){//delprov
             int created_by_user[eAccountCount];
             int iLast=0;
@@ -3348,6 +3363,7 @@ public:
 #endif
             return 0;
          }
+          */
          if(strcmp(p+4,"9787257*")==0){
             int *cc=(int*)findGlobalCfgKey("iClearZRTPCaches");
             if(cc)*cc=1;
@@ -3542,7 +3558,7 @@ public:
       //loadCodecDefaults
       return empty;
    }
-   
+#define i j
    CPhoneCons *empty;
    void clickOnEmpty(){
       if(!empty)return;
@@ -3806,6 +3822,10 @@ void *findBestEng(const char *p, const char *name){
 
 const char* sendEngMsg(void *pEng, const char *p){
    return engMain->sendEngMsg(pEng, p);
+}
+
+int getInfo(void *pEng, const char *key, char *p, int iMax){
+   return engMain->getInfo(pEng, key, p, iMax);
 }
 
 void g_setQWview(void *p){

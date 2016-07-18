@@ -36,6 +36,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.security.Key;
 import java.security.SecureRandom;
+import java.util.Arrays;
 import java.util.Random;
 
 import javax.crypto.Cipher;
@@ -84,9 +85,10 @@ public class CryptoUtil {
             throw new RuntimeException(exception);
         }
     }
-    public static void randomize(byte[] data) { } //TODO
 
-    public static void randomize(double[] data) { } //TODO
+    public static void randomize(double[] data) {
+        Arrays.fill(data, 0.0);
+    };
 
     public static byte [] randomBytes(int byteSize) {
         byte [] byteArray = new byte[byteSize];
@@ -94,10 +96,6 @@ public class CryptoUtil {
         RANDOM.nextBytes(byteArray);
 
         return byteArray;
-    }
-
-    public static int randomInt(int byteSize) {
-        return new BigInteger(randomBytes(byteSize)).intValue();
     }
 
     public static CipherOutputStream getCipherOutputStream(File file, byte[] keyData, byte[] ivData) {

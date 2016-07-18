@@ -76,9 +76,10 @@
                     android:layout_height="wrap_content"
                     android:singleLine="true"
                     android:textAppearance="?android:attr/textAppearanceSmall"
-                    android:textColor="@color/sc_ng_text_grey"
+                    android:textColor="@color/sc_ng_text_grey_2"
                     android:visibility="gone"
-                    tools:text="Subtitle" />
+                    tools:text="Subtitle"
+                    tools:visibility="visible"/>
 
         </LinearLayout>
 

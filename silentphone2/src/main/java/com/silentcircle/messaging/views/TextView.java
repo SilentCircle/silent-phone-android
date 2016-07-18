@@ -28,9 +28,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package com.silentcircle.messaging.views;
 
 import android.content.Context;
+import android.support.v7.widget.AppCompatTextView;
 import android.util.AttributeSet;
 
-public class TextView extends android.widget.TextView {
+public class TextView extends AppCompatTextView {
 
     public TextView(Context context) {
         super(context);

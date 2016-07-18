@@ -27,6 +27,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 package com.silentcircle.messaging.activities;
 
+import android.Manifest;
+import android.animation.LayoutTransition;
+import android.annotation.SuppressLint;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.content.BroadcastReceiver;
@@ -36,13 +39,19 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.content.pm.PackageManager;
+import android.content.res.Resources;
+import android.graphics.Rect;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.preference.PreferenceManager;
 import android.provider.ContactsContract;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.content.FileProvider;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
@@ -60,20 +69,25 @@ import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
+import android.widget.AdapterView;
 import android.widget.EditText;
+import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.QuickContactBadge;
+import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.silentcircle.SilentPhoneApplication;
 import com.silentcircle.common.list.ContactEntry;
 import com.silentcircle.common.util.DialerUtils;
+import com.silentcircle.common.util.ExplainPermissionDialog;
 import com.silentcircle.common.util.SearchUtil;
 import com.silentcircle.common.util.ViewUtil;
+import com.silentcircle.common.widget.KeyboardNotifierLinearLayout;
 import com.silentcircle.contacts.ContactPhotoManagerNew;
 import com.silentcircle.contacts.ContactsUtils;
 import com.silentcircle.contacts.calllognew.IntentProvider;
@@ -112,6 +126,7 @@ import com.silentcircle.messaging.util.AvatarUtils;
 import com.silentcircle.messaging.util.BurnDelay;
 import com.silentcircle.messaging.util.ContactsCache;
 import com.silentcircle.messaging.util.ConversationUtils;
+import com.silentcircle.messaging.util.DeviceInfo;
 import com.silentcircle.messaging.util.Extra;
 import com.silentcircle.messaging.util.IOUtils;
 import com.silentcircle.messaging.util.MessageUtils;
@@ -119,8 +134,11 @@ import com.silentcircle.messaging.util.MessagingPreferences;
 import com.silentcircle.messaging.util.Notifications;
 import com.silentcircle.messaging.util.SoundNotifications;
 import com.silentcircle.messaging.views.ConversationOptionsDrawer;
+import com.silentcircle.messaging.views.RelativeLayout;
 import com.silentcircle.messaging.views.ScreenLockView;
 import com.silentcircle.messaging.views.UploadView;
+import com.silentcircle.messaging.views.VerticalSeekBar;
+import com.silentcircle.silentphone2.BuildConfig;
 import com.silentcircle.silentphone2.R;
 import com.silentcircle.silentphone2.activities.DialerActivity;
 import com.silentcircle.silentphone2.dialogs.InfoMsgDialogFragment;
@@ -131,6 +149,8 @@ import com.silentcircle.silentphone2.util.CallState;
 import com.silentcircle.silentphone2.util.ConfigurationUtilities;
 import com.silentcircle.silentphone2.util.Utilities;
 import com.silentcircle.silentphone2.views.SearchEditTextLayout;
+import com.silentcircle.silentphone2.views.gridview.GridViewAdapter;
+import com.silentcircle.silentphone2.views.gridview.GridViewAdapter.GridViewItem;
 import com.silentcircle.userinfo.LoadUserInfo;
 
 import org.json.JSONException;
@@ -147,13 +167,16 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
 
+
 /**
  *
  */
 public class ConversationActivity extends AppCompatActivity implements
         ChatFragment.Callback, OnListFragmentScrolledListener, SearchFragment.HostInterface,
         AxoMessaging.AxoMessagingStateCallback, ScreenLockView.OnUnlockListener,
-        TiviPhoneService.ServiceStateChangeListener {
+        TiviPhoneService.ServiceStateChangeListener, ExplainPermissionDialog.AfterReading,
+        KeyboardNotifierLinearLayout.KeyboardListener {
+
 
     @SuppressWarnings("unused")
     private static final String TAG = ConversationActivity.class.getSimpleName();
@@ -169,6 +192,18 @@ public class ConversationActivity extends AppCompatActivity implements
 
     /** Limit after which unread message count is displayed with greater than sign */
     public static final int UNREAD_MESSAGE_COUNT_DISPLAY_LIMIT = 10;
+
+
+    public static final int PERMISSIONS_REQUEST_LOCATION = 1;
+
+    private static final int INTENT_CAPTURE_PHOTO = 0;
+    private static final int INTENT_CAPTURE_VIDEO = 1;
+    private static final int INTENT_RECORD_AUDIO = 2;
+    private static final int INTENT_PICK_MEDIA = 3;
+    private static final int INTENT_PICK_FILE = 4;
+    private static final int INTENT_PICK_CONTACT = 5;
+
+    private static final String KEYBOARD_HEIGHT_KEY = "keyboard_height";
 
     protected Conversation mConversation;
     protected String mConversationPartnerId;
@@ -190,6 +225,7 @@ public class ConversationActivity extends AppCompatActivity implements
     private Uri mPendingVideoCaptureUri;
     private Uri mPendingAudioCaptureUri;
     private static final int R_id_share = 0xFFFF & R.id.share;
+    private GridView mAttachmentGrid;
 
     private Toolbar mToolbar;
     private QuickContactBadge mAvatarView;
@@ -244,6 +280,10 @@ public class ConversationActivity extends AppCompatActivity implements
     private EditText mSearchView;
     private String mSearchQuery;
 
+    private boolean mIsKeyboardVisible;
+    private boolean mShouldShowAttachmentGrid;
+    private int mKeyboardHeight;
+
     private Runnable mOpenActionBarRunnable = new Runnable() {
         public void run() {
             openActionBarQueryField();
@@ -252,8 +292,9 @@ public class ConversationActivity extends AppCompatActivity implements
 
     private Runnable mOpenMessageInputRunnable = new Runnable() {
         public void run() {
-            if(mComposeText != null) {
+            if (mComposeText != null) {
                 DialerUtils.showInputMethod(mComposeText);
+                setBurnContainerVisibility(View.GONE);
             }
         }
     };
@@ -262,30 +303,22 @@ public class ConversationActivity extends AppCompatActivity implements
 
         @Override
         public void afterTextChanged(Editable editable) {
-            if(editable == mComposeText.getEditableText()) {
-                ImageView buttonSend = (ImageView) findViewById(R.id.compose_send);
-                Integer imageResource = (Integer) buttonSend.getTag();
-                int newImageResource = editable.length() > 0
-                        ? R.drawable.ic_action_send
-                        : R.drawable.ic_action_attachment_dark;
-                if (imageResource == null || imageResource != newImageResource) {
-                    buttonSend.setTag(newImageResource);
+            setBurnContainerVisibility(View.GONE);
+            ImageView buttonAttach = (ImageView) findViewById(R.id.compose_attach);
 
-                    if (imageResource == null && newImageResource == R.drawable.ic_action_attachment_dark) {
-                        // Special case
-                        // Don't animate to the attachment icon on activity creation - it is
-                        // already that icon by default (tag (imageResource) is null at this point)
-                    } else {
-                        ViewUtil.animateImageChange(ConversationActivity.this, buttonSend, newImageResource);
-                    }
+            if (editable.length() > 0) {
+                if (buttonAttach.getVisibility() == View.VISIBLE) {
+                    ViewUtil.scaleToInvisible(buttonAttach);
                 }
+            } else {
+                ViewUtil.scaleToVisible(buttonAttach);
+            }
 
-                if(editable.toString().length() > MESSAGE_TEXT_INPUT_LENGTH_LIMIT) {
-                    Toast.makeText(ConversationActivity.this, getString(R.string.messaging_compose_length_error), Toast.LENGTH_SHORT).show();
-
-                    mComposeText.setText(editable.subSequence(0, MESSAGE_TEXT_INPUT_LENGTH_LIMIT));
-                    mComposeText.setSelection(mComposeText.getText().length());
-                }
+            if (editable == mComposeText.getEditableText() && editable.length() > MESSAGE_TEXT_INPUT_LENGTH_LIMIT) {
+                Toast.makeText(ConversationActivity.this,
+                        getString(R.string.messaging_compose_length_error), Toast.LENGTH_SHORT).show();
+                mComposeText.setText(editable.subSequence(0, MESSAGE_TEXT_INPUT_LENGTH_LIMIT));
+                mComposeText.setSelection(mComposeText.getText().length());
             }
         }
 
@@ -310,6 +343,8 @@ public class ConversationActivity extends AppCompatActivity implements
 
         @Override
         public void onTextChanged(CharSequence s, int start, int before, int count) {
+            setBurnContainerVisibility(View.GONE);
+
             final String newText = s.toString();
             if (newText.equals(mSearchQuery)) {
                 // If the query hasn't changed (perhaps due to activity being destroyed
@@ -340,11 +375,13 @@ public class ConversationActivity extends AppCompatActivity implements
         @Override
         public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
             if (actionId == EditorInfo.IME_ACTION_GO) {
-                if (!mInSearchView)
+                if (!mInSearchView) {
                     return false;
+                }
                 String query = mSearchFragment.getQueryString();
-                if (!TextUtils.isEmpty(query) && Utilities.isValidSipUsername(query))
+                if (!TextUtils.isEmpty(query) && Utilities.isValidSipUsername(query)) {
                     mSearchFragment.validateUser(query);
+                }
                 return true;
             }
             return false;
@@ -357,6 +394,7 @@ public class ConversationActivity extends AppCompatActivity implements
         public void onFocusChange(View v, boolean hasFocus) {
             /* when view receives focus, scroll to bottom of conversation */
             if (hasFocus && !mInSearchView) {
+                setBurnContainerVisibility(View.GONE);
                 scrollToBottom();
             }
         }
@@ -372,9 +410,97 @@ public class ConversationActivity extends AppCompatActivity implements
                             android.R.string.ok, -1);
                     return;
                 }
-
-                selectFile();
+                toggleAttachmentGrid();
             }
+        }
+    };
+
+    private View.OnClickListener mBurnButtonListener = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            // toggle burn slider visibility
+            View burnDelayContainer = findViewById(R.id.burn_delay_value);
+            int visibility = burnDelayContainer.getVisibility() == View.VISIBLE ? View.GONE : View.VISIBLE;
+            setBurnContainerVisibility(visibility);
+        }
+    };
+
+    private View.OnTouchListener mSeekerTouchListener = new View.OnTouchListener() {
+
+        @Override
+        public boolean onTouch(View v, MotionEvent event) {
+
+            int action = event.getAction();
+
+            switch (action) {
+                case MotionEvent.ACTION_DOWN:
+                    v.getParent().requestDisallowInterceptTouchEvent(true);
+                    break;
+
+                case MotionEvent.ACTION_UP:
+                    v.getParent().requestDisallowInterceptTouchEvent(false);
+                    break;
+            }
+
+            v.onTouchEvent(event);
+            return true;
+        }
+    };
+
+    VerticalSeekBar.OnVerticalSeekBarChangeListener mSeekerChangeListener = new VerticalSeekBar.OnVerticalSeekBarChangeListener() {
+
+        @Override
+        public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+            // Ignore, handled by seek bar itself
+        }
+
+        @Override
+        public void onStartTrackingTouch(SeekBar seekBar) {
+            // Ignore
+        }
+
+        @Override
+        public void onStopTrackingTouch(SeekBar seekBar) {
+            int progress = seekBar.getProgress();
+            setBurnDelay(BurnDelay.Defaults.getDelay(progress));
+        }
+
+        @Override
+        public void onPositionChanged(SeekBar seekBar, int progress, int verticalPosition) {
+            android.widget.TextView textView = (android.widget.TextView) findViewById(R.id.burn_delay_description);
+            if (textView != null) {
+                textView.setText(BurnDelay.Defaults.getAlternateLabel(ConversationActivity.this, progress));
+                int specWidth = View.MeasureSpec.makeMeasureSpec(0 /* any */, View.MeasureSpec.UNSPECIFIED);
+                textView.measure(specWidth, specWidth);
+                int questionHeight = textView.getMeasuredHeight();
+                RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams) textView.getLayoutParams();
+                int topMargin = verticalPosition - (questionHeight / 2);
+                params.setMargins(params.leftMargin, topMargin, params.rightMargin, params.bottomMargin);
+            }
+        }
+
+        @Override
+        public void onVisibilityChanged(int visibility) {
+            View view = findViewById(R.id.burn_delay_description);
+            if (view != null) {
+                view.setVisibility(visibility);
+            }
+        }
+    };
+
+    /* Listener for burn delay container layout changes */
+    LayoutTransition.TransitionListener mSeekerContainerTransitionListener =
+            new LayoutTransition.TransitionListener() {
+
+        @Override
+        public void endTransition(LayoutTransition transition, ViewGroup container, View view,
+                int transitionType) {
+            TextView burnDelayDescription = (TextView) findViewById(R.id.burn_delay_description);
+            burnDelayDescription.requestLayout();
+        }
+
+        @Override
+        public void startTransition(LayoutTransition transition, ViewGroup container, View view,int transitionType) {
         }
     };
 
@@ -439,6 +565,7 @@ public class ConversationActivity extends AppCompatActivity implements
 
         @Override
         public void onDrawerOpened(View drawerView) {
+            setBurnContainerVisibility(View.GONE);
             hideSoftKeyboard(R.id.compose_text);
             mOptionsMenuItem.setIcon(R.drawable.ic_drawer_open);
         }
@@ -453,6 +580,42 @@ public class ConversationActivity extends AppCompatActivity implements
             // Nothing to do
         }
     };
+
+    /**
+     * Callback from ExplainPermissionDialog after user read the explanation.
+     *
+     * After we explained the facts and the user read the explanation ask for permission again.
+     *
+     * @param token The token from ExplainPermissionDialog#showExplanation() call
+     * @param callerBundle the optional bundle from ExplainPermissionDialog#showExplanation() call
+     */
+    @Override
+    public void explanationRead(final int token, final Bundle callerBundle) {
+        switch (token) {
+            case PERMISSIONS_REQUEST_LOCATION:
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, token);
+                break;
+            default:
+                break;
+        }
+    }
+
+    // We ask for permissions only if the user enables location, thus use 'true' when calling
+    // the location enable functions
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String permissions[], @NonNull int[] grantResults) {
+        switch (requestCode) {
+            case PERMISSIONS_REQUEST_LOCATION: {
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    getOptionsDrawer().checkLocationAfterPermission(true);
+                }
+                else {
+                    getOptionsDrawer().checkLocationAfterPermission(false);
+                }
+            }
+            break;
+        }
+    }
 
     /**
      * If the search term is empty and the user closes the soft keyboard, close the search UI.
@@ -505,6 +668,15 @@ public class ConversationActivity extends AppCompatActivity implements
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+
+        ViewUtil.setBlockScreenshots(this);
+
+        // apply theme to the activity
+        int theme = MessagingPreferences.getInstance(this).getMessageTheme();
+        setTheme(theme == MessagingPreferences.INDEX_THEME_DARK
+                ? R.style.SilentPhoneConversationThemeDark
+                : R.style.SilentPhoneConversationThemeLight);
 
         mSavedInstanceState = savedInstanceState;
 
@@ -610,13 +782,6 @@ public class ConversationActivity extends AppCompatActivity implements
                 ? R.drawable.ic_location_selected : R.drawable.ic_location_unselected);
         shareLocation.setVisible(locationSharingEnabled);
 
-        MenuItem burnNotice = menu.findItem(R.id.action_burn_notice);
-        boolean burnNoticeEnabled = (conversation != null && conversation.hasBurnNotice())
-                && visible;
-        burnNotice.setIcon(burnNoticeEnabled
-                ? R.drawable.ic_burn_enabled : R.drawable.ic_burn_disabled);
-        burnNotice.setVisible(burnNoticeEnabled);
-
         // TODO: determine whether call is with particular person
         boolean hasCall = TiviPhoneService.calls.getCallCount() > 0;
         MenuItem silentPhoneCall = menu.findItem(R.id.action_silent_phone_call);
@@ -629,6 +794,8 @@ public class ConversationActivity extends AppCompatActivity implements
             mOptionsMenuItem.setIcon(mDrawerLayout.isDrawerOpen(GravityCompat.END)
                     ? R.drawable.ic_drawer_open : R.drawable.ic_drawer_closed);
         }
+
+        ViewUtil.tintMenuIcons(this, menu);
 
         return super.onCreateOptionsMenu(menu);
     }
@@ -655,15 +822,6 @@ public class ConversationActivity extends AppCompatActivity implements
                 toggleOptionsDrawer();
                 consumed = true;
                 break;
-            case R.id.action_burn_notice:
-                /*
-                 * do not allow user to switch burn off
-                 * setBurnNotice(false);
-                 * for now just pop out the options
-                 */
-                toggleOptionsDrawer();
-                consumed = true;
-                break;
             case R.id.action_share_location:
                 setLocationSharing(false);
                 consumed = true;
@@ -687,6 +845,9 @@ public class ConversationActivity extends AppCompatActivity implements
             // close search view
             exitSearchUI(true);
         }
+        else if (mAttachmentGrid.getVisibility() == View.VISIBLE) {
+            hideAttachmentGrid();
+        }
         else {
             super.onBackPressed();
         }
@@ -694,6 +855,8 @@ public class ConversationActivity extends AppCompatActivity implements
 
     @Override
     protected void onDestroy() {
+        KeyboardNotifierLinearLayout notifier = (KeyboardNotifierLinearLayout) findViewById(R.id.conversation_root);
+        notifier.setListener(null);
         mDestroyed = true;
         cancelAutoRefresh();
         doUnbindService();
@@ -722,11 +885,26 @@ public class ConversationActivity extends AppCompatActivity implements
 
         String partner = getPartner();
 
+        KeyboardNotifierLinearLayout notifier = (KeyboardNotifierLinearLayout) findViewById(R.id.conversation_root);
+        notifier.setListener(this);
+
         mConversation = getConversation(getPartner());
         SendMessageOnClick sendMessageOnClickListener =
                 createSendMessageOnClickListener(mConversation);
         findViewById(R.id.compose_send).setOnClickListener(sendMessageOnClickListener);
         findViewById(R.id.compose_attach).setOnClickListener(mAttachButtonListener);
+        findViewById(R.id.burn).setOnClickListener(mBurnButtonListener);
+
+        @SuppressLint("WrongViewCast")
+        VerticalSeekBar seeker = (VerticalSeekBar) findViewById(R.id.burn_delay_value);
+        seeker.setMax(BurnDelay.Defaults.numLevels() - 1);
+        seeker.setProgress(mConversation.hasBurnNotice() ? BurnDelay.Defaults.getLevel(mConversation.getBurnDelay()) : 0);
+        seeker.setOnTouchListener(mSeekerTouchListener);
+        seeker.setOnVerticalSeekBarChangeListener(mSeekerChangeListener);
+
+        LayoutTransition mainLayoutTransition = ((ViewGroup) findViewById(R.id.burn_delay_container)).getLayoutTransition();
+        mainLayoutTransition.addTransitionListener(mSeekerContainerTransitionListener);
+        findViewById(R.id.burn_delay_container).setVisibility(View.VISIBLE);
 
         mComposeLayout = (ViewGroup) findViewById(R.id.compose);
         hideSoftKeyboard(R.id.compose_text);
@@ -774,9 +952,64 @@ public class ConversationActivity extends AppCompatActivity implements
         mPasswordOverlay = (ScreenLockView) findViewById(R.id.password_overlay);
         mPasswordOverlay.setOnUnlockListener(this);
 
-        ViewGroup overlay = (ViewGroup) findViewById(R.id.overlay);
+        View overlay = findViewById(R.id.conversation_progress);
         overlay.setVisibility(mIsAxolotlRegistered ? View.GONE : View.VISIBLE);
+
+        mAttachmentGrid = (GridView) findViewById(R.id.attachment_grid);
+        mAttachmentGrid.setVisibility(View.GONE);
+
+        // initialize the attachment grid
+        List<GridViewItem> mItems = new ArrayList<>();
+        Resources resources = getResources();
+
+        mItems.add(new GridViewItem(ContextCompat.getDrawable(this, R.drawable.ic_photo_camera_white),
+                resources.getString(R.string.take_photo), INTENT_CAPTURE_PHOTO));
+        mItems.add(new GridViewItem(ContextCompat.getDrawable(this, R.drawable.ic_photo_library_white),
+                resources.getString(R.string.gallery), INTENT_PICK_MEDIA));
+        mItems.add(new GridViewItem(ContextCompat.getDrawable(this, R.drawable.ic_videocam_white),
+                resources.getString(R.string.take_video), INTENT_CAPTURE_VIDEO));
+        mItems.add(new GridViewItem(ContextCompat.getDrawable(this, R.drawable.ic_mic_white),
+                resources.getString(R.string.record_audio), INTENT_RECORD_AUDIO));
+        mItems.add(new GridViewItem(ContextCompat.getDrawable(this, R.drawable.ic_insert_drive_file_white),
+                resources.getString(R.string.send_file), INTENT_PICK_FILE));
+        mItems.add(new GridViewItem(ContextCompat.getDrawable(this, R.drawable.ic_contact_phone_white),
+                resources.getString(R.string.share_contact), INTENT_PICK_CONTACT));
+        mAttachmentGrid.setAdapter(new GridViewAdapter(this, mItems));
+        mAttachmentGrid.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                GridViewAdapter.ViewHolder holder = (GridViewAdapter.ViewHolder) view.getTag();
+                int intentCode = (int) holder.userData;
+                hideAttachmentGrid();
+                Intent intent;
+                switch (intentCode) {
+                    case INTENT_CAPTURE_PHOTO:
+                        intent = createCaptureImageIntent();
+                        break;
+                    case INTENT_CAPTURE_VIDEO:
+                        intent = createCaptureVideoIntent();
+                        break;
+                    case INTENT_PICK_MEDIA:
+                        intent = createSelectMediaIntent();
+                        break;
+                    case INTENT_PICK_FILE:
+                        intent = createSelectFileIntent("*/*");
+                        break;
+                    case INTENT_PICK_CONTACT:
+                        intent = createSelectContactIntent();
+                        break;
+                    case INTENT_RECORD_AUDIO:
+                        intent = createCaptureAudioIntent();
+                        break;
+                    default:
+                        return;
+
+                }
+                startActivityForResult(intent, R_id_share);
+            }
+        });
     }
+
 
     @Override
     public void onListFragmentScrollStateChange(int scrollState) {
@@ -815,7 +1048,6 @@ public class ConversationActivity extends AppCompatActivity implements
         /* start refresh task as some messages can be in unread state, switch to read is necessary */
         refresh(true);
     }
-
 
     protected void setLocationSharing(boolean enabled) {
         ConversationRepository repository = ConversationUtils.getConversations(getApplicationContext());
@@ -974,7 +1206,15 @@ public class ConversationActivity extends AppCompatActivity implements
     protected void restoreActionBar() {
         mToolbar = (Toolbar) findViewById(R.id.conversation_toolbar);
         mToolbar.setContentInsetsAbsolute(0, 0);
-        ContactEntry contactEntry = ContactsCache.getContactEntryFromCache(getPartner());
+        final String partnerId = getPartner();
+        ContactEntry contactEntry = ContactsCache.getContactEntryFromCache(partnerId);
+
+        String verifyInfo = DeviceInfo.getDeviceVerificationString(getApplicationContext(), partnerId);
+        if (verifyInfo != null) {
+            TextView subTitle = (TextView) mToolbar.findViewById(R.id.sub_title);
+            subTitle.setVisibility(View.VISIBLE);
+            subTitle.setText(verifyInfo);
+        }
 
         String displayName = ConversationUtils.resolveDisplayName(contactEntry, getConversation());
         mTitle = (TextView) mToolbar.findViewById(R.id.title);
@@ -1179,25 +1419,13 @@ public class ConversationActivity extends AppCompatActivity implements
             @Override
             public void onClick(View button) {
                 // TODO: notify about account expiration before sending message
-                // TODO: validate session
-                // TODO: add message as attachment if it is too long
                 CharSequence text = mSource.getText();
 
                 // refresh conversation, it can be changed
                 mConversation = getConversation();
 
                 if (text.length() <= 0) {
-                    if(!LoadUserInfo.canSendAttachments(getApplicationContext())) {
-                        showDialog(R.string.information_dialog, R.string.basic_feature_info,
-                                android.R.string.ok, -1);
-
-                        super.onClick(button);
-
-                        return;
-                    }
-
-                    hideSoftKeyboard(R.id.compose_text);
-                    selectFile();
+                    // Do nothing
                 } else if (text.length() > MESSAGE_TEXT_LENGTH_LIMIT) {
                     // Message is too long to send itself over SIP - send it as an attachment
                     handleTextAttachment(text.toString());
@@ -1367,7 +1595,7 @@ public class ConversationActivity extends AppCompatActivity implements
         //FIXME: Hotfix
         File imagePath = new File(getFilesDir(), "captured/image");
         if(!imagePath.exists()) imagePath.mkdirs();
-        Uri uri = FileProvider.getUriForFile(this, "com.silentcircle.files", new File(imagePath, PictureProvider.JPG_FILE_NAME));
+        Uri uri = FileProvider.getUriForFile(this, BuildConfig.AUTHORITY_BASE + ".files", new File(imagePath, PictureProvider.JPG_FILE_NAME));
         mPendingImageCaptureUri = uri;
 
         intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
@@ -1375,6 +1603,7 @@ public class ConversationActivity extends AppCompatActivity implements
         intent.setClipData(ClipData.newRawUri(null, uri));
         intent.putExtra(MediaStore.EXTRA_OUTPUT, uri);
         intent.putExtra(MediaStore.EXTRA_SIZE_LIMIT, 10 * 1024 * 1024L);
+        intent.putExtra("return-data", true);
 
         return intent;
     }
@@ -1392,6 +1621,12 @@ public class ConversationActivity extends AppCompatActivity implements
         Uri uri = AudioProvider.CONTENT_URI;
         mPendingAudioCaptureUri = uri;
         intent.setDataAndType(uri, "audio/mp4");
+        return intent;
+    }
+
+    private Intent createSelectMediaIntent() {
+        // opens photo/album app to pick a picture
+        Intent intent = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
         return intent;
     }
 
@@ -1429,8 +1664,14 @@ public class ConversationActivity extends AppCompatActivity implements
                     File attachmentFile;
 
                     String mimeType = attachmentMetaDataJson.getString("MimeType");
+                    String exportedFilename = attachmentMetaDataJson.optString("ExportedFileName");
                     String fileName = attachmentMetaDataJson.getString("FileName");
                     String displayName = attachmentMetaDataJson.optString("DisplayName");
+                    String hash = attachmentMetaDataJson.optString("SHA256");
+
+                    if (!TextUtils.isEmpty(exportedFilename)) {
+                        fileName = exportedFilename;
+                    }
 
                     if(!exported) {
                         attachmentFile = AttachmentUtils.getFile(messageId, this);
@@ -1446,6 +1687,7 @@ public class ConversationActivity extends AppCompatActivity implements
                     Extra.ID.to(fileViewerIntent, messageId);
                     if (event != null && event instanceof Message) {
                         Extra.TEXT.to(fileViewerIntent, fileName);
+                        Extra.ALIAS.to(fileViewerIntent, hash);
                         Extra.DISPLAY_NAME.to(fileViewerIntent, displayName);
                     }
                     startActivity(fileViewerIntent);
@@ -1592,11 +1834,9 @@ public class ConversationActivity extends AppCompatActivity implements
                     case RECEIVE_MESSAGE:
                         /*
                          * Sound notification for an arrived message for another conversation
-                         * Play sound and stop broadcast insetad of showing message alarm notification.
+                         * Play sound and stop broadcast instead of showing message alarm notification.
                          */
-                        boolean soundsEnabled =
-                                MessagingPreferences.getInstance(context).getMessageSoundsEnabled();
-                        if (!forCurrentConversation && soundsEnabled) {
+                        if (!forCurrentConversation) {
                             SoundNotifications.playReceiveMessageSound();
                             setUnreadMessageCount();
                         }
@@ -1678,15 +1918,20 @@ public class ConversationActivity extends AppCompatActivity implements
     @Override
     public void onActionModeCreated(ActionMode mode) {
         mActionMode = mode;
+        ViewUtil.tintMenuIcons(this, mode.getMenu());
         findViewById(R.id.compose).setVisibility(View.GONE);
         hideSoftKeyboard(R.id.compose_text);
         mDrawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
+        setBurnContainerVisibility(View.GONE);
+        findViewById(R.id.burn_delay_container).setVisibility(View.GONE);
     }
 
     @Override
     public void onActionModeDestroyed() {
         mActionMode = null;
-        findViewById(R.id.compose).setVisibility(mInSearchView ? View.GONE : View.VISIBLE);
+        int visibility = mInSearchView ? View.GONE : View.VISIBLE;
+        findViewById(R.id.compose).setVisibility(visibility);
+        findViewById(R.id.burn_delay_container).setVisibility(visibility);
         if (!mInSearchView) {
             mDrawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED);
         }
@@ -1729,12 +1974,7 @@ public class ConversationActivity extends AppCompatActivity implements
     protected void performAction(int actionID, final Event event) {
         switch (actionID) {
             case R.id.burn:
-                boolean soundsEnabled =
-                        MessagingPreferences.getInstance(
-                                SilentPhoneApplication.getAppContext()).getMessageSoundsEnabled();
-                if (soundsEnabled) {
-                    SoundNotifications.playBurnMessageSound();
-                }
+                SoundNotifications.playBurnMessageSound();
                 MessageUtils.burnMessage(this, event);
                 break;
             case R.id.delete:
@@ -1792,8 +2032,7 @@ public class ConversationActivity extends AppCompatActivity implements
                     AsyncUtils.execute(task, message);
                 }
             }
-        }
-        else {
+        } else {
             Log.e(TAG, "Resend requested for other type of event than OutgoingMessage");
         }
     }
@@ -1836,6 +2075,7 @@ public class ConversationActivity extends AppCompatActivity implements
         actionBar.setDisplayShowCustomEnabled(true);
         ((TextView)mToolbar.findViewById(R.id.title)).setText(null);
         ((TextView)mToolbar.findViewById(R.id.sub_title)).setText(null);
+        ((TextView)mToolbar.findViewById(R.id.sub_title)).setVisibility(View.GONE);
         ((SearchEditTextLayout)actionBar.getCustomView()).expand(false /* animate */, true /* requestFocus */);
         ((SearchEditTextLayout)actionBar.getCustomView()).showBackButton(false);
     }
@@ -1885,6 +2125,7 @@ public class ConversationActivity extends AppCompatActivity implements
         hideSoftKeyboard(R.id.compose_text);
         mDrawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
         invalidateActionBar(mInSearchView);
+        findViewById(R.id.burn_delay_container).setVisibility(View.GONE);
     }
 
     protected void exitSearchUI(boolean transitioning) {
@@ -1924,6 +2165,7 @@ public class ConversationActivity extends AppCompatActivity implements
         if (transitioning) {
             restoreActionBar();
         }
+        findViewById(R.id.burn_delay_container).setVisibility(View.VISIBLE);
     }
 
     // Get a possible pending attachment file to send
@@ -1996,6 +2238,72 @@ public class ConversationActivity extends AppCompatActivity implements
             if (view != null) {
                 DialerUtils.hideInputMethod(view);
                 view.clearFocus();
+            }
+        }
+    }
+
+    @Override
+    public void onKeyboardHeightChanged(boolean isVisible, int keyboardHeight) {
+        mIsKeyboardVisible = isVisible;
+        // Store keyboard's height to adjust adjustment grid's height
+        if (isVisible && keyboardHeight > ViewUtil.dp(200.f, this)) {
+            mKeyboardHeight = keyboardHeight;
+            PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).edit().
+                    putInt(KEYBOARD_HEIGHT_KEY, mKeyboardHeight).commit();
+        }
+
+        if (isVisible) {
+            hideAttachmentGrid();
+        }
+        else {
+            if (mShouldShowAttachmentGrid) {
+                showAttachmentGrid();
+            }
+        }
+    }
+
+    private void showAttachmentGrid() {
+        mShouldShowAttachmentGrid = false;
+        if (mAttachmentGrid.getVisibility() == View.VISIBLE) {
+            return;
+        }
+        // Adjust height so that it matches the keyboard's height
+        ViewGroup.LayoutParams params = mAttachmentGrid.getLayoutParams();
+        if (mKeyboardHeight == 0) {
+            mKeyboardHeight = PreferenceManager.getDefaultSharedPreferences(getApplicationContext())
+                    .getInt(KEYBOARD_HEIGHT_KEY, params.height);
+        }
+        params.height = mKeyboardHeight;
+        mAttachmentGrid.setLayoutParams(params);
+        mAttachmentGrid.setVisibility(View.VISIBLE);
+    }
+
+    private void hideAttachmentGrid() {
+        mShouldShowAttachmentGrid = false;
+        if (mAttachmentGrid.getVisibility() == View.GONE) {
+            return;
+        }
+        mAttachmentGrid.setVisibility(View.GONE);
+        mAttachmentGrid.setSelection(0);
+    }
+
+    private void toggleAttachmentGrid() {
+        /*
+         * In case the keyboard is visible, we can't show the attachment grid right away, or else
+         * a graphic glitch will occur. So, we hide the soft keyboard and when
+         * "onKeyboardHeightChanged()" is fired, we show the attachment grid.
+         */
+        boolean isGridVisible = mAttachmentGrid.getVisibility() == View.VISIBLE;
+        if (isGridVisible) {    // should hide grid
+            hideAttachmentGrid();
+        }
+        else {                  // should show grid
+            if (mIsKeyboardVisible) {
+                hideSoftKeyboard(R.id.compose_text);
+                mShouldShowAttachmentGrid = true;
+            }
+            else {
+                showAttachmentGrid();
             }
         }
     }
@@ -2095,6 +2403,40 @@ public class ConversationActivity extends AppCompatActivity implements
             unbindService(phoneConnection);
             mPhoneIsBound = false;
         }
+    }
+
+    private void setBurnContainerVisibility(final int visibility) {
+        final View burnDelay = findViewById(R.id.burn_delay_value);
+        if (burnDelay.getVisibility() == visibility) {
+            return;
+        }
+        burnDelay.setVisibility(visibility);
+    }
+
+    private Rect mHitRectangle = new Rect();
+    private int[] mScreenLocation = new int[2];
+
+    public boolean dispatchTouchEvent(MotionEvent event) {
+        View burnButton = findViewById(R.id.burn);
+        int visibility = burnButton.getVisibility();
+        if (visibility == View.VISIBLE && event.getAction() == MotionEvent.ACTION_DOWN) {
+            View burnDelayContainer = findViewById(R.id.burn_delay_container);
+            burnDelayContainer.getHitRect(mHitRectangle);
+            burnDelayContainer.getLocationOnScreen(mScreenLocation);
+            mHitRectangle.offset(mScreenLocation[0] - burnDelayContainer.getLeft(), mScreenLocation[1] - burnDelayContainer.getTop());
+            boolean inside = mHitRectangle.contains((int) event.getRawX(), (int) event.getRawY());
+            if (!inside) {
+                View seeker = findViewById(R.id.burn_delay_value);
+                seeker.getHitRect(mHitRectangle);
+                seeker.getLocationOnScreen(mScreenLocation);
+                mHitRectangle.offset(mScreenLocation[0] - seeker.getLeft(), mScreenLocation[1] - seeker.getTop());
+                inside = mHitRectangle.contains((int) event.getRawX(), (int) event.getRawY());
+                if (!inside) {
+                    setBurnContainerVisibility(View.GONE);
+                }
+            }
+        }
+        return super.dispatchTouchEvent(event);
     }
 
     private static class AutoRefresh extends TimerTask {
@@ -2276,5 +2618,4 @@ public class ConversationActivity extends AppCompatActivity implements
             }
         }
     }
-
 }

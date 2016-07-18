@@ -17,7 +17,7 @@
 package com.silentcircle.contacts.calllognew;
 
 import android.database.Cursor;
-import com.silentcircle.silentcontacts2.ScCallLog.ScCalls;
+import com.silentcircle.contacts.ScCallLog.ScCalls;
 import android.telephony.PhoneNumberUtils;
 import android.text.format.Time;
 

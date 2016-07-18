@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <com.silentcircle.messaging.views.ListView
+    <com.silentcircle.messaging.views.AvatarListView
         android:id="@+id/chat_events"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -14,7 +14,7 @@
         android:listSelector="@drawable/none"
         android:stackFromBottom="true"
         android:transcriptMode="normal"
-        android:background="@drawable/bg_window_logo_dark"
+        android:background="@null"
         />
 
 </RelativeLayout>

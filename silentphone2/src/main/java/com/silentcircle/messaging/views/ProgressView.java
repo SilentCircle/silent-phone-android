@@ -28,6 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package com.silentcircle.messaging.views;
 
 import android.content.Context;
+import android.support.v4.content.ContextCompat;
 import android.util.AttributeSet;
 import android.widget.*;
 
@@ -51,7 +52,7 @@ public class ProgressView extends android.widget.RelativeLayout {
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
         ((ProgressBar) findViewById(R.id.progress_id)).getIndeterminateDrawable()
-                .setColorFilter(getResources().getColor(R.color.progress_color),
+                .setColorFilter(ContextCompat.getColor(getContext(), R.color.progress_color),
                         android.graphics.PorterDuff.Mode.SRC_ATOP);
     }
 

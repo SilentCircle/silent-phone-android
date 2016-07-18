@@ -116,7 +116,6 @@
     <string name="provisioning_existing_account">Login to existing account</string>
     <string name="provisioning_existing_account_bp">Login</string>
     <string name="provisioning_create">Create</string>
-    <string name="provisioning_credentials">Username or password wrong. Please check.</string>
     <string name="provisioning_forgot_pwd">I forgot my password.</string>
     <string name="provisioning_auth_token_hint">Enter authentication token</string>
     <string name="provisioning_auth_token_text">Two-factor authentication is enabled. Please enter an authentication token below.</string>
@@ -138,6 +137,8 @@
     <string name="no_ringtone">Default</string>
     <string name="preferred_algorithms">Prefer non-NIST suite</string>
     <string name="nist_preferred">Always prefer non-NIST algorithms if available: Twofish, Skein, and Bernstein curves.</string>
+    <string name="block_screenshots_title">Block screenshots</string>
+    <string name="block_screenshots_description">Block taking screenshots of the application. Remove application from recent applications list after enabling this setting.</string>
     <!--
          String describing the Dial ImageButton
 
@@ -151,7 +152,6 @@
     -->
     <string name="description_delete_button">backspace</string>
     <string name="description_pick_contact_button">Pick contact</string>
-    <string name="contacts_image_button">Open contacts</string>
     <string name="zrtp_common_cmp">"You should verbally compare the authentication code with the person you are calling. If it doesn’t match, it indicates that someone may have intercepted the call."</string>
     <string name="zrtp_common_cls">Connection Error. Please close and call again.</string>
     <string name="zrtp_common_upd">The person you are calling needs to update their Silent Phone application to the latest version.</string>
@@ -172,14 +172,12 @@
     <string name="provisioning_vertu_email_info">An alternate email address is necessary to receive important updates and benefits regarding your account.</string>
     <string name="provisioning_vertu_welcome_long">As a Vertu Customer you enjoy 12 months of complimentary access to Silent Circle’s encrypted communications services.</string>
     <string name="video_audio_mute">Toggle mute audio</string>
-    <string name="video_switch_camera">Switch cameras</string>
 
     <!-- The following until end are MISSING translations in SPA2 for languages other than English -->
     <string name="provisioning_infoText">Account Creation</string>
     <string name="provisioning_bp_email_info">An email address is necessary to receive important updates and information regarding your account.</string>
     <string name="mute_button">Mute</string>
     <string name="video_button">Video</string>
-    <string name="video_control">Video control</string>
     <string name="add_call">Add call</string>
     <string name="audio_options_button">Audio\noptions</string>
     <string name="verify_label">Touch and verify</string>
@@ -200,11 +198,6 @@
     <string name="account_creation_no_data">Account creation - server returned wrong data.</string>
     <string name="other_settings">Other options</string>
     <string name="developer_options" translatable="false">Developer options</string>
-    <string name="select_theme">Select theme</string>
-    <string name="current_theme">Current theme: %s</string>
-    <string name="theme_orange">Orange</string>
-    <string name="theme_white">White</string>
-    <string name="theme_dusk">Dusk</string>
     <string name="theme_black">Black</string>
     <string name="extended_menu">Extended menu</string>
     <!-- Strings for BlackPhone integration -->
@@ -244,9 +237,6 @@
             Silent Circle accounts, please contact customer support at support@blackphone.ch</string>
 
     <!-- ************************** String for the Contacts part ******************************  -->
-
-    <string name="alternate_title_sca">"Silent Contacts - Silent Circle's contact application"</string>
-
     <!-- Menu item used to add a number from the call log to contacts -->
     <string name="recentCalls_addToContact">Add to contacts</string>
 
@@ -342,61 +332,6 @@
         <item quantity="other">%d found</item>
     </plurals>
 
-    <!-- Text describing that a contact has no information available other than name and photo. [CHAR LIMIT=60] -->
-    <string name="no_contact_details">No additional information for this contact.</string>
-
-    <!-- The text displayed when the contacts list is empty while displaying only contacts that have phone numbers -->
-    <string name="noContactsWithPhoneNumbers">No contacts with phone numbers.</string>
-
-    <!-- Displayed full screen when the user has no favorites and they are displaying the favorites tab. [CHAR LIMIT=NONE] -->
-    <string name="noFavoritesHelpText">"You don't have any favorites.\n\nTo add a contact to your list of favorites:\n
-        <li>Touch the <b>Contacts</b> tab\n</li>
-        \n<li>Touch the contact you want to add to your favorites\n</li>
-        \n<li>Touch the star next to the contact\'s name\n</li>"
-    </string>
-
-    <!-- The text displayed when the contacts list is empty while displaying results after searching contacts -->
-    <string name="noMatchingContacts">No matching contacts found.</string>
-
-    <!-- The text displayed when the contacts list is empty while displaying only selected contacts in multiple picker -->
-    <string name="no_contacts_selected">"No contacts selected."</string>
-
-    <!-- Displayed full screen when the user want to create a shortcut, but there is no contacts, and contact syncing is enabled -->
-    <string name="noContactsHelpTextWithSyncForCreateShortcut">"You don't have any contacts to display. (If you just added an account, it can take a few minutes to sync contacts.)"</string>
-
-    <!-- Displayed full screen when the user has no contacts and they are displaying the My Contacts group, and contact syncing is enabled.  [CHAR LIMIT=NONE] -->
-    <string name="noContactsHelpTextWithSync">"You don't have any contacts to display. (If you just added an account, it can take a few minutes to sync contacts.)\n\nTo add contacts, touch <font fgcolor="#ffffffff"><b>Menu</b></font>, then touch:\n
-        \n<li><font fgcolor="#ffffffff"><b>Accounts</b></font> to add or set up an account with contacts you can sync to the phone\n</li>
-        \n<li><font fgcolor="#ffffffff"><b>Display options</b></font> to change which contacts are visible\n</li>
-        \n<li><font fgcolor="#ffffffff"><b>New contact</b></font> to create a new contact from scratch\n</li>
-        \n<li><font fgcolor="#ffffffff"><b>Import/Export</b></font> to import contacts from your SIM or SD card\n</li>"
-    </string>
-
-    <!-- Displayed full screen when the user has no contacts and they are displaying the My Contacts group, and contact syncing is enabled, and there is no sim card (cdma).  [CHAR LIMIT=NONE] -->
-    <string name="noContactsNoSimHelpTextWithSync">"You don't have any contacts to display. (If you just added an account, it can take a few minutes to sync contacts.)\n\nTo add contacts, touch <font fgcolor="#ffffffff"><b>Menu</b></font>, then touch:\n
-        \n<li><font fgcolor="#ffffffff"><b>Accounts</b></font> to add or set up an account with contacts you can sync to the phone\n</li>
-        \n<li><font fgcolor="#ffffffff"><b>Display options</b></font> to change which contacts are visible\n</li>
-        \n<li><font fgcolor="#ffffffff"><b>New contact</b></font> to create a new contact from scratch\n</li>
-        \n<li><font fgcolor="#ffffffff"><b>Import/Export</b></font> to import contacts from your SD card\n</li>"
-    </string>
-
-    <!-- Displayed full screen when the user want to create a shortcut, but there is no contacts -->
-    <string name="noContactsHelpTextForCreateShortcut">"You don't have any contacts to display."</string>
-
-    <!-- Displayed full screen when the user has no contacts and they are displaying the My Contacts group, and contact syncing is disabled.  [CHAR LIMIT=NONE] -->
-    <string name="noContactsHelpText">"You don't have any contacts to display.\n\nTo add contacts, touch <font fgcolor="#ffffffff"><b>Menu</b></font>, then touch:\n
-        \n<li><font fgcolor="#ffffffff"><b>Accounts</b></font> to add or set up an account with contacts you can sync to the phone\n</li>
-        \n<li><font fgcolor="#ffffffff"><b>New contact</b></font> to create a new contact from scratch\n</li>
-        \n<li><font fgcolor="#ffffffff"><b>Import/Export</b></font> to import contacts from your SIM or SD card\n</li>"
-    </string>
-
-    <!-- Displayed full screen when the user has no contacts and they are displaying the My Contacts group, and contact syncing is disabled, and there is no sim card (cdma).  [CHAR LIMIT=NONE]-->
-    <string name="noContactsNoSimHelpText">"You don't have any contacts to display.\n\nTo add contacts, touch <font fgcolor="#ffffffff"><b>Menu</b></font>, then touch:\n
-        \n<li><font fgcolor="#ffffffff"><b>Accounts</b></font> to add or set up an account with contacts you can sync to the phone\n</li>
-        \n<li><font fgcolor="#ffffffff"><b>New contact</b></font> to create a new contact from scratch\n</li>
-        \n<li><font fgcolor="#ffffffff"><b>Import/Export</b></font> to import contacts from your SD card\n</li>"
-    </string>
-
     <!-- Shown as the display name for a person when the name is missing or unknown. [CHAR LIMIT=18]-->
     <string name="missing_name">(No name)</string>
 
@@ -406,39 +341,9 @@
     <!-- Menu item to indicate you want to cancel the current editing process and NOT save the changes you've made [CHAR LIMIT=12] -->
     <string name="menu_doNotSave">Cancel</string>
 
-    <!-- Text displayed in place of the display name for the contact that represents the user's
-      personal profile entry [CHAR LIMIT=64] -->
-    <string name="profile_display_name">Set up my profile</string>
-
 
     <!-- Menu item to search contacts -->
     <string name="menu_search">Search</string>
-
-    <!-- Menu item (in the action bar) that creates a new contact [CHAR LIMIT=30] -->
-    <string name="menu_new_contact_action_bar">Add Contact</string>
-
-    <!-- Menu item (in the action bar) that creates a new group [CHAR LIMIT=30] -->
-    <string name="menu_new_group_action_bar">Add Group</string>
-
-    <!--  The menu item to clear frequents [CHAR LIMIT=30] -->
-    <string name="menu_clear_frequents">Clear frequents</string>
-
-    <!-- The menu item to bulk import or bulk export contacts from SIM card or SD card.  [CHAR LIMIT=30]-->
-    <string name="menu_import_export">Import/export</string>
-
-    <!-- The menu item to start vCard remove activity -->
-    <string name="menu_remove_vcard_files">Remove vCards</string>
-
-    <!-- Menu item shown only when the special debug mode is enabled, which is used to send all contacts database files via email.  [CHAR LIMI=NONE] -->
-    <string name="menu_export_database">Export database files</string>
-
-    <!-- Menu item for the settings activity [CHAR LIMIT=64] -->
-    <string name="menu_settings" msgid="377929915873428211">Settings</string>
-
-    <!-- Menu item for invoking contextual help [CHAR LIMIT=64] -->
-    <string name="menu_help">Help</string>
-
-    <string name="menu_about">About</string>
 
 
     <!-- Action string for calling a custom phone number -->
@@ -492,43 +397,9 @@
     <string name="toast_text_copied">Text copied</string>
 
 
-    <!-- Button shown on the main contacts screen when there are no contacts on the device.
-    Creates a new contact. [CHAR LIMIT=128] -->
-    <string name="contacts_unavailable_create_contact">Create a new contact</string>
-
-    <!-- Button shown on the main contacts screen when there are no contacts on the device.
-    Initiates a contact import dialog [CHAR LIMIT=128] -->
-    <string name="contacts_unavailable_import_contacts">Import contacts</string>
-
-    <!-- Button shown in the contacts app if the background process updating contacts fails because of memory shortage [CHAR LIMIT=50] -->
-    <string name="upgrade_out_of_memory_uninstall">Uninstall some applications</string>
-
-    <!-- Button shown in the contacts app if the background process updating contacts fails because of memory shortage [CHAR LIMIT=50] -->
-    <string name="upgrade_out_of_memory_retry">Retry upgrade</string>
-
-    <!-- Menu item used to create a contact shortcut when viewing contact details. [CHAR LIMIT=30] -->
-    <string name="menu_create_contact_shortcut">Place on Home screen</string>
-
-    <!-- The menu item to share the currently viewed contact [CHAR LIMIT=30] -->
-    <string name="menu_share">Share</string>
-
-
-    <!-- Menu item to indicate you want to stop editing a contact and NOT save the changes you've made [CHAR LIMIT=12] -->
-    <string name="menu_discard">Discard</string>
-
-    <!-- Text for a "create new contact" button on the bottom of the contact picker screen.
-         The text will be all capitalized.
-         [CHAR LIMIT=30] -->
-    <string name="pickerNewContactText">Create new contact</string>
-
     <!-- Contact list filter selection indicating that the list shows all contacts with phone numbers [CHAR LIMIT=64] -->
     <string name="list_filter_phones">All contacts with phone numbers</string>
 
-    <!-- Label of the "sort list by" display option -->
-    <string name="display_options_sort_list_by">Sort list by</string>
-
-    <!-- Label of the "view names as" display option -->
-    <string name="display_options_view_names_as">View contact names as</string>
 
     <!-- An allowable value for the "view names as" contact display option  -->
     <string name="display_options_view_given_name_first">Given name first</string>
@@ -536,213 +407,6 @@
     <!-- An allowable value for the "view names as" contact display option  -->
     <string name="display_options_view_family_name_first">Family name first</string>
 
-    <!-- An allowable value for the "sort list by" contact display option  -->
-    <string name="display_options_sort_by_given_name">Given name</string>
-
-    <!-- An allowable value for the "sort list by" contact display option  -->
-    <string name="display_options_sort_by_family_name">Family name</string>
-
-    <!-- Here a bunch of strings for VCARD processing, import/export etc.
-     -->
-
-    <!-- Dialog message shown when SDcard does not exist. [CHAR LIMIT=30] -->
-    <string name="no_sdcard_message">No SD or storage available.</string>
-
-    <!-- Action string for selecting (USB) storage for importing contacts [CHAR LIMIT=25] -->
-    <string name="import_from_sdcard">Import from storage</string>
-
-    <!-- One of alternatives shown when the system allows a user to select how many vCard files
-         should be imported. This message shows only when the system is certain that there's more
-         than one vCard files available in the system. -->
-    <string name="import_one_vcard_string">Import one vCard file</string>
-
-    <!-- One of alternatives shown when the system allows a user to select how many vCard files
-         should be imported. This message shows only when the system is certain that there's more
-         than one vCard files available in the system. -->
-    <string name="import_multiple_vcard_string">Import multiple vCard files</string>
-
-    <!-- One of alternatives shown when the system allows a user to select how many vCard files
-         should be imported. This message shows only when the system is certain that there's more
-         than one vCard files available in the system. -->
-    <string name="import_all_vcard_string">Import all vCard files</string>
-
-    <!-- Dialog message shown when searching VCard data from (USB) storage [CHAR LIMIT=NONE] -->
-    <string name="searching_vcard_message">Searching for vCard data in storage\u2026</string>
-
-    <!-- Dialog message shown when searching VCard data failed.
-         An exact reason for the failure should [CHAR LIMIT=NONE] -->
-    <string name="scanning_sdcard_failed_message">The storage couldn\'t be scanned. (Reason: \"%s\")</string>
-
-    <!-- The failed reason shown when Contacts app (especially vCard importer/exporter)
-         emitted some I/O error. Exact reason will be appended by the system. [CHAR LIMIT=NONE] -->
-    <string name="fail_reason_io_error">I/O error</string>
-
-    <!-- Failure reason show when Contacts app (especially vCard importer) encountered
-         low memory problem and could not proceed its import procedure. [CHAR LIMIT=NONE] -->
-    <string name="fail_reason_low_memory_during_import">Not enough memory. The file may be too large.</string>
-
-
-    <!-- The failed reason shown when vCard importer doesn't support the format.
-         This may be shown when the vCard is corrupted [CHAR LIMIT=40] -->
-    <string name="fail_reason_not_supported">The format isn\'t supported.</string>
-
-    <!-- Message used when vCard import has failed. [CHAR LIMIT=40] -->
-    <string name="vcard_import_failed">Couldn\'t import vCard.</string>
-
-    <!-- The failure message shown when the system could not find any vCard file.
-         (with extension ".vcf" in (USB) storage.)
-         [CHAR LIMIT=128] -->
-    <string name="import_failure_no_vcard_file">No vCard file found in storage.</string>
-
-    <!-- The failed reason which should not be shown but it may in some buggy condition. [CHAR LIMIT=40] -->
-    <string name="fail_reason_unknown">Unknown error.</string>
-
-    <!-- Dialog title shown when a user is asked to select vCard file. [CHAR LIMIT=25] -->
-    <string name="select_vcard_title">Choose vCard file</string>
-
-    <!-- Dialog title shown when a user is asked to select vCard file. [CHAR LIMIT=25] -->
-    <string name="select_vcard_title_remove">Remove vCard file</string>
-
-    <!-- The title shown when vCard importer is caching files to be imported into local temporary
-         data storage.  [CHAR LIMIT=40] -->
-    <string name="caching_vcard_title">Caching</string>
-
-    <!-- The message shown when vCard importer is caching files to be imported into local temporary
-         data storage. [CHAR LIMIT=NONE] -->
-    <string name="caching_vcard_message">Caching vCard(s) to local temporary storage. The actual import will start soon.</string>
-
-    <!-- The message shown while importing vCard(s).
-         First argument is current index of contacts to be imported.
-         Second argument is the total number of contacts.
-         Third argument is the name of a contact which is being read.
-         [CHAR LIMIT=20] -->
-    <string name="progress_notifier_message">Importing %1$s/%2$s: %3$s</string>
-
-    <!-- Description shown when importing vCard data.
-         The argument is the name of a contact which is being read.
-         [CHAR LIMIT=20] -->
-    <string name="importing_vcard_description">Importing %s</string>
-
-    <!-- Dialog title shown when reading vCard data failed [CHAR LIMIT=40] -->
-    <string name="reading_vcard_failed_title">Couldn\'t read vCard data</string>
-
-    <!-- The title shown when reading vCard finished
-         The argument is file name the user imported.
-         [CHAR LIMIT=40] -->
-    <string name="importing_vcard_finished_title">Finished importing vCard %s</string>
-
-    <!-- The title shown when importing vCard is canceled (probably by a user)
-         The argument is file name the user canceled importing.
-         [CHAR LIMIT=40] -->
-    <string name="importing_vcard_canceled_title">Importing %s canceled</string>
-
-    <!-- The message shown when vCard import request is accepted. The system may start that work soon, or do it later
-         when there are already other import/export requests.
-         The argument is file name the user imported.
-         [CHAR LIMIT=40] -->
-    <string name="vcard_import_will_start_message">%s will be imported shortly.</string>
-    <!-- The message shown when vCard import request is accepted. The system may start that work soon, or do it later when there are already other import/export requests.
-         "The file" is what a user selected for importing.
-         [CHAR LIMIT=40] -->
-    <string name="vcard_import_will_start_message_with_default_name">The file will be imported shortly.</string>
-    <!-- The message shown when a given vCard import request is rejected by the system. [CHAR LIMIT=NONE] -->
-    <string name="vcard_import_request_rejected_message">vCard import request was rejected. Try again later.</string>
-    <!-- The message shown when vCard export request is accepted. The system may start that work soon, or do it later
-         when there are already other import/export requests.
-         The argument is file name the user exported.
-         [CHAR LIMIT=40] -->
-    <string name="vcard_export_will_start_message">%s will be exported shortly.</string>
-    <!-- The message shown when a given vCard export request is rejected by the system. [CHAR LIMIT=NONE] -->
-    <string name="vcard_export_request_rejected_message">vCard export request was rejected. Try again later.</string>
-    <!-- Used when file name is unknown in vCard processing. It typically happens
-         when the file is given outside the Contacts app. [CHAR LIMIT=30] -->
-    <string name="vcard_unknown_filename">contact</string>
-
-    <!-- The percentage, used for expressing the progress of vCard import/export. -->
-    <string name="percentage">%s%%</string>
-
-    <!-- Dialog title shown when a user confirms whether he/she export Contact data. [CHAR LIMIT=32] -->
-    <string name="confirm_export_title">Export contacts?</string>
-
-    <!-- Dialog message shown when a user confirms whether he/she export Contact data [CHAR LIMIT=NONE] -->
-    <string name="confirm_export_message">Your contact list will be exported to file: %s.</string>
-
-    <!-- Dialog title shown when exporting Contact data failed. [CHAR LIMIT=20] -->
-    <string name="exporting_contact_failed_title">Couldn\'t export</string>
-
-    <!-- Dialog message shown when exporting Contact data failed. [CHAR LIMIT=NONE] -->
-    <string name="exporting_contact_failed_message">The contact data wasn\'t exported.\nReason: \"%s\"</string>
-
-    <!-- The failed reason shown when there's no contact which is allowed to be exported.
-         Note that user may have contacts data but all of them are probably not allowed to be
-         exported because of security/permission reasons. [CHAR LIMIT=NONE] -->
-    <string name="fail_reason_no_exportable_contact">There is no exportable contact.</string>
-
-    <!-- The failed reason shown when vCard exporter could not create a file for the vCard since
-         there are too many files relevant to vCard. [CHAR LIMIT=NONE] -->
-    <string name="fail_reason_too_many_vcard">Too many vCard files are in the storage.</string>
-
-    <!-- The failed reason shown when the given file name is too long for the system.
-         The length limit of each file is different in each Android device, so we don't need to
-         mention it here. [CHAR LIMIT=NONE] -->
-    <string name="fail_reason_too_long_filename">Required filename is too long (\"%s\").</string>
-
-    <!-- The title shown when exporting vCard is successfuly finished [CHAR LIMIT=40] -->
-    <string name="exporting_vcard_finished_title">Finished exporting %s.</string>
-
-    <!-- The title shown when exporting vCard is canceled (probably by a user)
-         The argument is file name the user canceled importing.
-         [CHAR LIMIT=40] -->
-    <string name="exporting_vcard_canceled_title">Exporting %s canceled.</string>
-
-    <!-- Dialog title shown when the application is exporting contact data outside. [CHAR LIMIT=NONE] -->
-    <string name="exporting_contact_list_title">Exporting contact data</string>
-
-    <!-- Message shown when the application is exporting contact data outside -->
-    <string name="exporting_contact_list_message">Your contact data is being exported to: %s.</string>
-
-    <!-- The failed reason shown when contacts exporter fails to be initialized.
-         Some exact reason must follow this. [CHAR LIMIT=NONE]-->
-    <string name="fail_reason_could_not_initialize_exporter">Couldn\'t start the exporter: \"%s\".</string>
-
-    <!-- The failed reason shown when some error happend during contacts export.
-         Some exact reason must follow this. [CHAR LIMIT=NONE] -->
-    <string name="fail_reason_error_occurred_during_export">An error occurred during export: \"%s\".</string>
-
-    <!-- The error reason the vCard composer "may" emit when database is corrupted or
-         something is going wrong. Usually users should not see this text. [CHAR LIMIT=NONE] -->
-    <string name="composer_failed_to_get_database_infomation">Couldn\'t get database information.</string>
-
-    <!-- This error message shown when the user actually have no contact
-         (e.g. just after data-wiping), or, data providers of the contact list prohibits their
-         contacts from being exported to outside world via vcard exporter, etc. [CHAR LIMIT=NONE] -->
-    <string name="composer_has_no_exportable_contact">There are no exportable contacts. If you do have contacts on your device, some data providers may not allow the contacts to be exported from the device.</string>
-
-    <!-- The error reason the vCard composer may emit when vCard composer is not initialized
-         even when needed.
-         Users should not usually see this error message. [CHAR LIMIT=NONE] -->
-    <string name="composer_not_initialized">The vCard composer didn\'t start properly.</string>
-
-    <!-- The failed reason shown when vCard importer/exporter could not open the file
-         specified by a user. The file name should be in the message. [CHAR LIMIT=NONE] -->
-    <string name="fail_reason_could_not_open_file">Could not open \"%1$s\": %2$s.</string>
-
-    <!-- Message shown in a Dialog confirming a user's cancel request toward existing vCard import.
-         The argument is file name for the vCard import the user wants to cancel.
-         [CHAR LIMIT=128] -->
-    <string name="cancel_import_confirmation_message">Cancel import of %s?</string>
-
-    <!-- Message shown in a Dialog confirming a user's cancel request toward existing vCard export.
-         The argument is file name for the vCard export the user wants to cancel.
-         [CHAR LIMIT=128] -->
-    <string name="cancel_export_confirmation_message">Cancel export of %s?</string>
-
-    <!-- The "file name" displayed for vCards received directly via NFC [CHAR LIMIT=16] -->
-    <string name="nfc_vcard_file_name">Contact received over NFC</string>
-
-
-    <!-- Title shown in a Dialog telling users cancel vCard import/export operation is failed. [CHAR LIMIT=40] -->
-    <string name="cancel_vcard_import_or_export_failed">Couldn\'t cancel vCard import/export</string>
 
     <!-- String describing a contact picture that introduces users to the contact detail screen.
 
@@ -750,11 +414,6 @@
 
          [CHAR LIMIT=NONE]
       -->
-    <string name="description_view_contact_detail" msgid="2795575601596468581">View contact</string>
-
-    <!-- The preference section title for contact display options [CHAR LIMIT=128] -->
-    <string name="preference_displayOptions">Display options</string>
-
     <!-- String describing the text for photo of a contact in a contacts list.
 
         Note: AccessibilityServices use this attribute to announce what the view represents.
@@ -771,6 +430,7 @@
     <string name="password_hint2">Enter password (verify)</string>
     <string name="cannot_change_password">Password change failed. Using existing password.</string>
     <string name="old_password_wrong">Old password is wrong. Locking key store.</string>
+    <string name="old_pin_wrong">Old pin is wrong. Locking key store.</string>
     <string name="key_store_change_pw">Change password</string>
     <string name="no_password">Missing password.</string>
     <string name="information_dialog">Information</string>
@@ -791,9 +451,6 @@
 
     <string name="force_traversal">Force firewall traversal</string>
     <string name="force_traversal_explanation">Use a more reliable but lower-quality method of connecting the call audio, which may be needed on particularly bad networks.</string>
-
-    <string name="monitor_native_calls">Ask to secure other calls</string>
-    <string name="monitor_native_calls_explanation">Silent Phone will ask whether you would like to secure calls placed from outside of Silent Phone.</string>
 
     <string name="setting_underflow">Dropout tone</string>
     <string name="setting_underflow_summary">Play low tone if no media packets are arriving. If heard often, you or your partner may want to change networks.</string>
@@ -869,22 +526,6 @@
     <string name="re_provision">Reload account data</string>
     <string name="re_provision_explanation">Reload Silent Phone\'s account and configuration data.</string>
 
-    <!-- ******** String to explain the migration activities -->
-<!--    <string name="migration_explanation">Silent Contacts is now embedded into Silent Phone. The embedded
-         Silent Contacts copies your existing contacts.
-         \n\nAfter completion of data copying accept de-installation of existing Silent Contacts.
-         \n\nIf you cancel this then de-install the existing Silent Contacts application using Android\'s app manager.
-         In this case your existing contacts are not automatically copied.</string> -->
-
-    <string name="migration_explanation_new">The Silent Contacts storage has been removed. The application uses Android\'s
-        standard \'People\' application. Your Silent Contacts data were exported into the vCard file <b>silent_contacts.vcf</b>.
-    </string>
-
-    <string name="migrate_start">Start migration of Silent Contact data.</string>
-    <string name="migrate_export">Export existing Silent Contacts.</string>
-    <string name="migrate_done">Migration done.</string>
-    <string name="migrate_not_ready">Embedded contact provider not ready.</string>
-
     <!-- ******** String for DID selection activity -->
     <string name="did_title">Phone number selection</string>
     <string name="did_region_area_explanation">Select your phone number from a region and area</string>
@@ -901,7 +542,6 @@
     <string name="did_ask_to_complete">Complete the phone number selection.</string>
 
     <string name="no_internet">No Internet connection</string>
-    <string name="mobile_internet_blocked">Mobile Internet blocked</string>
     <string name="mobile_internet_available">Mobile Internet available</string>
 
     <string name="directory_use_sc">Search Silent Circle Global Directory</string>
@@ -949,16 +589,9 @@
         To re-provision this device you need to enter your Silent Circle username and password.
         \n\nTo continue press OK.
     </string>
-
-    <string name="spa_no">No</string>
-
-    <string name="do_secure_call">"Use Silent Phone to secure this call?"</string>
-
     <!--
     **************************  New Dialer layout  *************************
     -->
-    <string name="tab_speed_dial">SPEED DIAL</string>
-
     <string name="tab_recents">CALLS</string>
 
     <string name="tab_all_contacts">CONTACTS</string>
@@ -1059,12 +692,6 @@
 
     <!-- Title for the recent calls footer that brings users to the full call history when clicked -->
     <string name="recents_footer_text">View full call history</string>
-
-    <!-- Remove button that shows up when contact is long-pressed. [CHAR LIMIT=NONE] -->
-    <string name="remove_contact">Remove</string>
-
-    <!-- Shown when there are no speed dial favorites. -->
-    <string name="speed_dial_empty">Speed dial is one touch dialing\nfor favorites and numbers\n you call frequently.</string>
 
     <!-- Shown when there are no contacts in the all contacts list. -->
     <string name="all_contacts_empty">You have no contacts.</string>
@@ -1203,9 +830,19 @@
     <string name="settings">Settings</string>
     <string name="wipe">Wipe</string>
 
+    <!--  Attachement grid -->
+    <string name="take_photo">Take Photo</string>
+    <string name="gallery">Gallery</string>
+    <string name="take_video">Take Video</string>
+    <string name="record_audio">Record Audio</string>
+    <string name="send_file">Send File</string>
+    <string name="share_contact">Share Contact</string>
+
     <!-- voiceovers for messages in conversation view -->
     <string name="messaging_burn_button_voiceover">Burn\u002E \u0020button</string>
+    <string name="messaging_location_button_voiceover">Location\u002E \u0020button</string>
     <string name="messaging_start_conversation_voiceover">Start conversation\u002E \u0020button</string>
+    <string name="messaging_burn_delay_voiceover">Set burn delay\u002E \u0020button</string>
 
     <string name="capture_audio_label">Record audio with Silent Phone</string>
     <string name="capture_video_label">Capture video with Silent Phone</string>
@@ -1219,6 +856,7 @@
     <string name="dialog_title_error">Error</string>
     <string name="dialog_title_select_notification_light">Select notification light</string>
     <string name="dialog_title_select_notification_vibrate">Select vibrate pattern</string>
+    <string name="dialog_title_select_messaging_theme">Select chat theme</string>
 
     <string name="dialog_message_enable_device_location">To use this option, enable Location under device Settings. Location may be empty if only GPS is used.</string>
     <string name="dialog_message_current_location_mode">Current location mode is \"%s\".</string>
@@ -1365,13 +1003,13 @@
     <string name="messaging_light_green">Green</string>
     <string name="messaging_light_white">White</string>
     <string name="messaging_light_purple">Purple</string>
+    <string name="messaging_theme_title">Chat theme</string>
+    <string name="messaging_theme_dark">Dark theme</string>
+    <string name="messaging_theme_light">Light theme</string>
 
-    <string name="addContactTitle">Add to Silent Circle Account</string>
+    <string name="addContactTitle">Add to Contacts</string>
     <string name="contactCreationFailure">Contact creation failed, check logs.</string>
     <string name="contactNameLabel">Contact Name</string>
-    <string name="contactPhoneLabel">Contact Phone</string>
-    <string name="selectLabel">Select label</string>
-    <string name="undefinedTypeLabel">(Undefined)</string>
 
     <!-- Dialog title when importing contacts from an external source. [CHAR LIMIT=36] -->
     <string name="dialog_auto_import">Start to import saved contacts?</string>
@@ -1549,6 +1187,8 @@
     <string name="dial_drawer_go_offline_description">Shut down the application</string>
     <string name="dial_drawer_wipe_phone_description">Clear application data and log out</string>
 
+    <string name="messaging_checked_verified">Verified</string>
+
     <string name="redirect_uri_mismatch">Redirect URI does not match: %s</string>
     <string name="redirect_uri_query_missing">Redirect URI does not contain a query string: %s.</string>
     <string name="redirect_uri_malformed">Redirect URI does not contain necessary data.</string>
@@ -1558,6 +1198,34 @@
 
     <string name="hw_device_id_mismatch">HW device identifiers do not match: \nStored: %1$s\nActual: %2$s
         \n\nPlease uninstall and install the application.</string>
-    <string name="soft_device_id_mismatch">Instance device identifiers do not match: \nStored: %1$s\nActual: %2$s
-        \n\nPlease uninstall and install the application.</string>
+
+    <!-- The percentage, used for expressing progress. -->
+    <string name="percentage">%s%%</string>
+
+    <string name="permission_phone_title">Why access to Phone?</string>
+    <string name="permission_phone_explanation">Silent Phone does not initiate phone calls that require the device\'s
+        phone application.
+        \n\nHowever, Silent Phone monitors if you have an active call or if you receive a call while
+        you are using Silent Phone. In these cases Silent Phone either manages the Silent Phone call or informs you about
+        the incoming call using a notification tone.</string>
+
+    <string name="permission_sp_main_title">Required Silent Phone Permissions</string>
+    <string name="permission_sp_main_explanation">&lt;b>Audio&lt;/b>: to setup calls or to record audio attachments (if enabled).
+        &lt;br/>&lt;br/>&lt;b>Camera:&lt;/b> enables video calls and video attachments.
+        &lt;br/>&lt;br/>&lt;b>Contacts:&lt;/b> get data to setup a call or a messaging session. Silent Phone does not send contact data to Silent Circle or others.
+    </string>
+
+    <string name="permission_main_not_granted_title">Silent Phone permissions missing</string>
+    <string name="permission_main_not_granted_explanation">Silent Phone cannot work without the required permissions, exiting.
+        You may start Silent Phone again and grant the required permissions.
+    </string>
+
+    <string name="permission_location_title">Why access to Location?</string>
+    <string name="permission_location_explanation">Silent Phone access the location send attach location information to
+        a message if you enabled this feature.</string>
+
+    <string name="permission_storage_title">Why access to Storage?</string>
+    <string name="permission_storage_explanation">On user request Silent Phone can store or share attachments. This
+        requires permission to access external storage.</string>
+
 </resources>

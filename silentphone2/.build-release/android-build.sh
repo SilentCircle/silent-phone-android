@@ -28,7 +28,7 @@ ARTIFACT_APK="silentphone.apk"
 
 if [[ "$SC_BUILD_TYPE" = "DEVELOP" ]];
 then
-   BUILD_GRADLE_TASK="assembleDevelop"
+   BUILD_GRADLE_TASK="assembleNormalDevelop"
    BUILD_APK_NAME="silentphone2-normal-develop.apk"
    echo "*** building develop configuration"
 else
@@ -65,13 +65,7 @@ ndk-build
 popd
 
 
-# network proxy so gradle can update gradle toolset
-echo "systemProp.http.proxyHost=hlp01-fsyyz.hlp.silentcircle.net"   > gradle.properties
-echo "systemProp.http.proxyPort=3128"                              >> gradle.properties
-echo "systemProp.https.proxyHost=hlp01-fsyyz.hlp.silentcircle.net" >> gradle.properties
-echo "systemProp.https.proxyPort=3128"                             >> gradle.properties
-
-echo "build_environment=silentcircle.com"                 >> gradle.properties
+echo "build_environment=silentcircle.com"                  > gradle.properties
 echo "build_version=$BUILD_NUMBER_PREFIX$BUILD_NUMBER"    >> gradle.properties
 echo "build_version_numeric=$BUILD_NUMBER"                >> gradle.properties
 echo "build_commit=$(git log -n 1 --pretty=format:'%h')"  >> gradle.properties

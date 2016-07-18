@@ -84,6 +84,7 @@ import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -523,22 +524,22 @@ public class SCloudService extends Service {
                 for(int i = 0; i < scloudObjects.size(); i++) {
                     SCloudObject scloudObject = scloudObjects.get(i);
 
+                    if(scloudObject == null) {
+                        return false;
+                    }
+
                     onProgressUpdate(R.string.uploading, i + 1, scloudObjects.size());
 
-                    byte[] scloudObjectData;
+                    FileInputStream fis;
                     try {
-                        scloudObjectData = scloudObjectRepository.read(scloudObject);
-                    } catch(IOException exception) {
+                        fis = new FileInputStream(scloudObjectRepository.getDataFile(scloudObject));
+                    } catch (FileNotFoundException exception) {
                         Log.e(TAG, "Error in reading SCloudObject data", exception);
 
                         return false;
                     }
 
-                    if(scloudObject == null) {
-                        return false;
-                    }
-
-                    HttpResponse<String> presignedUrlUploadResponse = AmazonS3.presignedUrlUpload(presignedUrls.get(scloudObject.getLocator().toString()), scloudObjectData);
+                    HttpResponse<String> presignedUrlUploadResponse = AmazonS3.presignedUrlUpload(presignedUrls.get(scloudObject.getLocator().toString()), fis);
 
                     if(!presignedUrlUploadResponse.hasError()) {
                         scloudObject.setUploaded(true);
@@ -689,7 +690,7 @@ public class SCloudService extends Service {
                         return;
                     }
 
-                    if(file != null && AttachmentUtils.fromOurMediaProvider(file)) {
+                    if(AttachmentUtils.fromOurMediaProvider(file)) {
                         mContext.getContentResolver().delete(file, null, null);
                     }
 
@@ -813,10 +814,15 @@ public class SCloudService extends Service {
 
                         metaData.put("Scloud_Segments", scloudObjects.size());
                         metaData.put("preview", encodedThumbnail);
+                        metaData.put("SHA256", Utilities.hash(getContentResolver().openInputStream(file), "SHA256"));
 
                         onMetaDataAvailable(metaData);
 
                         return createEncryptAndSaveSCloudObject(getTableOfContents(scloudObjects).toString().getBytes("UTF-8"), metaData);
+                    } catch (FileNotFoundException exception) {
+                        Log.e(TAG, "SCloud exception", exception);
+
+                        return null;
                     } catch (JSONException exception) {
                         Log.e(TAG, "SCloud json exception (rare)", exception);
 
@@ -896,7 +902,7 @@ public class SCloudService extends Service {
                     }
                 }
 
-                if(createDownloadAndSaveScloudObjects(tocScloudObjects) == true) {
+                if(createDownloadAndSaveScloudObjects(tocScloudObjects)) {
                     setAttachmentState(AttachmentState.DOWNLOADED);
 
                     decryptAndCombineScloudObjectData(decryptedTocSCloudObjectData, decryptedTocScloudObjectMetaData);
@@ -994,25 +1000,20 @@ public class SCloudService extends Service {
                 public boolean mayAlreadyHaveFiles() {
                     AttachmentState attachmentState = getAttachmentState();
 
-                    if(attachmentState == null) {
-                        return false;
-                    }
+                    return attachmentState != null &&
+                            (attachmentState.equals(AttachmentState.UPLOADED) || attachmentState.equals(AttachmentState.DOWNLOADED));
 
-                    return attachmentState.equals(AttachmentState.UPLOADED) || attachmentState.equals(AttachmentState.DOWNLOADED);
                 }
 
                 public boolean shouldProcess() {
                     AttachmentState attachmentState = getAttachmentState();
 
-                    if(attachmentState != null) {
-                        return attachmentState.equals(AttachmentState.DOWNLOADING_ERROR)
-                                || attachmentState.equals(AttachmentState.DOWNLOADED)
-                                || attachmentState.equals(AttachmentState.UPLOADED)
-                                || attachmentState.equals(AttachmentState.NOT_AVAILABLE);
+                    return attachmentState == null ||
+                            attachmentState.equals(AttachmentState.DOWNLOADING_ERROR) ||
+                            attachmentState.equals(AttachmentState.DOWNLOADED) ||
+                            attachmentState.equals(AttachmentState.UPLOADED) ||
+                            attachmentState.equals(AttachmentState.NOT_AVAILABLE);
 
-                    }
-
-                    return true;
                 }
 
                 public byte[][] process() {
@@ -1057,10 +1058,16 @@ public class SCloudService extends Service {
                         JSONObject metaData = getMetaData();
 
                         if(metaData != null) {
-                            String fileName = Util.getString("FileName", metaData);
+                            String exportedFileName = metaData.optString("ExportedFileName");
+                            String fileName = metaData.optString("FileName");
+                            String hash = metaData.optString("SHA256");
+
+                            if (!TextUtils.isEmpty(exportedFileName)) {
+                                fileName = exportedFileName;
+                            }
 
                             if(!TextUtils.isEmpty(fileName)) {
-                                if(AttachmentUtils.isExported(fileName)) {
+                                if(AttachmentUtils.isExported(fileName, hash)) {
                                     setAttachmentState(AttachmentState.DOWNLOADED);
 
                                     onAttachmentAvailable();
@@ -1358,8 +1365,9 @@ public class SCloudService extends Service {
 
             BufferedOutputStream bos = null;
 
+            File attachment = AttachmentUtils.getFile(mMessageId, mContext);
+
             try {
-                File attachment = AttachmentUtils.getFile(mMessageId, mContext);
                 bos = new BufferedOutputStream(new FileOutputStream(attachment));
 
                 for(int i = 0; i < scloudObjects.size(); i++) {
@@ -1393,7 +1401,7 @@ public class SCloudService extends Service {
                 return;
             }
 
-            onAttachmentAvailable(decryptedTocScloudObjectMetaData);
+            onAttachmentAvailable(attachment, decryptedTocScloudObjectMetaData);
         }
 
         private DbObjectRepository getScloudObjectRepository() {
@@ -1612,7 +1620,7 @@ public class SCloudService extends Service {
                     true, message.getId(), AxoMessaging.UPDATE_ACTION_MESSAGE_STATE_CHANGE);
         }
 
-        private void onAttachmentAvailable(byte[] metaData) {
+        private void onAttachmentAvailable(File attachment, byte[] metaData) {
             Intent intent = Action.RECEIVE_ATTACHMENT.intent();
             Extra.PARTNER.to(intent, mPartner);
             Extra.ID.to(intent, mMessageId);
@@ -1620,8 +1628,12 @@ public class SCloudService extends Service {
             try {
                 JSONObject metaDataJsonObject = new JSONObject(IOUtils.toString(metaData));
 
-                if(metaDataJsonObject.has("preview")) {
+                if (metaDataJsonObject.has("preview")) {
                     metaDataJsonObject.remove("preview");
+                }
+
+                if (!metaDataJsonObject.has("SHA256")) {
+                    metaDataJsonObject.put("SHA256", Utilities.hash(new FileInputStream(attachment), "SHA256"));
                 }
 
                 Extra.TEXT.to(intent, metaDataJsonObject.toString());
@@ -1725,11 +1737,6 @@ public class SCloudService extends Service {
             this.responseCode = responseCode;
             this.response = response;
             this.error = error;
-        }
-
-        public HttpResponse(int responseCode, T response) {
-            this.responseCode = responseCode;
-            this.response = response;
         }
 
         public boolean hasError() {
@@ -1918,7 +1925,7 @@ public class SCloudService extends Service {
             if (apiKeyData == null) {
                 Log.w(TAG, "No API key data available");
 
-                return new HttpResponse(-1, null, "No API key data available");
+                return new HttpResponse<>(-1, null, "No API key data available");
             }
 
             JSONObject requestJSON = new JSONObject();
@@ -1947,16 +1954,17 @@ public class SCloudService extends Service {
             } catch (JSONException exception){
                 Log.e(TAG, "SCloudBroker json exception (rare)", exception);
 
-                return new HttpResponse(-1, null, exception.getClass().getSimpleName());
+                return new HttpResponse<>(-1, null, exception.getClass().getSimpleName());
             } catch (UnsupportedEncodingException exception) {
                 Log.e(TAG, "SCloudBroker exception", exception);
 
-                return new HttpResponse(-1, null, exception.getClass().getSimpleName());
+                return new HttpResponse<>(-1, null, exception.getClass().getSimpleName());
             }
 
             HttpsURLConnection urlConnection = null;
             StringBuilder response = new StringBuilder();
 
+            OutputStream out = null;
             try {
                 String body = requestJSON.toString();
 
@@ -1968,7 +1976,7 @@ public class SCloudService extends Service {
                 else {
                     Log.e(TAG, "Cannot get a trusted/pinned SSL context, use normal SSL socket factory");
 
-                    return new HttpResponse(-1, null, "SSL pinning error");
+                    return new HttpResponse<>(-1, null, "SSL pinning error");
                 }
 
                 urlConnection.setRequestMethod("POST");
@@ -1977,7 +1985,7 @@ public class SCloudService extends Service {
                 urlConnection.setRequestProperty("Content-Type", "application/json");
                 urlConnection.setRequestProperty("Accept-Language", Locale.getDefault().getLanguage());
 
-                OutputStream out = new BufferedOutputStream(urlConnection.getOutputStream());
+                out = new BufferedOutputStream(urlConnection.getOutputStream());
                 out.write(body.getBytes());
                 out.flush();
 
@@ -1988,27 +1996,31 @@ public class SCloudService extends Service {
                         IOUtils.readStream(urlConnection.getErrorStream(), response);
 
                         if(!TextUtils.isEmpty(response)) {
-                            return new HttpResponse(ret, null, response.toString());
+                            return new HttpResponse<>(ret, null, response.toString());
                         }
                     }
 
-                    return new HttpResponse(ret, null, "");
+                    return new HttpResponse<>(ret, null, "");
                 }
 
                 if(urlConnection.getInputStream() != null) {
                     IOUtils.readStream(urlConnection.getInputStream(), response);
 
                     if(!TextUtils.isEmpty(response)) {
-                        return new HttpResponse(ret, response.toString(), null);
+                        return new HttpResponse<>(ret, response.toString(), null);
                     }
                 }
 
-                return new HttpResponse(ret, null, "");
+                return new HttpResponse<>(ret, null, "");
             } catch (IOException exception) {
                 Log.e(TAG, "Broker presigned url exception", exception);
 
-                return new HttpResponse(-1, null, exception.getClass().getSimpleName());
+                return new HttpResponse<>(-1, null, exception.getClass().getSimpleName());
             } finally {
+                try {
+                    if (out != null)
+                        out.close();
+                } catch (IOException ignore) { }
                 if (urlConnection != null) {
                     urlConnection.disconnect();
                 }
@@ -2033,9 +2045,10 @@ public class SCloudService extends Service {
 
         public static final SSLSocketFactory sslSocketFactory = PinnedCertificateHandling.getPinnedSslContext(ConfigurationUtilities.mNetworkConfiguration).getSocketFactory();
 
-        public static HttpResponse<String> presignedUrlUpload(String url, byte[] data) {
+        public static HttpResponse<String> presignedUrlUpload(String url, InputStream is) {
             HttpsURLConnection urlConnection = null;
             StringBuilder response = new StringBuilder();
+            BufferedOutputStream bos = null;
 
             try {
                 urlConnection = (HttpsURLConnection) (new URL(url).openConnection());
@@ -2054,9 +2067,9 @@ public class SCloudService extends Service {
                 urlConnection.setRequestProperty("Content-Type", CONTENT_TYPE_SCLOUD);
                 urlConnection.setRequestProperty("Accept-Language", Locale.getDefault().getLanguage());
 
-                OutputStream out = new BufferedOutputStream(urlConnection.getOutputStream());
-                out.write(data);
-                out.flush();
+                bos = new BufferedOutputStream(urlConnection.getOutputStream());
+                IOUtils.pipe(is, bos);
+                bos.flush();
 
                 int ret = urlConnection.getResponseCode();
 
@@ -2065,27 +2078,30 @@ public class SCloudService extends Service {
                         IOUtils.readStream(urlConnection.getErrorStream(), response);
 
                         if(!TextUtils.isEmpty(response)) {
-                            return new HttpResponse(ret, null, response.toString());
+                            return new HttpResponse<String>(ret, null, response.toString());
                         }
                     }
 
-                    return new HttpResponse(ret, null, "");
+                    return new HttpResponse<>(ret, null, "");
                 } else {
                     if(urlConnection.getInputStream() != null) {
                         IOUtils.readStream(urlConnection.getInputStream(), response);
 
                         if(!TextUtils.isEmpty(response)) {
-                            return new HttpResponse(ret, response.toString(), null);
+                            return new HttpResponse<>(ret, response.toString(), null);
                         }
                     }
 
-                    return new HttpResponse(ret, "", null);
+                    return new HttpResponse<>(ret, "", null);
                 }
             } catch (IOException exception) {
                 Log.e(TAG, "AmazonS3 upload exception", exception);
 
-                return new HttpResponse(-1, null, exception.getClass().getSimpleName());
+                return new HttpResponse<>(-1, null, exception.getClass().getSimpleName());
             } finally {
+                IOUtils.close(is);
+                IOUtils.close(bos);
+
                 if (urlConnection != null) {
                     urlConnection.disconnect();
                 }
@@ -2117,11 +2133,11 @@ public class SCloudService extends Service {
                         IOUtils.readStream(urlConnection.getErrorStream(), response);
 
                         if(!TextUtils.isEmpty(response)) {
-                            return new HttpResponse(ret, false, response.toString());
+                            return new HttpResponse<>(ret, false, response.toString());
                         }
                     }
 
-                    return new HttpResponse(ret, false, "");
+                    return new HttpResponse<>(ret, false, "");
                 } else {
                     if(urlConnection.getInputStream() != null) {
                         InputStream in = urlConnection.getInputStream();
@@ -2134,16 +2150,16 @@ public class SCloudService extends Service {
                             out.write(buffer, 0, count);
                             out.flush();
                         }
-
+                        in.close();
                         out.close();
                     }
 
-                    return new HttpResponse(ret, true, null);
+                    return new HttpResponse<>(ret, true, null);
                 }
             } catch (IOException exception) {
                 Log.e(TAG, "AmazonS3 download exception", exception);
 
-                return new HttpResponse(-1, false, exception.getClass().getSimpleName());
+                return new HttpResponse<>(-1, false, exception.getClass().getSimpleName());
             } finally {
                 if (urlConnection != null) {
                     urlConnection.disconnect();
@@ -2176,26 +2192,26 @@ public class SCloudService extends Service {
                         IOUtils.readStream(urlConnection.getErrorStream(), response);
 
                         if(!TextUtils.isEmpty(response)) {
-                            return new HttpResponse(ret, null, response.toString());
+                            return new HttpResponse<>(ret, null, response.toString());
                         }
                     }
 
-                    return new HttpResponse(ret, null, "");
+                    return new HttpResponse<>(ret, null, "");
                 } else {
                     if(urlConnection.getInputStream() != null) {
                         IOUtils.readStream(urlConnection.getInputStream(), response);
 
                         if(!TextUtils.isEmpty(response)) {
-                            return new HttpResponse(ret, response.toString(), null);
+                            return new HttpResponse<>(ret, response.toString(), null);
                         }
                     }
 
-                    return new HttpResponse(ret, "", null);
+                    return new HttpResponse<>(ret, "", null);
                 }
             } catch (IOException exception) {
                 Log.e(TAG, "AmazonS3 exists exception", exception);
 
-                return new HttpResponse(-1, null, exception.getClass().getSimpleName());
+                return new HttpResponse<>(-1, null, exception.getClass().getSimpleName());
             } finally {
                 if (urlConnection != null) {
                     urlConnection.disconnect();
@@ -2385,18 +2401,6 @@ public class SCloudService extends Service {
             return metaData;
         }
 
-        private static String getString(String string, byte[] jsonData) {
-            if(string == null || jsonData == null) {
-                return null;
-            }
-
-            if(jsonData == null) {
-                return null;
-            }
-
-            return getString(string, IOUtils.toString(jsonData));
-        }
-
         private static String getString(String string, String jsonData) {
             if(string == null || jsonData == null) {
                 return null;
@@ -2409,22 +2413,6 @@ public class SCloudService extends Service {
             try {
                 JSONObject jsonObject = new JSONObject(jsonData);
 
-                if(jsonObject.has(string)) {
-                    return jsonObject.getString(string);
-                }
-            } catch (JSONException exception) {
-                return null;
-            }
-
-            return null;
-        }
-
-        private static String getString(String string, JSONObject jsonObject) {
-            if(string == null || jsonObject == null) {
-                return null;
-            }
-
-            try {
                 if(jsonObject.has(string)) {
                     return jsonObject.getString(string);
                 }

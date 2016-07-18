@@ -15,7 +15,7 @@
 
     <style name="SilentPhoneTheme" parent="@style/SilentPhoneThemeBlack"/>
 
-    <style name="SilentPhoneConversationTheme" parent="SilentPhoneTheme">
+    <style name="SilentPhoneConversationThemeDark" parent="SilentPhoneTheme">
         <item name="android:windowActionModeOverlay">true</item>
         <item name="windowActionModeOverlay">true</item>
         <item name="android:actionModeBackground">?sp_actionbar_color</item>
@@ -25,8 +25,40 @@
         <item name="android:textColorPrimary">@color/sc_ng_text_dark</item>
     </style>
 
-    <style name="InAppPaymentTheme" parent="@style/SilentPhonePurchaseTheme">
+    <style name="SilentPhoneConversationThemeLight" parent="SilentPhoneTheme">
+        <item name="sp_actionbar_title_text_color">@color/sc_ng_text_grey</item>
+        <item name="sp_actionbar_color">@color/sc_ng_background</item>
+
+        <item name="android:windowActionModeOverlay">true</item>
+        <item name="windowActionModeOverlay">true</item>
+        <item name="android:actionModeBackground">?sp_actionbar_color</item>
+        <item name="android:actionModeStyle">@style/ActionMode.Spa4</item>
+        <item name="actionModeStyle">@style/ActionMode.Spa4</item>
+        <!-- action mode home button uses this colour on -->
+        <item name="android:textColorPrimary">?sp_actionbar_title_text_color</item>
+
+        <item name="list_item_textColorPrimary">@color/sc_ng_text_dark</item>
+        <item name="list_item_textColorSecondary">@color/sc_ng_text_grey_2</item>
+        <item name="list_item_name_text_color">@color/sc_ng_text_dark</item>
+
+        <item name="sp_activity_background_color">@color/chat_background_color_light</item>
+        <item name="sp_incoming_message_background_selector">@color/incoming_message_background_selector_light</item>
+        <item name="sp_incoming_message_text_selector">@color/incoming_message_text_selector_light</item>
+        <item name="sp_outgoing_message_background_selector">@color/outgoing_message_background_selector_light</item>
+        <item name="sp_outgoing_message_text_selector">@color/outgoing_message_text_selector_light</item>
+        <item name="sp_message_description_text_color">@color/sc_ng_text_dark</item>
+        <item name="sp_error_message_text_selector">@color/error_message_text_selector_light</item>
+        <item name="sp_date_header_text_color">@color/sc_ng_text_grey</item>
+        <item name="sp_date_header_background_tint_color">@color/sc_ng_background</item>
+        <item name="sp_message_send_tint_color">@color/sc_ng_background</item>
+        <item name="sp_message_action_button_background">@color/chat_background_color_light</item>
+        <item name="sp_incoming_message_background">@color/chat_incoming_message_color_light</item>
+        <item name="sp_outgoing_message_background">@color/chat_outgoing_message_color_light</item>
+
     </style>
+
+    <style name="InAppPaymentTheme" parent="@style/SilentPhonePurchaseTheme" />
+
     <style name="SilentPhonePurchaseTheme"  parent="SilentPhoneThemeBase">
         <item name="android:windowBackground">@color/black_background</item>
 
@@ -204,6 +236,20 @@
         <item name="sp_icon_tint_color">@color/sc_ng_text_dark</item>
         <item name="sp_dialog_text_color">@color/sc_ng_text_dark</item>
 
+        <item name="sp_activity_background_color">@color/sc_ng_background</item>
+        <item name="sp_incoming_message_background_selector">@color/incoming_message_background_selector</item>
+        <item name="sp_incoming_message_text_selector">@color/incoming_message_text_selector_dark</item>
+        <item name="sp_outgoing_message_background_selector">@color/outgoing_message_background_selector</item>
+        <item name="sp_outgoing_message_text_selector">@color/outgoing_message_text_selector_dark</item>
+        <item name="sp_message_description_text_color">@color/sc_ng_text_grey</item>
+        <item name="sp_error_message_text_selector">@color/error_message_text_selector_dark</item>
+        <item name="sp_date_header_text_color">@color/sc_ng_text_dark</item>
+        <item name="sp_date_header_background_tint_color">@color/sc_ng_background_1</item>
+        <item name="sp_message_send_tint_color">@color/sc_ng_background_1</item>
+        <item name="sp_message_action_button_background">@color/sc_ng_background</item>
+        <item name="sp_incoming_message_background">@color/chat_incoming_message_color</item>
+        <item name="sp_outgoing_message_background">@color/chat_outgoing_message_color</item>
+
         <!-- ************ Theme items for SCA part ************************* -->
 
         <!--
@@ -275,18 +321,6 @@
     <!-- ActionBar styles -->
     <style name="MyActionBarInverse"
            parent="android:Widget.Holo.Light.ActionBar.Solid.Inverse">
-        <item name="android:background">@color/q_black</item>
-    </style>
-
-    <style name="ActionBarDuskTitle"
-           parent="android:TextAppearance.Medium">
-        <item name="android:textColor">@color/dusk_orange</item>
-    </style>
-
-    <style name="ActionBarDusk"
-           parent="android:Widget.Holo.ActionBar">
-        <!--        <item name="android:titleTextStyle">@android:style/TextAppearance.Holo.Widget.ActionBar.Title</item> -->
-        <item name="android:titleTextStyle">@style/ActionBarDuskTitle</item>
         <item name="android:background">@color/q_black</item>
     </style>
 

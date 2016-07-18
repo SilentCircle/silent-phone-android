@@ -34,6 +34,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v7.view.ActionMode;
 import android.text.TextUtils;
 import android.util.SparseBooleanArray;
@@ -61,8 +62,8 @@ import com.silentcircle.messaging.util.MessageUtils;
 import com.silentcircle.messaging.views.FailureEventView;
 import com.silentcircle.messaging.views.ListView;
 import com.silentcircle.messaging.views.MessageEventView;
+import com.silentcircle.messaging.views.adapters.AvatarModelViewAdapter;
 import com.silentcircle.messaging.views.adapters.DateHeaderView;
-import com.silentcircle.messaging.views.adapters.GroupingModelViewAdapter;
 import com.silentcircle.messaging.views.adapters.ModelViewAdapter;
 import com.silentcircle.messaging.views.adapters.ModelViewType;
 import com.silentcircle.messaging.views.adapters.MultiSelectModelViewAdapter;
@@ -82,10 +83,16 @@ public class ChatFragment extends BaseFragment implements MultipleChoiceSelector
     public static final String TAG_CONVERSATION_CHAT_FRAGMENT =
             "com.silentcircle.messaging.chat";
 
+    private static final String FIRST_RUN =
+            "com.silentcircle.messaging.fragments.ChatFragment.firsRun";
+
+
     private static final String TAG = ChatFragment.class.getSimpleName();
 
     /* Priority for this view to handle message broadcasts, higher than ConversationActivity. */
     private static final int MESSAGE_PRIORITY = 3;
+    /* Invalid position in list view */
+    private static final int INVALID_POSITION = -1;
 
     public interface Callback {
 
@@ -114,6 +121,7 @@ public class ChatFragment extends BaseFragment implements MultipleChoiceSelector
     private Callback mCallback;
     private ListView mEventsView;
     private List<Event> mEvents;
+    private boolean mFirstRun = true;
 
     private BroadcastReceiver mViewUpdater = new BroadcastReceiver() {
 
@@ -154,6 +162,11 @@ public class ChatFragment extends BaseFragment implements MultipleChoiceSelector
 
         @Override
         public void run() {
+            // scroll to first unread message on first run
+            if (mFirstRun) {
+                scrollToFirstUnread();
+                mFirstRun = false;
+            }
             // ensure that visible events have their update routine running
             resumeEventUpdate();
             // ensure that visible events are marked as read
@@ -162,7 +175,7 @@ public class ChatFragment extends BaseFragment implements MultipleChoiceSelector
     };
 
     private void attachEventsToView(ListView view, List<Event> events) {
-        GroupingModelViewAdapter adapter = new GroupingModelViewAdapter(events, VIEW_TYPES);
+        AvatarModelViewAdapter adapter = new AvatarModelViewAdapter(events, VIEW_TYPES);
         view.setAdapter(adapter);
 
         view.setOnItemClickListener(ClickthroughWhenNotInChoiceMode.getInstance());
@@ -179,7 +192,12 @@ public class ChatFragment extends BaseFragment implements MultipleChoiceSelector
         return activity instanceof Callback ? (Callback) activity : null;
     }
 
+    @Nullable
     public Event getEvent(int position) {
+        /* Allow retrieval only for valid data positions */
+        if (getDataPosition(position) == INVALID_POSITION) {
+            return null;
+        }
         /*
          * Check validity of position, should be smaller than item count.
          * Negative values are checked in list view's getItemAtPosition().
@@ -208,6 +226,9 @@ public class ChatFragment extends BaseFragment implements MultipleChoiceSelector
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        if (savedInstanceState != null) {
+            mFirstRun = savedInstanceState.getBoolean(FIRST_RUN);
+        }
         return inflater.inflate(R.layout.messaging_chat_fragment, container, false);
     }
 
@@ -233,6 +254,12 @@ public class ChatFragment extends BaseFragment implements MultipleChoiceSelector
     }
 
     @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putBoolean(FIRST_RUN, mFirstRun);
+    }
+
+    @Override
     public void onPause() {
         super.onPause();
 
@@ -247,7 +274,10 @@ public class ChatFragment extends BaseFragment implements MultipleChoiceSelector
         if (callback != null && positions.length > 0) {
             final List<Event> events = new ArrayList<>(positions.length);
             for (int position : positions) {
-                events.add(getEvent(position));
+                Event event = getEvent(position);
+                if (event != null) {
+                    events.add(event);
+                }
             }
 
             callback.performAction(menuActionId, events);
@@ -256,9 +286,9 @@ public class ChatFragment extends BaseFragment implements MultipleChoiceSelector
 
     @Override
     public void onScrollStateChanged(AbsListView view, int scrollState) {
-        if (scrollState == AbsListView.OnScrollListener.SCROLL_STATE_IDLE) {
-            markReceivedMessagesAsRead();
-        }
+        // ensure that re-used views have their update timers scheduled properly
+        // this could also be done in MessageEventView#setMessage function.
+        resumeEventUpdate();
     }
 
     @Override
@@ -287,6 +317,26 @@ public class ChatFragment extends BaseFragment implements MultipleChoiceSelector
     public void scrollToBottom() {
         if (mEventsView != null) {
             mEventsView.setSelection(mEventsView.getCount() - 1);
+        }
+    }
+
+    public void scrollToFirstUnread() {
+        if (mEventsView != null && mEvents != null) {
+            int firstUnreadPosition = INVALID_POSITION;
+            int position = 0;
+            for (Event event : mEvents) {
+                if (event instanceof Message) {
+                    if (((Message) event).getState() == MessageStates.RECEIVED) {
+                        firstUnreadPosition = position;
+                        break;
+                    }
+                    position += 1;
+                }
+            }
+            // Try to scroll to first unread position showing also last read message
+            firstUnreadPosition = getScreenPosition(firstUnreadPosition - 1);
+            mEventsView.setSelection(firstUnreadPosition == INVALID_POSITION
+                    ? mEventsView.getCount() - 1 : firstUnreadPosition);
         }
     }
 
@@ -392,7 +442,7 @@ public class ChatFragment extends BaseFragment implements MultipleChoiceSelector
             // TODO: RecyclerView may handle removal animations better
             for (int i = firstVisible; i <= lastVisible; i++) {
                 final int position = getDataPosition(i);
-                if (position == -1) {
+                if (position == INVALID_POSITION) {
                     continue;
                 }
 
@@ -432,23 +482,23 @@ public class ChatFragment extends BaseFragment implements MultipleChoiceSelector
     }
 
     private int getScreenPosition(int position) {
-        int result = -1;
+        int result = INVALID_POSITION;
         try {
             ModelViewAdapter adapter = (ModelViewAdapter) mEventsView.getAdapter();
             result = adapter.getScreenPosition(position);
         } catch (Exception e) {
-            // item not found, return -1
+            // item not found, return INVALID_POSITION
         }
         return result;
     }
 
     private int getDataPosition(int position) {
-        int result = -1;
+        int result = INVALID_POSITION;
         try {
             ModelViewAdapter adapter = (ModelViewAdapter) mEventsView.getAdapter();
             result = adapter.getDataPosition(position);
         } catch (Exception e) {
-            // item not found, return -1
+            // item not found, return INVALID_POSITION
         }
         return result;
     }
@@ -497,7 +547,7 @@ public class ChatFragment extends BaseFragment implements MultipleChoiceSelector
 //        Vector<Message> unreadMessages = new Vector<>(lastVisible - firstVisible + 1);
 //        for (int i = firstVisible; i <= lastVisible; i++) {
 //            final int position = getDataPosition(i);
-//            if (position == -1) {
+//            if (position == INVALID_POSITION) {
 //                continue;
 //            }
 //

@@ -28,6 +28,7 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+
 #include <stdlib.h>
 #include <string.h>
 #include "../baseclasses/CTEditBase.h"
@@ -51,7 +52,9 @@ int t_snprintf(char *buf, int iMaxSize, const char *format, ...);
 //TODO int getGlobInts(char *pkeys[], int *values[], int iMax);
 typedef struct{
    
+   int iExitingAndDoSaveNothingOnDisk;
    //zrtp
+
    
    int iClearZRTPCaches;
    int iClearZRTP_ZID;
@@ -215,7 +218,7 @@ public:
       M_FNC_INT_T(g_Settings.iDisableSkeinHash,iDisableSkeinHash);
       
       M_FNC_INT_T(g_Settings.iForceFWTraversal,iForceFWTraversal);
-      //g_Settings.iEnableFWTraversal = 1;//
+      g_Settings.iEnableFWTraversal = 1;
       M_FNC_INT_T(g_Settings.iEnableFWTraversal,iEnableFWTraversal);
       
       M_FNC_INT_T(g_Settings.iRetroRingtone,iRetroRingtone);
@@ -259,6 +262,9 @@ public:
    }
    void save(){
       if(!iInitOk)return;
+      
+
+      if(g_Settings.iExitingAndDoSaveNothingOnDisk)return;
       
       if(memcmp(&prevSettings,&g_Settings,sizeof(TG_SETTINS))==0)return;
       memcpy(&prevSettings,&g_Settings,sizeof(TG_SETTINS));
@@ -441,6 +447,8 @@ return &g_Settings._K;\
 }
    
    //
+   GLOB_I_CHK(iExitingAndDoSaveNothingOnDisk);
+   
    
    GLOB_I_CHK(iDisableTwofish);
    GLOB_I_CHK(iDisableSkein);

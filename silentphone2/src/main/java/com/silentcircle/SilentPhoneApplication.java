@@ -28,11 +28,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 package com.silentcircle;
 
+import android.Manifest;
 import android.app.Application;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.preference.PreferenceManager;
+import android.support.v4.content.ContextCompat;
 import android.util.Log;
 
 import com.silentcircle.common.util.RingtoneUtils;
@@ -40,6 +43,7 @@ import com.silentcircle.messaging.util.ContactsCache;
 import com.silentcircle.messaging.util.SoundNotifications;
 import com.silentcircle.silentphone2.R;
 import com.silentcircle.silentphone2.fragments.SettingsFragment;
+import com.silentcircle.silentphone2.services.TiviPhoneService;
 
 import java.io.IOException;
 import java.util.Map;
@@ -59,10 +63,12 @@ public class SilentPhoneApplication extends Application {
         super.onCreate();
         sContext = getApplicationContext();
 
-        updateRingTones();
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED)
+            updateRingTones();
 
         /* initialize contacts cache */
-        ContactsCache.buildContactsCache(sContext);
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_CONTACTS) == PackageManager.PERMISSION_GRANTED)
+            ContactsCache.buildContactsCache(sContext);
 
         /* initialize sound notification pool here */
         SoundNotifications.getSoundPool();
