@@ -14,15 +14,15 @@
      limitations under the License.
 -->
 
-<LinearLayout
-        xmlns:android="http://schemas.android.com/apk/res/android"
-        xmlns:tools="http://schemas.android.com/tools"
-        android:id="@+id/lists_frame"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical"
-        android:background="@color/sc_ng_background"
-        android:animateLayoutChanges="true">
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/lists_frame"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/sc_ng_background"
+    android:animateLayoutChanges="true">
 
     <ListView
             android:id="@+id/shortcut_card_list"
@@ -54,7 +54,9 @@
                     android:id="@+id/sliding_tabs"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:background="@color/sc_ng_background_1"/>
+                    android:background="?attr/sp_actionbar_color"
+                    app:slidingTabTextColor="@color/sc_ng_text_grey_2"
+                    app:slidingTabSelectedTextColor="@color/sc_ng_text_red" />
 
             <!--
                         <com.android.contacts.common.list.ViewPagerTabs

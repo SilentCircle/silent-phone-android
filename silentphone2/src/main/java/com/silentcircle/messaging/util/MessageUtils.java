@@ -39,6 +39,7 @@ import android.text.TextUtils;
 
 import com.silentcircle.SilentPhoneApplication;
 import com.silentcircle.messaging.location.LocationUtils;
+import com.silentcircle.messaging.model.CallData;
 import com.silentcircle.messaging.model.Conversation;
 import com.silentcircle.messaging.model.MessageErrorCodes;
 import com.silentcircle.messaging.model.MessageStates;
@@ -47,6 +48,7 @@ import com.silentcircle.messaging.model.event.Event;
 import com.silentcircle.messaging.model.event.IncomingMessage;
 import com.silentcircle.messaging.model.event.Message;
 import com.silentcircle.messaging.model.event.OutgoingMessage;
+import com.silentcircle.messaging.model.event.CallMessage;
 import com.silentcircle.messaging.model.json.JSONEventAdapter;
 import com.silentcircle.messaging.repository.ConversationRepository;
 import com.silentcircle.messaging.repository.EventRepository;
@@ -91,9 +93,17 @@ public class MessageUtils {
     }
 
     public static Message composeMessage(final String sender, String text,
+                                         boolean shouldRequestDeliveryNotification, Conversation conversation,
+                                         Location location) {
+        return composeMessage(sender, text,
+                shouldRequestDeliveryNotification, conversation, location, null, null);
+    }
+
+    public static Message composeMessage(final String sender, String text,
             boolean shouldRequestDeliveryNotification, Conversation conversation,
-            Location location) {
-        Message message = new OutgoingMessage(sender, text);
+            Location location, String attachment, CallData callData) {
+        Message message = callData == null ? new OutgoingMessage(sender, text)
+                : new CallMessage(sender, callData);
         message.setConversationID(conversation.getPartner().getUserId());
         message.setId(UUIDGen.makeType1UUID().toString());
 
@@ -114,6 +124,15 @@ public class MessageUtils {
             }
 
             LocationUtils.locationToJSON(attributeJson, location);
+
+            if (!TextUtils.isEmpty(attachment)) {
+                message.setAttachment(attachment);
+            }
+
+            if (callData != null) {
+                attributeJson.put("ct", callData.type);
+                attributeJson.put("cd", callData.duration);
+            }
 
             if (attributeJson.length() > 0) {
                 message.setAttributes(attributeJson.toString());
@@ -420,21 +439,23 @@ public class MessageUtils {
      * @param events Array of events to remove from conversation. Assumption is that all events are
      *               from one and the same conversation.
      */
-
     public static void removeMessage(@Nullable final Event... events) {
+        if (events == null || events.length < 1) {
+            return;
+        }
+
         AsyncUtils.execute(new AsyncTask<Event, String, String>() {
 
             @Override
             protected String doInBackground(Event... events) {
 
-                if (events == null || events.length < 1) {
-                    return null;
-                }
-
                 AxoMessaging axoMessaging = AxoMessaging.getInstance(SilentPhoneApplication.getAppContext());
                 if (!axoMessaging.isRegistered()) {
                     return null;
                 }
+
+                int position = 0;
+                CharSequence[] ids = new CharSequence[events.length];
 
                 String conversationId = null;
                 ConversationRepository repository = axoMessaging.getConversations();
@@ -448,6 +469,7 @@ public class MessageUtils {
                         history = repository.historyOf(conversation);
                     }
 
+                    ids[position++] = event.getId();
                     if (event instanceof Message) {
                         Message message = (Message) event;
                         deleteEvent(SilentPhoneApplication.getAppContext(), repository, conversation, message);
@@ -458,19 +480,11 @@ public class MessageUtils {
                         }
                     }
                 }
-                return conversationId;
-            }
 
-            @Override
-            protected void onPostExecute(String conversationId) {
-                /*
-                 * TODO: instead of updating all conversation pass event ids that were removed to caller
-                 * If an animation is running during such full update, it is cancelled. Granular approach
-                 * would allow for smoother animations in chat fragment.
-                 */
-                if (!TextUtils.isEmpty(conversationId)) {
-                    notifyConversationUpdated(SilentPhoneApplication.getAppContext(), conversationId, true);
-                }
+                notifyConversationUpdated(SilentPhoneApplication.getAppContext(), conversationId,
+                        false, AxoMessaging.UPDATE_ACTION_MESSAGE_BURNED, ids);
+
+                return conversationId;
             }
 
         }, events);
@@ -519,18 +533,15 @@ public class MessageUtils {
                         events.remove(event);
                     }
 
+                    notifyConversationUpdated(context, conversationId, false,
+                            AxoMessaging.UPDATE_ACTION_MESSAGE_BURNED, event.getId());
+
                     return event;
                 }
 
                 @Override
                 protected void onPostExecute(Event event) {
-                    if (event != null) {
-                        notifyConversationUpdated(context, conversationId, false, event.getId(),
-                                AxoMessaging.UPDATE_ACTION_MESSAGE_BURNED);
-                    }
-                    else {
-                        notifyConversationUpdated(context, conversationId, true);
-                    }
+
                 }
 
             }, event);
@@ -551,6 +562,8 @@ public class MessageUtils {
                 conversationId = message.getConversationID();
             } else if (message instanceof IncomingMessage) {
                 conversationId = ((Message) message).getSender();
+            } else if (message instanceof CallMessage) {
+                conversationId = message.getConversationID();
             } else if (message instanceof  ErrorEvent) {
                 conversationId = ((ErrorEvent) message).getSender();
             }
@@ -570,16 +583,16 @@ public class MessageUtils {
         context.sendOrderedBroadcast(intent, Manifest.permission.READ);
     }
 
-    /**
-     * Send an UPDATE_CONVERSATION broadcast for given conversationId with details which message
-     * is affected by what action.
-     */
     public static void notifyConversationUpdated(final Context context, final String conversationId,
-            boolean forceRefresh, final String messageId, int updateAction) {
+            boolean forceRefresh, int updateAction, final CharSequence... messageIds) {
+        if (messageIds == null || messageIds.length == 0) {
+            return;
+        }
+
         final Intent intent = Action.UPDATE_CONVERSATION.intent();
         Extra.PARTNER.to(intent, conversationId);
         Extra.FORCE.to(intent, forceRefresh);
-        Extra.ID.to(intent, messageId);
+        Extra.IDS.to(intent, messageIds);
         Extra.REASON.to(intent, updateAction);
         context.sendOrderedBroadcast(intent, Manifest.permission.READ);
     }
@@ -750,19 +763,22 @@ public class MessageUtils {
      *                 one and the same conversation.
      */
     public static void markMessagesAsRead(@Nullable Message... messages) {
+        if (messages == null || messages.length < 1) {
+            return;
+        }
 
         AsyncUtils.execute(new AsyncTask<Message, String, String>() {
 
             @Override
             protected String doInBackground(Message... messages) {
-                if (messages == null || messages.length < 1) {
-                    return null;
-                }
 
                 AxoMessaging axoMessaging = AxoMessaging.getInstance(SilentPhoneApplication.getAppContext());
                 if (!axoMessaging.isRegistered()) {
                     return null;
                 }
+
+                int position = 0;
+                CharSequence[] ids = new CharSequence[messages.length];
 
                 String conversationId = null;
                 ConversationRepository repository = axoMessaging.getConversations();
@@ -771,7 +787,9 @@ public class MessageUtils {
 
                 long currentMillis = System.currentTimeMillis();
                 for (Message message : messages) {
-                    if (message.getState() != MessageStates.RECEIVED) {
+                    if (message.getState() != MessageStates.RECEIVED
+                            && (!(message instanceof CallMessage
+                            && message.getState() != MessageStates.READ))) {
                         continue;
                     }
                     message.setState(MessageStates.READ);
@@ -788,6 +806,7 @@ public class MessageUtils {
                         history = repository.historyOf(conversation);
                     }
 
+                    ids[position++] = message.getId();
                     if (history != null) {
                         history.save(message);
                     }
@@ -801,19 +820,17 @@ public class MessageUtils {
                     repository.save(conversation);
                 }
 
-                return conversationId;
-            }
-
-            @Override
-            protected void onPostExecute(String conversationId) {
-                /*
-                 * TODO: instead of updating all conversation pass event ids that were removed to caller
-                 * If an animation is running during such full update, it is cancelled. Granular approach
-                 * would allow for smoother animations in chat fragment.
-                 */
-                if (!TextUtils.isEmpty(conversationId)) {
-                    notifyConversationUpdated(SilentPhoneApplication.getAppContext(), conversationId, true);
+                int unreadCallMessageCount = conversation != null ? conversation.getUnreadCallMessageCount() : 0;
+                if (unreadCallMessageCount > 0) {
+                    unreadCallMessageCount = Math.max(0, unreadCallMessageCount - messages.length);
+                    conversation.setUnreadCallMessageCount(unreadCallMessageCount);
+                    repository.save(conversation);
                 }
+
+                notifyConversationUpdated(SilentPhoneApplication.getAppContext(), conversationId,
+                        false, AxoMessaging.UPDATE_ACTION_MESSAGE_STATE_CHANGE, ids);
+
+                return conversationId;
             }
 
         }, messages);

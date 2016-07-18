@@ -72,6 +72,7 @@ public class OptionsItem extends RelativeLayout implements Checkable {
 
     private int mTextColor;
     private int mDescriptionColor;
+    private int mTintColor;
 
     private OnCheckedChangeListener mOnCheckedChangeListener;
     private OnClickListener mOnClickListener;
@@ -110,6 +111,7 @@ public class OptionsItem extends RelativeLayout implements Checkable {
         mDescriptionSize = typedArray.getDimensionPixelSize(R.styleable.OptionsItem_descriptionSize, 0);
         mTextColor = typedArray.getColor(R.styleable.OptionsItem_textColor, 0);
         mDescriptionColor = typedArray.getColor(R.styleable.OptionsItem_descriptionColor, 0);
+        mTintColor = typedArray.getColor(R.styleable.OptionsItem_tintColor, 0);
         typedArray.recycle();
 
         inflate(context, R.layout.widget_options_item, this);
@@ -153,6 +155,9 @@ public class OptionsItem extends RelativeLayout implements Checkable {
         }
         if (mDescriptionColor != 0) {
             mItemDescription.setTextColor(mDescriptionColor);
+        }
+        if (mTintColor != 0) {
+            mImage.setColorFilter(mTintColor, android.graphics.PorterDuff.Mode.MULTIPLY);
         }
     }
 

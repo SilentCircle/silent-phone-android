@@ -30,7 +30,9 @@ package com.silentcircle.messaging.views;
 import android.app.Activity;
 import android.content.Context;
 import android.content.res.Resources;
+import android.os.Build;
 import android.support.annotation.NonNull;
+import android.telephony.PhoneNumberUtils;
 import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.view.View;
@@ -40,8 +42,11 @@ import android.widget.QuickContactBadge;
 import android.widget.TextView;
 
 import com.silentcircle.common.list.ContactEntry;
+import com.silentcircle.common.util.CallUtils;
 import com.silentcircle.contacts.ContactPhotoManagerNew;
+import com.silentcircle.contacts.ScCallLog;
 import com.silentcircle.messaging.model.Conversation;
+import com.silentcircle.messaging.model.event.CallMessage;
 import com.silentcircle.messaging.model.event.Event;
 import com.silentcircle.messaging.model.event.IncomingMessage;
 import com.silentcircle.messaging.model.event.Message;
@@ -53,9 +58,12 @@ import com.silentcircle.messaging.util.ConversationUtils;
 import com.silentcircle.messaging.util.MIME;
 import com.silentcircle.messaging.util.MessageUtils;
 import com.silentcircle.silentphone2.R;
+import com.silentcircle.silentphone2.util.Utilities;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.util.Locale;
 
 /**
  * Widget to house information for single conversation in conversations view.
@@ -153,6 +161,7 @@ public class ConversationListItem extends LinearLayout {
         mOnConversationItemClickListener = listener;
     }
 
+    @SuppressWarnings("deprecation")
     public void setConversation(@NonNull final Conversation conversation,
             final ContactPhotoManagerNew photoManager) {
 
@@ -174,6 +183,7 @@ public class ConversationListItem extends LinearLayout {
 //                displayName = conversation.getPartner().getDisplayName();
 //            }
 //        }
+
         mNameView.setText(displayName);
 
         AvatarUtils.setPhoto(photoManager, mContactButton, contactEntry);
@@ -188,8 +198,10 @@ public class ConversationListItem extends LinearLayout {
         // if there are any unread messages in conversation, show status icon
         // TODO: wrap this in a widget?
         mStatusIcon.setVisibility(
-                conversation.containsUnreadMessages() ? View.VISIBLE : View.GONE);
-        int unreadMessageCount = conversation.getUnreadMessageCount();
+                conversation.containsUnreadMessages() || conversation.containsUnreadCallMessages()
+                        ? View.VISIBLE : View.GONE);
+        int unreadMessageCount = conversation.getUnreadMessageCount()
+                + conversation.getUnreadCallMessageCount();
         mStatusMessageCount.setText(unreadMessageCount > UNREAD_MESSAGE_COUNT_DISPLAY_LIMIT
                 ? ">" + UNREAD_MESSAGE_COUNT_DISPLAY_LIMIT
                 : String.valueOf(unreadMessageCount));
@@ -217,6 +229,11 @@ public class ConversationListItem extends LinearLayout {
                 messageText = getAttachmentDescription((Message) event);
             } else if (event instanceof OutgoingMessage) {
                 messageText = getAttachmentDescription((Message) event);
+            } else if (event instanceof CallMessage) {
+                int callType = ((CallMessage) event).getCallType();
+                int callDuration = ((CallMessage) event).callDuration;
+
+                messageText = CallUtils.formatCallData(mContext, callType, callDuration);
             }
         }
         else {

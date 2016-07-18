@@ -31,46 +31,60 @@
         android:orientation="horizontal">
         <android.support.v7.widget.AppCompatRadioButton
             android:id="@+id/developer_axo_debug_radio_button_0"
+            style="@style/Widget.Silent.SimpleText.Medium"
+            android:theme="@style/Widget.RadioButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="0"/>
         <android.support.v7.widget.AppCompatRadioButton
             android:id="@+id/developer_axo_debug_radio_button_1"
+            style="@style/Widget.Silent.SimpleText.Medium"
+            android:theme="@style/Widget.RadioButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="1"/>
         <android.support.v7.widget.AppCompatRadioButton
             android:id="@+id/developer_axo_debug_radio_button_2"
+            style="@style/Widget.Silent.SimpleText.Medium"
+            android:theme="@style/Widget.RadioButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="2"/>
         <android.support.v7.widget.AppCompatRadioButton
             android:id="@+id/developer_axo_debug_radio_button_3"
+            style="@style/Widget.Silent.SimpleText.Medium"
+            android:theme="@style/Widget.RadioButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="3"/>
         <android.support.v7.widget.AppCompatRadioButton
             android:id="@+id/developer_axo_debug_radio_button_4"
+            style="@style/Widget.Silent.SimpleText.Medium"
+            android:theme="@style/Widget.RadioButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="4"/>
         <android.support.v7.widget.AppCompatRadioButton
-                android:id="@+id/developer_axo_debug_radio_button_5"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="5"/>
+            android:id="@+id/developer_axo_debug_radio_button_5"
+            style="@style/Widget.Silent.SimpleText.Medium"
+            android:theme="@style/Widget.RadioButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="5"/>
         <android.support.v7.widget.AppCompatRadioButton
-                android:id="@+id/developer_axo_debug_radio_button_6"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="6"/>
+            android:id="@+id/developer_axo_debug_radio_button_6"
+            style="@style/Widget.Silent.SimpleText.Medium"
+            android:theme="@style/Widget.RadioButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="6"/>
     </RadioGroup>
 
     <TextView
@@ -78,7 +92,6 @@
         android:layout_below="@id/developer_axo_debug_radio_group"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
-        android:textAppearance="?android:attr/textAppearanceSmall"
         android:maxLines="5"
         android:text="@string/developer_axo_debug_explanation"/>
 

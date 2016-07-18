@@ -552,12 +552,12 @@ public class DialpadFragment extends Fragment implements View.OnClickListener,
         if (isDestinationEmpty()) { // No number entered.
             handleDialButtonClickWithEmptyDigits();
         } else {
-            if (!LoadUserInfo.canCallOutbound(mParent)) {
-                showDialog(R.string.information_dialog, R.string.basic_account_info,
-                        android.R.string.ok, -1);
-
-                return;
-            }
+//            if (!LoadUserInfo.canCallOutbound(mParent)) {
+//                showDialog(R.string.information_dialog, R.string.basic_account_info,
+//                        android.R.string.ok, -1);
+//
+//                return;
+//            }
 
             final Editable text = mDestination.getText();
             if (text != null) {
@@ -663,7 +663,7 @@ public class DialpadFragment extends Fragment implements View.OnClickListener,
         dst = numberParts[0];
         final String deviceId = numberParts.length >= 2 ? ";" + numberParts[1] : null;
         final String formattedNumber;
-        if (Character.isLetter(dst.charAt(0)) || Utilities.isUriNumber(dst)) {
+        if (Character.isLetter(dst.charAt(0)) || Utilities.isUriNumber(dst) || dst.charAt(0) == '*') {
             formattedNumber = mLastDestination = dst;
         }
         else {
@@ -705,26 +705,26 @@ public class DialpadFragment extends Fragment implements View.OnClickListener,
                     // money if connected (OCA call)
 
                     if(isOcaCall) {
-                        if(LoadUserInfo.checkIfUsesMinutes() == LoadUserInfo.VALID &&
-                                LoadUserInfo.checkIfLowMinutes(0) == LoadUserInfo.VALID) {
-                            showDialog(R.string.information_dialog, R.string.minutes_gone_info,
-                                    android.R.string.ok, -1);
-
-                            return;
-                        } else if(LoadUserInfo.checkIfUsesCredit() == LoadUserInfo.VALID &&
-                                LoadUserInfo.checkIfLowCredit(0.00) == LoadUserInfo.VALID) {
-                            showDialog(R.string.information_dialog, R.string.credit_gone_info,
-                                    android.R.string.ok, -1);
-
-                            return;
-                        }
-
-                        if(!LoadUserInfo.canCallOca(mParent)) {
-                            showDialog(R.string.information_dialog, R.string.basic_account_info,
-                                    android.R.string.ok, -1);
-
-                            return;
-                        }
+//                        if(LoadUserInfo.checkIfUsesMinutes() == LoadUserInfo.VALID &&
+//                                LoadUserInfo.checkIfLowMinutes(0) == LoadUserInfo.VALID) {
+//                            showDialog(R.string.information_dialog, R.string.minutes_gone_info,
+//                                    android.R.string.ok, -1);
+//
+//                            return;
+//                        } else if(LoadUserInfo.checkIfUsesCredit() == LoadUserInfo.VALID &&
+//                                LoadUserInfo.checkIfLowCredit(0.00) == LoadUserInfo.VALID) {
+//                            showDialog(R.string.information_dialog, R.string.credit_gone_info,
+//                                    android.R.string.ok, -1);
+//
+//                            return;
+//                        }
+//
+//                        if(!LoadUserInfo.canCallOca(mParent)) {
+//                            showDialog(R.string.information_dialog, R.string.basic_account_info,
+//                                    android.R.string.ok, -1);
+//
+//                            return;
+//                        }
                         // For OCA calls set the display name to the formatted number because
                         // no other information is available :-) .
                         mUserInfo = new AsyncTasks.UserInfo();

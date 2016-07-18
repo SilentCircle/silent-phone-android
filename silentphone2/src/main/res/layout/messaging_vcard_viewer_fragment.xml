@@ -73,7 +73,7 @@
                 />
 
             <Button
-                style="@style/Widget.Button.Dark"
+                style="@style/Widget.Button"
                 android:id="@+id/button_import_vcard"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -85,7 +85,7 @@
                 />
 
             <Button
-                style="@style/Widget.Button.Dark"
+                style="@style/Widget.Button"
                 android:id="@+id/button_back"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

@@ -163,7 +163,6 @@
     <string name="account_creation_no_data">Creación de cuenta - el servidor devolvió un formato de datos erróneo.</string>
     <string name="other_settings">Otras configuraciones</string>
     <string name="theme_black">Black</string>
-    <string name="extended_menu">Menú Extendido</string>
     <string name="bp_is_online">Silent Phone en línea</string>
     <string name="bp_is_offline">Silent Phone fuera de línea</string>
     <string name="bp_not_started">Silent Phone sin iniciar</string>

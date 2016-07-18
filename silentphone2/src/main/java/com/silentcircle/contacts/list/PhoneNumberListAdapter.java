@@ -135,8 +135,9 @@ public class PhoneNumberListAdapter extends ScContactEntryListAdapter {
 
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     @Override
-    public void configureLoader(CursorLoader loader, long directoryId) {
-        if (mSearchScData) {
+    public void configureLoader(CursorLoader loader, long directoryId, String directoryType) {
+        if (mSearchScData
+                || (directoryType != null && directoryType.equals(mContext.getString(R.string.scContactsList)))) {
             configureLoaderScData(loader);
             return;
         }
@@ -255,8 +256,9 @@ public class PhoneNumberListAdapter extends ScContactEntryListAdapter {
         }
         else {
             final String selection = selectionMime + " AND " +
-                    ContactsContract.Contacts.DISPLAY_NAME + " LIKE '%" + query + "%'";
+                    ContactsContract.Contacts.DISPLAY_NAME + " LIKE ?";
             loader.setSelection(selection);
+            loader.setSelectionArgs(new String[] { '%' + query + '%' });
         }
 
         if (getContactNameDisplayOrder() == ContactsPreferences.DISPLAY_ORDER_PRIMARY) {
@@ -335,7 +337,7 @@ public class PhoneNumberListAdapter extends ScContactEntryListAdapter {
 
         int pi = getPartitionForPosition(position);
         if (cursor != null) {
-            if (((DirectoryPartition)getPartition(pi)).getDirectoryId() == SC_DIRECTORY) {
+            if (((DirectoryPartition)getPartition(pi)).getDirectoryId() == SC_REMOTE_DIRECTORY) {
                 return null;            // we don't have a data URI for SC directory entries/numbers
             }
             else {
@@ -439,7 +441,7 @@ public class PhoneNumberListAdapter extends ScContactEntryListAdapter {
         }
 
         final DirectoryPartition directory = (DirectoryPartition) getPartition(partition);
-        if (!mSearchScData)
+        if (!mSearchScData && !directory.getDirectoryType().equals(mContext.getString(R.string.scContactsList)))
             bindPhoneNumber(view, cursor, directory.isDisplayNumber());
     }
 

@@ -14,8 +14,9 @@
      limitations under the License.
 -->
 
-<CheckedTextView xmlns:android="http://schemas.android.com/apk/res/android"
+<android.support.v7.widget.AppCompatCheckedTextView xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@android:id/text1"
+    android:theme="@style/Widget.CheckedTextView.Light"
     android:layout_width="match_parent"
     android:layout_height="?android:attr/listPreferredItemHeightSmall"
     android:textAppearance="?android:attr/textAppearanceListItemSmall"
@@ -25,5 +26,5 @@
     android:paddingRight="@dimen/spacing_normal"
     android:paddingStart="@dimen/spacing_normal"
     android:paddingEnd="@dimen/spacing_normal"
-    android:textColor="?sp_actionbar_title_text_color"
+    android:textColor="@color/sc_ng_text_dark"
     />

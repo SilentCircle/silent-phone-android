@@ -32,6 +32,8 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Parcelable;
 
+import java.util.ArrayList;
+
 public enum Extra {
 
     ID("ID"),
@@ -44,7 +46,8 @@ public enum Extra {
     STATE("STATE"),
     REASON("REASON"),
     ALIAS("ALIAS"),
-    DISPLAY_NAME("DISPLAY_NAME");
+    DISPLAY_NAME("DISPLAY_NAME"),
+    IDS("IDS"),;
 
     public final String INTENT_EXTRA_NAME_FORMAT = "com.silentcircle.messaging.extra.%s";
 
@@ -106,6 +109,38 @@ public enum Extra {
 
     public boolean getBoolean(Intent intent) {
         return intent != null && intent.getBooleanExtra(getName(), false);
+    }
+
+    public CharSequence[] getCharSequences(Intent intent) {
+        return intent == null ? null : intent.getCharSequenceArrayExtra(getName());
+    }
+
+    public ArrayList<CharSequence> getCharSequenceList(Intent intent) {
+        return intent == null ? null : intent.getCharSequenceArrayListExtra(getName());
+    }
+
+    public String[] getStrings(Intent intent) {
+        return intent == null ? null : intent.getStringArrayExtra(getName());
+    }
+
+    public ArrayList<String> getStringList(Intent intent) {
+        return intent == null ? null : intent.getStringArrayListExtra(getName());
+    }
+
+    public CharSequence[] getCharSequences(Bundle bundle) {
+        return bundle == null ? null : bundle.getCharSequenceArray(getName());
+    }
+
+    public ArrayList<CharSequence> getCharSequenceList(Bundle bundle) {
+        return bundle == null ? null : bundle.getCharSequenceArrayList(getName());
+    }
+
+    public String[] getStrings(Bundle bundle) {
+        return bundle == null ? null : bundle.getStringArray(getName());
+    }
+
+    public ArrayList<String> getStringList(Bundle bundle) {
+        return bundle == null ? null : bundle.getStringArrayList(getName());
     }
 
     public String getName() {
@@ -212,6 +247,20 @@ public enum Extra {
     public Intent to(Intent intent, String value) {
         if (intent != null) {
             intent.putExtra(getName(), value);
+        }
+        return intent;
+    }
+
+    public Intent to(Intent intent, CharSequence... values) {
+        if (intent != null) {
+            intent.putExtra(getName(), values);
+        }
+        return intent;
+    }
+
+    public Intent to(Intent intent, String... values) {
+        if (intent != null) {
+            intent.putExtra(getName(), values);
         }
         return intent;
     }

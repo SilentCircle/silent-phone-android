@@ -257,9 +257,9 @@ public class InCallActivity extends AppCompatActivity
     @Override
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     protected void onCreate(Bundle savedInstanceState) {
+        Utilities.setTheme(this);
         super.onCreate(savedInstanceState);
 
-        Utilities.setTheme(this);
         ViewUtil.setBlockScreenshots(this);
         if (ConfigurationUtilities.mTrace) Log.d(TAG, "Intent onCreate: " + getIntent());
 
@@ -463,8 +463,15 @@ public class InCallActivity extends AppCompatActivity
         if (mForceDestroy)
             return;
         mSensorManager.unregisterListener(this);
-        Utilities.restoreSpeakerMode(getBaseContext());
-        Utilities.audioMode(getBaseContext(), false);
+
+        new Thread() {
+            @Override
+            public void run() {
+                Utilities.restoreSpeakerMode(getApplicationContext());
+                Utilities.audioMode(getApplicationContext(), false);
+            }
+        }.start();
+
         updateProximitySensorMode(false);
         doUnbindService();
     }
@@ -565,6 +572,7 @@ public class InCallActivity extends AppCompatActivity
             // The drawer does not modify action bar settings, thus no need to
             // restore them too.
             getMenuInflater().inflate(R.menu.incall, menu);
+            ViewUtil.tintMenuIcons(this, menu);
             restoreActionBar();
             return true;
         }

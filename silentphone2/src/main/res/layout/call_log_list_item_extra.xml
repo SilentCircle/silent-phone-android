@@ -22,11 +22,11 @@
              android:id="@+id/badge_container"
              android:layout_width="match_parent"
              android:layout_height="wrap_content"
-        android:background="@color/background_dialer_list_items">
+        android:background="?attr/sp_activity_background_color">
 
     <View android:layout_width="match_parent"
         android:layout_height="1px"
-        android:background="@color/favorite_contacts_separator_color" />
+        android:background="?attr/sp_activity_primary_text_color" />
 
     <LinearLayout android:id="@+id/badge_link_container"
         android:layout_width="match_parent"
@@ -40,7 +40,7 @@
         <ImageView android:id="@+id/badge_image"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:tint="@color/sc_ng_text_grey"
+            android:tint="?attr/sp_activity_primary_text_color"
             android:padding="@dimen/call_log_outer_margin" />
 
         <TextView android:id="@+id/badge_text"
@@ -48,7 +48,7 @@
             android:layout_height="wrap_content"
             android:paddingStart="@dimen/call_log_start_margin"
             android:paddingLeft="@dimen/call_log_start_margin"
-            android:textColor="@color/sc_ng_text_grey"
+            android:textColor="?attr/sp_activity_secondary_text_color"
             android:layout_gravity="center_vertical"
             android:layout_weight="1" />
 

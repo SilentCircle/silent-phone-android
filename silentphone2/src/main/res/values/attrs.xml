@@ -24,6 +24,9 @@
         <attr name="sp_drawer_background" format="color|reference"/>
         <attr name="sp_drawer_header_background" format="color|reference"/>
         <attr name="sp_drawer_header_text_color" format="color|reference"/>
+        <attr name="sp_drawer_text_color" format="color|reference"/>
+        <attr name="sp_drawer_secondary_text_color" format="color|reference"/>
+        <attr name="sp_drawer_separator_color" format="color|reference"/>
 
         <!-- ?
                 <attr name="sp_ab_title_style" format="reference" />
@@ -108,13 +111,19 @@
         <attr name="sp_ab_subtitle_style" format="reference" />
         <attr name="sp_ab_dark_title_style" format="reference" />
 
-        <attr name="sp_icon_tint_color" format="reference|color"/>
-
         <attr name="sp_dialog_text_color" format="reference|color"/>
 
+        <!-- main activity background and text colors -->
         <attr name="sp_activity_background_color" format="reference|color"/>
+        <attr name="sp_activity_primary_text_color" format="reference|color"/>
+        <attr name="sp_activity_secondary_text_color" format="reference|color"/>
+        <attr name="sp_activity_button_background_selector" format="reference|color"/>
+        <attr name="sp_activity_button_text_selector" format="reference|color"/>
 
-        <!-- Message bubble background and text colours -->
+        <!-- dialpad background -->
+        <attr name="sp_diaplad_background_color" format="reference|color"/>
+
+        <!-- message bubble background and text colours -->
         <attr name="sp_incoming_message_background_selector" format="reference|color"/>
         <attr name="sp_incoming_message_text_selector" format="reference|color"/>
         <attr name="sp_outgoing_message_background_selector" format="reference|color"/>
@@ -206,6 +215,7 @@
     <declare-styleable name="ScCallLog">
         <attr name="call_log_primary_text_color" format="color" />
         <attr name="call_log_primary_background_color" format="color" />
+        <attr name="call_log_expanded_background_color" format="color" />
         <attr name="call_log_secondary_text_color" format="color" />
         <attr name="call_log_secondary_background_color" format="color" />
         <attr name="call_log_header_color" format="color" />
@@ -280,6 +290,7 @@
     <declare-styleable name="OptionsItem">
         <attr name="src" format="reference" />
         <attr name="srcChecked" format="reference" />
+        <attr name="tintColor" format="reference" />
         <attr name="text" format="reference|string" />
         <attr name="textColor" format="reference|color" />
         <attr name="description" format="reference|string" />
@@ -316,6 +327,11 @@
 
     <declare-styleable name="AdjustingTextView">
         <attr name="minTextSize" format="reference|dimension" />
+    </declare-styleable>
+
+    <declare-styleable name="SlidingTabLayout">
+        <attr name="slidingTabTextColor" format="reference|color" />
+        <attr name="slidingTabSelectedTextColor" format="reference|color" />
     </declare-styleable>
 
 </resources>

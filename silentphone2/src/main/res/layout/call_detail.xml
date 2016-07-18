@@ -43,7 +43,7 @@
                 android:layout_alignParentLeft="true"
                 android:layout_alignParentStart="true"
                 android:layout_alignParentTop="true"
-                android:background="@color/sc_ng_background">
+                android:background="?attr/sp_activity_background_color">
             <!-- Caller information "card" -->
             <LinearLayout
                     android:id="@+id/caller_information"
@@ -81,7 +81,7 @@
                             android:id="@+id/caller_name"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:textColor="@color/sc_ng_text_grey"
+                        android:textColor="?attr/sp_activity_primary_text_color"
                             android:textSize="@dimen/call_log_primary_text_size"
                             android:includeFontPadding="false"
                             android:layout_marginBottom="5dp"
@@ -93,7 +93,7 @@
                             android:id="@+id/caller_number"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:textColor="@color/sc_ng_text_grey_3"
+                            android:textColor="?attr/sp_activity_primary_text_color"
                             android:textSize="@dimen/call_log_secondary_text_size"
                             android:layout_marginBottom="1dp"
                             android:singleLine="true"
@@ -104,7 +104,7 @@
                             android:id="@+id/phone_account_label"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:textColor="@color/secondary_text_color"
+                            android:textColor="?attr/sp_activity_secondary_text_color"
                             android:textSize="@dimen/call_log_secondary_text_size"
                             android:singleLine="true"
                             android:visibility="gone"

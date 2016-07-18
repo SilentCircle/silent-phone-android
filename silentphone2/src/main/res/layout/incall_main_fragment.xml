@@ -63,6 +63,7 @@
                     style="@style/Widget.Silent"
                     android:textAppearance="?android:textAppearanceSmall"
                     android:text="@string/verify_label"
+                    android:textColor="?attr/sp_activity_secondary_text_color"
                     android:filterTouchesWhenObscured="true"
                     android:singleLine="true"
                     tools:text="Antippen, vergleiche code"

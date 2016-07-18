@@ -116,7 +116,7 @@
                         android:layout_marginStart="@dimen/conversation_log_name_margin_left"
                         android:singleLine="true"
                         android:maxLines="1"
-                        android:textColor="@color/sc_ng_text_grey"
+                        android:textColor="?attr/sp_activity_primary_text_color"
                         android:textSize="@dimen/conversation_log_name_text_size"
                         tools:text="Name" />
 
@@ -128,7 +128,7 @@
                         android:layout_marginRight="@dimen/conversation_log_time_margin_right"
                         android:ellipsize="marquee"
                         android:singleLine="true"
-                        android:textColor="@color/sc_ng_text_grey_4"
+                        android:textColor="?attr/sp_activity_secondary_text_color"
                         android:textSize="@dimen/conversation_log_message_info_small_text_size"
                         android:visibility="visible"
                         tools:text="Yesterday"
@@ -148,10 +148,11 @@
                     android:ellipsize="end"
                     android:maxLines="1"
                     android:lines="1"
-                    android:textColor="@drawable/message_summary_text_color"
+                    android:textColor="?attr/sp_activity_secondary_text_color"
                     android:textSize="@dimen/conversation_log_secondary_text_size"
                     android:visibility="visible"
                     tools:text="Message text" />
+                <!-- TODO adjust @drawable/message_summary_text_color for this field -->
 
             </LinearLayout>
 

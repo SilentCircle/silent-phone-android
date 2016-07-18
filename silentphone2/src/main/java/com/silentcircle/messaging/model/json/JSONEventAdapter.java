@@ -37,6 +37,7 @@ import com.silentcircle.messaging.model.event.EventType;
 import com.silentcircle.messaging.model.event.IncomingMessage;
 import com.silentcircle.messaging.model.event.Message;
 import com.silentcircle.messaging.model.event.OutgoingMessage;
+import com.silentcircle.messaging.model.event.CallMessage;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -103,6 +104,12 @@ public class JSONEventAdapter extends JSONAdapter {
 
         to.setFailureFlags(fromArrayOfLongs(getJSONArray(from, "failureFlags")));
 
+        if (to instanceof CallMessage) {
+            ((CallMessage) to).setCallType(getInt(from, "call_type"));
+            ((CallMessage) to).setCallDuration(getInt(from, "call_duration"));
+            ((CallMessage) to).setCallTime(getLong(from, "call_time"));
+        }
+
         return to;
     }
 
@@ -121,7 +128,6 @@ public class JSONEventAdapter extends JSONAdapter {
             json.put("time", event.getTime());
 
             if (event instanceof Message) {
-
                 Message message = (Message) event;
 
                 json.put("burn_notice", message.getBurnNotice());
@@ -141,6 +147,12 @@ public class JSONEventAdapter extends JSONAdapter {
                     for (Long id : netIds)
                         ids.put(id);
                     json.put("net_ids", ids);
+                }
+
+                if (event instanceof CallMessage) {
+                    json.put("call_type", ((CallMessage) event).getCallType());
+                    json.put("call_duration", ((CallMessage) event).getCallDuration());
+                    json.put("call_time", ((CallMessage) event).getCallTime());
                 }
             }
 
@@ -174,6 +186,8 @@ public class JSONEventAdapter extends JSONAdapter {
                 return adapt(json, new IncomingMessage());
             case OUTGOING_MESSAGE:
                 return adapt(json, new OutgoingMessage());
+            case PHONE_MESSAGE:
+                return adapt(json, new CallMessage());
             case EVENT:
             default:
                 return adapt(json, new Event());

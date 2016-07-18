@@ -6,11 +6,28 @@
  */
 // +++LICENSE_END+++
  -->
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_height="match_parent"
+    android:layout_width="match_parent"
+    android:orientation="vertical"
+    android:background="?sp_activity_background_color"
+    tools:context="com.silentcircle.messaging.activities.AxoRegisterActivity">
 
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-             xmlns:tools="http://schemas.android.com/tools"
-             android:id="@+id/axo_devices_container"
-             android:layout_width="match_parent"
-             android:layout_height="match_parent"
-             android:background="?sp_activity_background_color"
-             tools:context="com.silentcircle.messaging.activities.AxoRegisterActivity"/>
+    <android.support.v7.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="?sp_actionbar_color"
+        android:minHeight="?attr/actionBarSize"
+        app:titleTextAppearance="?sp_ab_title_style"
+        app:subtitleTextAppearance="?sp_ab_subtitle_style" />
+
+    <FrameLayout
+        android:id="@+id/axo_devices_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+</LinearLayout>

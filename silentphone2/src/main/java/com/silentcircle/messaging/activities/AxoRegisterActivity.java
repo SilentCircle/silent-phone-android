@@ -29,12 +29,17 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package com.silentcircle.messaging.activities;
 
 import android.os.Bundle;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
+import android.view.MenuItem;
 
+import com.silentcircle.common.util.ViewUtil;
 import com.silentcircle.messaging.fragments.AxoDevicesFragment;
 import com.silentcircle.messaging.services.AxoMessaging;
 import com.silentcircle.silentphone2.R;
+import com.silentcircle.silentphone2.util.Utilities;
 
 /**
  * Support activity to handle Axolotl registration.
@@ -53,8 +58,12 @@ public class AxoRegisterActivity  extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Utilities.setTheme(this);
         super.onCreate(savedInstanceState);
+        ViewUtil.setBlockScreenshots(this);
         setContentView(R.layout.activity_axo_devices);
+        restoreActionBar();
+        setTitle(R.string.axo_menu_devices);
         String action = getIntent().getAction();
         if (TextUtils.isEmpty(action)) {
             finish();
@@ -77,6 +86,16 @@ public class AxoRegisterActivity  extends AppCompatActivity {
         super.onDestroy();
     }
 
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        boolean consumed = false;
+        if (item.getItemId() == android.R.id.home) {
+            consumed = true;
+            onBackPressed();
+        }
+        return consumed || super.onOptionsItemSelected(item);
+    }
+
     public void noRegistration() {
         AxoMessaging axoMessaging = AxoMessaging.getInstance(getApplicationContext());
         axoMessaging.setAskToRegister(false);
@@ -88,4 +107,18 @@ public class AxoRegisterActivity  extends AppCompatActivity {
         axoMessaging.registerDeviceMessaging(false);
         finish();
     }
+
+    protected void restoreActionBar() {
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+
+        ActionBar actionBar = getSupportActionBar();
+        if (actionBar != null) {
+            actionBar.setDisplayShowTitleEnabled(true);
+            actionBar.setDisplayHomeAsUpEnabled(true);
+            actionBar.setDisplayShowHomeEnabled(true);
+            actionBar.setHomeButtonEnabled(true);
+        }
+    }
+
 }

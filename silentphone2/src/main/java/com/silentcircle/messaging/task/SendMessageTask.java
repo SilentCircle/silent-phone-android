@@ -50,9 +50,15 @@ public class SendMessageTask extends AsyncTask<Message, Void, Message> {
     private boolean mResultStatus = true;
     private int mResultCode = 0;
     private String mResultInfo = null;
+    private boolean mSiblingsOnly;
 
     public SendMessageTask(Context context) {
         mContext = context;
+    }
+
+    public SendMessageTask(Context context, boolean siblingsOnly) {
+        mContext = context;
+        mSiblingsOnly = siblingsOnly;
     }
 
     @Override
@@ -61,7 +67,7 @@ public class SendMessageTask extends AsyncTask<Message, Void, Message> {
 
         if (message != null) {
             AxoMessaging msgService = AxoMessaging.getInstance(mContext);
-            mResultStatus = msgService.sendMessage(message);
+            mResultStatus = msgService.sendMessage(message, mSiblingsOnly);
 
             ConversationRepository repository = msgService.getConversations();
             Conversation conversation =
@@ -80,12 +86,16 @@ public class SendMessageTask extends AsyncTask<Message, Void, Message> {
                 conversation.setLastModified(System.currentTimeMillis());
                 repository.save(conversation);
 
-                SoundNotifications.playSentMessageSound();
+                if (!mSiblingsOnly) {
+                    SoundNotifications.playSentMessageSound();
+                }
             }
 
-            // notify about conversation changes
-            MessageUtils.notifyConversationUpdated(mContext, message.getConversationID(), false,
-                    message.getId(), AxoMessaging.UPDATE_ACTION_MESSAGE_SEND);
+            if (!mSiblingsOnly) {
+                // notify about conversation changes
+                MessageUtils.notifyConversationUpdated(mContext, message.getConversationID(), false,
+                        AxoMessaging.UPDATE_ACTION_MESSAGE_SEND, message.getId());
+            }
         }
 
         return message;

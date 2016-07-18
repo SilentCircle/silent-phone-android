@@ -183,12 +183,9 @@ public class SettingsFragment extends Fragment implements View.OnClickListener,
         // prepareUiTheme();
         prepareAdvancedSettings();
         prepareMessagingSettings();
-        prepareExtendedMenu();
         prepareBlockScreenshots();
-        if (ConfigurationUtilities.mEnableDevDebOptions) {
-            prepareDeveloper();
-            prepareDeveloperMenu();
-        }
+        prepareDeveloper();
+        prepareDeveloperMenu();
         showAdvancedSettings();
     }
 
@@ -332,10 +329,6 @@ public class SettingsFragment extends Fragment implements View.OnClickListener,
                         R.array.message_theme_array, mMessageThemeIndex, MESSAGE_THEME_SELECTION_DIALOG);
                 break;
 
-            case R.id.extended_menu:
-                selectExtendedMenu();
-                break;
-
             case R.id.messaging_lock_configuration:
                 mCallbacks.onDrawerItemSelected(DrawerCallbacks.MESSAGING_LOCK_SCREEN,
                         KeyStoreActivity.KEY_STORE_SET_CHAT_PASSWORD_CHANGE);
@@ -355,10 +348,6 @@ public class SettingsFragment extends Fragment implements View.OnClickListener,
 
             case R.id.reload_account_data:
                 doReProvision();
-                break;
-
-            case R.id.settings_switch_configuration:
-                ((DialerActivity ) mParent).switchConfiguration();
                 break;
 
             case R.id.settings_force_axo_reregister:
@@ -782,19 +771,27 @@ public class SettingsFragment extends Fragment implements View.OnClickListener,
     private SettingsItem mDeveloperOptionBox;
 
     private void prepareDeveloper() {
-        if (!ConfigurationUtilities.mEnableDevDebOptions) {
-            return;
-        }
-
-        mDeveloperOptionBox = (SettingsItem) mDrawerView.findViewById(R.id.developer_option);
-        mDeveloperOptionBox.setVisibility(View.VISIBLE);
-        mDeveloperOptionBox.setOnClickListener(this);
-
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mParent);
         mDeveloper = prefs.getBoolean(DEVELOPER, false);
+        mDeveloperOptionBox = (SettingsItem) mDrawerView.findViewById(R.id.developer_option);
+        mDeveloperOptionBox.setOnClickListener(this);
         mDeveloperOptionBox.setChecked(mDeveloper);
+        mDeveloperOptionBox.setVisibility(ConfigurationUtilities.mEnableDevDebOptions
+                                          ? View.VISIBLE : View.GONE);
         mDeveloperHeader.setVisibility(mDeveloper ? View.VISIBLE : View.GONE);
         mDeveloperContent.setVisibility(mDeveloper ? View.VISIBLE : View.GONE);
+        mDrawerView.findViewById(R.id.settings_block_screenshots)
+          .setVisibility(mDeveloper ? View.VISIBLE : View.GONE);
+        mDrawerView.findViewById(R.id.messaging_theme)
+          .setVisibility(mDeveloper ? View.VISIBLE : View.GONE);
+        mDrawerView.findViewById(R.id.messaging_lock_configuration)
+          .setVisibility(mDeveloper ? View.VISIBLE : View.GONE);
+        mDrawerView.findViewById(R.id.reload_account_data)
+          .setVisibility(mDeveloper ? View.VISIBLE : View.GONE);
+        mDrawerView.findViewById(R.id.settings_force_axo_reregister)
+          .setVisibility(AxoMessaging.getInstance(mParent.getApplicationContext())
+                         .isRegistered() && mDeveloper ? View.VISIBLE : View.GONE);
+
     }
 
     private void toggleDeveloperCheckbox() {
@@ -804,6 +801,17 @@ public class SettingsFragment extends Fragment implements View.OnClickListener,
         mDeveloperOptionBox.setChecked(mDeveloper);
         mDeveloperHeader.setVisibility(mDeveloper ? View.VISIBLE : View.GONE);
         mDeveloperContent.setVisibility(mDeveloper ? View.VISIBLE : View.GONE);
+        mDrawerView.findViewById(R.id.settings_block_screenshots)
+          .setVisibility(mDeveloper ? View.VISIBLE : View.GONE);
+        mDrawerView.findViewById(R.id.messaging_theme)
+          .setVisibility(mDeveloper ? View.VISIBLE : View.GONE);
+        mDrawerView.findViewById(R.id.messaging_lock_configuration)
+          .setVisibility(mDeveloper ? View.VISIBLE : View.GONE);
+        mDrawerView.findViewById(R.id.reload_account_data)
+          .setVisibility(mDeveloper ? View.VISIBLE : View.GONE);
+        mDrawerView.findViewById(R.id.settings_force_axo_reregister)
+          .setVisibility(AxoMessaging.getInstance(mParent.getApplicationContext())
+                         .isRegistered() && mDeveloper ? View.VISIBLE : View.GONE);
     }
 
     /**
@@ -1078,40 +1086,6 @@ public class SettingsFragment extends Fragment implements View.OnClickListener,
         ((TextView)infoMsg.getDialog().findViewById(android.R.id.message)).setMovementMethod(LinkMovementMethod.getInstance());
     }
 
-    private PopupMenu mExtendedMenu;
-    private void prepareExtendedMenu() {
-        // currently there are no items in extended menu so hide it
-        mDrawerView.findViewById(R.id.extended_menu).setVisibility(View.GONE);
-        if (mExtendedMenu == null) {
-            mExtendedMenu = new PopupMenu(mParent, mDrawerView.findViewById(R.id.extended_menu));
-            mDrawerView.findViewById(R.id.extended_menu).setOnClickListener(this);
-            mExtendedMenu.inflate(R.menu.dial_drawer);
-        }
-        Menu menu = mExtendedMenu.getMenu();
-        MenuItem menuItem;
-        if (ConfigurationUtilities.mEnableDevDebOptions) {
-            menu.setGroupVisible(R.id.dial_group_develop, true);
-
-            menuItem = menu.findItem(R.id.dial_menu_answer_on);
-            menuItem.setVisible(false /* !DialerActivity.mAutoAnswerForTesting */);
-
-            menuItem = menu.findItem(R.id.dial_menu_answer_off);
-            menuItem.setVisible(false /* DialerActivity.mAutoAnswerForTesting */);
-        }
-
-        mExtendedMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
-            @Override
-            public boolean onMenuItemClick(MenuItem item) {
-                return onOptionsItemSelected(item) || mParent.onOptionsItemSelected(item);
-            }
-        });
-    }
-
-    private void selectExtendedMenu() {
-        if (mExtendedMenu == null)
-            return;
-        mExtendedMenu.show();
-    }
     /*
      *** Advanced setting, available after *##*123*
      */
@@ -1156,31 +1130,13 @@ public class SettingsFragment extends Fragment implements View.OnClickListener,
 
         mDrawerView.findViewById(R.id.settings_set_passphrase).setOnClickListener(this);
         mDrawerView.findViewById(R.id.reload_account_data).setOnClickListener(this);
-        mDrawerView.findViewById(R.id.settings_switch_configuration).setOnClickListener(this);
         mDrawerView.findViewById(R.id.settings_force_axo_reregister).setOnClickListener(this);
         mDrawerView.findViewById(R.id.settings_axo_register).setOnClickListener(this);
 
         AxoMessaging axoMessaging = AxoMessaging.getInstance(mParent.getApplicationContext());
         boolean isRegisterButtonVisible = axoMessaging.isRegistered();
-        mDrawerView.findViewById(R.id.reload_account_data)
-                .setVisibility(ConfigurationUtilities.mEnableDevDebOptions
-                               ? View.VISIBLE : View.GONE);
         mDrawerView.findViewById(R.id.settings_axo_register)
                 .setVisibility(isRegisterButtonVisible ? View.GONE : View.VISIBLE);
-
-        /* some entries are intended for debugging only, show them only in certain conditions */
-        if (ConfigurationUtilities.mEnableDevDebOptions) {
-
-            mDrawerView.findViewById(R.id.settings_force_axo_reregister)
-                    .setVisibility(isRegisterButtonVisible ? View.VISIBLE : View.GONE);
-
-            ((Button) mDrawerView.findViewById(R.id.settings_switch_configuration)).setText(
-                    ConfigurationUtilities.mUseDevelopConfiguration
-                            ? R.string.switch_to_production : R.string.switch_to_develop);
-            mDrawerView.findViewById(R.id.settings_switch_configuration)
-                    .setVisibility(View.GONE); // This is horribly unreliable - wipe the phone
-                                                // and instead switch before even logging in
-        }
     }
 
     private void toggleEnableTraversalBox() {
@@ -1279,13 +1235,11 @@ public class SettingsFragment extends Fragment implements View.OnClickListener,
         updateMessageVibratePattern();
 
         mMessageTheme = (SettingsItem) mDrawerView.findViewById(R.id.messaging_theme);
+        mMessageTheme.setVisibility(View.VISIBLE);
         mMessageTheme.setOnClickListener(this);
         updateMessageTheme();
 
-        if (ConfigurationUtilities.mEnableDevDebOptions) {
-            mDrawerView.findViewById(R.id.messaging_lock_configuration).setVisibility(View.VISIBLE);
-            mDrawerView.findViewById(R.id.messaging_lock_configuration).setOnClickListener(this);
-        }
+        mDrawerView.findViewById(R.id.messaging_lock_configuration).setOnClickListener(this);
 
         if (AxoMessaging.getInstance(mParent.getApplicationContext()).isReady()) {
             mDrawerView.findViewById(R.id.settings_chat_device_management).setVisibility(View.VISIBLE);
@@ -1443,6 +1397,10 @@ public class SettingsFragment extends Fragment implements View.OnClickListener,
 
                 preferences.setMessageTheme(index);
                 updateMessageTheme();
+                /* change theme for whole app in debugg builds */
+                if (BuildConfig.DEBUG) {
+                    getActivity().recreate();
+                }
                 break;
         }
     }

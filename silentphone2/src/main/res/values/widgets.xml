@@ -14,24 +14,6 @@
         <item name="android:layout_width">match_parent</item>
     </style>
 
-    <style name="Widget.Silence.CheckBox.Light">
-        <item name="android:textColor">@color/sc_ng_text_dark</item>
-        <item name="android:textColorPrimary">@color/sc_ng_text_dark</item>
-        <item name="colorAccent">@color/sc_ng_text_green</item>
-        <item name="colorControlActivated">@color/sc_ng_text_green</item>
-        <item name="colorControlHighlight">@color/sc_ng_text_dark</item>
-        <item name="colorControlNormal">@color/sc_ng_text_dark</item>
-    </style>
-
-    <!--<style name="Widget.Silence.CheckBox.Dark">-->
-        <!--<item name="android:textColor">@color/sc_ng_text_grey_3</item>-->
-        <!--<item name="android:textColorPrimary">@color/sc_ng_text_grey_3</item>-->
-        <!--<item name="colorAccent">@color/sc_ng_background_1</item>-->
-        <!--<item name="colorControlActivated">@color/sc_ng_background_1</item>-->
-        <!--<item name="colorControlHighlight">@color/sc_ng_background_1</item>-->
-        <!--<item name="colorControlNormal">@color/sc_ng_background_1</item>-->
-    <!--</style>-->
-
     <style name="Widget.Silence.Divider">
         <item name="android:drawableRight">@drawable/ic_location</item>
     </style>
@@ -174,7 +156,7 @@
         <item name="android:layout_width">@dimen/drawer_width</item>
         <item name="android:layout_height">match_parent</item>
         <item name="android:orientation">vertical</item>
-        <item name="android:background">@color/chat_options_drawer_background</item>
+        <item name="android:background">?attr/sp_activity_background_color</item>
     </style>
 
     <style name="Widget.Text">
@@ -231,10 +213,15 @@
     </style>
 
     <style name="Widget.Text.Floating.Error">
-        <item name="android:textColor">@color/chat_error_message_text_color</item>
+        <item name="android:textColor">?sp_error_message_text_selector</item>
         <item name="android:drawableLeft">@drawable/ic_action_error</item>
         <item name="android:duplicateParentState">true</item>
-        <item name="android:addStatesFromChildren">true</item>
+    </style>
+
+    <style name="Widget.Text.Floating.Call">
+        <item name="android:drawableLeft">@drawable/ic_call_outgoing_holo_dark</item>
+        <item name="android:textColor">?sp_error_message_text_selector</item>
+        <item name="android:duplicateParentState">true</item>
     </style>
 
     <style name="Widget.Silence.MessageContent" parent="Widget.Silence.RelativeLayout">
@@ -422,7 +409,10 @@
         <item name="descriptionMarginLeft">@dimen/conversation_option_description_margin_left</item>
         <item name="descriptionMarginTop">@dimen/conversation_option_description_margin_top</item>
         <item name="textSize">@dimen/text_xlarge</item>
+        <item name="tintColor">?attr/sp_drawer_text_color</item>
+        <item name="textColor">?attr/sp_drawer_text_color</item>
         <item name="descriptionSize">@dimen/text_normal</item>
+        <item name="descriptionColor">?attr/sp_drawer_secondary_text_color</item>
     </style>
 
     <style name="Widget.MainDrawerOptionsItem">
@@ -438,8 +428,10 @@
         <item name="descriptionMarginLeft">75dp</item>
         <item name="descriptionMarginTop">0dp</item>
         <item name="textSize">@dimen/text_xlarge</item>
+        <item name="tintColor">?attr/sp_drawer_text_color</item>
+        <item name="textColor">?attr/sp_drawer_text_color</item>
         <item name="descriptionSize">@dimen/text_normal</item>
-        <item name="descriptionColor">@color/sc_ng_text_grey_5</item>
+        <item name="descriptionColor">?attr/sp_drawer_secondary_text_color</item>
     </style>
 
     <style name="Widget.SettingsItem">
@@ -451,9 +443,10 @@
         <item name="checkableMargin">@dimen/conversation_option_checkable_margin</item>
         <item name="descriptionMarginLeft">2dp</item>
         <item name="descriptionMarginTop">0dp</item>
-        <item name="descriptionColor">@color/sc_ng_text_grey_5</item>
         <item name="textSize">@dimen/text_xlarge</item>
+        <item name="textColor">?attr/sp_drawer_text_color</item>
         <item name="descriptionSize">@dimen/text_large</item>
+        <item name="descriptionColor">?attr/sp_drawer_secondary_text_color</item>
     </style>
 
     <style name="Widget.OptionsSeekBar" parent="android:Widget.SeekBar">

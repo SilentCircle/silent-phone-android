@@ -27,13 +27,16 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
 >
-            <Button
+            <com.silentcircle.common.widget.TintedAppCompatButton
                     android:id="@+id/quality_info_detail"
                     style="@style/Widget.Silent.TransparentButton"
                     android:layout_width="wrap_content"
                     android:drawableLeft="?sp_ic_view_list"
                     android:drawableStart="?sp_ic_view_list"
-                    android:text="@string/call_quality"/>
+                    android:tint="?attr/sp_activity_primary_text_color"
+                    android:text="@string/call_quality"
+                    android:textColor="?attr/sp_activity_primary_text_color"
+                    tools:ignore="UnusedAttribute"/>
             <TextView
                     android:id="@+id/quality_info_data"
                     style="@style/Widget.Silent.SimpleText.Medium"
@@ -130,7 +133,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical">
-            <Button
+            <com.silentcircle.common.widget.TintedAppCompatButton
                     android:id="@+id/zrtp_peer_name_btn"
                     style="@style/Widget.Silent.TransparentButton.Medium"
                     android:layout_width="wrap_content"
@@ -138,7 +141,10 @@
                     android:paddingEnd="@dimen/spacing_normal"
                     android:drawableLeft="?sp_ic_edit"
                     android:drawableStart="?sp_ic_edit"
-                    android:text="@string/crypto_peer_name"/>
+                    android:tint="?attr/sp_activity_primary_text_color"
+                    android:text="@string/crypto_peer_name"
+                    android:textColor="?attr/sp_activity_primary_text_color"
+                    tools:ignore="UnusedAttribute"/>
             <TextView
                     android:id="@+id/zrtp_peer_name_data"
                     style="@style/Widget.Silent.SimpleText.Medium"
@@ -151,12 +157,15 @@
                     android:ellipsize="marquee"
                     tools:text="John Doe"/>
         </LinearLayout>
-        <Button
+        <com.silentcircle.common.widget.TintedAppCompatButton
                 style="@style/Widget.Silent.TransparentButton.Medium"
                 android:id="@+id/security_detail"
                 android:text="@string/call_info_security_detail"
                 android:drawableLeft="?sp_ic_view_list"
-                android:drawableStart="?sp_ic_view_list" />
+                android:drawableStart="?sp_ic_view_list"
+                android:tint="?attr/sp_activity_primary_text_color"
+                android:textColor="?attr/sp_activity_primary_text_color"
+                tools:ignore="UnusedAttribute"/>
 
         <TextView
                 style="@style/DrawerSectionTitle"

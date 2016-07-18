@@ -748,6 +748,7 @@ public class ContactListItemView extends ViewGroup
         if (!TextUtils.isEmpty(title)) {
             if (mHeaderTextView == null) {
                 mHeaderTextView = new TextView(getContext());
+                mHeaderTextView.setTextColor(ViewUtil.getColorIdFromAttributeId(getContext(), R.attr.sp_activity_primary_text_color));
                 mHeaderTextView.setTextAppearance(getContext(), style > 0 ? style : R.style.SectionHeaderStyle);
                 mHeaderTextView.setGravity(
                         ViewUtil.isViewLayoutRtl(this) ? Gravity.RIGHT : Gravity.LEFT);

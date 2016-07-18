@@ -98,13 +98,11 @@ public class ChatNotification extends BroadcastReceiver implements AxoMessaging.
         // create intent used to launch conversation activity.
         Intent messagingIntent = ContactsUtils.getMessagingIntent(conversationPartnerId, context);
 
-        Bitmap bitmap = BitmapFactory.decodeResource(context.getResources(), R.drawable.ic_launcher_st);
-
         /* Show notification.
          *
          * Leave message empty for now. It could be passed in intent from AxoMessaging but
          * that does not seem to be secure.
          */
-        Notifications.sendMessageNotification(context, messagingIntent, bitmap);
+        Notifications.sendMessageNotification(context, messagingIntent);
     }
 }

@@ -198,8 +198,8 @@
     <string name="account_creation_no_data">Account creation - server returned wrong data.</string>
     <string name="other_settings">Other options</string>
     <string name="developer_options" translatable="false">Developer options</string>
+    <string name="call_settings">Call options</string>
     <string name="theme_black">Black</string>
-    <string name="extended_menu">Extended menu</string>
     <!-- Strings for BlackPhone integration -->
 
     <string name="bp_is_online">Silent Phone online</string>
@@ -303,6 +303,8 @@
 
     <!-- Directory partition name -->
     <string name="contactsList">Contacts</string>
+    <string name="scContactsList">Silent Circle contacts</string>
+    <string name="scRemoteContactsList">Silent Circle directory</string>
 
     <!-- The name of the invisible local contact directory -->
     <string name="local_invisible_directory">Other</string>
@@ -325,6 +327,9 @@
 
     <!-- Displayed at the top of the contacts showing the zero total number of contacts found when "Only contacts with phones" not selected. [CHAR LIMIT=30] -->
     <string name="listFoundAllContactsZero">No contacts</string>
+
+    <!-- Displayed at the top of the results showing the zero total number of results found when "Only contacts with phones" not selected. [CHAR LIMIT=30] -->
+    <string name="listFoundAllResultsZero">No results</string>
 
     <!-- Displayed at the top of the contacts showing the total number of contacts found when typing search query -->
     <plurals name="searchFoundContacts">
@@ -511,7 +516,7 @@
     <string name="pin_match">PINs do not match. Please check.</string>
     <string name="pin_short">PIN is too short. Enter at least %d digits </string>
 
-    <string name="key_store_title">Encrypt Silent Phone</string>
+    <string name="key_store_title">Encrypt local app data</string>
     <string name="key_store_type_default">Not encrypted</string>
     <string name="key_store_type_pw">Password set</string>
     <string name="key_store_type_pin">PIN set</string>
@@ -728,7 +733,7 @@
 
     <!-- Hint displayed in dialer search box when there is no query that is currently typed.
      [CHAR LIMIT=30] -->
-    <string name="dialer_hint_find_contact">Type a name or phone number</string>
+    <string name="dialer_hint_find_contact">Enter name or number</string>
 
     <!-- Title for the sms disambiguation dialog -->
     <string name="sms_disambig_title">Choose number</string>

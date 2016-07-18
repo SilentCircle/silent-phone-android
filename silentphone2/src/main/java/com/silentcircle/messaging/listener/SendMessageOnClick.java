@@ -103,8 +103,8 @@ public class SendMessageOnClick implements OnClickListener {
                 if (mConversation.isLocationEnabled()) {
                     // notify about conversation changes now, we want to see message as soon as possible
                     MessageUtils.notifyConversationUpdated(mSource.getContext(),
-                            MessageUtils.getConversationId(message), true, message.getId(),
-                            AxoMessaging.UPDATE_ACTION_MESSAGE_SEND);
+                            message.getConversationID(), true,
+                            AxoMessaging.UPDATE_ACTION_MESSAGE_SEND, message.getId());
 
                     LocationObserver.observe(mSource.getContext(),
                             new SendMessageOnLocationReceived(message));

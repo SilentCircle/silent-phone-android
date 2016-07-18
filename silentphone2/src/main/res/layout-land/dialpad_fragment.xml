@@ -24,7 +24,8 @@
             android:id="@+id/digits_container"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="center">
+            android:gravity="center"
+            android:background="?sp_actionbar_color">
 
         <ImageButton
                 android:id="@+id/input_type_switch"
@@ -32,9 +33,11 @@
                 android:layout_weight="0"
                 android:layout_height="match_parent"
                 android:filterTouchesWhenObscured="true"
-                android:background="?list_item_background_color"
+                android:background="?sp_actionbar_color"
                 android:contentDescription="@string/description_delete_button"
-                android:visibility="gone"/>
+                android:tint="?attr/sp_actionbar_title_text_color"
+                android:visibility="gone"
+                tools:src="?sp_ic_keyboard"/>
 
         <!--    android:layout_gravity="center_vertical"
                 android:gravity="center"
@@ -58,22 +61,27 @@
                 android:imeOptions="flagNoExtractUi"
                 android:paddingRight="5dp"
                 android:paddingLeft="5dp"
-                android:textColor="?sp_dial_text_color"
+                android:textColor="?sp_actionbar_title_text_color"
                 android:textCursorDrawable="@null"
-                android:background="?list_item_background_color"
+                android:background="?sp_actionbar_color"
                 tools:text="+1 (203) 499-6427"/>
         <!--            android:fontFamily="sans-serif-light" -->
 
         <ImageButton
                 android:id="@+id/deleteButton"
-                android:layout_width="56dip"
-                android:layout_height="match_parent"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingLeft="@dimen/dialpad_text_button_padding"
+                android:paddingRight="@dimen/dialpad_text_button_padding"
                 android:layout_gravity="center_vertical"
                 android:gravity="center"
+                android:filterTouchesWhenObscured="true"
                 android:state_enabled="false"
-                android:background="?list_item_background_color"
+                android:background="?sp_actionbar_color"
                 android:contentDescription="@string/description_delete_button"
-                android:src="@drawable/ic_action_backspace_dark"/>
+                android:tint="?attr/sp_actionbar_title_text_color"
+                android:src="?sp_ic_backspace"/>
+
     </LinearLayout>
 
     <!-- Rubber space -->

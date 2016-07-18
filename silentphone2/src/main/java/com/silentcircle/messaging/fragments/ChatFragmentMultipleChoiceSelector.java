@@ -34,6 +34,7 @@ import android.view.MenuItem;
 
 import com.silentcircle.messaging.listener.MultipleChoiceSelector;
 import com.silentcircle.messaging.model.MessageStates;
+import com.silentcircle.messaging.model.event.CallMessage;
 import com.silentcircle.messaging.model.event.ErrorEvent;
 import com.silentcircle.messaging.model.event.Event;
 import com.silentcircle.messaging.model.event.Message;
@@ -90,6 +91,7 @@ public class ChatFragmentMultipleChoiceSelector extends MultipleChoiceSelector<E
         boolean hasMessageStateOtherThanFailed = false;
         boolean hasErrorMessage = false;
         boolean hasAttachmentMessage = false;
+        boolean hasCallMessage = false;
 
         itemCopy.setVisible(!multipleChecked);
 
@@ -105,6 +107,11 @@ public class ChatFragmentMultipleChoiceSelector extends MultipleChoiceSelector<E
                         if (((Message) event).hasAttachment()) {
                             hasAttachmentMessage = true;
                         }
+
+                        if (event instanceof CallMessage) {
+                            hasCallMessage = true;
+                        }
+
                         hasMessageStateOtherThanFailed |=
                                 (((Message) event).getState() != MessageStates.FAILED);
                     }
@@ -115,11 +122,10 @@ public class ChatFragmentMultipleChoiceSelector extends MultipleChoiceSelector<E
             }
         }
 
-        itemCopy.setVisible(!multipleChecked && !hasAttachmentMessage && !hasErrorMessage);
-        itemForward.setVisible(!multipleChecked && !hasErrorMessage);
+        itemCopy.setVisible(!multipleChecked && !hasAttachmentMessage && !hasErrorMessage && !hasCallMessage);
+        itemForward.setVisible(!multipleChecked && !hasErrorMessage && !hasCallMessage);
         itemInfo.setVisible(!multipleChecked && BuildConfig.DEBUG);
-        itemResend.setVisible(!hasMessageStateOtherThanFailed && !hasErrorMessage);
-
+        itemResend.setVisible(!hasMessageStateOtherThanFailed && !hasErrorMessage && !hasCallMessage);
         int after = getMenuItemVisibilityMask(menu);
 
         return super.onPrepareActionMode(mode, menu) || before != after;

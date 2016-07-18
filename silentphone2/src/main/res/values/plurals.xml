@@ -20,6 +20,15 @@
     <item quantity="other"><xliff:g id="number_of_people">%1$d</xliff:g> people have sent you <xliff:g id="number_of_messages" example="2 messages">%2$s</xliff:g>.</item>
   </plurals>
 
+    <plurals name="notify_new_calls_subtitle">
+        <item quantity="zero"><xliff:g id="number_of_people">%1$d</xliff:g> people have called you <xliff:g id="number_of_messages" example="2 messages">%2$s</xliff:g>.</item>
+        <item quantity="one"><xliff:g id="number_of_people">%1$d</xliff:g> person has called you <xliff:g id="number_of_messages" example="2 messages">%2$s</xliff:g>.</item>
+        <item quantity="two"><xliff:g id="number_of_people">%1$d</xliff:g> people have called you <xliff:g id="number_of_messages" example="2 messages">%2$s</xliff:g>.</item>
+        <item quantity="few"><xliff:g id="number_of_people">%1$d</xliff:g> people have called you <xliff:g id="number_of_messages" example="2 messages">%2$s</xliff:g>.</item>
+        <item quantity="many"><xliff:g id="number_of_people">%1$d</xliff:g> people have called you <xliff:g id="number_of_messages" example="2 messages">%2$s</xliff:g>.</item>
+        <item quantity="other"><xliff:g id="number_of_people">%1$d</xliff:g> people have called you <xliff:g id="number_of_messages" example="2 messages">%2$s</xliff:g>.</item>
+    </plurals>
+
   <plurals name="n_messages">
       <item quantity="zero"><xliff:g id="count">%1$d</xliff:g> messages</item>
       <item quantity="one">a message</item>
@@ -28,6 +37,15 @@
       <item quantity="many"><xliff:g id="count">%1$d</xliff:g> messages</item>
       <item quantity="other"><xliff:g id="count">%1$d</xliff:g> messages</item>
   </plurals>
+
+    <plurals name="n_calls">
+        <item quantity="zero"><xliff:g id="count">%1$d</xliff:g> times</item>
+        <item quantity="one"><xliff:g id="count">%1$d</xliff:g> time</item>
+        <item quantity="two"><xliff:g id="count">%1$d</xliff:g> times</item>
+        <item quantity="few"><xliff:g id="count">%1$d</xliff:g> times</item>
+        <item quantity="many"><xliff:g id="count">%1$d</xliff:g> times</item>
+        <item quantity="other"><xliff:g id="count">%1$d</xliff:g> times</item>
+    </plurals>
 
   <plurals name="notify_unread_messages_from_individual">
     <item quantity="zero"><xliff:g id="count">%1$d</xliff:g> unread messages from <xliff:g id="contact_name" example="droidman">%2$s</xliff:g></item>

@@ -22,5 +22,5 @@ Keep the tag fields in synch with the interface specifications.
              android:id="@+id/ks_container"
              android:layout_width="match_parent"
              android:layout_height="match_parent"
-             android:background="@color/sc_ng_background"
+             android:background="?attr/sp_activity_background_color"
              tools:context="com.silentcircle.keystore.KeyStoreActivity"/>

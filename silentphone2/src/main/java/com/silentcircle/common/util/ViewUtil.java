@@ -507,9 +507,21 @@ public class ViewUtil {
         for (int i = 0; i < menu.size(); ++i) {
             final MenuItem item = menu.getItem(i);
             Drawable icon = item.getIcon();
-            icon.mutate().setColorFilter(color, PorterDuff.Mode.SRC_IN);
-            item.setIcon(icon);
+            if (icon != null) {
+                icon.mutate().setColorFilter(color, PorterDuff.Mode.SRC_IN);
+                item.setIcon(icon);
+            }
         }
+    }
+
+    public static int getColorIdFromAttributeId(final Context context, final int attributeId) {
+        TypedValue typedValue = new TypedValue();
+        context.getTheme().resolveAttribute(attributeId, typedValue, true);
+        return typedValue.resourceId;
+    }
+
+    public static int getColorFromAttributeId(final Context context, final int attributeId) {
+        return ContextCompat.getColor(context, getColorIdFromAttributeId(context, attributeId));
     }
 
 }

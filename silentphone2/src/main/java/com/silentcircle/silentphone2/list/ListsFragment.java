@@ -46,6 +46,7 @@ import android.support.v13.app.FragmentPagerAdapter;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewPager;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -54,6 +55,7 @@ import android.widget.ListView;
 
 import com.silentcircle.common.list.OnPhoneNumberPickerActionListener;
 import com.silentcircle.common.util.ObjectFactory;
+import com.silentcircle.common.util.ViewUtil;
 import com.silentcircle.contacts.ContactsUtils;
 import com.silentcircle.contacts.calllognew.CallLogAdapter;
 import com.silentcircle.contacts.calllognew.CallLogFragment;
@@ -93,17 +95,17 @@ public class ListsFragment extends Fragment implements CallLogQueryHandler.Liste
     private static final String TAG = "ListsFragment";
 
 //    public static final int TAB_INDEX_SPEED_DIAL = 0;
-    public static final int TAB_INDEX_RECENTS = 0;  // 1;
-    private static final int TAB_INDEX_ALL_CONTACTS = 1; // 2;
+//    public static final int TAB_INDEX_RECENTS = 0;  // 1;
+//    private static final int TAB_INDEX_ALL_CONTACTS = 1; // 2;
 
     // The CHAT fragment is optional, thus *must* have the highest index number.
-    public static final int TAB_INDEX_CHAT = 2; // 3;
+    public static final int TAB_INDEX_CHAT = 0; // 3;
 
-    private static final int TAB_INDEX_COUNT = 3; // 4;
+    private static final int TAB_INDEX_COUNT = 1; // 4;
 
-    private int[] mTabIndexNoAxo = {/*TAB_INDEX_SPEED_DIAL,*/ TAB_INDEX_RECENTS, TAB_INDEX_ALL_CONTACTS};
-    private int[] mTabIndexAxo = {/*TAB_INDEX_SPEED_DIAL,*/ TAB_INDEX_CHAT, TAB_INDEX_RECENTS, TAB_INDEX_ALL_CONTACTS};
-    private int[] mTabIndexMapAxo = {/*TAB_INDEX_SPEED_DIAL,*/ TAB_INDEX_ALL_CONTACTS, TAB_INDEX_CHAT, TAB_INDEX_RECENTS};
+    private int[] mTabIndexNoAxo = {TAB_INDEX_CHAT, /*TAB_INDEX_SPEED_DIAL, TAB_INDEX_RECENTS, TAB_INDEX_ALL_CONTACTS*/};
+    private int[] mTabIndexAxo = {/*TAB_INDEX_SPEED_DIAL,*/ TAB_INDEX_CHAT, /*TAB_INDEX_RECENTS, TAB_INDEX_ALL_CONTACTS*/};
+    private int[] mTabIndexMapAxo = {/*TAB_INDEX_SPEED_DIAL,*/ /*TAB_INDEX_ALL_CONTACTS,*/ TAB_INDEX_CHAT/*, TAB_INDEX_RECENTS*/};
     private int[] mTabIndex;
     private int[] mTabIndexMap;
 
@@ -237,9 +239,9 @@ public class ListsFragment extends Fragment implements CallLogQueryHandler.Liste
 
         mTabTitles = new String[TAB_INDEX_COUNT];
 //        mTabTitles[TAB_INDEX_SPEED_DIAL] = getResources().getString(R.string.tab_speed_dial);
-        mTabTitles[TAB_INDEX_RECENTS] = getResources().getString(R.string.tab_recents);
+//        mTabTitles[TAB_INDEX_RECENTS] = getResources().getString(R.string.tab_recents);
         mTabTitles[TAB_INDEX_CHAT] = getResources().getString(R.string.tab_chat);
-        mTabTitles[TAB_INDEX_ALL_CONTACTS] = getResources().getString(R.string.tab_all_contacts);
+//        mTabTitles[TAB_INDEX_ALL_CONTACTS] = getResources().getString(R.string.tab_all_contacts);
 
         mMessageHandler = new Handler();
     }
@@ -252,7 +254,7 @@ public class ListsFragment extends Fragment implements CallLogQueryHandler.Liste
         ViewPagerAdapter viewPagerAdapter = new ViewPagerAdapter(getFragmentManager());
         mViewPager.setAdapter(viewPagerAdapter);
         mViewPager.setOffscreenPageLimit(3);
-        setPagerItem(/*TAB_INDEX_SPEED_DIAL*/ mAxoRegistered ? TAB_INDEX_CHAT : TAB_INDEX_RECENTS);
+        setPagerItem(/*TAB_INDEX_SPEED_DIAL*/ /*mAxoRegistered ?*/ TAB_INDEX_CHAT /*: TAB_INDEX_RECENTS*/);
 
         // BEGIN_INCLUDE (setup_sliding tab layout)
         // Give the SlidingTabLayout the ViewPager, this must be done AFTER the ViewPager has had
@@ -263,13 +265,13 @@ public class ListsFragment extends Fragment implements CallLogQueryHandler.Liste
         mSlidingTabLayout.setDividerColors(ContextCompat.getColor(getActivity(), android.R.color.transparent));
         mSlidingTabLayout.setDefaultTabTextColor(R.color.sc_ng_text_grey_2);
         mSlidingTabLayout.setSelectedTabTextColor(R.color.sc_ng_text_red);
-        mSlidingTabLayout.setViewPager(mViewPager);
+//        mSlidingTabLayout.setViewPager(mViewPager);
         // END_INCLUDE (setup_sliding tab layout)
 
         mSlidingTabLayout.setOnPageChangeListener(this);
 
         mShortcutCardsListView = (ListView)parentView.findViewById(R.id.shortcut_card_list);
-        mShortcutCardsListView.setAdapter(mMergedAdapter);
+//        mShortcutCardsListView.setAdapter(mMergedAdapter);
 
         if (parentView instanceof OverlappingPaneLayout)
             setupPaneLayout((OverlappingPaneLayout) parentView);
@@ -393,12 +395,12 @@ public class ListsFragment extends Fragment implements CallLogQueryHandler.Liste
     private AbsListView getCurrentListView() {
         final int position = indexPosition(mViewPager.getCurrentItem());
         switch (getRtlPosition(position)) {
-            case TAB_INDEX_RECENTS:
-                return mRecentsFragment == null ? null : mRecentsFragment.getListView();
+//            case TAB_INDEX_RECENTS:
+//                return mRecentsFragment == null ? null : mRecentsFragment.getListView();
             case TAB_INDEX_CHAT:
                 return mConversationsFragment == null? null : mConversationsFragment.getListView();
-            case TAB_INDEX_ALL_CONTACTS:
-                return mAllContactsFragment == null ? null : mAllContactsFragment.getListView();
+//            case TAB_INDEX_ALL_CONTACTS:
+//                return mAllContactsFragment == null ? null : mAllContactsFragment.getListView();
         }
         throw new IllegalStateException("No fragment at position " + position);
     }
@@ -417,19 +419,19 @@ public class ListsFragment extends Fragment implements CallLogQueryHandler.Liste
         public Fragment getItem(int position) {
             Bundle args = new Bundle();
             switch (getRtlPosition(indexPosition(position))) {
-                case TAB_INDEX_RECENTS:
-                    args.putInt(CallLogFragment.FILTER_TYPE, CallLogQueryHandler.CALL_TYPE_ALL);
-                    args.putInt(CallLogFragment.LOG_LIMIT, MAX_RECENTS_ENTRIES);
-                    args.putLong(CallLogFragment.DATE_LIMIT, System.currentTimeMillis() - OLDEST_RECENTS_DATE);
-                    mRecentsFragment = CallLogFragment.newInstance(args);
-                    mRecentsFragment.setHasFooterView(true);
-                    return mRecentsFragment;
+//                case TAB_INDEX_RECENTS:
+//                    args.putInt(CallLogFragment.FILTER_TYPE, CallLogQueryHandler.CALL_TYPE_ALL);
+//                    args.putInt(CallLogFragment.LOG_LIMIT, MAX_RECENTS_ENTRIES);
+//                    args.putLong(CallLogFragment.DATE_LIMIT, System.currentTimeMillis() - OLDEST_RECENTS_DATE);
+//                    mRecentsFragment = CallLogFragment.newInstance(args);
+//                    mRecentsFragment.setHasFooterView(true);
+//                    return mRecentsFragment;
                 case TAB_INDEX_CHAT:
                     mConversationsFragment = ConversationsFragment.newInstance(args);
                     return mConversationsFragment;
-                case TAB_INDEX_ALL_CONTACTS:
-                    mAllContactsFragment = new AllContactsFragment();
-                    return mAllContactsFragment;
+//                case TAB_INDEX_ALL_CONTACTS:
+//                    mAllContactsFragment = new AllContactsFragment();
+//                    return mAllContactsFragment;
             }
             throw new IllegalStateException("No fragment at position " + position);
         }
@@ -492,7 +494,7 @@ public class ListsFragment extends Fragment implements CallLogQueryHandler.Liste
             mTabIndexMap = mTabIndexMapAxo;
             ViewPagerAdapter viewPagerAdapter = new ViewPagerAdapter(getFragmentManager());
             mViewPager.setAdapter(viewPagerAdapter);
-            mSlidingTabLayout.setViewPager(mViewPager);
+//            mSlidingTabLayout.setViewPager(mViewPager);
             refreshTabView();
             handleMessageFailures();
         }

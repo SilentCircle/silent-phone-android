@@ -30,6 +30,7 @@ package com.silentcircle.messaging.activities;
 import android.Manifest;
 import android.animation.LayoutTransition;
 import android.annotation.SuppressLint;
+import android.annotation.TargetApi;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.content.BroadcastReceiver;
@@ -44,6 +45,7 @@ import android.content.res.Resources;
 import android.graphics.Rect;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
@@ -75,6 +77,7 @@ import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.widget.AdapterView;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.QuickContactBadge;
@@ -90,10 +93,12 @@ import com.silentcircle.common.util.ViewUtil;
 import com.silentcircle.common.widget.KeyboardNotifierLinearLayout;
 import com.silentcircle.contacts.ContactPhotoManagerNew;
 import com.silentcircle.contacts.ContactsUtils;
+import com.silentcircle.contacts.ScCallLog;
 import com.silentcircle.contacts.calllognew.IntentProvider;
 import com.silentcircle.contacts.utils.ClipboardUtils;
 import com.silentcircle.contacts.utils.Constants;
 import com.silentcircle.keymanagersupport.KeyManagerSupport;
+import com.silentcircle.messaging.fragments.CameraFragment;
 import com.silentcircle.messaging.fragments.ChatFragment;
 import com.silentcircle.messaging.fragments.SearchAgainFragment;
 import com.silentcircle.messaging.listener.ClickSendOnEditorSendAction;
@@ -104,6 +109,7 @@ import com.silentcircle.messaging.location.LocationUtils;
 import com.silentcircle.messaging.model.Conversation;
 import com.silentcircle.messaging.model.MessageErrorCodes;
 import com.silentcircle.messaging.model.MessageStates;
+import com.silentcircle.messaging.model.event.CallMessage;
 import com.silentcircle.messaging.model.event.Event;
 import com.silentcircle.messaging.model.event.IncomingMessage;
 import com.silentcircle.messaging.model.event.Message;
@@ -175,7 +181,7 @@ public class ConversationActivity extends AppCompatActivity implements
         ChatFragment.Callback, OnListFragmentScrolledListener, SearchFragment.HostInterface,
         AxoMessaging.AxoMessagingStateCallback, ScreenLockView.OnUnlockListener,
         TiviPhoneService.ServiceStateChangeListener, ExplainPermissionDialog.AfterReading,
-        KeyboardNotifierLinearLayout.KeyboardListener {
+        KeyboardNotifierLinearLayout.KeyboardListener, CameraFragment.CameraFragmentListener {
 
 
     @SuppressWarnings("unused")
@@ -225,7 +231,9 @@ public class ConversationActivity extends AppCompatActivity implements
     private Uri mPendingVideoCaptureUri;
     private Uri mPendingAudioCaptureUri;
     private static final int R_id_share = 0xFFFF & R.id.share;
+    private FrameLayout mAttachmentGridFrame;
     private GridView mAttachmentGrid;
+    private boolean mCameraFragmentVisible;
 
     private Toolbar mToolbar;
     private QuickContactBadge mAvatarView;
@@ -667,16 +675,18 @@ public class ConversationActivity extends AppCompatActivity implements
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-
-
-        ViewUtil.setBlockScreenshots(this);
-
+        // TODO: Use Utilities.setTheme(this);
         // apply theme to the activity
         int theme = MessagingPreferences.getInstance(this).getMessageTheme();
         setTheme(theme == MessagingPreferences.INDEX_THEME_DARK
-                ? R.style.SilentPhoneConversationThemeDark
-                : R.style.SilentPhoneConversationThemeLight);
+                ? R.style.SilentPhoneThemeBlack
+                : R.style.SilentPhoneThemeLight);
+
+        super.onCreate(savedInstanceState);
+
+        setDefaultVisibilityFlags();
+
+        ViewUtil.setBlockScreenshots(this);
 
         mSavedInstanceState = savedInstanceState;
 
@@ -782,14 +792,16 @@ public class ConversationActivity extends AppCompatActivity implements
                 ? R.drawable.ic_location_selected : R.drawable.ic_location_unselected);
         shareLocation.setVisible(locationSharingEnabled);
 
-        // TODO: determine whether call is with particular person
-        boolean hasCall = TiviPhoneService.calls.getCallCount() > 0;
+        // FIXME: determine whether call is with particular person
+        // FIXME: solve issue with multiple calls being active when starting call from chat
         MenuItem silentPhoneCall = menu.findItem(R.id.action_silent_phone_call);
-        silentPhoneCall.setVisible(visible && !hasCall);
+        silentPhoneCall.setVisible(visible);
 
         // keep reference to this item
         mOptionsMenuItem = menu.findItem(R.id.options);
-        mOptionsMenuItem.setVisible(visible);
+        // FIXME, TODO: Don't setup listeners for drawer if we don't need the drawer
+        mOptionsMenuItem.setVisible(Utilities.canMessage(mConversationPartnerId != null
+                ? mConversationPartnerId : getPartner()));
         if (mDrawerLayout != null) {
             mOptionsMenuItem.setIcon(mDrawerLayout.isDrawerOpen(GravityCompat.END)
                     ? R.drawable.ic_drawer_open : R.drawable.ic_drawer_closed);
@@ -848,6 +860,10 @@ public class ConversationActivity extends AppCompatActivity implements
         else if (mAttachmentGrid.getVisibility() == View.VISIBLE) {
             hideAttachmentGrid();
         }
+        else if (mCameraFragmentVisible) {
+            CameraFragment cameraFragment = (CameraFragment) getFragmentManager().findFragmentByTag(CameraFragment.TAG_CAMERA_FRAGMENT);
+            cameraFragment.onBackPressed();
+        }
         else {
             super.onBackPressed();
         }
@@ -860,6 +876,7 @@ public class ConversationActivity extends AppCompatActivity implements
         mDestroyed = true;
         cancelAutoRefresh();
         doUnbindService();
+        hideCameraFragment();
         super.onDestroy();
     }
 
@@ -882,29 +899,36 @@ public class ConversationActivity extends AppCompatActivity implements
 
     protected void initConversationView(boolean fromIntent) {
         mIsAxolotlRegistered = isAxolotlInitialised();
-
+        mConversation = getConversation();
         String partner = getPartner();
+
+        if (mConversation != null) {
+            SendMessageOnClick sendMessageOnClickListener =
+                    createSendMessageOnClickListener(mConversation);
+            findViewById(R.id.compose_send).setOnClickListener(sendMessageOnClickListener);
+            findViewById(R.id.compose_attach).setOnClickListener(mAttachButtonListener);
+            findViewById(R.id.burn).setOnClickListener(mBurnButtonListener);
+
+            @SuppressLint("WrongViewCast")
+            VerticalSeekBar seeker = (VerticalSeekBar) findViewById(R.id.burn_delay_value);
+            seeker.setMax(BurnDelay.Defaults.numLevels() - 1);
+            seeker.setProgress(mConversation.hasBurnNotice() ? BurnDelay.Defaults.getLevel(mConversation.getBurnDelay()) : 0);
+            seeker.setOnTouchListener(mSeekerTouchListener);
+            seeker.setOnVerticalSeekBarChangeListener(mSeekerChangeListener);
+
+            LayoutTransition mainLayoutTransition = ((ViewGroup) findViewById(R.id.burn_delay_container)).getLayoutTransition();
+            mainLayoutTransition.addTransitionListener(mSeekerContainerTransitionListener);
+        } else {
+            /**
+             * Axolotl is probably not registered, wait for it to become registered
+             * See {@link ConversationActivity#axoRegistrationStateChange(boolean)}
+             */
+            // TODO: Handle Axolotl not being registered more gracefully
+            //1. Possibly trigger a registration if one is not currently ongoing (if keystore is ready)
+        }
 
         KeyboardNotifierLinearLayout notifier = (KeyboardNotifierLinearLayout) findViewById(R.id.conversation_root);
         notifier.setListener(this);
-
-        mConversation = getConversation(getPartner());
-        SendMessageOnClick sendMessageOnClickListener =
-                createSendMessageOnClickListener(mConversation);
-        findViewById(R.id.compose_send).setOnClickListener(sendMessageOnClickListener);
-        findViewById(R.id.compose_attach).setOnClickListener(mAttachButtonListener);
-        findViewById(R.id.burn).setOnClickListener(mBurnButtonListener);
-
-        @SuppressLint("WrongViewCast")
-        VerticalSeekBar seeker = (VerticalSeekBar) findViewById(R.id.burn_delay_value);
-        seeker.setMax(BurnDelay.Defaults.numLevels() - 1);
-        seeker.setProgress(mConversation.hasBurnNotice() ? BurnDelay.Defaults.getLevel(mConversation.getBurnDelay()) : 0);
-        seeker.setOnTouchListener(mSeekerTouchListener);
-        seeker.setOnVerticalSeekBarChangeListener(mSeekerChangeListener);
-
-        LayoutTransition mainLayoutTransition = ((ViewGroup) findViewById(R.id.burn_delay_container)).getLayoutTransition();
-        mainLayoutTransition.addTransitionListener(mSeekerContainerTransitionListener);
-        findViewById(R.id.burn_delay_container).setVisibility(View.VISIBLE);
 
         mComposeLayout = (ViewGroup) findViewById(R.id.compose);
         hideSoftKeyboard(R.id.compose_text);
@@ -912,6 +936,10 @@ public class ConversationActivity extends AppCompatActivity implements
         mComposeText.addTextChangedListener(mTextWatcher);
         mComposeText.setOnFocusChangeListener(mTextFocusListener);
         mComposeText.setOnEditorActionListener(new ClickSendOnEditorSendAction());
+
+        boolean canMessage = Utilities.canMessage(partner);
+        mComposeLayout.setVisibility(canMessage ? View.VISIBLE : View.GONE);
+        findViewById(R.id.burn_delay_container).setVisibility(canMessage ? View.VISIBLE : View.GONE);
 
         mProgressBar = (UploadView) findViewById(R.id.upload);
         findViewById(R.id.upload).setVisibility(View.GONE);
@@ -955,6 +983,7 @@ public class ConversationActivity extends AppCompatActivity implements
         View overlay = findViewById(R.id.conversation_progress);
         overlay.setVisibility(mIsAxolotlRegistered ? View.GONE : View.VISIBLE);
 
+        mAttachmentGridFrame = (FrameLayout)findViewById(R.id.attachment_grid_placehodler);
         mAttachmentGrid = (GridView) findViewById(R.id.attachment_grid);
         mAttachmentGrid.setVisibility(View.GONE);
 
@@ -987,8 +1016,10 @@ public class ConversationActivity extends AppCompatActivity implements
                         intent = createCaptureImageIntent();
                         break;
                     case INTENT_CAPTURE_VIDEO:
-                        intent = createCaptureVideoIntent();
-                        break;
+                        showCameraFragment();
+                        return;
+//                        intent = createCaptureVideoIntent();
+//                        break;
                     case INTENT_PICK_MEDIA:
                         intent = createSelectMediaIntent();
                         break;
@@ -1010,6 +1041,71 @@ public class ConversationActivity extends AppCompatActivity implements
         });
     }
 
+    private void showCameraFragment() {
+        if (TiviPhoneService.calls.getCallCount() > 0) {
+            Log.e(TAG, "Video recording is not supported during a call");
+
+            Toast.makeText(this, R.string.record_currently_on_call, Toast.LENGTH_LONG).show();
+
+            return;
+        }
+
+        ViewGroup container = (ViewGroup) findViewById(R.id.camera_fragment_container);
+        container.setVisibility(View.VISIBLE);
+
+        setFullScreenVisibilityFlags();
+
+        if (getFragmentManager().findFragmentByTag(CameraFragment.TAG_CAMERA_FRAGMENT) == null) {
+            CameraFragment cameraFragment = new CameraFragment();
+            Uri uri = VideoProvider.CONTENT_URI;
+            mPendingVideoCaptureUri = uri;
+            Bundle args = new Bundle();
+            args.putParcelable(CameraFragment.URI_KEY, uri);
+            cameraFragment.setArguments(args);
+            getFragmentManager().beginTransaction().add(R.id.camera_fragment_container,
+                    cameraFragment, CameraFragment.TAG_CAMERA_FRAGMENT).commit();
+        }
+
+        mCameraFragmentVisible = true;
+    }
+
+    private void hideCameraFragmentAnimated() {
+        CameraFragment cameraFragment = (CameraFragment) getFragmentManager().findFragmentByTag(CameraFragment.TAG_CAMERA_FRAGMENT);
+        cameraFragment.hide();
+    }
+
+    private void hideCameraFragment() {
+        CameraFragment cameraFragment = (CameraFragment) getFragmentManager().findFragmentByTag(CameraFragment.TAG_CAMERA_FRAGMENT);
+        if (cameraFragment != null) {
+            getFragmentManager().beginTransaction().remove(cameraFragment).commit();
+        }
+        ViewGroup container = (ViewGroup) findViewById(R.id.camera_fragment_container);
+        container.setVisibility(View.GONE);
+        mCameraFragmentVisible = false;
+
+        setDefaultVisibilityFlags();
+    }
+
+    @Override
+    public void shouldDismissFragment(boolean error) {
+        if (error) {
+            hideCameraFragment();
+        }
+        else {
+            hideCameraFragmentAnimated();
+        }
+    }
+
+    @Override
+    public void onVideoRecorded(Uri uri) {
+        hideCameraFragmentAnimated();
+        composeMessageWithAttachment(uri, true);
+    }
+
+    @Override
+    public void onFragmentHidden() {
+        hideCameraFragment();
+    }
 
     @Override
     public void onListFragmentScrollStateChange(int scrollState) {
@@ -1275,6 +1371,9 @@ public class ConversationActivity extends AppCompatActivity implements
     protected ConversationOptionsDrawer getOptionsDrawer() {
         mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer);
         mDrawerLayout.setDrawerListener(mDrawerListener);
+        if (!Utilities.canMessage(getPartner())) {
+            mDrawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
+        }
         return (ConversationOptionsDrawer) findViewById(R.id.drawer_content);
     }
 
@@ -1358,7 +1457,7 @@ public class ConversationActivity extends AppCompatActivity implements
              * For now all conversations will have burn notice for all messages
              * If a conversation does not have burn notice set it to 3 days by default.
              */
-            if (!conversation.hasBurnNotice()) {
+            if (!conversation.hasBurnNotice() && Utilities.canMessage(conversationPartner)) {
                 conversation.setBurnNotice(true);
                 conversation.setBurnDelay(BurnDelay.getDefaultDelay());
                 conversations.save(conversation);
@@ -1772,11 +1871,6 @@ public class ConversationActivity extends AppCompatActivity implements
     }
 
     private void composeMessageWithAttachment(final Intent attachment, final boolean isUnique) {
-        ConversationRepository repository = ConversationUtils.getConversations(getApplicationContext());
-        if (repository == null) {
-            return;
-        }
-
         if (attachment == null) {
             return;
         }
@@ -1787,6 +1881,15 @@ public class ConversationActivity extends AppCompatActivity implements
         }
 
         if (uri == null) {
+            return;
+        }
+
+        composeMessageWithAttachment(uri, isUnique);
+    }
+
+    private void composeMessageWithAttachment(final Uri uri, final boolean isUnique) {
+        ConversationRepository repository = ConversationUtils.getConversations(getApplicationContext());
+        if (repository == null) {
             return;
         }
 
@@ -1929,10 +2032,13 @@ public class ConversationActivity extends AppCompatActivity implements
     @Override
     public void onActionModeDestroyed() {
         mActionMode = null;
-        int visibility = mInSearchView ? View.GONE : View.VISIBLE;
+
+        boolean canMessage = Utilities.canMessage(getPartner());
+        int visibility = mInSearchView || !canMessage ? View.GONE : View.VISIBLE;
         findViewById(R.id.compose).setVisibility(visibility);
         findViewById(R.id.burn_delay_container).setVisibility(visibility);
-        if (!mInSearchView) {
+
+        if (!mInSearchView && canMessage) {
             mDrawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED);
         }
     }
@@ -2252,10 +2358,11 @@ public class ConversationActivity extends AppCompatActivity implements
                     putInt(KEYBOARD_HEIGHT_KEY, mKeyboardHeight).commit();
         }
 
-        if (isVisible) {
+        adjustLayoutTransitionForKeyboard();
+        if (isVisible) {    // keyboard appears
             hideAttachmentGrid();
         }
-        else {
+        else {              // keyboard disappears
             if (mShouldShowAttachmentGrid) {
                 showAttachmentGrid();
             }
@@ -2267,14 +2374,16 @@ public class ConversationActivity extends AppCompatActivity implements
         if (mAttachmentGrid.getVisibility() == View.VISIBLE) {
             return;
         }
-        // Adjust height so that it matches the keyboard's height
-        ViewGroup.LayoutParams params = mAttachmentGrid.getLayoutParams();
-        if (mKeyboardHeight == 0) {
-            mKeyboardHeight = PreferenceManager.getDefaultSharedPreferences(getApplicationContext())
-                    .getInt(KEYBOARD_HEIGHT_KEY, params.height);
-        }
-        params.height = mKeyboardHeight;
-        mAttachmentGrid.setLayoutParams(params);
+        // Layout Transitions
+        adjustLayoutTransitionForGrid();
+//        // Adjust height so that it matches the keyboard's height
+//        ViewGroup.LayoutParams params = mAttachmentGrid.getLayoutParams();
+//        if (mKeyboardHeight == 0) {
+//            mKeyboardHeight = PreferenceManager.getDefaultSharedPreferences(getApplicationContext())
+//                    .getInt(KEYBOARD_HEIGHT_KEY, params.height);
+//        }
+//        params.height = mKeyboardHeight;
+//        mAttachmentGrid.setLayoutParams(params);
         mAttachmentGrid.setVisibility(View.VISIBLE);
     }
 
@@ -2283,6 +2392,20 @@ public class ConversationActivity extends AppCompatActivity implements
         if (mAttachmentGrid.getVisibility() == View.GONE) {
             return;
         }
+        // Layout Transitions
+        adjustLayoutTransitionForGrid();
+        LayoutTransition transition = new LayoutTransition();
+        transition.addTransitionListener(new LayoutTransition.TransitionListener() {
+            @Override
+            public void startTransition(LayoutTransition transition, ViewGroup container, View view, int transitionType) {}
+
+            @Override
+            public void endTransition(LayoutTransition transition, ViewGroup container, View view, int transitionType) {
+                mAttachmentGridFrame.setLayoutTransition(null);
+            }
+        });
+        mAttachmentGridFrame.setLayoutTransition(transition);
+
         mAttachmentGrid.setVisibility(View.GONE);
         mAttachmentGrid.setSelection(0);
     }
@@ -2313,6 +2436,67 @@ public class ConversationActivity extends AppCompatActivity implements
         if (fragment != null) {
             fragment.scrollToBottom();
         }
+    }
+
+    private void enableLayoutTransition() {
+        ViewGroup rootView = (ViewGroup)findViewById(R.id.activity);
+        LayoutTransition transition = new LayoutTransition();
+        transition.enableTransitionType(LayoutTransition.CHANGING);
+        transition.addTransitionListener(new LayoutTransition.TransitionListener() {
+            @Override
+            public void startTransition(LayoutTransition transition, ViewGroup container, View view, int transitionType) {}
+
+            @Override
+            public void endTransition(LayoutTransition transition, ViewGroup container, View view, int transitionType) {
+                disableLayoutTransition();
+            }
+        });
+        rootView.setLayoutTransition(transition);
+    }
+
+    private void disableLayoutTransition() {
+        ViewGroup rootView = (ViewGroup)findViewById(R.id.activity);
+        rootView.setLayoutTransition(null);
+    }
+
+    private void adjustLayoutTransitionForKeyboard() {
+        // Disable transition when hiding keyboard. If the grid is going to appear in it place,
+        // it will enable the transition itself.
+        if (mIsKeyboardVisible) {   // keyboard appears
+            disableLayoutTransition();
+        }
+        else {                      // keyboard disappears
+            enableLayoutTransition();
+        }
+    }
+
+    private void adjustLayoutTransitionForGrid() {
+        // We want to enable transitions when toggling the visibility of the grid
+        enableLayoutTransition();
+    }
+
+    @TargetApi(Build.VERSION_CODES.KITKAT)
+    private void setDefaultVisibilityFlags() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT) {
+            return;
+        }
+        getWindow().getDecorView().setSystemUiVisibility(
+                View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                        | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+        );
+    }
+
+    @TargetApi(Build.VERSION_CODES.KITKAT)
+    private void setFullScreenVisibilityFlags() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT) {
+            return;
+        }
+        getWindow().getDecorView().setSystemUiVisibility(
+                View.SYSTEM_UI_FLAG_FULLSCREEN
+                        | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                        | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                        | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+        );
     }
 
     protected boolean refresh(final boolean forceRefresh) {
@@ -2463,6 +2647,7 @@ public class ConversationActivity extends AppCompatActivity implements
         final boolean mForceRefresh;
 
         private int mUnreadMessageCount = 0;
+        private int mUnreadCallMessageCount = 0;
 
         public RefreshTask(ConversationRepository repository, Conversation conversation, boolean forceRefresh) {
             mRepository = repository;
@@ -2490,12 +2675,13 @@ public class ConversationActivity extends AppCompatActivity implements
             events = removeExpiredMessages(history, events);
 
             mUnreadMessageCount = 0;
+            mUnreadCallMessageCount = 0;
             long autoRefreshTime = Long.MAX_VALUE;
             for (Event event : events) {
                 if (event instanceof Message) {
                     Message message = (Message) event;
                     boolean save = false;
-                    if (event instanceof IncomingMessage) {
+                    if (event instanceof IncomingMessage || event instanceof CallMessage) {
                         save = handleMessageByState(message);
 
                         if (message.hasAttachment() && !message.hasMetaData()) {
@@ -2522,7 +2708,7 @@ public class ConversationActivity extends AppCompatActivity implements
             }
 
             // attempt to correct unread message count for conversation
-            checkUnreadMessageCount(partner);
+            checkUnreadMessageCounts(partner);
 
             return MessageUtils.filter(events, DialerActivity.mShowErrors);
         }
@@ -2559,6 +2745,10 @@ public class ConversationActivity extends AppCompatActivity implements
             int state = message.getState();
             if (MessageStates.RECEIVED == state) {
                 mUnreadMessageCount += 1;
+            } else if (MessageStates.COMPOSED == state
+                    && message instanceof CallMessage
+                    && ((CallMessage) message).callType == ScCallLog.ScCalls.MISSED_TYPE) {
+                mUnreadCallMessageCount += 1;
             } else if (MessageStates.READ == state
                     && message.hasFailureFlagSet(Message.FAILURE_READ_NOTIFICATION)) {
                 Log.d(TAG, "Message has a failed read notification flag, resending");
@@ -2604,7 +2794,7 @@ public class ConversationActivity extends AppCompatActivity implements
             return newList;
         }
 
-        private void checkUnreadMessageCount(@NonNull final String partner) {
+        private void checkUnreadMessageCounts(@NonNull final String partner) {
             // re-read conversation to avoid using possibly stale version
             Conversation conversation = mRepository.findById(partner);
             if (conversation != null) {
@@ -2613,6 +2803,14 @@ public class ConversationActivity extends AppCompatActivity implements
                     Log.w(TAG, "Discrepancy between actual and reported unread message count for conversation: "
                             + mUnreadMessageCount + "/" + unreadMessageCount);
                     conversation.setUnreadMessageCount(mUnreadMessageCount);
+                    mRepository.save(conversation);
+                }
+
+                int unreadCallMessageCount = conversation.getUnreadCallMessageCount();
+                if (unreadCallMessageCount != mUnreadCallMessageCount) {
+                    Log.w(TAG, "Discrepancy between actual and reported unread call message count for conversation: "
+                            + mUnreadCallMessageCount + "/" + unreadMessageCount);
+                    conversation.setUnreadCallMessageCount(mUnreadCallMessageCount);
                     mRepository.save(conversation);
                 }
             }

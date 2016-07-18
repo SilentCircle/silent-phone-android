@@ -17,6 +17,7 @@
 package com.silentcircle.contacts.widget;
 
 import android.content.Context;
+import android.content.res.TypedArray;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.util.AttributeSet;
@@ -24,6 +25,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.HorizontalScrollView;
 import android.widget.TextView;
+
+import com.silentcircle.silentphone2.R;
 
 import java.util.HashSet;
 import java.util.Iterator;
@@ -93,6 +96,14 @@ public class SlidingTabLayout extends HorizontalScrollView {
 
     public SlidingTabLayout(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
+
+        TypedArray typedArray = context.obtainStyledAttributes(attrs,
+                com.silentcircle.silentphone2.R.styleable.SlidingTabLayout, 0, 0);
+        mDefaultTabTextColor =
+                typedArray.getColor(R.styleable.SlidingTabLayout_slidingTabTextColor, 0);
+        mSelectedTabTextColor =
+                typedArray.getColor(R.styleable.SlidingTabLayout_slidingTabSelectedTextColor, 0);
+        typedArray.recycle();
 
         // Disable the Scroll Bar
         setHorizontalScrollBarEnabled(false);
@@ -186,12 +197,11 @@ public class SlidingTabLayout extends HorizontalScrollView {
         updateTabs(0);
     }
 
-    public void setTabColor(int position, int colorId) {
+    public void setTabColor(int position, int color) {
         View view = getTabAt(position);
         if (view != null) {
             TextView tabNotification = (TextView) view.findViewById(mTabViewTextViewId);
             if (tabNotification != null) {
-                final int color = getResources().getColor(colorId);
                 tabNotification.setTextColor(color);
             }
         }
@@ -218,6 +228,7 @@ public class SlidingTabLayout extends HorizontalScrollView {
                 // If there is a custom tab view layout id set, try and inflate it
                 tabView = LayoutInflater.from(getContext()).inflate(mTabViewLayoutId, mTabStrip, false);
                 tabTitleView = (TextView) tabView.findViewById(mTabViewTextViewId);
+                tabTitleView.setTextColor(mDefaultTabTextColor);
             }
             else {
                 break;   // Should throw exception -- illegal parameter/state

@@ -22,7 +22,7 @@
     android:paddingBottom="@dimen/call_detail_header_bottom_margin"
     android:paddingLeft="@dimen/call_detail_horizontal_margin"
     android:paddingStart="@dimen/call_detail_horizontal_margin"
-    android:textColor="@color/sc_ng_text_grey_3"
+    android:textColor="?attr/sp_activity_secondary_text_color"
     android:textSize="@dimen/call_log_secondary_text_size"
     android:fontFamily="sans-serif-medium"
     android:singleLine="true"

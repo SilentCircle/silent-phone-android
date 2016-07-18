@@ -55,6 +55,7 @@ import com.silentcircle.messaging.model.event.Event;
 import com.silentcircle.messaging.model.event.IncomingMessage;
 import com.silentcircle.messaging.model.event.Message;
 import com.silentcircle.messaging.model.event.OutgoingMessage;
+import com.silentcircle.messaging.model.event.CallMessage;
 import com.silentcircle.messaging.services.AxoMessaging;
 import com.silentcircle.messaging.util.Action;
 import com.silentcircle.messaging.util.Extra;
@@ -63,6 +64,7 @@ import com.silentcircle.messaging.views.FailureEventView;
 import com.silentcircle.messaging.views.ListView;
 import com.silentcircle.messaging.views.MessageEventView;
 import com.silentcircle.messaging.views.adapters.AvatarModelViewAdapter;
+import com.silentcircle.messaging.views.CallEventView;
 import com.silentcircle.messaging.views.adapters.DateHeaderView;
 import com.silentcircle.messaging.views.adapters.ModelViewAdapter;
 import com.silentcircle.messaging.views.adapters.ModelViewType;
@@ -72,6 +74,7 @@ import com.silentcircle.silentphone2.R;
 import com.silentcircle.silentphone2.activities.DialerActivity;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.ListIterator;
@@ -108,6 +111,7 @@ public class ChatFragment extends BaseFragment implements MultipleChoiceSelector
     private static final ViewType[] VIEW_TYPES = {
         new ModelViewType(IncomingMessage.class, MessageEventView.class, R.layout.messaging_chat_item_incoming_message),
         new ModelViewType(OutgoingMessage.class, MessageEventView.class, R.layout.messaging_chat_item_outgoing_message),
+        new ModelViewType(CallMessage.class, CallEventView.class, R.layout.messaging_chat_item_phone),
         new ModelViewType(ErrorEvent.class, FailureEventView.class, R.layout.messaging_chat_item_error),
         new ModelViewType(Event.class, TextView.class, R.layout.messaging_chat_item_text),
         new ModelViewType(Date.class, DateHeaderView.class, R.layout.messaging_date_header_view)
@@ -391,20 +395,31 @@ public class ChatFragment extends BaseFragment implements MultipleChoiceSelector
     }
 
     private boolean handleReceiveMessageIntent(Intent intent) {
-        CharSequence conversationId = Extra.PARTNER.getCharSequence(intent);
-        CharSequence messageId = Extra.ID.getCharSequence(intent);
+        if (mEvents == null) {
+            return false;
+        }
 
-        Event event = null;
-        if (!TextUtils.isEmpty(messageId) && !TextUtils.isEmpty(conversationId)) {
+        CharSequence conversationId = Extra.PARTNER.getCharSequence(intent);
+        ArrayList<CharSequence> messageIds = getMessageIds(intent);
+
+        boolean changed = false;
+        if (!TextUtils.isEmpty(conversationId)) {
             if (conversationId.equals(getConversationId())) {
-                event = MessageUtils.getEventById(SilentPhoneApplication.getAppContext(),
-                        conversationId.toString(), messageId.toString());
+                for (CharSequence messageId : messageIds) {
+                    if (TextUtils.isEmpty(messageId)) {
+                        continue;
+                    }
+                    Event event = MessageUtils.getEventById(SilentPhoneApplication.getAppContext(),
+                            conversationId.toString(), messageId.toString());
+                    if (event != null) {
+                        updateEventInCache(event);
+                        changed = true;
+                    }
+                }
             }
         }
 
-        if (mEvents != null && event != null) {
-            // TODO: check for duplicates
-            mEvents.add(event);
+        if (changed) {
             mEvents = MessageUtils.filter(mEvents, DialerActivity.mShowErrors);
             setEvents(mEvents);
         }
@@ -412,20 +427,36 @@ public class ChatFragment extends BaseFragment implements MultipleChoiceSelector
         return false;
     }
 
+    private ArrayList<CharSequence> getMessageIds(Intent intent) {
+        CharSequence id = Extra.ID.getCharSequence(intent);
+        ArrayList<CharSequence> messageIds = new ArrayList<>();
+        CharSequence[] ids = Extra.IDS.getCharSequences(intent);
+        if (ids != null) {
+            // TODO something nicer
+            messageIds.addAll(Arrays.asList(ids));
+        }
+        if (!TextUtils.isEmpty(id)) {
+            messageIds.add(id);
+        }
+        return messageIds;
+    }
+
     private boolean handleUpdateNotification(Intent intent) {
         boolean isHandled = false;
         int reason = Extra.REASON.getInt(intent);
         boolean forceRefresh = Extra.FORCE.getBoolean(intent);
-        CharSequence messageId = Extra.ID.getCharSequence(intent);
+        ArrayList<CharSequence> messageIds = getMessageIds(intent);
         CharSequence conversationId = Extra.PARTNER.getCharSequence(intent);
 
         // TODO: avoid need for force refresh, it slows down burn animation and burn timer updates
-        if (mEvents != null && !TextUtils.isEmpty(messageId)) {
-            if (reason == AxoMessaging.UPDATE_ACTION_MESSAGE_BURNED) {
-                isHandled = handleBurnNotification(messageId);
-            } else if (reason == AxoMessaging.UPDATE_ACTION_MESSAGE_STATE_CHANGE
-                    || reason == AxoMessaging.UPDATE_ACTION_MESSAGE_SEND) {
-                isHandled = handleStatusUpdateNotification(conversationId, messageId);
+        if (reason == AxoMessaging.UPDATE_ACTION_MESSAGE_BURNED) {
+            for (CharSequence messageId : messageIds) {
+                isHandled |= handleBurnNotification(messageId);
+            }
+        } else if (reason == AxoMessaging.UPDATE_ACTION_MESSAGE_STATE_CHANGE
+                || reason == AxoMessaging.UPDATE_ACTION_MESSAGE_SEND) {
+            for (CharSequence messageId : messageIds) {
+                isHandled |= handleStatusUpdateNotification(conversationId, messageId);
             }
         }
         return isHandled && !forceRefresh;
@@ -514,18 +545,30 @@ public class ChatFragment extends BaseFragment implements MultipleChoiceSelector
 
         boolean isHandled = false;
         if (updatedEvent != null) {
+            updateEventInCache(updatedEvent);
+            isHandled = true;
+            setEvents(mEvents);
+        }
+        return isHandled;
+    }
+
+    private void updateEventInCache(Event updatedEvent) {
+        if (mEvents != null) {
+            boolean eventFound = false;
             ListIterator<Event> iterator = mEvents.listIterator();
             while (iterator.hasNext()) {
                 Event event = iterator.next();
                 if (event.getId().equals(updatedEvent.getId())) {
                     iterator.set(updatedEvent);
+                    eventFound = true;
                     break;
                 }
             }
-            isHandled = true;
-            setEvents(mEvents);
+            if (!eventFound) {
+                mEvents.add(updatedEvent);
+                mEvents = MessageUtils.filter(mEvents, DialerActivity.mShowErrors);
+            }
         }
-        return isHandled;
     }
 
     private void removeEvent(Event event) {
@@ -568,6 +611,10 @@ public class ChatFragment extends BaseFragment implements MultipleChoiceSelector
             if (event instanceof Message) {
                 Message message = (Message) event;
                 if (message.getState() == MessageStates.RECEIVED) {
+                    unreadMessages.add(message);
+                }
+
+                if (message instanceof CallMessage && message.getState() != MessageStates.READ) {
                     unreadMessages.add(message);
                 }
             }

@@ -51,11 +51,13 @@
         android:layout_height="wrap_content"
         android:id="@+id/attachment_grid_placehodler"
         android:layout_alignParentBottom="true">
+
         <include
             android:id="@+id/attachment_grid"
             layout="@layout/messaging_attachement_grid"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
+
     </FrameLayout>
 
 

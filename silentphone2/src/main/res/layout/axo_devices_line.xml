@@ -50,7 +50,7 @@ http://code.google.com/p/android/issues/detail?id=3414, comments 56 and 57
                         android:ellipsize="marquee"
                         android:marqueeRepeatLimit ="3"
                         android:scrollHorizontally="true"
-                        android:textColor="@color/translucent_white"
+                        android:textColor="?attr/sp_activity_primary_text_color"
                         tools:text="device id string"
                         tools:context="com.silentcircle.messaging.activities.AxoRegisterActivity"/>
 
@@ -69,6 +69,7 @@ http://code.google.com/p/android/issues/detail?id=3414, comments 56 and 57
                 android:background="@null"
                 android:visibility="invisible"
                 android:src="@android:drawable/ic_menu_more"
+                android:tint="?attr/sp_activity_primary_text_color"
                 tools:visibility="visible"/>
 
         <ImageButton
@@ -80,6 +81,7 @@ http://code.google.com/p/android/issues/detail?id=3414, comments 56 and 57
                 android:background="@null"
                 android:visibility="invisible"
                 android:src="@drawable/ic_check_white_24dp"
+                android:tint="?attr/sp_activity_primary_text_color"
                 tools:visibility="visible"/>
 
 </LinearLayout>

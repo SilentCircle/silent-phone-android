@@ -194,7 +194,7 @@ public final class ContactsCache {
                         break;
                     }
 //                    Log.d(TAG, "++++ entry number: " + entry.phoneNumber);
-                    if (name.equals(entry.phoneNumber)) {
+                    if (Utilities.formatNumber(name).equals(entry.phoneNumber)) {
                         result = entry;
                         break;
                     }

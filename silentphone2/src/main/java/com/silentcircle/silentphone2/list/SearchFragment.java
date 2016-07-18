@@ -23,6 +23,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.database.Cursor;
+import android.database.DatabaseUtils;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v7.app.AlertDialog;
@@ -51,6 +52,7 @@ import com.silentcircle.messaging.util.Extra;
 import com.silentcircle.messaging.views.CallOrConversationDialog;
 import com.silentcircle.silentphone2.R;
 import com.silentcircle.silentphone2.activities.ContactAdder;
+import com.silentcircle.silentphone2.activities.DialerActivity;
 import com.silentcircle.silentphone2.util.Utilities;
 
 public class SearchFragment extends PhoneNumberPickerFragment implements AxoMessaging.AxoMessagingStateCallback {
@@ -149,7 +151,7 @@ public class SearchFragment extends PhoneNumberPickerFragment implements AxoMess
 
 //        listView.setBackgroundColor(res.getColor(R.color.background_dialer_results));
         listView.setClipToPadding(false);
-        setVisibleScrollbarEnabled(false);
+        setVisibleScrollbarEnabled(true);
         listView.setOnScrollListener(new OnScrollListener() {
             @Override
             public void onScrollStateChanged(AbsListView view, int scrollState) {
@@ -324,8 +326,7 @@ public class SearchFragment extends PhoneNumberPickerFragment implements AxoMess
                 validateUser(number);
             }
             else {
-                buildCallConversationDialog(position, id, number)
-                        .show();
+                validateUser(position, number);
             }
         }
         else {
@@ -377,6 +378,24 @@ public class SearchFragment extends PhoneNumberPickerFragment implements AxoMess
                 });
 
         return dialog;
+    }
+
+    protected void validateUser(int itemPosition, String number) {
+        final DialerPhoneNumberListAdapter adapter = (DialerPhoneNumberListAdapter) getAdapter();
+
+        final Cursor cursor = (Cursor)adapter.getItem(itemPosition);
+        final int uuidIndex = cursor.getColumnIndex(ScDirectoryLoader.SC_UUID_FIELD);
+
+        if (uuidIndex >= 0) {
+            if (cursor.getString(uuidIndex) != null) {
+                validateUser(number); // Validate the number (username)
+            }
+        } else {
+            // Try to validate a sip username
+            number = Utilities.removeSipParts(number);
+
+            validateUser(number);
+        }
     }
 
     protected void showValidationError(final String userName, ValidationState state) {

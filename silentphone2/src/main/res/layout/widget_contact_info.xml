@@ -17,6 +17,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textSize="@dimen/text_normal"
+        android:textColor="?attr/sp_activity_secondary_text_color"
         tools:text="Label" />
 
     <TextView
@@ -24,7 +25,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textSize="@dimen/text_xlarge"
-        android:textColor="@color/silent_white"
+        android:textColor="?attr/sp_activity_primary_text_color"
         tools:text="Street name, City, postal code" />
 
 </LinearLayout>

@@ -38,6 +38,7 @@ import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.silentcircle.common.util.ViewUtil;
 import com.silentcircle.contacts.calllognew.CallLogAdapter;
 import com.silentcircle.contacts.calllognew.CallLogListItemView;
 import com.silentcircle.contacts.calllognew.CallLogQueryHandler;
@@ -147,9 +148,7 @@ public class ShortcutCardsAdapter extends BaseAdapter {
         mCallLogPaddingStart = resources.getDimensionPixelSize(R.dimen.recent_call_log_item_padding_start);
         mCallLogPaddingTop = resources.getDimensionPixelSize(R.dimen.recent_call_log_item_padding_top);
         mCallLogPaddingBottom = resources.getDimensionPixelSize(R.dimen.recent_call_log_item_padding_bottom);
-//        mShortCardBackgroundColor = resources.getColor(R.color.call_log_expanded_background_color);
-        mShortCardBackgroundColor = ContextCompat.getColor(mContext, R.color.background_dialer_list_items);
-
+        mShortCardBackgroundColor = ViewUtil.getColorFromAttributeId(context, R.attr.call_log_primary_background_color);
 
         mCallLogAdapter = callLogAdapter;
         mCallLogAdapter.registerDataSetObserver(new CustomDataSetObserver());

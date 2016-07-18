@@ -71,7 +71,9 @@ public abstract class IndexerListAdapter extends PinnedHeaderListAdapter impleme
     protected abstract void setPinnedSectionTitle(View pinnedHeaderView, String title);
 
     public boolean isSectionHeaderDisplayEnabled() {
-        return mSectionHeaderDisplayEnabled;
+        // FIXME: This is inaccurate for adapters with multiple pinned sections
+//        return mSectionHeaderDisplayEnabled;
+        return false;
     }
 
     public void setSectionHeaderDisplayEnabled(boolean flag) {

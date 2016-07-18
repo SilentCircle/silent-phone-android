@@ -48,6 +48,7 @@ import com.silentcircle.messaging.activities.AxoRegisterActivity;
 import com.silentcircle.messaging.model.Conversation;
 import com.silentcircle.messaging.model.MessageErrorCodes;
 import com.silentcircle.messaging.model.MessageStates;
+import com.silentcircle.messaging.model.event.CallMessage;
 import com.silentcircle.messaging.model.event.ErrorEvent;
 import com.silentcircle.messaging.model.event.Event;
 import com.silentcircle.messaging.model.event.IncomingMessage;
@@ -345,6 +346,11 @@ public class AxoMessaging extends AxolotlNative {
         return keyData;
     }
 
+    @WorkerThread
+    public boolean sendMessage(final Message msg) {
+        return sendMessage(msg, false);
+    }
+
     /**
      * Send message to the network.
      *
@@ -354,7 +360,7 @@ public class AxoMessaging extends AxolotlNative {
      * @param msg the composed message.
      */
     @WorkerThread
-    public boolean sendMessage(final Message msg) {
+    public boolean sendMessage(final Message msg, final boolean siblingsOnly) {
         if (!isReady()) {
             initialize();
             if (!isReady())
@@ -362,7 +368,11 @@ public class AxoMessaging extends AxolotlNative {
         }
         final byte[] messageBytes = createMsgDescriptor(msg, msg.getText());
 
-        createSendSyncOutgoing(messageBytes, msg);
+        boolean syncResult = createSendSyncOutgoing(messageBytes, msg);
+
+        if (siblingsOnly) {
+            return syncResult;
+        }
 
         long[] netMsgIds = sendMessage(messageBytes, msg.getAttachmentAsByteArray(), msg.getAttributesAsByteArray());
         if (netMsgIds == null) {
@@ -382,7 +392,7 @@ public class AxoMessaging extends AxolotlNative {
         }
 
         MessageUtils.notifyConversationUpdated(mContext, msg.getConversationID(), false,
-                msg.getId(), UPDATE_ACTION_MESSAGE_STATE_CHANGE);
+                UPDATE_ACTION_MESSAGE_STATE_CHANGE, msg.getId());
         return true;
     }
 
@@ -540,8 +550,10 @@ public class AxoMessaging extends AxolotlNative {
         if (conversation == null) {
             conversation = new Conversation(senderUUID);
             /* by default enable burn notice for conversation and set burn delay to 3 days */
-            conversation.setBurnNotice(true);
-            conversation.setBurnDelay(TimeUnit.DAYS.toSeconds(3));
+            if (Utilities.canMessage(senderUUID)) {
+                conversation.setBurnNotice(true);
+                conversation.setBurnDelay(TimeUnit.DAYS.toSeconds(3));
+            }
 
             // The sender's UUID is valid due to the SearchFragment#validateUser(String) function
             // which also sets user's the display name in the name lookup cache.
@@ -1017,7 +1029,7 @@ public class AxoMessaging extends AxolotlNative {
                     events.save(msg);
 
                     MessageUtils.notifyConversationUpdated(mContext, recipient, false,
-                            msg.getId(), UPDATE_ACTION_MESSAGE_STATE_CHANGE);
+                            UPDATE_ACTION_MESSAGE_STATE_CHANGE, msg.getId());
                 }
                 eventState.remove(netMsgId);
             }
@@ -1044,7 +1056,7 @@ public class AxoMessaging extends AxolotlNative {
                     events.save(message);
 
                     MessageUtils.notifyConversationUpdated(mContext, recipient,
-                            false, message.getId(), UPDATE_ACTION_MESSAGE_STATE_CHANGE);
+                            false, UPDATE_ACTION_MESSAGE_STATE_CHANGE, message.getId());
                 }
                 eventState.remove(netMsgId);
             }
@@ -1058,8 +1070,10 @@ public class AxoMessaging extends AxolotlNative {
         final Event event = events.findById(deliveredPacketID);
         if (event instanceof Message) {
             final Message message = (Message)event;
-            if (message.getState() == MessageStates.RECEIVED) {
+            if (message.getState() == MessageStates.RECEIVED && !(message instanceof CallMessage)) {
                 decrementUnreadMessages(message);
+            } else if (message instanceof CallMessage && message.getState() != MessageStates.READ) {
+                decrementUnreadCallMessages(message);
             }
             message.setState(MessageStates.READ);
             if (message.expires()) {
@@ -1070,7 +1084,7 @@ public class AxoMessaging extends AxolotlNative {
             events.save(message);
 
             MessageUtils.notifyConversationUpdated(mContext, MessageUtils.getConversationId(message),
-                    false, message.getId(), UPDATE_ACTION_MESSAGE_STATE_CHANGE);
+                    false, UPDATE_ACTION_MESSAGE_STATE_CHANGE, message.getId());
         }
     }
 
@@ -1087,7 +1101,7 @@ public class AxoMessaging extends AxolotlNative {
                 events.save(message);
 
                 MessageUtils.notifyConversationUpdated(mContext, message.getConversationID(), false,
-                        message.getId(), UPDATE_ACTION_MESSAGE_STATE_CHANGE);
+                        UPDATE_ACTION_MESSAGE_STATE_CHANGE, message.getId());
             }
         }
     }
@@ -1119,7 +1133,7 @@ public class AxoMessaging extends AxolotlNative {
         events.save(event);
 
         MessageUtils.notifyConversationUpdated(mContext, sender,
-                true, event.getId(), UPDATE_ACTION_MESSAGE_STATE_CHANGE);
+                true, UPDATE_ACTION_MESSAGE_SEND, event.getId());
     }
 
     private void burnPacket(final Conversation conv, final EventRepository events, final String burnedPacketId,
@@ -1137,6 +1151,7 @@ public class AxoMessaging extends AxolotlNative {
         }
 
         boolean isMessageUnread = false;
+        boolean isCallMessageUnread = false;
         /*
          * Determine whether correct event is being removed, whether conversation partner
          * for message does not match the conversation itself.
@@ -1153,8 +1168,12 @@ public class AxoMessaging extends AxolotlNative {
             }
         }
         else {
-            OutgoingMessage message = (OutgoingMessage) event;
+            Message message = (Message) event;
             conversationPartner = message.getConversationID();
+
+            if (message instanceof CallMessage && message.getState() != MessageStates.READ) {
+                isCallMessageUnread = true;
+            }
         }
 
         if (!conv.getPartner().getUserId().equals(conversationPartner)) {
@@ -1170,12 +1189,16 @@ public class AxoMessaging extends AxolotlNative {
             decrementUnreadMessages((Message) event);
         }
 
+        if (isCallMessageUnread) {
+            decrementUnreadCallMessages((Message) event);
+        }
+
         events.remove(event);
         if (confirm)
             sendBurnNoticeConfirmation((Message)event, conversationPartner);
 
-        MessageUtils.notifyConversationUpdated(mContext, conversationPartner, false, event.getId(),
-                UPDATE_ACTION_MESSAGE_BURNED);
+        MessageUtils.notifyConversationUpdated(mContext, conversationPartner, false,
+                UPDATE_ACTION_MESSAGE_BURNED, event.getId());
 
         if(((Message) event).hasAttachment()) {
             /** Remove a possible temporary attachment file (rare)
@@ -1440,7 +1463,7 @@ public class AxoMessaging extends AxolotlNative {
         conversations.save(conversation);
 
         MessageUtils.notifyConversationUpdated(mContext, message.getConversationID(), true,
-                message.getId(), UPDATE_ACTION_MESSAGE_STATE_CHANGE);
+                UPDATE_ACTION_MESSAGE_STATE_CHANGE, message.getId());
 
         // Do an initial request to download the thumbnail
         if(attachment != null && !TextUtils.isEmpty(message.getAttachment()) && !message.hasMetaData()) {
@@ -1473,6 +1496,15 @@ public class AxoMessaging extends AxolotlNative {
         if (conversation != null) {
             int unreadMessageCount = conversation.getUnreadMessageCount();
             conversation.setUnreadMessageCount(unreadMessageCount > 0 ? (unreadMessageCount - 1) : 0);
+            getConversations().save(conversation);
+        }
+    }
+
+    private void decrementUnreadCallMessages(Message message) {
+        Conversation conversation = getConversations().findById(MessageUtils.getConversationId(message));
+        if (conversation != null) {
+            int unreadCallMessageCount = conversation.getUnreadCallMessageCount();
+            conversation.setUnreadCallMessageCount(unreadCallMessageCount > 0 ? (unreadCallMessageCount - 1) : 0);
             getConversations().save(conversation);
         }
     }

@@ -114,7 +114,9 @@ public class AxoDevicesFragment extends Fragment implements View.OnClickListener
         }
         String action = args.getString(AxoRegisterActivity.ACTION, AxoRegisterActivity.ACTION_MANAGE);
         mManage = AxoRegisterActivity.ACTION_MANAGE.equals(action);
-        mNormalTextColor = ContextCompat.getColor(mParent, android.R.color.white);
+        mNormalTextColor = ContextCompat.getColor(mParent,
+                com.silentcircle.common.util.ViewUtil.getColorIdFromAttributeId(mParent,
+                        R.attr.sp_activity_primary_text_color));
         mThisDevTextColor = ContextCompat.getColor(mParent, R.color.black_yellow);
     }
 

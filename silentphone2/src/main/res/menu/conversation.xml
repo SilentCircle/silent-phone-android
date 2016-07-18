@@ -20,5 +20,6 @@
         app:showAsAction="always"
         android:orderInCategory="4"
         android:icon="@drawable/ic_drawer_closed"
+        android:visible="false"
         android:title="@string/options"/>
 </menu>

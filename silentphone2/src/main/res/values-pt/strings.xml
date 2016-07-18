@@ -164,7 +164,6 @@
     <string name="account_creation_no_data">Criação de conta - servidor forneceu dados errados.</string>
     <string name="other_settings">Outras configurações</string>
     <string name="theme_black">Black</string>
-    <string name="extended_menu">Menu ampliado</string>
     <string name="bp_is_online">Silent Phone on-line</string>
     <string name="bp_is_offline">Silent Phone off-line no momento</string>
     <string name="bp_not_started">Silent Phone não iniciou</string>

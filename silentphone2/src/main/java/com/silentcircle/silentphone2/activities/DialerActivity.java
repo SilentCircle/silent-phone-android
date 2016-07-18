@@ -64,6 +64,7 @@ import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.graphics.drawable.DrawableCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
@@ -75,6 +76,7 @@ import android.telephony.PhoneNumberUtils;
 import android.telephony.TelephonyManager;
 import android.text.Editable;
 import android.text.Html;
+import android.text.InputType;
 import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.text.method.LinkMovementMethod;
@@ -155,6 +157,9 @@ import java.util.Set;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 
+// TODO: Move logic out of this fragment - no longer used directly
+// I did not do this because it will introduce bugs when changing the flow
+// (time constraints :))
 public class DialerActivity extends TransactionSafeActivity
         implements DialDrawerFragment.DrawerCallbacks, DialpadFragment.DialpadCallbacks,
         KeyManagerSupport.KeyManagerListener, View.OnClickListener, ListsFragment.HostInterface,
@@ -422,6 +427,7 @@ public class DialerActivity extends TransactionSafeActivity
         @Override
         public void onTextChanged(CharSequence s, int start, int before, int count) {
             final String newText = s.toString();
+
             if (newText.equals(mSearchQuery)) {
                 // If the query hasn't changed (perhaps due to activity being destroyed
                 // and restored, or user launching the same DIAL intent twice), then there is
@@ -454,6 +460,44 @@ public class DialerActivity extends TransactionSafeActivity
 
         @Override
         public void afterTextChanged(Editable s) {
+            if (s.length() < 2) {
+                return;
+            }
+
+            String number = s.toString();
+
+            // TODO: Optimize logic
+            boolean wasModified = false;
+            char firstChar = number.charAt(0);
+            String formatted = null;
+            if (firstChar == '+' || Character.isDigit(firstChar)) {
+                StringBuilder modified = new StringBuilder(20);
+                wasModified = FindDialHelper.getDialHelper().analyseModifyNumberString(number, modified);
+                if (wasModified) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                        formatted = PhoneNumberUtils.formatNumber(modified.toString(), "Z");
+                    } else {
+                        formatted = PhoneNumberUtils.formatNumber(modified.toString());
+                    }
+
+                    mSearchView.setText(!TextUtils.isEmpty(formatted) ? formatted
+                            : !TextUtils.isEmpty(modified) ? modified : number);
+                    mSearchView.setSelection(mSearchView.getText().length());
+                } else if (firstChar == '+') {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                        formatted = PhoneNumberUtils.formatNumber(number, "Z");
+                    } else {
+                        formatted = PhoneNumberUtils.formatNumber(number);
+                    }
+
+                    if (formatted == null || formatted.equals(number)) {
+                        return;
+                    }
+
+                    mSearchView.setText(!TextUtils.isEmpty(formatted) ? formatted : number);
+                    mSearchView.setSelection(mSearchView.getText().length());
+                }
+            }
         }
     };
 
@@ -546,6 +590,7 @@ public class DialerActivity extends TransactionSafeActivity
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         AutoStart.setDisableAutoStart(true);            // Don't auto start if we are started once
+        Utilities.setTheme(this);
 
         super.onCreate(savedInstanceState);
         mSavedInstanceState = savedInstanceState;       // Copy it because we use it later after permission checks
@@ -601,7 +646,6 @@ public class DialerActivity extends TransactionSafeActivity
             getWindow().addFlags(windowFlags);
         }
 
-        Utilities.setTheme(this);
         ConfigurationUtilities.initializeDebugSettings(getBaseContext());
 
         if (Build.VERSION.SDK_INT >= 21 && ConfigurationUtilities.mUseDevelopConfiguration) {
@@ -704,10 +748,14 @@ public class DialerActivity extends TransactionSafeActivity
             mDialerDatabaseHelper.startSmartDialUpdateThread();
         }
 
-        if (mShowDialpadOnResume) {
-            showDialpadFragment(false, mAutoDialRequested /* autoDial */);
-            mShowDialpadOnResume = false;
+        if (isDialpadShown()) {
+            hideDialpadFragment(false, true);
         }
+
+//        if (mShowDialpadOnResume) {
+//            showDialpadFragment(false, mAutoDialRequested /* autoDial */);
+//            mShowDialpadOnResume = false;
+//        }
 
         if (mInRegularSearch) {
             updateSearchFragmentSettings();
@@ -838,7 +886,9 @@ public class DialerActivity extends TransactionSafeActivity
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         if (!isDrawerOpen()) {
-            getMenuInflater().inflate(R.menu.dialpad, menu);
+//            getMenuInflater().inflate(R.menu.dialpad, menu);
+//            getMenuInflater().inflate(R.menu.dialpad, menu);
+//            ViewUtil.tintMenuIcons(this, menu);
             restoreActionBar();
             return true;
         }
@@ -926,12 +976,18 @@ public class DialerActivity extends TransactionSafeActivity
     public void onClick(View view) {
         switch (view.getId()) {
             case R.id.floating_action_button:
-                Integer position = (Integer) mFloatingActionButton.getTag();
-                if (position == null || position != ListsFragment.TAB_INDEX_CHAT) {
-                    showDialpadFragment(true, false /* autoDial */);
-                }
-                else if (!isInSearchUi()) {
-                    startConversation("");
+//                Integer position = (Integer) mFloatingActionButton.getTag();
+//                if (position == null || position != ListsFragment.TAB_INDEX_CHAT) {
+//                    showDialpadFragment(true, false /* autoDial */);
+//                }
+//                else if (!isInSearchUi()) {
+//                    startConversation("");
+//                    invalidateOptionsMenu();
+//                }
+                if (!isInSearchUi()) {
+                    openActionBarQueryField();
+                    enterSearchUi(false /* smartDialSearch */, mSearchView.getText().toString(),
+                            false /* conversations flag */);
                     invalidateOptionsMenu();
                 }
                 break;
@@ -1336,7 +1392,14 @@ public class DialerActivity extends TransactionSafeActivity
             }
         };
 
-        mDrawerToggle.setHomeAsUpIndicator(R.drawable.ic_arrow_back_black_24dp);
+        Drawable homeAsUp = ContextCompat.getDrawable(this, R.drawable.ic_arrow_back_black_24dp);
+        homeAsUp = DrawableCompat.wrap(homeAsUp);
+        DrawableCompat.setTint(homeAsUp,
+                getResources().getColor(
+                        ViewUtil.getColorIdFromAttributeId(this,
+                                R.attr.sp_actionbar_title_text_color)));
+        mDrawerToggle.setHomeAsUpIndicator(homeAsUp);
+        mDrawerToggle.setDrawerIndicatorEnabled(true);
         mDrawerToggle.setToolbarNavigationClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -1370,10 +1433,26 @@ public class DialerActivity extends TransactionSafeActivity
 
         mSearchView = (EditText)searchEditTextLayout.findViewById(R.id.search_view);
         mSearchView.addTextChangedListener(mPhoneSearchQueryTextListener);
+
         searchEditTextLayout.setOnBackButtonClickedListener(new SearchEditTextLayout.OnBackButtonClickedListener() {
             @Override
             public void onBackButtonClicked() {
                 onBackPressed();
+            }
+        });
+
+        searchEditTextLayout.setOnInputSwitchedListener(new SearchEditTextLayout.OnInputSwitchedListener() {
+            @Override
+            public void onInputSwitched(int inputType) {
+                if (!isInSearchUi()) {
+                    return;
+                }
+
+                if (mRegularSearchFragment == null) {
+                    return;
+                }
+
+                mRegularSearchFragment.setPhoneInput(inputType == InputType.TYPE_CLASS_PHONE);
             }
         });
 
@@ -1472,6 +1551,31 @@ public class DialerActivity extends TransactionSafeActivity
         }
         pad.setDestination(formatted != null ? formatted : number);
         return wasModified;
+    }
+
+    public String formatSearchInput(String input) {
+        if (TextUtils.isEmpty(input))
+            return "";
+
+        input = input.trim();
+        if (Utilities.isUriNumber(input)) {
+            input = Utilities.removeUriPartsSelective(input);
+        }
+        boolean wasModified = false;
+        char firstChar = input.charAt(0);
+        String formatted = null;
+        if (firstChar == '+' || Character.isDigit(firstChar)) {
+            StringBuilder modified = new StringBuilder(20);
+            wasModified = FindDialHelper.getDialHelper().analyseModifyNumberString(input, modified);
+            if (wasModified) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
+                    formatted = PhoneNumberUtils.formatNumber(modified.toString(), Locale.getDefault().getCountry());
+                else
+                    formatted = PhoneNumberUtils.formatNumber(modified.toString());
+            }
+        }
+
+        return formatted != null ? formatted : input;
     }
 
     private void showToast(String s) {
@@ -2105,19 +2209,19 @@ public class DialerActivity extends TransactionSafeActivity
      */
     public void onDialpadShown() {
 //        if (mDialpadFragment.getAnimate()) {
-        final View view = mDialpadFragment.getView();
-        if (view != null)
-            view.startAnimation(mSlideIn);
-//        } else {
-//            mDialpadFragment.setYFraction(0);
+//        final View view = mDialpadFragment.getView();
+//        if (view != null)
+//            view.startAnimation(mSlideIn);
+////        } else {
+////            mDialpadFragment.setYFraction(0);
+////        }
+//        if (!mAutoDialRequested) {
+//            mAutoDialRequested = false;
+//            if (mRegularSearchFragment != null) {
+//                mRegularSearchFragment.setShowScDirectoryOption(false);
+//            }
 //        }
-        if (!mAutoDialRequested) {
-            mAutoDialRequested = false;
-            if (mRegularSearchFragment != null) {
-                mRegularSearchFragment.setShowScDirectoryOption(false);
-            }
-        }
-        updateSearchFragmentSettings();
+//        updateSearchFragmentSettings();
     }
 
     // Update the search position in any case, if the fragment is visible or not.
@@ -2131,7 +2235,7 @@ public class DialerActivity extends TransactionSafeActivity
         }
         if (fragment != null) {
             fragment.updatePosition(true /* animate */);
-            fragment.setShowEmptyListForNullQuery(true);
+            fragment.setShowEmptyListForNullQuery(false);
             if (mSearchQuery != null)
                 mSearchView.setText(mSearchQuery);
             if (fragment == mRegularSearchFragment) {
@@ -2343,7 +2447,7 @@ public class DialerActivity extends TransactionSafeActivity
         }
         // DialerActivity will provide the options menu
         fragment.setHasOptionsMenu(false);
-        fragment.setShowEmptyListForNullQuery(true);
+        fragment.setShowEmptyListForNullQuery(false);
         fragment.setQueryString(query, false /* delaySelection */);
         fragment.setStartConversationFlag(startConversationFlag);
         transaction.commit();
@@ -2364,7 +2468,7 @@ public class DialerActivity extends TransactionSafeActivity
      * Hides the search fragment
      */
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
-    private void exitSearchUi() {
+    public void exitSearchUi() {
         // See related bug in enterSearchUI();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1 && getFragmentManager().isDestroyed()) {
             return;
@@ -2482,13 +2586,13 @@ public class DialerActivity extends TransactionSafeActivity
     private void callImmediateOrAsk(String number) {
         if (number != null && mDialpadFragment != null) {
             boolean wasModified = checkCallToNr(number, mDialpadFragment);
-            if (!wasModified)
+//            if (!wasModified)
                 mDialpadFragment.dialButtonPressed();
-            else {
-                if (isInSearchUi() && !mIsDialpadShown)
-                    exitSearchUi();
-                showDialpadFragment(true /* animate */, true /* autoDial */);
-            }
+//            else {
+//                if (isInSearchUi() && !mIsDialpadShown)
+//                    exitSearchUi();
+//                showDialpadFragment(true /* animate */, true /* autoDial */);
+//            }
         }
     }
 

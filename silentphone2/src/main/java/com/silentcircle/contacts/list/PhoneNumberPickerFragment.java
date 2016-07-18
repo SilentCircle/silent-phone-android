@@ -281,7 +281,7 @@ public class PhoneNumberPickerFragment extends ScContactEntryListFragment<ScCont
         super.onLoadFinished(loader, data);
 
         // disable scroll bar if there is no data
-        setVisibleScrollbarEnabled(data.getCount() > 0);
+//        setVisibleScrollbarEnabled(data.getCount() > 0);
     }
 
     public void setUseCallableUri(boolean useCallableUri) {
@@ -352,7 +352,7 @@ public class PhoneNumberPickerFragment extends ScContactEntryListFragment<ScCont
     private void pickPhoneNumber(Uri uri, String number) {
         if (mShortcutAction == null) {
             mListener.onCallNumberDirectly(number);
-        } 
+        }
         else if (uri != null) {
             startPhoneNumberShortcutIntent(uri);
         }

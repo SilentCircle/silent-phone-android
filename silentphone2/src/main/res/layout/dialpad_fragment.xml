@@ -59,7 +59,7 @@
                     android:state_enabled="false"
                     android:background="?sp_actionbar_color"
                     android:contentDescription="@string/description_delete_button"
-                    android:tint="?sp_icon_tint_color"
+                    android:tint="?attr/sp_actionbar_title_text_color"
                     tools:src="?sp_ic_keyboard"/>
             <!--            <com.android.dialer.dialpad.DigitsEditText -->
             <com.silentcircle.silentphone2.views.FontFitEditText
@@ -92,7 +92,7 @@
                     android:state_enabled="false"
                     android:background="?sp_actionbar_color"
                     android:contentDescription="@string/description_delete_button"
-                    android:tint="?sp_icon_tint_color"
+                    android:tint="?attr/sp_actionbar_title_text_color"
                     android:src="?sp_ic_backspace"/>
 
             <ImageButton
@@ -105,7 +105,7 @@
                     android:state_enabled="false"
                     android:background="?sp_actionbar_color"
                     android:contentDescription="@string/description_pick_contact_button"
-                    android:tint="?sp_icon_tint_color"
+                    android:tint="?attr/sp_actionbar_title_text_color"
                     android:src="?sp_ic_contacts"/>
         </LinearLayout>
 
@@ -142,7 +142,7 @@
                 android:id="@+id/dialpad_bottom_height"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/dialpad_bottom_key_height"
-                android:background="@color/sc_ng_background"/>
+                android:background="?attr/sp_diaplad_background_color"/>
 
     </LinearLayout>
 

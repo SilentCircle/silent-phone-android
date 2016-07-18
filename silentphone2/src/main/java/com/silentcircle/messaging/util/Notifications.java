@@ -34,6 +34,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Build;
 import android.os.SystemClock;
@@ -70,26 +71,51 @@ public final class Notifications {
     /*
      * Show a notification with chat message content
      */
-    public static void sendMessageNotification(Context context, Intent messagingIntent, Bitmap notificationImage) {
+    public static void sendMessageNotification(Context context, Intent messagingIntent) {
 
         int conversationsWithUnreadMessages = ConversationUtils.getConversationsWithUnreadMessages(context);
-        int unreadMessageCount = ConversationUtils.getUnreadMessageCount(context);
+        int conversationsWithUnreadCallMessages = ConversationUtils.getConversationsWithUnreadCallMessages(context);
 
-        if (conversationsWithUnreadMessages <= 0) {
+        int unreadMessageCount = ConversationUtils.getUnreadMessageCount(context);
+        int unreadCallMessageCount = ConversationUtils.getUnreadCallMessageCount(context);
+
+        if (conversationsWithUnreadMessages <= 0 && conversationsWithUnreadCallMessages <= 0) {
             Log.e(TAG, "Trying to show a notification when there are no unread messages.");
             return;
         }
 
         Resources resources = context.getResources();
-        String title = resources.getQuantityString(R.plurals.notify_new_messages_title,
-                unreadMessageCount, unreadMessageCount);
-        String subtitle = resources.getQuantityString(R.plurals.notify_new_messages_subtitle,
-                conversationsWithUnreadMessages, conversationsWithUnreadMessages,
-                resources.getQuantityString(R.plurals.n_messages, unreadMessageCount,
-                        Integer.valueOf(unreadMessageCount)));
+
+        String title = "";
+        String subtitle = "";
+
+        Bitmap largeIcon = null;
+        int smallIconResId;
+
+        if (unreadCallMessageCount > 0) {
+            title = resources.getQuantityString(R.plurals.number_missed_calls,
+                    unreadCallMessageCount, unreadCallMessageCount);
+            subtitle = resources.getQuantityString(R.plurals.notify_new_calls_subtitle,
+                    conversationsWithUnreadCallMessages, conversationsWithUnreadCallMessages,
+                    resources.getQuantityString(R.plurals.n_calls, unreadCallMessageCount,
+                            Integer.valueOf(unreadCallMessageCount)));
+
+            largeIcon = BitmapFactory.decodeResource(context.getResources(), R.drawable.ic_launcher_sp);;
+            smallIconResId = R.drawable.stat_notify_missed_call;
+        } else {
+            title = resources.getQuantityString(R.plurals.notify_new_messages_title,
+                    unreadMessageCount, unreadMessageCount);
+            subtitle = resources.getQuantityString(R.plurals.notify_new_messages_subtitle,
+                    conversationsWithUnreadMessages, conversationsWithUnreadMessages,
+                    resources.getQuantityString(R.plurals.n_messages, unreadMessageCount,
+                            Integer.valueOf(unreadMessageCount)));
+
+            largeIcon = BitmapFactory.decodeResource(context.getResources(), R.drawable.ic_launcher_st);
+            smallIconResId = R.drawable.ic_chat_notification;
+        }
 
         Intent activityIntent = messagingIntent;
-        if (conversationsWithUnreadMessages > 1) {
+        if (conversationsWithUnreadMessages > 1 || conversationsWithUnreadCallMessages > 1) {
             activityIntent = Action.VIEW_CONVERSATIONS.intent(context, DialerActivity.class);
         }
 
@@ -99,8 +125,8 @@ public final class Notifications {
         Notification.Builder builder = new Notification.Builder(context)
                 .setContentTitle(title)
                 .setContentText(subtitle)
-                .setSmallIcon(R.drawable.ic_chat_notification)
-                .setLargeIcon(notificationImage)
+                .setSmallIcon(smallIconResId)
+                .setLargeIcon(largeIcon)
                 .setContentIntent(contentIntent)
                 .setPriority(Notification.PRIORITY_HIGH)
                 .setAutoCancel(true);

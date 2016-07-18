@@ -30,6 +30,7 @@ import android.support.annotation.WorkerThread;
 import android.support.v4.content.ContextCompat;
 import android.telephony.PhoneNumberUtils;
 import android.text.TextUtils;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.AccessibilityDelegate;
@@ -46,6 +47,7 @@ import com.google.common.base.Objects;
 import com.silentcircle.common.list.OnPhoneNumberPickerActionListener;
 import com.silentcircle.common.util.DialerUtils;
 import com.silentcircle.common.util.SearchUtil;
+import com.silentcircle.common.util.ViewUtil;
 import com.silentcircle.contacts.ContactPhotoManagerNew;
 import com.silentcircle.contacts.ContactPhotoManagerNew.DefaultImageRequest;
 import com.silentcircle.contacts.ContactsUtils;
@@ -377,8 +379,9 @@ public class CallLogAdapter extends GroupingListAdapter
 
         Resources resources = mContext.getResources();
         CallTypeHelper callTypeHelper = new CallTypeHelper(context);
-        mCallLogBackgroundColor = ContextCompat.getColor(context, R.color.background_dialer_list_items);
-        mExpandedBackgroundColor = ContextCompat.getColor(context, R.color.call_log_expanded_background_color);
+
+        mCallLogBackgroundColor = ViewUtil.getColorFromAttributeId(context, R.attr.call_log_primary_background_color);
+        mExpandedBackgroundColor = ViewUtil.getColorFromAttributeId(context, R.attr.call_log_expanded_background_color);
         mExpandedTranslationZ = resources.getDimension(R.dimen.call_log_expanded_translation_z);
 
         mContactPhotoManager = ContactPhotoManagerNew.getInstance(mContext);

@@ -50,6 +50,7 @@ public class JSONConversationAdapter extends JSONAdapter {
             json.put("send_receipts", conversation.shouldSendReadReceipts());
             json.put("partner", contactAdapter.adapt(conversation.getPartner()));
             json.put("unread_messages", conversation.getUnreadMessageCount());
+            json.put("unread_call_messages", conversation.getUnreadCallMessageCount());
             json.put("preview_event_id", conversation.getPreviewEventID());
             json.put("last_modified", conversation.getLastModified());
             json.put("failures", conversation.getFailures());
@@ -73,6 +74,7 @@ public class JSONConversationAdapter extends JSONAdapter {
         conversation.setLocationEnabled(getBoolean(json, "is_location_enabled"));
         conversation.setSendReadReceipts(getBoolean(json, "send_receipts"));
         conversation.setUnreadMessageCount(getInt(json, "unread_messages"));
+        conversation.setUnreadCallMessageCount(getInt(json, "unread_call_messages"));
         conversation.setPreviewEventID(getString(json, "preview_event_id"));
         conversation.setLastModified(getLong(json, "last_modified"));
         conversation.setFailures(getInt(json, "failures"));

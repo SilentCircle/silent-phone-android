@@ -54,6 +54,7 @@ import com.silentcircle.keymanagersupport.KeyManagerSupport;
 import com.silentcircle.messaging.activities.ConversationActivity;
 import com.silentcircle.messaging.model.Conversation;
 import com.silentcircle.messaging.model.MessageStates;
+import com.silentcircle.messaging.model.event.CallMessage;
 import com.silentcircle.messaging.model.event.Event;
 import com.silentcircle.messaging.model.event.IncomingMessage;
 import com.silentcircle.messaging.model.event.Message;
@@ -696,7 +697,9 @@ public class ConversationsFragment extends ListFragment implements Updatable,
             ListIterator<Event> iterator = events.listIterator(events.size());
             while (iterator.hasPrevious() && partnerUserName != null) {
                 Event event = iterator.previous();
-                if (event instanceof IncomingMessage || event instanceof OutgoingMessage) {
+                if (event instanceof IncomingMessage
+                        || event instanceof OutgoingMessage
+                        || event instanceof CallMessage) {
                     if (!((Message) event).isExpired()
                             && ((Message) event).getState() != MessageStates.BURNED) {
                         mLastMessages.put(partnerUserName, (Message) event);

@@ -1617,7 +1617,7 @@ public class SCloudService extends Service {
             events.save(message);
 
             MessageUtils.notifyConversationUpdated(mContext, mPartner,
-                    true, message.getId(), AxoMessaging.UPDATE_ACTION_MESSAGE_STATE_CHANGE);
+                    true, AxoMessaging.UPDATE_ACTION_MESSAGE_STATE_CHANGE, message.getId());
         }
 
         private void onAttachmentAvailable(File attachment, byte[] metaData) {

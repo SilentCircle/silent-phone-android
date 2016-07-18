@@ -66,8 +66,10 @@ public class RegularSearchListAdapter extends DialerPhoneNumberListAdapter {
 
     @Override
     public void setQueryString(String queryString) {
-        final boolean showNumberShortcuts = PhoneNumberUtils.isGlobalPhoneNumber(queryString)
-                || Utilities.isValidSipUsername(queryString);
+        final boolean showNumberShortcuts =
+                PhoneNumberUtils.isGlobalPhoneNumber(queryString.replaceAll("\\s",""))
+                || Utilities.isValidSipUsername(queryString)
+                || queryString.startsWith("*");
         final boolean showMessagingShortcuts = Utilities.isValidSipUsername(queryString);
 
         boolean changed = setShortcutEnabled(SHORTCUT_DIRECT_CALL, showNumberShortcuts);

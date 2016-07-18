@@ -79,11 +79,13 @@ import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 
+import com.silentcircle.common.util.StringUtils;
 import com.silentcircle.contacts.ContactPhotoManagerNew;
-import com.silentcircle.contacts.calllognew.CallLogAdapter;
 import com.silentcircle.contacts.preference.ContactsPreferences;
+import com.silentcircle.contacts.utils.PhoneNumberHelper;
 import com.silentcircle.contacts.widget.CompositeCursorAdapter;
 import com.silentcircle.silentphone2.R;
+import com.silentcircle.silentphone2.util.Utilities;
 
 import java.lang.ref.WeakReference;
 
@@ -114,6 +116,7 @@ public abstract class ScContactEntryListFragment<T extends ScContactEntryListAda
     private static final String KEY_REQUEST = "request";
     private static final String KEY_DARK_THEME = "darkTheme";
     private static final String KEY_LEGACY_COMPATIBILITY = "legacyCompatibility";
+    private static final String KEY_PHONE_INPUT = "phoneInput";
     private static final String KEY_DIRECTORY_RESULT_LIMIT = "directoryResultLimit";
 
     private static final String KEY_SC_PRE_SELECTOR = "sc_pre_selector";
@@ -123,6 +126,7 @@ public abstract class ScContactEntryListFragment<T extends ScContactEntryListAda
     private static final String KEY_SC_CONTENT_COLUMN = "sc_content_column";
 
     private static final String DIRECTORY_ID_ARG_KEY = "directoryId";
+    private static final String DIRECTORY_TYPE_ARG_KEY = "directoryType";
 
     private static final int DIRECTORY_LOADER_ID = -1;
 
@@ -139,6 +143,7 @@ public abstract class ScContactEntryListFragment<T extends ScContactEntryListAda
     private boolean mSearchMode;
     private boolean mVisibleScrollbarEnabled;
     private int mVerticalScrollbarPosition = View.SCROLLBAR_POSITION_RIGHT;
+    private boolean mPhoneInput;
     private String mQueryString;
     private int mDirectorySearchMode = DirectoryListLoader.SEARCH_MODE_NONE;
     private boolean mSelectionVisible;
@@ -306,6 +311,7 @@ public abstract class ScContactEntryListFragment<T extends ScContactEntryListAda
         outState.putInt(KEY_DIRECTORY_SEARCH_MODE, mDirectorySearchMode);
         outState.putBoolean(KEY_SELECTION_VISIBLE, mSelectionVisible);
         outState.putBoolean(KEY_LEGACY_COMPATIBILITY, mLegacyCompatibility);
+        outState.putString(KEY_PHONE_INPUT, mQueryString);
         outState.putString(KEY_QUERY_STRING, mQueryString);
         outState.putInt(KEY_DIRECTORY_RESULT_LIMIT, mDirectoryResultLimit);
         outState.putBoolean(KEY_DARK_THEME, mDarkTheme);
@@ -340,6 +346,7 @@ public abstract class ScContactEntryListFragment<T extends ScContactEntryListAda
         mDirectorySearchMode = savedState.getInt(KEY_DIRECTORY_SEARCH_MODE);
         mSelectionVisible = savedState.getBoolean(KEY_SELECTION_VISIBLE);
         mLegacyCompatibility = savedState.getBoolean(KEY_LEGACY_COMPATIBILITY);
+        mPhoneInput = savedState.getBoolean(KEY_PHONE_INPUT);
         mQueryString = savedState.getString(KEY_QUERY_STRING);
         mDirectoryResultLimit = savedState.getInt(KEY_DIRECTORY_RESULT_LIMIT);
         mDarkTheme = savedState.getBoolean(KEY_DARK_THEME);
@@ -402,11 +409,18 @@ public abstract class ScContactEntryListFragment<T extends ScContactEntryListAda
             Loader<Cursor> loader = null;
             long directoryId = args != null && args.containsKey(DIRECTORY_ID_ARG_KEY) 
                     ? args.getLong(DIRECTORY_ID_ARG_KEY) : Directory.DEFAULT;
+            String directoryType = args != null && args.containsKey(DIRECTORY_TYPE_ARG_KEY)
+                    ? args.getString(DIRECTORY_TYPE_ARG_KEY) : null;
             if (directoryId == Directory.DEFAULT) {
                 loader = createCursorLoader();
-                mAdapter.configureLoader((CursorLoaderSc)loader, directoryId);
+                mAdapter.configureLoader((CursorLoaderSc)loader, directoryId, directoryType);
+                int directory = mAdapter.getPartitionByDirectoryType(directoryType);
+
+                if (directory != -1) {
+                    mAdapter.setIndexedPartition(directory);
+                }
             }
-            else if (directoryId == ScContactEntryListAdapter.SC_DIRECTORY) {
+            else if (directoryId == ScContactEntryListAdapter.SC_REMOTE_DIRECTORY) {
                 loader = new ScDirectoryLoader(mContext);
                 ((PhoneNumberListAdapter)mAdapter).configureScDirLoader((ScDirectoryLoader)loader);
             }
@@ -422,13 +436,11 @@ public abstract class ScContactEntryListFragment<T extends ScContactEntryListAda
         DirectoryPartition partition = (DirectoryPartition)mAdapter.getPartition(partitionIndex);
         partition.setStatus(DirectoryPartition.STATUS_LOADING);
         long directoryId = partition.getDirectoryId();
-        if (directoryId == ScContactEntryListAdapter.SC_DIRECTORY) {
+        String directoryType = partition.getDirectoryType();
+        if (directoryId == ScContactEntryListAdapter.SC_REMOTE_DIRECTORY) {
             if (!mUseScDirLoader)
                 return;
-            ProgressBar pb = (ProgressBar)mView.findViewById(R.id.progressBar);
-            if (pb != null) {
-                pb.setVisibility(View.VISIBLE);
-            }
+            searchProgressVisibility(true);
         }
         if (mForceLoad) {
             if (directoryId == Directory.DEFAULT) {
@@ -439,6 +451,7 @@ public abstract class ScContactEntryListFragment<T extends ScContactEntryListAda
         } else {
             Bundle args = new Bundle();
             args.putLong(DIRECTORY_ID_ARG_KEY, directoryId);
+            args.putString(DIRECTORY_TYPE_ARG_KEY, directoryType);
             getLoaderManager().initLoader(partitionIndex, args, this);
         }
     }
@@ -460,6 +473,7 @@ public abstract class ScContactEntryListFragment<T extends ScContactEntryListAda
     protected void loadDirectoryPartition(int partitionIndex, DirectoryPartition partition) {
         Bundle args = new Bundle();
         args.putLong(DIRECTORY_ID_ARG_KEY, partition.getDirectoryId());
+        args.putString(DIRECTORY_TYPE_ARG_KEY, partition.getDirectoryType());
         getLoaderManager().restartLoader(partitionIndex, args, this);
     }
 
@@ -542,10 +556,14 @@ public abstract class ScContactEntryListFragment<T extends ScContactEntryListAda
         // Remove progress bar after loading
         CompositeCursorAdapter.Partition partition = mAdapter.getPartition(partitionIndex);
         if (partition instanceof DirectoryPartition) {
-            if (((DirectoryPartition)partition).getDirectoryId() == ScContactEntryListAdapter.SC_DIRECTORY) {
-                ProgressBar pb = (ProgressBar)mView.findViewById(R.id.progressBar);
-                if (pb != null) {
-                    pb.setVisibility(View.INVISIBLE);
+            if (((DirectoryPartition)partition).getDirectoryId() == ScContactEntryListAdapter.SC_REMOTE_DIRECTORY) {
+                searchProgressVisibility(false);
+            } else {
+                // Check if the partition has been removed
+                int scPartition = mAdapter.getPartitionByDirectoryId(ScContactEntryListAdapter.SC_REMOTE_DIRECTORY);
+
+                if (scPartition == -1) {
+                    searchProgressVisibility(false);
                 }
             }
         }
@@ -566,6 +584,13 @@ public abstract class ScContactEntryListFragment<T extends ScContactEntryListAda
     public boolean isLoadingDirectoryList() {
         return isSearchMode() && getDirectorySearchMode() != DirectoryListLoader.SEARCH_MODE_NONE
                 && (mDirectoryListStatus == STATUS_NOT_LOADED || mDirectoryListStatus == STATUS_LOADING);
+    }
+
+    private void searchProgressVisibility(boolean visible) {
+        ProgressBar pb = (ProgressBar)mView.findViewById(R.id.progressBar);
+        if (pb != null) {
+            pb.setVisibility(visible ? View.VISIBLE : View.INVISIBLE);
+        }
     }
 
     @Override
@@ -733,7 +758,16 @@ public abstract class ScContactEntryListFragment<T extends ScContactEntryListAda
                     // partitions after default one, assuming they are remote directories which
                     // should be cleaned up on exiting the search mode.
                     mAdapter.removeDirectoriesAfterDefault();
+                } else {
+                    // Re-add the SC directory partition it has been removed
+                    // Useful when clearing search field and continuing afterwards
+                    int scPartition = mAdapter.getPartitionByDirectoryId(ScContactEntryListAdapter.SC_REMOTE_DIRECTORY);
+
+                    if (scPartition == -1) {
+                        mAdapter.addPartition(mAdapter.createRemoteScDirPartition());
+                    }
                 }
+
                 mAdapter.configureDefaultPartition(false, flag);
             }
 
@@ -745,6 +779,14 @@ public abstract class ScContactEntryListFragment<T extends ScContactEntryListAda
 
     public final boolean isSearchMode() {
         return mSearchMode;
+    }
+
+    public final void setPhoneInput(boolean phoneInput) {
+        mPhoneInput = phoneInput;
+    }
+
+    public final boolean isPhoneInput() {
+        return mPhoneInput;
     }
 
     public final String getQueryString() {
@@ -768,6 +810,19 @@ public abstract class ScContactEntryListFragment<T extends ScContactEntryListAda
             setSearchMode(!TextUtils.isEmpty(mQueryString) || mShowEmptyListForEmptyQuery);
 
             if (mAdapter != null) {
+                if (queryString != null) {
+                    queryString = mQueryString = Utilities.isRtl() ? StringUtils.rtrim(queryString) :
+                            StringUtils.ltrim(queryString);
+
+                    if (!TextUtils.isEmpty(queryString) && isPhoneInput()) {
+                        String e164Formatted = PhoneNumberHelper.formatNumberToE164(queryString, "ZZ");
+
+                        if (!TextUtils.isEmpty(e164Formatted)) {
+                            queryString = mQueryString = e164Formatted;
+                        }
+                    }
+                }
+
                 mAdapter.setQueryString(queryString);
                 reloadData();
             }
@@ -979,9 +1034,9 @@ public abstract class ScContactEntryListFragment<T extends ScContactEntryListAda
      */
     @Override
     public void onFocusChange(View view, boolean hasFocus) {
-        if (view == mListView && hasFocus) {
-            hideSoftKeyboard();
-        }
+//        if (view == mListView && hasFocus) {
+//            hideSoftKeyboard();
+//        }
     }
 
     /**

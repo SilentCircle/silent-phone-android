@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    style="@style/DrawerScrollStyle"
     android:layout_width="@dimen/drawer_width"
-    android:layout_height="match_parent"
-    android:background="@color/chat_options_drawer_background">
+    android:layout_height="match_parent">
 
     <LinearLayout style="@style/Widget.Silence.LinearLayout.Vertical"
         android:layout_height="match_parent">
@@ -165,15 +165,16 @@
                 android:ellipsize="end"
                 android:maxLines="1"
                 android:textSize="10sp"
-                android:text="Num"/>
+                android:text="Num"
+                android:textColor="?attr/sp_activity_primary_text_color"/>
             <EditText
+                style="@style/Widget.EditText"
                 android:id="@+id/spam_num"
                 android:inputType="number"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:gravity="center"
-                android:textColor="@android:color/white"
                 android:text="100"/>
             <TextView
                 android:layout_width="wrap_content"
@@ -182,15 +183,16 @@
                 android:ellipsize="end"
                 android:maxLines="1"
                 android:textSize="10sp"
-                android:text="Delay (ms)"/>
+                android:text="Delay (ms)"
+                android:textColor="?attr/sp_activity_primary_text_color"/>
             <EditText
+                style="@style/Widget.EditText"
                 android:id="@+id/spam_delay"
                 android:inputType="number"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:gravity="center"
-                android:textColor="@android:color/white"
                 android:text="500"/>
         </LinearLayout>
     </LinearLayout>

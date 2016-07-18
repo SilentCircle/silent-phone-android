@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.silentcircle.messaging.views.CallEventView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingBottom="0.5dp"
+    android:background="@drawable/bg_error_light"
+    android:filterTouchesWhenObscured="true"
+    android:gravity="center">
+
+    <com.silentcircle.messaging.views.TextView
+        android:id="@+id/phone_message"
+        style="@style/Widget.Text.Floating.Call"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginRight="@dimen/space_normal"
+        android:layout_marginEnd="@dimen/space_normal"
+        android:paddingBottom="@dimen/space_normal"
+        android:paddingTop="@dimen/space_normal"
+        android:text="@string/sample_phone_message"/>
+
+    <com.silentcircle.messaging.views.TextView
+        android:id="@+id/phone_time"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_toRightOf="@id/phone_message"
+        android:layout_marginRight="@dimen/space_normal"
+        android:layout_marginEnd="@dimen/space_normal"
+        android:paddingBottom="@dimen/space_normal"
+        android:paddingTop="@dimen/space_normal"
+        android:duplicateParentState="true"
+        android:text="@string/sample_24hr_time"
+        android:textColor="?sp_error_message_text_selector"/>
+
+</com.silentcircle.messaging.views.CallEventView>

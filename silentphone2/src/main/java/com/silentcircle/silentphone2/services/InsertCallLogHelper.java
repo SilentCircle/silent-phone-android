@@ -28,28 +28,30 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 package com.silentcircle.silentphone2.services;
 
-import android.app.Notification;
 import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.support.annotation.NonNull;
 import android.support.annotation.WorkerThread;
-import android.support.v4.app.NotificationCompat;
 import android.telephony.PhoneNumberUtils;
 import android.text.TextUtils;
 import android.util.Log;
 
-import com.silentcircle.messaging.services.AxoMessaging;
+import com.silentcircle.contacts.ContactsUtils;
 import com.silentcircle.contacts.ScCallLog;
+import com.silentcircle.messaging.model.CallData;
+import com.silentcircle.messaging.model.Conversation;
+import com.silentcircle.messaging.repository.ConversationRepository;
+import com.silentcircle.messaging.services.AxoMessaging;
+import com.silentcircle.messaging.task.MessageSender;
+import com.silentcircle.messaging.util.Notifications;
 import com.silentcircle.silentphone2.R;
-import com.silentcircle.silentphone2.list.ShortcutCardsAdapter;
 import com.silentcircle.silentphone2.util.CallState;
 import com.silentcircle.silentphone2.util.ConfigurationUtilities;
 import com.silentcircle.silentphone2.util.Utilities;
@@ -104,6 +106,40 @@ public class InsertCallLogHelper extends AsyncTask<Uri, Void, Cursor> {
         if (!prepareCallLog(mCall))
             return null;
 
+        AxoMessaging msgService = AxoMessaging.getInstance(mCtx);
+
+        // Add a conversation entry for the call
+        if (msgService.isReady()) {
+            String uuid = mCall.iIsIncoming ? getPeerName(mCall) : mCall.bufDialed.toString();
+
+            Conversation conversation = msgService.getOrCreateConversation(uuid);
+            // Try to update display name if empty at this point
+            if (TextUtils.isEmpty(conversation.getPartner().getDisplayName())) {
+                conversation.getPartner().setDisplayName(mCall.mDefaultDisplayName.toString());
+            }
+            ConversationRepository repository = msgService.getConversations();
+
+            int callType = mInsertValues.getAsInteger(ScCallLog.ScCalls.TYPE);
+            int duration = mInsertValues.getAsInteger(ScCallLog.ScCalls.DURATION);
+            long time = mInsertValues.getAsLong(ScCallLog.ScCalls.DATE);
+
+            MessageSender messageSender = new MessageSender(mCtx, msgService.getUserName(), conversation, repository);
+
+            CallData callData = new CallData(callType, duration, time);
+
+            if (callType == ScCallLog.ScCalls.OUTGOING_TYPE) {
+                // TODO: implement when SPi3 has sibling phone messages
+                //messageSender.sendPhoneMessage(callData);
+                messageSender.composePhoneMessage(callData);
+            } else {
+                messageSender.composePhoneMessage(callData);
+
+                if (callType == ScCallLog.ScCalls.MISSED_TYPE) {
+                    conversation.offsetUnreadCallMessageCount(1);
+                }
+            }
+        }
+
         resolver.insert(uri[0], mInsertValues);
         int removed = removeExpiredEntries();
         if (ConfigurationUtilities.mTrace) Log.d(TAG, "Removed " + removed + " old/expired call log entries");
@@ -132,32 +168,56 @@ public class InsertCallLogHelper extends AsyncTask<Uri, Void, Cursor> {
         if (count <= 0)
             return;
 
-        NotificationManager notificationManager = (NotificationManager)mCtx.getSystemService(Context.NOTIFICATION_SERVICE);
-
-        Intent showCallLog = new Intent();
-        showCallLog.setAction(Intent.ACTION_VIEW);
-        showCallLog.setType(ScCallLog.ScCalls.CONTENT_TYPE);
-
-        // The PendingIntent to launch our activity if the user selects this notification
-        PendingIntent contentIntent = PendingIntent.getActivity(mCtx, 0, showCallLog, 0);
-
-        if (mNotifyLargeIcon == null)
-            mNotifyLargeIcon = BitmapFactory.decodeResource(mCtx.getResources(), R.drawable.ic_launcher_sp);
-
+        String conversationPartnerId = mCall.iIsIncoming ? getPeerName(mCall)
+                : mCall.bufDialed.toString();
         int callType = mInsertValues.getAsInteger(ScCallLog.ScCalls.TYPE);
-        // Show the callers name only if the current call was missed. Otherwise just indicate the log
-        // contains one or more missed calls.
-        final int ico = R.drawable.stat_notify_missed_call;
-        Notification notification = new NotificationCompat.Builder(mCtx)
-                .setContentTitle(mCtx.getResources().getQuantityString(R.plurals.number_missed_calls, count, count))
-                .setContentText(count == 1 && callType == ScCallLog.ScCalls.MISSED_TYPE? mCall.getNameFromAB() : null)
-                .setSmallIcon(ico)
-                .setLargeIcon(mNotifyLargeIcon)
-                .setContentIntent(contentIntent)
-                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-                .setAutoCancel(true)
-                .build();
-        notificationManager.notify(MISSED_CALL_NOTIFICATION_ID, notification);
+        /*
+         * Show notification only if call is missed.
+         * This is to avoid notification for outgoing and incoming calls if there are already
+         * some unanswered calls (variable count larger than 0).
+         *
+         * TODO
+         * Notifications are immediately dismissed when DialerActivity (ConversationsFragment)
+         * becomes visible after InCallActivity when unread messages notification is dismissed
+         * as a badge of unread messages/missed calls is shown affected for conversation.
+         * This worked for messages, calls may need additional handling.
+         *
+         * CallLogQueryHandler#markMissedCallsAsRead should also be called when entering
+         * a conversation with missed calls.
+         */
+        if (callType == ScCallLog.ScCalls.MISSED_TYPE) {
+            Intent messagingIntent = ContactsUtils.getMessagingIntent(conversationPartnerId, mCtx);
+            Notifications.sendMessageNotification(mCtx, messagingIntent);
+        }
+
+//        NotificationManager notificationManager = (NotificationManager)mCtx.getSystemService(Context.NOTIFICATION_SERVICE);
+//
+////        Intent showCallLog = new Intent();
+////        showCallLog.setAction(Intent.ACTION_VIEW);
+////        showCallLog.setType(ScCallLog.ScCalls.CONTENT_TYPE);
+//
+//        Intent showCallLog = Action.VIEW_CONVERSATIONS.intent(mCtx, DialerActivity.class);
+//
+//        // The PendingIntent to launch our activity if the user selects this notification
+//        PendingIntent contentIntent = PendingIntent.getActivity(mCtx, 0, showCallLog, 0);
+//
+//        if (mNotifyLargeIcon == null)
+//            mNotifyLargeIcon = BitmapFactory.decodeResource(mCtx.getResources(), R.drawable.ic_launcher_sp);
+//
+//        int callType = mInsertValues.getAsInteger(ScCallLog.ScCalls.TYPE);
+//        // Show the callers name only if the current call was missed. Otherwise just indicate the log
+//        // contains one or more missed calls.
+//        final int ico = R.drawable.stat_notify_missed_call;
+//        Notification notification = new NotificationCompat.Builder(mCtx)
+//                .setContentTitle(mCtx.getResources().getQuantityString(R.plurals.number_missed_calls, count, count))
+//                .setContentText(count == 1 && callType == ScCallLog.ScCalls.MISSED_TYPE? mCall.getNameFromAB() : null)
+//                .setSmallIcon(ico)
+//                .setLargeIcon(mNotifyLargeIcon)
+//                .setContentIntent(contentIntent)
+//                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+//                .setAutoCancel(true)
+//                .build();
+//        notificationManager.notify(MISSED_CALL_NOTIFICATION_ID, notification);
 
     }
 
@@ -280,5 +340,19 @@ public class InsertCallLogHelper extends AsyncTask<Uri, Void, Cursor> {
             }
         }
         return true;
+    }
+
+    private String getPeerName(@NonNull final CallState call) {
+        // asserted name will always be uuid (for sso, for regular users it will be uuid
+        // or user name, never alias)
+        // asserted name may be absent on occasions, then bufPeer has to be used
+        String peerName = call.mAssertedName.toString();
+        if (call.isOcaCall || TextUtils.isEmpty(peerName)) {
+            peerName = call.bufPeer.toString();
+        } else {
+            peerName = Utilities.getUsernameFromUriNumberSelective(peerName);
+            peerName = Utilities.removeSipPrefix(peerName);
+        }
+        return peerName;
     }
 }

@@ -748,6 +748,8 @@ public class TiviPhoneService extends PhoneServiceNative {
             call.iIsIncoming = true;
             call.iShowVideoSrcWhenAudioIsSecure = false;
             call.initialStates = CT_cb_msg.eIncomingCall;
+            // display name can be obtained from SIP packet
+            call.mDefaultDisplayName.setText(TiviPhoneService.getInfo(iEngID, iCallID, "peername"));
 
             String priority = TiviPhoneService.getInfo(iEngID, iCallID, "getPriority"); //can call this fnc after receiving eIncomingCall
             if (!TextUtils.isEmpty(priority)) {
@@ -767,8 +769,8 @@ public class TiviPhoneService extends PhoneServiceNative {
             // If an incoming call does not have an PAI header then this is an OCA call
             if (!TextUtils.isEmpty(assertedId)) {
                 String[] aiFields = Utilities.splitFields(assertedId, ";");
-                if (aiFields != null)
-                    call.mAssertedName.setText(aiFields[0]);
+                // asserted id will be sip identifier with occasional content after ";"
+                call.mAssertedName.setText(aiFields != null ? aiFields[0] : assertedId);
             }
             else {
                 call.isOcaCall = true;

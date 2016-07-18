@@ -40,6 +40,7 @@ import com.silentcircle.messaging.model.event.Event;
 import com.silentcircle.messaging.model.event.Message;
 import com.silentcircle.messaging.repository.ConversationRepository;
 import com.silentcircle.messaging.services.AxoMessaging;
+import com.silentcircle.silentphone2.util.Utilities;
 
 import java.util.List;
 
@@ -88,7 +89,19 @@ public class ConversationUtils {
     public static int getConversationsWithUnreadMessages(final Context context) {
         int result = 0;
         for (Conversation conversation : AxoMessaging.getInstance(context).getConversations().list()) {
-            if (conversation != null && conversation.containsUnreadMessages()) {
+            if (conversation != null
+                    && (conversation.containsUnreadMessages())) {
+                result += 1;
+            }
+        }
+        return result;
+    }
+
+    public static int getConversationsWithUnreadCallMessages(final Context context) {
+        int result = 0;
+        for (Conversation conversation : AxoMessaging.getInstance(context).getConversations().list()) {
+            if (conversation != null
+                    && (conversation.containsUnreadCallMessages())) {
                 result += 1;
             }
         }
@@ -107,6 +120,16 @@ public class ConversationUtils {
         for (Conversation conversation : AxoMessaging.getInstance(context).getConversations().list()) {
             if (conversation != null) {
                 result += conversation.getUnreadMessageCount();
+            }
+        }
+        return result;
+    }
+
+    public static int getUnreadCallMessageCount(final Context context) {
+        int result = 0;
+        for (Conversation conversation : AxoMessaging.getInstance(context).getConversations().list()) {
+            if (conversation != null) {
+                result += conversation.getUnreadCallMessageCount();
             }
         }
         return result;
@@ -158,12 +181,19 @@ public class ConversationUtils {
         if (contactEntry != null) {
             displayName = contactEntry.name;        // Use name on contact entry if available
         }
-        if (TextUtils.isEmpty(displayName) && conversation != null) { // If empty try to get it from name lookup cache
+        if ((TextUtils.isEmpty(displayName) || displayName.equals("_!NULL!_"))
+                && conversation != null) { // If empty try to get it from name lookup cache
             byte[] dpName = AxoMessaging.getDisplayName(conversation.getPartner().getUserId());
             if (dpName != null) {
                 displayName = new String(dpName);
-            }
-            else {
+
+                // FIXME: For TN conversations
+                if (displayName.equals("_!NULL!_")
+                        && contactEntry != null
+                        && !TextUtils.isEmpty(contactEntry.phoneNumber)) {
+                    displayName = Utilities.formatNumber(contactEntry.phoneNumber);
+                }
+            } else {
                 // Here we may fall back to a save "display name" we got from the SIP
                 // stack when receiving a message
                 displayName = conversation.getPartner().getDisplayName();

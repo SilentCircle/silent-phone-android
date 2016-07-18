@@ -6,7 +6,7 @@
 
     <android.support.v7.widget.AppCompatCheckBox
         android:id="@+id/checkbox"
-        android:theme="@style/Widget.Silence.CheckBox.Light"
+        android:theme="@style/Widget.CheckBox.Light"
         android:layout_height="wrap_content"
         android:layout_width="match_parent"
         android:layout_margin="@dimen/spacing_large"

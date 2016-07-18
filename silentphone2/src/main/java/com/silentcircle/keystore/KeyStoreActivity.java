@@ -47,6 +47,7 @@ import com.silentcircle.common.util.ViewUtil;
 import com.silentcircle.keymanagersupport.KeyManagerSupport;
 import com.silentcircle.messaging.fragments.MessagingPasswordFragment;
 import com.silentcircle.silentphone2.R;
+import com.silentcircle.silentphone2.util.Utilities;
 
 import java.lang.ref.WeakReference;
 
@@ -88,6 +89,7 @@ public class KeyStoreActivity extends AppCompatActivity {
      */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Utilities.setTheme(this);
         super.onCreate(savedInstanceState);
         ViewUtil.setBlockScreenshots(this);
         PRNGFixes.apply();

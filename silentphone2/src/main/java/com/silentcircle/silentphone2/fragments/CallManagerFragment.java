@@ -40,6 +40,7 @@ import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.graphics.drawable.DrawableCompat;
 import android.support.v7.widget.CardView;
 import android.text.TextUtils;
 import android.util.Log;
@@ -55,6 +56,7 @@ import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
+import com.silentcircle.common.util.ViewUtil;
 import com.silentcircle.silentphone2.R;
 import com.silentcircle.silentphone2.activities.InCallCallback;
 import com.silentcircle.silentphone2.services.TiviPhoneService;
@@ -156,6 +158,15 @@ public class CallManagerFragment extends Fragment implements TiviPhoneService.Se
             mSpeakerOff = ContextCompat.getDrawable(mParent, R.drawable.ic_action_volume_muted_light);
         }
 
+        mMicOpen = DrawableCompat.wrap(mMicOpen);
+        DrawableCompat.setTint(mMicOpen, ViewUtil.getColorFromAttributeId(mParent, R.attr.sp_actionbar_title_text_color));
+        mMicMute = DrawableCompat.wrap(mMicMute);
+        DrawableCompat.setTint(mMicMute, ViewUtil.getColorFromAttributeId(mParent, R.attr.sp_actionbar_title_text_color));
+        mSpeakerOn = DrawableCompat.wrap(mSpeakerOn);
+        DrawableCompat.setTint(mSpeakerOn, ViewUtil.getColorFromAttributeId(mParent, R.attr.sp_actionbar_title_text_color));
+        mSpeakerOff = DrawableCompat.wrap(mSpeakerOff);
+        DrawableCompat.setTint(mSpeakerOff, ViewUtil.getColorFromAttributeId(mParent, R.attr.sp_actionbar_title_text_color));
+
         View view = inflater.inflate(R.layout.call_manager_fragment, container, false);
         mMainLayout = (LinearLayout)view.findViewById(R.id.main_layout);
         if (mMainLayout == null)
@@ -240,6 +251,7 @@ public class CallManagerFragment extends Fragment implements TiviPhoneService.Se
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         inflater.inflate(R.menu.callmanager, menu);
         super.onCreateOptionsMenu(menu, inflater);
+        ViewUtil.tintMenuIcons(getActivity(), menu);
     }
 
     @Override

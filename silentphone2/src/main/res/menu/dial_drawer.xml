@@ -28,15 +28,7 @@
 -->
     <group android:id="@+id/dial_group_develop"
             android:visible="false">
-<!--
-        <item android:id="@+id/dial_menu_production"
-              android:title="@string/switch_to_production"
-              app:showAsAction="never"/>
 
-        <item android:id="@+id/dial_menu_develop"
-              android:title="@string/switch_to_develop"
-              app:showAsAction="never"/>
- -->
         <item android:id="@+id/dial_menu_answer_on"
               android:title="@string/switch_auto_answer_on"
               app:showAsAction="never"/>

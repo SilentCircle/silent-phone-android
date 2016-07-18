@@ -28,7 +28,7 @@
                     android:layout_height="wrap_content"
                     android:layout_width="match_parent"
                     android:minHeight="?attr/actionBarSize"
-                    android:background="?sp_actionbar_color">
+                    android:background="?attr/sp_actionbar_color">
                 <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -37,14 +37,14 @@
                               android:layout_width="wrap_content"
                               android:layout_height="wrap_content"
                               android:textAppearance="?android:attr/textAppearanceMedium"
-                              android:textColor="?sp_actionbar_title_text_color"
+                              android:textColor="?attr/sp_actionbar_title_text_color"
                               android:singleLine="true"/>
 
                     <TextView android:id="@+id/sub_title"
                               android:layout_width="wrap_content"
                               android:layout_height="wrap_content"
                               android:textAppearance="?android:attr/textAppearanceSmall"
-                              android:textColor="?sp_drawer_header_text_color"
+                              android:textColor="?attr/sp_drawer_header_text_color"
                               android:singleLine="true"/>
 
                 </LinearLayout>
@@ -86,7 +86,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:contentDescription="Dial pad"
-                    android:src="?sp_ic_dial_pad"/>
+                    android:src="?sp_ic_new_chat"/>
 
         </FrameLayout>
 

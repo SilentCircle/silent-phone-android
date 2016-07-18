@@ -58,6 +58,9 @@ import com.google.i18n.phonenumbers.NumberParseException;
 import com.google.i18n.phonenumbers.PhoneNumberUtil;
 import com.google.i18n.phonenumbers.Phonenumber;
 import com.silentcircle.messaging.util.IOUtils;
+import com.silentcircle.common.util.SearchUtil;
+import com.silentcircle.messaging.util.MessagingPreferences;
+import com.silentcircle.silentphone2.BuildConfig;
 import com.silentcircle.silentphone2.R;
 import com.silentcircle.silentphone2.activities.DialerActivity;
 import com.silentcircle.silentphone2.dialhelpers.FindDialHelper;
@@ -89,7 +92,7 @@ public class Utilities {
     private static boolean sIsSpeakerEnabled = false;
 
     private static Drawable mDefaultAvatar;
-    public static int mDrawerShadowId;
+    public static int mDrawerShadowId = R.drawable.drawer_shadow_dark;
 
     public static long get_time_ms() {
         return System.currentTimeMillis();
@@ -192,6 +195,19 @@ public class Utilities {
             n = n.substring(idx + 1);
         }
         return getUsernameFromUriNumber(n);
+    }
+
+    public static String removeSipPrefix(String number) {
+        if (TextUtils.isEmpty(number)) {
+            return number;
+        }
+
+        String n = number;
+        if (n.startsWith("sip:") || n.startsWith("sips:" )) {
+            int idx = n.indexOf(':');
+            n = n.substring(idx + 1);
+        }
+        return n;
     }
 
     /**
@@ -297,6 +313,17 @@ public class Utilities {
      * @param activity the Activity which calls
      */
     public static void setTheme(Activity activity) {
+        // apply theme to the activity
+        int theme = MessagingPreferences.getInstance(activity).getMessageTheme();
+        mSelectedTheme = (theme == MessagingPreferences.INDEX_THEME_DARK
+                ? R.style.SilentPhoneThemeBlack
+                : R.style.SilentPhoneThemeLight);
+
+        // Theming enabled only for debug builds, production builds have black theme only
+        if (!BuildConfig.DEBUG) {
+            mSelectedTheme = R.style.SilentPhoneThemeBlack;
+        }
+
         if (mSelectedTheme == 0) {
             // Change here if standard (startup) theme changes
 //            String theme = getSelectedTheme(activity);
@@ -310,7 +337,7 @@ public class Utilities {
 //            else if (theme.equals(activity.getString(R.string.theme_black)))
 //                mSelectedTheme = R.style.SilentPhoneThemeBlack;
 //            else {
-                mSelectedTheme = R.style.SilentPhoneThemeBlack;
+//                mSelectedTheme = R.style.SilentPhoneThemeLight;
 //                Log.w(TAG, "Cannot change theme, unknown: " + theme);
 //            }
         }
@@ -754,6 +781,31 @@ public class Utilities {
         } catch (NumberParseException e) {
             return null;
         }
+    }
+
+    /**
+     * Only formats a number if it is valid, if not returns it unmodified
+     *
+     * @param number The phone number to format
+     * @return The formatted number or {@param number}
+     */
+    public static String formatNumber(final String number) {
+        try {
+            PhoneNumberUtil pu = PhoneNumberUtil.getInstance();
+            Phonenumber.PhoneNumber phone = pu.parse(number, "ZZ");
+
+            if (pu.isValidNumber(phone)) {
+                return pu.format(phone, PhoneNumberUtil.PhoneNumberFormat.INTERNATIONAL);
+            } else {
+                return number;
+            }
+        } catch (NumberParseException e) {
+            return number;
+        }
+    }
+
+    public static boolean canMessage(String partner) {
+        return SearchUtil.isUuid(partner) || Utilities.isValidSipUsername(partner);
     }
 
     public static String[] splitFields(String field, String separator) {

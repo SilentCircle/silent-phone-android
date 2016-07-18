@@ -38,6 +38,7 @@ import android.view.MenuItem;
 
 import com.silentcircle.messaging.fragments.RemoteDevicesFragment;
 import com.silentcircle.silentphone2.R;
+import com.silentcircle.silentphone2.util.Utilities;
 
 /**
  * Support activity to handle Axolotl registration.
@@ -53,6 +54,7 @@ public class ShowRemoteDevicesActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Utilities.setTheme(this);
         super.onCreate(savedInstanceState);
 
         Intent intent = getIntent();
@@ -96,7 +98,7 @@ public class ShowRemoteDevicesActivity extends AppCompatActivity {
             consumed = true;
             onBackPressed();
         }
-        return consumed ? consumed : super.onOptionsItemSelected(item);
+        return consumed || super.onOptionsItemSelected(item);
     }
 
 }

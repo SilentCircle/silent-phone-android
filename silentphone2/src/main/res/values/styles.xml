@@ -7,8 +7,7 @@
 // +++LICENSE_END+++
  -->
 
-<resources
-        xmlns:android="http://schemas.android.com/apk/res/android">
+<resources xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools">
 
     <style name="DialpadButtonStyle">
         <item name="android:layout_width">wrap_content</item>
@@ -116,7 +115,7 @@
     <style name="DrawerScrollStyle">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">match_parent</item>
-        <item name="android:background">?sp_drawer_background</item>
+        <item name="android:background">?attr/sp_drawer_background</item>
         <item name="android:scrollbarStyle">outsideOverlay</item>
         <!--
         <item name="android:scrollbarStyle">insideInset</item>
@@ -141,12 +140,12 @@
     <style name="Widget.Silent.DrawerCheckBox">
         <item name="android:layout_height">wrap_content</item>
         <item name="android:layout_width">wrap_content</item>
-        <item name="android:textColor">@color/sc_ng_text_grey_3</item>
-        <item name="android:textColorPrimary">@color/sc_ng_text_grey_3</item>
+        <item name="android:textColor">?attr/sp_activity_primary_text_color</item>
+        <item name="android:textColorPrimary">?attr/sp_activity_primary_text_color</item>
         <item name="colorAccent">@color/sc_ng_text_green</item>
         <item name="colorControlActivated">@color/sc_ng_text_green</item>
         <item name="colorControlHighlight">@color/sc_ng_background_1</item>
-        <item name="colorControlNormal">@color/sc_ng_background_1</item>
+        <item name="colorControlNormal">?attr/sp_activity_primary_text_color</item>
     </style>
 
     <style name="Widget.Silent.DrawerSimpleText">
@@ -168,6 +167,7 @@
 
     <style name="Widget.Silent.SimpleText">
         <item name="android:layout_width">match_parent</item>
+        <item name="android:textColor">?attr/sp_activity_primary_text_color</item>
     </style>
 
     <style name="Widget.Silent.SimpleText.Small">
@@ -211,7 +211,7 @@
         <item name="android:textStyle">bold</item>
         <item name="android:textSize">@dimen/text_xlarge</item>
         <item name="android:textAppearance">?android:attr/textAppearanceMedium</item>
-        <item name="android:textColor">@color/chat_options_text_color</item>
+        <item name="android:textColor">?attr/sp_drawer_text_color</item>
         <item name="android:background">@drawable/bg_widget_options_item</item>
         <item name="android:paddingLeft">@dimen/settings_item_padding_left</item>
         <item name="android:paddingBottom">0dp</item>
@@ -400,7 +400,7 @@
     <style name="SectionHeaderStyle" parent="@android:style/TextAppearance.Large">
         <item name="android:textSize">20sp</item>
         <item name="android:textAllCaps">true</item>
-        <item name="android:textColor">@color/section_header_text_color</item>
+        <item name="android:textColor">?attr/sp_activity_primary_text_color</item>
         <item name="android:fontFamily">sans-serif-medium</item>
     </style>
 
@@ -412,6 +412,7 @@
         <item name="android:textSize">20sp</item>
         <item name="android:textAllCaps">true</item>
         <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:textColor">?attr/sp_activity_primary_text_color</item>
     </style>
 
     <style name="TextAppearanceSmall" parent="@android:style/TextAppearance.Small">
@@ -468,6 +469,18 @@
             colorControlHighlight & colorSwitchThumbNormal. -->
     </style>
 
+    <!-- Switch style to be used on dark background -->
+    <style name="Widget.Switch.Dark">
+        <item name="android:textColor">@color/sc_ng_text_grey</item>
+        <item name="colorSwitchThumbNormal">@color/sc_ng_text_grey</item>
+        <item name="colorControlActivated">@color/sc_ng_text_green</item>
+        <item name="android:colorForeground">@color/sc_ng_background_1</item>
+        <!--<item name="track">@drawable/btn_switch_bg_selector</item>-->
+    </style>
+
+    <style name="Widget.EditText" parent="Widget.Silent.SimpleText">
+        <item name="colorControlActivated">?attr/sp_activity_primary_text_color</item>
+    </style>
 
     <!-- Edit text widget style to be used on dark backgrounds -->
     <style name="Widget.EditText.Dark" parent="Widget.Silent.SimpleText">
@@ -479,7 +492,13 @@
         <item name="colorControlActivated">@color/sc_ng_text_grey_2</item>
     </style>
 
-    <style name="Widget.Button" />
+    <style name="Widget.Button">
+        <item name="android:background">?attr/sp_activity_button_background_selector</item>
+        <item name="android:gravity">center</item>
+        <item name="android:textColor">?attr/sp_activity_button_text_selector</item>
+        <item name="android:filterTouchesWhenObscured">true</item>
+    </style>
+
     <style name="Widget.Button.Dark" parent="Widget.Button">
         <item name="android:background">@drawable/bg_button_selector_dark</item>
         <item name="android:gravity">center</item>
@@ -494,13 +513,29 @@
         <item name="android:filterTouchesWhenObscured">true</item>
     </style>
 
-    <!-- Switch style to be used on dark background -->
-    <style name="Widget.Switch.Dark">
-        <item name="android:textColor">@color/sc_ng_text_grey</item>
-        <item name="colorSwitchThumbNormal">@color/sc_ng_text_grey</item>
-        <item name="colorControlActivated">@color/sc_ng_text_green</item>
-        <item name="android:colorForeground">@color/sc_ng_background_1</item>
-        <!--<item name="track">@drawable/btn_switch_bg_selector</item>-->
+    <style name="Widget.RadioButton" parent="@style/Widget.AppCompat.CompoundButton.RadioButton">
+        <item name="colorControlNormal">?attr/sp_activity_primary_text_color</item>
+        <item name="android:colorControlNormal" tools:ignore="NewApi">?attr/sp_activity_primary_text_color</item>
+    </style>
+
+    <style name="Widget.CheckBox" parent="Theme.AppCompat.Light">
+        <item name="colorControlNormal">?attr/sp_activity_primary_text_color</item>
+        <item name="android:colorControlNormal" tools:ignore="NewApi">?attr/sp_activity_primary_text_color</item>
+    </style>
+
+    <style name="Widget.CheckBox.Light" parent="Theme.AppCompat.Light">
+        <item name="colorControlNormal">@color/sc_ng_text_dark</item>
+        <item name="android:colorControlNormal" tools:ignore="NewApi">@color/sc_ng_text_dark</item>
+    </style>
+
+    <style name="Widget.CheckedTextView">
+        <item name="colorControlNormal">?attr/sp_activity_primary_text_color</item>
+        <item name="android:colorControlNormal" tools:ignore="NewApi">?attr/sp_activity_primary_text_color</item>
+    </style>
+
+    <style name="Widget.CheckedTextView.Light">
+        <item name="colorControlNormal">@color/sc_ng_text_dark</item>
+        <item name="android:colorControlNormal" tools:ignore="NewApi">@color/sc_ng_text_dark</item>
     </style>
 
 </resources>

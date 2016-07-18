@@ -39,7 +39,7 @@
         android:gravity="center"
         android:layout_gravity="center"
         android:minHeight="@dimen/action_bar_height"
-        android:textColor="@color/sc_ng_text_grey_2"
+        android:textColor="?sp_dial_text_color"
         android:textStyle="bold"
         android:ellipsize="marquee"
         android:maxLines="2"

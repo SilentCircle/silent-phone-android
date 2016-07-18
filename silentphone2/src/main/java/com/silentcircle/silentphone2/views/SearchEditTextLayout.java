@@ -22,12 +22,15 @@ import android.annotation.TargetApi;
 import android.content.Context;
 import android.os.Build;
 import android.text.Editable;
+import android.text.InputType;
+import android.text.TextUtils;
+import android.text.TextWatcher;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.FrameLayout;
+import android.widget.ImageView;
 
 import com.silentcircle.common.animation.AnimUtils;
 import com.silentcircle.common.util.DialerUtils;
@@ -62,10 +65,11 @@ public class SearchEditTextLayout extends FrameLayout {
 //    private View mOverflowButtonView;
     private View mBackButtonView;
     private View mExpandedSearchBox;
-    private View mClearButtonView;
+    private ImageView mKeypadToggleView;
 
     private ValueAnimator mAnimator;
 
+    private OnInputSwitchedListener mOnInputSwitchedListener;
     private OnBackButtonClickedListener mOnBackButtonClickedListener;
 
     private Runnable mShowImeRunnable = new Runnable() {
@@ -73,6 +77,13 @@ public class SearchEditTextLayout extends FrameLayout {
             DialerUtils.showInputMethod(mSearchView);
         }
     };
+
+    /**
+     * Listener for the input switch, see {@link InputType}
+     */
+    public interface OnInputSwitchedListener {
+        void onInputSwitched(int inputType);
+    }
 
     /**
      * Listener for the back button next to the search view being pressed
@@ -91,6 +102,10 @@ public class SearchEditTextLayout extends FrameLayout {
 
     public void setOnBackButtonClickedListener(OnBackButtonClickedListener listener) {
         mOnBackButtonClickedListener = listener;
+    }
+
+    public void setOnInputSwitchedListener(OnInputSwitchedListener listener) {
+        mOnInputSwitchedListener = listener;
     }
 
     @Override
@@ -114,8 +129,8 @@ public class SearchEditTextLayout extends FrameLayout {
 //        mOverflowButtonView = findViewById(R.id.dialtacts_options_menu_button);
         mBackButtonView = findViewById(R.id.search_back_button);
         mExpandedSearchBox = findViewById(R.id.search_box_expanded);
-        mClearButtonView = findViewById(R.id.search_close_button);
-        mClearButtonView.setFocusable(true);
+        mKeypadToggleView = (ImageView) findViewById(R.id.keypad_toggle_button);
+        mKeypadToggleView.setFocusable(true);
 
         mSearchView.setOnFocusChangeListener(new OnFocusChangeListener() {
             @Override
@@ -124,10 +139,53 @@ public class SearchEditTextLayout extends FrameLayout {
             }
         });
 
-        findViewById(R.id.search_close_button).setOnClickListener(new OnClickListener() {
+        mSearchView.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (!TextUtils.isEmpty(s)) {
+                    mKeypadToggleView.setImageResource(R.drawable.ic_clear_white_24dp);
+                } else {
+                    if (usingKeyboardInput()) {
+                        keyboardLayout();
+                    } else {
+                        dialpadLayout();
+                    }
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+
+            }
+        });
+
+        findViewById(R.id.keypad_toggle_button).setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
-                mSearchView.setText(null);
+                // The user wants to clear input (x)
+                if (!TextUtils.isEmpty(mSearchView.getText())) {
+                    mSearchView.setText("");
+
+                    return;
+                }
+
+                // The user is switching between text or numeric keyboards
+                if (!mSearchView.hasFocus()) {
+                    mSearchView.requestFocus();
+                } else {
+                    DialerUtils.showInputMethod(mSearchView);
+                }
+
+                if (usingKeyboardInput()) {
+                    dialpadLayout();
+                } else {
+                    keyboardLayout();
+                }
             }
         });
 
@@ -151,6 +209,38 @@ public class SearchEditTextLayout extends FrameLayout {
             }
         }
         return super.dispatchKeyEventPreIme(event);
+    }
+
+    private void keyboardLayout() {
+        mKeypadToggleView.setImageResource(R.drawable.ic_action_dial_pad_light);
+
+        if (mSearchView.getInputType() == InputType.TYPE_CLASS_TEXT) {
+            return;
+        }
+
+        mSearchView.setInputType(InputType.TYPE_CLASS_TEXT);
+
+        if (mOnInputSwitchedListener != null) {
+            mOnInputSwitchedListener.onInputSwitched(InputType.TYPE_CLASS_TEXT);
+        }
+    }
+
+    private void dialpadLayout() {
+        mKeypadToggleView.setImageResource(R.drawable.ic_action_keyboard_dark);
+
+        if (mSearchView.getInputType() == InputType.TYPE_CLASS_PHONE) {
+            return;
+        }
+
+        mSearchView.setInputType(InputType.TYPE_CLASS_PHONE);
+
+        if (mOnInputSwitchedListener != null) {
+            mOnInputSwitchedListener.onInputSwitched(InputType.TYPE_CLASS_PHONE);
+        }
+    }
+
+    private boolean usingKeyboardInput() {
+        return mSearchView.getInputType() == InputType.TYPE_CLASS_TEXT;
     }
 
     // Use the dialText handler to trigger the soft keyboard display. Without delay this does not
@@ -222,8 +312,14 @@ public class SearchEditTextLayout extends FrameLayout {
         
         if (requestFocus) {
             if (mSearchView.hasFocus())
-                mClearButtonView.requestFocus();
-            mSearchView.requestFocus();
+                mKeypadToggleView.requestFocus();
+            // Runnable because the focus could be taken away when loading
+            mSearchView.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    mSearchView.requestFocus();
+                }
+            }, 200);
         }
         final Editable text = mSearchView.getText();
         if (text != null)
@@ -278,7 +374,11 @@ public class SearchEditTextLayout extends FrameLayout {
         // TODO: Prevents keyboard from jumping up in landscape mode after exiting the
         // SearchFragment when the query string is empty. More elegant fix?
         //mExpandedSearchBox.setVisibility(expandedViewVisibility);
-        mClearButtonView.setVisibility(expandedViewVisibility);
+        mKeypadToggleView.setVisibility(expandedViewVisibility);
+
+        if (isExpand) {
+            keyboardLayout();
+        }
     }
 
     private void prepareAnimator(final boolean expand) {

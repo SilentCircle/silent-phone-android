@@ -90,7 +90,7 @@
         <ImageView
             android:layout_width="match_parent"
             android:layout_height="1px"
-            android:background="@color/sc_ng_text_grey"
+            android:background="?attr/sp_drawer_separator_color"
             android:layout_marginBottom="@dimen/spacing_large"
             />
 
@@ -104,7 +104,7 @@
         <ImageView
             android:layout_width="match_parent"
             android:layout_height="1px"
-            android:background="@color/sc_ng_text_grey"
+            android:background="?attr/sp_drawer_separator_color"
             android:layout_marginBottom="@dimen/spacing_large"
             />
 
@@ -124,6 +124,7 @@
             <TextView
                 android:id="@+id/dial_drawer_build_number"
                 style="@style/Widget.Silent.SimpleText.Small"
+                android:textColor="?attr/sp_drawer_text_color"
                 android:paddingRight="@dimen/spacing_normal"
                 android:paddingTop="@dimen/spacing_normal"
                 tools:text="#39" />
@@ -131,6 +132,7 @@
             <TextView
                 android:id="@+id/dial_drawer_build_flavor"
                 style="@style/Widget.Silent.SimpleText.Small"
+                android:textColor="?attr/sp_drawer_text_color"
                 android:paddingRight="@dimen/spacing_normal"
                 android:paddingTop="@dimen/spacing_normal"
                 tools:text="Normal" />
@@ -138,6 +140,7 @@
             <TextView
                 android:id="@+id/dial_drawer_build_detail"
                 style="@style/Widget.Silent.SimpleText.Small"
+                android:textColor="?attr/sp_drawer_text_color"
                 android:paddingRight="@dimen/spacing_normal"
                 android:paddingTop="@dimen/spacing_normal"
                 android:visibility="gone"

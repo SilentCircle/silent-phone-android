@@ -38,6 +38,7 @@ import com.silentcircle.contacts.ScCallLog.ScCalls;
 import com.silentcircle.contacts.widget.SlidingTabLayout;
 import com.silentcircle.silentphone2.R;
 import com.silentcircle.silentphone2.activities.DialerActivity;
+import com.silentcircle.silentphone2.util.Utilities;
 
 public class CallLogActivity extends AppCompatActivity implements CallLogQueryHandler.Listener {
     private Handler mHandler;
@@ -119,6 +120,7 @@ public class CallLogActivity extends AppCompatActivity implements CallLogQueryHa
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Utilities.setTheme(this);
         super.onCreate(savedInstanceState);
 
         ViewUtil.setBlockScreenshots(this);
@@ -166,8 +168,6 @@ public class CallLogActivity extends AppCompatActivity implements CallLogQueryHa
         mSlidingTabLayout.setCustomTabView(R.layout.tab_text, R.id.text_tab);
         mSlidingTabLayout.setSelectedIndicatorColors(ContextCompat.getColor(this, R.color.sc_ng_text_red));
         mSlidingTabLayout.setDividerColors(ContextCompat.getColor(this, android.R.color.transparent));
-        mSlidingTabLayout.setDefaultTabTextColor(R.color.sc_ng_text_grey_2);
-        mSlidingTabLayout.setSelectedTabTextColor(R.color.sc_ng_text_red);
 
         // END_INCLUDE (setup_sliding tab layout)
 
@@ -199,6 +199,7 @@ public class CallLogActivity extends AppCompatActivity implements CallLogQueryHa
     public boolean onCreateOptionsMenu(Menu menu) {
         final MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.call_log_options, menu);
+        ViewUtil.tintMenuIcons(this, menu);
         return true;
     }
 

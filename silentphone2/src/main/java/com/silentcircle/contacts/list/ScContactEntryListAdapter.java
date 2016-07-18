@@ -58,7 +58,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.provider.ContactsContract;
 import android.provider.ContactsContract.Contacts;
-import android.provider.ContactsContract.Data;
 import android.provider.ContactsContract.Directory;
 import android.text.TextUtils;
 import android.util.Log;
@@ -69,18 +68,19 @@ import android.widget.QuickContactBadge;
 import android.widget.SectionIndexer;
 import android.widget.TextView;
 
+import com.google.common.primitives.Ints;
 import com.silentcircle.common.list.IndexerListAdapter;
 import com.silentcircle.common.list.ContactListItemView;
 import com.silentcircle.common.list.ContactListPinnedHeaderView;
 import com.silentcircle.common.util.SearchUtil;
-import com.silentcircle.common.util.StringUtils;
 import com.silentcircle.contacts.ContactPhotoManagerNew;
 import com.silentcircle.contacts.ContactPhotoManagerNew.DefaultImageRequest;
 import com.silentcircle.contacts.widget.CompositeCursorAdapter;
 import com.silentcircle.silentphone2.R;
-import com.silentcircle.silentphone2.util.Utilities;
 
+import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 
 /**
  * Common base class for various contact-related lists, e.g. contact list, phone number list
@@ -96,7 +96,7 @@ public abstract class ScContactEntryListAdapter extends IndexerListAdapter {
      */
     private static final boolean LOCAL_INVISIBLE_DIRECTORY_ENABLED = false;
 
-    public static final int SC_DIRECTORY = 100;
+    public static final int SC_REMOTE_DIRECTORY = 100;
     
     private int mDisplayOrder;
     private int mSortOrder;
@@ -217,10 +217,10 @@ public abstract class ScContactEntryListAdapter extends IndexerListAdapter {
 //    }
 
     protected void addPartitions(boolean enableScDir) {
+        addPartition(createlocalScDirPartition());
         addPartition(createDefaultDirectoryPartition());
         if (enableScDir)
-            addPartition(createScDirPartition());
-//        setIndexedPartition(getPartitionByDirectoryId(Directory.DEFAULT));
+            addPartition(createRemoteScDirPartition());
     }
 
     protected DirectoryPartition createDefaultDirectoryPartition() {
@@ -233,10 +233,20 @@ public abstract class ScContactEntryListAdapter extends IndexerListAdapter {
         return partition;
     }
 
-    protected DirectoryPartition createScDirPartition() {
+    protected DirectoryPartition createlocalScDirPartition() {
         DirectoryPartition partition = new DirectoryPartition(false, true);
-        partition.setDirectoryId(SC_DIRECTORY);
-        partition.setDirectoryType("Silent Circle Directory");
+        partition.setDirectoryId(Directory.DEFAULT);
+        partition.setDirectoryType(getContext().getString(R.string.scContactsList));
+        partition.setPriorityDirectory(true);
+        partition.setPhotoSupported(true);
+        partition.setLabel(getContext().getString(R.string.scContactsList));
+        return partition;
+    }
+    
+    protected DirectoryPartition createRemoteScDirPartition() {
+        DirectoryPartition partition = new DirectoryPartition(false, true);
+        partition.setDirectoryId(SC_REMOTE_DIRECTORY);
+        partition.setDirectoryType(getContext().getString(R.string.scRemoteContactsList));
         partition.setPriorityDirectory(true);
         partition.setPhotoSupported(false);
         return partition;
@@ -267,9 +277,34 @@ public abstract class ScContactEntryListAdapter extends IndexerListAdapter {
     protected int getPartitionByDirectoryId(long id) {
         int count = getPartitionCount();
         for (int i = 0; i < count; i++) {
-            Partition partition = getPartition(i);
+            Partition partition;
+            try {
+                partition = getPartition(i);
+            } catch (IndexOutOfBoundsException exception) {
+                return -1;
+            }
+
             if (partition instanceof DirectoryPartition) {
                 if (((DirectoryPartition)partition).getDirectoryId() == id) {
+                    return i;
+                }
+            }
+        }
+        return -1;
+    }
+
+    protected int getPartitionByDirectoryType(String type) {
+        int count = getPartitionCount();
+        for (int i = 0; i < count; i++) {
+            Partition partition;
+            try {
+                partition = getPartition(i);
+            } catch (IndexOutOfBoundsException exception) {
+                return -1;
+            }
+
+            if (partition instanceof DirectoryPartition) {
+                if (((DirectoryPartition)partition).getDirectoryType().equals(type)) {
                     return i;
                 }
             }
@@ -280,7 +315,13 @@ public abstract class ScContactEntryListAdapter extends IndexerListAdapter {
     protected DirectoryPartition getDirectoryById(long id) {
         int count = getPartitionCount();
         for (int i = 0; i < count; i++) {
-            Partition partition = getPartition(i);
+            Partition partition;
+            try {
+                partition = getPartition(i);
+            } catch (IndexOutOfBoundsException exception) {
+                return null;
+            }
+
             if (partition instanceof DirectoryPartition) {
                 final DirectoryPartition directoryPartition = (DirectoryPartition) partition;
                 if (directoryPartition.getDirectoryId() == id) {
@@ -296,7 +337,7 @@ public abstract class ScContactEntryListAdapter extends IndexerListAdapter {
     }
 
     protected void useScDirectory(boolean use) {
-        int idx = getPartitionByDirectoryId(SC_DIRECTORY);
+        int idx = getPartitionByDirectoryId(SC_REMOTE_DIRECTORY);
         if (idx < 0)
             return;
         if (!use)
@@ -313,7 +354,7 @@ public abstract class ScContactEntryListAdapter extends IndexerListAdapter {
 
 
     public abstract String getContactDisplayName(int position);
-    public abstract void configureLoader(CursorLoader loader, long directoryId);
+    public abstract void configureLoader(CursorLoader loader, long directoryId, String directoryType);
 
     /**
      * Marks all partitions as "loading"
@@ -367,8 +408,6 @@ public abstract class ScContactEntryListAdapter extends IndexerListAdapter {
         if (TextUtils.isEmpty(queryString)) {
             mUpperCaseQueryString = null;
         } else {
-            mQueryString = Utilities.isRtl() ? StringUtils.rtrim(mQueryString) :
-                    StringUtils.ltrim(mQueryString);
             mUpperCaseQueryString = SearchUtil.cleanStartAndEndOfSearchQuery(mQueryString.toUpperCase()) ;
         }
     }
@@ -400,7 +439,7 @@ public abstract class ScContactEntryListAdapter extends IndexerListAdapter {
     }
 
     public int getDirectoryResultLimit(long directoryId) {
-        if (directoryId == SC_DIRECTORY) {
+        if (directoryId == SC_REMOTE_DIRECTORY) {
             return ScDirectoryLoader.MAX_RECORDS;
         }
         return mDirectoryResultLimit;
@@ -723,7 +762,7 @@ public abstract class ScContactEntryListAdapter extends IndexerListAdapter {
         }
         if (defaultPartitionIndex != -1) {
             setShowIfEmpty(defaultPartitionIndex, showIfEmpty);
-            setHasHeader(defaultPartitionIndex, hasHeader);
+//            setHasHeader(defaultPartitionIndex, hasHeader);
         }
     }
 
@@ -794,15 +833,17 @@ public abstract class ScContactEntryListAdapter extends IndexerListAdapter {
             countText.setText(R.string.search_results_searching);
         } else {
             int count;
-            if (directoryId == SC_DIRECTORY)
-                count = ScDirectoryLoader.getNumberOfRecords();
+            if (directoryId == SC_REMOTE_DIRECTORY)
+                // FIXME: There is a cache bug with this, reports # of results incorrectly
+                // count = ScDirectoryLoader.getNumberOfRecords();
+                count = getResultCount(cursor);
             else
                 count = getResultCount(cursor);
             if (directoryId != Directory.DEFAULT && directoryId != Directory.LOCAL_INVISIBLE) {
                 if (count >= getDirectoryResultLimit(directoryId))
                     countText.setText(mContext.getString(R.string.foundTooManyContacts, getDirectoryResultLimit(directoryId)));
                 else
-                    countText.setText(getQuantityText(count, R.string.listFoundAllContactsZero, R.plurals.searchFoundContacts));
+                    countText.setText(getQuantityText(count, R.string.listFoundAllResultsZero, R.plurals.searchFoundContacts));
             }
             else {
                 countText.setText(getQuantityText(count, R.string.listFoundAllContactsZero, R.plurals.searchFoundContacts));
@@ -934,7 +975,7 @@ public abstract class ScContactEntryListAdapter extends IndexerListAdapter {
         long contactId = cursor.getLong(contactIdColumn);
         String lookupKey = cursor.getString(lookUpKeyColumn);
         long directoryId = ((DirectoryPartition)getPartition(partitionIndex)).getDirectoryId();
-        if (directoryId == SC_DIRECTORY)
+        if (directoryId == SC_REMOTE_DIRECTORY)
             return null;                    // We don't have a database URI for SC directory contacts
         // Remote directories must have a lookup key or we don't have
         // a working contact URI

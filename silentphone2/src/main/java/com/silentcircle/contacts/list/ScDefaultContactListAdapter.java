@@ -47,7 +47,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 package com.silentcircle.contacts.list;
 
-import android.annotation.TargetApi;
 import android.content.ContentUris;
 import android.content.Context;
 import android.content.CursorLoader;
@@ -55,14 +54,12 @@ import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.Uri;
 import android.net.Uri.Builder;
-import android.os.Build;
 import android.preference.PreferenceManager;
 import android.provider.ContactsContract;
 import android.provider.ContactsContract.Contacts;
 import android.provider.ContactsContract.Directory;
 import android.provider.ContactsContract.SearchSnippets;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.View;
 
 import com.silentcircle.common.list.ContactListItemView;
@@ -84,7 +81,7 @@ public class ScDefaultContactListAdapter extends ScContactListAdapter {
     }
 
     @Override
-    public void configureLoader(CursorLoader loader, long directoryId) {
+    public void configureLoader(CursorLoader loader, long directoryId, String directoryType) {
 
         ContactListFilter filter = getFilter();
         if (isSearchMode()) {

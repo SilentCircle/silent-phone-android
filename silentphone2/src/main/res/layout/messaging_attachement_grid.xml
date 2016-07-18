@@ -9,8 +9,5 @@
     android:numColumns="auto_fit"
     android:columnWidth="100dp"
     android:stretchMode="columnWidth"
-    android:background="?attr/sp_attachment_grid_background">
-    <!-- @color/chat_attachment_grid_color -->
-
-</GridView>
+    android:background="?attr/sp_attachment_grid_background" />
 

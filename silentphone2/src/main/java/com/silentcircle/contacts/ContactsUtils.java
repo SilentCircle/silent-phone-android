@@ -258,7 +258,6 @@ public class ContactsUtils {
 
     public static Intent getMessagingIntent(Uri uri, String callOrigin, Context context) {
         final Intent intent = new Intent(Intent.ACTION_SENDTO, uri, context, ConversationActivity.class);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         return intent;
     }
 

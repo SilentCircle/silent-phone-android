@@ -16,7 +16,7 @@
         android:id="@+id/widget_contact_section_label"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textColor="@color/sc_ng_background_1"
+        android:textColor="?attr/sp_activity_primary_text_color"
         android:textSize="@dimen/text_large"
         tools:text="Label" />
 

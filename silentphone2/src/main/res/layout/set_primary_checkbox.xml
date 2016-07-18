@@ -25,7 +25,7 @@
 
     <android.support.v7.widget.AppCompatCheckBox
         android:id="@+id/setPrimary"
-        android:theme="@style/Widget.Silence.CheckBox.Light"
+        android:theme="@style/Widget.CheckBox.Light"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textColor="?sp_dialog_text_color"

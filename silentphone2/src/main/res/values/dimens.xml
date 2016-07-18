@@ -246,11 +246,11 @@
 
     <!-- Size of the close icon.
      Because it expands diagonally, it needs to be shrunk to look relatively the same size -->
-    <dimen name="search_box_close_icon_size">24dp</dimen>
+    <dimen name="search_box_keyboard_toggle_icon_size">24dp</dimen>
     <!-- Padding around back arrow icon in the search box -->
     <dimen name="search_box_navigation_icon_margin">14dp</dimen>
-    <!-- Padding around close icon in the search box -->
-    <dimen name="search_box_close_icon_margin">16dp</dimen>
+    <!-- Padding around keyboard toggle icon in the search box -->
+    <dimen name="search_box_keyboard_toggle_icon_margin">24dp</dimen>
     <!-- Left margin of the text field in the search box. -->
     <dimen name="search_box_text_left_margin">8dp</dimen>
     <!-- Search box text size -->

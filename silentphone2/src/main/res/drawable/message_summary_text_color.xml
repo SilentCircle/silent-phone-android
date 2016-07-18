@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:state_focused="true" android:state_pressed="false" android:color="@color/sc_ng_text_grey_4" />
-    <item android:state_focused="true" android:state_pressed="true" android:color="@color/sc_ng_text_grey_4" />
-    <item android:state_focused="false" android:state_pressed="true" android:color="@color/sc_ng_text_grey_4" />
-    <item android:state_selected="true" android:color="@color/sc_ng_text_grey_4" />
-    <item android:state_checked="true" android:color="@color/sc_ng_text_grey_4" />
+    <item android:state_focused="true" android:state_pressed="false" android:color="?attr/sp_activity_secondary_text_color" />
+    <item android:state_focused="true" android:state_pressed="true" android:color="?attr/sp_activity_secondary_text_color" />
+    <item android:state_focused="false" android:state_pressed="true" android:color="?attr/sp_activity_secondary_text_color" />
+    <item android:state_selected="true" android:color="?attr/sp_activity_secondary_text_color" />
+    <item android:state_checked="true" android:color="?attr/sp_activity_secondary_text_color" />
     <item android:state_activated="true" android:color="@color/sc_ng_text_grey_5" />
-    <item android:color="@color/sc_ng_text_grey_4" />
+    <item android:color="?attr/sp_activity_secondary_text_color" />
 </selector>

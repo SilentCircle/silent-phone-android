@@ -75,6 +75,8 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import javax.net.ssl.HttpsURLConnection;
+
 /**
  * Asynchronously loads contact photos and maintains a cache of photos.
  */
@@ -1506,7 +1508,12 @@ class ContactPhotoManagerImplNew extends ContactPhotoManagerNew implements Callb
                     final String scheme = uri.getScheme();
                     InputStream is = null;
                     if (scheme.equals("http") || scheme.equals("https")) {
-                        is = new URL(uri.toString()).openStream();
+                        HttpsURLConnection urlConnection =
+                                (HttpsURLConnection) new URL(uri.toString()).openConnection();
+                        int responseCode = urlConnection.getResponseCode();
+                        if (responseCode == HttpsURLConnection.HTTP_OK) {
+                            is = urlConnection.getInputStream();
+                        }
                     } else {
                         is = mResolver.openInputStream(uri);
                     }
@@ -1547,11 +1554,13 @@ class ContactPhotoManagerImplNew extends ContactPhotoManagerNew implements Callb
         private ByteArrayOutputStream getResizedBitmap(ByteArrayOutputStream baos) {
             byte[] bitmapBytes = baos.toByteArray();
             Bitmap bitmap = BitmapFactory.decodeByteArray(bitmapBytes, 0, bitmapBytes.length);
-            int height = (int) (bitmap.getHeight() * (50.0f / bitmap.getWidth()));
-            bitmap = Bitmap.createScaledBitmap(bitmap, (int) 50.0f, height, true);
+            if (bitmap != null) {
+                int height = (int) (bitmap.getHeight() * (50.0f / bitmap.getWidth()));
+                bitmap = Bitmap.createScaledBitmap(bitmap, (int) 50.0f, height, true);
 
-            baos = new ByteArrayOutputStream();
-            bitmap.compress(Bitmap.CompressFormat.PNG, 100, baos);
+                baos = new ByteArrayOutputStream();
+                bitmap.compress(Bitmap.CompressFormat.PNG, 100, baos);
+            }
             return baos;
         }
     }

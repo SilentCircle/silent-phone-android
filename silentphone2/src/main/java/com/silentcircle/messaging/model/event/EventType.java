@@ -32,6 +32,7 @@ public enum EventType {
     MESSAGE(1, Message.class),
     INCOMING_MESSAGE(17, IncomingMessage.class),
     OUTGOING_MESSAGE(33, OutgoingMessage.class),
+    PHONE_MESSAGE(40, CallMessage.class),
     ERROR_EVENT(48, ErrorEvent.class),
     CALL(80, Call.class),
     INCOMING_CALL(81, IncomingCall.class),

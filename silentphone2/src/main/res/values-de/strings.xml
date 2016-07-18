@@ -142,7 +142,6 @@
     <string name="account_creation_no_data">Konto erstellen – falsche Daten vom Server empfangen.</string>
     <string name="other_settings">Andere Einstellungen</string>
     <string name="theme_black">Schwarz</string>
-    <string name="extended_menu">Erweitertes Menü</string>
     <string name="bp_is_online">Silent Phone Online</string>
     <string name="bp_is_offline">Silent Phone gerade Offline</string>
     <string name="bp_not_started">Silent Phone nicht gestartet</string>

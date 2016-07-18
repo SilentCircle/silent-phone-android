@@ -253,6 +253,7 @@ public class ScCallDetailActivity extends AppCompatActivity /*implements Proximi
 
     @Override
     protected void onCreate(Bundle icicle) {
+        Utilities.setTheme(this);
         super.onCreate(icicle);
 
         ViewUtil.setBlockScreenshots(this);
@@ -759,6 +760,7 @@ public class ScCallDetailActivity extends AppCompatActivity /*implements Proximi
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.call_details_options, menu);
+        ViewUtil.tintMenuIcons(this, menu);
         return super.onCreateOptionsMenu(menu);
     }
 

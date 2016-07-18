@@ -30,9 +30,9 @@ package com.silentcircle.messaging.model;
 import android.support.annotation.NonNull;
 import android.text.TextUtils;
 
-import java.util.Arrays;
-
 import com.silentcircle.messaging.util.IOUtils;
+
+import java.util.Arrays;
 
 public class Conversation extends Burnable implements Comparable<Conversation> {
 
@@ -47,6 +47,7 @@ public class Conversation extends Burnable implements Comparable<Conversation> {
     protected boolean sendReadReceipts;
     protected long burnDelay;
     private int unreadMessageCount;
+    private int unreadCallMessageCount;
     private byte[] previewEventID;
     private long lastModified;
     private int failures;
@@ -61,6 +62,7 @@ public class Conversation extends Burnable implements Comparable<Conversation> {
         sendReadReceipts = false;
         burnDelay = 0;
         unreadMessageCount = 0;
+        unreadCallMessageCount = 0;
         removePreviewEventID();
         lastModified = 0;
         failures = 0;
@@ -96,6 +98,10 @@ public class Conversation extends Burnable implements Comparable<Conversation> {
 
     public boolean containsUnreadMessages() {
         return unreadMessageCount > 0;
+    }
+
+    public boolean containsUnreadCallMessages() {
+        return unreadCallMessageCount > 0;
     }
 
     @Override
@@ -140,6 +146,10 @@ public class Conversation extends Burnable implements Comparable<Conversation> {
         return unreadMessageCount;
     }
 
+    public int getUnreadCallMessageCount() {
+        return unreadCallMessageCount;
+    }
+
     public boolean hasBurnNotice() {
         return burnNotice;
     }
@@ -162,6 +172,11 @@ public class Conversation extends Burnable implements Comparable<Conversation> {
 
     public void offsetUnreadMessageCount(int offset) {
         unreadMessageCount = Math.max(0, unreadMessageCount + offset);
+        setLastModified(System.currentTimeMillis());
+    }
+
+    public void offsetUnreadCallMessageCount(int offset) {
+        unreadCallMessageCount = Math.max(0, unreadCallMessageCount + offset);
         setLastModified(System.currentTimeMillis());
     }
 
@@ -220,7 +235,11 @@ public class Conversation extends Burnable implements Comparable<Conversation> {
     }
 
     public void setUnreadMessageCount(int unreadMessageCount) {
-        this.unreadMessageCount = unreadMessageCount;
+        this.unreadMessageCount = Math.max(0, unreadMessageCount);
+    }
+
+    public void setUnreadCallMessageCount(int unreadCallMessageCount) {
+        this.unreadCallMessageCount = Math.max(0, unreadCallMessageCount);
     }
 
     public boolean shouldSendReadReceipts() {

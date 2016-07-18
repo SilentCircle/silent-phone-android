@@ -72,6 +72,7 @@ import com.silentcircle.messaging.util.MIME;
 import com.silentcircle.messaging.util.MessagingPreferences;
 import com.silentcircle.messaging.views.UploadView;
 import com.silentcircle.silentphone2.R;
+import com.silentcircle.silentphone2.util.Utilities;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -230,7 +231,7 @@ public class FileViewerActivity extends AppCompatActivity implements OnProgressU
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-
+        Utilities.setTheme(this);
         super.onCreate(savedInstanceState);
 
         ViewUtil.setBlockScreenshots(this);
@@ -333,6 +334,8 @@ public class FileViewerActivity extends AppCompatActivity implements OnProgressU
         menu.findItem(R.id.share).setVisible(AttachmentUtils.resolves(getPackageManager(), Intent.ACTION_SEND, mUri, mMimeType));
         menu.findItem(R.id.save).setVisible(!exported);
         menu.findItem(R.id.burn).setVisible(exported);
+
+        ViewUtil.tintMenuIcons(this, menu);
 
         return super.onCreateOptionsMenu(menu);
     }

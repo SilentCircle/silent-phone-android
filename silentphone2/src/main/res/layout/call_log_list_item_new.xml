@@ -95,6 +95,7 @@
                     android:textColor="?attr/call_log_primary_text_color"
                     android:textSize="@dimen/call_log_primary_text_size"
                     android:singleLine="true"
+                    tools:text="Name"
                     />
                 <TextView
                     android:id="@+id/voicemail_transcription"

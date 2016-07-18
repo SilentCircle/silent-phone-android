@@ -22,7 +22,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:padding="@dimen/activity_horizontal_margin"
-            android:background="@color/sc_ng_background_1"
+            android:background="?attr/sp_actionbar_color"
             android:text="@string/messaging_screen_lock_messaging_screen_protection"
             android:textSize="@dimen/text_xlarge"
             android:textStyle="bold"
@@ -45,7 +45,7 @@
                 android:layout_marginTop="@dimen/activity_vertical_margin"
                 android:layout_height="wrap_content"
                 android:gravity="center_horizontal"
-                android:textColor="@color/sc_ng_text_grey"
+                android:textColor="?attr/sp_activity_primary_text_color"
                 android:textSize="@dimen/text_xxlarge"
                 android:text="@string/messaging_screen_lock_set_password_and_timeout"
                 />
@@ -59,7 +59,7 @@
 
                 <EditText
                     style="@style/Widget.Silent.SimpleText"
-                    android:theme="@style/Widget.EditText.Dark"
+                    android:theme="@style/Widget.EditText"
                     android:id="@+id/messagingPasswordInput1"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -72,13 +72,13 @@
                     android:privateImeOptions="nm"
                     android:singleLine="true"
                     android:tag="password"
-                    android:textColor="@color/sc_ng_text_grey"
                     android:textSize="@dimen/text_large"
+                    android:textColorHint="?attr/sp_activity_secondary_text_color"
                     />
 
                 <EditText
                     style="@style/Widget.Silent.SimpleText"
-                    android:theme="@style/Widget.EditText.Dark"
+                    android:theme="@style/Widget.EditText"
                     android:id="@+id/messagingPasswordInput2"
                     android:layout_height="wrap_content"
                     android:layout_below="@id/messagingPasswordInput1"
@@ -90,8 +90,8 @@
                     android:inputType="textPassword"
                     android:singleLine="true"
                     android:tag="password"
-                    android:textColor="@color/sc_ng_text_grey"
                     android:textSize="@dimen/text_large"
+                    android:textColorHint="?attr/sp_activity_secondary_text_color"
                     />
 
                 <CheckBox
@@ -103,7 +103,7 @@
                     android:layout_marginLeft="@dimen/activity_horizontal_margin_large"
                     android:layout_marginStart="@dimen/activity_horizontal_margin_large"
                     android:layout_marginTop="@dimen/activity_vertical_margin_small"
-                    android:textColor="@color/sc_ng_text_grey"
+                    android:textColor="?attr/sp_activity_primary_text_color"
                     android:textSize="@dimen/text_normal"
                     android:text="@string/provisioning_show_pw"
                     android:contentDescription="@string/provisioning_show_pw"
@@ -135,13 +135,13 @@
                 android:layout_marginStart="@dimen/activity_horizontal_margin"
                 android:layout_marginTop="@dimen/spacing_normal"
                 android:gravity="center_vertical|start"
-                android:textColor="@color/sc_ng_text_grey"
+                android:textColor="?attr/sp_activity_secondary_text_color"
                 android:textSize="@dimen/text_normal"
                 tools:text="Lock messaging in 15 seconds"
                 />
 
             <Button
-                style="@style/Widget.Button.Dark"
+                style="@style/Widget.Button"
                 android:id="@+id/passwordSubmit"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

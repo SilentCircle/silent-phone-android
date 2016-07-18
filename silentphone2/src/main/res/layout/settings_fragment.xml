@@ -93,6 +93,86 @@
             </LinearLayout>
 
             <TextView
+                android:id="@+id/drawer_calls_header"
+                style="@style/DrawerSectionTitle"
+                android:layout_marginBottom="@dimen/spacing_normal"
+                android:layout_marginTop="@dimen/spacing_normal"
+                android:text="@string/call_settings"/>
+
+            <LinearLayout
+                android:id="@+id/drawer_calls_content"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:visibility="visible"
+                android:orientation="vertical" >
+
+                <com.silentcircle.silentphone2.views.SettingsItem
+                    style="@style/Widget.SettingsItem"
+                    android:id="@+id/ringtone"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:isCheckable="false"
+                    app:text="@string/sp_ringtone"
+                    app:description="Orion"
+                    />
+
+                <com.silentcircle.silentphone2.views.SettingsItem
+                    style="@style/Widget.SettingsItem"
+                    android:id="@+id/dial_helper"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:visibility="gone"
+                    app:isCheckable="false"
+                    app:text="@string/sp_dial_helper_title"
+                    app:description="North America"
+                    tools:visibility="visible"
+                    />
+
+                <com.silentcircle.silentphone2.views.SettingsItem
+                    style="@style/Widget.SettingsItem"
+                    android:id="@+id/underflow_check"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:isCheckable="true"
+                    app:text="@string/setting_underflow"
+                    app:description="@string/setting_underflow_summary"
+                    />
+
+                <com.silentcircle.silentphone2.views.SettingsItem
+                    style="@style/Widget.SettingsItem"
+                    android:id="@+id/traversal_check"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:isCheckable="true"
+                    app:text="@string/enable_traversal"
+                    app:description="@string/enable_traversal_explanation"
+                    />
+
+                <com.silentcircle.silentphone2.views.SettingsItem
+                    style="@style/Widget.SettingsItem"
+                    android:id="@+id/force_traversal"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:isCheckable="true"
+                    app:text="@string/force_traversal"
+                    app:description="@string/force_traversal_explanation"
+                    android:visibility="gone"
+                    />
+
+                <com.silentcircle.silentphone2.views.SettingsItem
+                    style="@style/Widget.SettingsItem"
+                    android:id="@+id/media_relay_check"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:isCheckable="true"
+                    app:text="@string/setting_p2p"
+                    app:description="@string/setting_p2p_summary"
+                    android:visibility="gone"
+                    />
+
+            </LinearLayout>
+
+            <TextView
                 android:id="@+id/drawer_msg_header"
                 style="@style/DrawerSectionTitle"
                 android:layout_marginBottom="@dimen/spacing_normal"
@@ -149,16 +229,6 @@
 
                 <com.silentcircle.silentphone2.views.SettingsItem
                     style="@style/Widget.SettingsItem"
-                    android:id="@+id/messaging_theme"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    app:isCheckable="false"
-                    app:text="@string/messaging_theme_title"
-                    app:description="Default"
-                    />
-
-                <com.silentcircle.silentphone2.views.SettingsItem
-                    style="@style/Widget.SettingsItem"
                     android:id="@+id/attachment_decrypt_warn_check"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -176,6 +246,17 @@
                     app:text="@string/messaging_burn_animation_text"
                     app:description="@string/messaging_burn_animation_explanation"
                     android:visibility="gone"
+                    />
+
+
+                <com.silentcircle.silentphone2.views.SettingsItem
+                    style="@style/Widget.SettingsItem"
+                    android:id="@+id/messaging_theme"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:isCheckable="false"
+                    app:text="@string/messaging_theme_title"
+                    app:description="Default"
                     />
 
                 <Button
@@ -213,28 +294,6 @@
 
                 <com.silentcircle.silentphone2.views.SettingsItem
                     style="@style/Widget.SettingsItem"
-                    android:id="@+id/ringtone"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    app:isCheckable="false"
-                    app:text="@string/sp_ringtone"
-                    app:description="Orion"
-                    />
-
-                <com.silentcircle.silentphone2.views.SettingsItem
-                    style="@style/Widget.SettingsItem"
-                    android:id="@+id/dial_helper"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:visibility="gone"
-                    app:isCheckable="false"
-                    app:text="@string/sp_dial_helper_title"
-                    app:description="North America"
-                    tools:visibility="visible"
-                    />
-
-                <com.silentcircle.silentphone2.views.SettingsItem
-                    style="@style/Widget.SettingsItem"
                     android:id="@+id/boot_check"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -252,48 +311,6 @@
                     app:isCheckable="true"
                     app:text="@string/re_provision"
                     app:description="@string/re_provision_explanation"
-                    android:visibility="gone"
-                    />
-
-                <com.silentcircle.silentphone2.views.SettingsItem
-                    style="@style/Widget.SettingsItem"
-                    android:id="@+id/underflow_check"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    app:isCheckable="true"
-                    app:text="@string/setting_underflow"
-                    app:description="@string/setting_underflow_summary"
-                    />
-
-                <com.silentcircle.silentphone2.views.SettingsItem
-                    style="@style/Widget.SettingsItem"
-                    android:id="@+id/traversal_check"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    app:isCheckable="true"
-                    app:text="@string/enable_traversal"
-                    app:description="@string/enable_traversal_explanation"
-                    />
-
-                <com.silentcircle.silentphone2.views.SettingsItem
-                    style="@style/Widget.SettingsItem"
-                    android:id="@+id/force_traversal"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    app:isCheckable="true"
-                    app:text="@string/force_traversal"
-                    app:description="@string/force_traversal_explanation"
-                    android:visibility="gone"
-                    />
-
-                <com.silentcircle.silentphone2.views.SettingsItem
-                    style="@style/Widget.SettingsItem"
-                    android:id="@+id/media_relay_check"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    app:isCheckable="true"
-                    app:text="@string/setting_p2p"
-                    app:description="@string/setting_p2p_summary"
                     android:visibility="gone"
                     />
 
@@ -322,14 +339,6 @@
                     style="@style/Widget.Silent.SettingsButton"
                     android:id="@+id/reload_account_data"
                     android:text="@string/re_provision"
-                    />
-
-                <Button
-                    style="@style/Widget.Silent.SettingsButton"
-                    android:id="@+id/settings_switch_configuration"
-                    android:text="@string/switch_to_develop"
-                    android:visibility="gone"
-                    tools:visibility="visible"
                     />
 
                 <Button
@@ -389,18 +398,6 @@
                 android:layout_marginEnd="@dimen/settings_item_margin_right"
                 layout="@layout/dial_drawer_developer_axo_debug_option"/>
 
-            <com.silentcircle.silentphone2.views.SettingsItem
-                style="@style/Widget.SettingsItem"
-                android:id="@+id/extended_menu"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="@dimen/settings_item_margin_bottom"
-                app:src="@drawable/ic_menu_more"
-                app:isCheckable="false"
-                app:text="@string/extended_menu"
-                app:description=""
-                />
-
         </LinearLayout>
 
         <!-- information section -->
@@ -424,6 +421,7 @@
 
             <TextView
                 style="@style/Widget.Silent.SimpleText.Small"
+                android:textColor="?attr/sp_drawer_text_color"
                 android:id="@+id/dial_drawer_build_number"
                 android:paddingTop="@dimen/spacing_normal"
                 android:paddingLeft="0dp"
@@ -433,6 +431,7 @@
 
             <TextView
                 style="@style/Widget.Silent.SimpleText.Small"
+                android:textColor="?attr/sp_drawer_text_color"
                 android:paddingTop="@dimen/spacing_normal"
                 android:paddingLeft="0dp"
                 android:paddingRight="@dimen/spacing_normal"
@@ -442,6 +441,7 @@
 
             <TextView
                 style="@style/Widget.Silent.SimpleText.Small"
+                android:textColor="?attr/sp_drawer_text_color"
                 android:id="@+id/dial_drawer_build_detail"
                 android:paddingTop="@dimen/spacing_normal"
                 android:paddingLeft="0dp"

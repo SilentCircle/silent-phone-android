@@ -22,7 +22,9 @@
         android:layout_marginStart="60dp"
         android:layout_marginBottom="@dimen/spacing_large"
         android:linksClickable="true"
-        android:text="@string/sc_privacy_link" />
+        android:text="@string/sc_privacy_link"
+        android:textColor="?attr/sp_drawer_text_color"
+        android:textColorLink="?attr/sp_drawer_text_color" />
 
     <TextView
         android:id="@+id/sc_tos"
@@ -33,6 +35,8 @@
         android:layout_marginTop="@dimen/activity_vertical_margin_small"
         android:linksClickable="true"
         android:maxLines="4"
-        android:text="@string/sc_tos_link" />
+        android:text="@string/sc_tos_link"
+        android:textColor="?attr/sp_drawer_text_color"
+        android:textColorLink="?attr/sp_drawer_text_color" />
 
 </RelativeLayout>

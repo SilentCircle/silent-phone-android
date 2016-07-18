@@ -33,30 +33,40 @@
 
         <android.support.v7.widget.AppCompatRadioButton
             android:id="@+id/developer_ssl_debug_radio_button_0"
+            style="@style/Widget.Silent.SimpleText.Medium"
+            android:theme="@style/Widget.RadioButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="0"/>
         <android.support.v7.widget.AppCompatRadioButton
             android:id="@+id/developer_ssl_debug_radio_button_1"
+            style="@style/Widget.Silent.SimpleText.Medium"
+            android:theme="@style/Widget.RadioButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="1"/>
         <android.support.v7.widget.AppCompatRadioButton
             android:id="@+id/developer_ssl_debug_radio_button_2"
+            style="@style/Widget.Silent.SimpleText.Medium"
+            android:theme="@style/Widget.RadioButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="2"/>
         <android.support.v7.widget.AppCompatRadioButton
             android:id="@+id/developer_ssl_debug_radio_button_3"
+            style="@style/Widget.Silent.SimpleText.Medium"
+            android:theme="@style/Widget.RadioButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="3"/>
         <android.support.v7.widget.AppCompatRadioButton
             android:id="@+id/developer_ssl_debug_radio_button_4"
+            style="@style/Widget.Silent.SimpleText.Medium"
+            android:theme="@style/Widget.RadioButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
@@ -68,7 +78,6 @@
         android:layout_below="@id/developer_ssl_debug_radio_group"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
-        android:textAppearance="?android:attr/textAppearanceSmall"
         android:maxLines="5"
         android:text="@string/developer_ssl_debug_explanation"/>
 

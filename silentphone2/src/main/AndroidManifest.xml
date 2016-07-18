@@ -260,7 +260,8 @@
         -->
         <activity
                 android:name="com.silentcircle.keystore.KeyStoreActivity"
-                android:windowSoftInputMode="adjustUnspecified">
+                android:windowSoftInputMode="adjustUnspecified"
+                android:theme="@style/SilentPhoneTheme">
             <intent-filter>
                 <action android:name="com.silentcircle.keystore.action.READY" />
 
@@ -433,7 +434,7 @@
         <activity android:name="com.silentcircle.messaging.activities.ConversationActivity"
             android:screenOrientation="portrait"
             android:windowSoftInputMode="adjustResize"
-            android:theme="@style/SilentPhoneConversationThemeDark"
+            android:theme="@style/SilentPhoneTheme"
             android:icon="@drawable/ic_launcher_st"
             android:launchMode="singleTop">
             <intent-filter>
@@ -457,7 +458,7 @@
 
         <!-- Activity to view multimedia content from conversation messages -->
         <activity android:name="com.silentcircle.messaging.activities.FileViewerActivity"
-            android:theme="@style/SilentPhoneConversationThemeDark"
+            android:theme="@style/SilentPhoneTheme"
             android:configChanges="screenSize|orientation"
             android:uiOptions="splitActionBarWhenNarrow"/>
 

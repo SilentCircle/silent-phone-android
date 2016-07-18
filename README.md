@@ -8,7 +8,7 @@ Silent Phone is Peer-to-peer encrypted calling and video. No keys are stored.
 
 ### What's New In This Update
 
-The sources are updated for version 4.3.2 of the project.
+The sources are updated for version 5.0 of the project.
 
 This version of the project includes Silent Contacts as a subproject.
 
@@ -23,8 +23,8 @@ To build Silent Phone for Android you will need the following resources:
 Using the Android SDK the following command will install the required additional packages:
 
 ```
-$ android  update sdk --all --no-ui --filter tools,platform-tools,build-tools-22.0.1,\
-  android-22,extra-android-m2repository,extra-android-support,extra-google-m2repository
+$ android  update sdk --all --no-ui --filter tools,platform-tools,build-tools-23.0.2,\
+  android-23,extra-android-m2repository,extra-android-support,extra-google-m2repository
 ```
 
 ### How to Build

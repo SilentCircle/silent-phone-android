@@ -35,6 +35,7 @@ import android.location.Location;
 import com.silentcircle.messaging.model.MessageStates;
 import com.silentcircle.messaging.model.event.Message;
 import com.silentcircle.messaging.repository.ConversationRepository;
+import com.silentcircle.messaging.model.CallData;
 import com.silentcircle.messaging.util.MessageUtils;
 
 public class ComposeMessageTask extends AsyncTask<String, Void, Message> {
@@ -45,6 +46,8 @@ public class ComposeMessageTask extends AsyncTask<String, Void, Message> {
     private final ConversationRepository mRepository;
     private final String mSelfUserName;
     private final Location mLocation;
+    private final String mAttachment;
+    private final CallData mCallData;
 
     public ComposeMessageTask(String self, Conversation conversation,
                               ConversationRepository repository,
@@ -54,6 +57,23 @@ public class ComposeMessageTask extends AsyncTask<String, Void, Message> {
         mConversation = conversation;
         mRepository = repository;
         mLocation = location;
+        mAttachment = null;
+        mCallData = null;
+        mShouldRequestDeliveryNotification = shouldRequestDeliveryNotification;
+    }
+
+    public ComposeMessageTask(String self, Conversation conversation,
+                              ConversationRepository repository,
+                              Location location,
+                              String attachment,
+                              CallData callData,
+                              boolean shouldRequestDeliveryNotification) {
+        mSelfUserName = self;
+        mConversation = conversation;
+        mRepository = repository;
+        mLocation = location;
+        mAttachment = attachment;
+        mCallData = callData;
         mShouldRequestDeliveryNotification = shouldRequestDeliveryNotification;
     }
 
@@ -65,7 +85,7 @@ public class ComposeMessageTask extends AsyncTask<String, Void, Message> {
 
         String messageText = messages[0];
         Message message = MessageUtils.composeMessage(mSelfUserName, messageText,
-                mShouldRequestDeliveryNotification, mConversation, mLocation);
+                mShouldRequestDeliveryNotification, mConversation, mLocation, mAttachment, mCallData);
         message.setState(isNoteToSelf()
                 ? MessageStates.SENT
                 : (mConversation.isLocationEnabled()

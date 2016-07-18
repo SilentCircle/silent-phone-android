@@ -17,13 +17,13 @@ android {
         // Version string: major.minor or major.minor.bug-fix.  When
         // releasing an X.Y version, list only two digits rather than
         // X.Y.Z.
-        versionName "4.3.2"
+        versionName "5.0.0"
 
         // The version code (vc) computes as follows: major*1000 + minor*100 + bug-fix.
         // This provides up to 100 bug-fix or small feature update releases :-)
         // To create the Android 'versionCode' the script shifts this number left by 16 and adds the
         // Jenkins build number.
-        def vc = 4302
+        def vc = 5000
 
         applicationId "com.silentcircle.silentphone"
 
@@ -147,14 +147,13 @@ dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
     compile 'com.googlecode.libphonenumber:libphonenumber:7.2.1'
     compile 'com.googlecode.libphonenumber:geocoder:2.31'
-    compile 'com.android.support:appcompat-v7:23.2.0'
-    compile 'com.android.support:design:23.2.0'
-    compile 'com.android.support:support-v13:23.2.0'
-    compile 'com.android.support:palette-v7:23.2.0'
-    compile 'com.android.support:cardview-v7:23.2.0'
+    compile 'com.android.support:appcompat-v7:23.2.1'
+    compile 'com.android.support:design:23.2.1'
+    compile 'com.android.support:support-v13:23.2.1'
+    compile 'com.android.support:palette-v7:23.2.1'
+    compile 'com.android.support:cardview-v7:23.2.1'
     compile 'com.google.android.gms:play-services-gcm:8.3.0'
 //    compile 'com.android.support:multidex:1.0.1'
-    compile 'com.android.support:design:23.2.0'
     compile 'com.stripe:stripe-android:1.0.0'
     compile 'com.google.code.gson:gson:2.6.1'
 }

@@ -147,7 +147,6 @@ public class ProvisioningActivity extends AppCompatActivity {
         // Gives more space on smaller screens to fill in the data fields
 //        requestWindowFeature(Window.FEATURE_NO_TITLE);
 
-        Utilities.setTheme(this);
         ConfigurationUtilities.initializeDebugSettings(getBaseContext());
 
         setContentView(R.layout.activity_provisioning);
