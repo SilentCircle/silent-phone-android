@@ -3558,7 +3558,7 @@ public:
       //loadCodecDefaults
       return empty;
    }
-#define i j
+
    CPhoneCons *empty;
    void clickOnEmpty(){
       if(!empty)return;

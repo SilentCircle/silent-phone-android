@@ -17,13 +17,13 @@ android {
         // Version string: major.minor or major.minor.bug-fix.  When
         // releasing an X.Y version, list only two digits rather than
         // X.Y.Z.
-        versionName "4.3.1"
+        versionName "4.3.2"
 
         // The version code (vc) computes as follows: major*1000 + minor*100 + bug-fix.
         // This provides up to 100 bug-fix or small feature update releases :-)
         // To create the Android 'versionCode' the script shifts this number left by 16 and adds the
         // Jenkins build number.
-        def vc = 4301
+        def vc = 4302
 
         applicationId "com.silentcircle.silentphone"
 

@@ -76,6 +76,8 @@ public class AccountCorpEmailEntry3 extends Fragment {
 
     private String mApiKey;
     private String mAuthCode;
+    private String mAuthType;
+    private String mState;
     private String mUsername;
     private String hwDeviceId;
 
@@ -104,6 +106,8 @@ public class AccountCorpEmailEntry3 extends Fragment {
         if (args != null) {
             mUsername = args.getString(ProvisioningActivity.USERNAME);
             mAuthCode = args.getString(AccountCorpEmailEntry2.AUTH_CODE);
+            mAuthType = args.getString(AccountCorpEmailEntry2.AUTH_TYPE);
+            mState = args.getString(AccountCorpEmailEntry2.STATE);
         }
 
 
@@ -167,7 +171,7 @@ public class AccountCorpEmailEntry3 extends Fragment {
     }
 
     /* *********************************************************************************
-     * Register the device with the ADFS provided auth_code.
+     * Register the device with the auth_code obtained from the Id/OIDC provider.
      * ******************************************************************************* */
     private void startLoadingRegisterDevice() {
         JSONObject data = null;
@@ -179,13 +183,16 @@ public class AccountCorpEmailEntry3 extends Fragment {
             final String deviceName = Build.MODEL;
             data = new JSONObject();
             data.put("username", mUsername);
-            data.put("auth_cookie", mAuthCode);
-            data.put("auth_type", "adfs");
+            data.put("auth_code", mAuthCode);
+            data.put("auth_type", mAuthType);
             data.put("device_name", deviceName);
             data.put("persistent_device_id", hwDeviceId);
             data.put("app", "silent_phone");
             data.put("device_class", "android");
             data.put("version", BuildConfig.SPA_BUILD_NUMBER);
+            if (mState != null) {
+                data.put("state", mState);
+            }
         } catch (JSONException ignore) {
         }
 

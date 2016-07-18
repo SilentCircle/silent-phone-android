@@ -424,6 +424,7 @@ public:
    virtual CTSesMediaBase* findMedia(const char *p, int iLen)=0;
    virtual void release(CTSesMediaBase * m)=0;
    virtual CTSock *getMediaSocket(int id=0)=0;
+   virtual void start()=0;
    virtual void stop()=0;
    virtual ~CTMediaBase(){};
    virtual void setNewPort(int i)=0;

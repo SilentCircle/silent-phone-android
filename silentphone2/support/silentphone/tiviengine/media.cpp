@@ -2392,7 +2392,6 @@ int CRTPA::checkNet(){
 //CTNetFWCheck(int iIpBinded, const char *aStun, ADDR &stunDefault, int iPingTime, int iPrevNetType, CTSock *s)
       
       unsigned int stT=getTickCount();
-      
       CTStun st(cbEng->ipBinded,sockth);//TODO exit flag if session down
       //TODO force udp recreate
       st.addrStun=cbEng->addrStun;

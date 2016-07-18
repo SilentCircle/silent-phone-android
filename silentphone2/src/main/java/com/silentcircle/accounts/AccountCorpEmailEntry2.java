@@ -35,6 +35,7 @@ import android.app.Fragment;
 import android.content.Context;
 import android.net.http.SslCertificate;
 import android.net.http.SslError;
+import android.net.UrlQuerySanitizer;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -70,15 +71,16 @@ import java.net.URLEncoder;
  */
 public class AccountCorpEmailEntry2 extends Fragment {
 
-    public static final String TAG="AccountCorpEmailEntry2";
-    public static final String ADFS_PATH = "adfs_path";
-    public static final String CAN_DO_USERNAME = "can_do_username";
+    public static final String TAG = "AccountCorpEmailEntry2";
+    public static final String AUTH_URI = "auth_uri";
     public static final String DOMAIN = "domain";
     public static final String AUTH_CODE = "auth_code";
+    public static final String AUTH_TYPE = "auth_type";
+    public static final String STATE = "state";
     public static final String REDIRECT_URI = "redirect_uri";
 
-    private static final String CODE = "code=";
-    private static final String ERROR = "error=";
+    private static final String CODE = "code";
+    private static final String ERROR = "error";
 
     private AuthenticatorActivity mParent;
 
@@ -92,6 +94,7 @@ public class AccountCorpEmailEntry2 extends Fragment {
 
     private String startPath;
     private String username;
+    private String authType;
     private String redirectScheme;
     private String redirectAuthority;
     private String redirectPath;
@@ -143,7 +146,7 @@ public class AccountCorpEmailEntry2 extends Fragment {
                     break;
             }
             mParent.showInputInfo(getString(R.string.redirect_ssl_error, sslc.getIssuedTo().toString()
-                                    + (TextUtils.isEmpty(message) ? "" : ": " + message)));
+                    + (TextUtils.isEmpty(message) ? "" : ": " + message)));
             //Toast.makeText(mParent.getApplicationContext(),
             //        "Big fat warning: SSL error on "+sslc.getIssuedTo().toString()+", see logcat; bypass for demo purposes", Toast.LENGTH_LONG).show();
 
@@ -176,15 +179,7 @@ public class AccountCorpEmailEntry2 extends Fragment {
 
             if(!dummyLoaded) {
                 dummyLoaded = true;
-                if(canDoUsername) {
-                    try {
-                        wv.loadUrl(startPath + "&username="+ URLEncoder.encode(username, "UTF-8"));
-                    } catch (UnsupportedEncodingException e) {
-                        e.printStackTrace();
-                    }
-                } else {
-                    wv.loadUrl(startPath);
-                }
+                wv.loadUrl(startPath);
             } else {
                 if(!realLoaded) {
                     realLoaded = true;
@@ -206,52 +201,46 @@ public class AccountCorpEmailEntry2 extends Fragment {
             if (localUri == null)
                 return false;   // cannot decode this URI --- let webview try it?? Or bail (back-step) out with error
 
-            if (redirectScheme.equals(localUri.getScheme()) && redirectAuthority.equals(localUri.getAuthority())) {
-                if (!TextUtils.isEmpty(redirectPath) && !redirectPath.equals(localUri.getPath())) {
-                    mParent.showInputInfo(getString(R.string.redirect_uri_mismatch, sUrl));
-                    mParent.backStep();
-                    return true;
-                }
-                //Toast.makeText(mParent.getApplicationContext(), "Got my redirect", Toast.LENGTH_LONG).show();
-                String query = localUri.getQuery();
-                String code;
-                if (!TextUtils.isEmpty(query)) {
-                    int idx = query.indexOf(CODE);
-                    if (idx < 0) {
-                        checkAndGetError(query);
-                        mParent.backStep();
-                        return true;
-                    }
-                    code = query.substring(idx + CODE.length());
-                    idx = code.indexOf('&');
-                    if (idx > 0)
-                        code = code.substring(0, idx);
-                }
-                else {
-                    mParent.showInputInfo(getString(R.string.redirect_uri_query_missing, sUrl));
-                    mParent.backStep();
-                    return true;
-                }
-                mParent.accountCorpEmailEntry3(username, code);
-                return true;
-            }
-            else {
+            if (!redirectScheme.equals(localUri.getScheme()) || !redirectAuthority.equals(localUri.getAuthority())) {
                 return false;
             }
+
+            if (!TextUtils.isEmpty(redirectPath) && !redirectPath.equals(localUri.getPath())) {
+                mParent.showInputInfo(getString(R.string.redirect_uri_mismatch, sUrl));
+                mParent.backStep();
+                return true;
+            }
+            //Toast.makeText(mParent.getApplicationContext(), "Got my redirect", Toast.LENGTH_LONG).show();
+            String query = localUri.getQuery();
+
+            if (!TextUtils.isEmpty(query)) {
+                UrlQuerySanitizer uqs = new UrlQuerySanitizer();
+                uqs.setAllowUnregisteredParamaters(true);
+                uqs.parseQuery(query);
+
+                String code = uqs.getValue(CODE);
+                if (code == null) {
+                    checkAndGetError(uqs);
+                    mParent.backStep();
+                    return true;
+                }
+                String state = uqs.getValue(STATE);
+                mParent.accountCorpEmailEntry3(username, code, authType, state);
+            } else {
+                mParent.showInputInfo(getString(R.string.redirect_uri_query_missing, sUrl));
+                mParent.backStep();
+            }
+            return true;
         }
     }
 
-    private void checkAndGetError(String query) {
-        int idx = query.indexOf(ERROR);
-        if (idx < 0) {
+    private void checkAndGetError(UrlQuerySanitizer uqs) {
+        String error = uqs.getValue(ERROR);
+        if (error != null) {
+            mParent.showInputInfo(getString(R.string.redirect_uri_error, error));
+        } else {
             mParent.showInputInfo(getString(R.string.redirect_uri_malformed));
-            return;
         }
-        String code = query.substring(idx + ERROR.length());
-        idx = code.indexOf('&');
-        if (idx > 0)
-            code = code.substring(0, idx);
-        mParent.showInputInfo(getString(R.string.redirect_uri_error, code));
     }
 
     @Override
@@ -333,8 +322,8 @@ public class AccountCorpEmailEntry2 extends Fragment {
 
         Bundle args = getArguments();
 
-        canDoUsername = args.getBoolean(CAN_DO_USERNAME);
-        startPath = args.getString(ADFS_PATH);
+        authType = args.getString(AUTH_TYPE);
+        startPath = args.getString(AUTH_URI);
         username = args.getString(ProvisioningActivity.USERNAME);
         try {
             URI redirectUri = new URI(URLDecoder.decode(args.getString(REDIRECT_URI), "utf-8"));

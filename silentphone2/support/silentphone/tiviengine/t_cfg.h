@@ -299,7 +299,9 @@ return &cfg->STR_CVG_ADD V_ID;\
       T_C_ITEME(iAPPrio,1,"eWifi3G,e3GOnly,eWifiOnly,eWifi3GRoam,e3GRoam");     
       T_C_ITEMB(iAutoShowApi,1);     
       T_C_ITEMI(iSipPortToBind,5060);     
-      T_C_ITEMI(iRtpPort,25500);     
+      T_C_ITEMI(iRtpPort,25500);
+      //the iDoNotRandomizePort is not the best name but i prefer default to be 0
+      T_C_ITEMB(iDoNotRandomizePort,0);//if 0 then randomize rtp ports
       
       T_C_ITEMC(tmpServ,64,"");
       T_C_ITEMC(bufpxifnat,64,"");

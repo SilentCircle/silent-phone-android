@@ -8,7 +8,7 @@ Silent Phone is Peer-to-peer encrypted calling and video. No keys are stored.
 
 ### What's New In This Update
 
-The sources are updated for version 4.3.1 of the project.
+The sources are updated for version 4.3.2 of the project.
 
 This version of the project includes Silent Contacts as a subproject.
 

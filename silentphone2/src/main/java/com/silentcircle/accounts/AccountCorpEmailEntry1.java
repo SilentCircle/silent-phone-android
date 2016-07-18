@@ -29,6 +29,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package com.silentcircle.accounts;
 
 import android.app.Activity;
+import android.app.Fragment;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.app.Fragment;
@@ -93,8 +94,8 @@ public class AccountCorpEmailEntry1 extends Fragment {
                         burl = getString(R.string.sccps_development_base_url);
                     }
                     return AccountCorpUtil.httpsGet(context, burl +
-                                    ConfigurationUtilities.getAuthBase(mParent.getBaseContext()) +
-                                    URLEncoder.encode(dom, "UTF-8") + "/", 0);
+                            ConfigurationUtilities.getAuthBase(mParent.getBaseContext()) +
+                            URLEncoder.encode(username, "UTF-8") + "/", 0);
 
                 } catch (Exception e) {
                     Log.d(TAG, "Could not get authorization data: ", e);
@@ -114,26 +115,34 @@ public class AccountCorpEmailEntry1 extends Fragment {
                 }
 
                 try {
-                    if (!resp.getString("auth_type").equals("adfs")) {
-                        Log.e(TAG, "Failed to obtain oauth host; unknown auth type " + resp.getString("auth_type"));
+                    String authType = resp.getString("auth_type");
+                    if (!authType.equals("ADFS") && !authType.equals("OIDC")) {
+                        Log.e(TAG, "Failed to obtain oauth host; unknown auth type " + authType);
                     } else {
-                        if(!resp.has("auth_uri") && !resp.has("redirect_uri")) {
-                            Log.e(TAG, "Failed to obtain oauth host; no URL; msg=" + resp.getString("msg"));
+                        if (!resp.has("auth_uri") || !resp.has("redirect_uri")) {
+                            String msg = "internal_error";
+                            if (resp.has("error")) {
+                                msg = resp.getString("error");
+                            } else if (resp.has("msg")) {
+                                msg = resp.getString("msg");
+                            }
+                            Log.e(TAG, "Failed to obtain oauth host; no URL; msg=" + msg);
                         } else {
-                            mParent.accountCorpEmailEntry2(resp.getString("auth_uri"), dom, username,
-                                    resp.getString("redirect_uri"), resp.getBoolean("can_do_username"));
+                            mParent.accountCorpEmailEntry2(
+                                    resp.getString("auth_uri"), authType, dom, username,
+                                    resp.getString("redirect_uri"));
                             return;
                         }
                     }
                 } catch (JSONException e) {
                     Log.e(TAG, "Failed to obtain oauth host; JSONException", e);
                 }
-            }
 
-            // Failed; give the user another chance
-            String errorMsg = String.format(getString(R.string.provisioning_domain_error), dom);
-            mParent.showInputInfo(errorMsg);
-            mParent.accountStep1();
+                // Failed; give the user another chance
+                String errorMsg = String.format(getString(R.string.provisioning_domain_error), dom);
+                mParent.showInputInfo(errorMsg);
+                mParent.accountStep1();
+            }
         }
     }
 

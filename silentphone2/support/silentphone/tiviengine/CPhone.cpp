@@ -2931,6 +2931,9 @@ void CTiViPhone::onNetCheckTimer(){
          {
             break;
          }
+         
+         cPhoneCallback->mediaFinder->start();
+         
          CTSock *so=cPhoneCallback->mediaFinder->getMediaSocket();
          CTStun st(ipBinded, so);
          if(so)so->recreateIfNeededNow();
@@ -3001,6 +3004,7 @@ void CTiViPhone::onNetCheckTimer(){
             uiCheckNetworkTypeAt=uiGT+T_GT_MINUTE*10;//after 5 min
          else
             uiCheckNetworkTypeAt=uiGT+T_GT_MINUTE*300;//after 5h
+         
       }while(0);
    }
    

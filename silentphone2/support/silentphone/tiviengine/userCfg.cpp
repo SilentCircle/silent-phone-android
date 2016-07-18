@@ -432,7 +432,10 @@ void FindXMLVal(NODE *node, int level, int cfgFlag, PHONE_CFG &cfg)
                }
                break;
             case CFG_F_AUDIO|CFG_F_TRUE|CFG_F_SDP:
-               if (CMP_XML(tmpNV->name,"RTPPORT",7))
+                  
+               if (CMP_XML(tmpNV->name,"RANDOMPORT",10))
+                  cfg.iDoNotRandomizePort=(int)!strtoul(tmpNV->value.s,NULL,0);
+               else if (CMP_XML(tmpNV->name,"RTPPORT",7))
                   cfg.iRtpPort=(int)strtoul(tmpNV->value.s,NULL,0);
                else if (CMP_XML(tmpNV->name,"AGC",3))
                   cfg.iUseAGC=tmpNV->value.s[0]!='0';
@@ -606,7 +609,7 @@ void guiSaveUserCfg(PHONE_CFG *p, short *fn)
 
    fprintf(f,"   <sdp p2p=\"%d\" tmr=\"%s\">" T_CRLF,p->iCanUseP2Pmedia, p->bufTMRAddr);
    fprintf(f,"      <zrtp flag=\"%d\" zid=\"%s\" sdes=\"%d\" tunneling=\"%d\"/>" T_CRLF,p->iCanUseZRTP,&p->szZID_base16[0], p->iSDES_On, p->iZRTPTunnel_On);
-   fprintf(f,"      <audio rtpport=\"%d\" agc=\"%d\" vad=\"%d\" vadg=\"%d\" aec=\"%d\" pcksz=\"%d\" pckszg=\"%d\">" T_CRLF,p->iRtpPort,p->iUseAGC ,p->iUseVAD,p->iUseVAD3G,p->iUseAEC,p->iPayloadSizeSend,p->iPayloadSizeSend3G);
+   fprintf(f,"      <audio rtpport=\"%d\" agc=\"%d\" vad=\"%d\" vadg=\"%d\" aec=\"%d\" pcksz=\"%d\" pckszg=\"%d\" randomport=\"%d\">" T_CRLF,p->iRtpPort,p->iUseAGC ,p->iUseVAD,p->iUseVAD3G,p->iUseAEC,p->iPayloadSizeSend,p->iPayloadSizeSend3G, !p->iDoNotRandomizePort);
 
    fprintf(f,"         <codecs enabledg=\"%s\" disabledg=\"%s\" enabled=\"%s\" disabled=\"%s\" respwithone=\"%d\"/>" T_CRLF,p->szACodecs3G,p->szACodecsDisabled3G,p->szACodecs,p->szACodecsDisabled,p->iResponseOnlyWithOneCodecIn200Ok);
 
@@ -870,7 +873,7 @@ static int getCfgLoc(PHONE_CFG *cfg,int iCheckImei, int iIndex)
 
    }
 
-   if(iCheckImei!=2 && cfg->iRtpPort==0 && cfg->iSipPortToBind==0)
+   if(iCheckImei!=2 && cfg->iSipPortToBind==0)
    {
       cfg->setDefaults();
    }

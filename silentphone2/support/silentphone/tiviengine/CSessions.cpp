@@ -282,6 +282,12 @@ void CPhSesions::handleSessions()
       }
 
    }
+   int cnt = getMediaSessionsCnt();
+    
+   if(!cnt){
+     
+      cPhoneCallback->mediaFinder->stop();
+   }
    UNLOCK_MUTEX_SES
 }
 
@@ -432,6 +438,8 @@ int makeSDP(CPhSesions &ph, CSesBase *spSes, CMakeSip &ms)
       ms.addSdpConnectIP(vis->strVal,(int)vis->uiLen,&ph.p_cfg);
    else 
       ms.addSdpConnectIP(ph.str64BindedAddr.strVal,(int)ph.str64BindedAddr.uiLen,&ph.p_cfg);
+   
+   ph.cPhoneCallback->mediaFinder->start();
    
    if(spSes->mBase->checkNet()!=1){
       ph.enableTMR(1,spSes);

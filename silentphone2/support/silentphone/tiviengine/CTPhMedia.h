@@ -1003,6 +1003,7 @@ class CTMedia: public CTMediaBase{
 public:
    CTAudioEngine audioEng;//obsolete
 protected:
+   int iThreadIsRunning;
    
    
    //?? var buut probl ar sho iespejams katram zv vajag savu
@@ -1058,14 +1059,10 @@ public:
    ,sockCB_RCV(NULL,NULL)
    ,sockth(*cbSock)
    {
-      ADDR a;
-      if(eng.p_cfg.iRtpPort<1024)eng.p_cfg.iRtpPort=1024;
-      else if(eng.p_cfg.iRtpPort>65534)eng.p_cfg.iRtpPort=65534;
-      a.setPort((unsigned int)eng.p_cfg.iRtpPort);
-      
+
       sockCB_RCV=CTSockRecvCB(onRcv,this);//makes copy
-      sockth.start(sockCB_RCV,&a);
       
+      iThreadIsRunning = 0;
       if(eng.pZrtpGlob==NULL)
       {
          eng.pZrtpGlob=initZrtpG();
@@ -1079,9 +1076,38 @@ public:
       list.removeAll();
       relZrtpG(eng.pZrtpGlob);
    }
+   
+   void start(){
+      if(iThreadIsRunning)return;
+      iThreadIsRunning = 1;
+      ADDR a;
+ 
+      
+      if(eng.p_cfg.iRtpPort==0 || eng.p_cfg.iDoNotRandomizePort == 0){
+         unsigned int port = 0;
+
+         char *getEntropyFromZRTP_tmp(unsigned char *p, int iBytes);
+         getEntropyFromZRTP_tmp((unsigned char *)&port, sizeof(port));
+         
+         port = ((port%10000)&(~1))+30000; //make even and between 30000 and 40000
+         
+         a.setPort(port);
+      }
+      else{
+         if(eng.p_cfg.iRtpPort<1024)eng.p_cfg.iRtpPort=1024;
+         else if(eng.p_cfg.iRtpPort>65534)eng.p_cfg.iRtpPort=65534;
+         
+         a.setPort((unsigned int)eng.p_cfg.iRtpPort);
+      }
+      
+      sockth.start(sockCB_RCV,&a);
+   }
+   
    void stop()
    {
       sockth.close();
+      iThreadIsRunning = 0;
+      
    }
    void startSockets()
    {

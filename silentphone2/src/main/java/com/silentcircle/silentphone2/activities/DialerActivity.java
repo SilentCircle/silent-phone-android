@@ -855,10 +855,11 @@ public class DialerActivity extends TransactionSafeActivity
     @Override
     public boolean onPrepareOptionsMenu(Menu menu) {
         final MenuItem item = menu.findItem(R.id.dial_menu_search);
+        boolean isInSubView = (isInSearchUi() || isInSettingsUi());
         if (item != null) {
-            item.setVisible(!(isInSearchUi() || isInSettingsUi()));
+            item.setVisible(!isInSubView);
         }
-        if (isInSettingsUi()) {
+        if (isInSubView) {
             mDrawerToggle.setDrawerIndicatorEnabled(false);
         }
         return super.onPrepareOptionsMenu(menu);

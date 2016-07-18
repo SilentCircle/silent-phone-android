@@ -30,6 +30,9 @@ package com.silentcircle.messaging.model.event;
 import com.silentcircle.messaging.model.MessageErrorCodes;
 import com.silentcircle.messaging.util.IOUtils;
 
+import java.util.Date;
+import java.util.UUID;
+
 public class ErrorEvent extends Event {
     @MessageErrorCodes.MessageErrorCode private int error;
 
@@ -39,6 +42,8 @@ public class ErrorEvent extends Event {
     private String mSendToDevId;
     private boolean mDuplicate;
     private byte[] mMessageText;
+
+    protected long messageComposeTime;
 
     public ErrorEvent() {
         this(MessageErrorCodes.SUCCESS);
@@ -121,14 +126,27 @@ public class ErrorEvent extends Event {
         this.mDuplicate = duplicate;
     }
 
+    public long getMessageComposeTime() {
+        if (messageComposeTime == 0) {
+            try {
+                messageComposeTime = (UUID.fromString(getMessageId()).timestamp() / 10000) + START_EPOCH;
+            } catch (Exception e) {
+                // failed to determine message compose time, return 0 for unknown
+                messageComposeTime = 0;
+            }
+        }
+        return messageComposeTime;
+    }
+
     public String toFormattedString() {
-        String result = super.toFormattedString()
+        long messageComposeTime = getMessageComposeTime();
+        return super.toFormattedString()
+                + "Message compose time: " + (messageComposeTime  == 0 ? "Unknown" : DATE_FORMAT.format(new Date(messageComposeTime))) + "\n"
                 + "Error: " + getError() + "\n"
                 + "Sender: " + getSender() + "\n"
                 + "Device id: " + getDeviceId() + "\n"
                 + "Message id: " + getMessageId() + "\n"
                 + "Sent to device: " + getSentToDevId() + "\n"
                 + "Is duplicate: " + isDuplicate();
-        return result;
     }
 }

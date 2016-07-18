@@ -343,23 +343,23 @@ public class AuthenticatorActivity extends AppCompatActivity {
         ft.replace(R.id.ProvisioningMainContainer, step, ProvisioningActivity.STEPCORP1_TAG).commitAllowingStateLoss();
     }
 
-    public void accountCorpEmailEntry2(String path, String domain, String username, String redirectUri, boolean can_append_username) {
+    public void accountCorpEmailEntry2(String path, String authType, String domain, String username, String redirectUri) {
         FragmentManager fm = getFragmentManager();
         FragmentTransaction ft = fm.beginTransaction();
         AccountCorpEmailEntry2 step = (AccountCorpEmailEntry2)fm.findFragmentByTag(ProvisioningActivity.STEPCORP2_TAG);
         if (step == null) {
             Bundle b = (Bundle)mBlackPhoneArgs.clone();
             b.putString(ProvisioningActivity.USERNAME, username);
-            b.putString(AccountCorpEmailEntry2.ADFS_PATH, path);
+            b.putString(AccountCorpEmailEntry2.AUTH_URI, path);
+            b.putString(AccountCorpEmailEntry2.AUTH_TYPE, authType);
             b.putString(AccountCorpEmailEntry2.DOMAIN, domain);
             b.putString(AccountCorpEmailEntry2.REDIRECT_URI, redirectUri);
-            b.putBoolean(AccountCorpEmailEntry2.CAN_DO_USERNAME, can_append_username);
             step = AccountCorpEmailEntry2.newInstance(b);
         }
         ft.replace(R.id.ProvisioningMainContainer, step, ProvisioningActivity.STEPCORP2_TAG).commitAllowingStateLoss();
     }
 
-    public void accountCorpEmailEntry3(String username, String auth_code) {
+    public void accountCorpEmailEntry3(String username, String auth_code, String auth_type, String state) {
         mUsername = username;
         FragmentManager fm = getFragmentManager();
         FragmentTransaction ft = fm.beginTransaction();
@@ -368,6 +368,10 @@ public class AuthenticatorActivity extends AppCompatActivity {
             Bundle b = (Bundle)mBlackPhoneArgs.clone();
             b.putString(ProvisioningActivity.USERNAME, username);
             b.putString(AccountCorpEmailEntry2.AUTH_CODE, auth_code);
+            b.putString(AccountCorpEmailEntry2.AUTH_TYPE, auth_type);
+            if (state != null) {
+                b.putString(AccountCorpEmailEntry2.STATE, state);
+            }
             step = AccountCorpEmailEntry3.newInstance(b);
         }
         ft.replace(R.id.ProvisioningMainContainer, step, ProvisioningActivity.STEPCORP3_TAG).commitAllowingStateLoss();
