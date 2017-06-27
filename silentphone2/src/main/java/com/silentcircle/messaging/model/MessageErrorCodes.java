@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2016-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -44,10 +44,14 @@ public class MessageErrorCodes {
 
     @IntDef({SUCCESS, OK,
             GENERIC_ERROR, VERSION_NO_SUPPORTED, BUFFER_TOO_SMALL, NOT_DECRYPTABLE, NO_OWN_ID,
-            JS_FIELD_MISSING, NO_DEVS_FOUND, NO_PRE_KEY_FOUND, NO_SESSION_USER, SESSION_NOT_INITED, OLD_MESSAGE,
+            JS_FIELD_MISSING, NO_DEVS_FOUND, NO_PRE_KEY_FOUND, NO_SESSION_DATA, SESSION_NOT_INITED, OLD_MESSAGE,
             CORRUPT_DATA, AXO_CONV_EXISTS, MAC_CHECK_FAILED, MSG_PADDING_FAILED, SUP_PADDING_FAILED, NO_STAGED_KEYS,
-            RECEIVE_ID_WRONG, SENDER_ID_WRONG, RECV_DATA_LENGTH, WRONG_RECV_DEV_ID, NETWORK_ERROR,
-            NO_SUCH_CURVE, KEY_TYPE_MISMATCH, IDENTITY_KEY_TYPE_MISMATCH, WRONG_BLK_SIZE, UNSUPPORTED_KEY_SIZE})
+            RECEIVE_ID_WRONG, SENDER_ID_WRONG, RECV_DATA_LENGTH, WRONG_RECV_DEV_ID, NETWORK_ERROR, DATA_MISSING,
+            DATABASE_ERROR, REJECT_DATA_RETENTION, PRE_KEY_HASH_WRONG, ILLEGAL_ARGUMENT, CONTEXT_ID_MISMATCH, NO_SUCH_CURVE,
+            KEY_TYPE_MISMATCH, IDENTITY_KEY_TYPE_MISMATCH, WRONG_BLK_SIZE, UNSUPPORTED_KEY_SIZE, MAX_MEMBERS_REACHED,
+            GROUP_CMD_MISSING_DATA, GROUP_CMD_DATA_INCONSISTENT, GROUP_MSG_DATA_INCONSISTENT, GROUP_MEMBER_NOT_STORED,
+            NO_SUCH_ACTIVE_GROUP, WRONG_UPDATE_TYPE, NO_VECTOR_CLOCK, GROUP_UPDATE_RUNNING, GROUP_UPDATE_INCONSISTENT})
+
     @Retention(RetentionPolicy.SOURCE)
     public @interface MessageErrorCode {}
 
@@ -64,23 +68,31 @@ public class MessageErrorCodes {
     public static final int JS_FIELD_MISSING  = -15;     //!< Missing a required JSON field
     public static final int NO_DEVS_FOUND  = -16;        //!< No registered Axolotl devices found for a user
     public static final int NO_PRE_KEY_FOUND  = -17;     //!< Offered Pre-key not found - unknown pre-key id
-    public static final int NO_SESSION_USER  = -18;      //!< No session for this user found
+    public static final int NO_SESSION_DATA  = -18;      //!< No session data for this user - internal problem
     public static final int SESSION_NOT_INITED  = -19;   //!< Session not initialized
     public static final int OLD_MESSAGE  = -20;          //!< Message too old to decrypt
     public static final int CORRUPT_DATA = -21;          //!< Incoming data corrupt
     public static final int AXO_CONV_EXISTS = -22;       //!< Axolotl conversation exists while tyring to setup new one
-    public static final int MAC_CHECK_FAILED = -23;      //!< HMAC check of encrypted message faild
+    public static final int MAC_CHECK_FAILED = -23;      //!< HMAC check of encrypted message failed
     public static final int MSG_PADDING_FAILED = -24;    //!< Incorrect padding of decrypted message
-    public static final int SUP_PADDING_FAILED = -25;    //!< Incorrect padding of decrypted supplemntary data
+    public static final int SUP_PADDING_FAILED = -25;    //!< Incorrect padding of decrypted supplementary data
     public static final int NO_STAGED_KEYS = -26;        //!< Not a real error, just to report that no staged keys available
     public static final int RECEIVE_ID_WRONG = -27;      //!< Receiver's long term id key hash mismatch
     public static final int SENDER_ID_WRONG = -28;       //!< Sender's long term id key hash mismatch
     public static final int RECV_DATA_LENGTH = -29;      //!< Expected length of data does not match received length
     public static final int WRONG_RECV_DEV_ID = -30;     //!< Expected device id does not match actual device id
     public static final int NETWORK_ERROR = -31;         //!< The HTTP request returned an code >400 or SIP failed
+    public static final int DATA_MISSING = -32;          //!< Some data for a function is missing
+    public static final int DATABASE_ERROR = -33;        //!< SQLCipher/SQLite returned and error code
+    public static final int REJECT_DATA_RETENTION = -34; //!< Reject data retention when sending a message
+    public static final int PRE_KEY_HASH_WRONG = -35;    //!< Pre-key check failed during setup of new conversation or re-keying
+    public static final int ILLEGAL_ARGUMENT = -36;      //!< Value of an argument is illegal/out of range
+    public static final int CONTEXT_ID_MISMATCH = -37;   //!< ZINA ratchet data is probably out of sync
+
+
     // ****** Ranges to simplify mapping of error codes, all positive
     private static final int MIN_MSG_ERROR = GENERIC_ERROR * -1;
-    private static final int MAX_MSG_ERROR = NETWORK_ERROR * -1;
+    private static final int MAX_MSG_ERROR = ILLEGAL_ARGUMENT * -1;
 
     // Error codes for public key modules, between -100 and -199
     public static final int NO_SUCH_CURVE     = -100;    //!< Curve not supported
@@ -94,11 +106,28 @@ public class MessageErrorCodes {
     private static final int MAX_RATCHET_ERROR = IDENTITY_KEY_TYPE_MISMATCH * -1;
 
     // Error codes for encryption/decryption, HMAC
-    public static final int WRONG_BLK_SIZE = -300;         //!< The IV or other data length did not match the cipher's blocksize
+    public static final int WRONG_BLK_SIZE = -300;         //!< The IV or other data length did not match the cipher's block size
     public static final int UNSUPPORTED_KEY_SIZE = -301;   //!< Key size not supported for this cipher
     private static final int MIN_ENC_ERROR = WRONG_BLK_SIZE * -1;
     private static final int MAX_ENC_ERROR = UNSUPPORTED_KEY_SIZE * -1;
 
+    // Error codes group chat
+    public static final int GROUP_ERROR_BASE = -400;        //!< Base error code: -400 generic error, -401 thru -449 are SQL errors
+    public static final int MAX_MEMBERS_REACHED = -450;     //!< Maximum members for this group reached
+    public static final int GROUP_CMD_MISSING_DATA = -451;  //<! Message has type group command but no data
+    public static final int GROUP_CMD_DATA_INCONSISTENT = -452; //<! Message is group command but has no command
+    public static final int GROUP_MSG_DATA_INCONSISTENT = -453; //<! Message is normal group message command but has no data
+    public static final int GROUP_MEMBER_NOT_STORED = -454;     //<! Cannot store a new member
+    public static final int NO_SUCH_ACTIVE_GROUP = -455;    //<! Group does not exist or is not active
+    public static final int WRONG_UPDATE_TYPE = -456;      //<! Update type not known
+    public static final int NO_VECTOR_CLOCK = -457;        //<! No vector clock for group/event pair
+    public static final int GROUP_UPDATE_RUNNING = -458;   //<! Currently preparing an sending group updates
+    public static final int GROUP_UPDATE_INCONSISTENT = -459; //<! A Prepared change set is not available
+
+
+    private static final int MIN_GROUP_ERROR = GROUP_ERROR_BASE * -1;
+    private static final int MAX_GROUP_SQL_ERROR = MAX_MEMBERS_REACHED * -1;
+    private static final int MAX_GROUP_ERROR = GROUP_UPDATE_INCONSISTENT * -1;
 
     private static final int[] MSG_TO_STRING_IDS = {
             R.string.message_error_msg_generic,             // 10
@@ -123,6 +152,12 @@ public class MessageErrorCodes {
             R.string.message_error_recv_data_length,        // 29
             R.string.message_error_wrong_recv_dev_id,       // 30
             R.string.message_error_network_error,           // 31
+            R.string.message_error_data_missing,            // 32
+            R.string.message_error_database_error,          // 33
+            R.string.message_error_reject_data_retention,   // 34
+            R.string.message_error_pre_key_hash_wrong,      // 35
+            R.string.message_error_illegal_argument,        // 36
+            R.string.message_error_context_id_mismatch
     };
 
     private static final int[] PUB_TO_STRING_IDS = {
@@ -139,6 +174,18 @@ public class MessageErrorCodes {
             R.string.message_error_enc_key                  // 301
     };
 
+    private static final int[] GROUP_TO_STRING_IDS = {
+            R.string.message_error_group_450,
+            R.string.message_error_group_451,
+            R.string.message_error_group_452,
+            R.string.message_error_group_453,
+            R.string.message_error_group_454,
+            R.string.message_error_group_455,
+            R.string.message_error_group_456,
+            R.string.message_error_group_457,
+            R.string.message_error_group_458,
+            R.string.message_error_group_459
+    };
     public static int messageErrorToStringId(@MessageErrorCode final int error) {
         if (error >= 0)
             return R.string.message_error_no_error;
@@ -156,6 +203,11 @@ public class MessageErrorCodes {
         }
         else if (code >= MIN_ENC_ERROR && code <= MAX_ENC_ERROR) {
             return ENC_TO_STRING_IDS[code - MIN_ENC_ERROR];
+        }
+        else if (code >= MIN_GROUP_ERROR && code <= MAX_GROUP_ERROR) {
+            if (code < MAX_GROUP_SQL_ERROR)
+                return R.string.message_error_group_400;
+            return GROUP_TO_STRING_IDS[code - MAX_GROUP_SQL_ERROR];
         }
         else
             return R.string.message_error_unknown;

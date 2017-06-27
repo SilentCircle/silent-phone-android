@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2014-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -47,7 +47,7 @@ import org.json.JSONObject;
 import java.io.File;
 import java.util.List;
 
-import axolotl.AxolotlNative;
+import zina.ZinaNative;
 
 /**
  * Test Repository implementation
@@ -88,15 +88,15 @@ public class RepositoryTester extends AndroidTestCase {
             if (dbFile.exists())
                 dbFile.delete();
             Log.d("RepoTester", "DB path: " + dbFile.getAbsolutePath());
-            AxolotlNative.repoOpenDatabase(dbFile.getAbsolutePath(), repoKey);
+            ZinaNative.repoOpenDatabase(dbFile.getAbsolutePath(), repoKey);
             firstSetup = true;
         }
     }
 
     public void testConversation() throws Exception {
-        assertTrue(AxolotlNative.repoIsOpen());
+        assertTrue(ZinaNative.repoIsOpen());
 
-        DbConversationRepository testConv = new DbConversationRepository(getContext(), userName);
+        DbConversationRepository testConv = new DbConversationRepository(userName);
         assertTrue(testConv.exists());   // Does a repo for this local user exist?
 
         assertFalse(testConv.exists(partners[0]));  // not yet
@@ -126,9 +126,9 @@ public class RepositoryTester extends AndroidTestCase {
     }
 
     public void testEventHistory() throws Exception {
-        assertTrue(AxolotlNative.repoIsOpen());
+        assertTrue(ZinaNative.repoIsOpen());
 
-        DbConversationRepository convRepo = new DbConversationRepository(getContext(), userName);
+        DbConversationRepository convRepo = new DbConversationRepository(userName);
         Conversation conversation = new Conversation(partners[1]);
         convRepo.save(conversation);
 
@@ -141,26 +141,18 @@ public class RepositoryTester extends AndroidTestCase {
         Message msg = new Message();
         msg.setId(events[0]);                           // a message (event) *must* have an id
         msg.setSender(partners[1]);                     // just for fun
-        msg.addNetMessageId(4711L);
-        msg.addNetMessageId(815L);
         evHistory.save(msg);                            // Save the message
 
         Event msgRead = evHistory.findById(events[0]);  // ready back with the event id
         assertTrue(msgRead instanceof Message);         // and should decode as Message
         assertEquals(events[0], msgRead.getId());
         assertEquals(partners[1], ((Message) msgRead).getSender());
-        List<Long> netIds = ((Message) msgRead).getNetMessageIds();
-        assertEquals(2, netIds.size());
-        long id = netIds.get(0);
-        assertEquals(4711L, id);
-        id = netIds.get(1);
-        assertEquals(815L, id);
 
         msgRead = evHistory.findById(events[1]);
         assertNull(msgRead);
 
         int[] code = new int[1];
-        byte[] msgByte = AxolotlNative.loadEventWithMsgId(IOUtils.encode(events[0]), code);
+        byte[] msgByte = ZinaNative.loadEventWithMsgId(IOUtils.encode(events[0]), code);
         assertNotNull(msgByte);
         assertTrue((msgByte.length > 1));
         final JSONEventAdapter adapter = new JSONEventAdapter();
@@ -211,10 +203,10 @@ public class RepositoryTester extends AndroidTestCase {
 
     byte[] objectData = {0x0d, 0x0e, 0x0a, 0x0d, 0x0c, 0x0a, 0x0f, 0x0e};
     public void testObjectHistory() throws Exception {
-        assertTrue(AxolotlNative.repoIsOpen());
+        assertTrue(ZinaNative.repoIsOpen());
 
         // First setup a conversation and a message inside the conversation
-        DbConversationRepository convRepo = new DbConversationRepository(getContext(), userName);
+        DbConversationRepository convRepo = new DbConversationRepository(userName);
         Conversation conversation = new Conversation(partners[2]);
         convRepo.save(conversation);
 
@@ -289,71 +281,71 @@ public class RepositoryTester extends AndroidTestCase {
     public static final int SQLITE_ROW = 100;
 
     public void testAttachmentStatus() throws Exception {
-        assertTrue(AxolotlNative.repoIsOpen());
+        assertTrue(ZinaNative.repoIsOpen());
 
         String msgId_1 = "msgid_1";
         String msgId_2 = "msgid_2";
         String msgId_3 = "msgid_3";
         String msgId_4 = "msgid_4";
 
-        int sqlCode = AxolotlNative.storeAttachmentStatus(IOUtils.encode(msgId_1), null, 1);
+        int sqlCode = ZinaNative.storeAttachmentStatus(IOUtils.encode(msgId_1), null, 1);
         assertFalse((sqlCode > SQLITE_OK && sqlCode < SQLITE_ROW));
 
         int[] code = new int[1];
-        int status = AxolotlNative.loadAttachmentStatus(IOUtils.encode(msgId_1), null, code);
+        int status = ZinaNative.loadAttachmentStatus(IOUtils.encode(msgId_1), null, code);
         assertEquals(1, status);
         assertFalse((sqlCode > SQLITE_OK && sqlCode < SQLITE_ROW));
 
         // Update the message status to 2
-        sqlCode = AxolotlNative.storeAttachmentStatus(IOUtils.encode(msgId_1), null, 2);
+        sqlCode = ZinaNative.storeAttachmentStatus(IOUtils.encode(msgId_1), null, 2);
         assertFalse((sqlCode > SQLITE_OK && sqlCode < SQLITE_ROW));
 
         // Check the status
-        status = AxolotlNative.loadAttachmentStatus(IOUtils.encode(msgId_1), null, code);
+        status = ZinaNative.loadAttachmentStatus(IOUtils.encode(msgId_1), null, code);
         assertEquals(2, status);
         assertFalse((sqlCode > SQLITE_OK && sqlCode < SQLITE_ROW));
 
-        sqlCode = AxolotlNative.deleteAttachmentStatus(IOUtils.encode(msgId_1), null);
+        sqlCode = ZinaNative.deleteAttachmentStatus(IOUtils.encode(msgId_1), null);
         assertFalse((sqlCode > SQLITE_OK && sqlCode < SQLITE_ROW));
 
         // No entry any more, returns -1
-        status = AxolotlNative.loadAttachmentStatus(IOUtils.encode(msgId_1), null, code);
+        status = ZinaNative.loadAttachmentStatus(IOUtils.encode(msgId_1), null, code);
         assertEquals(-1, status);
         assertFalse((sqlCode > SQLITE_OK && sqlCode < SQLITE_ROW));
 
         // Store 4 msg ids with same status
-        sqlCode = AxolotlNative.storeAttachmentStatus(IOUtils.encode(msgId_1), null, 1);
+        sqlCode = ZinaNative.storeAttachmentStatus(IOUtils.encode(msgId_1), null, 1);
         assertFalse((sqlCode > SQLITE_OK && sqlCode < SQLITE_ROW));
-        sqlCode = AxolotlNative.storeAttachmentStatus(IOUtils.encode(msgId_2), null, 1);
+        sqlCode = ZinaNative.storeAttachmentStatus(IOUtils.encode(msgId_2), null, 1);
         assertFalse((sqlCode > SQLITE_OK && sqlCode < SQLITE_ROW));
-        sqlCode = AxolotlNative.storeAttachmentStatus(IOUtils.encode(msgId_3), null, 1);
+        sqlCode = ZinaNative.storeAttachmentStatus(IOUtils.encode(msgId_3), null, 1);
         assertFalse((sqlCode > SQLITE_OK && sqlCode < SQLITE_ROW));
-        sqlCode = AxolotlNative.storeAttachmentStatus(IOUtils.encode(msgId_4), null, 1);
+        sqlCode = ZinaNative.storeAttachmentStatus(IOUtils.encode(msgId_4), null, 1);
         assertFalse((sqlCode > SQLITE_OK && sqlCode < SQLITE_ROW));
 
         // Load all msg ids with the same status
-        String[] msgIds = AxolotlNative.loadMsgsIdsWithAttachmentStatus(1, code);
+        String[] msgIds = ZinaNative.loadMsgsIdsWithAttachmentStatus(1, code);
         assertEquals(4, msgIds.length);
         assertFalse(msgIds[0].contains(":"));
 //        assertTrue(msgIds[0].equals(msgId_1));
 
         // Update 2 msg ids with a new status
-        sqlCode = AxolotlNative.storeAttachmentStatus(IOUtils.encode(msgId_3), null, 2);
+        sqlCode = ZinaNative.storeAttachmentStatus(IOUtils.encode(msgId_3), null, 2);
         assertFalse((sqlCode > SQLITE_OK && sqlCode < SQLITE_ROW));
-        sqlCode = AxolotlNative.storeAttachmentStatus(IOUtils.encode(msgId_4), null, 2);
+        sqlCode = ZinaNative.storeAttachmentStatus(IOUtils.encode(msgId_4), null, 2);
         assertFalse((sqlCode > SQLITE_OK && sqlCode < SQLITE_ROW));
 
         // Delete all msg is with status 2
-        sqlCode = AxolotlNative.deleteWithAttachmentStatus(2);
+        sqlCode = ZinaNative.deleteWithAttachmentStatus(2);
         assertFalse((sqlCode > SQLITE_OK && sqlCode < SQLITE_ROW));
 
         // No entries with status 2
-        msgIds = AxolotlNative.loadMsgsIdsWithAttachmentStatus(1, code);
+        msgIds = ZinaNative.loadMsgsIdsWithAttachmentStatus(1, code);
         assertEquals(2, msgIds.length);
     }
 
     public void testAttachmentStatusPartner() throws Exception {
-        assertTrue(AxolotlNative.repoIsOpen());
+        assertTrue(ZinaNative.repoIsOpen());
 
         String partner = "partner";
         String msgId_1 = "msgid_1";
@@ -361,66 +353,66 @@ public class RepositoryTester extends AndroidTestCase {
         String msgId_3 = "msgid_3";
         String msgId_4 = "msgid_4";
 
-        int sqlCode = AxolotlNative.storeAttachmentStatus(IOUtils.encode(msgId_1), IOUtils.encode(partner), 1);
+        int sqlCode = ZinaNative.storeAttachmentStatus(IOUtils.encode(msgId_1), IOUtils.encode(partner), 1);
         assertFalse((sqlCode > SQLITE_OK && sqlCode < SQLITE_ROW));
 
         int[] code = new int[1];
-        int status = AxolotlNative.loadAttachmentStatus(IOUtils.encode(msgId_1), IOUtils.encode(partner), code);
+        int status = ZinaNative.loadAttachmentStatus(IOUtils.encode(msgId_1), IOUtils.encode(partner), code);
         assertEquals(1, status);
         assertFalse((sqlCode > SQLITE_OK && sqlCode < SQLITE_ROW));
 
         // Update the message status to 2
-        sqlCode = AxolotlNative.storeAttachmentStatus(IOUtils.encode(msgId_1), IOUtils.encode(partner), 2);
+        sqlCode = ZinaNative.storeAttachmentStatus(IOUtils.encode(msgId_1), IOUtils.encode(partner), 2);
         assertFalse((sqlCode > SQLITE_OK && sqlCode < SQLITE_ROW));
 
         // Check the status
-        status = AxolotlNative.loadAttachmentStatus(IOUtils.encode(msgId_1), IOUtils.encode(partner), code);
+        status = ZinaNative.loadAttachmentStatus(IOUtils.encode(msgId_1), IOUtils.encode(partner), code);
         assertEquals(2, status);
         assertFalse((sqlCode > SQLITE_OK && sqlCode < SQLITE_ROW));
 
-        sqlCode = AxolotlNative.deleteAttachmentStatus(IOUtils.encode(msgId_1), IOUtils.encode(partner));
+        sqlCode = ZinaNative.deleteAttachmentStatus(IOUtils.encode(msgId_1), IOUtils.encode(partner));
         assertFalse((sqlCode > SQLITE_OK && sqlCode < SQLITE_ROW));
 
         // No entry any more, returns -1
-        status = AxolotlNative.loadAttachmentStatus(IOUtils.encode(msgId_1), IOUtils.encode(partner), code);
+        status = ZinaNative.loadAttachmentStatus(IOUtils.encode(msgId_1), IOUtils.encode(partner), code);
         assertEquals(-1, status);
         assertFalse((sqlCode > SQLITE_OK && sqlCode < SQLITE_ROW));
 
         // Store 4 msg ids with same status
-        sqlCode = AxolotlNative.storeAttachmentStatus(IOUtils.encode(msgId_1), IOUtils.encode(partner), 1);
+        sqlCode = ZinaNative.storeAttachmentStatus(IOUtils.encode(msgId_1), IOUtils.encode(partner), 1);
         assertFalse((sqlCode > SQLITE_OK && sqlCode < SQLITE_ROW));
-        sqlCode = AxolotlNative.storeAttachmentStatus(IOUtils.encode(msgId_2), IOUtils.encode(partner), 1);
+        sqlCode = ZinaNative.storeAttachmentStatus(IOUtils.encode(msgId_2), IOUtils.encode(partner), 1);
         assertFalse((sqlCode > SQLITE_OK && sqlCode < SQLITE_ROW));
-        sqlCode = AxolotlNative.storeAttachmentStatus(IOUtils.encode(msgId_3), IOUtils.encode(partner), 1);
+        sqlCode = ZinaNative.storeAttachmentStatus(IOUtils.encode(msgId_3), IOUtils.encode(partner), 1);
         assertFalse((sqlCode > SQLITE_OK && sqlCode < SQLITE_ROW));
-        sqlCode = AxolotlNative.storeAttachmentStatus(IOUtils.encode(msgId_4), IOUtils.encode(partner), 1);
+        sqlCode = ZinaNative.storeAttachmentStatus(IOUtils.encode(msgId_4), IOUtils.encode(partner), 1);
         assertFalse((sqlCode > SQLITE_OK && sqlCode < SQLITE_ROW));
 
         // Load all msg ids with the same status
-        String[] msgIds = AxolotlNative.loadMsgsIdsWithAttachmentStatus(1, code);
+        String[] msgIds = ZinaNative.loadMsgsIdsWithAttachmentStatus(1, code);
         assertEquals(4, msgIds.length);
         assertTrue(msgIds[0].contains(":"));
 //        assertTrue(msgIds[0].equals(msgId_1));
 
         // Update 2 msg ids with a new status
-        sqlCode = AxolotlNative.storeAttachmentStatus(IOUtils.encode(msgId_3), IOUtils.encode(partner), 2);
+        sqlCode = ZinaNative.storeAttachmentStatus(IOUtils.encode(msgId_3), IOUtils.encode(partner), 2);
         assertFalse((sqlCode > SQLITE_OK && sqlCode < SQLITE_ROW));
-        sqlCode = AxolotlNative.storeAttachmentStatus(IOUtils.encode(msgId_4), IOUtils.encode(partner), 2);
+        sqlCode = ZinaNative.storeAttachmentStatus(IOUtils.encode(msgId_4), IOUtils.encode(partner), 2);
         assertFalse((sqlCode > SQLITE_OK && sqlCode < SQLITE_ROW));
 
         // Delete all msg is with status 2
-        sqlCode = AxolotlNative.deleteWithAttachmentStatus(2);
+        sqlCode = ZinaNative.deleteWithAttachmentStatus(2);
         assertFalse((sqlCode > SQLITE_OK && sqlCode < SQLITE_ROW));
 
         // No entries with status 2
-        msgIds = AxolotlNative.loadMsgsIdsWithAttachmentStatus(1, code);
+        msgIds = ZinaNative.loadMsgsIdsWithAttachmentStatus(1, code);
         assertEquals(2, msgIds.length);
     }
 
     public void testEvengtHistoryPaging() throws Exception {
-        assertTrue(AxolotlNative.repoIsOpen());
+        assertTrue(ZinaNative.repoIsOpen());
 
-        DbConversationRepository convRepo = new DbConversationRepository(getContext(), userName);
+        DbConversationRepository convRepo = new DbConversationRepository(userName);
         Conversation conversation = new Conversation(partners[1]);
         convRepo.save(conversation);
 
@@ -481,9 +473,9 @@ public class RepositoryTester extends AndroidTestCase {
 
 
     public void testEvengtHistoryPagingWithDelete() throws Exception {
-        assertTrue(AxolotlNative.repoIsOpen());
+        assertTrue(ZinaNative.repoIsOpen());
 
-        DbConversationRepository convRepo = new DbConversationRepository(getContext(), userName);
+        DbConversationRepository convRepo = new DbConversationRepository(userName);
         Conversation conversation = new Conversation(partners[1]);
         convRepo.save(conversation);
 

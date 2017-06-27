@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2016-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -25,10 +25,10 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-
 package com.silentcircle.common.util;
 
 import android.content.ContentResolver;
+import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.res.AssetFileDescriptor;
@@ -40,9 +40,10 @@ import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
-import android.util.Log;
 
+import com.silentcircle.logs.Log;
 import com.silentcircle.messaging.util.IOUtils;
+import com.silentcircle.silentphone2.BuildConfig;
 import com.silentcircle.silentphone2.R;
 
 import java.io.File;
@@ -85,31 +86,37 @@ public class RingtoneUtils {
      * @return Uri ringtone URI
      */
     public static Uri getDefaultRingtoneUri(Context ctx, int type) {
-        Uri uri;
+        Uri uri = null;
 
-        uri = RingtoneManager.getActualDefaultRingtoneUri(ctx, type);
+        try {
+            uri = RingtoneManager.getActualDefaultRingtoneUri(ctx, type);
+        } catch (SecurityException exception) {
+            // When using an external ringtone, some devices actually do not throw an
+            // exception even if you don't have any storage permissions
+        }
 
         if (uri == null) {
-            // The default ringtone doesn't exist - probably a tablet
+            // Try to get any type of ringtone
+            uri = RingtoneManager.getValidRingtoneUri(ctx);
+        }
+
+        if (uri == null) {
+            // The default ringtone still doesn't exist - probably a tablet
             // Return the first available
             RingtoneManager rm = new RingtoneManager(ctx);
             rm.setType(type);
 
             Cursor cursor = rm.getCursor();
-            cursor.moveToFirst();
+            if (cursor.moveToFirst()) {
+                String idString = cursor.getString(RingtoneManager.ID_COLUMN_INDEX);
+                String uriString = cursor.getString(RingtoneManager.URI_COLUMN_INDEX);
 
-            String idString = cursor.getString(RingtoneManager.ID_COLUMN_INDEX);
-            String uriString = cursor.getString(RingtoneManager.URI_COLUMN_INDEX);
-
-            uri = Uri.parse(uriString + '/' + idString);
-
+                uri = Uri.parse(uriString + '/' + idString);
+            }
             cursor.close();
-
-            return uri;
-        } else {
-            // Return system default ringtone
-            return uri;
         }
+
+        return uri;
     }
 
     public static Uri getDefaultRingtoneUri(Context ctx) {
@@ -130,8 +137,19 @@ public class RingtoneUtils {
 
         Map<String, String> map = new HashMap<>();
         while (cursor.moveToNext()) {
-            String notificationTitle = cursor.getString(RingtoneManager.TITLE_COLUMN_INDEX);
-            String notificationUri = cursor.getString(RingtoneManager.URI_COLUMN_INDEX);
+            String notificationUri;
+            try {
+                notificationUri = ContentUris.withAppendedId
+                        (Uri.parse(cursor.getString(RingtoneManager.URI_COLUMN_INDEX)),
+                                cursor.getLong(RingtoneManager.ID_COLUMN_INDEX)).toString();
+            } catch (IllegalArgumentException exception) {
+                continue;
+            }
+
+            String notificationTitle = new String();
+            try {
+                notificationTitle = cursor.getString(RingtoneManager.TITLE_COLUMN_INDEX);
+            } catch (IllegalArgumentException ignore) {}
 
             map.put(notificationTitle, notificationUri);
         }
@@ -139,8 +157,13 @@ public class RingtoneUtils {
         return map;
     }
 
+    @Nullable
     public static Map<String, String> getRingtones(@NonNull Context context) {
-        return getRingtones(context, RingtoneManager.TYPE_RINGTONE);
+        try {
+            return getRingtones(context, RingtoneManager.TYPE_RINGTONE);
+        } catch (Throwable t) {
+            return null;
+        }
     }
 
     /**
@@ -154,7 +177,7 @@ public class RingtoneUtils {
      */
     public static boolean isRingtoneValid(@NonNull Context context, @NonNull Uri ringTone) {
         Map<String, String> ringTones = getRingtones(context);
-        return (ringTones.values().contains(ringTone.toString()));
+        return ringTones != null && (ringTones.values().contains(ringTone.toString()));
     }
 
     /**
@@ -188,7 +211,7 @@ public class RingtoneUtils {
         ringtoneDir.mkdirs();
         File ringtone = new File(ringtoneDir, assetName);
 
-        Uri assetUri = Uri.parse("android.resource://com.silentcircle.silentphone/" + resourceId);
+        Uri assetUri = Uri.parse("android.resource://" + BuildConfig.APPLICATION_ID + "/" + resourceId);
         AssetFileDescriptor assetRingtoneDescriptor = null;
         try {
             assetRingtoneDescriptor = contentResolver.openAssetFileDescriptor(assetUri, "r");

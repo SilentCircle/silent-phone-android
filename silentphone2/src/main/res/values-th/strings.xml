@@ -1,0 +1,1401 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+// +++LICENSE_BEGIN+++
+/*
+ * Copyright © 2014, Silent Circle
+ * All rights reserved.
+ */
+// +++LICENSE_END+++
+-->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+
+    <string name="next">ถัดไป</string>
+    <string name="back">กลับ</string>
+    <string name="dismiss_call">ปฏิเสธ</string>
+    <string name="answer_call">ตอบกลับ</string>
+    <string name="verify_infotext_top">เปรียบเทียบกับคู่สนธนา</string>
+    <string name="verify_infotext_bottom">ใส่ชื่อคู่สนธนาตรงนี้</string>
+    <string name="accept_video">ยอมรับ</string>
+    <string name="close_dialog">ปิด</string>
+    <string name="cancel_dialog">ยกเลิก</string>
+    <string name="confirm_dialog">ตกลง</string>
+    <string name="record_dialog">บันทึก</string>
+    <string name="stop_dialog">หยุด</string>
+    <string name="provision_later">ทีหลัง</string>
+    <string name="crypto_padlock">กุญแจเพื่อแสดงขั้นตอนความปลอดภัย</string>
+    <string name="error_code">รหัสผิดพลาด</string>
+    <string name="go_offline">เข้าสู่ออฟไลน์</string>
+    <string name="wipe_phone">ล้างSilent Phone</string>
+
+    <!-- Enable translation of server provided SIP message. -->
+
+    <string name="sip_state_calling">กำลังโทร...</string>
+    <string name="sip_state_connecting">กำลังเชื่อมต่อ...</string>
+    <string name="sip_state_ringing">เสียงเตือน</string>
+    <string name="sip_state_ended">สิ้นสุดการโทร</string>
+    <string name="sip_state_online">ออนไลน์</string>
+    <string name="sip_state_offline">ออฟไลน์</string>
+    <string name="sip_error_register">ไม่สามารถลงทะเบียนได้</string>
+    <string name="sip_error_generic">ไม่สามารถเชื่อมต่อได้</string>
+    <string name="sip_error_decline">ยกเลิกการโทร</string>
+    <string name="sip_error_no_user">ไม่พบผู้ใช้</string>
+    <string name="sip_error_no_cover">ไม่มีสัญญาณ</string>
+    <string name="sip_error_no_server">ไม่สามารถเชื่อต่อระบบได้</string>
+    <string name="sip_error_call_answered_elsewhere">รับสายที่อื่น</string>
+    <string name="sip_error_call_declined_elsewhere">Call declined elsewhere</string>
+    <string name="sip_error_call_decline_dr_blocked_errblk">User not available\n\nThe user/device
+        you are trying to reach is not available at this time.</string>
+    <string name="sip_error_call_decline_dr_rejected_errdrj">Call declined\n\nThe remote party
+        declined to communicate with users subject to data retention.</string>
+    <string name="sip_error_call_decline_dr_blocked_errblk_log">User not available</string>
+    <string name="sip_error_call_decline_dr_rejected_errdrj_log">Call declined: data retention rejected</string>
+
+    <!-- incoming call type message -->
+    <string name="call_error">ผิดพลาด</string>
+    <string name="call_unavailable">ใช้งานไม่ได้</string>
+
+    <!-- Strings to display security status, handle with care during translations -->
+    <string name="secstate_secure">ปลอดภัย</string>
+    <string name="secstate_secure_question">ปลอดภัย?</string>
+    <string name="secstate_not_secure">ไม่ปลอดภัย</string>
+    <string name="secstate_looking">กำลังมองหาผู้ใช้งาน</string>
+    <string name="secstate_going_sec">เปิดความปลอดภัย</string>
+    <string name="secstate_sec_disabled">ไม่ปลอดภัย- ไม่เปิดใช้งาน</string>
+    <string name="to_server_only">ไปที่ระบบ</string>
+
+    <!-- Strings for the crypto panel -->
+    <string name="crypto_peer_name">ชื่อผู้ใช้งาน</string>
+    <string name="crypto_peer_client">ZRTP ลูกค้าที่ใช้งาน</string>
+    <string name="crypto_peer_client_id">ZRTP รหัสลูกค้า</string>
+    <string name="crypto_peer_client_proto">เวอร์ชั่นโปรโตคอล</string>
+    <string name="crypto_secure_since">ปกป้องตั้งแต่</string>
+    <string name="crypto_crypto_components">ส่วนประกอบการเข้ารหัสลับ</string>
+    <string name="crypto_crypto_components_tls">TLS Ciphers:</string>
+    <string name="crypto_crypto_components_zhash">ZRTP Hash:</string>
+    <string name="crypto_crypto_components_pk">เปลี่ยนรหัส:</string>
+    <string name="crypto_crypto_components_cipher">ตัวเลข:</string>
+    <string name="crypto_crypto_components_hash">Hash:</string>
+    <string name="crypto_crypto_components_sauth">SRTP Auth Tag:</string>
+    <string name="crypto_shared_secrets">แบ่งปันความลับ</string>
+
+    <!-- strings for the call manager section headers -->
+    <string name="call_mng_conference">การประชุม</string>
+    <string name="call_mng_private">ส่วนตัว</string>
+    <string name="call_mng_in_out">กำลังเข้า, กำลังออก</string>
+
+    <!-- strings for the ZRTP warning/error panel -->
+    <string name="zrtp_we_error">ผิดพลาดบนZRTP</string>
+    <string name="zrtp_we_warn">กำลังเตือนZRTP</string>
+    <string name="srtp_we_warn">กำลังเตือนSRTP</string>
+    <string name="zrtp_show_details">แสดงรายละเอียด</string>
+    <string name="zrtp_hide_details">ซ่อนรายละเอียด</string>
+
+    <!-- Strings for the provisioning activity and messages -->
+    <string name="provisioning_welcome">ต้อนรับสู่Silent Circle</string>
+    <string name="provisioning_vertu_welcome">ต้อนรับสู่Silent Circle ร่วมกันหุ้นส่วน Vertu</string>
+    <string name="provisioning_username_hint">ชื่อผู้ใช้</string>
+    <string name="provisioning_password_hint">รหัสผ่าน</string>
+    <string name="provisioning_firstname_hint">ใส่ชื่อ</string>
+    <string name="provisioning_lastname_hint">ใส่นามสกุล</string>
+    <string name="provisioning_email_hint">ที่อยู่อีเมลล์</string>
+    <string name="provisioning_no_network">เครือข่ายไม่พร้อมใช้งาน</string>
+    <string name="provisioning_no_data">ไม่มีการจัดเตรียมข้อมูลให้พร้อมใช้งาน</string>
+    <string name="provisioning_wrong_format">รูปแบบข้อมูลผิดพลาด: </string>
+    <string name="provisioning_error">การเตรียมการผิดพลาด</string>
+    <string name="provisioning_info">ข้อมูล</string>
+    <string name="provisioning_user_req">ต้องการชื่อผู้ใช้, โปรดตรวจสอบ</string>
+    <string name="provisioning_user_invalid">ชื่อผู้ใช้ต้องเริ่มด้วยตัวอักษรพิมพ์เล็กหรือตัวเลข</string>
+    <string name="provisioning_psn_invalid">ไม่พบเลขซีเรียลที่ใช้งานได้</string>
+    <string name="provisioning_password_req">ต้องใส่รหัสผ่าน. โปรดตรวจสอบ</string>
+    <string name="provisioning_firstname_req">ต้องใส่ชื่อจริง. โปรดตรวจสอบ</string>
+    <string name="provisioning_lastname_req">ต้องใส่นามสกุล. โปรดตรวจสอบ</string>
+    <string name="provisioning_email_req">ต้องใส่ที่อยู่อีเมลล์. โปรดตรวจสอบ</string>
+    <string name="provisioning_email_invalid">ที่อยู่อีเมลล์สามารถใช้ได้. โปรดตรวจสอบ</string>
+    <string name="provisioning_already_registered">อุปกรณ์ได้รับการลงทะเบียนแล้ว</string>
+    <string name="provisioning_agreement">ด้วยการเข้าใช้งาน, คุณกำลังยอมรับเรา</string>
+    <string name="provisioning_manage_accounts"><a href="https://accounts.silentcircle.com/">Create new account or manage existing account</a></string>
+    <string name="provisioning_manage_accounts_dev"><a href="https://accounts-dev.silentcircle.com/">Create new account or manage existing account</a></string>
+    <string name="pwstrength_weak">ระดับของรหัสผ่าน : ง่าย</string>
+    <string name="pwstrength_good">ระดับของรหัสผ่าน : พอใช้</string>
+    <string name="pwstrength_strong">ระดับของรหัสผ่าน : ยาก</string>
+    <string name="provisioning_show_pw">แสดงรหัสผ่าน</string>
+    <string name="provisioning_privacy_tc">ฉันได้อ่านและยอมรับเงื่อนไขต่างๆจาก <a href="https://accounts.silentcircle.com/terms/">Silent Circle</a></string>
+    <string name="provisioning_terms">ส่วนของการบริการ</string>
+    <string name="provisioning_privacy">นโยบายความเป็นส่วนตัว</string>
+    <string name="provisioning_get_news">ฉันต้องการรับข่าวสารพิเศษต่างๆจากทางระบบ</string>
+    <string name="provisioning_new_account">สร้างบัญชีใหม่</string>
+    <string name="provisioning_existing_account">เข้าใช้บัญชีที่มีอยู่แล้ว</string>
+    <string name="provisioning_existing_account_bp">เข้าใช้</string>
+    <string name="provisioning_sso">เข้าใช้ SSO</string>
+    <string name="provisioning_create">สร้าง</string>
+    <string name="provisioning_forgot_pwd">ฉันลืมรหัสผ่านของตัวเอง</string>
+    <string name="provisioning_auth_token_hint">Enter authentication token</string>
+    <string name="provisioning_auth_token_text">Two-factor authentication is enabled. Please enter an authentication token below.</string>
+    <string name="provisioning_auth_token_error">Provisioning Error: You have specified an incorrect authentication token.</string>
+    <string name="provisioning_all_fields_required">ต้องใส่ข้อมูลให้ครบถ้วน</string>
+    <string name="provisioning_domain_error">An enterprise server could not be located, or could not be authenticated, for the %s domain</string>
+    <string name="provisioning_ssl_date_invalid">วันที่ในใบรับรองหมดอายุ</string>
+    <string name="provisioning_ssl_expired">ใบรับรองหมดอายุ</string>
+    <string name="provisioning_ssl_idmismatch">รายชื่อโฮสไม่ตรงกัน</string>
+    <string name="provisioning_ssl_notyetvalid">ใบรับรองยังไม่สามารถใช้งานได้</string>
+    <string name="provisioning_ssl_untrusted">ใบรับรองไม่น่าเชื่อถือ</string>
+    <string name="provisioning_version">เวอร์ชั่น</string>
+    <string name="thanks_number">โทรศัพท์:</string>
+    <string name="thanks_name">ชื่อ:</string>
+    <string name="thanks_organization">การจัดการ:</string>
+    <string name="thanks_data_retention">การเก็บข้อมูล:</string>
+    <string name="thanks_data_retention_on">เปิด &#9432;</string>
+    <string name="thanks_plan">แผน:</string>
+    <string name="preferred_sas_type">รูปแบบ SAS ที่แนะนำ</string>
+    <string name="sas_char_mode">SAS ถูกแสดงแบบ 4 ตัวอักษร</string>
+    <string name="sas_word_mode">SAS ถูกแสดงแบบ 2 คำ</string>
+    <string name="sas_emoji_mode">SAS ถูกแสดงแบบ 4 รูปภาพ</string>
+    <string name="sp_ringtone">ริงโทน</string>
+    <string name="no_ringtone">พื้นฐาน</string>
+    <string name="preferred_algorithms">Prefer non-NIST suite</string>
+    <string name="nist_preferred">Always prefer non-NIST algorithms if available: Twofish, Skein, and Bernstein curves.</string>
+    <string name="block_screenshots_title">Enhance local screen security</string>
+    <string name="block_screenshots_description">Prefer maximum security over a nicer UI; prevent Android from saving screen
+        images for multitasking, and disable screenshots.</string>
+    <string name="block_dr_title">บล๊อคการใช้ข้อมูล</string>
+    <string name="block_dr_description">Never allow detailed metadata, messages, attachments, or call audio to be retained by
+        your organization or by other organizations.</string>
+
+    <string name="block_local_dr_title">หยุดการเก็บข้อมูลพื้นฐาน</string>
+    <string name="block_local_dr_description">Never allow detailed metadata, messages, attachments,
+        or call audio to be retained by this device and uploaded to a server for retention</string>
+    <string name="block_remote_dr_title">หยุดการควบคุมการเก็บข้อมูล</string>
+    <string name="block_remote_dr_description">Refuse to communicate with other users who are subject
+        to data retention and whose devices are retaining detailed metadata, messages, attachments,
+        or call audio for upload to a retention server.</string>
+
+    <string name="block_local_data_retention">หยุดการเก็บข้อมูลพื้นฐาน</string>
+    <string name="block_local_metadata_retention">หยุดการเก็บข้อมูลพื้นฐานหลัก</string>
+    <string name="block_remote_data_retention">หยุดการควบคุมการเก็บข้อมูล</string>
+    <string name="block_remote_metadata_retention">หยุดการควบคุมการเก็บข้อมูลหลัก</string>
+    <!--
+         String describing the Dial ImageButton
+
+          Used by AccessibilityService to announce the purpose of the button.
+    -->
+    <string name="description_dial_button">โทร</string>
+    <!--
+     String describing the Delete/Backspace ImageButton
+
+     Used by AccessibilityService to announce the purpose of the button.
+    -->
+    <string name="description_delete_button">backspace</string>
+    <string name="description_pick_contact_button">เลือกรายชื่อติดต่อ</string>
+    <string name="zrtp_common_cmp">"You should verbally compare the authentication code with the person you are calling. If it doesn’t match, it indicates that someone may have intercepted the call."</string>
+    <string name="zrtp_common_cls">การเชื่อมต่อผิดพลาด โปรดปิดและโทรใหม่อีกครั้ง</string>
+    <string name="zrtp_common_upd">บุคคลที่คุณโทรหาตอนนี้จำเป็นต้องอัพเดทเวอร์ชั่นของ Silent phone เป็นเวอร์ชั่นล่าสุด</string>
+    <string name="zrtp_common_app">แอพพลิเคชั่นเกิดการผิดพลาด โปรดลองติดตั้ง Silent Phone อีกครั้ง</string>
+
+    <!-- Permissions -->
+    <string name="permission_read">อ่านรายชื่อที่ปลอดภัย</string>
+    <string name="permission_write">เขียนรายชื่อที่ปลอดภัย</string>
+
+    <!-- Permissions key manager -->
+    <string name="permission_read_km">อ่านตัวจัดการรหัสผ่าน Silent Circle</string>
+    <string name="permission_write_km">เขียนตัวจัดการรหัสผ่าน Silent Circle</string>
+
+    <!-- Only TAG names changed, copy existing translations -->
+    <string name="provisioning_stepInfo_1">ขั้นที่ 1 จาก 3</string>
+    <string name="provisioning_stepInfo_2">ขั้นที่ 2 จาก 3</string>
+    <string name="provisioning_stepInfo_3">ขั้นที่ 3 จาก 3</string>
+    <string name="provisioning_vertu_email_info">An alternate email address is necessary to receive important updates and benefits regarding your account.</string>
+    <string name="provisioning_vertu_welcome_long">As a Vertu Customer you enjoy 12 months of complimentary access to Silent Circle’s encrypted communications services.</string>
+    <string name="video_audio_mute">Toggle mute audio</string>
+
+    <!-- The following until end are MISSING translations in SPA2 for languages other than English -->
+    <string name="provisioning_infoText">สร้างบัญชี</string>
+    <string name="provisioning_bp_email_info">ที่อยู่อีเมลล์เป็นสิ่งจำเป็นในการรับข้อมูลข่าวสารต่างๆของบัญชีการใช้งานของคุณ</string>
+    <string name="mute_button">เงียบ</string>
+    <string name="video_button">วิดิโอ</string>
+    <string name="add_call">เพิ่มสาย</string>
+    <string name="audio_options_button">ตัวเลือกเสียง</string>
+    <string name="verify_label">สัมผัสและตรวจสอบ</string>
+    <string name="verify_question">ตรวจสอบ ?</string>
+    <string name="compare_with">เปรียบเทียบกับ</string>
+    <string name="stop_video">เสียงเท่านั้น</string>
+    <string name="pause_video">หยุดวิดิโอ</string>
+    <string name="send_video">ส่งวิดิโอ</string>
+    <string name="prepare">กำลังเตรียมการ…</string>
+    <string name="call_manager">จัดการการโทร</string>
+    <string name="dtmf_dialer">เสียงโทรออก</string>
+    <string name="security_options_header">ตัวเลือกความปลอดภัย</string>
+    <string name="call_info_generic">ข้อมูลการโทร</string>
+    <string name="call_info_security">ข้อมูลความปลอดภัยการโทร</string>
+    <string name="call_info_security_detail">รายละเอียดอื่นๆ</string>
+    <string name="build_info_header">Silent Phone Build</string>
+    <string name="dial_drawer_build_flavor">Build configuration: %s</string>
+    <string name="account_creation_error">การสร้างบัญชี - ผิดพลาด</string>
+    <string name="account_creation_wrong_format">การสร้างบัญชี - ระบบส่งรูปแบบข้อมูลผิดพลาด</string>
+    <string name="account_creation_no_data">การสร้างบัญชี - ระบบส่งข้อมูลกลับผิดพลาด</string>
+    <string name="other_settings">ตัวเลือกอื่นๆ</string>
+    <string name="call_settings">ตัวเลือการโทร</string>
+    <string name="theme_black">ดำ</string>
+    <!-- Strings for BlackPhone integration -->
+
+    <string name="bp_is_online">Silent Phone ออนไลน์</string>
+    <string name="bp_is_offline">Silent Phone ออฟไลน์ในขณะนี้</string>
+    <string name="bp_not_started">Silent Phone ยังไม่ได้เริ่ม</string>
+    <string name="bp_registering">กำลังลงทะเบียน Silent Phone</string>
+    <string name="bp_status_unknown">ไม่ทราบสถานะ</string>
+
+    <!-- Audio options -->
+
+    <string name="audio_bt">หูฟังบลูทูธ</string>
+    <string name="audio_speaker">ลำโพง</string>
+    <string name="audio_ear_phone">หูฟัง</string>
+    <string name="end_call_button">วางสาย</string>
+    <string name="call_quality">คุณภาพ</string>
+    <string name="call_quality_bad">แย่</string>
+    <string name="call_quality_weak">แย่</string>
+    <string name="call_quality_acceptable">ยอมรับได้</string>
+    <string name="call_quality_good">ดี</string>
+    <string name="call_quality_very_good">ดีมาก</string>
+    <string name="in_call_drawer_zrtp_confirmed">ใช่ ตรวจสอบแล้ว</string>
+    <string name="in_call_drawer_zrtp_not_confirmed">ใช่ ยังไม่ได้ตรวจสอบ</string>
+    <string name="in_call_drawer_sdes_active">เริ่มทำงาน</string>
+    <string name="navigation_drawer_open">เปิดการนำทาง</string>
+    <string name="navigation_drawer_close">ปิดการนำทาง</string>
+    <string name="valid_until">ใช้ได้จนถึง:</string>
+    <string name="subscription_expired">การสมัคร Silent Circel ของคุณหมดอายุแล้ว</string>
+    <string name="sip_error_not_online">ผู้ใช้งานไม่ได้ออนไลน์</string>
+    <string name="license_code_invalid">This license code doesn\'t appear to be valid. If you are having
+            trouble with activating your Blackphone and Silent Circle accounts,
+            please contact customer support at support@blackphone.ch</string>
+    <string name="license_code_duplicate">This license code appears to have been activated already. If you
+            are resetting your phone, simply log into your Silent Circle account
+            normally. If you are having trouble activating your Blackphone and
+            Silent Circle accounts, please contact customer support at support@blackphone.ch</string>
+
+    <!-- ************************** String for the Contacts part ******************************  -->
+    <!-- Menu item used to add a number from the call log to contacts -->
+    <string name="recentCalls_addToContact">เพิ่มลงไปที่ผู้ติดต่อ</string>
+
+    <!-- Text displayed when the call log is empty -->
+    <string name="recentCalls_empty">ไม่มีบันทึกการโทร</string>
+
+    <!-- Menu item used to remove all calls from the call log -->
+    <string name="recentCalls_deleteAll">ล้างบันทึกการโทร</string>
+
+    <!-- Menu item used to copy a number from the call log to the dialer so it can be edited before calling it -->
+    <string name="recentCalls_editNumberBeforeCall">แก้ไขเบอร์โทรก่อนการโทร</string>
+
+    <!-- Menu item used to remove a single call from the call log -->
+    <string name="recentCalls_removeFromRecentList">ลบออกจากบันทึกการโทร</string>
+
+    <!-- Menu item used to remove related call entries from the call log -->
+    <string name="recentCalls_removeSameFromRecentList">ลบออกจากที่เกียวข้องทั้งหมด</string>
+
+    <!-- Title for incoming call details screen -->
+    <string name="type_incoming">กำลังมีสายเข้า</string>
+
+    <!-- Title for outgoing call details screen -->
+    <string name="type_outgoing">กำลังโทรออก</string>
+
+    <!-- Title for missed call details screen -->
+    <string name="type_missed">สายที่ไม่ได้รับ</string>
+
+    <!-- Title bar for call history screen -->
+    <string name="callHistoryTitle">ประวัติการโทร</string>
+
+    <!-- Title bar for call detail screen -->
+    <string name="callDetailTitle">รายละเอียดการโทร</string>
+
+
+    <!-- String used to display calls from unknown numbers in the call log -->
+    <string name="unknown">ไม่รู้ที่มา</string>
+
+    <!-- String used to display calls from private numbers in the call log -->
+    <string name="private_num">เบอร์ส่วนตัว</string>
+
+    <!-- String used to display calls from pay phone in the call log -->
+    <string name="payphone">ตู้โทรศัพท์</string>
+
+    <string name="call_log_item_count_and_date">(%1$d) %2$s</string>
+
+    <!-- A nicely formatted call duration displayed when viewing call details. For example "42 mins 28 secs" -->
+    <string name="callDetailsDurationFormat">%1$s mins %2$s secs</string>
+
+    <!-- Toast for call detail screen when couldn't read the requested details -->
+    <string name="toast_call_detail_error">ไม่สามารถอ่านข้อมูลการร้องขอการโทร</string>
+
+    <!-- Title of the "Clearing call log" progress-dialog [CHAR LIMIT=35] -->
+    <string name="clearCallLogProgress_title">Clearing call log\u2026</string>
+
+    <!-- Title of the confirmation dialog for clearing the call log. [CHAR LIMIT=37]  -->
+    <string name="clearCallLogConfirmation_title">ล้างบันทึกการโทร?</string>
+
+    <!-- Confirmation dialog for clearing the call log. [CHAR LIMIT=NONE]  -->
+    <string name="clearCallLogConfirmation">บันทึกการโทรทั้งหมดจะถูกลบ</string>
+
+    <!-- Silent phone number type -->
+    <string name="phoneTypeSilent">Silent Phone</string>
+
+
+    <!-- Directory partition name -->
+    <string name="contactsList">ผู้ติดต่อ</string>
+    <string name="scContactsList">ผู้ติดต่อ Silent Circle</string>
+    <string name="scRemoteContactsList">Silent Circle directory</string>
+
+    <!-- The name of the invisible local contact directory -->
+    <string name="local_invisible_directory">อื่นๆ</string>
+
+    <!-- The label in section header in the contact list for a local contacts [CHAR LIMIT=128] -->
+    <string name="local_search_label">ผู้ติดต่อ</string>
+
+    <!-- String describing the text on the header of the profile contact in the contacts list
+         This may be programatically capitalized. [CHAR LIMIT=20] -->
+    <string name="user_profile_contacts_list_header" msgid="9154761216179882405">ฉัน</string>
+
+    <!-- The label in section header in the contact list for a contact directory [CHAR LIMIT=128] -->
+    <string name="directory_search_label">ไดเรคทอรี</string>
+
+    <!-- Title shown in the search result activity of contacts app while searching.  [CHAR LIMIT=20] -->
+    <string name="search_results_searching">Searching\u2026</string>
+
+    <!-- Displayed at the top of search results indicating that more contacts were found than shown [CHAR LIMIT=64] -->
+    <string name="foundTooManyContacts">More than %d found.</string>
+
+    <!-- Displayed at the top of the contacts showing the zero total number of contacts found when "Only contacts with phones" not selected. [CHAR LIMIT=30] -->
+    <string name="listFoundAllContactsZero">ไม่มีผู้ติดต่อ</string>
+
+    <!-- Displayed at the top of the results showing the zero total number of results found when "Only contacts with phones" not selected. [CHAR LIMIT=30] -->
+    <string name="listFoundAllResultsZero">ไม่พบ</string>
+
+    <!-- Displayed at the top of the contacts showing the total number of contacts found when typing search query -->
+    <plurals name="searchFoundContacts">
+        <item quantity="other">%d พบ</item>
+    </plurals>
+
+    <!-- Shown as the display name for a person when the name is missing or unknown. [CHAR LIMIT=18]-->
+    <string name="missing_name">(ไม่มีชื่อ)</string>
+
+    <!-- Menu item to indicate you are done editing a contact and want to save the changes you've made -->
+    <string name="menu_done">สำเร็จ</string>
+
+    <!-- Menu item to indicate you want to cancel the current editing process and NOT save the changes you've made [CHAR LIMIT=12] -->
+    <string name="menu_doNotSave">ยกเลิก</string>
+
+
+    <!-- Menu item to search contacts -->
+    <string name="menu_search">ค้นหา</string>
+
+
+    <!-- Action string for calling a custom phone number -->
+    <string name="call_custom">โทร %s</string>
+    <!-- Action string for calling a home phone number -->
+    <string name="call_home">โทรกลับบ้าน</string>
+    <!-- Action string for calling a mobile phone number -->
+    <string name="call_mobile">โทรเคลื่อนที่</string>
+    <!-- Action string for calling a work phone number -->
+    <string name="call_work">โทรที่ทำงาน</string>
+
+    <!-- Action string for calling a work fax phone number -->
+    <string name="call_fax_work">โทรแฟกซ์ที่ทำงาน</string>
+    <!-- Action string for calling a home fax phone number -->
+    <string name="call_fax_home">โทรแฟกซ์บ้าน</string>
+    <!-- Action string for calling a pager phone number -->
+    <string name="call_pager">โทรเพจเจอร์</string>
+    <!-- Action string for calling an other phone number -->
+    <string name="call_other">โทร</string>
+    <!-- Action string for calling a callback number -->
+    <string name="call_callback">โทรกลับ</string>
+    <!-- Action string for calling a car phone number -->
+    <string name="call_car">โทรในรถ</string>
+    <!-- Action string for calling a company main phone number -->
+    <string name="call_company_main">โทรเบอร์หลักบริษัท</string>
+    <!-- Action string for calling a ISDN phone number -->
+    <string name="call_isdn">โทร ISDN</string>
+    <!-- Action string for calling a main phone number -->
+    <string name="call_main">โทรหลัก</string>
+    <!-- Action string for calling an other fax phone number -->
+    <string name="call_other_fax">โทรแฟกซ์</string>
+    <!-- Action string for calling a radio phone number -->
+    <string name="call_radio">โทรวิทยุ</string>
+    <!-- Action string for calling a Telex phone number -->
+    <string name="call_telex">โทรสาร</string>
+    <!-- Action string for calling a TTY/TDD phone number -->
+    <string name="call_tty_tdd">โทร TTY/TDDD</string>
+    <!-- Action string for calling a work mobile phone number -->
+    <string name="call_work_mobile">โทรโทรศัพท์ที่ทำงาน</string>
+    <!-- Action string for calling a work pager phone number -->
+    <string name="call_work_pager">โทรเพจเจอร์</string>
+    <!-- Action string for calling an assistant phone number -->
+    <string name="call_assistant">โทร</string>
+    <!-- Action string for calling a MMS phone number -->
+    <string name="call_mms">โทร MMSS</string>
+
+    <!-- Generic action string for starting an IM chat -->
+    <string name="chat">ข้อความ</string>
+
+    <!-- Toast shown when text is copied to the clipboard [CHAR LIMIT=64] -->
+    <string name="toast_text_copied">คัดลอกข้อความ</string>
+    <string name="toast_copied_to_clipboard">คัดลอกไปยังคลิปบอร์ด</string>
+
+
+    <!-- Contact list filter selection indicating that the list shows all contacts with phone numbers [CHAR LIMIT=64] -->
+    <string name="list_filter_phones">รายชื่อติดต่อทั้งหมดพร้อมเบอร์โทรศัพท์</string>
+
+
+    <!-- An allowable value for the "view names as" contact display option  -->
+    <string name="display_options_view_given_name_first">ชื่อจริงก่อน</string>
+
+    <!-- An allowable value for the "view names as" contact display option  -->
+    <string name="display_options_view_family_name_first">นามสกุลก่อน</string>
+
+
+    <!-- String describing a contact picture that introduces users to the contact detail screen.
+
+         Used by AccessibilityService to announce the purpose of the button.
+
+         [CHAR LIMIT=NONE]
+      -->
+    <!-- String describing the text for photo of a contact in a contacts list.
+
+        Note: AccessibilityServices use this attribute to announce what the view represents.
+              This is especially valuable for views without textual representation like ImageView.
+    -->
+    <string name="description_quick_contact_for">ติดต่อด่วนสำหรับ %1$s</string>
+
+
+    <!--      ****************  Strings for Key store part ****************** -->
+    <string name="cannot_load_store">ไม่สามารถเปิด Key Store ได้ รหัสผ่านหรือ PIN ของคุณไม่ถูกต้อง โปรดลองใหม่อีกครั้ง</string>
+    <string name="password_hint">ใส่รหัสผ่าน</string>
+    <string name="password_hint_old">ใส่รหัสผ่านเดิม</string>
+    <string name="password_hint_new">ใส่รหัสผ่านใหม่</string>
+    <string name="password_hint2">ใส่รหัสผ่าน (ตรวจสอบ)</string>
+    <string name="cannot_change_password">การเปลี่ยนรหัสผ่านผิดพลาด. ใช้รหัสผ่านที่มีอยู่</string>
+    <string name="old_password_wrong">รหัสผ่านเก่าผิดพลาด</string>
+    <string name="old_pin_wrong">รหัส PIN ผิดพลาด</string>
+    <string name="key_store_change_pw">เปลี่ยนรหัสผ่าน</string>
+    <string name="no_password">ลืมรหัสผ่าน</string>
+    <string name="information_dialog">ข้อมูล</string>
+    <string name="show_pw">แสดงรหัสผ่าน</string>
+    <string name="password_match">รหัสผ่านไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง</string>
+
+
+    <!-- ******************** New or modified *********************** -->
+    <!-- Strings new after 2.0.1 release -->
+    <string name="video_control_explanation">Tap on screen to toggle video control buttons.
+        \n\nTouch small preview window to move it.</string>
+
+    <string name="start_on_boot">เริ่มต้น Silent Phone</string>
+    <string name="start_on_boot_explanation">เริ่มต้น Silent Phone ในขณะที่เริ่มต้นกระบวนการของเครื่อง</string>
+
+    <string name="enable_traversal">Enable firewall traversal</string>
+    <string name="enable_traversal_explanation">If Silent Phone detects a restrictive firewall, try extra hard to complete your call.</string>
+
+    <string name="force_traversal">Force firewall traversal</string>
+    <string name="force_traversal_explanation">มีความน่าเชื่อถือแต่คุณภาพเสียงของการโทรมีคุณภาพต่ำ อาจจะเกิดจากสัญญาณขัดข้อง</string>
+
+    <string name="setting_underflow">Dropout tone</string>
+    <string name="setting_underflow_summary">การเล่นเสียงต่ำ หากได้ยินบ่อยครั้ง คุณหรือคู่สนทนาอาจต้องเปลี่ยนสัญญาณ</string>
+
+    <string name="setting_echo_option">Echo canceler</string>
+    <string name="setting_echo_option_summary">การควบคุมอัตโนมัติของการยกเลิกเสียงสะท้อน หากเลือกการยกเลิกเสียงสะท้อนจะเปิดใช้งานตลอด</string>
+
+    <string name="setting_errors_option">แสดงข้อผิดพลาดทั้งหมด</string>
+    <string name="setting_errors_option_summary">ซอฟแวร์มีความผิดพลาดแต่จะไม่ส่งผลกระทบต่อการป้องกันข้อมูลของคุณ</string>
+
+
+
+
+    <!-- ******* Strings for the dial assist activity -->
+    <string name="sp_dial_helper_title">ตัวช่วยการโทร</string>
+    <string name="sp_dial_helper_select_explanation">To simplify dialing, turn on Dial Assist and select a
+        country. The number will automatically be formatted with your country code. Otherwise, dial \'+\' and
+        the country code.</string>
+    <string name="sp_dial_helper_select_explanation_1">To call other Silent Circle subscribers, simply dial their
+        Silent Circle subscriber name.</string>
+    <string name="sp_dial_helper_select">เลือกประเทศของคุณ</string>
+    <string name="sp_dial_helper_none">ไม่มีตัวช่วยการโทร</string>
+    <string name="sp_dial_helper_simple">ตัวช่วยการโทรอย่างง่าย</string>
+
+    <!-- Explain specific dial support functions -->
+    <string name="sp_dial_helper_null_explanation">ตัวช่วยการโทรปิดการใช้ง่าย</string>
+    <string name="sp_dial_helper_simple_explanation">เพิ่ม  \'+\'  ลงในฟอร์มเบอร์โทรระหว่างประเทศ</string>
+    <string name="sp_dial_helper_nanp_explanation">Adds \'+\' or \'+1\' or replaces a leading \'011\' with a \'+\' sign.</string>
+    <string name="sp_dial_helper_00_0_explanation">Replaces a leading \'%1$s\' with country code %2$s and a leading \'%3$s\' with the \'+\' sign.</string>
+    <string name="sp_dial_helper_00_x_explanation">Adds \'%2$s\' to dialed digits and replaces a leading \'%3$s\' with the \'+\' sign.</string>
+
+    <!-- ******* Strings for the key store management activity -->
+    <string name="key_store_set_pw_explanation">ตั้งรหัสผ่านเข้าสู่ Silent Phone คุณจำเป็นต้องใส่รหัสผ่านนี้เพื่อเริ่มแอปพลิเคชั่น. Silent Circle ไม่สามารถรีเซ็ทรหัสผ่านนี้ให้คุณได้</string>
+
+    <string name="key_store_change_pw_explanation">เปลี่ยนรหัสผ่านลับของคุณ</string>
+    <string name="key_store_reset_pw_explanation">หยุดการใช้รหัสผ่านลับของ Silent Phone</string>
+    <string name="key_store_enter_pw_explanation">ใส่รหัสผ่านลับของคุณ</string>
+
+    <string name="key_store_set_pin_explanation">ตั้งรหัส PIN เข้าสู่ Silent Phone คุณจำเป็นต้องใส่รหัส PIN นี้เพื่อเริ่มแอปพลิเคชั่น. Silent Circle ไม่สามารถรีเซ็ทรหัส PIN นี้ให้คุณได้</string>
+
+    <string name="key_store_change_pin_explanation">เปลี่ยนรหัส PIN ลับของคุณ</string>
+    <string name="key_store_reset_pin_explanation">หยุดการใช้ PIN ลับของ Silent Phone</string>
+    <string name="key_store_enter_pin_explanation">ใส่รหัส PIN ลับของคุณ</string>
+
+    <string name="pin_hint">ใส่ PIN</string>
+    <string name="pin_hint_old">ใส่รหัส PIN เก่า</string>
+    <string name="pin_hint_new">ใส่รหัส PIN ใหม่</string>
+    <string name="pin_hint2">ใส่รหัส PIN (ตรวจสอบ)</string>
+
+    <string name="no_pin">ลืมรหัส PIN</string>
+    <string name="show_pin">แสดงรหัส PIN</string>
+    <string name="pin_match">รหัส PIN ไม่ตรงกัน กรุณาตรวจสอบใหม่</string>
+    <string name="pin_short">รหัส PIN สั้นเกินไป ต้องใส่อย่างต่ำ %d  หลัก</string>
+
+    <string name="passcode_title">รหัสผ่าน</string>
+    <string name="passcode_change">เปลี่ยนรหัสผ่าน</string>
+    <string name="passcode_enable">เปิดรหัสผ่าน</string>
+    <string name="passcode_disable">ปิดรหัสผ่าน</string>
+    <string name="passcode_timeout">ต้องการรหัสผ่าน</string>
+    <string name="passcode_set">ติดตั้งรหัสผ่านเรียบร้อยแล้ว</string>
+    <string name="passcode_disabled">รหัสผ่านปิดการใช้งาน</string>
+    <string name="passcode_wipe">Wipe data</string>
+    <string name="passcode_wipe_description">Wipe all data on Silent Phone after 10 failed passcode attempts</string>
+
+    <string name="passcode_enter_any">ใส่รหัสผ่าน</string>
+    <string name="passcode_enter_your">ใส่รหัสผ่านของคุณ</string>
+    <string name="passcode_enter_old">ใส่รหัสผ่านเก่า</string>
+    <string name="passcode_enter_new">ใส่รหัสผ่านใหม่</string>
+    <string name="passcode_reenter">ใส่รหัสผ่านใหม่อีกครั้ง</string>
+    <string name="passcode_mismatch">รหัสผ่านไม่ตรงกัน กรุณาลองใหม่อีกครั้ง</string>
+    <string name="passcode_wrong">รหัสผ่านไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง</string>
+    <string name="passcode_try_again">Try again.</string>
+    <string name="passcode_try_left">You have %1$d try left.</string>
+    <string name="passcode_tries_left">You have %1$d tries left.</string>
+    <string name="passcode_data_wiped_warn">Data will be wiped.</string>
+    <string name="passcode_sp_locked">"Silent Phone is locked"</string>
+    <string name="passcode_locked_try_again">try again in"</string>
+    <string name="passcode_minute">"%1$d minute"</string>
+    <string name="passcode_minutes">"%1$d minutes"</string>
+
+
+    <string name="passcode_timeout_immediately">ทันที</string>
+    <string name="in">ใน</string>
+    <string name="seconds">วินาที</string>
+    <string name="minute">นาที</string>
+    <string name="minutes">นาที</string>
+
+    <string name="enabled">เปิดใช้งานแล้ว</string>
+    <string name="not_enabled">ไม่ได้เปิดใช้งาน</string>
+
+    <string name="key_store_title">เข้าสู่ข้อมูลแอปพลิเคชั่น</string>
+    <string name="key_store_type_default">ไม่ได้เข้ารหัส</string>
+    <string name="key_store_type_pw">ติดตั้งรหัสผ่านเรียบร้อยแล้ว</string>
+    <string name="key_store_type_pin">ติดตั้งรหัส PIN เรีนบร้อยแล้ว</string>
+
+    <string name="key_store_set_pw">ตั้งค่ารหัสผ่าน</string>
+    <string name="key_store_set_pin">ตั้งค่ารหัส PIN</string>
+
+    <string name="key_store_change_pin">เปลี่ยนรหัส PIN</string>
+
+    <string name="key_store_reset_default">ล้างรหัสผ่าน/PIN</string>
+
+    <string name="re_provision">ใส่ข้อมูลบัญชีเพิ่มเติม</string>
+    <string name="re_provision_explanation">เพิ่มบัญชีและข้อมูลของ Silent Phone</string>
+
+    <!-- ******** String for DID selection activity -->
+    <string name="did_title">การเลือกหมายเลขโทรศัพท์</string>
+    <string name="did_region_area_explanation">เลือกหมายเลขโทรศัพท์ของคุณจากภูมิภาคและพื้นที่</string>
+    <string name="did_currently_selected">ตัวเลือกปัจจุบัน</string>
+    <string name="did_region">ภูมิภาค:</string>
+    <string name="did_area">พื้นที่:</string>
+    <string name="did_number">หมายเลข:</string>
+    <string name="did_region_list">เลือกภูมิภาค</string>
+    <string name="did_area_list">เลือกพื้นที่</string>
+    <string name="did_number_list">เลือกหมายเลข</string>
+    <string name="did_selection_wrong_format">การเลือกหมายเลขโทรศัพท์ - เซิฟเวอร์ส่งข้อมูลผิดพลาด: </string>
+    <string name="did_no_area">ไม่มีพื้นที่สำหรับภูมิภาคนี้ กรุณาเลือกภูมิภาคใหม่</string>
+    <string name="did_no_number">ไม่มีหมายเลขนี้ เลิกภูมิภาคหรือพื้นที่อื่นๆ</string>
+    <string name="did_ask_to_complete">การเลือกหมายเลขโทรศัพท์สำเร็จ</string>
+
+    <string name="no_internet">ไม่มีการเชื่อมต่ออินเตอร์เน็ต</string>
+    <string name="mobile_internet_available">อินเตอร์เน็ตใช้งานได้</string>
+
+    <string name="directory_use_sc">ค้นหา</string>
+<!--    <string name="directory_use_sc">Search Silent Circle Directory</string> -->
+    <string name="directory_own_org_only">สมาชิกขององค์กรของฉัน</string>
+
+    <string name="sign_in">ลงชื่อเข้าใช้</string>
+    <string name="sign_in_to_sc">ลงชื่อเข้าใช้บัญชี Silent Circle ของคุณ</string>
+
+    <string name="sc_privacy_link"><a href="https://accounts.silentcircle.com/privacy-policy/">สิทธิส่วนบุคคล</a></string>
+    <string name="sc_tos_link"><a href="https://accounts.silentcircle.com/terms/">เงื่อนไขการให้บริการ</a></string>
+
+    <plurals name="number_missed_calls">
+        <item quantity="other">%dสายที่ไม่ได้รับ</item>
+    </plurals>
+
+    <string name="no_video_available">วิดิโอไม่สามารถใช้งานได้สำหรับการโทรนี้</string>
+    <string name="call_in_progress">กำลังใช้สาย</string>
+
+    <string name="server_cert_failure">การตรวจสอบผิดพลาด – กำลังลองอีกครั้ง</string>
+
+    <string name="remaining_oca_minutes">ข้อมูลบัญชี</string>
+    <string name="remaining_oca_minutes_fail">ไม่มีข้อมูล Silent World</string>
+
+    <string name="remaining_oca_minutes_zero">ไม่มีการใช้สาย. วางแผนประจำเดือน %1$d นาที</string>
+    <string name="remaining_oca_minutes_dialog">บัญชี Silent Circle</string>
+    <string name="remaining_oca_minutes_loading_dialog">กำลังเรียกข้อมูลบัญชี</string>
+    <string name="avatar_upload_loading_dialog">Uploading avatar…</string>
+    <string name="avatar_delete_loading_dialog">Deleting avatar…</string>
+    <plurals name="remaining_oca_minutes_info">
+        <!--<item quantity="other">You used %1$d minutes of your %2$d minutes.</item>-->
+        <item quantity="other">วางแผน  %1$d นาที ยอดคงเหลือ  %1$d นาที</item>
+    </plurals>
+    <string name="manage_account"><![CDATA[<br><br><a href="https://accounts.silentcircle.com/">Manage account</a>]]></string>
+    <string name="manage_account_dev"><![CDATA[<br><br><a href="https://accounts-dev.silentcircle.com/">Manage account</a>]]></string>
+
+    <string name="remaining_credit">ยอดเงินคงเหลือ: %1$.2f %2$s</string>
+
+    <string name="setting_p2p">Use media relay</string>
+    <string name="setting_p2p_summary">Always use media relay server to conceal remote party\'s location. Adds latency.</string>
+
+    <!-- SPA-259 added string -->
+    <string name="connected_to_network">สัญญาณไม่ว่าง ตรวจสอบอีกครั้งโทรศัพท์ของคุณได้เชื่อมต่ออินเตอร์เน็ตและลองอีกครั้ง</string>
+    <string name="provisioning_error_message">กรุณาเปิดแอปพลิเคชั่นใหม่และลงชื่อเข้าใช้งานอีกครั้ง</string>
+    <!-- end SPA-259 -->
+
+    <string name="re_provisioning_device_not_found">โทรศัพท์เครื่องนี้ไม่รู้จักกับเซิฟเวอร์ คุณจำเป็นต้องใส่ชื่อผู้ใช้งานและรหัสผ่านของ Silent Circle \n\n ถัดไปกดตกลง
+    </string>
+    <!--
+    **************************  New Dialer layout  *************************
+    -->
+    <string name="tab_recents">โทร</string>
+
+    <string name="tab_all_contacts">รายชื่อ</string>
+
+    <string name="tab_chat">สนทนา</string>
+
+    <!-- Button text for the "call back" button displayed underneath an entry in the call log.
+     Tapping causes a call to be placed to the caller represented by the call log entry.
+     [CHAR LIMIT=30] -->
+    <string name="call_log_action_call_back">โทรกลับ</string>
+
+
+    <!-- Button text for the "DETAILS" button displayed underneath an entry in the call log.
+         Tapping navigates the user to the call details screen where the user can view details for
+         the call log entry.
+         [CHAR LIMIT=30] -->
+    <string name="call_log_action_details">รายละเอียด</string>
+
+    <!-- Button text for the "report" button displayed underneath an entry in the call log.
+         Tapping causes the call log entry to be reported as a bad id.
+         [CHAR LIMIT=30] -->
+    <string name="call_log_action_report">รายงาน</string>
+
+    <!-- Button text for the "write back" button displayed underneath an entry in the call log.
+     Tapping causes a conversation to be started with the caller represented by the call log entry.
+     [CHAR LIMIT=30] -->
+    <string name="call_log_action_write_back">เขียนกลับ</string>
+
+    <!-- Button text for the "invite" button displayed underneath an entry in the call log.
+     Tapping causes an invitation to Silent Circle to be sent via SMS or email.
+     [CHAR LIMIT=30] -->
+    <string name="call_log_action_invite">เชิญเข้าสู่ SILENT CIRCLE</string>
+
+    <!-- Content description for dismiss button on badge. [CHAR LIMIT=NONE] -->
+    <string name="description_dismiss">ยกเลิก</string>
+
+    <!-- Message displayed when there is no application available to handle a particular action.
+     [CHAR LIMIT=NONE] -->
+    <string name="activity_not_available">ไม่ได้ติดตั้งกิจกรรมสำหรับสิ่งที่เลือกอยู่</string>
+
+    <!-- Note: AccessibilityServices use this attribute to announce what the view represents.
+    This is especially valuable for views without textual representation like ImageView.
+    -->
+    <string name="description_num_calls"><xliff:g id="numberOfCalls">%1$s</xliff:g> โทร.</string>
+
+    <!-- String describing the "call back" action for an entry in the call log.  The call back
+     action triggers a return call to the named user.
+     Note: AccessibilityServices uses this attribute to announce the purpose of the button.
+     [CHAR LIMIT=NONE] -->
+    <string name="description_call_back_action">โทรกลับ <xliff:g id="nameOrNumber" example="John Smith">%1$s</xliff:g></string>
+
+    <!-- String describing the "details" action for an entry in the call log.  The details action
+         displays the call details screen for an entry in the call log.  This shows the calls to
+         and from the specified number associated with the call log entry.
+         [CHAR LIMIT=NONE] -->
+    <string name="description_details_action">รายละเอียดการโทรสำหรับ <xliff:g id="nameOrNumber" example="John Smith">%1$s</xliff:g></string>
+
+    <!-- String describing the button to access the contact details for a name or number.
+
+        Note: AccessibilityServices use this attribute to announce what the view represents.
+              This is especially valuable for views without textual representation like ImageView.
+    -->
+    <string name="description_contact_details">รายละเอียดรายชื่อสำหรับ <xliff:g id="nameOrNumber">%1$s</xliff:g></string>
+
+    <!-- String describing an incoming missed call entry in the call log.
+     Note: AccessibilityServices uses this attribute to announce what the view represents.
+     [CHAR LIMIT=NONE] -->
+    <string name="description_incoming_missed_call">สายที่ไม่ได้รับจาก <xliff:g id="nameOrNumber" example="John Smith">%1$s</xliff:g>, <xliff:g id="typeOrLocation" example="Mobile">%2$s</xliff:g>, <xliff:g id="timeOfCall" example="2 min ago">%3$s</xliff:g>.</string>
+
+    <!-- String describing an incoming answered call entry in the call log.
+         Note: AccessibilityServices uses this attribute to announce what the view represents.
+         [CHAR LIMIT=NONE] -->
+    <string name="description_incoming_answered_call">สายที่ได้รับจาก <xliff:g id="nameOrNumber" example="John Smith">%1$s</xliff:g>, <xliff:g id="typeOrLocation" example="Mobile">%2$s</xliff:g>, <xliff:g id="timeOfCall" example="2 min ago">%3$s</xliff:g>.</string>
+
+    <!-- String describing an outgoing call entry in the call log.
+         Note: AccessibilityServices uses this attribute to announce what the view represents.
+         [CHAR LIMIT=NONE] -->
+    <string name="description_outgoing_call">โทรหา <xliff:g id="nameOrNumber" example="John Smith">%1$s</xliff:g>, <xliff:g id="typeOrLocation" example="Mobile">%2$s</xliff:g>, <xliff:g id="timeOfCall" example="2 min ago">%3$s</xliff:g>.</string>
+
+    <!-- Delimiter used between each item in a textual list; for example "Alpha, Beta".
+     [CHAR LIMIT=3] -->
+    <string name="list_delimeter">", "</string>
+
+    <!-- String used as a header in the call log above calls which occurred today.
+     [CHAR LIMIT=65] -->
+    <string name="call_log_header_today">วันนี้</string>
+
+    <!-- String used as a header in the call log above calls which occurred yesterday.
+         [CHAR LIMIT=65] -->
+    <string name="call_log_header_yesterday">เมื่อวานนี้</string>
+
+    <!-- String used as a header in the call log above calls which occurred two days or more ago.
+         [CHAR LIMIT=65] -->
+    <string name="call_log_header_other">เก่ากว่า</string>
+
+    <!-- Text displayed when the list of missed calls is empty -->
+    <string name="recentMissed_empty">คุณไม่มีสายที่ไม่ได้รับล่าสุด</string>
+
+    <!-- Title for the recent calls footer that brings users to the full call history when clicked -->
+    <string name="recents_footer_text">ดูประวัติการโทร</string>
+
+    <!-- Shown when there are no contacts in the all contacts list. -->
+    <string name="all_contacts_empty">คุณไม่มีรายชื่อผู้ติดต่อ</string>
+
+    <!-- Title for the call log tab containing the list of all voicemails and calls
+     [CHAR LIMIT=30] -->
+    <string name="call_log_all_title">ทั้งหมด</string>
+
+    <!-- Title for the call log tab containing the list of all missed calls only
+         [CHAR LIMIT=30] -->
+    <string name="call_log_missed_title">ไม่ได้รับ</string>
+
+
+    <!--  ***** -->
+    <!-- Shortcut item used to call a number directly from search -->
+    <string name="search_shortcut_call_number">โทร <xliff:g id="number">%s</xliff:g>
+    </string>
+
+    <!-- Shortcut item used to add a number directly from search -->
+    <string name="search_shortcut_add_to_contacts">เพิ่มรายชื่อ</string>
+
+    <!-- Shortcut item to start conversation from search -->
+    <string name="search_shortcut_write_to">เขียนถึง <xliff:g id="number">%s</xliff:g></string>
+
+    <!-- Message displayed when there is no application available to handle the add contact menu option. [CHAR LIMIT=NONE] -->
+    <string name="add_contact_not_available">เปิดใช้งานให้ผู้ติดต่อได้ใช้รูปแบบนี้</string>
+
+    <!-- Content description for the fake action menu up button as used
+     inside search. [CHAR LIMIT=NONE] -->
+    <string name="action_menu_back_from_search">ยกเลิกการค้นหา</string>
+
+    <!--  String describing the icons used in conversation starter -->
+    <string name="description_clear_search">ล้างประวัติการค้นหา</string>
+    <string name="description_dial_pad_toggle">Dial pad toggle</string>
+    <string name="description_keyboard_toggle">Keyboard toggle</string>
+
+    <!-- Hint displayed in dialer search box when there is no query that is currently typed.
+     [CHAR LIMIT=30] -->
+    <string name="dialer_hint_find_contact">ใส่ชื่อหรือหมายเลข</string>
+
+    <!-- Title for the sms disambiguation dialog -->
+    <string name="sms_disambig_title">เลือกหมายเลข</string>
+
+    <!-- Title for the call disambiguation dialog -->
+    <string name="call_disambig_title">เลือกหมายเลข</string>
+
+    <!-- Message next to disambiguation dialog check box -->
+    <string name="make_primary">จำตัวเลือกนี้</string>
+
+    <string name="low_volume">ระดับเสียงอาจจะเบาไป</string>
+
+    <string name="urgent_call">ด่วน</string>
+    <string name="emergency_call">ฉุกเฉิน</string>
+
+    <string name="call_mng_conference_explanation">ลากการโทรเข้าสู่การประชุมสาย</string>
+    <string name="call_mng_private_explanation">ลากที่นี่เพื่อลบการประชุมสาย</string>
+
+    <string name="account_manager_label">บัญชี Silent Circle</string>
+    <string name="account_access_label">เข้าสู่บัญชี</string>
+    <string name="account_exists">มีบัญชีอยู่แล้ว – ไม่สามารถสร้างบัญชีได้อีก</string>
+    <string name="account_missing_name">ลืมชื่อของบัญชีนี้</string>
+
+    <!--  Used to display as default status when the contact is available for chat [CHAR LIMIT=19] -->
+    <string name="status_available">ออนไลน์</string>
+
+    <!--  Used to display as default status when the contact is away or idle for chat [CHAR LIMIT=19] -->
+    <string name="status_away">ไม่อยู่</string>
+
+    <!--  Used to display as default status when the contact is busy or Do not disturb for chat [CHAR LIMIT=19] -->
+    <string name="status_busy">ไม่ว่าง</string>
+    <!-- Message displayed when the Phone application has been disabled and a phone call cannot
+         be made. [CHAR LIMIT=NONE] -->
+    <!-- String a header on the call details screen.  Appears above the list calls to or from a
+         particular number.
+         [CHAR LIMIT=65] -->
+    <string name="call_detail_list_header">รายการโทร</string>
+
+
+    <!-- String resources for messaging functionality
+         ********************************************
+    -->
+    <string name="messaging_send_message">ส่ง</string>
+    <string name="messaging_attach_file">แนบ</string>
+    <string name="messaging_compose_hint">พิมพ์ข้อความ... </string>
+
+    <string name="undisclosed_location">(ไม่เปิดเผยสถานที่)</string>
+
+    <string name="optimizing">Optimizing…</string>
+    <string name="processing">กำลังดำเนินการ...</string>
+    <string name="loading">กำลังโหลด...</string>
+    <string name="uploading">อัพโหลด...</string>
+    <string name="encrypting">เข้ารหัส...</string>
+    <string name="decrypting">ถอดรหัส...</string>
+    <string name="downloading">ดาวน์โหลด...</string>
+    <string name="exporting">ส่ง...</string>
+    <string name="thumbnail">Thumbnail</string>
+    <string name="attachment">แนบ</string>
+    <string name="delivered">ส่งแล้ว</string>
+    <string name="notify_resend_request">ผู้รับขอให้ส่งข้อความนี้ซ้ำ</string>
+    <string name="location">ตำแหน่ง</string>
+    <string name="share_location">แชร์ตำแหน่งที่ตั้ง</string>
+    <string name="silent_phone_call">โทร ใช้Silent Phone</string>
+    <string name="burn_notice">เบิร์น </string>
+    <string name="autolock">ล๊อคอัตโนมัติ</string>
+    <string name="send_receipts">ส่งรายงานการอ่าน</string>
+    <string name="clear_conversation">ลบบทสนทนา</string>
+    <string name="clear_conversation_exp">ลบข้อความทั้งหมด</string>
+    <string name="save_conversation">บันทึกข้อความ</string>
+    <string name="verify_description_verified">เพื่อความปลอดภัยที่เพิ่มขึ้น คุณได้ตรวจสอบข้อความนี้กับผู้รับ</string>
+    <string name="verify_description_unverified">เพื่อความปลอดภัยที่เพิ่มขึ้น ตรวจสอบข้อความนี้กับผู้รับ</string>
+    <string name="reset_keys">ปุ่มรีเซต</string>
+    <string name="no_expiration">ข้อความไม่หมดอายุ</string>
+    <string name="messages_expire">ข้อความหมดอายุ <xliff:g id="expire_timeout" example="in 1 minute">%1$s</xliff:g></string>
+    <string name="are_you_sure">คุณแน่ใจ?</string>
+    <string name="rekey_messaging_sessions">เปลี่ยนการเข้ารหัสข้อความ</string>
+    <string name="cannot_be_undone">ยืนยันการทำรายการ</string>
+    <string name="save_will_expose_data">การบันทึกการสนทนานี้จะแสดงทุกข้อความไปยังอีกแอปลิเคชั่นที่เลือก ข้อความกับไฟล์แนบหรือถูกเบิร์นแล้วจะไม่ถูกส่ง</string>
+    <string name="error_attachment_unavailable">ไม่มีไฟล์นี้แล้ว โปรดติดต่อผู้ส่งไฟล์อีกครั้ง</string>
+    <string name="warning_delete_conversation">การลบจะทำลายข้อมูล</string>
+    <string name="warning_media_to_be_exported">รายการนี้ถูกตั้งค่าความเป็นส่วนตัว เพื่อที่จะใช้, <xliff:g id="application_name">Silent Phone</xliff:g> ต้องอนุญาตให้ไฟล์อื่นเข้าถึงการถอดรหัส</string>
+    <string name="warning_rekey_conversation">ยืนยันการสร้างคีย์ใหม่</string>
+    <string name="warning_ringtone_picked_unavailable">ไม่สามารถใช้ริงโทนของระบบ</string>
+    <string name="warning_selected_action_unavailable">ไม่สามารถทำรายการที่เลือก</string>
+    <string name="share_from">แชร์อย่างปลอดภัย</string>
+    <string name="n_selected"><xliff:g id="count">%1$d</xliff:g> เลือกแล้ว</string>
+    <string name="delete">ลบ</string>
+    <string name="view">ดู</string>
+    <string name="share">แชร์</string>
+    <string name="save">บันทึก</string>
+    <string name="copy">คัดลอก</string>
+    <string name="info">ข้อมูล</string>
+    <string name="burn">เบิร์น</string>
+    <string name="resend">ส่งอีกครั้ง</string>
+    <string name="options">ตัวเลือก</string>
+    <string name="forward">ส่งต่อ</string>
+    <string name="import_contact">นำเข้ารายชื่อ</string>
+    <string name="import_contacts">นำเข้ารายชื่อ %d</string>
+    <string name="search">ค้นหา</string>
+    <string name="submit">ส่ง</string>
+    <string name="status_on">เปิด</string>
+    <string name="status_off">ปิด</string>
+    <string name="settings">ตั้งค่า</string>
+    <string name="wipe">ลบ</string>
+    <string name="immediately">ทันที</string>
+    <string name="got_it">ได้รับ</string>
+    <string name="just_now">ขณะนี้</string>
+
+    <!--  Attachement grid -->
+    <string name="take_photo">ถ่ายรูป</string>
+    <string name="gallery">แกลลอรี่</string>
+    <string name="take_video">ถ่ายวีดีโอ</string>
+    <string name="record_audio">บันทึกเสียง</string>
+    <string name="send_file">ส่งไฟล์</string>
+    <string name="share_contact">ส่งรายชื่อ</string>
+
+    <!-- voiceovers for conversation view -->
+    <string name="messaging_back_button_voiceover">กลับสู่การสนทนา</string>
+    <string name="messaging_avatar_voiceover">รูป</string>
+    <string name="messaging_burn_button_voiceover">เบิร์น</string>
+    <string name="messaging_location_button_voiceover">ตำแหน่ง</string>
+    <string name="messaging_start_conversation_voiceover">เริ่มการสนทนา</string>
+    <string name="messaging_burn_delay_voiceover">ตั้งค่าการเบิร์น</string>
+
+    <string name="activity_conversation_voiceover">การสนทนา</string>
+
+    <string name="capture_audio_label">บันทึกเสียงด้วยSilent Phone</string>
+    <string name="capture_video_label">บันทึกวีดีโอด้วยSilent Phone</string>
+
+    <string name="capture_picture_error">การถ่ายภาพมีปัญหา โปรดลองอีกครั้ง</string>
+
+    <string name="record_currently_on_call">ไม่สามารถบันทึกระหว่างการโทร</string>
+
+    <string name="dialog_title_cannot_enable_location_sharing">ไม่สามารถแชร์ตำแหน่งที่ตั้ง</string>
+    <string name="dialog_title_failed_to_send_message">ส่งข้อความล้มเหลว</string>
+    <string name="dialog_title_unable_to_send_messages">ไม่สามารถส่งข้อความ</string>
+    <string name="dialog_title_unable_to_call">ไม่สามารถโทร</string>
+    <string name="dialog_title_choose_action">เลือกรายการ</string>
+    <string name="dialog_title_error">ผิดพลาด</string>
+    <string name="dialog_title_select_notification_light">เลือกแสงการแจ้งเตือน</string>
+    <string name="dialog_title_select_notification_vibrate">เลือกรูปแบบการสั่น</string>
+    <string name="dialog_title_select_messaging_theme">เลือธีม</string>
+    <string name="dialog_title_choose_avatar_action">เลือกรูป</string>
+    <string name="dialog_title_device_deleted">อุปกรณ์นี้ถูกลบแล้ว</string>
+    <string name="dialog_title_data_retention">การรักษาข้อมูล</string>
+    <string name="dialog_title_data_retention_blocking_cannot_be_disabled">Blocking cannot be disabled</string>
+
+    <string name="dialog_message_enable_device_location">การเมนูนี้ต้องเปิด เมนูตำแหน่งที่ตั้ง ที่การตั้งค่าโทรศัพท์ก่อน</string>
+    <string name="dialog_message_current_location_mode">โหมดการระบุตำแหน่ง \"%s\".</string>
+    <string name="dialog_message_failed_to_send_to">ผิดพลาด การส่งข้อความไป %1$s.\n\n%2$s </string>
+    <string name="dialog_call_failed_to_send_to">ผิดพลาด การโทรไป %1$s.\n\n%2$s</string>
+    <string name="dialog_message_file_too_large">ขนาดไฟล์ใหญ่เกินไป</string>
+    <string name="dialog_message_wipe_phone">จากนี้จะลบบทสนทนา ประวัติการโทรและ ข้อมูลSilent Phone จะออกจากแอปลิเคชั่น และเมื่อเข้าใหม่อีกครั้งต้องใส่รหัสผ่าน</string>
+    <string name="dialog_message_wipe_after_timer">อุปกรณ์นี้ถูกลบออกโดยผู้มีอำนาจ จะถูกปิดภายใน%s.  และข้อมูลทั้งหมดจะถูกลบ</string>
+    <string name="dialog_message_close_after_timer">อุปกรณ์นี้ถูกลบออกโดยผู้มีอำนาจ จะถูกปิดภายใน%s.  โปรดลบข้อมูลแอปลิเคชั่น</string>
+    <string name="dialog_message_invited_to_group_conversation">คุณถูกเชิญเข้ากลุ่มสนทนา %1$s ดดย %2$s.\n โปรดตอบรับหรือปฎิเสธการเชิญ</string>
+
+    <string name="dialog_message_dr_enabled">องค์กรณ์ของคุณตั้งการสนทนาโหมดรักษาข้อมูล การติดต่อระหว่างคุณถูกบล๊อก คุณสามารถแก้ไขได้จากเมนู \"บล๊อคการใช้ข้อมูล\" ในการตั้งค่าของ Silent Phone หรือติดต่อผู้ดูและระบบของคุณ</string>
+
+    <string name="dialog_message_remote_dr_enabled">องค์กรณ์ของคู่สนทนาตั้งการสนทนาโหมดรักษาข้อมูล การติดต่อระหว่างคุณถูกบล๊อก คุณสามารถแก้ไขได้จากเมนู \"บล๊อคการใช้ข้อมูล\" ในการตั้งค่าของ Silent Phone</string>
+
+    <string name="dialog_message_communication_dr_blocked">ผู้ใช้ที่คุณส่งข้อความนี้ไม่สามารถรับข้อมูล คุณถูกจำกัดสิทธิ์ในการสื่อสาร เนื่องจากองค์กรณ์ของคุณ%1$sใช้โหมดรักษาข้อมูล คุณสามารถขอให้คู่สนทนาปลดล๊อคได้จากเมนู \"บล๊อคการใช้ข้อมูล\" ในการตั้งค่าของ Silent Phone หรือติดต่อผู้ดูและระบบของคุณ</string>
+
+    <string name="dialog_message_communication_dr_required">ผู้ใช้ที่คุณส่งข้อความนี้ไม่สามารถรับข้อมูล คุณถูกจำกัดสิทธิ์ในการสื่อสาร คุณสามารถปลดล๊อคได้จากเมนู \"บล๊อคการใช้ข้อมูล\" ในการตั้งค่าของ Silent Phone</string>
+
+    <string name="dialog_message_communication_blocked_remote">The user to whom you sent this message is subject to data retention,
+        however the user blocked the data retention functions on the client. Communication is blocked.</string>
+
+    <string name="dialog_message_dr_blocked_by_default">For your protection, we\'ve enabled blocking of data retention.
+        If you are a non-organizational user this blocking is enabled by default. If you are part of an organization, your
+        organization has blocked the use of data retention.</string>
+
+    <string name="dialog_button_ok">ตกลง</string>
+    <string name="dialog_button_yes">ใช่</string>
+    <string name="dialog_button_no">ไม่</string>
+    <string name="dialog_button_save">บันทึก</string>
+    <string name="dialog_button_cancel">ยกเลิก</string>
+
+    <string name="location_mode_off">ไม่ได้เปิดตำแหน่งที่ตั้ง</string>
+    <string name="location_mode_device">อุปกรณ์เท่านั้น(GPS)</string>
+    <string name="location_mode_battery_saving">ประหยัดแบตเตอรี่</string>
+    <string name="location_mode_high_accuracy">ความแม่นยำสูง</string>
+
+    <string name="chats_view_empty">ยังไม่มีการสนทนา\nแตะไอคอนเครื่องหมายบวกเพื่อเพิ่มลือการสนทนา</string>
+    <string name="chat_view_empty">ยังไม่มีการสนทนา\nแตะด้านล่างเพื่อส่งข้อความ\nแตะไอคอนโทรศัพทืด้านบนเพื่อโทร</string>
+
+    <string name="conversation_with">สนทนากับ %1$s</string>
+    <string name="username_unknown">ไม่รู้</string>
+
+    <string name="toast_saved_to">ถูกบันทึกไปยัง <xliff:g id="file_path">%1$s</xliff:g></string>
+    <string name="toast_deleted_from">ถูกลบจาก <xliff:g id="file_path">%1$s</xliff:g></string>
+    <string name="unable_to_display_file">ไม่สามารถแสดงไฟล์ <xliff:g id="file_path">%1$s</xliff:g></string>
+    <string name="toast_failed_to_export_file">การส่งไฟล์ล้มเหลว <xliff:g id="file_path">%1$s</xliff:g></string>
+    <string name="toast_no_browser_found">ไม่สามารถเปิดลิงค์ ไม่พบbrowser</string>
+
+    <string name="show_remote_dev">สถานะอุปกรณ์</string>
+    <string name="show_remote_dev_exp">แสดงสถานะอุปกรณ์ของคู่สนทนา</string>
+
+    <string name="no_axo_device">ไม่มีอุปกรณ์สำหรับการส่งข้อความ</string>
+    <string name="axo_ask_register">ลงทะเบียนอุปกรณ์สำหรับการส่งข้อความ?</string>
+    <string name="axo_menu_register">ฟังก์ชั่นแชต</string>
+    <string name="menu_devices">การจัดการอุปกรณ์</string>
+
+    <string name="axo_local_device">บันทึกการใช้อุปกรณ์:</string>
+    <string name="axo_local_device_id_empty">idอุปกรณ์ว่าง</string>
+
+    <string name="axo_devices">อุปกรณ์ที่ใช้ได้</string>
+    <plurals name="axo_devices_n">
+        <item quantity="other">%d เครื่องที่ใช้ได้</item>
+    </plurals>
+
+    <string name="axo_remote_devices">อุปกรณ์</string>
+    <plurals name="axo_remote_devices_n">
+        <item quantity="other">%d อุปกรณ์</item>
+    </plurals>
+
+    <string name="axo_remote_dev_header_1">ชื่ออุปกรณ์/บันทึกการใช้/id</string>
+    <string name="axo_remote_dev_header_2">ตรวสอบ</string>
+
+    <string name="axo_remote_dev_rescan">เช็คอุปกรณ์ใหม่</string>
+    <string name="axo_remote_dev_renew">เปลี่ยนการเข้ารหัสข้อความ</string>
+
+    <string name="axo_device_explanation">อาจแสดงมากว่าหนึ่งรายการ ถ้าคู่สนทนาลบแอปและติดตั้งใหม่ เพื่อเพิ่มความปลอดภัยให้ตั้งค่าความปลอดภัยในการติดตั้งใหม่ \n\n คลิ๊กปุ่มลบเพื่อลบอุปกรณ์เก่า</string>
+
+    <string name="axo_device_explanation_remote">อาจแสดงมากว่าหนึ่งรายการ ถ้าคู่สนทนาลบแอปและติดตั้งใหม่</string>
+
+    <string name="axo_device_options_voiceover">Action</string>
+
+    <string name="axo_force_re_register">Force ZINA re-register</string>
+
+    <string name="message_state_unknown">ไม่รู้</string>
+    <string name="message_state_resend_requested">ส่งคำขออีกครั้ง</string>
+    <string name="message_state_composing">Composing</string>
+    <string name="message_state_composed">Composed</string>
+    <string name="message_state_sent">ส่งแล้ว</string>
+    <string name="message_state_sent_to_server">ส่งไปยังเซิร์ฟเวอร์</string>
+    <string name="message_state_delivered">ส่งแล้ว</string>
+    <string name="message_state_received">รับแล้ว</string>
+    <string name="message_state_read">อ่าน</string>
+    <string name="message_state_burned">เบิร์นแล้ว</string>
+    <string name="message_state_sync">เชื่อมต่อ</string>
+    <string name="message_state_unused">ไม่ถูกใช้</string>
+    <string name="message_state_failed">ล้มเหลว</string>
+
+    <string name="message_error_no_error">ไม่เออเรอร์</string>
+    <string name="message_error_unknown">ไม่เออเรอร์โค๊ดที่ไม่รู้จัก</string>
+    <string name="message_error_msg_generic">เออเรอร์โค๊ดทั่วไป</string>
+    <string name="message_error_msg_version">ไม่รองรับ protocol version</string>
+    <string name="message_error_msg_buffer">บัฟเฟอร์เหลือน้อยเกินกว่าจะเก็บข้อมูล</string>
+    <string name="message_error_msg_not_dec">ไม่สามารถถอดรหัสข้อความ</string>
+    <string name="message_error_msg_own_id">ไม่พบIDสำหรับลงทะเบียน</string>
+    <string name="message_error_msg_no_js">Missing a required JSON field</string>
+    <string name="message_error_msg_no_dev">ไม่พบอุปกรณ์ส่งข้อความที่ลงทะเบียน</string>
+    <string name="message_error_msg_no_key">Offered pre-key not found - unknown pre-key id</string>
+    <string name="message_error_msg_no_session">No session for this user found</string>
+    <string name="message_error_msg_not_init">Session not initialized</string>
+    <string name="message_error_msg_old">ข้อความเก่าเกินกว่าจะถอดรหัส</string>
+    <string name="message_error_msg_corrupt">ข้อมูลนำเข้าลุ้มเหลว</string>
+    <string name="message_error_axo_conv_exists">ZINA conversation exists while trying to setup new one</string>
+    <string name="message_error_mac_check_failed">HMAC check of encrypted message failed</string>
+    <string name="message_error_msg_padding_failed">Incorrect padding of decrypted message</string>
+    <string name="message_error_sup_padding_failed">Incorrect padding of decrypted supplementary data</string>
+    <string name="message_error_no_staged_keys">Not a real error, just to report that no staged keys available</string>
+    <string name="message_error_recv_id_mismatch">จับคู่IDผู้รับไม่ได้</string>
+    <string name="message_error_sender_id_mismatch">จับคู่IDผู้ส่งไม่ได้</string>
+    <string name="message_error_recv_data_length">ความยาวข้อมูลไม่ตรง</string>
+    <string name="message_error_wrong_recv_dev_id">Idของอุปกรณ์ไม่ตรง</string>
+    <string name="message_error_network_error">เครือข่ายผิดพลาด</string>
+    <string name="message_error_data_missing">ข้อมูลบางอย่างของฟังก์ชั่นนี้สูญหาย</string>
+    <string name="message_error_database_error">ไม่สามารถเข้าฐานข้อมูล</string>
+    <string name="message_error_remote_decrypt_failed">Recipient failed to decrypt message</string>
+
+    <string name="message_error_pub_no_curve">Curve not supported</string>
+    <string name="message_error_pub_key_type">Private and public key use different curves</string>
+
+    <string name="message_error_rat_key_type">Their identity key and our identity key use different curve types</string>
+
+    <string name="message_error_enc_block">The IV or other data length did not match the cipher\'s block size</string>
+    <string name="message_error_enc_key">Key size not supported for this cipher</string>
+
+    <!-- Texts for message attachment viewer -->
+    <string name="messaging_compose_length_error">ข้อความมีปริมาณอักษรสูงสุดที่รองรับแล้ว</string>
+    <string name="messaging_file_viewer_view_with">เปิด <xliff:g id="file_name">%1$s</xliff:g></string>
+    <string name="messaging_image_viewer_unable_to_display_image">ไม่สามารถแสดงภาพได้</string>
+    <string name="messaging_file_viewer_failure">ไม่สามารถเปิดไฟล์</string>
+    <string name="messaging_pdf_viewer_showing_page_voiceover">แสดงหน้า %1$d of %2$d</string>
+    <string name="messaging_pdf_viewer_button_previous_page_voiceover">ไปหน้าก่อน</string>
+    <string name="messaging_pdf_viewer_button_next_page_voiceover">ไปหน้าถัดไป</string>
+    <string name="messaging_could_not_view_link">ไม่สามารถเปิดลิงค์</string>
+
+    <!-- Texts for messaging options in main drawer menu -->
+    <string name="messaging_options">ตัวเลือกข้อความ</string>
+    <string name="messaging_burn_animation_text">เบิร์นข้อความเคลื่อนไหว</string>
+    <string name="messaging_burn_animation_explanation">แสดงข้อความเคลื่อนไหวเมื่อเบิร์น</string>
+    <string name="messaging_attachment_export_warning">เตือนเมื่อส่งออก</string>
+    <string name="messaging_attachment_export_warn_explanation">เตือนเมื่อส่งออกข้อความที่มีไฟล์แนบ</string>
+    <string name="messaging_sounds">เปิดใช้เสียงสำหรับข้อความ</string>
+    <string name="messaging_sounds_explanation">เปิดใช้เสียงเมื่อมีข้อความใหม่หรือลบข้อความ</string>
+    <string name="messaging_ringtone_title">เสียงแจ้งเตือน</string>
+    <string name="messaging_light_title">ไฟแจ้งเตือน</string>
+    <string name="messaging_vibrate_title">รูปแบบการสั่น</string>
+    <string name="messaging_vibrate_off">ปิด</string>
+    <string name="messaging_vibrate_default">ค่าเริ่มต้น</string>
+    <string name="messaging_vibrate_short">สั้น</string>
+    <string name="messaging_vibrate_long">ยาว</string>
+    <string name="messaging_light_off">ปิด</string>
+    <string name="messaging_light_default">ค่าเริ่มต้น</string>
+    <string name="messaging_light_red">แดง</string>
+    <string name="messaging_light_blue">น้ำเงิน</string>
+    <string name="messaging_light_green">เขียว</string>
+    <string name="messaging_light_white">ขาว</string>
+    <string name="messaging_light_purple">ม่วง</string>
+    <string name="messaging_theme_title">ธีมแอพพลิเคชั่น</string>
+    <string name="messaging_theme_dark">ธีมโทนเข้ม</string>
+    <string name="messaging_theme_light">ธีมโทนสว่าง</string>
+
+    <string name="contact_adder_title">เพิ่มรายชื่อ</string>
+    <string name="contact_save_existing">เพิ่มรายชื่อ</string>
+    <string name="contact_create_new">สร้างรายชื่อ</string>
+    <string name="contactCreationFailure">สร้างรายชื่อล้มเหลว โปรดตรวจสอบ Logs</string>
+    <string name="contactNameLabel">รายชื่อ</string>
+
+    <!-- Dialog title when importing contacts from an external source. [CHAR LIMIT=36] -->
+    <string name="dialog_auto_import">เริ่มนำเข้ารายชื่อบันทึก</string>
+    <string name="dialog_auto_import_text">คุณสามารถนำเข้ารายชื่อที่บันทึกที่หลัง  ใช้ฟังก์ชั่นนำเข้ารายชื่อเพื่อเลือกไฟล์ <b>%s</b></string>
+
+    <string name="messaging_vcard_section_phone">โทรศัพท์</string>
+    <string name="messaging_vcard_section_birthday">วันเกิด</string>
+    <string name="messaging_vcard_section_email">อีเมล</string>
+    <string name="messaging_vcard_section_im">IM</string>
+    <string name="messaging_vcard_section_address">ที่อยู่</string>
+    <string name="messaging_vcard_section_organization">องค์กร</string>
+    <string name="messaging_vcard_section_notes">หมายเหตุ</string>
+    <string name="messaging_vcard_address_type_home">บ้าน</string>
+    <string name="messaging_vcard_address_type_work">ที่ทำงาน</string>
+    <string name="messaging_vcard_address_type_other">อื่นๆ</string>
+    <string name="messaging_vcard_im_type_aim">AIM</string>
+    <string name="messaging_vcard_im_type_msn">Windows Live</string>
+    <string name="messaging_vcard_im_type_yahoo">Yahoo</string>
+    <string name="messaging_vcard_im_type_skype">Skype</string>
+    <string name="messaging_vcard_im_type_qq">QQ</string>
+    <string name="messaging_vcard_im_type_hangouts">Hangouts</string>
+    <string name="messaging_vcard_im_type_icq">ICQ</string>
+    <string name="messaging_vcard_im_type_jabber">Jabber</string>
+    <string name="messaging_vcard_im_type_other">อื่นๆ</string>
+    <string name="messaging_vcard_phone_type_home">บ้าน</string>
+    <string name="messaging_vcard_phone_type_mobile">มือถือ</string>
+    <string name="messaging_vcard_phone_type_work">ที่ทำงาน</string>
+    <string name="messaging_vcard_phone_type_silent">Silent Circle</string>
+    <string name="messaging_vcard_phone_type_other">อื่นๆ</string>
+    <string name="messaging_vcard_importing_contact">นำเข้ารายชื่อสำหรับ%s</string>
+    <string name="messaging_vcard_cannot_show_selected_contact">ไม่สามารถแสดงรายชื่อ!</string>
+
+    <string name="messaging_conversation_list_no_messages">ไม่มีข้อความ</string>
+    <string name="messaging_conversation_list_prefix_you">You:\u0020</string>
+    <string name="messaging_conversation_list_prefix_draft">Draft:\u0020</string>
+    <string name="messaging_conversation_select_recipient_hint">ใส่ User name ผู้รับ</string>
+    <string name="messaging_conversation_select_conversation_partner">ผู้รับ username</string>
+    <string name="messaging_conversation_list_file_sent">%1$s ส่งแล้ว</string>
+    <string name="messaging_conversation_list_file_received">%1$s รับแล้ว</string>
+    <string name="messaging_conversation_list_type_file">ไฟล์</string>
+    <string name="messaging_conversation_list_type_audio">เสียง</string>
+    <string name="messaging_conversation_list_type_video">วีดีโอ</string>
+    <string name="messaging_conversation_list_type_image">ภาพ</string>
+    <string name="messaging_conversation_list_type_contact">รายชื่อ</string>
+    <string name="messaging_conversation_list_failed_attachment">แนบไฟล์ล้มเหลว</string>
+    <string name="messaging_conversation_list_call_voiceover">โทรออก</string>
+    <string name="messaging_conversation_list_delete_conversation_voiceover">ลบบทสนทนา</string>
+
+    <string name="user_validation_generic_error">ตรวจสอบว่า User name ถูกต้องไหม</string>
+    <string name="user_validation_username_empty">ไม่ได้ใส่ User name </string>
+    <string name="user_validation_no_connection">โปรดตรวจสอบว่าอุปกรณ์ได้เชื่อมต่อกับอินเทอร์เน็ต แล้วลองอีกครั้ง</string>
+
+    <string name="debug_information_title">ข้อมูล Debug</string>
+    <string name="debug_information_toggle_json_view">Toggle JSON view</string>
+
+    <string name="invite_sms_not_setup">ขออภัย อุปกรณ์ไม่รองรับ SMS ดังนั้นไม่สามารถส่งคำเชิญออกไปได้</string>
+    <string name="invite_email_not_setup">Sขออภัย คุณต้องตั้งค่าอีเมลก่อนส่งอีเมลคำเชิญ</string>
+    <string name="invite_no_phone_or_email">ขออภัย รายชื่อไม่มีเบอร์โทรหรืออีเม ไม่สามารถส่งคำเชิญออกไปได้</string>
+
+    <string name="basic_account_info">คุณถูกลิมิตการใช้งานของ Silent Phone โปรดเข้า <a href="https://accounts.silentcircle.com/">เว็บไซต์ Silent Circle</a> และอัพเกรดแอคเค้าท์ของคุณ</string>
+    <string name="basic_account_info_free">คุณถูกลิมิตการใช้งานของ Silent Phone โปรดเข้า <a href="https://accounts.silentcircle.com/">เว็บไซต์ Silent Circle</a> และอัพเกรดแอคเค้าท์ของคุณ  \n\n ในขณะนี้คุณสามารถรับส่ายและข้อความ</string>
+    <string name="expired_account_info">แอคเค้าท์ของคุณหมดอายุ โปรดเข้า <a href="https://accounts.silentcircle.com/">เว็บไซต์ Silent Circle</a> และต่ออายุแอคเค้าท์เพื่อใช้งานการโทรออก</string>
+
+    <string name="minutes_gone_info">นาทีของคุณหมด โปรดเข้า <a href="https://accounts.silentcircle.com/">เว็บไซต์ Silent Circle</a> และเพิ่มเครดิตเพื่อใช้งานการโทรออก</string>
+    <string name="credit_gone_info">เครดิตของคุณหมด โปรดเข้า <a href="https://accounts.silentcircle.com/">เว็บไซต์ Silent Circle</a> และเพิ่มเครดิตเพื่อใช้งานการโทรออก</string>
+    <string name="minutes_low_info">นาทีของคุณใกล้หมด โปรดเข้า <a href="https://accounts.silentcircle.com/">เว็บไซต์ Silent Circle</a> และเพิ่มเครดิตเพื่อใช้งานการโทรออก</string>
+    <string name="credit_low_info">เครดิตของคุณใกล้หมด โปรดเข้า <a href="https://accounts.silentcircle.com/">เว็บไซต์ Silent Circle</a> และเพิ่มเครดิตเพื่อใช้งานการโทรออก</string>
+
+    <string name="dialog_title_need_funding">จำเป็นต้องเติมเงิน</string>
+    <string name="dialog_message_need_funding">เพื่อใช้บริการ Silent Circle คุณต้องมียอดขั้นต่ำ 5 ดอลล่าร์   \n\nคลิ้กเพื่อเริ่มต้น</string>
+    <string name="dialog_positive_need_funding">Fund account</string>
+
+    <string name="dialog_title_pstn_disabled">No Silent World service</string>
+    <string name="dialog_message_pstn_disabled">This call to an outside number cannot be placed because your account does not include Silent World service.</string>
+
+    <string name="silent_world_contact_info">Silent World call</string>
+
+    <string name="battery_info">Please acknowledge the request in the next dialog to keep SilentPhone connected.
+        If SilentPhone is not connect then you cannot receive calls or text messages. SilentPhone has an advanced
+        power management if in standby mode and the impacts on battery lifetime are negligible.
+    </string>
+    <string name="provisioning_corp_email_hint">อีเมลบริษัท</string>
+
+    <!-- in-app purchase -->
+    <string name="in_app_purchase">ชำระเงินในแอพลิเคชั่น</string>
+    <string name="select_amount">โปรดใส่จำนวนที่ต้องการชำระ</string>
+    <string name="select">เลือก</string>
+    <string name="purchase">ซื้อ</string>
+    <string name="select_a_card">เลือกการ์ด</string>
+
+    <string name="select_card">โปรดเลือกการ์ดเพื่อชำระ</string>
+    <string name="specified_amount">โปรดใส่จำนวนที่ต้องการชำระ</string>
+    <string name="amount">จำนวน</string>
+    <string name="new_card">การ์ดใหม่</string>
+    <!--<string name="auto_refill_payment">Automatically make $10.00 payment when account balance is lower $10.00.</string>-->
+    <string name="make_payment">ชำระเงินสำหรับ Secure calls</string>
+
+    <string name="creating_token">กำลังสร้าง Token&#8230;</string>
+    <string name="validationErrors">การตรวจสอบล้มเหลว</string>
+    <string name="cardNumber">หมายเลขการ์ด</string>
+    <string name="invalid_card_info">โปรดใส่รายละเอียดเครดิตดาร์ดที่ถูกต้อง</string>
+    <string name="invalid_card_number">หมายเลขการ์ดผิด</string>
+    <string name="invalid_expiration_date">วันที่หมดอายุผิด</string>
+    <string name="invalid_cvc">รหัส CVC ที่ใส่ผิด</string>
+    <string name="minimum_payment">จำนวนขั้นต่ำ 5 $</string>
+
+    <string name="getting_cc_info">กำลังดำเนินการ...&#8230;</string>
+    <string name="processing_payment">กำลังดำเนินการชำระเงิน...&#8230;</string>
+    <string name="payment_successful">ขอบคุณสำหรับการชำระเงิน</string>
+    <string name="exception_occur">ลองอีกครั้ง ถ้ายังเป็นอยู่ โปรดติดต่อ App Provider</string>
+
+    <string name="confirm_payment_title">ยืนยันการชำระ</string>
+    <string name="confirm_payment_message">%1$s จะถูกชาร์จไปยังเครดิตการ์ดที่สิ้นสุดด้วย  %2$s</string>
+
+    <string name="amount_level_4">อื่นๆ</string>
+
+    <string name="card_ending_with">สิ้นสุด: </string>
+
+    <!-- android:description -->
+    <string name="click_to_purchase">คลิ้กที่ปุ่มเพื่อชำระเงิน</string>
+    <string name="input_card_number">โปรดใส่หมายเลขการ์ดใน</string>
+
+    <string name="expiration_year">เลือกปีที่หมดอายุจากรายการ</string>
+    <string name="expiration_month">เลือกเดือนที่หมดอายุจากรายการ</string>
+    <string name="cvc_number">โปรดใส่หมายเลข cvc ที่อยู่บนหลังการ์ด</string>
+    <string name="click_register_card_stripe">คลิ้กที่ปุ่มบันทึกเพื่อลงทะเบียนการ์ดของคุณลง  Stripe และบันทึก  Stripe token</string>
+
+    <!-- payment menu -->
+    <string name="payment_history">ประวัติการชำระเงิน</string>
+
+    <!-- Miscellaneous -->
+    <string name="dialer_activity_conversation_button">เริ่มบทสนทนาใหม่</string>
+    <!-- Error when wiping data (dev devices only) -->
+    <string name="wipe_data_failed">การล้างข้อมูลล้มเหลว-กรุณายกเลิกการติดตั้งด้วยตนเอง</string>
+
+    <string name="dial_drawer_remaining_oca_minutes_description">แสดงสถานะแอคเค้าท์</string>
+    <string name="dial_drawer_settings_description">ตั้งค่าแอพพลิเคชั่น</string>
+    <string name="dial_drawer_go_offline_description">ปิดแอพพลิเคชั่น</string>
+    <string name="dial_drawer_wipe_phone_description">ลบข้อมูลแอพพลิเคชั่นและ log out</string>
+    <string name="dial_drawer_avatar_voiceover">Avatar</string>
+
+    <string name="data_retention_on">เปิดการเก็บรักษาข้อมูล &#9432;</string>
+    <string name="data_retention_communication_blocked">บล็อคการติดต่อสื้อสาร &#9432;</string>
+    <string name="data_retention_calls_blocked">Calls blocked &#9432;</string>
+    <string name="data_retention_messaging_blocked">Messaging blocked &#9432;</string>
+    <string name="data_retention_your_organization">organization ของคุณ</string>
+    <string name="data_retention_remote_organization">Remote organization</string>
+    <string name="data_retention_data_retained_by">%1$s บังคับใช้นโยบายการเก็บรักษาข้อมูล</string>
+    <string name="data_retention_data_retains">" และ เก็บรักษาข้อมูล"</string>
+    <string name="data_retention_message_plaintext">เนื้อหาข้อความ</string>
+    <string name="data_retention_message_metadata">ข้อความ metadata</string>
+    <string name="data_retention_calls">โทรเสียง</string>
+    <string name="data_retention_call_metadata">โทร metadata</string>
+    <string name="data_retention_message_attachments">เนื้อหาไฟล์แนบ</string>
+    <string name="data_retention_for_user">สำหรับผู้ใช้</string>
+    <string name="data_retention_retaining_organization">จัดเก็บข้อมูล organization</string>
+    <string name="data_retention_retaining_organizations">จัดเก็บข้อมูล organization</string>
+    <string name="data_retention_data_retained">ข้อมูลถูกเก็บรักษา:</string>
+    <string name="data_retention_data_retention_description_remote">Organization ของผู้รับมีนโยบายการเก็บรักษาข้อมูลสนทนา Silent Phone กำลังจัดเก็บข้อมูลนี้ไปยัง Organization ของผู้รับ</string>
+
+    <string name="data_retention_data_retention_description_both">Organization ของคุณและผู้รับมีนโยบายการเก็บรักษาข้อมูลสนทนา Silent Phone กำลังจัดเก็บข้อมูลนี้ไปยัง Organization ของคุณและผู้รับ</string>
+
+    <string name="data_retention_data_retention_description_local">Organization ของคุณมีนโยบายการเก็บรักษาข้อมูลสนทนา Silent Phone กำลังจัดเก็บข้อมูลนี้ไปยัง Organization ของคุณ</string>
+
+    <string name="data_retention_policy_error">นโยบายขัดข้อง</string>
+    <string name="data_retention_call_retained">การโทรถูกเก็บรักษา</string>
+    <string name="data_retention_message_retained">ข้อความถูกเก็บรักษา</string>
+    <string name="data_retention_message_not_delivered">ข้อความไม่ถูกจัดส่ง!</string>
+    <string name="data_retention_communication_dr_blocked">ข้อความไม่ถูกจัดส่ง เนื่องด้วยนโยบายการเก็บรักษาข้อมูลของ Organization</string>
+    <string name="data_retention_communication_dr_required">ข้อความไม่ถูกจัดส่ง เนื่องด้วยนโยบายการเก็บรักษาข้อมูลของผู้รับ</string>
+    <string name="data_retention_communication_blocked_remote">Message not delivered due to recipient\'s data retention settings (blocked data retention)</string>
+
+    <string name="messaging_checked_verified">ตรวจสอบแล้ว</string>
+
+    <string name="redirect_uri_mismatch">Redirect URI ไม่ถูก: %s</string>
+    <string name="redirect_uri_query_missing">Redirect URI ไม่มี query String</string>
+    <string name="redirect_uri_malformed">Redirect URI ไม่มีข้อมูลพอ</string>
+    <string name="redirect_uri_error">Redirect URI ขัดข้อง. Error code: %s.</string>
+    <string name="redirect_ssl_error">Got a SSL Error: %s</string>
+    <string name="redirect_wrong_uri">Server ให้ redirect URI ผิด: %s</string>
+
+    <string name="hw_device_id_mismatch">HW device identifiers ผิด: \nจัดเก็บแล้ว: %1$s\nActual: %2$s         \n\n โปรดยกเลิกการติดตั้งและติดตั้งแอพพลิเคชั่น</string>
+
+    <!-- The percentage, used for expressing progress. -->
+    <string name="percentage">%s%%</string>
+
+    <string name="permission_phone_title">ทำไมถึงเข้าใช้ตัวเครื่อง ?</string>
+    <string name="permission_phone_explanation">"Silent Phone ไม่ได้ใช้แอพพลิเคชั่นการโทรในอุปกรณ์มือถือ\nอย่างไรก็ตาม Silent Phone สามารถแจ้งเตือนเมื่อมีสายโทรเข้าหรือข้อความ โดยใช้เสียงเตือนระหว่างการใช้งาน Silent Phone"</string>
+
+    <string name="permission_sp_main_title">ต้องการ Silent Phone Permissions</string>
+    <string name="permission_sp_main_explanation">&lt;b>Audio&lt;/b>:  เพื่อตั้งค่าการโทรหรือการอัดเสียงไฟล์แนบ (ถ้าเปิดใช้งาน)
+        &lt;br/>&lt;br/>&lt;b>Camera:&lt;/b> เปิดใช้งาน โทรแบบวีดีโอ และ ไฟล์แนบวีดีโอ
+    </string>
+
+    <string name="permission_main_not_granted_title">Silent Phone permissions หาย</string>
+    <string name="permission_main_not_granted_explanation">Silent Phone ไม่สามารถทำงานหากไม่ได้รับ permissions  คุณอาจเริ่ม Silent Phone อีกครั้ง และรับ permissions
+    </string>
+
+    <string name="permission_location_title">ทำไมถึงเข้าใช้ Location ?</string>
+    <string name="permission_location_explanation">Silent Phone เข้าใช้ Location และส่งแนบข้อมูลLocation ไปยังข้อความที่เปิดใช้งานฟังก์ชั่น</string>
+
+    <string name="permission_storage_title">ทำไมถึงเข้าใช้ พื้นที่จัดเก็บข้อมูล ?</string>
+    <string name="permission_storage_explanation">คำร้องของผู้ใช้ Silent Phone สามารถจัดเก็บและแชร์ไฟล์แนบ โดยจำเป็นต้องได้รับ Permission เพื่อใช้งานพื้นที่จัดเก็บข้อมูลภายนอก</string>
+
+    <!-- Texts for avatar action dialog -->
+    <string name="avatar_choose_image_from_gallery_voiceover">เลือกภาพจากแกลอรี่</string>
+    <string name="avatar_take_a_photo_voiceover">ถ่ายรูป</string>
+    <string name="avatar_delete_photo_voiceover">ลบภาพ Avatar</string>
+    <string name="avatar_show_as_square">แสดงสี่เหลี่ยม</string>
+    <string name="avatar_show_as_circle">แสดงวงกลม</string>
+    <string name="avatar_could_not_show_image">ไม่สามารถแสดงภาพ</string>
+    <string name="avatar_action_select_from_gallery">เลือกภาพ</string>
+    <string name="avatar_action_take_a_photo">ถ่ายรูป</string>
+    <string name="avatar_action_delete">ลบภาพ Avatar</string>
+
+    <!-- debug logging -->
+    <string name="setting_debug_logging">เปิดใช้งานโหมด Debug</string>
+    <string name="setting_debug_logging_summary">ตามคำร้องขอ Silent Phone สามารถจัดเก็บรายละเอียด Debug เพื่อรายงานปัญหาที่ต้องการร้องขอการอนุญาตเพื่อบันทึก Encrypted Log ที่พื้นที่จัดเก็บภายนอก</string>
+    <string name="setting_send_logs">รายงานปัญหาและส่ง Log</string>
+    <string name="setting_debug_logging_config">เลือก debug lookback interval</string>
+    <string name="description_of_problem">คำอธิบายปัญหา</string>
+    <string name="send_logs">รายงานปัญหาและส่ง Log</string>
+    <string name="logging_error">ขัดข้อง</string>
+    <string name="logging_net_work_connection_error">โปรดเชื่อมต่ออินเทอร์เน็ตและลองอีกครั้ง</string>
+    <string name="logging_no_api_key_error">Error code #307477.</string>
+    <string name="logging_io_error">Error code #199607.</string>
+    <string name="failed_to_send_logs">ส่งรายงานล้มเหลว</string>
+    <string name="upload_logs_successfully">ส่งรายงานเรียบร้อย</string>
+    <string name="error_read_logs">ขัดข้องขณะอ่านไฟล์ encrypted log</string>
+    <string name="can_not_store_decrypted_logs">ไม่สามารถสร้างไดเร็คทอรี่</string>
+    <string name="permission_storage_explanation_1">ตามคำร้องขอ Silent Phone สามารถจัดเก็บรายละเอียด Debug เพื่อรายงานปัญหาที่ต้องการร้องขอการอนุญาตเพื่อบันทึก Encrypted Log ที่พื้นที่จัดเก็บภายนอก</string>
+    <string name="no_decrypted_log_files">ไม่มีไฟล์ decrypted Log</string>
+
+    <string name="one_day">1 วัน</string>
+    <string name="two_day">2 วัน</string>
+    <string name="three_day">3 วัน</string>
+    <!-- end debug logging -->
+
+    <string name="onboarding_enterprise_privacy_platform">Enterprise privacy platform</string>
+    <string name="onboarding_connect_with_people">เชื่อมต่อกับคนอื่น</string>
+    <string name="onboarding_lets_get_started">เริ่มต้นใช้งาน</string>
+    <string name="onboarding_silent_circle_is">Silent Circle เป็นธุรกิจที่ให้บริการเกี่ยวกับการติดต่อสื่อสารที่ปลอดภัย ที่มีทั้ง โทรศัพท์มือถือ, แอพพลิเคชั่นซอฟต์แวร์ และการบริกการการจัดการการสื่อสารให้องค์กร</string>
+    <string name="onboarding_private_encrypted">เอกชน, การสื่อสารแบบ encrypted และการส่งไฟล์แบบปลอดภัยสำหรับทุกคนในองค์กร</string>
+    <string name="onboarding_search_for">ค้นหาชื่อในรายชื่อด้วยอีเมล หรือชื่อเต็ม</string>
+
+    <string name="message_info_title">ข้อมูลเหตุการ์ณ</string>
+    <string name="message_info_id">Id</string>
+    <string name="message_info_message_composed_at">สร้างข้อความเมื่อ</string>
+    <string name="message_info_message_sent_to">ส่งข้อความถึง</string>
+    <string name="message_info_message_read_at">อ่านข้อความเมื่อ</string>
+    <string name="message_info_message_delivered_at">ส่งข้อความเมื่อ</string>
+    <string name="message_info_message_expires_in">ข้อความหมดอายุ</string>
+    <string name="message_info_text">ข้อความ</string>
+    <string name="message_info_sender">ผู้ส่ง</string>
+    <string name="message_info_burn_delay">เบิร์นล่าช้า</string>
+    <string name="message_info_has_attachments">มีไฟล์แนบ</string>
+    <string name="message_info_is_retained">ถูกเก็บรักษา</string>
+    <string name="message_info_trace">Trace</string>
+    <string name="message_info_local_retention_info">ข้อมูลถูกเก็บรักษา Local:</string>
+    <string name="message_info_remote_retention_info">ข้อมูลถูกเก็บรักษา Remote:</string>
+    <string name="message_info_retaining_organization">องค์กรเก็บรักษา</string>
+    <string name="message_info_call_type">ประเภทการโทร</string>
+    <string name="message_info_call_time">โทรเริ่มต้นเมื่อ</string>
+    <string name="message_info_call_duration">เวลาการโทร</string>
+    <string name="message_info_call_error">ขัดข้อง</string>
+    <string name="message_info_error_device_id">หมายเลขอุปกรณ์</string>
+    <string name="message_info_error_number">ขัดข้อง</string>
+    <string name="message_info_error_message_id">หมายเลขข้อความ</string>
+    <string name="message_info_error_recipient_device_id">อุปกรณ์ผู้รับ</string>
+    <string name="message_info_error_is_duplicate">Is duplicate</string>
+    <string name="message_info_tab_info">ข้อมูล</string>
+    <string name="message_info_tab_json">Json</string>
+    <string name="message_info_tab_trace">Trace</string>
+    <string name="message_info_tab_no_trace_available">ไม่มีข้อมูล Trace</string>
+
+</resources>

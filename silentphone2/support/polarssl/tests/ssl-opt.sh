@@ -1,23 +1,35 @@
 #!/bin/sh
 
-# Test various options that are not covered by compat.sh
+# ssl-opt.sh
 #
-# Here the goal is not to cover every ciphersuite/version, but
-# rather specific options (max fragment length, truncated hmac, etc)
-# or procedures (session resumption from cache or ticket, renego, etc).
+# This file is part of mbed TLS (https://tls.mbed.org)
 #
-# Assumes all options are compiled in.
+# Copyright (c) 2016, ARM Limited, All Rights Reserved
+#
+# Purpose
+#
+# Executes tests to prove various TLS/SSL options and extensions.
+#
+# The goal is not to cover every ciphersuite/version, but instead to cover
+# specific options (max fragment length, truncated hmac, etc) or procedures
+# (session resumption from cache or ticket, renego, etc).
+#
+# The tests assume a build with default options, with exceptions expressed
+# with a dependency.  The tests focus on functionality and do not consider
+# performance.
+#
 
 set -u
 
 # default values, can be overriden by the environment
 : ${P_SRV:=../programs/ssl/ssl_server2}
 : ${P_CLI:=../programs/ssl/ssl_client2}
+: ${P_PXY:=../programs/test/udp_proxy}
 : ${OPENSSL_CMD:=openssl} # OPENSSL would conflict with the build system
 : ${GNUTLS_CLI:=gnutls-cli}
 : ${GNUTLS_SERV:=gnutls-serv}
 
-O_SRV="$OPENSSL_CMD s_server -www -cert data_files/server5.crt -key data_files/server5.key -dhparam data_files/dhparams.pem"
+O_SRV="$OPENSSL_CMD s_server -www -cert data_files/server5.crt -key data_files/server5.key"
 O_CLI="echo 'GET / HTTP/1.0' | $OPENSSL_CMD s_client"
 G_SRV="$GNUTLS_SERV --x509certfile data_files/server5.crt --x509keyfile data_files/server5.key"
 G_CLI="echo 'GET / HTTP/1.0' | $GNUTLS_CLI --x509cafile data_files/test-ca_cat12.crt"
@@ -26,11 +38,16 @@ TESTS=0
 FAILS=0
 SKIPS=0
 
-CONFIG_H='../include/polarssl/config.h'
+CONFIG_H='../include/mbedtls/config.h'
 
 MEMCHECK=0
 FILTER='.*'
 EXCLUDE='^$'
+
+SHOW_TEST_NUMBER=0
+RUN_TEST_NUMBER=''
+
+PRESERVE_LOGS=0
 
 print_usage() {
     echo "Usage: $0 [options]"
@@ -38,6 +55,10 @@ print_usage() {
     printf "  -m|--memcheck\tCheck memory leaks and errors.\n"
     printf "  -f|--filter\tOnly matching tests are executed (default: '$FILTER')\n"
     printf "  -e|--exclude\tMatching tests are excluded (default: '$EXCLUDE')\n"
+    printf "  -n|--number\tExecute only numbered test (comma-separated, e.g. '245,256')\n"
+    printf "  -s|--show-numbers\tShow test numbers in front of test names\n"
+    printf "  -p|--preserve-logs\tPreserve logs of successful tests as well\n"
+    printf "     --seed\tInteger seed value to use for this test run\n"
 }
 
 get_options() {
@@ -51,6 +72,18 @@ get_options() {
                 ;;
             -m|--memcheck)
                 MEMCHECK=1
+                ;;
+            -n|--number)
+                shift; RUN_TEST_NUMBER=$1
+                ;;
+            -s|--show-numbers)
+                SHOW_TEST_NUMBER=1
+                ;;
+            -p|--preserve-logs)
+                PRESERVE_LOGS=1
+                ;;
+            --seed)
+                shift; SEED="$1"
                 ;;
             -h|--help)
                 print_usage
@@ -66,16 +99,9 @@ get_options() {
     done
 }
 
-# skip next test if OpenSSL can't send SSLv2 ClientHello
-requires_openssl_with_sslv2() {
-    if [ -z "${OPENSSL_HAS_SSL2:-}" ]; then
-        if $OPENSSL_CMD ciphers -ssl2 >/dev/null 2>&1; then
-            OPENSSL_HAS_SSL2="YES"
-        else
-            OPENSSL_HAS_SSL2="NO"
-        fi
-    fi
-    if [ "$OPENSSL_HAS_SSL2" = "NO" ]; then
+# skip next test if the flag is not enabled in config.h
+requires_config_enabled() {
+    if grep "^#define $1" $CONFIG_H > /dev/null; then :; else
         SKIP_NEXT="YES"
     fi
 }
@@ -98,7 +124,7 @@ requires_openssl_with_fallback_scsv() {
 # skip next test if GnuTLS isn't available
 requires_gnutls() {
     if [ -z "${GNUTLS_AVAILABLE:-}" ]; then
-        if ( which "$GNUTLS_CLI" && which "$GNUTLS_SERV" ) >/dev/null; then
+        if ( which "$GNUTLS_CLI" && which "$GNUTLS_SERV" ) >/dev/null 2>&1; then
             GNUTLS_AVAILABLE="YES"
         else
             GNUTLS_AVAILABLE="NO"
@@ -109,14 +135,65 @@ requires_gnutls() {
     fi
 }
 
+# skip next test if IPv6 isn't available on this host
+requires_ipv6() {
+    if [ -z "${HAS_IPV6:-}" ]; then
+        $P_SRV server_addr='::1' > $SRV_OUT 2>&1 &
+        SRV_PID=$!
+        sleep 1
+        kill $SRV_PID >/dev/null 2>&1
+        if grep "NET - Binding of the socket failed" $SRV_OUT >/dev/null; then
+            HAS_IPV6="NO"
+        else
+            HAS_IPV6="YES"
+        fi
+        rm -r $SRV_OUT
+    fi
+
+    if [ "$HAS_IPV6" = "NO" ]; then
+        SKIP_NEXT="YES"
+    fi
+}
+
+# skip the next test if valgrind is in use
+not_with_valgrind() {
+    if [ "$MEMCHECK" -gt 0 ]; then
+        SKIP_NEXT="YES"
+    fi
+}
+
+# skip the next test if valgrind is NOT in use
+only_with_valgrind() {
+    if [ "$MEMCHECK" -eq 0 ]; then
+        SKIP_NEXT="YES"
+    fi
+}
+
+# multiply the client timeout delay by the given factor for the next test
+client_needs_more_time() {
+    CLI_DELAY_FACTOR=$1
+}
+
+# wait for the given seconds after the client finished in the next test
+server_needs_more_time() {
+    SRV_DELAY_SECONDS=$1
+}
+
 # print_name <name>
 print_name() {
-    printf "$1 "
-    LEN=$(( 72 - `echo "$1" | wc -c` ))
+    TESTS=$(( $TESTS + 1 ))
+    LINE=""
+
+    if [ "$SHOW_TEST_NUMBER" -gt 0 ]; then
+        LINE="$TESTS "
+    fi
+
+    LINE="$LINE$1"
+    printf "$LINE "
+    LEN=$(( 72 - `echo "$LINE" | wc -c` ))
     for i in `seq 1 $LEN`; do printf '.'; done
     printf ' '
 
-    TESTS=$(( $TESTS + 1 ))
 }
 
 # fail <message>
@@ -126,14 +203,23 @@ fail() {
 
     mv $SRV_OUT o-srv-${TESTS}.log
     mv $CLI_OUT o-cli-${TESTS}.log
-    echo "  ! outputs saved to o-srv-${TESTS}.log and o-cli-${TESTS}.log"
+    if [ -n "$PXY_CMD" ]; then
+        mv $PXY_OUT o-pxy-${TESTS}.log
+    fi
+    echo "  ! outputs saved to o-XXX-${TESTS}.log"
 
     if [ "X${USER:-}" = Xbuildbot -o "X${LOGNAME:-}" = Xbuildbot ]; then
         echo "  ! server output:"
         cat o-srv-${TESTS}.log
-        echo "  ! ============================================================"
+        echo "  ! ========================================================"
         echo "  ! client output:"
         cat o-cli-${TESTS}.log
+        if [ -n "$PXY_CMD" ]; then
+            echo "  ! ========================================================"
+            echo "  ! proxy output:"
+            cat o-pxy-${TESTS}.log
+        fi
+        echo ""
     fi
 
     FAILS=$(( $FAILS + 1 ))
@@ -142,6 +228,28 @@ fail() {
 # is_polar <cmd_line>
 is_polar() {
     echo "$1" | grep 'ssl_server2\|ssl_client2' > /dev/null
+}
+
+# openssl s_server doesn't have -www with DTLS
+check_osrv_dtls() {
+    if echo "$SRV_CMD" | grep 's_server.*-dtls' >/dev/null; then
+        NEEDS_INPUT=1
+        SRV_CMD="$( echo $SRV_CMD | sed s/-www// )"
+    else
+        NEEDS_INPUT=0
+    fi
+}
+
+# provide input to commands that need it
+provide_input() {
+    if [ $NEEDS_INPUT -eq 0 ]; then
+        return
+    fi
+
+    while true; do
+        echo "HTTP/1.0 200 OK"
+        sleep 1
+    done
 }
 
 # has_mem_err <log_file_name>
@@ -162,16 +270,29 @@ wait_server_start() {
         DONE=0
 
         # make a tight loop, server usually takes less than 1 sec to start
-        while [ $DONE -eq 0 ]; do
-            if lsof -nbi TCP:"$PORT" 2>/dev/null | grep LISTEN >/dev/null
-            then
-                DONE=1
-            elif [ $(( $( date +%s ) - $START_TIME )) -gt $DOG_DELAY ]; then
-                echo "SERVERSTART TIMEOUT"
-                echo "SERVERSTART TIMEOUT" >> $SRV_OUT
-                DONE=1
-            fi
-        done
+        if [ "$DTLS" -eq 1 ]; then
+            while [ $DONE -eq 0 ]; do
+                if lsof -nbi UDP:"$SRV_PORT" 2>/dev/null | grep UDP >/dev/null
+                then
+                    DONE=1
+                elif [ $(( $( date +%s ) - $START_TIME )) -gt $DOG_DELAY ]; then
+                    echo "SERVERSTART TIMEOUT"
+                    echo "SERVERSTART TIMEOUT" >> $SRV_OUT
+                    DONE=1
+                fi
+            done
+        else
+            while [ $DONE -eq 0 ]; do
+                if lsof -nbi TCP:"$SRV_PORT" 2>/dev/null | grep LISTEN >/dev/null
+                then
+                    DONE=1
+                elif [ $(( $( date +%s ) - $START_TIME )) -gt $DOG_DELAY ]; then
+                    echo "SERVERSTART TIMEOUT"
+                    echo "SERVERSTART TIMEOUT" >> $SRV_OUT
+                    DONE=1
+                fi
+            done
+        fi
     else
         sleep "$START_DELAY"
     fi
@@ -182,36 +303,58 @@ wait_server_start() {
 wait_client_done() {
     CLI_PID=$!
 
-    ( sleep "$DOG_DELAY"; echo "TIMEOUT" >> $CLI_OUT; kill $CLI_PID ) &
-    WATCHDOG_PID=$!
+    CLI_DELAY=$(( $DOG_DELAY * $CLI_DELAY_FACTOR ))
+    CLI_DELAY_FACTOR=1
+
+    ( sleep $CLI_DELAY; echo "===CLIENT_TIMEOUT===" >> $CLI_OUT; kill $CLI_PID ) &
+    DOG_PID=$!
 
     wait $CLI_PID
     CLI_EXIT=$?
 
-    kill $WATCHDOG_PID
-    wait $WATCHDOG_PID
+    kill $DOG_PID >/dev/null 2>&1
+    wait $DOG_PID
 
     echo "EXIT: $CLI_EXIT" >> $CLI_OUT
+
+    sleep $SRV_DELAY_SECONDS
+    SRV_DELAY_SECONDS=0
 }
 
-# Usage: run_test name srv_cmd cli_cmd cli_exit [option [...]]
+# check if the given command uses dtls and sets global variable DTLS
+detect_dtls() {
+    if echo "$1" | grep 'dtls=1\|-dtls1\|-u' >/dev/null; then
+        DTLS=1
+    else
+        DTLS=0
+    fi
+}
+
+# Usage: run_test name [-p proxy_cmd] srv_cmd cli_cmd cli_exit [option [...]]
 # Options:  -s pattern  pattern that must be present in server output
 #           -c pattern  pattern that must be present in client output
+#           -u pattern  lines after pattern must be unique in client output
 #           -S pattern  pattern that must be absent in server output
 #           -C pattern  pattern that must be absent in client output
+#           -U pattern  lines after pattern must be unique in server output
 run_test() {
     NAME="$1"
-    SRV_CMD="$2"
-    CLI_CMD="$3"
-    CLI_EXPECT="$4"
-    shift 4
+    shift 1
 
     if echo "$NAME" | grep "$FILTER" | grep -v "$EXCLUDE" >/dev/null; then :
     else
+        SKIP_NEXT="NO"
         return
     fi
 
     print_name "$NAME"
+
+    # Do we only run numbered tests?
+    if [ "X$RUN_TEST_NUMBER" = "X" ]; then :
+    elif echo ",$RUN_TEST_NUMBER," | grep ",$TESTS," >/dev/null; then :
+    else
+        SKIP_NEXT="YES"
+    fi
 
     # should we skip?
     if [ "X$SKIP_NEXT" = "XYES" ]; then
@@ -220,6 +363,30 @@ run_test() {
         SKIPS=$(( $SKIPS + 1 ))
         return
     fi
+
+    # does this test use a proxy?
+    if [ "X$1" = "X-p" ]; then
+        PXY_CMD="$2"
+        shift 2
+    else
+        PXY_CMD=""
+    fi
+
+    # get commands and client output
+    SRV_CMD="$1"
+    CLI_CMD="$2"
+    CLI_EXPECT="$3"
+    shift 3
+
+    # fix client port
+    if [ -n "$PXY_CMD" ]; then
+        CLI_CMD=$( echo "$CLI_CMD" | sed s/+SRV_PORT/$PXY_PORT/g )
+    else
+        CLI_CMD=$( echo "$CLI_CMD" | sed s/+SRV_PORT/$SRV_PORT/g )
+    fi
+
+    # update DTLS variable
+    detect_dtls "$SRV_CMD"
 
     # prepend valgrind to our commands if active
     if [ "$MEMCHECK" -gt 0 ]; then
@@ -231,19 +398,43 @@ run_test() {
         fi
     fi
 
-    # run the commands
-    echo "$SRV_CMD" > $SRV_OUT
-    $SRV_CMD >> $SRV_OUT 2>&1 &
-    SRV_PID=$!
-    wait_server_start
+    TIMES_LEFT=2
+    while [ $TIMES_LEFT -gt 0 ]; do
+        TIMES_LEFT=$(( $TIMES_LEFT - 1 ))
 
-    echo "$CLI_CMD" > $CLI_OUT
-    eval "$CLI_CMD" >> $CLI_OUT 2>&1 &
-    wait_client_done
+        # run the commands
+        if [ -n "$PXY_CMD" ]; then
+            echo "$PXY_CMD" > $PXY_OUT
+            $PXY_CMD >> $PXY_OUT 2>&1 &
+            PXY_PID=$!
+            # assume proxy starts faster than server
+        fi
 
-    # kill the server
-    kill $SRV_PID
-    wait $SRV_PID
+        check_osrv_dtls
+        echo "$SRV_CMD" > $SRV_OUT
+        provide_input | $SRV_CMD >> $SRV_OUT 2>&1 &
+        SRV_PID=$!
+        wait_server_start
+
+        echo "$CLI_CMD" > $CLI_OUT
+        eval "$CLI_CMD" >> $CLI_OUT 2>&1 &
+        wait_client_done
+
+        # terminate the server (and the proxy)
+        kill $SRV_PID
+        wait $SRV_PID
+        if [ -n "$PXY_CMD" ]; then
+            kill $PXY_PID >/dev/null 2>&1
+            wait $PXY_PID
+        fi
+
+        # retry only on timeouts
+        if grep '===CLIENT_TIMEOUT===' $CLI_OUT >/dev/null; then
+            printf "RETRY "
+        else
+            TIMES_LEFT=0
+        fi
+    done
 
     # check if the client and server went at least to the handshake stage
     # (useful to avoid tests with only negative assertions and non-zero
@@ -274,39 +465,61 @@ run_test() {
     if [ \( "$CLI_EXPECT" = 0 -a "$CLI_EXIT" != 0 \) -o \
          \( "$CLI_EXPECT" != 0 -a "$CLI_EXIT" = 0 \) ]
     then
-        fail "bad client exit code"
+        fail "bad client exit code (expected $CLI_EXPECT, got $CLI_EXIT)"
         return
     fi
 
     # check other assertions
     # lines beginning with == are added by valgrind, ignore them
+    # lines with 'Serious error when reading debug info', are valgrind issues as well
     while [ $# -gt 0 ]
     do
         case $1 in
             "-s")
-                if grep -v '^==' $SRV_OUT | grep "$2" >/dev/null; then :; else
-                    fail "-s $2"
+                if grep -v '^==' $SRV_OUT | grep -v 'Serious error when reading debug info' | grep "$2" >/dev/null; then :; else
+                    fail "pattern '$2' MUST be present in the Server output"
                     return
                 fi
                 ;;
 
             "-c")
-                if grep -v '^==' $CLI_OUT | grep "$2" >/dev/null; then :; else
-                    fail "-c $2"
+                if grep -v '^==' $CLI_OUT | grep -v 'Serious error when reading debug info' | grep "$2" >/dev/null; then :; else
+                    fail "pattern '$2' MUST be present in the Client output"
                     return
                 fi
                 ;;
 
             "-S")
-                if grep -v '^==' $SRV_OUT | grep "$2" >/dev/null; then
-                    fail "-S $2"
+                if grep -v '^==' $SRV_OUT | grep -v 'Serious error when reading debug info' | grep "$2" >/dev/null; then
+                    fail "pattern '$2' MUST NOT be present in the Server output"
                     return
                 fi
                 ;;
 
             "-C")
-                if grep -v '^==' $CLI_OUT | grep "$2" >/dev/null; then
-                    fail "-C $2"
+                if grep -v '^==' $CLI_OUT | grep -v 'Serious error when reading debug info' | grep "$2" >/dev/null; then
+                    fail "pattern '$2' MUST NOT be present in the Client output"
+                    return
+                fi
+                ;;
+
+                # The filtering in the following two options (-u and -U) do the following
+                #   - ignore valgrind output
+                #   - filter out everything but lines right after the pattern occurances
+                #   - keep one of each non-unique line
+                #   - count how many lines remain
+                # A line with '--' will remain in the result from previous outputs, so the number of lines in the result will be 1
+                # if there were no duplicates.
+            "-U")
+                if [ $(grep -v '^==' $SRV_OUT | grep -v 'Serious error when reading debug info' | grep -A1 "$2" | grep -v "$2" | sort | uniq -d | wc -l) -gt 1 ]; then
+                    fail "lines following pattern '$2' must be unique in Server output"
+                    return
+                fi
+                ;;
+
+            "-u")
+                if [ $(grep -v '^==' $CLI_OUT | grep -v 'Serious error when reading debug info' | grep -A1 "$2" | grep -v "$2" | sort | uniq -d | wc -l) -gt 1 ]; then
+                    fail "lines following pattern '$2' must be unique in Client output"
                     return
                 fi
                 ;;
@@ -332,13 +545,20 @@ run_test() {
 
     # if we're here, everything is ok
     echo "PASS"
-    rm -f $SRV_OUT $CLI_OUT
+    if [ "$PRESERVE_LOGS" -gt 0 ]; then
+        mv $SRV_OUT o-srv-${TESTS}.log
+        mv $CLI_OUT o-cli-${TESTS}.log
+    fi
+
+    rm -f $SRV_OUT $CLI_OUT $PXY_OUT
 }
 
 cleanup() {
-    rm -f $CLI_OUT $SRV_OUT $SESSION
-    kill $SRV_PID >/dev/null 2>&1
-    kill $WATCHDOG_PID >/dev/null 2>&1
+    rm -f $CLI_OUT $SRV_OUT $PXY_OUT $SESSION
+    test -n "${SRV_PID:-}" && kill $SRV_PID >/dev/null 2>&1
+    test -n "${PXY_PID:-}" && kill $PXY_PID >/dev/null 2>&1
+    test -n "${CLI_PID:-}" && kill $CLI_PID >/dev/null 2>&1
+    test -n "${DOG_PID:-}" && kill $DOG_PID >/dev/null 2>&1
     exit 1
 }
 
@@ -362,6 +582,16 @@ if [ ! -x "$P_CLI" ]; then
     echo "Command '$P_CLI' is not an executable file"
     exit 1
 fi
+if [ ! -x "$P_PXY" ]; then
+    echo "Command '$P_PXY' is not an executable file"
+    exit 1
+fi
+if [ "$MEMCHECK" -gt 0 ]; then
+    if which valgrind >/dev/null 2>&1; then :; else
+        echo "Memcheck not possible. Valgrind not found"
+        exit 1
+    fi
+fi
 if which $OPENSSL_CMD >/dev/null 2>&1; then :; else
     echo "Command '$OPENSSL_CMD' not found"
     exit 1
@@ -378,22 +608,30 @@ else
     START_DELAY=1
     DOG_DELAY=10
 fi
+CLI_DELAY_FACTOR=1
+SRV_DELAY_SECONDS=0
 
-# Pick a "unique" port in the range 10000-19999.
-PORT="0000$$"
-PORT="1$( printf $PORT | tail -c 4 )"
+# Pick a "unique" server port in the range 10000-19999, and a proxy port
+PORT_BASE="0000$$"
+PORT_BASE="$( printf $PORT_BASE | tail -c 4 )"
+SRV_PORT="1$PORT_BASE"
+PXY_PORT="2$PORT_BASE"
+unset PORT_BASE
 
-# fix commands to use this port
-P_SRV="$P_SRV server_port=$PORT"
-P_CLI="$P_CLI server_port=$PORT"
-O_SRV="$O_SRV -accept $PORT"
-O_CLI="$O_CLI -connect localhost:$PORT"
-G_SRV="$G_SRV -p $PORT"
-G_CLI="$G_CLI -p $PORT localhost"
+# fix commands to use this port, force IPv4 while at it
+# +SRV_PORT will be replaced by either $SRV_PORT or $PXY_PORT later
+P_SRV="$P_SRV server_addr=127.0.0.1 server_port=$SRV_PORT"
+P_CLI="$P_CLI server_addr=127.0.0.1 server_port=+SRV_PORT"
+P_PXY="$P_PXY server_addr=127.0.0.1 server_port=$SRV_PORT listen_addr=127.0.0.1 listen_port=$PXY_PORT ${SEED:+"seed=$SEED"}"
+O_SRV="$O_SRV -accept $SRV_PORT -dhparam data_files/dhparams.pem"
+O_CLI="$O_CLI -connect localhost:+SRV_PORT"
+G_SRV="$G_SRV -p $SRV_PORT"
+G_CLI="$G_CLI -p +SRV_PORT localhost"
 
 # Also pick a unique name for intermediate files
 SRV_OUT="srv_out.$$"
 CLI_OUT="cli_out.$$"
+PXY_OUT="pxy_out.$$"
 SESSION="session.$$"
 
 SKIP_NEXT="NO"
@@ -417,13 +655,36 @@ run_test    "Default" \
             -S "error" \
             -C "error"
 
+run_test    "Default, DTLS" \
+            "$P_SRV dtls=1" \
+            "$P_CLI dtls=1" \
+            0 \
+            -s "Protocol is DTLSv1.2" \
+            -s "Ciphersuite is TLS-ECDHE-ECDSA-WITH-AES-256-GCM-SHA384"
+
+# Test for uniqueness of IVs in AEAD ciphersuites
+run_test    "Unique IV in GCM" \
+            "$P_SRV exchanges=20 debug_level=4" \
+            "$P_CLI exchanges=20 debug_level=4 force_ciphersuite=TLS-ECDHE-ECDSA-WITH-AES-256-GCM-SHA384" \
+            0 \
+            -u "IV used" \
+            -U "IV used"
+
 # Tests for rc4 option
 
+requires_config_enabled MBEDTLS_REMOVE_ARC4_CIPHERSUITES
 run_test    "RC4: server disabled, client enabled" \
             "$P_SRV" \
             "$P_CLI force_ciphersuite=TLS-RSA-WITH-RC4-128-SHA" \
             1 \
-            -s "SSL - None of the common ciphersuites is usable"
+            -s "SSL - The server has no ciphersuites in common"
+
+requires_config_enabled MBEDTLS_REMOVE_ARC4_CIPHERSUITES
+run_test    "RC4: server half, client enabled" \
+            "$P_SRV arc4=1" \
+            "$P_CLI force_ciphersuite=TLS-RSA-WITH-RC4-128-SHA" \
+            1 \
+            -s "SSL - The server has no ciphersuites in common"
 
 run_test    "RC4: server enabled, client disabled" \
             "$P_SRV force_ciphersuite=TLS-RSA-WITH-RC4-128-SHA" \
@@ -432,30 +693,11 @@ run_test    "RC4: server enabled, client disabled" \
             -s "SSL - The server has no ciphersuites in common"
 
 run_test    "RC4: both enabled" \
-            "$P_SRV arc4=1" \
+            "$P_SRV force_ciphersuite=TLS-RSA-WITH-RC4-128-SHA" \
             "$P_CLI force_ciphersuite=TLS-RSA-WITH-RC4-128-SHA" \
             0 \
             -S "SSL - None of the common ciphersuites is usable" \
             -S "SSL - The server has no ciphersuites in common"
-
-# Test for SSLv2 ClientHello
-
-requires_openssl_with_sslv2
-run_test    "SSLv2 ClientHello: reference" \
-            "$P_SRV debug_level=3" \
-            "$O_CLI -no_ssl2" \
-            0 \
-            -S "parse client hello v2" \
-            -S "ssl_handshake returned"
-
-# Adding a SSL2-only suite makes OpenSSL client send SSLv2 ClientHello
-requires_openssl_with_sslv2
-run_test    "SSLv2 ClientHello: actual test" \
-            "$P_SRV debug_level=2" \
-            "$O_CLI -cipher 'DES-CBC-MD5:ALL'" \
-            0 \
-            -s "parse client hello v2" \
-            -S "ssl_handshake returned"
 
 # Tests for Truncated HMAC extension
 
@@ -479,8 +721,8 @@ run_test    "Truncated HMAC: client enabled, server default" \
             "$P_CLI force_ciphersuite=TLS-RSA-WITH-AES-128-CBC-SHA \
              trunc_hmac=1" \
             0 \
-            -S "dumping 'computed mac' (20 bytes)" \
-            -s "dumping 'computed mac' (10 bytes)"
+            -s "dumping 'computed mac' (20 bytes)" \
+            -S "dumping 'computed mac' (10 bytes)"
 
 run_test    "Truncated HMAC: client enabled, server disabled" \
             "$P_SRV debug_level=4 trunc_hmac=0" \
@@ -539,7 +781,7 @@ run_test    "Encrypt then MAC: client enabled, aead cipher" \
 run_test    "Encrypt then MAC: client enabled, stream cipher" \
             "$P_SRV debug_level=3 etm=1 \
              force_ciphersuite=TLS-RSA-WITH-RC4-128-SHA" \
-            "$P_CLI debug_level=3 etm=1 arc4=1" \
+            "$P_CLI debug_level=3 etm=1 arc4=1 force_ciphersuite=TLS-RSA-WITH-RC4-128-SHA" \
             0 \
             -c "client hello, adding encrypt_then_mac extension" \
             -s "found encrypt then mac extension" \
@@ -560,6 +802,7 @@ run_test    "Encrypt then MAC: client disabled, server enabled" \
             -C "using encrypt then mac" \
             -S "using encrypt then mac"
 
+requires_config_enabled MBEDTLS_SSL_PROTO_SSL3
 run_test    "Encrypt then MAC: client SSLv3, server enabled" \
             "$P_SRV debug_level=3 min_version=ssl3 \
              force_ciphersuite=TLS-RSA-WITH-AES-128-CBC-SHA" \
@@ -572,13 +815,14 @@ run_test    "Encrypt then MAC: client SSLv3, server enabled" \
             -C "using encrypt then mac" \
             -S "using encrypt then mac"
 
+requires_config_enabled MBEDTLS_SSL_PROTO_SSL3
 run_test    "Encrypt then MAC: client enabled, server SSLv3" \
             "$P_SRV debug_level=3 force_version=ssl3 \
              force_ciphersuite=TLS-RSA-WITH-AES-128-CBC-SHA" \
             "$P_CLI debug_level=3 min_version=ssl3" \
             0 \
             -c "client hello, adding encrypt_then_mac extension" \
-            -s "found encrypt then mac extension" \
+            -S "found encrypt then mac extension" \
             -S "server hello, adding encrypt then mac extension" \
             -C "found encrypt_then_mac extension" \
             -C "using encrypt then mac" \
@@ -619,6 +863,7 @@ run_test    "Extended Master Secret: client disabled, server enabled" \
             -C "using extended master secret" \
             -S "using extended master secret"
 
+requires_config_enabled MBEDTLS_SSL_PROTO_SSL3
 run_test    "Extended Master Secret: client SSLv3, server enabled" \
             "$P_SRV debug_level=3 min_version=ssl3" \
             "$P_CLI debug_level=3 force_version=ssl3" \
@@ -630,12 +875,13 @@ run_test    "Extended Master Secret: client SSLv3, server enabled" \
             -C "using extended master secret" \
             -S "using extended master secret"
 
+requires_config_enabled MBEDTLS_SSL_PROTO_SSL3
 run_test    "Extended Master Secret: client enabled, server SSLv3" \
             "$P_SRV debug_level=3 force_version=ssl3" \
             "$P_CLI debug_level=3 min_version=ssl3" \
             0 \
             -c "client hello, adding extended_master_secret extension" \
-            -s "found extended master secret extension" \
+            -S "found extended master secret extension" \
             -S "server hello, adding extended master secret extension" \
             -C "found extended_master_secret extension" \
             -C "using extended master secret" \
@@ -644,7 +890,7 @@ run_test    "Extended Master Secret: client enabled, server SSLv3" \
 # Tests for FALLBACK_SCSV
 
 run_test    "Fallback SCSV: default" \
-            "$P_SRV" \
+            "$P_SRV debug_level=2" \
             "$P_CLI debug_level=3 force_version=tls1_1" \
             0 \
             -C "adding FALLBACK_SCSV" \
@@ -653,7 +899,7 @@ run_test    "Fallback SCSV: default" \
             -C "is a fatal alert message (msg 86)"
 
 run_test    "Fallback SCSV: explicitly disabled" \
-            "$P_SRV" \
+            "$P_SRV debug_level=2" \
             "$P_CLI debug_level=3 force_version=tls1_1 fallback=0" \
             0 \
             -C "adding FALLBACK_SCSV" \
@@ -662,7 +908,7 @@ run_test    "Fallback SCSV: explicitly disabled" \
             -C "is a fatal alert message (msg 86)"
 
 run_test    "Fallback SCSV: enabled" \
-            "$P_SRV" \
+            "$P_SRV debug_level=2" \
             "$P_CLI debug_level=3 force_version=tls1_1 fallback=1" \
             1 \
             -c "adding FALLBACK_SCSV" \
@@ -671,7 +917,7 @@ run_test    "Fallback SCSV: enabled" \
             -c "is a fatal alert message (msg 86)"
 
 run_test    "Fallback SCSV: enabled, max version" \
-            "$P_SRV" \
+            "$P_SRV debug_level=2" \
             "$P_CLI debug_level=3 fallback=1" \
             0 \
             -c "adding FALLBACK_SCSV" \
@@ -697,7 +943,7 @@ run_test    "Fallback SCSV: enabled, openssl server" \
 
 requires_openssl_with_fallback_scsv
 run_test    "Fallback SCSV: disabled, openssl client" \
-            "$P_SRV" \
+            "$P_SRV debug_level=2" \
             "$O_CLI -tls1_1" \
             0 \
             -S "received FALLBACK_SCSV" \
@@ -705,7 +951,7 @@ run_test    "Fallback SCSV: disabled, openssl client" \
 
 requires_openssl_with_fallback_scsv
 run_test    "Fallback SCSV: enabled, openssl client" \
-            "$P_SRV" \
+            "$P_SRV debug_level=2" \
             "$O_CLI -tls1_1 -fallback_scsv" \
             1 \
             -s "received FALLBACK_SCSV" \
@@ -713,7 +959,7 @@ run_test    "Fallback SCSV: enabled, openssl client" \
 
 requires_openssl_with_fallback_scsv
 run_test    "Fallback SCSV: enabled, max version, openssl client" \
-            "$P_SRV" \
+            "$P_SRV debug_level=2" \
             "$O_CLI -fallback_scsv" \
             0 \
             -s "received FALLBACK_SCSV" \
@@ -748,6 +994,7 @@ run_test    "CBC Record splitting: TLS 1.0, splitting" \
             -s "Read from client: 1 bytes read" \
             -s "122 bytes read"
 
+requires_config_enabled MBEDTLS_SSL_PROTO_SSL3
 run_test    "CBC Record splitting: SSLv3, splitting" \
             "$P_SRV min_version=ssl3" \
             "$P_CLI force_ciphersuite=TLS-RSA-WITH-AES-128-CBC-SHA \
@@ -758,7 +1005,7 @@ run_test    "CBC Record splitting: SSLv3, splitting" \
             -s "122 bytes read"
 
 run_test    "CBC Record splitting: TLS 1.0 RC4, no splitting" \
-            "$P_SRV arc4=1" \
+            "$P_SRV arc4=1 force_ciphersuite=TLS-RSA-WITH-RC4-128-SHA" \
             "$P_CLI force_ciphersuite=TLS-RSA-WITH-RC4-128-SHA \
              request_size=123 force_version=tls1" \
             0 \
@@ -897,7 +1144,7 @@ run_test    "Session resume using cache: cache_max=1" \
             -s "a session has been resumed" \
             -c "a session has been resumed"
 
-run_test    "Session resume using cache: timemout > delay" \
+run_test    "Session resume using cache: timeout > delay" \
             "$P_SRV debug_level=3 tickets=0" \
             "$P_CLI debug_level=3 tickets=0 reconnect=1 reco_delay=0" \
             0 \
@@ -950,6 +1197,8 @@ run_test    "Max fragment length: not used, reference" \
             "$P_SRV debug_level=3" \
             "$P_CLI debug_level=3" \
             0 \
+            -c "Maximum fragment length is 16384" \
+            -s "Maximum fragment length is 16384" \
             -C "client hello, adding max_fragment_length extension" \
             -S "found max fragment length extension" \
             -S "server hello, max_fragment_length extension" \
@@ -959,6 +1208,8 @@ run_test    "Max fragment length: used by client" \
             "$P_SRV debug_level=3" \
             "$P_CLI debug_level=3 max_frag_len=4096" \
             0 \
+            -c "Maximum fragment length is 4096" \
+            -s "Maximum fragment length is 4096" \
             -c "client hello, adding max_fragment_length extension" \
             -s "found max fragment length extension" \
             -s "server hello, max_fragment_length extension" \
@@ -968,6 +1219,8 @@ run_test    "Max fragment length: used by server" \
             "$P_SRV debug_level=3 max_frag_len=4096" \
             "$P_CLI debug_level=3" \
             0 \
+            -c "Maximum fragment length is 16384" \
+            -s "Maximum fragment length is 4096" \
             -C "client hello, adding max_fragment_length extension" \
             -S "found max fragment length extension" \
             -S "server hello, max_fragment_length extension" \
@@ -978,13 +1231,53 @@ run_test    "Max fragment length: gnutls server" \
             "$G_SRV" \
             "$P_CLI debug_level=3 max_frag_len=4096" \
             0 \
+            -c "Maximum fragment length is 4096" \
             -c "client hello, adding max_fragment_length extension" \
             -c "found max_fragment_length extension"
+
+run_test    "Max fragment length: client, message just fits" \
+            "$P_SRV debug_level=3" \
+            "$P_CLI debug_level=3 max_frag_len=2048 request_size=2048" \
+            0 \
+            -c "Maximum fragment length is 2048" \
+            -s "Maximum fragment length is 2048" \
+            -c "client hello, adding max_fragment_length extension" \
+            -s "found max fragment length extension" \
+            -s "server hello, max_fragment_length extension" \
+            -c "found max_fragment_length extension" \
+            -c "2048 bytes written in 1 fragments" \
+            -s "2048 bytes read"
+
+run_test    "Max fragment length: client, larger message" \
+            "$P_SRV debug_level=3" \
+            "$P_CLI debug_level=3 max_frag_len=2048 request_size=2345" \
+            0 \
+            -c "Maximum fragment length is 2048" \
+            -s "Maximum fragment length is 2048" \
+            -c "client hello, adding max_fragment_length extension" \
+            -s "found max fragment length extension" \
+            -s "server hello, max_fragment_length extension" \
+            -c "found max_fragment_length extension" \
+            -c "2345 bytes written in 2 fragments" \
+            -s "2048 bytes read" \
+            -s "297 bytes read"
+
+run_test    "Max fragment length: DTLS client, larger message" \
+            "$P_SRV debug_level=3 dtls=1" \
+            "$P_CLI debug_level=3 dtls=1 max_frag_len=2048 request_size=2345" \
+            1 \
+            -c "Maximum fragment length is 2048" \
+            -s "Maximum fragment length is 2048" \
+            -c "client hello, adding max_fragment_length extension" \
+            -s "found max fragment length extension" \
+            -s "server hello, max_fragment_length extension" \
+            -c "found max_fragment_length extension" \
+            -c "fragment larger than.*maximum"
 
 # Tests for renegotiation
 
 run_test    "Renegotiation: none, for reference" \
-            "$P_SRV debug_level=3 exchanges=2" \
+            "$P_SRV debug_level=3 exchanges=2 auth_mode=optional" \
             "$P_CLI debug_level=3 exchanges=2" \
             0 \
             -C "client hello, adding renegotiation extension" \
@@ -997,7 +1290,7 @@ run_test    "Renegotiation: none, for reference" \
             -S "write hello request"
 
 run_test    "Renegotiation: client-initiated" \
-            "$P_SRV debug_level=3 exchanges=2 renegotiation=1" \
+            "$P_SRV debug_level=3 exchanges=2 renegotiation=1 auth_mode=optional" \
             "$P_CLI debug_level=3 exchanges=2 renegotiation=1 renegotiate=1" \
             0 \
             -c "client hello, adding renegotiation extension" \
@@ -1010,7 +1303,7 @@ run_test    "Renegotiation: client-initiated" \
             -S "write hello request"
 
 run_test    "Renegotiation: server-initiated" \
-            "$P_SRV debug_level=3 exchanges=2 renegotiation=1 renegotiate=1" \
+            "$P_SRV debug_level=3 exchanges=2 renegotiation=1 auth_mode=optional renegotiate=1" \
             "$P_CLI debug_level=3 exchanges=2 renegotiation=1" \
             0 \
             -c "client hello, adding renegotiation extension" \
@@ -1023,7 +1316,7 @@ run_test    "Renegotiation: server-initiated" \
             -s "write hello request"
 
 run_test    "Renegotiation: double" \
-            "$P_SRV debug_level=3 exchanges=2 renegotiation=1 renegotiate=1" \
+            "$P_SRV debug_level=3 exchanges=2 renegotiation=1 auth_mode=optional renegotiate=1" \
             "$P_CLI debug_level=3 exchanges=2 renegotiation=1 renegotiate=1" \
             0 \
             -c "client hello, adding renegotiation extension" \
@@ -1036,7 +1329,7 @@ run_test    "Renegotiation: double" \
             -s "write hello request"
 
 run_test    "Renegotiation: client-initiated, server-rejected" \
-            "$P_SRV debug_level=3 exchanges=2 renegotiation=0" \
+            "$P_SRV debug_level=3 exchanges=2 renegotiation=0 auth_mode=optional" \
             "$P_CLI debug_level=3 exchanges=2 renegotiation=1 renegotiate=1" \
             1 \
             -c "client hello, adding renegotiation extension" \
@@ -1051,7 +1344,7 @@ run_test    "Renegotiation: client-initiated, server-rejected" \
             -c "failed"
 
 run_test    "Renegotiation: server-initiated, client-rejected, default" \
-            "$P_SRV debug_level=3 exchanges=2 renegotiation=1 renegotiate=1" \
+            "$P_SRV debug_level=3 exchanges=2 renegotiation=1 renegotiate=1 auth_mode=optional" \
             "$P_CLI debug_level=3 exchanges=2 renegotiation=0" \
             0 \
             -C "client hello, adding renegotiation extension" \
@@ -1067,7 +1360,7 @@ run_test    "Renegotiation: server-initiated, client-rejected, default" \
 
 run_test    "Renegotiation: server-initiated, client-rejected, not enforced" \
             "$P_SRV debug_level=3 exchanges=2 renegotiation=1 renegotiate=1 \
-             renego_delay=-1" \
+             renego_delay=-1 auth_mode=optional" \
             "$P_CLI debug_level=3 exchanges=2 renegotiation=0" \
             0 \
             -C "client hello, adding renegotiation extension" \
@@ -1084,7 +1377,7 @@ run_test    "Renegotiation: server-initiated, client-rejected, not enforced" \
 # delay 2 for 1 alert record + 1 application data record
 run_test    "Renegotiation: server-initiated, client-rejected, delay 2" \
             "$P_SRV debug_level=3 exchanges=2 renegotiation=1 renegotiate=1 \
-             renego_delay=2" \
+             renego_delay=2 auth_mode=optional" \
             "$P_CLI debug_level=3 exchanges=2 renegotiation=0" \
             0 \
             -C "client hello, adding renegotiation extension" \
@@ -1100,7 +1393,7 @@ run_test    "Renegotiation: server-initiated, client-rejected, delay 2" \
 
 run_test    "Renegotiation: server-initiated, client-rejected, delay 0" \
             "$P_SRV debug_level=3 exchanges=2 renegotiation=1 renegotiate=1 \
-             renego_delay=0" \
+             renego_delay=0 auth_mode=optional" \
             "$P_CLI debug_level=3 exchanges=2 renegotiation=0" \
             0 \
             -C "client hello, adding renegotiation extension" \
@@ -1115,7 +1408,7 @@ run_test    "Renegotiation: server-initiated, client-rejected, delay 0" \
 
 run_test    "Renegotiation: server-initiated, client-accepted, delay 0" \
             "$P_SRV debug_level=3 exchanges=2 renegotiation=1 renegotiate=1 \
-             renego_delay=0" \
+             renego_delay=0 auth_mode=optional" \
             "$P_CLI debug_level=3 exchanges=2 renegotiation=1" \
             0 \
             -c "client hello, adding renegotiation extension" \
@@ -1130,7 +1423,7 @@ run_test    "Renegotiation: server-initiated, client-accepted, delay 0" \
             -S "failed"
 
 run_test    "Renegotiation: periodic, just below period" \
-            "$P_SRV debug_level=3 exchanges=9 renegotiation=1 renego_period=3" \
+            "$P_SRV debug_level=3 exchanges=9 renegotiation=1 renego_period=3 auth_mode=optional" \
             "$P_CLI debug_level=3 exchanges=2 renegotiation=1" \
             0 \
             -C "client hello, adding renegotiation extension" \
@@ -1147,7 +1440,7 @@ run_test    "Renegotiation: periodic, just below period" \
 
 # one extra exchange to be able to complete renego
 run_test    "Renegotiation: periodic, just above period" \
-            "$P_SRV debug_level=3 exchanges=9 renegotiation=1 renego_period=3" \
+            "$P_SRV debug_level=3 exchanges=9 renegotiation=1 renego_period=3 auth_mode=optional" \
             "$P_CLI debug_level=3 exchanges=4 renegotiation=1" \
             0 \
             -c "client hello, adding renegotiation extension" \
@@ -1163,7 +1456,7 @@ run_test    "Renegotiation: periodic, just above period" \
             -S "failed"
 
 run_test    "Renegotiation: periodic, two times period" \
-            "$P_SRV debug_level=3 exchanges=9 renegotiation=1 renego_period=3" \
+            "$P_SRV debug_level=3 exchanges=9 renegotiation=1 renego_period=3 auth_mode=optional" \
             "$P_CLI debug_level=3 exchanges=7 renegotiation=1" \
             0 \
             -c "client hello, adding renegotiation extension" \
@@ -1179,7 +1472,7 @@ run_test    "Renegotiation: periodic, two times period" \
             -S "failed"
 
 run_test    "Renegotiation: periodic, above period, disabled" \
-            "$P_SRV debug_level=3 exchanges=9 renegotiation=0 renego_period=3" \
+            "$P_SRV debug_level=3 exchanges=9 renegotiation=0 renego_period=3 auth_mode=optional" \
             "$P_CLI debug_level=3 exchanges=4 renegotiation=1" \
             0 \
             -C "client hello, adding renegotiation extension" \
@@ -1195,7 +1488,7 @@ run_test    "Renegotiation: periodic, above period, disabled" \
             -S "failed"
 
 run_test    "Renegotiation: nbio, client-initiated" \
-            "$P_SRV debug_level=3 nbio=2 exchanges=2 renegotiation=1" \
+            "$P_SRV debug_level=3 nbio=2 exchanges=2 renegotiation=1 auth_mode=optional" \
             "$P_CLI debug_level=3 nbio=2 exchanges=2 renegotiation=1 renegotiate=1" \
             0 \
             -c "client hello, adding renegotiation extension" \
@@ -1208,7 +1501,7 @@ run_test    "Renegotiation: nbio, client-initiated" \
             -S "write hello request"
 
 run_test    "Renegotiation: nbio, server-initiated" \
-            "$P_SRV debug_level=3 nbio=2 exchanges=2 renegotiation=1 renegotiate=1" \
+            "$P_SRV debug_level=3 nbio=2 exchanges=2 renegotiation=1 renegotiate=1 auth_mode=optional" \
             "$P_CLI debug_level=3 nbio=2 exchanges=2 renegotiation=1" \
             0 \
             -c "client hello, adding renegotiation extension" \
@@ -1221,7 +1514,7 @@ run_test    "Renegotiation: nbio, server-initiated" \
             -s "write hello request"
 
 run_test    "Renegotiation: openssl server, client-initiated" \
-            "$O_SRV" \
+            "$O_SRV -www" \
             "$P_CLI debug_level=3 exchanges=1 renegotiation=1 renegotiate=1" \
             0 \
             -c "client hello, adding renegotiation extension" \
@@ -1251,7 +1544,7 @@ run_test    "Renegotiation: gnutls server unsafe, client-initiated default" \
             -c "client hello, adding renegotiation extension" \
             -C "found renegotiation extension" \
             -c "=> renegotiate" \
-            -c "ssl_handshake() returned" \
+            -c "mbedtls_ssl_handshake() returned" \
             -c "error" \
             -C "HTTP/1.0 200 [Oo][Kk]"
 
@@ -1264,7 +1557,7 @@ run_test    "Renegotiation: gnutls server unsafe, client-inititated no legacy" \
             -c "client hello, adding renegotiation extension" \
             -C "found renegotiation extension" \
             -c "=> renegotiate" \
-            -c "ssl_handshake() returned" \
+            -c "mbedtls_ssl_handshake() returned" \
             -c "error" \
             -C "HTTP/1.0 200 [Oo][Kk]"
 
@@ -1280,6 +1573,58 @@ run_test    "Renegotiation: gnutls server unsafe, client-inititated legacy" \
             -C "ssl_hanshake() returned" \
             -C "error" \
             -c "HTTP/1.0 200 [Oo][Kk]"
+
+run_test    "Renegotiation: DTLS, client-initiated" \
+            "$P_SRV debug_level=3 dtls=1 exchanges=2 renegotiation=1" \
+            "$P_CLI debug_level=3 dtls=1 exchanges=2 renegotiation=1 renegotiate=1" \
+            0 \
+            -c "client hello, adding renegotiation extension" \
+            -s "received TLS_EMPTY_RENEGOTIATION_INFO" \
+            -s "found renegotiation extension" \
+            -s "server hello, secure renegotiation extension" \
+            -c "found renegotiation extension" \
+            -c "=> renegotiate" \
+            -s "=> renegotiate" \
+            -S "write hello request"
+
+run_test    "Renegotiation: DTLS, server-initiated" \
+            "$P_SRV debug_level=3 dtls=1 exchanges=2 renegotiation=1 renegotiate=1" \
+            "$P_CLI debug_level=3 dtls=1 exchanges=2 renegotiation=1 \
+             read_timeout=1000 max_resend=2" \
+            0 \
+            -c "client hello, adding renegotiation extension" \
+            -s "received TLS_EMPTY_RENEGOTIATION_INFO" \
+            -s "found renegotiation extension" \
+            -s "server hello, secure renegotiation extension" \
+            -c "found renegotiation extension" \
+            -c "=> renegotiate" \
+            -s "=> renegotiate" \
+            -s "write hello request"
+
+run_test    "Renegotiation: DTLS, renego_period overflow" \
+            "$P_SRV debug_level=3 dtls=1 exchanges=4 renegotiation=1 renego_period=18446462598732840962 auth_mode=optional" \
+            "$P_CLI debug_level=3 dtls=1 exchanges=4 renegotiation=1" \
+            0 \
+            -c "client hello, adding renegotiation extension" \
+            -s "received TLS_EMPTY_RENEGOTIATION_INFO" \
+            -s "found renegotiation extension" \
+            -s "server hello, secure renegotiation extension" \
+            -s "record counter limit reached: renegotiate" \
+            -c "=> renegotiate" \
+            -s "=> renegotiate" \
+            -s "write hello request" \
+
+requires_gnutls
+run_test    "Renegotiation: DTLS, gnutls server, client-initiated" \
+            "$G_SRV -u --mtu 4096" \
+            "$P_CLI debug_level=3 dtls=1 exchanges=1 renegotiation=1 renegotiate=1" \
+            0 \
+            -c "client hello, adding renegotiation extension" \
+            -c "found renegotiation extension" \
+            -c "=> renegotiate" \
+            -C "mbedtls_ssl_handshake returned" \
+            -C "error" \
+            -s "Extra-header:"
 
 # Test for the "secure renegotation" extension only (no actual renegotiation)
 
@@ -1334,6 +1679,64 @@ run_test    "Renego ext: gnutls client unsafe, server break legacy" \
             -S "received TLS_EMPTY_RENEGOTIATION_INFO\|found renegotiation extension" \
             -S "server hello, secure renegotiation extension"
 
+# Tests for silently dropping trailing extra bytes in .der certificates
+
+requires_gnutls
+run_test    "DER format: no trailing bytes" \
+            "$P_SRV crt_file=data_files/server5-der0.crt \
+             key_file=data_files/server5.key" \
+            "$G_CLI " \
+            0 \
+            -c "Handshake was completed" \
+
+requires_gnutls
+run_test    "DER format: with a trailing zero byte" \
+            "$P_SRV crt_file=data_files/server5-der1a.crt \
+             key_file=data_files/server5.key" \
+            "$G_CLI " \
+            0 \
+            -c "Handshake was completed" \
+
+requires_gnutls
+run_test    "DER format: with a trailing random byte" \
+            "$P_SRV crt_file=data_files/server5-der1b.crt \
+             key_file=data_files/server5.key" \
+            "$G_CLI " \
+            0 \
+            -c "Handshake was completed" \
+
+requires_gnutls
+run_test    "DER format: with 2 trailing random bytes" \
+            "$P_SRV crt_file=data_files/server5-der2.crt \
+             key_file=data_files/server5.key" \
+            "$G_CLI " \
+            0 \
+            -c "Handshake was completed" \
+
+requires_gnutls
+run_test    "DER format: with 4 trailing random bytes" \
+            "$P_SRV crt_file=data_files/server5-der4.crt \
+             key_file=data_files/server5.key" \
+            "$G_CLI " \
+            0 \
+            -c "Handshake was completed" \
+
+requires_gnutls
+run_test    "DER format: with 8 trailing random bytes" \
+            "$P_SRV crt_file=data_files/server5-der8.crt \
+             key_file=data_files/server5.key" \
+            "$G_CLI " \
+            0 \
+            -c "Handshake was completed" \
+
+requires_gnutls
+run_test    "DER format: with 9 trailing random bytes" \
+            "$P_SRV crt_file=data_files/server5-der9.crt \
+             key_file=data_files/server5.key" \
+            "$G_CLI " \
+            0 \
+            -c "Handshake was completed" \
+
 # Tests for auth_mode
 
 run_test    "Authentication: server badcert, client required" \
@@ -1343,7 +1746,7 @@ run_test    "Authentication: server badcert, client required" \
             1 \
             -c "x509_verify_cert() returned" \
             -c "! The certificate is not correctly signed by the trusted CA" \
-            -c "! ssl_handshake returned" \
+            -c "! mbedtls_ssl_handshake returned" \
             -c "X509 - Certificate verification failed"
 
 run_test    "Authentication: server badcert, client optional" \
@@ -1353,7 +1756,7 @@ run_test    "Authentication: server badcert, client optional" \
             0 \
             -c "x509_verify_cert() returned" \
             -c "! The certificate is not correctly signed by the trusted CA" \
-            -C "! ssl_handshake returned" \
+            -C "! mbedtls_ssl_handshake returned" \
             -C "X509 - Certificate verification failed"
 
 run_test    "Authentication: server badcert, client none" \
@@ -1363,8 +1766,26 @@ run_test    "Authentication: server badcert, client none" \
             0 \
             -C "x509_verify_cert() returned" \
             -C "! The certificate is not correctly signed by the trusted CA" \
-            -C "! ssl_handshake returned" \
+            -C "! mbedtls_ssl_handshake returned" \
             -C "X509 - Certificate verification failed"
+
+run_test    "Authentication: client SHA256, server required" \
+            "$P_SRV auth_mode=required" \
+            "$P_CLI debug_level=3 crt_file=data_files/server6.crt \
+             key_file=data_files/server6.key \
+             force_ciphersuite=TLS-ECDHE-ECDSA-WITH-AES-256-GCM-SHA384" \
+            0 \
+            -c "Supported Signature Algorithm found: 4," \
+            -c "Supported Signature Algorithm found: 5,"
+
+run_test    "Authentication: client SHA384, server required" \
+            "$P_SRV auth_mode=required" \
+            "$P_CLI debug_level=3 crt_file=data_files/server6.crt \
+             key_file=data_files/server6.key \
+             force_ciphersuite=TLS-ECDHE-ECDSA-WITH-AES-128-GCM-SHA256" \
+            0 \
+            -c "Supported Signature Algorithm found: 4," \
+            -c "Supported Signature Algorithm found: 5,"
 
 run_test    "Authentication: client badcert, server required" \
             "$P_SRV debug_level=3 auth_mode=required" \
@@ -1378,9 +1799,9 @@ run_test    "Authentication: client badcert, server required" \
             -C "skip write certificate verify" \
             -S "skip parse certificate verify" \
             -s "x509_verify_cert() returned" \
-            -S "! The certificate is not correctly signed by the trusted CA" \
-            -s "! ssl_handshake returned" \
-            -c "! ssl_handshake returned" \
+            -s "! The certificate is not correctly signed by the trusted CA" \
+            -s "! mbedtls_ssl_handshake returned" \
+            -c "! mbedtls_ssl_handshake returned" \
             -s "X509 - Certificate verification failed"
 
 run_test    "Authentication: client badcert, server optional" \
@@ -1396,8 +1817,8 @@ run_test    "Authentication: client badcert, server optional" \
             -S "skip parse certificate verify" \
             -s "x509_verify_cert() returned" \
             -s "! The certificate is not correctly signed by the trusted CA" \
-            -S "! ssl_handshake returned" \
-            -C "! ssl_handshake returned" \
+            -S "! mbedtls_ssl_handshake returned" \
+            -C "! mbedtls_ssl_handshake returned" \
             -S "X509 - Certificate verification failed"
 
 run_test    "Authentication: client badcert, server none" \
@@ -1413,8 +1834,8 @@ run_test    "Authentication: client badcert, server none" \
             -s "skip parse certificate verify" \
             -S "x509_verify_cert() returned" \
             -S "! The certificate is not correctly signed by the trusted CA" \
-            -S "! ssl_handshake returned" \
-            -C "! ssl_handshake returned" \
+            -S "! mbedtls_ssl_handshake returned" \
+            -C "! mbedtls_ssl_handshake returned" \
             -S "X509 - Certificate verification failed"
 
 run_test    "Authentication: client no cert, server optional" \
@@ -1430,8 +1851,8 @@ run_test    "Authentication: client no cert, server optional" \
             -c "skip write certificate verify" \
             -s "skip parse certificate verify" \
             -s "! Certificate was missing" \
-            -S "! ssl_handshake returned" \
-            -C "! ssl_handshake returned" \
+            -S "! mbedtls_ssl_handshake returned" \
+            -C "! mbedtls_ssl_handshake returned" \
             -S "X509 - Certificate verification failed"
 
 run_test    "Authentication: openssl client no cert, server optional" \
@@ -1441,7 +1862,7 @@ run_test    "Authentication: openssl client no cert, server optional" \
             -S "skip write certificate request" \
             -s "skip parse certificate verify" \
             -s "! Certificate was missing" \
-            -S "! ssl_handshake returned" \
+            -S "! mbedtls_ssl_handshake returned" \
             -S "X509 - Certificate verification failed"
 
 run_test    "Authentication: client no cert, openssl server optional" \
@@ -1452,8 +1873,9 @@ run_test    "Authentication: client no cert, openssl server optional" \
             -c "got a certificate request" \
             -C "skip write certificate$" \
             -c "skip write certificate verify" \
-            -C "! ssl_handshake returned"
+            -C "! mbedtls_ssl_handshake returned"
 
+requires_config_enabled MBEDTLS_SSL_PROTO_SSL3
 run_test    "Authentication: client no cert, ssl3" \
             "$P_SRV debug_level=3 auth_mode=optional force_version=ssl3" \
             "$P_CLI debug_level=3 crt_file=none key_file=none min_version=ssl3" \
@@ -1467,8 +1889,8 @@ run_test    "Authentication: client no cert, ssl3" \
             -s "SSLv3 client has no certificate" \
             -s "skip parse certificate verify" \
             -s "! Certificate was missing" \
-            -S "! ssl_handshake returned" \
-            -C "! ssl_handshake returned" \
+            -S "! mbedtls_ssl_handshake returned" \
+            -C "! mbedtls_ssl_handshake returned" \
             -S "X509 - Certificate verification failed"
 
 # Tests for certificate selection based on SHA verson
@@ -1528,49 +1950,138 @@ run_test    "Certificate hash: client TLS 1.1, no SHA-1 -> SHA-2 (order 2)" \
 # tests for SNI
 
 run_test    "SNI: no SNI callback" \
-            "$P_SRV debug_level=3 server_addr=127.0.0.1 \
+            "$P_SRV debug_level=3 \
              crt_file=data_files/server5.crt key_file=data_files/server5.key" \
-            "$P_CLI debug_level=0 server_addr=127.0.0.1 \
-             server_name=localhost" \
-             0 \
-             -S "parse ServerName extension" \
-             -c "issuer name *: C=NL, O=PolarSSL, CN=Polarssl Test EC CA" \
-             -c "subject name *: C=NL, O=PolarSSL, CN=localhost"
+            "$P_CLI server_name=localhost" \
+            0 \
+            -S "parse ServerName extension" \
+            -c "issuer name *: C=NL, O=PolarSSL, CN=Polarssl Test EC CA" \
+            -c "subject name *: C=NL, O=PolarSSL, CN=localhost"
 
 run_test    "SNI: matching cert 1" \
-            "$P_SRV debug_level=3 server_addr=127.0.0.1 \
+            "$P_SRV debug_level=3 \
              crt_file=data_files/server5.crt key_file=data_files/server5.key \
-             sni=localhost,data_files/server2.crt,data_files/server2.key,polarssl.example,data_files/server1-nospace.crt,data_files/server1.key" \
-            "$P_CLI debug_level=0 server_addr=127.0.0.1 \
-             server_name=localhost" \
-             0 \
-             -s "parse ServerName extension" \
-             -c "issuer name *: C=NL, O=PolarSSL, CN=PolarSSL Test CA" \
-             -c "subject name *: C=NL, O=PolarSSL, CN=localhost"
+             sni=localhost,data_files/server2.crt,data_files/server2.key,-,-,-,polarssl.example,data_files/server1-nospace.crt,data_files/server1.key,-,-,-" \
+            "$P_CLI server_name=localhost" \
+            0 \
+            -s "parse ServerName extension" \
+            -c "issuer name *: C=NL, O=PolarSSL, CN=PolarSSL Test CA" \
+            -c "subject name *: C=NL, O=PolarSSL, CN=localhost"
 
 run_test    "SNI: matching cert 2" \
-            "$P_SRV debug_level=3 server_addr=127.0.0.1 \
+            "$P_SRV debug_level=3 \
              crt_file=data_files/server5.crt key_file=data_files/server5.key \
-             sni=localhost,data_files/server2.crt,data_files/server2.key,polarssl.example,data_files/server1-nospace.crt,data_files/server1.key" \
-            "$P_CLI debug_level=0 server_addr=127.0.0.1 \
-             server_name=polarssl.example" \
-             0 \
-             -s "parse ServerName extension" \
-             -c "issuer name *: C=NL, O=PolarSSL, CN=PolarSSL Test CA" \
-             -c "subject name *: C=NL, O=PolarSSL, CN=polarssl.example"
+             sni=localhost,data_files/server2.crt,data_files/server2.key,-,-,-,polarssl.example,data_files/server1-nospace.crt,data_files/server1.key,-,-,-" \
+            "$P_CLI server_name=polarssl.example" \
+            0 \
+            -s "parse ServerName extension" \
+            -c "issuer name *: C=NL, O=PolarSSL, CN=PolarSSL Test CA" \
+            -c "subject name *: C=NL, O=PolarSSL, CN=polarssl.example"
 
 run_test    "SNI: no matching cert" \
-            "$P_SRV debug_level=3 server_addr=127.0.0.1 \
+            "$P_SRV debug_level=3 \
              crt_file=data_files/server5.crt key_file=data_files/server5.key \
-             sni=localhost,data_files/server2.crt,data_files/server2.key,polarssl.example,data_files/server1-nospace.crt,data_files/server1.key" \
-            "$P_CLI debug_level=0 server_addr=127.0.0.1 \
-             server_name=nonesuch.example" \
-             1 \
-             -s "parse ServerName extension" \
-             -s "ssl_sni_wrapper() returned" \
-             -s "ssl_handshake returned" \
-             -c "ssl_handshake returned" \
-             -c "SSL - A fatal alert message was received from our peer"
+             sni=localhost,data_files/server2.crt,data_files/server2.key,-,-,-,polarssl.example,data_files/server1-nospace.crt,data_files/server1.key,-,-,-" \
+            "$P_CLI server_name=nonesuch.example" \
+            1 \
+            -s "parse ServerName extension" \
+            -s "ssl_sni_wrapper() returned" \
+            -s "mbedtls_ssl_handshake returned" \
+            -c "mbedtls_ssl_handshake returned" \
+            -c "SSL - A fatal alert message was received from our peer"
+
+run_test    "SNI: client auth no override: optional" \
+            "$P_SRV debug_level=3 auth_mode=optional \
+             crt_file=data_files/server5.crt key_file=data_files/server5.key \
+             sni=localhost,data_files/server2.crt,data_files/server2.key,-,-,-" \
+            "$P_CLI debug_level=3 server_name=localhost" \
+            0 \
+            -S "skip write certificate request" \
+            -C "skip parse certificate request" \
+            -c "got a certificate request" \
+            -C "skip write certificate" \
+            -C "skip write certificate verify" \
+            -S "skip parse certificate verify"
+
+run_test    "SNI: client auth override: none -> optional" \
+            "$P_SRV debug_level=3 auth_mode=none \
+             crt_file=data_files/server5.crt key_file=data_files/server5.key \
+             sni=localhost,data_files/server2.crt,data_files/server2.key,-,-,optional" \
+            "$P_CLI debug_level=3 server_name=localhost" \
+            0 \
+            -S "skip write certificate request" \
+            -C "skip parse certificate request" \
+            -c "got a certificate request" \
+            -C "skip write certificate" \
+            -C "skip write certificate verify" \
+            -S "skip parse certificate verify"
+
+run_test    "SNI: client auth override: optional -> none" \
+            "$P_SRV debug_level=3 auth_mode=optional \
+             crt_file=data_files/server5.crt key_file=data_files/server5.key \
+             sni=localhost,data_files/server2.crt,data_files/server2.key,-,-,none" \
+            "$P_CLI debug_level=3 server_name=localhost" \
+            0 \
+            -s "skip write certificate request" \
+            -C "skip parse certificate request" \
+            -c "got no certificate request" \
+            -c "skip write certificate" \
+            -c "skip write certificate verify" \
+            -s "skip parse certificate verify"
+
+run_test    "SNI: CA no override" \
+            "$P_SRV debug_level=3 auth_mode=optional \
+             crt_file=data_files/server5.crt key_file=data_files/server5.key \
+             ca_file=data_files/test-ca.crt \
+             sni=localhost,data_files/server2.crt,data_files/server2.key,-,-,required" \
+            "$P_CLI debug_level=3 server_name=localhost \
+             crt_file=data_files/server6.crt key_file=data_files/server6.key" \
+            1 \
+            -S "skip write certificate request" \
+            -C "skip parse certificate request" \
+            -c "got a certificate request" \
+            -C "skip write certificate" \
+            -C "skip write certificate verify" \
+            -S "skip parse certificate verify" \
+            -s "x509_verify_cert() returned" \
+            -s "! The certificate is not correctly signed by the trusted CA" \
+            -S "The certificate has been revoked (is on a CRL)"
+
+run_test    "SNI: CA override" \
+            "$P_SRV debug_level=3 auth_mode=optional \
+             crt_file=data_files/server5.crt key_file=data_files/server5.key \
+             ca_file=data_files/test-ca.crt \
+             sni=localhost,data_files/server2.crt,data_files/server2.key,data_files/test-ca2.crt,-,required" \
+            "$P_CLI debug_level=3 server_name=localhost \
+             crt_file=data_files/server6.crt key_file=data_files/server6.key" \
+            0 \
+            -S "skip write certificate request" \
+            -C "skip parse certificate request" \
+            -c "got a certificate request" \
+            -C "skip write certificate" \
+            -C "skip write certificate verify" \
+            -S "skip parse certificate verify" \
+            -S "x509_verify_cert() returned" \
+            -S "! The certificate is not correctly signed by the trusted CA" \
+            -S "The certificate has been revoked (is on a CRL)"
+
+run_test    "SNI: CA override with CRL" \
+            "$P_SRV debug_level=3 auth_mode=optional \
+             crt_file=data_files/server5.crt key_file=data_files/server5.key \
+             ca_file=data_files/test-ca.crt \
+             sni=localhost,data_files/server2.crt,data_files/server2.key,data_files/test-ca2.crt,data_files/crl-ec-sha256.pem,required" \
+            "$P_CLI debug_level=3 server_name=localhost \
+             crt_file=data_files/server6.crt key_file=data_files/server6.key" \
+            1 \
+            -S "skip write certificate request" \
+            -C "skip parse certificate request" \
+            -c "got a certificate request" \
+            -C "skip write certificate" \
+            -C "skip write certificate verify" \
+            -S "skip parse certificate verify" \
+            -s "x509_verify_cert() returned" \
+            -S "! The certificate is not correctly signed by the trusted CA" \
+            -s "The certificate has been revoked (is on a CRL)"
 
 # Tests for non-blocking I/O: exercise a variety of handshake flows
 
@@ -1578,56 +2089,56 @@ run_test    "Non-blocking I/O: basic handshake" \
             "$P_SRV nbio=2 tickets=0 auth_mode=none" \
             "$P_CLI nbio=2 tickets=0" \
             0 \
-            -S "ssl_handshake returned" \
-            -C "ssl_handshake returned" \
+            -S "mbedtls_ssl_handshake returned" \
+            -C "mbedtls_ssl_handshake returned" \
             -c "Read from server: .* bytes read"
 
 run_test    "Non-blocking I/O: client auth" \
             "$P_SRV nbio=2 tickets=0 auth_mode=required" \
             "$P_CLI nbio=2 tickets=0" \
             0 \
-            -S "ssl_handshake returned" \
-            -C "ssl_handshake returned" \
+            -S "mbedtls_ssl_handshake returned" \
+            -C "mbedtls_ssl_handshake returned" \
             -c "Read from server: .* bytes read"
 
 run_test    "Non-blocking I/O: ticket" \
             "$P_SRV nbio=2 tickets=1 auth_mode=none" \
             "$P_CLI nbio=2 tickets=1" \
             0 \
-            -S "ssl_handshake returned" \
-            -C "ssl_handshake returned" \
+            -S "mbedtls_ssl_handshake returned" \
+            -C "mbedtls_ssl_handshake returned" \
             -c "Read from server: .* bytes read"
 
 run_test    "Non-blocking I/O: ticket + client auth" \
             "$P_SRV nbio=2 tickets=1 auth_mode=required" \
             "$P_CLI nbio=2 tickets=1" \
             0 \
-            -S "ssl_handshake returned" \
-            -C "ssl_handshake returned" \
+            -S "mbedtls_ssl_handshake returned" \
+            -C "mbedtls_ssl_handshake returned" \
             -c "Read from server: .* bytes read"
 
 run_test    "Non-blocking I/O: ticket + client auth + resume" \
             "$P_SRV nbio=2 tickets=1 auth_mode=required" \
             "$P_CLI nbio=2 tickets=1 reconnect=1" \
             0 \
-            -S "ssl_handshake returned" \
-            -C "ssl_handshake returned" \
+            -S "mbedtls_ssl_handshake returned" \
+            -C "mbedtls_ssl_handshake returned" \
             -c "Read from server: .* bytes read"
 
 run_test    "Non-blocking I/O: ticket + resume" \
             "$P_SRV nbio=2 tickets=1 auth_mode=none" \
             "$P_CLI nbio=2 tickets=1 reconnect=1" \
             0 \
-            -S "ssl_handshake returned" \
-            -C "ssl_handshake returned" \
+            -S "mbedtls_ssl_handshake returned" \
+            -C "mbedtls_ssl_handshake returned" \
             -c "Read from server: .* bytes read"
 
 run_test    "Non-blocking I/O: session-id resume" \
             "$P_SRV nbio=2 tickets=0 auth_mode=none" \
             "$P_CLI nbio=2 tickets=0 reconnect=1" \
             0 \
-            -S "ssl_handshake returned" \
-            -C "ssl_handshake returned" \
+            -S "mbedtls_ssl_handshake returned" \
+            -C "mbedtls_ssl_handshake returned" \
             -c "Read from server: .* bytes read"
 
 # Tests for version negotiation
@@ -1636,8 +2147,8 @@ run_test    "Version check: all -> 1.2" \
             "$P_SRV" \
             "$P_CLI" \
             0 \
-            -S "ssl_handshake returned" \
-            -C "ssl_handshake returned" \
+            -S "mbedtls_ssl_handshake returned" \
+            -C "mbedtls_ssl_handshake returned" \
             -s "Protocol is TLSv1.2" \
             -c "Protocol is TLSv1.2"
 
@@ -1645,8 +2156,8 @@ run_test    "Version check: cli max 1.1 -> 1.1" \
             "$P_SRV" \
             "$P_CLI max_version=tls1_1" \
             0 \
-            -S "ssl_handshake returned" \
-            -C "ssl_handshake returned" \
+            -S "mbedtls_ssl_handshake returned" \
+            -C "mbedtls_ssl_handshake returned" \
             -s "Protocol is TLSv1.1" \
             -c "Protocol is TLSv1.1"
 
@@ -1654,8 +2165,8 @@ run_test    "Version check: srv max 1.1 -> 1.1" \
             "$P_SRV max_version=tls1_1" \
             "$P_CLI" \
             0 \
-            -S "ssl_handshake returned" \
-            -C "ssl_handshake returned" \
+            -S "mbedtls_ssl_handshake returned" \
+            -C "mbedtls_ssl_handshake returned" \
             -s "Protocol is TLSv1.1" \
             -c "Protocol is TLSv1.1"
 
@@ -1663,8 +2174,8 @@ run_test    "Version check: cli+srv max 1.1 -> 1.1" \
             "$P_SRV max_version=tls1_1" \
             "$P_CLI max_version=tls1_1" \
             0 \
-            -S "ssl_handshake returned" \
-            -C "ssl_handshake returned" \
+            -S "mbedtls_ssl_handshake returned" \
+            -C "mbedtls_ssl_handshake returned" \
             -s "Protocol is TLSv1.1" \
             -c "Protocol is TLSv1.1"
 
@@ -1672,8 +2183,8 @@ run_test    "Version check: cli max 1.1, srv min 1.1 -> 1.1" \
             "$P_SRV min_version=tls1_1" \
             "$P_CLI max_version=tls1_1" \
             0 \
-            -S "ssl_handshake returned" \
-            -C "ssl_handshake returned" \
+            -S "mbedtls_ssl_handshake returned" \
+            -C "mbedtls_ssl_handshake returned" \
             -s "Protocol is TLSv1.1" \
             -c "Protocol is TLSv1.1"
 
@@ -1681,8 +2192,8 @@ run_test    "Version check: cli min 1.1, srv max 1.1 -> 1.1" \
             "$P_SRV max_version=tls1_1" \
             "$P_CLI min_version=tls1_1" \
             0 \
-            -S "ssl_handshake returned" \
-            -C "ssl_handshake returned" \
+            -S "mbedtls_ssl_handshake returned" \
+            -C "mbedtls_ssl_handshake returned" \
             -s "Protocol is TLSv1.1" \
             -c "Protocol is TLSv1.1"
 
@@ -1690,21 +2201,19 @@ run_test    "Version check: cli min 1.2, srv max 1.1 -> fail" \
             "$P_SRV max_version=tls1_1" \
             "$P_CLI min_version=tls1_2" \
             1 \
-            -s "ssl_handshake returned" \
-            -c "ssl_handshake returned" \
+            -s "mbedtls_ssl_handshake returned" \
+            -c "mbedtls_ssl_handshake returned" \
             -c "SSL - Handshake protocol not within min/max boundaries"
 
 run_test    "Version check: srv min 1.2, cli max 1.1 -> fail" \
             "$P_SRV min_version=tls1_2" \
             "$P_CLI max_version=tls1_1" \
             1 \
-            -s "ssl_handshake returned" \
-            -c "ssl_handshake returned" \
+            -s "mbedtls_ssl_handshake returned" \
+            -c "mbedtls_ssl_handshake returned" \
             -s "SSL - Handshake protocol not within min/max boundaries"
 
 # Tests for ALPN extension
-
-if grep '^#define POLARSSL_SSL_ALPN' $CONFIG_H >/dev/null; then
 
 run_test    "ALPN: none" \
             "$P_SRV debug_level=3" \
@@ -1790,7 +2299,6 @@ run_test    "ALPN: both, no common" \
             -C "Application Layer Protocol is 1234" \
             -S "Application Layer Protocol is 1234"
 
-fi
 
 # Tests for keyUsage in leaf certificates, part 1:
 # server-side certificate/suite selection
@@ -1987,11 +2495,10 @@ run_test    "extKeyUsage srv: codeSign,anyEKU -> OK" \
             "$P_CLI" \
             0
 
-# add psk to leave an option for client to send SERVERQUIT
 run_test    "extKeyUsage srv: codeSign -> fail" \
-            "$P_SRV psk=abc123 key_file=data_files/server5.key \
+            "$P_SRV key_file=data_files/server5.key \
              crt_file=data_files/server5.eku-cli.crt" \
-            "$P_CLI psk=badbad" \
+            "$P_CLI" \
             1
 
 # Tests for extendedKeyUsage, part 2: client-side checking of server cert
@@ -2092,6 +2599,43 @@ run_test    "DHM parameters: other parameters" \
             -c "value of 'DHM: P ' (1024 bits)" \
             -c "value of 'DHM: G ' (2 bits)"
 
+# Tests for DHM client-side size checking
+
+run_test    "DHM size: server default, client default, OK" \
+            "$P_SRV" \
+            "$P_CLI force_ciphersuite=TLS-DHE-RSA-WITH-AES-128-CBC-SHA \
+                    debug_level=1" \
+            0 \
+            -C "DHM prime too short:"
+
+run_test    "DHM size: server default, client 2048, OK" \
+            "$P_SRV" \
+            "$P_CLI force_ciphersuite=TLS-DHE-RSA-WITH-AES-128-CBC-SHA \
+                    debug_level=1 dhmlen=2048" \
+            0 \
+            -C "DHM prime too short:"
+
+run_test    "DHM size: server 1024, client default, OK" \
+            "$P_SRV dhm_file=data_files/dhparams.pem" \
+            "$P_CLI force_ciphersuite=TLS-DHE-RSA-WITH-AES-128-CBC-SHA \
+                    debug_level=1" \
+            0 \
+            -C "DHM prime too short:"
+
+run_test    "DHM size: server 1000, client default, rejected" \
+            "$P_SRV dhm_file=data_files/dh.1000.pem" \
+            "$P_CLI force_ciphersuite=TLS-DHE-RSA-WITH-AES-128-CBC-SHA \
+                    debug_level=1" \
+            1 \
+            -c "DHM prime too short:"
+
+run_test    "DHM size: server default, client 2049, rejected" \
+            "$P_SRV" \
+            "$P_CLI force_ciphersuite=TLS-DHE-RSA-WITH-AES-128-CBC-SHA \
+                    debug_level=1 dhmlen=2049" \
+            1 \
+            -c "DHM prime too short:"
+
 # Tests for PSK callback
 
 run_test    "PSK callback: psk, no callback" \
@@ -2157,41 +2701,145 @@ run_test    "PSK callback: wrong key" \
             -S "SSL - Unknown identity received" \
             -s "SSL - Verification of the message MAC failed"
 
+# Tests for EC J-PAKE
+
+requires_config_enabled MBEDTLS_KEY_EXCHANGE_ECJPAKE
+run_test    "ECJPAKE: client not configured" \
+            "$P_SRV debug_level=3" \
+            "$P_CLI debug_level=3" \
+            0 \
+            -C "add ciphersuite: c0ff" \
+            -C "adding ecjpake_kkpp extension" \
+            -S "found ecjpake kkpp extension" \
+            -S "skip ecjpake kkpp extension" \
+            -S "ciphersuite mismatch: ecjpake not configured" \
+            -S "server hello, ecjpake kkpp extension" \
+            -C "found ecjpake_kkpp extension" \
+            -S "None of the common ciphersuites is usable"
+
+requires_config_enabled MBEDTLS_KEY_EXCHANGE_ECJPAKE
+run_test    "ECJPAKE: server not configured" \
+            "$P_SRV debug_level=3" \
+            "$P_CLI debug_level=3 ecjpake_pw=bla \
+             force_ciphersuite=TLS-ECJPAKE-WITH-AES-128-CCM-8" \
+            1 \
+            -c "add ciphersuite: c0ff" \
+            -c "adding ecjpake_kkpp extension" \
+            -s "found ecjpake kkpp extension" \
+            -s "skip ecjpake kkpp extension" \
+            -s "ciphersuite mismatch: ecjpake not configured" \
+            -S "server hello, ecjpake kkpp extension" \
+            -C "found ecjpake_kkpp extension" \
+            -s "None of the common ciphersuites is usable"
+
+requires_config_enabled MBEDTLS_KEY_EXCHANGE_ECJPAKE
+run_test    "ECJPAKE: working, TLS" \
+            "$P_SRV debug_level=3 ecjpake_pw=bla" \
+            "$P_CLI debug_level=3 ecjpake_pw=bla \
+             force_ciphersuite=TLS-ECJPAKE-WITH-AES-128-CCM-8" \
+            0 \
+            -c "add ciphersuite: c0ff" \
+            -c "adding ecjpake_kkpp extension" \
+            -C "re-using cached ecjpake parameters" \
+            -s "found ecjpake kkpp extension" \
+            -S "skip ecjpake kkpp extension" \
+            -S "ciphersuite mismatch: ecjpake not configured" \
+            -s "server hello, ecjpake kkpp extension" \
+            -c "found ecjpake_kkpp extension" \
+            -S "None of the common ciphersuites is usable" \
+            -S "SSL - Verification of the message MAC failed"
+
+server_needs_more_time 1
+requires_config_enabled MBEDTLS_KEY_EXCHANGE_ECJPAKE
+run_test    "ECJPAKE: password mismatch, TLS" \
+            "$P_SRV debug_level=3 ecjpake_pw=bla" \
+            "$P_CLI debug_level=3 ecjpake_pw=bad \
+             force_ciphersuite=TLS-ECJPAKE-WITH-AES-128-CCM-8" \
+            1 \
+            -C "re-using cached ecjpake parameters" \
+            -s "SSL - Verification of the message MAC failed"
+
+requires_config_enabled MBEDTLS_KEY_EXCHANGE_ECJPAKE
+run_test    "ECJPAKE: working, DTLS" \
+            "$P_SRV debug_level=3 dtls=1 ecjpake_pw=bla" \
+            "$P_CLI debug_level=3 dtls=1 ecjpake_pw=bla \
+             force_ciphersuite=TLS-ECJPAKE-WITH-AES-128-CCM-8" \
+            0 \
+            -c "re-using cached ecjpake parameters" \
+            -S "SSL - Verification of the message MAC failed"
+
+requires_config_enabled MBEDTLS_KEY_EXCHANGE_ECJPAKE
+run_test    "ECJPAKE: working, DTLS, no cookie" \
+            "$P_SRV debug_level=3 dtls=1 ecjpake_pw=bla cookies=0" \
+            "$P_CLI debug_level=3 dtls=1 ecjpake_pw=bla \
+             force_ciphersuite=TLS-ECJPAKE-WITH-AES-128-CCM-8" \
+            0 \
+            -C "re-using cached ecjpake parameters" \
+            -S "SSL - Verification of the message MAC failed"
+
+server_needs_more_time 1
+requires_config_enabled MBEDTLS_KEY_EXCHANGE_ECJPAKE
+run_test    "ECJPAKE: password mismatch, DTLS" \
+            "$P_SRV debug_level=3 dtls=1 ecjpake_pw=bla" \
+            "$P_CLI debug_level=3 dtls=1 ecjpake_pw=bad \
+             force_ciphersuite=TLS-ECJPAKE-WITH-AES-128-CCM-8" \
+            1 \
+            -c "re-using cached ecjpake parameters" \
+            -s "SSL - Verification of the message MAC failed"
+
+# for tests with configs/config-thread.h
+requires_config_enabled MBEDTLS_KEY_EXCHANGE_ECJPAKE
+run_test    "ECJPAKE: working, DTLS, nolog" \
+            "$P_SRV dtls=1 ecjpake_pw=bla" \
+            "$P_CLI dtls=1 ecjpake_pw=bla \
+             force_ciphersuite=TLS-ECJPAKE-WITH-AES-128-CCM-8" \
+            0
+
 # Tests for ciphersuites per version
 
+requires_config_enabled MBEDTLS_SSL_PROTO_SSL3
 run_test    "Per-version suites: SSL3" \
-            "$P_SRV min_version=ssl3 version_suites=TLS-RSA-WITH-3DES-EDE-CBC-SHA,TLS-RSA-WITH-RC4-128-SHA,TLS-RSA-WITH-AES-128-CBC-SHA,TLS-RSA-WITH-AES-128-GCM-SHA256" \
+            "$P_SRV min_version=ssl3 version_suites=TLS-RSA-WITH-3DES-EDE-CBC-SHA,TLS-RSA-WITH-AES-256-CBC-SHA,TLS-RSA-WITH-AES-128-CBC-SHA,TLS-RSA-WITH-AES-128-GCM-SHA256" \
             "$P_CLI force_version=ssl3" \
             0 \
             -c "Ciphersuite is TLS-RSA-WITH-3DES-EDE-CBC-SHA"
 
 run_test    "Per-version suites: TLS 1.0" \
-            "$P_SRV arc4=1 version_suites=TLS-RSA-WITH-3DES-EDE-CBC-SHA,TLS-RSA-WITH-RC4-128-SHA,TLS-RSA-WITH-AES-128-CBC-SHA,TLS-RSA-WITH-AES-128-GCM-SHA256" \
+            "$P_SRV arc4=1 version_suites=TLS-RSA-WITH-3DES-EDE-CBC-SHA,TLS-RSA-WITH-AES-256-CBC-SHA,TLS-RSA-WITH-AES-128-CBC-SHA,TLS-RSA-WITH-AES-128-GCM-SHA256" \
             "$P_CLI force_version=tls1 arc4=1" \
             0 \
-            -c "Ciphersuite is TLS-RSA-WITH-RC4-128-SHA"
+            -c "Ciphersuite is TLS-RSA-WITH-AES-256-CBC-SHA"
 
 run_test    "Per-version suites: TLS 1.1" \
-            "$P_SRV version_suites=TLS-RSA-WITH-3DES-EDE-CBC-SHA,TLS-RSA-WITH-RC4-128-SHA,TLS-RSA-WITH-AES-128-CBC-SHA,TLS-RSA-WITH-AES-128-GCM-SHA256" \
+            "$P_SRV version_suites=TLS-RSA-WITH-3DES-EDE-CBC-SHA,TLS-RSA-WITH-AES-256-CBC-SHA,TLS-RSA-WITH-AES-128-CBC-SHA,TLS-RSA-WITH-AES-128-GCM-SHA256" \
             "$P_CLI force_version=tls1_1" \
             0 \
             -c "Ciphersuite is TLS-RSA-WITH-AES-128-CBC-SHA"
 
 run_test    "Per-version suites: TLS 1.2" \
-            "$P_SRV version_suites=TLS-RSA-WITH-3DES-EDE-CBC-SHA,TLS-RSA-WITH-RC4-128-SHA,TLS-RSA-WITH-AES-128-CBC-SHA,TLS-RSA-WITH-AES-128-GCM-SHA256" \
+            "$P_SRV version_suites=TLS-RSA-WITH-3DES-EDE-CBC-SHA,TLS-RSA-WITH-AES-256-CBC-SHA,TLS-RSA-WITH-AES-128-CBC-SHA,TLS-RSA-WITH-AES-128-GCM-SHA256" \
             "$P_CLI force_version=tls1_2" \
             0 \
             -c "Ciphersuite is TLS-RSA-WITH-AES-128-GCM-SHA256"
 
-# Tests for ssl_get_bytes_avail()
+# Test for ClientHello without extensions
 
-run_test    "ssl_get_bytes_avail: no extra data" \
+requires_gnutls
+run_test    "ClientHello without extensions" \
+            "$P_SRV debug_level=3" \
+            "$G_CLI --priority=NORMAL:%NO_EXTENSIONS:%DISABLE_SAFE_RENEGOTIATION" \
+            0 \
+            -s "dumping 'client hello extensions' (0 bytes)"
+
+# Tests for mbedtls_ssl_get_bytes_avail()
+
+run_test    "mbedtls_ssl_get_bytes_avail: no extra data" \
             "$P_SRV" \
             "$P_CLI request_size=100" \
             0 \
             -s "Read from client: 100 bytes read$"
 
-run_test    "ssl_get_bytes_avail: extra data" \
+run_test    "mbedtls_ssl_get_bytes_avail: extra data" \
             "$P_SRV" \
             "$P_CLI request_size=500" \
             0 \
@@ -2199,6 +2847,7 @@ run_test    "ssl_get_bytes_avail: extra data" \
 
 # Tests for small packets
 
+requires_config_enabled MBEDTLS_SSL_PROTO_SSL3
 run_test    "Small packet SSLv3 BlockCipher" \
             "$P_SRV min_version=ssl3" \
             "$P_CLI request_size=1 force_version=ssl3 \
@@ -2206,8 +2855,9 @@ run_test    "Small packet SSLv3 BlockCipher" \
             0 \
             -s "Read from client: 1 bytes read"
 
+requires_config_enabled MBEDTLS_SSL_PROTO_SSL3
 run_test    "Small packet SSLv3 StreamCipher" \
-            "$P_SRV min_version=ssl3 arc4=1" \
+            "$P_SRV min_version=ssl3 arc4=1 force_ciphersuite=TLS-RSA-WITH-RC4-128-SHA" \
             "$P_CLI request_size=1 force_version=ssl3 \
              force_ciphersuite=TLS-RSA-WITH-RC4-128-SHA" \
             0 \
@@ -2236,7 +2886,7 @@ run_test    "Small packet TLS 1.0 BlockCipher truncated MAC" \
             -s "Read from client: 1 bytes read"
 
 run_test    "Small packet TLS 1.0 StreamCipher truncated MAC" \
-            "$P_SRV arc4=1" \
+            "$P_SRV arc4=1 force_ciphersuite=TLS-RSA-WITH-RC4-128-SHA" \
             "$P_CLI request_size=1 force_version=tls1 \
              force_ciphersuite=TLS-RSA-WITH-RC4-128-SHA \
              trunc_hmac=1" \
@@ -2258,7 +2908,7 @@ run_test    "Small packet TLS 1.1 BlockCipher without EtM" \
             -s "Read from client: 1 bytes read"
 
 run_test    "Small packet TLS 1.1 StreamCipher" \
-            "$P_SRV arc4=1" \
+            "$P_SRV arc4=1 force_ciphersuite=TLS-RSA-WITH-RC4-128-SHA" \
             "$P_CLI request_size=1 force_version=tls1_1 \
              force_ciphersuite=TLS-RSA-WITH-RC4-128-SHA" \
             0 \
@@ -2273,7 +2923,7 @@ run_test    "Small packet TLS 1.1 BlockCipher truncated MAC" \
             -s "Read from client: 1 bytes read"
 
 run_test    "Small packet TLS 1.1 StreamCipher truncated MAC" \
-            "$P_SRV arc4=1" \
+            "$P_SRV arc4=1 force_ciphersuite=TLS-RSA-WITH-RC4-128-SHA" \
             "$P_CLI request_size=1 force_version=tls1_1 \
              force_ciphersuite=TLS-RSA-WITH-RC4-128-SHA \
              trunc_hmac=1" \
@@ -2310,14 +2960,14 @@ run_test    "Small packet TLS 1.2 BlockCipher truncated MAC" \
             -s "Read from client: 1 bytes read"
 
 run_test    "Small packet TLS 1.2 StreamCipher" \
-            "$P_SRV arc4=1" \
+            "$P_SRV arc4=1 force_ciphersuite=TLS-RSA-WITH-RC4-128-SHA" \
             "$P_CLI request_size=1 force_version=tls1_2 \
              force_ciphersuite=TLS-RSA-WITH-RC4-128-SHA" \
             0 \
             -s "Read from client: 1 bytes read"
 
 run_test    "Small packet TLS 1.2 StreamCipher truncated MAC" \
-            "$P_SRV arc4=1" \
+            "$P_SRV arc4=1 force_ciphersuite=TLS-RSA-WITH-RC4-128-SHA" \
             "$P_CLI request_size=1 force_version=tls1_2 \
              force_ciphersuite=TLS-RSA-WITH-RC4-128-SHA \
              trunc_hmac=1" \
@@ -2338,8 +2988,19 @@ run_test    "Small packet TLS 1.2 AEAD shorter tag" \
             0 \
             -s "Read from client: 1 bytes read"
 
+# A test for extensions in SSLv3
+
+requires_config_enabled MBEDTLS_SSL_PROTO_SSL3
+run_test    "SSLv3 with extensions, server side" \
+            "$P_SRV min_version=ssl3 debug_level=3" \
+            "$P_CLI force_version=ssl3 tickets=1 max_frag_len=4096 alpn=abc,1234" \
+            0 \
+            -S "dumping 'client hello extensions'" \
+            -S "server hello, total extension length:"
+
 # Test for large packets
 
+requires_config_enabled MBEDTLS_SSL_PROTO_SSL3
 run_test    "Large packet SSLv3 BlockCipher" \
             "$P_SRV min_version=ssl3" \
             "$P_CLI request_size=16384 force_version=ssl3 recsplit=0 \
@@ -2347,8 +3008,9 @@ run_test    "Large packet SSLv3 BlockCipher" \
             0 \
             -s "Read from client: 16384 bytes read"
 
+requires_config_enabled MBEDTLS_SSL_PROTO_SSL3
 run_test    "Large packet SSLv3 StreamCipher" \
-            "$P_SRV min_version=ssl3 arc4=1" \
+            "$P_SRV min_version=ssl3 arc4=1 force_ciphersuite=TLS-RSA-WITH-RC4-128-SHA" \
             "$P_CLI request_size=16384 force_version=ssl3 \
              force_ciphersuite=TLS-RSA-WITH-RC4-128-SHA" \
             0 \
@@ -2370,7 +3032,7 @@ run_test    "Large packet TLS 1.0 BlockCipher truncated MAC" \
             -s "Read from client: 16384 bytes read"
 
 run_test    "Large packet TLS 1.0 StreamCipher truncated MAC" \
-            "$P_SRV arc4=1" \
+            "$P_SRV arc4=1 force_ciphersuite=TLS-RSA-WITH-RC4-128-SHA" \
             "$P_CLI request_size=16384 force_version=tls1 \
              force_ciphersuite=TLS-RSA-WITH-RC4-128-SHA \
              trunc_hmac=1" \
@@ -2385,7 +3047,7 @@ run_test    "Large packet TLS 1.1 BlockCipher" \
             -s "Read from client: 16384 bytes read"
 
 run_test    "Large packet TLS 1.1 StreamCipher" \
-            "$P_SRV arc4=1" \
+            "$P_SRV arc4=1 force_ciphersuite=TLS-RSA-WITH-RC4-128-SHA" \
             "$P_CLI request_size=16384 force_version=tls1_1 \
              force_ciphersuite=TLS-RSA-WITH-RC4-128-SHA" \
             0 \
@@ -2400,7 +3062,7 @@ run_test    "Large packet TLS 1.1 BlockCipher truncated MAC" \
             -s "Read from client: 16384 bytes read"
 
 run_test    "Large packet TLS 1.1 StreamCipher truncated MAC" \
-            "$P_SRV arc4=1" \
+            "$P_SRV arc4=1 force_ciphersuite=TLS-RSA-WITH-RC4-128-SHA" \
             "$P_CLI request_size=16384 force_version=tls1_1 \
              force_ciphersuite=TLS-RSA-WITH-RC4-128-SHA \
              trunc_hmac=1" \
@@ -2430,14 +3092,14 @@ run_test    "Large packet TLS 1.2 BlockCipher truncated MAC" \
             -s "Read from client: 16384 bytes read"
 
 run_test    "Large packet TLS 1.2 StreamCipher" \
-            "$P_SRV arc4=1" \
+            "$P_SRV arc4=1 force_ciphersuite=TLS-RSA-WITH-RC4-128-SHA" \
             "$P_CLI request_size=16384 force_version=tls1_2 \
              force_ciphersuite=TLS-RSA-WITH-RC4-128-SHA" \
             0 \
             -s "Read from client: 16384 bytes read"
 
 run_test    "Large packet TLS 1.2 StreamCipher truncated MAC" \
-            "$P_SRV arc4=1" \
+            "$P_SRV arc4=1 force_ciphersuite=TLS-RSA-WITH-RC4-128-SHA" \
             "$P_CLI request_size=16384 force_version=tls1_2 \
              force_ciphersuite=TLS-RSA-WITH-RC4-128-SHA \
              trunc_hmac=1" \
@@ -2457,6 +3119,545 @@ run_test    "Large packet TLS 1.2 AEAD shorter tag" \
              force_ciphersuite=TLS-RSA-WITH-AES-256-CCM-8" \
             0 \
             -s "Read from client: 16384 bytes read"
+
+# Tests for DTLS HelloVerifyRequest
+
+run_test    "DTLS cookie: enabled" \
+            "$P_SRV dtls=1 debug_level=2" \
+            "$P_CLI dtls=1 debug_level=2" \
+            0 \
+            -s "cookie verification failed" \
+            -s "cookie verification passed" \
+            -S "cookie verification skipped" \
+            -c "received hello verify request" \
+            -s "hello verification requested" \
+            -S "SSL - The requested feature is not available"
+
+run_test    "DTLS cookie: disabled" \
+            "$P_SRV dtls=1 debug_level=2 cookies=0" \
+            "$P_CLI dtls=1 debug_level=2" \
+            0 \
+            -S "cookie verification failed" \
+            -S "cookie verification passed" \
+            -s "cookie verification skipped" \
+            -C "received hello verify request" \
+            -S "hello verification requested" \
+            -S "SSL - The requested feature is not available"
+
+run_test    "DTLS cookie: default (failing)" \
+            "$P_SRV dtls=1 debug_level=2 cookies=-1" \
+            "$P_CLI dtls=1 debug_level=2 hs_timeout=100-400" \
+            1 \
+            -s "cookie verification failed" \
+            -S "cookie verification passed" \
+            -S "cookie verification skipped" \
+            -C "received hello verify request" \
+            -S "hello verification requested" \
+            -s "SSL - The requested feature is not available"
+
+requires_ipv6
+run_test    "DTLS cookie: enabled, IPv6" \
+            "$P_SRV dtls=1 debug_level=2 server_addr=::1" \
+            "$P_CLI dtls=1 debug_level=2 server_addr=::1" \
+            0 \
+            -s "cookie verification failed" \
+            -s "cookie verification passed" \
+            -S "cookie verification skipped" \
+            -c "received hello verify request" \
+            -s "hello verification requested" \
+            -S "SSL - The requested feature is not available"
+
+run_test    "DTLS cookie: enabled, nbio" \
+            "$P_SRV dtls=1 nbio=2 debug_level=2" \
+            "$P_CLI dtls=1 nbio=2 debug_level=2" \
+            0 \
+            -s "cookie verification failed" \
+            -s "cookie verification passed" \
+            -S "cookie verification skipped" \
+            -c "received hello verify request" \
+            -s "hello verification requested" \
+            -S "SSL - The requested feature is not available"
+
+# Tests for client reconnecting from the same port with DTLS
+
+not_with_valgrind # spurious resend
+run_test    "DTLS client reconnect from same port: reference" \
+            "$P_SRV dtls=1 exchanges=2 read_timeout=1000" \
+            "$P_CLI dtls=1 exchanges=2 debug_level=2 hs_timeout=500-1000" \
+            0 \
+            -C "resend" \
+            -S "The operation timed out" \
+            -S "Client initiated reconnection from same port"
+
+not_with_valgrind # spurious resend
+run_test    "DTLS client reconnect from same port: reconnect" \
+            "$P_SRV dtls=1 exchanges=2 read_timeout=1000" \
+            "$P_CLI dtls=1 exchanges=2 debug_level=2 hs_timeout=500-1000 reconnect_hard=1" \
+            0 \
+            -C "resend" \
+            -S "The operation timed out" \
+            -s "Client initiated reconnection from same port"
+
+not_with_valgrind # server/client too slow to respond in time (next test has higher timeouts)
+run_test    "DTLS client reconnect from same port: reconnect, nbio, no valgrind" \
+            "$P_SRV dtls=1 exchanges=2 read_timeout=1000 nbio=2" \
+            "$P_CLI dtls=1 exchanges=2 debug_level=2 hs_timeout=500-1000 reconnect_hard=1" \
+            0 \
+            -S "The operation timed out" \
+            -s "Client initiated reconnection from same port"
+
+only_with_valgrind # Only with valgrind, do previous test but with higher read_timeout and hs_timeout
+run_test    "DTLS client reconnect from same port: reconnect, nbio, valgrind" \
+            "$P_SRV dtls=1 exchanges=2 read_timeout=2000 nbio=2 hs_timeout=1500-6000" \
+            "$P_CLI dtls=1 exchanges=2 debug_level=2 hs_timeout=1500-3000 reconnect_hard=1" \
+            0 \
+            -S "The operation timed out" \
+            -s "Client initiated reconnection from same port"
+
+run_test    "DTLS client reconnect from same port: no cookies" \
+            "$P_SRV dtls=1 exchanges=2 read_timeout=1000 cookies=0" \
+            "$P_CLI dtls=1 exchanges=2 debug_level=2 hs_timeout=500-8000 reconnect_hard=1" \
+            0 \
+            -s "The operation timed out" \
+            -S "Client initiated reconnection from same port"
+
+# Tests for various cases of client authentication with DTLS
+# (focused on handshake flows and message parsing)
+
+run_test    "DTLS client auth: required" \
+            "$P_SRV dtls=1 auth_mode=required" \
+            "$P_CLI dtls=1" \
+            0 \
+            -s "Verifying peer X.509 certificate... ok"
+
+run_test    "DTLS client auth: optional, client has no cert" \
+            "$P_SRV dtls=1 auth_mode=optional" \
+            "$P_CLI dtls=1 crt_file=none key_file=none" \
+            0 \
+            -s "! Certificate was missing"
+
+run_test    "DTLS client auth: none, client has no cert" \
+            "$P_SRV dtls=1 auth_mode=none" \
+            "$P_CLI dtls=1 crt_file=none key_file=none debug_level=2" \
+            0 \
+            -c "skip write certificate$" \
+            -s "! Certificate verification was skipped"
+
+run_test    "DTLS wrong PSK: badmac alert" \
+            "$P_SRV dtls=1 psk=abc123 force_ciphersuite=TLS-PSK-WITH-AES-128-GCM-SHA256" \
+            "$P_CLI dtls=1 psk=abc124" \
+            1 \
+            -s "SSL - Verification of the message MAC failed" \
+            -c "SSL - A fatal alert message was received from our peer"
+
+# Tests for receiving fragmented handshake messages with DTLS
+
+requires_gnutls
+run_test    "DTLS reassembly: no fragmentation (gnutls server)" \
+            "$G_SRV -u --mtu 2048 -a" \
+            "$P_CLI dtls=1 debug_level=2" \
+            0 \
+            -C "found fragmented DTLS handshake message" \
+            -C "error"
+
+requires_gnutls
+run_test    "DTLS reassembly: some fragmentation (gnutls server)" \
+            "$G_SRV -u --mtu 512" \
+            "$P_CLI dtls=1 debug_level=2" \
+            0 \
+            -c "found fragmented DTLS handshake message" \
+            -C "error"
+
+requires_gnutls
+run_test    "DTLS reassembly: more fragmentation (gnutls server)" \
+            "$G_SRV -u --mtu 128" \
+            "$P_CLI dtls=1 debug_level=2" \
+            0 \
+            -c "found fragmented DTLS handshake message" \
+            -C "error"
+
+requires_gnutls
+run_test    "DTLS reassembly: more fragmentation, nbio (gnutls server)" \
+            "$G_SRV -u --mtu 128" \
+            "$P_CLI dtls=1 nbio=2 debug_level=2" \
+            0 \
+            -c "found fragmented DTLS handshake message" \
+            -C "error"
+
+requires_gnutls
+run_test    "DTLS reassembly: fragmentation, renego (gnutls server)" \
+            "$G_SRV -u --mtu 256" \
+            "$P_CLI debug_level=3 dtls=1 renegotiation=1 renegotiate=1" \
+            0 \
+            -c "found fragmented DTLS handshake message" \
+            -c "client hello, adding renegotiation extension" \
+            -c "found renegotiation extension" \
+            -c "=> renegotiate" \
+            -C "mbedtls_ssl_handshake returned" \
+            -C "error" \
+            -s "Extra-header:"
+
+requires_gnutls
+run_test    "DTLS reassembly: fragmentation, nbio, renego (gnutls server)" \
+            "$G_SRV -u --mtu 256" \
+            "$P_CLI debug_level=3 nbio=2 dtls=1 renegotiation=1 renegotiate=1" \
+            0 \
+            -c "found fragmented DTLS handshake message" \
+            -c "client hello, adding renegotiation extension" \
+            -c "found renegotiation extension" \
+            -c "=> renegotiate" \
+            -C "mbedtls_ssl_handshake returned" \
+            -C "error" \
+            -s "Extra-header:"
+
+run_test    "DTLS reassembly: no fragmentation (openssl server)" \
+            "$O_SRV -dtls1 -mtu 2048" \
+            "$P_CLI dtls=1 debug_level=2" \
+            0 \
+            -C "found fragmented DTLS handshake message" \
+            -C "error"
+
+run_test    "DTLS reassembly: some fragmentation (openssl server)" \
+            "$O_SRV -dtls1 -mtu 768" \
+            "$P_CLI dtls=1 debug_level=2" \
+            0 \
+            -c "found fragmented DTLS handshake message" \
+            -C "error"
+
+run_test    "DTLS reassembly: more fragmentation (openssl server)" \
+            "$O_SRV -dtls1 -mtu 256" \
+            "$P_CLI dtls=1 debug_level=2" \
+            0 \
+            -c "found fragmented DTLS handshake message" \
+            -C "error"
+
+run_test    "DTLS reassembly: fragmentation, nbio (openssl server)" \
+            "$O_SRV -dtls1 -mtu 256" \
+            "$P_CLI dtls=1 nbio=2 debug_level=2" \
+            0 \
+            -c "found fragmented DTLS handshake message" \
+            -C "error"
+
+# Tests for specific things with "unreliable" UDP connection
+
+not_with_valgrind # spurious resend due to timeout
+run_test    "DTLS proxy: reference" \
+            -p "$P_PXY" \
+            "$P_SRV dtls=1 debug_level=2" \
+            "$P_CLI dtls=1 debug_level=2" \
+            0 \
+            -C "replayed record" \
+            -S "replayed record" \
+            -C "record from another epoch" \
+            -S "record from another epoch" \
+            -C "discarding invalid record" \
+            -S "discarding invalid record" \
+            -S "resend" \
+            -s "Extra-header:" \
+            -c "HTTP/1.0 200 OK"
+
+not_with_valgrind # spurious resend due to timeout
+run_test    "DTLS proxy: duplicate every packet" \
+            -p "$P_PXY duplicate=1" \
+            "$P_SRV dtls=1 debug_level=2" \
+            "$P_CLI dtls=1 debug_level=2" \
+            0 \
+            -c "replayed record" \
+            -s "replayed record" \
+            -c "discarding invalid record" \
+            -s "discarding invalid record" \
+            -S "resend" \
+            -s "Extra-header:" \
+            -c "HTTP/1.0 200 OK"
+
+run_test    "DTLS proxy: duplicate every packet, server anti-replay off" \
+            -p "$P_PXY duplicate=1" \
+            "$P_SRV dtls=1 debug_level=2 anti_replay=0" \
+            "$P_CLI dtls=1 debug_level=2" \
+            0 \
+            -c "replayed record" \
+            -S "replayed record" \
+            -c "discarding invalid record" \
+            -s "discarding invalid record" \
+            -c "resend" \
+            -s "resend" \
+            -s "Extra-header:" \
+            -c "HTTP/1.0 200 OK"
+
+run_test    "DTLS proxy: inject invalid AD record, default badmac_limit" \
+            -p "$P_PXY bad_ad=1" \
+            "$P_SRV dtls=1 debug_level=1" \
+            "$P_CLI dtls=1 debug_level=1 read_timeout=100" \
+            0 \
+            -c "discarding invalid record (mac)" \
+            -s "discarding invalid record (mac)" \
+            -s "Extra-header:" \
+            -c "HTTP/1.0 200 OK" \
+            -S "too many records with bad MAC" \
+            -S "Verification of the message MAC failed"
+
+run_test    "DTLS proxy: inject invalid AD record, badmac_limit 1" \
+            -p "$P_PXY bad_ad=1" \
+            "$P_SRV dtls=1 debug_level=1 badmac_limit=1" \
+            "$P_CLI dtls=1 debug_level=1 read_timeout=100" \
+            1 \
+            -C "discarding invalid record (mac)" \
+            -S "discarding invalid record (mac)" \
+            -S "Extra-header:" \
+            -C "HTTP/1.0 200 OK" \
+            -s "too many records with bad MAC" \
+            -s "Verification of the message MAC failed"
+
+run_test    "DTLS proxy: inject invalid AD record, badmac_limit 2" \
+            -p "$P_PXY bad_ad=1" \
+            "$P_SRV dtls=1 debug_level=1 badmac_limit=2" \
+            "$P_CLI dtls=1 debug_level=1 read_timeout=100" \
+            0 \
+            -c "discarding invalid record (mac)" \
+            -s "discarding invalid record (mac)" \
+            -s "Extra-header:" \
+            -c "HTTP/1.0 200 OK" \
+            -S "too many records with bad MAC" \
+            -S "Verification of the message MAC failed"
+
+run_test    "DTLS proxy: inject invalid AD record, badmac_limit 2, exchanges 2"\
+            -p "$P_PXY bad_ad=1" \
+            "$P_SRV dtls=1 debug_level=1 badmac_limit=2 exchanges=2" \
+            "$P_CLI dtls=1 debug_level=1 read_timeout=100 exchanges=2" \
+            1 \
+            -c "discarding invalid record (mac)" \
+            -s "discarding invalid record (mac)" \
+            -s "Extra-header:" \
+            -c "HTTP/1.0 200 OK" \
+            -s "too many records with bad MAC" \
+            -s "Verification of the message MAC failed"
+
+run_test    "DTLS proxy: delay ChangeCipherSpec" \
+            -p "$P_PXY delay_ccs=1" \
+            "$P_SRV dtls=1 debug_level=1" \
+            "$P_CLI dtls=1 debug_level=1" \
+            0 \
+            -c "record from another epoch" \
+            -s "record from another epoch" \
+            -c "discarding invalid record" \
+            -s "discarding invalid record" \
+            -s "Extra-header:" \
+            -c "HTTP/1.0 200 OK"
+
+# Tests for "randomly unreliable connection": try a variety of flows and peers
+
+client_needs_more_time 2
+run_test    "DTLS proxy: 3d (drop, delay, duplicate), \"short\" PSK handshake" \
+            -p "$P_PXY drop=5 delay=5 duplicate=5" \
+            "$P_SRV dtls=1 hs_timeout=250-10000 tickets=0 auth_mode=none \
+             psk=abc123" \
+            "$P_CLI dtls=1 hs_timeout=250-10000 tickets=0 psk=abc123 \
+             force_ciphersuite=TLS-PSK-WITH-AES-128-CCM-8" \
+            0 \
+            -s "Extra-header:" \
+            -c "HTTP/1.0 200 OK"
+
+client_needs_more_time 2
+run_test    "DTLS proxy: 3d, \"short\" RSA handshake" \
+            -p "$P_PXY drop=5 delay=5 duplicate=5" \
+            "$P_SRV dtls=1 hs_timeout=250-10000 tickets=0 auth_mode=none" \
+            "$P_CLI dtls=1 hs_timeout=250-10000 tickets=0 \
+             force_ciphersuite=TLS-RSA-WITH-AES-128-CBC-SHA" \
+            0 \
+            -s "Extra-header:" \
+            -c "HTTP/1.0 200 OK"
+
+client_needs_more_time 2
+run_test    "DTLS proxy: 3d, \"short\" (no ticket, no cli_auth) FS handshake" \
+            -p "$P_PXY drop=5 delay=5 duplicate=5" \
+            "$P_SRV dtls=1 hs_timeout=250-10000 tickets=0 auth_mode=none" \
+            "$P_CLI dtls=1 hs_timeout=250-10000 tickets=0" \
+            0 \
+            -s "Extra-header:" \
+            -c "HTTP/1.0 200 OK"
+
+client_needs_more_time 2
+run_test    "DTLS proxy: 3d, FS, client auth" \
+            -p "$P_PXY drop=5 delay=5 duplicate=5" \
+            "$P_SRV dtls=1 hs_timeout=250-10000 tickets=0 auth_mode=required" \
+            "$P_CLI dtls=1 hs_timeout=250-10000 tickets=0" \
+            0 \
+            -s "Extra-header:" \
+            -c "HTTP/1.0 200 OK"
+
+client_needs_more_time 2
+run_test    "DTLS proxy: 3d, FS, ticket" \
+            -p "$P_PXY drop=5 delay=5 duplicate=5" \
+            "$P_SRV dtls=1 hs_timeout=250-10000 tickets=1 auth_mode=none" \
+            "$P_CLI dtls=1 hs_timeout=250-10000 tickets=1" \
+            0 \
+            -s "Extra-header:" \
+            -c "HTTP/1.0 200 OK"
+
+client_needs_more_time 2
+run_test    "DTLS proxy: 3d, max handshake (FS, ticket + client auth)" \
+            -p "$P_PXY drop=5 delay=5 duplicate=5" \
+            "$P_SRV dtls=1 hs_timeout=250-10000 tickets=1 auth_mode=required" \
+            "$P_CLI dtls=1 hs_timeout=250-10000 tickets=1" \
+            0 \
+            -s "Extra-header:" \
+            -c "HTTP/1.0 200 OK"
+
+client_needs_more_time 2
+run_test    "DTLS proxy: 3d, max handshake, nbio" \
+            -p "$P_PXY drop=5 delay=5 duplicate=5" \
+            "$P_SRV dtls=1 hs_timeout=250-10000 nbio=2 tickets=1 \
+             auth_mode=required" \
+            "$P_CLI dtls=1 hs_timeout=250-10000 nbio=2 tickets=1" \
+            0 \
+            -s "Extra-header:" \
+            -c "HTTP/1.0 200 OK"
+
+client_needs_more_time 4
+run_test    "DTLS proxy: 3d, min handshake, resumption" \
+            -p "$P_PXY drop=5 delay=5 duplicate=5" \
+            "$P_SRV dtls=1 hs_timeout=250-10000 tickets=0 auth_mode=none \
+             psk=abc123 debug_level=3" \
+            "$P_CLI dtls=1 hs_timeout=250-10000 tickets=0 psk=abc123 \
+             debug_level=3 reconnect=1 read_timeout=1000 max_resend=10 \
+             force_ciphersuite=TLS-PSK-WITH-AES-128-CCM-8" \
+            0 \
+            -s "a session has been resumed" \
+            -c "a session has been resumed" \
+            -s "Extra-header:" \
+            -c "HTTP/1.0 200 OK"
+
+client_needs_more_time 4
+run_test    "DTLS proxy: 3d, min handshake, resumption, nbio" \
+            -p "$P_PXY drop=5 delay=5 duplicate=5" \
+            "$P_SRV dtls=1 hs_timeout=250-10000 tickets=0 auth_mode=none \
+             psk=abc123 debug_level=3 nbio=2" \
+            "$P_CLI dtls=1 hs_timeout=250-10000 tickets=0 psk=abc123 \
+             debug_level=3 reconnect=1 read_timeout=1000 max_resend=10 \
+             force_ciphersuite=TLS-PSK-WITH-AES-128-CCM-8 nbio=2" \
+            0 \
+            -s "a session has been resumed" \
+            -c "a session has been resumed" \
+            -s "Extra-header:" \
+            -c "HTTP/1.0 200 OK"
+
+client_needs_more_time 4
+run_test    "DTLS proxy: 3d, min handshake, client-initiated renego" \
+            -p "$P_PXY drop=5 delay=5 duplicate=5" \
+            "$P_SRV dtls=1 hs_timeout=250-10000 tickets=0 auth_mode=none \
+             psk=abc123 renegotiation=1 debug_level=2" \
+            "$P_CLI dtls=1 hs_timeout=250-10000 tickets=0 psk=abc123 \
+             renegotiate=1 debug_level=2 \
+             force_ciphersuite=TLS-PSK-WITH-AES-128-CCM-8" \
+            0 \
+            -c "=> renegotiate" \
+            -s "=> renegotiate" \
+            -s "Extra-header:" \
+            -c "HTTP/1.0 200 OK"
+
+client_needs_more_time 4
+run_test    "DTLS proxy: 3d, min handshake, client-initiated renego, nbio" \
+            -p "$P_PXY drop=5 delay=5 duplicate=5" \
+            "$P_SRV dtls=1 hs_timeout=250-10000 tickets=0 auth_mode=none \
+             psk=abc123 renegotiation=1 debug_level=2" \
+            "$P_CLI dtls=1 hs_timeout=250-10000 tickets=0 psk=abc123 \
+             renegotiate=1 debug_level=2 \
+             force_ciphersuite=TLS-PSK-WITH-AES-128-CCM-8" \
+            0 \
+            -c "=> renegotiate" \
+            -s "=> renegotiate" \
+            -s "Extra-header:" \
+            -c "HTTP/1.0 200 OK"
+
+client_needs_more_time 4
+run_test    "DTLS proxy: 3d, min handshake, server-initiated renego" \
+            -p "$P_PXY drop=5 delay=5 duplicate=5" \
+            "$P_SRV dtls=1 hs_timeout=250-10000 tickets=0 auth_mode=none \
+             psk=abc123 renegotiate=1 renegotiation=1 exchanges=4 \
+             debug_level=2" \
+            "$P_CLI dtls=1 hs_timeout=250-10000 tickets=0 psk=abc123 \
+             renegotiation=1 exchanges=4 debug_level=2 \
+             force_ciphersuite=TLS-PSK-WITH-AES-128-CCM-8" \
+            0 \
+            -c "=> renegotiate" \
+            -s "=> renegotiate" \
+            -s "Extra-header:" \
+            -c "HTTP/1.0 200 OK"
+
+client_needs_more_time 4
+run_test    "DTLS proxy: 3d, min handshake, server-initiated renego, nbio" \
+            -p "$P_PXY drop=5 delay=5 duplicate=5" \
+            "$P_SRV dtls=1 hs_timeout=250-10000 tickets=0 auth_mode=none \
+             psk=abc123 renegotiate=1 renegotiation=1 exchanges=4 \
+             debug_level=2 nbio=2" \
+            "$P_CLI dtls=1 hs_timeout=250-10000 tickets=0 psk=abc123 \
+             renegotiation=1 exchanges=4 debug_level=2 nbio=2 \
+             force_ciphersuite=TLS-PSK-WITH-AES-128-CCM-8" \
+            0 \
+            -c "=> renegotiate" \
+            -s "=> renegotiate" \
+            -s "Extra-header:" \
+            -c "HTTP/1.0 200 OK"
+
+client_needs_more_time 6
+not_with_valgrind # risk of non-mbedtls peer timing out
+run_test    "DTLS proxy: 3d, openssl server" \
+            -p "$P_PXY drop=5 delay=5 duplicate=5 protect_hvr=1" \
+            "$O_SRV -dtls1 -mtu 2048" \
+            "$P_CLI dtls=1 hs_timeout=250-60000 tickets=0" \
+            0 \
+            -c "HTTP/1.0 200 OK"
+
+client_needs_more_time 8
+not_with_valgrind # risk of non-mbedtls peer timing out
+run_test    "DTLS proxy: 3d, openssl server, fragmentation" \
+            -p "$P_PXY drop=5 delay=5 duplicate=5 protect_hvr=1" \
+            "$O_SRV -dtls1 -mtu 768" \
+            "$P_CLI dtls=1 hs_timeout=250-60000 tickets=0" \
+            0 \
+            -c "HTTP/1.0 200 OK"
+
+client_needs_more_time 8
+not_with_valgrind # risk of non-mbedtls peer timing out
+run_test    "DTLS proxy: 3d, openssl server, fragmentation, nbio" \
+            -p "$P_PXY drop=5 delay=5 duplicate=5 protect_hvr=1" \
+            "$O_SRV -dtls1 -mtu 768" \
+            "$P_CLI dtls=1 hs_timeout=250-60000 nbio=2 tickets=0" \
+            0 \
+            -c "HTTP/1.0 200 OK"
+
+requires_gnutls
+client_needs_more_time 6
+not_with_valgrind # risk of non-mbedtls peer timing out
+run_test    "DTLS proxy: 3d, gnutls server" \
+            -p "$P_PXY drop=5 delay=5 duplicate=5" \
+            "$G_SRV -u --mtu 2048 -a" \
+            "$P_CLI dtls=1 hs_timeout=250-60000" \
+            0 \
+            -s "Extra-header:" \
+            -c "Extra-header:"
+
+requires_gnutls
+client_needs_more_time 8
+not_with_valgrind # risk of non-mbedtls peer timing out
+run_test    "DTLS proxy: 3d, gnutls server, fragmentation" \
+            -p "$P_PXY drop=5 delay=5 duplicate=5" \
+            "$G_SRV -u --mtu 512" \
+            "$P_CLI dtls=1 hs_timeout=250-60000" \
+            0 \
+            -s "Extra-header:" \
+            -c "Extra-header:"
+
+requires_gnutls
+client_needs_more_time 8
+not_with_valgrind # risk of non-mbedtls peer timing out
+run_test    "DTLS proxy: 3d, gnutls server, fragmentation, nbio" \
+            -p "$P_PXY drop=5 delay=5 duplicate=5" \
+            "$G_SRV -u --mtu 512" \
+            "$P_CLI dtls=1 hs_timeout=250-60000 nbio=2" \
+            0 \
+            -s "Extra-header:" \
+            -c "Extra-header:"
 
 # Final report
 

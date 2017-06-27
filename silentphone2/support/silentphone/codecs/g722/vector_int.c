@@ -25,7 +25,7 @@
 
 /*! \file */
 
-#include "config.h"
+#include "g722config.h"
 
 #include <stdlib.h>
 #include "inttypes.h"

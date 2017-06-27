@@ -26,7 +26,6 @@ import android.provider.ContactsContract.Intents.Insert;
 import android.telephony.PhoneNumberUtils;
 import android.text.TextUtils;
 import android.view.View;
-import android.widget.TextView;
 
 import com.silentcircle.contacts.utils.Constants;
 import com.silentcircle.contacts.utils.PhoneNumberHelper;
@@ -43,6 +42,11 @@ import java.util.List;
 public class ContactsUtils {
     private static final String TAG = "ContactsUtils";
     private static final String WAIT_SYMBOL_AS_STRING = String.valueOf(PhoneNumberUtils.WAIT);
+
+    public static final String PARAM_TEXT = "Text";
+    public static final String PARAM_ASSERTED_NAME = "AssertedName";
+    public static final String PARAM_ALIAS = "Alias";
+    public static final String PARAM_PHOTO_URL = "PhotoUrl";
 
     private static int sThumbnailSize = -1;
 
@@ -176,11 +180,23 @@ public class ContactsUtils {
                 appendPath(address).build();
     }
 
-    public static Intent getAddNumberToContactIntent(Context ctx, CharSequence text, String assertedName) {
+    public static Intent getAddNumberToContactIntent(Context ctx, CharSequence text, String assertedName, String alias) {
         final Intent intent = new Intent(ctx, ContactAdder.class);
-        intent.putExtra("AssertedName", assertedName);
-        intent.putExtra("Text", text);
+        intent.putExtra(PARAM_ASSERTED_NAME, assertedName);
+        intent.putExtra(PARAM_ALIAS, alias);
+        intent.putExtra(PARAM_TEXT, text);
 
+        return intent;
+    }
+
+    public static Intent getAddScToContactIntent(Context context, String uuid, String alias, String displayName) {
+        return getAddNumberToContactIntent(context, displayName, "sip:" + uuid + context.getString(R.string.sc_sip_domain_0), alias);
+    }
+
+    public static Intent getAddScToContactIntent(Context context, String uuid, String alias, String displayName,
+            String photoUrl) {
+        Intent intent = getAddScToContactIntent(context, uuid, alias, displayName);
+        intent.putExtra(PARAM_PHOTO_URL, photoUrl);
         return intent;
     }
 
@@ -257,8 +273,7 @@ public class ContactsUtils {
     }
 
     public static Intent getMessagingIntent(Uri uri, String callOrigin, Context context) {
-        final Intent intent = new Intent(Intent.ACTION_SENDTO, uri, context, ConversationActivity.class);
-        return intent;
+        return new Intent(Intent.ACTION_SENDTO, uri, context, ConversationActivity.class);
     }
 
     // Supports either LOOKUP_KEY or display_name (for temporary contacts)

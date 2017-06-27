@@ -1,0 +1,389 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:android.support.design="http://schemas.android.com/apk/res-auto"
+    android:background="?attr/sp_activity_secondary_background_color"
+    android:clickable="true">
+
+    <com.silentcircle.messaging.views.ObservableScrollView
+        android:id="@+id/group_details_main_container"
+        android:layout_alignParentTop="true"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:overScrollMode="never"
+        tools:visibility="visible">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <android.support.v7.widget.CardView
+                android:id="@+id/self_avatar_container"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:paddingBottom="@dimen/spacing_normal"
+                android:layout_marginBottom="@dimen/spacing_large"
+                android.support.design:cardCornerRadius="0dp"
+                android.support.design:cardBackgroundColor="?attr/sp_activity_background_color"
+                android.support.design:cardElevation="@dimen/spacing_tiny"
+                android.support.design:cardMaxElevation="@dimen/spacing_tiny"
+                tools:ignore="RtlSymmetry">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <FrameLayout
+                        android:id="@+id/group_avatar_container"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="@dimen/spacing_normal">
+
+                        <ImageView
+                            android:id="@+id/group_avatar"
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/messaging_group_details_avatar_height"
+                            android:layout_gravity="center"
+                            android:contentDescription="@string/dial_drawer_avatar_voiceover"
+                            android:scaleType="centerCrop"
+                            android:src="@drawable/ic_profile_group_placeholder"
+                            android:visibility="invisible" />
+
+                        <ImageButton
+                            android:id="@+id/edit_group_avatar"
+                            android:layout_width="41dp"
+                            android:layout_height="41dp"
+                            android:layout_gravity="top|end"
+                            android:layout_marginTop="@dimen/spacing_normal"
+                            android:layout_marginRight="@dimen/spacing_normal"
+                            android:layout_marginEnd="@dimen/spacing_normal"
+                            android:background="?attr/selectableItemBackgroundBorderless"
+                            android:contentDescription="@string/group_messaging_edit_group_name_voiceover"
+                            android:src="@drawable/ic_action_edit_white_24px"
+                            android:tint="?attr/sp_activity_primary_text_color" />
+
+                    </FrameLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="@dimen/spacing_mlarge"
+                        android:layout_marginStart="@dimen/spacing_mlarge"
+                        android:layout_marginRight="@dimen/spacing_normal"
+                        android:layout_marginEnd="@dimen/spacing_normal"
+                        android:orientation="vertical">
+
+                        <TextView
+                            style="@style/Widget.Silent.SimpleText.Small"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/spacing_small"
+                            android:layout_marginBottom="@dimen/spacing_small"
+                            android:text="@string/group_messaging_group_title"
+                            android:textStyle="bold"
+                            />
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal">
+
+                            <TextView android:id="@+id/text_group_title"
+                                style="@style/Widget.Silent.SimpleText.Medium"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:layout_marginTop="@dimen/spacing_small"
+                                android:layout_marginBottom="@dimen/spacing_small"
+                                android:layout_gravity="center_vertical"
+                                android:textColor="?attr/sp_activity_secondary_text_color"
+                                tools:text="Group name here"
+                                />
+
+                            <ImageButton
+                                android:id="@+id/edit_group_title"
+                                android:layout_width="41dp"
+                                android:layout_height="41dp"
+                                android:layout_gravity="center_vertical"
+                                android:background="?attr/selectableItemBackgroundBorderless"
+                                android:contentDescription="@string/group_messaging_edit_group_name_voiceover"
+                                android:src="@drawable/ic_action_edit_white_24px"
+                                android:tint="?attr/sp_activity_primary_text_color" />
+
+                        </LinearLayout>
+
+                        <TextView
+                            style="@style/Widget.Silent.SimpleText.Small"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/spacing_small"
+                            android:layout_marginBottom="@dimen/spacing_small"
+                            android:text="@string/group_messaging_group_creator"
+                            android:textStyle="bold"
+                            android:visibility="gone"
+                            tools:visibility="visible"
+                            />
+
+                        <TextView android:id="@+id/text_group_creator"
+                            style="@style/Widget.Silent.SimpleText.Medium"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/spacing_normal"
+                            android:layout_marginBottom="@dimen/spacing_normal"
+                            android:textColor="?attr/sp_activity_secondary_text_color"
+                            android:visibility="gone"
+                            tools:text="Group creator here"
+                            tools:visibility="visible"
+                            />
+
+                        <!-- Currently group description field is not populated but may be used later -->
+                        <TextView
+                            style="@style/Widget.Silent.SimpleText.Small"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/spacing_small"
+                            android:layout_marginBottom="@dimen/spacing_small"
+                            android:text="@string/group_messaging_group_description"
+                            android:textStyle="bold"
+                            android:visibility="gone"
+                            tools:visibility="visible"
+                            />
+
+                        <TextView android:id="@+id/text_group_description"
+                            style="@style/Widget.Silent.SimpleText.Medium"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/spacing_normal"
+                            android:layout_marginBottom="@dimen/spacing_normal"
+                            android:textColor="?attr/sp_activity_secondary_text_color"
+                            tools:text="Group description here"
+                            android:visibility="gone"
+                            tools:visibility="visible"
+                            />
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+            </android.support.v7.widget.CardView >
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:background="?attr/sp_activity_background_color"
+                android:elevation="@dimen/spacing_tiny"
+                tools:ignore="UnusedAttribute"
+                >
+
+                <android.support.v7.widget.RecyclerView
+                    android:id="@android:id/list"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:clipChildren="false"
+                    android:fadingEdge="none"
+                    android:filterTouchesWhenObscured="false"
+                    android:overScrollMode="never" />
+
+                <include
+                    android:id="@+id/empty_list_view"
+                    layout="@layout/empty_list_view"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:visibility="gone"
+                    tools:visibility="visible" />
+
+            </FrameLayout>
+
+            <Button
+                android:id="@+id/button_sync"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/activity_horizontal_margin"
+                android:paddingLeft="@dimen/spacing_xlarge"
+                android:paddingStart="@dimen/spacing_xlarge"
+                android:gravity="start|center_vertical"
+                android:background="@drawable/bg_button_selector_white"
+                android:text="@string/group_messaging_sync_group"
+                android:drawableLeft="@drawable/ic_sync_white_24dp"
+                android:drawableStart="@drawable/ic_sync_white_24dp"
+                android:drawablePadding="@dimen/messaging_group_details_button_drawable_padding"
+                android:drawableTint="?attr/sp_activity_primary_text_color"
+                android:textAllCaps="false"
+                android:textSize="@dimen/text_mlarge"
+                android:visibility="gone"
+                tools:ignore="RtlSymmetry,UnusedAttribute"
+                tools:visibility="visible"/>
+
+            <Button
+                android:id="@+id/button_leave"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/activity_horizontal_margin"
+                android:layout_marginBottom="@dimen/spacing_large"
+                android:paddingLeft="@dimen/spacing_xlarge"
+                android:paddingStart="@dimen/spacing_xlarge"
+                android:gravity="start|center_vertical"
+                android:background="@drawable/bg_button_selector_white"
+                android:text="@string/group_messaging_leave_group"
+                android:drawableLeft="@drawable/ic_exit_to_app_white_24dp"
+                android:drawableStart="@drawable/ic_exit_to_app_white_24dp"
+                android:drawablePadding="@dimen/messaging_group_details_button_drawable_padding"
+                android:drawableTint="?attr/sp_activity_primary_text_color"
+                android:textAllCaps="false"
+                android:textSize="@dimen/text_mlarge"
+                tools:ignore="RtlSymmetry,UnusedAttribute" />
+
+            <LinearLayout
+                android:id="@+id/group_details_container"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginTop="@dimen/spacing_large"
+                android:layout_marginBottom="@dimen/spacing_small"
+                android:visibility="gone"
+                tools:visibility="visible">
+
+                <TextView
+                    android:id="@+id/text_group_information"
+                    style="@style/Widget.Silent.SimpleText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/spacing_small"
+                    android:layout_marginBottom="@dimen/spacing_small"
+                    android:layout_marginLeft="@dimen/activity_horizontal_margin_large"
+                    android:layout_marginRight="@dimen/activity_horizontal_margin_large"
+                    tools:text="Group information"/>
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </com.silentcircle.messaging.views.ObservableScrollView>
+
+    <LinearLayout
+        android:id="@+id/group_details_edit_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:layout_alignParentTop="true"
+        android:layout_marginTop="@dimen/spacing_large"
+        android:visibility="gone"
+        tools:visibility="gone">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="@dimen/activity_horizontal_margin_large"
+            android:layout_marginRight="@dimen/activity_horizontal_margin_large">
+
+            <android.support.design.widget.TextInputLayout
+                android:id="@+id/textinput_group_name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColorHint="?attr/sp_activity_primary_text_color"
+                android.support.design:errorEnabled="true"
+                android.support.design:hintTextAppearance="@style/TextAppearance.App.TextInputLayout">
+
+                <EditText
+                    android:id="@+id/edit_group_name"
+                    style="@style/Widget.Silent.SimpleText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="@string/group_messaging_create_group_name"
+                    android:imeOptions="actionDone"
+                    android:nextFocusDown="@+id/edit_group_description"
+                    android:nextFocusLeft="@+id/edit_group_description"
+                    android:nextFocusRight="@+id/edit_group_description"
+                    android:nextFocusUp="@+id/edit_group_description"
+                    android:privateImeOptions="nm"
+                    android:selectAllOnFocus="true"
+                    android:maxLength="50"
+                    android:maxLines="1"
+                    android:singleLine="true"
+                    android:textColor="?attr/sp_activity_primary_text_color"
+                    android:textColorHighlight="@color/sc_ng_text_green"
+                    android:textColorHint="?attr/sp_activity_primary_text_color"
+                    android:textSize="@dimen/text_large"
+                    android:theme="@style/Widget.EditText" />
+
+            </android.support.design.widget.TextInputLayout>
+
+            <!--
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <TextView
+                    style="@style/Widget.Silent.SimpleText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/spacing_small"
+                    android:layout_marginBottom="@dimen/spacing_small"
+                    android:text="@string/group_messaging_edit_group_maximum_members"
+                    tools:text="Max members:" />
+
+                <EditText
+                    style="@style/Widget.EditText"
+                    android:id="@+id/edit_group_max_members"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:inputType="number"
+                    android:ems="10"
+                    android:imeOptions="actionDone"
+                    android:textColorHighlight="@color/sc_ng_text_green"
+                    android:selectAllOnFocus="true" />
+
+            </LinearLayout>
+            -->
+
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/activity_horizontal_margin"
+            android:orientation="horizontal">
+
+            <Button
+                style="@style/Widget.Button"
+                android:id="@+id/button_cancel"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:text="@string/dialog_button_cancel"
+                android:textSize="@dimen/text_normal" />
+
+            <View
+                android:layout_width="1px"
+                android:layout_height="match_parent"
+                android:background="@android:color/darker_gray" />
+
+            <Button
+                style="@style/Widget.Button"
+                android:id="@+id/button_save"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:text="@string/dialog_button_save"
+                android:textSize="@dimen/text_normal" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</RelativeLayout>

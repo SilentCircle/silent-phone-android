@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2014-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -37,7 +37,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
-import android.util.Log;
+import com.silentcircle.logs.Log;
 
 import com.silentcircle.silentphone2.R;
 import com.silentcircle.silentphone2.util.ConfigurationUtilities;
@@ -74,7 +74,10 @@ public class ScAuthenticator extends AbstractAccountAuthenticator {
         final Bundle bundle = new Bundle();
         AccountManager am = AccountManager.get(mContext);
 
-        Account[] accounts = am.getAccountsByType(AccountConstants.ACCOUNT_TYPE);
+        Account[] accounts = new Account[0];
+        try {
+            accounts = am.getAccountsByType(AccountConstants.ACCOUNT_TYPE);
+        } catch (SecurityException ignore) {}
         if (accounts.length >= 1) {
             bundle.putString(AccountManager.KEY_ERROR_CODE, "multiple");
             bundle.putString(AccountManager.KEY_ERROR_MESSAGE, mContext.getString(R.string.account_exists));

@@ -1,7 +1,7 @@
 /*
 Created by Janis Narbuts
 Copyright (C) 2004-2012, Tivi LTD, www.tiviphone.com. All rights reserved.
-Copyright (C) 2012-2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2012-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,7 +27,6 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-
 #import "SquareCamViewController.h"
 #import <CoreImage/CoreImage.h>
 #import <ImageIO/ImageIO.h>
@@ -35,6 +34,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #import <AssetsLibrary/AssetsLibrary.h>
 #include <CoreGraphics/CGContext.h>
 #import <UIKit/UIGraphics.h>
+
 #include "CTVideoInIOS.h"
 int getIOSVersion();
 
@@ -164,7 +164,7 @@ static CGContextRef CreateCGBitmapContextForSize(CGSize size)
 
 #pragma mark-
 
-@interface SquareCamViewController (InternalMethods) <UIAlertViewDelegate>
+@interface SquareCamViewController (InternalMethods)
 - (void)setupAVCapture;
 - (void)teardownAVCapture;
 
@@ -291,45 +291,18 @@ bail:
 	
 	if (error) {
       iRunning=0;
-// Note: [self teardownAVCapture] will release the session
-//      [session release];
-        
-        [self teardownAVCapture];
-        
-        UIAlertView *alertView;
-        
-        if(error.code == AVErrorApplicationIsNotAuthorizedToUseDevice) {
-            
-            alertView = [[UIAlertView alloc] initWithTitle:@"Camera permission required"
-                                                   message:@"Silent Phone does not have permission to use the camera.\n\nYou can grant permissions\nin Settings > Silent Phone > Camera"
-                                                  delegate:self
-                                         cancelButtonTitle:@"Dismiss"
-                                         otherButtonTitles:@"Fix", nil];
-            alertView.tag = 403;
-        }
-        else
-            alertView = [[UIAlertView alloc] initWithTitle:[NSString stringWithFormat:@"Failed with error %d", (int)[error code]]
+      [session release];
+		UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:[NSString stringWithFormat:@"Failed with error %d", (int)[error code]]
                                                           message:[error localizedDescription]
                                                          delegate:nil
                                                 cancelButtonTitle:@"Dismiss"
                                                 otherButtonTitles:nil];
 		[alertView show];
 		[alertView release];
+		[self teardownAVCapture];
 	}
 #endif
 }
-
-#pragma mark - UIAlertViewDelegate
-
-- (void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex
-{
-    if(alertView.tag == 403 && buttonIndex == 1) {
-        
-        [[UIApplication sharedApplication] openURL:[NSURL URLWithString:UIApplicationOpenSettingsURLString]];
-    }
-}
-
-#pragma mark - Internal 
 
 -(int) getDegFromOrientation:(int)v{
    

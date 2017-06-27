@@ -21,7 +21,8 @@ http://code.google.com/p/android/issues/detail?id=3414, comments 56 and 57
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:descendantFocusability="blocksDescendants"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:background="@drawable/bg_action">
 
     <TextView
               android:id="@+id/list_line"

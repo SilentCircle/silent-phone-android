@@ -1,7 +1,7 @@
 /*
 Created by Janis Narbuts
 Copyright (C) 2004-2012, Tivi LTD, www.tiviphone.com. All rights reserved.
-Copyright (C) 2012-2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2012-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,13 +27,14 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-
-
 #define T_C_STR 3
 
 #define T_DST(x,y) p[x*T_C_STR+stride*y]
-#define T_DEF_T unsigned int t0,t1,t2,t3,t4,t5,t6,t7;
-#define T_DEF_L unsigned int l0,l1,l2,l3,l4,l5,l6,l7;
+#define T_DEF_T4 unsigned int t0,t1,t2,t3;
+#define T_DEF_T7 unsigned int t0,t1,t2,t3,t4,t5,t6,t7;
+#define T_DEF_T8 unsigned int t0,t1,t2,t3,t4,t5,t6,t7;
+#define T_DEF_L4 unsigned int l0,l1,l2,l3;
+#define T_DEF_L8 unsigned int l0,l1,l2,l3,l4,l5,l6,l7;
 enum {
    T_4FT=1,
    T_4FL=2,
@@ -117,7 +118,7 @@ static int predDCL(unsigned char *p, int stride, int f){
 static int predTR(unsigned char *p, int stride, int f){
    if(!(f&T_4FT) || !(f&T_4FR))return 0;
    if(f&T_4FTEST)return 1;
-   T_DEF_T
+   T_DEF_T8
    T_LT1
    T_LT2
    t4=(t4*5+p[-stride*2+5*3]+4+t3+t5)>>3;
@@ -133,7 +134,7 @@ static int predTR(unsigned char *p, int stride, int f){
 static int predTTR(unsigned char *p, int stride, int f){
    if(!(f&T_4FT) || !(f&T_4FR) )return 0;
    if(f&T_4FTEST)return 1;
-   T_DEF_T
+   T_DEF_T7
    T_LT1
    T_LT2
 
@@ -162,12 +163,16 @@ static int predTTR(unsigned char *p, int stride, int f){
    T_DST(0,2)=t12;T_DST(1,2)=t23;T_DST(2,2)=t34;T_DST(3,2)=t45;
    T_DST(0,3)=t2;T_DST(1,3)=t3;T_DST(2,3)=t4;T_DST(3,3)=t5;
    return 1;
-}      
+}
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-variable" // ignore warning
+
 static int predTTL(unsigned char *p, int stride, int f){
    if(!(f&T_4FT) || !(f&T_4FL) )return 0;
    if(f&T_4FTEST)return 1;
-   T_DEF_T
-   T_DEF_L
+   T_DEF_T7
+   T_DEF_L4
    T_LT1
    T_LT2
    T_LL1
@@ -199,11 +204,13 @@ static int predTTL(unsigned char *p, int stride, int f){
    return 1;
 }      
 
+#pragma clang diagnostic pop
+
 static int predTLL(unsigned char *p, int stride, int f){
    if(!(f&T_4FT) || !(f&T_4FL) )return 0;
    if(f&T_4FTEST)return 1;
-   T_DEF_T
-   T_DEF_L
+   T_DEF_T4
+   T_DEF_L4
    T_LT1
    T_LL1
 
@@ -237,7 +244,7 @@ static int predTLL(unsigned char *p, int stride, int f){
 static int predT(unsigned char *p, int stride, int f){
    if(!(f&T_4FT) )return 0;
    if(f&T_4FTEST)return 1;
-   T_DEF_T;
+   T_DEF_T4;
    T_LT1;
 //--   if(t0==t1 && t0==t2 && t0==t3 )return 0;
    int i;
@@ -250,8 +257,8 @@ static int predT(unsigned char *p, int stride, int f){
 static int predTL(unsigned char *p, int stride, int f){
    if(!(f&T_4FT) || !(f&T_4FL) )return 0;
    if(f&T_4FTEST)return 1;
-   T_DEF_T
-   T_DEF_L
+   T_DEF_T4
+   T_DEF_L4
    T_LT1
    T_LL1
    int tl=p[-stride-T_C_STR];
@@ -292,7 +299,7 @@ static int predL(unsigned char *p, int stride, int f){
 static int predBL(unsigned char *p, int stride, int f){
    if(!(f&T_4FL))return 0;
    if(f&T_4FTEST)return 1;
-   T_DEF_L;
+   T_DEF_L8;
    T_LL1;
    T_LL2;
    int l4o=l4;
@@ -308,7 +315,7 @@ static int predBLL(unsigned char *p, int stride, int f){
    
    if(!(f&T_4FL) )return 0;
    if(f&T_4FTEST)return 1;
-   T_DEF_L;
+   T_DEF_L8;
    T_LL1;
    T_LL2;
    //   0  1  2  3

@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2016-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,7 +27,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 package com.silentcircle.messaging.util;
 
+import android.Manifest;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.database.ContentObserver;
 import android.database.Cursor;
 import android.net.Uri;
@@ -35,16 +37,21 @@ import android.os.Handler;
 import android.provider.ContactsContract;
 import android.support.annotation.MainThread;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.annotation.WorkerThread;
+import android.support.v4.content.ContextCompat;
 import android.text.TextUtils;
-import android.util.Log;
 
 import com.silentcircle.SilentPhoneApplication;
 import com.silentcircle.common.list.ContactEntry;
 import com.silentcircle.common.util.AsyncTasks;
-import com.silentcircle.contacts.UpdateScContactDataService;
+import com.silentcircle.contacts.ContactsUtils;
+import com.silentcircle.contacts.calllognew.ContactInfo;
+import com.silentcircle.contacts.calllognew.ContactInfoHelper;
 import com.silentcircle.contacts.utils.Constants;
-import com.silentcircle.messaging.services.AxoMessaging;
+import com.silentcircle.logs.Log;
+import com.silentcircle.messaging.model.Contact;
+import com.silentcircle.messaging.services.ZinaMessaging;
 import com.silentcircle.silentphone2.util.ConfigurationUtilities;
 import com.silentcircle.silentphone2.util.Utilities;
 import com.silentcircle.userinfo.LoadUserInfo;
@@ -54,7 +61,10 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
+
+import zina.ZinaNative;
 
 /**
  * TEMPORARY:
@@ -63,6 +73,7 @@ import java.util.List;
 public final class ContactsCache {
 
     private static final String TAG = "ContactsCache";
+    private static final boolean DEBUG = false;       // Don't submit with true
 
     // Not sure about correctness this
     private static  final String SIP_DOMAIN_SILENTCIRCLE = "@sip.silentcircle.net";
@@ -90,13 +101,15 @@ public final class ContactsCache {
 
     private static final List<ContactEntry> mContactCache =
             Collections.synchronizedList(new ArrayList<ContactEntry>());
+    private static final List<String> mLoadUserDataTaskList =
+            Collections.synchronizedList(new ArrayList<String>());
 
-
-    private static Context mContext;
-    private static boolean mDoUpdate = true;
     private static ContactsCache sContactsCache = null;
+    protected static ContactInfoHelper sContactInfoHelper = null;
 
-    private ContentObserver mChangeObserver = new ContentObserver(new Handler()) {
+    public static boolean sIsContactObserverRegistered;
+
+    private static ContentObserver mChangeObserver = new ContentObserver(new Handler()) {
 
         @Override
         public boolean deliverSelfNotifications() {
@@ -105,147 +118,296 @@ public final class ContactsCache {
 
         @Override
         public void onChange(boolean selfChange) {
-            mDoUpdate = true;
-            buildContactsCache(mContext);
+            onChange(selfChange, null);
+        }
+
+        @Override
+        public void onChange(boolean selfChange, Uri uri) {
+            resetContactsCache();
+            MessageUtils.requestRefresh();
         }
     };
 
-    public static ContactsCache getInstance(@NonNull Context context) {
+    public static ContactsCache getInstance() {
         if (sContactsCache == null) {
-            sContactsCache = new ContactsCache(context);
+            sContactsCache = new ContactsCache();
         }
         return sContactsCache;
     }
 
-    protected ContactsCache(Context ctx) {
-        mContext = ctx;
-        mContext.getContentResolver().registerContentObserver(ContactsContract.Contacts.CONTENT_URI, true, mChangeObserver);
+    protected ContactsCache() {
+        Context ctx = SilentPhoneApplication.getAppContext();
+        registerContactObserver();
+
+        String currentCountryIso = ContactsUtils.getCurrentCountryIso(ctx);
+        sContactInfoHelper = new ContactInfoHelper(ctx, currentCountryIso);
     }
 
-    public static void buildContactsCache(final Context context) {
-        if (!mDoUpdate)
+    public static void registerContactObserver() {
+        if (sIsContactObserverRegistered) {
             return;
-        mDoUpdate = false;
+        }
 
+        Context ctx = SilentPhoneApplication.getAppContext();
+        if (ContextCompat.checkSelfPermission(ctx, Manifest.permission.READ_CONTACTS)
+                == PackageManager.PERMISSION_GRANTED) {
+            ctx.getContentResolver().registerContentObserver(ContactsContract.Contacts.CONTENT_URI,
+                    true, mChangeObserver);
+
+            sIsContactObserverRegistered = true;
+        }
+    }
+
+    protected static void resetContactsCache() {
+        if (DEBUG) Log.d(TAG, "resetContactsCache");
         synchronized (mContactCache) {
             mContactCache.clear();
         }
-
-        Uri lookupUri = ContactsContract.Data.CONTENT_URI;
-        String selection = ContactsContract.Data.MIMETYPE + "='" +
-                UpdateScContactDataService.SC_MSG_CONTENT_TYPE + "' OR " +
-                ContactsContract.Data.MIMETYPE + "='" + UpdateScContactDataService.SC_PHONE_CONTENT_TYPE + "'";
-
-        List<ContactEntry> entryList = new ArrayList<>();
-        Cursor cursor = context.getContentResolver().query(lookupUri, COLUMNS, selection, null, null);
-        if (cursor != null) {
-            while (cursor.moveToNext()) {
-
-                // NGA-497: if the cursor has a wrong column count (why?) then skip it (Sam S.)
-                if (cursor.getColumnCount() != COLUMNS.length)
-                    continue;
-                ContactEntry contactEntry = new ContactEntry();
-                contactEntry.name = cursor.getString(COLUMN_INDEX_DISPLAY_NAME);
-                contactEntry.phoneLabel = cursor.getString(COLUMN_INDEX_PHONE_LABEL);
-                contactEntry.phoneNumber = Utilities.removeUriPartsSelective(cursor.getString(COLUMN_INDEX_DATA1));
-
-                String photoUri = cursor.getString(COLUMN_INDEX_PHOTO_URI);
-                if (!TextUtils.isEmpty(photoUri)) {
-                    contactEntry.photoUri = Uri.parse(photoUri);
-                }
-
-                String thumbnailUri = cursor.getString(COLUMN_INDEX_THUMBNAIL_PHOTO_URI);
-                if (!TextUtils.isEmpty(thumbnailUri)) {
-                    contactEntry.thumbnailUri = Uri.parse(thumbnailUri);
-                }
-
-                contactEntry.photoId = cursor.getLong(COLUMN_INDEX_PHOTO_ID);
-                String lookupKey = cursor.getString(COLUMN_INDEX_LOOKUP_KEY);
-                contactEntry.lookupKey = lookupKey;
-                contactEntry.lookupUri = ContactsContract.Contacts.getLookupUri(contactEntry.id, lookupKey);
-                entryList.add(contactEntry);
-
-                // left for now for debug
-//                int c = cursor.getColumnCount();
-//                for (int i = 0; i < c; i++) {
-//                    Log.d(TAG, "++++ " + cursor.getColumnName(i) + " = [" + cursor.getString(i) + "]");
-//                }
-            }
-            cursor.close();
-        }
-        if (entryList.size() > 0) {
-            synchronized (mContactCache) {
-                mContactCache.addAll(entryList);
-            }
+        synchronized (mLoadUserDataTaskList) {
+            mLoadUserDataTaskList.clear();
         }
     }
 
-    @MainThread
-    public static ContactEntry getContactEntryFromCache(final String name) {
+    public static ContactEntry getContactEntryFromCacheIfExists(final String name) {
+        if (DEBUG) Log.d(TAG, "getContactEntryFromCacheIfExists name: " + name);
         ContactEntry result = null;
-//        Log.d(TAG, "++++ look for name: " + name);
         if (!TextUtils.isEmpty(name)) {
-
+            String formattedNumber = Utilities.formatNumber(name);
             synchronized (mContactCache) {
                 for (ContactEntry entry : mContactCache) {
-//                    Log.d(TAG, "++++ entry name: " + entry.name + ", imName: " + entry.imName);
+//                    if (DEBUG) Log.d(TAG, "++++ entry name: " + entry.name + ", imName: " + entry.imName);
                     if (name.equals(entry.name) || name.equals(entry.imName)) {
                         result = entry;
                         break;
                     }
-//                    Log.d(TAG, "++++ entry number: " + entry.phoneNumber);
-                    if (Utilities.formatNumber(name).equals(entry.phoneNumber)) {
+//                    if (DEBUG) Log.d(TAG, "++++ entry number: " + entry.phoneNumber);
+                    if (formattedNumber.equals(entry.phoneNumber) || name.equals(entry.phoneNumber)) {
                         result = entry;
                         break;
                     }
                 }
-                if (result != null && TextUtils.isEmpty(result.name) && result.timeCreated != 0) {
-                    if (result.timeCreated + RETRY_TIME < System.currentTimeMillis()) {
-                        if (ConfigurationUtilities.mTrace) Log.d(TAG, "Retry to get user contact data after timeout");
-                        // Keep the existing entry until we got some result from server. The RETRY_TIME
-                        // should be longer than any network timeouts
-                        result.timeCreated = System.currentTimeMillis();
-                        loadUserDataBackground(name, result);
-                    }
-                }
-                // If result is null then try to get a alias mapping. If successful create a stub
-                // entry, set the entry's name to the mapped display name and the name parameter
-                // to the phone name. If another cache lookup with the same name shows up we find
-                // the stub entry.
-                if (result == null) {
-                    byte[] dpName = null;
-                    byte[] userInfo = null;
-                    if (AxoMessaging.getInstance(mContext).isReady()) {
-                        dpName = AxoMessaging.getDisplayName(name);
-                        userInfo = AxoMessaging.getUserInfoFromCache(name);
-                    }
-                    if (dpName != null) {
-                        result = createTemporaryContactEntry(new String(dpName));
-                        result.phoneNumber = name;
+            }
+        }
+        if (DEBUG) Log.d(TAG, "getContactEntryFromCacheIfExists result: " + result);
+        return result;
+    }
 
-                        if (userInfo != null) {
-                            AsyncTasks.UserInfo ui = AsyncTasks.parseUserInfo(userInfo);
-                            if (ui != null) {
-                                if (!TextUtils.isEmpty(ui.mAvatarUrl) && !LoadUserInfo.URL_AVATAR_NOT_SET.equals(ui.mAvatarUrl)) {
-                                    result.photoUri = Uri.parse(ConfigurationUtilities.getProvisioningBaseUrl(SilentPhoneApplication.getAppContext()) + ui.mAvatarUrl);
-                                }
-                            }
+    @MainThread
+    public static ContactEntry getContactEntryFromCache(final String name) {
+        if (DEBUG) Log.d(TAG, "getContactEntryFromCache name: " + name);
+
+        ContactEntry result = null;
+        if (!TextUtils.isEmpty(name)) {
+
+            result = getContactEntryFromCacheIfExists(name);
+
+            if (result != null && TextUtils.isEmpty(result.name) && result.timeCreated != 0) {
+                if (result.timeCreated + RETRY_TIME < System.currentTimeMillis()) {
+                    if (ConfigurationUtilities.mTrace)
+                        Log.d(TAG, "Retry to get user contact data after timeout");
+                    // Keep the existing entry until we got some result from server. The RETRY_TIME
+                    // should be longer than any network timeouts
+                    result.timeCreated = System.currentTimeMillis();
+                    loadUserDataBackground(name, result);
+                }
+            }
+
+            if (result == null) {
+                if (DEBUG) Log.d(TAG, "getContactEntry no cached entry for: " + name);
+                result = getContactEntryFromContacts(name);
+                addCacheEntry(name, result);
+            }
+
+            // If result is null then try to get a alias mapping. If successful create a stub
+            // entry, set the entry's name to the mapped display name and the name parameter
+            // to the phone name. If another cache lookup with the same name shows up we find
+            // the stub entry.
+            if (result == null) {
+                byte[] dpName = null;
+                byte[] userInfo = null;
+                if (ZinaMessaging.getInstance().isReady()) {
+                    dpName = ZinaMessaging.getDisplayName(name);
+                    userInfo = ZinaMessaging.getUserInfoFromCache(name);
+                }
+                if (dpName != null) {
+                    result = createTemporaryContactEntry(new String(dpName));
+                    result.phoneNumber = name;
+
+                    if (userInfo != null) {
+                        AsyncTasks.UserInfo ui = AsyncTasks.parseUserInfo(userInfo);
+                        if (ui != null) {
+                            result.photoUri = AvatarUtils.getAvatarProviderUri(ui.mAvatarUrl, name);
+                            result.alias = ui.mAlias;
                         }
-                        mContactCache.add(result);
                     }
-                    else {
-                        loadUserDataBackground(name, null);
+                    addCacheEntry(name, result);
+                }
+                else {
+                    loadUserDataBackground(name, null);
+                }
+            }
+            if (result == null) {
+                if (ConfigurationUtilities.mTrace) Log.d(TAG, "No valid messaging contact entry found for: '" + name + "'");
+            }
+        }
+        if (DEBUG) Log.d(TAG, "getContactEntryFromCache result: " + name);
+
+        return result;
+    }
+
+    @Nullable
+    public static ContactEntry getContactEntryFromContacts(final String name) {
+        if (DEBUG) Log.d(TAG, "getContactEntryFromContacts name: " + name);
+        ContactInfo info = null;
+        String alias = null;
+        if (Utilities.isUuid(name) || Utilities.isValidSipUsername(name)) {
+            info = ContactInfoHelper.queryContactInfoForScUuid(SilentPhoneApplication.getAppContext(), name);
+
+            byte[] userInfoBytes = ZinaNative.getUserInfoFromCache(name);
+            if (userInfoBytes != null) {
+                AsyncTasks.UserInfo userInfo = AsyncTasks.parseUserInfo(userInfoBytes);
+                if (userInfo != null && !TextUtils.isEmpty(userInfo.mAlias)) {
+                    alias = userInfo.mAlias;
+                }
+            }
+        } else {
+            info = sContactInfoHelper.lookupNumberWithoutAxoCache(name, null);
+
+            alias = Utilities.formatNumber(name);
+        }
+
+        ContactEntry result = contactInfoToContactEntry(name, alias, info);
+
+        if (DEBUG) Log.d(TAG, "getContactEntryFromContacts result: " + name);
+        return result;
+    }
+
+    @WorkerThread
+    public static ContactEntry getContactEntry(final String name) {
+        if (DEBUG) Log.d(TAG, "getContactEntry name: " + name);
+        ContactEntry result = null;
+        if (!TextUtils.isEmpty(name)) {
+            result = getContactEntryFromCacheIfExists(name);
+
+            if (result != null && TextUtils.isEmpty(result.name) && result.timeCreated != 0) {
+                if (result.timeCreated + RETRY_TIME < System.currentTimeMillis()) {
+                    if (ConfigurationUtilities.mTrace)
+                        Log.d(TAG, "Retry to get user contact data after timeout");
+                    // Keep the existing entry until we got some result from server. The RETRY_TIME
+                    // should be longer than any network timeouts
+                    result.timeCreated = System.currentTimeMillis();
+                    loadUserDataBackground(name, result);
+                }
+            }
+
+            if (result == null) {
+                if (DEBUG) Log.d(TAG, "getContactEntry no cached entry for: " + name);
+                result = getContactEntryFromContacts(name);
+                addCacheEntry(name, result);
+            }
+
+            // Create contact for an anonymous caller
+            if (Contact.UNKNOWN_USER_ID.equals(name)) {
+                result = createTemporaryContactEntry(Contact.UNKNOWN_DISPLAY_NAME);
+                result.phoneNumber = name;
+                result.timeCreated = System.currentTimeMillis();
+                addCacheEntry(name, result);
+            }
+
+            // If result is null then try to get a alias mapping. If successful create a stub
+            // entry, set the entry's name to the mapped display name and the name parameter
+            // to the phone name. If another cache lookup with the same name shows up we find
+            // the stub entry.
+            if (result == null) {
+                int[] errorCode = new int[1];
+                byte[] userInfo = null;
+                if (ZinaMessaging.getInstance().isReady()) {
+                    // query axolotl cache first and go online if that fails
+                    userInfo = ZinaMessaging.getUserInfoFromCache(name);
+                    if (userInfo == null) {
+                        userInfo = ZinaMessaging.getUserInfo(name, null, errorCode);
                     }
                 }
-                if (result == null) {
-                    if (ConfigurationUtilities.mTrace) Log.d(TAG, "No valid messaging contact entry found for: '" + name + "'");
+                if (userInfo != null) {
+                    AsyncTasks.UserInfo ui = AsyncTasks.parseUserInfo(userInfo);
+                    if (ui != null) {
+                        result = createTemporaryContactEntry(ui.mDisplayName);
+                        result.alias = ui.mAlias;
+                        result.phoneNumber = name;
+                        result.photoUri = AvatarUtils.getAvatarProviderUri(ui.mAvatarUrl, name);
+                    }
                 }
+                else {
+                    if (ConfigurationUtilities.mTrace) Log.d(TAG, "Scheduling timeout to get user contact data. " + name);
+                    result = createTemporaryContactEntry(name);
+                    result.phoneNumber = name;
+                    result.timeCreated = System.currentTimeMillis();
+                }
+                addCacheEntry(name, result);
+            }
+        }
+        if (DEBUG) Log.d(TAG, "getContactEntry result: " + result);
+        return result;
+    }
+
+    public static ContactEntry getTemporaryGroupContactEntry(final String name, final String displayName) {
+        ContactEntry result = createTemporaryContactEntry(name);
+        result.timeCreated = Long.MAX_VALUE;
+        result.photoUri = AvatarUtils.getAvatarProviderUriGroup(null, name);
+        addCacheEntry(name, result);
+        return result;
+    }
+
+    public static boolean hasExpired(@Nullable ContactEntry entry) {
+        boolean result = (entry == null);
+        if (entry != null && TextUtils.isEmpty(entry.name) && entry.timeCreated != 0) {
+            if (entry.timeCreated + RETRY_TIME < System.currentTimeMillis()) {
+                result = true;
+            }
+        }
+        if (DEBUG) Log.d(TAG, "hasExpired result: " + result);
+        return result;
+    }
+
+    public static void removeCachedEntry(final String name) {
+        if (DEBUG) Log.d(TAG, "removeCachedEntry name: " + name);
+        synchronized (mContactCache) {
+            for (final Iterator<ContactEntry> iterator = mContactCache.iterator(); iterator.hasNext();) {
+                final ContactEntry entry = iterator.next();
+                final String formattedNumber = Utilities.formatNumber(name);
+                if (name.equals(entry.name) || name.equals(entry.imName)) {
+                    iterator.remove();
+                }
+                else if (formattedNumber.equals(entry.phoneNumber) || name.equals(entry.phoneNumber)) {
+                    iterator.remove();
+                    break;
+                }
+            }
+        }
+    }
+
+    public static CharSequence getDisplayName(@NonNull CharSequence name, @Nullable ContactEntry contactEntry) {
+        CharSequence result = name;
+        if (contactEntry != null) {
+            result = !TextUtils.isEmpty(contactEntry.name)
+                    ? contactEntry.name
+                    : (!TextUtils.isEmpty(contactEntry.alias) ? contactEntry.alias : name);
+            if (ConversationUtils.UNKNOWN_DISPLAY_NAME.equals(result)) {
+                result = name;
             }
         }
         return result;
     }
 
     private static void loadUserDataBackground(final String name, final ContactEntry oldEntry) {
+        synchronized (mLoadUserDataTaskList) {
+            if (mLoadUserDataTaskList.contains(name)) {
+                if (ConfigurationUtilities.mTrace) {
+                    Log.d(TAG, "Retrieval for " + name + " already scheduled.");
+                }
+                return;
+            }
+        }
         AsyncTasks.UserDataBackgroundTaskNotMain getNameTask = new AsyncTasks.UserDataBackgroundTaskNotMain(name) {
             @Override
             @WorkerThread
@@ -258,10 +420,9 @@ public final class ContactsCache {
                     }
 
                     result = createTemporaryContactEntry(mUserInfo.mDisplayName);
+                    result.alias = mUserInfo.mAlias;
                     result.phoneNumber = name;
-                    if (!TextUtils.isEmpty(photoUri)) {
-                        result.photoUri = Uri.parse(ConfigurationUtilities.getProvisioningBaseUrl(SilentPhoneApplication.getAppContext()) + photoUri);
-                    }
+                    result.photoUri = AvatarUtils.getAvatarProviderUri(photoUri, name);
                 }
                 else {
                     if (ConfigurationUtilities.mTrace) Log.d(TAG, "Scheduling timeout to get user contact data.");
@@ -270,19 +431,28 @@ public final class ContactsCache {
                     result.timeCreated = System.currentTimeMillis();
                 }
                 if (oldEntry != null) {
-                    synchronized (mContactCache) {
-                        mContactCache.remove(oldEntry);
-                    }
+                    mContactCache.remove(oldEntry);
                 }
-                synchronized (mContactCache) {
-                    mContactCache.add(result);
-                }
-                // notify conversation list or conversation view to force refresh
-                MessageUtils.notifyConversationUpdated(SilentPhoneApplication.getAppContext(), name, false);
+                addCacheEntry(name, result);
+                mLoadUserDataTaskList.remove(name);
+                MessageUtils.notifyConversationUpdated(SilentPhoneApplication.getAppContext(), name, true);
             }
         };
         if (ConfigurationUtilities.mTrace) Log.d(TAG, "Get user data from server/lookup cache for " + name);
+        mLoadUserDataTaskList.add(name);
         AsyncUtils.executeSerial(getNameTask);
+    }
+
+    private static void addCacheEntry(final String name, final ContactEntry entry) {
+        synchronized (mContactCache) {
+            if (entry != null) {
+                ContactEntry existingEntry = getContactEntryFromCacheIfExists(name);
+                if (existingEntry != null) {
+                    mContactCache.remove(existingEntry);
+                }
+                mContactCache.add(entry);
+            }
+        }
     }
 
     /**
@@ -294,8 +464,9 @@ public final class ContactsCache {
     private static ContactEntry createTemporaryContactEntry(final String name) {
         ContactEntry updatedInfo = new ContactEntry();
         updatedInfo.name = name;
-        updatedInfo.lookupUri = createTemporaryContactUri(name);
+        updatedInfo.lookupUri = null; //createTemporaryContactUri(name);
         updatedInfo.lookupKey = name;
+        updatedInfo.photoUri = AvatarUtils.getAvatarProviderUri(null, name);
         return updatedInfo;
     }
 
@@ -329,4 +500,79 @@ public final class ContactsCache {
             return null;
         }
     }
+
+    @Nullable
+    private static ContactEntry getContactEntry(Cursor cursor) {
+        // NGA-497: if the cursor has a wrong column count (why?) then skip it (Sam S.)
+        if (cursor.getColumnCount() != COLUMNS.length)
+            return null;
+        ContactEntry contactEntry = new ContactEntry();
+        contactEntry.name = cursor.getString(COLUMN_INDEX_DISPLAY_NAME);
+        contactEntry.phoneLabel = cursor.getString(COLUMN_INDEX_PHONE_LABEL);
+        contactEntry.phoneNumber = Utilities.removeUriPartsSelective(cursor.getString(COLUMN_INDEX_DATA1));
+
+        String photoUri = cursor.getString(COLUMN_INDEX_PHOTO_URI);
+        if (!TextUtils.isEmpty(photoUri)) {
+            contactEntry.photoUri = Uri.parse(photoUri);
+        }
+
+        String thumbnailUri = cursor.getString(COLUMN_INDEX_THUMBNAIL_PHOTO_URI);
+        if (!TextUtils.isEmpty(thumbnailUri)) {
+            contactEntry.thumbnailUri = Uri.parse(thumbnailUri);
+        }
+
+        contactEntry.photoId = cursor.getLong(COLUMN_INDEX_PHOTO_ID);
+        String lookupKey = cursor.getString(COLUMN_INDEX_LOOKUP_KEY);
+        contactEntry.lookupKey = lookupKey;
+        contactEntry.lookupUri = ContactsContract.Contacts.getLookupUri(contactEntry.id, lookupKey);
+        return contactEntry;
+    }
+
+    /**
+     * Translates ContactInfo instance to a ContactEntry instance.
+     *
+     * TODO It may be necessary to move to ContactInfo and drop ContactEntry to avoid such hacks.
+     */
+    @Nullable
+    private static ContactEntry contactInfoToContactEntry(final String name, final String alias, @Nullable final ContactInfo info) {
+        if (info == null || info == ContactInfo.EMPTY) {
+            return null;
+        }
+
+        ContactEntry contactEntry = new ContactEntry();
+        contactEntry.name = info.name;
+        contactEntry.phoneLabel = info.label;
+        contactEntry.phoneNumber = info.normalizedNumber;
+        if (TextUtils.isEmpty(contactEntry.phoneNumber)) {
+            contactEntry.phoneNumber = info.number;
+        }
+        if (TextUtils.isEmpty(contactEntry.phoneNumber)) {
+            contactEntry.phoneNumber = info.formattedNumber;
+        }
+
+        contactEntry.photoUri = info.photoUri;
+        contactEntry.thumbnailUri = null;
+
+        contactEntry.photoId = info.photoId;
+        contactEntry.lookupKey = info.lookupKey;
+        contactEntry.lookupUri = info.lookupUri;
+
+        /*
+         * To guarantee, that this entry is found, set otherwise unused imName to search param value
+         */
+        contactEntry.imName = name;
+        contactEntry.alias = alias;
+
+        if (DEBUG) {
+            Log.d(TAG, String.format("created contact entry : name %s, phoneLabel: %s, "
+                    + "phoneNumber: %s, photoUri: %s, thumbnailUri: %s, photoId: %d, "
+                    + "lookupKey: %s, lookupUri: %s, imName: %s",
+                    contactEntry.name, contactEntry.phoneLabel, contactEntry.phoneNumber,
+                    contactEntry.photoUri, contactEntry.thumbnailUri, contactEntry.photoId,
+                    contactEntry.lookupKey, contactEntry.lookupUri, contactEntry.imName));
+        }
+
+        return contactEntry;
+    }
+
 }

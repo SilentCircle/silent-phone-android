@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2016-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -29,23 +29,22 @@ package com.silentcircle.silentphone2.dialogs;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
-import android.support.v4.content.ContextCompat;
-import android.support.v7.app.AlertDialog;
 import android.app.Dialog;
 import android.app.DialogFragment;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.v4.content.ContextCompat;
+import android.support.v7.app.AlertDialog;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.silentcircle.logs.Log;
 import com.silentcircle.silentphone2.R;
 import com.silentcircle.silentphone2.activities.InCallActivity;
 import com.silentcircle.silentphone2.services.TiviPhoneService;
@@ -98,9 +97,27 @@ public class CryptoInfoDialog extends DialogFragment implements View.OnClickList
     public CryptoInfoDialog() {
     }
 
+    @TargetApi(Build.VERSION_CODES.M)
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        commonOnAttach(getActivity());
+    }
+
+    /*
+     * Deprecated on API 23
+     * Use onAttachToContext instead
+     */
+    @SuppressWarnings("deprecation")
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+            commonOnAttach(activity);
+        }
+    }
+
+    private void commonOnAttach(Activity activity) {
         mParent = (InCallActivity) activity;
     }
 

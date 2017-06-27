@@ -74,7 +74,7 @@
                     android:layout_marginTop="@dimen/activity_vertical_margin"
                     android:hint="@string/provisioning_username_hint"
                     android:imeOptions="actionNext"
-                    android:inputType="text"
+                    android:inputType="text|textNoSuggestions|textEmailAddress"
                     android:singleLine="true"
                     android:tag="username"
                     android:textSize="16sp"/>

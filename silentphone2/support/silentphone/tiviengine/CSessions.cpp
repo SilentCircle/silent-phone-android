@@ -1,7 +1,7 @@
 /*
 Created by Janis Narbuts
 Copyright (C) 2004-2012, Tivi LTD, www.tiviphone.com. All rights reserved.
-Copyright (C) 2012-2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2012-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,7 +27,6 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-
 #include "CSessions.h"
 #include "../encrypt/md5/md5.h"
 
@@ -162,7 +161,7 @@ void CPhSesions::createCallId(CSesBase *spSes, int iIsReg)
    CTMd5 md5;
    CTMd5 md5pwd;
    md5pwd.update((unsigned char *)"salt",4);
-   md5pwd.update((unsigned char *)&p_cfg.user.pwd[0], strlen(p_cfg.user.pwd));
+   md5pwd.update((unsigned char *)&p_cfg.user.pwd[0], (unsigned int)strlen(p_cfg.user.pwd));
    unsigned int pwd_res = md5pwd.final();
    
    
@@ -178,10 +177,10 @@ void CPhSesions::createCallId(CSesBase *spSes, int iIsReg)
    if(iDevIDLen<=0)
       md5.update((unsigned char *)&uiRegistarationCallIdRandom,sizeof(uiRegistarationCallIdRandom));
    
-   md5.update((unsigned char *)&p_cfg.user.un[0] , strlen(p_cfg.user.un));
+   md5.update((unsigned char *)&p_cfg.user.un[0] , (unsigned int)strlen(p_cfg.user.un));
    ////if user has changed password then call-id should be different 
    md5.update((unsigned char *)&pwd_res, 1);//must be 1 byte
-   md5.update((unsigned char *)&p_cfg.user.nr[0] , strlen(p_cfg.user.nr));
+   md5.update((unsigned char *)&p_cfg.user.nr[0] , (unsigned int)strlen(p_cfg.user.nr));
    if(!iIsReg){
       md5.update((unsigned char *)&iRandomCounter, 4);
       md5.update((unsigned char *)&extAddr.ip, 4);
@@ -309,7 +308,7 @@ CSesBase *CPhSesions::findSessionByZRTP(CTZRTP *z){
       CTMediaIDS *mids=spSes->pMediaIDS;
       if(!spSes->isMediaSession() || !mb || !mids)continue;
 //      if(z==mb->getZRTP() && z->pSes==spSes )return spSes;
-      if(z==mids->pzrtp && z->pSes==spSes )return spSes;
+      if(mids->ownZRTP(z) && z->pSes==spSes )return spSes;
       
    }
    return NULL;
@@ -327,7 +326,7 @@ CTZRTP *CPhSesions::findSessionZRTP(CSesBase *ses){
       mb=spSes->mBase;
       CTMediaIDS *mids=spSes->pMediaIDS;
       if(!spSes->isMediaSession() || !mb || !mids)break;
-      z=mids->pzrtp;
+      z=mids->getZRTP();
       if(z && z->pSes==spSes){
          return z;
       }
@@ -575,6 +574,12 @@ int CPhSesions::onSipMsgSes(CSesBase *spSes, SIP_MSG *sMsg)
       CTSesMediaBase *mb=spSes->mBase;
       if(sMsg->sipHdr.dstrStatusCode.uiVal!=481)
       {
+          //ignore all error codes after we have active the call(received or sent 200ok)
+         if(spSes->cs.iCallStat==CALL_STAT::EOk){
+             
+             return 0;
+         }
+          
          if(sMsg->sipHdr.dstrStatusCode.uiVal==400 && 
             //spSes->sSIPMsg.hldContact.x[0].sipUri.dstrSipAddr.uiLen==0 &&
             mb && 
@@ -657,12 +662,21 @@ int CPhSesions::onSipMsgSes(CSesBase *spSes, SIP_MSG *sMsg)
       {
 
          CMakeSip ms(sockSip, spSes);
-         ms.makeReq(sMsg->sipHdr.dstrStatusCode.uiVal==200 ? METHOD_BYE : METHOD_CANCEL,&p_cfg);
+         ms.makeReq(sMsg->sipHdr.dstrStatusCode.uiVal>=180 ? METHOD_BYE : METHOD_CANCEL,&p_cfg);
          ms.addContent();
          sendSip(sockSip,spSes);
       }
       return 0;
    }
+   
+   //we want to send BYE only for 200OK (SDP) (if the call is ending)
+    if(spSes->cs.iCallStat==CALL_STAT::EEnding && iMeth==METHOD_ACK && sMsg->hldVia.uiCount > 1){
+        CMakeSip ms(sockSip, spSes);
+        ms.makeReq(METHOD_BYE, &p_cfg);
+        ms.addContent();
+        sendSip(sockSip,spSes);
+        return 0;
+    }
    /*
     A UAS that receives an INVITE on a dialog while an INVITE it had sent
     on that dialog is in progress MUST return a 491 (Request Pending)
@@ -740,6 +754,13 @@ int CPhSesions::onSipMsgSes(CSesBase *spSes, SIP_MSG *sMsg)
    case METHOD_CANCEL:
       if(iIsReq)
       {
+          //we should not end the call after we have the active call(received or sent 200ok)
+          //and we have to wait for BYE
+          if(iMeth==METHOD_CANCEL && spSes->cs.iCallStat==CALL_STAT::EOk){
+              //should I send 200 ok?
+              //CMakeSip ms(sockSip,200,sMsg);
+              return 0;
+          }
 
          spSes->sSendTo.stopRetransmit();
          CMakeSip ms1(sockSip,200,sMsg, spSes);
@@ -749,11 +770,14 @@ int CPhSesions::onSipMsgSes(CSesBase *spSes, SIP_MSG *sMsg)
             ms.addContent();
             sendSip(sockSip,spSes);
             
-            if(sMsg->hdrReason.cause.uiVal==200 && sMsg->hdrReason.text.strVal && CMP(sMsg->hdrReason.proto, "SIP", 3)){
-
-               
-               spSes->iDontShowMissed = sizeof(CALL_COMPETED_ELSWHERE)-1 == sMsg->hdrReason.text.uiLen &&
-               t_isEqual_case(sMsg->hdrReason.text.strVal,CALL_COMPETED_ELSWHERE, sMsg->hdrReason.text.uiLen);
+            if(CMP(sMsg->hdrReason.proto, "SIP", 3)){
+               if(sMsg->hdrReason.cause.uiVal==603){
+                  spSes->iDeclinedElsewhere = 1;
+               }
+               else if(sMsg->hdrReason.cause.uiVal==200 && sMsg->hdrReason.text.strVal){
+                  spSes->iDontShowMissed = sizeof(CALL_COMPETED_ELSWHERE)-1 == sMsg->hdrReason.text.uiLen &&
+                  t_isEqual_case(sMsg->hdrReason.text.strVal,CALL_COMPETED_ELSWHERE, sMsg->hdrReason.text.uiLen);
+               }
             }
          }
 
@@ -1147,6 +1171,22 @@ int CPhSesions::sdpRec(SIP_MSG *sMsg,CSesBase *spSes)
    {
       int iPrevIsAudioOnly=spSes->mBase->getMediaType()==spSes->mBase->eAudio;
       //TODO parse SDP once, spSes->mBase->onSdp(sdp);
+      int isNewSDP = spSes->isNewSDP(sMsg->rawDataBuffer+sMsg->uiBytesParsed+1,(int) sMsg->dstrContLen.uiVal);
+      
+      if(isNewSDP && sMsg->sipHdr.uiMethodID && spSes->iSdesOnly){//reset SDES on reinivte
+         void setupMediaIDS( CTMediaIDS *p, void *pThis, int iCallId, CSessionsBase *sb, int iCaller, int iSdesOnly);
+         setupMediaIDS(spSes->pMediaIDS, spSes, spSes->ses_id(), this, 0, 1);
+        // spSes->setMBase(spSes->mBase);//we have to reset
+         CTSesMediaBase *pm=spSes->mBase;
+         CTSesMediaBase *nm = cPhoneCallback->tryGetMedia("audio");
+        // spSes->setMBase(NULL);
+         int a = pm->iIsActive;
+         spSes->setMBase(nm);
+         cPhoneCallback->mediaFinder->release(pm);
+         if(a)spSes->mBase->onStart();
+         
+      }
+      
       int not_ok=spSes->mBase->onSdp(sMsg->rawDataBuffer+sMsg->uiBytesParsed+1,(int) sMsg->dstrContLen.uiVal, iIsReq, 0);
 
       //TODO error codes
@@ -1241,7 +1281,7 @@ void CPhSesions::setStopReason(CSesBase *spSes, int code, int meth, const char *
          if(code == -1)d.strVal = (char *)"ERR: timeout";
          else if(code == -2)d.strVal = (char *)"ERR: slow network";
          else d.strVal=(char*)"ERR: unknow";
-         d.uiLen = strlen(d.strVal);
+         d.uiLen = (unsigned int)strlen(d.strVal);
       }
 
       CTAxoInterfaceBase::sharedInstance()->stateReport(spSes->sentSimpleMsgId64bit, code, (u_int8_t*)dstr->strVal, dstr->uiLen);
@@ -1297,7 +1337,7 @@ void CPhSesions::onKillSes(CSesBase *spSes, int iReason, SIP_MSG *sMsg ,int iMet
       }
       
       
-      int _TODO_SUCRIBE_PUBLISH_KILL_STATUS;
+//      int _TODO_SUCRIBE_PUBLISH_KILL_STATUS;
       if(spSes->cs.iSendS==METHOD_SUBSCRIBE)
       {
          CTEditBuf<150> buf;
@@ -1336,7 +1376,7 @@ void CPhSesions::onKillSes(CSesBase *spSes, int iReason, SIP_MSG *sMsg ,int iMet
                case -1://timeout
                   if(spSes->iRespReceived==0){
                      //TODO translate
-                     if(iMeth==METHOD_INVITE)
+                     if(0 && iMeth==METHOD_INVITE)//this was ok with tivi server
                         strReason.setText(strings.lRemoteOutOfReach);
                      else
                         strReason.setText("Please Check your Internet Connection");
@@ -1420,32 +1460,40 @@ void CPhSesions::onKillSes(CSesBase *spSes, int iReason, SIP_MSG *sMsg ,int iMet
             }
             if(iUpdate && strReason.getLen())
             {
-               
-               buf.addChar(' ');//color
-               if(pErrStr){
-                  buf.addText(*pErrStr);
-                  buf.addText(". ",2);
+               if(iMeth==METHOD_INVITE && sMsg->sipHdr.dstrStatusCode.uiVal>=400){
+                  buf.setText("");
+                  buf.addInt(sMsg->sipHdr.dstrStatusCode.uiVal);
+                  buf.addChar(' ');
+                  buf.addText(sMsg->sipHdr.dstrReasonPhrase.strVal,sMsg->sipHdr.dstrReasonPhrase.uiLen);
                }
+               else{
                
-              //-- buf.addText(strings.lReason);
-               if(iAddReasonPh)//if sip
-               {
+                  buf.addChar(' ');//color
+                  if(pErrStr){
+                     buf.addText(*pErrStr);
+                     buf.addText(". ",2);
+                  }
+                  
+                  //-- buf.addText(strings.lReason);
+                  if(iAddReasonPh)//if sip
+                  {
 #define T_U_N_O "user not online"
-                  int ofs = sMsg->sipHdr.dstrReasonPhrase.uiLen - (sizeof(T_U_N_O)-1);
-                  if(ofs>0 && strncmp(sMsg->sipHdr.dstrReasonPhrase.strVal+ofs, T_U_N_O,sizeof(T_U_N_O)-1 )==0){//Cannot connect. Not Found -user not online
-                     buf.setText(T_U_N_O);
+                     int ofs = sMsg->sipHdr.dstrReasonPhrase.uiLen - (sizeof(T_U_N_O)-1);
+                     if(ofs>0 && strncmp(sMsg->sipHdr.dstrReasonPhrase.strVal+ofs, T_U_N_O,sizeof(T_U_N_O)-1 )==0){//Cannot connect. Not Found -user not online
+                        buf.setText(T_U_N_O);
 #undef T_U_N_O
+                     }
+                     else{
+                        const char *ressiptr = tg_translate(sMsg->sipHdr.dstrReasonPhrase.strVal,sMsg->sipHdr.dstrReasonPhrase.uiLen);
+                        if(ressiptr!=sMsg->sipHdr.dstrReasonPhrase.strVal)
+                           buf.addText(ressiptr);
+                        else
+                           buf.addText(sMsg->sipHdr.dstrReasonPhrase.strVal,sMsg->sipHdr.dstrReasonPhrase.uiLen);
+                     }
                   }
-                  else{
-                     const char *ressiptr = tg_translate(sMsg->sipHdr.dstrReasonPhrase.strVal,sMsg->sipHdr.dstrReasonPhrase.uiLen);
-                     if(ressiptr!=sMsg->sipHdr.dstrReasonPhrase.strVal)
-                        buf.addText(ressiptr);
-                     else
-                        buf.addText(sMsg->sipHdr.dstrReasonPhrase.strVal,sMsg->sipHdr.dstrReasonPhrase.uiLen);
-                  }
+                  else
+                     buf.addText(strReason);
                }
-               else
-                  buf.addText(strReason);
             }
             
             int  tryTranslateMsg(CPhSesions *ph, SIP_MSG *sMsg,CTEditBase &b);
@@ -1473,7 +1521,9 @@ void CPhSesions::onKillSes(CSesBase *spSes, int iReason, SIP_MSG *sMsg ,int iMet
          
          if(spSes->isMediaSession()){
             log_call_marker(0, spSes->sSIPMsg.dstrCallID.strVal, spSes->sSIPMsg.dstrCallID.uiLen);
-            cPhoneCallback->onEndCall(*spSes, spSes->iDontShowMissed);
+            cPhoneCallback->onEndCall(*spSes,
+                                      spSes->iDontShowMissed ? "Call completed elsewhere":
+                                      (spSes->iDeclinedElsewhere ? "Call declined elsewhere" : NULL));
          }
          spSes->iOnEndCalled=1;
       }
@@ -1543,13 +1593,13 @@ static int updateSdpMediaAddress(CSesBase *spSes, ADDR &a, char *pStart, const c
    char *tmp;
    tmp=pP;
    while(isdigit(tmp[0]))tmp++;
-   int iOldPortL=tmp-pP;
+   int iOldPortL=(int)(tmp-pP);
    
 
    int iInc = (pl-iOldPortL);
    //fix port
    if(iInc){
-      int ofs = (pP - &spSes->sSendTo.data.rawData[0]);
+      int ofs = (int)(pP - &spSes->sSendTo.data.rawData[0]);
       memmove(pP+pl,pP+iOldPortL,spSes->sSendTo.data.offset-ofs);
    }
    strncpy(pP, bufP, pl);//overwrite port
@@ -1569,12 +1619,12 @@ static int updateSdpMediaAddress(CSesBase *spSes, ADDR &a, char *pStart, const c
       int szL=createTIceCandidates(&a,&a, bufIce, sizeof(bufIce),  "relay");
       
       char *pEnd = strstr(pIce+10,"\r\n")+2;
-      int iIceLen = pEnd - pIce;
+      int iIceLen = (int)(pEnd - pIce);
       
       iInc = (szL-iIceLen);
       
       if(iInc){
-         int ofs = (pEnd - &spSes->sSendTo.data.rawData[0]);
+         int ofs = (int)(pEnd - &spSes->sSendTo.data.rawData[0]);
          memmove(pIce+szL, pIce+iIceLen, spSes->sSendTo.data.offset-ofs);
       }
       memcpy(pIce,bufIce,szL);
@@ -1594,17 +1644,17 @@ static char * updateSdpMediaIP(CSesBase *spSes, ADDR &a){
    pIP+=sizeof("\r\nc=IN IP4 ")-1;
    
    char bufIP[64];
-   a.toStr(&bufIP[0],0);int ipl = strlen(bufIP);
+   a.toStr(&bufIP[0],0);int ipl = (int)strlen(bufIP);
    
    char *tmp;
    
    tmp=pIP;
    while(isdigit(tmp[0]) || tmp[0]=='.')tmp++; //calc ip len
-   int iOldIpLen = tmp - pIP;
+   int iOldIpLen = (int)(tmp - pIP);
    
    //fix ip
    if(iOldIpLen!=ipl){
-      int ofs = (pIP - &spSes->sSendTo.data.rawData[0]);
+      int ofs = (int)(pIP - &spSes->sSendTo.data.rawData[0]);
       memmove(pIP+ipl,pIP+iOldIpLen,spSes->sSendTo.data.offset-ofs);
    }
    
@@ -1690,7 +1740,7 @@ static void updateTmrState(CSesBase *spSes, CTMRTunnel *t, const char *media){
    unsigned int ssrc_peer = 0;
    
    if(r>0){ // if(r<=0) FS is not sending SSRC in SDP
-      ssrc_peer = strtoul(buf,NULL,0);
+      ssrc_peer = (unsigned int)strtoul(buf,NULL,0);
    }
    
    t->tmr_info.setPeerSDP(peer_sdp_addr, ssrc_peer);

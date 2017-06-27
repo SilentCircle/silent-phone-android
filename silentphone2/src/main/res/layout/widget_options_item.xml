@@ -1,9 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/options_item_container"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:paddingTop="@dimen/space_normal"
+    android:paddingBottom="@dimen/space_normal"
     android:background="@drawable/bg_widget_options_item"
+    android:addStatesFromChildren="true"
     android:clickable="true">
 
     <LinearLayout
@@ -12,16 +16,14 @@
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
         android:orientation="horizontal"
-        android:duplicateParentState="true"
-        android:clickable="false">
+        >
 
         <ImageView
             android:id="@+id/widget_optitem_image"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:src="@drawable/ic_location"
-            android:duplicateParentState="true"
-            android:clickable="false"/>
+            />
 
         <TextView
             android:id="@+id/widget_optitem_text"
@@ -30,20 +32,19 @@
             android:layout_weight="1"
             android:gravity="center_vertical"
             android:maxLines="1"
-            android:duplicateParentState="true"
-            android:clickable="false"
             tools:text="Location sharing"
             android:textSize="@dimen/text_xlarge"
-            android:textColor="@color/chat_options_text_color"/>
+            android:textColor="@color/chat_options_text_color"
+            />
 
         <android.support.v7.widget.AppCompatCheckBox
             android:id="@+id/widget_optitem_checkbox"
             android:theme="@style/Widget.Silent.DrawerCheckBox"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:duplicateParentState="true"
+            android:text=""
             android:clickable="false"
-            android:text="" />
+            />
 
     </LinearLayout>
 
@@ -55,6 +56,6 @@
         tools:text="Enable location sharing"
         android:textSize="@dimen/text_normal"
         android:textColor="@color/chat_options_text_color"
-        android:clickable="false"/>
+        />
 
 </RelativeLayout>

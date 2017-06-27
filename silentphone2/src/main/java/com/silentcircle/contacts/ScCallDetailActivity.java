@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2013-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -64,7 +64,7 @@ import android.telephony.TelephonyManager;
 import android.text.BidiFormatter;
 import android.text.TextDirectionHeuristics;
 import android.text.TextUtils;
-import android.util.Log;
+import com.silentcircle.logs.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -438,7 +438,7 @@ public class ScCallDetailActivity extends AppCompatActivity /*implements Proximi
             public void onPostExecute(PhoneCallDetails[] details) {
                 Context context = ScCallDetailActivity.this;
 
-                if (details == null) {
+                if (details == null || details.length == 0) {
                     // Somewhere went wrong: we're going to bail out and show error to users.
                     Toast.makeText(context, R.string.toast_call_detail_error,
                             Toast.LENGTH_SHORT).show();

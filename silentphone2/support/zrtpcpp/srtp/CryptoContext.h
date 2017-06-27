@@ -44,9 +44,8 @@ const int SrtpEncryptionTWOF8 = 4;
 #include <stdint.h>
 #ifdef ZRTP_OPENSSL
 #include <openssl/hmac.h>
-#else
-#include <crypto/hmac.h>
 #endif
+#include <crypto/hmac.h>
 #include <cryptcommon/macSkein.h>
 
 class SrtpSymCrypto;

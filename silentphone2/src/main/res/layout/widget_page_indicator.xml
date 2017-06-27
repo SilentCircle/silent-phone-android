@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.silentcircle.common.widget.PageIndicator
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_error_light"
+    android:filterTouchesWhenObscured="false"
+    android:gravity="center" />

@@ -30,7 +30,7 @@ import android.support.v4.view.MotionEventCompat;
 import android.support.v4.view.ViewCompat;
 import android.support.v4.view.accessibility.AccessibilityNodeInfoCompat;
 import android.util.AttributeSet;
-import android.util.Log;
+import com.silentcircle.logs.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;

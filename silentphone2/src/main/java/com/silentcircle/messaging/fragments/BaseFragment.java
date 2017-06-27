@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2016-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -28,13 +28,21 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package com.silentcircle.messaging.fragments;
 
 import android.annotation.TargetApi;
-import android.app.Fragment;
+import android.app.Activity;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.IntentFilter;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.view.View;
 import android.view.ViewGroup;
 
-public class BaseFragment extends Fragment {
+import com.silentcircle.logs.Log;
+import com.silentcircle.messaging.listener.MessagingBroadcastManager;
+import com.silentcircle.messaging.listener.MessagingBroadcastReceiver;
+
+public abstract class BaseFragment extends UserInfoListenerFragment {
 
     private static final String WRAPPER_CLASS = "android.support.v4.app.NoSaveStateFrameLayout";
 
@@ -72,8 +80,36 @@ public class BaseFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setRetainInstance(true);
     }
 
+    protected void registerMessagingReceiver(@NonNull Context context, MessagingBroadcastReceiver receiver,
+            IntentFilter filter, int priority) {
+        filter.setPriority(priority);
+        MessagingBroadcastManager.getInstance(context).registerReceiver(receiver, filter);
+    }
+
+    protected void unregisterMessagingReceiver(MessagingBroadcastReceiver receiver) {
+        try {
+            Activity activity = getActivity();
+            if (receiver != null && activity != null) {
+                MessagingBroadcastManager.getInstance(activity).unregisterReceiver(receiver);
+            }
+        } catch (Exception e) {
+            Log.e("BaseFragment", "Failed to unregister view update broadcast receiver.");
+            e.printStackTrace();
+        }
+    }
+
+    protected void unregisterReceiver(BroadcastReceiver receiver) {
+        try {
+            Activity activity = getActivity();
+            if (receiver != null && activity != null) {
+                activity.unregisterReceiver(receiver);
+            }
+        } catch (Exception e) {
+            Log.e("BaseFragment", "Failed to unregister view update broadcast receiver.");
+            e.printStackTrace();
+        }
+    }
 }
 

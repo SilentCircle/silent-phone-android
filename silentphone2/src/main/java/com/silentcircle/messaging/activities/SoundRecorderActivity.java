@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2016-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -33,7 +33,6 @@ import android.media.MediaPlayer;
 import android.media.MediaRecorder;
 import android.net.Uri;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
@@ -43,6 +42,8 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.silentcircle.logs.Log;
+import com.silentcircle.messaging.util.MessagingPreferences;
 import com.silentcircle.silentphone2.R;
 import com.silentcircle.silentphone2.services.TiviPhoneService;
 
@@ -107,6 +108,12 @@ public class SoundRecorderActivity extends Activity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        int theme = MessagingPreferences.getInstance(this).getMessageTheme();
+        int selectedTheme = (theme == MessagingPreferences.INDEX_THEME_DARK
+                ? R.style.SoundRecorderDialogBlack
+                : R.style.SoundRecorderDialogLight);
+        setTheme(selectedTheme);
+
         super.onCreate(savedInstanceState);
 
         if (TiviPhoneService.calls.getCallCount() > 0) {

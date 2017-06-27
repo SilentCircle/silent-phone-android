@@ -1,7 +1,7 @@
 /*
 Created by Janis Narbuts
 Copyright (C) 2004-2012, Tivi LTD, www.tiviphone.com. All rights reserved.
-Copyright (C) 2012-2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2012-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,7 +27,6 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-
 #ifndef _C_TIVI_SOCK
 #define _C_TIVI_SOCK
 
@@ -687,6 +686,7 @@ class CTSockCB{
 
 class CTSock: public CTSockBase{
    int iErrCnt;
+   int iIsV6;
    
    int iRecreateIfNeededNow;//helps to remove a false-positive when checking a network
    
@@ -702,7 +702,7 @@ class CTSock: public CTSockBase{
       if(!sa.sin_port)return 0;
 
       //printf("[rtp-send=%d %d]",iLen,address->ip);
-      int r=sendto(sock,"12345",5,0,(struct sockaddr *)&sa,  sizeof(sa));
+      int r=(int)sendto(sock,"12345",5,0,(struct sockaddr *)&sa,  sizeof(sa));
       
       return r;
    }
@@ -710,6 +710,7 @@ class CTSock: public CTSockBase{
 public:
    CTSock(CTSockCB &):CTSockBase()
    {
+      iIsV6=0;
       sock=0;
       iIsBinded=0;
       iNeedClose=0;
@@ -722,12 +723,11 @@ public:
    {
       closeSocket();
    }
-private:
    static char *removePort(char *dst, int iSizeOfDest, const char *pin, int iLen=0){
       
       iSizeOfDest--;
       
-      if(iLen==0)iLen=strlen(pin);
+      if(iLen==0)iLen=(int)strlen(pin);
       if(iLen+1>=iSizeOfDest)return NULL;
       
       strncpy(dst,pin,iLen);
@@ -808,9 +808,12 @@ public:
 #endif
       return ip;
    }
-   int createSock(ADDR *addrToBind,BOOL toAny)
+   int createSock(ADDR *addrToBind,BOOL toAny, int v6 = -1)
    {
-      if(createSock())
+      if(v6 != -1){
+         iIsV6 = v6;
+      }
+      if(createSock(iIsV6))
          return Bind(addrToBind,toAny);
       return -1;
    }
@@ -828,13 +831,14 @@ public:
    {
       createSock(&addr,1);
    }
-   SOCKET createSock()
+   SOCKET createSock(int v6 = -1)
    {
-   //   iIsClosed=0;
+   //   iIsClosed=0;;
+      if(v6 != -1)iIsV6 = v6;
       if(sock)closeSocket();
       iIsBinded=0;
       iNeedClose=0;
-      sock=socket(AF_INET,SOCK_DGRAM,0);
+      sock=socket(iIsV6 ? AF_INET6 :AF_INET, SOCK_DGRAM,0);
       // SO_NOSIGPIPE vajag arii udp priesh ios
 #ifdef __APPLE__
       int set=1;setsockopt(sock, SOL_SOCKET, SO_NOSIGPIPE, (void *)&set, sizeof(int));
@@ -842,6 +846,7 @@ public:
       iErrCnt=0;
       return sock;
    }
+   
 
 
    int closeSocket()
@@ -873,16 +878,71 @@ public:
    inline int sendTo(const char *buf, int iLen, ADDR *address)
    {
       if(iSuspended || !sock || iNeedClose){Sleep(20);return 0;}
-      struct sockaddr_in sa;
-      memset(&sa,0,sizeof(sa));
-      sa.sin_addr.s_addr=address->ip;
-      if(!sa.sin_addr.s_addr)sa.sin_addr.s_addr=0x0100007f;
-      sa.sin_port=(unsigned short)address->getPortNF();
-      sa.sin_family = AF_INET;
-      if(!sa.sin_port)return 0;
+      
+      struct sockaddr_in sa4;
+      
+      struct sockaddr *sa =(struct sockaddr *)&sa4;
+      int sizeof_sa = sizeof(sa4);
+      
+      if(iIsV6){
+         //AI_NUMERICHOST
+         sa = (struct sockaddr *)address->getV6Sock(&sizeof_sa);
+         if(sizeof_sa < 1 || address->addr6didChange()){
+            
+            struct addrinfo hints,  *res0;
+            int error;
+            //must be AF_INET if
+            memset(&hints, 0, sizeof(hints));
+            hints.ai_family = PF_INET6;
+            hints.ai_socktype = SOCK_DGRAM;
+            hints.ai_flags = AI_DEFAULT;// AI_NUMERICHOST;
+            char ba[64],port[16];
+            
+            address->toStr(ba,0);
+            address->toStrPort(port);
+            
+            //warning!!! this can take time
+            //do nat64,dns64 //ipv4->ipv6mapping
+            error = getaddrinfo(ba, port, &hints, &res0);//TODO cache results
+            
+            if(!res0)return 0;
+            
+            struct sockaddr_in6 *sa6 =  (struct sockaddr_in6 *)res0->ai_addr;
+            
+            address->setIPv6(&sa6->sin6_addr.s6_addr[0]);
+            address->setIpv6sockAddr(res0->ai_addr, res0->ai_addrlen, address->getPortNF());
+            
+            sa = (struct sockaddr *)address->getV6Sock(&sizeof_sa);
+            
+            printf("getaddrinfo %s\n",ba);
+
+            freeaddrinfo(res0);
+            if(iSuspended || !sock || iNeedClose){if(!iNeedClose)Sleep(20);return 0;}
+         }
+         struct sockaddr_in6 *sa6 = (struct sockaddr_in6 *)sa;
+         sa6->sin6_port = address->getPortNF();//should i do it here?
+#if 0
+         char szIPv6[64];
+         inet_ntop(AF_INET6, &sa6->sin6_addr, szIPv6, INET6_ADDRSTRLEN);
+         printf("send %s %d\n",szIPv6,iLen);
+#endif
+         
+      }else{
+         memset(&sa4,0,sizeof(sockaddr_in));
+         sa4.sin_addr.s_addr=address->ip;
+         if(!sa4.sin_addr.s_addr)sa4.sin_addr.s_addr=0x0100007f;
+         sa4.sin_port=(unsigned short)address->getPortNF();
+         sa4.sin_family = AF_INET;
+         
+         if(!sa4.sin_port)return 0;
+      }
+
       iBytesSent+=iLen;
 
-      int r = sendto(sock,buf,iLen,0,(struct sockaddr *)&sa,  sizeof(sa));
+      int r = (int)sendto(sock,buf,iLen,0, sa, sizeof_sa);
+      
+    //  char _b[64];address->toStr(_b,1);printf("[sendto %s]\n",_b);
+     // printf("[send rtp %d]",r);
       if(r>0){
          iRecreateIfNeededNow=0;
       }
@@ -892,7 +952,7 @@ public:
 #ifndef _WIN32         
          if((iRecreateIfNeededNow || errno==EPIPE) && !iSuspended){
             reStartSock();
-            r = sendto(sock,buf,iLen,0,(struct sockaddr *)&sa,  sizeof(sa));
+            r = (int)sendto(sock,buf,iLen,0, sa,  sizeof_sa);
             if(r<0){printf("[resend failed]");}
          }
 #endif
@@ -907,9 +967,10 @@ public:
    }
    inline int recvFrom(char *buf, int iLen, ADDR *address)
    {
-      struct sockaddr_in sa;
-      sa.sin_port=0;
-      int recSize = sizeof(sa);
+      //struct sockaddr_in sa;
+      unsigned char buf_sockaddr_in[64];
+      memset(buf_sockaddr_in,0,sizeof(buf_sockaddr_in));
+      int recSize = sizeof(buf_sockaddr_in);
       if(iNeedClose)
       {
          Sleep(1);
@@ -919,7 +980,7 @@ public:
       do{
          int iIsBack=0;
 #ifdef __APPLE__
-         int isInBackGround();
+         int isInBackGround(void);
          iIsBack = isInBackGround();
 #endif
          if(iErrCnt>100 && iIsBack && 1 && !iRecreateIfNeededNow){//ios kills app if it read_broken_socket in background
@@ -928,27 +989,40 @@ public:
          }
          else{
             
-            ret=recvfrom(sock,buf,iLen,0,(struct sockaddr *)&sa, (socklen_t*)&recSize);
+            ret=(int)recvfrom(sock,buf,iLen,0,(struct sockaddr *)&buf_sockaddr_in[0], (socklen_t*)&recSize);
             if(ret>0){
                iRecreateIfNeededNow = 0;
             }
             if(iNeedClose)return -1;
          }
          
-     //    printf("[rtp=%d]",ret);   
+         //printf("[rtp=%d]",ret);
 
          if(ret>=0)
          {
             
             iErrCnt=0;
-            address->ip=sa.sin_addr.s_addr;
-            address->setPortNF(sa.sin_port);
-          //--  char b[64];  printf("[rec udp   a=%s  l=%d]\n", address->toStr(b,1),ret);
+            if(iIsV6){
+               struct sockaddr_in6 *sa6 =  (struct sockaddr_in6 *)&buf_sockaddr_in[0];
+#if 0
+               char szIPv6[64];
+               inet_ntop(AF_INET6, &sa6->sin6_addr, szIPv6, INET6_ADDRSTRLEN);
+               printf("rec6 %s %d\n",szIPv6,ret);
+#endif
+              
+               address->setIpv6sockAddr(sa6, recSize, sa6->sin6_port);
+               address->setIPv6(&sa6->sin6_addr.s6_addr[0]);
+            }
+            else{
+               struct sockaddr_in *sa = (struct sockaddr_in *)&buf_sockaddr_in[0];
+               address->ip=sa->sin_addr.s_addr;
+               address->setPortNF(sa->sin_port);
+            }
+          //  char b[64];  printf("[rec udp   a=%s  l=%d]\n", address->toStr(b,1),ret);
             //TODO listener list
             if(onRecv(buf, ret,address)!=-1)
             {
                if(iNeedClose)return -1;
-               recSize = sizeof(sa);
                return 0;
             }
          }
@@ -960,10 +1034,9 @@ public:
             iErrCnt++;
             address->clear();
             if((iErrCnt&15)==15)
-               printf("[--port=%d lport=%d ip=%x iErrCnt=%d ret=%d iIsBack=%d errno=%d--]",
-                      htons(sa.sin_port),addr.getPort(),sa.sin_addr.s_addr,iErrCnt,ret,iIsBack,errno);
+               printf("[iErrCnt=%d ret=%d iIsBack=%d errno=%d--]",iErrCnt,ret,iIsBack,errno);
 #ifdef __APPLE__
-            int isTmpWorkingInBackGround();
+            extern int isTmpWorkingInBackGround();
 
             int iBi=iIsBinded; //ETIMEDOUT
             if(iRecreateIfNeededNow || (iBi && !iSuspended && iErrCnt>10 && (!isInBackGround()||(iErrCnt>35 && isTmpWorkingInBackGround())))){
@@ -1011,7 +1084,7 @@ public:
          if(bind(sock, (struct sockaddr *) &sa, sizeof(sa)) >= 0)
          {
 //            DEBUG_T(0,"bind ok");
-            printf("[bind-ok %d tr=%d]",addrToBind->getPort(),iMaxTrys);
+            printf("(CTiViSock)[bind-ok %d tr=%d]\n",addrToBind->getPort(),iMaxTrys);
             iIsBinded=1;
             addr=*addrToBind;
             iNeedClose=0;

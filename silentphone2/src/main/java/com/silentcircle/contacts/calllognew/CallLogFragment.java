@@ -156,9 +156,27 @@ public class CallLogFragment extends ListFragment
 
     public CallLogFragment() {}
 
+    @TargetApi(Build.VERSION_CODES.M)
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        commonOnAttach(getActivity());
+    }
+
+    /*
+     * Deprecated on API 23
+     * Use onAttachToContext instead
+     */
+    @SuppressWarnings("deprecation")
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+            commonOnAttach(activity);
+        }
+    }
+
+    private void commonOnAttach(Activity activity) {
         if (activity instanceof OnPhoneNumberPickerActionListener)
             mPhoneNumberPickerActionListener = (OnPhoneNumberPickerActionListener) activity;
     }

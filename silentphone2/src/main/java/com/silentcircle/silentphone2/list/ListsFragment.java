@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2016-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -38,15 +38,15 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.database.Cursor;
-import android.media.MediaPlayer;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.annotation.Nullable;
 import android.support.v13.app.FragmentPagerAdapter;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewPager;
-import android.util.Log;
-import android.util.TypedValue;
+import com.silentcircle.logs.Log;
+
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -55,7 +55,6 @@ import android.widget.ListView;
 
 import com.silentcircle.common.list.OnPhoneNumberPickerActionListener;
 import com.silentcircle.common.util.ObjectFactory;
-import com.silentcircle.common.util.ViewUtil;
 import com.silentcircle.contacts.ContactsUtils;
 import com.silentcircle.contacts.calllognew.CallLogAdapter;
 import com.silentcircle.contacts.calllognew.CallLogFragment;
@@ -64,15 +63,16 @@ import com.silentcircle.contacts.calllognew.CallLogQueryHandler;
 import com.silentcircle.contacts.calllognew.ContactInfoHelper;
 import com.silentcircle.contacts.widget.SlidingTabLayout;
 import com.silentcircle.messaging.fragments.ConversationsFragment;
-import com.silentcircle.messaging.services.AxoMessaging;
+import com.silentcircle.messaging.services.ZinaMessaging;
 import com.silentcircle.messaging.util.Action;
 import com.silentcircle.messaging.util.AsyncUtils;
 import com.silentcircle.messaging.util.ConversationUtils;
-import com.silentcircle.messaging.util.MessagingPreferences;
 import com.silentcircle.messaging.util.SoundNotifications;
 import com.silentcircle.silentphone2.R;
 import com.silentcircle.silentphone2.activities.DialerActivity;
 import com.silentcircle.silentphone2.list.ShortcutCardsAdapter.SwipeableShortcutCard;
+import com.silentcircle.silentphone2.services.TiviPhoneService;
+import com.silentcircle.silentphone2.util.CallState;
 import com.silentcircle.silentphone2.util.Utilities;
 import com.silentcircle.silentphone2.views.OverlappingPaneLayout;
 
@@ -89,7 +89,7 @@ import java.util.concurrent.TimeUnit;
  * create an instance of this fragment.
  */
 public class ListsFragment extends Fragment implements CallLogQueryHandler.Listener,
-        CallLogAdapter.CallFetcher, ViewPager.OnPageChangeListener, AxoMessaging.AxoMessagingStateCallback {
+        CallLogAdapter.CallFetcher, ViewPager.OnPageChangeListener, ZinaMessaging.AxoMessagingStateCallback {
 
     private static final boolean DEBUG = false; // ConfigurationUtilities.mTrace;
     private static final String TAG = "ListsFragment";
@@ -231,7 +231,7 @@ public class ListsFragment extends Fragment implements CallLogQueryHandler.Liste
                 (OnPhoneNumberPickerActionListener)getActivity(), false);
 
         mMergedAdapter = new ShortcutCardsAdapter(getActivity(), this, mCallLogAdapter);
-        AxoMessaging axoMessaging = AxoMessaging.getInstance(getActivity().getApplicationContext());
+        ZinaMessaging axoMessaging = ZinaMessaging.getInstance();
         mAxoRegistered = axoMessaging.isRegistered();
         axoMessaging.addStateChangeListener(this);
         mTabIndex = mAxoRegistered ? mTabIndexAxo : mTabIndexNoAxo;
@@ -375,7 +375,7 @@ public class ListsFragment extends Fragment implements CallLogQueryHandler.Liste
     private void refreshTabView() {
         if (mAxoRegistered) {
             int conversationsWithUnreadMessages =
-                    ConversationUtils.getConversationsWithUnreadMessages(getActivity().getApplicationContext());
+                    ConversationUtils.getConversationsWithUnreadMessages();
             setTabViewNotificationVisibility(mTabIndexMap[TAB_INDEX_CHAT],
                     conversationsWithUnreadMessages > 0);
         }
@@ -387,7 +387,7 @@ public class ListsFragment extends Fragment implements CallLogQueryHandler.Liste
         if (mMergedAdapter != null) {
             mMergedAdapter.unregisterContentObserver();
         }
-        AxoMessaging axoMessaging = AxoMessaging.getInstance(getActivity().getApplicationContext());
+        ZinaMessaging axoMessaging = ZinaMessaging.getInstance();
         axoMessaging.removeStateChangeListener(this);
         mCallLogAdapter.stopRequestProcessing();
     }
@@ -398,7 +398,7 @@ public class ListsFragment extends Fragment implements CallLogQueryHandler.Liste
 //            case TAB_INDEX_RECENTS:
 //                return mRecentsFragment == null ? null : mRecentsFragment.getListView();
             case TAB_INDEX_CHAT:
-                return mConversationsFragment == null? null : mConversationsFragment.getListView();
+                return null;
 //            case TAB_INDEX_ALL_CONTACTS:
 //                return mAllContactsFragment == null ? null : mAllContactsFragment.getListView();
         }
@@ -443,7 +443,9 @@ public class ListsFragment extends Fragment implements CallLogQueryHandler.Liste
             // Copy the fragments that the FragmentManager finds so that we can store them in
             // instance variables for later.
             final Fragment fragment = (Fragment) super.instantiateItem(container, position);
-            if (fragment instanceof CallLogFragment) {
+            if (fragment instanceof ConversationsFragment) {
+                mConversationsFragment = (ConversationsFragment) fragment;
+            } else if (fragment instanceof CallLogFragment) {
                 mRecentsFragment = (CallLogFragment) fragment;
             } else if (fragment instanceof AllContactsFragment) {
                 mAllContactsFragment = (AllContactsFragment) fragment;
@@ -594,4 +596,9 @@ public class ListsFragment extends Fragment implements CallLogQueryHandler.Liste
         fetchCalls();
     }
 
+    public void onCallStateChanged(@Nullable CallState call, TiviPhoneService.CT_cb_msg msg) {
+        if (mConversationsFragment != null) {
+            mConversationsFragment.onCallStateChanged(call, msg);
+        }
+    }
 }

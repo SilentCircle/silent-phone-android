@@ -1,7 +1,7 @@
 /*
 Created by Janis Narbuts
 Copyright (C) 2004-2012, Tivi LTD, www.tiviphone.com. All rights reserved.
-Copyright (C) 2012-2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2012-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,7 +27,6 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-
 // tiviCons.cpp : Defines the entry point for the console application.
 //
 #ifndef UNICODE
@@ -56,6 +55,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../tiviengine/CTPhMedia.h"
 #include "../utils/utils_audio.h"
 #include "../utils/utils_make_dtmf.h"
+
+#if defined(__APPLE__)
+#include "ZinaLogging.h"
+#endif
 
 
 #if defined(ANDROID_NDK) || defined(__APPLE__) || defined(__linux__)
@@ -212,7 +215,10 @@ CTMutex mutexResp;
  
  */
 //TODO move to sock
+static int bIpv6=0;
+static char szIPv6[INET6_ADDRSTRLEN+4]="";
 class CTGetIP{
+  
 public:
    /*
     
@@ -227,6 +233,7 @@ public:
     }
     
     */
+
    
    static int getIPLoc(int iNow, int *piIs3G)
    {
@@ -262,43 +269,93 @@ public:
       if (success == 0)
       {
          // Loop through linked list of interfaces
-         temp_addr = interfaces;
-         while(temp_addr != NULL)
-         {
-            if(temp_addr->ifa_addr->sa_family == AF_INET)// &&  (temp_addr->ifa_flags & IFF_LOOPBACK) == 0)
+         for(int i=0;i<2 && iNewIp==0;i++){
+            temp_addr = interfaces;
+            while(temp_addr != NULL)
             {
-               // Check if interface is en0 which is the wifi connection on the iPhone
-               
-               if(strcmp(temp_addr->ifa_name,"en0")==0 //wifi
-                  || strcmp(temp_addr->ifa_name,"en1")==0)
+             //  printf("F %d, temp_addr->ifa_name %s\n",temp_addr->ifa_addr->sa_family, temp_addr->ifa_name);
+               if(temp_addr->ifa_addr->sa_family == (i==0? AF_INET:AF_INET6))// &&  (temp_addr->ifa_flags & IFF_LOOPBACK) == 0)
                {
+                  // Check if interface is en0 which is the wifi connection on the iPhone
+                  printf("temp_addr->ifa_name %s\n",temp_addr->ifa_name);
+                  
+                  if(strcmp(temp_addr->ifa_name,"en0")==0 //wifi
+                     || strcmp(temp_addr->ifa_name,"en1")==0)
+                  {
+                     tivi_log1(temp_addr->ifa_name,0);
+                     memcpy(&iNewIp,&((struct sockaddr_in *)temp_addr->ifa_addr)->sin_addr,sizeof(iNewIp));
+                     i3g=0;
+                     ADDR a;
+                     a.ip = iNewIp;
+                     char _b[64];
+                     a.toStr(_b);
+                    // printf("addr ip %s\n",a.toStr(_b));
+                     if(strncmp(_b, "169.254",7 )==0){//ignore this one
+                        iNewIp=0;
+                        temp_addr = temp_addr->ifa_next;
+                        continue;
+                     }
+                     if(temp_addr->ifa_addr->sa_family==AF_INET6){
+                        const struct sockaddr_in6 *addr6 = (const struct sockaddr_in6*)temp_addr->ifa_addr;
+                        
+
+                        if(inet_ntop(AF_INET6, &addr6->sin6_addr, szIPv6, INET6_ADDRSTRLEN)) {
+                           puts(szIPv6);
+                           iNewIp = addr6->sin6_addr.__u6_addr.__u6_addr32[0]^addr6->sin6_addr.__u6_addr.__u6_addr32[3];
+                           
+                           bIpv6 = 1;
+                           break;
+                        }
+                     }
+                     bIpv6 = 0;
+                     szIPv6[0]=0;
+                     
+                     break;
+                  }
+               }
+               temp_addr = temp_addr->ifa_next;
+            }
+            temp_addr = interfaces;
+            while(temp_addr != NULL && !iNewIp)
+            {
+               if(temp_addr->ifa_addr->sa_family == (i==0? AF_INET:AF_INET6))// &&  (temp_addr->ifa_flags & IFF_LOOPBACK) == 0)
+               {
+                  
+                  if(strcmp(temp_addr->ifa_name,"pdp_ip0")==0 && temp_addr->ifa_addr->sa_family==AF_INET6){
+                     const struct sockaddr_in6 *addr6 = (const struct sockaddr_in6*)temp_addr->ifa_addr;
+                     
+
+                     if(inet_ntop(AF_INET6, &addr6->sin6_addr, szIPv6, INET6_ADDRSTRLEN)) {
+                        puts(szIPv6);
+                        iNewIp = addr6->sin6_addr.__u6_addr.__u6_addr32[0]^addr6->sin6_addr.__u6_addr.__u6_addr32[3];
+                        //we have ipv6
+                        bIpv6 = 1;
+                        i3g=1;
+                        break;
+                     }
+                  }
+                  
                   tivi_log1(temp_addr->ifa_name,0);
-                  memcpy(&iNewIp,&((struct sockaddr_in *)temp_addr->ifa_addr)->sin_addr,sizeof(iNewIp));
-                  i3g=0;
-                  break;
+                  if(strcmp(temp_addr->ifa_name,"pdp_ip0")==0 && temp_addr->ifa_addr->sa_family==AF_INET)
+                  {
+                     bIpv6 = 0;
+                     szIPv6[0]=0;
+                     i3g=1;
+                     memcpy(&iNewIp,&((struct sockaddr_in *)temp_addr->ifa_addr)->sin_addr,sizeof(iNewIp));
+                     break;
+                  }
+
                }
+               temp_addr = temp_addr->ifa_next;
             }
-            temp_addr = temp_addr->ifa_next;
-         }
-         temp_addr = interfaces;
-         while(temp_addr != NULL && !iNewIp)
-         {
-            if(temp_addr->ifa_addr->sa_family == AF_INET)// &&  (temp_addr->ifa_flags & IFF_LOOPBACK) == 0)
-            {
-               
-               tivi_log1(temp_addr->ifa_name,0);
-               if(strcmp(temp_addr->ifa_name,"pdp_ip0")==0)
-               {
-                  i3g=1;
-                  memcpy(&iNewIp,&((struct sockaddr_in *)temp_addr->ifa_addr)->sin_addr,sizeof(iNewIp));
-                  break;
-               }
-            }
-            temp_addr = temp_addr->ifa_next;
          }
       }
-      ip=iNewIp;
       
+
+   
+   
+      ip=iNewIp;
+   
       // Free memory
       freeifaddrs(interfaces);
       
@@ -366,6 +423,9 @@ public:
 #endif
    }
 };
+
+int isIPv6(){return bIpv6;}
+const char *getIpV6(){int z; if(!bIpv6)CTGetIP::getIPLoc(1, &z); return szIPv6;}
 
 int hasIP(){
    int i3g=0,ip;
@@ -538,9 +598,13 @@ protected:
 //--------------<<<<<<<<<<<<<---------------------move to audio utils-------end
 
 
+static void signalFncOnPipe(int id){
+   tivi_log1(">>>>>>>>>signalFncOnPipe",id);
+}
+
 
 static void signalFncOnStop(int id){
-   tivi_log1("signalOnStop",id);
+   tivi_log1(">>>>>>>>>signalOnStop",id);
 }
 
 static int iVideoConfEnabled=0;
@@ -667,6 +731,8 @@ public:
             o=ao[i].voipAudioOut;
             ao[i].uiReleasedAT=0;
             ao[i].iInUse=1;
+            o->stopAfter(-1);
+            o->stop();//we need this because audio may stop before we clean up
             
             break;
          }
@@ -880,7 +946,8 @@ void initGlobals(){
    if(iInitOk){while(iInitOk==2)Sleep(20);return;}
    iInitOk=2;
 #ifndef _WIN32
-   signal(SIGPIPE, SIG_IGN);//when peer tcp closes,then SIGPIPE is rised,TODO check connections
+//   signal(SIGPIPE, SIG_IGN);//when peer tcp closes,then SIGPIPE is rised,TODO check connections
+   signal(SIGPIPE, signalFncOnPipe);//when peer tcp closes,then SIGPIPE is rised,TODO check connections
    signal(SIGSTOP, signalFncOnStop);//when peer tcp closes,then SIGPIPE is rised,TODO check connections
 #endif
    puts("InitGlobalAudio");
@@ -975,7 +1042,7 @@ public:
                a=sz+i+1;
                if(a.ip && a.ip==p_cfg.GW.ip){//if ip addr is servers replace to serv addr
                   strcpy(&sz[i+1],&p_cfg.str32GWaddr.strVal[0]);
-                  iLen=strlen(&sz[0]);
+                  iLen=(int)strlen(&sz[0]);
                }
                else{
                   
@@ -983,7 +1050,7 @@ public:
                      int iAtPos=i;
                      for(;i<iLen;i++){
                         if(sz[i]!='.')continue;
-                        int l=strlen(p_cfg.str32GWaddr.strVal);
+                        int l=(int)strlen(p_cfg.str32GWaddr.strVal);
                         int z=l-(iLen-i);
                         if(z>0){
                            //if pbx.example.com replace to sip.example.com where sip.example.com is  serv addr
@@ -991,7 +1058,7 @@ public:
                            puts(&p_cfg.str32GWaddr.strVal[z]);
                            if(strcmp(&sz[i],&p_cfg.str32GWaddr.strVal[z])==0){
                               strcpy(&sz[iAtPos+1],&p_cfg.str32GWaddr.strVal[0]);
-                              iLen=strlen(&sz[0]);
+                              iLen=(int)strlen(&sz[0]);
                            }
                         }
                         i=iLen;
@@ -1097,7 +1164,7 @@ public:
    
    void sendCB(int iMsgId, int cid=0, const char *szMsg=NULL, int iLen=0){
       if(fncCB){
-         if(!iLen && szMsg)iLen=strlen(szMsg);
+         if(!iLen && szMsg)iLen=(int)strlen(szMsg);
          fncCB(pCBRet, this, cid , iMsgId, szMsg, iLen);
       }
    }
@@ -1279,9 +1346,12 @@ public:
       getCfg(&p_cfg,1,iEngineIndex);
       
       //CTAxoInterfaceBase::sharedInstance(p_cfg.user.un);
-      void g_sendDataFuncAxo(uint8_t* names[], uint8_t* devIds[], uint8_t* envelopes[], size_t sizes[], uint64_t msgIds[]);
-      CTAxoInterfaceBase::setSendCallback(g_sendDataFuncAxo);
-      
+//      void g_sendDataFuncAxo(uint8_t* names[], uint8_t* devIds[], uint8_t* envelopes[], size_t sizes[], uint64_t msgIds[]);
+//      CTAxoInterfaceBase::setSendCallback(g_sendDataFuncAxo);
+
+      bool g_sendDataFuncAxoNew(uint8_t* names, uint8_t* devIds, uint8_t* envelopes, size_t sizes, uint64_t msgIds);
+      CTAxoInterfaceBase::setSendCallback(g_sendDataFuncAxoNew);
+
       p_cfg.iAutoRegister=1;
       
       int readSignedCfg(PHONE_CFG &cfg, CTLangStrings *strings);
@@ -1351,7 +1421,7 @@ public:
 #endif
       if(!p)return 0;
       
-      if(iLen<0)iLen=p?strlen(p):0;
+      if(iLen<0)iLen=p?(int)strlen(p):0;
       
       printf("[(1)msg %s l=%d]",p,iLen);
       
@@ -1382,7 +1452,7 @@ public:
 #ifdef __APPLE__
                  // Same code is executed when we receive a remote end call event
                  // (METHOD_BYE)
-                 // This code makes sure that the t_setActiveAS method will be called last
+                 // This code makes sure that the AudioManager_SetAudioSessionState method will be called last
                  // so that we won't have any issues with the enabled VoiceOver.
                  CTAudioOutVOIP *ao=(CTAudioOutVOIP*)ph->findSessionAO(ses);
                  
@@ -1395,11 +1465,20 @@ public:
                      ao->setIgnoreIncomingRtp(1);
                      ao->setPlayPos(0);
                      ao->update(buf,(int)uiBufSize,0,0);
-                     ao->stopAfter(1800);
+                     ao->stopAfter(0);
+                     
+                     delete[] buf;
                  }
 #endif
-                 
-                 ph->endCall(cid);
+                
+                 int findChar(const char *p, char c);
+                 int pos = findChar(p,';');
+
+                 if(pos>0){
+                     ph->endCall(cid,0,p+pos+1);
+                 }else{
+                     ph->endCall(cid);
+                 }
                  return 0;
              }
             case 'm':puts("TODO mute");return 0;
@@ -1615,6 +1694,16 @@ public:
                }
                return 0;
             }
+            else if(iLen==12 && strcmp(p+1,"delay_reg=1")==0){
+               if(p_cfg.iAccountIsDisabled)return T_TRY_OTHER_ENG;
+               p_cfg.iDelayRegister = 1;
+               return T_TRY_OTHER_ENG;
+            }
+            else if(iLen==12 && strcmp(p+1,"delay_reg=0")==0){
+               if(p_cfg.iAccountIsDisabled)return T_TRY_OTHER_ENG;
+               p_cfg.iDelayRegister = 0;
+               return T_TRY_OTHER_ENG;
+            }
             else if(iLen==6 && strcmp(p+1,"rereg")==0){
                //p_cfg.iIsInForeground=0;
                if(p_cfg.iAccountIsDisabled)return T_TRY_OTHER_ENG;
@@ -1801,7 +1890,10 @@ public:
    char prevTransport[16];
    
    void dbg(char *p, int iLen){
-      printf("[%.*s]",iLen,p);
+#ifdef  __APPLE__
+      void dbg_sip_ios(char *p, int iLen);
+      dbg_sip_ios(p, iLen);
+#endif
    }
    
    void checkCfgChanges(int iReg=1){
@@ -1848,7 +1940,7 @@ public:
             if(strcmp(p_cfg.tmpServ,p_cfg.str32GWaddr.strVal)!=0){
                
                strcpy(p_cfg.str32GWaddr.strVal,p_cfg.tmpServ);
-               p_cfg.str32GWaddr.uiLen=strlen(p_cfg.str32GWaddr.strVal);
+               p_cfg.str32GWaddr.uiLen=(unsigned int)strlen(p_cfg.str32GWaddr.strVal);
                
                
                ph->checkServDomainName(0,1);
@@ -1870,13 +1962,13 @@ public:
 #endif
       static int iCnt=0;
       iCnt++;
-      if((iCnt&31)==1|| (ph->iActiveCallCnt)){
+      if((iCnt&31)==1|| (ph->iSessionCallCnt)){
          
-         float cpu_usage();
+         extern float cpu_usage();
          float f=cpu_usage();
          if(f>.2){
             //g_iWarning_CPU_is_too_hot=(f>70);
-            int _TODO_if_cpu_is_hot_set_warningFlag;//skip video b frame decode,//skip b frame loopfilter
+//            int _TODO_if_cpu_is_hot_set_warningFlag;//skip video b frame decode,//skip b frame loopfilter
             printf("cpu=%f\n",f);
          }
          
@@ -1904,6 +1996,7 @@ public:
        */
       
    }
+
    
    ~CPhoneCons()
    {
@@ -1949,7 +2042,7 @@ public:
       return 0;
    }
    
-   int onEndCall(int SesId, int iDontShowMissed){
+   int onEndCall(int SesId, const char *reason){
 #ifndef T_ENABLE_MULTI_CALLS
       if(iCallId==SesId)
 #endif
@@ -1958,8 +2051,8 @@ public:
          iFlagResetEC=0;//if no calls left// are 0
          if(iCallId==SesId)iCallId=0;
          
-         if(iDontShowMissed){
-            sendCB(CT_cb_msg::eEndCall,SesId, "Call completed elsewhere");
+         if(reason){
+            sendCB(CT_cb_msg::eEndCall,SesId, reason);
          }
          else{
             sendCB(CT_cb_msg::eEndCall,SesId);
@@ -2057,7 +2150,7 @@ protected:
          }
       
 #ifndef _WIN32      
-#warning TODO notify gui about  missed call
+//#warning TODO notify gui about  missed call
 #endif
       info(&ph->strings.lMissCall,0,0);
       return 0;
@@ -2079,7 +2172,7 @@ protected:
    
 
    int onSdpMedia(int SesId, const char *media){
-      sendCB(CT_cb_msg::eNewMedia,SesId,media,strlen(media));
+      sendCB(CT_cb_msg::eNewMedia,SesId,media,(int)strlen(media));
       return 0;
    }
    
@@ -2157,7 +2250,7 @@ protected:
       ao->update(buf,(int)uiBufSize,0,0);
       ao->play();
       
-      delete buf;
+      delete[] buf;
       
       return 0;
       
@@ -2203,7 +2296,7 @@ protected:
                ao->stopAfter(1800);
             }
          }
-         delete buf;
+         delete[] buf;
          
       }
       
@@ -2428,7 +2521,7 @@ public:
   
       for(int i=0;i<eAccountCount;i++){
          if(account[i].iInUse==1 && account[i].ph && !account[i].ph->p_cfg.iAccountIsDisabled
-            && account[i].ph->ph && account[i].ph->ph->iActiveCallCnt){
+            && account[i].ph->ph && account[i].ph->ph->getCallCnt()){
             
             ph[iCnt]=account[i].ph;
             if(!iVad && (ph[iCnt]->p_cfg.useVAD() || ph[iCnt]->ph->vadMustBeOn()))iVad++;
@@ -2523,10 +2616,16 @@ public:
    }
    
    void start(){
-      if(iStarted ){for(int i=0;i<10 && iStarted==2;i++)Sleep(20);return;}
+      if (iStarted){
+          for (int i=0;i<10 && iStarted==2;i++)
+              Sleep(20);
+          return;
+      }
       iStarted=2;
       audioMngr.cAI.cb=this;
       audioMngr.cVI.cb=this;
+
+      tmp_log("start engine");
       
       CTEditBase b(1024);
       
@@ -2563,7 +2662,7 @@ public:
       return NULL;
    }
    void *findBestEng(const char *p, const char *name){
-      int iLen=p?strlen(p):0;
+      int iLen=p?(int)strlen(p):0;
       void *pRet=isThisEngine(getAccountByID(iCurrentDialOutIndex,1),p,iLen,name);
       if(pRet)return pRet;
       
@@ -2683,7 +2782,7 @@ public:
       
       //fake call id
       int cid=15+(pl->iTmpCallID&15);
-      pl->eng[0].eng->onCalling(&pl->eng[0].eng->p_cfg.GW, (char*)un, strlen(un), cid);
+      pl->eng[0].eng->onCalling(&pl->eng[0].eng->p_cfg.GW, (char*)un, (int)strlen(un), cid);
       pl->eng[0].eng->info(e,*(int *)"ERRO",cid);
       pl->eng[0].eng->onEndCall(cid,0);
    }
@@ -2957,11 +3056,39 @@ public:
       
       return 0;
    }
+   
    int hasActiveCalls(){
       int iCalls=0;
       int iSessions=0;
       getCallSessions(&iCalls,&iSessions);
       return iCalls;
+   }
+   
+   const char *onPushNotification(const char *msg){
+#if 0
+      if(!iExiting && getPhoneState()!=2 && !hasActiveCalls()){
+
+         void sleepForMs(int msec, int step, int *exiting);
+         sleepForMs(3000,100, &iExiting);
+         
+         if(!iExiting && getPhoneState()!=2 && !hasActiveCalls()){
+            sendCommandToAllEngines(":force.network_reset");
+         }
+         
+      }
+#else
+      if(iExiting)return "ok";
+      
+      checkIPNow();
+      
+      CPhoneCons *ret=getAccountByID(0,1);
+      if(!ret)return "fail no_account";
+      if(!ret->ph)Sleep(100);//should not happen
+      if(!ret->ph)return "fail !ret->ph";
+      return ret->ph->onPushNotification(msg);
+#endif
+      
+      return "ok";
    }
    
    void *findEngByServ(CTEditBase *b){
@@ -2983,7 +3110,7 @@ public:
       for(int i=0;i<eAccountCount;i++){
          CPhoneCons *ret=getAccountByID(i);
          if(ret == pEng){
-            if(!ret->ph){
+            if(!ret || !ret->ph){
                return 0;
             }
             return ret->ph->getInfo(key, p, iMax);
@@ -2996,7 +3123,7 @@ public:
       
       if(!iStarted || iExiting)return "";
       
-      int l=p?strlen(p):0;
+      int l=p?(int)strlen(p):0;
       
       if(CMP_SZ(p,"title")){
          if(!pEng)return "";
@@ -3014,6 +3141,13 @@ public:
       if(!pEng){
          if(!p)return "";
          
+#define STRN_STARTS_WITH(_str, _l, _val) (_l + 1>= sizeof(_val) && strncmp(_str, _val, sizeof(_val) - 1)==0)
+         
+         if(STRN_STARTS_WITH(p, l, ":onPushNotifcation")){
+            
+            return onPushNotification(p);
+         }
+         
          if(l>4 && strncmp(p,"cfg.",4)==0){
             static char buf[256];
             char *findByServKey(void *pEng, const char *key, char *buf, int iMax);
@@ -3026,7 +3160,7 @@ public:
                CPhoneCons *ret=getAccountByID(i,1);
                if(!ret)break;
                //TODO check is valid ip
-               if(!ret->ph || !ret->p_cfg.isOnline())return "false";
+               if(!ret->ph || !ret->p_cfg.isOnline() || !hasIP())return "false";
             }
             return "true";
          }
@@ -3237,7 +3371,7 @@ public:
                iRestart=1;
             }
             else if(!iEnable && iHave443){
-               int l = strlen(ret->p_cfg.bufpxifnat);
+               int l = (int)strlen(ret->p_cfg.bufpxifnat);
                if(l>5)ret->p_cfg.bufpxifnat[l-4]=0;//rem 443
                iRestart=1;
             }
@@ -3337,11 +3471,18 @@ public:
       }
 
       if(p && strncmp(p,"*##*",4)==0){
-         
+      //--
          if(strcmp(p+4,"3948*")==0){//exit
             exit(0);
             return 0;
          }
+#if defined(__APPLE__)
+         if(strcmp(p+4,"3742*")==0){
+            void setZinaLogLevel(int32_t level);
+            setZinaLogLevel(6);//EPIC
+            return 0;
+         }
+#endif
          /*
          if(strcmp(p+4,"3357768*")==0){//delprov
             int created_by_user[eAccountCount];
@@ -3774,6 +3915,48 @@ void g_sendDataFuncAxo(uint8_t* names[], uint8_t* devIds[], uint8_t* envelopes[]
    }
 }
 
+bool g_sendDataFuncAxoNew(uint8_t* name, uint8_t* devId, uint8_t* envelope, size_t size, uint64_t msgId){
+   void bin2Hex(unsigned char *Bin, char * Hex ,int iBinLen);
+
+   CTEditBuf<3*1024+128> b;//should be less then 4K - sizeof(SIP MESSAGE)
+
+   char bufMsgId[64];
+   char hex[32];
+   char bufDevIdAdd[64];
+
+   if(!name || !devId || !envelope || !size)
+      return false;
+
+   bin2Hex((unsigned char *)&msgId, hex, sizeof(msgId));
+
+   snprintf(bufMsgId, sizeof(bufMsgId), "X-SC-Message-Meta: id64=%s\r\n", hex);
+   snprintf(bufDevIdAdd, sizeof(bufDevIdAdd), "xscdevid=%s", devId);
+
+   //we have to send messages for one device via the same server, to avoid messages out of order
+   int iServerID = 0;// (devIds[i][4]>>2) & 1 ;//(msg_id>>10) & 1;
+   //iServerID = engMain->getEngIDByPtr(engMain->getAccountByID(engMain->iCurrentDialOutIndex,1));
+   //TODO check how healty is connection
+   CPhoneCons *ret = (CPhoneCons*)engMain->getAccountByID(iServerID);// check online
+   if(!ret || !ret->p_cfg.isOnline()) ret = (CPhoneCons*)engMain->getAccountByID(!iServerID); //twin account
+
+   if(!ret || !ret->p_cfg.isOnline()){
+      log_events(__FUNCTION__,"FAIL to send: !ret || !ret->p_cfg.isOnline()");
+      return false;            //we have to set all msg id's to 0
+   }
+   b.setText((const char *)envelope, (int)size ,0);
+
+   int ses_id = ret->ph->sendSipMsg(0, "MESSAGE", (char *)name, &bufDevIdAdd[0], "application/x-sc-axolotl", &b, &bufMsgId[0]);
+   t_logf(log_events, __FUNCTION__, "Called sendSipMsg [name: %s devid: %s return: %d]", (char *)name, bufDevIdAdd, ses_id);
+
+   CSesBase *spSes = ses_id ? ret->ph->findSessionByID(ses_id) : NULL;
+   if (spSes) {
+      spSes->sentSimpleMsgId64bit = msgId;
+   } else {
+      return false;
+   }
+   return true;
+}
+
 int hasActiveCalls(){return  engMain->hasActiveCalls();}
 
 CSesBase *g_getSesByCallID(int iCallID){
@@ -3821,6 +4004,7 @@ void *findBestEng(const char *p, const char *name){
 }
 
 const char* sendEngMsg(void *pEng, const char *p){
+   if(!engMain)return "";
    return engMain->sendEngMsg(pEng, p);
 }
 
@@ -3837,8 +4021,13 @@ void g_setQWview_vi(void *p){
 }
 
 void setPhoneCB(fnc_cb_ph *fnc, void *pRet){
-   if(!engMain)return ;
-   engMain->setPhoneCB(fnc, pRet);
+    
+    printf("\nsetPhoneCB\n");
+    if(!engMain) {
+        printf("\nNO ENGMAIN! RETURNING!\n");
+        return;
+    }
+    engMain->setPhoneCB(fnc, pRet);
 }
 
 void *getEmptyAccount(){
@@ -3871,14 +4060,14 @@ void* findCfgItemByServiceKey(void *ph, char *key, int &iSize, char **opt, int *
    if(key && key[0]=='*')return NULL;
    
    if(!ph){
-      return findGlobalCfgKey(key,strlen(key),iSize,opt,type);
+      return findGlobalCfgKey(key,(int)strlen(key),iSize,opt,type);
    }
    if(!ph)return NULL;
    CPhoneCons *p=(CPhoneCons*)ph;
    //TODO check is servIs valid
-   void *ret=findCfgItemKey((void*)&p->p_cfg,key,strlen(key),iSize,opt,type);
+   void *ret=findCfgItemKey((void*)&p->p_cfg,key,(int)strlen(key),iSize,opt,type);
    if(ret)return ret;
-   return findGlobalCfgKey(key,strlen(key),iSize,opt,type);
+   return findGlobalCfgKey(key,(int)strlen(key),iSize,opt,type);
    
 }
 
@@ -3953,7 +4142,7 @@ void t_onEndApp(){
    }
 }
 
-
+/* EA: unused function
 static void signalFnc(int id)
 {
    puts("signal...");
@@ -3962,8 +4151,7 @@ static void signalFnc(int id)
    delete cPhone;
    cPhone=NULL;
 }
-
-
+*/
 
 int z_main_init(int argc, const  char* argv[]){
    
@@ -4037,6 +4225,46 @@ int canEnableDialHelper(){
    return 1;
 }
 
+//DebugLogging:
+int debugLoggingEnabled(){
+    static int *hlp = (int *)findGlobalCfgKey("iEnableDebugLogging");
+    if(hlp && *hlp == 1){
+        return 1;
+    }
+    return 0;
+}
+
+char* getDebugLoggingSetting(){
+    static char *hlp = (char *)findGlobalCfgKey("szDebugLoggingSetting");
+    return hlp;
+}
+
+// Passcode
+int passcodeIsWipeEnable() {
+    
+    static int *hlp = (int *)findGlobalCfgKey("iPasscodeEnableWipe");
+    
+    if(hlp && *hlp == 1)
+        return 1;
+    
+    return 0;
+}
+
+int passcodeIsTouchIDEnabled() {
+    
+    static int *hlp = (int *)findGlobalCfgKey("iPasscodeEnableTouchID");
+    
+    if(hlp && *hlp == 1)
+        return 1;
+    
+    return 0;
+}
+
+char * getPasscodeTimeout() {
+    static char *hlp = (char *)findGlobalCfgKey("szPasscodeTimeout");
+    return hlp;
+}
+
 int canModifyNumber(){
    static int *hlp = (int *)findGlobalCfgKey("iEnableDialHelper");
    if(hlp && *hlp==0)return 0;
@@ -4086,13 +4314,14 @@ int getSetCfgVal(int iGet, char *k, int iKeyLen, char *v, int iMaxVLen){
    }
    if(!cPhone){
       return 0;//android does not support multiple accounts or cfg
-      
+/* EA: code not executed
       engMain->getEmptyAccount();
       engMain->clickOnEmpty();
       cPhone=engMain->getAccountByID(0, 1);
       cPhone->command(":reg");
+ */
    }
-   if(!cPhone)return 0;
+//   if(!cPhone)return 0;
    PHONE_CFG *cfg=&cPhone->p_cfg;
    if(iGet==2){
       saveCfg(cfg,cPhone->iEngineIndex);
@@ -4225,11 +4454,13 @@ static int test_th_send_opt(void *pv){
 }
 
 void enableSIPTLS443forSC(int iEnable){
-   engMain->enableSIPTLS443forSC(iEnable);
+    if (engMain)
+        engMain->enableSIPTLS443forSC(iEnable);
 }
 
 void switchToTest443(){
-   engMain->switchToTest443();
+    if (engMain)
+        engMain->switchToTest443();
 }
 
 void test_send_options(const char *name){

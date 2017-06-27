@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2016-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -31,29 +31,34 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Matrix;
 import android.location.Location;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.text.TextUtils;
 import android.util.Base64;
-import android.util.Log;
 
-import com.silentcircle.common.util.ViewUtil;
+import com.silentcircle.common.waveform.SoundFile;
 import com.silentcircle.keymanagersupport.KeyManagerSupport;
+import com.silentcircle.logs.Log;
+import com.silentcircle.messaging.listener.MessagingBroadcastManager;
 import com.silentcircle.messaging.location.LocationObserver;
 import com.silentcircle.messaging.location.OnLocationReceivedListener;
+import com.silentcircle.messaging.model.Attachment;
 import com.silentcircle.messaging.model.Conversation;
 import com.silentcircle.messaging.model.MessageStates;
 import com.silentcircle.messaging.model.SCloudObject;
 import com.silentcircle.messaging.model.event.Event;
+import com.silentcircle.messaging.model.event.InfoEvent;
 import com.silentcircle.messaging.model.event.Message;
+import com.silentcircle.messaging.model.event.MessageStateEvent;
 import com.silentcircle.messaging.model.event.OutgoingMessage;
-import com.silentcircle.messaging.providers.PictureProvider;
+import com.silentcircle.messaging.providers.AudioProvider;
 import com.silentcircle.messaging.repository.ConversationRepository;
 import com.silentcircle.messaging.repository.DbRepository.DbObjectRepository;
 import com.silentcircle.messaging.repository.EventRepository;
@@ -70,7 +75,7 @@ import com.silentcircle.messaging.util.MIME;
 import com.silentcircle.messaging.util.MessageUtils;
 import com.silentcircle.messaging.util.UTI;
 import com.silentcircle.messaging.util.UUIDGen;
-import com.silentcircle.silentphone2.Manifest;
+import com.silentcircle.silentphone2.BuildConfig;
 import com.silentcircle.silentphone2.R;
 import com.silentcircle.silentphone2.util.ConfigurationUtilities;
 import com.silentcircle.silentphone2.util.PinnedCertificateHandling;
@@ -93,6 +98,7 @@ import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -101,9 +107,12 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
 
-import axolotl.AxolotlNative;
+import zina.ZinaNative;
+
+import static com.silentcircle.messaging.services.SCloudService.AttachmentState.fromState;
 
 /**
  Everything TODO regarding attachments
@@ -115,14 +124,33 @@ import axolotl.AxolotlNative;
 public class SCloudService extends Service {
     private static final String TAG = SCloudService.class.getSimpleName();
 
+    public static final String ATTACHMENT_INFO =
+            "com.silentcircle.messaging.services.attachmentInfo";
+    public static final String FLAG_GROUP_AVATAR =
+            "com.silentcircle.messaging.services.flagGroupAvatar";
+
+    public static final String SCLOUD_METADATA_THUMBNAIL = "preview";
+    public static final String SCLOUD_METADATA_WAVEFORM = "Waveform";
+    public static final String SCLOUD_METADATA_DURATION = "Duration";
+
     private Handler mRecoveryHandler = new Handler();
 
     AtomicBoolean atomicHasARecoveryRunning = new AtomicBoolean(false);
+
+    public static final List<AsyncTask<Void, Void, Void>> DOWNLOAD_LIST
+            = Collections.synchronizedList(new ArrayList<AsyncTask<Void, Void, Void>>());
+    public static final List<AsyncTask<Void, Void, Void>> UPLOAD_LIST
+            = Collections.synchronizedList(new ArrayList<AsyncTask<Void, Void, Void>>());
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         if(intent != null) {
             String action = intent.getAction();
+
+            Bundle extras = new Bundle();
+            // populate extras which will be added to broadcast events
+            extras.putBoolean(FLAG_GROUP_AVATAR, intent.getBooleanExtra(FLAG_GROUP_AVATAR, false));
+            extras.putString(ATTACHMENT_INFO, intent.getStringExtra(ATTACHMENT_INFO));
 
             switch(Action.from(action)) {
                 case UPLOAD: {
@@ -133,9 +161,14 @@ public class SCloudService extends Service {
 
                     boolean isUnique = intent.getBooleanExtra("IS_UNIQUE", false);
 
-                    SCloudUploadTask uploadTask = new SCloudUploadTask(partner, messageId, uri, isUnique, this);
+                    SCloudUploadTask uploadTask = new SCloudUploadTask(partner, messageId, uri, isUnique, extras, this);
 
-                    uploadTask.execute();
+                    if ((isUploading() || isDownloading())
+                            && !intent.getBooleanExtra(FLAG_GROUP_AVATAR, false)) {
+                        uploadTask.mAttachmentManager.onCancel(R.string.attachment_wait_until_complete);
+                    } else {
+                        uploadTask.execute();
+                    }
 
                     break;
                 }
@@ -143,10 +176,16 @@ public class SCloudService extends Service {
                 case DOWNLOAD: {
                     String partner = Extra.PARTNER.from(intent);
                     String messageId = Extra.ID.from(intent);
+                    String attachmentInfo = intent.getStringExtra(ATTACHMENT_INFO);
 
-                    SCloudDownloadTask downloadTask = new SCloudDownloadTask(partner, messageId, this);
+                    SCloudDownloadTask downloadTask = new SCloudDownloadTask(partner, messageId, attachmentInfo, extras, this);
 
-                    downloadTask.execute();
+                    if ((isUploading() || isDownloading())
+                            && !intent.getBooleanExtra(FLAG_GROUP_AVATAR, false)) {
+                        downloadTask.mAttachmentManager.onCancel(R.string.attachment_wait_until_complete);
+                    } else {
+                        downloadTask.execute();
+                    }
 
                     break;
                 }
@@ -155,7 +194,7 @@ public class SCloudService extends Service {
                     String partner = Extra.PARTNER.from(intent);
                     String messageId = Extra.ID.from(intent);
 
-                    SCloudDownloadThumbnailTask thumbnailDownloadTask = new SCloudDownloadThumbnailTask(partner, messageId, this);
+                    SCloudDownloadThumbnailTask thumbnailDownloadTask = new SCloudDownloadThumbnailTask(partner, messageId, extras, this);
 
                     thumbnailDownloadTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 
@@ -168,13 +207,18 @@ public class SCloudService extends Service {
                     }
 
                     boolean fromBoot = intent.getBooleanExtra("FROM_BOOT", false);
-                    boolean fromNetworkChange = intent.getBooleanExtra("FROM_NETWORK", false);
+//                    boolean fromNetworkChange = intent.getBooleanExtra("FROM_NETWORK", false);    state not used
 
-                    SCloudRecoveryRunnable scloudRecoveryRunnable = new SCloudRecoveryRunnable();
-                    scloudRecoveryRunnable.setFromBoot(fromBoot);
-                    scloudRecoveryRunnable.setFromNetworkChange(fromNetworkChange);
-                    mRecoveryHandler.post(scloudRecoveryRunnable);
+//                    SCloudRecoveryRunnable scloudRecoveryRunnable = new SCloudRecoveryRunnable();
+//                    scloudRecoveryRunnable.setFromBoot(fromBoot);
+//                    scloudRecoveryRunnable.setFromNetworkChange(fromNetworkChange);
+//                    mRecoveryHandler.post(scloudRecoveryRunnable);
+                    break;
                 }
+
+                default:
+                case _INVALID_:
+                    break;
             }
         }
 
@@ -188,13 +232,13 @@ public class SCloudService extends Service {
         private String mPartner;
         private String mMessageId;
 
-        protected Uri mUri;
+        Uri mUri;
 
-        protected boolean mIsUnique;
+        boolean mIsUnique;
 
         private Context mContext;
 
-        public SCloudUploadTask(String partner, String messageId, Uri uri, boolean isUnique, Context context) {
+        SCloudUploadTask(String partner, String messageId, Uri uri, boolean isUnique, Bundle extras, Context context) {
             this.mPartner = partner;
             this.mMessageId = messageId;
 
@@ -209,14 +253,33 @@ public class SCloudService extends Service {
             } else {
                 this.mAttachmentManager = new AttachmentManager(mPartner, mContext);
             }
+            mAttachmentManager.setExtras(extras);
         }
 
         @Override
         protected Void doInBackground(Void... params) {
+            synchronized (UPLOAD_LIST) {
+                UPLOAD_LIST.add(this);
+            }
+
             mAttachmentManager.setEncryptionContext();      // Don't comment this, we need the context
             mAttachmentManager.upload(mUri, mIsUnique);
 
             return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            synchronized (UPLOAD_LIST) {
+                UPLOAD_LIST.remove(this);
+            }
+        }
+
+        @Override
+        protected void onCancelled() {
+            synchronized (UPLOAD_LIST) {
+                UPLOAD_LIST.remove(this);
+            }
         }
     }
 
@@ -227,12 +290,9 @@ public class SCloudService extends Service {
         private String mPartner;
         private String mMessageId;
 
-        private String mTocCloudLocator;
-        private String mTocCloudKey;
-
         private Context mContext;
 
-        public SCloudDownloadTask(String partner, String messageId, Context context) {
+        SCloudDownloadTask(String partner, String messageId, String attachmentInfo, Bundle extras, Context context) {
             this.mPartner = partner;
             this.mMessageId = messageId;
 
@@ -243,13 +303,33 @@ public class SCloudService extends Service {
             } else {
                 this.mAttachmentManager = new AttachmentManager(mPartner, mContext);
             }
+            mAttachmentManager.setAttachmentInfo(attachmentInfo);
+            mAttachmentManager.setExtras(extras);
         }
 
         @Override
         protected Void doInBackground(Void... params) {
+            synchronized (DOWNLOAD_LIST) {
+                DOWNLOAD_LIST.add(this);
+            }
+
             mAttachmentManager.download();
 
             return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            synchronized (DOWNLOAD_LIST) {
+                DOWNLOAD_LIST.remove(this);
+            }
+        }
+
+        @Override
+        protected void onCancelled() {
+            synchronized (DOWNLOAD_LIST) {
+                DOWNLOAD_LIST.remove(this);
+            }
         }
     }
 
@@ -260,12 +340,9 @@ public class SCloudService extends Service {
         private String mPartner;
         private String mMessageId;
 
-        private String mTocCloudLocator;
-        private String mTocCloudKey;
-
         private Context mContext;
 
-        public SCloudDownloadThumbnailTask(String partner, String messageId, Context context) {
+        SCloudDownloadThumbnailTask(String partner, String messageId,  Bundle extras, Context context) {
             this.mPartner = partner;
             this.mMessageId = messageId;
 
@@ -276,6 +353,7 @@ public class SCloudService extends Service {
             } else {
                 this.mAttachmentManager = new AttachmentManager(mPartner, mContext);
             }
+            mAttachmentManager.setExtras(extras);
         }
 
         @Override
@@ -284,6 +362,38 @@ public class SCloudService extends Service {
 
             return null;
         }
+    }
+
+    public static boolean isUploading() {
+        synchronized (UPLOAD_LIST) {
+            if (UPLOAD_LIST.size() == 0) {
+                return false;
+            }
+
+            for (AsyncTask<Void, Void, Void> task : UPLOAD_LIST) {
+                if (task != null && task.getStatus() != AsyncTask.Status.FINISHED) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    public static boolean isDownloading() {
+        synchronized (DOWNLOAD_LIST) {
+            if (DOWNLOAD_LIST.size() == 0) {
+                return false;
+            }
+
+            for (AsyncTask<Void, Void, Void> task : DOWNLOAD_LIST) {
+                if (task != null && task.getStatus() != AsyncTask.Status.FINISHED) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     public static Intent getDownloadThumbnailIntent(Event message, String partner, Context context) {
@@ -311,6 +421,7 @@ public class SCloudService extends Service {
             this.state = state;
         }
 
+        @Nullable
         public static AttachmentState fromState(int state) {
             for(AttachmentState attachmentState : AttachmentState.values()) {
                 if (attachmentState.state == state) {
@@ -323,38 +434,52 @@ public class SCloudService extends Service {
 
         public boolean isUpload() {
             return state >= 0 && state <= 5;
-
         }
 
         public boolean isDownload() {
             return state > 5 && state <= 8;
-
         }
     }
 
-    public class AttachmentManager implements AxoMessaging.AxoMessagingStateCallback {
+    public class AttachmentManager implements ZinaMessaging.AxoMessagingStateCallback {
 
         private Context mContext;
         private String mPartner;
         private String mMessageId;
+        private String mAttachmentInfo;
+
+        private Bundle mExtras;
 
         private static final int DEFAULT_CHUNK_SIZE = 256 * 1024;
 
-        private int mChunkSize;
+//        private int mChunkSize; - is never assigned/initialized - remove it
         private byte[] mEncryptionContext;
 
-        public AttachmentManager(String partner, String messageId, Context context) {
+        private boolean mClearObjectRepoOnFinish;
+
+        AttachmentManager(String partner, String messageId, Context context) {
             this.mContext = context;
 
             this.mPartner = partner;
             this.mMessageId = messageId;
         }
 
-        public AttachmentManager(String partner, Context context) {
+        AttachmentManager(String partner, Context context) {
             this.mContext = context;
 
             this.mPartner = partner;
             this.mMessageId = UUIDGen.makeType1UUID().toString();
+
+            Util.createDbObjectRepository(partner, mMessageId);
+            mClearObjectRepoOnFinish = true;
+        }
+
+        public void setExtras(Bundle extras) {
+            mExtras = extras;
+        }
+
+        void setAttachmentInfo(String attachmentInfo) {
+            mAttachmentInfo = attachmentInfo;
         }
 
         public void upload(Uri file, boolean isUnique) {
@@ -364,6 +489,10 @@ public class SCloudService extends Service {
             uploadProcessor.process(file);
 
             uploader.upload(isUnique);
+
+            if (mClearObjectRepoOnFinish) {
+                removeMessage();
+            }
         }
 
         public void download() {
@@ -373,13 +502,21 @@ public class SCloudService extends Service {
             byte[][] decryptedToCSCloudObject = downloadProcessor.process();
 
             downloader.download(decryptedToCSCloudObject);
+
+            if (mClearObjectRepoOnFinish) {
+                removeMessage();
+            }
         }
 
-        public void downloadThumbnail() {
+        void downloadThumbnail() {
             Downloader processor = new Downloader();
 
             Downloader.ThumbnailDownloadProcessor thumbnailDownloadProcessor = processor.new ThumbnailDownloadProcessor();
             thumbnailDownloadProcessor.process();
+
+            if (mClearObjectRepoOnFinish) {
+                removeMessage();
+            }
         }
 
         // Populates presigned urls, uploads, and saves SCloudObjects
@@ -443,7 +580,7 @@ public class SCloudService extends Service {
 
 
                 // Request presigned urls from the broker per SCloudObject
-                Map<String, String> preSignedUrls = null;
+                Map<String, String> preSignedUrls;
 
                 HttpResponse<String> preSignedUrlsResponse = Broker.requestPresignedUrls(scloudObjects, mContext);
 
@@ -482,37 +619,33 @@ public class SCloudService extends Service {
                     return;
                 }
 
-                if(preSignedUrls != null) {
-                    // Upload SCloudObjects
-                    if (uploadScloudObjects(scloudObjects, preSignedUrls) == true) {
-                        Log.i(TAG, String.format("Uploaded %d chunks", scloudObjects.size()));
+                // Upload SCloudObjects
+                if (uploadScloudObjects(scloudObjects, preSignedUrls)) {
+                    if (BuildConfig.DEBUG) Log.i(TAG, "Chunks uploaded:" + scloudObjects.size());
 
-                        setAttachmentState(AttachmentState.UPLOADED);
+                    setAttachmentState(AttachmentState.UPLOADED);
 
-                        removeChunks();
+                    removeChunks();
 
-                        sendTocMessage();
+                    sendTocMessage();
+
+                    runRecoveryHandler();
+                } else {
+                    if(!Utilities.isNetworkConnected(getApplicationContext())) {
+                        setAttachmentState(AttachmentState.UPLOADING_ERROR);
+                        onError(R.string.connected_to_network);
 
                         runRecoveryHandler();
-                    } else {
-                        if(!Utilities.isNetworkConnected(getApplicationContext())) {
-                            setAttachmentState(AttachmentState.UPLOADING_ERROR);
-                            onError(R.string.connected_to_network);
-
-                            runRecoveryHandler();
-                        }
-                        else {
-                            setAttachmentState(AttachmentState.NOT_AVAILABLE);
-                        }
-
-                        onProgressCancel(R.string.uploading);
-
-                        return;
                     }
+                    else {
+                        setAttachmentState(AttachmentState.NOT_AVAILABLE);
+                    }
+
+                    onProgressCancel(R.string.uploading);
                 }
             }
 
-            public boolean uploadScloudObjects(List<SCloudObject> scloudObjects, Map<String, String> presignedUrls) {
+            boolean uploadScloudObjects(List<SCloudObject> scloudObjects, Map<String, String> presignedUrls) {
                 boolean fullyUploaded = true;
 
                 DbObjectRepository scloudObjectRepository = getScloudObjectRepository();
@@ -530,16 +663,22 @@ public class SCloudService extends Service {
 
                     onProgressUpdate(R.string.uploading, i + 1, scloudObjects.size());
 
-                    FileInputStream fis;
+                    HttpResponse<String> presignedUrlUploadResponse = null;
+                    FileInputStream fis = null;
                     try {
                         fis = new FileInputStream(scloudObjectRepository.getDataFile(scloudObject));
+                        presignedUrlUploadResponse = AmazonS3.presignedUrlUpload(presignedUrls.get(scloudObject.getLocator().toString()), fis);
                     } catch (FileNotFoundException exception) {
                         Log.e(TAG, "Error in reading SCloudObject data", exception);
 
                         return false;
+                    } finally {
+                        IOUtils.close(fis);
                     }
 
-                    HttpResponse<String> presignedUrlUploadResponse = AmazonS3.presignedUrlUpload(presignedUrls.get(scloudObject.getLocator().toString()), fis);
+                    if (presignedUrlUploadResponse == null) {
+                        return false;
+                    }
 
                     if(!presignedUrlUploadResponse.hasError()) {
                         scloudObject.setUploaded(true);
@@ -560,6 +699,7 @@ public class SCloudService extends Service {
                 return fullyUploaded;
             }
 
+            @Nullable
             private Map<String, String> parseRequestPresignedUrlsResponse(String response, List<SCloudObject> requestedScloudObjects) {
                 Map<String, String> urlHashMap = new HashMap<>();
 
@@ -601,15 +741,10 @@ public class SCloudService extends Service {
             private class UploadProcessor {
                 private static final String TAG = "SCloudUploadProcessor";
 
-                public boolean shouldProcess() {
+                boolean shouldProcess() {
                     AttachmentState attachmentState = getAttachmentState();
 
-                    if(attachmentState != null) {
-                        return attachmentState.equals(AttachmentState.UPLOAD_PROCESSING_ERROR);
-
-                    }
-
-                    return true;
+                    return attachmentState == null || !attachmentState.equals(AttachmentState.UPLOAD_PROCESSING_ERROR);
                 }
 
                 public void process(Uri file) {
@@ -623,41 +758,41 @@ public class SCloudService extends Service {
 
                     setAttachmentState(AttachmentState.UPLOAD_PROCESSING);
 
-                    if(file.equals(PictureProvider.CONTENT_URI)) {
-                        InputStream in = null;
-                        OutputStream out = null;
-                        try {
-                            in = mContext.getContentResolver().openInputStream(file);
-                            BitmapFactory.Options bitmapOpts = new BitmapFactory.Options();
-                            bitmapOpts.inSampleSize = 8;
-                            Bitmap bitmap = BitmapFactory.decodeStream(in, null, bitmapOpts);
-                            in.close();
-
-                            /*
-                             * Pre-rotate bitmap as with this operation we are loosing Exif information.
-                             * Exif has to be explicitly added to end file:
-                             *
-                             *
-                             * ExifInterface exif = new ExifInterface(<file>);
-                             * exif.setAttribute(ExifInterface.TAG_ORIENTATION, <original orientation>);
-                             * exif.saveAttributes();
-                             */
-                            Matrix matrix = ViewUtil.getRotationMatrixFromExif(mContext, file);
-                            if (matrix != null) {
-                                Bitmap recyclable = bitmap;
-                                bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(),
-                                        bitmap.getHeight(), matrix, false);
-                                recyclable.recycle();
-                            }
-
-                            out = mContext.getContentResolver().openOutputStream(file);
-                            bitmap.compress(Bitmap.CompressFormat.JPEG, 60, out);
-                            out.flush();
-                            out.close();
-                        } catch(IOException exception) {
-                            Log.e(TAG, "Image resizing exception (ignoring)", exception);
-                        }
-                    }
+//                    if(file.equals(PictureProvider.CONTENT_URI)) {
+//                        InputStream in = null;
+//                        OutputStream out = null;
+//                        try {
+//                            in = mContext.getContentResolver().openInputStream(file);
+//                            BitmapFactory.Options bitmapOpts = new BitmapFactory.Options();
+//                            bitmapOpts.inSampleSize = 8;
+//                            Bitmap bitmap = BitmapFactory.decodeStream(in, null, bitmapOpts);
+//                            in.close();
+//
+//                            /*
+//                             * Pre-rotate bitmap as with this operation we are loosing Exif information.
+//                             * Exif has to be explicitly added to end file:
+//                             *
+//                             *
+//                             * ExifInterface exif = new ExifInterface(<file>);
+//                             * exif.setAttribute(ExifInterface.TAG_ORIENTATION, <original orientation>);
+//                             * exif.saveAttributes();
+//                             */
+//                            Matrix matrix = ViewUtil.getRotationMatrixFromExif(mContext, file);
+//                            if (matrix != null) {
+//                                Bitmap recyclable = bitmap;
+//                                bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(),
+//                                        bitmap.getHeight(), matrix, false);
+//                                recyclable.recycle();
+//                            }
+//
+//                            out = mContext.getContentResolver().openOutputStream(file);
+//                            bitmap.compress(Bitmap.CompressFormat.JPEG, 60, out);
+//                            out.flush();
+//                            out.close();
+//                        } catch(IOException exception) {
+//                            Log.e(TAG, "Image resizing exception (ignoring)", exception);
+//                        }
+//                    }
 
                     // Prepare the metadata
                     JSONObject metaData = Util.getMetaData(file, mContext);
@@ -706,6 +841,10 @@ public class SCloudService extends Service {
 
                     try {
                         InputStream fileInputStream = mContext.getContentResolver().openInputStream(uri);
+                        if (fileInputStream == null) {
+                            Log.e(TAG, "Cannot open input steam: " + uri.toString());
+                            return false;
+                        }
                         long fileSize = AttachmentUtils.getFileSize(mContext, uri);
                         int numChunks = (int) Math.ceil(fileSize/getChunkSize());
 
@@ -722,7 +861,7 @@ public class SCloudService extends Service {
                                 }
                             };
 
-                            byte[] buffer = new byte[fileSize < getChunkSize() ? (int) fileSize : getChunkSize()];
+                            byte[] buffer = new byte[fileSize > 0 && fileSize < getChunkSize() ? (int) fileSize : getChunkSize()];
 
                             int read;
                             int count = 0;
@@ -739,8 +878,8 @@ public class SCloudService extends Service {
 
                             bos.flush();
 
-                        } catch (IOException | IllegalStateException exception) {
-                            Log.e(TAG, "Error in chunking");
+                        } catch (Exception exception) {
+                            Log.e(TAG, "Error in chunking", exception);
 
                             return false;
                         } finally {
@@ -749,8 +888,8 @@ public class SCloudService extends Service {
                                 mContext.getContentResolver().delete(uri, null, null);
                             }
                         }
-                    } catch (FileNotFoundException exception) {
-                        Log.e(TAG, "Error in chunking");
+                    } catch (Exception exception) {
+                        Log.e(TAG, "Error in chunking", exception);
 
                         return false;
                     }
@@ -758,6 +897,7 @@ public class SCloudService extends Service {
                     return true;
                 }
 
+                @Nullable
                 private SCloudObject createEncryptAndSaveSCloudObject(byte[] chunkDatum, JSONObject metaData) {
                     DbObjectRepository scloudObjectRepository = getScloudObjectRepository();
 
@@ -770,16 +910,16 @@ public class SCloudService extends Service {
                     try {
                         int[] code = new int[1];
 
-                        long cloudRef = AxolotlNative.cloudEncryptNew(getEncryptionContext(), chunkDatum, metaData.toString().getBytes("UTF-8"), code);
-                        AxolotlNative.cloudCalculateKey(cloudRef);
+                        long cloudRef = ZinaNative.cloudEncryptNew(getEncryptionContext(), chunkDatum, metaData.toString().getBytes("UTF-8"), code);
+                        ZinaNative.cloudCalculateKey(cloudRef);
 
-                        byte[] dataBlob = AxolotlNative.cloudEncryptNext(cloudRef, code);
-                        byte[] keyBlob = AxolotlNative.cloudEncryptGetKeyBLOB(cloudRef, code);
-                        byte[] locatorBlob = AxolotlNative.cloudEncryptGetLocatorREST(cloudRef, code);
+                        byte[] dataBlob = ZinaNative.cloudEncryptNext(cloudRef, code);
+                        byte[] keyBlob = ZinaNative.cloudEncryptGetKeyBLOB(cloudRef, code);
+                        byte[] locatorBlob = ZinaNative.cloudEncryptGetLocatorREST(cloudRef, code);
 
                         encryptedSCloudObject = new SCloudObject(keyBlob, locatorBlob, dataBlob);
 
-                        AxolotlNative.cloudFree(cloudRef);
+                        ZinaNative.cloudFree(cloudRef);
                     } catch (UnsupportedEncodingException exception) {
                         Log.e(TAG, "SCloud exception", exception);
 
@@ -799,6 +939,7 @@ public class SCloudService extends Service {
                     return encryptedSCloudObject;
                 }
 
+                @Nullable
                 private SCloudObject createEncryptAndSaveToc(Uri file, JSONObject metaData) {
                     DbObjectRepository scloudObjectRepository = getScloudObjectRepository();
 
@@ -812,22 +953,28 @@ public class SCloudService extends Service {
                         CreateThumbnail createThumbnail = new CreateThumbnail(mContext, new Intent().setDataAndType(file, metaData.getString("MimeType")), 240, 320);
                         String encodedThumbnail = Util.encodeThumbnail(createThumbnail.getThumbnail(), metaData.getString("MimeType"));
 
+                        if (file.equals(AudioProvider.CONTENT_URI)) {
+                            SoundFile soundFile = SoundFile.create(mContext, file, 80);
+                            if (soundFile != null) {
+                                String durationString = AttachmentUtils
+                                        .getDurationAsString(soundFile.getDurationMS());
+                                metaData.put(SCLOUD_METADATA_DURATION, durationString);
+                                float[] levels = soundFile.getLevels();
+                                if (levels != null) {
+                                    String base64Levels = AttachmentUtils.getLevelsAsBase64String(levels);
+                                    metaData.put(SCLOUD_METADATA_WAVEFORM, base64Levels);
+                                }
+                            }
+                        }
+
                         metaData.put("Scloud_Segments", scloudObjects.size());
-                        metaData.put("preview", encodedThumbnail);
+                        metaData.put(SCLOUD_METADATA_THUMBNAIL, encodedThumbnail);
                         metaData.put("SHA256", Utilities.hash(getContentResolver().openInputStream(file), "SHA256"));
 
                         onMetaDataAvailable(metaData);
 
                         return createEncryptAndSaveSCloudObject(getTableOfContents(scloudObjects).toString().getBytes("UTF-8"), metaData);
-                    } catch (FileNotFoundException exception) {
-                        Log.e(TAG, "SCloud exception", exception);
-
-                        return null;
-                    } catch (JSONException exception) {
-                        Log.e(TAG, "SCloud json exception (rare)", exception);
-
-                        return null;
-                    } catch (UnsupportedEncodingException exception) {
+                    } catch (Exception exception) {
                         Log.e(TAG, "SCloud exception", exception);
 
                         return null;
@@ -930,7 +1077,7 @@ public class SCloudService extends Service {
             }
 
             // Downloads SCloudObject data given the locator
-            public boolean downloadSCloudObjectData(String locator) {
+            boolean downloadSCloudObjectData(String locator) {
                 DbObjectRepository scloudObjectRepository = getScloudObjectRepository();
 
                 if(scloudObjectRepository == null) {
@@ -949,6 +1096,7 @@ public class SCloudService extends Service {
 
             }
 
+            @Nullable
             private SCloudObject createDownloadAndSaveScloudObject(String scloudLocator) {
                 DbObjectRepository scloudObjectRepository = getScloudObjectRepository();
 
@@ -997,15 +1145,14 @@ public class SCloudService extends Service {
             }
 
             private class DownloadProcessor {
-                public boolean mayAlreadyHaveFiles() {
+                boolean mayAlreadyHaveFiles() {
                     AttachmentState attachmentState = getAttachmentState();
 
                     return attachmentState != null &&
                             (attachmentState.equals(AttachmentState.UPLOADED) || attachmentState.equals(AttachmentState.DOWNLOADED));
-
                 }
 
-                public boolean shouldProcess() {
+                boolean shouldProcess() {
                     AttachmentState attachmentState = getAttachmentState();
 
                     return attachmentState == null ||
@@ -1013,7 +1160,6 @@ public class SCloudService extends Service {
                             attachmentState.equals(AttachmentState.DOWNLOADED) ||
                             attachmentState.equals(AttachmentState.UPLOADED) ||
                             attachmentState.equals(AttachmentState.NOT_AVAILABLE);
-
                 }
 
                 public byte[][] process() {
@@ -1023,8 +1169,8 @@ public class SCloudService extends Service {
                         return null;
                     }
 
-                    String tocScloudLocator = null;
-                    String tocScloudKey = null;
+                    String tocScloudLocator;
+                    String tocScloudKey;
 
                     if(!attachment.has("cloud_url") || !attachment.has("cloud_key")) {
                         return null;
@@ -1054,7 +1200,7 @@ public class SCloudService extends Service {
                     }
 
                     // Check for already existing files, whether from a previous upload or a previous download
-                    if(mayAlreadyHaveFiles()) {
+                    if (mayAlreadyHaveFiles()) {
                         JSONObject metaData = getMetaData();
 
                         if(metaData != null) {
@@ -1211,8 +1357,8 @@ public class SCloudService extends Service {
                         return null;
                     }
 
-                    String tocScloudLocator = null;
-                    String tocScloudKey = null;
+                    String tocScloudLocator;
+                    String tocScloudKey;
 
                     if(!attachment.has("cloud_url") || !attachment.has("cloud_key")) {
                         return null;
@@ -1271,25 +1417,18 @@ public class SCloudService extends Service {
         }
 
         private int getChunkSize() {
-            return mChunkSize <= 0 ? DEFAULT_CHUNK_SIZE : mChunkSize;
-        }
-
-        private void setChunkSize(int chunkSize) {
-            this.mChunkSize = chunkSize;
+            return DEFAULT_CHUNK_SIZE;
         }
 
         private byte[] getEncryptionContext() {
             return mEncryptionContext != null ? mEncryptionContext : null;
         }
 
-        private void setEncryptionContext(byte[] encryptionContext) {
-            this.mEncryptionContext = encryptionContext;
-        }
-
         private void setEncryptionContext() {
             this.mEncryptionContext = CryptoUtil.randomBytes(16);
         }
 
+        @Nullable
         private SCloudObject getScloudObject(String scloudLocator) {
             DbObjectRepository scloudObjectRepository = getScloudObjectRepository();
 
@@ -1305,14 +1444,14 @@ public class SCloudService extends Service {
 
             int[] code = new int[1];
 
-            long cloudRef = AxolotlNative.cloudDecryptNew(IOUtils.toByteArray(scloudKey), code);
+            long cloudRef = ZinaNative.cloudDecryptNew(IOUtils.toByteArray(scloudKey), code);
 
-            AxolotlNative.cloudDecryptNext(cloudRef, scloudObjectData);
+            ZinaNative.cloudDecryptNext(cloudRef, scloudObjectData);
 
-            byte[] dataBlob = AxolotlNative.cloudGetDecryptedData(cloudRef);
-            byte[] metaDataBlob = AxolotlNative.cloudGetDecryptedMetaData(cloudRef);
+            byte[] dataBlob = ZinaNative.cloudGetDecryptedData(cloudRef);
+            byte[] metaDataBlob = ZinaNative.cloudGetDecryptedMetaData(cloudRef);
 
-            AxolotlNative.cloudFree(cloudRef);
+            ZinaNative.cloudFree(cloudRef);
 
             returnByteArray[0] = dataBlob;
             returnByteArray[1] = metaDataBlob;
@@ -1334,7 +1473,7 @@ public class SCloudService extends Service {
 
                     tocScloudObjects.add(new SCloudObject(segmentKey, segmentLocator));
                 }
-            } catch (JSONException exception) {
+            } catch (JSONException | NullPointerException exception) {
                 Log.e(TAG, "SCloud ToC JSON error (rare)", exception);
 
                 return null;
@@ -1355,6 +1494,9 @@ public class SCloudService extends Service {
             }
 
             List<SCloudObject> scloudObjects = parseTocScloudObjectData(decryptedTocScloudObjectData);
+            if (scloudObjects == null) {
+                return;
+            }
 
             boolean showDecryptingProgress = false;
             if(scloudObjects.size() > 10) {
@@ -1366,6 +1508,9 @@ public class SCloudService extends Service {
             BufferedOutputStream bos = null;
 
             File attachment = AttachmentUtils.getFile(mMessageId, mContext);
+            if (attachment == null) {
+                return;
+            }
 
             try {
                 bos = new BufferedOutputStream(new FileOutputStream(attachment));
@@ -1387,7 +1532,7 @@ public class SCloudService extends Service {
                 }
 
                 bos.close();
-            } catch(IOException exception) {
+            } catch(IOException | NullPointerException exception) {
                 Log.e(TAG, "SCloud decrypt and combine object exception", exception);
 
                 if(bos != null) {
@@ -1405,23 +1550,23 @@ public class SCloudService extends Service {
         }
 
         private DbObjectRepository getScloudObjectRepository() {
-            return Util.getDbObjectRepository(mPartner, mMessageId, mContext);
-        }
-
-        private ConversationRepository getConversationRepository() {
-            return Util.getConversationRepository(mContext);
-        }
-
-        private Conversation getConversation() {
-            return Util.getConversation(mPartner, mContext);
+            return Util.getDbObjectRepository(mPartner, mMessageId);
         }
 
         private void removeMessage() {
-            Util.removeMessage(mPartner, mMessageId, mContext);
+            Util.removeMessage(mPartner, mMessageId);
         }
 
         private JSONObject getAttachment() {
-            return Util.getAttachment(mPartner, mMessageId, mContext);
+            JSONObject result = null;
+            if (!TextUtils.isEmpty(mAttachmentInfo)) {
+                result = Util.getAttachment(mAttachmentInfo);
+            }
+            if (result == null) {
+                result = Util.getAttachment(mPartner, mMessageId, mContext);
+            }
+
+            return result;
         }
 
         private JSONObject getMetaData() {
@@ -1438,34 +1583,6 @@ public class SCloudService extends Service {
             scloudObjectRepository.clear();
         }
 
-        private void removeFileChunks() {
-            Log.i(TAG, "Deleting file chunks - partner: " + mPartner + " id: " + mMessageId);
-
-            Event event = MessageUtils.getEventById(mContext, mPartner, mMessageId);
-
-            if(event != null) {
-                if(event instanceof Message) {
-                    DbObjectRepository scloudObjectRepository = getScloudObjectRepository();
-
-                    if(scloudObjectRepository == null) {
-                        return;
-                    }
-
-                    List<SCloudObject> scloudObjects = scloudObjectRepository.list();
-
-                    String tocScloudLocator = Util.getString("cloud_url", event.getAttachment());
-
-                    if(!TextUtils.isEmpty(tocScloudLocator)) {
-                        for(SCloudObject scloudObject : scloudObjects) {
-                            if(!scloudObject.getLocator().equals(tocScloudLocator)) {
-                                scloudObjectRepository.remove(scloudObject);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
         private void onProgressStart(int labelResourceId) {
             onProgressUpdate(labelResourceId, 0, 100);
         }
@@ -1477,7 +1594,7 @@ public class SCloudService extends Service {
             Extra.PROGRESS.to(intent, (int) Math.ceil(100 * ((double) part / total)));
             Extra.TEXT.to(intent, labelResourceId);
 
-            mContext.sendBroadcast(intent, Manifest.permission.READ);
+            MessagingBroadcastManager.getInstance(mContext).sendBroadcast(intent);
         }
 
         private void onProgressFinish(int labelResourceId) {
@@ -1489,97 +1606,150 @@ public class SCloudService extends Service {
         }
 
         private void sendTocMessage() {
-            ConversationRepository conversations = AxoMessaging.getInstance(mContext).getConversations();
+            ConversationRepository conversations = ZinaMessaging.getInstance().getConversations();
 
             Conversation conversation = conversations.findByPartner(mPartner);
-            final EventRepository events = conversations.historyOf(conversation);
-            final OutgoingMessage message = (OutgoingMessage) events.findById(mMessageId);
-
-            if(message == null) {
+            if (conversation == null) {
                 return;
             }
+            final EventRepository events = conversations.historyOf(conversation);
+            final Event event = events.findById(mMessageId);
+            if (event instanceof OutgoingMessage) {
+                final OutgoingMessage message = (OutgoingMessage) event;
+                final boolean isGroup = conversation.getPartner().isGroup();
 
-            JSONObject attributeJson = new JSONObject();
+                JSONObject attributeJson = new JSONObject();
 
-            try {
-                attributeJson.put("r", true);                          // "request_receipt" - currently always true!!!
+                try {
+                    if (!isGroup) {
+                        // "request_receipt" - currently always true for non-group messages
+                        attributeJson.put("r", true);
+                    }
 
-                if (conversation.hasBurnNotice()) {
-                    attributeJson.put("s", conversation.getBurnDelay());  // "shred_after"
+                    if (conversation.hasBurnNotice()) {
+                        // use message's burn time as conversation can be updated already
+                        attributeJson.put("s", message.getBurnNotice());  // "shred_after"
+                    }
+                } catch (JSONException exception) {
+                    Log.e(TAG, "Send ToC Message JSON exception (ignoring)", exception);
                 }
-            } catch (JSONException exception) {
-                Log.e(TAG, "Send ToC Message JSON exception (ignoring)", exception);
-            }
 
-            if(attributeJson.length() > 0) {
-                message.setAttributes(attributeJson.toString());
-            }
-
-            if(conversation.isLocationEnabled()) {
-                if(Looper.myLooper() == null) {
-                    Looper.prepare();
+                if (attributeJson.length() > 0) {
+                    message.setAttributes(attributeJson.toString());
                 }
 
-                LocationObserver.observe(mContext, new OnLocationReceivedListener() {
-                    @Override
-                    public void onLocationReceived(Location location) {
-                        MessageUtils.setMessageLocation(message, location);
-
-                        sendMessage();
+                if (conversation.isLocationEnabled()) {
+                    if (Looper.myLooper() == null) {
+                        Looper.prepare();
                     }
 
-                    @Override
-                    public void onLocationUnavailable() {
-                        MessageUtils.setMessageLocation(message, null);
+                    LocationObserver.observe(mContext, new OnLocationReceivedListener() {
+                        @Override
+                        public void onLocationReceived(Location location) {
+                            MessageUtils.setMessageLocation(message, location);
 
-                        sendMessage();
-                    }
+                            sendMessage();
+                        }
 
-                    private void sendMessage() {
-                        events.save(message);
+                        @Override
+                        public void onLocationUnavailable() {
+                            MessageUtils.setMessageLocation(message, null);
 
-                        SendMessageTask task = new SendMessageTask(getApplicationContext());
-                        AsyncUtils.execute(task, message);
-                    }
-                });
-            } else {
-                events.save(message);
+                            sendMessage();
+                        }
 
-                SendMessageTask task = new SendMessageTask(getApplicationContext());
-                AsyncUtils.execute(task, message);
+                        private void sendMessage() {
+                            events.save(message);
+
+                            SendMessageTask task = new SendMessageTask(getApplicationContext());
+                            AsyncUtils.execute(task, message);
+                        }
+                    });
+                } else {
+                    events.save(message);
+
+                    SendMessageTask task = new SendMessageTask(getApplicationContext());
+                    AsyncUtils.execute(task, message);
+                }
             }
         }
 
         private void onTocAvailable(String tocScloudLocator, String tocScloudKey) {
-            ConversationRepository conversations = AxoMessaging.getInstance(mContext).getConversations();
+            ConversationRepository conversations = ZinaMessaging.getInstance().getConversations();
 
             Conversation conversation = conversations.findByPartner(mPartner);
+            if (conversation == null) {
+                return;
+            }
             final EventRepository events = conversations.historyOf(conversation);
-            final OutgoingMessage message = (OutgoingMessage) events.findById(mMessageId);
 
-            if(message == null) {
-                return;
+            final Event event = events.findById(mMessageId);
+            if (event != null) {
+
+                JSONObject attachmentJson = new JSONObject();
+                try {
+                    attachmentJson.put("cloud_url", tocScloudLocator);
+                    attachmentJson.put("cloud_key", tocScloudKey);
+                    JSONObject attachmentMetaDataJson = new JSONObject();
+
+                    if (event instanceof OutgoingMessage && ((OutgoingMessage) event).hasMetaData()) {
+                        attachmentMetaDataJson = new JSONObject(((OutgoingMessage) event).getMetaData());
+                    }
+                    else if (event instanceof InfoEvent) {
+                        attachmentMetaDataJson =
+                                new JSONObject(event.getAttachment() == null ? "" : event.getAttachment());
+                    }
+
+                    try {
+                        String mimeType = attachmentMetaDataJson.getString("MimeType");
+                        String exportedFilename = attachmentMetaDataJson.optString("ExportedFileName");
+                        String fileName = attachmentMetaDataJson.getString("FileName");
+                        String displayName = attachmentMetaDataJson.optString("DisplayName");
+                        String hash = attachmentMetaDataJson.optString("SHA256");
+                        long size = attachmentMetaDataJson.optLong("FileSize", -1);
+
+                        attachmentJson.put("content_type", mimeType);
+                        attachmentJson.put("filename", fileName);
+                        if (!TextUtils.isEmpty(exportedFilename)) {
+                            attachmentJson.put("exported_filename", exportedFilename);
+                        }
+                        if (!TextUtils.isEmpty(displayName)) {
+                            attachmentJson.put("display_name", displayName);
+                        }
+                        if (!TextUtils.isEmpty(hash)) {
+                            attachmentJson.put("sha256", hash);
+                        }
+                        if (size >= 0) {
+                            attachmentJson.put("file_size", size);
+                        }
+                    } catch (JSONException exception) {
+                        Log.e(TAG, "SCloud TOC attachment JSON exception (rare)", exception);
+                    }
+                } catch (JSONException exception) {
+                    Log.e(TAG, "SCloud ToC message exception (rare)", exception);
+                    return;
+                }
+
+                if (attachmentJson.length() > 0) {
+                    event.setAttachment(attachmentJson.toString());
+                }
+
+                if (event instanceof OutgoingMessage) {
+                    ((OutgoingMessage) event).setState(MessageStates.COMPOSED);
+                }
+
+                events.save(event);
+
+                // notify attachment event receiver about TOC availability
+                Intent intent = Action.UPLOAD.intent();
+                if (mExtras != null) {
+                    intent.putExtras(mExtras);
+                }
+                Extra.PARTNER.to(intent, mPartner);
+                Extra.ID.to(intent, mMessageId);
+                intent.putExtra(ATTACHMENT_INFO, attachmentJson.toString());
+                MessagingBroadcastManager.getInstance(mContext).sendBroadcast(intent);
             }
-
-            JSONObject attachmentJson = new JSONObject();
-
-            try {
-                attachmentJson.put("cloud_url", tocScloudLocator);
-                attachmentJson.put("cloud_key", tocScloudKey);
-
-            } catch (JSONException exception) {
-                Log.e(TAG, "SCloud ToC message exception (rare)", exception);
-
-                return;
-            }
-
-            if(attachmentJson.length() > 0) {
-                message.setAttachment(attachmentJson.toString());
-            }
-
-            message.setState(MessageStates.COMPOSED);
-
-            events.save(message);
         }
 
         private void onMetaDataAvailable(JSONObject metaDataJsonObject) {
@@ -1599,31 +1769,43 @@ public class SCloudService extends Service {
         }
 
         private void onMetaDataAvailable(String metaData) {
-            ConversationRepository conversations = AxoMessaging.getInstance(mContext).getConversations();
+            ConversationRepository conversations = ZinaMessaging.getInstance().getConversations();
 
             Conversation conversation = conversations.findByPartner(mPartner);
-            EventRepository events = conversations.historyOf(conversation);
-            Message message = (Message) events.findById(mMessageId);
-
-            if(message == null) {
+            if (conversation == null) {
                 return;
             }
+            EventRepository events = conversations.historyOf(conversation);
+            Event event = events.findById(mMessageId);
+            if (event instanceof Message) {
+                Message message = (Message) event;
 
-            if(metaData != null) {
-                message.setMetaData(metaData);
-                message.setText(mContext.getString(R.string.attachment));
+                if (metaData != null) {
+                    message.setMetaData(metaData);
+                    message.setText(mContext.getString(R.string.attachment));
+                }
+
+                events.save(message);
+
+                MessageUtils.notifyConversationUpdated(mContext, mPartner,
+                        true, ZinaMessaging.UPDATE_ACTION_MESSAGE_STATE_CHANGE, message.getId());
             }
-
-            events.save(message);
-
-            MessageUtils.notifyConversationUpdated(mContext, mPartner,
-                    true, AxoMessaging.UPDATE_ACTION_MESSAGE_STATE_CHANGE, message.getId());
+            else if (event instanceof InfoEvent) {
+                if (metaData != null) {
+                    // save attachment metadata in info event
+                    event.setAttachment(metaData);
+                    events.save(event);
+                }
+            }
         }
 
         private void onAttachmentAvailable(File attachment, byte[] metaData) {
             Intent intent = Action.RECEIVE_ATTACHMENT.intent();
             Extra.PARTNER.to(intent, mPartner);
             Extra.ID.to(intent, mMessageId);
+            if (mExtras != null) {
+                intent.putExtras(mExtras);
+            }
 
             try {
                 JSONObject metaDataJsonObject = new JSONObject(IOUtils.toString(metaData));
@@ -1641,7 +1823,7 @@ public class SCloudService extends Service {
                 Log.e(TAG, "Attachment available exception (ignoring)", ignore);
             }
 
-            mContext.sendBroadcast(intent, Manifest.permission.WRITE);
+            MessagingBroadcastManager.getInstance(mContext).sendBroadcast(intent);
         }
 
         private void onAttachmentAvailable() {
@@ -1649,8 +1831,11 @@ public class SCloudService extends Service {
             Extra.PARTNER.to(intent, mPartner);
             Extra.ID.to(intent, mMessageId);
             Extra.EXPORTED.to(intent, true);
+            if (mExtras != null) {
+                intent.putExtras(mExtras);
+            }
 
-            mContext.sendBroadcast(intent, Manifest.permission.WRITE);
+            MessagingBroadcastManager.getInstance(mContext).sendBroadcast(intent);
         }
 
         private void onError(int errorResourceId) {
@@ -1658,8 +1843,23 @@ public class SCloudService extends Service {
             Extra.PARTNER.to(intent, mPartner);
             Extra.ID.to(intent, mMessageId);
             Extra.TEXT.to(intent, errorResourceId);
+            if (mExtras != null) {
+                intent.putExtras(mExtras);
+            }
 
-            mContext.sendBroadcast(intent, Manifest.permission.WRITE);
+            MessagingBroadcastManager.getInstance(mContext).sendBroadcast(intent);
+        }
+
+        private void onCancel(int cancelResourceId) {
+            Intent intent = Action.CANCEL.intent();
+            Extra.PARTNER.to(intent, mPartner);
+            Extra.ID.to(intent, mMessageId);
+            Extra.TEXT.to(intent, cancelResourceId);
+            if (mExtras != null) {
+                intent.putExtras(mExtras);
+            }
+
+            MessagingBroadcastManager.getInstance(mContext).sendBroadcast(intent);
         }
 
         // DB Stuff
@@ -1680,20 +1880,20 @@ public class SCloudService extends Service {
                 Looper.prepare();
             }
 
-            AxoMessaging axoMessaging = AxoMessaging.getInstance(getApplicationContext());
+            ZinaMessaging axoMessaging = ZinaMessaging.getInstance();
             boolean axoRegistered = axoMessaging.isRegistered();
             if (!axoRegistered) {
                 axoMessaging.addStateChangeListener(this);
             } else {
-                SCloudRecoveryRunnable scloudRecoveryRunnable = new SCloudRecoveryRunnable();
-                mRecoveryHandler.post(scloudRecoveryRunnable);
+//                SCloudRecoveryRunnable scloudRecoveryRunnable = new SCloudRecoveryRunnable();
+//                mRecoveryHandler.post(scloudRecoveryRunnable);
             }
         }
 
         @Override
         public void axoRegistrationStateChange(boolean registered) {
             if (registered) {
-                AxoMessaging axoMessaging = AxoMessaging.getInstance(getApplicationContext());
+                ZinaMessaging axoMessaging = ZinaMessaging.getInstance();
                 axoMessaging.removeStateChangeListener(this);
 
                 runRecoveryHandler();
@@ -1705,18 +1905,16 @@ public class SCloudService extends Service {
         public void onChunk(byte[] chunk) {}
 
         @Override
-        public void write(byte [] buffer) throws IOException {
+        public void write(@NonNull byte [] buffer) throws IOException {
             onChunk(buffer);
         }
 
         @Override
-        public void write(byte [] buffer, int offset, int count) throws IOException {
+        public void write(@NonNull byte [] buffer, int offset, int count) throws IOException {
             byte[] segment = count < buffer.length ? new byte [count] : buffer;
 
             if(segment != buffer) {
-                for(int i = 0; i < segment.length; i++) {
-                    segment[i] = buffer[offset + i];
-                }
+                System.arraycopy(buffer, offset, segment, 0, segment.length);
             }
 
             write(segment);
@@ -1729,17 +1927,17 @@ public class SCloudService extends Service {
     }
 
     public static class HttpResponse<T> {
-        public int responseCode;
+        int responseCode;
         public T response;
         public String error;
 
-        public HttpResponse(int responseCode, T response, String error) {
+        HttpResponse(int responseCode, T response, String error) {
             this.responseCode = responseCode;
             this.response = response;
             this.error = error;
         }
 
-        public boolean hasError() {
+        boolean hasError() {
             return this.error != null;
         }
     }
@@ -1748,32 +1946,44 @@ public class SCloudService extends Service {
         public static final String TAG = "SCloud DB";
 
         public static AttachmentState getAttachmentState(String messageId, String partner) {
-            return AttachmentState.fromState(AxolotlNative.loadAttachmentStatus(IOUtils.encode(messageId), IOUtils.encode(partner), new int[1]));
+            return fromState(ZinaNative.loadAttachmentStatus(IOUtils.encode(messageId), IOUtils.encode(partner), new int[1]));
         }
 
-        public static void setAttachmentState(String messageId, String partner, AttachmentState attachmentState) {
+        static void setAttachmentState(String messageId, String partner, AttachmentState attachmentState) {
             setAttachmentState(messageId, partner, attachmentState.state);
         }
 
-        public static void setAttachmentState(String messageId, String partner, int attachmentState) {
-            Log.i(TAG, "Attachment state set - messageId:" + messageId + " partner:" + partner + " state:" + AttachmentState.fromState(attachmentState).name());
+        static void setAttachmentState(String messageId, String partner, int attachmentState) {
+            if (BuildConfig.DEBUG) {
+                AttachmentState state = AttachmentState.fromState(attachmentState);
+                Log.i(TAG, "Attachment state set - messageId:" + messageId + " partner:" + partner + " state:" +
+                        (state == null ? "UNKNOWN" : state.name()));
+            }
 
-            AxolotlNative.storeAttachmentStatus(IOUtils.encode(messageId), IOUtils.encode(partner), attachmentState);
+            ZinaNative.storeAttachmentStatus(IOUtils.encode(messageId), IOUtils.encode(partner), attachmentState);
         }
 
-        public static List<String[]> getAttachmentsByState(AttachmentState attachmentState) {
+        static List<String[]> getAttachmentsByState(AttachmentState attachmentState) {
             return getAttachmentsByState(attachmentState.state);
         }
 
-        public static List<String[]> getAttachmentsByState(int attachmentState) {
-            List<String[]> attachmentList = new ArrayList<String[]>();
+        static List<String[]> getAttachmentsByState(int attachmentState) {
+            List<String[]> attachmentList = new ArrayList<>();
 
-            String[] attachments = AxolotlNative.loadMsgsIdsWithAttachmentStatus(attachmentState, new int[1]);
+            int[] code = new int[1];
+            String[] attachments = ZinaNative.loadMsgsIdsWithAttachmentStatus(attachmentState, code);
 
-            for(int i = 0; i < attachments.length; i++) {
-                String[] attachmentSplit = attachments[i].split(":");
-
-                attachmentList.add(new String[] {attachmentSplit[0], attachmentSplit[1]});
+            if (attachments != null) {
+                for (String attachment : attachments) {
+                    if (TextUtils.isEmpty(attachment)) {
+                        continue;
+                    }
+                    String[] attachmentSplit = attachment.split(":");
+                    attachmentList.add(new String[]{attachmentSplit[0], attachmentSplit[1]});
+                }
+            } else {
+                Log.e(TAG, "Could not load messages with specified attachment status: "
+                        + attachmentState + ", result: " + code[0]);
             }
 
             return attachmentList;
@@ -1782,17 +1992,7 @@ public class SCloudService extends Service {
         public static void deleteAttachmentState(String messageId, String partner) {
             Log.i(TAG, "Attachment state deleted - messageId:" + messageId + " partner:" + partner);
 
-            AxolotlNative.deleteAttachmentStatus(IOUtils.encode(messageId), IOUtils.encode(partner));
-        }
-
-        public static void deleteAttachmentsByState(AttachmentState attachmentState) {
-            deleteAttachmentsByState(attachmentState.state);
-        }
-
-        public static void deleteAttachmentsByState(int attachmentState) {
-            Log.i(TAG, "Attachment states deleted - state:" + AttachmentState.fromState(attachmentState).name());
-
-            AxolotlNative.deleteWithAttachmentStatus(attachmentState);
+            ZinaNative.deleteAttachmentStatus(IOUtils.encode(messageId), IOUtils.encode(partner));
         }
     }
 
@@ -1802,13 +2002,13 @@ public class SCloudService extends Service {
         private final String TAG = SCloudRecoveryRunnable.class.getSimpleName();
 
         private boolean mFromBoot = false;
-        private boolean mFromNetworkChange = false;
+//        private boolean mFromNetworkChange = false;  This state is no used
 
         @Override
         public void run() {
             Log.i(TAG, "Running attachment recovery");
 
-            AxoMessaging axoMessaging = AxoMessaging.getInstance(getApplicationContext());
+            ZinaMessaging axoMessaging = ZinaMessaging.getInstance();
             boolean axoRegistered = axoMessaging.isRegistered();
             if (!axoRegistered) {
                 Log.i(TAG, "Axolotl not yet registered, cannot run recovery.");
@@ -1829,7 +2029,7 @@ public class SCloudService extends Service {
 
                     if(!uploadProcessing.isEmpty()) {
                         for(int i = 0; i < uploadProcessing.size(); i++) {
-                            Util.removeMessage(uploadProcessing.get(i)[1], uploadProcessing.get(i)[0], getApplicationContext());
+                            Util.removeMessage(uploadProcessing.get(i)[1], uploadProcessing.get(i)[0]);
 
                             DB.deleteAttachmentState(uploadProcessing.get(i)[0], uploadProcessing.get(i)[1]);
                         }
@@ -1837,9 +2037,9 @@ public class SCloudService extends Service {
 
                     if(!uploadProcessingError.isEmpty()) {
                         for(int i = 0; i < uploadProcessingError.size(); i++) {
-                            Util.removeMessage(uploadProcessingError.get(i)[1], uploadProcessingError.get(i)[0], getApplicationContext());
+                            Util.removeMessage(uploadProcessingError.get(i)[1], uploadProcessingError.get(i)[0]);
 
-                            DB.deleteAttachmentState(uploadProcessing.get(i)[0], uploadProcessing.get(i)[1]);
+                            DB.deleteAttachmentState(uploadProcessingError.get(i)[0], uploadProcessingError.get(i)[1]);
                         }
                     }
                 }
@@ -1904,7 +2104,7 @@ public class SCloudService extends Service {
             this.mFromBoot = fromBoot;
         }
 
-        private void setFromNetworkChange(boolean fromNetworkChange) { this.mFromNetworkChange = fromNetworkChange; }
+//        private void setFromNetworkChange(boolean fromNetworkChange) { this.mFromNetworkChange = fromNetworkChange; }
     }
 
 
@@ -1913,7 +2113,8 @@ public class SCloudService extends Service {
 
         private static final String BROKER_URI = "broker/";
 
-        private static final SSLSocketFactory sslSocketFactory = PinnedCertificateHandling.getPinnedSslContext(ConfigurationUtilities.mNetworkConfiguration).getSocketFactory();
+        private static final SSLContext sslContext = PinnedCertificateHandling.getPinnedSslContext(ConfigurationUtilities.mNetworkConfiguration);
+        private static final SSLSocketFactory sslSocketFactory = sslContext != null ? sslContext.getSocketFactory() : null;
 
         private static final List<String> IGNORED_ERRORS = new ArrayList<String>() {{
             add("You are not authorized to use that locator\n");
@@ -2027,7 +2228,7 @@ public class SCloudService extends Service {
             }
         }
 
-        public static boolean isIgnoredError(String error) {
+        static boolean isIgnoredError(String error) {
             return IGNORED_ERRORS.contains(error);
 
         }
@@ -2043,10 +2244,12 @@ public class SCloudService extends Service {
         private static final String HEADER_AMAZON_ACL = "x-amz-acl";
         private static final String HEADER_AMAZON_ACL_VALUE_PUBLIC_READ = "public-read";
 
-        public static final SSLSocketFactory sslSocketFactory = PinnedCertificateHandling.getPinnedSslContext(ConfigurationUtilities.mNetworkConfiguration).getSocketFactory();
+        private static final SSLContext sslContext = PinnedCertificateHandling.getPinnedSslContext(ConfigurationUtilities.mNetworkConfiguration);
+        private static final SSLSocketFactory sslSocketFactory = sslContext != null ? sslContext.getSocketFactory() : null;
 
-        public static HttpResponse<String> presignedUrlUpload(String url, InputStream is) {
+        static HttpResponse<String> presignedUrlUpload(String url, InputStream is) {
             HttpsURLConnection urlConnection = null;
+
             StringBuilder response = new StringBuilder();
             BufferedOutputStream bos = null;
 
@@ -2078,7 +2281,7 @@ public class SCloudService extends Service {
                         IOUtils.readStream(urlConnection.getErrorStream(), response);
 
                         if(!TextUtils.isEmpty(response)) {
-                            return new HttpResponse<String>(ret, null, response.toString());
+                            return new HttpResponse<>(ret, null, response.toString());
                         }
                     }
 
@@ -2112,6 +2315,9 @@ public class SCloudService extends Service {
             HttpsURLConnection urlConnection = null;
             StringBuilder response = new StringBuilder();
 
+            InputStream in = null;
+            FileOutputStream out = null;
+
             try {
                 urlConnection = (HttpsURLConnection) (new URL(getSCloudURL(locator)).openConnection());
 
@@ -2140,8 +2346,8 @@ public class SCloudService extends Service {
                     return new HttpResponse<>(ret, false, "");
                 } else {
                     if(urlConnection.getInputStream() != null) {
-                        InputStream in = urlConnection.getInputStream();
-                        FileOutputStream out = new FileOutputStream(outputFile);
+                        in = urlConnection.getInputStream();
+                        out = new FileOutputStream(outputFile);
 
                         byte[] buffer = new byte[1024];
                         int count;
@@ -2164,6 +2370,8 @@ public class SCloudService extends Service {
                 if (urlConnection != null) {
                     urlConnection.disconnect();
                 }
+
+                IOUtils.close(in, out);
             }
         }
 
@@ -2219,32 +2427,20 @@ public class SCloudService extends Service {
             }
         }
 
+        @NonNull
         private static String getSCloudURL(String locator ) {
             return AmazonS3.SCLOUD_URL +  locator;
-        }
-
-        private static String getSCloudURL( SCloudObject scloudObject ) {
-            return AmazonS3.SCLOUD_URL +  scloudObject.getLocator().toString();
         }
     }
 
     private static class Util {
-        private static DbObjectRepository getDbObjectRepository(String partner, String messageId, Context context) {
+        private static DbObjectRepository createDbObjectRepository(String partner, String messageId) {
             if(partner == null || messageId == null) {
                 return null;
             }
 
-            AxoMessaging axoMessaging = AxoMessaging.getInstance(context);
-
-            if(axoMessaging == null) {
-                return null;
-            }
-
+            ZinaMessaging axoMessaging = ZinaMessaging.getInstance();
             ConversationRepository conversations = axoMessaging.getConversations();
-
-            if(conversations == null) {
-                return null;
-            }
 
             Conversation conversation = conversations.findByPartner(partner);
 
@@ -2258,47 +2454,58 @@ public class SCloudService extends Service {
                 return null;
             }
 
-            Message message = (Message) events.findById(messageId);
+            Event event = new MessageStateEvent();
+            event.setId(messageId);
 
-            if(message == null) {
-                return null;
-            }
+            events.save(event);
 
-            return (DbObjectRepository) events.objectsOf(message);
+            return (DbObjectRepository) events.objectsOf(event);
         }
 
-        public static ConversationRepository getConversationRepository(Context context) {
-            AxoMessaging axoMessaging = AxoMessaging.getInstance(context);
-
-            if(axoMessaging == null) {
+        private static DbObjectRepository getDbObjectRepository(String partner, String messageId) {
+            if(partner == null || messageId == null) {
                 return null;
             }
+
+            ZinaMessaging axoMessaging = ZinaMessaging.getInstance();
 
             ConversationRepository conversations = axoMessaging.getConversations();
 
-            if(conversations == null) {
+            Conversation conversation = conversations.findByPartner(partner);
+
+            if(conversation == null) {
                 return null;
             }
 
-            return conversations;
+            EventRepository events = conversations.historyOf(conversation);
+
+            if(events == null) {
+                return null;
+            }
+
+            Event event = events.findById(messageId);
+
+            if(event == null) {
+                return null;
+            }
+
+            return (DbObjectRepository) events.objectsOf(event);
         }
 
-        public static Conversation getConversation(String partner, Context context) {
+        static ConversationRepository getConversationRepository() {
+            ZinaMessaging axoMessaging = ZinaMessaging.getInstance();
+
+            return axoMessaging.getConversations();
+        }
+
+        static Conversation getConversation(String partner) {
             if(partner == null) {
                 return null;
             }
 
-            AxoMessaging axoMessaging = AxoMessaging.getInstance(context);
-
-            if(axoMessaging == null) {
-                return null;
-            }
+            ZinaMessaging axoMessaging = ZinaMessaging.getInstance();
 
             ConversationRepository conversations = axoMessaging.getConversations();
-
-            if(conversations == null) {
-                return null;
-            }
 
             Conversation conversation = conversations.findByPartner(partner);
 
@@ -2309,20 +2516,16 @@ public class SCloudService extends Service {
             return conversation;
         }
 
-        private static void removeMessage(String partner, String messageId, Context context) {
+        private static void removeMessage(String partner, String messageId) {
             Log.i(TAG, "Removing message - partner: " + partner + " messageId: " + messageId);
 
             if(partner == null || messageId == null) {
                 return;
             }
 
-            ConversationRepository conversationRepository = Util.getConversationRepository(context);
+            ConversationRepository conversationRepository = Util.getConversationRepository();
 
-            if(conversationRepository == null) {
-                return;
-            }
-
-            Conversation conversation = getConversation(partner, context);
+            Conversation conversation = getConversation(partner);
 
             if(conversation == null) {
                 return;
@@ -2343,30 +2546,41 @@ public class SCloudService extends Service {
             conversationEventRepository.remove(message);
         }
 
+        @Nullable
         private static JSONObject getAttachment(String partner, String messageId, Context context) {
             if(partner == null || messageId == null) {
                 return null;
             }
 
-            Event event = MessageUtils.getEventById(context, partner, messageId);
+            Event event = MessageUtils.getEventById(partner, messageId);
 
-            if(event instanceof Message) {
-                try {
-                    return new JSONObject(event.getAttachment());
-                } catch (JSONException exception) {
-                    Log.e(TAG, "Message attachment JSON error (rare)", exception);
-                }
+            try {
+                return new JSONObject(event.getAttachment());
+            } catch (JSONException | NullPointerException exception) {
+                Log.e(TAG, "Message attachment JSON error (rare)", exception);
             }
 
             return null;
         }
 
+        @Nullable
+        private static JSONObject getAttachment(String attachmentInfo) {
+            try {
+                return new JSONObject(attachmentInfo);
+            } catch (JSONException | NullPointerException exception) {
+                Log.e(TAG, "Invalid attachment info: ", exception);
+            }
+
+            return null;
+        }
+
+        @Nullable
         private static JSONObject getMetaData(String partner, String messageId, Context context) {
             if(partner == null || messageId == null) {
                 return null;
             }
 
-            Event event = MessageUtils.getEventById(context, partner, messageId);
+            Event event = MessageUtils.getEventById(partner, messageId);
 
             if(event instanceof Message) {
                 try {
@@ -2379,6 +2593,7 @@ public class SCloudService extends Service {
             return null;
         }
 
+        @Nullable
         private static JSONObject getMetaData( Uri uri, Context context ) {
             if(uri == null) {
                 return null;
@@ -2401,28 +2616,7 @@ public class SCloudService extends Service {
             return metaData;
         }
 
-        private static String getString(String string, String jsonData) {
-            if(string == null || jsonData == null) {
-                return null;
-            }
-
-            if(TextUtils.isEmpty(jsonData)) {
-                return null;
-            }
-
-            try {
-                JSONObject jsonObject = new JSONObject(jsonData);
-
-                if(jsonObject.has(string)) {
-                    return jsonObject.getString(string);
-                }
-            } catch (JSONException exception) {
-                return null;
-            }
-
-            return null;
-        }
-
+        @NonNull
         private static String encodeThumbnail(Bitmap bitmap, String mimeType) {
             if(bitmap == null ) {
                 return "";
@@ -2432,7 +2626,7 @@ public class SCloudService extends Service {
             Bitmap.CompressFormat compressFormat = Bitmap.CompressFormat.JPEG;
             if (MIME.isContact(mimeType) || MIME.isOctetStream(mimeType)
                     || MIME.isDoc(mimeType) || MIME.isPdf(mimeType) || MIME.isPpt(mimeType)
-                    || MIME.isText(mimeType) || MIME.isXls(mimeType)) {
+                    || MIME.isText(mimeType) || MIME.isXls(mimeType) || MIME.isAudio(mimeType)) {
                 // for some types prefer PNG, will be small enough, if one color is dominant
                 compressFormat = Bitmap.CompressFormat.PNG;
             }

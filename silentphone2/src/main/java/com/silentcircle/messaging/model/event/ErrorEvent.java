@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2016-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -29,12 +29,20 @@ package com.silentcircle.messaging.model.event;
 
 import com.silentcircle.messaging.model.MessageErrorCodes;
 import com.silentcircle.messaging.util.IOUtils;
+import com.silentcircle.messaging.util.UUIDGen;
 
 import java.util.Date;
 import java.util.UUID;
 
 public class ErrorEvent extends Event {
     @MessageErrorCodes.MessageErrorCode private int error;
+
+    // TODO better to have error codes
+    public static final String POLICY_ERROR_RETENTION_REQUIRED = "policy_error_retention_required";
+    public static final String POLICY_ERROR_MESSAGE_REJECTED = "policy_error_message_rejected";
+    public static final String POLICY_ERROR_MESSAGE_BLOCKED = "policy_error_message_blocked";
+
+    public static final String DECRYPTION_ERROR_MESSAGE_UNDECRYPTABLE = "decryption_error_message_undecryptable";
 
     private String mSender;
     private String mDeviceId;
@@ -129,7 +137,7 @@ public class ErrorEvent extends Event {
     public long getMessageComposeTime() {
         if (messageComposeTime == 0) {
             try {
-                messageComposeTime = (UUID.fromString(getMessageId()).timestamp() / 10000) + START_EPOCH;
+                messageComposeTime = UUIDGen.getAdjustedTimestamp(UUID.fromString(getMessageId()));
             } catch (Exception e) {
                 // failed to determine message compose time, return 0 for unknown
                 messageComposeTime = 0;

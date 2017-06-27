@@ -1,45 +1,53 @@
 /*
  *  Platform-specific and custom entropy polling functions
  *
- *  Copyright (C) 2006-2014, ARM Limited, All Rights Reserved
+ *  Copyright (C) 2006-2016, ARM Limited, All Rights Reserved
+ *  SPDX-License-Identifier: Apache-2.0
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License"); you may
+ *  not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ *  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  *
  *  This file is part of mbed TLS (https://tls.mbed.org)
- *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
- *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License along
- *  with this program; if not, write to the Free Software Foundation, Inc.,
- *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#if !defined(POLARSSL_CONFIG_FILE)
-#include "polarssl/config.h"
+#if !defined(MBEDTLS_CONFIG_FILE)
+#include "mbedtls/config.h"
 #else
-#include POLARSSL_CONFIG_FILE
+#include MBEDTLS_CONFIG_FILE
 #endif
 
-#if defined(POLARSSL_ENTROPY_C)
+#if defined(MBEDTLS_ENTROPY_C)
 
-#include "polarssl/entropy.h"
-#include "polarssl/entropy_poll.h"
+#include "mbedtls/entropy.h"
+#include "mbedtls/entropy_poll.h"
 
-#if defined(POLARSSL_TIMING_C)
+#if defined(MBEDTLS_TIMING_C)
 #include <string.h>
-#include "polarssl/timing.h"
+#include "mbedtls/timing.h"
 #endif
-#if defined(POLARSSL_HAVEGE_C)
-#include "polarssl/havege.h"
+#if defined(MBEDTLS_HAVEGE_C)
+#include "mbedtls/havege.h"
+#endif
+#if defined(MBEDTLS_ENTROPY_NV_SEED)
+#include "mbedtls/platform.h"
 #endif
 
-#if !defined(POLARSSL_NO_PLATFORM_ENTROPY)
+#if !defined(MBEDTLS_NO_PLATFORM_ENTROPY)
+
+#if !defined(unix) && !defined(__unix__) && !defined(__unix) && \
+    !defined(__APPLE__) && !defined(_WIN32)
+#error "Platform entropy sources only work on Unix and Windows, see MBEDTLS_NO_PLATFORM_ENTROPY in config.h"
+#endif
+
 #if defined(_WIN32) && !defined(EFIX64) && !defined(EFI32)
 
 #if !defined(_WIN32_WINNT)
@@ -48,7 +56,7 @@
 #include <windows.h>
 #include <wincrypt.h>
 
-int platform_entropy_poll( void *data, unsigned char *output, size_t len,
+int mbedtls_platform_entropy_poll( void *data, unsigned char *output, size_t len,
                            size_t *olen )
 {
     HCRYPTPROV provider;
@@ -58,11 +66,14 @@ int platform_entropy_poll( void *data, unsigned char *output, size_t len,
     if( CryptAcquireContext( &provider, NULL, NULL,
                               PROV_RSA_FULL, CRYPT_VERIFYCONTEXT ) == FALSE )
     {
-        return( POLARSSL_ERR_ENTROPY_SOURCE_FAILED );
+        return( MBEDTLS_ERR_ENTROPY_SOURCE_FAILED );
     }
 
     if( CryptGenRandom( provider, (DWORD) len, output ) == FALSE )
-        return( POLARSSL_ERR_ENTROPY_SOURCE_FAILED );
+    {
+        CryptReleaseContext( provider, 0 );
+        return( MBEDTLS_ERR_ENTROPY_SOURCE_FAILED );
+    }
 
     CryptReleaseContext( provider, 0 );
     *olen = len;
@@ -77,13 +88,20 @@ int platform_entropy_poll( void *data, unsigned char *output, size_t len,
  * available in GNU libc and compatible libc's (eg uClibc).
  */
 #if defined(__linux__) && defined(__GLIBC__)
-#include <linux/version.h>
 #include <unistd.h>
 #include <sys/syscall.h>
 #if defined(SYS_getrandom)
 #define HAVE_GETRANDOM
+
 static int getrandom_wrapper( void *buf, size_t buflen, unsigned int flags )
 {
+    /* MemSan cannot understand that the syscall writes to the buffer */
+#if defined(__has_feature)
+#if __has_feature(memory_sanitizer)
+    memset( buf, 0, buflen );
+#endif
+#endif
+
     return( syscall( SYS_getrandom, buf, buflen, flags ) );
 }
 
@@ -129,7 +147,7 @@ static int has_getrandom = -1;
 
 #include <stdio.h>
 
-int platform_entropy_poll( void *data,
+int mbedtls_platform_entropy_poll( void *data,
                            unsigned char *output, size_t len, size_t *olen )
 {
     FILE *file;
@@ -145,7 +163,7 @@ int platform_entropy_poll( void *data,
         int ret;
 
         if( ( ret = getrandom_wrapper( output, len, 0 ) ) < 0 )
-            return( POLARSSL_ERR_ENTROPY_SOURCE_FAILED );
+            return( MBEDTLS_ERR_ENTROPY_SOURCE_FAILED );
 
         *olen = ret;
         return( 0 );
@@ -156,13 +174,13 @@ int platform_entropy_poll( void *data,
 
     file = fopen( "/dev/urandom", "rb" );
     if( file == NULL )
-        return( POLARSSL_ERR_ENTROPY_SOURCE_FAILED );
+        return( MBEDTLS_ERR_ENTROPY_SOURCE_FAILED );
 
     read_len = fread( output, 1, len, file );
     if( read_len != len )
     {
         fclose( file );
-        return( POLARSSL_ERR_ENTROPY_SOURCE_FAILED );
+        return( MBEDTLS_ERR_ENTROPY_SOURCE_FAILED );
     }
 
     fclose( file );
@@ -171,13 +189,30 @@ int platform_entropy_poll( void *data,
     return( 0 );
 }
 #endif /* _WIN32 && !EFIX64 && !EFI32 */
-#endif /* !POLARSSL_NO_PLATFORM_ENTROPY */
+#endif /* !MBEDTLS_NO_PLATFORM_ENTROPY */
 
-#if defined(POLARSSL_TIMING_C)
-int hardclock_poll( void *data,
+#if defined(MBEDTLS_TEST_NULL_ENTROPY)
+int mbedtls_null_entropy_poll( void *data,
                     unsigned char *output, size_t len, size_t *olen )
 {
-    unsigned long timer = hardclock();
+    ((void) data);
+    ((void) output);
+    *olen = 0;
+
+    if( len < sizeof(unsigned char) )
+        return( 0 );
+
+    *olen = sizeof(unsigned char);
+
+    return( 0 );
+}
+#endif
+
+#if defined(MBEDTLS_TIMING_C)
+int mbedtls_hardclock_poll( void *data,
+                    unsigned char *output, size_t len, size_t *olen )
+{
+    unsigned long timer = mbedtls_timing_hardclock();
     ((void) data);
     *olen = 0;
 
@@ -189,22 +224,45 @@ int hardclock_poll( void *data,
 
     return( 0 );
 }
-#endif /* POLARSSL_TIMING_C */
+#endif /* MBEDTLS_TIMING_C */
 
-#if defined(POLARSSL_HAVEGE_C)
-int havege_poll( void *data,
+#if defined(MBEDTLS_HAVEGE_C)
+int mbedtls_havege_poll( void *data,
                  unsigned char *output, size_t len, size_t *olen )
 {
-    havege_state *hs = (havege_state *) data;
+    mbedtls_havege_state *hs = (mbedtls_havege_state *) data;
     *olen = 0;
 
-    if( havege_random( hs, output, len ) != 0 )
-        return( POLARSSL_ERR_ENTROPY_SOURCE_FAILED );
+    if( mbedtls_havege_random( hs, output, len ) != 0 )
+        return( MBEDTLS_ERR_ENTROPY_SOURCE_FAILED );
 
     *olen = len;
 
     return( 0 );
 }
-#endif /* POLARSSL_HAVEGE_C */
+#endif /* MBEDTLS_HAVEGE_C */
 
-#endif /* POLARSSL_ENTROPY_C */
+#if defined(MBEDTLS_ENTROPY_NV_SEED)
+int mbedtls_nv_seed_poll( void *data,
+                          unsigned char *output, size_t len, size_t *olen )
+{
+    unsigned char buf[MBEDTLS_ENTROPY_BLOCK_SIZE];
+    size_t use_len = MBEDTLS_ENTROPY_BLOCK_SIZE;
+    ((void) data);
+
+    memset( buf, 0, MBEDTLS_ENTROPY_BLOCK_SIZE );
+
+    if( mbedtls_nv_seed_read( buf, MBEDTLS_ENTROPY_BLOCK_SIZE ) < 0 )
+      return( MBEDTLS_ERR_ENTROPY_SOURCE_FAILED );
+
+    if( len < use_len )
+      use_len = len;
+
+    memcpy( output, buf, use_len );
+    *olen = use_len;
+
+    return( 0 );
+}
+#endif /* MBEDTLS_ENTROPY_NV_SEED */
+
+#endif /* MBEDTLS_ENTROPY_C */

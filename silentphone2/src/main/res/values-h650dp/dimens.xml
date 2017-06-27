@@ -1,0 +1,5 @@
+<resources>
+	<!-- underflow indicator -->
+    <dimen name="in_call_underflow_indicator_height">62dp</dimen>
+    <dimen name="in_call_underflow_indicator_top_margin">16dp</dimen>
+</resources>

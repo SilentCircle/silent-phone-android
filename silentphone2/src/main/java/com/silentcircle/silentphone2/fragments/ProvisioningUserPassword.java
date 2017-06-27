@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2014-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -31,15 +31,12 @@ package com.silentcircle.silentphone2.fragments;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.Fragment;
-import android.app.FragmentManager;
 import android.content.Context;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.text.method.LinkMovementMethod;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -51,8 +48,11 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.silentcircle.common.util.AsyncTasks;
+import com.silentcircle.common.util.ViewUtil;
+import com.silentcircle.logs.Log;
 import com.silentcircle.silentphone2.BuildConfig;
 import com.silentcircle.silentphone2.R;
+import com.silentcircle.silentphone2.activities.DialogHelperActivity;
 import com.silentcircle.silentphone2.activities.ProvisioningActivity;
 import com.silentcircle.silentphone2.services.TiviPhoneService;
 import com.silentcircle.silentphone2.util.ConfigurationUtilities;
@@ -145,7 +145,9 @@ public class ProvisioningUserPassword extends Fragment implements ProvisioningAc
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
-        commonOnAttach(activity);
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+            commonOnAttach(activity);
+        }
     }
 
     private void commonOnAttach(Activity activity) {
@@ -172,7 +174,8 @@ public class ProvisioningUserPassword extends Fragment implements ProvisioningAc
             ((TextView)userPasswordView.findViewById(R.id.UsernamePasswordInfoText)).setText(getString(R.string.provisioning_vertu_welcome));
         }
 
-        ((TextView)userPasswordView.findViewById(R.id.UsernamePasswordCheckBoxTCText)).setMovementMethod(LinkMovementMethod.getInstance());
+        ((TextView)userPasswordView.findViewById(R.id.UsernamePasswordCheckBoxTCText)).setMovementMethod(
+                new ViewUtil.MovementCheck(mParent, userPasswordView, R.string.toast_no_browser_found));
         inputFields.setVisibility(View.VISIBLE);
         userPasswordView.findViewById(R.id.UsernamePasswordOK).setOnClickListener(new View.OnClickListener() {
             @Override
@@ -201,7 +204,8 @@ public class ProvisioningUserPassword extends Fragment implements ProvisioningAc
             mParent.finish();
         }
         else {
-            mParent.showErrorInfo(result);      // Show Error terminates activity after user confirmed message
+            DialogHelperActivity.showDialog(R.string.provisioning_error, result, android.R.string.ok, -1);
+            mParent.provisioningCancel();
         }
     }
 
@@ -211,11 +215,11 @@ public class ProvisioningUserPassword extends Fragment implements ProvisioningAc
 //        CheckBox ctv = (CheckBox)userPasswordView.findViewById(R.id.UsernamePasswordCheckBoxTC);
 
         if (TextUtils.isEmpty(username)) {
-            mParent.showInputInfo(getString(R.string.provisioning_user_req));
+            DialogHelperActivity.showDialog(R.string.information_dialog, R.string.provisioning_user_req, android.R.string.ok, -1);
             return false;
         }
         if (TextUtils.isEmpty(password)) {
-            mParent.showInputInfo(getString(R.string.provisioning_password_req));
+            DialogHelperActivity.showDialog(R.string.information_dialog, R.string.provisioning_password_req, android.R.string.ok, -1);
             return false;
         }
 
@@ -270,12 +274,6 @@ public class ProvisioningUserPassword extends Fragment implements ProvisioningAc
             retMsg = getString(R.string.provisioning_no_data) + " (" + mContent.length() + ")";
         }
         return retMsg;
-    }
-
-    private void showDialog(int titleResId, int msgResId, int positiveBtnLabel, int negativeBtnLabel) {
-        com.silentcircle.silentphone2.dialogs.InfoMsgDialogFragment infoMsg = com.silentcircle.silentphone2.dialogs.InfoMsgDialogFragment.newInstance(titleResId, msgResId, positiveBtnLabel, negativeBtnLabel);
-        FragmentManager fragmentManager = mParent.getFragmentManager();
-        infoMsg.show(fragmentManager,TAG );
     }
 
     private class LoaderTask extends AsyncTask<URL, Integer, Integer> {
@@ -378,12 +376,12 @@ public class ProvisioningUserPassword extends Fragment implements ProvisioningAc
                 mParent.usernamePasswordDone(mApiKey, ProvisioningUserPassword.this);
             }
             else if (result == Constants.NO_NETWORK_CONNECTION) {
-                showDialog(R.string.information_dialog, R.string.connected_to_network, android.R.string.ok, -1);
+                DialogHelperActivity.showDialog(R.string.provisioning_error, R.string.connected_to_network, android.R.string.ok, -1);
                 cleanUp();
             }
             else {
                 message = errorMessage != null ? errorMessage : message;
-                mParent.showInputInfo(message);
+                DialogHelperActivity.showDialog(R.string.provisioning_error, message, android.R.string.ok, -1);
                 cleanUp();
             }
         }

@@ -1,10 +1,25 @@
+/*
+Copyright 2016-2017 Silent Circle, LLC
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
 #ifndef TRANSPORT_H
 #define TRANSPORT_H
 
 /**
  * @file Transport.h
  * @brief Interface for tnetwork transport functions
- * @ingroup Axolotl++
+ * @ingroup Zina
  * @{
  */
 
@@ -12,14 +27,16 @@
 #include <utility>
 #include <vector>
 #include <string>
+#include <memory>
 
+// bool g_sendDataFuncAxoNew(uint8_t* name, uint8_t* devId, uint8_t* envelope, size_t size, uint64_t msgId){
+typedef bool (*SEND_DATA_FUNC)(uint8_t*, uint8_t*, uint8_t*, size_t, uint64_t);
 
-//void sendDataFunc(uint8_t* names[], uint8_t* recipientScClientDevIds[], uint8_t* data[], size_t length[], uint64_t msgIds[]);
-typedef void (*SEND_DATA_FUNC)(uint8_t* [], uint8_t* [], uint8_t* [], size_t [], uint64_t []);
+namespace zina {
 
-using namespace std;
+// Forward declaration to avoid include of AppInterfaceImpl.h
+typedef struct CmdQueueInfo_ CmdQueueInfo;
 
-namespace axolotl{
 class Transport
 {
 public:
@@ -45,13 +62,10 @@ public:
      * The App interface calls this function after it prepared the message envelopes. If the user has
      * more than one Axolotl device then the function sends out all envelopes, one for each device.
      * 
-     * @param recipient The recipient's name.
-     * @param msgPairs a vector of message pairs. The first element in each pair contains the long device id
-     *                 of one of the recipient's device. The name/device id identifies a unique device. The second
-     *                 element of the pair is the message envelope to send.
-     * @return a vector of int64_t unique message ids, one id for each message sent.
+     * @param info The meta-data of the message ot send
+     * @param envelope The message envelope, serialized as string and B64 encoded
      */
-    virtual std::vector<int64_t>* sendAxoMessage(const string& recipient, vector<pair<string, string> >* msgPairs) = 0;
+    virtual void sendAxoMessage(const CmdQueueInfo& info, const std::string& envelope) = 0;
 
     /**
      * @brief Receive data from network transport - callback function for network layer.

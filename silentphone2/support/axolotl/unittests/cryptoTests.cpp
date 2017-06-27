@@ -1,13 +1,28 @@
-#include "../axolotl/crypto/Ec255PrivateKey.h"
-#include "../axolotl/crypto/Ec255PublicKey.h"
-#include "../axolotl/crypto/EcCurve.h"
-#include "../axolotl/crypto/AesCbc.h"
-#include "../logging/AxoLogging.h"
+/*
+Copyright 2016-2017 Silent Circle, LLC
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+#include "../ratchet/crypto/Ec255PrivateKey.h"
+#include "../ratchet/crypto/Ec255PublicKey.h"
+#include "../ratchet/crypto/EcCurve.h"
+#include "../ratchet/crypto/AesCbc.h"
+#include "../logging/ZinaLogging.h"
 #include "gtest/gtest.h"
 
-#include <memory>
+using namespace std;
+using namespace zina;
 
-using namespace axolotl;
 static int32_t type255 = EcCurveTypes::Curve25519;
 
 class CryptoTestFixture: public ::testing::Test {
@@ -128,11 +143,11 @@ uint8_t shared[] = {
 
 TEST_F(CryptoTestFixture, Curve25519Agreement)
 {
-    const DhPublicKey* alicePublicKey = EcCurve::decodePoint(alicePublic);
-    const DhPrivateKey* alicePrivateKey = EcCurve::decodePrivatePoint(alicePrivate, sizeof(alicePrivate));
+    PublicKeyUnique alicePublicKey = EcCurve::decodePoint(alicePublic);
+    PrivateKeyUnique alicePrivateKey = EcCurve::decodePrivatePoint(alicePrivate, sizeof(alicePrivate));
 
-    const DhPublicKey* bobPublicKey = EcCurve::decodePoint(bobPublic);
-    const DhPrivateKey* bobPrivateKey = EcCurve::decodePrivatePoint(bobPrivate, sizeof(bobPrivate));
+    PublicKeyUnique bobPublicKey = EcCurve::decodePoint(bobPublic);
+    PrivateKeyUnique bobPrivateKey = EcCurve::decodePrivatePoint(bobPrivate, sizeof(bobPrivate));
 
     uint8_t sharedOne[Ec255PrivateKey::KEY_LENGTH] = {0};
     uint8_t sharedTwo[Ec255PrivateKey::KEY_LENGTH] = {0};
@@ -150,10 +165,6 @@ TEST_F(CryptoTestFixture, Curve25519Agreement)
     for (int i = 0; i < Ec255PrivateKey::KEY_LENGTH; ++i) {
         ASSERT_EQ(shared[i], sharedTwo[i]) << "Agreement two differs at index " << i;
     }
-    delete alicePublicKey;
-    delete alicePrivateKey;
-    delete bobPublicKey;
-    delete bobPrivateKey;
 }
 
 uint8_t aliceIdentityPrivate[] = {
@@ -186,8 +197,8 @@ uint8_t aliceSignature[] = {
 
 TEST_F(CryptoTestFixture, Curve25519GenerateKeys)
 {
-    const DhKeyPair* alice = EcCurve::generateKeyPair(EcCurveTypes::Curve25519);
-    const DhKeyPair* bob = EcCurve::generateKeyPair(EcCurveTypes::Curve25519);
+    KeyPairUnique alice = EcCurve::generateKeyPair(EcCurveTypes::Curve25519);
+    KeyPairUnique bob = EcCurve::generateKeyPair(EcCurveTypes::Curve25519);
 
     uint8_t sharedOne[Ec255PrivateKey::KEY_LENGTH] = {0};
     uint8_t sharedTwo[Ec255PrivateKey::KEY_LENGTH] = {0};
@@ -215,20 +226,20 @@ TEST_F(CryptoTestFixture, AesBasic)
     std::string iv((const char*)ivData, sizeof(ivData));
 
     std::string plainText("0123456789");   // 10 characters, expect 6 bytes padding
-    shared_ptr<string> cryptText = make_shared<string>();
+    string cryptText;
 
-    aesCbcEncrypt(key, iv, plainText, cryptText);
-    ASSERT_EQ(cryptText->size(), 16) << "Wrong cryptText size";
-    ASSERT_NE(plainText, *cryptText);
+    aesCbcEncrypt(key, iv, plainText, &cryptText);
+    ASSERT_EQ(cryptText.size(), 16) << "Wrong cryptText size";
+    ASSERT_NE(plainText, cryptText);
 
-    shared_ptr<string> newPlainText = make_shared<string>();
+    string newPlainText;
 
-    aesCbcDecrypt(key, iv, *cryptText, newPlainText);
-    ASSERT_EQ(newPlainText->size(), 16) << "Wrong newPlainText size";
-    ASSERT_EQ((*newPlainText)[15], '\6') << "Wrong padding byte";
+    aesCbcDecrypt(key, iv, cryptText, &newPlainText);
+    ASSERT_EQ(newPlainText.size(), 16) << "Wrong newPlainText size";
+    ASSERT_EQ(newPlainText[15], '\6') << "Wrong padding byte";
     
-    ASSERT_TRUE(checkAndRemovePadding(newPlainText));
-    ASSERT_EQ(plainText, *newPlainText);
+    ASSERT_TRUE(checkAndRemovePadding(&newPlainText));
+    ASSERT_EQ(plainText, newPlainText);
 }
 
 TEST_F(CryptoTestFixture, AesZeroLen)
@@ -242,18 +253,18 @@ TEST_F(CryptoTestFixture, AesZeroLen)
     std::string iv((const char*)ivData, sizeof(ivData));
 
     std::string plainText;   // 0 characters, expect 16 bytes padding
-    shared_ptr<string> cryptText = make_shared<string>();
+    string cryptText;;
 
-    aesCbcEncrypt(key, iv, plainText, cryptText);
-    ASSERT_EQ(cryptText->size(), 16) << "Wrong cryptText size";
-    ASSERT_NE(plainText, *cryptText);
+    aesCbcEncrypt(key, iv, plainText, &cryptText);
+    ASSERT_EQ(cryptText.size(), 16) << "Wrong cryptText size";
+    ASSERT_NE(plainText, cryptText);
 
-    shared_ptr<string> newPlainText = make_shared<string>();
+    string newPlainText;
 
-    aesCbcDecrypt(key, iv, *cryptText, newPlainText);
-    ASSERT_EQ(newPlainText->size(), 16) << "Wrong newPlainText size";
-    ASSERT_EQ(16, (*newPlainText)[15]) << "Wrong padding byte";
+    aesCbcDecrypt(key, iv, cryptText, &newPlainText);
+    ASSERT_EQ(newPlainText.size(), 16) << "Wrong newPlainText size";
+    ASSERT_EQ(16, newPlainText[15]) << "Wrong padding byte";
 
-    ASSERT_TRUE(checkAndRemovePadding(newPlainText));
-    ASSERT_EQ(plainText, *newPlainText);
+    ASSERT_TRUE(checkAndRemovePadding(&newPlainText));
+    ASSERT_EQ(plainText, newPlainText);
 }

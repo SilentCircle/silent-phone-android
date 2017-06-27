@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2013-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -66,6 +66,8 @@ public class AutoScrollListView extends ListView {
 
     private int mRequestedScrollPosition = -1;
     private boolean mSmoothScrollRequested;
+    private float mOffset;
+    private boolean mForceScroll;
 
     public AutoScrollListView(Context context) {
         super(context);
@@ -89,7 +91,22 @@ public class AutoScrollListView extends ListView {
     public void requestPositionToScreen(int position, boolean smoothScroll) {
         mRequestedScrollPosition = position;
         mSmoothScrollRequested = smoothScroll;
+        mOffset = (getHeight() * PREFERRED_SELECTION_OFFSET_FROM_TOP);
         requestLayout();
+    }
+
+    public void requestPositionToScreen(int position, boolean smoothScroll, float offset,
+            boolean forceScroll) {
+        mRequestedScrollPosition = position;
+        mSmoothScrollRequested = smoothScroll;
+        mOffset = offset;
+        mForceScroll = forceScroll;
+        requestLayout();
+    }
+
+    public float getPreferredOffset() {
+        float result = mOffset;
+        return result;
     }
 
     @Override
@@ -102,13 +119,17 @@ public class AutoScrollListView extends ListView {
         final int position = mRequestedScrollPosition;
         mRequestedScrollPosition = -1;
 
+        final boolean forceScroll = mForceScroll;
+        mForceScroll = false;
+
         int firstPosition = getFirstVisiblePosition() + 1;
         int lastPosition = getLastVisiblePosition();
-        if (position >= firstPosition && position <= lastPosition) {
+
+        if (position >= firstPosition && position <= lastPosition && !forceScroll) {
             return; // Already on screen
         }
 
-        final int offset = (int) (getHeight() * PREFERRED_SELECTION_OFFSET_FROM_TOP);
+        final int offset = (int) getPreferredOffset();
         if (!mSmoothScrollRequested) {
             setSelectionFromTop(position, offset);
 

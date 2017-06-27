@@ -308,7 +308,7 @@ class __EXPORT ZRtp {
      *    If ZRTP was not started or ZRTP is not yet in secure state the method
      *    returns an empty string.
      */
-    DEPRECATED std::string getMultiStrParams() {return getMultiStrParams(NULL); }
+    DEPRECATED_ZRTP std::string getMultiStrParams() {return getMultiStrParams(NULL); }
 
     /**
      * Set Multi-stream parameters.
@@ -327,7 +327,7 @@ class __EXPORT ZRtp {
      *     new ZrtpQueue instanace shall use. See also
      *     <code>getMultiStrParams()</code>
      */
-    DEPRECATED void setMultiStrParams(std::string parameters) { setMultiStrParams(parameters, NULL);}
+    DEPRECATED_ZRTP void setMultiStrParams(std::string parameters) { setMultiStrParams(parameters, NULL);}
 
     /**
      * Get Multi-stream parameters.

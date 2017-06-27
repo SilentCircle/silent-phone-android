@@ -12,6 +12,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     style="@style/DrawerScrollStyle"
     android:id="@+id/drawer_scroll"
+    android:overScrollMode="never"
     tools:context=".activities.DialerActivity"
     >
 
@@ -32,7 +33,7 @@
             <TextView
                 android:id="@+id/drawer_sec_header"
                 style="@style/DrawerSectionTitle"
-                android:layout_marginBottom="@dimen/spacing_normal"
+                android:layout_marginBottom="@dimen/spacing_small"
                 android:text="@string/security_options_header"
                 />
 
@@ -73,13 +74,24 @@
                     />
 
                 <com.silentcircle.silentphone2.views.SettingsItem
+                    style="@style/Widget.SettingsItem"
+                    android:id="@+id/settings_passcode_configuration"
+                    app:isCheckable="false"
+                    app:text="@string/passcode_title"
+                    app:description="@string/not_enabled"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent" />
+
+                <com.silentcircle.silentphone2.views.SettingsItem
                         style="@style/Widget.SettingsItem"
                         android:id="@+id/settings_set_passphrase"
                         app:isCheckable="false"
                         app:text="@string/key_store_title"
                         app:description="@string/key_store_type_default"
                         android:layout_width="match_parent"
-                        android:layout_height="match_parent" />
+                        android:layout_height="match_parent"
+                        android:visibility="gone"
+                        tools:visibility="visible"/>
 
                 <com.silentcircle.silentphone2.views.SettingsItem
                     style="@style/Widget.SettingsItem"
@@ -90,12 +102,82 @@
                     app:text="@string/block_screenshots_title"
                     app:description="@string/block_screenshots_description" />
 
+                <com.silentcircle.silentphone2.views.SettingsItem
+                    style="@style/Widget.SettingsItem"
+                    android:id="@+id/settings_block_local_dr"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    app:isCheckable="true"
+                    app:text="@string/block_local_dr_title"
+                    app:description="@string/block_local_dr_description"
+                    android:visibility="gone"
+                    tools:visibility="visible"/>
+
+                <com.silentcircle.silentphone2.views.SettingsItem
+                    style="@style/Widget.SettingsItem.Inner"
+                    android:id="@+id/settings_bldr"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_marginLeft="@dimen/spacing_large"
+                    android:layout_marginStart="@dimen/spacing_large"
+                    app:isCheckable="true"
+                    app:text="@string/block_local_data_retention"
+                    android:visibility="gone"
+                    tools:visibility="visible" />
+
+                <com.silentcircle.silentphone2.views.SettingsItem
+                    style="@style/Widget.SettingsItem.Inner"
+                    android:id="@+id/settings_blmr"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    app:isCheckable="true"
+                    app:text="@string/block_local_metadata_retention"
+                    android:visibility="gone"
+                    tools:visibility="visible" />
+
+                <com.silentcircle.silentphone2.views.SettingsItem
+                    style="@style/Widget.SettingsItem"
+                    android:id="@+id/settings_block_remote_dr"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    app:isCheckable="true"
+                    app:text="@string/block_remote_dr_title"
+                    app:description="@string/block_remote_dr_description"
+                    android:visibility="gone"
+                    tools:visibility="visible"/>
+
+                <com.silentcircle.silentphone2.views.SettingsItem
+                    style="@style/Widget.SettingsItem.Inner"
+                    android:id="@+id/settings_brdr"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    app:isCheckable="true"
+                    app:text="@string/block_remote_data_retention"
+                    android:visibility="gone"
+                    tools:visibility="visible" />
+
+                <com.silentcircle.silentphone2.views.SettingsItem
+                    style="@style/Widget.SettingsItem.Inner"
+                    android:id="@+id/settings_brmr"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    app:isCheckable="true"
+                    app:text="@string/block_remote_metadata_retention"
+                    android:visibility="gone"
+                    tools:visibility="visible" />
+
+                <Button
+                    style="@style/Widget.Silent.SettingsButton"
+                    android:id="@+id/settings_device_management"
+                    android:text="@string/menu_devices"
+                    />
+
             </LinearLayout>
 
             <TextView
                 android:id="@+id/drawer_calls_header"
                 style="@style/DrawerSectionTitle"
-                android:layout_marginBottom="@dimen/spacing_normal"
+                android:layout_marginBottom="@dimen/space_small"
                 android:layout_marginTop="@dimen/spacing_normal"
                 android:text="@string/call_settings"/>
 
@@ -175,7 +257,7 @@
             <TextView
                 android:id="@+id/drawer_msg_header"
                 style="@style/DrawerSectionTitle"
-                android:layout_marginBottom="@dimen/spacing_normal"
+                android:layout_marginBottom="@dimen/spacing_small"
                 android:layout_marginTop="@dimen/spacing_normal"
                 android:text="@string/messaging_options"/>
 
@@ -237,6 +319,12 @@
                     app:description="@string/messaging_attachment_export_warn_explanation"
                     />
 
+                <Button
+                    style="@style/Widget.Silent.SettingsButton"
+                    android:id="@+id/messaging_group_list"
+                    android:text="@string/messaging_group_management"
+                    />
+
                 <com.silentcircle.silentphone2.views.SettingsItem
                     style="@style/Widget.SettingsItem"
                     android:id="@+id/burn_animation_check"
@@ -248,40 +336,12 @@
                     android:visibility="gone"
                     />
 
-
-                <com.silentcircle.silentphone2.views.SettingsItem
-                    style="@style/Widget.SettingsItem"
-                    android:id="@+id/messaging_theme"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    app:isCheckable="false"
-                    app:text="@string/messaging_theme_title"
-                    app:description="Default"
-                    />
-
-                <Button
-                    style="@style/Widget.Silent.SettingsButton"
-                    android:id="@+id/messaging_lock_configuration"
-                    android:text="@string/messaging_protection"
-                    android:drawableEnd="@drawable/ic_navigate_next_white_24dp"
-                    android:drawableRight="@drawable/ic_navigate_next_white_24dp"
-                    android:visibility="gone"
-                    />
-
-                <Button
-                    style="@style/Widget.Silent.SettingsButton"
-                    android:id="@+id/settings_chat_device_management"
-                    android:text="@string/axo_menu_devices"
-                    android:drawableEnd="@drawable/ic_navigate_next_white_24dp"
-                    android:drawableRight="@drawable/ic_navigate_next_white_24dp"
-                    />
-
             </LinearLayout>
 
             <TextView
                 android:id="@+id/drawer_other_header"
                 style="@style/DrawerSectionTitle"
-                android:layout_marginBottom="@dimen/spacing_normal"
+                android:layout_marginBottom="@dimen/space_small"
                 android:layout_marginTop="@dimen/spacing_normal"
                 android:text="@string/other_settings"/>
 
@@ -300,6 +360,26 @@
                     app:isCheckable="true"
                     app:text="@string/start_on_boot"
                     app:description="@string/start_on_boot_explanation"
+                    />
+
+                <com.silentcircle.silentphone2.views.SettingsItem
+                    style="@style/Widget.SettingsItem"
+                    android:id="@+id/reset_feature_discovery"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:isCheckable="false"
+                    app:text="@string/reset_feature_discovery"
+                    app:description="@string/reset_feature_discovery_explanation"
+                    />
+
+                <com.silentcircle.silentphone2.views.SettingsItem
+                    style="@style/Widget.SettingsItem"
+                    android:id="@+id/reset_warnings"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:isCheckable="false"
+                    app:text="@string/reset_warnings"
+                    app:description="@string/reset_warnings_explanation"
                     />
 
                 <!-- unused ?-->
@@ -335,6 +415,30 @@
                     android:visibility="gone"
                     />
 
+                <!-- debug logging -->
+                <com.silentcircle.silentphone2.views.SettingsItem
+                    style="@style/Widget.SettingsItem"
+                    android:id="@+id/debug_logging_option"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:isCheckable="true"
+                    app:text="@string/setting_debug_logging"
+                    app:description="@string/setting_debug_logging_summary"
+                    />
+
+                <Button
+                    style="@style/Widget.Silent.SettingsButton"
+                    android:id="@+id/send_logs_config_option"
+                    android:text="@string/setting_debug_logging_config"
+                    />
+
+                <Button
+                    style="@style/Widget.Silent.SettingsButton"
+                    android:id="@+id/send_logs_option"
+                    android:text="@string/setting_send_logs"
+                    />
+                <!-- end debug logging -->
+
                 <Button
                     style="@style/Widget.Silent.SettingsButton"
                     android:id="@+id/reload_account_data"
@@ -353,6 +457,28 @@
                     android:text="@string/axo_force_re_register"
                     android:visibility="gone"
                     tools:visibility="visible"
+                    />
+
+                <com.silentcircle.silentphone2.views.SettingsItem
+                    style="@style/Widget.SettingsItem"
+                    android:id="@+id/settings_force_feature_discovery"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:isCheckable="true"
+                    app:text="@string/setting_feature_discovery_option"
+                    app:description="@string/setting_feature_discovery_summary"
+                    android:visibility="gone"
+                    tools:visibility="visible"
+                    />
+
+                <com.silentcircle.silentphone2.views.SettingsItem
+                    style="@style/Widget.SettingsItem"
+                    android:id="@+id/messaging_theme"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:isCheckable="false"
+                    app:text="@string/messaging_theme_title"
+                    app:description="Default"
                     />
 
             </LinearLayout>

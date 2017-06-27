@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2014-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -30,7 +30,7 @@ package com.silentcircle.silentphone2.audio;
 
 import android.media.AudioManager;
 import android.media.AudioTrack;
-import android.util.Log;
+import com.silentcircle.logs.Log;
 
 import com.silentcircle.silentphone2.util.ConfigurationUtilities;
 
@@ -48,24 +48,20 @@ public class AudioTrackSp {
 
     private AudioTrack mTrack;
 
-    @SuppressWarnings("unused")
     static int getMinBufferSize(int sampleRateInHz, int channelConfig, int audioFormat) {
         return AudioTrack.getMinBufferSize(sampleRateInHz, channelConfig, audioFormat);
     }
 
-    @SuppressWarnings("unused")
     public AudioTrackSp() {
         Log.d(TAG, "Create empty Audio track helper");
     }
 
-    @SuppressWarnings("unused")
     public AudioTrackSp(int sampleRateInHz, int channelConfig, int audioFormat, int bufferSizeInBytes) {
         if (ConfigurationUtilities.mTrace) Log.d(TAG, "Create Audio track");
         mTrack = new AudioTrack(AudioManager.STREAM_VOICE_CALL, sampleRateInHz, channelConfig, audioFormat,
                 bufferSizeInBytes, AudioTrack.MODE_STREAM);
     }
 
-    @SuppressWarnings("unused")
     void play() {
         if (ConfigurationUtilities.mTrace) Log.d(TAG, "Start audio playback, mTrack: " + mTrack);
         if (mTrack != null) {
@@ -83,20 +79,22 @@ public class AudioTrackSp {
         }
     }
 
-    @SuppressWarnings("unused")
     int	write(short[] audioData, int offsetInShorts, int sizeInShorts) {
         if (mTrack != null)
             return mTrack.write(audioData, offsetInShorts, sizeInShorts);
         return 0;
     }
 
-    @SuppressWarnings("unused")
     void stop() {
         if (ConfigurationUtilities.mTrace) Log.d(TAG, "Stop audio playback");
-        if (mTrack != null && mTrack.getState() != AudioTrack.STATE_UNINITIALIZED) {
-            mTrack.stop();
-            mTrack.release();
+        try {
+            if (mTrack != null && mTrack.getState() == AudioTrack.STATE_INITIALIZED) {
+                mTrack.stop();
+                mTrack.release();
+            }
+        } catch (Exception ignore) {}
+        finally {
+            mTrack = null;
         }
-        mTrack = null;
     }
 }

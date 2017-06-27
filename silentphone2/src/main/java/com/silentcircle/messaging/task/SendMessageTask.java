@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2016-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -31,14 +31,20 @@ import android.content.Context;
 import android.os.AsyncTask;
 
 import com.silentcircle.messaging.model.Conversation;
+import com.silentcircle.messaging.model.MessageErrorCodes;
 import com.silentcircle.messaging.model.MessageStates;
 import com.silentcircle.messaging.model.event.Message;
 import com.silentcircle.messaging.repository.ConversationRepository;
-import com.silentcircle.messaging.services.AxoMessaging;
+import com.silentcircle.messaging.services.ZinaMessaging;
 import com.silentcircle.messaging.util.MessageUtils;
 import com.silentcircle.messaging.util.SoundNotifications;
 
-import axolotl.AxolotlNative;
+import org.acra.sender.SentrySender;
+
+import java.util.Collection;
+import java.util.concurrent.TimeUnit;
+
+import zina.ZinaNative;
 
 /**
  * Async task to send a composed message.
@@ -50,15 +56,17 @@ public class SendMessageTask extends AsyncTask<Message, Void, Message> {
     private boolean mResultStatus = true;
     private int mResultCode = 0;
     private String mResultInfo = null;
-    private boolean mSiblingsOnly;
+    private String mUser;
+    private Collection<String> mDeviceIds;
 
     public SendMessageTask(Context context) {
-        mContext = context;
+        this(context, null, null);
     }
 
-    public SendMessageTask(Context context, boolean siblingsOnly) {
+    public SendMessageTask(Context context, String user, Collection<String> deviceIds) {
         mContext = context;
-        mSiblingsOnly = siblingsOnly;
+        mUser = user;
+        mDeviceIds = deviceIds;
     }
 
     @Override
@@ -66,19 +74,34 @@ public class SendMessageTask extends AsyncTask<Message, Void, Message> {
         Message message = params[0];
 
         if (message != null) {
-            AxoMessaging msgService = AxoMessaging.getInstance(mContext);
-            mResultStatus = msgService.sendMessage(message, mSiblingsOnly);
 
-            ConversationRepository repository = msgService.getConversations();
+            ZinaMessaging msgService = ZinaMessaging.getInstance();
             Conversation conversation =
                     msgService.getOrCreateConversation(message.getConversationID());
+            boolean isGroupMessage = conversation.getPartner().isGroup();
 
-            if (!mResultStatus) {
+            mResultStatus = isGroupMessage
+                    ? ((mResultCode = msgService.sendGroupMessage(message, mUser, mDeviceIds)) == MessageErrorCodes.OK)
+                    : msgService.sendMessage(message, conversation);
+
+            ConversationRepository repository = msgService.getConversations();
+
+            /* mark message as read immediately for group messages to start burn countdown */
+            if (isGroupMessage) {
+                message.setExpirationTime(System.currentTimeMillis()
+                        + TimeUnit.SECONDS.toMillis(message.getBurnNotice()));
+                message.setState(MessageStates.READ);
+                repository.historyOf(conversation).save(message);
+            }
+
+            if (!mResultStatus && !isGroupMessage) {
                 message.setState(MessageStates.FAILED);
-                mResultCode = AxolotlNative.getErrorCode();
-                mResultInfo = AxolotlNative.getErrorInfo();
+                mResultCode = ZinaNative.getErrorCode();
+                mResultInfo = ZinaNative.getErrorInfo();
                 // Save message with new state here
                 repository.historyOf(conversation).save(message);
+                // report failure to Sentry, but error is probably absence of devices to send to
+                SentrySender.sendMessageStateReport(message, mResultCode, MessageErrorCodes.SUCCESS);
             } else {
                 message.setState(MessageStates.SENT);
 
@@ -86,16 +109,11 @@ public class SendMessageTask extends AsyncTask<Message, Void, Message> {
                 conversation.setLastModified(System.currentTimeMillis());
                 repository.save(conversation);
 
-                if (!mSiblingsOnly) {
-                    SoundNotifications.playSentMessageSound();
-                }
+                SoundNotifications.playSentMessageSound();
             }
-
-            if (!mSiblingsOnly) {
-                // notify about conversation changes
-                MessageUtils.notifyConversationUpdated(mContext, message.getConversationID(), false,
-                        AxoMessaging.UPDATE_ACTION_MESSAGE_SEND, message.getId());
-            }
+            // notify about conversation changes
+            MessageUtils.notifyConversationUpdated(mContext, message.getConversationID(), false,
+                    ZinaMessaging.UPDATE_ACTION_MESSAGE_SEND, message.getId());
         }
 
         return message;

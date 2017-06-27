@@ -1,0 +1,270 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:android.support.design="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/ProvisioningScrollFrameLayout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:baselineAligned="false"
+    android:fillViewport="true"
+    android:focusable="false"
+    android:visibility="visible"
+    tools:visibility="visible">
+
+    <LinearLayout
+        android:id="@+id/ProvisioningWelcomeLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:visibility="visible">
+
+        <ImageView
+            android:id="@+id/ProvisioningWelcomeImg"
+            tools:ignore="PxUsage"
+            android:layout_width="@dimen/authorization_logo_size"
+            android:layout_height="@dimen/authorization_logo_size"
+            android:layout_marginTop="@dimen/authorization_logo_margin_top"
+            android:layout_gravity="center_horizontal"
+            android:contentDescription="@string/silent_circle"
+            android:src="@drawable/sc_logo_grey"
+            android:tint="#ffffff" />
+
+        <TextView
+            android:id="@+id/AppText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_horizontal"
+            android:layout_marginTop="@dimen/authorization_heading_margin_top"
+            android:text="@string/app_name"
+            android:textColor="@color/auth_active_headline_text_grey"
+            android:textSize="20sp"/>
+
+        <TextView
+            style="@style/Widget.Silent.SimpleText"
+            android:id="@+id/ProvisioningBy"
+            android:layout_height="wrap_content"
+            android:gravity="center_horizontal"
+            android:layout_marginTop="@dimen/authorization_version_margin_top"
+            android:text="@string/by_silent_circle"
+            android:textColor="@color/auth_active_body_text_grey"
+            android:textSize="12sp"/>
+
+        <TextView
+            style="@style/Widget.Silent.SimpleText"
+            android:id="@+id/ProvisioningVersion"
+            android:layout_height="wrap_content"
+            android:gravity="center_horizontal"
+            android:textColor="@color/auth_active_body_text_grey"
+            android:textSize="12sp"
+            tools:text="version 5.1.0" />
+
+        <RelativeLayout
+            android:id="@+id/ProvisioningUserFields"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/authorization_login_fields_margin_top"
+            android:layout_marginLeft="@dimen/activity_horizontal_margin_large"
+            android:layout_marginRight="@dimen/activity_horizontal_margin_large"
+            android:orientation="vertical"
+            android:visibility="visible"
+            tools:visibility="visible">
+
+            <android.support.design.widget.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/authorization_login_field_max_height"
+                android:id="@+id/ProvisioningUsernameLayout"
+                android:gravity="bottom"
+                android:paddingTop="0dp"
+                android:clipToPadding="false"
+                android.support.design:errorEnabled="true"
+                android.support.design:hintTextAppearance="?android:attr/textAppearanceSmall">
+
+                <EditText
+                    style="@style/Widget.Silent.SimpleText"
+                    android:id="@+id/ProvisioningUsernameInput"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="@string/provisioning_username_hint"
+                    android:imeOptions="actionNext"
+                    android:inputType="text|textNoSuggestions|textEmailAddress"
+                    android:privateImeOptions="nm"
+                    android:singleLine="true"
+                    android:tag="username"
+                    android:textSize="@dimen/text_large" />
+
+            </android.support.design.widget.TextInputLayout>
+
+            <android.support.design.widget.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/authorization_login_field_max_height"
+                android:layout_below="@id/ProvisioningUsernameLayout"
+                android:id="@+id/ProvisioningPasswordLayout"
+                android:gravity="bottom"
+                android:paddingTop="0dp"
+                android:clipToPadding="false"
+                android.support.design:errorEnabled="true"
+                android.support.design:hintTextAppearance="?android:attr/textAppearanceSmall"
+                android.support.design:passwordToggleEnabled="false">
+
+                <EditText
+                    style="@style/Widget.Silent.SimpleText"
+                    android:id="@+id/ProvisioningPasswordInput"
+                    android:layout_height="wrap_content"
+                    android:hint="@string/provisioning_password_hint"
+                    android:imeOptions="actionDone"
+                    android:inputType="textPassword"
+                    android:singleLine="true"
+                    android:tag="password"
+                    android:textSize="@dimen/text_large" />
+
+            </android.support.design.widget.TextInputLayout>
+
+            <CheckBox
+                android:id="@+id/ShowPassword"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/ProvisioningPasswordLayout"
+                android:gravity="center_vertical|start"
+                android:paddingTop="@dimen/spacing_normal"
+                android:paddingLeft="0dp"
+                android:paddingStart="0dp"
+                android:paddingRight="@dimen/authorization_login_checkbox_padding"
+                android:paddingEnd="@dimen/authorization_login_checkbox_padding"
+                android:paddingBottom="@dimen/authorization_login_checkbox_padding"
+                android:textColor="@color/auth_active_body_text_grey"
+                android:textSize="@dimen/text_normal"
+                android:text="@string/provisioning_show_pw"
+                android:contentDescription="@string/provisioning_show_pw" />
+
+            <View android:id="@+id/strut"
+                android:layout_width="@dimen/activity_horizontal_margin_large"
+                android:layout_height="0dp"
+                android:layout_centerHorizontal="true"
+                android:layout_below="@+id/ProvisioningPasswordLayout"/>
+
+            <TextView
+                style="@style/Widget.Silent.SimpleText"
+                android:id="@+id/ProvisioningForgotPassword"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/ProvisioningPasswordLayout"
+                android:layout_alignBaseline="@id/ShowPassword"
+                android:layout_toRightOf="@id/strut"
+                android:layout_toEndOf="@id/strut"
+                android:paddingTop="@dimen/authorization_login_checkbox_padding"
+                android:paddingBottom="@dimen/authorization_login_checkbox_padding"
+                android:gravity="center_vertical|end"
+                android:textColorLink="@color/auth_active_body_text_grey"
+                android:linksClickable="true"
+                android:textSize="@dimen/text_normal"
+                android:text="@string/provisioning_forgot_pwd"/>
+
+        </RelativeLayout>
+
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginBottom="@dimen/spacing_normal"
+            android:gravity="bottom">
+
+            <Button
+                android:id="@+id/switchConfiguration"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="@dimen/spacing_normal"
+                android:visibility="gone"
+                android:padding="12dp"
+                android:gravity="center"
+                android:layout_gravity="center"
+                android:text="@string/switch_to_develop"
+                android:textColor="@color/auth_active_headline_text_grey"
+                android:textSize="16sp"
+                tools:visibility="visible" />
+
+            <TextView
+                style="@style/Widget.Silent.SimpleText"
+                android:id="@+id/ProvisioningManageAccounts"
+                android:layout_height="wrap_content"
+                android:paddingTop="@dimen/spacing_normal"
+                android:paddingBottom="@dimen/spacing_normal"
+                android:gravity="center_horizontal"
+                android:textColor="@color/auth_inactive_body_text_grey"
+                android:textSize="@dimen/text_normal"
+                android:text="@string/provisioning_manage_accounts"
+                android:textColorLink="@color/auth_active_body_text_grey"
+                android:linksClickable="true" />
+
+            <TextView
+                style="@style/Widget.Silent.SimpleText"
+                android:id="@+id/ProvisioningAgreement"
+                android:layout_height="wrap_content"
+                android:gravity="center_horizontal"
+                android:textColor="@color/auth_inactive_body_text_grey"
+                android:textSize="12sp"
+                android:text="@string/provisioning_agreement"/>
+
+            <TableLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <TableRow
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:orientation="horizontal" >
+
+                    <TextView
+                        style="@style/Widget.Silent.SimpleText"
+                        android:id="@+id/ProvisioningTerms"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:paddingTop="2dp"
+                        android:paddingBottom="4dp"
+                        android:textColor="@color/auth_inactive_body_text_grey"
+                        android:textColorLink="@color/auth_active_body_text_grey"
+                        android:linksClickable="true"
+                        android:textSize="12sp"
+                        android:text="@string/provisioning_terms"/>
+
+                    <TextView android:id="@+id/strut2"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:paddingTop="2dp"
+                        android:paddingBottom="4dp"
+                        android:textColor="@color/auth_inactive_body_text_grey"
+                        android:textSize="12sp"
+                        android:text=" &amp; " />
+
+                    <TextView
+                        style="@style/Widget.Silent.SimpleText"
+                        android:id="@+id/ProvisioningPrivacy"
+                        android:layout_height="wrap_content"
+                        android:paddingTop="2dp"
+                        android:paddingBottom="4dp"
+                        android:textColor="@color/auth_inactive_body_text_grey"
+                        android:textColorLink="@color/auth_active_body_text_grey"
+                        android:linksClickable="true"
+                        android:textSize="12sp"
+                        android:text="@string/provisioning_privacy"/>
+
+                </TableRow>
+
+            </TableLayout>
+
+            <Button
+                android:id="@+id/registerNew"
+                android:background="@drawable/account_button_selector"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:gravity="center"
+                android:text="@string/provisioning_new_account"
+                android:textColor="@color/auth_active_headline_text_grey"
+                android:textSize="16sp"/>
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</ScrollView>

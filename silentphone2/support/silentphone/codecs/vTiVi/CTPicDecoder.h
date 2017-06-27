@@ -1,7 +1,7 @@
 /*
 Created by Janis Narbuts
 Copyright (C) 2004-2012, Tivi LTD, www.tiviphone.com. All rights reserved.
-Copyright (C) 2012-2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2012-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,7 +27,6 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-
 #ifndef _C_TPIC_DECODER
 #define _C_TPIC_DECODER
    static void copy_pred8( unsigned char *cur,int stride, int *res)
@@ -36,7 +35,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
       int avgR=0;
       int avgG=0;
       int avgB=0;
-      int v;
+//      int v;
       int tu[24];
       int tl[24];
       for(i=0;i<8;i++){
@@ -287,7 +286,7 @@ public:
    }
    static void copyX(int iSize, unsigned char *pImg, int w, int h, unsigned char *pParts, int cx, int cy)
    {
-      int i,j;
+      int j;//,i
       int iSizeX3=iSize*3;
       int stridew=w*3;//-iSizeX3;
       int stridecx=cx*3;//-iSizeX3;
@@ -314,7 +313,7 @@ public:
       int iSizeX3=iSize*3;
       int stridew=w*3-iSizeX3;
       //int stridecx=cx*3-iSizeX3;
-      int c;
+//      int c;
       for(j=0;j<iSize;j++)
       {
          for(i=0;i<iSize;i++)
@@ -333,7 +332,7 @@ public:
       int iSizeX3=iSize*3;
       int stridew=w*3-iSizeX3;
       //int stridecx=cx*3-iSizeX3;
-      int c;
+//      int c;
       for(j=0;j<iSize;j++)
       {
          for(i=0;i<iSize;i++)
@@ -359,12 +358,12 @@ public:
       //CTPixDecoder dif;
       int iSizeOfPart=cx;
       int i,j;
-      int iRow=0;
-      int iXPos=0;
+//      int iRow=0;
+//      int iXPos=0;
       int iWPos=0;
-      int iImgSizeParts=w*h/(cy*cy);
+//      int iImgSizeParts=w*h/(cy*cy);
       int iSizeOfPartx3=iSizeOfPart*3;
-      int stridew=w*3;
+//      int stridew=w*3;
       int iJump=iSizeOfPartx3*iSizeOfPart;
 
 #if 0

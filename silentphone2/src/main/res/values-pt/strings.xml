@@ -364,7 +364,7 @@
     <string name="remaining_oca_minutes_dialog">Minutos de Silent World</string>
 
     <plurals name="remaining_oca_minutes_info">
-        <item quantity="one">Voc&#234; usou um minuto do seu limite de %2$d minutos.</item>
+        <item quantity="one">Voc&#234; usou um minuto do seu limite de %1$d minutos.</item>
         <item quantity="other">Voc&#234; usou %1$d minutos do seu limite de %2$d minutos.</item>
     </plurals>
 
@@ -508,7 +508,6 @@
     <string name="dialog_message_enable_device_location">Para usar esta opção, ative a Localização nas Configurações do dispositivo. A localização pode estar vazia se for utilizado somente o GPS.</string>
     <string name="dialog_message_current_location_mode">O modo de localização atual é \"%s\".</string>
     <string name="dialog_message_failed_to_send_to">Falha ao enviar mensagem ao usuário %1$s\n\n%2$s</string>
-    <string name="dialog_message_unable_to_send_to">Não foi possível enviar mensagens ao usuário %1$s. Verifique se o nome de usuário ingressado está correto.</string>
     <string name="dialog_message_file_too_large">O arquivo selecionado é muito grande.</string>
 <string name="dialog_message_wipe_phone">Esta operação irá eliminar os dados do aplicativo e fechar o aplicativo.
         \n\nVocê deverá restabelecer.</string>
@@ -521,7 +520,7 @@
     <string name="location_mode_device">Somente dispositivo (GPS)</string>
     <string name="location_mode_battery_saving">Poupança de bateria</string>
     <string name="location_mode_high_accuracy">Alta precisão</string>
-    <string name="chat_view_empty">O registro de conversas está vazio.</string>
+    <string name="chats_view_empty">O registro de conversas está vazio.</string>
     <string name="conversation_with">Conversa com %1$s</string>
     <string name="username_unknown">Desconhecido</string>
 
@@ -537,17 +536,17 @@
     <string name="no_axo_device">Não há nenhum dispositivo disponível para mensagens</string>
     <string name="axo_ask_register">Registrar este dispositivo para mensagens?</string>
     <string name="axo_menu_register">Recurso de bate-papo</string>
-    <string name="axo_menu_devices">Gerenciamento de dispositivos de bate-papo</string>
+    <string name="menu_devices">Gerenciamento de dispositivos de bate-papo</string>
     <string name="axo_local_device">Impressão digital do dispositivo de mensagens local:</string>
     <string name="axo_local_device_id_empty">Id do dispositivo local vazio</string>
 
-    <plurals name="axo_devices">
+    <plurals name="axo_devices_n">
         <item quantity="one">Um dispositivo dispon&#237;vel para mensagens</item>
         <item quantity="other">%d dispositivos dispon&#237;veis para mensagens</item>
     </plurals>
 
 
-    <plurals name="axo_remote_devices">
+    <plurals name="axo_remote_devices_n">
         <item quantity="one">Um dispositivo remoto para mensagens</item>
         <item quantity="other">%d dispositivos remotos para mensagens</item>
     </plurals>
@@ -561,7 +560,7 @@
          \nClique no botão remover para eliminar um dispositivo antigo.</string>
     <string name="axo_device_explanation_remote">Esta lista poderá mostrar um dispositivo mais de uma vez se o aplicativo
          tiver sido removido e reinstalado no dispositivo do seu parceiro.</string>
-    <string name="axo_force_re_register">Forçar Axolotl a registrar novamente</string>
+    <string name="axo_force_re_register">Forçar ZINA a registrar novamente</string>
     <string name="message_state_unknown">Desconhecido</string>
     <string name="message_state_resend_requested">Reenvio solicitado</string>
     <string name="message_state_composing">Escrevendo</string>
@@ -589,7 +588,7 @@
     <string name="message_error_msg_not_init">Sessão não inicializada</string>
     <string name="message_error_msg_old">A mensagem é muito antiga para ser decodificada</string>
     <string name="message_error_msg_corrupt">Os dados recebidos estão corrompidos</string>
-    <string name="message_error_axo_conv_exists">Já existe uma conversa Axolotl, ao tentar estabelecer uma nova</string>
+    <string name="message_error_axo_conv_exists">Já existe uma conversa ZINA, ao tentar estabelecer uma nova</string>
     <string name="message_error_mac_check_failed">Falha na verificação HMAC da mensagem criptografada</string>
     <string name="message_error_msg_padding_failed">Espaçamento incorreto da mensagem decodificada</string>
     <string name="message_error_sup_padding_failed">Espaçamento incorreto de dados adicionais decodificados</string>
@@ -620,7 +619,6 @@
     <string name="messaging_attachment_export_warn_explanation">Avise ao exportar anexos de mensagens.</string>
     <string name="messaging_sounds">Reproduzir som para mensagens</string>
     <string name="messaging_sounds_explanation">Reproduzir som ao receber uma nova mensagem ou quando uma mensagem é removida.</string>
-    <string name="messaging_protection">Configuração de proteção de bate-papo</string>
     <string name="messaging_ringtone_title">Tom de notificação</string>
     <string name="messaging_light_title">Luz de notificação</string>
     <string name="messaging_vibrate_title">Padrão de vibração</string>
@@ -635,7 +633,7 @@
     <string name="messaging_light_green">Verde</string>
     <string name="messaging_light_white">White</string>
     <string name="messaging_light_purple">Roxo</string>
-    <string name="addContactTitle">Adicionar à conta de Silent Circle</string>
+    <string name="contact_adder_title">Adicionar à conta de Silent Circle</string>
     <string name="contactCreationFailure">Falha na criação de contato, verifique os registros.</string>
     <string name="contactNameLabel">Nome do Contato</string>
     <string name="dialog_auto_import">Começar a importar os contatos salvos?</string>
@@ -679,12 +677,11 @@
     <string name="messaging_conversation_list_type_image">Imagem</string>
     <string name="messaging_conversation_list_type_contact">Contato</string>
     <string name="messaging_conversation_list_failed_attachment">Falha ao anexar</string>
-    <string name="messaging_user_validation_generic_error">Falha ao validar o nome de usuário.</string>
-    <string name="messaging_user_validation_username_empty">O nome de usuário fornecido está vazio.</string>
-    <string name="messaging_user_validation_no_connection">Não é possível validar o nome de usuário sem uma conexão de rede.</string>
-    <string name="messaging_message_information_title">Informações da Mensagem</string>
-    <string name="messaging_message_information_copied_to_clipboard">Copiado para a área de transferência</string>
-    <string name="messaging_message_information_toggle_json_view">Alternar vista JSON</string>
+    <string name="user_validation_generic_error">Falha ao validar o nome de usuário.</string>
+    <string name="user_validation_username_empty">O nome de usuário fornecido está vazio.</string>
+    <string name="user_validation_no_connection">Não é possível validar o nome de usuário sem uma conexão de rede.</string>
+    <string name="debug_information_title">Informações da Mensagem</string>
+    <string name="debug_information_toggle_json_view">Alternar vista JSON</string>
     <string name="invite_sms_not_setup">Desculpe, parece que este dispositivo não suporta SMS, então não podemos enviar um convite.</string>
     <string name="invite_email_not_setup">Desculpe, você precisa configurar uma conta de e-mail antes que possamos enviar convites por e-mail.</string>
     <string name="invite_no_phone_or_email">Desculpe, parece que o contato não tem nenhum telefone ou e-mail, então não podemos enviar um convite.</string>
@@ -692,9 +689,6 @@
     
 <string name="basic_account_info">Com uma conta básica, você obtém mensagens seguras ilimitadas e chamadas recebidas grátis.
         \n\nVá ao site do <a href="https://accounts.silentcircle.com/">Silent Circle</a> e faça o upgrade da sua conta para poder realizar chamadas.</string>
-    
-<string name="basic_feature_info">Com uma conta básica, você tem limitado o uso de recursos
-        \n\nVá ao site do <a href="https://accounts.silentcircle.com/">Silent Circle</a> e faça o upgrade da sua conta.</string>
     
 <string name="expired_account_info">A sua conta expirou. Vá ao site do <a href="https://accounts.silentcircle.com/">Silent Circle</a> e renove a sua conta para poder realizar chamadas seguras.
         \n\nEnquanto isso, você pode continuar recebendo chamadas seguras e enviar/receber mensagens seguras.</string>
@@ -720,24 +714,6 @@
         de energia avançado quando está em modo de espera e o impacto na vida útil da bateria é desprezível.
     </string>
     <string name="provisioning_corp_email_hint">Endereço de e-mail corporativo</string>
-    <string name="messaging_screen_lock_enter_password_label">Digite a senha para desbloquear:</string>
-    <string name="messaging_screen_lock_enter_password_hint">Senha</string>
-    <string name="messaging_screen_lock_unlock">Desbloquear</string>
-    <string name="messaging_screen_lock_password_not_correct">Senha incorreta</string>
-    <string name="messaging_screen_lock_messaging_screen_protection">Proteção de tela de bate-papo: %s</string>
-    <string name="messaging_screen_lock_password_removed">Proteção de tela de bate-papo desativada</string>
-    <string name="messaging_screen_lock_password_enabled">Proteção de tela de bate-papo ativada</string>
-    <string name="messaging_screen_lock_password_update_failed">Falha na atualização da proteção de tela de bate-papo</string>
-    <string name="messaging_screen_lock_passwords_dont_match">As senhas não coincidem</string>
-    <string name="messaging_screen_lock_messaging_after">Bloquear vista de bate-papo %s</string>
-    <string name="messaging_screen_lock_enabled">Bloqueio de bate-papo ativado</string>
-    <string name="messaging_screen_locked">Bate-papo bloqueado</string>
-    <string name="messaging_screen_lock_set_password_and_timeout">Definir senha e tempo de espera</string>
-    <string name="messaging_screen_lock_enter_password">Digitar senha</string>
-    <string name="messaging_screen_lock_enter_password_description">Digite a senha para alterar a configuração de proteção de mensagens</string>
-    <string name="messaging_screen_lock_password_hint">Senha</string>
-    <string name="messaging_screen_lock_repeat_password_hint">Repita a senha</string>
-    <string name="messaging_screen_lock_timeout_updated">Tempo de espera atualizado</string>
     <string name="in_app_purchase">Compras dentro do aplicativo</string>
     <string name="select_amount">Por favor, forneça um valor para comprar</string>
     <string name="select">SELECIONAR</string>

@@ -29,6 +29,7 @@ public class ContactEntry {
     public String phoneLabel;
     public String phoneNumber;
     public String imName;
+    public String alias;
     public Uri photoUri;
     public Uri lookupUri;
     public Uri thumbnailUri;

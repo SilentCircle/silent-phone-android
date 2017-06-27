@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2014-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -35,7 +35,7 @@ import android.media.audiofx.AcousticEchoCanceler;
 import android.media.audiofx.AutomaticGainControl;
 import android.media.audiofx.NoiseSuppressor;
 import android.os.Build;
-import android.util.Log;
+import com.silentcircle.logs.Log;
 
 import com.silentcircle.silentphone2.util.ConfigurationUtilities;
 
@@ -47,6 +47,7 @@ import com.silentcircle.silentphone2.util.ConfigurationUtilities;
  *
  * Created by werner on 19.06.14.
  */
+@SuppressWarnings("unused")
 public class AudioRecordSp {
 
     private static final String TAG = AudioRecordSp.class.getSimpleName();
@@ -62,12 +63,10 @@ public class AudioRecordSp {
         mUseInternalAec = use;
     }
 
-    @SuppressWarnings("unused")
     public AudioRecordSp() {
         if (ConfigurationUtilities.mTrace) Log.d(TAG, "Create empty Audio recorder helper");
     }
 
-    @SuppressWarnings("unused")
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
     public AudioRecordSp(int sampleRateInHz, int channelConfig, int audioFormat, int bufferSizeInBytes) {
         if (ConfigurationUtilities.mTrace) Log.d(TAG, "Create Audio recorder");
@@ -96,12 +95,10 @@ public class AudioRecordSp {
         }
     }
 
-    @SuppressWarnings("unused")
     public static int getMinBufferSize(int sampleRateInHz, int channelConfig, int audioFormat) {
         return AudioRecord.getMinBufferSize (sampleRateInHz, channelConfig, audioFormat);
     }
 
-    @SuppressWarnings("unused")
     public int read(short[] audioData, int offsetInShorts, int sizeInShorts) {
         if (mRecorder != null) {
             return mRecorder.read(audioData, offsetInShorts, sizeInShorts);
@@ -109,7 +106,6 @@ public class AudioRecordSp {
         return 0;
     }
 
-    @SuppressWarnings("unused")
     public void startRecording() {
         if (ConfigurationUtilities.mTrace) Log.d(TAG, "Start recording, mRecorder: " + mRecorder);
         if (mRecorder != null) {
@@ -131,16 +127,20 @@ public class AudioRecordSp {
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
     public void stop() {
         if (ConfigurationUtilities.mTrace) Log.d(TAG, "Stop recording");
-        if (mAec != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN)
-            mAec.release();
-        if (mNoise != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN)
-            mNoise.release();
-        if (mGain != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN)
-            mGain.release();
-        if (mRecorder != null && mRecorder.getState() != AudioRecord.STATE_UNINITIALIZED) {
-            mRecorder.stop();
-            mRecorder.release();
+        try {
+            if (mAec != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN)
+                mAec.release();
+            if (mNoise != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN)
+                mNoise.release();
+            if (mGain != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN)
+                mGain.release();
+            if (mRecorder != null && mRecorder.getState() == AudioRecord.STATE_INITIALIZED) {
+                mRecorder.stop();
+                mRecorder.release();
+            }
+        } catch (Exception ignore) {}
+        finally {
+            mRecorder = null;
         }
-        mRecorder = null;
     }
 }

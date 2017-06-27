@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2014-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -32,7 +32,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 import android.text.TextUtils;
-import android.util.Log;
+import com.silentcircle.logs.Log;
 
 import com.silentcircle.silentphone2.R;
 import com.silentcircle.silentphone2.services.TiviPhoneService;
@@ -108,7 +108,8 @@ public class FindDialHelper {
         mHelperList.put("00_0", new Dial_00_0Helper());
         mHelperList.put("00_x", new Dial_00_xHelper());
         mHelperList.put("00_n", new Dial_00_nHelper());
-        mHelperList.put("_none_", mNullHelper);
+        // To match iOS, remove "simple" and replace "none" logic with "simple" logic
+        mHelperList.put("_none_", new SimpleHelper() /*mNullHelper*/);
         mHelperList.put("_simple_", new SimpleHelper());
 
         // Our partners and and if the customers of the partners should see the dial support option
@@ -399,7 +400,8 @@ public class FindDialHelper {
 
     private static void initialize(Context ctx) {
         mCountryList.put("!none_", new CountryData(ctx.getString(R.string.sp_dial_helper_none), "!none_", "", "_none_", "", ""));
-        mCountryList.put("!simple_", new CountryData(ctx.getString(R.string.sp_dial_helper_simple), "!simple_", "", "_simple_", "", ""));
+        // To match iOS, remove "simple" and replace "none" logic with "simple" logic
+//        mCountryList.put("!simple_", new CountryData(ctx.getString(R.string.sp_dial_helper_simple), "!simple_", "", "_simple_", "", ""));
     }
 
     public static CountryData getActiveCountry() {

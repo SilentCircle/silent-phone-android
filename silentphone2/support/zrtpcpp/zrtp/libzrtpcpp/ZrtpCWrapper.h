@@ -135,7 +135,8 @@ enum zrtp_WarningCodes {
     zrtp_WarningCRCmismatch,             /*!< Internal ZRTP packet checksum mismatch - packet dropped */
     zrtp_WarningSRTPauthError,           /*!< Dropping packet because SRTP authentication failed! */
     zrtp_WarningSRTPreplayError,         /*!< Dropping packet because SRTP replay check failed! */
-    zrtp_WarningNoExpectedRSMatch        /*!< Valid retained shared secrets availabe but no matches found - must verify SAS */
+    zrtp_WarningNoExpectedRSMatch,       /*!< Valid retained shared secrets availabe but no matches found - must verify SAS */
+    zrtp_WarningNoExpectedAuxMatch       /*!< Our AUX secret was set but the other peer's AUX secret does not match ours */
 };
 
 /**
@@ -843,7 +844,7 @@ extern "C"
      * and restriction how and when to use multi-stream mode.
      *
      * @param zrtpContext
-     *    Pointer to the opaque ZrtpContext structure.
+     *    Pointer to the opaque ZrtpContext structure of the master ZRTP session.
      * @param length
      *    Pointer to an integer that receives the length of the char array
      * @return
@@ -1179,11 +1180,11 @@ extern "C"
     *
     * The standard configuration consists of the following algorithms:
     * <ul>
-    * <li> Hash: SHA256 </li>
-    * <li> Symmetric Cipher: AES 128, AES 256 </li>
-    * <li> Public Key Algorithm: DH2048, DH3027, MultiStream </li>
+    * <li> Hash: SHA384, SHA256 </li>
+    * <li> Symmetric Cipher: Twofish 256, , AES 256, Twofish 128, AES 128, </li>
+    * <li> Public Key Algorithm: EC-DH256, DH3072, EC-DH384, DH2048, MultiStream </li>
     * <li> SAS type: libase 32 </li>
-    * <li> SRTP Authentication lengths: 32, 80 </li>
+    * <li> SRTP Authentication lengths: SK32, SK64, 32, 80 </li>
     *</ul>
     *
     * @param zrtpContext

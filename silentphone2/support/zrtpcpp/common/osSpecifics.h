@@ -52,12 +52,12 @@
 #endif
 
 #ifdef __GNUC__
-#define DEPRECATED __attribute__((deprecated))
+#define DEPRECATED_ZRTP __attribute__((deprecated))
 #elif defined(_MSC_VER)
-#define DEPRECATED __declspec(deprecated)
+#define DEPRECATED_ZRTP __declspec(deprecated)
 #else
-#pragma message("WARNING: You need to implement DEPRECATED for this compiler")
-#define DEPRECATED
+#pragma message("WARNING: You need to implement DEPRECATED_ZRTP for this compiler")
+#define DEPRECATED_ZRTP
 #endif
 
 #if defined(__cplusplus)

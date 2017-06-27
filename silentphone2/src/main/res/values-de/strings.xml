@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<resources>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <string name="next">Weiter</string>
     <string name="back">Zurück</string>
     <string name="dismiss_call">Ablehnen</string>
@@ -24,10 +24,12 @@
     <string name="sip_state_offline">Offline</string>
     <string name="sip_error_register">Anmeldungsfehler</string>
     <string name="sip_error_generic">Keine Verbindung</string>
-    <string name="sip_error_decline">Ruf abgewiesen</string>
+    <string name="sip_error_decline">Anruf abgewiesen</string>
     <string name="sip_error_no_user">Kein Teilnehmer</string>
     <string name="sip_error_no_cover">Keine Funkverbindung</string>
     <string name="sip_error_no_server">Server nicht erreichbar</string>
+    <string name="sip_error_call_answered_elsewhere">Anruf wurde woanders angenommen</string>
+
     <string name="call_error">Fehler</string>
     <string name="secstate_secure">SICHER</string>
     <string name="secstate_secure_question">SICHER?</string>
@@ -336,7 +338,7 @@
     <string name="server_cert_failure">Zertifikatsprüfung fehlgeschlagen - wird wiederholt</string>
     <string name="remaining_oca_minutes">Verbleibende Minuten für OCA</string>
     <string name="remaining_oca_minutes_fail">Keine OCA Information verfügbar</string>
-    <string name="remaining_oca_minutes_zero">Kein Minuten verbraucht. Es verbleiben: %1$d Minuten.</string>
+    <string name="remaining_oca_minutes_zero">Keine Minuten verbraucht. Es verbleiben: %1$d Minuten.</string>
     <!-- PLURAL -->
     <plurals name="remaining_oca_minutes_info">
         <item quantity="one">Sie haben eine Minute von %1$d Minuten verbraucht.</item>
@@ -423,7 +425,7 @@
     <string name="save_conversation">Konversation sichern</string>
     <string name="verify_description_verified">For added security, you have verified this message with the recipient.</string>
     <string name="verify_description_unverified">For added security, verify this message with the recipient.</string>
-    <string name="reset_keys">Reset Keys</string>
+    <string name="reset_keys">Schlüssel zurücksetzen</string>
     <string name="no_expiration">Nachrichten verfallen nicht</string>
     <!-- CHECK -->
     <string name="messages_expire">Nachrichten verfallen in %1$s</string>
@@ -456,7 +458,8 @@
     <string name="location_mode_device">Device only (GPS)</string>
     <string name="location_mode_battery_saving">Battery saving</string>
     <string name="location_mode_high_accuracy">High accuracy</string>
-    <string name="chat_view_empty">Konversations Log ist leer.</string>
+    <string name="chats_view_empty">Noch keine Konversationen\nKlicken Sie das Plus-Zeichen um eine Konversation zu starten.</string>
+    <string name="chat_view_empty">Die Konversation ist leer.\nEine Nachricht unten eingeben,\nfür einen Anruf den Hörer oben klicken</string>
     <string name="conversation_with">Konversation mit %1$s</string>
     <string name="username_unknown">Unbekannt</string>
     <string name="toast_saved_to">Gesichert nach </string>
@@ -465,14 +468,18 @@
     <string name="no_axo_device">Kein Gerät für Text freigeschaltet</string>
     <string name="axo_ask_register">Dieses Gerät für Text freischalten?</string>
     <string name="axo_menu_register">Freischalten für Text</string>
-    <string name="axo_menu_devices">Verwalten der Geräte für Text</string>
+    <string name="menu_devices">Verwalten der Geräte für Text</string>
     <!-- PLURAL -->
-    <plurals name="axo_devices">
+    <plurals name="axo_devices_n">
         <item quantity="one">Ein Ger&#228;t ist f&#252;r Text freigeschaltet</item>
         <item quantity="other">%d Ger&#228;te sind f&#252;r Text freigeschaltet</item>
     </plurals>
 
-    
+    <plurals name="axo_remote_devices_n">
+        <item quantity="one">Partner hat ein Geräte</item>
+        <item quantity="other">Partner hat %d Geräte</item>
+    </plurals>
+
 <string name="axo_device_explanation">Die Liste kann ein Gerät mehrfach anzeigen wenn die App auf dem Gerät
         gelöscht und neu installiert wurde. Aus Sicherheitsgründen wird jedesmal eine neue Sicherheitskonfiguration
         erstellt.
@@ -484,7 +491,7 @@
     <string name="message_error_msg_not_dec">Konnte empfangene Nachricht nicht entschlüsseln</string>
     <string name="message_error_msg_no_js">Ein Datenfeld (JSON) fehlt</string>
     <string name="message_error_msg_no_key">Gesendeter \'Pre-key\' wurde nicht gefunden - unbekannte \'Pre-key\' Identifikation</string>
-    <string name="message_error_msg_no_session">Es wurde keine Textverbindung für diesen Benutzer gefunden</string>
+    <string name="message_error_msg_no_session">Es wurde keine Konversationsdaten für diesen Benutzer gefunden</string>
     <string name="message_error_msg_old">Nachricht ist zu alt - kann ncht mehr verarbeitet werden</string>
     <!-- CHECK -->
     <string name="messaging_file_viewer_view_with">Öffne %1$s</string>
@@ -500,7 +507,7 @@
 <string name="axo_device_explanation_remote">Die Liste kann ein Gerät mehrfach anzeigen wenn die App auf dem Gerät des
         Partners gelöscht und neu installiert wurde. </string>
     <string name="axo_remote_dev_rescan">Prüfe ob neue Geräte vorhanden</string>
-    <string name="axo_remote_dev_renew">Verbindungen rücksetzten/neu aufbauen</string>
+    <string name="axo_remote_dev_renew">Verbindungen neu aufbauen</string>
     <string name="call_detail_list_header">Anrufliste</string>
     <string name="call_log_action_invite">Zu Silent Circle einladen</string>
     <string name="capture_audio_label">Audioaufnahme</string>
@@ -515,7 +522,7 @@
     <string name="forward">Weiterleiten</string>
     <string name="import_contact">Importieren</string>
     <string name="info">Info</string>
-    <string name="message_error_axo_conv_exists">Axolotlverbindung besteht schon, keine Neue notwendig</string>
+    <string name="message_error_axo_conv_exists">ZINA-Verbindung besteht schon, keine Neue notwendig</string>
     <string name="message_error_enc_block">Interner Fehler: falsche Datenlänge für Verschlüsselung</string>
     <string name="message_error_enc_key">Falsche Schlüssellänge für Verschlüsselung </string>
     <string name="message_error_mac_check_failed">HMAC Überprüfung fehlgeschlagen</string>
@@ -535,6 +542,19 @@
     <string name="message_error_sup_padding_failed">Datenformat fehlerhaft nach Entschlüsselung (padding, Zusatzdaten)</string>
     <string name="message_error_unknown">Unbekannter Fehlercode</string>
     <string name="message_error_wrong_recv_dev_id">Gerätekennung stimmt nicht mit der erwarteten Kennung überein</string>
+
+    <string name="message_error_group_400">Datenbankfehler Gruppenchat, Code: %1$d</string>
+    <string name="message_error_group_450">Maximale Anzahl Gruppenmitglieder erreicht</string>
+    <string name="message_error_group_451">Kommandonachricht ohne Daten empfangen (Gruppenchat)</string>
+    <string name="message_error_group_452">Kommandonachricht ohne gültiges Kommando empfangen (Gruppenchat)</string>
+    <string name="message_error_group_453">Gruppennachricht ohne Daten empfangen.</string>
+    <string name="message_error_group_454">Neues Gruppenmitglied kann nicht in Datenbank gespeichert werden</string>
+    <string name="message_error_group_455">Die Gruppe existiert nicht oder ist nicht aktiv.</string>
+    <string name="message_error_group_456">Neue Gruppendaten: Datentyp nicht bekannt.</string>
+    <string name="message_error_group_457">Neue Gruppendaten: Keine Versionsdaten (vector clock) vorhanden.</string>
+    <string name="message_error_group_458">Es werden gerade neue Gruppendaten vorbereitet und verteilt.</string>
+    <string name="message_error_group_459">Es sind keine vorbereiteten Gruppendaten verfügbar.</string>
+
     <string name="message_state_burned">Verbrannt</string>
     <string name="message_state_composed">Erstellt</string>
     <string name="message_state_composing">Erstellen</string>
@@ -600,15 +620,14 @@
     <!-- CHECK -->
     <string name="toast_failed_to_export_file">Konnte Datei %1$s nicht exportieren</string>
     <string name="uploading">Uploading…</string>
-<string name="basic_account_info">Mit dem kostenlosen Basiskonto können sie unbegrenzt Nachrichten senden und
-        empfangen sowie Anrufe entgegennehmen.
-        \nAuf der Silent Circle Webseite können Sie die Funktionen ihres Kontos erweitern.</string>
     <string name="amount">Betrag</string>
     <string name="amount_level_4">Anderer</string>
-    <!-- CHECK -->
-<string name="basic_feature_info">Mit dem Basiskonto können sie nicht alle Funktionen verwenden.
-        \n\nAuf der <a href="https://accounts.silentcircle.com/">Silent Circle Webseite</a> können Sie Ihr Konto erweitern.</string>
-<string name="battery_info">Bitte bestätigen Sie die Aufforderung im nächsten Dialogfenster.
+
+    <string name="basic_account_info">Mit dem Basiskonto können sie nicht alle Funktionen verwenden. Auf der <a href="https://accounts.silentcircle.com/">Silent Circle Webseite</a> können Sie Ihr Konto erweitern.</string>
+    <string name="basic_account_info_free">Mit dem Basiskonto können sie nicht alle Funktionen verwenden. Auf der <a href="https://accounts.silentcircle.com/">Silent Circle Webseite</a> können Sie Ihr Konto erweitern.
+    \n\nWährenddessen können sie Nachrichten empfangen sowie Anrufe entgegennehmen.</string>
+
+    <string name="battery_info">Bitte bestätigen Sie die Aufforderung im nächsten Dialogfenster.
         Wenn SilentPhone nicht online ist können Sie keine Anrufe oder Nachrichten empfangen. SilentPhone verbraucht sehr
         wenig Strom im Standby-Mode.
     </string>
@@ -631,8 +650,11 @@
     <string name="dial_drawer_settings_description">Silent Phone konfigurieren</string>
     <string name="dial_drawer_wipe_phone_description">Löschen aller Daten von Silent Phone und beenden</string>
     <string name="dialog_message_file_too_large">Die Datei ist zu groß</string>
+    <string name="dialog_message_wipe_phone">Die löscht alle Konversationen, Anrufliste, und andere Silent Phone Daten. Die Anwendung wird beendet. Beim Neustart von Silent Phone müssen Sie sich neu anmelden.</string>
+    <string name="dialog_message_wipe_after_timer">Diese Gerät wurde von der Liste der authorisierten Geräte entfernt, es wird sich in %s beenden und alle Anwendungsdaten werden gelöscht.</string>
+    <string name="dialog_message_close_after_timer">Diese Gerät wurde von der Liste der authorisierten Geräte entfernt, es wird sich in %s beenden. Bitte löschen Sie die Anwednungsdaten manuell.</string>
     <string name="dialog_message_need_funding">Damit sie Silent Circle Dienste verwenden können muss Ihr Konto ein Guthaben von mindestens $5,00 (USD) haben. </string>
-    <string name="dialog_message_unable_to_send_to">Es können keine Nachrichten an %1$s gesendet werden. Bitte prüfen Sie ob der Name korrekt ist.</string>
+
     <string name="dialog_positive_need_funding">Guthaben einzahlen</string>
     <string name="dialog_title_choose_action">Aktion auswählen</string>
     <string name="dialog_title_error">Fehler</string>
@@ -662,6 +684,9 @@
     <string name="invite_sms_not_setup">Diese Gerät hate keine SMS Funktion, Silent Phone kann keine Einladung senden.</string>
     <string name="make_payment">Für sichere Anrufe ist ein Guthaben erforderlich</string>
     <string name="message_state_failed">Fehlgeschlagen</string>
+    <string name="message_info_user_added_new_device">%1$s hat das Gerät \'%2$s\' hinzugefügt.</string>
+    <string name="message_info_user_removed_device">%1$s hat das Gerät \'%2$s\' entfernt.</string>
+
     <string name="messaging_compose_length_error">Die maximale Zeichenanzahl ist erreicht.</string>
     <string name="messaging_conversation_list_failed_attachment">Anhang ist fehlgeschlagen</string>
     <string name="messaging_conversation_list_file_received">%1$s empfangen</string>
@@ -680,32 +705,12 @@
     <string name="messaging_light_red">Rot</string>
     <string name="messaging_light_title">Hinweislicht</string>
     <string name="messaging_light_white">Weiß</string>
-    <string name="messaging_message_information_copied_to_clipboard">Zur Zwischenablage kopiert</string>
-    <string name="messaging_message_information_title">Nachrichteninformation</string>
-    <string name="messaging_message_information_toggle_json_view">JSON Ansicht ein/aus</string>
-    <string name="messaging_protection">Konfigurieren des Nachrichtenschutzes</string>
+    <string name="debug_information_title">Nachrichteninformation</string>
+    <string name="debug_information_toggle_json_view">JSON Ansicht ein/aus</string>
     <string name="messaging_ringtone_title">Hinweiston</string>
-    <string name="messaging_screen_lock_enabled">Nachrichtenschutz ist aktiv</string>
-    <string name="messaging_screen_lock_enter_password">Passwort eingeben</string>
-    <string name="messaging_screen_lock_enter_password_description">Zum Ändern des Nachrichtenschutzes Passwort eingeben</string>
-    <string name="messaging_screen_lock_enter_password_hint">Passwort</string>
-    <string name="messaging_screen_lock_enter_password_label">Zur Freigabe Passwort eingeben</string>
-    <string name="messaging_screen_lock_password_hint">Passwort</string>
-    <string name="messaging_screen_lock_password_not_correct">Passwort falsch</string>
-    <string name="messaging_screen_lock_password_removed">Nachrichtenschutz ist nicht aktiv</string>
-    <string name="messaging_screen_lock_passwords_dont_match">Passwörter stimmen nicht überein</string>
-    <string name="messaging_screen_lock_repeat_password_hint">Passwort wiederholen</string>
-    <string name="messaging_screen_lock_set_password_and_timeout">Passwort und Timeout setzen</string>
-    <string name="messaging_screen_lock_timeout_updated">Timeout neu eingestellt</string>
-    <string name="messaging_screen_lock_unlock">Freigeben</string>
-    <string name="messaging_screen_locked">Nachrichten gesperrt</string>
-    <string name="messaging_screen_lock_password_enabled">Nachrichtenschutz ist aktiv</string>
-    <string name="messaging_screen_lock_messaging_screen_protection">Nachrichtenschutz: %s</string>
-    <string name="messaging_screen_lock_messaging_after">Nachrichtenansicht sperren %s</string>
-    <string name="messaging_screen_lock_password_update_failed">Ändern des Nachrichtenschutzes fehlgeschlagen</string>
-    <string name="messaging_user_validation_generic_error">Falscher/ungültiger Nutzername</string>
-    <string name="messaging_user_validation_no_connection">Keine Netzwerkverbindung um den Nutzernamen zu prüfen</string>
-    <string name="messaging_user_validation_username_empty">Kein Nutzername eingegeben</string>
+    <string name="user_validation_generic_error">Falscher/ungültiger Nutzername</string>
+    <string name="user_validation_no_connection">Keine Netzwerkverbindung um den Nutzernamen zu prüfen</string>
+    <string name="user_validation_username_empty">Kein Nutzername eingegeben</string>
     <string name="messaging_vcard_cannot_show_selected_contact">Ausgewählter Kontakt kann nicht angezeigt werden</string>
     <string name="messaging_vcard_importing_contact">Kontakt für %s wird importiert</string>
     <string name="messaging_vibrate_default">Standard</string>
@@ -752,12 +757,18 @@
     <string name="validationErrors">Fehler bei der Überprüfung</string>
     <string name="wipe_data_failed">Löschen der Daten fehlgeschlagen - bitte Silent Phone normal de-installieren</string>
     <string name="message_error_network_error">Netwerkfehler oder Server antworted nicht</string>
+    <string name="message_error_data_missing">Fehlende Daten für diese Funktion</string>
+    <string name="message_error_database_error">Fehler bei Datenbankzugriff</string>
+    <string name="message_error_reject_data_retention">Zurückgewiesen wegen den Einstellungen zur Datenspeicherung</string>
+    <string name="message_error_pre_key_hash_wrong">Überprüfung des Ratchet Pre-keys nicht erfolgreich.</string>
+    <string name="message_error_illegal_argument">Functionswert nicht korrekt (Interner Fehler)</string>
+    <string name="message_error_remote_decrypt_failed">Empfänger konnte die Nachricht nicht korrekt verarbeiten.</string>
+
     <string name="messaging_checked_verified">Verifiziert</string>
     <string name="wipe">Alle Silent Phone Daten löschen</string>
     <string name="setting_errors_option">Geringfügige Fehler anzeigen</string>
 
-    <string name="hw_device_id_mismatch">HW Gerät-Id stimmt nicht überein: \nGespeichert: %1$s\nBerechnet: %2$s
-        \n\nBitte Anwendung de-installieren und dann neu installieren.</string>
+    <string name="hw_device_id_mismatch">HW Geräte-Id stimmt nicht überein: \nGespeichert: %1$s\nBerechnet: %2$s\n        \n\nBitte Anwendung de-installieren und dann neu installieren.</string>
 
     <string name="percentage">"%s %%"</string>
     <string name="search">Suchen</string>
@@ -772,7 +783,7 @@
     <string name="block_screenshots_title">Bildschirmfotos blockieren</string>
     <string name="block_screenshots_description">Keine Bildschirmfotos von Silent Phone zulassen. Entfernen Sie Silent Phone aus dem Verlauf nachdem Sie ein Einstellung geändert haben.</string>
     <string name="axo_local_device_id_empty">Kein Gerätekennzeichen verfügbar </string>
-    <string name="addContactTitle">In Kontakten speichern</string>
+    <string name="contact_adder_title">In Kontakten speichern</string>
 
     <string name="permission_location_title">Wozu wird \'Standort\' benötigt?</string>
     <string name="permission_location_explanation">Sie können Ihren aktuellen Standort zusammen mit einer Nachricht verschicken. In diesem Fall beötigt Silent Phone die Standortinformation.</string>
@@ -794,6 +805,10 @@ Wenn Sie einen Anruf mit Silent Phone machen und währenddessen ein normaler Anr
 \n\nSilent Phone tätigt keine normalen Telefonanrufe.</string>
     <string name="permission_storage_title">Wozu werden Medien/Daten benötigt?</string>
     <string name="permission_storage_explanation">Sie können Nachrichtenanhänge, zum Beispiel Bilder oder Sprachnachrichten, teilen und speichern. In diesem Fall benötigt Silent Phone dieses Berechtigung.</string>
+
+    <string name="permission_camera_title">Warum Zugriff auf die Kamera?</string>
+    <string name="permission_camera_explanation">Silent Phone verwendet die Kamera damit sie Bilder oder Video aufnehmen und als\n        Anhang verschicken können. Die Kamera wird ebenflass für Videoanrufe verwendet.</string>
+
     <string name="messaging_avatar_voiceover">Bild des Partners</string>
     <string name="messaging_back_button_voiceover">Zurück zur Konversation</string>
     <string name="messaging_burn_delay_voiceover">Setze Dauer bis zum Verbrennen der Nachricht</string>
@@ -803,4 +818,367 @@ Wenn Sie einen Anruf mit Silent Phone machen und währenddessen ein normaler Anr
     <string name="share_contact">Teilen des Kontaktes</string>
     <string name="take_photo">Foto aufnehmen</string>
     <string name="take_video">Video aufnehmen</string>
+    <string name="avatar_choose_image_from_gallery_voiceover">Bild aus Fotogallerie wählen</string>
+    <string name="avatar_could_not_show_image">Kann das Bild nicht anzeigen</string>
+    <string name="avatar_delete_photo_voiceover">Lösche Avatarbild</string>
+    <string name="avatar_show_as_circle">Als Kreis anzeigen</string>
+    <string name="avatar_show_as_square">Als Rechteck anzeigen</string>
+    <string name="avatar_take_a_photo_voiceover">Foto aufnehmen</string>
+    <string name="call_settings">Enstellungen Anrufe</string>
+    <string name="contact_create_new">Neuen Kontakt erstellen</string>
+    <string name="contact_save_existing">Zum Kontakt hinzufügen</string>
+    <string name="dialog_call_failed_to_send_to">Anruf nicht erfolgreich %1$s.\n\n%2$s</string>
+    <string name="dialog_title_choose_avatar_action">Avataraktion auswählen</string>
+    <string name="dialog_title_device_deleted">Das Gerät wurde gelöscht</string>
+    <string name="dialog_title_unable_to_call">Anruf nicht möglich</string>
+    <string name="gallery">Fotogallerie</string>
+    <string name="messaging_theme_dark">Dunkle Farben</string>
+    <string name="messaging_theme_light">Helle Farben</string>
+    <string name="loading">Laden…</string>
+    <string name="listFoundAllResultsZero">Kein Ergebnis</string>
+    <string name="dialog_title_select_messaging_theme">Chatfarben auswählen</string>
+    <string name="onboarding_connect_with_people">Bleiben Sie in Kontakt</string>
+    <string name="onboarding_enterprise_privacy_platform">Datenschutz für Unternehmen</string>
+    <string name="onboarding_lets_get_started">Los gehts</string>
+    <string name="onboarding_private_encrypted">Vertrauliche, verschlüsselte Kommunikation und sichere Dateiübertragung zu jedem Gerät, für jeden in ihrem Unternehmen.</string>
+    <string name="onboarding_search_for">Suchen nach Partnern in ihreren Kontakten, entweder mit E-mail Adresse oder dem vollen Namen</string>
+    <string name="onboarding_silent_circle_is">Silent Circle ist die Firma für sichere Kommunikation und bietet mobile Geräte, Softwareanwendungen, und Kommunikationsmanagement für Unternehmen an.</string>
+    <string name="one_day">Ein Tag</string>
+    <string name="permission_storage_explanation_1">Auf Ihre Anforderung hin kann Silent Phone Fehlerdaten verschlüsset speichern und für Diagnosezwecke übermitteln. Dafür ist Ihre Zusatimmung notwendig.</string>
+    <string name="record_audio">Sprachnachricht</string>
+    <string name="scContactsList">Silent Circle Kontakte</string>
+    <string name="scRemoteContactsList">Silent Circle Adressbuch</string>
+    <string name="send_logs">Fehler melden und Fehlerdaten übermitteln</string>
+    <string name="setting_debug_logging">Fehlerdiagnose ermöglichen</string>
+    <string name="setting_debug_logging_summary">Speichert Fehlerdaten auf Ihrem Gerät, dies hilft bei der Diagnose wenn Sie einen Fehler melden.</string>
+    <string name="setting_debug_logging_config">Zeitraum für gespeicherte Fehlerdaten wählen</string>
+    <string name="setting_send_logs">Fehler melden und Fehlerdaten senden</string>
+    <string name="three_day">Drei Tage</string>
+    <string name="two_day">Zwei Tage</string>
+    <string name="upload_logs_successfully">Fehler erfolgreich gemeldet</string>
+    <string name="verify_question">Prüfen?</string>
+    <string name="no_decrypted_log_files">Keine entschlüsselten Fehlerdateien.</string>
+    <string name="logging_net_work_connection_error">Bitte eine Internetverbindung herstellen und nochmals versuchen.</string>
+    <string name="error_read_logs">Fehler beim Lesen der verschlüsselten Fehler-/Diagnosdaten</string>
+    <string name="failed_to_send_logs">Der Fehler konnte nicht gemeldet werden.</string>
+    <string name="compare_with">Vergleiche mit</string>
+    <string name="can_not_store_decrypted_logs">Konnte entschlüsselte Fehlerdateien nicht temporär speichern.</string>
+    <string name="data_retention_your_organization">Ihre Organisation</string>
+    <string name="data_retention_data_retained_by">%s verlangt eine Speicherung der Kommunikationsdaten</string>
+    <string name="data_retention_message_attachments">Nachtichtenanhänge</string>
+    <string name="data_retention_call_metadata">Gesprächsdaten (wann, wer)</string>
+    <string name="data_retention_calls">Gesprächsinhalte</string>
+    <string name="data_retention_message_metadata">Nachrichtendaten (wann, wer)</string>
+    <string name="data_retention_message_plaintext">Nachrichteninhalte</string>
+    <string name="data_retention_data_retention_description_remote">Die Organisation/Firma des Empfängers verlangt eine Speicherung der Kommunikationsdaten.
+        Silent Phone speichert die Daten und übermittelt sie an die Organisation/Firma des Empfängers.</string>
+
+    <string name="description_dial_pad_toggle">Umschalter Tastatur</string>
+    <string name="call_unavailable">Nicht verfügbar</string>
+    <string name="block_dr_description">Blockiere die Speicherung von Verbindungsdaten, Anhängen, Nachrichten- und Gesprächsinhalten für ihre oder von andere Organisationen.</string>
+    <string name="block_dr_title">Blockiere speichern von Kommunikationsdaten</string>
+    <string name="block_local_data_retention">Blockiere speichern von Inhalten (lokal)</string>
+    <string name="block_local_metadata_retention">Blockiere speichern von Verbindungsdaten (lokal)</string>
+    <string name="block_remote_data_retention">Blockiere speichern von Inhalten (Partner)</string>
+    <string name="block_remote_metadata_retention">Blockiere spiechern von Verbindungsdaten (Partner)</string>
+    <string name="messaging_conversation_list_call_voiceover">Anrufen</string>
+    <string name="messaging_conversation_list_delete_conversation_voiceover">Konversation löschen</string>
+    <string name="provisioning_sso">Login mit Single Sign On</string>
+    <string name="rekey_messaging_sessions">Neue Schlüssel aushandeln</string>
+    <string name="remaining_oca_minutes_loading_dialog">Kontoinformationen holen…</string>
+    <string name="warning_partner_dr_enabled">Kommunikationsdatenspeicherung für diese Konversation ist aktiv</string>
+    <string name="avatar_action_delete">Avatar löschen</string>
+    <string name="avatar_action_select_from_gallery">Bild auswählen</string>
+    <string name="avatar_action_take_a_photo">Foto machen</string>
+    <string name="axo_device_options_voiceover">Aktion</string>
+    <string name="axo_devices">Verfügbare Geräte</string>
+    <string name="axo_force_re_register">Neue ZINA Registrierung erzwingen</string>
+    <string name="axo_remote_devices">Geräte des Partners</string>
+    <string name="dialer_activity_conversation_button">Neue Konversation starten</string>
+    <string name="immediately">sofort</string>
+    <string name="logging_error">Fehler</string>
+    <string name="warning_ringtone_picked_unavailable">Kann Klingeltonauswahl nicht starten.</string>
+    <string name="warning_selected_action_unavailable">Kann die gewählte Aktion nicht starten</string>
+    <string name="accepted">angenommen</string>
+    <string name="activity_conversation_voiceover">Konversation</string>
+    <string name="capture_picture_error">Problem beim Aufnehmen des Bildes. Bitte versuchen Sie es nochmal.</string>
+    <string name="data_retention_data_retained">Folgende Daten werden gespeichert:</string>
+    <string name="data_retention_data_retains">" und speichert"</string>
+    <string name="data_retention_for_user">Für Benutzer</string>
+    <string name="data_retention_on">Kommunikationsdatenspeicherung AKTIV &#9432;</string>
+    <string name="data_retention_policy_error">Fehler - Kommunikationsdatenspeicherung</string>
+    <string name="data_retention_remote_organization">Organisation des Partners</string>
+    <string name="data_retention_retaining_organization">Speichernde Organisation</string>
+    <string name="description_keyboard_toggle">Umschalten Tastatur</string>
+    <string name="description_of_problem">Problembeschreibung</string>
+    <string name="dialog_message_dr_enabled">Ihre Organisation/Firma erzwingt eine Speicherung der Kommunikationsdaten. In Ihren
+        Einstellungen haben Sie das jedoch blockiert und Silent Phone spichert diese Daten nicht. Deswegen ist keine Kommunication möglich.
+
+        Damit Sie mit dem Partner kommunizieren können ändern Sie entweder die Einstellung \"Blockiere speichern von Kommunikationsdaten\"
+        in den Silent Phone Einstellungen oder kontaktieren Sie den Systemadministrator Ihrer Organisation/Firma ob die
+        Speicherung der Kommunikationsdaten deaktiviert werden kann.</string>
+
+    <string name="dialog_message_remote_dr_enabled">Die Organisation/Firma Ihres Kommunikationspartners erzwingt eine Speicherung
+        der Kommunikationsdaten. In Ihren Einstellungen haben Sie das jedoch blockiert und Silent Phone spichert diese Daten nicht.
+        Deswegen ist keine Kommunication möglich.
+
+        Damit Sie mit dem Partner kommunizieren können ändern Sie die Einstellung \"Blockiere speichern von Kommunikationsdaten\"
+        in den Silent Phone Einstellungen.</string>
+
+    <string name="dialog_message_communication_dr_blocked">Ihr Kommunikationspartner möchte keine Nachrichten von Benutzern empfangen,
+        deren Einstellungen eine Speicherung der Kommunikationsdaten verlangen. Ihre Organisation/Firma %1$s erzwingt jedoch eine
+        Speicherung der Kommunikationsdaten. Deswegen ist keine Kommunication möglich.
+
+        Damit Sie mit dem Partner kommunizieren können müsste er/sie die Einstellung \"Blockiere speichern von Kommunikationsdaten\"
+        ändern oder Sie kontaktieren den Systemadministrator Ihrer Organisation/Firma ob die Speicherung der Kommunikationsdaten
+        deaktiviert werden kann.</string>
+
+    <string name="dialog_message_communication_dr_required">Die Organisation/Firma Ihres Kommunikationspartners erzwingt eine Speicherung
+        der Kommunikationsdaten. Sie haben dies jedoch mit \"Blockiere speichern von Kommunikationsdaten\" in den Silent Phone Einstellungen
+        blockiert. Deswegen ist keine Kommunication möglich.
+
+        Damit Sie mit dem Partner kommunizieren können ändern Sie die genannten Einstellung.</string>
+    <string name="dialog_title_data_retention">Kommunikationsdaten</string>
+    <string name="thanks_data_retention">Datenspeicherung:</string>
+    <string name="thanks_data_retention_on">AKTIV &#9432;</string>
+    <string name="thanks_organization">Organisation</string>
+    <string name="thanks_plan">Tarif:</string>
+    <string name="block_local_dr_description">Diese Gerät darf keine Inhalte speichern und zu einem Server schicken.</string>
+    <string name="block_local_dr_title">Blockiere speichern von Inhalten (lokal)</string>
+    <string name="block_remote_dr_description">Keine Kommunikation mit Partnern deren Geräte Inhalte speichern und an Server schicken.</string>
+    <string name="block_remote_dr_title">Blockiere speichern von Inhalten (Partner)</string>
+    <string name="data_retention_call_retained">Gespräch wird aufgezeichnet</string>
+    <string name="data_retention_calls_blocked">Anrufe geblockt &#9432;</string>
+    <string name="data_retention_communication_blocked">Kommunikation geblockt &#9432;</string>
+    <string name="data_retention_communication_blocked_remote">Nachricht nicht gesendet da der Partner das Speichern von Kommunikationsdaten blockiert hat.</string>
+    <string name="data_retention_communication_dr_blocked">Nachricht nicht gesendet wegen den Einstellungen ihrer Organisation zum Speichern von Kommunkationsdaten.</string>
+    <string name="data_retention_communication_dr_required">Nachricht nicht gesendet wegen den Einstellungen des Partners zum Speichern von Kommunkationsdaten.</string>
+    <string name="data_retention_data_retention_description_both">Ihre und die Organisation des Partners verlangen die Speicherung von Kumminkationsdaten. Silent Phone speichert diese Daten und sendet diese zu Servern der Organisationen.</string>
+    <string name="data_retention_data_retention_description_local">Ihre Organisation verlanget die Speicherung von Kumminkationsdaten. Silent Phone speichert diese Daten und sendet diese zu Servern ihrer Organisation.</string>
+    <string name="data_retention_message_not_delivered">Nachricht nicht geliefert.</string>
+    <string name="data_retention_message_retained">Kommunikationsdaten gespeichert</string>
+    <string name="data_retention_retaining_organizations">Speichernde Organisationen</string>
+    <string name="data_retention_messaging_blocked">Messaging blockiert &#9432;</string>
+    <string name="dialog_message_communication_blocked_remote">Ihr Partner speichert Kommunikationsdaten auf einem Server, Kommunikation mit dem Partner wurde blockiert.</string>
+    <string name="dialog_message_dr_blocked_by_default">Zu Ihrer Sicherheit haben wir die Speicherung von Kommunikationsdaten blockiert.</string>
+    <string name="dialog_message_invited_to_group_conversation">Sie wurden von %2$s in die Gruppe %1$s eingeladen.</string>
+    <string name="dialog_message_pstn_disabled">Dieser Anruf benötigt den Dienst \'Silent World\' und kann daher nicht ausgeführt werden.</string>
+    <string name="minute">Minute</string>
+    <string name="minutes">Minuten</string>
+    <string name="not_enabled">Nicht freigegeben</string>
+    <string name="passcode_change">Passcode eingeben</string>
+    <string name="passcode_data_wiped_warn">Daten des Programms werden gelöscht.</string>
+    <string name="passcode_disable">Passcode ausschalten</string>
+    <string name="passcode_disabled">Passcode ist ausgeschaltet.</string>
+    <string name="passcode_enable">Passcode einschalten</string>
+    <string name="passcode_enter_any">Passcode eingeben</string>
+    <string name="passcode_enter_new">Neuen Passcode eingeben</string>
+    <string name="passcode_enter_old">Alten Passcode eingeben</string>
+    <string name="passcode_enter_your">Ihren Passcode eingeben</string>
+    <string name="passcode_locked_try_again">Versuchen Sie es nochmal in</string>
+    <string name="passcode_minute">\"%1$d Minute\"</string>
+    <string name="passcode_minutes">\"%1$d Minuten\"</string>
+    <string name="passcode_mismatch">Passcodes stimmen nicht überein</string>
+    <string name="passcode_reenter">Neuen Passcode nochmal eingeben</string>
+    <string name="passcode_set">Passcode ist gesetzt</string>
+    <string name="passcode_sp_locked">Silent Phone ist gesperrt</string>
+    <string name="passcode_timeout">Passcode ist erforderlich</string>
+    <string name="passcode_timeout_immediately">sofort</string>
+    <string name="passcode_title">Passcode</string>
+    <string name="passcode_tries_left">Sie haben noch %1$d Versuche.</string>
+    <string name="passcode_try_again">Nochmal versuchen</string>
+    <string name="passcode_try_left">Sie haben noch %1$d Versuch.</string>
+    <string name="passcode_wipe">Löschen der Programmdaten</string>
+    <string name="passcode_wipe_description">Loöschen der Programmdaten nach 10 Fehlversuchen.</string>
+    <string name="passcode_wrong">Falscher Passcode</string>
+    <string name="provisioning_manage_accounts"><a href="https://accounts.silentcircle.com/">Neues Konto erstellen oder Konto verwalten</a></string>
+    <string name="provisioning_manage_accounts_dev"><a href="https://accounts-dev.silentcircle.com/">Neues Konto erstellen oder Konto verwalten</a></string>
+    <string name="provisioning_version">Version</string>
+    <string name="seconds">Sekunden</string>
+    <string name="sip_error_call_decline_dr_blocked_errblk_log">Partner nicht verfügbar</string>
+    <string name="sip_error_call_decline_dr_blocked_errblk">Partner nicht verfügbar\n\nDer Partner
+        ist im Moment nicht verfügbar.</string>
+    <string name="sip_error_call_decline_dr_rejected_errdrj">Anruf abgewiesen: Spiecherung der Kommunikationsdaten</string>
+    <string name="sip_error_call_declined_elsewhere">Anruf wurde an einem anderen Gerät abgewiesen</string>
+    <string name="sip_error_call_decline_dr_rejected_errdrj_log">Anruf Abgewiesen\n\nDer Angerufene hat
+        den Anruf abgewiesen. Grund: Speicherung von Kommunikationsdaten.</string>
+    <string name="toast_copied_to_clipboard">In den Zwischenspeicher kopiert</string>
+    <string name="toast_no_browser_found">Der Linka kann nicht geöffnet werden. Kein Browser verfügbar.</string>
+    <string name="warning_rekey_conversation">Wollen Sie die Verschlüsselung neu initialisieren (neue Schlüssel austauschen)?</string>
+    <string name="dial_drawer_avatar_voiceover">Avatar</string>
+    <string name="dialog_title_data_retention_blocking_cannot_be_disabled"></string>
+    <string name="dialog_title_pstn_disabled">\'Silent World\' Dienst ist nicht verfügbar</string>
+    <string name="enabled">Freigegeben</string>
+    <string name="in">in</string>
+    <string name="message_info_call_duration">Anrufdauer</string>
+    <string name="message_info_call_time">Anrfuf startete um</string>
+    <string name="message_info_call_error">Fehler</string>
+    <string name="message_info_call_type">Anruftyp</string>
+    <string name="message_info_error_device_id">Geräte-Id</string>
+    <string name="message_info_error_is_duplicate">Ist doppelt</string>
+    <string name="message_info_error_message_id">Nachrichten-Id</string>
+    <string name="message_info_error_number">Fehler</string>
+    <string name="message_info_error_recipient_device_id">Geräte des Empfängers</string>
+    <string name="message_info_has_attachments">Hat Anhänge</string>
+    <string name="message_info_id">Id</string>
+    <string name="message_info_is_retained">Gespeichert</string>
+    <string name="message_info_local_retention_info"></string>
+    <string name="message_info_message_composed_at">Nachricht erstellt um</string>
+    <string name="message_info_message_delivered_at">Nachricht geliefert um</string>
+    <string name="message_info_message_expires_in">Nachricht verfällt in</string>
+    <string name="message_info_message_read_at">Nachricht gelesen um</string>
+    <string name="message_info_message_sent_to">Nachricht gesendet an</string>
+    <string name="message_info_sender">Sender</string>
+    <string name="message_info_tab_info">Information</string>
+    <string name="message_info_tab_json">Json</string>
+    <string name="message_info_tab_no_trace_available">Keine Ablaufverfolgung verfügbar</string>
+    <string name="message_info_tab_trace">Ablaufverfolgung</string>
+    <string name="message_info_text">Text</string>
+    <string name="message_info_title">Ereignisinformation</string>
+    <string name="message_info_trace">Ablaufverfolgung</string>
+    <string name="message_info_burn_delay">Dauer bis \'verbrennen\'</string>
+    <string name="messaging_conversation_list_prefix_draft">Entwurf:</string>
+    <string name="messaging_conversation_list_prefix_you">Sie:</string>
+    <string name="avatar_delete_loading_dialog">Avatarbild wird gelöscht…</string>
+    <string name="avatar_fetch_loading_dialog">Avatarbild wird geladen…</string>
+    <string name="avatar_upload_loading_dialog">Avatarbild wird hochgeladen…</string>
+    <string name="chats_view_empty_header">Konversation starten</string>
+    <string name="connecting">Verbinden</string>
+    <string name="dialer_hint_find_messaging_contact">Namen eingeben</string>
+    <string name="dialog_button_accept">Annehmen</string>
+    <string name="dialog_button_create">Erstellen</string>
+    <string name="dialog_button_decline">Abweisen</string>
+    <string name="dialog_button_invite">Zu Konversation hinzufügen</string>
+    <string name="dialog_title_group_invitation">Einladung in Gruppe</string>
+    <string name="manage_account"><![CDATA[<br><br><a href="https://accounts.silentcircle.com/">Konto verwalten</a>]]></string>
+    <string name="manage_account_dev"><![CDATA[<br><br><a href="https://accounts-dev.silentcircle.com/">Konto verwalten</a>]]></string>
+    <string name="messaging_group_management">Gruppe verwalten</string>
+    <string name="navigation_drawer_collapse_details_voiceover">Kontodetails ausblenden</string>
+    <string name="navigation_drawer_expand_details_voiceover">Kontodetails anzeigen</string>
+    <string name="network_trouble_title">Netzwerkprobleme</string>
+    <string name="network_trouble_underflow_description">Den Ton den Sie hörten oder gerade hören zeigt an, dass keine Audiodaten empfangen werden. Dieser \\\'Dropout\\\' Tone zeigt an, dass dies Netzwerkprobleme sind und nicht vom Sender beabsichtigt ist.</string>
+    <string name="online">Online</string>
+    <string name="offline">Offline</string>
+    <string name="remove">Entfernen</string>
+    <string name="reset_feature_discovery">Zurücksetzen der Erläuterungen</string>
+    <string name="reset_warnings">Warnungen zurücksetzen</string>
+    <string name="reset_warnings_explanation">Nochmals alle vorherigen Warnungen anzeigen</string>
+    <string name="reset_feature_discovery_explanation">Wiederholen der Erläuterungen falls Sie diese nicht gesehen haben.</string>
+    <string name="scExistingConversationsList">Konversationen</string>
+    <string name="scV1UserList">Genaue Übereinstimung</string>
+    <string name="sc_help">Hilfe &amp; Support</string>
+    <string name="sc_manage_account">Konto verwalten</string>
+    <string name="sc_privacy">Datenschutzregeln</string>
+    <string name="sc_tos">Geschäftsbedingungen</string>
+    <string name="search_shortcut_add_to_group_chat"><xliff:g id="number">%s</xliff:g> zur Auswahl hinzufügen</string>
+    <string name="search_shortcut_group_chat">Neue Gruppenkonversation</string>
+    <string name="show_group_members">Mitglieder der Gruppe</string>
+    <string name="show_group_members_exp">Zeigt die Mitglieder der Gruppe an.</string>
+    <string name="sound_recording_error">Fehler während der Aufnahme</string>
+    <string name="thanks_minutes">Verbleibende Minuten:</string>
+    <string name="title_activity_simple_chat_ui"></string>
+    <string name="tooltip_record_button">Zum Aufnehmen gedrückt halten, zum Senden loslassen</string>
+    <string name="warning_leave_group_conversation">Wenn sie Gruppe verlassen werden alle ihre Daten gelöscht.</string>
+    <string name="you">Sie</string>
+    <string name="just_now">Gerade eben</string>
+    <string name="info_feature_discovery_reset">Erläuterungen zurückgesetzt</string>
+    <string name="info_warnings_reset">Warnungen zurückgesetzt</string>
+    <string name="fab_action_new_conversation">Neue Konversation</string>
+    <string name="fab_action_new_group_conversation">Neue Gruppenkonversation</string>
+    <string name="got_it">Verstanden</string>
+    <string name="discovery_conversation_1_desc">Tippen Sie dieses Icon, um diese Person anzurufen. Verschlüsselte Sprach- und Videoanrufe sind möglich.</string>
+    <string name="discovery_conversation_1_title">Verschlüsselter Anruf</string>
+    <string name="discovery_conversation_2_desc">Zum Aufnehmen das Icon gedrückt halten, zum Senden loslassen.</string>
+    <string name="discovery_conversation_2_title">Sprachnachricht senden</string>
+    <string name="discovery_conversation_3_desc">Tippen Sie diese Icons um Bilder und Videos aufzunehmen und zu senden sowie Kontakte und andere Daten zu teilen.</string>
+    <string name="discovery_conversation_3_title">Noch mehr Möglichkeiten zu kommunizieren</string>
+    <string name="discovery_conversation_4_title">Dauer bis \'verbrennen\' der Nachrichten</string>
+    <string name="discovery_conversation_4_desc">Tippen Sie dieses Icon, um die Zeitdauer einzustellen bevor Silent Phone die Nachricht löscht (\'verbrennt\').</string>
+    <string name="discovery_conversation_5_title">Zu Kontakten hinzufügen</string>
+    <string name="discovery_conversation_5_desc">Tippen sie hier, um die Person zu ihrem Adressbuch hinzuzufügen oder die Silent Phone Information mit einem bestehenden Eintrag zu verknüpfen.</string>
+    <string name="discovery_conversation_6_title">Standort mitteilen &amp; mehr</string>
+    <string name="discovery_conversation_6_desc">Tippen Sie das Menüicon, um ihren Standort in den Nachrichten mitzuteilen, die Konversation zu löschen oder Sicherheitsinformationen der Geräte zu sehen.</string>
+    <string name="discovery_onboarding_1_title">Einstellungen und Kontoinformation</string>
+    <string name="discovery_onboarding_1_desc">Tippen Sie dieses Icon, um die Silent Phone Einstellungen zu ändern, ihre Kontoinformation zu sehen und noch einiges mehr.</string>
+    <string name="discovery_onboarding_2_title">Anrufe, Nachrichten, Fotos, Videos senden und mehr</string>
+    <string name="discovery_onboarding_2_desc">Tippen Sie dieses Icon, um eine neue Konversation zu erstellen, Anrufe zu machen oder in Kontakten suchen. In einer Konversation können sie Sprachnachrichten, Fotos, Video, ihren Standort und Dateien schicken und noch einiges mehr.</string>
+    <string name="discovery_search_1_title">Kontakt auswählen</string>
+    <string name="discovery_search_1_desc">Kontakte, die auch über Silent Phone erreichbar ist werden zuerst in der Liste angezeigt. Silent Phone vergleicht und sucht nach Silent World Nummern und e-Mail Adressen.</string>
+    <string name="discovery_search_2_title">Mit Silent World jeden anrufen</string>
+    <string name="discovery_search_2_desc">Wenn ihr Konto Silent World unterstützt, dann können Sie jeden Kontakt mit einer Telefonnummer unverschlüsselt anrufen.</string>
+    <string name="discovery_search_3_title">Kontakt suchen</string>
+    <string name="discovery_search_3_desc">"Geben Sie einen Namen, Telefonnummer, E-mail oder Silent Circle Nutzername ein und Silent Phone versucht den Kontakt zu finden. Es werden Kontakte auf den Gerät und im %1$s Verzeichnis gesucht. "</string>
+    <string name="discovery_search_4_title">Wählen</string>
+    <string name="discovery_search_4_desc">Tippen sie das Tastenicon, um eine Telefonnummer zu in den Kontakten suchen oder direkt zu wählen.</string>
+    <string name="group_chat_view_empty">Die Konversation ist leer.\\nEine Nachricht unten eingeben.</string>
+    <string name="group_messaging_add_participants">Neue Mitglieder hinzufügen</string>
+    <string name="group_messaging_add_participants_voiceover">Neue Mitglieder hinzufügen</string>
+    <string name="group_messaging_conversation_with">Konversation mit</string>
+    <string name="group_messaging_could_not_validate_user">Nutzer %1$s ist nicht bekannt.</string>
+    <string name="group_messaging_create_group">Gruppe erstellen</string>
+    <string name="group_messaging_create_group_description">Beschreibung der Gruppe</string>
+    <string name="group_messaging_create_group_description_not_empty">Gruppenbeschreibung sollte nicht leer sein.</string>
+    <string name="group_messaging_create_group_failed">Fehler beim Erstellen der Gruppe</string>
+    <string name="group_messaging_create_group_maximum_members_default">30</string>
+    <string name="group_messaging_create_group_member_count_limits">Die maximale Anzahl der Mitglieder muss zwischen %1$d und %2$d sein.</string>
+    <string name="group_messaging_create_group_name">Gruppenname</string>
+    <string name="group_messaging_create_group_name_already_used">Eine Gruppe mit diesem Name gibt es schon</string>
+    <string name="group_messaging_create_group_name_not_empty">Gruppenname sollte nicht leer sein.</string>
+    <string name="group_messaging_create_group_select_participants_hint">Anklicken der Kontakte, um Gruppenmitglieder auszuwählen.</string>
+    <string name="group_messaging_edit_group_avatar_failed">Der Gruppenavatar konnte nicht geändert werden.</string>
+    <string name="group_messaging_edit_group_details">Ändern der Gruppendaten</string>
+    <string name="group_messaging_edit_group_maximum_members">Maximale Anzahl Gruppenmitglieder:</string>
+    <string name="group_messaging_edit_group_members_failed">Die Anzahl der maximalen Gruppenmitglieder konnte nicht geändert werden.</string>
+    <string name="group_messaging_edit_group_members_failed_already_more">Die Gruppe hat schon mehr Mitlgieder als vorgesehen/erlaubt.</string>
+    <string name="group_messaging_edit_group_members_failed_maximum">Die maximale Anzahl von Gruppenmitgliedern ist 30.</string>
+    <string name="group_messaging_edit_group_members_failed_minimum">Die minimale Anzahl von Gruppenmitgliedern ist 30.</string>
+    <string name="group_messaging_edit_group_members_updated">Die Anzahl der maximalen Gruppenmitglieder wurde geändert..</string>
+    <string name="group_messaging_edit_group_name_empty">Gruppenname darf nicht leer sein.</string>
+    <string name="group_messaging_edit_group_name_failed">Gruppenname konnte nicht geändert werden.</string>
+    <string name="group_messaging_edit_group_name_voiceover">Ändern des Gruppennamens</string>
+    <string name="group_messaging_group_conversation_advanced_details">Erweiterte Einstellungen</string>
+    <string name="group_messaging_group_conversation_created">Erstellt am</string>
+    <string name="group_messaging_group_created">Gruppe erstellt</string>
+    <string name="group_messaging_group_created_by">%1$s hat die Gruppe am %2$s erstellt</string>
+    <string name="group_messaging_group_created_this">Sie haben die Gruppe am %1$s erstellt</string>
+
+    <string name="group_messaging_group_creator">Ersteller</string>
+    <string name="group_messaging_group_description">Beschreibung</string>
+    <string name="group_messaging_group_details">Gruppendetails</string>
+    <string name="group_messaging_group_empty">Noch keine Mitglieder in der Gruppe.\\nKlicken sie das Plus-Icon, um Mitglieder hinzuzufügen.</string>
+    <string name="group_messaging_group_id">Gruppen-Id: %1$s</string>
+    <string name="group_messaging_group_maximum_members">Maximale Anzahl Gruppenmitglieder: %1$d</string>
+    <string name="group_messaging_group_members">Mietglieder der Gruppe</string>
+    <string name="group_messaging_group_participants">Mitglieder</string>
+    <string name="group_messaging_group_sync_failed">Gerätesynchronisation nicht erfolgreich.</string>
+    <string name="group_messaging_group_sync_successful">Gerätesynchronisation erfolgreich.</string>
+    <string name="group_messaging_group_title">Gruppenname</string>
+    <string name="group_messaging_hello_received">%1$s ist der Gruppe beigetreten</string>
+    <string name="group_messaging_invitation_pending">Einladung noch nicht bestätigt</string>
+    <string name="group_messaging_invite">Sie haben %1$s eingeladen</string>
+    <string name="group_messaging_invite_answer_accepted">%1$s hat die Einladung angenommen</string>
+    <string name="group_messaging_invite_answer_declined">%1$s hat die Einladung abgelehnt</string>
+    <string name="group_messaging_invite_answer_self_accepted">Sie haben die Einladung angenommen.</string>
+    <string name="group_messaging_invite_answer_self_declined">Sie haben die Einladung abgelehnt</string>
+    <string name="group_messaging_invite_failed">Die Einladung konnt nicht an %1$s gesendet werden.</string>
+    <string name="group_messaging_invite_notification">Sie haben eine neue Einladung zu einer Gruppe</string>
+    <string name="group_messaging_invite_user">Ein neues Mitglied einladen</string>
+    <string name="group_messaging_leave_group">Gruppe verlassen</string>
+    <string name="group_messaging_leave_notification">%1$s hat die Gruppe verlassen</string>
+    <string name="group_messaging_maximum_number_of_participants_selected">Maximale Anzahl neuer Mitglieder ausgewählt</string>
+    <string name="group_messaging_member_count">Anzahl der Mitglieder: %1$d/%2$d</string>
+    <string name="group_messaging_new_burn">Zeit bis zum Löschen (\'verbrennen\') ist %1$s</string>
+    <string name="group_messaging_new_burn_by">%1$s änderte die Löschzeit auf %2$s</string>
+    <string name="group_messaging_new_burn_this">Sie änderte die Löschzeit auf %1$s</string>
+
+    <string name="group_messaging_new_group_conversation">Neue Gruppe</string>
+    <string name="group_messaging_new_name">Gruppenname geändert zu: %1$s</string>
+    <string name="group_messaging_new_name_by">%1$s änderte den Gruppennamen auf: %2$s</string>
+    <string name="group_messaging_new_name_this">Sie änderten den Gruppennamen auf: %1$s</string>
+    <string name="group_messaging_no_known_groups">Keine Gruppen auf diesem Gerät</string>
+    <string name="group_messaging_sync_group">Gruppe synchronisieren</string>
+    <string name="group_messaging_title_create_group">Gruppe erstellen</string>
+    <string name="group_messaging_title_known_groups">Gruppen</string>
+
+
 </resources>

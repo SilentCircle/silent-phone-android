@@ -18,6 +18,7 @@ package com.silentcircle.common.list;
 
 import android.annotation.TargetApi;
 import android.content.Context;
+import android.content.res.ColorStateList;
 import android.content.res.TypedArray;
 import android.database.CharArrayBuffer;
 import android.database.Cursor;
@@ -29,6 +30,9 @@ import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.ContactsContract;
+import android.support.v4.content.ContextCompat;
+import android.support.v7.view.ContextThemeWrapper;
+import android.support.v7.widget.AppCompatCheckBox;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.TextUtils;
@@ -40,6 +44,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AbsListView.SelectionBoundsAdjuster;
+import android.widget.CheckBox;
 import android.widget.ImageView;
 import android.widget.ImageView.ScaleType;
 import android.widget.QuickContactBadge;
@@ -162,6 +167,8 @@ public class ContactListItemView extends ViewGroup
     private TextView mSnippetView;
     private TextView mStatusView;
     private ImageView mPresenceIcon;
+    private ImageView mMarkerIcon;
+    private AppCompatCheckBox mCheckBox;
 
 //    private ColorStateList mSecondaryTextColor;
     private int mSecondaryTextColor;
@@ -195,6 +202,14 @@ public class ContactListItemView extends ViewGroup
      */
     private boolean mPhotoViewWidthAndHeightAreReady = false;
 
+    private int mDefaultCheckBoxSize = 0;
+    private Drawable mCheckboxDrawable;
+
+    private int mMarkerIconSize;
+    private Drawable mMarkerDrawable;
+
+    private boolean mIsCheckable = false;
+
     private int mNameTextViewHeight;
     private int mNameTextViewTextColor = Color.BLACK;
     private int mPhoneticNameTextViewHeight;
@@ -224,6 +239,8 @@ public class ContactListItemView extends ViewGroup
     /** A helper used to highlight a prefix in a text field. */
     private final TextHighlighter mTextHighlighter;
     private CharSequence mUnknownNameText;
+
+    private boolean mIsChecked = false;
 
     public ContactListItemView(Context context) {
         super(context);
@@ -273,6 +290,12 @@ public class ContactListItemView extends ViewGroup
         mNameTextViewTextSize = (int) a.getDimension(
                 R.styleable.ContactListItemView_list_item_name_text_size,
                 (int) getResources().getDimension(R.dimen.contact_browser_list_item_text_size));
+        mDefaultCheckBoxSize = a.getDimensionPixelOffset(
+                R.styleable.ContactListItemView_list_item_checkbox_size, mDefaultCheckBoxSize);
+        mCheckboxDrawable = a.getDrawable(R.styleable.ContactListItemView_list_item_checkbox_drawable);
+        mMarkerIconSize = a.getDimensionPixelOffset(
+                R.styleable.ContactListItemView_list_item_checkbox_size, mDefaultCheckBoxSize);
+        mMarkerDrawable = null;
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
             setPaddingRelative(
@@ -357,6 +380,18 @@ public class ContactListItemView extends ViewGroup
 
         if (mIsSectionHeaderEnabled) {
             effectiveWidth -= mHeaderWidth + mGapBetweenImageAndText;
+        }
+
+        if (isCheckable() && mCheckBox != null) {
+            mCheckBox.measure(MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED),
+                    MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED));
+        }
+
+        if (isVisible(mMarkerIcon)) {
+            mMarkerIcon.measure(
+                    MeasureSpec.makeMeasureSpec(mMarkerIconSize, MeasureSpec.EXACTLY),
+                    MeasureSpec.makeMeasureSpec(mMarkerIconSize, MeasureSpec.EXACTLY));
+
         }
 
         // Go over all visible text views and measure actual width of each of them.
@@ -453,12 +488,12 @@ public class ContactListItemView extends ViewGroup
         }
 
         // Calculate height including padding.
-        int height = (mNameTextViewHeight + mPhoneticNameTextViewHeight +
-                mLabelAndDataViewMaxHeight +
-                mSnippetTextViewHeight + mStatusTextViewHeight);
+        int height = (mNameTextViewHeight + mPhoneticNameTextViewHeight
+                + mLabelAndDataViewMaxHeight + mSnippetTextViewHeight + mStatusTextViewHeight);
 
         // Make sure the height is at least as high as the photo
-        height = Math.max(height, mPhotoViewHeight + getPaddingBottom() + getPaddingTop());
+        height = Math.max(height + getPaddingTop() + getPaddingBottom(),
+                mPhotoViewHeight + getPaddingBottom() + getPaddingTop());
 
         // Make sure height is at least the preferred height
         height = Math.max(height, preferredHeight);
@@ -485,6 +520,7 @@ public class ContactListItemView extends ViewGroup
         int rightBound = width - getPaddingRight();
 
         final boolean isLayoutRtl = ViewUtil.isViewLayoutRtl(this);
+        final boolean isCheckable = isCheckable();
 
         // Put the section header on the left side of the contact view.
         if (mIsSectionHeaderEnabled) {
@@ -531,6 +567,18 @@ public class ContactListItemView extends ViewGroup
                         photoTop,
                         leftBound + mPhotoViewWidth,
                         photoTop + mPhotoViewHeight);
+                // for checkbox over thumbnail
+                if (isCheckable) {
+                    mCheckBox.layout(leftBound + mPhotoViewWidth - mDefaultCheckBoxSize, photoTop,
+                            leftBound + mPhotoViewWidth, photoTop + mDefaultCheckBoxSize);
+                    bringChildToFront(mCheckBox);
+                }
+                // for marker icon
+                if (isVisible(mMarkerIcon)) {
+                    mMarkerIcon.layout(leftBound, photoTop + mPhotoViewHeight - mMarkerIconSize,
+                            leftBound + mMarkerIconSize, photoTop + mPhotoViewHeight);
+                    bringChildToFront(mMarkerIcon);
+                }
                 leftBound += mPhotoViewWidth + mGapBetweenImageAndText;
             } else if (mKeepHorizontalPaddingForPhotoView) {
                 // Draw nothing but keep the padding.
@@ -546,6 +594,19 @@ public class ContactListItemView extends ViewGroup
                         photoTop,
                         rightBound,
                         photoTop + mPhotoViewHeight);
+                // for checkbox over thumbnail
+                if (isCheckable) {
+                    mCheckBox.layout(rightBound - mPhotoViewWidth, photoTop,
+                            rightBound - mPhotoViewWidth + mDefaultCheckBoxSize,
+                            photoTop + mDefaultCheckBoxSize);
+                    bringChildToFront(mCheckBox);
+                }
+                // for marker icon
+                if (isVisible(mMarkerIcon)) {
+                    mMarkerIcon.layout(rightBound - mMarkerIconSize, photoTop + mPhotoViewHeight - mMarkerIconSize,
+                            rightBound, photoTop + mPhotoViewHeight);
+                    bringChildToFront(mMarkerIcon);
+                }
                 rightBound -= (mPhotoViewWidth + mGapBetweenImageAndText);
             } else if (mKeepHorizontalPaddingForPhotoView) {
                 // Draw nothing but keep the padding.
@@ -748,7 +809,7 @@ public class ContactListItemView extends ViewGroup
         if (!TextUtils.isEmpty(title)) {
             if (mHeaderTextView == null) {
                 mHeaderTextView = new TextView(getContext());
-                mHeaderTextView.setTextColor(ViewUtil.getColorIdFromAttributeId(getContext(), R.attr.sp_activity_primary_text_color));
+                mHeaderTextView.setTextColor(ViewUtil.getColorFromAttributeId(getContext(), R.attr.sp_activity_primary_text_color));
                 mHeaderTextView.setTextAppearance(getContext(), style > 0 ? style : R.style.SectionHeaderStyle);
                 mHeaderTextView.setGravity(
                         ViewUtil.isViewLayoutRtl(this) ? Gravity.RIGHT : Gravity.LEFT);
@@ -961,6 +1022,7 @@ public class ContactListItemView extends ViewGroup
             mLabelView.setSingleLine(true);
             mLabelView.setEllipsize(getTextEllipsis());
             mLabelView.setTextAppearance(getContext(), R.style.TextAppearanceSmall);
+            mLabelView.setTextColor(mSecondaryTextColor);
             if (mPhotoPosition == PhotoPosition.LEFT) {
                 mLabelView.setAllCaps(true);
                 mLabelView.setGravity(Gravity.END);
@@ -1058,6 +1120,7 @@ public class ContactListItemView extends ViewGroup
             mDataView.setSingleLine(true);
             mDataView.setEllipsize(getTextEllipsis());
             mDataView.setTextAppearance(getContext(), R.style.TextAppearanceSmall);
+            mDataView.setTextColor(mSecondaryTextColor);
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1)
                 mDataView.setTextAlignment(View.TEXT_ALIGNMENT_VIEW_START);
             mDataView.setActivated(isActivated());
@@ -1157,6 +1220,23 @@ public class ContactListItemView extends ViewGroup
         } else {
             if (mPresenceIcon != null) {
                 mPresenceIcon.setVisibility(View.GONE);
+            }
+        }
+    }
+
+    public void setMarker(Drawable icon) {
+        if (icon != null) {
+            if (mMarkerIcon == null) {
+                mMarkerIcon = new ImageView(getContext());
+                addView(mMarkerIcon);
+                bringChildToFront(mMarkerIcon);
+            }
+            mMarkerIcon.setImageDrawable(icon);
+            mMarkerIcon.setScaleType(ScaleType.CENTER);
+            mMarkerIcon.setVisibility(View.VISIBLE);
+        } else {
+            if (mMarkerIcon != null) {
+                mMarkerIcon.setVisibility(View.GONE);
             }
         }
     }
@@ -1497,6 +1577,23 @@ public class ContactListItemView extends ViewGroup
         photo.setImageResource(drawableId);
     }
 
+
+    /**
+     * Set drawable resources directly for both the background and the drawable resource
+     * of the photo view
+     *
+     * @param backgroundId Id of background resource
+     * @param drawableId Id of drawable resource
+     * @param tintColor Tint colour for drawable
+     */
+    public void setDrawableResource(int backgroundId, int drawableId, int tintColor) {
+        final ImageView photo = getPhotoView();
+        photo.setScaleType(ScaleType.CENTER);
+        photo.setBackgroundResource(backgroundId);
+        photo.setImageResource(drawableId);
+        photo.setColorFilter(tintColor);
+    }
+
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         final float x = event.getX();
@@ -1514,5 +1611,50 @@ public class ContactListItemView extends ViewGroup
     private boolean pointIsInView(float localX, float localY) {
         return localX >= mLeftOffset && localX < mRightOffset
                 && localY >= 0 && localY < (getBottom() - getTop());
+    }
+
+    public void setCheckable(boolean checkable) {
+        if (checkable) {
+            if (mCheckBox == null) {
+                ContextThemeWrapper newContext = new ContextThemeWrapper(getContext(),
+                        R.style.Widget_CheckBox);
+                mCheckBox = new AppCompatCheckBox(newContext);
+                mCheckBox.setVisibility(VISIBLE);
+                if (mCheckboxDrawable != null) {
+                    mCheckBox.setButtonDrawable(mCheckboxDrawable);
+                }
+                // don' allow checkbox to steal list item clicks
+                mCheckBox.setFocusable(false);
+                mCheckBox.setClickable(false);
+                mCheckBox.setBackground(null);
+                addView(mCheckBox);
+                bringChildToFront(mCheckBox);
+            }
+        } else {
+            if (mCheckBox != null) {
+                removeView(mCheckBox);
+                mCheckBox = null;
+            }
+        }
+        mIsCheckable = checkable;
+    }
+
+    public boolean isCheckable() {
+        return mIsCheckable;
+    }
+
+    public void setChecked(boolean checked) {
+        mIsChecked = checked;
+        if (mCheckBox != null) {
+            mCheckBox.setChecked(mIsChecked);
+        }
+    }
+
+    public void toggleChecked() {
+        setChecked(!mIsChecked);
+    }
+
+    public boolean isChecked() {
+        return mIsChecked;
     }
 }

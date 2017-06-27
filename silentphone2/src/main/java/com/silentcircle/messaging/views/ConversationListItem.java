@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2016-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,13 +27,16 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 package com.silentcircle.messaging.views;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.res.Resources;
+import android.graphics.Typeface;
 import android.os.Build;
 import android.support.annotation.NonNull;
-import android.telephony.PhoneNumberUtils;
+import android.support.annotation.Nullable;
+import android.text.SpannableString;
+import android.text.SpannableStringBuilder;
 import android.text.TextUtils;
+import android.text.style.ForegroundColorSpan;
 import android.util.AttributeSet;
 import android.view.View;
 import android.widget.FrameLayout;
@@ -43,37 +46,42 @@ import android.widget.TextView;
 
 import com.silentcircle.common.list.ContactEntry;
 import com.silentcircle.common.util.CallUtils;
+import com.silentcircle.common.util.ViewUtil;
 import com.silentcircle.contacts.ContactPhotoManagerNew;
-import com.silentcircle.contacts.ScCallLog;
+import com.silentcircle.messaging.model.CallData;
+import com.silentcircle.messaging.model.Contact;
 import com.silentcircle.messaging.model.Conversation;
 import com.silentcircle.messaging.model.event.CallMessage;
 import com.silentcircle.messaging.model.event.Event;
 import com.silentcircle.messaging.model.event.IncomingMessage;
+import com.silentcircle.messaging.model.event.InfoEvent;
 import com.silentcircle.messaging.model.event.Message;
 import com.silentcircle.messaging.model.event.OutgoingMessage;
+import com.silentcircle.messaging.providers.AvatarProvider;
 import com.silentcircle.messaging.services.SCloudService;
 import com.silentcircle.messaging.util.AvatarUtils;
-import com.silentcircle.messaging.util.ContactsCache;
 import com.silentcircle.messaging.util.ConversationUtils;
 import com.silentcircle.messaging.util.MIME;
 import com.silentcircle.messaging.util.MessageUtils;
 import com.silentcircle.silentphone2.R;
-import com.silentcircle.silentphone2.util.Utilities;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.util.Locale;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Widget to house information for single conversation in conversations view.
  */
-public class ConversationListItem extends LinearLayout {
+public class ConversationListItem extends LinearLayout implements View.OnClickListener {
 
     private static final String TAG = "ConversationListItem";
 
     /** Limit after which unread message count is displayed with greater than sign */
     public static final int UNREAD_MESSAGE_COUNT_DISPLAY_LIMIT = 10;
+
+    public static final String CONVERSATION_UNREAD_MESSAGES_MORE_THAN = ">";
+    public static final String CONVERSATION_ATTENTION_REQUIRED = "!";
 
     /**
      *
@@ -89,18 +97,9 @@ public class ConversationListItem extends LinearLayout {
 
         /* Callback for click event on conversation contact */
         void onConversationContactClick(final ConversationListItem view);
+
+        void onCallClick(final ConversationListItem view);
     }
-
-    private OnConversationItemClickListener mOnConversationItemClickListener;
-
-    private View.OnClickListener mConversationClickListener = new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-            if (mOnConversationItemClickListener != null) {
-                mOnConversationItemClickListener.onConversationClick(ConversationListItem.this);
-            }
-        }
-    };
 
     private View.OnLongClickListener mConversationDeleteClickListener = new View.OnLongClickListener() {
         @Override
@@ -114,34 +113,52 @@ public class ConversationListItem extends LinearLayout {
         }
     };
 
-    private View.OnClickListener mConversationContactClickListener = new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-            if (mOnConversationItemClickListener != null) {
-                mOnConversationItemClickListener.onConversationContactClick(ConversationListItem.this);
-            }
-        }
-    };
+    private OnConversationItemClickListener mOnConversationItemClickListener;
 
     private TextView mMessageText;
     private TextView mNameView;
     private TextView mMessageTimeView;
     private TextView mStatusMessageCount;
+    private View mStatusDataRetention;
     private QuickContactBadge mContactButton;
     private FrameLayout mStatusIcon;
     private View mConversationButton;
-    private Context mContext;
+    private View mCallButton;
+    private View mDeleteButton;
+    private SwipeRevealLayout mContainer;
 
-    public ConversationListItem(Activity context) {
+    private String mJustNow;
+    private String mPrefixYou;
+    private String mPrefixDraft;
+    private String mInvitationPending;
+
+    private int mTextColor;
+    private int mPrefixColor;
+
+    private static Typeface sDefaultTypeFace = Typeface.create("sans-serif", Typeface.NORMAL);
+    private static Typeface sSemiboldTypeFace =
+            Typeface.create(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP
+                ? "sans-serif-light"
+                : "sans-serif-medium", Typeface.BOLD);
+
+    public ConversationListItem(Context context) {
         this(context, null);
     }
 
-    public ConversationListItem(Activity context, AttributeSet attrs) {
+    public ConversationListItem(Context context, AttributeSet attrs) {
         this(context, attrs, android.R.attr.textStyle);
     }
 
-    public ConversationListItem(Activity context, AttributeSet attrs, int defStyle) {
+    public ConversationListItem(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
+
+        mJustNow = context.getString(R.string.just_now);
+        mPrefixYou = context.getString(R.string.messaging_conversation_list_prefix_you);
+        mPrefixDraft = context.getString(R.string.messaging_conversation_list_prefix_draft);
+        mInvitationPending = context.getString(R.string.group_messaging_invitation_pending);
+
+        mTextColor = ViewUtil.getColorFromAttributeId(context, R.attr.sp_activity_secondary_text_color);
+        mPrefixColor = ViewUtil.getColorFromAttributeId(context, R.attr.sp_activity_primary_text_color);
 
         inflate(context, R.layout.messaging_log_list_item_new, this);
 
@@ -152,21 +169,127 @@ public class ConversationListItem extends LinearLayout {
         mMessageTimeView =
                 (TextView) findViewById(R.id.message_time);
         mStatusIcon = (FrameLayout) findViewById(R.id.unread_message_notification);
+        mStatusDataRetention = findViewById(R.id.data_retention_status);
         mStatusMessageCount = (TextView) findViewById(R.id.unread_message_count);
-        mConversationButton = findViewById(R.id.conversation_action_view);
-        mContext = context.getApplicationContext();
+        mConversationButton = findViewById(R.id.conversation_log_row);
+        mCallButton = findViewById(R.id.conversation_log_call);
+        mDeleteButton = findViewById(R.id.conversation_log_delete);
+
+        mContainer = (SwipeRevealLayout) findViewById(R.id.conversation_log_list_item);
+
+        mConversationButton.setOnClickListener(this);
+        /*
+         * Do not set on click listener for quick contact view to preserve Android's default behaviour.
+         * With this callback OnConversationItemClickListener#onConversationContactClick will not get
+         * called.
+         *
+        mContactButton.setOnClickListener(this);
+         */
+        mCallButton.setOnClickListener(this);
+        mDeleteButton.setOnClickListener(this);
+        findViewById(R.id.call_layout).setOnClickListener(this);
+        findViewById(R.id.delete_layout).setOnClickListener(this);
     }
 
     public void setOnConversationItemClickListener(final OnConversationItemClickListener listener) {
         mOnConversationItemClickListener = listener;
     }
 
-    @SuppressWarnings("deprecation")
-    public void setConversation(@NonNull final Conversation conversation,
-            final ContactPhotoManagerNew photoManager) {
+    public void setConversation(@NonNull final Conversation conversation) {
+        long now = System.currentTimeMillis();
+        CharSequence timeText;
+        if (Math.abs(now - conversation.getLastModified()) < TimeUnit.MINUTES.toMillis(1)) {
+            timeText = mJustNow;
+        } else {
+            timeText = android.text.format.DateUtils.getRelativeTimeSpanString(
+                    conversation.getLastModified(),
+                    now,
+                    android.text.format.DateUtils.MINUTE_IN_MILLIS,
+                    android.text.format.DateUtils.FORMAT_ABBREV_RELATIVE);
+        }
+        mMessageTimeView.setText(timeText);
 
-        final String userId = conversation.getPartner().getUserId();
-        ContactEntry contactEntry = ContactsCache.getContactEntryFromCache(userId);
+        // if there are any unread messages in conversation, show status icon
+        // TODO: wrap this in a widget?
+        boolean statusVisible = conversation.containsUnreadMessages()
+                || conversation.containsUnreadCallMessages();
+        mStatusIcon.setVisibility(statusVisible ? View.VISIBLE : View.GONE);
+        Typeface typeFace = statusVisible ? sSemiboldTypeFace : sDefaultTypeFace;
+        mMessageText.setTypeface(typeFace);
+        mNameView.setTypeface(typeFace);
+        int unreadMessageCount = conversation.getUnreadMessageCount()
+                + conversation.getUnreadCallMessageCount();
+        String statusText = (unreadMessageCount > UNREAD_MESSAGE_COUNT_DISPLAY_LIMIT
+                ? CONVERSATION_UNREAD_MESSAGES_MORE_THAN + UNREAD_MESSAGE_COUNT_DISPLAY_LIMIT
+                : String.valueOf(unreadMessageCount));
+        mStatusMessageCount.setText(statusText);
+        // draft text overrides last message text
+        if (!TextUtils.isEmpty(conversation.getUnsentText())) {
+            setMessageDecoration(0);
+            setMessageText(mPrefixDraft, conversation.getUnsentText());
+        }
+
+        mConversationButton.setOnClickListener(this);
+        /*
+         * Do not set on click listener for quick contact view to preserve Android's default behaviour.
+         * With this callback OnConversationItemClickListener#onConversationContactClick will not get
+         * called.
+         *
+        mContactButton.setOnClickListener(mConversationContactClickListener);
+         */
+        mCallButton.setOnClickListener(this);
+        mDeleteButton.setOnClickListener(this);
+    }
+
+    @Override
+    public void onClick(View v) {
+        switch (v.getId()) {
+            case R.id.conversation_log_call:
+            case R.id.call_layout:
+                if (mOnConversationItemClickListener != null) {
+                    mOnConversationItemClickListener.onCallClick(this);
+                }
+                break;
+            case R.id.conversation_log_delete:
+            case R.id.delete_layout:
+                if (mOnConversationItemClickListener != null) {
+                    mOnConversationItemClickListener.onConversationDeleteClick(this);
+                }
+                break;
+            case R.id.conversation_log_row:
+                if (mOnConversationItemClickListener != null) {
+                    mOnConversationItemClickListener.onConversationClick(this);
+                }
+                break;
+        }
+    }
+
+    public void setAvatar(@NonNull final ContactPhotoManagerNew photoManager,
+            @NonNull final Conversation conversation, @Nullable final ContactEntry contactEntry) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            mContactButton.setOverlay(null);
+        }
+
+        if (contactEntry != null) {
+            AvatarUtils.setPhoto(photoManager, mContactButton, contactEntry,
+                /* isCircular */ !AvatarProvider.AVATAR_TYPE_GENERATED.equals(conversation.getAvatarUrl()));
+        }
+        else {
+            AvatarUtils.setPhoto(photoManager, mContactButton,
+                AvatarUtils.getAvatarProviderUri(conversation.getAvatarUrl(), conversation.getPartner().getUserId()),
+                ContactPhotoManagerNew.TYPE_DEFAULT,
+                /* isCircular */ !AvatarProvider.AVATAR_TYPE_GENERATED.equals(conversation.getAvatarUrl()));
+        }
+    }
+
+    @SuppressWarnings("deprecation")
+    public void setContactEntry(@Nullable final ContactEntry contactEntry,
+            @NonNull final Conversation conversation) {
+
+        if (contactEntry == null) {
+            mNameView.setText(R.string.loading);
+            return;
+        }
 
         String displayName = ConversationUtils.resolveDisplayName(contactEntry, conversation);
 //        if (contactEntry != null) {
@@ -184,62 +307,76 @@ public class ConversationListItem extends LinearLayout {
 //            }
 //        }
 
+        Contact partner = conversation.getPartner();
+        if (partner.isGroup()) {
+            displayName = conversation.getPartner().getDisplayName();
+            if (TextUtils.isEmpty(displayName)) {
+                // FIXME this may affect conversation loading a bit
+                ConversationUtils.GroupData groupData =
+                        ConversationUtils.getGroup(partner.getUserId());
+                displayName = groupData != null ? groupData.getGroupName() : partner.getUserId();
+                if (groupData != null) {
+                    ConversationUtils.verifyConversationAvatar(getContext(), partner.getUserId(),
+                            groupData.getAvatarInfo());
+                }
+            }
+        }
+
         mNameView.setText(displayName);
-
-        AvatarUtils.setPhoto(photoManager, mContactButton, contactEntry);
-
-        mMessageTimeView.setText(
-                android.text.format.DateUtils.getRelativeTimeSpanString(
-                        conversation.getLastModified(),
-                        System.currentTimeMillis(),
-                        android.text.format.DateUtils.MINUTE_IN_MILLIS,
-                        android.text.format.DateUtils.FORMAT_ABBREV_RELATIVE));
-
-        // if there are any unread messages in conversation, show status icon
-        // TODO: wrap this in a widget?
-        mStatusIcon.setVisibility(
-                conversation.containsUnreadMessages() || conversation.containsUnreadCallMessages()
-                        ? View.VISIBLE : View.GONE);
-        int unreadMessageCount = conversation.getUnreadMessageCount()
-                + conversation.getUnreadCallMessageCount();
-        mStatusMessageCount.setText(unreadMessageCount > UNREAD_MESSAGE_COUNT_DISPLAY_LIMIT
-                ? ">" + UNREAD_MESSAGE_COUNT_DISPLAY_LIMIT
-                : String.valueOf(unreadMessageCount));
-
-        mConversationButton.setOnLongClickListener(mConversationDeleteClickListener);
-        mConversationButton.setOnClickListener(mConversationClickListener);
-        /*
-         * Do not set on click listener for quick contact view to preserve Android's default behaviour.
-         * With this callback OnConversationItemClickListener#onConversationContactClick will not get
-         * called.
-         *
-        mContactButton.setOnClickListener(mConversationContactClickListener);
-         */
     }
 
-    public void setMessageText(final String text) {
-        mMessageText.setText(text);
+    public void setMessageText(final String prefix, final String text) {
+
+        SpannableStringBuilder builder = new SpannableStringBuilder();
+
+        if (!TextUtils.isEmpty(prefix)) {
+            SpannableString prefixSpan = new SpannableString(prefix);
+            prefixSpan.setSpan(new ForegroundColorSpan(mPrefixColor), 0, prefixSpan.length(), 0);
+            builder.append(prefixSpan);
+        }
+
+        SpannableString textSpan = new SpannableString(text);
+        textSpan.setSpan(new ForegroundColorSpan(mTextColor), 0, textSpan.length(), 0);
+        builder.append(textSpan);
+
+        mMessageText.setText(builder, TextView.BufferType.SPANNABLE);
+    }
+
+    public void setMessageDecoration(final int drawableId) {
+        mMessageText.setCompoundDrawablesWithIntrinsicBounds(drawableId, 0, 0, 0);
     }
 
     public void setEvent(final Event event) {
-        String messageText = null;
+        String messageText;
+        String messagePrefix = null;
+        int messageDecoration = 0;
         if (event != null) {
             messageText = event.getText();
             if (event instanceof IncomingMessage) {
                 messageText = getAttachmentDescription((Message) event);
             } else if (event instanceof OutgoingMessage) {
                 messageText = getAttachmentDescription((Message) event);
+                if (!((Message) event).hasAttachment()) {
+                    messagePrefix = mPrefixYou;
+                }
             } else if (event instanceof CallMessage) {
-                int callType = ((CallMessage) event).getCallType();
-                int callDuration = ((CallMessage) event).callDuration;
+                CallMessage callMessage = ((CallMessage) event);
+                int callType = callMessage.getCallType();
+                int callDuration = callMessage.callDuration;
+                callMessage.getErrorMessage();
 
-                messageText = CallUtils.formatCallData(mContext, callType, callDuration);
+                messageText = CallUtils.formatCallData(getContext(), callType, callDuration,
+                        CallData.translateSipErrorMsg(getContext(), callMessage.getErrorMessage()));
+                messageDecoration = CallUtils.getTypeDrawableResId(callMessage.getCallType());
+            } else if (event instanceof InfoEvent) {
+                messageText = InfoEventView.getLocalizedText(getContext(), (InfoEvent) event).toString();
             }
         }
         else {
             messageText = getResources().getString(R.string.messaging_conversation_list_no_messages);
         }
-        setMessageText(messageText);
+        setMessageDecoration(messageDecoration);
+        setMessageText(messagePrefix, messageText);
     }
 
     private String getAttachmentDescription(Message message) {
@@ -297,4 +434,11 @@ public class ConversationListItem extends LinearLayout {
         mMessageText.setSelected(selected);
     }
 
+    public void setIsCallable(boolean enabled) {
+        mContainer.setSectLeftEnabled(enabled);
+    }
+
+    public void setIsDataRetained(boolean retained) {
+        mStatusDataRetention.setVisibility(retained ? View.VISIBLE : View.GONE);
+    }
 }

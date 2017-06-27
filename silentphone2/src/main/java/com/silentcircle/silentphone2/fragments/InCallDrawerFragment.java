@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2014-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -42,7 +42,7 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.text.TextUtils;
-import android.util.Log;
+import com.silentcircle.logs.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
@@ -92,6 +92,9 @@ public class InCallDrawerFragment extends Fragment implements View.OnClickListen
 
     /** If drawer is open we do some regular updates, for example display of call duration time every second */
     private boolean mOpenState;
+
+    /** If drawer has been viewed, resets after closed */
+    private boolean mViewState;
 
     /**
      * Callbacks interface that all activities using this fragment must implement.
@@ -149,7 +152,9 @@ public class InCallDrawerFragment extends Fragment implements View.OnClickListen
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
-        commonOnAttach(activity);
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+            commonOnAttach(activity);
+        }
     }
 
     private void commonOnAttach(Activity activity) {
@@ -233,6 +238,7 @@ public class InCallDrawerFragment extends Fragment implements View.OnClickListen
 
                 mParent.invalidateOptionsMenu(); // calls onPrepareOptionsMenu()
                 mOpenState = false;
+                mViewState = false;
                 if (mCallbacks != null)
                     mCallbacks.onDrawerStateChange(DrawerCallbacks.CLOSED);
 
@@ -242,9 +248,19 @@ public class InCallDrawerFragment extends Fragment implements View.OnClickListen
             public void onDrawerStateChanged(int newState) {
                 super.onDrawerStateChanged(newState);
                 if (!mOpenState &&
-                        (newState == DrawerLayout.STATE_SETTLING || newState == DrawerLayout.STATE_DRAGGING) && mCallbacks != null)
-                    mCallbacks.onDrawerStateChange(DrawerCallbacks.MOVING);
+                        (newState == DrawerLayout.STATE_SETTLING || newState == DrawerLayout.STATE_DRAGGING)) {
+                    if (mCallbacks != null) {
+                        mCallbacks.onDrawerStateChange(DrawerCallbacks.MOVING);
+                    }
 
+                    // Try to setup here to make the view update faster
+                    if (!mViewState) {
+                        mViewState = true;
+
+                        setupCallSecurityInfo();
+                        prepareEchoOptionCheck();
+                    }
+                }
             }
 
             @Override
@@ -256,8 +272,13 @@ public class InCallDrawerFragment extends Fragment implements View.OnClickListen
                 mParent.invalidateOptionsMenu(); // calls onPrepareOptionsMenu()
                 mOpenState = true;
                 setupCallInfo();
-                setupCallSecurityInfo();
-                prepareEchoOptionCheck();
+                // If the setup failed (mViewState == false), do it here
+                if (!mViewState) {
+                    mViewState = true;
+
+                    setupCallSecurityInfo();
+                    prepareEchoOptionCheck();
+                }
                 if (mCallbacks != null)
                     mCallbacks.onDrawerStateChange(DrawerCallbacks.OPENED);
             }

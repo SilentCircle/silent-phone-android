@@ -1,11 +1,37 @@
-//VoipPhone
-//Created by Janis Narbuts
-//Copyright (c) 2004-2012 Tivi LTD, www.tiviphone.com. All rights reserved.
+/*
+Created by Janis Narbuts
+Copyright (C) 2004-2012, Tivi LTD, www.tiviphone.com. All rights reserved.
+Copyright (C) 2012-2017, Silent Circle, LLC.  All rights reserved.
 
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+    * Any redistribution, use, or modification is done solely for personal
+      benefit and not for any commercial purpose or for monetary gain
+    * Redistributions of source code must retain the above copyright
+      notice, this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above copyright
+      notice, this list of conditions and the following disclaimer in the
+      documentation and/or other materials provided with the distribution.
+    * Neither the name Silent Circle nor the
+      names of its contributors may be used to endorse or promote products
+      derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL SILENT CIRCLE, LLC BE LIABLE FOR ANY
+DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <algorithm>
 
 #define _T_WO_GUI
 #include "../baseclasses/CTEditBase.h"
@@ -83,7 +109,7 @@ static int remSP(char *out, int iOutLen, const char *in){
    int l=0;
    
    for(;l<iOutLen;){
-      if(isalnum(in[i]) || in[i]=='+'){*out=in[i];out++;l++;}
+      if(isalnum(in[i]) || in[i]=='+'  || in[i]=='*' || in[i]=='#'){*out=in[i];out++;l++;}
       i++;
       if(!in[i] || in[i]=='@')break;
    }
@@ -185,7 +211,7 @@ class CTCountryCode{
       
       
       
-      return p-start;
+      return (int)(p-start);
    }
    
    void addCountrySorted( CListItemStringCountry *item)
@@ -231,7 +257,7 @@ class CTCountryCode{
       
       while(!isalnum(p[0]) && iLeft>0){p++;iLeft--;}
       
-      return p-start;
+      return (int)(p-start);
    }
    void loadCC(){
       //szCountryListFN
@@ -296,7 +322,7 @@ public:
          }
          if(iFail)break;
          
-         for(i=(min(l,8));i>0;i--){
+         for(i=(std::min(l,8));i>0;i--){
             cc[i]=0;
             if(setCC(cc, i))return 0;
          }
@@ -580,11 +606,11 @@ int fixNR(void *p, const char *in, char *out, int iLenMax){
          fixNR_CC(l,c->getSelected(),in,out,iLenMax);
       }
    }
-   else {
-      if(0&&in[0]!='+'){
-         l=fixNR_CC(0,NULL,in,out,iLenMax);
-      }
-   }
+//   else {
+//      if(0&&in[0]!='+'){
+//         l=fixNR_CC(0,NULL,in,out,iLenMax);
+//      }
+//   }
    if(l<=0)
       strncpy(out,in,iLenMax);
    
@@ -796,7 +822,7 @@ public:
       int nddl = (int)strlen(cr->ndd);
       int iddl = (int)strlen(cr->idd);
       
-      printf(" ndd[%s] idd[%s]\n",cr->ndd, cr->idd);
+    //  printf(" ndd[%s] idd[%s]\n",cr->ndd, cr->idd);
       
       
       /*
@@ -837,7 +863,7 @@ public:
          }
          else if(nddl==0 || strncmp(cr->ndd,bufDialed,nddl)==0){
             iHasUpdated=1;
-            snprintf(bufUpdated, sizeof(bufUpdated), "+%s%s", cr->ccode, &bufDialed[nddl]);
+            snprintf(bufUpdated, sizeof(bufUpdated), "+%.*s%s", cr->iCountryCodeLen, cr->ccode, &bufDialed[nddl]);
          }
       }
       

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.silentcircle.messaging.views.SwipeRevealLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/swipeable_item"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:addStatesFromChildren="true"
+    app:dragEdge="left"
+    app:mode="same_level">
+
+    <FrameLayout
+        android:id="@+id/call_layout"
+        android:layout_width="@dimen/conversation_log_action_button_size"
+        android:layout_height="@dimen/conversation_log_action_button_size"
+        android:addStatesFromChildren="true"
+        android:background="@color/conversation_call_action_background_color">
+
+        <ImageButton
+            android:id="@+id/call"
+            style="@style/Widget.AppCompat.Button.Colored"
+            android:layout_width="@dimen/conversation_log_contact_photo_size"
+            android:layout_height="@dimen/conversation_log_contact_photo_size"
+            android:layout_gravity="center"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/messaging_conversation_list_call_voiceover"
+            android:src="@drawable/ic_call_light"
+            android:tint="@android:color/white" />
+
+    </FrameLayout>
+
+    <include
+        android:id="@+id/member_layout"
+        layout="@layout/messaging_group_member" />
+
+</com.silentcircle.messaging.views.SwipeRevealLayout>

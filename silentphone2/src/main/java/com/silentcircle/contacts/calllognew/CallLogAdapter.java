@@ -778,6 +778,10 @@ public class CallLogAdapter extends GroupingListAdapter
             }
         }
 
+        if (info == null) {
+            return;
+        }
+
         CharSequence formattedNumber;
         final String name;
 
@@ -835,7 +839,8 @@ public class CallLogAdapter extends GroupingListAdapter
 //            contactType = ContactPhotoManagerNew.TYPE_BUSINESS;
 //        }
 
-        String lookupKey = info.lookupKey != null ? info.lookupKey : ContactsUtils.getFlexibleLookupKey(lookupUri);
+//        String lookupKey = info.lookupKey != null ? info.lookupKey : ContactsUtils.getFlexibleLookupKey(lookupUri);
+        String lookupKey = info.lookupKey;
 
         String nameForDefaultImage = null;
         if (TextUtils.isEmpty(name)) {
@@ -1118,7 +1123,7 @@ public class CallLogAdapter extends GroupingListAdapter
                     @Override
                     public void onClick(View v) {
                         final Intent intent =
-                                ContactsUtils.getAddNumberToContactIntent(mContext, details.number, views.assertedId);
+                                ContactsUtils.getAddNumberToContactIntent(mContext, details.number, views.assertedId, null);
                         mContext.startActivity(intent);
                     }
                 });

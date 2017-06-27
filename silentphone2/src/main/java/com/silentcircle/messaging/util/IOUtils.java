@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2016-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -30,9 +30,10 @@ package com.silentcircle.messaging.util;
 import android.content.Context;
 import android.net.Uri;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.text.TextUtils;
-import android.util.Log;
 
+import com.silentcircle.logs.Log;
 import com.silentcircle.messaging.model.listener.OnProgressUpdateListener;
 import com.silentcircle.silentphone2.util.ConfigurationUtilities;
 
@@ -47,7 +48,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.io.PrintWriter;
+import java.lang.reflect.Array;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
@@ -72,6 +73,10 @@ public class IOUtils {
 
 
     public static void close(Closeable... closeables) {
+        if (closeables == null) {
+            return;
+        }
+
         for (int i = 0; i < closeables.length; i++) {
             Closeable closeable = closeables[i];
             if (closeable != null) {
@@ -91,7 +96,7 @@ public class IOUtils {
      * @return Byte array, an empty array if the input is null or empty.
      */
     @NonNull
-    public static byte[] encode(String s) {
+    public static byte[] encode(@Nullable String s) {
         if (TextUtils.isEmpty(s))
             return new byte[0];
 
@@ -125,6 +130,36 @@ public class IOUtils {
         return c;
     }
 
+    public static int[] concat(int[] a, int[] b) {
+        int aLen = a.length;
+        int bLen = b.length;
+        int[] c= new int[aLen+bLen];
+        System.arraycopy(a, 0, c, 0, aLen);
+        System.arraycopy(b, 0, c, aLen, bLen);
+        return c;
+    }
+
+    public static <T> T[] concat(T[] a, T[] b) {
+        int aLen = a.length;
+        int bLen = b.length;
+
+        @SuppressWarnings("unchecked")
+        T[] c = (T[]) Array.newInstance(a.getClass().getComponentType(), aLen+bLen);
+        System.arraycopy(a, 0, c, 0, aLen);
+        System.arraycopy(b, 0, c, aLen, bLen);
+
+        return c;
+    }
+
+    public static int[] convertIntegers(Integer[] integers) {
+        int[] ret = new int[integers.length];
+        for (int i=0; i < ret.length; i++)
+        {
+            ret[i] = integers[i].intValue();
+        }
+        return ret;
+    }
+
     public static void readStream(InputStream in, StringBuilder content) {
         BufferedReader reader;
         content.delete(0, content.length()); // remove old content
@@ -134,7 +169,7 @@ public class IOUtils {
             for (String str = reader.readLine(); str != null; str = reader.readLine()) {
                 content.append(str).append('\n');
             }
-            if (ConfigurationUtilities.mTrace) Log.d(TAG, "readStream: " + content);
+            if (ConfigurationUtilities.mTrace) Log.d(TAG, "readStream: "+content);
         } catch (IOException e) {
             Log.w(TAG, "I/O Exception: " + e);
             if (ConfigurationUtilities.mTrace) e.printStackTrace();
@@ -305,6 +340,17 @@ public class IOUtils {
         fill(in, buffer);
         return buffer;
     }
+
+    public static ByteArrayOutputStream readFullyAsByteStream(InputStream in, ByteArrayOutputStream out) throws IOException {
+        byte[] buffer = new byte[16 * 1024];
+        int offset = 0;
+        int length = buffer.length;
+        for (int size = in.read(buffer, offset, length); size > -1; size = in.read(buffer, offset, length)) {
+            out.write(buffer, offset, size);
+        }
+        return out;
+    }
+
 
     public static byte[] readFully(InputStream in) throws IOException {
         return readFully(in, new byte[16 * 1024]);
@@ -533,5 +579,23 @@ public class IOUtils {
             IOUtils.close(input);
         }
         return outputFile;
+    }
+
+    /**
+     * Deletes given file or directory.
+     */
+    public static void deleteRecursive(@Nullable File file) {
+        if (file == null) {
+            return;
+        }
+        if (file.isDirectory()) {
+            File[] fileList = file.listFiles();
+            if (fileList != null) {
+                for (File child : fileList) {
+                    deleteRecursive(child);
+                }
+            }
+        }
+        file.delete();
     }
 }

@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2014-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -31,9 +31,10 @@ package com.silentcircle.common.util;
 import android.os.AsyncTask;
 import android.support.annotation.Nullable;
 import android.support.annotation.WorkerThread;
-import android.util.Log;
+import android.text.TextUtils;
 
-import com.silentcircle.messaging.services.AxoMessaging;
+import com.silentcircle.logs.Log;
+import com.silentcircle.messaging.services.ZinaMessaging;
 import com.silentcircle.silentphone2.services.TiviPhoneService;
 import com.silentcircle.silentphone2.util.ConfigurationUtilities;
 
@@ -44,6 +45,13 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+
+import static zina.JsonStrings.RETENTION_ORG;
+import static zina.JsonStrings.RRAP;
+import static zina.JsonStrings.RRCM;
+import static zina.JsonStrings.RRCP;
+import static zina.JsonStrings.RRMM;
+import static zina.JsonStrings.RRMP;
 
 /**
  * Some re-usable async tasks for various purposes.
@@ -57,6 +65,10 @@ public class AsyncTasks {
     public static void asyncCommand(String command) {
         AsynchronousCommandTask task = new AsynchronousCommandTask();
         task.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, command);
+    }
+
+    public static void asyncCommand(Runnable task) {
+        AsyncTask.THREAD_POOL_EXECUTOR.execute(task);
     }
 
     public static void readStream(InputStream in, StringBuilder content) {
@@ -106,15 +118,22 @@ public class AsyncTasks {
         protected byte[] mData;
         protected UserInfo mUserInfo = new UserInfo();
         protected int[] errorCode = new int[1];
+        protected boolean mForceRefresh;
 
         public UserDataBackgroundTask() { }
+
+        public UserDataBackgroundTask(boolean flagForceRefresh) {
+            mForceRefresh = flagForceRefresh;
+        }
 
         @Override
         protected Integer doInBackground(String... uid) {
             mUidIn = uid[0];
             long startTime = System.currentTimeMillis();
             if (mUidIn != null) {
-                mData = AxoMessaging.getUserInfo(mUidIn, null, errorCode);
+                mData = mForceRefresh
+                        ? ZinaMessaging.refreshUserData(mUidIn, null)
+                        : ZinaMessaging.getUserInfo(mUidIn, null, errorCode);
             }
             mUserInfo =  parseUserInfo(mData);
             return (int)(System.currentTimeMillis() - startTime);
@@ -142,7 +161,7 @@ public class AsyncTasks {
         public void run () {
             long startTime = System.currentTimeMillis();
             if (mUidIn != null) {
-                mData = AxoMessaging.getUserInfo(mUidIn, null, errorCode);
+                mData = ZinaMessaging.getUserInfo(mUidIn, null, errorCode);
             }
             mUserInfo =  parseUserInfo(mData);
             if (ConfigurationUtilities.mTrace)
@@ -160,6 +179,14 @@ public class AsyncTasks {
         public String mUuid;
         public String mLookupUri;
         public String mAvatarUrl;
+        public String retentionOrganization;
+        public String organization;
+        public boolean mDrEnabled;
+        public boolean rrmm;
+        public boolean rrmp;
+        public boolean rrcm;
+        public boolean rrcp;
+        public boolean rrap;
     }
 
     @Nullable
@@ -169,21 +196,19 @@ public class AsyncTasks {
         UserInfo ui = new UserInfo();
         try {
             JSONObject data = new JSONObject(new String(userData));
-            if (data.has("alias0")) {
-                ui.mAlias = data.optString("alias0");
-            }
-            if (data.has("display_name")) {
-                ui.mDisplayName = data.optString("display_name");
-            }
-            if (data.has("uid")) {
-                ui.mUuid = data.optString("uid");
-            }
-            if (data.has("lookup_uri")) {
-                ui.mLookupUri = data.optString("lookup_uri");
-            }
-            if (data.has("avatar_url")) {
-                ui.mAvatarUrl = data.optString("avatar_url");
-            }
+            ui.mAlias = data.optString("alias0", null);
+            ui.mDisplayName = data.optString("display_name", null);
+            ui.mUuid = data.optString("uid", null);
+            ui.mLookupUri = data.optString("lookup_uri", null);
+            ui.mAvatarUrl = data.optString("avatar_url", null);
+            ui.mDrEnabled = data.optBoolean("dr_enabled", false);
+            ui.retentionOrganization = data.optString(RETENTION_ORG, null);
+            ui.organization = data.optString("display_organization", null);
+            ui.rrmm = data.optBoolean(RRMM, false);
+            ui.rrmp = data.optBoolean(RRMP, false);
+            ui.rrcm = data.optBoolean(RRCM, false);
+            ui.rrcp = data.optBoolean(RRCP, false);
+            ui.rrap = data.optBoolean(RRAP, false);
         } catch (JSONException ex) {
             Log.d("parseUserInfo", "JSON exception", ex);
             ui = null;

@@ -20,7 +20,7 @@ import android.content.AsyncTaskLoader;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.MatrixCursor;
-import android.util.Log;
+import com.silentcircle.logs.Log;
 
 import com.silentcircle.common.util.DatabaseHelperManager;
 import com.silentcircle.contacts.list.PhoneNumberListAdapter.PhoneQuery;

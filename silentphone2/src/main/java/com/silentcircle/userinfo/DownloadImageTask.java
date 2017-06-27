@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2016-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -25,7 +25,6 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-
 package com.silentcircle.userinfo;
 
 import android.content.Context;
@@ -33,20 +32,23 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
 import android.text.TextUtils;
-import android.util.Log;
+import com.silentcircle.logs.Log;
 
+import com.silentcircle.messaging.util.IOUtils;
 import com.silentcircle.silentphone2.util.ConfigurationUtilities;
+import com.silentcircle.silentphone2.util.PinnedCertificateHandling;
 
 import java.io.IOException;
 import java.net.URL;
 import java.util.Locale;
 
 import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
 
 /**
  * Async task to download an image.
  */
-public class DownloadImageTask extends AsyncTask<String, Void, Bitmap> {
+public class DownloadImageTask extends AsyncTask<String, Void, byte[]> {
 
     private static final String TAG = DownloadImageTask.class.getSimpleName();
 
@@ -58,7 +60,7 @@ public class DownloadImageTask extends AsyncTask<String, Void, Bitmap> {
         mBaseUrl = ConfigurationUtilities.getProvisioningBaseUrl(context);
     }
 
-    protected Bitmap doInBackground(String... urls) {
+    protected byte[] doInBackground(String... urls) {
         if (urls == null || urls.length == 0) {
             return null;
         }
@@ -69,10 +71,20 @@ public class DownloadImageTask extends AsyncTask<String, Void, Bitmap> {
         }
 
         HttpsURLConnection urlConnection = null;
-        Bitmap result = null;
+        byte[] result = null;
         try {
             if (ConfigurationUtilities.mTrace) Log.d(TAG, "User info URL: " + url);
             urlConnection = (HttpsURLConnection) new URL(mBaseUrl + url).openConnection();
+            SSLContext context = PinnedCertificateHandling.getPinnedSslContext(
+                    ConfigurationUtilities.mNetworkConfiguration);
+            if (context != null) {
+                urlConnection.setSSLSocketFactory(context.getSocketFactory());
+            }
+            else {
+                Log.e(TAG, "Cannot get a trusted/pinned SSL context; failing");
+                throw new AssertionError("Failed to get pinned SSL context");
+            }
+
             urlConnection.setRequestProperty("Accept-Language", Locale.getDefault().getLanguage());
             urlConnection.setConnectTimeout(REQUEST_TIMEOUT);
 
@@ -80,7 +92,7 @@ public class DownloadImageTask extends AsyncTask<String, Void, Bitmap> {
             if (ConfigurationUtilities.mTrace) Log.d(TAG, "HTTP code: " + ret);
 
             if (ret == HttpsURLConnection.HTTP_OK) {
-                result = BitmapFactory.decodeStream(urlConnection.getInputStream());
+                result = IOUtils.readFully(urlConnection.getInputStream());
             }
 
         } catch (IOException e) {

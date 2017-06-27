@@ -123,7 +123,7 @@ empty_output_buffer2 (j_compress_ptr cinfo)
       (size_t) OUTPUT_BUF_SIZE)
     ERREXIT(cinfo, JERR_FILE_WRITE);
     */
-  int l=OUTPUT_BUF_SIZE-dest->pub.free_in_buffer;
+  int l=(int)(OUTPUT_BUF_SIZE-dest->pub.free_in_buffer);
   memcpy(dest->pToWrite,dest->buffer,l);
   dest->pToWrite+=l;
   dest->iBytesInBuf+=l;

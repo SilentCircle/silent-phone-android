@@ -30,10 +30,14 @@ import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.graphics.Canvas;
+import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Vibrator;
+import android.support.v4.view.ViewCompat;
+import android.support.v4.view.accessibility.AccessibilityNodeInfoCompat;
+import android.support.v4.widget.ExploreByTouchHelper;
 import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -41,11 +45,15 @@ import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityManager;
+import android.view.accessibility.AccessibilityNodeInfo;
+import android.view.accessibility.AccessibilityNodeProvider;
 
 import com.silentcircle.silentphone2.R;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * This is a copy of com.android.internal.widget.multiwaveview.GlowPadView with minor changes
@@ -73,11 +81,11 @@ public class GlowPadView extends View {
     public interface OnTriggerListener {
         int NO_HANDLE = 0;
         int CENTER_HANDLE = 1;
-        void onGrabbed(View v, int handle);
-        void onReleased(View v, int handle);
-        void onTrigger(View v, int target);
-        void onGrabbedStateChange(View v, int handle);
-        void onFinishFinalAnimation();
+        public void onGrabbed(View v, int handle);
+        public void onReleased(View v, int handle);
+        public void onTrigger(View v, int target);
+        public void onGrabbedStateChange(View v, int handle);
+        public void onFinishFinalAnimation();
     }
 
     // Tuneable parameters for animation
@@ -126,6 +134,9 @@ public class GlowPadView extends View {
     private boolean mDragging;
     private int mNewTargetResources;
 
+    private AccessibilityNodeProvider mAccessibilityNodeProvider;
+    private GlowpadExploreByTouchHelper mExploreByTouchHelper;
+
     private class AnimationBundle extends ArrayList<Tweener> {
         private static final long serialVersionUID = 0xA84D78726F127468L;
         private boolean mSuspended;
@@ -160,7 +171,7 @@ public class GlowPadView extends View {
         public void setSuspended(boolean suspend) {
             mSuspended = suspend;
         }
-    }
+    };
 
     private AnimatorListener mResetListener = new AnimatorListenerAdapter() {
         public void onAnimationEnd(Animator animator) {
@@ -225,7 +236,7 @@ public class GlowPadView extends View {
                 mFeedbackCount);
         mAllowScaling = a.getBoolean(R.styleable.GlowPadView_allowScaling, false);
         TypedValue handle = a.peekValue(R.styleable.GlowPadView_handleDrawable);
-        setHandleDrawable(handle != null ? handle.resourceId : 0 /*R.drawable.ic_incall_audio_handle*/);
+        setHandleDrawable(handle != null ? handle.resourceId : R.drawable.ic_incall_audio_handle);
         mOuterRing = new TargetDrawable(res,
                 getResourceId(a, R.styleable.GlowPadView_outerRingDrawable), 1);
 
@@ -241,7 +252,7 @@ public class GlowPadView extends View {
         if (a.getValue(R.styleable.GlowPadView_targetDrawables, outValue)) {
             internalSetTargetResources(outValue.resourceId);
         }
-        if ((mTargetDrawables == null || mTargetDrawables.size() == 0) && !isInEditMode()) {
+        if (mTargetDrawables == null || mTargetDrawables.size() == 0) {
             throw new IllegalStateException("Must specify at least one target drawable");
         }
 
@@ -262,6 +273,9 @@ public class GlowPadView extends View {
             }
             setDirectionDescriptionsResourceId(resourceId);
         }
+
+        // Use gravity attribute from LinearLayout
+        //a = context.obtainStyledAttributes(attrs, R.styleable.LinearLayout);
         mGravity = a.getInt(R.styleable.GlowPadView_android_gravity, Gravity.TOP);
         a.recycle();
 
@@ -273,6 +287,9 @@ public class GlowPadView extends View {
         mPointCloud = new PointCloud(pointDrawable);
         mPointCloud.makePointCloud(mInnerRadius, mOuterRadius);
         mPointCloud.glowManager.setRadius(mGlowRadius);
+
+        mExploreByTouchHelper = new GlowpadExploreByTouchHelper(this);
+        ViewCompat.setAccessibilityDelegate(this, mExploreByTouchHelper);
     }
 
     private int getResourceId(TypedArray a, int id) {
@@ -401,7 +418,6 @@ public class GlowPadView extends View {
 
             case STATE_TRACKING:
                 mHandleDrawable.setAlpha(0.0f);
-                showGlow(REVEAL_GLOW_DURATION , REVEAL_GLOW_DELAY, 1.0f, null);
                 break;
 
             case STATE_SNAP:
@@ -637,11 +653,15 @@ public class GlowPadView extends View {
     }
 
     /**
-     * Sets teh handle drawable to the drawable specified by the resource ID.
+     * Sets the handle drawable to the drawable specified by the resource ID.
      * @param resourceId
      */
     public void setHandleDrawable(int resourceId) {
-        mHandleDrawable = new TargetDrawable(getResources(), resourceId, 2);
+        if (mHandleDrawable != null) {
+            mHandleDrawable.setDrawable(getResources(), resourceId);
+        } else {
+            mHandleDrawable = new TargetDrawable(getResources(), resourceId, 1);
+        }
         mHandleDrawable.setState(TargetDrawable.STATE_INACTIVE);
     }
 
@@ -693,7 +713,7 @@ public class GlowPadView extends View {
      * @param enabled
      */
     public void setVibrateEnabled(boolean enabled) {
-        if (!isInEditMode() && enabled && mVibrator == null) {
+        if (enabled && mVibrator == null) {
             mVibrator = (Vibrator) getContext().getSystemService(Context.VIBRATOR_SERVICE);
         } else {
             mVibrator = null;
@@ -860,7 +880,6 @@ public class GlowPadView extends View {
         switchToState(STATE_FINISH, event.getX(actionIndex), event.getY(actionIndex));
     }
 
-    @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
     private void handleMove(MotionEvent event) {
         int activeTarget = -1;
         final int historySize = event.getHistorySize();
@@ -942,7 +961,7 @@ public class GlowPadView extends View {
                 final AccessibilityManager accessibilityManager =
                         (AccessibilityManager) getContext().getSystemService(
                                 Context.ACCESSIBILITY_SERVICE);
-                if (accessibilityManager.isEnabled() && Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+                if (accessibilityManager.isEnabled()) {
                     String targetContentDescription = getTargetDescription(activeTarget);
                     announceForAccessibility(targetContentDescription);
                 }
@@ -1058,7 +1077,6 @@ public class GlowPadView extends View {
      * Given the desired width and height of the ring and the allocated width and height, compute
      * how much we need to scale the ring.
      */
-
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
     private float computeScaleFactor(int desiredWidth, int desiredHeight,
             int actualWidth, int actualHeight) {
@@ -1208,7 +1226,6 @@ public class GlowPadView extends View {
         return square(scaledTapRadius);
     }
 
-    @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
     private void announceTargets() {
         StringBuilder utterance = new StringBuilder();
         final int targetCount = mTargetDrawables.size();
@@ -1355,5 +1372,104 @@ public class GlowPadView extends View {
             replaceTargetDrawables(getContext().getResources(), existingResId, existingResId);
         }
         return replaced;
+    }
+
+    public class GlowpadExploreByTouchHelper extends ExploreByTouchHelper {
+
+        private Rect mBounds = new Rect();
+
+        public GlowpadExploreByTouchHelper(View forView) {
+            super(forView);
+        }
+
+        @Override
+        protected int getVirtualViewAt(float x, float y) {
+            if (mGrabbedState == OnTriggerListener.CENTER_HANDLE) {
+                for (int i = 0; i < mTargetDrawables.size(); i++) {
+                    final TargetDrawable target = mTargetDrawables.get(i);
+                    if (target.isEnabled() && target.getBounds().contains((int) x, (int) y)) {
+                        return i;
+                    }
+                }
+                return INVALID_ID;
+            } else {
+                return HOST_ID;
+            }
+        }
+
+        @Override
+        protected void getVisibleVirtualViews(List<Integer> virtualViewIds) {
+            if (mGrabbedState == OnTriggerListener.CENTER_HANDLE) {
+                // Add virtual views backwards so that accessibility services like switch
+                // access traverse them in the correct order
+                for (int i = mTargetDrawables.size() - 1; i >= 0; i--) {
+                    if (mTargetDrawables.get(i).isEnabled()) {
+                        virtualViewIds.add(i);
+                    }
+                }
+            }
+        }
+
+        @Override
+        protected void onPopulateEventForVirtualView(int virtualViewId, AccessibilityEvent event) {
+            if (virtualViewId >= 0 && virtualViewId < mTargetDescriptions.size()) {
+                event.setContentDescription(mTargetDescriptions.get(virtualViewId));
+            }
+        }
+
+        @Override
+        public void onInitializeAccessibilityEvent(View host, AccessibilityEvent event) {
+            if (host == GlowPadView.this && event.getEventType()
+                    == AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED) {
+                event.setContentChangeTypes(AccessibilityEvent.CONTENT_CHANGE_TYPE_SUBTREE);
+            }
+            super.onInitializeAccessibilityEvent(host, event);
+        }
+
+        @Override
+        public void onPopulateNodeForHost(AccessibilityNodeInfoCompat node) {
+            if (mGrabbedState == OnTriggerListener.NO_HANDLE) {
+                node.setClickable(true);
+                node.addAction(AccessibilityNodeInfoCompat.ACTION_CLICK);
+            }
+            mBounds.set(0, 0, GlowPadView.this.getWidth(), GlowPadView.this.getHeight());
+            node.setBoundsInParent(mBounds);
+        }
+
+        @Override
+        public boolean performAccessibilityAction(View host, int action, Bundle args) {
+            if (mGrabbedState == OnTriggerListener.NO_HANDLE) {
+                // Simulate handle being grabbed to expose targets.
+                trySwitchToFirstTouchState(mWaveCenterX, mWaveCenterY);
+                invalidateRoot();
+                return true;
+            }
+            return super.performAccessibilityAction(host, action, args);
+        }
+
+        @Override
+        protected void onPopulateNodeForVirtualView(int virtualViewId,
+                AccessibilityNodeInfoCompat node) {
+            if (virtualViewId < mTargetDrawables.size()) {
+                final TargetDrawable target = mTargetDrawables.get(virtualViewId);
+                node.setBoundsInParent(target.getBounds());
+                node.setClickable(true);
+                node.addAction(AccessibilityNodeInfoCompat.ACTION_CLICK);
+                node.setContentDescription(getTargetDescription(virtualViewId));
+            }
+        }
+
+        @Override
+        protected boolean onPerformActionForVirtualView(int virtualViewId, int action,
+                Bundle arguments) {
+            if (action == AccessibilityNodeInfo.ACTION_CLICK) {
+                if (virtualViewId >= 0 && virtualViewId < mTargetDrawables.size()) {
+                    dispatchTriggerEvent(virtualViewId);
+                    return true;
+                }
+            }
+            return false;
+        }
+
     }
 }

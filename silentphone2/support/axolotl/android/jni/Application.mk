@@ -1,13 +1,22 @@
+# Copyright 2016 Silent Circle, LLC
 #
-# Copyright (c) 2015 Slient Circle LLC.  All rights reserved.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
 #
-# @author Werner Dittmann <Werner.Dittmann@t-online.de>
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 #
 # APP_PROJECT_PATH := /path/to/project
 APP_PLATFORM := android-14
 APP_STL := gnustl_shared
-APP_MODULES := protobuf axolotl++
+APP_MODULES := protobuf zina
 APP_ABI := armeabi-v7a
 APP_CPPFLAGS += -std=c++11
-# NDK_TOOLCHAIN_VERSION=clang
+NDK_TOOLCHAIN_VERSION=clang
 

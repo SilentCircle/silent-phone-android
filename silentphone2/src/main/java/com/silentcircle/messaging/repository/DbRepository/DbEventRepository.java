@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2014-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -29,23 +29,26 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package com.silentcircle.messaging.repository.DbRepository;
 
 import android.content.Context;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+import android.text.TextUtils;
 
+import com.silentcircle.SilentPhoneApplication;
+import com.silentcircle.logs.Log;
 import com.silentcircle.messaging.model.event.Event;
 import com.silentcircle.messaging.model.json.JSONEventAdapter;
 import com.silentcircle.messaging.repository.ObjectRepository;
 import com.silentcircle.messaging.repository.EventRepository;
-import com.silentcircle.messaging.util.CryptoUtil;
 import com.silentcircle.messaging.util.IOUtils;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.security.Key;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import axolotl.AxolotlNative;
+import zina.ZinaNative;
 
 /**
  * Implementation of a database event/message repository.
@@ -58,7 +61,6 @@ public class DbEventRepository implements EventRepository {
 
     private static final List<Event> EMPTY_LIST = new ArrayList<>();
     private final byte[] repoId;
-    private final Context context;
 
     private final JSONEventAdapter adapter = new JSONEventAdapter();
 
@@ -69,21 +71,30 @@ public class DbEventRepository implements EventRepository {
      * uses to look for events of this conversation.
      *
      * @param id the unique conversation id
-     * @param key key to encrypt/decrypt event data
      */
-    public DbEventRepository(Context ctx, byte[] id) {
-        context = ctx;
+    public DbEventRepository(byte[] id) {
         repoId = id;
     }
 
     @Override
+    @Nullable
     public ObjectRepository objectsOf(Event event) {
-        if( event == null ) {
+        if (event == null) {
             return null;
         }
-        byte[] eventId = IOUtils.encode(identify(event));
-        ObjectRepository objRepo = new DbObjectRepository(context, repoId, eventId);
-        return objRepo;
+
+        return objectsOf(identify(event));
+    }
+
+    @Override
+    @Nullable
+    public ObjectRepository objectsOf(String eventId) {
+        if (TextUtils.isEmpty(eventId)) {
+            return null;
+        }
+
+        byte[] id = IOUtils.encode(eventId);
+        return new DbObjectRepository(repoId, id);
     }
 
     @Override
@@ -92,6 +103,16 @@ public class DbEventRepository implements EventRepository {
         for (Event event: events) {
             remove(event);
         }
+
+        /*
+         * instead of removing events one by one try to delete all events associated with
+         * conversation and all entries from objects and attachmentStatus repos.
+
+        Log.d(TAG, "Clear all events for a conversation");
+        ZinaNative.deleteAllEvents(repoId);
+         */
+
+        DbObjectRepository.clear(SilentPhoneApplication.getAppContext(), repoId);
     }
 
     /**
@@ -104,20 +125,21 @@ public class DbEventRepository implements EventRepository {
      */
     @Override
     public boolean exists() {
-        return AxolotlNative.existConversation(repoId);
+        return ZinaNative.existConversation(repoId);
     }
 
     @Override
     public boolean exists(String id) {
         byte[] idBytes = IOUtils.encode(id);
-        return AxolotlNative.existEvent(repoId, idBytes);
+        return ZinaNative.existEvent(repoId, idBytes);
     }
 
     @Override
-    public Event findById(String eventId) {
+    @Nullable
+    public Event findById(@Nullable String eventId) {
         byte[] id = IOUtils.encode(eventId);
         int[] code = new int[2];
-        byte[] data = AxolotlNative.loadEvent(repoId, id, code);
+        byte[] data = ZinaNative.loadEvent(repoId, id, code);
         if (data != null) {
             return deserialize(new String(data));
         }
@@ -134,7 +156,7 @@ public class DbEventRepository implements EventRepository {
         int[] code = new int[2];
         code[1] = pagingContext.getLastMessageNumber();
 
-        byte[][] events = AxolotlNative.loadEvents(repoId, pagingContext.getNextOffset(),
+        byte[][] events = ZinaNative.loadEvents(repoId, pagingContext.getNextOffset(),
                 pagingContext.getPageSize(), pagingContext.getPagingDirection(), code);
 
         if (events == null || events.length == 0
@@ -152,12 +174,46 @@ public class DbEventRepository implements EventRepository {
     }
 
     @Override
-    public void remove(Event event) {
-        ObjectRepository objRepo = objectsOf(event);
-        objRepo.clear();
+    public List<Event> list(int offset, int number, int direction) {
+        int[] code = new int[2];
+        code[1] = offset;
 
-        byte[] id = IOUtils.encode(identify(event));
-        AxolotlNative.deleteEvent(repoId, id)     ;
+        byte[][] events = ZinaNative.loadEvents(repoId, offset,
+                number, direction, code);
+
+        if (events == null || events.length == 0) {
+            return EMPTY_LIST;
+        }
+
+        List<Event> eventsList = new ArrayList<>();
+        for (byte[] eventData : events) {
+            eventsList.add(deserialize(new String(eventData)));
+        }
+        return eventsList;
+    }
+
+    @Override
+    public void remove(@Nullable Event event) {
+        if (event == null) {
+            return;
+        }
+
+        remove(identify(event));
+    }
+
+    @Override
+    public void remove(@Nullable String eventId) {
+        if (TextUtils.isEmpty(eventId)) {
+            return;
+        }
+
+        ObjectRepository objRepo = objectsOf(eventId);
+        if (objRepo != null) {
+            objRepo.clear();
+        }
+
+        byte[] id = IOUtils.encode(eventId);
+        ZinaNative.deleteEvent(repoId, id);
     }
 
     protected String identify( Event message ) {
@@ -166,13 +222,20 @@ public class DbEventRepository implements EventRepository {
 
     @Override
     public void save(Event object) {
-        byte[] data = serialize(object).getBytes();
+        if (object == null) {
+            return;
+        }
 
-        byte[] id = IOUtils.encode(identify(object));
-        AxolotlNative.insertEvent(repoId, id, data);
-        Arrays.fill(data, (byte) 0);
+        String serialized = serialize(object);
+        if (serialized != null) {
+            byte[] data = serialized.getBytes();
+            byte[] id = IOUtils.encode(identify(object));
+            ZinaNative.insertEvent(repoId, id, data);
+            Arrays.fill(data, (byte) 0);
+        }
     }
 
+    @Nullable
     protected String serialize(Event event) {
         if (event == null) {
             return null;
@@ -180,6 +243,7 @@ public class DbEventRepository implements EventRepository {
         return adapter.adapt(event).toString();
     }
 
+    @Nullable
     private Event deserialize(String serial) {
         if (serial == null) {
             return null;

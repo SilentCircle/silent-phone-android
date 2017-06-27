@@ -20,7 +20,7 @@ import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
 import android.provider.ContactsContract;
-import android.util.Log;
+import com.silentcircle.logs.Log;
 
 /**
  * Static methods to update contact information.

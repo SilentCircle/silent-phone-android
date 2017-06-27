@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources xmlns:android="http://schemas.android.com/apk/res/android">
+<resources xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools">
 
     <style name="Widget.Silence"/>
 
@@ -192,7 +192,10 @@
     </style>
 
     <style name="Widget.Text.Floating">
-        <item name="android:layout_margin">@dimen/space_small</item>
+        <item name="android:layout_marginTop">@dimen/space_small</item>
+        <item name="android:layout_marginBottom">@dimen/space_small</item>
+        <item name="android:layout_marginLeft">@dimen/space_small</item>
+        <item name="android:layout_marginRight">@dimen/space_small</item>
         <item name="android:padding">@dimen/space_small</item>
         <item name="android:drawablePadding">@dimen/space_small</item>
         <item name="android:gravity">center_vertical</item>
@@ -215,6 +218,11 @@
     <style name="Widget.Text.Floating.Error">
         <item name="android:textColor">?sp_error_message_text_selector</item>
         <item name="android:drawableLeft">@drawable/ic_action_error</item>
+        <item name="android:duplicateParentState">true</item>
+    </style>
+
+    <style name="Widget.Text.Floating.Info">
+        <item name="android:textColor">?sp_error_message_text_selector</item>
         <item name="android:duplicateParentState">true</item>
     </style>
 
@@ -288,9 +296,9 @@
 
     <style name="Widget.Layout.__Card" parent="Widget.Layout.Linear.Vertical">
         <item name="android:layout_width">wrap_content</item>
-        <item name="android:layout_marginLeft">@dimen/space_normal</item>
-        <item name="android:layout_marginRight">@dimen/space_normal</item>
-        <item name="android:layout_marginTop">@dimen/space_normal</item>
+        <item name="android:layout_marginLeft">@dimen/spacing_normal</item>
+        <item name="android:layout_marginRight">@dimen/spacing_normal</item>
+        <item name="android:layout_marginTop">0dp</item>
         <item name="android:background">@drawable/bg_card_light_default</item>
         <item name="android:duplicateParentState">true</item>
         <item name="android:minWidth">@dimen/messaging_message_card_min_width</item>
@@ -300,7 +308,7 @@
     <style name="Widget.Layout.Card" parent="Widget.Layout.__Card"/>
 
     <style name="Widget.Layout.Card.__Outgoing">
-        <item name="android:background">@drawable/bg_my_card_light_default</item>
+        <item name="android:background">@drawable/bg_my_card_light_second</item>
         <!-- Attribute android:backgroundTint is not supported in Jelly Beans, so additional code
              is necessary in MessageEventView to have support for tinting.
         <item name="android:backgroundTint">@color/outgoing_message_background_selector</item>
@@ -308,7 +316,7 @@
     </style>
 
     <style name="Widget.Layout.Card.__Incoming">
-        <item name="android:background">@drawable/bg_card_light_default</item>
+        <item name="android:background">@drawable/bg_card_light_second</item>
     </style>
 
     <style name="Widget.Layout.Card.Incoming" parent="Widget.Layout.Card.__Incoming">
@@ -320,15 +328,19 @@
     </style>
 
     <style name="Widget.Layout.Card.Incoming.Message">
+        <!--
         <item name="android:layout_toRightOf">@+id/message_avatar</item>
         <item name="android:layout_marginLeft">-5dp</item>
+        -->
+        <item name="android:layout_alignParentLeft">true</item>
     </style>
 
     <style name="Widget.Layout.Card.Outgoing.Message">
         <item name="android:layout_toLeftOf">@+id/message_avatar</item>
     </style>
+
     <style name="Widget.Silence.__ActionTray" parent="Widget.Silence.LinearLayout.Horizontal">
-        <item name="android:layout_alignParentTop">true</item>
+        <!--<item name="android:layout_alignParentTop">true</item>-->
     </style>
 
     <style name="Widget.Silence.ActionTray" parent="Widget.Silence.__ActionTray"/>
@@ -395,22 +407,25 @@
 
     <style name="Widget.Text.Error.Resend">
         <item name="android:text">@string/notify_resend_request</item>
+        <item name="android:visibility">gone</item>
     </style>
 
     <style name="Widget.OptionsItem">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">wrap_content</item>
-        <item name="android:layout_marginLeft">@dimen/conversation_option_margin_left</item>
-        <item name="android:layout_marginRight">@dimen/conversation_option_margin_right</item>
         <item name="android:layout_marginBottom">@dimen/conversation_option_margin_bottom</item>
         <item name="android:filterTouchesWhenObscured">true</item>
-        <item name="checkableMargin">@dimen/conversation_option_checkable_margin</item>
+        <item name="containerPaddingTop">@dimen/space_large</item>
+        <item name="containerPaddingBottom">@dimen/spacing_large</item>
+        <item name="checkableMarginLeft">@dimen/conversation_option_checkable_margin_left</item>
+        <item name="checkableMarginRight">@dimen/conversation_option_margin_left</item>
+        <item name="imageMarginLeft">@dimen/conversation_option_margin_left</item>
         <item name="imageMarginRight">@dimen/conversation_option_image_margin</item>
         <item name="descriptionMarginLeft">@dimen/conversation_option_description_margin_left</item>
         <item name="descriptionMarginTop">@dimen/conversation_option_description_margin_top</item>
         <item name="textSize">@dimen/text_xlarge</item>
         <item name="tintColor">?attr/sp_drawer_text_color</item>
-        <item name="textColor">?attr/sp_drawer_text_color</item>
+        <item name="android:textColor">?attr/sp_drawer_text_color</item>
         <item name="descriptionSize">@dimen/text_normal</item>
         <item name="descriptionColor">?attr/sp_drawer_secondary_text_color</item>
     </style>
@@ -420,16 +435,17 @@
         <item name="android:layout_height">wrap_content</item>
         <item name="android:layout_marginLeft">0dp</item>
         <item name="android:layout_marginRight">0dp</item>
-        <item name="android:layout_marginBottom">@dimen/conversation_option_margin_bottom</item>
         <item name="android:filterTouchesWhenObscured">true</item>
-        <item name="checkableMargin">@dimen/conversation_option_checkable_margin</item>
-        <item name="imageMarginLeft">@dimen/conversation_option_image_margin</item>
+        <item name="android:textColor">?attr/sp_drawer_text_color</item>
+        <item name="containerPaddingTop">@dimen/space_large</item>
+        <item name="containerPaddingBottom">@dimen/spacing_large</item>
+        <item name="checkableMarginLeft">@dimen/conversation_option_checkable_margin_left</item>
+        <item name="imageMarginLeft">@dimen/dial_drawer_avatar_padding_left</item>
         <item name="imageMarginRight">@dimen/conversation_option_image_margin</item>
         <item name="descriptionMarginLeft">75dp</item>
         <item name="descriptionMarginTop">0dp</item>
         <item name="textSize">@dimen/text_xlarge</item>
         <item name="tintColor">?attr/sp_drawer_text_color</item>
-        <item name="textColor">?attr/sp_drawer_text_color</item>
         <item name="descriptionSize">@dimen/text_normal</item>
         <item name="descriptionColor">?attr/sp_drawer_secondary_text_color</item>
     </style>
@@ -437,16 +453,25 @@
     <style name="Widget.SettingsItem">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">wrap_content</item>
-        <item name="android:layout_marginLeft">@dimen/settings_item_margin_left</item>
-        <item name="android:layout_marginRight">@dimen/settings_item_margin_right</item>
-        <item name="android:layout_marginBottom">@dimen/settings_item_margin_bottom</item>
-        <item name="checkableMargin">@dimen/conversation_option_checkable_margin</item>
-        <item name="descriptionMarginLeft">2dp</item>
+        <item name="android:layout_marginLeft">0dp</item>
+        <item name="android:layout_marginRight">0dp</item>
+        <item name="android:layout_marginBottom">0dp</item>
+        <item name="android:textStyle">normal</item>
+        <item name="android:textColor">?attr/sp_activity_text_selector</item>
+        <item name="imageMarginLeft">@dimen/settings_item_margin_left</item>
+        <item name="checkableMarginLeft">@dimen/conversation_option_checkable_margin_left</item>
+        <item name="checkableMarginRight">@dimen/conversation_option_checkable_margin_right</item>
+        <item name="descriptionMarginLeft">@dimen/settings_item_margin_left</item>
+        <item name="descriptionMarginRight">@dimen/settings_item_margin_left</item>
         <item name="descriptionMarginTop">0dp</item>
         <item name="textSize">@dimen/text_xlarge</item>
-        <item name="textColor">?attr/sp_drawer_text_color</item>
         <item name="descriptionSize">@dimen/text_large</item>
         <item name="descriptionColor">?attr/sp_drawer_secondary_text_color</item>
+    </style>
+
+    <style name="Widget.SettingsItem.Inner" parent="Widget.SettingsItem">
+        <item name="android:layout_marginLeft">@dimen/spacing_large</item>
+        <item name="android:layout_marginStart" tools:ignore="NewApi">@dimen/spacing_large</item>
     </style>
 
     <style name="Widget.OptionsSeekBar" parent="android:Widget.SeekBar">
@@ -461,5 +486,9 @@
         <item name="android:filterTouchesWhenObscured">true</item>
     </style>
 
-</resources>
+    <style name="Widget.Layout.FileUpload" parent="Widget.Silence.ProgressLayout">
+        <item name="android:background">?attr/sp_outgoing_message_background</item>
+    </style>
 
+    <style name="Widget.Text.FileUpload" parent="Widget.Text.Outgoing"/>
+</resources>

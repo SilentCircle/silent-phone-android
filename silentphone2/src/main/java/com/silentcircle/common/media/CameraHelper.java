@@ -1,5 +1,5 @@
-92/*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+/*
+Copyright (C) 2016-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -30,13 +30,14 @@ package com.silentcircle.common.media;
 import android.app.Activity;
 import android.graphics.Point;
 import android.hardware.Camera;
-import android.os.Environment;
-import android.util.Log;
 import android.view.Display;
 import android.view.Surface;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -100,6 +101,45 @@ public class CameraHelper {
                 optimalRatio = (double) size.width/size.height;
                 minRatioDiff = Math.abs(targetRatio - ratio);
             }
+        }
+        return optimalSize;
+    }
+
+    /**
+     * Returns a picture size that its aspect ratio is close to the provided {@code targetRatio} and its
+     * height is not bigger than 2700 pixels.
+     */
+    public static Camera.Size getOptimalPictureSize(List<Camera.Size> sizes, double targetRatio) {
+        final double SMALL_VALUE = 0.001;
+        if (sizes == null) return null;
+        // Find the closest match
+        Camera.Size closestMatch = getOptimalPreviewSize2(sizes, targetRatio);
+        targetRatio = (float)closestMatch.width/closestMatch.height;
+        // Find all the sizes that have the same aspect ratio
+        List<Camera.Size> selectedSizes = new ArrayList<>();
+        for (Camera.Size size : sizes) {
+            double ratio = (double) size.width / size.height;
+            if (Math.abs(targetRatio - ratio) < SMALL_VALUE) {
+                selectedSizes.add(size);
+            }
+        }
+        if (selectedSizes.isEmpty()) {
+            return null;
+        }
+        sortCameraSizes(selectedSizes);
+        // Pick one size that has not very big height
+        Camera.Size optimalSize = null;
+        for (Camera.Size size : selectedSizes) {
+            if (size.height > 2700) {
+                continue;
+            }
+            else {
+                optimalSize = size;
+                break;
+            }
+        }
+        if (optimalSize == null) {
+            optimalSize = selectedSizes.get(0);
         }
         return optimalSize;
     }
@@ -168,8 +208,7 @@ public class CameraHelper {
         camera.setDisplayOrientation(result);
     }
 
-    public static int getOrientationHint(Activity activity,
-                                         int cameraId, android.hardware.Camera camera) {
+    public static int getOrientationHint(Activity activity, int cameraId) {
         android.hardware.Camera.CameraInfo info =
                 new android.hardware.Camera.CameraInfo();
         android.hardware.Camera.getCameraInfo(cameraId, info);
@@ -190,6 +229,24 @@ public class CameraHelper {
             result = (info.orientation - degrees + 360) % 360;
         }
         return result;
+    }
+
+    /**
+     * Sorts the camera sizes in decreasing order.
+     *
+     * Camera sizes with the same amount of pixel are compared according to their width.
+     */
+    public static void sortCameraSizes(List<Camera.Size> sizes) {
+        Collections.sort(sizes, new Comparator<Camera.Size>() {
+            @Override
+            public int compare(Camera.Size lhs, Camera.Size rhs) {
+                int diff = lhs.width * lhs.height - rhs.width * rhs.height;
+                if (diff == 0) {
+                    diff = (lhs.width > rhs.width) ? 1 : -1;
+                }
+                return -diff;
+            }
+        });
     }
 
 }

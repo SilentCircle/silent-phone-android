@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2014-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -36,8 +36,6 @@ import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
-import android.text.method.LinkMovementMethod;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -47,7 +45,10 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 
 import com.silentcircle.common.util.AsyncTasks;
+import com.silentcircle.common.util.ViewUtil;
+import com.silentcircle.logs.Log;
 import com.silentcircle.silentphone2.R;
+import com.silentcircle.silentphone2.activities.DialogHelperActivity;
 import com.silentcircle.silentphone2.activities.ProvisioningActivity;
 import com.silentcircle.silentphone2.util.ConfigurationUtilities;
 import com.silentcircle.silentphone2.util.Constants;
@@ -90,6 +91,10 @@ public class ProvisioningVertuStep3 extends Fragment implements View.OnClickList
 
     private URL requestUrl;
 
+    private String mProvisioningError;
+    private String mProvisioningWrongFormat;
+    private String mProvisioningNoData;
+
     public static ProvisioningVertuStep3 newInstance() {
         return new ProvisioningVertuStep3();
     }
@@ -107,6 +112,10 @@ public class ProvisioningVertuStep3 extends Fragment implements View.OnClickList
         } catch (MalformedURLException e) {
             mParent.finish();
         }
+
+        mProvisioningError = getString(R.string.provisioning_error);
+        mProvisioningWrongFormat = getString(R.string.provisioning_wrong_format);
+        mProvisioningNoData = getString(R.string.provisioning_no_data);
     }
 
     @TargetApi(Build.VERSION_CODES.M)
@@ -124,7 +133,9 @@ public class ProvisioningVertuStep3 extends Fragment implements View.OnClickList
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
-        commonOnAttach(activity);
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+            commonOnAttach(activity);
+        }
     }
 
     private void commonOnAttach(Activity activity) {
@@ -147,7 +158,8 @@ public class ProvisioningVertuStep3 extends Fragment implements View.OnClickList
         mScroll = (ScrollView) vertuStepView.findViewById(R.id.Scroll);
         mButtons = (LinearLayout) vertuStepView.findViewById(R.id.ProvisioningButtons);
 
-        ((TextView) vertuStepView.findViewById(R.id.CheckBoxTCText)).setMovementMethod(LinkMovementMethod.getInstance());
+        ((TextView) vertuStepView.findViewById(R.id.CheckBoxTCText)).setMovementMethod(
+                new ViewUtil.MovementCheck(mParent, vertuStepView, R.string.toast_no_browser_found));
 
         vertuStepView.findViewById(R.id.back).setOnClickListener(this);
         vertuStepView.findViewById(R.id.create).setOnClickListener(this);
@@ -179,7 +191,8 @@ public class ProvisioningVertuStep3 extends Fragment implements View.OnClickList
             mParent.finish();
         }
         else {
-            mParent.showErrorInfo(result);      // Show Error terminates activity after user confirmed message
+            DialogHelperActivity.showDialog(R.string.provisioning_error, result, android.R.string.ok, -1);
+            mParent.provisioningCancel();
         }
     }
 
@@ -207,16 +220,16 @@ public class ProvisioningVertuStep3 extends Fragment implements View.OnClickList
                     mProvisioningCode = jsonObj.getString("provisioning_code");
                 }
                 else {
-                    retMsg = getString(R.string.provisioning_error) + ": " + jsonObj.getString("error_msg");
+                    retMsg = mProvisioningError + ": " + jsonObj.getString("error_msg");
                     Log.w(TAG, "Provisioning error: " + jsonObj.getString("error_msg"));
                 }
             } catch (JSONException e) {
-                retMsg = getString(R.string.provisioning_wrong_format) + e.getMessage();
+                retMsg = mProvisioningWrongFormat + e.getMessage();
                 Log.w(TAG, "JSON exception: " + e);
             }
         }
         else {
-            retMsg = getString(R.string.provisioning_no_data) + " (" + mContent.length() + ")";
+            retMsg = mProvisioningNoData + " (" + mContent.length() + ")";
         }
         return retMsg;
     }
@@ -235,12 +248,6 @@ public class ProvisioningVertuStep3 extends Fragment implements View.OnClickList
         mButtons.setVisibility(View.VISIBLE);
     }
 
-    private void showDialog(int titleResId, int msgResId, int positiveBtnLabel, int negativeBtnLabel) {
-        com.silentcircle.silentphone2.dialogs.InfoMsgDialogFragment infoMsg = com.silentcircle.silentphone2.dialogs.InfoMsgDialogFragment.newInstance(titleResId, msgResId, positiveBtnLabel, negativeBtnLabel);
-        FragmentManager fragmentManager = mParent.getFragmentManager();
-        infoMsg.show(fragmentManager,TAG );
-    }
-
     private class LoaderTask extends AsyncTask<URL, Integer, Integer> {
         private HttpsURLConnection urlConnection = null;
         private JSONObject customerData;
@@ -257,7 +264,8 @@ public class ProvisioningVertuStep3 extends Fragment implements View.OnClickList
                 contentLength = body.getBytes().length;
             }
             else {
-                mParent.showErrorInfo(getString(R.string.provisioning_wrong_format));
+                DialogHelperActivity.showDialog(R.string.provisioning_error, R.string.provisioning_wrong_format, android.R.string.ok, -1);
+                mParent.provisioningCancel();
                 return -1;
             }
 //            if (testData != null) {
@@ -305,11 +313,12 @@ public class ProvisioningVertuStep3 extends Fragment implements View.OnClickList
                 if(!Utilities.isNetworkConnected(mParent)){
                     return Constants.NO_NETWORK_CONNECTION;
                 }
-                mParent.showInputInfo(getString(R.string.provisioning_no_network) + e.getLocalizedMessage());
+                final String msg = getString(R.string.provisioning_no_network) + e.getLocalizedMessage();
+                DialogHelperActivity.showDialog(R.string.provisioning_error, msg, android.R.string.ok, -1);
                 Log.e(TAG, "Network not available: " + e.getMessage());
                 return -1;
             } catch (Exception e) {
-                mParent.showInputInfo(getString(R.string.provisioning_error) + e.getLocalizedMessage());
+                DialogHelperActivity.showDialog(R.string.provisioning_error, e.getLocalizedMessage(), android.R.string.ok, -1);
                 Log.e(TAG, "Network connection problem: " + e.getMessage());
                 return -1;
             } finally {
@@ -338,21 +347,20 @@ public class ProvisioningVertuStep3 extends Fragment implements View.OnClickList
             }
             switch (result) {
                 case Constants.NO_NETWORK_CONNECTION:
-                    showDialog(R.string.information_dialog, R.string.connected_to_network, android.R.string.ok, -1);
+                    DialogHelperActivity.showDialog(R.string.provisioning_error, R.string.connected_to_network, android.R.string.ok, -1);
                     break;
                 case HttpsURLConnection.HTTP_NOT_FOUND:
-                    String msg = getString(R.string.provisioning_no_data);
                     Log.w(TAG, "No provisioning data available" + result);
-                    mParent.showInputInfo(msg);
+                    DialogHelperActivity.showDialog(R.string.provisioning_error, R.string.provisioning_no_data, android.R.string.ok, -1);
                     // TODO: agree with Vertu about handling. step back?
                     break;
 
                 case HttpsURLConnection.HTTP_FORBIDDEN:
-                    mParent.showInputInfo(getString(R.string.provisioning_already_registered));
+                    DialogHelperActivity.showDialog(R.string.provisioning_error, R.string.provisioning_already_registered, android.R.string.ok, -1);
                     break;
 
                 default:                        // Covers all other HTTP codes
-                    mParent.showInputInfo(errorMessage);
+                    DialogHelperActivity.showDialog(R.string.provisioning_error, errorMessage, android.R.string.ok, -1);
                     break;
             }
             cleanup();

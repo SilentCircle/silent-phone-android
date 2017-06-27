@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2014-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -170,9 +170,27 @@ public class ZrtpMessageDialog extends DialogFragment {
     public ZrtpMessageDialog() {
     }
 
+    @TargetApi(Build.VERSION_CODES.M)
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        commonOnAttach(getActivity());
+    }
+
+    /*
+     * Deprecated on API 23
+     * Use onAttachToContext instead
+     */
+    @SuppressWarnings("deprecation")
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+            commonOnAttach(activity);
+        }
+    }
+
+    private void commonOnAttach(Activity activity) {
         mParent = (InCallActivity) activity;
     }
 

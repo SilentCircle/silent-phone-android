@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2016-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -31,10 +31,11 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.GridView;
 
+import com.silentcircle.common.util.ViewUtil;
 import com.silentcircle.messaging.views.ListView;
 import com.silentcircle.messaging.views.adapters.HasChoiceMode;
 
-public class ClickthroughWhenNotInChoiceMode implements AdapterView.OnItemClickListener {
+public class ClickthroughWhenNotInChoiceMode implements View.OnClickListener {
 
     private static ClickthroughWhenNotInChoiceMode instance;
 
@@ -46,22 +47,9 @@ public class ClickthroughWhenNotInChoiceMode implements AdapterView.OnItemClickL
     }
 
     @Override
-    public void onItemClick(AdapterView<?> parentView, View view, int position, long itemID) {
-        HasChoiceMode adapter = (HasChoiceMode) parentView.getAdapter();
-        if (adapter.isInChoiceMode()) {
-            return;
-        }
+    public void onClick(View view) {
         if (view instanceof View.OnClickListener) {
             ((View.OnClickListener) view).onClick(view);
-            if (parentView instanceof ListView) {
-                ((ListView) parentView).setItemChecked(position, false);
-            }
-
-/*
-            if (parentView instanceof GridView) {
-                // ( (GridView) parentView ).setItemChecked( position, false );
-            }
-*/
         }
     }
 

@@ -1,10 +1,25 @@
+/*
+Copyright 2016-2017 Silent Circle, LLC
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
 #ifndef SCPROVISIONING_H
 #define SCPROVISIONING_H
 
 /**
  * @file ScProvisioning.h
  * @brief Implementation of the provisioning interface for Silent Circle provisioning server.
- * @ingroup Axolotl++
+ * @ingroup Zina
  * @{
  */
 
@@ -20,7 +35,7 @@ static const std::string DELETE("DELETE");
 
 typedef int32_t (*HTTP_FUNC)(const std::string& requestUri, const std::string& method, const std::string& requestData, std::string* response);
 
-namespace axolotl {
+namespace zina {
 class ScProvisioning : public Provisioning
 {
 public:
@@ -36,7 +51,7 @@ private:
     /**
      * @brief functions pointer to the HTTP helper function
      * 
-     * This is a blocking funtion and returns after the server answered the HTTP request.
+     * This is a blocking function and returns after the server answered the HTTP request.
      * The @c requestURL does not include the protocol specifier, e.g. HTTP or HTTPS, and 
      * not the domain name. The helper function adds these to form a valid address.
      * 

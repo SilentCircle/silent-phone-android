@@ -15,24 +15,14 @@ SET(CPACK_PACKAGE_VERSION_MAJOR 1)
 SET(CPACK_PACKAGE_VERSION_MINOR 0)
 SET(CPACK_PACKAGE_VERSION_PATCH 0)
 
-set (VERSION 3.0.0)
+set (VERSION 3.0.1)
 set (SOVERSION 3)
 
 # ***** SETUP section *****
 # see README
 #
-# This is not a production ready cmake file, it mainly exists to build a Linux
-# command line client for some testing. This is a 'development' cmake that's
-# currently adjusted to my (Werner's) development environment.
-#
 # Setup of variable that point to additional directories, libraries, etc.
-# Set the 'otherlibs' variable according to you environment
-#
-# In my (Werner's) environment the libs/axolotl and libs/zrtpcpp are just
-# symbolic links to the Axolotl and zrtpcpp directories.
-#
-# Note: also check the linux/CMakeLists.txt. The 'target_link_libraries'
-# also use directories and use libraries inside the directories.
+# Set the 'otherlibs' variable accouring to you environment
 #
 set(otherLibs ${CMAKE_SOURCE_DIR}/../libs) ## adjust this setting if necessary
 
@@ -60,9 +50,9 @@ else()
 endif()
 
 
-MESSAGE(STATUS "Configuring Tivi client for ${tiviSystem}. Base settings: zrtp: ${zrtpDir}, polar: ${polarDir}, axolotl: ${axoDir}")
+MESSAGE(STATUS "Configuring Tivi client for ${tiviSystem}. Base settings: zrtp: ${zrtpDir}, polar: ${polarDir}")
 
-include_directories (${zrtpDir} ${zrtpDir}/zrtp ${zrtpDir}/clients/tivi ${polarDir}/include ${axoDir})
+include_directories (${zrtpDir} ${zrtpDir}/zrtp ${zrtpDir}/clients/tivi ${polarDir}/include)
 
 set(encryptDir 
     ${tiviBase}/encrypt/md5/md5.cpp 
@@ -201,7 +191,6 @@ set(tiviEngine
     ${tiviBase}/tiviengine/tivi_log.cpp
     ${tiviBase}/tiviengine/release.cpp
     ${tiviBase}/tiviengine/sip_reason_translator.cpp
-    ${tiviBase}/tiviengine/axolotl_glue.cpp
 )
 
 set(rtp 
@@ -256,9 +245,6 @@ set(vTivi ${tiviBase}/codecs/vTiVi/
     ${tiviBase}/codecs/vTiVi/tabs.cpp
     ${tiviBase}/codecs/vTiVi/t_filter.cpp
     ${tiviBase}/codecs/vTiVi/t_ssim.c)
-
-set(tmr ${tiviBase}/tmr/CTMRTunnel.cpp 
-    ${tiviBase}/tmr/tmr_parse.cpp)
 
 #set(aec
 #    ${tiviBase}/audio/ec/speex_aec/speex_aec.cpp)

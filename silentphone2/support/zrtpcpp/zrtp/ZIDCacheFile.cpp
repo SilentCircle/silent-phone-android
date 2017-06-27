@@ -226,7 +226,8 @@ ZIDRecord *ZIDCacheFile::getRecord(unsigned char *zid) {
     // found. We need to create a new ZID record.
     if (numRead == 0) {
         // create new record
-        //        ZIDRecordFile rec1;
+        delete(zidRecord);
+        zidRecord = new ZIDRecordFile();
         zidRecord->setZid(zid);
         zidRecord->setValid();
         if (fwrite(zidRecord->getRecordData(), zidRecord->getRecordLength(), 1, zidFile) < 1)

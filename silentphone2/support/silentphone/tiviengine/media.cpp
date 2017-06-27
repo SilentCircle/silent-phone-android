@@ -1,7 +1,7 @@
 /*
 Created by Janis Narbuts
 Copyright (C) 2004-2012, Tivi LTD, www.tiviphone.com. All rights reserved.
-Copyright (C) 2012-2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2012-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,7 +27,6 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-
 #ifdef __SYMBIAN32__
 #include  <libc\ctype.h> //isalpha
 #endif
@@ -284,7 +283,37 @@ void releaseMediaIDS(CSessionsBase *sb, CTMediaIDS *p, void *pThis){
    }
 }
 
-CTMediaIDS* initMediaIDS(void *pThis, int iCallId, CSessionsBase *sb, int iCaller){
+void setupMediaIDS( CTMediaIDS *p, void *pThis, int iCallId, CSessionsBase *sb, int iCaller, int iSdesOnly){
+   
+   ////if you ask why md5 ??? read (RFC 3550)
+   
+   CTMd5 md5;
+   int t=(int)getTickCount();
+   size_t x=(size_t)pThis;
+   
+   md5.update(x);
+   md5.update((unsigned char *)&sb->p_cfg,sizeof(sb->p_cfg));
+   md5.update(sb->uiGT);
+   md5.update(t);
+   
+   md5.update((unsigned char *)&sb->extAddr.ip,4);
+   md5.update((unsigned char *)&sb->ipBinded,4);
+   md5.update((unsigned char *)&sb->iRandomCounter,4);
+   unsigned int res[4];
+   md5.final((unsigned char*)&res[0]);//generate RTP SSRC
+   sb->iRandomCounter+=res[0];
+   sb->iRandomCounter^=res[1];
+   
+   if(!res[2])res[2]^=res[0];
+   if(!res[3])res[3]^=res[1];
+   
+   p->init(res[2],res[3]);
+   
+   p->initZRTP(sb->zrtpCB,sb->pZrtpGlob, iSdesOnly, iCallId, pThis);
+
+}
+
+CTMediaIDS* initMediaIDS(void *pThis, int iCallId, CSessionsBase *sb, int iCaller, int iSdesOnly){
    CTMediaIDS *p=NULL;
    CTMediaIDS *mf=&sb->mediaIDS[0];
    
@@ -292,15 +321,17 @@ CTMediaIDS* initMediaIDS(void *pThis, int iCallId, CSessionsBase *sb, int iCalle
       if(!mf->pOwner){
          p=mf;
          p->pOwner=pThis;
-         ////if you ask why md5 ??? read (RFC 3550)
+         
+         
+         /*
          CTMd5 md5;
          int t=(int)getTickCount();
-         int x=(size_t)pThis;
+         size_t x=(size_t)pThis;
          
-         md5.update((unsigned char *)&x,4);
+         md5.update(x);
          md5.update((unsigned char *)&sb->p_cfg,sizeof(sb->p_cfg));
-         md5.update((unsigned char *)&sb->uiGT,sizeof(sb->uiGT));
-         md5.update((unsigned char *)&t,4);
+         md5.update(sb->uiGT);
+         md5.update(t);
          
          md5.update((unsigned char *)&sb->extAddr.ip,4);
          md5.update((unsigned char *)&sb->ipBinded,4);
@@ -315,11 +346,14 @@ CTMediaIDS* initMediaIDS(void *pThis, int iCallId, CSessionsBase *sb, int iCalle
          
          p->init(res[2],res[3]);
       
-         p->initZRTP(sb->zrtpCB,sb->pZrtpGlob);
-         if(p->pzrtp){
-            p->pzrtp->init_zrtp(iCaller,sb->p_cfg.szZID_base16,iCallId,1,1);
-            p->pzrtp->pSes=pThis;
+         p->initZRTP(sb->zrtpCB,sb->pZrtpGlob, iSdesOnly);
+         CTZRTP *z = p->getZRTP();
+         if(z){
+            z->init_zrtp(iCaller,sb->p_cfg.szZID_base16,iCallId,1,1);
+            z->pSes=pThis;
          }
+          */
+         setupMediaIDS(p, pThis, iCallId,sb, iCaller, iSdesOnly);
 
          CTDataBuf *g_getSound(const char *name);
          
@@ -336,7 +370,8 @@ int CTRecSendUDP::start(const CTSockRecvCB &sockCBRecv, ADDR *addrToBind)
    iRun=1;
    int iTrys=10;
    do{
-      int cr=createSock();
+      int isIPv6(void);
+      int cr=createSock(isIPv6());
       if(!cr){
          perror("create media sock failed");
          Sleep(20);
@@ -353,6 +388,7 @@ int CTRecSendUDP::start(const CTSockRecvCB &sockCBRecv, ADDR *addrToBind)
    
    return 0;
 }
+
 
 int forceFWTraversal();
 int CTRecSendUDP::thFnc(void *p1)
@@ -381,7 +417,7 @@ int CTRecSendUDP::thFnc(void *p1)
       p->recvFrom(bufx, iRecvBufSize, &a);
    }
    
-   delete bufx;
+   delete[] bufx;
    
    return 0;
 
@@ -594,13 +630,13 @@ static int getInfoRTPX(CRTPX *rtpx, const char *key, int l, char *p, int iMax){
       ADDR *p2p = rtpx->ice.getBestCandidateForTMR();
       if(!p2p)return -2;
       p2p->toStr(p,1);
-      return strlen(p);
+      return (int)strlen(p);
    }
    
    if(CMP_CSZ ("peer_sdp_addr")){
       if(iMax<63)return -1;
       rtpx->addrDst.toStr(p,1);
-      return strlen(p);
+      return (int)strlen(p);
    }
    
    return 0;
@@ -609,7 +645,7 @@ static int getInfoRTPX(CRTPX *rtpx, const char *key, int l, char *p, int iMax){
 int CRTPV::getInfo(const char *key, char *p, int iMax){
    if(!key)return 0;
    
-   int l = strlen(key);
+   int l = (int)strlen(key);
    
    if(l>6){
       if(strncmp(key,"video.", 6)==0){
@@ -629,7 +665,7 @@ int CRTPA::getInfo(const char *key, char *p, int iMax){
    
    if(!key)return 0; //or get all
    int iIsVideo=0;
-   int l=strlen(key);
+   int l=(int)strlen(key);
    if(iMax>1)iMax--;
    if(l>6){
       if(strncmp(key,"video.", 6)==0){
@@ -651,7 +687,7 @@ int CRTPA::getInfo(const char *key, char *p, int iMax){
    if(!iStarted)return 0;
    
    if(l>5 && memcmp(key,"zrtp.",5)==0){
-      return pzrtp?pzrtp->getInfoX(key+5,p,iMax,iIsVideo):0;
+      return sdes_or_zrtp?sdes_or_zrtp->getInfoX(key+5,p,iMax,iIsVideo):0;
    }
    
    
@@ -700,8 +736,8 @@ int CRTPA::getInfo(const char *key, char *p, int iMax){
             ret+=snprintf(p+ret,iMax-ret,"/%s",codecID_to_sz_safe(rtp.iPrevPT));
       }
       
-      if(pzrtp && pzrtp->iAuthFailCnt)
-         ret+=snprintf(p+ret,iMax-ret," %d",pzrtp->iAuthFailCnt);
+      if(sdes_or_zrtp && sdes_or_zrtp->iAuthFailCnt)
+         ret+=snprintf(p+ret,iMax-ret," %d",sdes_or_zrtp->iAuthFailCnt);
       
       p[iMax]=0;
       
@@ -734,6 +770,13 @@ int CRTPA::getInfo(const char *key, char *p, int iMax){
       }
       return ret;
    }
+   else if(strcmp(key, "rxLed") == 0) {
+	  int iIsCn, iIsVoice, iPrevAuthFail;
+	  int cap = g_getCap(iIsCn, iIsVoice, iPrevAuthFail);
+
+	  ret = sprintf(p+ret, "%d:%d", cap, iPrevAuthFail);
+	  return ret;
+   }
    else {
       CTAudioOutBase *a=cAO;
       if(a){
@@ -751,7 +794,7 @@ int CRTPA::onSend(char *p, int iLen, int iCurType, void* pMediaParam, int iIsVoi
 {
    if((iCurType&(eAudio|eDTMF))==0)return -1;
  
-   if(rtp.addrDst.ip==0)return 0;
+   if(rtp.addrDst.hasIPSet()==0)return 0;
    if(rtp.rtpSend.ssrc==0)return 0; //??
    
    int sz=cbEng->p_cfg.payloadSize();
@@ -780,9 +823,9 @@ int CRTPA::onSend(char *p, int iLen, int iCurType, void* pMediaParam, int iIsVoi
    
    cAI.packetTime(sz);
 
-   unsigned int ts=(size_t)pMediaParam;
+   size_t ts=(size_t)pMediaParam;
    int i,iBSent=0;
-   for(i=0;i<iLen;i+=iPartSize,p+=iPartSize,ts+=(unsigned int)iPartSize)
+   for(i=0;i<iLen;i+=iPartSize,p+=iPartSize,ts+=iPartSize)
    {
       iBSent+=onSendUAlawSpliter(p,iPartSize,iPartSize,iCurType,(void*)ts,iIsVoice);
    }
@@ -831,7 +874,7 @@ int CRTPA::onSendUAlawSpliter(char *p, int iLen, int iPartSize, int iCurType, vo
    {
       int ts=c->getTSMult()*2;
       iMediaSent=1;
-      unsigned int nTS =(size_t)pMediaParam/ts+uiTimeStampOffset;
+      unsigned int nTS =(unsigned int)((size_t)pMediaParam/ts+uiTimeStampOffset);
       dTS = (int)(nTS-rtp.rtpSend.ts);
       rtp.rtpSend.ts=nTS;
    }
@@ -839,7 +882,7 @@ int CRTPA::onSendUAlawSpliter(char *p, int iLen, int iPartSize, int iCurType, vo
    {
       uiTimeStampOffset=(getTickCount()/10)*80*c->getTSMult();
       dTS =  (int)(uiTimeStampOffset-rtp.rtpSend.ts);
-      rtp.rtpSend.ts=uiTimeStampOffset;
+      rtp.rtpSend.ts=(unsigned int)uiTimeStampOffset;
    }
    const int iIsSmartVad = 1;
 
@@ -849,7 +892,7 @@ int CRTPA::onSendUAlawSpliter(char *p, int iLen, int iPartSize, int iCurType, vo
    
    int iMute = 0;//TODO read a mute state for a call - pCallStatus->iMuted;
    
-   pMediaIDS->holdSounds.callState(iOnHold, pzrtp->getStatus(0)==pzrtp->eSecure);
+   pMediaIDS->holdSounds.callState(iOnHold, sdes_or_zrtp->getStatus(0)==sdes_or_zrtp->eSecure);
    
    if(iOnHold){
       p = getOnHoldSound(iLen, iPartSize, rtp.rtpSend.ts, iOnHold);
@@ -998,7 +1041,7 @@ void CRTPV::sendRtp(CtZrtpSession const *session, uint8_t* packet, size_t length
    //if(length<120 && length>60){puts("DROP");return;}
    
    ADDR *a=&rtpV.addrDst;
-   int r = sendPacket(sockth, (char*)packet, (int)length,a,1);
+   /*int r =*/ sendPacket(sockth, (char*)packet, (int)length,a,1);
   // char b[64];a->toStr(b); printf("[zrtp CRTPV send cb %d %d %s [%x l=%lu=%d]]",iStarted,streamNm, b, packet[0],length,r );
 }
 
@@ -1063,7 +1106,7 @@ int CRTPA::onData(char *p, int iLen, ADDR *a)
 
    if(cbEng->p_cfg.iIsValidZRTPKey==1 && cbEng->p_cfg.iCanUseZRTP==3)cbEng->p_cfg.iCanUseZRTP=2;
    if(!cbEng->p_cfg.iIsValidZRTPKey && cbEng->p_cfg.iCanUseZRTP>1)cbEng->p_cfg.iCanUseZRTP=1;
-   pzrtp->iCanUseZRTP=cbEng->p_cfg.iCanUseZRTP;
+   sdes_or_zrtp->iCanUseZRTP=cbEng->p_cfg.iCanUseZRTP;
    
    
    //if (FS sends media to my ip port from prev call) ignore it
@@ -1086,11 +1129,11 @@ int CRTPA::onData(char *p, int iLen, ADDR *a)
       
    //   printf("[seq=%d prev_ok_seq=%d]\n",rtp.rtpRec.seqNr,rtp.iPrevId);
       
-      pzrtp->setZrtpEnabled(!!pzrtp->iCanUseZRTP);
+      sdes_or_zrtp->setZrtpEnabled(!!sdes_or_zrtp->iCanUseZRTP);
       
-      pzrtp->startIfNotStarted(rtp.rtpSend.ssrc,0);
+      sdes_or_zrtp->startIfNotStarted(rtp.rtpSend.ssrc,0);
       int iLenNew=iLen;
-      int rr=pzrtp->decrypt(p,iLenNew,0);
+      int rr=sdes_or_zrtp->decrypt(p,iLenNew,0);
       if(rr==CTZRTP::eIsProtocol){
          return 0;//protcol
       }
@@ -1135,7 +1178,7 @@ int CRTPA::onData(char *p, int iLen, ADDR *a)
    if(iPacketReceived && (unsigned short)rtp.iPrevId==(unsigned short)rtp.rtpRec.seqNr)return 0;//move it up?
    
    
-   if(pzrtp->getStatus(0)==pzrtp->eSecure && rtp.ice.active()){
+   if(sdes_or_zrtp->getStatus(0)==sdes_or_zrtp->eSecure && rtp.ice.active()){
       //if (we are not sending data )set_ice_params
       rtp.ice.setPeerData(sockth, rtp.rtpSend.ssrc, rtp.rtpRec.ssrc);
    }
@@ -1442,12 +1485,12 @@ int CRTPV::onData(char *p, int iLen, ADDR *a)
    {
       if(iWillStop)return 0;
 
-      pzrtp->setZrtpEnabled(!!pzrtp->iCanUseZRTP);
+      sdes_or_zrtp->setZrtpEnabled(!!sdes_or_zrtp->iCanUseZRTP);
      
-      pzrtp->startIfNotStarted(rtpV.rtpSend.ssrc,1);
+      sdes_or_zrtp->startIfNotStarted(rtpV.rtpSend.ssrc,1);
       
       int iLenNew=iLen;
-      int rr=pzrtp->decrypt(p,iLenNew,1);
+      int rr=sdes_or_zrtp->decrypt(p,iLenNew,1);
       
       if(rr==CTZRTP::eIsProtocol){
         // rtpV.rtpRec.ssrc = rtp.uiSSRC;
@@ -1466,7 +1509,7 @@ int CRTPV::onData(char *p, int iLen, ADDR *a)
 
    rtpV.uiSSRC=rtpV.rtpRec.ssrc;
    
-   if(pzrtp->getStatus(1)==pzrtp->eSecure && rtpV.ice.active()){
+   if(sdes_or_zrtp->getStatus(1)==sdes_or_zrtp->eSecure && rtpV.ice.active()){
       //if (we are not sending data )set_ice_params
       rtpV.ice.setPeerData(sockth, rtpV.rtpSend.ssrc, rtpV.uiSSRC, 1);
    }
@@ -1528,11 +1571,11 @@ int CRTPV::onVideoSend(char *p, int iLen, int iType, void* pMediaParam)
    if((iType&eVideo)==0)return -1;
 
    if(iWillStop)return 0;
-   if(rtp.addrDst.ip==0)return 0;
+   if(!rtp.addrDst.hasIPSet())return 0;
 
    if(rtpV.rtpSend.ssrc==0)return 0;
    
-   rtpV.rtpSend.ts=(size_t)pMediaParam;
+   rtpV.rtpSend.ts=(unsigned int)(size_t)pMediaParam;
    
    int iTinaSendSilenceVal=61;
 #if defined (_WIN32_WCE)  || defined(__SYMBIAN32__)
@@ -1543,7 +1586,7 @@ int CRTPV::onVideoSend(char *p, int iLen, int iType, void* pMediaParam)
 //   printf("[%p %d %d %d]",p,iLen,iType,rtpV.rtpSend.ts);
    
    
-   if(cbEng->p_cfg.iCanUseZRTP && pzrtp->getStatus(1)!=pzrtp->eSecure)
+   if(cbEng->p_cfg.iCanUseZRTP && sdes_or_zrtp->getStatus(1)!=sdes_or_zrtp->eSecure)
       iOnHold=1;
 
    if(p==NULL || iLen==0 || iIsActive==0 || iOnHold)
@@ -1657,7 +1700,7 @@ int CRTPA::tryEncryptSendPack(CRTPX *r, CTSock *s, int iIsVideo){
       iIsVideo = 1;
    }
 
-   CtZrtpSession::streamName n = iIsVideo ? pzrtp->VideoStream : pzrtp->AudioStream;
+   CtZrtpSession::streamName n = iIsVideo ? sdes_or_zrtp->VideoStream : sdes_or_zrtp->AudioStream;
    
 #if 0
    
@@ -1671,13 +1714,13 @@ int CRTPA::tryEncryptSendPack(CRTPX *r, CTSock *s, int iIsVideo){
    
 #endif
    
-   if(pzrtp->isStarted(n) || pzrtp->isSdesActive(n))
+   if(sdes_or_zrtp->isStarted(n) || sdes_or_zrtp->isSdesActive(n))
    {
     //  int encryptTest(unsigned char *binIn, int iLen,  int iIndex);
       //encryptTest(&r->rtpSend.dataBuf[12],r->rtpSend.allPack.len-12, r->rtpSend.seqNr);
       
       int iLenE=(int )r->rtpSend.allPack.len;
-      if(pzrtp->encrypt((char *)&r->rtpSend.dataBuf[0],iLenE, iIsVideo)<0)return 0;
+      if(sdes_or_zrtp->encrypt((char *)&r->rtpSend.dataBuf[0],iLenE, iIsVideo)<0)return 0;
       r->rtpSend.allPack.len=(unsigned int)iLenE;
    }
    
@@ -1695,10 +1738,10 @@ int CRTPA::tryEncryptSendPack(CRTPX *r, CTSock *s, int iIsVideo){
    
 
    
-   if(iPacketReceived && pzrtp->getStatus(iIsVideo)==pzrtp->eSecure && r->uiSSRC && r->ice.active()){
+   if(iPacketReceived && sdes_or_zrtp->getStatus(iIsVideo)==sdes_or_zrtp->eSecure && r->uiSSRC && r->ice.active()){
       r->ice.setPeerData(sockth, r->rtpSend.ssrc, r->uiSSRC);
       r->ice.onSendRTP(1);
-      int ret = r->ice.trySetP2PAddr(&aNewDst);
+      /*int ret = */ r->ice.trySetP2PAddr(&aNewDst);
     //  printf("[ice=%d v=%d]",ret, iIsVideo);
       /*
        //did not help ,should we check rtp ext ip ? and send reinvite
@@ -1803,7 +1846,7 @@ int trySetZRTP_hash(SDP &sdp, CTZRTP *zrtp, int iType){
 
       if(sdp.attribs.n[i].iMediaType==iType  && sdp.attribs.n[i].iLen>64+sizeof(ph) && strncmp(sdp.attribs.n[i].p,ph,sizeof(ph)-1)==0){
          int l=sdp.attribs.n[i].iLen-(sizeof(ph)-1);
-         zrtp->setDstHash(sdp.attribs.n[i].p+sizeof(ph)-1+5,l-5,iType==SDP::eVideo);//skip verss nr
+         if(zrtp)zrtp->setDstHash(sdp.attribs.n[i].p+sizeof(ph)-1+5,l-5,iType==SDP::eVideo);//skip verss nr
          printf("[setting sdp hash %.*s]",sdp.attribs.n[i].iLen,sdp.attribs.n[i].p);
          cnt++;
       }
@@ -1873,7 +1916,7 @@ int trySetZRTP_encap(SDP &sdp, CTZRTP *zrtp, int iType){
    
    for (i = 0; i < sdp.attribs.iAttribCnt; i++) {
       if (sdp.attribs.n[i].iMediaType == iType  && sdp.attribs.n[i].iLen > sizeof(ph) && strncmp(sdp.attribs.n[i].p, ph, sizeof(ph)-1)==0) {
-         int l = sdp.attribs.n[i].iLen - (sizeof(ph) - 1);
+//         int l = sdp.attribs.n[i].iLen - (sizeof(ph) - 1);
          zrtp->setZrtpEncapAttribute(sdp.attribs.n[i].p + sizeof(ph)-1, sn);
          log_zrtp("t_zrtp","setZrtpEncapAttribute ok");
          cnt=1;
@@ -1912,6 +1955,17 @@ void CRTPX::onSDPAttribs(SDP &sdp, int eType, PHONE_CFG &p_cfg, int iInviter, CT
    
 }
 
+int sdpHasZRTPAttribs(char *pSdp, int iLen){
+   SDP sdp;
+   memset(&sdp,0,sizeof(SDP));
+   int not_ok=parseSDP(&sdp,pSdp, iLen);
+   if(not_ok)return 0;
+   
+   int x = trySetZRTP_hash(sdp,NULL,SDP::eAudio);
+   
+   return !x;
+}
+
 int CRTPA::onSdp(char *pSdp, int iLen, int iIsReq, int iForceMedia)//uu CRTPX
 {
 
@@ -1943,9 +1997,9 @@ int CRTPA::onSdp(char *pSdp, int iLen, int iIsReq, int iForceMedia)//uu CRTPX
    
    int iInviter=iSdpSent;//iIsReq?????
 
-   rtp.onSDPAttribs(sdp, SDP::eAudio, cbEng->p_cfg, iInviter, pzrtp);
+   rtp.onSDPAttribs(sdp, SDP::eAudio, cbEng->p_cfg, iInviter, sdes_or_zrtp);
    
-   if(cbEng->p_cfg.iSDES_On && pzrtp)pzrtp->clearSdesString();
+   if(cbEng->p_cfg.iSDES_On && sdes_or_zrtp)sdes_or_zrtp->clearSdesString();
    
 
    if(iSdpSent || !cAO)
@@ -1976,11 +2030,11 @@ int CRTPA::onStart()
    if(iStarted)return 0;
    iStarted=1;
 
-   if(pzrtp){
-      pzrtp->pRet[0]=this;
-      pzrtp->setSendCallback(this, pzrtp->AudioStream);
-      pzrtp->setSdesEnabled(!!(cbEng->p_cfg.iSDES_On));
-      pzrtp->setZrtpEnabled(!!(cbEng->p_cfg.iCanUseZRTP || cbEng->p_cfg.iZRTP_On));
+   if(sdes_or_zrtp){
+      sdes_or_zrtp->pRet[0]=this;
+      sdes_or_zrtp->setSendCallback(this, sdes_or_zrtp->AudioStream);
+      sdes_or_zrtp->setSdesEnabled(!!(cbEng->p_cfg.iSDES_On));
+      sdes_or_zrtp->setZrtpEnabled(!!(cbEng->p_cfg.iCanUseZRTP || cbEng->p_cfg.iZRTP_On));
    }
    
    if(pMediaIDS && pMediaIDS->tmrTunnel)
@@ -2061,9 +2115,9 @@ int CRTPV::onStart()
 {
    if(iStarted)return 0;
    CRTPA::onStart();
-   pzrtp->pRet[1]=this;
-   pzrtp->setSendCallback(this, pzrtp->AudioStream);
-   pzrtp->setSendCallback(this, pzrtp->VideoStream);
+   sdes_or_zrtp->pRet[1]=this;
+   sdes_or_zrtp->setSendCallback(this, sdes_or_zrtp->AudioStream);
+   sdes_or_zrtp->setSendCallback(this, sdes_or_zrtp->VideoStream);
    rtpV.iCanSend=1;
 
 
@@ -2134,15 +2188,15 @@ int CRTPV::onSdp(char *pSdp, int iLen, int iIsReq, int iForceMedia)
    
    //reinvite 491 req pending
    int iSDPSentPrev=iSdpSent;
-   if(cbEng->p_cfg.iSDES_On && pzrtp && !pzrtp->isSecure(1) && !iSdpParsed && iSdpSent && iIsReq){
+   if(cbEng->p_cfg.iSDES_On && sdes_or_zrtp && !sdes_or_zrtp->isSecure(1) && !iSdpParsed && iSdpSent && iIsReq){
       iSdpSent=0;
-      pzrtp->resetSdesContext(pzrtp->VideoStream);
+      sdes_or_zrtp->resetSdesContext(sdes_or_zrtp->VideoStream);
       log_zrtp("t_zrtp","resetSdesContext(video)");
    }
 
-   rtp.onSDPAttribs(sdp, SDP::eAudio, cbEng->p_cfg, iInviter, pzrtp);
-   rtpV.onSDPAttribs(sdp, SDP::eVideo, cbEng->p_cfg, iInviter, pzrtp);
-   if(cbEng->p_cfg.iSDES_On && pzrtp) pzrtp->clearSdesString();
+   rtp.onSDPAttribs(sdp, SDP::eAudio, cbEng->p_cfg, iInviter, sdes_or_zrtp);
+   rtpV.onSDPAttribs(sdp, SDP::eVideo, cbEng->p_cfg, iInviter, sdes_or_zrtp);
+   if(cbEng->p_cfg.iSDES_On && sdes_or_zrtp) sdes_or_zrtp->clearSdesString();
    
    iRTPSource=getRtpSOURCE(&sdp);
    uiIPOrig=sdp.ipOrigin;
@@ -2182,16 +2236,16 @@ int CTSesMediaBase::addNonMediaAttribs(char *p, int iMaxLen, int iIsVideo
    
    CtZrtpSession::streamName sn = iIsVideo ? CtZrtpSession::VideoStream : CtZrtpSession::AudioStream;
    
-   if(cbEng->p_cfg.iZRTP_On && pzrtp){
-      int cnt=pzrtp->getNumberSupportedVersions(sn);
+   if(cbEng->p_cfg.iZRTP_On && sdes_or_zrtp && !iIsSdesOnly){
+      int cnt=sdes_or_zrtp->getNumberSupportedVersions(sn);
       for(int i=0;i<cnt;i++){
          char tmp[128];
-         int l=pzrtp->getSignalingHelloHash(tmp,iIsVideo,i);
+         int l=sdes_or_zrtp->getSignalingHelloHash(tmp,iIsVideo,i);
          if(l>0)iLen+=t_snprintf(p+iLen,iMaxLen-iLen,"a=zrtp-hash:%.*s\r\n",l,&tmp[0]);
       }
    }
 
-   if(cbEng->p_cfg.iSDES_On && pzrtp){
+   if(cbEng->p_cfg.iSDES_On && sdes_or_zrtp){
       char tmp[128];
       char tmp1[128];
       
@@ -2203,17 +2257,17 @@ int CTSesMediaBase::addNonMediaAttribs(char *p, int iMaxLen, int iIsVideo
       int iInviter=!iSdpParsed;//pCallStatus && pCallStatus->iCaller - fails on reinivte, dont use pCallStatus
       
       if(iInviter){
-         bool b=pzrtp->t_createSdes(&tmp[0], &l, sn);
+         bool b=sdes_or_zrtp->t_createSdes(&tmp[0], &l, sn);
          log_zrtp("t_zrtp", b?"t_createSdes()=ok":"t_createSdes()=false");
       }
       else{
-         bool b=pzrtp->getSavedSdes(&tmp[0], &l, sn);
+         bool b=sdes_or_zrtp->getSavedSdes(&tmp[0], &l, sn);
          log_zrtp("t_zrtp", b?"getSavedSdes()=ok":"getSavedSdes()=false");
          if(!b)l=0;
       }
       
-      if(cbEng->p_cfg.iZRTP_On && cbEng->p_cfg.iZRTPTunnel_On){
-         const char *encap = pzrtp->getZrtpEncapAttribute(sn);
+      if(cbEng->p_cfg.iZRTP_On && cbEng->p_cfg.iZRTPTunnel_On && !iIsSdesOnly){
+         const char *encap = sdes_or_zrtp->getZrtpEncapAttribute(sn);
          if (encap != NULL) {
             iLen += t_snprintf(p+iLen,iMaxLen-iLen, "a=zrtp-encap:%s\r\n",  encap);
             log_zrtp("t_zrtp", "add zrtp-encap:");
@@ -2223,7 +2277,7 @@ int CTSesMediaBase::addNonMediaAttribs(char *p, int iMaxLen, int iIsVideo
       
       if(l>0 && l<sizeof(tmp)){
          
-         mixLen = pzrtp->getCryptoMixAttribute(tmp1, l1, sn);
+         mixLen = sdes_or_zrtp->getCryptoMixAttribute(tmp1, l1, sn);
          if (mixLen > 0){
             iLen += t_snprintf(p+iLen,iMaxLen-iLen, "a=crypto-mix:%.*s\r\n", (int)mixLen, tmp1);
             log_zrtp("t_zrtp", "add crypto-mix:");
@@ -2491,7 +2545,7 @@ int CRTPA::makeSdp(char *p, int iMaxLen,  int fUseExtPort)
                         SDP::eAudio,
                         *cbEng, pMediaIDS->m[0].uiSSRC);
    
-   if(pzrtp)pzrtp->setSdesEnabled(!!(cbEng->p_cfg.iSDES_On));
+   if(sdes_or_zrtp)sdes_or_zrtp->setSdesEnabled(!!(cbEng->p_cfg.iSDES_On));
 
    iLen += addNonMediaAttribs(p+iLen, iMaxLen-iLen, 0, &rtp, &rtp.addrPublic, &addrPriv, fUseExtPort);
 
@@ -2676,7 +2730,6 @@ int CRTPX::makeSdp(char *p, int iMaxLen, unsigned int uiPort,
    //-- return iLen;
    return t_snprintf(p+iLen, iMaxLen-iLen,"a=x-ssrc:%08x\r\n",uiSSRC)+iLen;
 }
-
 
 
 

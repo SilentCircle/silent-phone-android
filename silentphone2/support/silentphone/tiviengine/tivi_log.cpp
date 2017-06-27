@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -25,10 +25,21 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
+
+#include <stdlib.h>
+#include <limits.h>
+#include <time.h>
+
+#include "../tiviandroid/sc_logs.h"
+
+
+#if defined(__APPLE__)
+//#include "/Users/eturner/Programming/SilentCircle/SPi3/spi3/Logging/DevLogging/SCSPLog_private.h"
+#import "SCSPLog_private.h"
+#endif
 
 /*
 static void (*_zrtp_log_cb)(void *ret, const char *tag, const char *buf) = NULL;
@@ -101,6 +112,12 @@ public:
    }
    
    void log(const char *tag, const char *buf){
+       //DebugLogging: save log entry into files
+       int debugLoggingEnabled(void);
+       if(debugLoggingEnabled()){
+           writeToFile(buf);
+       }
+       
       //split line
       const char *p = buf;
       int iLen=0;
@@ -285,24 +302,44 @@ static void debug_sip_wo_sdes_key(const char *tag, const char *buf){
 }
 
 void log_sip(const char *tag, const char *buf){
+#if defined(__APPLE__)
+    ios_log_tivi(tivi_log_sip, tag, buf);
+#endif
+
    debug_sip_wo_sdes_key(tag, buf );
    //sip_log.log(tag, buf);
 }
 
 void log_audio_stats(const char *tag, const char *buf){
-   audio_stats_log.log(tag, buf);
+#if defined(__APPLE__)
+    ios_log_tivi(tivi_log_audio_stats, tag, buf);
+#endif
+
+    audio_stats_log.log(tag, buf);
 }
 
 void log_events(const char *tag, const char *buf){
+#if defined(__APPLE__)
+    ios_log_tivi(tivi_log_events, tag, buf);
+#endif
+
    event_log.log(tag, buf);
 }
 
 void log_zrtp(const char *tag, const char *buf){
+#if defined(__APPLE__)
+    ios_log_tivi(tivi_log_zrtp, tag, buf);
+#endif
+
    zrtp_log.log(tag, buf);
 }
 
 
 void log_audio(const char *tag, const char *buf){
+#if defined(__APPLE__)
+    ios_log_tivi(tivi_log_audio, tag, buf);
+#endif
+
    audio_log.log(tag, buf);
 }
 

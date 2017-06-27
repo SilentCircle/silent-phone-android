@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2014-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -51,7 +51,7 @@ import android.provider.ContactsContract.DataUsageFeedback;
 import android.text.TextUtils;
 import android.text.util.Rfc822Token;
 import android.text.util.Rfc822Tokenizer;
-import android.util.Log;
+import com.silentcircle.logs.Log;
 
 import com.silentcircle.contacts.UpdateScContactDataService;
 import com.silentcircle.silentphone2.util.ConfigurationUtilities;
@@ -106,7 +106,7 @@ public class DataUsageStatUpdater {
      * input has no valid entities. 
      */
     public boolean updateWithAddress(Collection<String> addresses) {
-        if (Log.isLoggable(TAG, Log.DEBUG)) {
+        if (android.util.Log.isLoggable(TAG, android.util.Log.DEBUG)) {
             Log.d(TAG, "updateWithAddress: " + Arrays.toString(addresses.toArray()));
         }
         if (addresses != null && !addresses.isEmpty()) {
@@ -197,7 +197,7 @@ public class DataUsageStatUpdater {
         // supports it and call the API. 
         if (Build.VERSION.SDK_INT >= 14) {
             if (dataIds.isEmpty()) {
-                if (Log.isLoggable(TAG, Log.DEBUG)) {
+                if (android.util.Log.isLoggable(TAG, android.util.Log.DEBUG)) {
                     Log.d(TAG, "Given list for data IDs is null. Ignoring.");
                 }
             } else {
@@ -208,7 +208,7 @@ public class DataUsageStatUpdater {
                 if (mResolver.update(uri, new ContentValues(), null, null) > 0) {
                     successful = true;
                 } else {
-                    if (Log.isLoggable(TAG, Log.DEBUG)) {
+                    if (android.util.Log.isLoggable(TAG, android.util.Log.DEBUG)) {
                         Log.d(TAG, "update toward data rows " + dataIds + " failed");
                     }
                 }

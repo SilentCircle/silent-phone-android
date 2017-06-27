@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2014-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -28,15 +28,18 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 package com.silentcircle.common.util;
 
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.Dialog;
 import android.app.DialogFragment;
 import android.app.FragmentManager;
+import android.content.Context;
 import android.content.DialogInterface;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AlertDialog;
-import android.util.Log;
+import com.silentcircle.logs.Log;
 
 /**
  * Helper class to show a permission explanation and callback after user read and confirmed explanation.
@@ -79,7 +82,11 @@ public class ExplainPermissionDialog {
 
         ExplainDialog infoMsg = ExplainDialog.newInstance(args);
         FragmentManager fragmentManager = activity.getFragmentManager();
-        infoMsg.show(fragmentManager, "SilentExplainDialog");
+        if (fragmentManager != null) {
+            fragmentManager.beginTransaction()
+                .add(infoMsg, "SilentExplainDialog")
+                .commitAllowingStateLoss();
+        }
     }
 
     public static class ExplainDialog extends DialogFragment {
@@ -96,9 +103,27 @@ public class ExplainPermissionDialog {
         public ExplainDialog() {
         }
 
+        @TargetApi(Build.VERSION_CODES.M)
+        @Override
+        public void onAttach(Context context) {
+            super.onAttach(context);
+            commonOnAttach(getActivity());
+        }
+
+        /*
+         * Deprecated on API 23
+         * Use onAttachToContext instead
+         */
+        @SuppressWarnings("deprecation")
         @Override
         public void onAttach(Activity activity) {
             super.onAttach(activity);
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+                commonOnAttach(activity);
+            }
+        }
+
+        private void commonOnAttach(Activity activity) {
             mArgs = getArguments();
             mParent = activity;
             if (!(mParent instanceof AfterReading)) {

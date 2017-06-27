@@ -1,0 +1,257 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:android.support.design="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="?attr/sp_activity_background_color"
+    android:clickable="true">
+
+    <LinearLayout
+        android:id="@+id/selection_container"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/widget_contact_selection_section_height"
+        android:orientation="vertical"
+        android:background="#F7F7F7"
+        android:paddingTop="@dimen/activity_horizontal_margin_large"
+        android:paddingLeft="@dimen/activity_horizontal_margin_large"
+        android:paddingRight="@dimen/activity_horizontal_margin_large"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true">
+
+        <android.support.design.widget.TextInputLayout
+            android:id="@+id/textinput_group_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColorHint="?attr/sp_activity_primary_text_color"
+            android.support.design:errorEnabled="true"
+            android.support.design:hintTextAppearance="@style/TextAppearance.App.TextInputLayout">
+
+            <EditText
+                android:id="@+id/edit_group_name"
+                style="@style/Widget.Silent.SimpleText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/group_messaging_create_group_name"
+                android:imeOptions="actionDone"
+                android:nextFocusDown="@+id/edit_group_description"
+                android:nextFocusLeft="@+id/edit_group_description"
+                android:nextFocusRight="@+id/edit_group_description"
+                android:nextFocusUp="@+id/edit_group_description"
+                android:privateImeOptions="nm"
+                android:selectAllOnFocus="true"
+                android:maxLines="1"
+                android:singleLine="true"
+                android:textColor="?attr/sp_activity_primary_text_color"
+                android:textColorHighlight="@color/sc_ng_text_green"
+                android:textColorHint="?attr/sp_activity_primary_text_color"
+                android:textSize="@dimen/text_large"
+                android:theme="@style/Widget.EditText" />
+
+        </android.support.design.widget.TextInputLayout>
+
+    </LinearLayout>
+
+
+    <!-- FAB size is Normal (56dp), separator should be half of that plus FAB bottom margin -->
+    <View
+        android:id="@+id/selection_separator"
+        android:layout_below="@id/selection_container"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/spacing_xlarge" />
+
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/button_create"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/spacing_small"
+        android:layout_marginRight="@dimen/spacing_normal"
+        android:layout_marginEnd="@dimen/spacing_normal"
+        android:src="@drawable/ic_check_white_24dp"
+        android:contentDescription="@string/group_messaging_add_participants_voiceover"
+        android.support.design:fabSize="normal"
+        android.support.design:backgroundTint="@color/invite_button_background_selector"
+        android.support.design:elevation="@dimen/spacing_tiny"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
+        android:layout_alignBottom="@id/selection_separator" />
+
+    <TextView
+        android:id="@+id/group_fields_toggle"
+        style="@style/Widget.Silent.SimpleText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="@dimen/activity_horizontal_margin_large"
+        android:layout_marginStart="@dimen/activity_horizontal_margin_large"
+        android:layout_alignBottom="@id/selection_separator"
+        android:padding="@dimen/spacing_small"
+        android:drawableLeft="@drawable/ic_arrow_expand_white_24dp"
+        android:drawableTint="?attr/sp_activity_primary_text_color"
+        android:text="@string/group_messaging_group_conversation_advanced_details" />
+
+    <LinearLayout
+        android:id="@+id/group_fields_participants_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/selection_separator"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:orientation="vertical"
+        android:animateLayoutChanges="true">
+
+        <LinearLayout
+            android:id="@+id/group_fields_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="@dimen/activity_horizontal_margin_large"
+            android:layout_marginRight="@dimen/activity_horizontal_margin_large"
+            android:orientation="vertical"
+            android:visibility="gone"
+            tools:visibility="visible">
+
+            <android.support.design.widget.TextInputLayout
+                android:id="@+id/textinput_group_description"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColorHint="?attr/sp_activity_primary_text_color"
+                android.support.design:errorEnabled="true"
+                android.support.design:hintTextAppearance="@style/TextAppearance.App.TextInputLayout">
+
+                <EditText
+                    android:id="@+id/edit_group_description"
+                    style="@style/Widget.Silent.SimpleText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="@string/group_messaging_create_group_description"
+                    android:imeOptions="actionNext"
+                    android:nextFocusDown="@+id/edit_group_max_members"
+                    android:nextFocusUp="@id/edit_group_name"
+                    android:privateImeOptions="nm"
+                    android:selectAllOnFocus="true"
+                    android:maxLines="1"
+                    android:singleLine="true"
+                    android:textColor="?attr/sp_activity_primary_text_color"
+                    android:textColorHighlight="@color/sc_ng_text_green"
+                    android:textColorHint="?attr/sp_activity_primary_text_color"
+                    android:textSize="@dimen/text_large"
+                    android:theme="@style/Widget.EditText" />
+
+            </android.support.design.widget.TextInputLayout>
+
+            <android.support.design.widget.TextInputLayout
+                android:id="@+id/textinput_group_max_members"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColorHint="?attr/sp_activity_primary_text_color"
+                android.support.design:errorEnabled="true"
+                android.support.design:hintTextAppearance="@style/TextAppearance.App.TextInputLayout">
+
+                <EditText
+                    android:id="@+id/edit_group_max_members"
+                    style="@style/Widget.Silent.SimpleText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:ems="10"
+                    android:hint="@string/group_messaging_edit_group_maximum_members"
+                    android:imeOptions="actionDone"
+                    android:inputType="number"
+                    android:privateImeOptions="nm"
+                    android:selectAllOnFocus="true"
+                    android:maxLines="1"
+                    android:singleLine="true"
+                    android:textColor="?attr/sp_activity_primary_text_color"
+                    android:textColorHighlight="@color/sc_ng_text_green"
+                    android:textColorHint="?attr/sp_activity_primary_text_color"
+                    android:textSize="@dimen/text_large"
+                    android:theme="@style/Widget.EditText" />
+
+            </android.support.design.widget.TextInputLayout>
+
+            <!--
+            Hint goes over default value so it is set from code
+
+            android:text="@string/group_messaging_create_group_maximum_members_default"
+            -->
+
+        </LinearLayout>
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="@dimen/activity_horizontal_margin_large"
+            android:layout_marginStart="@dimen/activity_horizontal_margin_large"
+            android:orientation="horizontal"
+            android:visibility="gone"
+            tools:visibility="gone">
+
+            <android.support.design.widget.FloatingActionButton
+                android:id="@+id/edit_group_add_participants"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentStart="true"
+                android:layout_alignParentTop="true"
+                android:layout_marginBottom="@dimen/spacing_small"
+                android:src="@drawable/ic_group_add_white_24px"
+                android:contentDescription="@string/group_messaging_add_participants_voiceover"
+                android.support.design:backgroundTint="@color/sc_ng_text_red_button"
+                android.support.design:fabSize="normal"
+                android.support.design:elevation="@dimen/spacing_tiny" />
+
+            <TextView
+                android:id="@+id/edit_group_number_participants"
+                style="@style/Widget.Silent.SimpleText.Small"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_toRightOf="@id/edit_group_add_participants"
+                android:layout_toEndOf="@id/edit_group_add_participants"
+                android:layout_marginLeft="@dimen/spacing_small"
+                android:layout_marginStart="@dimen/spacing_small"
+                android:layout_marginTop="@dimen/spacing_large"
+                tools:text="10 participants" />
+
+        </RelativeLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1px"
+            android:layout_gravity="bottom"
+            android:layout_marginEnd="@dimen/conversation_log_outer_margin"
+            android:layout_marginLeft="@dimen/conversation_log_outer_margin"
+            android:layout_marginRight="@dimen/conversation_log_outer_margin"
+            android:layout_marginStart="@dimen/conversation_log_outer_margin"
+            android:background="?attr/sp_dial_text_background"
+            android:visibility="visible" />
+
+        <android.support.v7.widget.RecyclerView
+            android:id="@android:id/list"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipChildren="false"
+            android:divider="@null"
+            android:fadingEdge="none"
+            android:filterTouchesWhenObscured="false"
+            android:overScrollMode="never" />
+
+    </LinearLayout>
+
+    <FrameLayout
+        android:id="@+id/create_progress"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/black_background_transparent"
+        android:clickable="true"
+        android:visibility="gone"
+        tools:visibility="visible">
+
+        <com.silentcircle.common.widget.ProgressBar
+            style="?android:attr/progressBarStyleLarge"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_gravity="center"
+            android:indeterminate="true" />
+
+    </FrameLayout>
+
+</RelativeLayout>

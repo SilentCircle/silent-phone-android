@@ -1,7 +1,7 @@
 /*
 Created by Janis Narbuts
 Copyright (C) 2004-2012, Tivi LTD, www.tiviphone.com. All rights reserved.
-Copyright (C) 2012-2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2012-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,7 +27,6 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-
 #if 1
 #define T_CAN_TEST_V
 #include <math.h>
@@ -54,13 +53,14 @@ inline int abs(int a) {
 //#define  BLK_SIZE 8
 #define u_int8 unsigned char 
 #define int8 char
-static inline int clip(int a, int b, int c){if(c<a)return a; if(c>b)return b;return c;}
+//static inline int clip(int a, int b, int c){if(c<a)return a; if(c>b)return b;return c;}
 static inline unsigned char _clip_uint8(int a){if(a<=0)return 0; if(a>=255)return 255;return a;}
 
 
 
 
 #endif
+/* EA: unused variables:
 static const unsigned char t_l2[]=  {0,0,0,0, 0,0,0,0, 1,1,1,1,1,1,1,1,1,2,2,2,2,2,2,2,2,2,3,3,3,3,3,
 3,3,4,4,4,4,4,4,5,5,5,5,6,6,6,6,7,7,7,7,8,8,8,8,8,8,8,8,8,8,8,8,
 8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,
@@ -84,6 +84,7 @@ static const unsigned char t_l1[]=  {0,1,1,1, 1,2,2,2 ,3,3,3,3,4,4,4,5,5,5,6,6,6
 16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,
 16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,
 };
+ */
 /*
 const unsigned char t_s0l2[]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,2,2,2,2,2,2,2,2,3,3,3,3,3,3,3,3,3,3, 4, 4, 4, 4, 4, 4, 4, 4,
 5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,};
@@ -95,7 +96,7 @@ static int fsTab[300];
 //static int fsTabR[300];
 //static int fsTab[300];
 int getOneBitCost(int t0, int *sadDif){
-   short bl[16]={0,0,t0,0, 
+   short bl[16]={0,0,static_cast<short>(t0),0,
       0,0,0,0, 
       0,0,0,0, 
       0,0,0,0, };
@@ -110,10 +111,11 @@ int getOneBitCost(int t0, int *sadDif){
 int setFSTabVal(int a, int t0, int t1, int fs){
    if(a>299)a=299;
    if(!fsTab[a]){
-      fsTab[a]=fs;return fs;
+      fsTab[a]=fs;
+      return fs;
 
-
-      short bl[16]={0,(t1+t0*2)>>1,0,0,
+/* EA: code never executed:
+      short bl[16]={0,static_cast<short>((t1+t0*2)>>1),0,0,
          //short bl[16]={-t0,t1,0,0, 
          0,0,0,0, 
          0,0,0,0, 
@@ -142,6 +144,7 @@ int setFSTabVal(int a, int t0, int t1, int fs){
       if(str<fsTab[a])fsTab[a]=str;
       fsTab[a]=str;
       //fsTab[a]=(str*3)>>2;
+ */
    }
    return fsTab[a];
 }
@@ -158,11 +161,11 @@ int setFSTabValx( int t0, int t1){
       return r[t0sh2];
 
    //short bl[16]={0,(t1+t0*2)>>1,0,0,
-   short bl[16]={0,(t1+t0*2)>>1,0,0, 
+   short bl[16]={0,static_cast<short>((t1+t0*2)>>1),0,0,
       //short bl[16]={0,0,(t1+t0*2)>>2,0, 
       0,0,0,0, 
       0,0,0,0, 
-      0,0,0,0, };
+      0,0,0,0 };
    void itrxF(short *p);
    itrxF(&bl[0]);
    //  r[t0sh2]=(abs(bl[0])+12)>>4;//((abs(bl[0])*7+128)>>8);
@@ -202,7 +205,7 @@ int setFTabA(int a, int iPic){
 
    if(a==pa[0])return iFSX;
    pa[0]=a;
-   short bl[16]={0,0,a,0, 
+   short bl[16]={0,0,static_cast<short>(a),
       0,0,0,0, 
       0,0,0,0, 
       0,0,0,0, };
@@ -225,6 +228,7 @@ int setFTabA(int a, int iPic){
 
 
 #define t_abs(_a) abs(_a)
+/* EA: unused functions
 static inline int t_lim_2(int v, int lim1, int lim2){
    return lim1<v && v<lim2;
 }
@@ -232,6 +236,7 @@ static inline int t_lim_m(int v, int lim1){
    return (unsigned )(v+lim1)<(lim1<<1);
    //return -lim1<v && v<lim1
 }
+ */
 
 #define t_filter_L t_filter_LZ
 //#define t_filter_L t_filter_LxZ
@@ -525,13 +530,13 @@ static  void t_filter_LZ(unsigned char *p, const int stridex, const int stridey,
 
 
 
-   int _d,_d1,_d2,_s,iF,iFC;
+    int _d,_s,iF; //,_d1,_d2,iFC;
 
    if(iPass==1)
    {
       //      int a1,a2,a3;
-      const int fs1=fsTab[a];//(a+6)>>3;
-      const int T2=min((a+2)>>2,fs1*3);
+//      const int fs1=fsTab[a];//(a+6)>>3;
+//      const int T2=min((a+2)>>2,fs1*3);
 
       //alphaTab
       //int ad3=((a*80)>>8)+1;      if(ad3>9){ad3+=27;ad3>>=2;}
@@ -1132,7 +1137,7 @@ static  void t_filter_LZ_s(unsigned char *p, const int stridex, const int stride
                f1=fr2<0,3,0>(p,stridex,stridey,a,1,T2);p+=stridey*2;
                f1+=fr2<0,3,0>(p,stridex,stridey,a,0,T2);
                //    void debugsi(char*,int);debugsi("f1+f2=",f1+f2);
-               if((f1==2)){
+               if(f1==2){
                   p-=stridey;
                   fr2<0,3,0>(p,stridex,stridey,a,0,T2);p+=stridey*2;
                   fr2<0,3,0>(p,stridex,stridey,a,1,T2);p+=stridey;//,iCoefs!=1
@@ -1415,6 +1420,7 @@ else {p[0]-=t_l1[d];p[-stridex]+=t_l1[d];p[stridex]-=1;p[-stridex*2]+=1;}\
    }
 }
 #endif
+/* EA: unused
 static  void t_filter_L_D(unsigned char *p, const int stridex,const int stridey, const int L, int a, int rem){
    int i; 
    // int ad3=(a>>2)+1;
@@ -1440,6 +1446,7 @@ static  void t_filter_L_D(unsigned char *p, const int stridex,const int stridey,
       p+=stridey;
    }
 }
+ */
 /*
 if(_d>1 && _d<a){ \
 _r=p[0]-p[stridex]-p[-2*stridex]+p[-stridex];\
@@ -2010,7 +2017,7 @@ void filterHx(unsigned char *img, const int stridex, const int stridey, int wh, 
 void filterVx(unsigned char *img, const int stridex, const int stridey, int wh, const int coef, const int iCoef2);
 static  void t_filter_L_TLUV(unsigned char *p, const int stridex, const int stridey, const int L,const int a){
    //   a+=4;
-   int i,_r; 
+    int i;//,_r;
 #ifdef T_CAN_TEST_V
    const int str=GETFS;//fsTab[a];//(a+2)>>2;//a div 6
    if(!str)return ;
@@ -2023,7 +2030,7 @@ static  void t_filter_L_TLUV(unsigned char *p, const int stridex, const int stri
    }
 
    return;
-#endif
+#else
 
 
    //   const int ad3=(a>>2)+2;
@@ -2175,6 +2182,7 @@ static  void t_filter_L_TLUV(unsigned char *p, const int stridex, const int stri
       }
       p+=stridey;
    }
+#endif
 }
 
 void filter_16_topUV(unsigned char *p, int stride, int a){
@@ -2446,7 +2454,7 @@ void filter_4x4_16_a_dcf(unsigned char *p, int stride, int a, int *f, int *dc){
 void filter_4x4_16_a(unsigned char *p, int stride, int a){
    if(a<2)return ;
    //char pC[16*6];
-   int ipC[4*6];
+//   int ipC[4*6];
   // char *pC=(char*)&ipC[0];
    //a+=2;
    //   a+=2;
@@ -2485,7 +2493,7 @@ static void dc_f_h(unsigned char *src,const  int stride, const int a)
    int i;
    int b, c,dif,d,d2,d3,d4,iLong;
    src+=stride;
-   int sw;
+//   int sw;
    int iFS=GETFS;
    //int al=tfa;
 
@@ -2632,9 +2640,9 @@ static void dc_f_v(unsigned char *src, const int stride, const int a)
 {
    //   return;
    int i,d,d2,d3,d4,iLong;
-   int b, c,dif,rnd=0;
+    int b, c,dif;//,rnd=0;
    src+=3;
-   int sw;
+//   int sw;
    int iFS=GETFS;
    //int al=tfa;
 

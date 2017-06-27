@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.silentcircle.messaging.views.InfoEventView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingBottom="1dp"
+    android:background="@drawable/bg_error_light"
+    android:filterTouchesWhenObscured="false"
+    android:gravity="center">
+
+    <com.silentcircle.messaging.views.TextView
+        android:id="@+id/info_message"
+        style="@style/Widget.Text.Floating.Info"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginRight="@dimen/space_normal"
+        android:layout_marginEnd="@dimen/space_normal"
+        android:paddingBottom="@dimen/space_normal"
+        android:paddingTop="@dimen/space_normal"
+        android:textColor="?sp_error_message_text_selector"
+        android:gravity="center"
+        tools:text="@string/sample_error"/>
+
+</com.silentcircle.messaging.views.InfoEventView>

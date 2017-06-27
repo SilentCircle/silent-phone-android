@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+<?xml version="1.0" encoding="utf-8"?><!--
 // +++LICENSE_BEGIN+++
 /*
  * Copyright © 2014, Silent Circle
@@ -9,84 +8,152 @@
  -->
 
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              xmlns:tools="http://schemas.android.com/tools"
-              android:orientation="vertical"
-              android:layout_width="match_parent"
-              android:layout_height="wrap_content"
-              android:layout_marginTop="@dimen/spacing_normal"
-              android:background="?sp_drawer_background"
-              tools:context=".activities.DialerActivity">
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="?attr/sp_activity_secondary_background_color"
+    android:orientation="vertical"
+    tools:context=".activities.DialerActivity">
 
     <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/spacing_normal"
-            android:visibility="gone"
-            tools:visibility="visible">
+        android:id="@+id/dial_drawer_number"
+        style="@style/Widget.Silent.AccountDetail.Container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        tools:visibility="visible">
+
         <TextView
-                style="@style/Widget.Silent.SimpleText.Medium"
-                android:layout_marginLeft="@dimen/spacing_normal"
-                android:layout_marginStart="@dimen/spacing_normal"
-                android:layout_width="wrap_content"
-                android:textColor="?attr/sp_drawer_text_color"
-                android:text="@string/thanks_name"/>
-        <TextView
-                style="@style/Widget.Silent.SimpleText.Medium"
-                android:id="@+id/dial_drawer_name"
-                android:layout_marginRight="@dimen/spacing_normal"
-                android:layout_marginEnd="@dimen/spacing_normal"
-                android:gravity="end"
-                android:textColor="?attr/sp_drawer_text_color"
-                tools:text="John Doe III"/>
+            style="@style/Widget.Silent.AccountDetail.Label"
+            android:text="@string/thanks_number" />
+
+        <com.silentcircle.silentphone2.views.ResizingTextTextView
+            android:id="@+id/dial_drawer_number_data"
+            style="@style/Widget.Silent.AccountDetail.Value"
+            tools:text="(555) 4711 815" />
+
     </LinearLayout>
 
     <LinearLayout
-            android:id="@+id/dial_drawer_number"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/spacing_normal"
-            android:visibility="gone"
-            tools:visibility="visible">
+        android:id="@+id/dial_drawer_plan"
+        style="@style/Widget.Silent.AccountDetail.Container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        tools:visibility="visible">
+
         <TextView
-                style="@style/Widget.Silent.SimpleText.Medium"
-                android:layout_marginLeft="@dimen/spacing_normal"
-                android:layout_marginStart="@dimen/spacing_normal"
-                android:layout_width="wrap_content"
-                android:textColor="?attr/sp_drawer_text_color"
-                android:text="@string/thanks_number"/>
-        <TextView
-                style="@style/Widget.Silent.SimpleText.Medium"
-                android:id="@+id/dial_drawer_number_data"
-                android:layout_marginRight="@dimen/spacing_normal"
-                android:layout_marginEnd="@dimen/spacing_normal"
-                android:gravity="end"
-                android:textColor="?attr/sp_drawer_text_color"
-                tools:text="(555) 4711 815"/>
+            style="@style/Widget.Silent.AccountDetail.Label"
+            android:text="@string/thanks_plan" />
+
+        <com.silentcircle.silentphone2.views.ResizingTextTextView
+            android:id="@+id/dial_drawer_plan_data"
+            style="@style/Widget.Silent.AccountDetail.Value"
+            tools:text="Basic" />
+
     </LinearLayout>
 
     <LinearLayout
-            android:id="@+id/dial_drawer_valid"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/spacing_normal"
-            android:visibility="gone"
-            tools:visibility="visible">
+        android:id="@+id/dial_drawer_minutes"
+        style="@style/Widget.Silent.AccountDetail.Container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        tools:visibility="visible">
+
         <TextView
-                style="@style/Widget.Silent.SimpleText.Medium"
-                android:id="@+id/dialer_drawer_valid_label"
-                android:layout_marginLeft="@dimen/spacing_normal"
-                android:layout_marginStart="@dimen/spacing_normal"
-                android:layout_width="wrap_content"
-                android:textColor="?attr/sp_drawer_text_color"
-                android:text="@string/valid_until"/>
-        <TextView
-                style="@style/Widget.Silent.SimpleText.Medium"
-                android:id="@+id/dial_drawer_valid_data"
-                android:layout_marginRight="@dimen/spacing_normal"
-                android:layout_marginEnd="@dimen/spacing_normal"
-                android:gravity="end"
-                android:textColor="?attr/sp_drawer_text_color"
-                tools:text="2014-09-13"/>
+            style="@style/Widget.Silent.AccountDetail.Label"
+            android:text="@string/thanks_minutes" />
+
+        <com.silentcircle.silentphone2.views.ResizingTextTextView
+            android:id="@+id/dial_drawer_minutes_data"
+            style="@style/Widget.Silent.AccountDetail.Value"
+            tools:text="Silent Phone, Silent Text - $9.95 (1 months)" />
+
     </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/dial_drawer_credit"
+        style="@style/Widget.Silent.AccountDetail.Container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        tools:visibility="visible">
+
+        <TextView
+            style="@style/Widget.Silent.AccountDetail.Label"
+            android:text="@string/thanks_credit" />
+
+        <com.silentcircle.silentphone2.views.ResizingTextTextView
+            android:id="@+id/dial_drawer_credit_data"
+            style="@style/Widget.Silent.AccountDetail.Value"
+            tools:text="1000" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/dial_drawer_valid"
+        style="@style/Widget.Silent.AccountDetail.Container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        tools:visibility="visible">
+
+        <TextView
+            style="@style/Widget.Silent.AccountDetail.Label"
+            android:id="@+id/dialer_drawer_valid_label"
+            android:text="@string/valid_until" />
+
+        <com.silentcircle.silentphone2.views.ResizingTextTextView
+            android:id="@+id/dial_drawer_valid_data"
+            style="@style/Widget.Silent.AccountDetail.Value"
+            tools:text="2014-09-13" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/dial_drawer_org"
+        style="@style/Widget.Silent.AccountDetail.Container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        tools:visibility="visible">
+
+        <TextView
+            style="@style/Widget.Silent.AccountDetail.Label"
+            android:text="@string/thanks_organization" />
+
+        <com.silentcircle.silentphone2.views.ResizingTextTextView
+            android:id="@+id/dial_drawer_org_data"
+            style="@style/Widget.Silent.AccountDetail.Value"
+            tools:text="Umbrella Corp." />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/dial_drawer_data_retention"
+        style="@style/Widget.Silent.AccountDetail.Container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        tools:visibility="visible">
+
+        <TextView
+            style="@style/Widget.Silent.AccountDetail.Label"
+            android:text="@string/thanks_data_retention" />
+
+        <com.silentcircle.silentphone2.views.ResizingTextTextView
+            android:id="@+id/dial_drawer_data_retention_data"
+            style="@style/Widget.Silent.AccountDetail.Value"
+            android:text="@string/thanks_data_retention_on" />
+
+    </LinearLayout>
+
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="1px"
+        android:background="?attr/sp_drawer_separator_color"
+        tools:ignore="ContentDescription"
+        />
 
 </LinearLayout>

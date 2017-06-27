@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2016-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -30,15 +30,41 @@ package com.silentcircle.messaging.model;
 import android.support.annotation.NonNull;
 import android.text.TextUtils;
 
+import com.silentcircle.common.util.StringUtils;
+import com.silentcircle.contacts.utils.Hex;
+import com.silentcircle.messaging.model.event.Event;
+import com.silentcircle.messaging.util.ConversationUtils;
 import com.silentcircle.messaging.util.IOUtils;
 
 import java.util.Arrays;
+import java.util.Comparator;
 
 public class Conversation extends Burnable implements Comparable<Conversation> {
 
     private static String toString(byte[] value) {
         return value == null ? null : new String(value);
     }
+
+    public static class ConversationNameComparator implements Comparator<Conversation> {
+
+        @Override
+        public int compare(Conversation lhs, Conversation rhs) {
+            if (lhs == null && rhs == null) {
+                return 0;
+            }
+            if (lhs == null || TextUtils.isEmpty(lhs.getPartner().getDisplayName())) {
+                return -1;
+            }
+            if (rhs == null || TextUtils.isEmpty(rhs.getPartner().getDisplayName())) {
+                return 1;
+            }
+            return StringUtils.NAME_COMPARATOR.compare(lhs.getPartner().getDisplayName(),
+                    rhs.getPartner().getDisplayName());
+        }
+    }
+
+    public static final ConversationNameComparator CONVERSATION_NAME_COMPARATOR =
+            new ConversationNameComparator();
 
     protected byte[] id;
     protected Contact partner;
@@ -52,6 +78,9 @@ public class Conversation extends Burnable implements Comparable<Conversation> {
     private long lastModified;
     private int failures;
     private String mUnsentText;
+    private String mAvatarUrl;
+    private String mAvatar;
+    private byte[] mAvatarIv;
 
     @Override
     public void clear() {
@@ -93,7 +122,7 @@ public class Conversation extends Burnable implements Comparable<Conversation> {
 
     @Override
     public int compareTo(@NonNull Conversation other) {
-        return lastModified == 0 ? -1 : lastModified < other.lastModified ? 1 : lastModified == other.lastModified ? 0 : -1;
+        return (lastModified < other.lastModified) ? 1 : ((lastModified == other.lastModified) ? 0 : -1);
     }
 
     public boolean containsUnreadMessages() {
@@ -256,4 +285,38 @@ public class Conversation extends Burnable implements Comparable<Conversation> {
             mUnsentText = null;
         }
     }
+
+    public String getAvatarUrl() {
+        return mAvatarUrl;
+    }
+
+    public void setAvatarUrl(String avatarUrl) {
+        mAvatarUrl = avatarUrl;
+    }
+
+    public String getAvatar() {
+        return mAvatar;
+    }
+
+    public void setAvatar(String avatar) {
+        mAvatar = avatar;
+    }
+
+    public byte[] getAvatarIvAsByteArray() {
+        return mAvatarIv;
+    }
+
+    public String getAvatarIv() {
+        byte[] key = getAvatarIvAsByteArray();
+        return key != null ? Hex.encodeHex(getAvatarIvAsByteArray(), false) : null;
+    }
+
+    public void setAvatarIv(byte[] iv) {
+        mAvatarIv = iv;
+    }
+
+    public void setAvatarIv(String iv) {
+        setAvatarIv(TextUtils.isEmpty(iv) ? null : Hex.decodeHex(iv));
+    }
+
 }

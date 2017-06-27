@@ -25,6 +25,7 @@ import com.silentcircle.common.util.CachedNumberLookupService.CachedContactInfo;
 import com.silentcircle.contacts.calllognew.ContactInfo;
 import com.silentcircle.contacts.list.DirectoryPartition;
 import com.silentcircle.silentphone2.util.Utilities;
+import com.silentcircle.userinfo.LoadUserInfo;
 
 /**
  * List adapter to display regular search results.
@@ -32,7 +33,7 @@ import com.silentcircle.silentphone2.util.Utilities;
 public class RegularSearchListAdapter extends DialerPhoneNumberListAdapter {
 
     public RegularSearchListAdapter(Context context) {
-        super(context);
+        super(context, LoadUserInfo.canCallOutboundOca(context));
     }
 
     public CachedNumberLookupService.CachedContactInfo getContactInfo(CachedNumberLookupService lookupService, int position) {
@@ -67,12 +68,12 @@ public class RegularSearchListAdapter extends DialerPhoneNumberListAdapter {
     @Override
     public void setQueryString(String queryString) {
         final boolean showNumberShortcuts =
-                PhoneNumberUtils.isGlobalPhoneNumber(queryString.replaceAll("\\s",""))
-                || Utilities.isValidSipUsername(queryString)
+                PhoneNumberUtils.isGlobalPhoneNumber(queryString.replaceAll("\\s","")
+                        .replaceAll("[()]", ""))
                 || queryString.startsWith("*");
-        final boolean showMessagingShortcuts = Utilities.isValidSipUsername(queryString);
-
-        boolean changed = setShortcutEnabled(SHORTCUT_DIRECT_CALL, showNumberShortcuts);
+        final boolean noExactMatch = isDirectoryEmpty(SC_EXACT_MATCH_ON_V1_USER);
+        boolean changed = setShortcutEnabled(SHORTCUT_DIRECT_CALL,
+                showNumberShortcuts && !isCheckable() && noExactMatch);
         // Either one of the add contacts options should be enabled. If the user entered
         // a dial-able number, then clicking add to contact should add it as a number.
         // Otherwise, it should add it to a new contact as a name.
@@ -80,11 +81,27 @@ public class RegularSearchListAdapter extends DialerPhoneNumberListAdapter {
 
         // For NGA: Don't show the "add to contacts option"
         changed |= setShortcutEnabled(SHORTCUT_ADD_NUMBER_TO_CONTACTS, false);
-        changed |= setShortcutEnabled(SHORTCUT_DIRECT_CONVERSATION, showMessagingShortcuts);
+        changed |= setShortcutEnabled(SHORTCUT_DIRECT_CONVERSATION, false);
 //        changed |= setShortcutEnabled(SHORTCUT_MAKE_VIDEO_CALL, showNumberShortcuts /* && CallUtil.isVideoEnabled(getContext())*/);
         if (changed) {
             notifyDataSetChanged();
         }
         super.setQueryString(queryString);
     }
+
+    @Override
+    public void onChangeCursor(int partitionIndex) {
+        final String queryString = getQueryString();
+        final boolean showNumberShortcuts =
+                PhoneNumberUtils.isGlobalPhoneNumber(queryString.replaceAll("\\s","")
+                        .replaceAll("[()]", ""))
+                        || queryString.startsWith("*");
+        final boolean noExactMatch = isDirectoryEmpty(SC_EXACT_MATCH_ON_V1_USER);
+        boolean changed = setShortcutEnabled(SHORTCUT_DIRECT_CALL,
+                showNumberShortcuts && !isCheckable() && noExactMatch);
+        if (changed) {
+            notifyDataSetChanged();
+        }
+    }
+
 }

@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2016-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -28,7 +28,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package com.silentcircle.messaging.fragments;
 
 import android.support.v7.view.ActionMode;
-import android.util.SparseBooleanArray;
 import android.view.Menu;
 import android.view.MenuItem;
 
@@ -37,10 +36,15 @@ import com.silentcircle.messaging.model.MessageStates;
 import com.silentcircle.messaging.model.event.CallMessage;
 import com.silentcircle.messaging.model.event.ErrorEvent;
 import com.silentcircle.messaging.model.event.Event;
+import com.silentcircle.messaging.model.event.IncomingMessage;
+import com.silentcircle.messaging.model.event.InfoEvent;
 import com.silentcircle.messaging.model.event.Message;
+import com.silentcircle.messaging.model.event.OutgoingMessage;
 import com.silentcircle.messaging.views.adapters.HasChoiceMode;
 import com.silentcircle.silentphone2.BuildConfig;
 import com.silentcircle.silentphone2.R;
+
+import java.util.Set;
 
 public class ChatFragmentMultipleChoiceSelector extends MultipleChoiceSelector<Event> {
 
@@ -75,15 +79,20 @@ public class ChatFragmentMultipleChoiceSelector extends MultipleChoiceSelector<E
     public void onItemCheckedStateChanged(ActionMode mode, int position, long itemId,
             boolean checked) {
         super.onItemCheckedStateChanged(mode, position, itemId, checked);
-        mode.invalidate();
+        if (mode != null) {
+            mode.invalidate();
+        }
     }
 
+    @SuppressWarnings("unused")
     @Override
     public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
         MenuItem itemCopy = menu.findItem(R.id.copy);
         MenuItem itemForward = menu.findItem(R.id.forward);
         MenuItem itemInfo = menu.findItem(R.id.info);
         MenuItem itemResend = menu.findItem(R.id.action_resend);
+        MenuItem itemBurn = menu.findItem(R.id.burn);
+        MenuItem itemDelete = menu.findItem(R.id.delete);
 
         int before = getMenuItemVisibilityMask(menu);
 
@@ -92,40 +101,73 @@ public class ChatFragmentMultipleChoiceSelector extends MultipleChoiceSelector<E
         boolean hasErrorMessage = false;
         boolean hasAttachmentMessage = false;
         boolean hasCallMessage = false;
+        boolean hasInfoMessage = false;
+        boolean hasIncomingMessage = false;
+        boolean hasOutgoingMessage = false;
+        boolean isGroupConversation = mFragment.isGroupConversation();
 
-        itemCopy.setVisible(!multipleChecked);
-
-        SparseBooleanArray checkedItems = mFragment.getCheckedItemPositions();
+        Set<String> checkedItems = mFragment.getCheckedItems();
+        // Do not do visibility changes if no items are selected anymore
+        if (checkedItems.size() == 0) {
+            return super.onPrepareActionMode(mode, menu);
+        }
         if (checkedItems != null) {
-            for (int i = 0; i < checkedItems.size(); i++) {
-                int key = checkedItems.keyAt(i);
+            for (String id : checkedItems) {
+                Event event = mFragment.getEvent(id);
 
-                if (checkedItems.get(key, false)) {
-                    Event event = mFragment.getEvent(key);
-
-                    if (event != null && event instanceof Message) {
-                        if (((Message) event).hasAttachment()) {
-                            hasAttachmentMessage = true;
-                        }
-
-                        if (event instanceof CallMessage) {
-                            hasCallMessage = true;
-                        }
-
-                        hasMessageStateOtherThanFailed |=
-                                (((Message) event).getState() != MessageStates.FAILED);
+                if (event != null && event instanceof Message) {
+                    if (((Message) event).hasAttachment()) {
+                        hasAttachmentMessage = true;
                     }
-                    if (event != null && event instanceof ErrorEvent) {
-                        hasErrorMessage = true;
+
+                    if (event instanceof IncomingMessage) {
+                        hasIncomingMessage = true;
                     }
+
+                    if (event instanceof OutgoingMessage) {
+                        hasOutgoingMessage = true;
+                    }
+
+                    if (event instanceof CallMessage) {
+                        hasCallMessage = true;
+                    }
+
+                    hasMessageStateOtherThanFailed |=
+                            (((Message) event).getState() != MessageStates.FAILED);
+                }
+                if (event instanceof ErrorEvent) {
+                    hasErrorMessage = true;
+                }
+                if (event instanceof InfoEvent) {
+                    hasInfoMessage = true;
                 }
             }
         }
 
         itemCopy.setVisible(!multipleChecked && !hasAttachmentMessage && !hasErrorMessage && !hasCallMessage);
-        itemForward.setVisible(!multipleChecked && !hasErrorMessage && !hasCallMessage);
+        itemForward.setVisible(!multipleChecked && !hasErrorMessage && !hasCallMessage && !hasInfoMessage);
         itemInfo.setVisible(!multipleChecked && BuildConfig.DEBUG);
-        itemResend.setVisible(!hasMessageStateOtherThanFailed && !hasErrorMessage && !hasCallMessage);
+        itemResend.setVisible(!hasMessageStateOtherThanFailed && !hasErrorMessage && !hasCallMessage
+            && !hasInfoMessage);
+        /*
+         * Delete item visible always.
+         *
+         * To have it only for group conversations uncomment the following line.
+
+        itemDelete.setVisible(isGroupConversation);
+
+         */
+
+        /*
+         * Burn item visible for regular conversations when incoming and outgoing messages are selected
+         * and for group conversations when only outgoing messages are selected.
+         *
+         * Call messages are currently not burnable as well.
+         *
+         * Previously for regular conversations burn was visible when any type of event was selected
+         */
+        itemBurn.setVisible(!isGroupConversation && !(hasErrorMessage || hasInfoMessage || hasCallMessage)
+                || (isGroupConversation && !(hasIncomingMessage || hasErrorMessage || hasInfoMessage)));
         int after = getMenuItemVisibilityMask(menu);
 
         return super.onPrepareActionMode(mode, menu) || before != after;
@@ -138,11 +180,13 @@ public class ChatFragmentMultipleChoiceSelector extends MultipleChoiceSelector<E
         MenuItem itemInfo = menu.findItem(R.id.info);
         MenuItem itemResend = menu.findItem(R.id.action_resend);
         MenuItem itemBurn = menu.findItem(R.id.burn);
+        MenuItem itemDelete = menu.findItem(R.id.delete);
         return (itemCopy.isVisible() ? 1 : 0)
                 | (itemForward.isVisible() ? 2 : 0)
                 | (itemInfo.isVisible() ? 4 : 0)
                 | (itemResend.isVisible() ? 8 : 0)
-                | (itemBurn.isVisible() ? 16 : 0);
+                | (itemBurn.isVisible() ? 16 : 0)
+                | (itemDelete.isVisible() ? 32 : 0);
     }
 
 }

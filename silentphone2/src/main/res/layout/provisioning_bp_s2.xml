@@ -76,7 +76,7 @@
                         android:layout_marginTop="32dp"
                         android:hint="@string/provisioning_username_hint"
                         android:imeOptions="actionNext"
-                        android:inputType="text|textNoSuggestions"
+                        android:inputType="text|textNoSuggestions|textEmailAddress"
                         android:singleLine="true"
                         android:tag="username"
                         android:textColor="@color/auth_active_body_text_grey"

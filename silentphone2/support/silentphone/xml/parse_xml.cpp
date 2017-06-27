@@ -1,7 +1,7 @@
 /*
 Created by Janis Narbuts
 Copyright (C) 2004-2012, Tivi LTD, www.tiviphone.com. All rights reserved.
-Copyright (C) 2012-2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2012-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,7 +27,6 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -171,7 +170,7 @@ int CParseXml::splitXML()
                errorXML("CR or LF found after \"<\"");
                return -1;
             }
-            str.len = cur-str.s;
+            str.len = (int)(cur-str.s);
             if (str.len>0) { 
                if (-1 == newTok(str)) 
                   return -1;
@@ -198,7 +197,7 @@ int CParseXml::splitXML()
             if (flag & (F_SQUOTE|F_DQUOTE))
                continue;
             if (flag & F_TRI_BRACE) {
-               str.len = cur - str.s;
+               str.len = (int)(cur - str.s);
                if (str.len > 0) { 
                   if (-1 == newTok(str))
                      return -1;
@@ -236,7 +235,7 @@ int CParseXml::splitXML()
             if (cur > str.s) {
                flag |= F_CONTENT;
                
-               str.len = cur - str.s;
+               str.len = (int)(cur - str.s);
                if (-1 == newTok(str))
                   return -1;
                flag &= ~F_VALUE;
@@ -259,7 +258,7 @@ int CParseXml::splitXML()
             flag &= ~F_VNAME;
             flag &= ~F_CONTENT;
             
-            str.len = cur-str.s;
+            str.len = (int)(cur-str.s);
             if ((str.len == 0) && (cur[-1] != '<')) { 
                flag &= ~F_TRI_BRACE;str.s = cur+1;
                continue;
@@ -282,7 +281,7 @@ int CParseXml::splitXML()
             if ((flag & F_DQUOTE) == 0) {
                flag |= F_VALUE;
                flag &= ~F_VNAME;
-               str.len = cur - str.s;
+               str.len = (int)(cur - str.s);
                flag &= ~F_NODE_NCLOSE;
                flag &= ~F_NODE_NOPEN;
                if (-1 == newTok(str))
@@ -302,7 +301,7 @@ int CParseXml::splitXML()
             if ((flag & F_SQUOTE) == 0) {
                flag |= F_VALUE;
                flag &= ~F_VNAME;
-               str.len = cur-str.s;
+               str.len = (int)(cur-str.s);
                flag &= ~F_NODE_NCLOSE;
                flag &= ~F_NODE_NOPEN;
                if (-1 == newTok(str))
@@ -336,7 +335,7 @@ int CParseXml::splitXML()
                return -1;
             }
             if (cur > str.s){
-               str.len = cur - str.s;
+               str.len = (int)(cur - str.s);
                if (-1 == newTok(str)) 
                   return -1;
                flag &= ~F_VNAME;
@@ -366,7 +365,7 @@ int CParseXml::splitXML()
                errorXML("TAB , SP or EQVAL found after '<'");
                return -1;
             }
-            str.len = cur - str.s;
+            str.len = (int)(cur - str.s);
             if (cur > str.s) {
                if (-1 == newTok(str)) 
                   return -1;
@@ -440,7 +439,7 @@ NODE *CParseXml::node()
          if (no->content.len == 0) 
             no->content = curStr;
          else
-            no->content.len = curStr.s-no->content.s+curStr.len;
+            no->content.len = (int)(curStr.s-no->content.s)+curStr.len;
          continue;
       }
       if ((curFlag == F_TRI_BRACE+F_NODE_NCLOSE) && (nextFlag == F_TRI_BRACE+F_NODE_NOPEN)) { 
@@ -603,7 +602,7 @@ NODE* CParseXml::parseXml(char * inbuf, int iBufLen)
    
    // Buf (from inbuf) is always terminated with 'nul' bytes
    if(iBufLen == 0)
-      iBufLen = strlen(buf);
+      iBufLen = (int)strlen(buf);
    
    end = buf + iBufLen;
    cur = buf;
@@ -681,7 +680,7 @@ int cmpNOpenNClose(STR_XML nO,STR_XML nC)
 int errorXMLF(const char * errorStr)
 {
    char s[128];
-   int el = strlen(errorStr);
+   int el = (int)strlen(errorStr);
    if (el > 100)
       el = 100;
    
@@ -696,7 +695,7 @@ nameValue *getAttribute(NODE *node, char *pszAttribName)
    nameValue *nv = node->nV;
    if (!nv)
       return NULL;
-   int iStrLen = strlen(pszAttribName);
+   int iStrLen = (int)strlen(pszAttribName);
    
    while (nv) {
       if (nv->name.len == iStrLen && !memcmp(nv->name.s, pszAttribName, iStrLen)) {
@@ -716,7 +715,7 @@ NODE_LIST *getChildNodeList(NODE *node, char *pszNodeName) {
    NODE_LIST *nodeList = NULL;
    NODE_LIST *prevList = NULL;
    
-   int iNodeLen = strlen(pszNodeName);
+   int iNodeLen = (int)strlen(pszNodeName);
    
    while (child) {
       
@@ -757,8 +756,8 @@ NODE *getNodeWithAttrib(NODE_LIST *nl, char *pszAttribName, char *pszAttribValue
 
 nameValue *getAttribByNameValue(NODE *node, char* pszAttribName, char* pszAttribValue)
 {
-   int iAttribNameLen = strlen(pszAttribName);
-   int iAttribValueLen = strlen(pszAttribValue);
+   int iAttribNameLen = (int)strlen(pszAttribName);
+   int iAttribValueLen = (int)strlen(pszAttribValue);
    
    nameValue *nv = node->nV;
    
@@ -792,7 +791,7 @@ nameValue *getAttribByName(NODE *node, char* pszAttribName)
    nameValue *nv = node->nV;
    if(!nv)
       return NULL;
-   int iAttribNameLen = strlen(pszAttribName);
+   int iAttribNameLen = (int)strlen(pszAttribName);
    
    while (nv) {
       if (nv->name.len == iAttribNameLen && !memcmp(nv->name.s, pszAttribName, iAttribNameLen)) {
@@ -806,8 +805,8 @@ nameValue *getAttribByName(NODE *node, char* pszAttribName)
 
 nameValue *createAttribute(NODE *node, char *pszName, char *pszValue)
 {
-   int iNameLen  = strlen(pszName);
-   int iValueLen = strlen(pszValue);
+   int iNameLen  = (int)strlen(pszName);
+   int iValueLen = (int)strlen(pszValue);
    
    nameValue *attrib = getAttribByName(node, pszName);
    
@@ -839,7 +838,7 @@ nameValue *createAttribute(NODE *node, char *pszName, char *pszValue)
 
 NODE *createChildNode(NODE *node, char *pszName) {
    
-   int iNameLen  = strlen(pszName);
+   int iNameLen  = (int)strlen(pszName);
    
    NODE *childNode = (NODE *)malloc(sizeof(NODE));
    memset(childNode, 0, sizeof(NODE));
@@ -1001,7 +1000,7 @@ NODE *findNode(NODE *parent,char *name, int fRecusrisve, int iNameLen)
    NODE *ch = parent->child;
    
    if(iNameLen == 0)
-      iNameLen = strlen(name);
+      iNameLen = (int)strlen(name);
    if(iNameLen == parent->name.len && strncmp(name,parent->name.s,iNameLen) == 0)
       return parent;
    

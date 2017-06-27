@@ -1,0 +1,24 @@
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="rectangle">
+            <size android:width="@dimen/messaging_message_card_min_height"
+                android:height="@dimen/messaging_message_card_min_height" />
+        </shape>
+    </item>
+    <item android:gravity="center">
+        <shape android:shape="oval">
+            <solid android:color="@color/chat_outgoing_message_color_light" />
+            <size android:width="35dp" android:height="35dp"/>
+        </shape>
+    </item>
+    <item android:gravity="center">
+        <selector>
+            <item android:state_enabled="true">
+                <bitmap android:src="@drawable/ic_location_1" android:gravity="center" />
+            </item>
+            <item>
+                <bitmap android:src="@drawable/ic_location_1_disabled" android:gravity="center" />
+            </item>
+        </selector>
+    </item>
+</layer-list>

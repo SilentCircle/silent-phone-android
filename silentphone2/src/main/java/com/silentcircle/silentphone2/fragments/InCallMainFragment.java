@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2014-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -30,19 +30,21 @@ package com.silentcircle.silentphone2.fragments;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
-import android.app.Fragment;
 import android.app.FragmentManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
+import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
 import android.telephony.PhoneNumberUtils;
 import android.text.TextUtils;
-import android.util.Log;
+import android.text.method.TransformationMethod;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -50,12 +52,20 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
-import android.widget.ImageView;
 import android.widget.PopupMenu;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.silentcircle.common.util.AsyncTasks;
+import com.silentcircle.common.util.DRUtils;
+import com.silentcircle.common.widget.DataRetentionBanner;
+import com.silentcircle.common.widget.SignalQualityIndicator;
+import com.silentcircle.logs.Log;
+import com.silentcircle.messaging.fragments.UserInfoListenerFragment;
+import com.silentcircle.messaging.model.Contact;
 import com.silentcircle.messaging.util.Action;
+import com.silentcircle.messaging.util.AsyncUtils;
+import com.silentcircle.silentphone2.BuildConfig;
 import com.silentcircle.silentphone2.R;
 import com.silentcircle.silentphone2.activities.DialerActivity;
 import com.silentcircle.silentphone2.activities.InCallCallback;
@@ -64,20 +74,30 @@ import com.silentcircle.silentphone2.services.TiviPhoneService;
 import com.silentcircle.silentphone2.util.CallState;
 import com.silentcircle.silentphone2.util.ConfigurationUtilities;
 import com.silentcircle.silentphone2.util.DeviceHandling;
-import com.silentcircle.userinfo.LoadUserInfo;
+import com.silentcircle.silentphone2.util.RedrawHandler;
 import com.silentcircle.silentphone2.util.Utilities;
+import com.silentcircle.silentphone2.views.BlurrableImageView;
+import com.silentcircle.silentphone2.views.VerifySasWidget;
+import com.silentcircle.silentphone2.views.VolumeIndicatorLayout;
 import com.silentcircle.silentphone2.views.multiwaveview.GlowPadView;
+import com.silentcircle.userinfo.LoadUserInfo;
+import com.silentcircle.userinfo.UserInfo;
 
 import java.util.Locale;
+import java.util.concurrent.TimeUnit;
+
+import zina.ZinaNative;
+
+import static com.silentcircle.silentphone2.R.id.call;
 
 /**
  * This Fragment handles the in call screen and triggers actions.
  *
  * Created by werner on 16.02.14.
  */
-public class InCallMainFragment extends Fragment implements View.OnClickListener,
+public class InCallMainFragment extends UserInfoListenerFragment implements View.OnClickListener,
         TiviPhoneService.ServiceStateChangeListener, TiviPhoneService.DeviceStateChangeListener, 
-        GlowPadView.OnTriggerListener {
+        GlowPadView.OnTriggerListener, VerifySasWidget.OnSasVerifyClickListener {
 
     private static final String TAG = InCallMainFragment.class.getSimpleName();
 
@@ -88,6 +108,7 @@ public class InCallMainFragment extends Fragment implements View.OnClickListener
     /** Call Control buttons */
     private ImageButton mEndCall;
     private GlowPadView mGlowPadView;
+    private VolumeIndicatorLayout mVolumeIndicator;
 
     /** Call state info */
     private TextView mStateLabel;
@@ -101,12 +122,80 @@ public class InCallMainFragment extends Fragment implements View.OnClickListener
 
     // The caller/callee avatar and name/number
     private TextView mCallerNumberName;
-    private ImageView mCallerImage;
+    private BlurrableImageView mCallerImage;
+    private View mRxLed;
+    private SignalQualityIndicator mSignalQualityIndicator;
+
+    private Handler mRxLedHandler;
+    private Runnable mRxLedUpdater = new Runnable() {
+        @Override
+        public void run() {
+            boolean shouldContinue = updateCallRxLed();
+            mRxLedHandler.removeCallbacks(mRxLedUpdater);
+            if (shouldContinue) {
+                mRxLedHandler.postDelayed(mRxLedUpdater, 25);
+            }
+        }
+    };
+    private int pv = -1;
+    private int prevPrevAuthFail = -1;
+
+    private Handler mSignalQualityHandler;
+    private Runnable mSignalQualityUpdater = new Runnable() {
+        @Override
+        public void run() {
+            boolean shouldContinue = updateCallSignalQualityIndicator();
+            mSignalQualityHandler.removeCallbacks(mSignalQualityUpdater);
+            if (shouldContinue) {
+                mSignalQualityHandler.postDelayed(mSignalQualityUpdater, TimeUnit.SECONDS.toMillis(1));
+            }
+        }
+    };
+
+    private Handler mVolumeIndicatorHandler;
+    private Runnable mVolumeIndicatorUpdater = new Runnable() {
+        @Override
+        public void run() {
+            boolean shouldContinue = updateVolumeIndicator();
+            mVolumeIndicatorHandler.removeCallbacks(mVolumeIndicatorUpdater);
+            if (shouldContinue) {
+                mVolumeIndicatorHandler.postDelayed(mVolumeIndicatorUpdater, 100);
+            }
+        }
+    };
+
+    private Handler mUnderflowIndicatorHandler;
+    private Runnable mUnderflowIndicatorUpdater = new Runnable() {
+        @Override
+        public void run() {
+            boolean shouldContinue = updateUnderflowIndicator();
+            mUnderflowIndicatorHandler.removeCallbacks(mUnderflowIndicatorUpdater);
+            if (shouldContinue) {
+                mUnderflowIndicatorHandler.postDelayed(mUnderflowIndicatorUpdater, 100);
+            }
+        }
+    };
+    private Handler mUnderflowExplainIndicatorHideHandler;
+    private Runnable mUnderflowExplainIndicatorHideUpdater = new Runnable() {
+        @Override
+        public void run() {
+            if (mUnderflowExplainIndicator != null) {
+                mUnderflowExplainIndicator.setVisibility(View.GONE);
+            }
+        }
+    };
+
+    private RedrawHandler mHandler;
 
     // The security information area
     private TextView mSasText;
     public static int mSasVerifiedColor;
-    private TextView mVerifyLabel;
+
+    private VerifySasWidget mVerifySas;
+    private DataRetentionBanner mDataRetentionBanner;
+
+    private View mUnderflowIndicator;
+    private View mUnderflowExplainIndicator;
 
     public static int mNameNumberTextColorNormal;
     public static int mNameNumberTextColorPeerMatch;
@@ -126,6 +215,76 @@ public class InCallMainFragment extends Fragment implements View.OnClickListener
     private Drawable mSpeakerBtOff;
 
     private boolean mSpeakerOnly;
+    private boolean mIsSelfDrEnabled;
+    private boolean mIsPartnerDrEnabled;
+
+    private String mNoVideoAvailableError;
+    private String mSecurityStateSecure;
+    private String mSecurityStateSecureToServer;
+    private String mSecurityStateNotSecure;
+    private String mSecurityStateNotVerified;
+    private String mCallTypeIncoming;
+    private String mCallTypeOutgoing;
+    private String mCallTypeUrgent;
+    private String mCallTypeEmergency;
+
+    private class RefreshDrStateRunnable implements Runnable {
+
+        private final String mPeerName;
+        private final boolean mRefreshUserInfo;
+
+        public RefreshDrStateRunnable(String peerName) {
+            this(peerName, false);
+        }
+
+        public RefreshDrStateRunnable(String peerName, boolean refreshUserInfo) {
+            mPeerName = peerName;
+            mRefreshUserInfo = refreshUserInfo;
+        }
+
+        @Override
+        public void run() {
+            boolean isDrEnabled = LoadUserInfo.isLrcm() | LoadUserInfo.isLrcp()
+                    // TODO during call show banner when messaging DR is active as well?
+                    | LoadUserInfo.isLrmp() | LoadUserInfo.isLrmp() | LoadUserInfo.isLrap();
+            mIsSelfDrEnabled = isDrEnabled;
+
+            boolean retentionState = false;
+            byte[] partnerUserInfo = mRefreshUserInfo
+                    ? ZinaNative.refreshUserData(mPeerName, null)
+                    : ZinaNative.getUserInfoFromCache(mPeerName);
+            if (partnerUserInfo == null) {
+                int[] errorCode = new int[1];
+                partnerUserInfo = ZinaNative.getUserInfo(mPeerName, null, errorCode);
+            }
+            if (partnerUserInfo != null) {
+                AsyncTasks.UserInfo userInfo = AsyncTasks.parseUserInfo(partnerUserInfo);
+                retentionState = DRUtils.isAnyDataRetainedForUser(userInfo);
+            }
+
+            mIsPartnerDrEnabled = retentionState;
+            isDrEnabled |= retentionState;
+
+            android.os.Message message = android.os.Message.obtain();
+            message.arg1 = isDrEnabled ? View.VISIBLE : View.GONE;
+            message.what = RedrawHandler.REFRESH_DATA_RETENTION_BANNER;
+            mHandler.sendMessage(message);
+        }
+    };
+
+    private static final TransformationMethod LOWER_CASE_TRANSFORMATION_METHOD = new TransformationMethod() {
+
+        @Override
+        public CharSequence getTransformation(CharSequence source, View view) {
+            return TextUtils.isEmpty(source) ? source : source.toString().toLowerCase();
+        }
+
+        @Override
+        public void onFocusChanged(View view, CharSequence sourceText, boolean focused,
+            int direction, Rect previouslyFocusedRect) {
+            // not used
+        }
+    };
 
     public InCallMainFragment() {
     }
@@ -133,9 +292,38 @@ public class InCallMainFragment extends Fragment implements View.OnClickListener
     @Override
     public void onCreate(Bundle state) {
         super.onCreate(state);
+        mRxLedHandler = new Handler();
+        mSignalQualityHandler = new Handler();
+        mVolumeIndicatorHandler = new Handler();
+        mUnderflowIndicatorHandler = new Handler();
+        mUnderflowExplainIndicatorHideHandler = new Handler();
+        mHandler = new RedrawHandler(new RedrawHandler.RedrawRunnable() {
+            @Override
+            public void run() {
+                if (mDataRetentionBanner != null) {
+                    CallState call = TiviPhoneService.calls.selectedCall;
+                    int visibility = getFlags() == View.VISIBLE ? View.VISIBLE : View.GONE;
+//                    if (call != null && call.mPeerDisclosureFlag) {
+//                        visibility = View.VISIBLE;
+//                    }
+                    mDataRetentionBanner.setVisibility(visibility);
+                }
+            }
+        });
+
+        mNoVideoAvailableError = getString(R.string.no_video_available);
+        mSecurityStateSecure = getString(R.string.secstate_secure);
+        mSecurityStateSecureToServer = getString(R.string.to_server_only);
+        mSecurityStateNotSecure = getString(R.string.secstate_not_secure);
+        mSecurityStateNotVerified = getString(R.string.secstate_secure_question);
+        mCallTypeIncoming = getString(R.string.type_incoming);
+        mCallTypeOutgoing = getString(R.string.type_outgoing);
+        mCallTypeUrgent = getString(R.string.urgent_call);
+        mCallTypeEmergency = getString(R.string.emergency_call);
     }
 
     @Override
+    @SuppressWarnings("ResourceType")       // Otherwise AS report some issue with array.getXxxx functions
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedState) {
         final Resources.Theme theme = mParent.getTheme();
         final TypedArray array = theme != null ? theme.obtainStyledAttributes(new int[]{
@@ -160,7 +348,7 @@ public class InCallMainFragment extends Fragment implements View.OnClickListener
             mSpeakerBt = array.getDrawable(4);
             mSpeakerBtOff = array.getDrawable(5);
             mSasVerifiedColor = array.getColor(6, ContextCompat.getColor(mParent, R.color.white_translucent));
-            mNameNumberTextColorNormal = array.getColor(7, ContextCompat.getColor(mParent, android.R.color.white));
+            mNameNumberTextColorNormal = ContextCompat.getColor(mParent, android.R.color.white);
             mNameNumberTextColorPeerMatch = array.getColor(8, ContextCompat.getColor(mParent, R.color.black_green));
 
             mSecurityTextColorGreen = array.getColor(9, ContextCompat.getColor(mParent, R.color.black_green));
@@ -193,9 +381,12 @@ public class InCallMainFragment extends Fragment implements View.OnClickListener
 
         mEndCall = (ImageButton)fragmentView.findViewById(R.id.hangup);
         mEndCall.setOnClickListener(this);
+        mEndCall.bringToFront();
 
         mGlowPadView = (GlowPadView)fragmentView.findViewById(R.id.glow_pad_view);
         mGlowPadView.setOnTriggerListener(this);
+
+        mVolumeIndicator = (VolumeIndicatorLayout) fragmentView.findViewById(R.id.volume_indicator);
 
         mMute = (ImageButton)fragmentView.findViewById(R.id.mute_image);
 
@@ -219,13 +410,22 @@ public class InCallMainFragment extends Fragment implements View.OnClickListener
         mCallerNumberName = (TextView)fragmentView.findViewById(R.id.caller_text);
         mCallerNumberName.setSelected(true);    // Necessary to enable horizontal scrolling on long names/numbers
 
-        mCallerImage = (ImageView)fragmentView.findViewById(R.id.caller_image);
+        mCallerImage = (BlurrableImageView) fragmentView.findViewById(R.id.caller_image);
 
-        mSasText = (TextView)fragmentView.findViewById(R.id.sas_text);
+        mRxLed = fragmentView.findViewById(R.id.rx_led);
+        mSignalQualityIndicator = (SignalQualityIndicator) fragmentView.findViewById(R.id.callStateIcon);
+
+        mVerifySas = (VerifySasWidget) fragmentView.findViewById(R.id.sas_widget);
+        mDataRetentionBanner = (DataRetentionBanner) fragmentView.findViewById(R.id.data_retention_status);
+
+        mUnderflowIndicator = fragmentView.findViewById(R.id.underflow_indicator);
+        mUnderflowExplainIndicator = fragmentView.findViewById(R.id.underflow_explain_widget);
+        mUnderflowExplainIndicator.setOnClickListener(this);
+
+        mSecurityText = (TextView) fragmentView.findViewById(R.id.sec_info1);
+        mSecurityText.setTransformationMethod(LOWER_CASE_TRANSFORMATION_METHOD);
+        mSasText = (TextView) fragmentView.findViewById(R.id.sas_text1);
         mSasText.setOnClickListener(this);
-        mVerifyLabel = (TextView)fragmentView.findViewById(R.id.verify_label);
-
-        mSecurityText = (TextView)fragmentView.findViewById(R.id.sec_info);
 
         setInitialInCallScreen(savedState);
         return fragmentView;
@@ -253,11 +453,32 @@ public class InCallMainFragment extends Fragment implements View.OnClickListener
         super.onResume();
         refreshScreen();
         refreshSecurityFields(TiviPhoneService.calls.selectedCall);
+        if (TiviPhoneService.calls.selectedCall != null) {
+            mRxLedHandler.removeCallbacks(mRxLedUpdater);
+            mRxLedHandler.postDelayed(mRxLedUpdater, 25);
+
+            mSignalQualityHandler.removeCallbacks(mSignalQualityUpdater);
+            mSignalQualityHandler.postDelayed(mSignalQualityUpdater, TimeUnit.SECONDS.toMillis(1));
+
+            mVolumeIndicatorHandler.removeCallbacks(mVolumeIndicatorUpdater);
+            mVolumeIndicatorHandler.postDelayed(mVolumeIndicatorUpdater, 100);
+
+            mUnderflowIndicatorHandler.removeCallbacks(mUnderflowIndicatorUpdater);
+            mUnderflowIndicatorHandler.postDelayed(mUnderflowIndicatorUpdater, 100);
+        }
+        if (TiviPhoneService.calls.selectedCall != null) {
+            mDataRetentionBanner.setVisibility(mIsSelfDrEnabled ? View.VISIBLE : View.GONE);
+            updateDataRetentionBanner(false);
+        }
     }
 
     @Override
     public void onPause() {
         super.onPause();
+
+        mRxLedHandler.removeCallbacks(mRxLedUpdater);
+        mSignalQualityHandler.removeCallbacks(mSignalQualityUpdater);
+        mVolumeIndicatorHandler.removeCallbacks(mVolumeIndicatorUpdater);
     }
 
     @TargetApi(Build.VERSION_CODES.M)
@@ -275,7 +496,9 @@ public class InCallMainFragment extends Fragment implements View.OnClickListener
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
-        commonOnAttach(activity);
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+            commonOnAttach(activity);
+        }
     }
 
     private void commonOnAttach(Activity activity) {
@@ -308,7 +531,7 @@ public class InCallMainFragment extends Fragment implements View.OnClickListener
 
             case R.id.video_image:
                 if(!LoadUserInfo.canInitiateVideo(mParent)) {
-                    showDialog(R.string.information_dialog, R.string.basic_feature_info,
+                    showDialog(R.string.information_dialog, LoadUserInfo.getDenialStringResId(),
                             android.R.string.ok, -1);
                     return;
                 }
@@ -317,13 +540,13 @@ public class InCallMainFragment extends Fragment implements View.OnClickListener
                 if (call != null && !call.sdesActive && !TextUtils.isEmpty(call.bufSAS.toString()))
                     activateVideo();
                 else {
-                    Toast.makeText(mParent, getString(R.string.no_video_available), Toast.LENGTH_LONG).show();
+                    Toast.makeText(mParent, mNoVideoAvailableError, Toast.LENGTH_LONG).show();
                 }
                 break;
 
             case R.id.add_image:            // Add another call. Clear some fields and buttons
                 if(!LoadUserInfo.canStartConference(mParent)) {
-                    showDialog(R.string.information_dialog, R.string.basic_feature_info,
+                    showDialog(R.string.information_dialog, LoadUserInfo.getDenialStringResId(),
                             android.R.string.ok, -1);
                     return;
                 }
@@ -341,15 +564,23 @@ public class InCallMainFragment extends Fragment implements View.OnClickListener
 
             case R.id.start_chat_image:
                 Intent intent = Action.VIEW_CONVERSATIONS.intent(getActivity(), DialerActivity.class);
+                intent.putExtra(DialerActivity.EXTRA_FROM_CALL, true);
                 startActivity(intent);
                 break;
 
             case R.id.sas_text:
             case R.id.verify_label:
+            case R.id.btn_verify_sas:
+            case R.id.sas_text1:
                 call = TiviPhoneService.calls.selectedCall;
                 if (call == null)
                     return;
                 verifySas(call.iCallId);
+                break;
+
+            case R.id.underflow_explain_widget:
+                showDialog(R.string.network_trouble_title, R.string.network_trouble_underflow_description,
+                        android.R.string.ok, -1);
                 break;
 
             default: {
@@ -357,6 +588,15 @@ public class InCallMainFragment extends Fragment implements View.OnClickListener
                 break;
             }
         }
+    }
+
+    @Override
+    public void onSasVerifyClick(View view) {
+        CallState call = TiviPhoneService.calls.selectedCall;
+        if (call == null) {
+            return;
+        }
+        verifySas(call.iCallId);
     }
 
     // GlowView state listener
@@ -372,12 +612,12 @@ public class InCallMainFragment extends Fragment implements View.OnClickListener
     public void onTrigger(View v, int target) {
         final int resId = mGlowPadView.getResourceIdForTarget(target);
         switch (resId) {
-            case R.drawable.ic_call_dark:
+            case R.drawable.ic_lockscreen_answer:
                 mCallback.answerCallCb();
                 mGlowPadView.setVisibility(View.GONE);
                 break;
 
-            case R.drawable.ic_end_call_dark:
+            case R.drawable.ic_lockscreen_decline:
                 endCall();
                 mGlowPadView.setVisibility(View.GONE);
                 break;
@@ -392,6 +632,14 @@ public class InCallMainFragment extends Fragment implements View.OnClickListener
     @Override
     public void onFinishFinalAnimation() { }
 
+    @Override
+    public void onUserInfo(UserInfo userInfo, String errorInfo, boolean silent) {
+        if (!isAdded()) {
+            return;
+        }
+        updateDataRetentionBanner(false);
+    }
+
     /* ****************************************************************************
      * Public functions used by InCallActivity
      **************************************************************************** */
@@ -401,7 +649,7 @@ public class InCallMainFragment extends Fragment implements View.OnClickListener
      * @param call the call that changed its ZRTP state.
      * @param msg  the message id of the ZRTP status change.
      */
-    public void zrtpStateChange(CallState call, TiviPhoneService.CT_cb_msg msg) {
+    public void zrtpStateChange(@NonNull CallState call, TiviPhoneService.CT_cb_msg msg) {
         // The main call screen shows the current active call only
         if (call != TiviPhoneService.calls.selectedCall)
             return;
@@ -409,6 +657,18 @@ public class InCallMainFragment extends Fragment implements View.OnClickListener
             case eZRTP_sas:
                 call.sdesActive = false;
                 showSecurityFields(call);
+                // TODO: Enable this when the peer disclosure bug is resolved
+                /*
+                   Don't show banner immediately, update user info if disclosure flag
+                   does not match known retention state for remote party.
+
+                   This would avoid showing DR banner when only peer disclosure flag indicates data
+                   retention without having this information in Silent Manager.
+
+                if (call.mPeerDisclosureFlag && mDataRetentionBanner != null) {
+                    mDataRetentionBanner.setVisibility(View.VISIBLE);
+                }
+                 */
                 break;
 
             case eZRTP_peer:
@@ -439,12 +699,16 @@ public class InCallMainFragment extends Fragment implements View.OnClickListener
                 break;
 
             case eEndCall:
+                mVerifySas.setVisibility(View.INVISIBLE);
                 mEndCall.setVisibility(View.GONE);
                 mEndCall.setEnabled(false);
+                mVolumeIndicator.setVisibility(View.GONE);
                 return;
 
             case eIncomingCall:
                 zrtpStateChange(call, TiviPhoneService.CT_cb_msg.eZRTPMsgA); // check for possible SDES
+
+                updateDataRetentionBanner(false);
                 break;
 
             default:
@@ -481,39 +745,63 @@ public class InCallMainFragment extends Fragment implements View.OnClickListener
         if (call == null || call != TiviPhoneService.calls.selectedCall)
             return;
 
-        mSecurityText.setTextColor(mSecurityTextColorYellow);
         mSecurityText.setVisibility(View.VISIBLE);
-        mVerifyLabel.setVisibility(View.VISIBLE);
+        mSecurityText.setTextColor(mSecurityTextColorNormal);
+
+        mCallerNumberName.setTextColor(mNameNumberTextColorNormal);
 
         if ("SECURE SDES".equals(call.bufSecureMsg.toString())) {
             call.sdesActive = true;
-            mSecurityText.setText(getString(R.string.secstate_secure));
-            mVerifyLabel.setText(getString(R.string.to_server_only));
+            mSecurityText.setText(mSecurityStateSecure + " " + mSecurityStateSecureToServer);
+            mSecurityText.setTextColor(mSecurityTextColorYellow);
+            mCallerImage.setBlurred(false);
             return;
         }
-        mVerifyLabel.setText(Utilities.translateZrtpStateMsg(mParent, call));
-        if (!call.sdesActive && call.iActive)
-            mSecurityText.setText(getString(R.string.secstate_not_secure));
+
+        mSecurityText.setText(Utilities.translateZrtpStateMsg(mParent, call));
+
+        if (!call.sdesActive && call.iActive) {
+            mSecurityText.setText(mSecurityStateNotSecure);
+        }
 
         String sas = call.bufSAS.toString();
         if (!sas.isEmpty()) {
             mSasText.setText(sas);
-            mSasText.setVisibility(View.VISIBLE);
+            mVerifySas.setSasPhrase(sas);
+            boolean remoteRetentionState = getRetentionState(Utilities.getPeerName(call));
+            boolean retentionState = mIsSelfDrEnabled | remoteRetentionState;
+            /*
+             * Check whether current know DR state matches ZRTP peer disclosure flag
+             * and update DR info if it does not.
+             *
+             * This will also help to ensure that up-to-date user information is available for
+             * remote party.
+             */
+//            // TODO: Remove this when the peer disclosure bug is resolved
+//            if (remoteRetentionState != call.mPeerDisclosureFlag) {
+//                retentionState |= call.mPeerDisclosureFlag;
+//                updateDataRetentionBanner(true);
+//            }
+            mVerifySas.setDataRetentionState(retentionState);
+
             mVideo.setVisibility(View.VISIBLE);
 
             // Show two security indicators because we have a ZRTP SAS. Switch on indicator1 as
             // well in case we had no SDES security before (should not happen on SC infrastructure)
             if (call.iShowVerifySas) {
-                mSecurityText.setText(getString(R.string.secstate_secure_question));
+                mVerifySas.setVisibility(View.VISIBLE);
+                mVerifySas.setOnSasVerifyClickListener(this);
+
                 mSecurityText.setTextColor(mSecurityTextColorNormal);
-                mVerifyLabel.setText(getString(R.string.verify_label));
-                mVerifyLabel.setVisibility(View.VISIBLE);
-                mVerifyLabel.setOnClickListener(this);
+                mSecurityText.setText(mSecurityStateNotVerified);
                 if (Character.isLetter(sas.charAt(0)) || Character.isDigit(sas.charAt(0))) {
                     mSasText.setTextColor(mNameNumberTextColorNormal);
                 }
+                mCallerImage.setBlurred(true);
             }
             else {
+                mSasText.setText(sas);
+                mSasText.setVisibility(View.VISIBLE);
                 // At this point: SAS verified.
                 // If we have a ZRTP peer string then use it and display it in numberName field.
                 //
@@ -527,21 +815,26 @@ public class InCallMainFragment extends Fragment implements View.OnClickListener
                 String zrtpPeer = call.zrtpPEER.toString();
                 if (!TextUtils.isEmpty(zrtpPeer)) {
                     String nameNum = call.getNameFromAB();
+                    /* For now don't colour the peer name green on match
                     if (zrtpPeer.equals(nameNum)) {
                         mCallerNumberName.setTextColor(mNameNumberTextColorPeerMatch);
                     }
                     else {
                         mCallerNumberName.setTextColor(mNameNumberTextColorNormal);
                     }
+                     */
                     mCallerNumberName.setText(call.zrtpPEER.toString());
+                    mVerifySas.setUserName(call.zrtpPEER.toString());
                 }
-                mVerifyLabel.setVisibility(View.GONE);
-                mSecurityText.setText(getString(R.string.secstate_secure));
+                mVerifySas.setVisibility(View.INVISIBLE);
+                mSecurityText.setText(R.string.secstate_secure);
                 mSecurityText.setTextColor(mSecurityTextColorGreen);
 
                 if (Character.isLetter(sas.charAt(0)) || Character.isDigit(sas.charAt(0))) {
                     mSasText.setTextColor(mSasVerifiedColor);
                 }
+
+                mCallerImage.setBlurred(false);
             }
         }
     }
@@ -554,6 +847,10 @@ public class InCallMainFragment extends Fragment implements View.OnClickListener
      * which takes appropriate actions.
      */
     public void showCall(CallState call) {
+        if (!isAdded()) {
+            return;
+        }
+
         // No need to update the view if this is not the selected call
         if (call == null || call != TiviPhoneService.calls.selectedCall)
             return;
@@ -563,14 +860,13 @@ public class InCallMainFragment extends Fragment implements View.OnClickListener
 
         Utilities.setCallerImage(call, mCallerImage);
         if (!call.iActive) {
-            mVerifyLabel.setVisibility(View.VISIBLE);
-            mVerifyLabel.setText(call.bufMsg.toString());
+            mSecurityText.setTextColor(mSecurityTextColorNormal);
+            mSecurityText.setText(call.bufMsg.toString());
         }
-        String stateLabel = getString(call.iIsIncoming ? R.string.type_incoming : R.string.type_outgoing);
+        String stateLabel = call.iIsIncoming ? mCallTypeIncoming : mCallTypeOutgoing;
         View view = getView();
         if (call.iIsIncoming && view != null) {
             TextView priority = (TextView)view.findViewById(R.id.call_priority);
-            Resources res = getResources();
             switch (call.mPriority) {
                 case CallState.NORMAL:
                     priority.setVisibility(View.GONE);
@@ -579,12 +875,12 @@ public class InCallMainFragment extends Fragment implements View.OnClickListener
                 case CallState.URGENT:
                     priority.setVisibility(View.VISIBLE);
                     priority.setTextColor(ContextCompat.getColor(mParent, R.color.black_yellow));
-                    priority.setText(getString(R.string.urgent_call));
+                    priority.setText(mCallTypeUrgent);
                     break;
                 case CallState.EMERGENCY:
                     priority.setVisibility(View.VISIBLE);
                     priority.setTextColor(ContextCompat.getColor(mParent, R.color.q_orange));
-                    priority.setText(getString(R.string.emergency_call));
+                    priority.setText(mCallTypeEmergency);
                     break;
             }
         }
@@ -601,6 +897,16 @@ public class InCallMainFragment extends Fragment implements View.OnClickListener
             Toast.makeText(mParent, call.secExceptionMsg, Toast.LENGTH_LONG).show();
             call.secExceptionMsg = null;
         }
+
+        mRxLedHandler.removeCallbacks(mRxLedUpdater);
+        mSignalQualityHandler.removeCallbacks(mSignalQualityUpdater);
+        mVolumeIndicatorHandler.removeCallbacks(mVolumeIndicatorUpdater);
+        mUnderflowIndicatorHandler.removeCallbacks(mUnderflowIndicatorUpdater);
+
+        mRxLedHandler.post(mRxLedUpdater);
+        mSignalQualityHandler.post(mSignalQualityUpdater);
+        mVolumeIndicatorHandler.post(mVolumeIndicatorUpdater);
+        mUnderflowIndicatorHandler.post(mUnderflowIndicatorUpdater);
     }
 
     /**
@@ -676,15 +982,7 @@ public class InCallMainFragment extends Fragment implements View.OnClickListener
         boolean isOcaCall = bundle.getBoolean(TiviPhoneService.IS_OCA_CALL);
 
         if(isOcaCall) {
-            if (LoadUserInfo.checkIfUsesMinutes() == LoadUserInfo.VALID &&
-                    LoadUserInfo.checkIfLowMinutes(LoadUserInfo.DEFAULT_LOW_MINUTES_THRESHHOLD) == LoadUserInfo.VALID) {
-                showDialog(R.string.information_dialog, R.string.minutes_low_info,
-                        android.R.string.ok, -1);
-            } else if (LoadUserInfo.checkIfUsesCredit() == LoadUserInfo.VALID &&
-                    LoadUserInfo.checkIfLowCredit(LoadUserInfo.DEFAULT_LOW_CREDIT_THRESHHOLD) == LoadUserInfo.VALID) {
-                showDialog(R.string.information_dialog, R.string.credit_low_info,
-                        android.R.string.ok, -1);
-            }
+            DialerActivity.mShowCreditDialog = true;
         }
 
         // On outgoing call, we may not yet have a selected call, we take care of this later
@@ -731,24 +1029,27 @@ public class InCallMainFragment extends Fragment implements View.OnClickListener
     private void endCall() {
         mEndCall.setVisibility(View.GONE);
         mEndCall.setEnabled(false);
+        mVolumeIndicator.setVisibility(View.GONE);
         mCallback.endCallCb(TiviPhoneService.calls.selectedCall);
+
+        updateDataRetentionBanner(false);
     }
 
     private void verifySas(int callId) {
-        CharSequence text = mSasText.getText();
+        CharSequence text = mVerifySas.getSasPhrase();
         if (text != null)
             mCallback.verifySasCb(text.toString(), callId);
     }
 
-    private void activateVideo() {
-        mCallback.activateVideoCb();
+    public void activateVideo() {
+        mCallback.activateVideoCb(false);
     }
 
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     @SuppressWarnings("deprecation")
     private void setCallNumberField(String number) {
         if (TextUtils.isEmpty(number))
-            return;
+            number = Contact.UNKNOWN_DISPLAY_NAME;
 
         String formatted;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
@@ -757,6 +1058,7 @@ public class InCallMainFragment extends Fragment implements View.OnClickListener
             formatted = PhoneNumberUtils.formatNumber(number);
         formatted = (TextUtils.isEmpty(formatted) ? number : formatted);
         mCallerNumberName.setText(formatted);
+        mVerifySas.setUserName(formatted);
     }
 
     private void setAnswerEndCallButton(CallState call) {
@@ -764,11 +1066,13 @@ public class InCallMainFragment extends Fragment implements View.OnClickListener
             mGlowPadView.setVisibility(View.VISIBLE);
             mEndCall.setVisibility(View.GONE);
             mEndCall.setEnabled(false);
+            mVolumeIndicator.setVisibility(View.GONE);
 
         }
         else {
             mGlowPadView.setVisibility(View.GONE);
             mEndCall.setVisibility(View.VISIBLE);
+            mVolumeIndicator.setVisibility(View.VISIBLE);
             mEndCall.setEnabled(true);
         }
     }
@@ -926,9 +1230,9 @@ public class InCallMainFragment extends Fragment implements View.OnClickListener
     }
 
     private void hideSecurityFields() {
+        mVerifySas.setVisibility(View.INVISIBLE);
         mSecurityText.setVisibility(View.GONE);
         mSasText.setVisibility(View.GONE);
-        mVerifyLabel.setVisibility(View.GONE);
     }
 
     /* *********************************************************************
@@ -1000,7 +1304,11 @@ public class InCallMainFragment extends Fragment implements View.OnClickListener
     private void showDialog(int titleResId, int msgResId, int positiveBtnLabel, int negativeBtnLabel) {
         InfoMsgDialogFragment infoMsg = InfoMsgDialogFragment.newInstance(titleResId, msgResId, positiveBtnLabel, negativeBtnLabel);
         FragmentManager fragmentManager = getFragmentManager();
-        infoMsg.show(fragmentManager, TAG);
+        if (fragmentManager != null) {
+            fragmentManager.beginTransaction()
+                    .add(infoMsg, TAG)
+                    .commitAllowingStateLoss();
+        }
     }
 
     private void processTesting() {
@@ -1012,4 +1320,146 @@ public class InCallMainFragment extends Fragment implements View.OnClickListener
                 mCallerNumberName.postDelayed(mAnswerer, 1000);
         }
     }
+
+    private boolean updateCallRxLed() {
+        boolean result = false;
+        CallState call = TiviPhoneService.calls.selectedCall;
+        if (call == null || call.uiStartTime == 0) {
+            if (mRxLed != null) {
+                mRxLed.setVisibility(View.GONE);
+            }
+        } else {
+            String info = TiviPhoneService.getInfo(call.iEngID, call.iCallId, "media.rxLed");
+            if (!TextUtils.isEmpty(info)) {
+                String[] data = info.split(":");
+
+                if (data.length >= 2) {
+                    int v = Integer.valueOf(data[0]);
+                    int prevAuthFail = Integer.valueOf(data[1]);
+
+                    if(prevPrevAuthFail != prevAuthFail || pv != v) {
+                        float fv = v * 0.005f + .35f; // Maps [0, 130] to [0.35, 1] for alpha
+                        if (mRxLed != null) {
+                            mRxLed.setVisibility(View.VISIBLE);
+                            mRxLed.setAlpha(fv);
+                        }
+                    }
+
+                    pv = v;
+                    prevPrevAuthFail = prevAuthFail;
+                }
+            }
+
+            result = true;
+        }
+
+        return result;
+    }
+
+    private boolean updateCallSignalQualityIndicator() {
+        boolean result = false;
+        CallState call = TiviPhoneService.calls.selectedCall;
+        if (call == null || call.uiStartTime == 0) {
+            if (mSignalQualityIndicator != null) {
+                mSignalQualityIndicator.setVisibility(View.GONE);
+            }
+        } else {
+            String info = TiviPhoneService.getInfo(call.iEngID, call.iCallId, "media.bars");
+            if (!TextUtils.isEmpty(info)) {
+                char antenna = info.charAt(0);
+                if (mSignalQualityIndicator != null) {
+                    mSignalQualityIndicator.setVisibility(View.VISIBLE);
+                    mSignalQualityIndicator.setQuality(antenna);
+                }
+            }
+            result = true;
+        }
+        return result;
+    }
+
+    private boolean updateVolumeIndicator() {
+        boolean result = false;
+        CallState call = TiviPhoneService.calls.selectedCall;
+        if (call == null || call.uiStartTime == 0) {
+            if (mVolumeIndicator != null) {
+                mVolumeIndicator.setVisibility(View.GONE);
+            }
+        } else {
+            String info = TiviPhoneService.getInfo(call.iEngID, call.iCallId, "media.audio.volume_voice");
+            if (!TextUtils.isEmpty(info)) {
+                String[] data = info.split("_");
+
+                if (data.length >= 2) {
+                    int volume = Integer.valueOf(data[0]); // 0 to 9
+                    // int voiceQuality = Integer.valueOf(data[1]); // 2 - Good, 1 - Normal, 0 - Not voice
+
+                    // TODO: Do we only care about voice?
+                    // if (voiceQuality > 0) {
+                        mVolumeIndicator.setVolume(volume);
+                    // }
+                }
+            }
+
+            result = true;
+        }
+
+        return result;
+    }
+
+    private boolean updateUnderflowIndicator() {
+        boolean result = false;
+        CallState call = TiviPhoneService.calls.selectedCall;
+        if (call == null || call.uiStartTime == 0) {
+            if (mUnderflowIndicator != null) {
+                mUnderflowIndicator.setVisibility(View.GONE);
+            }
+        } else {
+            String info = TiviPhoneService.getInfo(call.iEngID, call.iCallId, "media.underflow");
+            if (!TextUtils.isEmpty(info)) {
+                int isUnderflow = info.charAt(0);
+
+                if (isUnderflow == '1') {
+                    if (mUnderflowIndicator != null) {
+                        mUnderflowIndicator.setVisibility(View.VISIBLE);
+                    }
+
+                    if (mUnderflowExplainIndicator != null) {
+                        mUnderflowExplainIndicator.setVisibility(View.VISIBLE);
+                        mUnderflowExplainIndicatorHideHandler.removeCallbacks(mUnderflowExplainIndicatorHideUpdater);
+                        mUnderflowExplainIndicatorHideHandler.postDelayed(mUnderflowExplainIndicatorHideUpdater, 60000);
+                    }
+                } else {
+                    if (mUnderflowIndicator != null) {
+                        mUnderflowIndicator.setVisibility(View.GONE);
+                    }
+                }
+            }
+
+            result = true;
+        }
+
+        return result;
+    }
+
+    private boolean getRetentionState(String peerName) {
+        boolean retentionState = false;
+        if (Utilities.canMessage(peerName)) {
+            byte[] mPartnerUserInfo = ZinaNative.getUserInfoFromCache(peerName);
+            if (mPartnerUserInfo != null) {
+                AsyncTasks.UserInfo userInfo = AsyncTasks.parseUserInfo(mPartnerUserInfo);
+                retentionState = DRUtils.isAnyDataRetainedForUser(userInfo);
+                mIsPartnerDrEnabled = retentionState;
+            }
+        }
+        return retentionState;
+    }
+
+    private void updateDataRetentionBanner(boolean refreshUserInfo) {
+        String peerName = Utilities.getPeerName(TiviPhoneService.calls.selectedCall);
+        mDataRetentionBanner.clearConversationPartners();
+        mDataRetentionBanner.addConversationPartner(peerName);
+        mDataRetentionBanner.refreshBannerTitle();
+        AsyncUtils.execute(new RefreshDrStateRunnable(peerName, refreshUserInfo));
+    }
+
 }

@@ -17,13 +17,14 @@
 package com.silentcircle.silentphone2.activities;
 
 import android.os.Bundle;
-import android.support.v7.app.AppCompatActivity;
+
+import com.silentcircle.silentphone2.passcode.AppLifecycleNotifierBaseActivity;
 
 /**
  * A common superclass that keeps track of whether an {@link android.app.Activity} has saved its state yet or
  * not.
  */
-public abstract class TransactionSafeActivity extends AppCompatActivity {
+public abstract class TransactionSafeActivity extends AppLifecycleNotifierBaseActivity {
 
     private boolean mIsSafeToCommitTransactions;
 

@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2014-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -31,7 +31,7 @@ package com.silentcircle.contacts.utils;
 import android.database.Cursor;
 import android.database.CursorWrapper;
 import android.text.TextUtils;
-import android.util.Log;
+import com.silentcircle.logs.Log;
 
 import java.util.Arrays;
 import java.util.regex.Matcher;
@@ -145,6 +145,10 @@ public class ScCursorFilterWrapper extends CursorWrapper {
 
     @Override
     public boolean moveToPosition(int position) {
+        if (getWrappedCursor() == null || getWrappedCursor().isClosed()) {
+            return false;
+        }
+
 //        Log.d(TAG, "++++ moveToPosition: " + position);
         if (position == -1) {
             mPosition = -1;

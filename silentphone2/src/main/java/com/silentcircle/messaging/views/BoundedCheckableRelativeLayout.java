@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2016-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -40,7 +40,7 @@ import com.silentcircle.common.util.ViewUtil;
  */
 public class BoundedCheckableRelativeLayout extends CheckableRelativeLayout {
 
-    private static final int MAXIMUM_WIDTH_PERCENTAGE = 75;
+    private static final int MAXIMUM_WIDTH_PERCENTAGE = 85;
     private Point mSize;
 
     private int mMaximumWidth;

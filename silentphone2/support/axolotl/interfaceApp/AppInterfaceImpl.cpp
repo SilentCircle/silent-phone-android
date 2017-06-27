@@ -1,339 +1,101 @@
-#include "AppInterfaceImpl.h"
-#include "MessageEnvelope.pb.h"
+/*
+Copyright 2016-2017 Silent Circle, LLC
 
-#include "../axolotl/Constants.h"
-#include "../axolotl/AxoPreKeyConnector.h"
-#include "../axolotl/ratchet/AxoRatchet.h"
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+#include "AppInterfaceImpl.h"
 
 #include "../keymanagment/PreKeys.h"
-#include "../util/cJSON.h"
 #include "../util/b64helper.h"
-#include "../util/UUID.h"
 #include "../provisioning/Provisioning.h"
 #include "../provisioning/ScProvisioning.h"
-#include "../logging/AxoLogging.h"
+#include "../dataRetention/ScDataRetention.h"
+#include "JsonStrings.h"
+#include "../util/Utilities.h"
 
-#include <zrtp/crypto/sha256.h>
+#include <cryptcommon/ZrtpRandom.h>
+#include <condition_variable>
 
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "OCDFAInspection"
-static mutex convLock;
 
-using namespace axolotl;
+using namespace std;
+using namespace zina;
 
-void Log(const char* format, ...);
+// Locks, conditional variables and flags to synchronize the functions to re-key a device
+// conversation (ratchet context) and to re-scan devices.
+static mutex reKeyLock;
+static bool reKeyDone;
+
+static mutex reScanLock;
+static bool reScanDone;
+
+static mutex synchronizeLock;
+static condition_variable synchronizeCv;
 
 AppInterfaceImpl::AppInterfaceImpl(const string& ownUser, const string& authorization, const string& scClientDevId,
-                                   RECV_FUNC receiveCallback, STATE_FUNC stateReportCallback, NOTIFY_FUNC notifyCallback):
-                                   AppInterface(receiveCallback, stateReportCallback, notifyCallback), tempBuffer_(NULL), tempBufferSize_(0),
-                                   ownUser_(ownUser), authorization_(authorization), scClientDevId_(scClientDevId),
-                                   errorCode_(0), transport_(NULL), flags_(0), ownChecked_(false)
+                                   RECV_FUNC receiveCallback, STATE_FUNC stateReportCallback, NOTIFY_FUNC notifyCallback,
+                                   GROUP_MSG_RECV_FUNC groupMsgCallback, GROUP_CMD_RECV_FUNC groupCmdCallback,
+                                   GROUP_STATE_FUNC groupStateCallback):
+        AppInterface(receiveCallback, stateReportCallback, notifyCallback, groupMsgCallback, groupCmdCallback, groupStateCallback),
+        tempBuffer_(NULL), tempBufferSize_(0), ownUser_(ownUser), authorization_(authorization), scClientDevId_(scClientDevId),
+        errorCode_(0), transport_(NULL), flags_(0), siblingDevicesScanned_(false), drLrmm_(false), drLrmp_(false), drLrap_(false),
+        drBldr_(false), drBlmr_(false), drBrdr_(false), drBrmr_(false)
 {
     store_ = SQLiteStoreConv::getStore();
+    ScDataRetention::setAuthorization(authorization);
 }
 
 AppInterfaceImpl::~AppInterfaceImpl()
 {
-    LOGGER(INFO, __func__, " -->");
+    LOGGER(DEBUGGING, __func__, " -->");
     tempBufferSize_ = 0; delete tempBuffer_; tempBuffer_ = NULL;
     delete transport_; transport_ = NULL;
-    LOGGER(INFO, __func__, " <--");
+    LOGGER(DEBUGGING, __func__, " <--");
 }
 
-static void createSupplementString(const string& attachementDesc, const string& messageAttrib, string* supplement)
+string AppInterfaceImpl::createSupplementString(const string& attachmentDesc, const string& messageAttrib)
 {
-    LOGGER(INFO, __func__, " -->");
-    if (!attachementDesc.empty() || !messageAttrib.empty()) {
+    LOGGER(DEBUGGING, __func__, " -->");
+    string supplement;
+    if (!attachmentDesc.empty() || !messageAttrib.empty()) {
         cJSON* msgSupplement = cJSON_CreateObject();
 
-        if (!attachementDesc.empty()) {
-            LOGGER(DEBUGGING, "Adding an attachment descriptor supplement");
-            cJSON_AddStringToObject(msgSupplement, "a", attachementDesc.c_str());
+        if (!attachmentDesc.empty()) {
+            LOGGER(VERBOSE, "Adding an attachment descriptor supplement");
+            cJSON_AddStringToObject(msgSupplement, "a", attachmentDesc.c_str());
         }
 
         if (!messageAttrib.empty()) {
-            LOGGER(DEBUGGING, "Adding an message attribute supplement");
+            LOGGER(VERBOSE, "Adding an message attribute supplement");
             cJSON_AddStringToObject(msgSupplement, "m", messageAttrib.c_str());
         }
         char *out = cJSON_PrintUnformatted(msgSupplement);
 
-        supplement->append(out);
+        supplement = out;
         cJSON_Delete(msgSupplement); free(out);
     }
-    LOGGER(INFO, __func__, " <--");
+    LOGGER(DEBUGGING, __func__, " <--");
+    return supplement;
 }
 
-/*
- {
-    "version":    <int32_t>,            # Version of JSON send message descriptor, 1 for the first implementation
-    "recipient":  <string>,             # for SC this is either the user's name of the user's DID
-    "deviceId" :  <int32_t>,            # optional, if we support multi-device, defaults to 1 if missing
-                                        # set to 0 to send the message to each registered device 
-                                        # of the user
-    "message":    <string>              # the actual plain text message, UTF-8 encoded (Java programmers beware!)
- }
- */
-vector<int64_t>* AppInterfaceImpl::sendMessage(const string& messageDescriptor, const string& attachementDescriptor, const string& messageAttributes)
-{
-
-    string recipient;
-    string msgId;
-    string message;
-    int32_t parseResult = parseMsgDescriptor(messageDescriptor, &recipient, &msgId, &message);
-
-    LOGGER(INFO, __func__, " -->");
-    if (parseResult < 0) {
-        errorCode_ = parseResult;
-        LOGGER(ERROR, __func__, " Wrong JSON data to send message, error code: ", parseResult);
-        return NULL;
-    }
-    return sendMessageInternal(recipient, msgId, message, attachementDescriptor, messageAttributes);
-}
-
-vector<int64_t>* AppInterfaceImpl::sendMessageToSiblings(const string& messageDescriptor, const string& attachementDescriptor, 
-                                                         const string& messageAttributes)
-{
-    string recipient;
-    string msgId;
-    string message;
-    int32_t parseResult = parseMsgDescriptor(messageDescriptor, &recipient, &msgId, &message);
-
-    LOGGER(INFO, __func__, " -->");
-    if (parseResult < 0) {
-        errorCode_ = parseResult;
-        LOGGER(ERROR, __func__, " Wrong JSON data to send message, error code: ", parseResult);
-        return NULL;
-    }
-    return sendMessageInternal(ownUser_, msgId, message, attachementDescriptor, messageAttributes);
-}
-
-static string receiveErrorJson(const string& sender, const string& senderScClientDevId, const string& msgId, 
-                               const char* msgHex, int32_t errorCode, const string& sentToId)
-{
-    cJSON* root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "version", 1);
-
-    cJSON* details;
-    cJSON_AddItemToObject(root, "details", details = cJSON_CreateObject());
-
-    cJSON_AddStringToObject(details, "name", sender.c_str());
-    cJSON_AddStringToObject(details, "scClientDevId", senderScClientDevId.c_str());
-    cJSON_AddStringToObject(details, "otherInfo", msgHex);            // App may use this to retry after fixing the problem
-    cJSON_AddStringToObject(details, "msgId", msgId.c_str());         // May help to diganose the issue
-    cJSON_AddNumberToObject(details, "errorCode", errorCode);
-    cJSON_AddStringToObject(details, "sentToId", sentToId.c_str());
-
-    char *out = cJSON_PrintUnformatted(root);
-    string retVal(out);
-    cJSON_Delete(root); free(out);
-
-    return retVal;
-}
-
-// Take a message envelope (see sendMessage above), parse it, and process the embedded data. Then
-// forward the data to the UI layer.
-static int32_t duplicates = 0;
-
-int32_t AppInterfaceImpl::receiveMessage(const string& messageEnvelope)
-{
-    return receiveMessage(messageEnvelope, Empty, Empty);
-}
-
-
-int32_t AppInterfaceImpl::receiveMessage(const string& messageEnvelope, const string& uid, const string& displayName)
-{
-    LOGGER(INFO, __func__, " -->");
-
-    uint8_t hash[SHA256_DIGEST_LENGTH];
-    sha256((uint8_t*)messageEnvelope.data(), (uint32_t)messageEnvelope.size(), hash);
-
-    string msgHash;
-    msgHash.assign((const char*)hash, SHA256_DIGEST_LENGTH);
-
-    unique_lock<mutex> lck(convLock);
-    int32_t sqlResult = store_->hasMsgHash(msgHash);
-
-    // If we found a duplicate, log and silently ignore it.
-    if (sqlResult == SQLITE_ROW) {
-        LOGGER(DEBUGGING, __func__, " Duplicate messages detected so far: ", ++duplicates);
-        return OK;
-    }
-    store_->insertMsgHash(msgHash);
-    lck.unlock();
-
-    // Cleanup old message hashes
-    time_t timestamp = time(0) - MK_STORE_TIME;
-    store_->deleteMsgHashes(timestamp);
-
-    if (messageEnvelope.size() > tempBufferSize_) {
-        delete tempBuffer_;
-        tempBuffer_ = new char[messageEnvelope.size()];
-        tempBufferSize_ = messageEnvelope.size();
-    }
-    size_t binLength = b64Decode(messageEnvelope.data(), messageEnvelope.size(), (uint8_t*)tempBuffer_, tempBufferSize_);
-    string envelopeBin((const char*)tempBuffer_, binLength);
-
-    MessageEnvelope envelope;
-    envelope.ParseFromString(envelopeBin);
-
-    // backward compatibility or in case the message Transport does not support
-    // UID. Then fallback to data in the message envelope.
-    const string& sender = uid.empty() ? envelope.name() : uid;
-
-    const string& senderScClientDevId = envelope.scclientdevid();
-    const string& supplements = envelope.has_supplement() ? envelope.supplement() : Empty;
-    const string& message = envelope.message();
-    const string& msgId = envelope.msgid();
-
-    string sentToId;
-    if (envelope.has_recvdevidbin())
-        sentToId = envelope.recvdevidbin();
-
-    bool wrongDeviceId = false; 
-    if (!sentToId.empty()) {
-        uint8_t binDevId[20];
-        hex2bin(scClientDevId_.c_str(), binDevId);
-
-        wrongDeviceId = memcmp((void*)sentToId.data(), binDevId, sentToId.size()) != 0;
-
-        char receiverId[16] = {0};
-        size_t len;
-        bin2hex((const uint8_t*)sentToId.data(), sentToId.size(), receiverId, &len);
-        if (wrongDeviceId) {
-            LOGGER(ERROR, __func__, "Message is for device id: ", receiverId, ", my device id: ", scClientDevId_);
-        }
-    }
-    uuid_t uu = {0};
-    uuid_parse(msgId.c_str(), uu);
-    time_t msgTime = uuid_time(uu, NULL);
-    time_t currentTime = time(NULL);
-    time_t timeDiff = currentTime - msgTime;
-
-    bool oldMessage = (timeDiff > 0 && timeDiff >= MK_STORE_TIME);
-
-//     Log("Message send time: %d, current receiver time: %d, difference: %d, oldMessge: %s",
-//         msgTime, currentTime, timeDiff, oldMessage? "TRUE": "FALSE");
-
-    pair<string, string> idHashes;
-    bool hasIdHashes = false;
-    if (envelope.has_recvidhash() && envelope.has_senderidhash()) {
-        hasIdHashes = true;
-        const string& recvIdHash = envelope.recvidhash();
-        const string& senderIdHash = envelope.senderidhash();
-        idHashes.first = recvIdHash;
-        idHashes.second = senderIdHash;
-    }
-    lck.lock();
-    AxoConversation* axoConv = AxoConversation::loadConversation(ownUser_, sender, senderScClientDevId);
-
-    // This is a not yet seen user. Set up a basic Conversation structure. Decrypt uses it and fills
-    // in the other data based on the received message.
-    if (axoConv == NULL) {
-        axoConv = new AxoConversation(ownUser_, sender, senderScClientDevId);
-    }
-    shared_ptr<string> supplementsPlain = make_shared<string>();
-    shared_ptr<const string> messagePlain;
-
-    messagePlain = AxoRatchet::decrypt(axoConv, message, supplements, supplementsPlain, hasIdHashes ? &idHashes : NULL);
-    errorCode_ = axoConv->getErrorCode();
-    delete axoConv;
-    lck.unlock();
-
-    //    Log("After decrypt: %s", messagePlain ? messagePlain->c_str() : "NULL");
-    if (!messagePlain) {
-        char b2hexBuffer[1004] = {0};
-
-        if (oldMessage)
-            errorCode_ = OLD_MESSAGE;
-        if (wrongDeviceId)
-            errorCode_ = WRONG_RECV_DEV_ID;
-        size_t msgLen = min(message.size(), (size_t)500);
-        size_t outLen;
-        bin2hex((const uint8_t*)message.data(), msgLen, b2hexBuffer, &outLen);
-        messageStateReport(0, errorCode_, receiveErrorJson(sender, senderScClientDevId, msgId, b2hexBuffer, errorCode_, sentToId));
-        LOGGER(ERROR, __func__ , " Decryption failed: ", errorCode_, ", sender: ", sender, ", device: ", senderScClientDevId );
-        return errorCode_;
-    }
-
-    /*
-     * Message descriptor for received message:
-     {
-         "version":    <int32_t>,            # Version of JSON send message descriptor, 1 for the first implementation
-         "sender":     <string>,             # for SC this is either the user's name or the user's DID
-         "scClientDevId" : <string>,         # the sender's long device id
-         "message":    <string>              # the actual plain text message, UTF-8 encoded (Java programmers beware!)
-    }
-    */
-    cJSON* root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "version", 1);
-    cJSON_AddStringToObject(root, "sender", sender.c_str());        // sender is the UUID string
-
-    // backward compatibility or in case the message Transport does not support
-    // alias handling. Then fallback to data in the message envelope.
-    cJSON_AddStringToObject(root, "display_name", displayName.empty() ? envelope.name().c_str() : displayName.c_str());
-    cJSON_AddStringToObject(root, "scClientDevId", senderScClientDevId.c_str());
-    cJSON_AddStringToObject(root, "msgId", msgId.c_str());
-    cJSON_AddStringToObject(root, "message", messagePlain->c_str());
-    messagePlain.reset();
-
-    char *out = cJSON_PrintUnformatted(root);
-    string msgDescriptor(out);
-
-    cJSON_Delete(root); free(out);
-
-    string attachmentDescr;
-    string attributesDescr;
-    if (!supplementsPlain->empty()) {
-        cJSON* jsSupplement = cJSON_Parse(supplementsPlain->c_str());
-
-        cJSON* cjTemp = cJSON_GetObjectItem(jsSupplement, "a");
-        char* jsString = (cjTemp != NULL) ? cjTemp->valuestring : NULL;
-        if (jsString != NULL) {
-            attachmentDescr = jsString;
-        }
-
-        cjTemp = cJSON_GetObjectItem(jsSupplement, "m");
-        jsString = (cjTemp != NULL) ? cjTemp->valuestring : NULL;
-        if (jsString != NULL) {
-            attributesDescr = jsString;
-        }
-        cJSON_Delete(jsSupplement);
-    }
-    receiveCallback_(msgDescriptor, attachmentDescr, attributesDescr);
-    LOGGER(INFO, __func__, " <--");
-    return OK;
-}
-
-/*
-JSON state information block:
-{   
-    "version":    <int32_t>,            # Version of the JSON known users structure,
-                                        # 1 for the first implementation
-    "code":       <int32_t>,            # success, error codes (code values to be 
-                                        # defined)
-    "details": {                        # optional, in case of error code it includes
-                                        # detail information
-        "name":      <string>,          # optional, name of sender/recipient of message,
-                                        # if known
-        "scClientDevId" : <string>,     # the same string as used to register the 
-                                        # device (v1/me/device/{device_id}/)
-        "otherInfo": <string>           # optional, additional info, e.g. SIP server 
-                                        # messages
-    }
-}
-*/
-void AppInterfaceImpl::messageStateReport(int64_t messageIdentfier, int32_t statusCode, const string& stateInformation)
-{
-    LOGGER(INFO, __func__, " -->");
-    stateReportCallback_(messageIdentfier, statusCode, stateInformation);
-    LOGGER(INFO, __func__, " <--");
-}
 
 string* AppInterfaceImpl::getKnownUsers()
 {
     int32_t sqlCode;
 
-    LOGGER(INFO, __func__, " -->");
+    LOGGER(DEBUGGING, __func__, " -->");
     if (!store_->isReady()) {
         LOGGER(ERROR, __func__, " Axolotl conversation DB not ready.");
         return NULL;
@@ -346,6 +108,8 @@ string* AppInterfaceImpl::getKnownUsers()
         return NULL;
     }
     size_t size = names->size();
+    if (size == 0)
+        return NULL;
 
     cJSON *root,*nameArray;
     root=cJSON_CreateObject();
@@ -353,7 +117,7 @@ string* AppInterfaceImpl::getKnownUsers()
     cJSON_AddItemToObject(root, "users", nameArray = cJSON_CreateArray());
 
     for (int32_t i = 0; i < size; i++) {
-        string name = names->front();
+        const string& name = names->front();
         cJSON_AddItemToArray(nameArray, cJSON_CreateString(name.c_str()));
         names->pop_front();
     }
@@ -361,7 +125,7 @@ string* AppInterfaceImpl::getKnownUsers()
     string* retVal = new string(out);
     cJSON_Delete(root); free(out);
 
-    LOGGER(INFO, __func__, " <--");
+    LOGGER(DEBUGGING, __func__, " <--");
     return retVal;
 }
 
@@ -381,34 +145,31 @@ string* AppInterfaceImpl::getKnownUsers()
     }]
 }
  */
-int32_t AppInterfaceImpl::registerAxolotlDevice(string* result)
+int32_t AppInterfaceImpl::registerZinaDevice(string* result)
 {
     cJSON *root;
     char b64Buffer[MAX_KEY_BYTES_ENCODED*2];   // Twice the max. size on binary data - b64 is times 1.5
 
-    LOGGER(INFO, __func__, " -->");
+    LOGGER(DEBUGGING, __func__, " -->");
 
     root = cJSON_CreateObject();
     cJSON_AddNumberToObject(root, "version", 1);
 //    cJSON_AddStringToObject(root, "scClientDevId", scClientDevId_.c_str());
 
-    AxoConversation* ownConv = AxoConversation::loadLocalConversation(ownUser_);
-    if (ownConv == NULL) {
+    shared_ptr<ZinaConversation> ownConv = ZinaConversation::loadLocalConversation(ownUser_, *store_);
+    if (!ownConv->isValid()) {
         cJSON_Delete(root);
         LOGGER(ERROR, __func__, " No own conversation in database.");
         return NO_OWN_ID;
     }
-    const DhKeyPair* myIdPair = ownConv->getDHIs();
-    if (myIdPair == NULL) {
+    if (!ownConv->hasDHIs()) {
         cJSON_Delete(root);
-        delete ownConv;
         LOGGER(ERROR, __func__, " Own conversation not correctly initialized.");
         return NO_OWN_ID;
     }
 
-    string data = myIdPair->getPublicKey().serialize();
-
-    delete ownConv;
+    const DhKeyPair& myIdPair = ownConv->getDHIs();
+    string data = myIdPair.getPublicKey().serialize();
 
     b64Encode((const uint8_t*)data.data(), data.size(), b64Buffer, MAX_KEY_BYTES_ENCODED*2);
     cJSON_AddStringToObject(root, "identity_key", b64Buffer);
@@ -416,99 +177,452 @@ int32_t AppInterfaceImpl::registerAxolotlDevice(string* result)
     cJSON* jsonPkrArray;
     cJSON_AddItemToObject(root, "prekeys", jsonPkrArray = cJSON_CreateArray());
 
-    list<pair<int32_t, const DhKeyPair* > >* preList = PreKeys::generatePreKeys(store_);
+    auto* preList = PreKeys::generatePreKeys(store_);
 
-    int32_t size = static_cast<int32_t>(preList->size());
-
-    for (int32_t i = 0; i < size; i++) {
-        pair< int32_t, const DhKeyPair* >pkPair = preList->front();
-        preList->pop_front();
+    for (; !preList->empty(); preList->pop_front()) {
+        auto& pkPair = preList->front();
 
         cJSON* pkrObject;
         cJSON_AddItemToArray(jsonPkrArray, pkrObject = cJSON_CreateObject());
-        cJSON_AddNumberToObject(pkrObject, "id", pkPair.first);
+        cJSON_AddNumberToObject(pkrObject, "id", pkPair.keyId);
 
         // Get pre-key's public key data, serialized
-        const DhKeyPair* ecPair = pkPair.second;
-        const string keyData = ecPair->getPublicKey().serialize();
+        const string keyData = pkPair.keyPair->getPublicKey().serialize();
 
         b64Encode((const uint8_t*) keyData.data(), keyData.size(), b64Buffer, MAX_KEY_BYTES_ENCODED * 2);
         cJSON_AddStringToObject(pkrObject, "key", b64Buffer);
-        delete ecPair;
     }
     delete preList;
 
-    char *out = cJSON_Print(root);
+    char *out = cJSON_PrintUnformatted(root);
     string registerRequest(out);
     cJSON_Delete(root); free(out);
 
-    int32_t code = Provisioning::registerAxoDevice(registerRequest, authorization_, scClientDevId_, result);
-
-    LOGGER(INFO, __func__, " <-- ", code);
+    int32_t code = Provisioning::registerZinaDevice(registerRequest, authorization_, scClientDevId_, result);
+    if (code != 200) {
+        LOGGER(ERROR, __func__, "Failed to register device for ZINA usage, code: ", code);
+    }
+    else {
+        LOGGER(DEBUGGING, __func__, " <-- ", code);
+    }
     return code;
 }
 
-int32_t AppInterfaceImpl::removeAxolotlDevice(string& devId, string* result)
+int32_t AppInterfaceImpl::removeZinaDevice(string& devId, string* result)
 {
-    LOGGER(INFO, __func__, " <-->");
-    return ScProvisioning::removeAxoDevice(devId, authorization_, result);
+    LOGGER(DEBUGGING, __func__, " <-->");
+    return ScProvisioning::removeZinaDevice(devId, authorization_, result);
 }
 
 int32_t AppInterfaceImpl::newPreKeys(int32_t number)
 {
-    LOGGER(INFO, __func__, " -->");
-    SQLiteStoreConv* store = SQLiteStoreConv::getStore();
+    LOGGER(DEBUGGING, __func__, " -->");
     string result;
-    return ScProvisioning::newPreKeys(store, scClientDevId_, authorization_, number, &result);
+    return ScProvisioning::newPreKeys(store_, scClientDevId_, authorization_, number, &result);
 }
 
 int32_t AppInterfaceImpl::getNumPreKeys() const
 {
-    LOGGER(INFO, __func__, " <-->");
+    LOGGER(DEBUGGING, __func__, " <-->");
     return Provisioning::getNumPreKeys(scClientDevId_, authorization_);
 }
 
 // Get known Axolotl device from provisioning server, check if we have a new one
 // and if yes send a "ping" message to the new devices to create an Axolotl conversation
-// for the new devices.
+// for the new devices. The real implementation is in the command handling function below.
 
-// This is the ping command the code sends to new devices to create an Axolotl setup
-static string ping("{\"cmd\":\"ping\"}");
-
-void AppInterfaceImpl::rescanUserDevices(string& userName)
+void AppInterfaceImpl::rescanUserDevices(const string& userName)
 {
-    LOGGER(INFO, __func__, " -->");
-    list<pair<string, string> >* devices = Provisioning::getAxoDeviceIds(userName, authorization_);
-    if (devices == NULL || devices->empty()) {
-        delete devices;
+    LOGGER(DEBUGGING, __func__, " -->");
+
+    // Only _one_ re-scan command at a time because we check on one Done condition only
+    unique_lock<mutex> reScan(reScanLock);
+    reScanDone = false;
+
+    auto msgInfo = new CmdQueueInfo;
+    msgInfo->command = ReScanUserDevices;
+    msgInfo->queueInfo_recipient = userName;
+
+    unique_lock<mutex> syncCv(synchronizeLock);
+    addMsgInfoToRunQueue(unique_ptr<CmdQueueInfo>(msgInfo));
+
+    while (!reScanDone) {
+        synchronizeCv.wait(syncCv);
+    }
+    LOGGER(DEBUGGING, __func__, " <--");
+    return;
+}
+
+
+void AppInterfaceImpl::setHttpHelper(HTTP_FUNC httpHelper)
+{
+    ScProvisioning::setHttpHelper(httpHelper);
+    ScDataRetention::setHttpHelper(httpHelper);
+}
+
+void AppInterfaceImpl::setS3Helper(S3_FUNC s3Helper)
+{
+    ScDataRetention::setS3Helper(s3Helper);
+}
+
+void AppInterfaceImpl::reKeyAllDevices(const string &userName) {
+    list<StringUnique> devices;
+
+    if (!store_->isReady()) {
+        LOGGER(ERROR, __func__, " Axolotl conversation DB not ready.");
+        return;
+    }
+    store_->getLongDeviceIds(userName, ownUser_, devices);
+    for (auto &recipientDeviceId : devices) {
+        reKeyDevice(userName, *recipientDeviceId);
+    }
+}
+
+void AppInterfaceImpl::reKeyDevice(const string &userName, const string &deviceId) {
+    LOGGER(DEBUGGING, __func__, " -->");
+
+    if (!store_->isReady()) {
+        LOGGER(ERROR, __func__, " Axolotl conversation DB not ready.");
+        return;
+    }
+    // Don't re-sync this device
+    bool toSibling = userName == ownUser_;
+    if (toSibling && deviceId == scClientDevId_) {
+        return;
+    }
+
+    // Only _one_ re-key command at a time because we check on one Done condition only
+    unique_lock<mutex> reKey(reKeyLock);
+    reKeyDone = false;
+
+    auto msgInfo = new CmdQueueInfo;
+    msgInfo->command = ReKeyDevice;
+    msgInfo->queueInfo_recipient = userName;
+    msgInfo->queueInfo_deviceId = deviceId;
+    msgInfo->boolData1 = toSibling;
+
+    unique_lock<mutex> syncCv(synchronizeLock);
+    addMsgInfoToRunQueue(unique_ptr<CmdQueueInfo>(msgInfo));
+
+    while (!reKeyDone) {
+        synchronizeCv.wait(syncCv);
+    }
+
+    LOGGER(DEBUGGING, __func__, " <--");
+    return;
+}
+
+// ***** Private functions
+// *******************************
+
+int32_t AppInterfaceImpl::parseMsgDescriptor(const string& messageDescriptor, string* recipient, string* msgId, string* message, bool receivedMsg)
+{
+    LOGGER(DEBUGGING, __func__, " -->");
+    cJSON* cjTemp;
+    char* jsString;
+
+    // wrap the cJSON root into a shared pointer with custom cJSON deleter, this
+    // will always free the cJSON root when we leave the function :-) .
+    shared_ptr<cJSON> sharedRoot(cJSON_Parse(messageDescriptor.c_str()), cJSON_deleter);
+    cJSON* root = sharedRoot.get();
+
+    if (root == NULL) {
+        errorInfo_ = "root";
+        return GENERIC_ERROR;
+    }
+    const char* recipientSender = receivedMsg ? MSG_SENDER : MSG_RECIPIENT;
+    cjTemp = cJSON_GetObjectItem(root, recipientSender);
+    jsString = (cjTemp != NULL) ? cjTemp->valuestring : NULL;
+    if (jsString == NULL) {
+        errorInfo_ = recipientSender;
+        return JS_FIELD_MISSING;
+    }
+    recipient->assign(jsString);
+
+    // Get the message id
+    cjTemp = cJSON_GetObjectItem(root, MSG_ID);
+    jsString = (cjTemp != NULL) ? cjTemp->valuestring : NULL;
+    if (jsString == NULL) {
+        errorInfo_ = MSG_ID;
+        return JS_FIELD_MISSING;
+    }
+    msgId->assign(jsString);
+
+    // Get the message
+    cjTemp = cJSON_GetObjectItem(root, MSG_MESSAGE);
+    jsString = (cjTemp != NULL) ? cjTemp->valuestring : NULL;
+    if (jsString == NULL) {
+        errorInfo_ = MSG_MESSAGE;
+        return JS_FIELD_MISSING;
+    }
+    message->assign(jsString);
+
+    LOGGER(DEBUGGING, __func__, " <--");
+    return OK;
+}
+
+string AppInterfaceImpl::getOwnIdentityKey()
+{
+    LOGGER(DEBUGGING, __func__, " -->");
+
+    char b64Buffer[MAX_KEY_BYTES_ENCODED*2];   // Twice the max. size on binary data - b64 is times 1.5
+    shared_ptr<ZinaConversation> axoConv = ZinaConversation::loadLocalConversation(ownUser_, *store_);
+    if (!axoConv->isValid()) {
+        LOGGER(ERROR, "No own conversation, ignore.")
+        LOGGER(INFO, __func__, " <-- No own conversation.");
+        errorInfo_ = "Failed to read own conversation from database";
+        errorCode_ = axoConv->getErrorCode();
+        return Empty;
+    }
+
+    const DhPublicKey& pubKey = axoConv->getDHIs().getPublicKey();
+
+    b64Encode(pubKey.getPublicKeyPointer(), pubKey.getSize(), b64Buffer, MAX_KEY_BYTES_ENCODED*2);
+
+    string idKey((const char*)b64Buffer);
+    idKey.append(":");
+    if (!axoConv->getDeviceName().empty()) {
+        idKey.append(axoConv->getDeviceName());
+    }
+    idKey.append(":").append(scClientDevId_).append(":0");
+    LOGGER(DEBUGGING, __func__, " <--");
+    return idKey;
+}
+
+shared_ptr<list<string> > AppInterfaceImpl::getIdentityKeys(string& user)
+{
+    LOGGER(DEBUGGING, __func__, " -->");
+
+    char b64Buffer[MAX_KEY_BYTES_ENCODED*2];   // Twice the max. size on binary data - b64 is times 1.5
+    shared_ptr<list<string> > idKeys = make_shared<list<string> >();
+
+    list<StringUnique> devices;
+    store_->getLongDeviceIds(user, ownUser_, devices);
+
+    for (auto &recipientDeviceId : devices) {
+        auto axoConv = ZinaConversation::loadConversation(ownUser_, user, *recipientDeviceId, *store_);
+        errorCode_ = axoConv->getErrorCode();
+        if (errorCode_ != SUCCESS || !axoConv->isValid()) { // A database problem when loading the conversation
+            errorInfo_ = "Failed to read remote conversation from database";
+            idKeys->clear();                // return an empty list, all gathered info may be invalid
+            return idKeys;
+        }
+        if (!axoConv->hasDHIr()) {
+            continue;
+        }
+        const DhPublicKey &idKey = axoConv->getDHIr();
+
+        b64Encode(idKey.getPublicKeyPointer(), idKey.getSize(), b64Buffer, MAX_KEY_BYTES_ENCODED*2);
+
+        string id((const char*)b64Buffer);
+        id.append(":");
+        if (!axoConv->getDeviceName().empty()) {
+            id.append(axoConv->getDeviceName());
+        }
+        id.append(":").append(*recipientDeviceId);
+        snprintf(b64Buffer, 5, ":%d", axoConv->getZrtpVerifyState());
+        b64Buffer[4] = '\0';          // make sure it's terminated
+        id.append(b64Buffer);
+
+        idKeys->push_back(id);
+    }
+    LOGGER(DEBUGGING, __func__, " <--");
+    return idKeys;
+}
+
+
+void AppInterfaceImpl::reKeyDeviceCommand(const CmdQueueInfo &command) {
+    LOGGER(DEBUGGING, __func__, " -->");
+
+    if (!store_->isReady()) {
+        LOGGER(ERROR, __func__, " ZINA conversation DB not ready.");
+        sendActionCallback(ReKeyAction);
+        return;
+    }
+    // clear data and store the nearly empty conversation
+    auto conv = ZinaConversation::loadConversation(ownUser_, command.queueInfo_recipient, command.queueInfo_deviceId, *store_);
+    if (!conv->isValid()) {
+        sendActionCallback(ReKeyAction);
+        return;
+    }
+    conv->reset();
+    int32_t result = conv->storeConversation(*store_);
+    if (result != SUCCESS) {
+        sendActionCallback(ReKeyAction);
+        return;
+    }
+
+    // Check if server still knows this device.
+    // If no device at all for his user -> remove all conversations (ratchet contexts) of this user.
+    list<pair<string, string> > devices;
+    result = Provisioning::getZinaDeviceIds(command.queueInfo_recipient, authorization_, devices);
+
+    if (result != SUCCESS || devices.empty()) {
+        store_->deleteConversationsName(command.queueInfo_recipient, ownUser_);
+        sendActionCallback(ReKeyAction);
+        return;
+    }
+
+    string deviceName;
+    bool deviceFound = false;
+    for (const auto &device : devices) {
+        if (command.queueInfo_deviceId == device.first) {
+            deviceName = device.second;
+            deviceFound = true;
+            break;
+        }
+    }
+
+    // The server does not know this device anymore. In this case remove the conversation (ratchet context), done.
+    if (!deviceFound) {
+        store_->deleteConversation(command.queueInfo_recipient, command.queueInfo_deviceId, ownUser_);
+        sendActionCallback(ReKeyAction);
+        return;
+    }
+    queueMessageToSingleUserDevice(command.queueInfo_recipient, generateMsgIdTime(), command.queueInfo_deviceId,
+                                   deviceName, ping, Empty, Empty, MSG_CMD, true, ReKeyAction);
+    LOGGER(DEBUGGING, __func__, " <--");
+    return;
+}
+
+void AppInterfaceImpl::setIdKeyVerified(const string &userName, const string& deviceId, bool flag) {
+    LOGGER(DEBUGGING, __func__, " -->");
+
+    if (!store_->isReady()) {
+        LOGGER(ERROR, __func__, " Axolotl conversation DB not ready.");
+        return;
+    }
+    // Don't do this for own devices
+    bool toSibling = userName == ownUser_;
+    if (toSibling && deviceId == scClientDevId_)
+        return;
+
+    auto msgInfo = new CmdQueueInfo;
+    msgInfo->command = SetIdKeyChangeFlag;
+    msgInfo->queueInfo_recipient = userName;
+    msgInfo->queueInfo_deviceId = deviceId;
+    msgInfo->boolData1 = flag;
+    addMsgInfoToRunQueue(unique_ptr<CmdQueueInfo>(msgInfo));
+
+    LOGGER(DEBUGGING, __func__, " <--");
+    return;
+}
+
+int32_t AppInterfaceImpl::setDataRetentionFlags(const string& jsonFlags)
+{
+    LOGGER(DEBUGGING, __func__, " --> ", jsonFlags);
+    if (jsonFlags.empty()) {
+        return DATA_MISSING;
+    }
+
+    shared_ptr<cJSON> sharedRoot(cJSON_Parse(jsonFlags.c_str()), cJSON_deleter);
+    cJSON* root = sharedRoot.get();
+    if (root == nullptr) {
+        return CORRUPT_DATA;
+    }
+    drLrmm_ = Utilities::getJsonBool(root, LRMM, false);
+    drLrmp_ = Utilities::getJsonBool(root, LRMP, false);
+    drLrap_ = Utilities::getJsonBool(root, LRAP, false);
+    drBldr_ = Utilities::getJsonBool(root, BLDR, false);
+    drBlmr_ = Utilities::getJsonBool(root, BLMR, false);
+    drBrdr_ = Utilities::getJsonBool(root, BRDR, false);
+    drBrmr_ = Utilities::getJsonBool(root, BRMR, false);
+
+    LOGGER(DEBUGGING, __func__, " <--");
+    return SUCCESS;
+}
+
+void AppInterfaceImpl::checkRemoteIdKeyCommand(const CmdQueueInfo &command)
+{
+    /*
+     * Command data usage:
+    command.command = CheckRemoteIdKey;
+    command.stringData1 = remoteName;
+    command.stringData2 = deviceId;
+    command.stringData3 = pubKey;
+    command.int32Data = verifyState;
+     */
+    auto remote = ZinaConversation::loadConversation(getOwnUser(), command.stringData1, command.stringData2, *store_);
+
+    if (!remote->isValid()) {
+        LOGGER(ERROR, "<-- No conversation, user: '", command.stringData1, "', device: ", command.stringData2);
+        return;
+    }
+    if (!remote->hasDHIr()) {
+        LOGGER(ERROR, "<-- User: '", command.stringData1, "' has no longer term identity key");
+
+    }
+    const string remoteIdKey = remote->getDHIr().getPublicKey();
+
+    if (command.stringData3.compare(remoteIdKey) != 0) {
+        LOGGER(ERROR, "<-- Messaging keys do not match, user: '", command.stringData1, "', device: ", command.stringData2);
+        return;
+    }
+    // if verifyState is 1 then both users verified their SAS and thus set the Axolotl conversation
+    // to fully verified, otherwise at least the identity keys are equal and we proved that via
+    // a ZRTP session.
+    int32_t verify = (command.int32Data == 1) ? 2 : 1;
+    remote->setZrtpVerifyState(verify);
+    remote->setIdentityKeyChanged(false);
+    remote->storeConversation(*store_);
+}
+
+void AppInterfaceImpl::setIdKeyVerifiedCommand(const CmdQueueInfo &command)
+{
+    /*
+     * Command data usage:
+    command.command = SetIdKeyChangeFlag;
+    command.queueInfo_recipient = remoteName;
+    command.queueInfo_deviceId = deviceId;
+    command.boolData1 = flag;
+     */
+    auto remote = ZinaConversation::loadConversation(getOwnUser(), command.queueInfo_recipient, command.queueInfo_deviceId, *store_);
+
+    if (!remote->isValid()) {
+        LOGGER(ERROR, "<-- No conversation, user: '", command.queueInfo_recipient, "', device: ", command.queueInfo_deviceId);
+        return;
+    }
+    remote->setIdentityKeyChanged(command.boolData1);
+    remote->storeConversation(*store_);
+}
+
+void AppInterfaceImpl::rescanUserDevicesCommand(const CmdQueueInfo &command)
+{
+    LOGGER(DEBUGGING, __func__, " -->");
+
+    const string &userName = command.queueInfo_recipient;
+
+    list<pair<string, string> > devices;
+    int32_t errorCode = Provisioning::getZinaDeviceIds(userName, authorization_, devices);
+
+    if (errorCode != SUCCESS || devices.empty()) {
+        sendActionCallback(ReScanAction);
         return;
     }
 
     // Get known devices from DB, compare with devices from provisioning server
-    // and remove old devices in DB, i.e. devices not longer known to provisioning server
+    // and remove old devices and their data, i.e. devices not longer known to provisioning server
     //
-    SQLiteStoreConv* store = SQLiteStoreConv::getStore();
+    list<StringUnique> devicesDb;
 
-    shared_ptr<list<string> > devicesDb = store_->getLongDeviceIds(userName, ownUser_);
+    store_->getLongDeviceIds(userName, ownUser_, devicesDb);
 
-    if (devicesDb) {
-        while (!devicesDb->empty()) {
-            string devIdDb = devicesDb->front();
-            devicesDb->pop_front();
-            bool found = false;
+    for (const auto &devIdDb : devicesDb) {
+        bool found = false;
 
-            for (list<pair<string, string> >::iterator devIterator = devices->begin();
-                 devIterator != devices->end(); ++devIterator) {
-                string devId = (*devIterator).first;
-                if (devIdDb == devId) {
-                    found = true;
-                    break;
-                }
+        for (const auto &device : devices) {
+            if (*devIdDb == device.first) {
+                found = true;
+                break;
             }
-            if (!found) {
-                store->deleteConversation(userName, devIdDb, ownUser_);
-                LOGGER(DEBUGGING, "Remove device from database: ", devIdDb);
+        }
+        if (!found) {
+            auto conv = ZinaConversation::loadConversation(ownUser_, userName, *devIdDb, *store_);
+            if (conv) {
+                conv->deleteSecondaryRatchets(*store_);
             }
+            store_->deleteConversation(userName, *devIdDb, ownUser_);
+            LOGGER(INFO, __func__, "Remove device from database: ", *devIdDb);
         }
     }
 
@@ -516,481 +630,124 @@ void AppInterfaceImpl::rescanUserDevices(string& userName)
     // - an Empty message
     // - a message command attribute with a ping command
     // For each Ping message the code generates a new UUID
-    string supplements;
-    createSupplementString(Empty, ping, &supplements);
 
     // Prepare the messages for all known new devices of this user
-    vector<pair<string, string> >* msgPairs = new vector<pair<string, string> >;
 
-    unique_lock<mutex> lck(convLock);
-    while (!devices->empty()) {
-        string deviceId = devices->front().first;
-        string deviceName = devices->front().second;
-        devices->pop_front();
+    uint64_t counter = 0;
 
-        // If we already have a conversation for this device skip further processing
-        // after storing a user defined device name. The use may change a device's name
-        // using the Web interface of the provisioning server
-        if (store->hasConversation(userName, deviceId, ownUser_)) {
-            AxoConversation* conv = AxoConversation::loadConversation(ownUser_, userName, deviceId);
-            if (conv != NULL) {
-                const string& convDevName = conv->getDeviceName();
-                if (!deviceName.empty()) {
+    string deviceId;
+    string deviceName;
+
+    for (const auto &device : devices) {
+        deviceId = device.first;
+        deviceName = device.second;
+
+        // Don't re-scan own device, just check if name changed
+        bool toSibling = userName == ownUser_;
+        if (toSibling && scClientDevId_ == deviceId) {
+            shared_ptr<ZinaConversation> conv = ZinaConversation::loadLocalConversation(ownUser_, *store_);
+            if (conv->isValid()) {
+                const string &convDevName = conv->getDeviceName();
+                if (deviceName.compare(convDevName) != 0) {
                     conv->setDeviceName(deviceName);
-                    conv->storeConversation();
+                    conv->storeConversation(*store_);
                 }
-                delete conv;
             }
             continue;
         }
-        uuid_t pingUuid = {0};
-        uuid_string_t uuidString = {0};
 
-        uuid_generate_time(pingUuid);
-        uuid_unparse(pingUuid, uuidString);
-        string msgId(uuidString);
-
-        LOGGER(DEBUGGING, "Send Ping to new found device: ", deviceId);
-        int32_t result = createPreKeyMsg(userName, deviceId, deviceName, Empty, supplements, msgId, msgPairs);
-        if (result == 0)   // no pre-key bundle available for name/device-id combination
+        // If we already have a conversation for this device skip further processing
+        // after storing a user defined device name. The user may change a device's name
+        // using the Web interface of the provisioning server
+        if (store_->hasConversation(userName, deviceId, ownUser_)) {
+            auto conv = ZinaConversation::loadConversation(ownUser_, userName, deviceId, *store_);
+            if (conv->isValid()) {
+                const string &convDevName = conv->getDeviceName();
+                if (deviceName.compare(convDevName) != 0) {
+                    conv->setDeviceName(deviceName);
+                    conv->storeConversation(*store_);
+                }
+            }
             continue;
-
-        // This is always a security issue: return immediately, don't process and send a message
-        if (result < 0) {
-            delete msgPairs;
-            delete devices;
-            return;
         }
-    }
-    lck.unlock();
-    delete devices;
 
-    if (msgPairs->empty()) {
-        delete msgPairs;
+        LOGGER(INFO, __func__, "Send Ping to new found device: ", deviceId);
+        queueMessageToSingleUserDevice(userName, generateMsgIdTime(), deviceId, deviceName, ping, Empty, Empty, MSG_CMD,
+                                       true, NoAction);
+
+        performGroupHellos(userName, deviceId, deviceName);
+        counter++;
+
+        LOGGER(DEBUGGING, "Queued message to ping a new device.");
+    }
+    // If we found at least on new device: re-send the Ping to the last device found with a callback action,
+    // then return, send callback function handles unlock/synchronize actions. Sending a Ping a second time does
+    // not do any harm. We do this to signal: done with rescanning devices.
+    if (counter > 0) {
+        queueMessageToSingleUserDevice(userName, generateMsgIdTime(), deviceId, deviceName, ping, Empty, Empty, MSG_CMD,
+                                       true, ReScanAction);
+        LOGGER(DEBUGGING, __func__, " <--");
         return;
     }
-    vector<int64_t>* returnMsgIds = transport_->sendAxoMessage(userName, msgPairs);
-    LOGGER(DEBUGGING, "Found new devices: ", returnMsgIds->size());
 
-    delete msgPairs;
-    delete returnMsgIds;
-    LOGGER(INFO, __func__, " <--");
+    // No new devices found, unlock/sync and return
+    sendActionCallback(ReScanAction);
+    LOGGER(DEBUGGING, __func__, " <-- no re-scan necessary");
     return;
 }
 
-void AppInterfaceImpl::setHttpHelper(HTTP_FUNC httpHelper)
+void AppInterfaceImpl::queueMessageToSingleUserDevice(const string &userId, const string &msgId, const string &deviceId,
+                                                      const string &deviceName, const string &attributes, const string &attachment,
+                                                      const string &msg, int32_t msgType, bool newDevice,
+                                                      SendCallbackAction sendCallbackAction)
 {
-    ScProvisioning::setHttpHelper(httpHelper);
+    LOGGER(DEBUGGING, __func__, " --> ");
+
+    uint64_t transportMsgId;
+    ZrtpRandom::getRandomData(reinterpret_cast<uint8_t*>(&transportMsgId), 8);
+
+    // The transport id is structured: bits 0..3 are status/type bits, bits 4..7 is a counter, bits 8..63 random data
+    transportMsgId &= ~0xff;
+
+    auto msgInfo = new CmdQueueInfo;
+    msgInfo->command = SendMessage;
+    msgInfo->queueInfo_recipient = userId;
+    msgInfo->queueInfo_deviceName = deviceName;
+    msgInfo->queueInfo_deviceId = deviceId;                     // to this user device
+    msgInfo->queueInfo_msgId = msgId;
+    msgInfo->queueInfo_message = msg;
+    msgInfo->queueInfo_attachment = attachment;
+    msgInfo->queueInfo_attributes = attributes;                 // message attributes
+    msgInfo->queueInfo_transportMsgId = transportMsgId | msgType;
+    msgInfo->queueInfo_toSibling = userId == getOwnUser();
+    msgInfo->queueInfo_newUserDevice = newDevice;
+    msgInfo->queueInfo_callbackAction = sendCallbackAction;
+    addMsgInfoToRunQueue(unique_ptr<CmdQueueInfo>(msgInfo));
+
+    LOGGER(INFO, __func__, " Queued message to device: ", deviceId, ", attributes: ", attributes);
+
+    LOGGER(DEBUGGING, __func__, " <-- ");
 }
 
-// ***** Private functions 
-// *******************************
-
-vector<int64_t>* AppInterfaceImpl::sendMessageInternal(const string& recipient, const string& msgId, const string& message,
-                                                       const string& attachementDescriptor, const string& messageAttributes)
+void AppInterfaceImpl::sendActionCallback(SendCallbackAction sendCallbackAction)
 {
-    LOGGER(INFO, __func__, " -->");
+    unique_lock<mutex> syncLock(synchronizeLock);
+    switch (sendCallbackAction) {
+        case NoAction:
+            return;
 
-    errorCode_ = OK;
+        case ReKeyAction:
+            reKeyDone = true;
+            break;
 
-    bool toSibling = recipient == ownUser_;
+        case ReScanAction:
+            reScanDone = true;
+            break;
 
-    shared_ptr<list<string> > devices = store_->getLongDeviceIds(recipient, ownUser_);
-    size_t numDevices = devices->size();
-
-    if (numDevices == 0) {
-        vector<pair<string, string> >* msgPairs = sendMessagePreKeys(recipient, msgId, message, attachementDescriptor, messageAttributes);
-
-        // Either no device registered for recipient or some error occurred.
-        if (msgPairs == NULL) {
-            LOGGER(DEBUGGING, "Cannot send initial pre-key message to: ", recipient, ", code: ", errorCode_);
-            LOGGER(INFO, __func__, " <--");
-            return NULL;
-        }
-        unique_lock<mutex> lck(convLock);
-        vector<int64_t>* returnMsgIds = transport_->sendAxoMessage(recipient, msgPairs);
-        lck.unlock();
-        LOGGER(DEBUGGING, "Sent initial pre-key messages to # devices: ", returnMsgIds->size());
-        delete msgPairs;
-
-        LOGGER(INFO, __func__, " <-- Initial pre-key message sent.");
-        return returnMsgIds;
+        default:
+            LOGGER(WARNING, __func__, " Unknown send action callback code: ", sendCallbackAction);
+            return;
     }
-
-    string supplements;
-    createSupplementString(attachementDescriptor, messageAttributes, &supplements);
-
-    // Prepare the messages for all known device of this user
-    vector<pair<string, string> >* msgPairs = new vector<pair<string, string> >;
-
-    unique_lock<mutex> lck(convLock);
-    while (!devices->empty()) {
-        string recipientDeviceId = devices->front();
-        devices->pop_front();
-
-        // Don't send this to sender device, even when sending to my sibbling devices
-        if (toSibling && recipientDeviceId == scClientDevId_) {
-            continue;
-        }
-
-        AxoConversation* axoConv = AxoConversation::loadConversation(ownUser_, recipient, recipientDeviceId);
-        if (axoConv == NULL) {
-            LOGGER(DEBUGGING, "Axolotl Conversation is NULL. Owner: ", ownUser_, ", recipient: ", recipient, ", recipientDeviceId: ",
-                   recipientDeviceId);
-            continue;
-        }
-
-        shared_ptr<string> supplementsEncrypted = make_shared<string>();
-
-        // Encrypt the user's message and the supplementary data if necessary
-        pair<string, string> idHashes;
-        shared_ptr<const string> wireMessage = AxoRatchet::encrypt(*axoConv, message, supplements, supplementsEncrypted, &idHashes);
-        axoConv->storeConversation();
-        delete axoConv;
-        if (!wireMessage)
-            continue;
-        bool hasIdHashes = !idHashes.first.empty() && !idHashes.second.empty();
-        /*
-         * Create the message envelope:
-         {
-             "name":           <string>         # sender's name
-             "scClientDevId":  <string>         # sender's long device id
-             "supplement":     <string>         # suplementary data, encrypted, B64
-             "message":        <string>         # message, encrypted, B64
-         }
-        */
-
-        MessageEnvelope envelope;
-        envelope.set_name(ownUser_);
-        envelope.set_scclientdevid(scClientDevId_);
-        envelope.set_msgid(msgId);
-        if (!supplementsEncrypted->empty())
-            envelope.set_supplement(*supplementsEncrypted);
-        envelope.set_message(*wireMessage);
-        if (hasIdHashes) {
-            envelope.set_recvidhash(idHashes.first.data(), 4);
-            envelope.set_senderidhash(idHashes.second.data(), 4);
-        }
-        wireMessage.reset();
-
-        uint8_t binDevId[20];
-        size_t res = hex2bin(recipientDeviceId.c_str(), binDevId);
-        if (res != 0)
-            envelope.set_recvdevidbin(binDevId, 4);
-//        envelope.set_recvdeviceid(recipientDeviceId);
-
-        string serialized = envelope.SerializeAsString();
-
-        // We need to have them in b64 encoding, check if buffer is large enough. Allocate twice
-        // the size of binary data, this is big enough to hold B64 plus paddling and terminator
-        if (serialized.size() * 2 > tempBufferSize_) {
-            delete tempBuffer_;
-            tempBuffer_ = new char[serialized.size()*2];
-            tempBufferSize_ = serialized.size()*2;
-        }
-        size_t b64Len = b64Encode((const uint8_t*)serialized.data(), serialized.size(), tempBuffer_, tempBufferSize_);
-
-        // replace the binary data with B64 representation
-        serialized.assign(tempBuffer_, b64Len);
-
-        pair<string, string> msgPair(recipientDeviceId, serialized);
-        msgPairs->push_back(msgPair);
-
-        supplementsEncrypted->clear();
-    }
-
-    vector<int64_t>* returnMsgIds = NULL;
-    if (!msgPairs->empty()) {
-        returnMsgIds = transport_->sendAxoMessage(recipient, msgPairs);
-        LOGGER(DEBUGGING, "Sent messages to # devices: ", returnMsgIds->size());
-    }
-    lck.unlock();
-    delete msgPairs;
-    LOGGER(INFO, __func__, " <--");
-
-    return returnMsgIds;
-}
-
-vector<pair<string, string> >* AppInterfaceImpl::sendMessagePreKeys(const string& recipient, const string& msgId, const string& message,
-                                                                    const string& attachementDescriptor, const string& messageAttributes)
-{
-    LOGGER(INFO, __func__, " -->");
-
-    string supplements;
-    createSupplementString(attachementDescriptor, messageAttributes, &supplements);
-
-    bool toSibling = recipient == ownUser_;
-
-    list<pair<string, string> >* devices = NULL;
-    int32_t errorCode = 0;
-    if (!toSibling || !ownChecked_) {
-        devices = Provisioning::getAxoDeviceIds(recipient, authorization_, &errorCode);
-    }
-    if (devices == NULL) {
-        char tmpBuff[20];
-        snprintf(tmpBuff, 10, "%d", errorCode);
-        string errorString(tmpBuff);
-
-        errorCode_ = NETWORK_ERROR;
-        errorInfo_ = errorString;
-        LOGGER(INFO, __func__, " <-- Network error: ", errorCode);
-        return NULL;
-    }
-
-    if (devices->empty()) {
-        errorCode_ = NO_DEVS_FOUND;
-        errorInfo_ = recipient;
-        delete devices;
-        LOGGER(DEBUGGING, "No device registered for recipient: ", recipient);
-        LOGGER(INFO, __func__, " <-- No device.");
-        return NULL;
-    }
-
-    // Prepare the messages for all known devices of this user
-    vector<pair<string, string> >* msgPairs = new vector<pair<string, string> >;
-
-    unique_lock<mutex> lck(convLock);
-    while (!devices->empty()) {
-        string recipientDeviceId = devices->front().first;
-        string recipientDeviceName = devices->front().second;
-        devices->pop_front();
-
-        // Don't send this to sender device, even when sending to my sibling devices
-        if (toSibling && recipientDeviceId == scClientDevId_) {
-            continue;
-        }
-
-        int32_t result = createPreKeyMsg(recipient, recipientDeviceId, recipientDeviceName, message, supplements, msgId, msgPairs);
-        if (result == 0) {  // no pre-key bundle available for name/device-id combination
-            LOGGER(DEBUGGING, "No pre-key bundle available for recipient ", recipient, ", device id: ", recipientDeviceId);
-            continue;
-        }
-
-        // This is always a security issue: return immediately, don't process and send a message
-        if (result < 0) {
-            delete msgPairs;
-            delete devices;
-            errorCode_ = result;
-            errorInfo_ = recipientDeviceId;
-            LOGGER(ERROR, "Failed to create pre-key message, code ", result, ", recipient: ", recipient,
-                   ", device id: ", recipientDeviceId);
-            LOGGER(INFO, __func__, " <-- No pre-key message.");
-            return NULL;
-        }
-    }
-    lck.unlock();
-    delete devices;
-
-    if (msgPairs->empty()) {
-        delete msgPairs;
-        if (!toSibling) {
-            errorCode_ = NO_PRE_KEY_FOUND;
-            errorInfo_ = recipient;
-        }
-        else {
-            ownChecked_ = true;
-        }
-        LOGGER(DEBUGGING, "No pre-key message sent to: ", recipient);
-        LOGGER(INFO, __func__, " <-- No pre-key message sent.");
-        return NULL;
-    }
-    LOGGER(INFO, __func__, " <--");
-    return msgPairs;
-}
-
-
-int32_t AppInterfaceImpl::parseMsgDescriptor(const string& messageDescriptor, string* recipient, string* msgId, string* message)
-{
-    LOGGER(INFO, __func__, " -->");
-    cJSON* cjTemp;
-    char* jsString;
-
-    cJSON* root = cJSON_Parse(messageDescriptor.c_str());
-    if (root == NULL) {
-        errorInfo_ = "root";
-        goto cleanup;
-    }
-    cjTemp = cJSON_GetObjectItem(root, "recipient");
-    jsString = (cjTemp != NULL) ? cjTemp->valuestring : NULL;
-    if (jsString == NULL) {
-        errorInfo_ = "recipient";
-        goto cleanup;
-    }
-    recipient->assign(jsString);
-
-    // Get the message id
-    cjTemp = cJSON_GetObjectItem(root, "msgId");
-    jsString = (cjTemp != NULL) ? cjTemp->valuestring : NULL;
-    if (jsString == NULL) {
-        errorInfo_ = "msgId";
-        goto cleanup;
-    }
-    msgId->assign(jsString);
-
-    // Get the message
-    cjTemp = cJSON_GetObjectItem(root, "message");
-    jsString = (cjTemp != NULL) ? cjTemp->valuestring : NULL;
-    if (jsString == NULL) {
-        errorInfo_ = "message";
-        goto cleanup;
-    }
-    message->assign(jsString);
-    cJSON_Delete(root);    // Done with JSON root for message data
-//    LOGGER(INFO, __func__, " <--");
-    return OK;
-
-cleanup:
-    cJSON_Delete(root);    // Done with JSON root for message data
-    LOGGER(INFO, __func__, " <-- with error: ", errorInfo_);
-    return JS_FIELD_MISSING;
-}
-
-
-int32_t AppInterfaceImpl::createPreKeyMsg(const string& recipient,  const string& recipientDeviceId, const string& recipientDeviceName,
-                                          const string& message, const string& supplements,
-                                          const string& msgId, vector<pair<string, string> >* msgPairs)
-{
-    LOGGER(INFO, __func__, " -->");
-
-    pair<const DhPublicKey*, const DhPublicKey*> preIdKeys;
-    int32_t preKeyId = Provisioning::getPreKeyBundle(recipient, recipientDeviceId, authorization_, &preIdKeys);
-    if (preKeyId == 0) {
-        LOGGER(DEBUGGING, "No pre-key bundle available for recipient ", recipient, ", device id: ", recipientDeviceId);
-        LOGGER(INFO, __func__, " <-- No pre-key bundle");
-        return 0;
-    }
-
-    int32_t buildResult = AxoPreKeyConnector::setupConversationAlice(ownUser_, recipient, recipientDeviceId, preKeyId, preIdKeys);
-
-    // This is always a security issue: return immediately, don't process and send a message
-    if (buildResult < 0) {
-        errorCode_ = buildResult;
-        errorInfo_ = recipientDeviceId;
-        return buildResult;
-    }
-    AxoConversation* axoConv = AxoConversation::loadConversation(ownUser_, recipient, recipientDeviceId);
-    axoConv->setDeviceName(recipientDeviceName);
-
-    shared_ptr<string> supplementsEncrypted = make_shared<string>();
-
-    // Encrypt the user's message and the supplementary data if necessary
-    pair<string, string> idHashes;
-    shared_ptr<const string> wireMessage = AxoRatchet::encrypt(*axoConv, message, supplements, supplementsEncrypted, &idHashes);
-    axoConv->storeConversation();
-    delete axoConv;
-
-    if (!wireMessage) {
-        LOGGER(WARNING, "Encryption failed, no wire message created.");
-        LOGGER(INFO, __func__, " <-- Encryption failed.");
-        return 0;
-    }
-    bool hasIdHashes = !idHashes.first.empty() && !idHashes.second.empty();
-    /*
-     * Create the message envelope:
-     {
-         "name":           <string>         # sender's name
-         "scClientDevId":  <string>         # sender's long device id
-         "supplement":     <string>         # suplementary data, encrypted
-         "message":        <string>         # message, encrypted
-      }
-      */
-    MessageEnvelope envelope;
-    envelope.set_name(ownUser_);
-    envelope.set_scclientdevid(scClientDevId_);
-    envelope.set_msgid(msgId);
-    if (!supplementsEncrypted->empty())
-        envelope.set_supplement(*supplementsEncrypted);
-    envelope.set_message(*wireMessage);
-    if (hasIdHashes) {
-        envelope.set_recvidhash(idHashes.first.data(), 4);
-        envelope.set_senderidhash(idHashes.second.data(), 4);
-    }
-
-    uint8_t binDevId[20];
-    size_t res = hex2bin(recipientDeviceId.c_str(), binDevId);
-    if (res != 0)
-        envelope.set_recvdevidbin(binDevId, 4);
-//    envelope.set_recvdeviceid(recipientDeviceId);
-    wireMessage.reset();
-
-    string serialized = envelope.SerializeAsString();
-
-    // We need to have them in b64 encoding, check if buffer is large enough. Allocate twice
-    // the size of binary data, this is big enough to hold B64 plus padding and terminator
-    if (serialized.size() * 2 > tempBufferSize_) {
-        delete tempBuffer_;
-        tempBuffer_ = new char[serialized.size()*2];
-        tempBufferSize_ = serialized.size()*2;
-    }
-    size_t b64Len = b64Encode((const uint8_t*)serialized.data(), serialized.size(), tempBuffer_, tempBufferSize_);
-
-    // replace the binary data with B64 representation
-    serialized.assign(tempBuffer_, b64Len);
-
-    pair<string, string> msgPair(recipientDeviceId, serialized);
-    msgPairs->push_back(msgPair);
-
-    LOGGER(INFO, __func__, " <--");
-    return OK;
-}
-
-string AppInterfaceImpl::getOwnIdentityKey() const
-{
-    LOGGER(INFO, __func__, " -->");
-
-    char b64Buffer[MAX_KEY_BYTES_ENCODED*2];   // Twice the max. size on binary data - b64 is times 1.5
-    AxoConversation* axoConv = AxoConversation::loadLocalConversation(ownUser_);
-    if (axoConv == NULL) {
-        LOGGER(ERROR, "No own conversation, ignore.")
-        LOGGER(INFO, __func__, " <-- No own conversation.");
-        return Empty;
-    }
-
-    const DhKeyPair* keyPair = axoConv->getDHIs();
-    const DhPublicKey& pubKey = keyPair->getPublicKey();
-
-    b64Encode(pubKey.getPublicKeyPointer(), pubKey.getSize(), b64Buffer, MAX_KEY_BYTES_ENCODED*2);
-
-    string idKey((const char*)b64Buffer);
-    if (!axoConv->getDeviceName().empty()) {
-        idKey.append(":").append(axoConv->getDeviceName());
-    }
-    delete axoConv;
-    LOGGER(INFO, __func__, " <--");
-    return idKey;
-}
-
-list<string>* AppInterfaceImpl::getIdentityKeys(string& user) const
-{
-    LOGGER(INFO, __func__, " -->");
-
-    char b64Buffer[MAX_KEY_BYTES_ENCODED*2];   // Twice the max. size on binary data - b64 is times 1.5
-    list<string>* idKeys = new list<string>;
-
-    shared_ptr<list<string> > devices = store_->getLongDeviceIds(user, ownUser_);
-
-    while (!devices->empty()) {
-        string recipientDeviceId = devices->front();
-        devices->pop_front();
-        AxoConversation* axoConv = AxoConversation::loadConversation(ownUser_, user, recipientDeviceId);
-        const DhPublicKey* idKey = axoConv->getDHIr();
-
-        b64Encode(idKey->getPublicKeyPointer(), idKey->getSize(), b64Buffer, MAX_KEY_BYTES_ENCODED*2);
-
-        string id((const char*)b64Buffer);
-        id.append(":");
-        if (!axoConv->getDeviceName().empty()) {
-            id.append(axoConv->getDeviceName());
-        }
-        id.append(":").append(recipientDeviceId);
-        snprintf(b64Buffer, 5, ":%d", axoConv->getZrtpVerifyState());
-        b64Buffer[4] = '\0';          // make sure it's terminated
-        id.append(b64Buffer);
-
-        idKeys->push_back(id);
-        delete axoConv;
-    }
-    LOGGER(INFO, __func__, " <--");
-    return idKeys;
+    synchronizeCv.notify_one();
 }
 #pragma clang diagnostic pop

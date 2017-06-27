@@ -18,9 +18,10 @@ package com.silentcircle.silentphone2.views.multiwaveview;
 
 import android.content.res.Resources;
 import android.graphics.Canvas;
+import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.StateListDrawable;
-import android.util.Log;
+import com.silentcircle.logs.Log;
 
 public class TargetDrawable {
     private static final String TAG = "TargetDrawable";
@@ -45,6 +46,7 @@ public class TargetDrawable {
     private boolean mEnabled = true;
     private final int mResourceId;
     private int mNumDrawables = 1;
+    private Rect mBounds;
 
     /**
      * This is changed from the framework version to pass in the number of drawables in the
@@ -211,6 +213,17 @@ public class TargetDrawable {
 
     public int getHeight() {
         return mDrawable != null ? mDrawable.getIntrinsicHeight() : 0;
+    }
+
+    public Rect getBounds() {
+        if (mBounds == null) {
+            mBounds = new Rect();
+        }
+        mBounds.set((int) (mTranslationX + mPositionX - getWidth() * 0.5),
+                (int) (mTranslationY + mPositionY - getHeight() * 0.5),
+                (int) (mTranslationX + mPositionX + getWidth() * 0.5),
+                (int) (mTranslationY + mPositionY + getHeight() * 0.5));
+        return mBounds;
     }
 
     public void draw(Canvas canvas) {

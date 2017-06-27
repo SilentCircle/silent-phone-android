@@ -17,6 +17,7 @@
 package com.silentcircle.common.util;
 
 import android.content.Context;
+import android.support.annotation.Nullable;
 import android.text.format.DateFormat;
 import android.text.format.Time;
 
@@ -28,6 +29,7 @@ import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.Locale;
 import java.util.TimeZone;
+import java.util.UUID;
 
 /**
  * Utility methods for processing dates.
@@ -40,6 +42,9 @@ public class DateUtils {
      * Let's add a one-off hack for that day of the year
      */
     public static final String NO_YEAR_DATE_FEB29TH = "--02-29";
+
+    /* UUID v1 timestamp epoch in unix time, millis at 00:00:00.000 15 Oct 1582 */
+    protected static final long START_EPOCH = -12219292800000L;
 
     // Variations of ISO 8601 date format.  Do not change the order - it does affect the
     // result in ambiguous cases.
@@ -286,4 +291,19 @@ public class DateUtils {
 
         return Math.abs(currentDay - startDay);
     }
+
+    /**
+     * Retrieve milliseconds (since start of Unix epoch) from given v1 uuid.
+     * Returns 0 if there was an error.
+     */
+    public static long getMillisFromUuid(@Nullable String uuid) {
+        long millisFromUuid = 0;
+        try {
+            millisFromUuid = (UUID.fromString(uuid).timestamp() / 10000) + START_EPOCH;
+        } catch (Exception e) {
+            // failed to determine time, return 0 for unknown
+        }
+        return millisFromUuid;
+    }
+
 }

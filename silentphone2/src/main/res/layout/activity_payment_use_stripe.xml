@@ -9,10 +9,7 @@
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="?sp_actionbar_color"
-        android:minHeight="?attr/actionBarSize"
-        app:titleTextAppearance="?sp_ab_title_style"
-        app:subtitleTextAppearance="?sp_ab_subtitle_style"
+        style="@style/Toolbar"
         />
 
     <TextView

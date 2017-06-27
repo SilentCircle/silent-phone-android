@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2016-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -25,7 +25,6 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-
 package com.silentcircle.messaging.task;
 
 import com.silentcircle.silentphone2.R;
@@ -43,13 +42,13 @@ public enum ValidationState {
         int descriptionId = 0;
         switch (state) {
             case VALIDATION_ERROR:
-                descriptionId = R.string.messaging_user_validation_generic_error;
+                descriptionId = R.string.user_validation_generic_error;
                 break;
             case USERNAME_EMPTY:
-                descriptionId = R.string.messaging_user_validation_username_empty;
+                descriptionId = R.string.user_validation_username_empty;
                 break;
             case NETWORK_NOT_AVAILABLE:
-                descriptionId = R.string.messaging_user_validation_no_connection;
+                descriptionId = R.string.user_validation_no_connection;
                 break;
             default:
         }

@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2014-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -28,6 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 package com.silentcircle.silentphone2.activities;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Fragment;
@@ -41,25 +42,28 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.ActivityInfo;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.media.AudioAttributes;
 import android.media.AudioManager;
+import android.media.SoundPool;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.NotificationCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -69,7 +73,12 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.silentcircle.common.util.AsyncTasks;
+import com.silentcircle.common.util.ExplainPermissionDialog;
 import com.silentcircle.common.util.ViewUtil;
+import com.silentcircle.logs.Log;
+import com.silentcircle.messaging.activities.ConversationActivity;
+import com.silentcircle.messaging.util.AsyncUtils;
+import com.silentcircle.messaging.util.MessagingPreferences;
 import com.silentcircle.silentphone2.R;
 import com.silentcircle.silentphone2.dialogs.CryptoInfoDialog;
 import com.silentcircle.silentphone2.dialogs.VerifyDialog;
@@ -79,26 +88,30 @@ import com.silentcircle.silentphone2.fragments.DtmfDialerFragment;
 import com.silentcircle.silentphone2.fragments.InCallDrawerFragment;
 import com.silentcircle.silentphone2.fragments.InCallMainFragment;
 import com.silentcircle.silentphone2.fragments.InCallVideoFragmentHw;
+import com.silentcircle.silentphone2.passcode.AppLifecycleNotifierBaseActivity;
 import com.silentcircle.silentphone2.services.TiviPhoneService;
 import com.silentcircle.silentphone2.util.CallState;
 import com.silentcircle.silentphone2.util.ConfigurationUtilities;
 import com.silentcircle.silentphone2.util.DeviceHandling;
 import com.silentcircle.silentphone2.util.ManageCallStates;
 import com.silentcircle.silentphone2.util.Utilities;
+import com.silentcircle.userinfo.LoadUserInfo;
 
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.concurrent.CountDownLatch;
+
+import zina.ZinaNative;
 
 /**
  * This activity handles all in-call events.
  *
  * Created by werner on 13.02.14.
  */
-public class InCallActivity extends AppCompatActivity
+public class InCallActivity extends AppLifecycleNotifierBaseActivity
         implements InCallDrawerFragment.DrawerCallbacks, TiviPhoneService.ServiceStateChangeListener,
-        TiviPhoneService.DeviceStateChangeListener, InCallCallback,
-        SensorEventListener {
+        TiviPhoneService.DeviceStateChangeListener, TiviPhoneService.GracefulEndCallListener, InCallCallback,
+        SensorEventListener, ExplainPermissionDialog.AfterReading {
 
     private static final String TAG = InCallActivity.class.getSimpleName();
 
@@ -119,6 +132,9 @@ public class InCallActivity extends AppCompatActivity
 
     public static final int ACTIVE_CALL_NOTIFICATION_ID = 47110815;
     private static final int ADD_CALL_ACTIVITY = 1113;
+
+    public static final int PERMISSIONS_REQUEST_VIDEO_ACTIVATE = 1;
+    public static final int PERMISSIONS_REQUEST_VIDEO_ACCEPT = 2;
 
     private NotificationManager mNotificationManager;
     /**
@@ -155,6 +171,8 @@ public class InCallActivity extends AppCompatActivity
     private final Collection<TiviPhoneService.ServiceStateChangeListener> callStateListeners = new LinkedList<>();
     private final Collection<TiviPhoneService.DeviceStateChangeListener> deviceStateListeners = new LinkedList<>();
 
+    private TiviPhoneService.GracefulEndCallListener listener;
+
     /** If true leave hint detected, controls proximity wake-lock handling */
     private boolean mLeaveHint;
 
@@ -180,6 +198,10 @@ public class InCallActivity extends AppCompatActivity
 
     private Toolbar mToolbar;
 
+    // Dedicated sound pool for end call sound
+    private SoundPool mSoundPool;
+    private int mHangupSoundId;
+
     /* *********************************************************************
      * Functions and variables to bind this activity to the TiviPhoneService
      * This uses standard Android mechanism.
@@ -202,6 +224,7 @@ public class InCallActivity extends AppCompatActivity
             }
             mPhoneService.addStateChangeListener(InCallActivity.this);
             mPhoneService.addDeviceChangeListener(InCallActivity.this);
+            mPhoneService.addGracefulEndCallListener(InCallActivity.this);
         }
 
         public void onServiceDisconnected(ComponentName className) {
@@ -219,7 +242,7 @@ public class InCallActivity extends AppCompatActivity
         // class name because we want a specific service implementation that
         // we know will be running in our own process (and thus won't be
         // supporting component replacement by other applications).
-        bindService(new Intent(InCallActivity.this, TiviPhoneService.class), phoneConnection, Context.BIND_AUTO_CREATE);
+        bindService(new Intent(InCallActivity.this, TiviPhoneService.class), phoneConnection, Context.BIND_AUTO_CREATE | Context.BIND_IMPORTANT);
     }
 
     private void doUnbindService() {
@@ -398,6 +421,8 @@ public class InCallActivity extends AppCompatActivity
         callMonitoringThread.start();
         if (startVideo && TiviPhoneService.calls.getCallCount() >= 1)
             activateVideo(false);
+
+        initSoundPool();
     }
 
     @Override
@@ -409,7 +434,9 @@ public class InCallActivity extends AppCompatActivity
     protected void onResume() {
         super.onResume();
         mIsForeground = true;
-        if (TiviPhoneService.calls.getCallCount() >= 1 && !TiviPhoneService.calls.selectedCall.mustShowAnswerBT()) {
+        if (TiviPhoneService.calls.getCallCount() >= 1
+                && TiviPhoneService.calls.selectedCall != null
+                && !TiviPhoneService.calls.selectedCall.mustShowAnswerBT()) {
             mNotificationManager.cancel(ACTIVE_CALL_NOTIFICATION_ID);
         }
         mLeaveHint = false;
@@ -421,7 +448,8 @@ public class InCallActivity extends AppCompatActivity
         super.onUserLeaveHint();
         mLeaveHint = true;
         updateProximitySensorMode(false);
-        if (TiviPhoneService.calls.getCallCount() >= 1)
+        if (TiviPhoneService.calls.getCallCount() >= 1
+                && TiviPhoneService.calls.selectedCall != null)
             setCallActiveNotification(TiviPhoneService.calls.selectedCall);
     }
 
@@ -454,8 +482,8 @@ public class InCallActivity extends AppCompatActivity
         if(mPhoneService != null) {
             mPhoneService.removeStateChangeListener(this);
             mPhoneService.removeDeviceChangeListener(this);
+            mPhoneService.removeGracefulEndCallListener();
             mPhoneService.stopRinger();
-            mPhoneService.setNotificationToDialer();
         }
 
         waitForLatch(mMonitorStopLatch);
@@ -474,6 +502,8 @@ public class InCallActivity extends AppCompatActivity
 
         updateProximitySensorMode(false);
         doUnbindService();
+
+        releaseSoundPool();
     }
 
     @Override
@@ -536,7 +566,7 @@ public class InCallActivity extends AppCompatActivity
             }
             startCallManager = TiviPhoneService.calls.getCallCount() > 1;
         }
-        if (ft != null && !isFinishing()) {
+        if (ft != null && !isFinishing() && !mDestroyed) {
             ft.show(mInCallMain).commitAllowingStateLoss();
             if (startCallManager)
                 startCallManager();
@@ -711,14 +741,20 @@ public class InCallActivity extends AppCompatActivity
     @Override
     public void onDrawerItemSelected(int type, Object... params) {
         if (type == InCallDrawerFragment.SHOW_SECURITY_DETAIL) {
-            FragmentManager fragmentManager = getFragmentManager();
             CryptoInfoDialog cryptoScreen = CryptoInfoDialog.newInstance();
-            cryptoScreen.show(fragmentManager, "crypto_dialog");
+            FragmentManager fragmentManager = getFragmentManager();
+            if (fragmentManager != null) {
+                fragmentManager.beginTransaction()
+                    .add(cryptoScreen, "crypto_dialog")
+                    .commitAllowingStateLoss();
+            }
         }
     }
 
     @Override
     public void onDrawerStateChange(int action) {}
+
+
 
     /* *******************************************************************
      * Call and device state change listeners
@@ -733,7 +769,7 @@ public class InCallActivity extends AppCompatActivity
      * @param call the call that changed its ZRTP state.
      * @param msg  the message id of the ZRTP status change.
      */
-    public void zrtpStateChange(CallState call, TiviPhoneService.CT_cb_msg msg) {
+    public void zrtpStateChange(@NonNull CallState call, TiviPhoneService.CT_cb_msg msg) {
         runOnUiThread(new zrtpChangeWrapper(call, msg));
     }
 
@@ -764,6 +800,13 @@ public class InCallActivity extends AppCompatActivity
         });
     }
 
+    public void gracefulEndCall(final CallState call){
+        runOnUiThread(new Runnable() {
+            public void run() {
+                endCall(true, call);
+            }
+        });
+    }
     /* *********************************************************************************
      * Implementation of InCallCallback interface methods
      ********************************************************************************* */
@@ -795,21 +838,30 @@ public class InCallActivity extends AppCompatActivity
         }
     }
 
+    public void addGracefulEndCallListener (TiviPhoneService.GracefulEndCallListener listener){
+        this.listener = listener;
+    }
+    public void removeGracefulEndCallListener (TiviPhoneService.GracefulEndCallListener listener){
+        this.listener = null;
+    }
+
     public void answerCallCb() {
         answerCall(true);
     }
 
     public void addCallCb(CallState call) {
-        if (mCallManagerFragment != null)            {
+        if (mCallManagerFragment != null) {
             mCallManagerFragment.setLastCallUnHold(call);// remember this call as last call not on hold
             mCallManagerFragment.setConferenceOnHold();  // and hold conference if necessary
         }
-        if (!call.iIsOnHold) {
+        if (call != null && !call.iIsOnHold) {
             call.iIsOnHold = true;                           // hold current call
             TiviPhoneService.doCmd("*h" + call.iCallId);
         }
+
         Intent intent = new Intent(this, DialerActivity.class);
         intent.setAction(ADD_CALL_ACTION);
+        intent.putExtra(DialerActivity.EXTRA_FROM_CALL, true);
         startActivityForResult(intent, ADD_CALL_ACTIVITY);
         invalidateOptionsMenu();
     }
@@ -819,13 +871,17 @@ public class InCallActivity extends AppCompatActivity
     }
 
     public void verifySasCb(String Sas, int callId) {
-        FragmentManager fragmentManager = getFragmentManager();
         VerifyDialog verify = VerifyDialog.newInstance(Sas, callId);
-        verify.show(fragmentManager, "com.silentcircle.silentphone2.verify_dialog");
+        FragmentManager fragmentManager = getFragmentManager();
+        if (fragmentManager != null) {
+            fragmentManager.beginTransaction()
+                .add(verify, "com.silentcircle.silentphone2.verify_dialog")
+                .commitAllowingStateLoss();
+        }
     }
 
-    public void activateVideoCb() {
-        activateVideo(false);
+    public void activateVideoCb(boolean fromAcceptance) {
+        handleVideoPermission(fromAcceptance);
     }
 
     // Hide and remove the active video fragment. The fragment itself already
@@ -1061,9 +1117,53 @@ public class InCallActivity extends AppCompatActivity
         }
     }
 
+    private void sendDrCallMetadata(final CallState call) {
+        // Calls that never started don't get logged.
+        if (!call.iActive)
+            return;
+
+        // If data retention is not enabled or user has blocked DR, don't log the call.
+        // This is last resort check to avoid DR logging
+        boolean isDrEnabled =
+                (LoadUserInfo.isLrcm() | LoadUserInfo.isLrcp());
+        if (!isDrEnabled
+                || (LoadUserInfo.isBldr() | LoadUserInfo.isBlmr())) {
+            return;
+        }
+
+        /*
+        new Thread(new Runnable() {
+            public void run() {
+                if (call.isOcaCall) {
+                    ZinaNative.sendDrSilentWorldCallMetadata(call.sipCallId.toString(), call.iIsIncoming, "", call.mDefaultDisplayName.toString(), call.uiStartTime == 0 ? System.currentTimeMillis() : call.uiStartTime, System.currentTimeMillis());
+                }
+                else {
+                    ZinaNative.sendDrInCircleCallMetadata(call.sipCallId.toString(), call.iIsIncoming, call.getNameFromAB(), call.uiStartTime == 0 ? System.currentTimeMillis() : call.uiStartTime, System.currentTimeMillis());
+                }
+            }
+        }).start();
+         */
+
+        AsyncUtils.execute(new Runnable() {
+            public void run() {
+                if (call.isOcaCall) {
+                    ZinaNative.sendDrSilentWorldCallMetadata(call.sipCallId.toString(),
+                            call.iIsIncoming, "", call.mCallerUuid,
+                            call.uiStartTime == 0 ? System.currentTimeMillis() : call.uiStartTime,
+                            System.currentTimeMillis());
+                }
+                else {
+                    ZinaNative.sendDrInCircleCallMetadata(call.sipCallId.toString(),
+                            call.iIsIncoming, call.mCallerUuid,
+                            call.uiStartTime == 0 ? System.currentTimeMillis() : call.uiStartTime,
+                            System.currentTimeMillis());
+                }
+            }
+        });
+    }
+
     private boolean mPreviousUserPressed;
     synchronized private void endCall(boolean userPressed, final CallState call) {
-
         // No active call - this should not happen. Anyway, as a precaution: Stop ringer (just in case),
         // switch to normal audio mode, done
         // Usually this could not happen because we always set an active call state during call dialing
@@ -1097,7 +1197,9 @@ public class InCallActivity extends AppCompatActivity
         // set-up completely the call id is zero. In this case we have an early call termination
         // that needs a specific handling.
         if (userPressed) {
+            playHangupSound();
             mPreviousUserPressed = true;
+            call.callEndedByUser = true;
             AsyncTasks.asyncCommand("*e" + call.iCallId);
             if (call.iCallId == 0) {                         // mark as ended and let monitor thread handle it
                 call.callEnded = true;
@@ -1136,6 +1238,7 @@ public class InCallActivity extends AppCompatActivity
                 Utilities.turnOnSpeaker(getBaseContext(), false, true); // Set speaker to off at end of call and remember this
             }
         });
+//        sendDrCallMetadata(call);
     }
 
     /**
@@ -1219,7 +1322,7 @@ public class InCallActivity extends AppCompatActivity
      * @param call
      *            the <tt>the CTCall information</tt>
      */
-    private void zrtpStateChanged(CallState call, TiviPhoneService.CT_cb_msg msg) {
+    private void zrtpStateChanged(@NonNull CallState call, TiviPhoneService.CT_cb_msg msg) {
         synchronized (callStateListeners) {
             for (TiviPhoneService.ServiceStateChangeListener l : callStateListeners)
                 l.zrtpStateChange(call, msg);
@@ -1232,7 +1335,7 @@ public class InCallActivity extends AppCompatActivity
      * @param call
      *            the <tt>the CTCall information</tt>
      */
-    private void callStateChanged(CallState call, TiviPhoneService.CT_cb_msg msg) {
+    private void callStateChanged(@NonNull CallState call, TiviPhoneService.CT_cb_msg msg) {
         synchronized (callStateListeners) {
             for (TiviPhoneService.ServiceStateChangeListener l : callStateListeners)
                 l.callStateChange(call, msg);
@@ -1403,6 +1506,7 @@ public class InCallActivity extends AppCompatActivity
                 }
                 mPhoneService.bluetoothHeadset(false);
                 InCallActivity.this.finish();
+                mSaveForRestart = null;
                 if (mMonitorStopLatch != null) {
                     mMonitorStopLatch.countDown();
                 }
@@ -1454,6 +1558,8 @@ public class InCallActivity extends AppCompatActivity
     }
 
     private void startCallManager() {
+        if (mDestroyed)                     // Can happen because we call this from a timer and an external thread
+            return;
         FragmentManager fm = getFragmentManager();
         FragmentTransaction ft = fm.beginTransaction();
         if (mCallManagerFragment == null) {
@@ -1473,7 +1579,6 @@ public class InCallActivity extends AppCompatActivity
             ft.replace(R.id.dtmf_dialer, mDtmfDialer, "com.silentcircle.silentphone.dtmfDialer");
         }
         ft.hide(mInCallMain).show(mDtmfDialer).commitAllowingStateLoss();
-        mDtmfDialer.startTimer();
         if (!mIsMuted) {
             mDtmfSetToMute = true;
             TiviPhoneService.doCmd(":mute 1");
@@ -1489,9 +1594,64 @@ public class InCallActivity extends AppCompatActivity
             ZrtpMessageDialog infoMsg =
                     ZrtpMessageDialog.newInstance(message, type, call.iCallId);
             FragmentManager fragmentManager = getFragmentManager();
-            infoMsg.show(fragmentManager, "SilentPhoneZrtpMessage");
+            fragmentManager.beginTransaction()
+                    .add(infoMsg, "SilentPhoneZrtpMessage")
+                    .commitAllowingStateLoss();
         }
         mZrtpErrorShowing = true;
+    }
+
+    private void handleVideoPermission(boolean fromAcceptance) {
+        if (ContextCompat.checkSelfPermission(this,
+                Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.CAMERA)) {
+                ExplainPermissionDialog.showExplanation(this, fromAcceptance
+                                ? PERMISSIONS_REQUEST_VIDEO_ACCEPT
+                                : PERMISSIONS_REQUEST_VIDEO_ACTIVATE,
+                        getString(R.string.permission_camera_title), getString(R.string.permission_camera_explanation), null);
+            }
+            else {
+                ActivityCompat.requestPermissions(this, new String[] { Manifest.permission.CAMERA }
+                        , fromAcceptance ? PERMISSIONS_REQUEST_VIDEO_ACCEPT : PERMISSIONS_REQUEST_VIDEO_ACTIVATE);
+            }
+        }
+        else {
+            if (!fromAcceptance) {
+                activateVideo(false);
+            } else if (mVideoFragment != null) {
+                mVideoFragment.mVideoAccepted = true;
+                mVideoFragment.switchVideoOn(true);
+            }
+        }
+    }
+
+    @Override
+    public void explanationRead(int token, Bundle callerBundle) {
+        switch (token) {
+            case PERMISSIONS_REQUEST_VIDEO_ACTIVATE:
+            case PERMISSIONS_REQUEST_VIDEO_ACCEPT:
+                ActivityCompat.requestPermissions(this, new String[] { Manifest.permission.CAMERA }, token);
+                break;
+            default:
+                break;
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        switch (requestCode) {
+            case PERMISSIONS_REQUEST_VIDEO_ACTIVATE:
+            case PERMISSIONS_REQUEST_VIDEO_ACCEPT:
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    if (requestCode == PERMISSIONS_REQUEST_VIDEO_ACTIVATE) {
+                        activateVideo(false);
+                    } else if (mVideoFragment != null) {
+                        mVideoFragment.mVideoAccepted = true;
+                        mVideoFragment.switchVideoOn(true);
+                    }
+                }
+            break;
+        }
     }
 
     /**
@@ -1558,7 +1718,6 @@ public class InCallActivity extends AppCompatActivity
         }
 
         public void run() {
-
             if (call == null && msg == TiviPhoneService.CT_cb_msg.eReg) {
                 Utilities.setSubtitleColor(InCallActivity.this, mToolbar);
                 return;
@@ -1658,7 +1817,12 @@ public class InCallActivity extends AppCompatActivity
                 .setOngoing(true)
                 .addAction(R.drawable.ic_end_call_dark, getString(R.string.end_call_button), endCallPendingIntent)
                 .build();
-        mNotificationManager.notify(ACTIVE_CALL_NOTIFICATION_ID, notification);
+        try {
+            mNotificationManager.notify(ACTIVE_CALL_NOTIFICATION_ID, notification);
+        } catch (Throwable ignore) {
+            // @see <a href="https://sentry.silentcircle.org/sentry/spa/issues/6179/">this crash</a>
+            // TODO: Why?
+        }
     }
 
     private void showCallInformation(String message) {
@@ -1680,4 +1844,37 @@ public class InCallActivity extends AppCompatActivity
         final float relativeVolume = (float)currentVolume / (float)maxVolume;
         return (relativeVolume <= 0.15);
     }
+
+    @SuppressWarnings("deprecation")
+    private void initSoundPool() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            AudioAttributes attributes = new AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION_SIGNALLING)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                    .build();
+            mSoundPool = new SoundPool.Builder()
+                    .setAudioAttributes(attributes)
+                    .build();
+            mHangupSoundId = mSoundPool.load(this, R.raw.hangup, 1);
+        } else {
+            mSoundPool = new SoundPool(1, AudioManager.STREAM_VOICE_CALL, 0);
+        }
+    }
+
+    private void playHangupSound() {
+        if (mSoundPool != null) {
+            final boolean soundsEnabled = MessagingPreferences.getInstance(this).getMessageSoundsEnabled();
+            if (soundsEnabled) {
+                mSoundPool.play(mHangupSoundId, 0.99f, 0.99f, 1, 0, 0.99f);
+            }
+        }
+    }
+
+    private void releaseSoundPool() {
+        if (mSoundPool != null) {
+            mSoundPool.release();
+            mSoundPool = null;
+        }
+    }
+
 }

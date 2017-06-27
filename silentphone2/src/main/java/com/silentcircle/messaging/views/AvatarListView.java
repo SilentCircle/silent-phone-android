@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2016-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -25,7 +25,6 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-
 package com.silentcircle.messaging.views;
 
 import android.annotation.TargetApi;
@@ -46,6 +45,15 @@ import com.silentcircle.silentphone2.R;
  */
 public class AvatarListView extends ListView {
 
+    public interface PinnedAvatarAdapter {
+
+        int getPinnedAvatarCount();
+
+        View getPinnedAvatarView(int viewIndex, View convertView, ViewGroup parent);
+
+        void configurePinnedAvatars(AvatarListView listView);
+    }
+
     public static final class PinnedAvatar {
         View view;
         boolean visible;
@@ -58,6 +66,7 @@ public class AvatarListView extends ListView {
     protected int mSize;
     protected int mAvatarPaddingStart;
     protected int mAvatarPaddingTop;
+    protected int mAvatarPaddingFirstMessageTop;
     protected int mAvatarPaddingBottom;
     protected int mAvatarWidth;
 
@@ -75,12 +84,6 @@ public class AvatarListView extends ListView {
         super(context, attributes, defaultStyle);
     }
 
-    public interface PinnedAvatarAdapter {
-        int getPinnedAvatarCount();
-        View getPinnedAvatarView(int viewIndex, View convertView, ViewGroup parent);
-        void configurePinnedAvatars(AvatarListView listView);
-    }
-
     @Override
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
@@ -88,6 +91,7 @@ public class AvatarListView extends ListView {
         mAvatarPaddingStart = (int) getContext().getResources().getDimension(R.dimen.messaging_message_avatar_padding_start);
         mAvatarWidth = r - l - mAvatarPaddingStart - getPaddingEnd();
         mAvatarPaddingTop = (int) getContext().getResources().getDimension(R.dimen.messaging_message_avatar_padding_top);
+        mAvatarPaddingFirstMessageTop = (int) getContext().getResources().getDimension(R.dimen.messaging_message_avatar_first_message_padding_top);
         mAvatarPaddingBottom = (int) getContext().getResources().getDimension(R.dimen.messaging_message_avatar_padding_bottom);
     }
 
@@ -125,6 +129,18 @@ public class AvatarListView extends ListView {
         super.onScroll(view, firstVisibleItem, visibleItemCount, totalItemCount);
     }
 
+    @Override
+    public void invalidate() {
+        super.invalidate();
+        invalidateAvatars();
+    }
+
+    @Override
+    public void invalidateViews() {
+        super.invalidateViews();
+        invalidateAvatars();
+    }
+
     /**
      * Pins avatar to a given group
      *
@@ -149,7 +165,7 @@ public class AvatarListView extends ListView {
         if (firstVisiblePosition <= sectionPosition) {
             View view = getChildAt(sectionPosition - firstVisiblePosition);
             if (view != null) {
-                y = view.getTop() + mAvatarPaddingTop;
+                y = view.getTop() + mAvatarPaddingFirstMessageTop;
                 // slide only for groups with more than one item
                 if (sectionLength > 0) {
                     y = Math.max(y, mAvatarPaddingTop);
@@ -193,31 +209,28 @@ public class AvatarListView extends ListView {
             return;
         }
 
-        // assume constant size after measured once
-        if (mAvatars[viewIndex].height == 0) {
-            ViewGroup.LayoutParams layoutParams = view.getLayoutParams();
-            int widthSpec;
-            int heightSpec;
+        ViewGroup.LayoutParams layoutParams = view.getLayoutParams();
+        int widthSpec;
+        int heightSpec;
 
-            if (layoutParams != null && layoutParams.width > 0) {
-                widthSpec = View.MeasureSpec
-                        .makeMeasureSpec(layoutParams.width, View.MeasureSpec.EXACTLY);
-            } else {
-                widthSpec = View.MeasureSpec
-                        .makeMeasureSpec(mAvatarWidth, View.MeasureSpec.EXACTLY);
-            }
-
-            if (layoutParams != null && layoutParams.height > 0) {
-                heightSpec = View.MeasureSpec
-                        .makeMeasureSpec(layoutParams.height, View.MeasureSpec.EXACTLY);
-            } else {
-                heightSpec = View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED);
-            }
-            view.measure(widthSpec, heightSpec);
-            int height = view.getMeasuredHeight();
-            mAvatars[viewIndex].height = height;
-            view.layout(0, 0, view.getMeasuredWidth(), height);
+        if (layoutParams != null && layoutParams.width > 0) {
+            widthSpec = View.MeasureSpec
+                    .makeMeasureSpec(layoutParams.width, View.MeasureSpec.EXACTLY);
+        } else {
+            widthSpec = View.MeasureSpec
+                    .makeMeasureSpec(mAvatarWidth, View.MeasureSpec.EXACTLY);
         }
+
+        if (layoutParams != null && layoutParams.height > 0) {
+            heightSpec = View.MeasureSpec
+                    .makeMeasureSpec(layoutParams.height, View.MeasureSpec.EXACTLY);
+        } else {
+            heightSpec = View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED);
+        }
+        view.measure(widthSpec, heightSpec);
+        int height = view.getMeasuredHeight();
+        mAvatars[viewIndex].height = height;
+        view.layout(0, 0, view.getMeasuredWidth(), height);
     }
 
 
@@ -261,6 +274,15 @@ public class AvatarListView extends ListView {
             canvas.translate(translateX, avatar.y);
             view.draw(canvas);
             canvas.restoreToCount(saveCount);
+        }
+    }
+
+    private void invalidateAvatars() {
+        for (int i = 0; i < mSize; i++) {
+            PinnedAvatar avatar = mAvatars[i];
+            if (avatar.visible && avatar.view != null) {
+                avatar.view.invalidate();
+            }
         }
     }
 

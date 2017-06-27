@@ -1,7 +1,7 @@
 /*
 Created by Janis Narbuts
 Copyright (C) 2004-2012, Tivi LTD, www.tiviphone.com. All rights reserved.
-Copyright (C) 2012-2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2012-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,9 +27,6 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-
-
-
 #include "../encrypt/md5/md5.h"
 #include "../sipparser/client/sip.h"
 #include "digestmd5.h"
@@ -64,19 +61,19 @@ int calcMD5(unsigned char *p, int iLen, char *out){
    md5.update(p, iLen);
    md5.final((unsigned char *)HA1);
    CvtHex(HA1, out);
-   return strlen(out);
+   return (int)strlen(out);
 }
 
 unsigned int calcMD5(const char *p, int iLen){
    CTMd5 md5;
-   if(!iLen)iLen=strlen(p);
+   if(!iLen)iLen=(int)strlen(p);
    md5.update((unsigned char*)p, iLen);
    return md5.final();
 }
 
 unsigned int calcMD5(const char *p, int iLen, int n){
    CTMd5 md5;
-   if(!iLen)iLen=strlen(p);
+   if(!iLen)iLen=(int)strlen(p);
    for(int i=0;i<n;i++)
       md5.update((unsigned char*)p, iLen);
    
@@ -95,11 +92,11 @@ int DigestCalcHA1(IN  HDR_AUT * aut, IN unsigned char *un, IN unsigned char * pw
    if((aut->iFlag & 2048)==0) return false;
    //TODO save UN:realm:pwd as hash in xml
    
-   md5.update(un, strlen((const char *)un));
+   md5.update(un, (unsigned int)strlen((const char *)un));
    md5.update( (unsigned char *)":", 1);
    md5.update( DSTR_USL(aut->dstrRealm));//TODO realm or domain
    md5.update((unsigned char *)":", 1);
-   md5.update( pwd, strlen((const char *)pwd));
+   md5.update( pwd, (unsigned int)strlen((const char *)pwd));
    md5.final((unsigned char *)HA1);
    if (CMP(aut->dstrAlgo,"MD\x15\rSESS",8)) {
       
@@ -190,7 +187,7 @@ int DigestCalcResponse(
 
       if(nonceCount)
       {
-         md5.update( (unsigned char *)nonceCount, strlen(nonceCount));
+         md5.update( (unsigned char *)nonceCount, (unsigned int)strlen(nonceCount));
          md5.update( (unsigned char *)":", 1);
       }
       else if(aut->dstrNonceCount.strVal)
@@ -200,7 +197,7 @@ int DigestCalcResponse(
       } 
       
       if(cNonce)
-         md5.update( (unsigned char *)cNonce, strlen(cNonce));
+         md5.update( (unsigned char *)cNonce, (unsigned int)strlen(cNonce));
       else if(aut->dstrCnonce.strVal)
          md5.update( DSTR_USL(aut->dstrCnonce));
       md5.update((unsigned char *)":", 1);

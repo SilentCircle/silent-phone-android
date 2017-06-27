@@ -25,10 +25,14 @@ Thumbs.db
 ##################
 *~
 
-# Static libraries, created using the buildNative script
+# Static and shared libraries, created using the buildNative script
 ########################################################
-silentphone2/jni/*/libaxolotl++.a
+silentphone2/jni/*/libzina.a
 silentphone2/jni/*/libprotobuf-cpp-lite.a
+silentphone2/jni/*/libtina.so
+silentphone2/jni/*/libtivi.so
+silentphone2/jni/*/libaec.so
+silentphone2/jni/*/libzrtpcpp.a
 
 # Backup files and Android Studio and gradle directories
 ##################
@@ -37,9 +41,9 @@ out/
 .gradle/
 .idea/
 *.iml
-libtivi.so
 
 helper/
 translations/
 libs/
 
+.*.sw?

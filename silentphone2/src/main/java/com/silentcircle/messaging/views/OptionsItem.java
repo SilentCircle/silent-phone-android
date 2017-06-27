@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2016-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -28,15 +28,18 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package com.silentcircle.messaging.views;
 
 import android.content.Context;
+import android.content.res.ColorStateList;
 import android.content.res.TypedArray;
 import android.graphics.drawable.Drawable;
 import android.text.TextUtils;
+import android.text.util.Linkify;
 import android.util.AttributeSet;
 import android.util.TypedValue;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.SoundEffectConstants;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.CheckBox;
 import android.widget.Checkable;
 import android.widget.ImageView;
@@ -50,32 +53,44 @@ import com.silentcircle.silentphone2.R;
  */
 public class OptionsItem extends RelativeLayout implements Checkable {
 
+    private static final int[] ATTRIBUTES = {android.R.attr.textColor,
+            android.R.attr.text};
+
     private TextView mItemText;
     private TextView mItemDescription;
     private ImageView mImage;
     private CheckBox mCheckBox;
 
+    private ViewGroup mContainer;
     private CharSequence mText;
     private CharSequence mDescription;
     private Drawable mImageDrawable;
     private Drawable mImageDrawableChecked;
     private boolean mIsCheckable;
+    private int mPaddingLeft;
+    private int mPaddingTop;
+    private int mPaddingRight;
+    private int mPaddingBottom;
     private int mImageMarginLeft;
     private int mImageMarginRight;
-    private int mCheckboxMargin;
+    private int mCheckboxMarginLeft;
+    private int mCheckboxMarginRight;
     private int mDescriptionMarginTop;
     private int mDescriptionMarginLeft;
+    private int mDescriptionMarginRight;
     private int mTextSize;
     private int mDescriptionSize;
+    private boolean mTrackingGesture;
 
     private boolean mChecked;
 
-    private int mTextColor;
-    private int mDescriptionColor;
+    private ColorStateList mTextColor;
+    private ColorStateList mDescriptionColor;
     private int mTintColor;
 
     private OnCheckedChangeListener mOnCheckedChangeListener;
     private OnClickListener mOnClickListener;
+    private PerformClick performClick = new PerformClick();
 
     /**
      * Interface definition for a callback to be invoked when the checked state
@@ -91,30 +106,43 @@ public class OptionsItem extends RelativeLayout implements Checkable {
         void onCheckedChanged(OptionsItem optionsItemView, boolean isChecked);
     }
 
-
+    @SuppressWarnings("ResourceType")
     public OptionsItem(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
 
-        TypedArray typedArray = context.obtainStyledAttributes(attrs,
+        TypedArray typedArray = context.obtainStyledAttributes(attrs, ATTRIBUTES);
+        mTextColor = typedArray.getColorStateList(0);
+        mText = typedArray.getText(1);
+        typedArray.recycle();
+
+        typedArray = context.obtainStyledAttributes(attrs,
                 com.silentcircle.silentphone2.R.styleable.OptionsItem, 0, 0);
-        mText = typedArray.getText(R.styleable.OptionsItem_text);
+        if (TextUtils.isEmpty(mText)) {
+            mText = typedArray.getText(R.styleable.OptionsItem_text);
+        }
         mDescription = typedArray.getText(R.styleable.OptionsItem_description);
         mImageDrawable = typedArray.getDrawable(com.silentcircle.silentphone2.R.styleable.OptionsItem_src);
         mImageDrawableChecked = typedArray.getDrawable(com.silentcircle.silentphone2.R.styleable.OptionsItem_srcChecked);
         mIsCheckable = typedArray.getBoolean(com.silentcircle.silentphone2.R.styleable.OptionsItem_isCheckable, true);
         mImageMarginLeft = typedArray.getDimensionPixelSize(R.styleable.OptionsItem_imageMarginLeft, 0);
         mImageMarginRight = typedArray.getDimensionPixelSize(R.styleable.OptionsItem_imageMarginRight, 0);
-        mCheckboxMargin = typedArray.getDimensionPixelSize(R.styleable.OptionsItem_checkableMargin, 0);
+        mCheckboxMarginLeft = typedArray.getDimensionPixelSize(R.styleable.OptionsItem_checkableMarginLeft, 0);
+        mCheckboxMarginRight = typedArray.getDimensionPixelSize(R.styleable.OptionsItem_checkableMarginRight, 0);
         mDescriptionMarginTop = typedArray.getDimensionPixelSize(R.styleable.OptionsItem_descriptionMarginTop, 0);
         mDescriptionMarginLeft = typedArray.getDimensionPixelSize(R.styleable.OptionsItem_descriptionMarginLeft, 0);
+        mDescriptionMarginRight = typedArray.getDimensionPixelSize(R.styleable.OptionsItem_descriptionMarginRight, 0);
         mTextSize = typedArray.getDimensionPixelSize(R.styleable.OptionsItem_textSize, 0);
         mDescriptionSize = typedArray.getDimensionPixelSize(R.styleable.OptionsItem_descriptionSize, 0);
-        mTextColor = typedArray.getColor(R.styleable.OptionsItem_textColor, 0);
-        mDescriptionColor = typedArray.getColor(R.styleable.OptionsItem_descriptionColor, 0);
+        mDescriptionColor = typedArray.getColorStateList(R.styleable.OptionsItem_descriptionColor);
         mTintColor = typedArray.getColor(R.styleable.OptionsItem_tintColor, 0);
+        mPaddingLeft = typedArray.getDimensionPixelSize(R.styleable.OptionsItem_containerPaddingLeft, 0);
+        mPaddingTop = typedArray.getDimensionPixelSize(R.styleable.OptionsItem_containerPaddingTop, 0);
+        mPaddingRight = typedArray.getDimensionPixelSize(R.styleable.OptionsItem_containerPaddingRight, 0);
+        mPaddingBottom = typedArray.getDimensionPixelSize(R.styleable.OptionsItem_containerPaddingBottom, 0);
         typedArray.recycle();
 
         inflate(context, R.layout.widget_options_item, this);
+        mContainer = (ViewGroup) findViewById(R.id.options_item_container);
         mImage = (ImageView) findViewById(R.id.widget_optitem_image);
         mCheckBox = (CheckBox) findViewById(R.id.widget_optitem_checkbox);
         mItemText = (TextView) findViewById(R.id.widget_optitem_text);
@@ -135,6 +163,9 @@ public class OptionsItem extends RelativeLayout implements Checkable {
     @Override
     protected void onFinishInflate() {
         super.onFinishInflate();
+
+        mContainer.setPadding(mPaddingLeft, mPaddingTop, mPaddingRight, mPaddingBottom);
+
         mCheckBox.setVisibility(mIsCheckable ? View.VISIBLE : View.GONE);
         setText(mText);
         setDescription(mDescription);
@@ -145,15 +176,17 @@ public class OptionsItem extends RelativeLayout implements Checkable {
         LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) mImage.getLayoutParams();
         params.setMargins(mImageMarginLeft, params.topMargin, mImageMarginRight, params.bottomMargin);
         params = (LinearLayout.LayoutParams) mCheckBox.getLayoutParams();
-        params.setMargins(mCheckboxMargin, params.topMargin, params.rightMargin, params.bottomMargin);
+        params.setMargins(mCheckboxMarginLeft, params.topMargin, mCheckboxMarginRight, params.bottomMargin);
 
         RelativeLayout.LayoutParams rparams = (RelativeLayout.LayoutParams) mItemDescription.getLayoutParams();
-        rparams.setMargins(mDescriptionMarginLeft, mDescriptionMarginTop, rparams.rightMargin, rparams.bottomMargin);
+        rparams.setMargins(mDescriptionMarginLeft, mDescriptionMarginTop, mDescriptionMarginRight, rparams.bottomMargin);
 
-        if (mTextColor != 0) {
+        if (mTextColor != null) {
             mItemText.setTextColor(mTextColor);
+            mItemText.setLinkTextColor(mTextColor);
+            mItemText.setAutoLinkMask(Linkify.ALL);
         }
-        if (mDescriptionColor != 0) {
+        if (mDescriptionColor != null) {
             mItemDescription.setTextColor(mDescriptionColor);
         }
         if (mTintColor != 0) {
@@ -165,12 +198,12 @@ public class OptionsItem extends RelativeLayout implements Checkable {
     public void setChecked(boolean checked) {
         if (mChecked != checked) {
             mChecked = checked;
-            mCheckBox.setChecked(checked);
-            mImage.setImageDrawable(checked ? mImageDrawableChecked : mImageDrawable);
             if (mOnCheckedChangeListener != null) {
                 mOnCheckedChangeListener.onCheckedChanged(this, mChecked);
             }
         }
+        mCheckBox.setChecked(checked);
+        mImage.setImageDrawable(checked ? mImageDrawableChecked : mImageDrawable);
     }
 
     @Override
@@ -181,6 +214,15 @@ public class OptionsItem extends RelativeLayout implements Checkable {
     @Override
     public void toggle() {
         setChecked(!mChecked);
+    }
+
+    @Override
+    public void setEnabled(boolean enabled) {
+        super.setEnabled(enabled);
+        mItemText.setEnabled(enabled);
+        mItemDescription.setEnabled(enabled);
+        mImage.setEnabled(enabled);
+        mCheckBox.setEnabled(enabled);
     }
 
     public void setText(final CharSequence text) {
@@ -215,10 +257,25 @@ public class OptionsItem extends RelativeLayout implements Checkable {
 
     @Override
     public boolean dispatchTouchEvent(MotionEvent event) {
-        if (event.getAction() == MotionEvent.ACTION_UP) {
-            performClick();
-            if (mOnClickListener != null) {
-                mOnClickListener.onClick(this);
+        if (!isEnabled()) {
+            return false;
+        }
+
+        final int action = event.getAction();
+        final float x = event.getX();
+        final float y = event.getY();
+
+        if (action == MotionEvent.ACTION_DOWN) {
+            mTrackingGesture = true;
+        }
+        if (action == MotionEvent.ACTION_UP) {
+            if (mTrackingGesture) {
+                getHandler().post(performClick);
+            }
+        }
+        else if (action == MotionEvent.ACTION_MOVE) {
+            if (!isPointInView(x, y)) {
+                mTrackingGesture = false;
             }
         }
         return super.dispatchTouchEvent(event);
@@ -227,6 +284,10 @@ public class OptionsItem extends RelativeLayout implements Checkable {
 
     @Override
     public boolean dispatchKeyEvent(KeyEvent event) {
+        if (!isEnabled()) {
+            return false;
+        }
+
         if (event.getAction() == KeyEvent.ACTION_UP
                 && (event.getKeyCode() == KeyEvent.KEYCODE_DPAD_CENTER
                         || event.getKeyCode() == KeyEvent.KEYCODE_ENTER)) {
@@ -238,12 +299,31 @@ public class OptionsItem extends RelativeLayout implements Checkable {
         return super.dispatchKeyEvent(event);
     }
 
+    boolean isPointInView(float localX, float localY) {
+        return isPointInView(localX, localY, 0);
+    }
+
+    public boolean isPointInView(float localX, float localY, float slop) {
+        return localX >= -slop && localY >= -slop && localX < ((getRight() - getLeft()) + slop) &&
+                localY < ((getBottom() - getTop()) + slop);
+    }
+
+    private final class PerformClick implements Runnable {
+        @Override
+        public void run() {
+            performClick();
+        }
+    }
+
     @Override
     public boolean performClick() {
         if (mIsCheckable) {
             toggle();
         }
         playSoundEffect(SoundEffectConstants.CLICK);
+        if (mOnClickListener != null) {
+            mOnClickListener.onClick(this);
+        }
         return super.performClick();
     }
 

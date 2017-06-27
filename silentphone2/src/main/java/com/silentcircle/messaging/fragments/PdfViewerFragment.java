@@ -1,30 +1,3 @@
-/*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-    * Any redistribution, use, or modification is done solely for personal
-      benefit and not for any commercial purpose or for monetary gain
-    * Redistributions of source code must retain the above copyright
-      notice, this list of conditions and the following disclaimer.
-    * Redistributions in binary form must reproduce the above copyright
-      notice, this list of conditions and the following disclaimer in the
-      documentation and/or other materials provided with the distribution.
-    * Neither the name Silent Circle nor the
-      names of its contributors may be used to endorse or promote products
-      derived from this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL SILENT CIRCLE, LLC BE LIABLE FOR ANY
-DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
 package com.silentcircle.messaging.fragments;
 
 import android.annotation.TargetApi;
@@ -140,7 +113,9 @@ public class PdfViewerFragment extends FileViewerFragment implements View.OnClic
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
-        commonOnAttach(activity);
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+            commonOnAttach(activity);
+        }
     }
 
     private void commonOnAttach(Context context) {
@@ -150,9 +125,9 @@ public class PdfViewerFragment extends FileViewerFragment implements View.OnClic
 
         try {
             openRenderer(context);
-        } catch (IOException e) {
+        } catch (IOException | SecurityException e) {
             Toast.makeText(context, "Failed to show PDF document [" + e.getMessage() + "]",
-                    Toast.LENGTH_SHORT).show();
+                    Toast.LENGTH_LONG).show();
             dispatchError();
         }
     }
@@ -192,7 +167,7 @@ public class PdfViewerFragment extends FileViewerFragment implements View.OnClic
 
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     public int getPageCount() {
-        return mPdfRenderer.getPageCount();
+        return mPdfRenderer != null ? mPdfRenderer.getPageCount() : 0;
     }
 
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
@@ -212,11 +187,16 @@ public class PdfViewerFragment extends FileViewerFragment implements View.OnClic
 
         if (mPdfRenderer != null) {
             mPdfRenderer.close();
+            mPdfRenderer = null;
         }
     }
 
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     private void showPage(int index) {
+        if (mPdfRenderer == null) {
+            return;
+        }
+
         if (mPdfRenderer.getPageCount() <= index || index < 0) {
             return;
         }
@@ -230,8 +210,25 @@ public class PdfViewerFragment extends FileViewerFragment implements View.OnClic
         int renderWidth = Math.round(mRenderMultiplier * mCurrentPage.getWidth());
         int renderHeight = Math.round(mRenderMultiplier * mCurrentPage.getHeight());
 
-        Bitmap bitmap = Bitmap.createBitmap(renderWidth, renderHeight,
-                Bitmap.Config.ARGB_8888);
+        Bitmap bitmap = null;
+        try {
+            bitmap = Bitmap.createBitmap(renderWidth, renderHeight,
+                    Bitmap.Config.ARGB_8888);
+        } catch (OutOfMemoryError oomHiDef) {
+            // Can't render hi-def PDF image, try lo-def
+            try {
+                bitmap = Bitmap.createBitmap(mCurrentPage.getWidth(), mCurrentPage.getHeight(),
+                        Bitmap.Config.ARGB_4444);
+            } catch (OutOfMemoryError oomLoDef) {
+                // Can't render anything, error and return
+                Toast.makeText(getActivity(), "Failed to show PDF document",
+                        Toast.LENGTH_LONG).show();
+                dispatchError();
+
+                return;
+            }
+        }
+
         mCurrentPage.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY);
         mImageView.setImageBitmap(bitmap);
         updateUi();
@@ -239,6 +236,10 @@ public class PdfViewerFragment extends FileViewerFragment implements View.OnClic
 
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     private void updateUi() {
+        if (mPdfRenderer == null || mCurrentPage == null) {
+            return;
+        }
+
         int index = mCurrentPage.getIndex();
         int pageCount = mPdfRenderer.getPageCount();
         mButtonPrevious.setEnabled(0 != index);

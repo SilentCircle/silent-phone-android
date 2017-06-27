@@ -39,7 +39,7 @@ public class ClipboardUtils {
      * @param text Text to copy.
      * @param showToast If {@code true}, a toast is shown to the user.
      */
-    public static void copyText(Context context, CharSequence label, CharSequence text, boolean showToast) {
+    public static void copyText(Context context, CharSequence label, CharSequence text, CharSequence toastMessage, boolean showToast) {
         if (TextUtils.isEmpty(text))
             return;
 
@@ -48,7 +48,7 @@ public class ClipboardUtils {
         clipboardManager.setPrimaryClip(clipData);
 
         if (showToast) {
-            String toastText = context.getString(R.string.toast_text_copied);
+            CharSequence toastText = toastMessage == null ? context.getString(R.string.toast_copied_to_clipboard) : toastMessage;
             Toast.makeText(context, toastText, Toast.LENGTH_SHORT).show();
         }
     }

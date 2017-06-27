@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2013-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -47,7 +47,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 package com.silentcircle.vcard;
 
-import android.util.Log;
+import com.silentcircle.logs.Log;
 
 import com.silentcircle.vcard.exception.VCardException;
 
@@ -258,7 +258,7 @@ class VCardParserImpl_V30 extends VCardParserImpl_V21 {
         for (int i = 0; i < length; i++) {
             final char ch = paramValue.charAt(i);
             if (ch == '"') {
-                if (insideDquote) {
+                if (insideDquote && property != null) {
                     // End of Dquote.
                     property.addParameter(paramName, encodeParamValue(builder.toString()));
                     builder = null;
@@ -269,7 +269,7 @@ class VCardParserImpl_V30 extends VCardParserImpl_V21 {
                             // e.g.
                             // pref"quoted"
                             Log.w(LOG_TAG, "Unexpected Dquote inside property.");
-                        } else {
+                        } else if (property != null) {
                             // e.g.
                             // pref,"quoted"
                             // "quoted",pref
@@ -282,7 +282,7 @@ class VCardParserImpl_V30 extends VCardParserImpl_V21 {
                 if (builder == null) {
                     Log.w(LOG_TAG, "Comma is used before actual string comes. (" +
                             paramValue + ")");
-                } else {
+                } else if (property != null) {
                     property.addParameter(paramName, encodeParamValue(builder.toString()));
                     builder = null;
                 }
@@ -304,7 +304,7 @@ class VCardParserImpl_V30 extends VCardParserImpl_V21 {
             if (builder.length() == 0) {
                 Log.w(LOG_TAG, "Unintended behavior. We must not see empty StringBuilder " +
                         "at the end of parameter value parsing.");
-            } else {
+            } else if (property != null) {
                 property.addParameter(paramName, encodeParamValue(builder.toString()));
             }
         }

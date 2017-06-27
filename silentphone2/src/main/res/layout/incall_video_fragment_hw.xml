@@ -96,7 +96,8 @@
                     android:layout_height="@dimen/button_height"
                     android:layout_marginRight="10dp"
                     android:visibility="gone"
-                    android:text="@string/stop_video"/>
+                    android:text="@string/stop_video"
+                    android:textColor="@color/sc_ng_text_grey_1" />
 
             <Button
                     android:id="@+id/video_pause"
@@ -105,7 +106,8 @@
                     android:layout_height="@dimen/button_height"
                     android:layout_marginLeft="10dp"
                     android:visibility="gone"
-                    android:text="@string/pause_video"/>
+                    android:text="@string/pause_video"
+                    android:textColor="@color/sc_ng_text_grey_1" />
         </LinearLayout>
 
         <LinearLayout

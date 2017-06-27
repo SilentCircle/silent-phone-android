@@ -1,31 +1,41 @@
-#include <limits.h>
+/*
+Copyright 2016-2017 Silent Circle, LLC
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
 
 #include "../storage/sqlite/SQLiteStoreConv.h"
 
-#include "../axolotl/crypto/Ec255PrivateKey.h"
-#include "../axolotl/crypto/Ec255PublicKey.h"
-#include "../axolotl/crypto/EcCurve.h"
-#include "../axolotl/state/AxoConversation.h"
+#include "../ratchet/crypto/Ec255PrivateKey.h"
+#include "../ratchet/crypto/Ec255PublicKey.h"
+#include "../ratchet/crypto/EcCurve.h"
+#include "../ratchet/state/ZinaConversation.h"
 
 #include "../interfaceApp/AppInterfaceImpl.h"
-#include "../util/cJSON.h"
 #include "../util/b64helper.h"
-#include "../axolotl/Constants.h"
 #include "../keymanagment/PreKeys.h"
 #include "../provisioning/ScProvisioning.h"
-#include "../axolotl/crypto/DhKeyPair.h"
 
 #include "gtest/gtest.h"
-#include <iostream>
-#include <string>
-#include <utility>
+
+using namespace std;
 
 static const uint8_t keyInData[] = {0,1,2,3,4,5,6,7,8,9,19,18,17,16,15,14,13,12,11,10,20,21,22,23,24,25,26,27,28,20,31,30};
 static const uint8_t keyInData_1[] = {0,1,2,3,4,5,6,7,8,9,19,18,17,16,15,14,13,12,11,10,20,21,22,23,24,25,26,27,28,20,31,32};
 static const uint8_t keyInData_2[] = {"ZZZZZzzzzzYYYYYyyyyyXXXXXxxxxxW"};  // 32 bytes
 static     std::string empty;
 
-using namespace axolotl;
+using namespace zina;
 using namespace std;
 
 SQLiteStoreConv* store;
@@ -37,7 +47,7 @@ static const int32_t bobRegisterId = 4711;
 
 static const Ec255PublicKey bobIdpublicKey(keyInData);
 
-static pair<int32_t, const DhKeyPair*> bobPreKey;
+static PreKeys::PreKeyData bobPreKey(0, nullptr);
 
 #ifdef UNITTESTS
 // Used in testing and debugging to do in-depth checks
@@ -73,6 +83,9 @@ static int32_t helper0(const std::string& requestUrl, const std::string& method,
 
 TEST(RegisterRequest, Basic)
 {
+    LOGGER_INSTANCE setLogLevel(ERROR);
+
+    // Open the store with some key
     store = SQLiteStoreConv::getStore();
     if (!store->isReady()) {
         store->setKey(std::string((const char*)keyInData, 32));
@@ -83,17 +96,16 @@ TEST(RegisterRequest, Basic)
     string name("wernerd");
     string devId("myDev-id");
     AppInterfaceImpl uiIf(store, name, string("myAPI-key"), devId);
-    AxoConversation* ownAxoConv = AxoConversation::loadLocalConversation(name);
+    auto ownAxoConv = ZinaConversation::loadLocalConversation(name, *store);
 
-    if (ownAxoConv == NULL) {  // no yet available, create one. An own conversation has the same local and remote name
-        ownAxoConv = new AxoConversation(name, name, empty);
-        const DhKeyPair* idKeyPair = EcCurve::generateKeyPair(EcCurveTypes::Curve25519);
-        ownAxoConv->setDHIs(idKeyPair);
-        ownAxoConv->storeConversation();
+    if (!ownAxoConv->isValid()) {  // no yet available, create one. An own conversation has the same local and remote name
+        KeyPairUnique idKeyPair = EcCurve::generateKeyPair(EcCurveTypes::Curve25519);
+        ownAxoConv->setDHIs(move(idKeyPair));
+        ownAxoConv->storeConversation(*store);
     }
 
     std::string result;
-    int32_t ret = uiIf.registerAxolotlDevice(&result);
+    int32_t ret = uiIf.registerZinaDevice(&result);
 
     ASSERT_TRUE(ret > 0) << "Actual return value: " << ret;
 }
@@ -115,28 +127,23 @@ static int32_t helper1(const std::string& requestUrl, const std::string& method,
     char b64Buffer[MAX_KEY_BYTES_ENCODED*2];   // Twice the max. size on binary data - b64 is times 1.5
 
     root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "version", 1);
-    cJSON_AddStringToObject(root, "username", bob.c_str());
-    cJSON_AddStringToObject(root, "scClientDevId", bobDevId.c_str());
-//    cJSON_AddNumberToObject(root, "registrationId", bobRegisterId);
+    cJSON* axolotl;
+    cJSON_AddItemToObject(root, "axolotl", axolotl = cJSON_CreateObject());
 
     std::string data = bobIdpublicKey.serialize();
-    int32_t b64Len = b64Encode((const uint8_t*)data.data(), data.size(), b64Buffer, MAX_KEY_BYTES_ENCODED*2);
-    cJSON_AddStringToObject(root, "identity_key", b64Buffer);
-//    cJSON_AddNumberToObject(root, "deviceId", 1);
+    size_t b64Len = b64Encode((const uint8_t*)data.data(), data.size(), b64Buffer, MAX_KEY_BYTES_ENCODED*2);
+    cJSON_AddStringToObject(axolotl, "identity_key", b64Buffer);
 
     bobPreKey = PreKeys::generatePreKey(store);
 
     cJSON* jsonPkr;
-    cJSON_AddItemToObject(root, "preKey", jsonPkr = cJSON_CreateObject());
-    cJSON_AddNumberToObject(jsonPkr, "id", bobPreKey.first);
+    cJSON_AddItemToObject(axolotl, "preKey", jsonPkr = cJSON_CreateObject());
+    cJSON_AddNumberToObject(jsonPkr, "id", bobPreKey.keyId);
 
     // Get pre-key's public key data, serialized and add it to JSON
-    const DhKeyPair* ecPair = bobPreKey.second;
-    data = ecPair->getPublicKey().serialize();
+    data = bobPreKey.keyPair->getPublicKey().serialize();
     b64Len = b64Encode((const uint8_t*)data.data(), data.size(), b64Buffer, MAX_KEY_BYTES_ENCODED*2);
     cJSON_AddStringToObject(jsonPkr, "key", b64Buffer);
-    delete ecPair;
 
     char* out = cJSON_Print(root);
     response->append(out);
@@ -147,6 +154,8 @@ static int32_t helper1(const std::string& requestUrl, const std::string& method,
 
 TEST(PreKeyBundle, Basic)
 {
+    LOGGER_INSTANCE setLogLevel(ERROR);
+
     store = SQLiteStoreConv::getStore();
     if (!store->isReady()) {
         store->setKey(std::string((const char*)keyInData, 32));
@@ -155,10 +164,10 @@ TEST(PreKeyBundle, Basic)
     ScProvisioning::setHttpHelper(helper1);
 
 
-    pair< const axolotl::DhPublicKey*, const axolotl::DhPublicKey* > preIdKeys;
+    pair<PublicKeyUnique, PublicKeyUnique> preIdKeys;
     int32_t preKeyId = Provisioning::getPreKeyBundle(bob, bobDevId, bobAuth, &preIdKeys);
     
-    ASSERT_EQ(bobPreKey.first, preKeyId);
+    ASSERT_EQ(bobPreKey.keyId, preKeyId);
     ASSERT_TRUE(bobIdpublicKey == *(preIdKeys.first));
 
 }
@@ -208,21 +217,16 @@ static int32_t helper2(const std::string& requestUrl, const std::string& method,
 // }
 
 
-// This simulates an answer from the provisioning server repsonding a user's available Axolotl devices
+// This simulates an answer from the provisioning server responding a user's available Axolotl devices
 //
 /*
- * {"devices":
- * [
- *  {"version": 1, "id": "longDevId_1", "device_name": "Blackphone 2"},
- *  {"version": 1, "id": "longDevId_2", "device_name": "iPad"},
- *  {"version": 1, "id": "longDevId_3", "device_name": "Signature Touch"},
-   ]
- * }
- {
-    "version" :        <int32_t>,        # Version of JSON new pre-keys, 1 for the first implementation
-    "scClientDevIds" : [<string>, ..., <string>]   # array of known Axolotl ScClientDevIds for this user/account
- }
+ * Returns the device ids.
+ * {
+   "version" :        <int32_t>,        # Version of JSON new pre-keys, 1 for the first implementation
+   {"devices": ["id": <string>, "device_name": <string>}]}  # array of known Axolotl ScClientDevIds for this user/account
+   }
  */
+
 static int32_t helper3(const std::string& requestUrl, const std::string& method, const std::string& data, std::string* response)
 {
 //     std::cerr << method << " " << requestUrl << '\n';
@@ -233,10 +237,23 @@ static int32_t helper3(const std::string& requestUrl, const std::string& method,
     cJSON_AddNumberToObject(root, "version", 1);
 
     cJSON* devArray;
-    cJSON_AddItemToObject(root, "scClientDevIds", devArray = cJSON_CreateArray());
-    cJSON_AddItemToArray(devArray, cJSON_CreateString("longDevId_1"));
-    cJSON_AddItemToArray(devArray, cJSON_CreateString("longDevId_2"));
-    cJSON_AddItemToArray(devArray, cJSON_CreateString("longDevId_3"));
+    cJSON_AddItemToObject(root, "devices", devArray = cJSON_CreateArray());
+
+
+    cJSON* device = cJSON_CreateObject();
+    cJSON_AddItemToObject(device, "id", cJSON_CreateString("longDevId_1"));
+    cJSON_AddItemToObject(device, "device_name", cJSON_CreateString("Device_1"));
+    cJSON_AddItemToArray(devArray, device);
+
+    device = cJSON_CreateObject();
+    cJSON_AddItemToObject(device, "id", cJSON_CreateString("longDevId_2"));
+    cJSON_AddItemToObject(device, "device_name", cJSON_CreateString("Device_2"));
+    cJSON_AddItemToArray(devArray, device);
+
+    device = cJSON_CreateObject();
+    cJSON_AddItemToObject(device, "id", cJSON_CreateString("longDevId_3"));
+    cJSON_AddItemToObject(device, "device_name", cJSON_CreateString("Device_3"));
+    cJSON_AddItemToArray(devArray, device);
 
     char* out = cJSON_Print(root);
     response->append(out);
@@ -248,33 +265,35 @@ static int32_t helper3(const std::string& requestUrl, const std::string& method,
 
 TEST(GetDeviceIds, Basic)
 {
+    LOGGER_INSTANCE setLogLevel(ERROR);
+
     store = SQLiteStoreConv::getStore();
     if (!store->isReady()) {
         store->setKey(std::string((const char*)keyInData, 32));
         store->openStore(std::string());
     }
     ScProvisioning::setHttpHelper(helper3);
-    list<pair<string, string> >* devIds = Provisioning::getAxoDeviceIds(bob, bobAuth);
 
-    ASSERT_TRUE(devIds != NULL);
+    list<pair<string, string> > devIds;
+    int32_t errorCode = Provisioning::getZinaDeviceIds(bob, bobAuth, devIds);
 
-    ASSERT_EQ(3, devIds->size());
-    string id = devIds->front().first;
-    devIds->pop_front();
+    ASSERT_EQ(SUCCESS, errorCode);
+
+    ASSERT_EQ(3, devIds.size());
+    string id = devIds.front().first;
+    devIds.pop_front();
     string id1("longDevId_1");
     ASSERT_EQ(id1, id);
 
-    id = devIds->front().first;
-    devIds->pop_front();
+    id = devIds.front().first;
+    devIds.pop_front();
     std::string id2("longDevId_2");
     ASSERT_EQ(id2, id);
 
-    id = devIds->front().first;
-    devIds->pop_front();
+    id = devIds.front().first;
+    devIds.pop_front();
     std::string id3("longDevId_3");
     ASSERT_EQ(id3, id);
-
-    delete devIds;
 }
 
 // This simulates an answer from the provisioning server responding to set a new signed pre-key
@@ -302,6 +321,8 @@ static int32_t helper5(const std::string& requestUrl, const std::string& method,
 
 TEST(newPreKeys, Basic)
 {
+    LOGGER_INSTANCE setLogLevel(ERROR);
+
     store = SQLiteStoreConv::getStore();
     if (!store->isReady()) {
         store->setKey(std::string((const char*)keyInData, 32));

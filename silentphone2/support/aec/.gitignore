@@ -1,0 +1,20 @@
+# Android generated files #
+###########################
+android.keystore
+local.properties
+bin/
+gen/
+obj/
+libs/
+
+# OS generated files #
+######################
+.DS_Store*
+ehthumbs.db
+Icon?
+Thumbs.db
+
+# Backup files
+##################
+*~
+

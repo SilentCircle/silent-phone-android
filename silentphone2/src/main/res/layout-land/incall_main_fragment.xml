@@ -23,13 +23,22 @@
             tools:ignore="RtlHardcoded">
         <!-- Check for RTL layout, may need specific adaptations -->
 
+
+        <include layout="@layout/banner_data_retention"
+            android:id="@+id/data_retention_status"
+            android:layout_alignParentTop="true"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            tools:visibility="visible" />
+
         <View
                 android:id="@+id/top_divider"
-                android:layout_alignParentTop="true"
                 android:layout_height="1dp"
                 android:layout_marginBottom="1dp"
                 android:background="?sp_divider_color"
-                android:layout_width="match_parent"/>
+                android:layout_width="match_parent"
+                android:layout_below="@id/data_retention_status" />
 
         <LinearLayout
                 android:layout_width="wrap_content"
@@ -41,79 +50,24 @@
 
             <LinearLayout
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:layout_height="match_parent"
                     android:orientation="vertical">
-
-                <LinearLayout
-                        android:id="@+id/indicators"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:gravity="center_horizontal"
-                        android:orientation="vertical">
-
-                    <TextView
-                            android:id="@+id/sec_info"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:textColor="@android:color/white"
-                            android:visibility="gone"
-                            android:textSize="22sp"
-                            android:textStyle="bold"
-                            tools:visibility="visible"
-                            tools:text="Not Secure"/>
-
-                    <LinearLayout
-                            android:id="@+id/verify_sas"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:gravity="center_horizontal"
-                            android:orientation="vertical"
-                            android:layout_marginTop="5dp">
-
-                        <TextView
-                                android:id="@+id/verify_label"
-                                style="@style/Widget.Silent"
-                                android:filterTouchesWhenObscured="true"
-                                android:textSize="14sp"
-                                android:text="@string/verify_label"
-                                tools:text="Antippen, vergleiche Code"
-                                tools:visibility="visible"/>
-
-                        <TextView
-                                android:id="@+id/sas_text"
-                                style="@style/Widget.Silent"
-                                android:filterTouchesWhenObscured="true"
-                                android:textSize="16sp"
-                                android:singleLine="true"
-                                android:visibility="gone"
-                                android:textStyle="bold"
-                                tools:visibility="visible"
-                                tools:text="SASword1 SASword2"/>
-
-                    </LinearLayout>
-                </LinearLayout>
-                <View
-                        android:layout_height="0dp"
-                        android:layout_weight="1"
-                        android:layout_width="match_parent"/>
 
                 <!-- Primary "call card" block, for the foreground call. -->
                 <android.support.v7.widget.CardView
                         android:id="@+id/primary_call_info_container"
                         android:layout_width="@dimen/in_call_card_width"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="@dimen/call_banner_primary_call_container_top_padding"
+                        android:layout_height="match_parent"
                         spa:cardBackgroundColor="@color/incall_call_banner_background_color"
-                        spa:cardCornerRadius="4dp">
+                        spa:cardCornerRadius="0dp">
                     <!--
                                     android:layout_alignParentBottom="true"
                                     android:layout_toRightOf="@+id/caller_image_container"
                     -->
 
-                    <LinearLayout
+                    <RelativeLayout
                             android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:orientation="vertical"
+                            android:layout_height="match_parent"
                             android:layout_centerHorizontal="true"
                             android:clipChildren="false"
                             android:clipToPadding="false">
@@ -121,64 +75,12 @@
                         <include layout="@layout/incall_call_info"/>
 
                         <!-- Main cluster of onscreen buttons on the lower part of the screen. -->
-                        <LinearLayout
-                                android:id="@+id/bottomButtons"
-                                android:orientation="vertical"
-                                android:layout_width="match_parent"
-                                android:layout_margin="0dp"
-                                android:padding="0dp"
-                                android:layout_height="wrap_content"
-                                android:animateLayoutChanges="true"
-                                tools:visibility="visible">
-
-                            <LinearLayout
-                                    android:orientation="horizontal"
-                                    android:layout_width="match_parent"
-                                    android:layout_height="wrap_content"
-                                    android:paddingStart="@dimen/button_cluster_horizontal_padding"
-                                    android:paddingEnd="@dimen/button_cluster_horizontal_padding"
-                                    android:gravity="center_horizontal">
-
-                                <ImageButton
-                                        android:id="@+id/mute_image"
-                                        style="@style/InCallCompoundButton"
-                                        android:contentDescription="@string/mute_button"
-                                        android:filterTouchesWhenObscured="true"
-                                        android:src="?sp_ic_mic"/>
-
-                                <ImageButton
-                                        android:id="@+id/video_image"
-                                        style="@style/InCallCompoundButton"
-                                        android:contentDescription="@string/video_button"
-                                        android:filterTouchesWhenObscured="true"
-                                        android:src="?sp_ic_video"/>
-
-                                <ImageButton
-                                        android:id="@+id/add_image"
-                                        style="@style/InCallCompoundButton"
-                                        android:contentDescription="@string/add_call"
-                                        android:filterTouchesWhenObscured="true"
-                                        android:src="?sp_ic_add_call"/>
-
-                                <ImageButton
-                                        android:id="@+id/start_chat_image"
-                                        style="@style/InCallCompoundButton"
-                                        android:contentDescription="@string/chat"
-                                        android:filterTouchesWhenObscured="true"
-                                        android:src="?sp_ic_start_chat"
-                                        android:visibility="visible"/>
-
-                                <ImageButton
-                                        android:id="@+id/audio_image"
-                                        style="@style/InCallCompoundButton"
-                                        android:contentDescription="@string/audio_options_button"
-                                        android:filterTouchesWhenObscured="true"
-                                        android:src="?sp_ic_volume_on"/>
-
-                            </LinearLayout>
-
-                        </LinearLayout>
-
+                        <include layout="@layout/widget_incall_buttons"
+                            android:layout_width="match_parent"
+                            android:layout_margin="0dp"
+                            android:padding="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_alignParentBottom="true"/>
 
                         <TextView
                                 android:id="@+id/connectionServiceMessage"
@@ -189,35 +91,41 @@
                                 android:padding="@dimen/call_banner_side_padding"
                                 android:background="@android:color/white"/>
 
-                    </LinearLayout>
+                    </RelativeLayout>
                 </android.support.v7.widget.CardView>
             </LinearLayout>
-            <RelativeLayout
+
+
+            <FrameLayout
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1">
+
+                <RelativeLayout
                     android:id="@+id/caller_image_container"
                     android:layout_width="wrap_content"
-                    android:layout_weight="1"
                     android:layout_height="match_parent">
 
-                <ImageView
+                    <com.silentcircle.silentphone2.views.BlurrableImageView
                         android:id="@+id/caller_image"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         android:layout_gravity="center_horizontal"
                         android:scaleType="centerCrop"
-                        android:src="?sp_ic_contact_picture"/>
+                        tools:src="?sp_ic_contact_picture"/>
 
-                <TextView android:id="@+id/call_priority"
-                          android:layout_width="match_parent"
-                          android:layout_height="wrap_content"
-                          android:textAppearance="?android:attr/textAppearanceLarge"
-                          android:textSize="@dimen/call_name_text_size"
-                          android:visibility="gone"
-                          android:gravity="center_horizontal"
-                          android:background="@color/black_translucent"
-                          tools:visibility="visible"
-                          tools:text="Emergency"/>
+                    <TextView android:id="@+id/call_priority"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textAppearance="?android:attr/textAppearanceLarge"
+                        android:textSize="@dimen/call_priority_text_size"
+                        android:visibility="gone"
+                        android:gravity="center_horizontal"
+                        android:background="@color/black_translucent"
+                        tools:visibility="visible"
+                        tools:text="Emergency"/>
 
-                <ImageButton
+                    <ImageButton
                         android:id="@+id/hangup"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -232,8 +140,47 @@
                         android:visibility="gone"
                         tools:visibility="visible"/>
 
-            </RelativeLayout>
+                    <TextView
+                        android:id="@+id/underflow_indicator"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentBottom="true"
+                        style="@style/InCallCompoundButton"
+                        android:drawableTop="@drawable/ic_signal_cellular_connected_no_internet_4_bar_white_48dp"
+                        android:text="DROPOUT"
+                        android:textColor="@color/indicator_red"
+                        android:textStyle="bold"
+                        android:visibility="gone"
+                        tools:visibility="visible"/>
 
+                    <com.silentcircle.silentphone2.views.VolumeIndicatorLayout
+                        android:id="@+id/volume_indicator"
+                        android:layout_width="@dimen/in_call_volume_indicator_width"
+                        android:layout_height="@dimen/in_call_volume_indicator_height"
+                        android:layout_centerHorizontal="true"
+                        android:layout_alignParentBottom="true"
+                        android:layout_marginBottom="@dimen/in_call_volume_indicator_bottom_margin" />
+
+                </RelativeLayout>
+
+                <com.silentcircle.silentphone2.views.VerifySasWidget
+                    android:id="@+id/sas_widget"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/in_call_sas_widget_margin_top"
+                    android:filterTouchesWhenObscured="false" />
+
+                <include layout="@layout/widget_underflow_explain"
+                    android:id="@+id/underflow_explain_widget"
+                    android:layout_width="200dp"
+                    android:layout_height="62dp"
+                    android:layout_marginTop="@dimen/in_call_sas_widget_margin_top"
+                    android:gravity="center"
+                    android:layout_gravity="center"
+                    android:visibility="gone"
+                    tools:visibility="visible" />
+
+            </FrameLayout>
 
         </LinearLayout>
     </RelativeLayout>

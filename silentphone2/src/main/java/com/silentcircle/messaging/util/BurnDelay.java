@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2016-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -54,6 +54,7 @@ public class BurnDelay {
              */
             put(level++, MINUTE);
             put(level++, 5 * MINUTE);
+            put(level++, 10 * MINUTE);
             put(level++, 15 * MINUTE);
             put(level++, 30 * MINUTE);
             put(level++, HOUR);
@@ -64,9 +65,12 @@ public class BurnDelay {
             put(level++, 2 * DAY);
             put(level++, 3 * DAY);
             put(level++, 4 * DAY);
+            put(level++, 5 * DAY);
             put(level++, WEEK);
             put(level++, 2 * WEEK);
+            put(level++, 4 * WEEK);
             put(level++, MONTH);
+            put(level++, 45 * DAY);
             put(level++, DEFAULT_MAX_DELAY);
             /*
              * For now leave maximum to 3 months

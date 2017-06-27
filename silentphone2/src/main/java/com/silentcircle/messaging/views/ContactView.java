@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2016-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -31,15 +31,15 @@ import android.annotation.TargetApi;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.os.Build;
+import android.support.v4.content.ContextCompat;
 import android.text.TextUtils;
 import android.util.AttributeSet;
-import android.view.GestureDetector;
-import android.view.MotionEvent;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.silentcircle.common.util.ViewUtil;
 import com.silentcircle.silentphone2.R;
 
 import java.util.HashMap;
@@ -97,6 +97,10 @@ public class ContactView extends LinearLayout {
                 height - (int) (height * CROP_BORDER * 2), null, false);
         getViews().photo.setImageBitmap(newBitmap);
         getViews().photo.setVisibility(View.VISIBLE);
+        int textColor = ContextCompat.getColor(getContext(), R.color.sc_ng_text_grey);
+        getViews().displayName.setTextColor(textColor);
+        getViews().phoneticName.setTextColor(textColor);
+        getViews().username.setTextColor(textColor);
     }
 
     public void setDisplayName(final String displayName) {
@@ -135,6 +139,11 @@ public class ContactView extends LinearLayout {
         views.username.setText(null);
         views.photo.setImageBitmap(null);
         views.photo.setVisibility(View.GONE);
+        int textColor = ViewUtil.getColorFromAttributeId(getContext(),
+                R.attr.sp_activity_primary_text_color);
+        getViews().displayName.setTextColor(textColor);
+        getViews().phoneticName.setTextColor(textColor);
+        getViews().username.setTextColor(textColor);
         views.details.removeAllViews();
         mSections.clear();
         invalidate();

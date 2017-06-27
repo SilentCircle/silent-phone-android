@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2016-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -25,21 +25,18 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-
 package com.silentcircle.accounts;
-
 
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.Fragment;
 import android.content.Context;
+import android.net.UrlQuerySanitizer;
 import android.net.http.SslCertificate;
 import android.net.http.SslError;
-import android.net.UrlQuerySanitizer;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -55,7 +52,9 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.webkit.WebViewDatabase;
 
+import com.silentcircle.logs.Log;
 import com.silentcircle.silentphone2.R;
+import com.silentcircle.silentphone2.activities.DialogHelperActivity;
 import com.silentcircle.silentphone2.activities.ProvisioningActivity;
 import com.silentcircle.silentphone2.util.ConfigurationUtilities;
 
@@ -63,8 +62,6 @@ import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLDecoder;
-import java.net.URLEncoder;
-
 
 /**
  * A simple {@link Fragment} subclass.
@@ -90,7 +87,6 @@ public class AccountCorpEmailEntry2 extends Fragment {
 
     private boolean dummyLoaded = false;
     private boolean realLoaded = false;
-    private boolean canDoUsername = false;
 
     private String startPath;
     private String username;
@@ -145,10 +141,9 @@ public class AccountCorpEmailEntry2 extends Fragment {
                     message = getString(R.string.provisioning_ssl_untrusted);
                     break;
             }
-            mParent.showInputInfo(getString(R.string.redirect_ssl_error, sslc.getIssuedTo().toString()
-                    + (TextUtils.isEmpty(message) ? "" : ": " + message)));
-            //Toast.makeText(mParent.getApplicationContext(),
-            //        "Big fat warning: SSL error on "+sslc.getIssuedTo().toString()+", see logcat; bypass for demo purposes", Toast.LENGTH_LONG).show();
+            final String msg = getString(R.string.redirect_ssl_error, sslc.getIssuedTo().toString()
+                    + (TextUtils.isEmpty(message) ? "" : ": " + message));
+            DialogHelperActivity.showDialog(R.string.information_dialog, msg, android.R.string.ok, -1);
 
             handler.cancel();
         }
@@ -206,7 +201,7 @@ public class AccountCorpEmailEntry2 extends Fragment {
             }
 
             if (!TextUtils.isEmpty(redirectPath) && !redirectPath.equals(localUri.getPath())) {
-                mParent.showInputInfo(getString(R.string.redirect_uri_mismatch, sUrl));
+                DialogHelperActivity.showDialog(R.string.information_dialog, getString(R.string.redirect_uri_mismatch, sUrl), android.R.string.ok, -1);
                 mParent.backStep();
                 return true;
             }
@@ -227,7 +222,7 @@ public class AccountCorpEmailEntry2 extends Fragment {
                 String state = uqs.getValue(STATE);
                 mParent.accountCorpEmailEntry3(username, code, authType, state);
             } else {
-                mParent.showInputInfo(getString(R.string.redirect_uri_query_missing, sUrl));
+                DialogHelperActivity.showDialog(R.string.information_dialog, getString(R.string.redirect_uri_query_missing, sUrl), android.R.string.ok, -1);
                 mParent.backStep();
             }
             return true;
@@ -237,9 +232,9 @@ public class AccountCorpEmailEntry2 extends Fragment {
     private void checkAndGetError(UrlQuerySanitizer uqs) {
         String error = uqs.getValue(ERROR);
         if (error != null) {
-            mParent.showInputInfo(getString(R.string.redirect_uri_error, error));
+            DialogHelperActivity.showDialog(R.string.information_dialog, getString(R.string.redirect_uri_error, error), android.R.string.ok, -1);
         } else {
-            mParent.showInputInfo(getString(R.string.redirect_uri_malformed));
+            DialogHelperActivity.showDialog(R.string.information_dialog, R.string.redirect_uri_malformed, android.R.string.ok, -1);
         }
     }
 
@@ -302,7 +297,9 @@ public class AccountCorpEmailEntry2 extends Fragment {
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
-        commonOnAttach(activity);
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+            commonOnAttach(activity);
+        }
     }
 
     private void commonOnAttach(Activity activity) {
@@ -335,7 +332,7 @@ public class AccountCorpEmailEntry2 extends Fragment {
         } catch (UnsupportedEncodingException ignore) { }
 
         if (TextUtils.isEmpty(redirectScheme) || TextUtils.isEmpty(redirectAuthority)) {
-            mParent.showInputInfo(getString(R.string.redirect_wrong_uri, args.getString(REDIRECT_URI)));
+            DialogHelperActivity.showDialog(R.string.information_dialog, getString(R.string.redirect_wrong_uri, args.getString(REDIRECT_URI)), android.R.string.ok, -1);
             mParent.backStep();
             return;
         }

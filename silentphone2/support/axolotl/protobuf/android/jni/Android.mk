@@ -55,6 +55,6 @@ LOCAL_C_INCLUDES := \
     $(LOCAL_PATH)/../../android \
     $(LOCAL_PATH)/../../src
 
-LOCAL_CFLAGS := -DGOOGLE_PROTOBUF_NO_RTTI $(IGNORED_WARNINGS)
+LOCAL_CFLAGS := -DGOOGLE_PROTOBUF_NO_RTTI $(IGNORED_WARNINGS) -fvisibility=hidden -fvisibility-inlines-hidden
 
 include $(BUILD_STATIC_LIBRARY)

@@ -1,51 +1,45 @@
 /*
  *  RFC 1521 base64 encoding/decoding
  *
- *  Copyright (C) 2006-2014, ARM Limited, All Rights Reserved
+ *  Copyright (C) 2006-2015, ARM Limited, All Rights Reserved
+ *  SPDX-License-Identifier: Apache-2.0
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License"); you may
+ *  not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ *  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  *
  *  This file is part of mbed TLS (https://tls.mbed.org)
- *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
- *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License along
- *  with this program; if not, write to the Free Software Foundation, Inc.,
- *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#if !defined(POLARSSL_CONFIG_FILE)
-#include "polarssl/config.h"
+#if !defined(MBEDTLS_CONFIG_FILE)
+#include "mbedtls/config.h"
 #else
-#include POLARSSL_CONFIG_FILE
+#include MBEDTLS_CONFIG_FILE
 #endif
 
-#if defined(POLARSSL_BASE64_C)
+#if defined(MBEDTLS_BASE64_C)
 
-#include "polarssl/base64.h"
+#include "mbedtls/base64.h"
 
-#if defined(_MSC_VER) && !defined(EFIX64) && !defined(EFI32)
-#include <basetsd.h>
-typedef UINT32 uint32_t;
-#else
-#include <inttypes.h>
-#endif
+#include <stdint.h>
 
-#if defined(POLARSSL_SELF_TEST)
+#if defined(MBEDTLS_SELF_TEST)
 #include <string.h>
-#if defined(POLARSSL_PLATFORM_C)
-#include "polarssl/platform.h"
+#if defined(MBEDTLS_PLATFORM_C)
+#include "mbedtls/platform.h"
 #else
 #include <stdio.h>
-#define polarssl_printf printf
-#endif /* POLARSSL_PLATFORM_C */
-#endif /* POLARSSL_SELF_TEST */
+#define mbedtls_printf printf
+#endif /* MBEDTLS_PLATFORM_C */
+#endif /* MBEDTLS_SELF_TEST */
 
 static const unsigned char base64_enc_map[64] =
 {
@@ -80,7 +74,7 @@ static const unsigned char base64_dec_map[128] =
 /*
  * Encode a buffer into base64 format
  */
-int base64_encode( unsigned char *dst, size_t *dlen,
+int mbedtls_base64_encode( unsigned char *dst, size_t dlen, size_t *olen,
                    const unsigned char *src, size_t slen )
 {
     size_t i, n;
@@ -89,7 +83,7 @@ int base64_encode( unsigned char *dst, size_t *dlen,
 
     if( slen == 0 )
     {
-        *dlen = 0;
+        *olen = 0;
         return( 0 );
     }
 
@@ -97,16 +91,16 @@ int base64_encode( unsigned char *dst, size_t *dlen,
 
     if( n > ( BASE64_SIZE_T_MAX - 1 ) / 4 )
     {
-        *dlen = BASE64_SIZE_T_MAX;
-        return( POLARSSL_ERR_BASE64_BUFFER_TOO_SMALL );
+        *olen = BASE64_SIZE_T_MAX;
+        return( MBEDTLS_ERR_BASE64_BUFFER_TOO_SMALL );
     }
 
     n *= 4;
 
-    if( *dlen < n + 1 )
+    if( ( dlen < n + 1 ) || ( NULL == dst ) )
     {
-        *dlen = n + 1;
-        return( POLARSSL_ERR_BASE64_BUFFER_TOO_SMALL );
+        *olen = n + 1;
+        return( MBEDTLS_ERR_BASE64_BUFFER_TOO_SMALL );
     }
 
     n = ( slen / 3 ) * 3;
@@ -138,7 +132,7 @@ int base64_encode( unsigned char *dst, size_t *dlen,
         *p++ = '=';
     }
 
-    *dlen = p - dst;
+    *olen = p - dst;
     *p = 0;
 
     return( 0 );
@@ -147,7 +141,7 @@ int base64_encode( unsigned char *dst, size_t *dlen,
 /*
  * Decode a base64-formatted buffer
  */
-int base64_decode( unsigned char *dst, size_t *dlen,
+int mbedtls_base64_decode( unsigned char *dst, size_t dlen, size_t *olen,
                    const unsigned char *src, size_t slen )
 {
     size_t i, n;
@@ -178,33 +172,37 @@ int base64_decode( unsigned char *dst, size_t *dlen,
 
         /* Space inside a line is an error */
         if( x != 0 )
-            return( POLARSSL_ERR_BASE64_INVALID_CHARACTER );
+            return( MBEDTLS_ERR_BASE64_INVALID_CHARACTER );
 
         if( src[i] == '=' && ++j > 2 )
-            return( POLARSSL_ERR_BASE64_INVALID_CHARACTER );
+            return( MBEDTLS_ERR_BASE64_INVALID_CHARACTER );
 
         if( src[i] > 127 || base64_dec_map[src[i]] == 127 )
-            return( POLARSSL_ERR_BASE64_INVALID_CHARACTER );
+            return( MBEDTLS_ERR_BASE64_INVALID_CHARACTER );
 
         if( base64_dec_map[src[i]] < 64 && j != 0 )
-            return( POLARSSL_ERR_BASE64_INVALID_CHARACTER );
+            return( MBEDTLS_ERR_BASE64_INVALID_CHARACTER );
 
         n++;
     }
 
     if( n == 0 )
     {
-        *dlen = 0;
+        *olen = 0;
         return( 0 );
     }
 
-    n = ( ( n * 6 ) + 7 ) >> 3;
+    /* The following expression is to calculate the following formula without
+     * risk of integer overflow in n:
+     *     n = ( ( n * 6 ) + 7 ) >> 3;
+     */
+    n = ( 6 * ( n >> 3 ) ) + ( ( 6 * ( n & 0x7 ) + 7 ) >> 3 );
     n -= j;
 
-    if( dst == NULL || *dlen < n )
+    if( dst == NULL || dlen < n )
     {
-        *dlen = n;
-        return( POLARSSL_ERR_BASE64_BUFFER_TOO_SMALL );
+        *olen = n;
+        return( MBEDTLS_ERR_BASE64_BUFFER_TOO_SMALL );
     }
 
    for( j = 3, n = x = 0, p = dst; i > 0; i--, src++ )
@@ -224,12 +222,12 @@ int base64_decode( unsigned char *dst, size_t *dlen,
         }
     }
 
-    *dlen = p - dst;
+    *olen = p - dst;
 
     return( 0 );
 }
 
-#if defined(POLARSSL_SELF_TEST)
+#if defined(MBEDTLS_SELF_TEST)
 
 static const unsigned char base64_test_dec[64] =
 {
@@ -250,48 +248,46 @@ static const unsigned char base64_test_enc[] =
 /*
  * Checkup routine
  */
-int base64_self_test( int verbose )
+int mbedtls_base64_self_test( int verbose )
 {
     size_t len;
     const unsigned char *src;
     unsigned char buffer[128];
 
     if( verbose != 0 )
-        polarssl_printf( "  Base64 encoding test: " );
+        mbedtls_printf( "  Base64 encoding test: " );
 
-    len = sizeof( buffer );
     src = base64_test_dec;
 
-    if( base64_encode( buffer, &len, src, 64 ) != 0 ||
+    if( mbedtls_base64_encode( buffer, sizeof( buffer ), &len, src, 64 ) != 0 ||
          memcmp( base64_test_enc, buffer, 88 ) != 0 )
     {
         if( verbose != 0 )
-            polarssl_printf( "failed\n" );
+            mbedtls_printf( "failed\n" );
 
         return( 1 );
     }
 
     if( verbose != 0 )
-        polarssl_printf( "passed\n  Base64 decoding test: " );
+        mbedtls_printf( "passed\n  Base64 decoding test: " );
 
-    len = sizeof( buffer );
     src = base64_test_enc;
 
-    if( base64_decode( buffer, &len, src, 88 ) != 0 ||
+    if( mbedtls_base64_decode( buffer, sizeof( buffer ), &len, src, 88 ) != 0 ||
          memcmp( base64_test_dec, buffer, 64 ) != 0 )
     {
         if( verbose != 0 )
-            polarssl_printf( "failed\n" );
+            mbedtls_printf( "failed\n" );
 
         return( 1 );
     }
 
     if( verbose != 0 )
-        polarssl_printf( "passed\n\n" );
+        mbedtls_printf( "passed\n\n" );
 
     return( 0 );
 }
 
-#endif /* POLARSSL_SELF_TEST */
+#endif /* MBEDTLS_SELF_TEST */
 
-#endif /* POLARSSL_BASE64_C */
+#endif /* MBEDTLS_BASE64_C */

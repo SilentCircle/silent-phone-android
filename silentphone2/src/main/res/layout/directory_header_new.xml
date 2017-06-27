@@ -33,32 +33,36 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center_vertical">
+        <LinearLayout
+            android:id="@+id/container"
+            android:layout_toLeftOf="@+id/count"
+            android:layout_toStartOf="@+id/count"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+                <TextView
+                        android:id="@+id/label"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="8dip"
+                        android:layout_marginStart="8dip"
+                        android:textAppearance="@style/DirectoryHeaderStyle"
+                        android:textColor="?attr/sp_activity_primary_text_color"
+                        android:singleLine="true"
+                        tools:text="Directory"/>
 
-        <TextView
-                android:id="@+id/label"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_alignParentLeft="true"
-                android:layout_alignParentStart="true"
-                android:layout_marginLeft="8dip"
-                android:layout_marginStart="8dip"
-                android:textAppearance="@style/DirectoryHeaderStyle"
-                android:textColor="@color/sc_ng_text_green"
-                android:singleLine="true"
-                tools:text="Directory"/>
-
-        <TextView
-                android:id="@+id/display_name"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginLeft="8dip"
-                android:layout_marginRight="8dip"
-                android:layout_toRightOf="@+id/label"
-                android:layout_toEndOf="@+id/label"
-                android:textAppearance="@style/DirectoryHeaderStyle"
-                android:textColor="@color/sc_ng_text_green"
-                android:singleLine="true"
-                tools:text="Dirname"/>
+                <TextView
+                        android:id="@+id/display_name"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="8dip"
+                        android:layout_marginRight="8dip"
+                        android:textAppearance="@style/DirectoryHeaderStyle"
+                        android:textColor="?attr/sp_activity_primary_text_color"
+                        android:singleLine="true"
+                        tools:text="Dirname"/>
+        </LinearLayout>
         <TextView
                 android:id="@+id/count"
                 android:paddingTop="1dip"
@@ -67,7 +71,7 @@
                 android:layout_alignParentRight="true"
                 android:layout_alignParentEnd="true"
                 android:layout_alignParentBottom="true"
-                android:layout_alignBaseline="@+id/label"
+                android:layout_alignBaseline="@+id/container"
                 android:singleLine="true"
                 android:textSize="14sp"
                 android:textColor="@color/contact_count_text_color"

@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2016-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -30,15 +30,14 @@ package com.silentcircle.messaging.views;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.ColorStateList;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.PorterDuff;
 import android.graphics.Rect;
-import android.graphics.drawable.AnimationDrawable;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
-import android.os.Build;
-import android.os.Handler;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.graphics.drawable.DrawableCompat;
 import android.text.TextUtils;
@@ -48,24 +47,22 @@ import android.util.TypedValue;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.view.ViewGroup;
-import android.widget.Checkable;
+import android.view.ViewStub;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
-import android.widget.QuickContactBadge;
 import android.widget.RelativeLayout;
 
-import com.silentcircle.SilentPhoneApplication;
 import com.silentcircle.common.util.ViewUtil;
-import com.silentcircle.contacts.ContactPhotoManagerNew;
+import com.silentcircle.common.waveform.SoundAttachmentPreview;
+import com.silentcircle.logs.Log;
+import com.silentcircle.messaging.listener.MessagingBroadcastManager;
 import com.silentcircle.messaging.location.LocationUtils;
 import com.silentcircle.messaging.model.MessageStates;
 import com.silentcircle.messaging.model.event.IncomingMessage;
 import com.silentcircle.messaging.model.event.Message;
 import com.silentcircle.messaging.model.event.OutgoingMessage;
 import com.silentcircle.messaging.services.SCloudService;
-import com.silentcircle.messaging.thread.Updater;
 import com.silentcircle.messaging.util.Action;
 import com.silentcircle.messaging.util.AttachmentUtils;
 import com.silentcircle.messaging.util.DateUtils;
@@ -73,19 +70,14 @@ import com.silentcircle.messaging.util.Extra;
 import com.silentcircle.messaging.util.MIME;
 import com.silentcircle.messaging.util.MessageUtils;
 import com.silentcircle.messaging.util.SoundNotifications;
-import com.silentcircle.messaging.util.Updatable;
-import com.silentcircle.messaging.views.adapters.HasChoiceMode;
-import com.silentcircle.silentphone2.Manifest;
+import com.silentcircle.silentphone2.BuildConfig;
 import com.silentcircle.silentphone2.R;
-
-import org.json.JSONException;
-import org.json.JSONObject;
+import com.silentcircle.silentphone2.activities.DialerActivity;
 
 import java.text.SimpleDateFormat;
 import java.util.Locale;
-import java.util.concurrent.TimeUnit;
 
-public class MessageEventView extends RelativeLayout implements Updatable, Checkable, HasChoiceMode, OnClickListener {
+public abstract class MessageEventView extends BaseMessageEventView implements OnClickListener {
 
     @SuppressWarnings("unused")
     private static final String TAG = MessageEventView.class.getSimpleName();
@@ -115,70 +107,80 @@ public class MessageEventView extends RelativeLayout implements Updatable, Check
 
     static class Views {
 
-        public final QuickContactBadge avatar;
         public final LinearLayout card;
-        public final TextView attachment_text;
-        public final ImageView attachment_status;
-        public final ImageView preview;
-        public final ImageView preview_icon;
-        public final ProgressBar preview_progress;
+
         public final TextView text;
         public final TextView time;
         public final TextView burn_notice;
+        public final View retention_notice;
         public final View action_location;
-        public final ViewGroup action_burn;
+        public final View action_burn;
         public final View action_send;
         public final TextView message_state;
         public final RelativeLayout message_actions;
+        public final TextView message_avatar_name;
+        public final TextView attachment_text;
+
+        private ViewStub attachmentViewStub;
+        public boolean isAttachmentViewStubLoaded = false;
+        public AttachmentViews attachmentViews = null;
 
         public final View[] clickable_views;
 
         public Views(MessageEventView parent) {
-
-            avatar = (QuickContactBadge) parent.findViewById(R.id.message_avatar);
             card = (LinearLayout) parent.findViewById(R.id.message_card);
-            attachment_text = (TextView) parent.findViewById(R.id.message_attachment_text);
-            attachment_status = (ImageView) parent.findViewById(R.id.message_attachment_status);
-            preview = (ImageView) parent.findViewById(R.id.message_preview);
-            preview_icon = (ImageView) parent.findViewById(R.id.message_icon);
-            preview_progress = (ProgressBar) parent.findViewById(R.id.message_preview_progress);
             text = (TextView) parent.findViewById(R.id.message_body);
             time = (TextView) parent.findViewById(R.id.message_time);
             burn_notice = (TextView) parent.findViewById(R.id.message_burn_notice);
+            retention_notice = parent.findViewById(R.id.message_retained_notice);
+            attachment_text = (TextView) parent.findViewById(R.id.message_attachment_text);
+            attachmentViewStub = (ViewStub) parent.findViewById(R.id.attachment_stub_import);
 
             message_actions = (RelativeLayout) parent.findViewById(R.id.message_actions);
             action_location = parent.findViewById(R.id.message_action_location);
             action_location.setOnClickListener(parent);
-            action_burn = (ViewGroup) parent.findViewById(R.id.message_action_burn);
+            action_burn = parent.findViewById(R.id.message_action_burn);
             action_burn.setOnClickListener(parent);
+            action_burn.setVisibility(View.GONE);
+
             action_send = parent.findViewById(R.id.message_action_send);
             if (action_send != null) {
                 action_send.setOnClickListener(parent);
             }
 
             message_state = (TextView) parent.findViewById(R.id.message_state);
+            message_avatar_name = (TextView) parent.findViewById(R.id.message_avatar_name);
 
             clickable_views = new View[]{card, action_burn, action_location, action_send};
         }
 
-        public void setInformationViewVisibility(int visibility) {
-            preview.setVisibility(visibility);
-            preview_icon.setVisibility(visibility);
-            preview_progress.setVisibility(visibility);
-            text.setVisibility(visibility);
-            time.setVisibility(visibility);
-            burn_notice.setVisibility(visibility);
-            message_state.setVisibility(visibility);
-            action_location.setVisibility(visibility);
-            action_burn.setVisibility(View.GONE);
-            if (visibility == View.GONE) {
-                text.setText(null);
-                time.setText(null);
-                burn_notice.setText(null);
-                attachment_text.setVisibility(visibility);
-            } else {
-                // always show card as well
-                card.setVisibility(visibility);
+        public void loadAttachmentViews() {
+            if (isAttachmentViewStubLoaded) {
+                return;
+            }
+            isAttachmentViewStubLoaded = true;
+
+            attachmentViews = new AttachmentViews(attachmentViewStub);
+            attachmentViewStub = null;
+        }
+
+        static class AttachmentViews {
+            public  final ImageView attachment_status;
+            public  final SoundAttachmentPreview sound_preview;
+            public  final BoundedImageView preview;
+            public  final ImageView preview_icon;
+            public  final View preview_play;
+            public  final ProgressBar preview_progress;
+
+            public AttachmentViews(ViewStub viewStub) {
+                View parent = viewStub.inflate();
+
+                attachment_status = (ImageView) parent.findViewById(R.id.message_attachment_status);
+                sound_preview = (SoundAttachmentPreview) parent.findViewById(R.id.message_sound_preview);
+                preview = (BoundedImageView) parent.findViewById(R.id.message_preview);
+                preview_icon = (ImageView) parent.findViewById(R.id.message_icon);
+                preview_progress = (ProgressBar) parent.findViewById(R.id.message_preview_progress);
+                preview_play = parent.findViewById(R.id.message_preview_play);
             }
         }
     }
@@ -191,70 +193,69 @@ public class MessageEventView extends RelativeLayout implements Updatable, Check
         }
     }
 
-    private static void toggleDeliveredState(Message message, View view) {
-        if (view != null) {
-            if (MessageStates.READ == message.getState()) {
-                view.setVisibility(VISIBLE);
-                ViewUtil.setAlpha(view, 0.5f);
-            } else {
-                view.setVisibility(GONE);
-            }
-        }
-    }
-
-    private static void toggleSendActionVisibility(Message message, View actionView) {
-        if (actionView != null) {
-            int visibility = GONE;
-            if (message instanceof OutgoingMessage) {
-                if (MessageStates.RESEND_REQUESTED == message.getState()) {
-                    visibility = VISIBLE;
-                }
-            }
-            actionView.setVisibility(visibility);
-        }
-    }
-
-    private static ContactPhotoManagerNew sContactPhotoManager;
-
-    static {
-        sContactPhotoManager = ContactPhotoManagerNew.getInstance(SilentPhoneApplication.getAppContext());
-    }
+    protected ColorStateList mColorStateListIncoming;
+    protected ColorStateList mColorStateListOutgoing;
+    private ColorStateList mColorStateList;
 
     private Views views;
 
-    private boolean checked;
-
-    private boolean inChoiceMode;
-
-    private final Updater updater;
-
     private Location mLocation;
 
-    private Drawable mBackgroundDrawable;
+    protected int mIncomingGroupMessageMarginStart;
+    protected int mIncomingMessageMarginStart;
+    protected int mIncomingGroupMessageAvatarStart;
+    protected int mIncomingMessageAvatarStart;
 
-    private boolean mIsBurned = true;
+    protected int mLoadedBackgroundId;
 
     /* array to hold drawable state change */
     private final int[] mStateChange = new int[2];
 
     public MessageEventView(Context context) {
-        super(context);
-        updater = new Updater(this);
+        this(context, null);
     }
 
     public MessageEventView(Context context, AttributeSet attrs) {
-        super(context, attrs);
-        updater = new Updater(this);
+        this(context, attrs, 0);
     }
 
     public MessageEventView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
-        updater = new Updater(this);
+
+        Resources resources = getResources();
+        mIncomingGroupMessageMarginStart = (int) resources.getDimension(R.dimen.messaging_group_incoming_message_margin_left);
+        mIncomingMessageMarginStart = (int) resources.getDimension(R.dimen.messaging_incoming_message_margin_left);
+        mIncomingGroupMessageAvatarStart = (int) resources.getDimension(R.dimen.messaging_group_incoming_message_avatar_margin_left);
+        mIncomingMessageAvatarStart = (int) resources.getDimension(R.dimen.messaging_incoming_message_avatar_margin_left);
+
+        int backgroundColorSelectorId = R.attr.sp_incoming_message_background_selector;
+        TypedValue typedValue = new TypedValue();
+        getContext().getTheme().resolveAttribute(backgroundColorSelectorId, typedValue, true);
+        mColorStateListIncoming = ContextCompat.getColorStateList(getContext(), typedValue.resourceId);
+
+        backgroundColorSelectorId = R.attr.sp_outgoing_message_background_selector;
+        typedValue = new TypedValue();
+        getContext().getTheme().resolveAttribute(backgroundColorSelectorId, typedValue, true);
+        mColorStateListOutgoing = ContextCompat.getColorStateList(getContext(), typedValue.resourceId);
+
+        mLoadedBackgroundId = (this instanceof IncomingMessageEventView) ?
+                R.drawable.bg_card_light_second : R.drawable.bg_my_card_light_second;
     }
 
     public Message getMessage() {
         Object tag = getTag();
         return tag instanceof Message ? (Message) tag : null;
+    }
+
+    @Override
+    public void setBurnNotice(@Nullable CharSequence text, int visibility) {
+        Views v = getViews();
+        if (v.burn_notice.getVisibility() != visibility) {
+            v.burn_notice.setVisibility(visibility);
+        }
+        if (text != null && !text.equals(v.burn_notice.getText())) {
+            v.burn_notice.setText(text);
+        }
     }
 
     private Views getViews() {
@@ -265,20 +266,9 @@ public class MessageEventView extends RelativeLayout implements Updatable, Check
     }
 
     @Override
-    public boolean isChecked() {
-        return checked;
-    }
-
-    @Override
-    public boolean isInChoiceMode() {
-        return inChoiceMode;
-    }
-
-    @Override
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
-        setCardBackground(mBackgroundDrawable);
-        update();
+        // setCardBackground(mBackgroundDrawable);
     }
 
     /* Andris' patch file, modified by Rong
@@ -292,12 +282,18 @@ public class MessageEventView extends RelativeLayout implements Updatable, Check
     @Override
     public boolean dispatchTouchEvent(MotionEvent event) {
         Views views = getViews();
-        boolean shouldDispatch;
+        boolean shouldDispatch = true;
 
-        if (inChoiceMode) {
-            shouldDispatch = isEventWithinView(event, views.card);
-        } else {
-            shouldDispatch = isEventWithinView(event, views.clickable_views);
+        /*
+         * Only ACTION_DOWN is necessary, skipping other events would lead to
+         * drawables not updating to proper state.
+         */
+        if (MotionEvent.ACTION_DOWN == event.getAction()) {
+            if (isInChoiceMode()) {
+                shouldDispatch = isEventWithinView(event, views.card);
+            } else {
+                shouldDispatch = isEventWithinView(event, views.clickable_views);
+            }
         }
 
         // shouldDispatch ? super.dispatchTouchEvent(event) : true;
@@ -345,7 +341,7 @@ public class MessageEventView extends RelativeLayout implements Updatable, Check
             Intent intent = Action.DOWNLOAD.intent();
             Extra.PARTNER.to(intent, message.getConversationID() != null ? message.getConversationID() : message.getSender());
             Extra.ID.to(intent, message.getId());
-            context.sendBroadcast(intent, Manifest.permission.WRITE);
+            MessagingBroadcastManager.getInstance(context).sendBroadcast(intent);
 
             return;
         }
@@ -364,7 +360,7 @@ public class MessageEventView extends RelativeLayout implements Updatable, Check
         int position = 0;
 
         final int[] state = super.onCreateDrawableState(extraSpace + 2);
-        if (inChoiceMode && checked) {
+        if (isInChoiceMode() && isChecked()) {
             mStateChange[position++] = android.R.attr.state_checked;
         }
 
@@ -386,29 +382,13 @@ public class MessageEventView extends RelativeLayout implements Updatable, Check
         getViews();
     }
 
-    private void scheduleNextUpdate() {
-        Handler handler = getHandler();
-        if (handler != null) {
-            handler.removeCallbacks(updater);
-            handler.postDelayed(updater, getNextUpdateTime());
-        }
-    }
-
-    @Override
-    public void setChecked(boolean checked) {
-        if (checked != this.checked) {
-            this.checked = checked;
-            refreshDrawableState();
-        }
-    }
-
     @Override
     public void setInChoiceMode(boolean inChoiceMode) {
-        if (inChoiceMode != this.inChoiceMode) {
-            this.inChoiceMode = inChoiceMode;
+        if (inChoiceMode != isInChoiceMode()) {
+            super.setInChoiceMode(inChoiceMode);
             Views v = getViews();
             setClickable(!inChoiceMode, v.action_location, v.action_send, v.action_burn);
-            ViewUtil.setEnabled(v.action_burn, !inChoiceMode);
+            v.action_burn.setEnabled(!inChoiceMode);
             v.action_location.setEnabled(!inChoiceMode);
             refreshDrawableState();
         }
@@ -430,77 +410,108 @@ public class MessageEventView extends RelativeLayout implements Updatable, Check
 
         Views v = getViews();
 
-        /* TODO: calling this very often causes OOM.
-         * Avatar is not shown, do not try to set image for it.
-        v.avatar.setContact(message.getSender());
-         */
-
         int previewVisibility = message.hasAttachment() ? VISIBLE : GONE;
         //v.preview.setVisibility(previewVisibility);
         v.attachment_text.setVisibility(previewVisibility);
-        v.attachment_status.setVisibility(View.GONE);
 
-        restoreViews(message instanceof IncomingMessage);
+        if (views.isAttachmentViewStubLoaded) {
+            v.attachmentViews.attachment_status.setVisibility(View.GONE);
+        }
 
-        setStatusAndTime(message);
+        boolean isIncomingMessage = message instanceof IncomingMessage;
+        boolean isGroupMessage = isGroupMessage();
+        boolean isFirstMessage = isFirstMessage();
+        boolean isNewDate = isNewDate();
+        restoreViews(isIncomingMessage, isFirstMessage,
+                isGroupMessage, isNewDate, message.isRetained());
+
+        setStatusAndTime(message, v, isGroupMessage);
         updateBurnNotice();
         toggleEnabledState(message);
-        toggleSendActionVisibility(message, v.action_send);
 
         // set text or attachment preview only if it won't be immediately replaced by burn animation
         if (message.hasAttachment() || message.hasMetaData()) {
             setAttachmentInfo(message.getMetaData());
         } else {
-            setText(message.getText());
+            setText(v, message.getText());
         }
-
+        setSenderName(v, isIncomingMessage && isGroupMessage && isFirstMessage ? getSenderName() : "");
         setLocation(message.getLocation());
+
+        adjustMinimumWidth();
+
+        // necessary so that re-used view won't keep previous message's state
         refreshDrawableState();
     }
 
     /**
      * Restore visibility of possibly hidden views.
      */
-    public void restoreViews(boolean incoming) {
+    public void restoreViews(boolean isIncoming, boolean isFirstMessage, boolean isGroupMessage,
+            boolean isNewDate, boolean isRetained) {
         Views v = getViews();
-        v.setInformationViewVisibility(View.VISIBLE);
-        v.avatar.setVisibility(incoming ? View.INVISIBLE : View.GONE);
-        Drawable background = ContextCompat.getDrawable(getContext(),
-                incoming ? R.drawable.bg_card_light_second : R.drawable.bg_my_card_light_second);
+        mColorStateList = isIncoming ? mColorStateListIncoming : mColorStateListOutgoing;
 
-        Boolean newGroup = (Boolean) getTag(R.id.new_group_flag);
-        if (newGroup != null && newGroup) {
-            background = ContextCompat.getDrawable(getContext(),
-                    incoming ? R.drawable.bg_card_light_default : R.drawable.bg_my_card_light_default);
+        int backgroundId = isIncoming
+                ? R.drawable.bg_card_light_second : R.drawable.bg_my_card_light_second;
+
+        if (isFirstMessage) {
+            backgroundId = isIncoming
+                    ? R.drawable.bg_card_light_default : R.drawable.bg_my_card_light_default;
         }
 
-        int backgroundColorSelectorId = incoming
-            ? R.attr.sp_incoming_message_background_selector
-            : R.attr.sp_outgoing_message_background_selector;
-
-        ColorStateList backgroundTintColor;
-        TypedValue typedValue = new TypedValue();
-        getContext().getTheme().resolveAttribute(backgroundColorSelectorId, typedValue, true);
-        backgroundTintColor = ContextCompat.getColorStateList(getContext(), typedValue.resourceId);
-
+        Drawable background = (mLoadedBackgroundId == backgroundId) ?
+                v.card.getBackground() : ContextCompat.getDrawable(getContext(), backgroundId);
+        mLoadedBackgroundId = backgroundId;
         background = DrawableCompat.wrap(background);
-        DrawableCompat.setTintList(background, backgroundTintColor);
+        DrawableCompat.setTintList(background, mColorStateList);
         DrawableCompat.setTintMode(background, PorterDuff.Mode.MULTIPLY);
         v.card.setBackground(background);
-        mBackgroundDrawable = background;
+
+        setAttachmentIndicator(isIncoming, v);
+
+        if (isIncoming) {
+            RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams) v.card.getLayoutParams();
+            params.leftMargin = isGroupMessage ? mIncomingGroupMessageMarginStart : mIncomingMessageMarginStart;
+
+            params = (RelativeLayout.LayoutParams) v.message_avatar_name.getLayoutParams();
+            params.leftMargin = isGroupMessage ? mIncomingGroupMessageAvatarStart : mIncomingMessageAvatarStart;
+        }
+        v.retention_notice.setVisibility(isRetained ? View.VISIBLE : View.GONE);
+        v.message_avatar_name.setVisibility((isIncoming && isFirstMessage && isGroupMessage) ? View.VISIBLE : View.GONE);
     }
 
-    public void setText(final String text) {
-        Views v = getViews();
-        v.text.setText(text);
-        v.preview.setVisibility(GONE);
-        v.preview_icon.setVisibility(GONE);
-        v.preview_progress.setVisibility(GONE);
-        v.attachment_text.setVisibility(GONE);
-        Linkify.addLinks(v.text, Linkify.ALL);
-        v.text.setMovementMethod(null);
-        v.text.setVisibility(VISIBLE);
-        ViewUtil.setDrawableStart(v.text, 0);
+    public void setText(Views views, final String text) {
+        CharSequence previousText = views.text.getText();
+        if (text != previousText || (text != null && !text.equals(previousText))) {
+            views.text.setText(text);
+            try {
+                Linkify.addLinks(views.text, Linkify.ALL);
+            } catch (Throwable t) {
+                Log.w(TAG, "Unable to linkify message text");
+                t.printStackTrace();
+                /*
+                 * Ignore failure to linkify text to avoid crash due to missing WebView component
+                 * on some devices.
+                 * Could not reproduce the crash from https://sentry.silentcircle.org/sentry/spa/issues/5879/
+                 */
+                views.text.setText(text);
+            }
+
+            views.attachment_text.setVisibility(GONE);
+
+            if (views.isAttachmentViewStubLoaded) {
+                views.attachmentViews.preview.setVisibility(GONE);
+                views.attachmentViews.preview_icon.setVisibility(GONE);
+                views.attachmentViews.preview_progress.setVisibility(GONE);
+                views.attachmentViews.preview_play.setVisibility(GONE);
+                views.attachmentViews.sound_preview.setVisibility(GONE);
+            }
+
+            views.text.setMovementMethod(null);
+            views.text.setVisibility(VISIBLE);
+            ViewUtil.setDrawableStart(views.text, 0);
+        }
     }
 
     public void setAttachmentInfo(String metaData) {
@@ -511,10 +522,22 @@ public class MessageEventView extends RelativeLayout implements Updatable, Check
 
         Views v = getViews();
 
-        v.preview.setVisibility(INVISIBLE);
-        v.preview_icon.setVisibility(INVISIBLE);
-        v.preview_progress.setVisibility(VISIBLE);
+        if (!v.isAttachmentViewStubLoaded) {
+            v.loadAttachmentViews();
+        }
+
+        v.attachmentViews.sound_preview.setVisibility(GONE);
+        v.attachmentViews.preview.setVisibility(GONE);
+        v.attachmentViews.preview.setIsImage(false);
+        v.attachmentViews.preview_icon.setVisibility(INVISIBLE);
+        v.attachmentViews.preview_progress.setVisibility(VISIBLE);
+        v.attachmentViews.preview_play.setVisibility(GONE);
         v.text.setVisibility(GONE);
+
+        if (metaData == null) {
+            v.attachmentViews.preview_icon.setVisibility(GONE);
+            v.attachment_text.setVisibility(GONE);
+        }
 
         String fileName = null; // Used as the name of the attachment
         String displayName = null; // Sometimes used to replace displaying fileName
@@ -525,59 +548,71 @@ public class MessageEventView extends RelativeLayout implements Updatable, Check
                 || state == SCloudService.AttachmentState.DOWNLOADING_ERROR
                 || state == SCloudService.AttachmentState.UPLOADING_ERROR);
         int attachmentStatusVisibility = isAttachmentFailed ? View.VISIBLE : View.GONE;
+        boolean isVisualOrAudio = false;
 
         if (metaData != null) {
-            JSONObject metaDataJson;
+            AttachmentUtils.MetaData parsedMetaData = AttachmentUtils.MetaData.parse(metaData);
+            String preview = parsedMetaData.preview;
+            String mimeType = parsedMetaData.mimeType;
+            String waveform = parsedMetaData.waveform;
+            String duration = parsedMetaData.duration;
 
-            try {
-                metaDataJson = new JSONObject(metaData);
-            } catch (JSONException exception) {
-                return;
-            }
+            fileName = parsedMetaData.fileName;
+            displayName = parsedMetaData.displayName;
 
-            String preview = null;
-            String mimeType = null;
-
-            try {
-                preview = metaDataJson.getString("preview");
-                fileName = metaDataJson.getString("FileName");
-                mimeType = metaDataJson.getString("MimeType");
-                displayName = metaDataJson.getString("DisplayName");
-            } catch (JSONException ignore) {
-            }
+            isVisualOrAudio = (MIME.isAudio(mimeType) || MIME.isVideo(mimeType) || MIME.isImage(mimeType));
 
             int iconResource = AttachmentUtils.getPreviewIcon(mimeType);
             if (!TextUtils.isEmpty(preview) && MIME.isContact(mimeType)) {
                 Bitmap previewBitmap = AttachmentUtils.getPreviewImage("image/jpg", preview, 0);
 
-                v.preview_icon.setVisibility(VISIBLE);
-                v.preview_icon.setImageBitmap(previewBitmap);
-                v.preview_progress.setVisibility(GONE);
-                v.preview.setVisibility(GONE);
-                v.attachment_status.setVisibility(attachmentStatusVisibility);
-            } else if (iconResource != 0) {
-                v.preview_icon.setImageResource(iconResource);
-                v.preview_icon.setVisibility(VISIBLE);
-                v.preview_progress.setVisibility(GONE);
-                v.attachment_status.setVisibility(attachmentStatusVisibility);
+                v.attachmentViews.preview_icon.setVisibility(VISIBLE);
+                v.attachmentViews.preview_icon.setImageBitmap(previewBitmap);
+                v.attachmentViews.preview_progress.setVisibility(GONE);
+                v.attachmentViews.preview.setVisibility(GONE);
+                v.attachmentViews.attachment_status.setVisibility(attachmentStatusVisibility);
+            }
+            else if (isVisualOrAudio && waveform != null && duration != null) {
+                float[] levels = AttachmentUtils.getDBLevelsFromBase64(waveform);
+                long durationMS = AttachmentUtils.getDurationFromString(duration);
+                v.attachmentViews.sound_preview.setSoundData(levels, durationMS);
+                v.attachmentViews.sound_preview.setVisibility(VISIBLE);
+                v.attachmentViews.preview.setVisibility(GONE);
+                v.attachmentViews.preview_icon.setVisibility(GONE);
+                v.attachmentViews.preview_progress.setVisibility(GONE);
+                v.attachmentViews.attachment_status.setVisibility(attachmentStatusVisibility);
+            }
+            else if (iconResource != 0) {
+                v.attachmentViews.preview_icon.setImageResource(iconResource);
+                v.attachmentViews.preview_icon.setVisibility(VISIBLE);
+                v.attachmentViews.preview_progress.setVisibility(GONE);
+                v.attachmentViews.attachment_status.setVisibility(attachmentStatusVisibility);
+                if (MIME.isAudio(mimeType) || MIME.isVideo(mimeType)) {
+                    v.attachmentViews.preview_play.setVisibility(VISIBLE);
+                }
             } else if (!TextUtils.isEmpty(preview)) {
                 Bitmap previewBitmap = AttachmentUtils.getPreviewImage("image/jpg", preview, 0);
 
-                v.preview.setVisibility(VISIBLE);
-                v.preview.setImageBitmap(previewBitmap);
-                v.preview_progress.setVisibility(GONE);
-                v.attachment_status.setVisibility(attachmentStatusVisibility);
+                v.attachmentViews.preview.setVisibility(VISIBLE);
+                v.attachmentViews.preview.setImageBitmap(previewBitmap);
+                v.attachmentViews.preview.setIsImage(MIME.isImage(mimeType) || MIME.isVideo(mimeType));
+                v.attachmentViews.preview.setCornerColor(mColorStateList);
+                v.attachmentViews.preview_progress.setVisibility(GONE);
+                v.attachmentViews.attachment_status.setVisibility(attachmentStatusVisibility);
+                if (MIME.isAudio(mimeType) || MIME.isVideo(mimeType)) {
+                    v.attachmentViews.preview_play.setVisibility(VISIBLE);
+                }
             } else {
-                v.preview.setVisibility(GONE);
-                v.preview_icon.setVisibility(GONE);
-                v.preview_progress.setVisibility(GONE);
+                v.attachmentViews.preview.setVisibility(GONE);
+                v.attachmentViews.preview_icon.setVisibility(GONE);
+                v.attachmentViews.preview_progress.setVisibility(GONE);
             }
         } else if (isAttachmentFailed) {
-            v.preview_icon.setImageResource((message instanceof IncomingMessage)
+            v.attachmentViews.preview_icon.setImageResource((message instanceof IncomingMessage)
                     ? R.drawable.ic_received_attachment_failed
                     : R.drawable.ic_sent_attachment_failed);
-            v.preview_icon.setVisibility(VISIBLE);
-            v.preview_progress.setVisibility(GONE);
+            v.attachmentViews.preview_icon.setVisibility(VISIBLE);
+            v.attachmentViews.preview_progress.setVisibility(GONE);
         }
 
         if (!TextUtils.isEmpty(displayName)) {
@@ -588,7 +623,9 @@ public class MessageEventView extends RelativeLayout implements Updatable, Check
             v.attachment_text.setText(R.string.attachment);
         }
 
-        v.attachment_text.setVisibility(VISIBLE);
+        if(metaData != null) {
+            v.attachment_text.setVisibility(isVisualOrAudio ? View.GONE : View.VISIBLE);
+        }
     }
 
     @Override
@@ -599,150 +636,46 @@ public class MessageEventView extends RelativeLayout implements Updatable, Check
         }
     }
 
-    private void setStatusAndTime(Message message) {
-        Views v = getViews();
-
+    private void setStatusAndTime(Message message, Views views, boolean isGroupMessage) {
         /*
          * Instead of DateUtils.getRelativeTimeSpanString(getContext(), message.getTime()) show
-         * just time for messages as date is visible in header
+         * just time for messages as date is visible in header.
          */
         CharSequence statusAndTime = DateUtils.getMessageTimeFormat(message.getComposeTime());
-        v.time.setText(statusAndTime);
-        v.message_state.setText("");
-        if (message instanceof OutgoingMessage) {
-            v.message_state.setText(MessageStates.messageStateToStringId(message.getState()));
+        views.time.setText(statusAndTime);
+
+        /*
+         * Status is shown for outgoing messages only in production builds.
+         * In debug builds for debug purposes status is shown for incoming messages if
+         * "Show all errors" is set in settings.
+         *
+         * There is no status for group conversation messages.
+         */
+        views.message_state.setVisibility(isGroupMessage ? View.GONE : View.VISIBLE);
+        if (message instanceof OutgoingMessage || (BuildConfig.DEBUG && DialerActivity.mShowErrors)) {
+            views.message_state.setText(MessageStates.messageStateToStringId(message.getState()));
         }
-
-    }
-
-    @Override
-    public void toggle() {
-        setChecked(!isChecked());
-    }
-
-
-    @Override
-    public void update() {
-        updateBurnNotice();
-        scheduleNextUpdate();
-    }
-
-    public void cancelUpdates() {
-        Handler handler = getHandler();
-        if (handler != null) {
-            handler.removeCallbacks(updater);
+        else if (!"".equals(views.message_state.getText())) {
+            views.message_state.setText("");
         }
     }
 
-    /**
-     * Do the burn animation.
-     *
-     * @return Duration of the animation
-     */
-    public int animateBurn(final Runnable runnable) {
-        final Views v = getViews();
-        mBackgroundDrawable = v.card.getBackground();
-        final Handler handler = getHandler();
-        // hide all fields (except card view)
-        v.setInformationViewVisibility(View.GONE);
-        // disable view updates
-        cancelUpdates();
-        // mark view as transient to avoid its reuse while animation runs,
-        // only do this if it will be re-set
-        if (handler != null) {
-            setHasTransientState(true);
+    private void setSenderName(Views views, @Nullable final CharSequence displayName) {
+        CharSequence previousName = views.message_avatar_name.getText();
+        if (displayName != previousName || (displayName != null && !displayName.equals(previousName))) {
+            views.message_avatar_name.setText(displayName);
         }
-
-        // set background to animated drawable
-        v.card.setBackgroundResource(R.drawable.poof);
-        AnimationDrawable drawable = (AnimationDrawable) v.card.getBackground();
-        drawable.setOneShot(true);
-
-        // get duration of the animation
-        int duration = 0;
-        for (int i = 0; i < drawable.getNumberOfFrames(); i++, duration += drawable.getDuration(i))
-            ;
-
-        // schedule actions to be performed when it finishes
-        Runnable postAnimationRunnable = new Runnable() {
-            @Override
-            public void run() {
-                setHasTransientState(false);
-                if (runnable != null) {
-                    runnable.run();
-                }
-            }
-        };
-        if (handler != null) {
-            handler.postDelayed(postAnimationRunnable, duration);
-        } else {
-            // run the passed runnable immediately, it won't be run otherwise
-            if (runnable != null) {
-                runnable.run();
-            }
-        }
-
-        // start the animation
-        drawable.start();
-
-        return duration;
     }
 
     private void toggleEnabledState(Message message) {
+        int state = message.getState();
         boolean enabled = !(message instanceof OutgoingMessage)
-                || MessageStates.SENT_TO_SERVER == message.getState()
-                || MessageStates.DELIVERED == message.getState()
-                || MessageStates.READ == message.getState();
+                || MessageStates.SENT_TO_SERVER == state
+                || MessageStates.DELIVERED == state
+                || MessageStates.READ == state;
 
         // TODO: handle MessageStates.RESEND_REQUESTED
-        ViewUtil.setAlpha(getViews().card, enabled ? 1.0f : 0.5f);
-    }
-
-    private void updateBurnNotice() {
-
-        final Message message = getMessage();
-        final Context context = getContext();
-        Views v = getViews();
-
-        if (message == null || v == null || context == null) {
-            return;
-        }
-
-        if (message.expires()) {
-            v.burn_notice.setVisibility(VISIBLE);
-            v.action_burn.setVisibility(GONE);
-            ViewUtil.setEnabled(v.action_burn, !isInChoiceMode());
-
-            if (message.getState() == MessageStates.READ) {
-                long millisecondsToExpiry = message.getExpirationTime() - System.currentTimeMillis();
-                CharSequence newText = DateUtils.getShortTimeString(context, millisecondsToExpiry);
-                if (!newText.equals(v.burn_notice.getText())) {
-                    v.burn_notice.setText(newText);
-                }
-                /*
-                 * Show burn animation for message if it is expired
-                 */
-                if (isExpired(message)) {
-                    animateBurn(new Runnable() {
-                        @Override
-                        public void run() {
-                            mIsBurned = true;
-                            MessageUtils.removeMessage(message);
-                        }
-                    });
-                    /* cancel updates as well to avoid burning message multiple times */
-                    cancelUpdates();
-                    /* forget about the message */
-                    setTag(null);
-                }
-            } else {
-                v.burn_notice.setText(DateUtils.getShortTimeString(context,
-                        TimeUnit.SECONDS.toMillis(message.getBurnNotice())));
-            }
-        } else {
-            v.burn_notice.setVisibility(GONE);
-            v.action_burn.setVisibility(GONE);
-        }
+        ViewUtil.setAlpha(getViews().card, enabled ? 1.0f : 0.65f);
     }
 
     private void setLocation(final com.silentcircle.messaging.model.Location location) {
@@ -750,24 +683,6 @@ public class MessageEventView extends RelativeLayout implements Updatable, Check
 
         Views v = getViews();
         v.action_location.setVisibility(mLocation != null ? VISIBLE : GONE);
-    }
-
-    @SuppressWarnings("deprecation")
-    private void setCardBackground(final Drawable drawable) {
-        Views v = getViews();
-        if (drawable != null) {
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN) {
-                v.card.setBackgroundDrawable(drawable);
-            } else {
-                v.card.setBackground(drawable);
-            }
-        }
-        v.card.setVisibility(View.VISIBLE);
-    }
-
-    private boolean isExpired(@NonNull final Message message) {
-        long millisecondsToExpiry = message.getExpirationTime() - System.currentTimeMillis();
-        return (millisecondsToExpiry <= TimeUnit.SECONDS.toMillis(1));
     }
 
     private boolean isEventWithinView(@NonNull MotionEvent event, @NonNull View... views) {
@@ -784,22 +699,62 @@ public class MessageEventView extends RelativeLayout implements Updatable, Check
         return result;
     }
 
-    private long getNextUpdateTime() {
-        long nextUpdateTime = TimeUnit.DAYS.toMillis(1);
-        Message message = getMessage();
-        if (message != null) {
-            nextUpdateTime = message.getExpirationTime() - System.currentTimeMillis();
-            if (nextUpdateTime > TimeUnit.DAYS.toMillis(1)) {
-                nextUpdateTime = Math.min(nextUpdateTime % TimeUnit.HOURS.toMillis(1), TimeUnit.HOURS.toMillis(1));
-            }
-            else if (nextUpdateTime > TimeUnit.HOURS.toMillis(1)) {
-                nextUpdateTime = Math.min(nextUpdateTime % TimeUnit.MINUTES.toMillis(1), TimeUnit.MINUTES.toMillis(1));
-            }
-            else {
-                nextUpdateTime = TimeUnit.SECONDS.toMillis(1);
-            }
+    private Drawable mAttachmentDrawable = null;
+
+    private void setAttachmentIndicator(boolean incoming, Views v) {
+        if (mAttachmentDrawable == null) {
+            mAttachmentDrawable = ContextCompat.getDrawable(getContext(),
+                    R.drawable.ic_action_attachment_light);
+            int textColorSelectorId = incoming
+                    ? R.attr.sp_incoming_message_text_selector
+                    : R.attr.sp_outgoing_message_text_selector;
+            ColorStateList textTintColor;
+            TypedValue typedValue = new TypedValue();
+            getContext().getTheme().resolveAttribute(textColorSelectorId, typedValue, true);
+            textTintColor = ContextCompat.getColorStateList(getContext(), typedValue.resourceId);
+
+            mAttachmentDrawable = DrawableCompat.wrap(mAttachmentDrawable);
+            DrawableCompat.setTintList(mAttachmentDrawable, textTintColor);
+            DrawableCompat.setTintMode(mAttachmentDrawable, PorterDuff.Mode.MULTIPLY);
         }
-        return nextUpdateTime;
+
+        v.attachment_text.setCompoundDrawablesWithIntrinsicBounds(mAttachmentDrawable, null, null, null);
+    }
+
+    private boolean isGroupMessage() {
+        Boolean isGroupMessage = (Boolean) getTag(R.id.group_conversation_flag);
+        return isGroupMessage == null ? false : isGroupMessage;
+    }
+
+    private boolean isFirstMessage() {
+        Boolean newGroup = (Boolean) getTag(R.id.new_group_flag);
+        return newGroup != null && newGroup;
+    }
+
+    private boolean isNewDate() {
+        Boolean newGroup = (Boolean) getTag(R.id.new_date_flag);
+        return newGroup != null && newGroup;
+    }
+
+    private CharSequence getSenderName() {
+        return (CharSequence) getTag(R.id.sender_display_name);
+    }
+
+    private void adjustMinimumWidth() {
+        Views v = getViews();
+        Resources resources = getResources();
+        boolean isIncoming = getMessage() instanceof IncomingMessage;
+        int minimumWidth = Math.max((int) resources.getDimension(R.dimen.messaging_message_card_min_width),
+                (isIncoming
+                        ? (int) resources.getDimension(R.dimen.messaging_message_time_margin_left)
+                        : (int) resources.getDimension(R.dimen.messaging_message_time_margin_right))
+                + (int) resources.getDimension(R.dimen.spacing_small)
+                + v.retention_notice.getMeasuredWidth()
+                + v.burn_notice.getMeasuredWidth()
+                + v.message_state.getMeasuredWidth());
+        if (v.card.getMinimumWidth() != minimumWidth) {
+            v.card.setMinimumWidth(minimumWidth);
+        }
     }
 
 }

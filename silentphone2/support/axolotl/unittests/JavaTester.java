@@ -1,4 +1,19 @@
-import axolotl.AxolotlNative;
+/*
+Copyright 2016 Silent Circle, LLC
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+import zina.AxolotlNative;
 
 public class JavaTester extends AxolotlNative {
 
@@ -9,7 +24,7 @@ public class JavaTester extends AxolotlNative {
     }
 
     public int receiveMessage(byte[] messageDescriptor, byte[] attachementDescriptor, byte[] messageAttributes) {
-        return 0;
+        return 1;
     }
 
     public void messageStateReport(long messageIdentfier, int statusCode, byte[] stateInformation) { 
@@ -17,6 +32,22 @@ public class JavaTester extends AxolotlNative {
 
     public void notifyCallback(int notifyActionCode, byte[] actionInformation, byte[] deviceId) {
     }
+
+    public int groupMsgReceive(byte[]messageDescriptor, byte[]attachmentDescriptor, byte[] messageAttributes) {
+        return 0;
+    }
+
+    public int groupCmdReceive(byte[] commandMessage) {
+        return 0;
+    }
+
+    public void groupStateCallback(int errorCode, byte[] stateInformation) {
+    }
+
+    public int storeMessageData(byte[] messageDescriptor, byte[] attachmentDescriptor, byte[] messageAttributes) {
+        return 1;
+    }
+
 
     public byte[] httpHelper(byte[] requestUri, String method, byte[] requestData, int[] code) {
         String uri = new String(requestUri);
@@ -42,7 +73,7 @@ public class JavaTester extends AxolotlNative {
         JavaTester tester = new JavaTester();
         try {
             int initResult = tester.doInit(1, ":memory:", passphrase, new String("wernerd").getBytes("UTF-8"), 
-                                           new String("someapikey").getBytes("UTF-8"), new String("somedevid").getBytes("UTF-8"));
+                                           new String("someapikey").getBytes("UTF-8"), new String("somedevid").getBytes("UTF-8"), false);
             System.out.println("initResult: " + initResult + ", pwlength: " + passphrase.length);
 
             final byte[] msg = new String("Hello, Axolotl! öäüß").getBytes("UTF-8");

@@ -23,13 +23,13 @@ import android.telephony.PhoneNumberUtils;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.style.TtsSpan;
-import android.util.Log;
 import android.util.Patterns;
 
 import com.google.common.base.Preconditions;
 import com.google.i18n.phonenumbers.NumberParseException;
 import com.google.i18n.phonenumbers.PhoneNumberUtil;
 import com.google.i18n.phonenumbers.Phonenumber.PhoneNumber;
+import com.silentcircle.logs.Log;
 import com.silentcircle.silentphone2.R;
 
 import static android.provider.ContactsContract.CommonDataKinds.Phone;

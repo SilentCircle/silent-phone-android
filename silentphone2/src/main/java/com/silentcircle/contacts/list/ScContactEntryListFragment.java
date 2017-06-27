@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2013-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -57,12 +57,15 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.Loader;
 import android.database.Cursor;
+import android.database.MatrixCursor;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.os.Parcelable;
 import android.provider.ContactsContract.Directory;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
@@ -71,6 +74,9 @@ import android.view.View;
 import android.view.View.OnFocusChangeListener;
 import android.view.View.OnTouchListener;
 import android.view.ViewGroup;
+import android.view.animation.AccelerateInterpolator;
+import android.view.animation.Animation;
+import android.view.animation.TranslateAnimation;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AbsListView;
 import android.widget.AbsListView.OnScrollListener;
@@ -79,15 +85,17 @@ import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 
-import com.silentcircle.common.util.StringUtils;
+import com.silentcircle.common.list.ContactListItemView;
 import com.silentcircle.contacts.ContactPhotoManagerNew;
 import com.silentcircle.contacts.preference.ContactsPreferences;
-import com.silentcircle.contacts.utils.PhoneNumberHelper;
 import com.silentcircle.contacts.widget.CompositeCursorAdapter;
+import com.silentcircle.messaging.task.ScConversationLoader;
+import com.silentcircle.messaging.util.Extra;
 import com.silentcircle.silentphone2.R;
-import com.silentcircle.silentphone2.util.Utilities;
 
 import java.lang.ref.WeakReference;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Common base class for various contact-related list fragments.
@@ -118,6 +126,8 @@ public abstract class ScContactEntryListFragment<T extends ScContactEntryListAda
     private static final String KEY_LEGACY_COMPATIBILITY = "legacyCompatibility";
     private static final String KEY_PHONE_INPUT = "phoneInput";
     private static final String KEY_DIRECTORY_RESULT_LIMIT = "directoryResultLimit";
+    private static final String KEY_IN_USER_SELECTION_MODE = "userSelectionMode";
+    private static final String KEY_SELECTION = "userSelection";
 
     private static final String KEY_SC_PRE_SELECTOR = "sc_pre_selector";
     private static final String KEY_SC_PRE_SELECTOR_ARGS = "sc_pre_selector_args";
@@ -130,7 +140,7 @@ public abstract class ScContactEntryListFragment<T extends ScContactEntryListAda
 
     private static final int DIRECTORY_LOADER_ID = -1;
 
-    private static final int DIRECTORY_SEARCH_DELAY_MILLIS = 1000;  // 300ms is not enough on small touch keyboards
+    private static final int DIRECTORY_SEARCH_DELAY_MILLIS = 600;  // 300ms is not enough on small touch keyboards
     private static final int DIRECTORY_SEARCH_MESSAGE = 1;
 
     private static final int DEFAULT_DIRECTORY_RESULT_LIMIT = 20;
@@ -149,12 +159,15 @@ public abstract class ScContactEntryListFragment<T extends ScContactEntryListAda
     private boolean mSelectionVisible;
     private boolean mLegacyCompatibility;
     private boolean mShowEmptyListForEmptyQuery;
+    private boolean mInUserSelectionMode;
 
     private boolean mEnabled = true;
 
     private T mAdapter;
     private View mView;
     private ListView mListView;
+
+    private List<String> mSelectedItems = new ArrayList<>();
 
     /**
      * Used for keeping track of the scroll state of the list.
@@ -236,7 +249,9 @@ public abstract class ScContactEntryListFragment<T extends ScContactEntryListAda
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
-        commonOnAttach(activity);
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+            commonOnAttach(activity);
+        }
     }
 
     private void commonOnAttach(Activity activity) {
@@ -311,10 +326,14 @@ public abstract class ScContactEntryListFragment<T extends ScContactEntryListAda
         outState.putInt(KEY_DIRECTORY_SEARCH_MODE, mDirectorySearchMode);
         outState.putBoolean(KEY_SELECTION_VISIBLE, mSelectionVisible);
         outState.putBoolean(KEY_LEGACY_COMPATIBILITY, mLegacyCompatibility);
-        outState.putString(KEY_PHONE_INPUT, mQueryString);
+        outState.putBoolean(KEY_PHONE_INPUT, mPhoneInput);
         outState.putString(KEY_QUERY_STRING, mQueryString);
         outState.putInt(KEY_DIRECTORY_RESULT_LIMIT, mDirectoryResultLimit);
         outState.putBoolean(KEY_DARK_THEME, mDarkTheme);
+        outState.putBoolean(KEY_IN_USER_SELECTION_MODE, mInUserSelectionMode);
+        outState.putCharSequenceArray(KEY_SELECTION,
+                mSelectedItems.toArray(new CharSequence[getSelectedItems().size()]));
+
 
         if (mListView != null) {
             outState.putParcelable(KEY_LIST_STATE, mListView.onSaveInstanceState());
@@ -327,6 +346,10 @@ public abstract class ScContactEntryListFragment<T extends ScContactEntryListAda
         mContactsPrefs = new ContactsPreferences(mContext);
         restoreSavedState(savedState);
         mAdapter = createListAdapter();
+        if (savedState != null && mSearchMode) {
+            mSearchMode = false;
+            setSearchMode(true);
+        }
         mContactsPrefs = new ContactsPreferences(mContext);
     }
 
@@ -350,6 +373,9 @@ public abstract class ScContactEntryListFragment<T extends ScContactEntryListAda
         mQueryString = savedState.getString(KEY_QUERY_STRING);
         mDirectoryResultLimit = savedState.getInt(KEY_DIRECTORY_RESULT_LIMIT);
         mDarkTheme = savedState.getBoolean(KEY_DARK_THEME);
+        mInUserSelectionMode = savedState.getBoolean(KEY_IN_USER_SELECTION_MODE);
+        CharSequence[] participants = savedState.getCharSequenceArray(KEY_SELECTION);
+        setSelection(participants);
 
         // Retrieve list state. This will be applied in onLoadFinished
         mListState = savedState.getParcelable(KEY_LIST_STATE);
@@ -424,6 +450,14 @@ public abstract class ScContactEntryListFragment<T extends ScContactEntryListAda
                 loader = new ScDirectoryLoader(mContext);
                 ((PhoneNumberListAdapter)mAdapter).configureScDirLoader((ScDirectoryLoader)loader);
             }
+            else if (directoryId == ScContactEntryListAdapter.SC_EXISTING_CONVERSATIONS) {
+                loader = new ScConversationLoader(mContext);
+                ((PhoneNumberListAdapter) mAdapter).configureConversationDirLoader((ScConversationLoader)loader);
+            }
+            else if (directoryId == ScContactEntryListAdapter.SC_EXACT_MATCH_ON_V1_USER) {
+                loader = new ScV1UserLoader(mContext);
+                ((PhoneNumberListAdapter) mAdapter).configureExactMatchLoader((ScV1UserLoader)loader);
+            }
             return loader;
         }
     }
@@ -440,7 +474,7 @@ public abstract class ScContactEntryListFragment<T extends ScContactEntryListAda
         if (directoryId == ScContactEntryListAdapter.SC_REMOTE_DIRECTORY) {
             if (!mUseScDirLoader)
                 return;
-            searchProgressVisibility(true);
+//            searchProgressVisibility(!TextUtils.isEmpty(mQueryString) ? true : false);
         }
         if (mForceLoad) {
             if (directoryId == Directory.DEFAULT) {
@@ -496,7 +530,74 @@ public abstract class ScContactEntryListFragment<T extends ScContactEntryListAda
             mAdapter.changeDirectories(data);
             startLoading();
         } else {
-            onPartitionLoaded(loaderId, data);
+            // Do not show the /user match if there is already a result in the directory listing
+            int remotePartition = mAdapter.getPartitionByDirectoryType(mContext.getString(R.string.scRemoteContactsList));
+            int v1UserPartition = mAdapter.getPartitionByDirectoryType(mContext.getString(R.string.scV1UserList));
+            Cursor directoryResults = remotePartition == -1 ? null : mAdapter.getPartition(remotePartition) != null
+                    ? mAdapter.getCursor(remotePartition) : null;
+            Cursor v1UserResults = v1UserPartition == -1 ? null : mAdapter.getPartition(v1UserPartition) != null
+                    ? mAdapter.getCursor(v1UserPartition) : null;
+            // We now have fresh data - use it
+            if (loaderId == remotePartition) {
+                directoryResults = data;
+            }
+            if (loaderId == v1UserPartition) {
+                v1UserResults = data;
+            }
+
+            if (directoryResults != null && v1UserResults != null
+                    && directoryResults.getCount() > 0 && v1UserResults.getCount() > 0) {
+                try {
+                    MatrixCursor newData = new MatrixCursor(directoryResults.getColumnNames(), 0);
+                    if (v1UserResults.moveToFirst()) {
+                        do {
+                            String uuid = v1UserResults.getString(10);
+
+                            boolean addRow = true;
+                            if (uuid != null) {
+                                if (directoryResults.moveToFirst()) {
+                                    do {
+                                        if (uuid.equals(directoryResults.getString(10))) {
+                                            addRow = false;
+                                            break;
+                                        }
+                                    }
+                                    while (directoryResults.moveToNext());
+                                }
+                                directoryResults.moveToPosition(0);
+
+                                if (addRow) {
+                                    MatrixCursor.RowBuilder row;
+                                    row = newData.newRow();
+                                    row.add(v1UserResults.getInt(0));
+                                    row.add(v1UserResults.getInt(1));
+                                    row.add(v1UserResults.getString(2));
+                                    row.add(v1UserResults.getString(3));
+                                    row.add(v1UserResults.getInt(4));
+                                    row.add(v1UserResults.getString(5));
+                                    row.add(v1UserResults.getString(6));
+                                    row.add(v1UserResults.getString(7));
+                                    row.add(v1UserResults.getString(8));
+                                    row.add(v1UserResults.getString(9));
+                                    row.add(v1UserResults.getString(10));
+                                }
+                            }
+                        } while (v1UserResults.moveToNext());
+                    }
+
+                    onPartitionLoaded(v1UserPartition, newData);
+                    if (loaderId != v1UserPartition) {
+                        onPartitionLoaded(loaderId, data);
+                    }
+                } catch (Throwable exception) {
+                    // If an error occurs, proceed normally
+                    // Observed an IllegalStateException when reading string from directoryResults
+                    onPartitionLoaded(loaderId, data);
+                }
+            } else {
+                onPartitionLoaded(loaderId, data);
+            }
+
             if (isSearchMode()) {
                 int directorySearchMode = getDirectorySearchMode();
                 if (directorySearchMode != DirectoryListLoader.SEARCH_MODE_NONE) {
@@ -557,13 +658,13 @@ public abstract class ScContactEntryListFragment<T extends ScContactEntryListAda
         CompositeCursorAdapter.Partition partition = mAdapter.getPartition(partitionIndex);
         if (partition instanceof DirectoryPartition) {
             if (((DirectoryPartition)partition).getDirectoryId() == ScContactEntryListAdapter.SC_REMOTE_DIRECTORY) {
-                searchProgressVisibility(false);
+//                searchProgressVisibility(false);
             } else {
                 // Check if the partition has been removed
                 int scPartition = mAdapter.getPartitionByDirectoryId(ScContactEntryListAdapter.SC_REMOTE_DIRECTORY);
 
                 if (scPartition == -1) {
-                    searchProgressVisibility(false);
+//                    searchProgressVisibility(false);
                 }
             }
         }
@@ -587,9 +688,30 @@ public abstract class ScContactEntryListFragment<T extends ScContactEntryListAda
     }
 
     private void searchProgressVisibility(boolean visible) {
-        ProgressBar pb = (ProgressBar)mView.findViewById(R.id.progressBar);
+        final ProgressBar pb = (ProgressBar)mView.findViewById(R.id.progressBar);
         if (pb != null) {
-            pb.setVisibility(visible ? View.VISIBLE : View.INVISIBLE);
+            if (pb.getVisibility() == (visible ? View.VISIBLE : View.GONE)) {
+                return;
+            }
+
+            if (visible) {
+                pb.clearAnimation();
+                pb.setVisibility(View.VISIBLE);
+            } else {
+                Animation fadeOut = new TranslateAnimation(0, 0, 0, -1 * pb.getHeight());
+                fadeOut.setInterpolator(new AccelerateInterpolator());
+                fadeOut.setDuration(150);
+                fadeOut.setAnimationListener(new Animation.AnimationListener()
+                {
+                    public void onAnimationEnd(Animation animation)
+                    {
+                        pb.setVisibility(View.GONE);
+                    }
+                    public void onAnimationRepeat(Animation animation) {}
+                    public void onAnimationStart(Animation animation) {}
+                });
+                pb.startAnimation(fadeOut);
+            }
         }
     }
 
@@ -757,14 +879,33 @@ public abstract class ScContactEntryListFragment<T extends ScContactEntryListAda
                     // If we are switching from search to regular display, remove all directory
                     // partitions after default one, assuming they are remote directories which
                     // should be cleaned up on exiting the search mode.
-                    mAdapter.removeDirectoriesAfterDefault();
+                    //TODO: do we need to run this?
+//                    mAdapter.removeDirectoriesAfterDefault();
+                    int scPartition = mAdapter.getPartitionByDirectoryId(
+                            ScContactEntryListAdapter.SC_REMOTE_DIRECTORY);
+                    if (scPartition != -1) {
+                        mAdapter.removePartition(scPartition);
+                    }
                 } else {
+                    int scPartition = mAdapter.getPartitionByDirectoryId(
+                            ScContactEntryListAdapter.SC_EXACT_MATCH_ON_V1_USER);
+                    if (scPartition == -1) {
+                        mAdapter.addPartition(0, mAdapter.createV1UserPartition());
+                    }
+
+                    scPartition = mAdapter.getPartitionByDirectoryId(
+                            ScContactEntryListAdapter.SC_EXISTING_CONVERSATIONS);
+                    if (scPartition == -1) {
+                        mAdapter.addPartition(1, mAdapter.createLocalScConversationPartition());
+                    }
+
                     // Re-add the SC directory partition it has been removed
                     // Useful when clearing search field and continuing afterwards
-                    int scPartition = mAdapter.getPartitionByDirectoryId(ScContactEntryListAdapter.SC_REMOTE_DIRECTORY);
+                    scPartition = mAdapter.getPartitionByDirectoryId(
+                            ScContactEntryListAdapter.SC_REMOTE_DIRECTORY);
 
                     if (scPartition == -1) {
-                        mAdapter.addPartition(mAdapter.createRemoteScDirPartition());
+                        mAdapter.addPartition(2, mAdapter.createRemoteScDirPartition());
                     }
                 }
 
@@ -810,19 +951,6 @@ public abstract class ScContactEntryListFragment<T extends ScContactEntryListAda
             setSearchMode(!TextUtils.isEmpty(mQueryString) || mShowEmptyListForEmptyQuery);
 
             if (mAdapter != null) {
-                if (queryString != null) {
-                    queryString = mQueryString = Utilities.isRtl() ? StringUtils.rtrim(queryString) :
-                            StringUtils.ltrim(queryString);
-
-                    if (!TextUtils.isEmpty(queryString) && isPhoneInput()) {
-                        String e164Formatted = PhoneNumberHelper.formatNumberToE164(queryString, "ZZ");
-
-                        if (!TextUtils.isEmpty(e164Formatted)) {
-                            queryString = mQueryString = e164Formatted;
-                        }
-                    }
-                }
-
                 mAdapter.setQueryString(queryString);
                 reloadData();
             }
@@ -1014,7 +1142,11 @@ public abstract class ScContactEntryListFragment<T extends ScContactEntryListAda
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        hideSoftKeyboard();
+        if (TextUtils.isEmpty(getQueryString()) && position == 1) {
+            // Item is "New group conversation"
+        } else if (!inUserSelectionMode()) {
+            hideSoftKeyboard();
+        }
 
         int adjPosition = position - mListView.getHeaderViewsCount();
         if (adjPosition >= 0) {
@@ -1022,7 +1154,7 @@ public abstract class ScContactEntryListFragment<T extends ScContactEntryListAda
         }
     }
 
-    private void hideSoftKeyboard() {
+    protected void hideSoftKeyboard() {
         // Hide soft keyboard, if visible
         InputMethodManager inputMethodManager = (InputMethodManager)
                 mContext.getSystemService(Context.INPUT_METHOD_SERVICE);
@@ -1045,7 +1177,7 @@ public abstract class ScContactEntryListFragment<T extends ScContactEntryListAda
     @Override
     public boolean onTouch(View view, MotionEvent event) {
         if (view == mListView) {
-            hideSoftKeyboard();
+//            hideSoftKeyboard();
         }
         return false;
     }
@@ -1112,4 +1244,134 @@ public abstract class ScContactEntryListFragment<T extends ScContactEntryListAda
             reloadData();
         }
     };
+
+    protected View findViewById(int viewResourceID) {
+        View parent = getView();
+        if (parent != null) {
+            return parent.findViewById(viewResourceID);
+        }
+        return null;
+    }
+
+    /* Functionality for item selection mode */
+
+    protected void setUserSelectionMode(boolean enabled) {
+        mInUserSelectionMode = enabled;
+    }
+
+    protected boolean inUserSelectionMode() {
+        return mInUserSelectionMode;
+    }
+
+    protected void setSelection(@Nullable CharSequence[] participants) {
+        if (participants != null) {
+            for (CharSequence participant : participants) {
+                if (!TextUtils.isEmpty(participant)) {
+                    mSelectedItems.add(participant.toString());
+                }
+            }
+        }
+    }
+
+    protected void onClearSelection() {
+    }
+
+    protected void onAddToSelection(@Nullable String item, int position) {
+    }
+
+    protected void onRemoveFromSelection(@Nullable String item, int position) {
+    }
+
+    protected String getGroupName() {
+        Bundle arguments = getArguments();
+        return arguments != null ? Extra.GROUP.from(arguments) : null;
+    }
+
+    protected void selectItem(int position) {
+        ListView listView = getListView();
+        if (listView != null) {
+            View view = listView.getChildAt(position - listView.getFirstVisiblePosition() + 1);
+            boolean canToggle = true;
+            if (view instanceof ContactListItemView) {
+                if (!((ContactListItemView) view).isChecked()) {
+                    canToggle = canAddToSelection();
+                }
+                if (canToggle) {
+                    ((ContactListItemView) view).toggleChecked();
+                    String uuid = (String) view.getTag(R.id.view_holder_userid);
+                    if (((ContactListItemView) view).isChecked()) {
+                        addToSelection(uuid);
+                    } else {
+                        removeFromSelection(uuid);
+                    }
+                }
+            }
+        }
+    }
+
+    @NonNull
+    protected List<String> getSelectedItems() {
+        return mSelectedItems;
+    }
+
+    protected int getCheckedCount() {
+        return mSelectedItems.size();
+    }
+
+    protected boolean canAddToSelection() {
+        return true;
+    }
+
+    protected void clearSelection() {
+        mSelectedItems.clear();
+        onClearSelection();
+
+        ListView listView = getListView();
+        if (listView != null) {
+            for (int i = 0; i < listView.getChildCount(); i++) {
+                View view = listView.getChildAt(i);
+                if (view instanceof ContactListItemView) {
+                    ((ContactListItemView) view).setChecked(false);
+                }
+            }
+        }
+    }
+
+    protected synchronized void addToSelection(@Nullable String item) {
+        if (TextUtils.isEmpty(item) || !canAddToSelection()) {
+            return;
+        }
+
+        if (!mSelectedItems.contains(item)) {
+            mSelectedItems.add(item);
+            onAddToSelection(item, mSelectedItems.size() - 1);
+        }
+    }
+
+    protected synchronized void removeFromSelection(@Nullable String item) {
+        if (TextUtils.isEmpty(item)) {
+            return;
+        }
+
+        for (int i = 0; i < mSelectedItems.size(); i++) {
+            if (item.equals(mSelectedItems.get(i))) {
+                onRemoveFromSelection(item, i);
+                mSelectedItems.remove(item);
+                break;
+            }
+        }
+
+        ListView listView = getListView();
+        if (listView != null) {
+            for (int i = 0; i < listView.getChildCount(); i++) {
+                View view = listView.getChildAt(i);
+                if (view instanceof ContactListItemView) {
+                    if (item.equals(view.getTag(R.id.view_holder_userid))) {
+                        ((ContactListItemView) view).setChecked(false);
+                    }
+                }
+            }
+        }
+    }
+
 }

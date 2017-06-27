@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2016-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -25,7 +25,6 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-
 package com.silentcircle.silentphone2.fragments;
 
 import android.app.Dialog;
@@ -34,7 +33,7 @@ import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AlertDialog;
-import android.util.Log;
+import com.silentcircle.logs.Log;
 import android.widget.ArrayAdapter;
 
 import com.silentcircle.silentphone2.R;
@@ -58,6 +57,9 @@ public class SingleChoiceDialogFragment extends DialogFragment {
 
     protected static final int NO_SELECTION = -1;
 
+    private OnSingleChoiceDialogItemSelectedListener mListener = null;
+    private int mRequestCode;
+
     /**
      * Listener interface to pass selected item index to caller.
      */
@@ -79,6 +81,11 @@ public class SingleChoiceDialogFragment extends DialogFragment {
     }
 
     public SingleChoiceDialogFragment() {
+    }
+
+    public void setListener(OnSingleChoiceDialogItemSelectedListener listener, int requestCode) {
+        mListener = listener;
+        mRequestCode = requestCode;
     }
 
     @NonNull
@@ -105,9 +112,17 @@ public class SingleChoiceDialogFragment extends DialogFragment {
             @Override
             public void onClick(DialogInterface dialog, int index) {
                 try {
-                    OnSingleChoiceDialogItemSelectedListener listener =
-                            (OnSingleChoiceDialogItemSelectedListener) getTargetFragment();
-                    listener.onSingleChoiceDialogItemSelected(dialog, getTargetRequestCode(), index);
+                    OnSingleChoiceDialogItemSelectedListener listener;
+                    int requestCode;
+                    if (mListener != null) {
+                        listener = mListener;
+                        requestCode = mRequestCode;
+                    }
+                    else {
+                        listener = (OnSingleChoiceDialogItemSelectedListener) getTargetFragment();
+                        requestCode = getTargetRequestCode();
+                    }
+                    listener.onSingleChoiceDialogItemSelected(dialog, requestCode, index);
                 }
                 catch (ClassCastException e) {
                     throw new ClassCastException(

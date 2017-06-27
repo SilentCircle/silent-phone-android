@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2016-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,12 +27,17 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 package com.silentcircle.messaging.repository.DbRepository;
 
-import android.content.Context;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.util.Log;
+import android.support.v4.util.LruCache;
+import android.text.TextUtils;
 
+import com.silentcircle.logs.Log;
+
+import com.silentcircle.SilentPhoneApplication;
 import com.silentcircle.messaging.model.Conversation;
 import com.silentcircle.messaging.model.json.JSONConversationAdapter;
+import com.silentcircle.messaging.providers.AvatarProvider;
 import com.silentcircle.messaging.repository.ConversationRepository;
 import com.silentcircle.messaging.repository.EventRepository;
 import com.silentcircle.messaging.util.IOUtils;
@@ -49,7 +54,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import axolotl.AxolotlNative;
+import zina.ZinaNative;
+
+import static android.R.attr.data;
 
 public class DbConversationRepository /*extends BaseFileRepository<Conversation>*/ implements ConversationRepository {
 
@@ -60,10 +67,12 @@ public class DbConversationRepository /*extends BaseFileRepository<Conversation>
     public static final String NAME_SEPARATOR = "_:::_";
 
     private static final List<Conversation> EMPTY_CONVERSATION_LIST = Arrays.asList(new Conversation[0]);
+    private static final List<Conversation> CACHED_CONVERSATION_LIST = new ArrayList<>();
     private static final String ownRepoNameSuffix = "$$_REPO_FOR_ME_$$";
     private final String userName;
     private final String userNameSep;
-    private final Context context;
+
+    private static final LruCache<String, Conversation> mConversationsCache = new LruCache<>(10);
 
     /**
      * Get a Conversation repository for a local user.
@@ -78,39 +87,29 @@ public class DbConversationRepository /*extends BaseFileRepository<Conversation>
      * @param username The name of the local user
      * @param key      The key used to encrypt data
      */
-    public DbConversationRepository(Context ctx, String name) {
-        context = ctx;
+    public DbConversationRepository(String name) {
         userName = name;
         userNameSep = name + NAME_SEPARATOR;
         if (!exists(ownRepoNameSuffix)) {
             byte[] id = IOUtils.encode(userNameSep + "$$_REPO_FOR_ME_$$");
             byte[] data = {0x0d, 0x0e, 0x0a, 0x0d, 0x0c, 0x0a, 0x0f, 0x0e};
-            AxolotlNative.storeConversation(id, data);
+            ZinaNative.storeConversation(id, data);
         }
     }
 
-
-//	@Override
-//	public ResourceStateRepository contextOf( Conversation conversation ) {
-//		if( conversation == null ) {
-//			return null;
-//		}
-//		String id = identify( conversation );
-//		ResourceStateRepository repository = contexts.get( id );
-//		if( repository == null ) {
-//			repository = new FileResourceStateRepository( new File( root, Hash.sha1( id + ".contexts" ) ) );
-//			( (FileResourceStateRepository) repository ).setFilter( filter );
-//			contexts.put( id, repository );
-//		}
-//		return repository;
-//	}
-
     @Override
     public void clear() {
+        synchronized (mConversationsCache) {
+            mConversationsCache.evictAll();
+        }
+
         List<Conversation> conversations = list();
         for (Conversation conv: conversations) {
             remove(conv);
         }
+
+        AvatarProvider.deleteAllAvatars(SilentPhoneApplication.getAppContext());
+        CACHED_CONVERSATION_LIST.clear();
     }
 
     /**
@@ -131,7 +130,7 @@ public class DbConversationRepository /*extends BaseFileRepository<Conversation>
     @Override
     public boolean exists(String partner) {
         byte[] id = IOUtils.encode(userNameSep + partner);
-        return AxolotlNative.existConversation(id);
+        return ZinaNative.existConversation(id);
     }
 
     /**
@@ -140,15 +139,36 @@ public class DbConversationRepository /*extends BaseFileRepository<Conversation>
      * @param partner The conversation partner's name
      * @return the conversation object or {@code null} if not found
      */
+    @Nullable
     @Override
-    public Conversation findById(String partner) {
-        byte[] id = IOUtils.encode(userNameSep + partner);
-        int[] code = new int[1];
-        byte[] data = AxolotlNative.loadConversation(id, code);
-        if (data != null) {
-            return deserialize(new String(data));
+    public Conversation findById(@Nullable final String partner) {
+        synchronized (mConversationsCache) {
+            if (TextUtils.isEmpty(partner)) {
+                return null;
+            }
+            Conversation result;
+
+            result = mConversationsCache.get(partner);
+            if (result == null) {
+                byte[] id = IOUtils.encode(userNameSep + partner);
+                int[] code = new int[1];
+                byte[] data = ZinaNative.loadConversation(id, code);
+                if (data != null) {
+                    result = deserialize(new String(data));
+                }
+                if (result != null) {
+                    mConversationsCache.put(partner, result);
+                    /*
+                    if (!partner.equals(result.getPartner().getUserId())) {
+                        if (!"null".equals(partner)) {
+                            throw new IllegalStateException("Partner and uuid not matching!");
+                        }
+                    }
+                     */
+                }
+            }
+            return result;
         }
-        return null;
     }
 
     /**
@@ -160,7 +180,7 @@ public class DbConversationRepository /*extends BaseFileRepository<Conversation>
     @Override
     public List<Conversation> list() {
         Set<String> conversationPartners = new HashSet<>();
-        byte[][] conversationsArray = AxolotlNative.listConversations();
+        byte[][] conversationsArray = ZinaNative.listConversations();
         if (conversationsArray == null)
             return EMPTY_CONVERSATION_LIST;
         for (byte[] conversation : conversationsArray) {
@@ -180,7 +200,7 @@ public class DbConversationRepository /*extends BaseFileRepository<Conversation>
         }
         conversationPartners.remove(ownRepoNameSuffix);
 
-        byte[] usersJson = AxolotlNative.getKnownUsers();
+        byte[] usersJson = ZinaNative.getKnownUsers();
         if ((usersJson != null && usersJson.length > 0)) {
             List<String> partners = parseKnownUsers(new String(usersJson));
             if (partners != null) {
@@ -197,6 +217,14 @@ public class DbConversationRepository /*extends BaseFileRepository<Conversation>
         return conversations;
     }
 
+    @Override
+    public List<Conversation> listCached() {
+        if (CACHED_CONVERSATION_LIST.isEmpty()) {
+            CACHED_CONVERSATION_LIST.addAll(list());
+        }
+        return CACHED_CONVERSATION_LIST;
+    }
+
     private Conversation deserialize(String serial) {
         if (serial == null) {
             return null;
@@ -209,21 +237,20 @@ public class DbConversationRepository /*extends BaseFileRepository<Conversation>
     }
 
     @Override
-    public Conversation findByPartner(String partner) {
+    @Nullable
+    public Conversation findByPartner(@Nullable final String partner) {
         return findById(partner);
     }
 
     @Override
-    public EventRepository historyOf(Conversation conversation) {
+    @NonNull
+    public EventRepository historyOf(@NonNull final Conversation conversation) {
         // TODO if DbEventRepository is ready
-        if (conversation == null) {
-            return null;
-        }
         byte[] id = IOUtils.encode(userNameSep + identify(conversation));
         EventRepository history = histories.get(id);
         if (history == null) {
-			history = new DbEventRepository(context, id);
-//			histories.put( id, history );
+            history = new DbEventRepository(id);
+//            histories.put( id, history );
         }
         return history;
     }
@@ -233,23 +260,44 @@ public class DbConversationRepository /*extends BaseFileRepository<Conversation>
     }
 
     public void remove(Conversation conversation) {
-        if (conversation == null) {
-            return;
+        synchronized (mConversationsCache) {
+            if (conversation == null) {
+                return;
+            }
+
+            mConversationsCache.remove(conversation.getPartner().getUserId());
+
+            // TODO: check if we need context in Axolotl, context maybe SCIMP specific: contextOf( conversation ).clear();
+            historyOf(conversation).clear();
+            byte[] id = IOUtils.encode(userNameSep + identify(conversation));
+            ZinaNative.deleteConversation(id);
+
+            // delete conversation's avatar
+            AvatarProvider.deleteConversationAvatar(SilentPhoneApplication.getAppContext(), conversation.getAvatar());
         }
-        // TODO: check if we need context in Axolotl, context maybe SCIMP specific: contextOf( conversation ).clear();
-        historyOf(conversation).clear();
-        byte[] id = IOUtils.encode(userNameSep + identify(conversation));
-        AxolotlNative.deleteConversation(id);
+        CACHED_CONVERSATION_LIST.clear();
     }
 
     @Override
     public void save(Conversation conv) {
-        byte[] data = serialize(conv).getBytes();
+        synchronized (mConversationsCache) {
+            if (conv == null) {
+                return;
+            }
 
-        String partner = identify(conv);
-        byte[] id = IOUtils.encode(userNameSep + partner);
-        AxolotlNative.storeConversation(id, data);
-        Arrays.fill(data, (byte) 0);
+
+            byte[] data = serialize(conv).getBytes();
+
+            String partner = identify(conv);
+            byte[] id = IOUtils.encode(userNameSep + partner);
+            ZinaNative.storeConversation(id, data);
+            Arrays.fill(data, (byte) 0);
+
+            if (conv.getPartner().getUserId() != null) {
+                mConversationsCache.put(conv.getPartner().getUserId(), conv);
+            }
+        }
+        CACHED_CONVERSATION_LIST.clear();
     }
 
     private String serialize(Conversation conversation) {

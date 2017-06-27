@@ -20,11 +20,8 @@ import android.app.IntentService;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
-import android.support.v4.content.LocalBroadcastManager;
-import android.text.TextUtils;
-import android.util.Log;
+import com.silentcircle.logs.Log;
 
-import com.google.android.gms.gcm.GcmPubSub;
 import com.google.android.gms.gcm.GoogleCloudMessaging;
 import com.google.android.gms.iid.InstanceID;
 import com.silentcircle.silentphone2.R;
@@ -47,11 +44,12 @@ public class RegistrationIntentService extends IntentService {
 
     public RegistrationIntentService() {
         super(TAG);
+        setIntentRedelivery(true);
     }
 
     @Override
     protected void onHandleIntent(Intent intent) {
-        final String action = intent.getAction();
+        final String action = intent != null ? intent.getAction() : null;
 
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         sharedPreferences.edit().putBoolean(SENT_TOKEN_TO_SERVER, false).apply();

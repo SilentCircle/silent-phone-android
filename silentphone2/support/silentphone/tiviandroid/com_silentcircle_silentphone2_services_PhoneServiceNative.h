@@ -55,6 +55,14 @@ JNIEXPORT jint JNICALL Java_com_silentcircle_silentphone2_services_PhoneServiceN
 
 /*
  * Class:     com_silentcircle_silentphone2_services_PhoneServiceNative
+ * Method:    setSIPPassword
+ * Signature: ([B)I
+ */
+JNIEXPORT jint JNICALL Java_com_silentcircle_silentphone2_services_PhoneServiceNative_setSIPPassword
+        (JNIEnv *, jclass, jbyteArray);
+
+/*
+ * Class:     com_silentcircle_silentphone2_services_PhoneServiceNative
  * Method:    initPhone
  * Signature: (II)I
  */
@@ -148,6 +156,46 @@ JNIEXPORT jintArray JNICALL Java_com_silentcircle_silentphone2_services_PhoneSer
   */
  JNIEXPORT void JNICALL Java_com_silentcircle_silentphone2_services_PhoneServiceNative_setPushToken
    (JNIEnv *, jclass, jstring);
+
+/*
+  * Class:     com_silentcircle_silentphone2_services_PhoneServiceNative
+  * Method:    setLogFileName
+  * Signature: (Ljava/lang/String;)I
+  */
+JNIEXPORT void JNICALL Java_com_silentcircle_silentphone2_services_PhoneServiceNative_setLogFileName
+(JNIEnv *, jclass, jstring);
+
+/*
+  * Class:     com_silentcircle_silentphone2_services_PhoneServiceNative
+  * Method:    scLog
+  * Signature: (Ljava/lang/String;)I
+  */
+JNIEXPORT void JNICALL Java_com_silentcircle_silentphone2_services_PhoneServiceNative_scLog
+(JNIEnv *, jclass, jstring);
+
+/*
+  * Class:     com_silentcircle_silentphone2_services_PhoneServiceNative
+  * Method:    decryptLogs
+  * Signature: (Ljava/lang/String;)I
+  */
+JNIEXPORT jstring JNICALL Java_com_silentcircle_silentphone2_services_PhoneServiceNative_decryptLogs
+(JNIEnv *, jclass, jobjectArray, jstring);
+
+
+/*
+  * Class:     com_silentcircle_silentphone2_services_PhoneServiceNative
+  * Method:    setLoggingEnabled
+  * Signature: (Ljava/lang/String;)I
+  */
+JNIEXPORT void JNICALL Java_com_silentcircle_silentphone2_services_PhoneServiceNative_setLoggingEnabled
+(JNIEnv *, jclass, jint);
+
+/*
+  * Class:     com_silentcircle_silentphone2_services_PhoneServiceNative
+  * Method:    setLoggingEnabled
+  */
+JNIEXPORT void JNICALL Java_com_silentcircle_silentphone2_services_PhoneServiceNative_initLoggingStaticVariables
+();
 
 #ifdef __cplusplus
 }

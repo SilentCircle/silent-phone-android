@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2013-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -48,8 +48,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 package com.silentcircle.contacts.utils;
 
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.support.annotation.NonNull;
 
 /**
  * Provides static functions to decode bitmaps at the optimal size
@@ -100,6 +102,25 @@ public class BitmapUtil {
     }
 
     /**
+     * Finds the optimal sampleSize so that the resulting resolution is the next available bigger
+     * resolution than the target resolution.
+     */
+    public static int findOptimalSampleSize(int srcWidth, int srcHeight, int trgWidth,
+                                            int trgHeight) {
+        int inSampleSize = 1;
+        if (srcWidth > trgWidth && srcHeight > trgHeight) {
+
+            while ((srcHeight / inSampleSize) > trgHeight
+                    && (srcWidth / inSampleSize) > trgWidth) {
+                inSampleSize *= 2;
+            }
+            inSampleSize /= 2;
+        }
+
+        return inSampleSize;
+    }
+
+    /**
      * Decodes the bitmap with the given sample size
      */
     public static Bitmap decodeBitmapFromBytes(byte[] bytes, int sampleSize) {
@@ -111,5 +132,43 @@ public class BitmapUtil {
             options.inSampleSize = sampleSize;
         }
         return BitmapFactory.decodeByteArray(bytes, 0, bytes.length, options);
+    }
+
+    /**
+     * Decodes the bitmap
+     */
+    public static Bitmap decodeBitmapFromBytes(byte[] bytes) {
+        final BitmapFactory.Options options = new BitmapFactory.Options();;
+        options.inDither = false;
+        options.inPreferredConfig = Bitmap.Config.ARGB_8888;
+        return BitmapFactory.decodeByteArray(bytes, 0, bytes.length, options);
+    }
+
+    /**
+     * Create a bitmap from passed array of bytes with optimal sample size to match passed
+     * dimensions.
+     */
+    public static Bitmap loadOptimalBitmapFromBytes(@NonNull byte[] bytes, int width, int height) {
+        final BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inJustDecodeBounds = true;
+        BitmapFactory.decodeByteArray(bytes, 0, bytes.length, options);
+        options.inSampleSize = BitmapUtil.findOptimalSampleSize(options.outWidth,
+                options.outHeight, width, height);
+        options.inJustDecodeBounds = false;
+        return BitmapFactory.decodeByteArray(bytes, 0, bytes.length, options);
+    }
+
+    /**
+     * Create a bitmap from resources with optimal sample size to match passed dimensions.
+     */
+    public static Bitmap loadOptimalBitmapFromResources(@NonNull Resources resources, int id,
+            int width, int height) {
+        final BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inJustDecodeBounds = true;
+        BitmapFactory.decodeResource(resources, id, options);
+        options.inSampleSize = BitmapUtil.findOptimalSampleSize(options.outWidth,
+                options.outHeight, width, height);
+        options.inJustDecodeBounds = false;
+        return BitmapFactory.decodeResource(resources, id, options);
     }
 }

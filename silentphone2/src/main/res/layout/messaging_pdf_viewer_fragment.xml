@@ -17,7 +17,8 @@
         android:id="@+id/pdf_controls"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true">
+        android:layout_alignParentBottom="true"
+        android:background="@color/sc_ng_background">
 
         <ImageButton
             android:id="@+id/button_previous"

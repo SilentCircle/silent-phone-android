@@ -21,7 +21,7 @@
 
 set -e
 
-SC_BUILD_TYPE="$1"
+export SC_BUILD_TYPE="$1"
 
 BUILT_APK_ROOT="silentphone2/build/outputs/apk/"
 ARTIFACT_APK="silentphone.apk"
@@ -32,7 +32,7 @@ then
    BUILD_APK_NAME="silentphone2-normal-develop.apk"
    echo "*** building develop configuration"
 else
-   SC_BUILD_TYPE="RELEASE"
+   export SC_BUILD_TYPE="RELEASE"
    BUILD_GRADLE_TASK="assembleRelease"
    BUILD_APK_NAME="silentphone2-normal-release.apk"
    echo "*** building release configuration"
@@ -46,10 +46,38 @@ git submodule status
 echo "sdk.dir=$ANDROID_SDK" > local.properties
 echo "ndk.dir=$ANDROID_NDK" >> local.properties
 
-# build static Axolotl lib and dependencies, copy resulting libs to
-# correct place (silentphone2/jni/armeabi-v7a), then run ndk-build
+# build static and shared libs and dependencies, copy resulting libs to
+# correct place (silentphone2/jni/armeabi-v7a), then run top level ndk-build
 pushd silentphone2/support/axolotl
-    sh -x axolotl-build.sh
+chmod +x ./axolotl-build.sh
+if ! ./axolotl-build.sh; then
+    echo "ZINA static library build failed"
+    exit 1
+fi
+popd
+
+pushd silentphone2/support/zrtpcpp
+chmod +x ./buildNativeAndroidTivi.sh
+if ! ./buildNativeAndroidTivi.sh; then
+    echo "ZRTP static library build failed"
+    exit 1
+fi
+popd
+
+pushd silentphone2/support/aec
+chmod +x ./aecBuild.sh
+if ! ./aecBuild.sh; then
+    echo "WebRTC AEC shared library build failed"
+    exit 1
+fi
+popd
+
+pushd silentphone2/support/silentphone/codecs/vTiVi
+chmod +x ./tinaBuild.sh
+if ! ./tinaBuild.sh; then
+    echo "Tina codec shared library build failed"
+    exit 1
+fi
 popd
 
 pushd silentphone2
@@ -58,9 +86,15 @@ if [ ! -h local.properties ]; then
   ln -s ../local.properties
 fi
 
+# try to make a clean build for silentphone submodule
+ndk-build clean
+
 # ndk jni builds
 # ndk-build -d -B V=1 NDK_LOG=1
-ndk-build
+if ! ndk-build; then
+    echo "Build of native silentphone library failed"
+    exit 1
+fi
 
 popd
 

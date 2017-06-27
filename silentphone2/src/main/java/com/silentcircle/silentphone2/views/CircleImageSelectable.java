@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2014-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,7 +27,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 package com.silentcircle.silentphone2.views;
 
-import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
@@ -42,12 +41,12 @@ import android.graphics.drawable.Drawable;
 import android.graphics.drawable.ShapeDrawable;
 import android.graphics.drawable.StateListDrawable;
 import android.graphics.drawable.shapes.OvalShape;
-import android.os.Build;
 import android.support.v4.content.ContextCompat;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.widget.ImageView;
 
+import com.silentcircle.contacts.widget.LetterTileDrawable;
+import com.silentcircle.logs.Log;
 import com.silentcircle.silentphone2.R;
 import com.silentcircle.silentphone2.util.CompatibilityHelper;
 import com.silentcircle.silentphone2.util.ConfigurationUtilities;
@@ -73,6 +72,7 @@ public class CircleImageSelectable extends ImageView {
     private Bitmap mSourceBitmap;
     private int mBackgroundColor;
     private int mPixelDiff;
+    private Drawable mDefaultDrawable;
 
     private float mGivenDiameter;
     private float mStrokeWidth;
@@ -85,11 +85,18 @@ public class CircleImageSelectable extends ImageView {
         super(context);
     }
 
+    @SuppressWarnings("unused")
     public CircleImageSelectable(Context context, AttributeSet attrs) {
-        super(context, attrs);
-        TypedArray a = context.obtainStyledAttributes(attrs, new int[] { android.R.attr.background });
+        this(context, attrs, 0);
+    }
+
+    @SuppressWarnings("ResourceType")
+    public CircleImageSelectable(Context context, AttributeSet attrs, int defStyle) {
+        super(context, attrs, defStyle);
+        TypedArray a = context.obtainStyledAttributes(attrs, new int[] { android.R.attr.background, android.R.attr.src });
         if (a != null) {
             mBackgroundColor = a.getColor(0, 0);
+            mDefaultDrawable = a.getDrawable(1);
             a.recycle();
         }
         final Resources.Theme theme = context.getTheme();
@@ -106,11 +113,6 @@ public class CircleImageSelectable extends ImageView {
             mShadowColor = a.getColor(R.styleable.CircleImageSelectable_sp_round_image_shadow_color, ContextCompat.getColor(context, android.R.color.black));
             a.recycle();
         }
-    }
-
-    @SuppressWarnings("unused")
-    public CircleImageSelectable(Context context, AttributeSet attrs, int defStyle) {
-        super(context, attrs, defStyle);
     }
 
     @Override
@@ -153,13 +155,34 @@ public class CircleImageSelectable extends ImageView {
             mPixelDiff = paddingOffset;
         }
         // need to change size of bitmaps because the size changed, thus reset the cached source bitmap.
-        if (oldDiameter != mDiameter)
+        if (oldDiameter != mDiameter) {
             mSourceBitmap = null;
+            mCircleBitmap = null;
+        }
 
         if (ConfigurationUtilities.mTrace)Log.v(TAG, "onSizeChanged width: " + width + ", height: " + height +
                 ", diameter: " + mDiameter + ", pixel shift: " + mPixelDiff + ", diameter changed: " + (oldDiameter != mDiameter));
 
         CompatibilityHelper.setBackground(this, createStateListDrawable(mDiameter));
+    }
+
+    @Override
+    public void setImageDrawable(Drawable drawable) {
+        Drawable imageDrawable = drawable;
+        if (drawable instanceof LetterTileDrawable) {
+            /*
+             * show default avatar if contact image not found.
+             * photo manager will return specific drawable, but this check is not nice.
+             */
+            imageDrawable = ContextCompat.getDrawable(getContext(),
+                    R.drawable.ic_contact_picture_holo_dark);
+        }
+        super.setImageDrawable(imageDrawable);
+
+        // reset internal cache so when drawable is updated, old images are not used
+        mSourceBitmap = null;
+        mCircleBitmap = null;
+        requestLayout();
     }
 
     private RectF circle = new RectF();
@@ -192,10 +215,16 @@ public class CircleImageSelectable extends ImageView {
         // The reduce the real diameter by the overall stroke widths
         int diameter = mDiameter - strokeWidthSum * 2;
 
-        Bitmap b = ((BitmapDrawable)drawable).getBitmap();
-        if (b != mSourceBitmap) {
-            mSourceBitmap = b;
-            mCircleBitmap = createRoundImage(getScaledBitmap(b, diameter));
+        if (mCircleBitmap == null) {
+            if (mSourceBitmap == null) {
+                mSourceBitmap = getDrawableBitmap(drawable);
+            }
+            if (mSourceBitmap == null) {
+                mSourceBitmap = getDrawableBitmap(mDefaultDrawable);
+            }
+            if (mSourceBitmap != null) {
+                mCircleBitmap = createRoundImage(getScaledBitmap(mSourceBitmap, diameter));
+            }
         }
 
         // shift rectangle to center of surrounding box
@@ -226,7 +255,9 @@ public class CircleImageSelectable extends ImageView {
             shadowColor.setStrokeWidth(shadowWidth);
             canvas.drawArc(shadow, 0, 360, true, shadowColor);
         }
-        canvas.drawBitmap(mCircleBitmap, shiftPixels + strokeWidthSum, shiftPixels + strokeWidthSum, null);
+        if (mCircleBitmap != null) {
+            canvas.drawBitmap(mCircleBitmap, shiftPixels + strokeWidthSum, shiftPixels + strokeWidthSum, null);
+        }
         if (mStrokeWidth > 0) {
             circle.set(left, upper, right, bottom);
             circleColor.setAntiAlias(true);
@@ -235,6 +266,33 @@ public class CircleImageSelectable extends ImageView {
             circleColor.setStrokeWidth(mStrokeWidth);
             canvas.drawArc(circle, 0, 360, true, circleColor);
         }
+    }
+
+    private Bitmap getDrawableBitmap(Drawable drawable) {
+        drawable = drawable == null ? mDefaultDrawable : drawable;
+        if (drawable == null) {
+            return null;
+        }
+
+        Bitmap bitmap;
+        if (drawable instanceof BitmapDrawable) {
+            BitmapDrawable bitmapDrawable = (BitmapDrawable) drawable;
+            if (bitmapDrawable.getBitmap() != null) {
+                return bitmapDrawable.getBitmap();
+            }
+        }
+
+        if (drawable.getIntrinsicWidth() <= 0 || drawable.getIntrinsicHeight() <= 0) {
+            bitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888);
+        } else {
+            bitmap = Bitmap.createBitmap(drawable.getIntrinsicWidth(),
+                    drawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
+        }
+
+        Canvas canvas = new Canvas(bitmap);
+        drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
+        drawable.draw(canvas);
+        return bitmap;
     }
 
     // This function assumes a square bitmap

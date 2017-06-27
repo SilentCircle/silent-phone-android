@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2014-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -66,13 +66,11 @@ public class ConfigurationUtilities {
     public static final String NAME_KEY_PRODUCTION = "provisioning_name_production";
     public static final String NAME_KEY_DEVELOPMENT = "provisioning_name_development";
 
-    public static final String NAME_CHAT_PROTECTION_PASSWORD = "chat_protection_password";
-
     public static final boolean mEnableDevDebOptions = BuildConfig.DEBUG;
     public static boolean mUseDevelopConfiguration;
     public static int mNetworkConfiguration;
-    public static final boolean mTrace = BuildConfig.DEBUG;
-
+    public static final boolean mTrace = true;
+    public static final boolean mNativeLog = BuildConfig.DEBUG;
 
     private static boolean misInitialized;
 
@@ -144,6 +142,10 @@ public class ConfigurationUtilities {
         return ctx.getResources().getString(R.string.sccps_directory_request);
     }
 
+    public static String getAvatarAction(Context ctx) {
+        return ctx.getResources().getString(R.string.sccps_avatar_action_request);
+    }
+
     public static String getAuthBase(Context ctx) {
         return ctx.getResources().getString(R.string.sccps_authorization_request);
     }
@@ -179,10 +181,6 @@ public class ConfigurationUtilities {
         return mUseDevelopConfiguration ? "spa_device_instance_id_save_dev" : "spa_device_instance_id_save_prod";
     }
 
-    public static String getChatProtectionKey() {
-        return NAME_CHAT_PROTECTION_PASSWORD;
-    }
-
     public static String getPublishableKeyUrl(Context ctx){
         return ctx.getString(R.string.sccps_publishable_key_request);
     }
@@ -193,5 +191,9 @@ public class ConfigurationUtilities {
 
     public static String getProcessChargeUrl(Context ctx){
         return ctx.getString(R.string.sccps_process_charge_request);
+    }
+
+    public static String getSendLogsUrl(Context ctx){
+        return ctx.getString(R.string.sccps_send_logs_request);
     }
 }

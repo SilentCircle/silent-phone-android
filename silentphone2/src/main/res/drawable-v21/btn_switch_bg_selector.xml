@@ -16,17 +16,17 @@
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:state_enabled="false">
         <nine-patch android:src="@drawable/switch_track_mtrl_alpha"
-            android:tint="@color/sc_ng_background_3"
+            android:tint="?attr/sp_activity_secondary_text_color"
             android:alpha="0.1" />
     </item>
     <item android:state_checked="true">
         <nine-patch android:src="@drawable/switch_track_mtrl_alpha"
-            android:tint="@color/sc_ng_text_dark"
+            android:tint="@color/sc_ng_text_green"
             android:alpha="0.3" />
     </item>
     <item>
         <nine-patch android:src="@drawable/switch_track_mtrl_alpha"
-            android:tint="@color/sc_ng_background_3"
+            android:tint="?attr/sp_activity_secondary_text_color"
             android:alpha="0.3" />
     </item>
 </selector>

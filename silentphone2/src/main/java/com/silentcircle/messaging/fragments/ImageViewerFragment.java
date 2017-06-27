@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2016-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -36,7 +36,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
-import android.util.Log;
+import android.support.annotation.Nullable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -44,6 +44,7 @@ import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.silentcircle.common.util.ViewUtil;
+import com.silentcircle.logs.Log;
 import com.silentcircle.messaging.activities.FileViewerActivity;
 import com.silentcircle.messaging.util.AsyncUtils;
 import com.silentcircle.messaging.util.IOUtils;
@@ -119,6 +120,7 @@ public class ImageViewerFragment extends FileViewerFragment {
         return result;
     }
 
+    @Nullable
     protected static Bitmap getBitmap(FileDescriptor fileDescriptor) {
         return BitmapFactory.decodeFileDescriptor(fileDescriptor);
     }

@@ -22,7 +22,6 @@ import android.os.Build;
 import android.provider.ContactsContract.CommonDataKinds.Phone;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
-import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 

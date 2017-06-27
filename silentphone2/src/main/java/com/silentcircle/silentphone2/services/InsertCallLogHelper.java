@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2014-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -37,18 +37,18 @@ import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.AsyncTask;
-import android.support.annotation.NonNull;
 import android.support.annotation.WorkerThread;
 import android.telephony.PhoneNumberUtils;
 import android.text.TextUtils;
-import android.util.Log;
 
 import com.silentcircle.contacts.ContactsUtils;
 import com.silentcircle.contacts.ScCallLog;
+import com.silentcircle.logs.Log;
 import com.silentcircle.messaging.model.CallData;
+import com.silentcircle.messaging.model.Contact;
 import com.silentcircle.messaging.model.Conversation;
 import com.silentcircle.messaging.repository.ConversationRepository;
-import com.silentcircle.messaging.services.AxoMessaging;
+import com.silentcircle.messaging.services.ZinaMessaging;
 import com.silentcircle.messaging.task.MessageSender;
 import com.silentcircle.messaging.util.Notifications;
 import com.silentcircle.silentphone2.R;
@@ -106,16 +106,28 @@ public class InsertCallLogHelper extends AsyncTask<Uri, Void, Cursor> {
         if (!prepareCallLog(mCall))
             return null;
 
-        AxoMessaging msgService = AxoMessaging.getInstance(mCtx);
+        ZinaMessaging msgService = ZinaMessaging.getInstance();
 
         // Add a conversation entry for the call
         if (msgService.isReady()) {
-            String uuid = mCall.iIsIncoming ? getPeerName(mCall) : mCall.bufDialed.toString();
+            String uuid;
+            String displayName = null;
+            if (mCall.iIsIncoming) {
+                if (mCall.isOcaCall && Contact.UNKNOWN_DISPLAY_NAME.equals(mCall.bufPeer.toString())) {
+                    uuid = Contact.UNKNOWN_USER_ID;
+                    displayName = Contact.UNKNOWN_DISPLAY_NAME;
+                } else {
+                    uuid = Utilities.getPeerName(mCall);
+                }
+            } else {
+                uuid = mCall.bufDialed.toString();
+            }
 
             Conversation conversation = msgService.getOrCreateConversation(uuid);
             // Try to update display name if empty at this point
             if (TextUtils.isEmpty(conversation.getPartner().getDisplayName())) {
-                conversation.getPartner().setDisplayName(mCall.mDefaultDisplayName.toString());
+                conversation.getPartner().setDisplayName(!TextUtils.isEmpty(displayName)
+                        ? displayName : mCall.mDefaultDisplayName.toString());
             }
             ConversationRepository repository = msgService.getConversations();
 
@@ -125,7 +137,19 @@ public class InsertCallLogHelper extends AsyncTask<Uri, Void, Cursor> {
 
             MessageSender messageSender = new MessageSender(mCtx, msgService.getUserName(), conversation, repository);
 
-            CallData callData = new CallData(callType, duration, time);
+            String errorMessage = mCall.bufSipErrorMessage.toString();
+            if (!mCall.hasSipErrorMessage) {
+                // These strings are simulated SIP error messages; they are translated later
+                if (mCall.mAnsweredElsewhere) {
+                    errorMessage = "call completed elsewhere";
+                } else if (mCall.mDeclinedElsewhere) {
+                    errorMessage = "call declined elsewhere";
+                } else if (mCall.iIsIncoming && mCall.callEndedByUser && duration == 0) {
+                    errorMessage = "cannot connect decline";
+                }
+            }
+
+            CallData callData = new CallData(callType, duration, time, errorMessage);
 
             if (callType == ScCallLog.ScCalls.OUTGOING_TYPE) {
                 // TODO: implement when SPi3 has sibling phone messages
@@ -134,7 +158,8 @@ public class InsertCallLogHelper extends AsyncTask<Uri, Void, Cursor> {
             } else {
                 messageSender.composePhoneMessage(callData);
 
-                if (callType == ScCallLog.ScCalls.MISSED_TYPE) {
+                // TODO: Do we treat receiver-ended calls as missed?
+                if (callType == ScCallLog.ScCalls.MISSED_TYPE && !mCall.callEndedByUser) {
                     conversation.offsetUnreadCallMessageCount(1);
                 }
             }
@@ -168,7 +193,7 @@ public class InsertCallLogHelper extends AsyncTask<Uri, Void, Cursor> {
         if (count <= 0)
             return;
 
-        String conversationPartnerId = mCall.iIsIncoming ? getPeerName(mCall)
+        String conversationPartnerId = mCall.iIsIncoming ? Utilities.getPeerName(mCall)
                 : mCall.bufDialed.toString();
         int callType = mInsertValues.getAsInteger(ScCallLog.ScCalls.TYPE);
         /*
@@ -229,13 +254,13 @@ public class InsertCallLogHelper extends AsyncTask<Uri, Void, Cursor> {
 
         if (call.uiStartTime != 0) {
             duration = System.currentTimeMillis() - call.uiStartTime;
-            call.uiStartTime = 0;
         }
 
         // Here we can use the same values for CallLog and SCCallLog: kept in sync
         int iType = call.iIsIncoming ? ScCallLog.ScCalls.INCOMING_TYPE : ScCallLog.ScCalls.OUTGOING_TYPE;
 
-        if (!call.mAnsweredElsewhere && duration == 0 && iType != ScCallLog.ScCalls.OUTGOING_TYPE) {
+        if ((!call.mAnsweredElsewhere && !call.mDeclinedElsewhere)
+                && duration == 0 && iType != ScCallLog.ScCalls.OUTGOING_TYPE) {
             iType = ScCallLog.ScCalls.MISSED_TYPE;
         }
 
@@ -322,7 +347,7 @@ public class InsertCallLogHelper extends AsyncTask<Uri, Void, Cursor> {
         if (call.hasSipErrorMessage && !displayNameAvailable) {
             // get the uuid from dialed buf
             int[] errorCode = new int[1];
-            final byte[] userData = AxoMessaging.getUserInfo(call.bufDialed.toString(), null, errorCode);
+            final byte[] userData = ZinaMessaging.getUserInfo(call.bufDialed.toString(), null, errorCode);
 
             String displayNameUserInfo = null;
             if (userData != null) {
@@ -333,7 +358,7 @@ public class InsertCallLogHelper extends AsyncTask<Uri, Void, Cursor> {
             }
             else {
                 Log.w(TAG, "No user info found for: '" + call.bufDialed.toString() + "'");
-                return false;
+                return true;
             }
             if (!TextUtils.isEmpty(displayNameUserInfo)) {
                 mInsertValues.put(ScCallLog.ScCalls.SC_OPTION_TEXT2, displayNameUserInfo);
@@ -342,17 +367,4 @@ public class InsertCallLogHelper extends AsyncTask<Uri, Void, Cursor> {
         return true;
     }
 
-    private String getPeerName(@NonNull final CallState call) {
-        // asserted name will always be uuid (for sso, for regular users it will be uuid
-        // or user name, never alias)
-        // asserted name may be absent on occasions, then bufPeer has to be used
-        String peerName = call.mAssertedName.toString();
-        if (call.isOcaCall || TextUtils.isEmpty(peerName)) {
-            peerName = call.bufPeer.toString();
-        } else {
-            peerName = Utilities.getUsernameFromUriNumberSelective(peerName);
-            peerName = Utilities.removeSipPrefix(peerName);
-        }
-        return peerName;
-    }
 }

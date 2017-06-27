@@ -42,7 +42,7 @@
             android:ellipsize="marquee"
             android:marqueeRepeatLimit ="3"
             android:scrollHorizontally="true"
-            android:textColor="@color/translucent_white"
+            android:textColor="?attr/sp_activity_secondary_text_color"
             tools:text="device id string"
             tools:context="com.silentcircle.messaging.activities.ShowRemoteDevicesActivity"/>
 
@@ -96,21 +96,19 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_below="@+id/AxoDeviceListHeader"
-            android:layout_above="@+id/ok"
             android:dividerHeight="1px"
             android:divider="?sp_dial_text_background"
             android:listSelector="@android:color/transparent"
-            android:visibility="invisible"
-            tools:visibility="visible"/>
+            android:overScrollMode="never"
+            android:scrollbars="vertical"/>
 
-    <ProgressBar
+    <com.silentcircle.common.widget.ProgressBar
             style="?android:attr/progressBarStyleLarge"
             android:id="@+id/progressBar"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/activity_vertical_margin"
-            android:layout_below="@+id/AxoDeviceListHeader"
-            android:layout_centerHorizontal="true"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_gravity="center"
+            android:indeterminate="true"
             android:visibility="invisible"
             tools:visibility="visible" />
 

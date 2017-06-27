@@ -4,10 +4,17 @@
     <item
         android:id="@+id/action_share_location"
         app:showAsAction="always"
-        android:orderInCategory="2"
+        android:orderInCategory="1"
         android:icon="@drawable/ic_location"
         android:visible="false"
         android:title="@string/share_location"/>
+    <item
+        android:id="@+id/action_add_contact"
+        app:showAsAction="always"
+        android:orderInCategory="2"
+        android:icon="@drawable/ic_search_add_contact"
+        android:visible="false"
+        android:title="@string/search_shortcut_add_to_contacts"/>
     <item
         android:id="@+id/action_silent_phone_call"
         app:showAsAction="always"
@@ -15,6 +22,13 @@
         android:icon="@drawable/ic_call_light"
         android:visible="false"
         android:title="@string/silent_phone_call"/>
+    <item
+        android:id="@+id/action_invite_user"
+        app:showAsAction="always"
+        android:orderInCategory="3"
+        android:icon="@drawable/ic_group_add_white_24px"
+        android:visible="false"
+        android:title="@string/group_messaging_invite_user"/>
     <item
         android:id="@+id/options"
         app:showAsAction="always"

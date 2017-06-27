@@ -20,6 +20,7 @@ import android.animation.ValueAnimator;
 import android.animation.ValueAnimator.AnimatorUpdateListener;
 import android.annotation.TargetApi;
 import android.content.Context;
+import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.text.Editable;
 import android.text.InputType;
@@ -30,6 +31,7 @@ import android.view.KeyEvent;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.FrameLayout;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 
 import com.silentcircle.common.animation.AnimUtils;
@@ -56,6 +58,8 @@ public class SearchEditTextLayout extends FrameLayout {
     protected boolean mIsExpanded = false;
     protected boolean mIsFadedOut = false;
 
+    protected boolean mIsDialpadEnabled = true;
+
 //    private View mCollapsed;
     private View mExpanded;
     private EditText mSearchView;
@@ -63,8 +67,7 @@ public class SearchEditTextLayout extends FrameLayout {
 //    private View mCollapsedSearchBox;
 //    private View mVoiceSearchButtonView;
 //    private View mOverflowButtonView;
-    private View mBackButtonView;
-    private View mExpandedSearchBox;
+    private ImageButton mBackButtonView;
     private ImageView mKeypadToggleView;
 
     private ValueAnimator mAnimator;
@@ -93,7 +96,11 @@ public class SearchEditTextLayout extends FrameLayout {
     }
 
     public SearchEditTextLayout(Context context, AttributeSet attrs) {
-        super(context, attrs);
+        this(context, attrs, 0);
+    }
+
+    public SearchEditTextLayout(Context context, AttributeSet attrs, int defStyleAttr) {
+        super(context, attrs, defStyleAttr);
     }
 
     public void setPreImeKeyListener(OnKeyListener listener) {
@@ -127,8 +134,7 @@ public class SearchEditTextLayout extends FrameLayout {
 //        mCollapsedSearchBox = findViewById(R.id.search_box_start_search);
 //        mVoiceSearchButtonView = findViewById(R.id.voice_search_button);
 //        mOverflowButtonView = findViewById(R.id.dialtacts_options_menu_button);
-        mBackButtonView = findViewById(R.id.search_back_button);
-        mExpandedSearchBox = findViewById(R.id.search_box_expanded);
+        mBackButtonView = (ImageButton) findViewById(R.id.search_back_button);
         mKeypadToggleView = (ImageView) findViewById(R.id.keypad_toggle_button);
         mKeypadToggleView.setFocusable(true);
 
@@ -148,12 +154,14 @@ public class SearchEditTextLayout extends FrameLayout {
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 if (!TextUtils.isEmpty(s)) {
+                    mKeypadToggleView.setVisibility(View.VISIBLE);
                     mKeypadToggleView.setImageResource(R.drawable.ic_clear_white_24dp);
+                    mKeypadToggleView.setContentDescription(getContext().getString(R.string.description_clear_search));
                 } else {
-                    if (usingKeyboardInput()) {
-                        keyboardLayout();
+                    if (usingKeyboardInput() || !mIsDialpadEnabled) {
+                        keyboardLayout(false);
                     } else {
-                        dialpadLayout();
+                        dialpadLayout(false);
                     }
                 }
             }
@@ -164,7 +172,7 @@ public class SearchEditTextLayout extends FrameLayout {
             }
         });
 
-        findViewById(R.id.keypad_toggle_button).setOnClickListener(new OnClickListener() {
+        mKeypadToggleView.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
                 // The user wants to clear input (x)
@@ -181,15 +189,15 @@ public class SearchEditTextLayout extends FrameLayout {
                     DialerUtils.showInputMethod(mSearchView);
                 }
 
-                if (usingKeyboardInput()) {
-                    dialpadLayout();
+                if (usingKeyboardInput() && mIsDialpadEnabled) {
+                    dialpadLayout(false);
                 } else {
-                    keyboardLayout();
+                    keyboardLayout(false);
                 }
             }
         });
 
-        findViewById(R.id.search_back_button).setOnClickListener(new OnClickListener() {
+        mBackButtonView.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (mOnBackButtonClickedListener != null) {
@@ -200,7 +208,6 @@ public class SearchEditTextLayout extends FrameLayout {
 
         super.onFinishInflate();
     }
-
     @Override
     public boolean dispatchKeyEventPreIme(KeyEvent event) {
         if (mPreImeKeyListener != null) {
@@ -211,28 +218,35 @@ public class SearchEditTextLayout extends FrameLayout {
         return super.dispatchKeyEventPreIme(event);
     }
 
-    private void keyboardLayout() {
-        mKeypadToggleView.setImageResource(R.drawable.ic_action_dial_pad_light);
-
-        if (mSearchView.getInputType() == InputType.TYPE_CLASS_TEXT) {
-            return;
+    public void keyboardLayout(boolean clear) {
+        if (mIsDialpadEnabled) {
+            mKeypadToggleView.setVisibility(View.VISIBLE);
+            mKeypadToggleView.setImageResource(R.drawable.ic_action_dial_pad_light);
+            mKeypadToggleView.setContentDescription(getContext().getString(R.string.description_dial_pad_toggle));
+        } else {
+            mKeypadToggleView.setVisibility(View.GONE);
         }
 
-        mSearchView.setInputType(InputType.TYPE_CLASS_TEXT);
+        if (clear) {
+            mSearchView.setInputType(InputType.TYPE_NULL);
+        }
+        mSearchView.setInputType(InputType.TYPE_CLASS_TEXT
+                | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS
+                | InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS);
 
         if (mOnInputSwitchedListener != null) {
             mOnInputSwitchedListener.onInputSwitched(InputType.TYPE_CLASS_TEXT);
         }
     }
 
-    private void dialpadLayout() {
+    public void dialpadLayout(boolean clear) {
         mKeypadToggleView.setImageResource(R.drawable.ic_action_keyboard_dark);
+        mKeypadToggleView.setContentDescription(getContext().getString(R.string.description_keyboard_toggle));
 
-        if (mSearchView.getInputType() == InputType.TYPE_CLASS_PHONE) {
-            return;
+        if (clear) {
+            mSearchView.setInputType(InputType.TYPE_NULL);
         }
-
-        mSearchView.setInputType(InputType.TYPE_CLASS_PHONE);
+        mSearchView.setInputType(InputType.TYPE_CLASS_PHONE | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
 
         if (mOnInputSwitchedListener != null) {
             mOnInputSwitchedListener.onInputSwitched(InputType.TYPE_CLASS_PHONE);
@@ -240,7 +254,9 @@ public class SearchEditTextLayout extends FrameLayout {
     }
 
     private boolean usingKeyboardInput() {
-        return mSearchView.getInputType() == InputType.TYPE_CLASS_TEXT;
+        return mSearchView.getInputType() == (InputType.TYPE_CLASS_TEXT
+                | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS
+                | InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS);
     }
 
     // Use the dialText handler to trigger the soft keyboard display. Without delay this does not
@@ -249,9 +265,9 @@ public class SearchEditTextLayout extends FrameLayout {
         if (makeVisible) {
             mSearchView.postDelayed(mShowImeRunnable, 200);
         }
-        else {
-            mSearchView.removeCallbacks(mShowImeRunnable);
-            DialerUtils.hideInputMethod(mSearchView);        }
+//        else {
+//            mSearchView.removeCallbacks(mShowImeRunnable);
+//            DialerUtils.hideInputMethod(mSearchView);        }
     }
 
     public void fadeOut() {
@@ -350,10 +366,19 @@ public class SearchEditTextLayout extends FrameLayout {
     }
 
     public void showBackButton(boolean yes) {
-        if (yes)
-            mBackButtonView.setVisibility(VISIBLE);
-        else
-            mBackButtonView.setVisibility(GONE);
+        if (mBackButtonView != null) {
+            mBackButtonView.setVisibility(yes ? View.VISIBLE : View.GONE);
+        }
+    }
+
+    public void clearSearchQuery() {
+        if (mSearchView != null) {
+            mSearchView.setText("");
+        }
+    }
+
+    public void showInputMethod() {
+        DialerUtils.showInputMethod(mSearchView);
     }
 
     /**
@@ -373,12 +398,8 @@ public class SearchEditTextLayout extends FrameLayout {
         mBackButtonView.setVisibility(expandedViewVisibility);
         // TODO: Prevents keyboard from jumping up in landscape mode after exiting the
         // SearchFragment when the query string is empty. More elegant fix?
-        //mExpandedSearchBox.setVisibility(expandedViewVisibility);
+        //mExpanded.setVisibility(expandedViewVisibility);
         mKeypadToggleView.setVisibility(expandedViewVisibility);
-
-        if (isExpand) {
-            keyboardLayout();
-        }
     }
 
     private void prepareAnimator(final boolean expand) {
@@ -404,6 +425,20 @@ public class SearchEditTextLayout extends FrameLayout {
 
     public boolean isFadedOut() {
         return mIsFadedOut;
+    }
+
+    public void setIsDialpadEnabled(boolean visible) {
+        mIsDialpadEnabled = visible;
+        keyboardLayout(false);
+        mSearchView.setHint(mIsDialpadEnabled
+                ? R.string.dialer_hint_find_contact
+                : R.string.dialer_hint_find_messaging_contact);
+    }
+
+    public void setBackButtonDrawable(final Drawable drawable) {
+        if (mBackButtonView != null) {
+            mBackButtonView.setImageDrawable(drawable);
+        }
     }
 
     /**

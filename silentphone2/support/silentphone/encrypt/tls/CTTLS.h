@@ -1,7 +1,7 @@
 /*
 Created by Janis Narbuts
 Copyright (C) 2004-2012, Tivi LTD, www.tiviphone.com. All rights reserved.
-Copyright (C) 2012-2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2012-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,7 +27,6 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-
 #ifndef _C_T_TLS_H
 #define _C_T_TLS_H
 #include "../../os/CTiViSock.h"
@@ -42,7 +41,7 @@ public:
    void reCreate();
    int createSock();
    int closeSocket();
-   int _connect(ADDR *address);
+   int _connect(ADDR *address, ADDR *preferedAddr = NULL);
    int _send(const char *buf, int iLen);
    int _recv(char *buf, int iMaxSize);
    inline int Bind(int port, int toAny) {addr.setPort(port); return 0;}
@@ -57,6 +56,7 @@ public:
    int getInfo(const char *key, char *p, int iMax);
    
    int isClosed(){return iClosed;}
+   int wasConnected(){return iWasConnected;}
    
    void enableBackgroundForVoip(int bTrue);
    
@@ -77,6 +77,8 @@ private:
    void *pSSL;
    char bufErr[256];
    int iWaitForRead;
+   int iDestroyFlag;
+   int iWasConnected;
    
    int bIsVoipSock;
 };

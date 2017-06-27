@@ -22,29 +22,5 @@
             android:layout_marginTop="@dimen/activity_vertical_margin"
             android:text="@string/prepare"/>
 
-    <RelativeLayout
-        android:id="@+id/relative_container"
-        android:layout_width="203px"
-        android:layout_height="203px"
-        android:layout_centerInParent="true">
-
-        <ImageView
-                android:id="@+id/ProvisioningInProgress"
-                tools:ignore="PxUsage"
-                android:layout_width="175px"
-                android:layout_height="175px"
-                android:layout_centerInParent="true"
-                android:contentDescription="@string/silent_circle"
-                android:src="@drawable/dot_circle"/>
-
-        <ProgressBar
-                android:id="@+id/ProgressBar"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_centerInParent="true"
-                tools:visibility="visible"
-                android:indeterminate="true"
-                android:indeterminateDrawable="@drawable/progressbar_sc"/>
-
-    </RelativeLayout>
+    <include layout="@layout/widget_progress_bar" />
 </RelativeLayout>

@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2016-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -25,20 +25,23 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-
 package com.silentcircle.accounts;
 
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.Fragment;
+import android.content.Context;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
-import android.app.Fragment;
-import android.util.Log;
+import android.support.annotation.Nullable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.silentcircle.logs.Log;
 import com.silentcircle.silentphone2.R;
+import com.silentcircle.silentphone2.activities.DialogHelperActivity;
 import com.silentcircle.silentphone2.activities.ProvisioningActivity;
 import com.silentcircle.silentphone2.util.ConfigurationUtilities;
 import com.silentcircle.silentphone2.util.PinnedCertificateHandling;
@@ -55,6 +58,10 @@ public class AccountCorpEmailEntry1 extends Fragment {
     private static final String TAG = "AccountCorpEmailEntry1";
     private AuthenticatorActivity mParent;
 
+    String mProvisioningDomainError;
+    String mSccpsProductionBaseUrl;
+    String mDevelopmentBaseUrl;
+
     public static AccountCorpEmailEntry1 newInstance(Bundle args) {
         AccountCorpEmailEntry1 f = new AccountCorpEmailEntry1();
         f.setArguments(args);
@@ -63,6 +70,15 @@ public class AccountCorpEmailEntry1 extends Fragment {
 
     public AccountCorpEmailEntry1() {
         // Required empty public constructor
+    }
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        mProvisioningDomainError = getString(R.string.provisioning_domain_error);
+        mSccpsProductionBaseUrl = getString(R.string.sccps_production_base_url);
+        mDevelopmentBaseUrl = getString(R.string.sccps_development_base_url);
     }
 
     private class GetDomainInfo extends AsyncTask<String, Void, JSONObject>
@@ -89,10 +105,8 @@ public class AccountCorpEmailEntry1 extends Fragment {
                         Log.e(TAG, "Cannot get a trusted/pinned SSL context; failing");
                         throw new AssertionError("Failed to get pinned SSL context");
                     }
-                    String burl = getString(R.string.sccps_production_base_url);
-                    if (ConfigurationUtilities.mUseDevelopConfiguration) {
-                        burl = getString(R.string.sccps_development_base_url);
-                    }
+                    String burl = ConfigurationUtilities.mUseDevelopConfiguration
+                            ? mDevelopmentBaseUrl : mSccpsProductionBaseUrl;
                     return AccountCorpUtil.httpsGet(context, burl +
                             ConfigurationUtilities.getAuthBase(mParent.getBaseContext()) +
                             URLEncoder.encode(username, "UTF-8") + "/", 0);
@@ -139,8 +153,8 @@ public class AccountCorpEmailEntry1 extends Fragment {
                 }
 
                 // Failed; give the user another chance
-                String errorMsg = String.format(getString(R.string.provisioning_domain_error), dom);
-                mParent.showInputInfo(errorMsg);
+                String errorMsg = String.format(mProvisioningDomainError, dom);
+                DialogHelperActivity.showDialog(R.string.information_dialog, errorMsg, android.R.string.ok, -1);
                 mParent.accountStep1();
             }
         }
@@ -166,9 +180,24 @@ public class AccountCorpEmailEntry1 extends Fragment {
         new GetDomainInfo().execute(savedArgs.getString(ProvisioningActivity.USERNAME));
     }
 
+    @TargetApi(Build.VERSION_CODES.M)
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        mParent = (AuthenticatorActivity) getActivity();
+    }
+
+    /*
+     * Deprecated on API 23
+     * Use onAttachToContext instead
+     */
+    @SuppressWarnings("deprecation")
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
-        mParent = (AuthenticatorActivity) activity;
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+            mParent = (AuthenticatorActivity) activity;
+        }
     }
+
 }

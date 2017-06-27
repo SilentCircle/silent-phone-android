@@ -1,5 +1,6 @@
 build*/
 autoconf/
+cmake-*/
 doc/html/
 configure
 Makefile
@@ -7,6 +8,8 @@ Makefile.in
 aclocal.m4
 libs/
 obj/
+doc/html/
+doc/ZinaDoxy
 .idea/
 .kdev*
 *.o

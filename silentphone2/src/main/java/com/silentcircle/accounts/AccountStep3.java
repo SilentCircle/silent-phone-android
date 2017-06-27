@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2014-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -31,7 +31,6 @@ package com.silentcircle.accounts;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.Fragment;
-import android.app.FragmentManager;
 import android.content.Context;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -41,8 +40,6 @@ import android.support.v4.content.ContextCompat;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
-import android.text.method.LinkMovementMethod;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -54,9 +51,13 @@ import android.widget.ProgressBar;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
+import com.silentcircle.SilentPhoneApplication;
 import com.silentcircle.common.util.AsyncTasks;
+import com.silentcircle.common.util.ViewUtil;
+import com.silentcircle.logs.Log;
 import com.silentcircle.silentphone2.BuildConfig;
 import com.silentcircle.silentphone2.R;
+import com.silentcircle.silentphone2.activities.DialogHelperActivity;
 import com.silentcircle.silentphone2.activities.ProvisioningActivity;
 import com.silentcircle.silentphone2.services.TiviPhoneService;
 import com.silentcircle.silentphone2.util.ConfigurationUtilities;
@@ -70,6 +71,7 @@ import org.json.JSONObject;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -106,7 +108,15 @@ public class AccountStep3 extends Fragment implements View.OnClickListener {
     private int mLicenseErrorCode;
     private String mLicenseErrorString;
 
-    private Fragment mFragment;
+    private String mProvisioningAuthTokenText;
+    private String mProvisioningError;
+    private String mProvisioningWrongFormat;
+    private String mProvisioningNoData;
+    private String mAccountCreationError;
+    private String mAccountCreationWrongFormat;
+    private String mAccountCreationNoData;
+    private String mLicenseCodeInvalid;
+    private String mLicenseCodeDuplicate;
 
     public static AccountStep3 newInstance(Bundle args) {
         AccountStep3 f = new AccountStep3();
@@ -120,7 +130,6 @@ public class AccountStep3 extends Fragment implements View.OnClickListener {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mFragment = this;
 
         String deviceId = null;
         String username = null;
@@ -137,7 +146,9 @@ public class AccountStep3 extends Fragment implements View.OnClickListener {
                 "', existing: " + mUseExistingAccount + ", username: " + username);
         if (deviceId == null || username == null) {
             // Report this problem
-            mParent.showErrorInfo("Feature code: '" + mRoninCode + "', device id: '" + deviceId + "'" + "username: '" + username + "'");
+            final String msg = "Feature code: '" + mRoninCode + "', device id: '" + deviceId + "'" + "username: '" + username + "'";
+            DialogHelperActivity.showDialog(R.string.provisioning_error, msg, android.R.string.ok, -1);
+            mParent.provisioningCancel();
             return;
         }
         // Add the feature code / license code to JSON data
@@ -147,7 +158,8 @@ public class AccountStep3 extends Fragment implements View.OnClickListener {
             try {
                 data.put("license_code", mRoninCode);
             } catch (JSONException e) {
-                mParent.showErrorInfo(e.getLocalizedMessage());
+                DialogHelperActivity.showDialog(R.string.provisioning_error, e.getLocalizedMessage(), android.R.string.ok, -1);
+                mParent.provisioningCancel();
                 Log.e(TAG, "JSON problem: ", e);
             }
         }
@@ -158,13 +170,23 @@ public class AccountStep3 extends Fragment implements View.OnClickListener {
                     Uri.encode(username) + "/");
 
             // https://sccps.silentcircle.com/v1/me/device/{device_id}/  (PUT)
-            // TODO remove enable_tfa from querystring for production
+            // TODO remove enable_tfa from query string for production
             mRequestUrlProvisionDevice = new URL(ConfigurationUtilities.getProvisioningBaseUrl(mParent.getBaseContext()) +
                     ConfigurationUtilities.getDeviceManagementBase(mParent.getBaseContext()) +
                     Uri.encode(deviceId) + "/?enable_tfa=1");
         } catch (MalformedURLException e) {
             mParent.provisioningCancel();
         }
+
+        mProvisioningAuthTokenText = getString(R.string.provisioning_auth_token_text);
+        mProvisioningError = getString(R.string.provisioning_error);
+        mProvisioningWrongFormat = getString(R.string.provisioning_wrong_format);
+        mProvisioningNoData = getString(R.string.provisioning_no_data);
+        mAccountCreationError = getString(R.string.account_creation_error);
+        mAccountCreationWrongFormat = getString(R.string.account_creation_wrong_format);
+        mAccountCreationNoData = getString(R.string.account_creation_no_data);
+        mLicenseCodeInvalid = getString(R.string.license_code_invalid);
+        mLicenseCodeDuplicate = getString(R.string.license_code_duplicate);
     }
 
     @TargetApi(Build.VERSION_CODES.M)
@@ -182,7 +204,9 @@ public class AccountStep3 extends Fragment implements View.OnClickListener {
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
-        commonOnAttach(activity);
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+            commonOnAttach(activity);
+        }
     }
 
     private void commonOnAttach(Activity activity) {
@@ -201,14 +225,15 @@ public class AccountStep3 extends Fragment implements View.OnClickListener {
             return null;
 
         mTcCheckbox = (CheckBox) stepView.findViewById(R.id.CheckBoxTC);
-        mProgress = (ProgressBar) stepView.findViewById(R.id.ProgressBar);
-        mProgressInner = stepView.findViewById(R.id.ProvisioningInProgress);
+        mProgress = (ProgressBar) stepView.findViewById(R.id.progressbar);
+        mProgressInner = stepView.findViewById(R.id.progress);
         mScroll = (ScrollView) stepView.findViewById(R.id.Scroll);
         mButtons = (LinearLayout) stepView.findViewById(R.id.ProvisioningButtons);
         mAuthToken = (TextView)stepView.findViewById(R.id.ProvisioningAuthTokenInput);
         mAuthToken.setHint(getString(R.string.provisioning_auth_token_hint));
 
-        ((TextView)stepView.findViewById(R.id.CheckBoxTCText)).setMovementMethod(LinkMovementMethod.getInstance());
+        ((TextView)stepView.findViewById(R.id.CheckBoxTCText)).setMovementMethod(
+                new ViewUtil.MovementCheck(mParent, stepView, R.string.toast_no_browser_found));
 
         stepView.findViewById(R.id.back).setOnClickListener(this);
         stepView.findViewById(R.id.create).setOnClickListener(this);
@@ -351,16 +376,16 @@ public class AccountStep3 extends Fragment implements View.OnClickListener {
                     for (String err : errors) {
                         errorString.append('\n').append(err);
                     }
-                    retMsg = getString(R.string.account_creation_error) + ": " + errorString.toString();
+                    retMsg = mAccountCreationError + ": " + errorString.toString();
                     Log.w(TAG, "Provisioning error: " + (mLicenseErrorString != null ? mLicenseErrorString : errorString.toString()));
                 }
             } catch (JSONException e) {
-                retMsg = getString(R.string.account_creation_wrong_format) + e.getMessage();
+                retMsg = mAccountCreationWrongFormat + e.getMessage();
                 Log.w(TAG, "JSON exception: " + e);
             }
         }
         else {
-            retMsg = getString(R.string.account_creation_no_data) + " (" + mContent.length() + ")";
+            retMsg = mAccountCreationNoData + " (" + mContent.length() + ")";
         }
         return retMsg;
     }
@@ -371,7 +396,7 @@ public class AccountStep3 extends Fragment implements View.OnClickListener {
         try {
             error = jsonObj.getString("error_msg");
         } catch (JSONException e) {
-            errorList.add(getString(R.string.account_creation_wrong_format) + e.getMessage());
+            errorList.add(mAccountCreationWrongFormat + e.getMessage());
             Log.w(TAG, "JSON exception: " + e);
             return errorList;
         }
@@ -414,7 +439,7 @@ public class AccountStep3 extends Fragment implements View.OnClickListener {
 
         // Two-factor authentication token required. Rearrange the UI, the show the error text, input field, and Back and Next buttons
         mProgress.setVisibility(View.INVISIBLE);
-        getView().findViewById(R.id.ProvisioningInProgress).setVisibility(View.INVISIBLE);
+        getView().findViewById(R.id.progress).setVisibility(View.INVISIBLE);
         mScroll.setVisibility(View.VISIBLE);
         mButtons.setVisibility(View.VISIBLE);
         view.findViewById(R.id.CheckBoxTCText).setVisibility(View.GONE);
@@ -430,7 +455,7 @@ public class AccountStep3 extends Fragment implements View.OnClickListener {
 
         TextView errorText = (TextView)view.findViewById(R.id.license_error);
 
-        errorText.setText(getString(R.string.provisioning_auth_token_text));
+        errorText.setText(mProvisioningAuthTokenText);
         errorText.setVisibility(View.VISIBLE);
     }
 
@@ -443,7 +468,7 @@ public class AccountStep3 extends Fragment implements View.OnClickListener {
 
         // Serious problem. Rearrange the UI, the show the error text and button
         mProgress.setVisibility(View.INVISIBLE);
-        getView().findViewById(R.id.ProvisioningInProgress).setVisibility(View.INVISIBLE);
+        getView().findViewById(R.id.progress).setVisibility(View.INVISIBLE);
         mScroll.setVisibility(View.VISIBLE);
         mButtons.setVisibility(View.GONE);
         view.findViewById(R.id.CheckBoxTCText).setVisibility(View.GONE);
@@ -457,10 +482,10 @@ public class AccountStep3 extends Fragment implements View.OnClickListener {
 
         switch (mLicenseErrorCode) {
             case 1:
-                licenseErrorText.setText(mLicenseErrorString + "\n\n" + getString(R.string.license_code_invalid));
+                licenseErrorText.setText(mLicenseErrorString + "\n\n" + mLicenseCodeInvalid);
                 break;
             case 2:
-                licenseErrorText.setText(mLicenseErrorString + "\n\n" + getString(R.string.license_code_duplicate));
+                licenseErrorText.setText(mLicenseErrorString + "\n\n" + mLicenseCodeDuplicate);
                 break;
         }
     }
@@ -481,7 +506,8 @@ public class AccountStep3 extends Fragment implements View.OnClickListener {
                 contentLength = body.getBytes().length;
             }
             else {
-                mParent.showErrorInfo(getString(R.string.account_creation_wrong_format));
+                DialogHelperActivity.showDialog(R.string.provisioning_error, R.string.account_creation_wrong_format, android.R.string.ok, -1);
+                mParent.provisioningCancel();
                 return -1;
             }
             OutputStream out = null;
@@ -516,14 +542,15 @@ public class AccountStep3 extends Fragment implements View.OnClickListener {
                 }
                 return ret;
             } catch (IOException e) {
-                if(!Utilities.isNetworkConnected(mFragment.getActivity())){
+                if(!Utilities.isNetworkConnected(SilentPhoneApplication.getAppContext())){
                     return Constants.NO_NETWORK_CONNECTION;
                 }
-                mParent.showInputInfo(getString(R.string.provisioning_no_network) + e.getLocalizedMessage());
+                final String msg = getString(R.string.provisioning_no_network) + e.getLocalizedMessage();
+                DialogHelperActivity.showDialog(R.string.provisioning_error, msg, android.R.string.ok, -1);
                 Log.e(TAG, "Network not available: " + e.getMessage());
                 return -1;
             } catch (Exception e) {
-                mParent.showInputInfo(getString(R.string.provisioning_error) + e.getLocalizedMessage());
+                DialogHelperActivity.showDialog(R.string.provisioning_error, e.getLocalizedMessage(), android.R.string.ok, -1);
                 Log.e(TAG, "Network connection problem: " + e.getMessage());
                 return -1;
             } finally {
@@ -542,7 +569,7 @@ public class AccountStep3 extends Fragment implements View.OnClickListener {
                 startLoadingRegisterDevice();
             }
             else if (result == Constants.NO_NETWORK_CONNECTION){
-                showDialog(R.string.information_dialog, R.string.connected_to_network, android.R.string.ok, -1);
+                DialogHelperActivity.showDialog(R.string.information_dialog, R.string.connected_to_network, android.R.string.ok, -1);
                 cleanUp();
             }
             else {
@@ -550,7 +577,7 @@ public class AccountStep3 extends Fragment implements View.OnClickListener {
                 if (mLicenseErrorCode > 0)
                     licenseError();
                 else {
-                    mParent.showInputInfo(creationResult);
+                    DialogHelperActivity.showDialog(R.string.information_dialog, creationResult, android.R.string.ok, -1);
                     cleanUp();
                 }
             }
@@ -625,16 +652,16 @@ public class AccountStep3 extends Fragment implements View.OnClickListener {
                 if ("success".equals(result))
                     mApiKey = jsonObj.getString("api_key");
                 else {
-                    retMsg = getString(R.string.provisioning_error) + ": " + jsonObj.getString("error_msg");
+                    retMsg = mProvisioningError + ": " + jsonObj.getString("error_msg");
                     Log.w(TAG, "Provisioning error: " + jsonObj.getString("error_msg"));
                 }
             } catch (JSONException e) {
-                retMsg = getString(R.string.provisioning_wrong_format) + e.getMessage();
+                retMsg = mProvisioningWrongFormat + e.getMessage();
                 Log.w(TAG, "JSON exception: " + e);
             }
         }
         else {
-            retMsg = getString(R.string.provisioning_no_data) + " (" + mContent.length() + ")";
+            retMsg = mProvisioningNoData + " (" + mContent.length() + ")";
         }
         return retMsg;
     }
@@ -654,12 +681,6 @@ public class AccountStep3 extends Fragment implements View.OnClickListener {
             }
         }
         return isTwoFactorEnabled;
-    }
-
-    private void showDialog(int titleResId, int msgResId, int positiveBtnLabel, int nagetiveBtnLabel) {
-        com.silentcircle.silentphone2.dialogs.InfoMsgDialogFragment infoMsg = com.silentcircle.silentphone2.dialogs.InfoMsgDialogFragment.newInstance(titleResId, msgResId, positiveBtnLabel, nagetiveBtnLabel);
-        FragmentManager fragmentManager = mFragment.getFragmentManager();
-        infoMsg.show(fragmentManager,TAG );
     }
 
     private class LoaderTaskRegisterDevice extends AsyncTask<URL, Integer, Integer> {
@@ -707,23 +728,21 @@ public class AccountStep3 extends Fragment implements View.OnClickListener {
                 int ret = urlConnection.getResponseCode();
                 if (ConfigurationUtilities.mTrace) Log.d(TAG, "HTTP code-2: " + ret);
 
-                if (ret == HttpsURLConnection.HTTP_OK) {
-                    AsyncTasks.readStream(new BufferedInputStream(urlConnection.getInputStream()), mContent);
-                }
-                else {
-                    AsyncTasks.readStream(new BufferedInputStream(urlConnection.getErrorStream()), mContent);
-                }
+                InputStream inputStream = (ret == HttpsURLConnection.HTTP_OK)
+                        ? urlConnection.getInputStream()
+                        : urlConnection.getErrorStream();
+                AsyncTasks.readStream(new BufferedInputStream(inputStream), mContent);
                 return ret;
 
             } catch (IOException e) {
-                if(!Utilities.isNetworkConnected(mFragment.getActivity())){
+                if(!Utilities.isNetworkConnected(SilentPhoneApplication.getAppContext())){
                     return Constants.NO_NETWORK_CONNECTION;
                 }
                 errorMessage = getString(R.string.provisioning_no_network) + e.getLocalizedMessage();
                 Log.e(TAG, "Network not available: " + e.getMessage());
                 return -1;
             } catch (Exception e) {
-                errorMessage = getString(R.string.provisioning_error) + e.getLocalizedMessage();
+                errorMessage = e.getLocalizedMessage();
                 Log.e(TAG, "Network connection problem: " + e.getMessage());
                 return -1;
             } finally {
@@ -731,7 +750,8 @@ public class AccountStep3 extends Fragment implements View.OnClickListener {
                     if (out != null)
                         out.close();
                 } catch (IOException ignore) { }
-                urlConnection.disconnect();
+                if (urlConnection != null)
+                    urlConnection.disconnect();
             }
         }
 
@@ -746,29 +766,29 @@ public class AccountStep3 extends Fragment implements View.OnClickListener {
 
         @Override
         protected void onPostExecute(Integer result) {
+            if (getActivity() == null)          // No parent anymore, simply return
+                return;
             String message = parseRegisterResultData();
             if (result == HttpsURLConnection.HTTP_OK && message == null && mApiKey != null) {
                 mParent.usernamePasswordDone(mApiKey);
             }
             else if (result == Constants.NO_NETWORK_CONNECTION) {
-                showDialog(R.string.information_dialog, R.string.connected_to_network, android.R.string.ok, -1);
+                DialogHelperActivity.showDialog(R.string.provisioning_error, R.string.connected_to_network, android.R.string.ok, -1);
                 cleanUp();
             }
             else {
                 message = errorMessage != null ? errorMessage : message;
                 if (shouldRequestTwoFactorAuthToken()) {
                     if (!TextUtils.isEmpty(mAuthToken.getText())) {
-                        showDialog(R.string.information_dialog, R.string.provisioning_auth_token_error, android.R.string.ok, -1);
+                        DialogHelperActivity.showDialog(R.string.provisioning_error, R.string.provisioning_auth_token_error, android.R.string.ok, -1);
                     }
                     authTokenError();
                 } else {
-                    mParent.showInputInfo(message);
+                    DialogHelperActivity.showDialog(R.string.provisioning_error, message, android.R.string.ok, -1);
                     cleanUp();
                 }
             }
         }
 
     }
-
-
 }

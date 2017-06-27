@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2016-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -54,4 +54,14 @@ public class OutgoingMessage extends Message {
     public OutgoingMessage(CharSequence sender, CharSequence text) {
         this(IOUtils.toByteArray(sender), IOUtils.toByteArray(text));
     }
+
+    public OutgoingMessage(byte[] sender, byte[] id, byte[] text) {
+        this(sender, text);
+        setId(id);
+    }
+
+    public OutgoingMessage(CharSequence sender, CharSequence id, CharSequence text) {
+        this(IOUtils.toByteArray(sender), IOUtils.toByteArray(id), IOUtils.toByteArray(text));
+    }
+
 }

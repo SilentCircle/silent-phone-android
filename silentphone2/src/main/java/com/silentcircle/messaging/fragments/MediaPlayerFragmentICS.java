@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2016-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -37,11 +37,12 @@ import android.graphics.SurfaceTexture;
 import android.media.MediaMetadataRetriever;
 import android.media.MediaPlayer;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.PowerManager;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
-import android.util.DisplayMetrics;
-import android.util.Log;
+import com.silentcircle.logs.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Surface;
@@ -49,6 +50,7 @@ import android.view.TextureView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
+import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.MediaController;
 import android.widget.RelativeLayout;
@@ -145,6 +147,19 @@ public class MediaPlayerFragmentICS extends FileViewerFragment implements
         Log.d(TAG, "createPlayer");
         mPlayer = new MediaPlayer();
         mPlayerWrapper = new MediaPlayerWrapper(mPlayer);
+        mPlayerWrapper.setOnEventListener(new MediaPlayerWrapper.OnEventListener() {
+            @Override
+            public void onStart() {
+                if (MIME.isVideo(getType())) {
+                    getActivity().getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+                }
+            }
+
+            @Override
+            public void onPause() {
+                getActivity().getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+            }
+        });
         try {
             AttachmentUtils.makePublic(getActivity(), getFile());
 
@@ -218,6 +233,8 @@ public class MediaPlayerFragmentICS extends FileViewerFragment implements
 
     @Override
     public void onCompletion(MediaPlayer player) {
+        getActivity().getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
         if (mController != null) {
             mController.invalidate();
             mPlayerWrapper.seekTo(0);
@@ -299,13 +316,43 @@ public class MediaPlayerFragmentICS extends FileViewerFragment implements
         super.onPause();
         Log.d(TAG, "onPause");
 
+        // Keep audio playing if the screen turns off
+        if (MIME.isAudio(getType()) && !isFinishing()) {
+            PowerManager pm = (PowerManager) getActivity().getSystemService(Context.POWER_SERVICE);
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT_WATCH) {
+                if (!pm.isScreenOn()) {
+                    return;
+                }
+            } else {
+                if (!pm.isInteractive()) {
+                    return;
+                }
+            }
+        }
+
+        tearDown();
+    }
+
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+
+        tearDown();
+    }
+
+    private void tearDown() {
         hideController();
 
         if (mController != null) {
             mController.hide();
             mController.setAnchorView(null);
             mController = null;
-            getUnwrappedView().setOnClickListener(null);
+
+            View view = getUnwrappedView();
+            if (view != null) {
+                view.setOnClickListener(null);
+            }
         }
 
         if (!isChangingConfigurations()) {
@@ -319,7 +366,9 @@ public class MediaPlayerFragmentICS extends FileViewerFragment implements
             }
         }
 
-        mPlayerContainer.removeView(mTextureView);
+        if (mPlayerContainer != null) {
+            mPlayerContainer.removeView(mTextureView);
+        }
     }
 
     @Override
@@ -327,7 +376,6 @@ public class MediaPlayerFragmentICS extends FileViewerFragment implements
         super.onSaveInstanceState(outState);
         outState.putInt(CURRENT_POSITION, mSavedPosition);
     }
-
 
     @Override
     public void onSurfaceTextureAvailable(SurfaceTexture texture, int width, int height) {
@@ -360,6 +408,10 @@ public class MediaPlayerFragmentICS extends FileViewerFragment implements
     protected void play() {
         if (mPlayerWrapper != null) {
             if (mSavedPosition == 0) {
+                if (MIME.isVideo(getType())) {
+                    getActivity().getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+                }
+
                 mPlayerWrapper.start();
             }
             else {

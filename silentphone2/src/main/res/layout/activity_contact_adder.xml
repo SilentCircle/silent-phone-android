@@ -15,100 +15,145 @@
 -->
 
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                xmlns:app="http://schemas.android.com/apk/res-auto"
                 xmlns:tools="http://schemas.android.com/tools"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:paddingRight="@dimen/activity_horizontal_margin"
-                android:paddingLeft="@dimen/activity_horizontal_margin"
+                android:background="?attr/sp_activity_background_color"
                 android:orientation="vertical"
                 tools:context="com.silentcircle.silentphone2.activities.ContactAdder">
 
-    <TextView
-            android:id="@+id/HeaderText"
-            style="@style/Widget.Silent.SimpleText.Medium"
-            android:layout_marginTop="32dp"
-            android:text="@string/addContactTitle"/>
+    <android.support.v7.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        style="@style/Toolbar" />
 
-    <EditText
-            style="@style/Widget.Silent.SimpleText"
-            android:theme="@style/Widget.EditText.Dark"
-            android:id="@+id/contactNameEditText"
-            android:layout_width="match_parent"
-            android:layout_height="@dimen/editor_min_line_item_height"
-            android:layout_marginTop="@dimen/activity_vertical_margin"
-            android:layout_marginLeft="16dp"
-            android:layout_marginStart="16dp"
-            android:hint="@string/contactNameLabel"
-            android:imeOptions="actionDone"
-            android:nextFocusForward="@+id/spinner"
-            android:inputType="textCapWords|textNoSuggestions"
-            android:singleLine="true"
-            android:textAppearance="?android:attr/textAppearanceMedium"
-            android:textColor="@color/auth_active_body_text_grey"/>
-
-    <!--
     <LinearLayout
-            android:id="@+id/contactPhoneLine"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="@dimen/editor_min_line_item_height"
-            android:layout_marginLeft="16dp"
-            android:layout_marginStart="16dp"
-            android:orientation="horizontal">
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="@dimen/spacing_small"
+            android:gravity="center_vertical"
+            android:animateLayoutChanges="true">
 
+            <ImageView
+                android:id="@+id/contactPhoto"
+                android:layout_width="@dimen/contact_photo_size"
+                android:layout_height="@dimen/contact_photo_size"
+                android:layout_marginTop="3dp"
+                android:layout_marginLeft="@dimen/spacing_large"
+                android:layout_marginStart="@dimen/spacing_large"
+                android:importantForAccessibility="no"
+                android:visibility="gone"
+                tools:visibility="visible"
+                tools:src="@drawable/ic_avatar_placeholder_circular"/>
+
+            <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:paddingLeft="@dimen/activity_vertical_margin"
+                android:paddingRight="@dimen/activity_vertical_margin">
+
+                <EditText
+                    style="@style/Widget.Silent.SimpleText"
+                    android:theme="@style/Widget.EditText"
+                    android:id="@+id/contactNameEditText"
+                    android:layout_width="match_parent"
+                    android:layout_height="@dimen/editor_min_line_item_height"
+                    android:layout_marginLeft="@dimen/spacing_normal"
+                    android:layout_marginStart="@dimen/spacing_normal"
+                    android:hint="@string/contactNameLabel"
+                    android:imeOptions="actionDone"
+                    android:privateImeOptions="nm"
+                    android:nextFocusForward="@+id/spinner"
+                    android:inputType="textCapWords|textNoSuggestions"
+                    android:singleLine="true"
+                    android:textAppearance="?android:attr/textAppearanceMedium"
+                    android:textColor="?attr/sp_activity_primary_text_color"
+                    />
+
+                <ImageView
+                    android:id="@+id/contactNameClear"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentRight="true"
+                    android:layout_alignBottom="@id/contactNameEditText"
+                    android:paddingBottom="12dp"
+                    android:clickable="true"
+                    android:visibility="gone"
+                    android:src="@drawable/ic_clear_white_24dp"
+                    android:tint="?attr/sp_activity_primary_text_color"/>
+
+            </RelativeLayout>
+
+        </LinearLayout>
+
+        <!--
+        <LinearLayout
+                android:id="@+id/contactPhoneLine"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/editor_min_line_item_height"
+                android:layout_marginLeft="16dp"
+                android:layout_marginStart="16dp"
+                android:orientation="horizontal">
+
+            <TextView
+                    style="@style/Widget.Silent.SimpleText"
+                    android:id="@+id/contactPhoneEditText"
+                    android:layout_width="0dp"
+                    android:layout_height="@dimen/editor_min_line_item_height"
+                    android:layout_marginTop="3dp"
+                    android:layout_weight="1"
+                    android:textAppearance="?android:attr/textAppearanceMedium"
+                    android:gravity="center_vertical"
+                    android:hint="@string/contactPhoneLabel"
+                    android:textColor="@color/auth_inactive_body_text_grey"
+                    android:paddingLeft="3dp"
+                    android:paddingStart="3dp" />
+            <include
+                    android:id="@+id/spinner"
+                    layout="@layout/edit_spinner"
+                    android:visibility="gone" />
+        </LinearLayout>
+    -->
+
+        <FrameLayout
+                android:id="@+id/list_fragment"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1" />
+        <!--    android:visibility="gone"
+                tools:visibility="visible"/>-->
+
+        <!--
         <TextView
                 style="@style/Widget.Silent.SimpleText"
-                android:id="@+id/contactPhoneEditText"
-                android:layout_width="0dp"
+                android:id="@+id/contactScName"
+                android:layout_width="match_parent"
                 android:layout_height="@dimen/editor_min_line_item_height"
+                android:layout_marginLeft="16dp"
+                android:layout_marginStart="16dp"
                 android:layout_marginTop="3dp"
-                android:layout_weight="1"
                 android:textAppearance="?android:attr/textAppearanceMedium"
                 android:gravity="center_vertical"
-                android:hint="@string/contactPhoneLabel"
+                android:layout_above="@+id/contactSaveButton"
                 android:textColor="@color/auth_inactive_body_text_grey"
-                android:paddingLeft="3dp"
-                android:paddingStart="3dp" />
-        <include
-                android:id="@+id/spinner"
-                layout="@layout/edit_spinner"
-                android:visibility="gone" />
+                android:paddingStart="3dp"
+                android:paddingLeft="3dp"/>
+    -->
+        <Button
+                android:layout_height="wrap_content"
+                style="@style/Widget.Button"
+                android:text="@string/contact_create_new"
+                android:id="@+id/contactSaveButton"
+                android:layout_width="match_parent"
+                android:visibility="invisible"
+                tools:visibility="visible"
+                />
     </LinearLayout>
--->
-
-    <FrameLayout
-            android:id="@+id/list_fragment"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_marginLeft="16dp"
-            android:layout_marginStart="16dp"
-            android:layout_weight="1"
-            android:visibility="gone"
-            tools:visibility="visible"/>
-
-    <!--
-    <TextView
-            style="@style/Widget.Silent.SimpleText"
-            android:id="@+id/contactScName"
-            android:layout_width="match_parent"
-            android:layout_height="@dimen/editor_min_line_item_height"
-            android:layout_marginLeft="16dp"
-            android:layout_marginStart="16dp"
-            android:layout_marginTop="3dp"
-            android:textAppearance="?android:attr/textAppearanceMedium"
-            android:gravity="center_vertical"
-            android:layout_above="@+id/contactSaveButton"
-            android:textColor="@color/auth_inactive_body_text_grey"
-            android:paddingStart="3dp"
-            android:paddingLeft="3dp"/>
--->
-    <Button
-            android:layout_height="wrap_content"
-            style="?android:attr/buttonBarButtonStyle"
-            android:text="@string/save"
-            android:id="@+id/contactSaveButton"
-            android:layout_marginTop="@dimen/activity_vertical_margin"
-            android:layout_width="match_parent"
-            android:visibility="invisible"
-            tools:visibility="visible"
-            />
 </LinearLayout>

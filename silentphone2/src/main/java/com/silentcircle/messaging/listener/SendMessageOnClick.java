@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2016-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -33,13 +33,14 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.TextView;
 
+import com.silentcircle.common.util.StringUtils;
 import com.silentcircle.messaging.location.LocationObserver;
 import com.silentcircle.messaging.location.OnLocationReceivedListener;
 import com.silentcircle.messaging.model.Conversation;
 import com.silentcircle.messaging.model.MessageStates;
 import com.silentcircle.messaging.model.event.Message;
 import com.silentcircle.messaging.repository.ConversationRepository;
-import com.silentcircle.messaging.services.AxoMessaging;
+import com.silentcircle.messaging.services.ZinaMessaging;
 import com.silentcircle.messaging.task.ComposeMessageTask;
 import com.silentcircle.messaging.task.SaveMessageTask;
 import com.silentcircle.messaging.util.AsyncUtils;
@@ -72,21 +73,25 @@ public class SendMessageOnClick implements OnClickListener {
     private final boolean mShouldRequestDeliveryNotification;
 
     protected Conversation mConversation;
+    protected boolean mIsRetained;
 
     public SendMessageOnClick(TextView source, String username, Conversation conversation,
               ConversationRepository repository,
-              boolean shouldRequestDeliveryNotification) {
+              boolean shouldRequestDeliveryNotification,
+              boolean isRetained) {
         mSource = source;
         mUsername = username;
         mConversation = conversation;
         mRepository = repository;
         mShouldRequestDeliveryNotification = shouldRequestDeliveryNotification;
+        mIsRetained = isRetained;
     }
 
     @Override
     public void onClick(View button) {
 
-        final String text = mSource.getText().toString();
+        // Do not allow to send text consisting only of whitespaces
+        final String text = StringUtils.trim(mSource.getText()).toString();
 
         if (TextUtils.isEmpty(text)) {
             return;
@@ -95,7 +100,7 @@ public class SendMessageOnClick implements OnClickListener {
         mSource.setText(null);
 
         ComposeMessageTask task = new ComposeMessageTask(mUsername, mConversation, mRepository,
-                null, mShouldRequestDeliveryNotification) {
+                null, mShouldRequestDeliveryNotification, mIsRetained) {
 
             @Override
             protected void onPostExecute(Message message) {
@@ -104,7 +109,7 @@ public class SendMessageOnClick implements OnClickListener {
                     // notify about conversation changes now, we want to see message as soon as possible
                     MessageUtils.notifyConversationUpdated(mSource.getContext(),
                             message.getConversationID(), true,
-                            AxoMessaging.UPDATE_ACTION_MESSAGE_SEND, message.getId());
+                            ZinaMessaging.UPDATE_ACTION_MESSAGE_SEND, message.getId());
 
                     LocationObserver.observe(mSource.getContext(),
                             new SendMessageOnLocationReceived(message));

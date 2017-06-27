@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2016-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -25,7 +25,6 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-
 package com.silentcircle.messaging.model.event;
 
 import com.silentcircle.messaging.model.CallData;
@@ -35,6 +34,7 @@ public class CallMessage extends Message {
     public int callType;
     public int callDuration;
     public long callTime;
+    public String errorMessage;
 
     public CallMessage() {
 
@@ -46,6 +46,7 @@ public class CallMessage extends Message {
         setCallType(callData.type);
         setCallDuration(callData.duration);
         setCallTime(callData.time);
+        setErrorMessage(callData.errorMessage);
     }
 
     public int getCallType() {
@@ -60,6 +61,10 @@ public class CallMessage extends Message {
         return callDuration;
     }
 
+    public String getErrorMessage() {
+        return errorMessage;
+    }
+
     public void setCallDuration(int duration) {
         this.callDuration = duration;
     }
@@ -70,5 +75,9 @@ public class CallMessage extends Message {
 
     public void setCallTime(long callTime) {
         this.callTime = callTime;
+    }
+
+    public void setErrorMessage(String errorMessage) {
+        this.errorMessage = errorMessage;
     }
 }

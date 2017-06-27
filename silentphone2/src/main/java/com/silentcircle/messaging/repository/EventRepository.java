@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2016-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -28,15 +28,23 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package com.silentcircle.messaging.repository;
 
 
+import android.support.annotation.Nullable;
+
 import com.silentcircle.messaging.model.event.Event;
 
 import java.util.List;
 
 public interface EventRepository extends Repository<Event> {
 
-    ObjectRepository objectsOf(Event event);
+    ObjectRepository objectsOf(@Nullable Event event);
+
+    ObjectRepository objectsOf(@Nullable String eventId);
 
     List<Event> list(PagingContext pagingContext);
+
+    List<Event> list(int offset, int number, int direction);
+
+    void remove(@Nullable String id);
 
     class PagingContext {
 
@@ -44,12 +52,18 @@ public interface EventRepository extends Repository<Event> {
         public static final int START_FROM_OLDEST = 1;
 
         private int mLastPosition;
-        private final int mStartPosition;
-        private final int mPageSize;
+        private int mStartPosition;
+        private int mPageSize;
 
         public PagingContext(int startPosition, int pageSize) {
             mStartPosition = startPosition;
             mLastPosition = startPosition;
+            mPageSize = pageSize;
+        }
+
+        public PagingContext(int startPosition, int lastPosition, int pageSize) {
+            mStartPosition = startPosition;
+            mLastPosition = lastPosition;
             mPageSize = pageSize;
         }
 
@@ -71,6 +85,10 @@ public interface EventRepository extends Repository<Event> {
             return mStartPosition;
         }
 
+        public void setPagingDirection(int direction) {
+            mStartPosition = direction;
+        }
+
         public boolean isEndReached(int lastPosition) {
             return (mLastPosition == lastPosition);
         }
@@ -81,6 +99,10 @@ public interface EventRepository extends Repository<Event> {
 
         public int getPageSize() {
             return mPageSize;
+        }
+
+        public void setPageSize(int size) {
+            mPageSize = size;
         }
     }
 }

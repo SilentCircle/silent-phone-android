@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2016-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -39,11 +39,11 @@ public class CheckableLinearLayout extends LinearLayout implements Checkable {
     private boolean mChecked;
 
     public CheckableLinearLayout(Context context) {
-        super(context);
+        this(context, null);
     }
 
     public CheckableLinearLayout(Context context, AttributeSet attrs) {
-        super(context, attrs);
+        this(context, attrs, 0);
     }
 
     @TargetApi(Build.VERSION_CODES.HONEYCOMB)
@@ -81,4 +81,5 @@ public class CheckableLinearLayout extends LinearLayout implements Checkable {
          */
         invalidate();
     }
+
 }

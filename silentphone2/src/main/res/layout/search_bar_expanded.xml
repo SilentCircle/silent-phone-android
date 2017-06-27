@@ -13,66 +13,66 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<LinearLayout
+<RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/search_box_expanded"
-    android:layout_width="fill_parent"
+    android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="horizontal"
+    android:id="@+id/search_box_expanded"
     android:gravity="center_vertical"
     android:visibility="gone"
     tools:visibility="visible">
 
-    <RelativeLayout
+    <ImageButton
+        android:id="@+id/search_back_button"
+        android:layout_width="@dimen/search_box_icon_size"
+        android:layout_height="@dimen/search_box_icon_size"
+        android:layout_marginRight="@dimen/search_box_navigation_icon_margin"
+        android:layout_marginEnd="@dimen/search_box_navigation_icon_margin"
+        android:src="@drawable/ic_back_arrow"
+        android:contentDescription="@string/action_menu_back_from_search"
+        android:background="@null"
+        android:tint="?attr/sp_actionbar_title_text_color"
+        android:layout_gravity="center_vertical"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_centerVertical="true" />
+
+    <EditText
+        android:id="@+id/search_view"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="@dimen/search_box_icon_size"
+        android:layout_marginLeft="@dimen/search_box_text_left_margin"
+        android:layout_marginStart="@dimen/search_box_text_left_margin"
+        android:textSize="@dimen/search_text_size"
+        android:fontFamily="@string/search_font_family"
+        android:textColor="?sp_actionbar_title_text_color"
+        android:textColorHint="@color/searchbox_hint_text_color"
+        android:background="@null"
+        android:inputType="textFilter|textNoSuggestions|textEmailAddress"
+        android:singleLine="true"
+        android:imeOptions="flagNoExtractUi"
+        android:privateImeOptions="nm"
+        android:hint="@string/dialer_hint_find_contact"
+        android:layout_gravity="center_vertical"
+        android:layout_toEndOf="@+id/search_back_button"
+        android:layout_toRightOf="@+id/search_back_button"
+        android:layout_toLeftOf="@+id/keypad_toggle_button"
+        android:layout_toStartOf="@+id/keypad_toggle_button"
+        android:layout_centerVertical="true" />
 
-        <ImageButton
-            android:id="@+id/search_back_button"
-            android:layout_width="@dimen/search_box_icon_size"
-            android:layout_height="@dimen/search_box_icon_size"
-            android:layout_marginRight="@dimen/search_box_navigation_icon_margin"
-            android:src="@drawable/ic_back_arrow"
-            android:contentDescription="@string/action_menu_back_from_search"
-            android:background="@null"
-            android:tint="?attr/sp_actionbar_title_text_color"
-            android:layout_gravity="center_vertical"
-            android:layout_alignParentLeft="true"
-            android:layout_centerVertical="true" />
+    <ImageView
+        android:id="@+id/keypad_toggle_button"
+        android:layout_height="@dimen/search_box_keyboard_toggle_icon_size"
+        android:layout_width="@dimen/search_box_keyboard_toggle_icon_size"
+        android:src="@drawable/ic_action_dial_pad_light"
+        android:clickable="true"
+        android:padding="@dimen/search_box_keyboard_toggle_icon_padding"
+        android:contentDescription="@string/description_dial_pad_toggle"
+        android:tint="?sp_actionbar_title_text_color"
+        android:layout_gravity="center_vertical"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
+        android:layout_centerVertical="true" />
 
-        <EditText
-            android:id="@+id/search_view"
-            android:layout_width="match_parent"
-            android:layout_height="@dimen/search_box_icon_size"
-            android:layout_weight="1"
-            android:layout_marginLeft="@dimen/search_box_text_left_margin"
-            android:textSize="@dimen/search_text_size"
-            android:fontFamily="@string/search_font_family"
-            android:textColor="?sp_actionbar_title_text_color"
-            android:textColorHint="@color/searchbox_hint_text_color"
-            android:background="@null"
-            android:inputType="textFilter"
-            android:singleLine="true"
-            android:imeOptions="flagNoExtractUi"
-            android:hint="@string/dialer_hint_find_contact"
-            android:layout_gravity="center_vertical"
-            android:layout_toRightOf="@+id/search_back_button"
-            android:layout_toLeftOf="@+id/keypad_toggle_button"
-            android:layout_centerVertical="true" />
-
-        <ImageView
-            android:id="@+id/keypad_toggle_button"
-            android:layout_height="@dimen/search_box_keyboard_toggle_icon_size"
-            android:layout_width="@dimen/search_box_keyboard_toggle_icon_size"
-            android:layout_marginRight="@dimen/search_box_keyboard_toggle_icon_margin"
-            android:src="@drawable/ic_action_dial_pad_light"
-            android:clickable="true"
-            android:contentDescription="@string/description_clear_search"
-            android:tint="?sp_actionbar_title_text_color"
-            android:layout_gravity="center_vertical"
-            android:layout_alignParentRight="true"
-            android:layout_centerVertical="true" />
-    </RelativeLayout>
-
-</LinearLayout>
+</RelativeLayout>

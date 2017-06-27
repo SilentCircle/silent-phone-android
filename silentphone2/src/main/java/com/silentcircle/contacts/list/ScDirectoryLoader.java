@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2014-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -34,19 +34,25 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.database.MatrixCursor;
 import android.net.Uri;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.Message;
 import android.provider.ContactsContract.CommonDataKinds.Phone;
+import android.telephony.PhoneNumberUtils;
 import android.text.TextUtils;
 import android.util.JsonReader;
-import android.util.Log;
 
 import com.silentcircle.common.util.AsyncTasks;
 import com.silentcircle.contacts.utils.NameSplitter;
+import com.silentcircle.contacts.utils.PhoneNumberHelper;
 import com.silentcircle.keymanagersupport.KeyManagerSupport;
+import com.silentcircle.logs.Log;
 import com.silentcircle.silentphone2.R;
 import com.silentcircle.silentphone2.activities.DialogHelperActivity;
-import com.silentcircle.silentphone2.services.PhoneServiceNative;
+import com.silentcircle.silentphone2.dialogs.InfoMsgDialogFragment;
 import com.silentcircle.silentphone2.util.ConfigurationUtilities;
 import com.silentcircle.silentphone2.util.PinnedCertificateHandling;
+import com.silentcircle.silentphone2.util.Utilities;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -85,7 +91,7 @@ public class ScDirectoryLoader extends AsyncTaskLoader<Cursor> {
     /** Add only the number field to the returned cursor */
     public static final int NUMBERS_ONLY = 2;
 
-    private static final int MIN_SEARCH_LENGTH = 1;
+    public static final int MIN_SEARCH_LENGTH = 2;
     public static final int MAX_RECORDS = 20;
 
     private final static String MAX_RECORDS_SERVER = "&start=0&max=" + (MAX_RECORDS+1);
@@ -110,42 +116,100 @@ public class ScDirectoryLoader extends AsyncTaskLoader<Cursor> {
     private StringBuilder mContent = new StringBuilder();
     private final MatrixCursor mEmptyCursor = new MatrixCursor(PROJECTION, 0);
 
-    private static TreeMap<String, UserData> mUserList;
-
-    private static NameSplitter mNameSplitter;
-
-    private static int mNumberOfRows;
     private boolean mQueryChanged;
 
     private int mFilterType = ALL;
 
-    private static class UserData {
-        private final String fullName;
-        private String displayName;
-        private final String userName;
-        private final String uuid;
-        private String sortKey;
+    static class UserData {
+        final String fullName;
+        String displayName;
+        final String userName;
+        final String uuid;
+        final String organization;
+        String sortKey;
 
         UserData(String full, String display, String un, String uid, String sort) {
+            this(full, display, un, uid, sort, null);
+        }
+
+        UserData(String full, String display, String un, String uid, String sort, String org) {
             fullName = full;
             displayName = display;
             userName = un;
             uuid = uid;
             sortKey = sort;
+            organization = org;
         }
+    }
+
+    // Singleton class used for data that must survive the re-creation of the loader class until
+    // explicitly reset. This enables some limited caching and thus reducing server queries.
+    public static class DirectoryHelper extends Handler{
+        public static final int MSG_UPDATE_CACHE = 0;
+        public static class QueryResults {
+            // Class used to send the query results as a message from the background to the main thread
+            public QueryResults(String query,TreeMap<String, UserData>  data, boolean error) {
+                this.query = query;
+                this.data = data;
+                this.error = error;
+            }
+            public String query;
+            public TreeMap<String, UserData> data;
+            public boolean error;
+        }
+
+        public String mPreviousQuery = "";
+        public TreeMap<String, UserData> mUserList;
+
+        public NameSplitter mNameSplitter;
+        public boolean mUseScDirLoaderOrg;
+        public boolean mErrorOnPreviousSearch;
+        public Handler mHandler;
+
+        public DirectoryHelper(Looper looper)  {
+            super(looper);
+        }
+
+        // Runs in main thread and updates the cache related variables according to the
+        // previous query results
+        @Override
+        public void handleMessage(Message msg) {
+            switch (msg.what) {
+                case MSG_UPDATE_CACHE:
+                    QueryResults results = (QueryResults) msg.obj;
+                    mErrorOnPreviousSearch = results.error;
+                    if (results.error) {
+                        clearCachedData();
+                    }
+                    else {
+                        if (results.data.size() == 0)
+                            return;
+                        mPreviousQuery = results.query;
+                        mUserList = results.data;
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
+
+    }
+
+    private static DirectoryHelper directoryHelper;
+    /** Getter method to access the singleton class of the helper */
+    public static DirectoryHelper getHelper() {
+        if (directoryHelper == null) {
+            directoryHelper = new DirectoryHelper(Looper.getMainLooper());
+        }
+        return directoryHelper;
     }
 
     private boolean mSortAlternative;
     private boolean mDisplayAlternative;
     private String mDevAuthorization;
 
-    // The following static data must survive the re-creation of the loader class until
-    // explicitly reset. This enables some limited caching and thus reducing server queries.
-    private static String mSearchText;
-    private static String mPreviousSearchText;
-    private static boolean mUseScDirLoaderOrg;
+    private String mSearchText = "";
 
-    public static boolean mErrorOnPreviousSearch;
 
     public ScDirectoryLoader(Context context) {
         super(context);
@@ -162,68 +226,83 @@ public class ScDirectoryLoader extends AsyncTaskLoader<Cursor> {
 
     public void setQueryString(String query) {
         if (ConfigurationUtilities.mTrace)
-            Log.d(TAG, "Query: " + query + ", previous: " + mPreviousSearchText + ", search: " + mSearchText +
-                    ", list: " + (mUserList == null ? "null" : "not null"));
-        mPreviousSearchText = mSearchText;
+            Log.d(TAG, "Query: " + query + ", previous: " + getHelper().mPreviousQuery +
+                    ", list: " + (getHelper().mUserList == null ? "null" : "not null"));
         mSearchText = query;
-        if (mPreviousSearchText == null)
-            mPreviousSearchText = query;
+
+        /*
+         * If search query is a phone number, normalize it by removing spaces and other non-numeric
+         * characters (excluding + sign).
+         *
+         * v2/people will only return result for a normalized phone number.
+         */
+        if (mSearchText != null && PhoneNumberUtils.isGlobalPhoneNumber(mSearchText.replaceAll("\\s", ""))) {
+            mSearchText = PhoneNumberHelper.normalizeNumber(mSearchText);
+        }
+
         mQueryChanged = true;
     }
 
     public static void clearCachedData() {
-        mUserList = null;
-        mNameSplitter = null;
-        mSearchText = mPreviousSearchText = null;
-        mNumberOfRows = 0;
+        getHelper().mUserList = null;
+        getHelper().mNameSplitter = null;
+        getHelper().mPreviousQuery = "";
     }
 
     public void setFilterType(final int filterType) {
         mFilterType = filterType;
     }
 
-    public static int getNumberOfRecords() {
-        return mNumberOfRows;
-    }
-
     @Override
     protected void onStartLoading() {
-
         // Perform SC directory search only if the application is online, i.e. has an Internet connection
-        if (TextUtils.isEmpty(mSearchText) || PhoneServiceNative.getPhoneState() != 2) {
-            mUserList = null;
+        if (TextUtils.isEmpty(mSearchText)
+                || !Utilities.isNetworkConnected(getContext())) {
+            getHelper().mPreviousQuery = "";
+            getHelper().mUserList = null;
             deliverResult(mEmptyCursor);
             return;
         }
 
+        if (getHelper().mUserList != null && mSearchText.equals(getHelper().mPreviousQuery)) {
+            deliverResult(createCursor(getHelper().mUserList));
+            return;
+        }
+
         // The new query string is shorter than the old - no subset, refresh content
-        if (mSearchText.length() < mPreviousSearchText.length()) {
-            if (!mSearchText.regionMatches(0, mPreviousSearchText, 0, mSearchText.length())) {
-                mUserList = null;
+        if (mSearchText.length() < getHelper().mPreviousQuery.length()) {
+            if (!mSearchText.regionMatches(0, getHelper().mPreviousQuery, 0, mSearchText.length())) {
+                getHelper().mUserList = null;
             }
             else {
-                deliverResult(createCursorMatching());
-                return;
+                Cursor cursor = createCursorMatching(getHelper().mUserList, mSearchText);
+                if (cursor.getCount() >= MAX_RECORDS) {
+                    deliverResult(cursor);
+                    return;
+                }
+                else {
+                    getHelper().mUserList = null;
+                }
             }
         }
 
-        if (mUserList == null || mUserList.size() == 0) {
+        if (getHelper().mUserList == null || getHelper().mUserList.size() == 0) {
             forceLoad();
             return;
         }
 
-        if (mUserList.size() > MAX_RECORDS) {
-            if (mQueryChanged) {
-                forceLoad();
-                mQueryChanged = false;
-            }
-            else
-                deliverResult(createCursor());
-            return;
-        }
+//        if (getHelper().mUserList.size() > MAX_RECORDS) {
+//            if (mQueryChanged) {
+//                forceLoad();
+//                mQueryChanged = false;
+//            }
+//            else
+//                deliverResult(createCursor());
+//            return;
+//        }
 
-        if (mSearchText.startsWith(mPreviousSearchText)) {
-            Cursor cursor = createCursorMatching();
+        if (mSearchText.startsWith(getHelper().mPreviousQuery) && getHelper().mUserList.size() < MAX_RECORDS) {
+            Cursor cursor = createCursorMatching(getHelper().mUserList, mSearchText);
             if (cursor.getCount() > 0) {
                 deliverResult(cursor);
                 return;
@@ -238,12 +317,14 @@ public class ScDirectoryLoader extends AsyncTaskLoader<Cursor> {
 
     @Override
     public void onCanceled(Cursor data) {
-        data.close();
+        if (data != null) {
+            data.close();
+        }
     }
 
     @Override
     public Cursor loadInBackground() {
-
+        Log.d(TAG, "Query: " + mSearchText);
         if (mSearchText == null || mSearchText.length() < MIN_SEARCH_LENGTH) {
             return mEmptyCursor;
         }
@@ -253,14 +334,16 @@ public class ScDirectoryLoader extends AsyncTaskLoader<Cursor> {
                     ConfigurationUtilities.getDirectorySearch(getContext()) +
                     Uri.encode(mSearchText) + "&api_key=" +
                     Uri.encode(mDevAuthorization) + MAX_RECORDS_SERVER +
-                    (mUseScDirLoaderOrg ? "&org_only=1" : ""));
-            if (ConfigurationUtilities.mTrace) Log.d(TAG, "SC directory URL: " + dirUrl);
+                    (getHelper().mUseScDirLoaderOrg ? "&org_only=1" : ""));
+            if (ConfigurationUtilities.mTrace) Log.d(TAG, "SC directory URL: "+dirUrl);
         } catch (MalformedURLException e) {
             e.printStackTrace();
             return mEmptyCursor;
         }
         mQueryChanged = false;                  // we are processing the query right now
         HttpsURLConnection urlConnection = null;
+        TreeMap<String, UserData> userList = null;
+        boolean error = false;
         try {
             urlConnection = (HttpsURLConnection) dirUrl.openConnection();
             SSLContext context = PinnedCertificateHandling.getPinnedSslContext(ConfigurationUtilities.mNetworkConfiguration);
@@ -275,42 +358,45 @@ public class ScDirectoryLoader extends AsyncTaskLoader<Cursor> {
             urlConnection.setDoInput(true);
             urlConnection.setRequestProperty("Content-Type", "application/json");
             urlConnection.setRequestProperty("Accept-Language", Locale.getDefault().getLanguage());
-            urlConnection.setConnectTimeout(2500);
+            urlConnection.setConnectTimeout(5000);
 
             int ret = urlConnection.getResponseCode();
             if (ConfigurationUtilities.mTrace) Log.d(TAG, "HTTP code SC directory loader: " + ret);
             if (ret == HttpsURLConnection.HTTP_OK) {
                 if (!ConfigurationUtilities.mTrace)
-                    parseUserDataStream(new InputStreamReader(urlConnection.getInputStream(), "UTF-8"));
+                    userList = parseUserDataStream(new InputStreamReader(urlConnection.getInputStream(), "UTF-8"));
                 else {
                     //  Use the following code for testing to see the data (readStream dumps it)
                     AsyncTasks.readStream(new BufferedInputStream(urlConnection.getInputStream()), mContent);
-                    parseUserDataStream(new StringReader(mContent.toString()));
+                    userList = parseUserDataStream(new StringReader(mContent.toString()));
                 }
             }
             else {
                 AsyncTasks.readStream(new BufferedInputStream(urlConnection.getErrorStream()), mContent);
                 JSONObject jsonObj = new JSONObject(mContent.toString());
                 parseErrorMessage(jsonObj);
+                error = true;
                 return mEmptyCursor;
             }
         } catch (IOException e) {
-            showInputInfo(getContext().getString(R.string.provisioning_no_network) + e.getLocalizedMessage());
+            showInputInfo(getContext().getString(R.string.network_not_available_title),
+                    getContext().getString(R.string.network_not_available_description));
             Log.e(TAG, "Network not available: " + e.getMessage());
-            mErrorOnPreviousSearch = true;
-            clearCachedData();
+            error = true;
             return mEmptyCursor;
         } catch (Exception e) {
-            showInputInfo(getContext().getString(R.string.call_error) + ": " + e.getLocalizedMessage());
+            showInputInfo(getContext().getString(R.string.network_not_available_title),
+                    getContext().getString(R.string.network_not_available_description));
             Log.e(TAG, "Network connection problem: " + e.getMessage());
-            mErrorOnPreviousSearch = true;
-            clearCachedData();
+            error = true;
             return mEmptyCursor;
         } finally {
             if (urlConnection != null)
                 urlConnection.disconnect();
+            DirectoryHelper.QueryResults results = new DirectoryHelper.QueryResults(mSearchText, userList, error);
+            getHelper().sendMessage(getHelper().obtainMessage(DirectoryHelper.MSG_UPDATE_CACHE, results));
         }
-        return createCursor();
+        return createCursor(userList);
     }
 
     @Override
@@ -327,89 +413,84 @@ public class ScDirectoryLoader extends AsyncTaskLoader<Cursor> {
     }
 
     protected void useScDirectoryOrganization(boolean use) {
-        if (mUseScDirLoaderOrg != use)
-            mUserList = null;               // force a new search if restriction changed
-        mUseScDirLoaderOrg = use;
+        if (getHelper().mUseScDirLoaderOrg != use)
+            getHelper().mUserList = null;               // force a new search if restriction changed
+        getHelper().mUseScDirLoaderOrg = use;
     }
 
     protected static void reSort(final boolean alternative, final Context ctx) {
-        if (mUserList == null || mUserList.size() == 0)
+        if (getHelper().mUserList == null || getHelper().mUserList.size() == 0)
             return;
 
         final TreeMap<String, UserData> newList = new TreeMap<>();
 
         createNameSplitter(ctx);
-        final List<UserData> userList = new ArrayList<>(mUserList.values());
+        final List<UserData> userList = new ArrayList<>(getHelper().mUserList.values());
         final NameSplitter.Name name = new NameSplitter.Name();
         for (UserData ud : userList) {
             String fullName = ud.fullName;
 
             name.clear();
-            mNameSplitter.split(name, fullName);
+            getHelper().mNameSplitter.split(name, fullName);
 //            ud.sortKey = UCharacter.foldCase(mNameSplitter.join(name, !alternative, true), true);
-            ud.sortKey = mNameSplitter.join(name, !alternative, true).toLowerCase(Locale.getDefault());
+            ud.sortKey = getHelper().mNameSplitter.join(name, !alternative, true).toLowerCase(Locale.getDefault());
             newList.put(ud.sortKey, ud);
         }
-        mUserList = newList;
+        getHelper().mUserList = newList;
     }
 
     protected static void reDisplay(boolean alternative, Context ctx) {
-        if (mUserList == null || mUserList.size() == 0)
+        if (getHelper().mUserList == null || getHelper().mUserList.size() == 0)
             return;
 
         TreeMap<String, UserData> newList = new TreeMap<>();
 
         createNameSplitter(ctx);
-        List<UserData> userList = new ArrayList<>(mUserList.values());
+        List<UserData> userList = new ArrayList<>(getHelper().mUserList.values());
         NameSplitter.Name name = new NameSplitter.Name();
         for (UserData ud : userList) {
             String fullName = ud.fullName;
 
             name.clear();
-            mNameSplitter.split(name, fullName);
-            ud.displayName = mNameSplitter.join(name, !alternative, true);
+            getHelper().mNameSplitter.split(name, fullName);
+            ud.displayName = getHelper().mNameSplitter.join(name, !alternative, true);
             newList.put(ud.sortKey, ud);
         }
-        mUserList = newList;
+        getHelper().mUserList = newList;
     }
 
-    private Cursor createCursor() {
+    private Cursor createCursor(TreeMap<String, UserData> userList) {
         int size;
-        if (mUserList == null || (size = mUserList.size()) == 0)
+        if (userList == null || (size = userList.size()) == 0)
             return mEmptyCursor;
 
         MatrixCursor cursor = new MatrixCursor(PROJECTION, size * 2);
-        List<UserData> userList = new ArrayList<>(mUserList.values());
+        List<UserData> userListValues = new ArrayList<>(userList.values());
 
-        mNumberOfRows = 0;
         int _id = 3;
-        for (UserData ud : userList) {
+        for (UserData ud : userListValues) {
             addRow(cursor, ud, _id);
             _id++;
-            mNumberOfRows++;
         }
         return cursor;
     }
 
-    private Cursor createCursorMatching() {
+    private Cursor createCursorMatching(TreeMap<String, UserData> userList, String searchText) {
         int size;
-
-        if (mUserList == null || (size = mUserList.size()) == 0)
+        if (userList == null || (size = userList.size()) == 0)
             return mEmptyCursor;
 
         MatrixCursor cursor = new MatrixCursor(PROJECTION, size * 2);
-        List<UserData> userList = new ArrayList<>(mUserList.values());
+        List<UserData> userListValues = new ArrayList<>(userList.values());
 
-        String searchFold = mSearchText.toLowerCase(Locale.getDefault());
-        mNumberOfRows = 0;
+        String searchFold = searchText.toLowerCase(Locale.getDefault());
         long _id = 3;
-        for (UserData ud : userList) {
+        for (UserData ud : userListValues) {
             String dpNameFold = ud.displayName.toLowerCase(Locale.getDefault());
             String userNameFold = ud.userName.toLowerCase(Locale.getDefault());
-            if (dpNameFold.contains(searchFold) || userNameFold.contains(searchFold)) {
+            if (dpNameFold.contains(searchFold)) {
                 addRow(cursor, ud, _id);
                 _id++;
-                mNumberOfRows++;
             }
         }
         return cursor;
@@ -458,34 +539,36 @@ public class ScDirectoryLoader extends AsyncTaskLoader<Cursor> {
             message = getContext().getString(R.string.provisioning_wrong_format) + e.getMessage();
             Log.w(TAG, "JSON exception: " + e);
         }
-        mErrorOnPreviousSearch = true;
-        clearCachedData();
         showInputInfo(message);
     }
 
     private static void createNameSplitter(Context ctx) {
-        if (mNameSplitter == null) {
-            mNameSplitter = new NameSplitter(ctx.getString(R.string.common_name_prefixes),
+        if (getHelper().mNameSplitter == null) {
+            getHelper().mNameSplitter = new NameSplitter(ctx.getString(R.string.common_name_prefixes),
                     ctx.getString(R.string.common_last_name_prefixes), ctx.getString(R.string.common_name_suffixes),
                     ctx.getString(R.string.common_name_conjunctions), Locale.getDefault());
         }
     }
 
-    private void showInputInfo(String msg) {
+    private void showInputInfo(String title, String msg) {
         Intent intent = new Intent(getContext(), DialogHelperActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        intent.putExtra(DialogHelperActivity.TITLE, getContext().getString(R.string.directory_use_sc));
-        intent.putExtra(DialogHelperActivity.MESSAGE, msg);
+        intent.putExtra(InfoMsgDialogFragment.TITLE, title != null ? title : getContext().getString(R.string.directory_use_sc));
+        intent.putExtra(InfoMsgDialogFragment.MESSAGE, msg);
         getContext().startActivity(intent);
     }
 
-    private void parseUserDataStream(Reader inReader) {
-        mUserList = new TreeMap<>();
+    private void showInputInfo(String msg) {
+        showInputInfo(null, msg);
+    }
+
+    private TreeMap<String, UserData> parseUserDataStream(Reader inReader) {
+        TreeMap<String, UserData> userList = new TreeMap<>();
         createNameSplitter(getContext());
 
         JsonReader reader = new JsonReader(inReader);
         try {
-            readPeopleObject(reader);
+            readPeopleObject(reader, userList);
         } catch (IOException ex) {
             Log.w(TAG, "JSON exception reading error message: " + ex);
         } finally {
@@ -495,14 +578,15 @@ public class ScDirectoryLoader extends AsyncTaskLoader<Cursor> {
                 Log.w(TAG, "JSON exception reading error message: " + ex);
             }
         }
+        return userList;
     }
 
-    private void readPeopleObject(JsonReader reader) throws IOException {
+    private void readPeopleObject(JsonReader reader, TreeMap<String, UserData> userList) throws IOException {
         reader.beginObject();
         while (reader.hasNext()) {
             String name = reader.nextName();
             if (name.equals("people")) {
-                readUserArray(reader);
+                readUserArray(reader, userList);
             }
             else {
                 reader.skipValue();
@@ -511,9 +595,10 @@ public class ScDirectoryLoader extends AsyncTaskLoader<Cursor> {
         reader.endObject();
     }
 
-    // Iterate over the user object array, fill in UserData, and store them in the user list
-    private void readUserArray(JsonReader reader) throws IOException {
+    // Iterate over the user object array and fill in UserData
+    private void readUserArray(JsonReader reader, TreeMap<String, UserData> userList) throws IOException {
         NameSplitter.Name name = new NameSplitter.Name();
+        new TreeMap<>();
 
         reader.beginArray();
         while (reader.hasNext()) {
@@ -548,14 +633,14 @@ public class ScDirectoryLoader extends AsyncTaskLoader<Cursor> {
             final String sortKeyAppend = (userName != null && !userName.equals(fullName)) ? userName : null;
 
             name.clear();
-            mNameSplitter.split(name, fullName);
-            final String displayName = mNameSplitter.join(name, !mDisplayAlternative, true);
+            getHelper().mNameSplitter.split(name, fullName);
+            final String displayName = getHelper().mNameSplitter.join(name, !mDisplayAlternative, true);
 //            String sortKey = UCharacter.foldCase(mNameSplitter.join(name, !mSortAlternative, true), true);
             final String sortKey =
-                    mNameSplitter.join(name, !mSortAlternative, true).toLowerCase(Locale.getDefault()) + sortKeyAppend;
+                    getHelper().mNameSplitter.join(name, !mSortAlternative, true).toLowerCase(Locale.getDefault()) + sortKeyAppend;
 
             UserData user = new UserData(fullName, displayName, userName, uuid, sortKey);
-            mUserList.put(sortKey, user);
+            userList.put(sortKey, user);
         }
         reader.endArray();
     }

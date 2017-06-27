@@ -2,20 +2,10 @@
 
 LOCAL_PATH:= $(call my-dir)
 
-# The following three sections install SQLCipher native libraries only
+# The following section installs SQLCipher (native library only)
 include $(CLEAR_VARS)
-LOCAL_MODULE := libdatabase_sqlcipher
-LOCAL_SRC_FILES := $(TARGET_ARCH_ABI)/libdatabase_sqlcipher.so
-include $(PREBUILT_SHARED_LIBRARY)
-
-include $(CLEAR_VARS)
-LOCAL_MODULE := libsqlcipher_android
-LOCAL_SRC_FILES := $(TARGET_ARCH_ABI)/libsqlcipher_android.so
-include $(PREBUILT_SHARED_LIBRARY)
-
-include $(CLEAR_VARS)
-LOCAL_MODULE := libstlport_shared
-LOCAL_SRC_FILES := $(TARGET_ARCH_ABI)/libstlport_shared.so
+LOCAL_MODULE := libsqlcipher
+LOCAL_SRC_FILES := $(TARGET_ARCH_ABI)/libsqlcipher.so
 include $(PREBUILT_SHARED_LIBRARY)
 
 # CHECK THIS
@@ -80,8 +70,8 @@ LOCAL_SRC_FILES := $(TARGET_ARCH_ABI)/libprotobuf-cpp-lite.a
 include $(PREBUILT_STATIC_LIBRARY)
 
 include $(CLEAR_VARS)
-LOCAL_MODULE := axolotl
-LOCAL_SRC_FILES := $(TARGET_ARCH_ABI)/libaxolotl++.a
+LOCAL_MODULE := zina
+LOCAL_SRC_FILES := $(TARGET_ARCH_ABI)/libzina.a
 LOCAL_EXPORT_C_INCLUDES := $(AXO_SRC_PATH)
 
 include $(PREBUILT_STATIC_LIBRARY)
@@ -95,15 +85,15 @@ LOCAL_PATH := $(TIVI_SRC_PATH)
 
 
 LOCAL_MODULE    := tivi
-LOCAL_SRC_FILES := tiviandroid/jni_glue2.cpp tiviandroid/t_a_main.cpp
+LOCAL_SRC_FILES := tiviandroid/jni_glue2.cpp tiviandroid/t_a_main.cpp tiviandroid/sc_logs.cpp
 LOCAL_ARM_MODE := arm
-LOCAL_LDLIBS := -llog
+LOCAL_LDLIBS := -llog -lz
 
 LOCAL_SHARED_LIBRARIES := tina
 LOCAL_SHARED_LIBRARIES += aec
-LOCAL_SHARED_LIBRARIES += libsqlcipher_android
+LOCAL_SHARED_LIBRARIES += libsqlcipher
 LOCAL_STATIC_LIBRARIES := zrtpcpp
-LOCAL_STATIC_LIBRARIES += axolotl
+LOCAL_STATIC_LIBRARIES += zina
 LOCAL_STATIC_LIBRARIES += protobuf
 
 
@@ -206,8 +196,11 @@ MY_SOURCES += $(TMR_SRC)/CTMRTunnel.cpp $(TMR_SRC)/tmr_parse.cpp
 LOCAL_SRC_FILES += $(MY_SOURCES)
 
 # $(warning Local_src $(LOCAL_SRC_FILES))
+LOCAL_CPP_FEATURES := exceptions
 
-LOCAL_CFLAGS := -DANDROID_NDK $(SPA_NDK_OPTIONS) -DWITH_AXOLOTL
+# For this Android build we can set the visibility to hidden. Access to functions is only via
+# exported JNI functions.
+LOCAL_CFLAGS := -DANDROID_NDK $(SPA_NDK_OPTIONS) -DWITH_AXOLOTL -fvisibility=hidden -fvisibility-inlines-hidden
 $(info Local flags:  $(LOCAL_CFLAGS))
 
 include $(BUILD_SHARED_LIBRARY)

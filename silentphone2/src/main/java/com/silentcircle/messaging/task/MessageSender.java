@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2016-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -25,25 +25,27 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-
 package com.silentcircle.messaging.task;
 
 import android.content.Context;
-import android.content.Intent;
 import android.location.Location;
+import android.support.annotation.Nullable;
+import android.text.TextUtils;
 
+import com.silentcircle.common.util.AsyncTasks;
 import com.silentcircle.messaging.location.LocationObserver;
 import com.silentcircle.messaging.location.OnLocationReceivedListener;
+import com.silentcircle.messaging.model.CallData;
 import com.silentcircle.messaging.model.Conversation;
 import com.silentcircle.messaging.model.MessageStates;
 import com.silentcircle.messaging.model.event.Message;
 import com.silentcircle.messaging.repository.ConversationRepository;
-import com.silentcircle.messaging.util.Action;
+import com.silentcircle.messaging.services.ZinaMessaging;
 import com.silentcircle.messaging.util.AsyncUtils;
-import com.silentcircle.messaging.model.CallData;
-import com.silentcircle.messaging.util.Extra;
 import com.silentcircle.messaging.util.MessageUtils;
-import com.silentcircle.silentphone2.Manifest;
+import com.silentcircle.userinfo.LoadUserInfo;
+
+import zina.ZinaNative;
 
 /**
  * Allows us to easily and completely compose and send
@@ -124,16 +126,20 @@ public class MessageSender {
     }
 
     private void send(String text, String attachment, CallData calldata) {
+        boolean isRetained = determineRetentionStatus(
+                mConversation != null ? mConversation.getPartner().getUserId() : null,
+                calldata != null);
+
         ComposeMessageTask task = new ComposeMessageTask(mUsername, mConversation, mRepository,
-                null, attachment, calldata, false) {
+                null, attachment, calldata, false, isRetained) {
 
             @Override
             protected void onPostExecute(Message message) {
                 if (mConversation.isLocationEnabled()) {
                     // notify about conversation changes now, we want to see message as soon as possible
-                    Intent intent = Action.UPDATE_CONVERSATION.intent();
-                    Extra.PARTNER.to(intent, message.getConversationID());
-                    mContext.sendOrderedBroadcast(intent, Manifest.permission.READ);
+                    MessageUtils.notifyConversationUpdated(mContext,
+                            message.getConversationID(), true,
+                            ZinaMessaging.UPDATE_ACTION_MESSAGE_SEND, message.getId());
 
                     LocationObserver.observe(mContext,
                             new SendMessageOnLocationReceived(message));
@@ -171,7 +177,7 @@ public class MessageSender {
             return;
         }
 
-        SendMessageTask task = new SendMessageTask(mContext, mSiblingsOnly) {
+        SendMessageTask task = new SendMessageTask(mContext) {
 
             @Override
             protected void onPostExecute(Message message) {
@@ -179,6 +185,24 @@ public class MessageSender {
             }
         };
         AsyncUtils.execute(task, message);
+    }
+
+    private boolean determineRetentionStatus(@Nullable String partner, boolean isCallMessage) {
+        boolean result = isCallMessage
+                ? (LoadUserInfo.isLrcm() | LoadUserInfo.isLrcp())
+                : (LoadUserInfo.isLrmm() | LoadUserInfo.isLrmp() | LoadUserInfo.isLrap());
+        if (!result && !TextUtils.isEmpty(partner)) {
+            byte[] partnerUserInfo = ZinaNative.getUserInfoFromCache(partner);
+            if (partnerUserInfo != null) {
+                AsyncTasks.UserInfo userInfo = AsyncTasks.parseUserInfo(partnerUserInfo);
+                if (userInfo != null)  {
+                    result = isCallMessage
+                            ? (userInfo.rrcm | userInfo.rrcp)
+                            : (userInfo.rrmm | userInfo.rrmp | userInfo.rrap);
+                }
+            }
+        }
+        return result;
     }
 
 }

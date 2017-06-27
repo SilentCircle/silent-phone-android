@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2015-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -25,16 +25,15 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-
 #include "interfaceApp/AppInterfaceImpl.h"
 #include "interfaceTransport/sip/SipTransport.h"
 
-#include "axolotl/crypto/AesCbc.h"
-#include "axolotl/crypto/EcCurve.h"
-#include "axolotl/Constants.h"
-#include "axolotl/AxoPreKeyConnector.h"
-#include "axolotl/state/AxoConversation.h"
-#include "axolotl/ratchet/AxoRatchet.h"
+#include "ratchet/crypto/AesCbc.h"
+#include "ratchet/crypto/EcCurve.h"
+#include "Constants.h"
+#include "ratchet/ZinaPreKeyConnector.h"
+#include "ratchet/state/ZinaConversation.h"
+#include "ratchet/ratchet/ZinaRatchet.h"
 #include "keymanagment/PreKeys.h"
 #include "util/UUID.h"
 
@@ -49,74 +48,143 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "axolotl_glue.h"
 
-using namespace axolotl;
+using namespace zina;
 
+static bool zinaHttpHelperSet = false;
+static int storeDBsopened = 0;
 static AppInterfaceImpl* axoAppInterface = NULL;
 static Transport *sipTransport = NULL;
 
 static STATE_FUNC _messageStateReport = NULL;
 static RECV_FUNC _receiveMessage = NULL;
+
+static GROUP_CMD_RECV_FUNC _groupReceiveCommand = NULL;
+static GROUP_MSG_RECV_FUNC _groupReceiveMessage = NULL;
+static GROUP_STATE_FUNC _groupStateCallback = NULL;
+
 static SEND_DATA_FUNC _sendDataFuncAxo;
+
+static int mustAddPrekeyCnt = 0;
 
 void t_setAxoTransport(Transport *transport){
    sipTransport = transport;
    //sipTransport->setSendDataFunction(sendDataFuncAxo);
 }
 
-#ifndef ANDROID_NDK
+/**
+ * Minimum number of zina sqlite files required to be ready for access.
+ */
+#define MIN_DB_FILES_COUNT 2
+
+
+/* Begin #if defined(__APPLE__) */
+#if defined(__APPLE__)
 #include "../os/CTMutex.h"
+#import "appRepository/AppRepository.h"
+#import "SCSPLog_private.h"
+
+const char *getAPIKey(void);
+char * getFileStorePath(void);
+unsigned char *get32ByteAxoKey(void);
+const char *t_getDevID_md5(void);
+
+void setFileBackgroundReadable(const char *fn);
+void exitWithFatalErrorMsg(const char *msg);
+int32_t s3Helper(const std::string& region, const std::string& requestData, std::string* response);
+int32_t httpHelper(const std::string& requestUri, const std::string& method, const std::string& requestData, std::string* response);
+
+// Plain public API without a class
+AppInterface* t_getAxoAppInterface() { return axoAppInterface; }
+bool isZinaHttpHelperSet() { return zinaHttpHelperSet; }
+bool areZinaDatabasesOpen() { return (storeDBsopened >= MIN_DB_FILES_COUNT); }
+void zinaDatabaseWasOpened() { storeDBsopened++; }
 
 const char *CTAxoInterfaceBase::getErrorMsg(int id){
    
    switch(id){
       case GENERIC_ERROR        : return "Generic error code, unspecified error";
-      case VERSION_NO_SUPPORTED : return "Unsupported protocol version";
+      case VERSION_NOT_SUPPORTED: return "Unsupported protocol version";
       case BUFFER_TOO_SMALL     : return "Buffer too small to store some data";
       case NOT_DECRYPTABLE      : return "Could not decrypt received message";
       case NO_OWN_ID            : return "Found no own identity for registration";
       case JS_FIELD_MISSING     : return "Missing a required JSON field";
-      case NO_DEVS_FOUND        : return "No registered Axolotl devices found for a user";
+      case NO_DEVS_FOUND        : return "No registered ZINA devices found for a user";
       case NO_PRE_KEY_FOUND     : return "No more pre-keys for user's devices";
-      case NO_SESSION_USER      : return "No session for this user found";
+      case NO_SESSION_DATA      : return "No session for this user found";
       case SESSION_NOT_INITED   : return "Session not initialized";
       case OLD_MESSAGE          : return "Message too old to decrypt";
       case CORRUPT_DATA         : return "Incoming data CORRUPT_DATA";
-      case AXO_CONV_EXISTS      : return "Axolotl conversation exists while trying to setup new one";
+      case AXO_CONV_EXISTS      : return "ZINA conversation exists while trying to setup new one";
       case MAC_CHECK_FAILED     : return "HMAC check of encrypted message failed";
       case MSG_PADDING_FAILED   : return "Incorrect padding of decrypted message";
       case SUP_PADDING_FAILED   : return "Incorrect padding of decrypted supplementary data";
-      case NO_STAGED_KEYS       : return "Not a real error, just to report that no staged keys available";
+      case NO_STAGED_KEYS       : return "No staged keys available (not an error)";
       case RECEIVE_ID_WRONG     : return "Receiver's long term id key hash mismatch";
-      case SENDER_ID_WRONG      : return "Sender''s long term id key hash mismatch";
+      case SENDER_ID_WRONG      : return "Sender's long term id key hash mismatch";
       case RECV_DATA_LENGTH     : return "Expected length of data does not match received length";
       case WRONG_RECV_DEV_ID    : return "Expected device id does not match actual device id";
+      case NETWORK_ERROR        : return "The HTTP request returned code 400 or SIP failed";
+      case DATA_MISSING         : return "Some data for a function is missing";
+      case DATABASE_ERROR       : return "SQLCipher/SQLite returned an error code";
+      case REJECT_DATA_RETENTION: return "Reject data retention when sending a message";
+      case PRE_KEY_HASH_WRONG   : return "Pre-key check failed during setup of new conversation or re-keying";
+      case ILLEGAL_ARGUMENT     : return "Value of an argument is illegal/out of range";
    }
 
    static char err[64];
-   snprintf(err,sizeof(err)-10, "Unknow - code: %d", id);
+   snprintf(err,sizeof(err)-10, "Unknown Error - Code: %d", id);
    return err;
 }
-// Plain public API without a class
-AppInterface* t_getAxoAppInterface() { return axoAppInterface; }
+
+using namespace std;
+
+static string drFlags;
+static int drISOn = 0;
+
+const char *t_getDRJsonFlagFN(int drOnOffFlag){
+    static char buffn0[512];
+    static char buffn1[512];
+    char *p = drOnOffFlag?&buffn0[0]:&buffn1[0];
+    if(p[0])return &p[0];
+    int createFN(char *p, const char *fn);
+    createFN(p, drOnOffFlag? "drOnOff.text":"drJsonFlags.json");
+    return p;
+}
+
+
+void zina_setDataRetentionFlags(const string &jsonFlags, int isOn){
+    drFlags = jsonFlags;
+    if(axoAppInterface){
+        axoAppInterface->setDataRetentionFlags(jsonFlags);
+        axoAppInterface->setS3Helper(isOn? s3Helper: NULL);
+    }
+    drISOn = isOn;
+    
+    void saveFile(const char *fn,void *p, int iLen);
+    saveFile(t_getDRJsonFlagFN(0), (void *)jsonFlags.c_str(), (int)jsonFlags.size());
+    saveFile(t_getDRJsonFlagFN(1), isOn? (void*)"1":(void*)"0", 1);
+    setFileBackgroundReadable(t_getDRJsonFlagFN(0));
+    setFileBackgroundReadable(t_getDRJsonFlagFN(1));
+
+}
 
 void *CTAxoInterfaceBase::getAxoAppInterface(){return axoAppInterface;}
 
-static void sendDataFuncAxo(uint8_t* names[], uint8_t* devIds[], uint8_t* envelopes[], size_t sizes[], uint64_t msgIds[]){
+static bool sendDataFuncAxo(uint8_t* name, uint8_t* devId, uint8_t* envelope, size_t size, uint64_t msgId){
    
-   _sendDataFuncAxo(names, devIds, envelopes, sizes, msgIds);
+   return _sendDataFuncAxo(name, devId, envelope, size, msgId);
 }
-
 
 /*
  * Receive message callback for AppInterfaceImpl.
  */
 //UI
+//from axolotl
 static int32_t receiveMessage(const std::string& messageDescriptor, const std::string& attachementDescriptor = std::string(), const std::string& messageAttributes = std::string())
 {
-
    if(!_receiveMessage){
       printf("!receiveMessage=%s\n", messageDescriptor.c_str());
-      return 0;
+      return CTAxoInterfaceBase::eErrorNoFunctionPointers;
    }
    
    return _receiveMessage(messageDescriptor, attachementDescriptor, messageAttributes);
@@ -163,42 +231,122 @@ static void notifyCallback(int32_t notifyAction, const string& actionInformation
    }
 }
 
-
-/*
- * Class:     AxolotlNative
- * Method:    httpHelper
- */
-/*
- * HTTP request helper callback for provisioning etc.
- */
-static int32_t httpHelper(const std::string& requestUri, const std::string& method, const std::string& requestData, std::string* response)
+static int32_t receiveGroupMessage(const string& messageDescriptor, const string& attachmentDescriptor = string(), const string& messageAttributes = string())
 {
+   if(!_groupReceiveMessage){
+      printf("!_groupReceiveMessage=%s\n", messageDescriptor.c_str());
+      return 0;
+   }
 
-   char* t_send_http_json(const char *url, const char *meth,  char *bufResp, int iMaxLen, int &iRespContentLen, const char *pContent);
-   
-   int iSizeOfRet = 128 * 1024;
-   char *retBuf = new char [iSizeOfRet];
-   int iContentLen = 0;
-   
-   int code = 0;
-   char *content = t_send_http_json (requestUri.c_str(), method.c_str(),
-                                     retBuf ,iSizeOfRet - 1,
-                                     iContentLen, requestData.c_str());
-   
-   if(content && iContentLen>0 && response)
-      response->assign((const char*)content, iContentLen);
-   
-   delete retBuf;
-    //puts(response->c_str());
-   
-   if(iContentLen<1)return -1;
-   
-   return 200;
+   return _groupReceiveMessage(messageDescriptor, attachmentDescriptor, messageAttributes);
 }
 
+static int32_t receiveGroupCommand(const string& commandMessage)
+{
+   if(!_groupReceiveCommand){
+      printf("!_groupReceiveCommand=%s\n", commandMessage.c_str());
+      return 0;
+   }
+
+   return _groupReceiveCommand(commandMessage);
+}
+
+static void groupStateReport(int32_t statusCode, const string& stateInformation)
+{
+   if(!_groupStateCallback){
+      printf("!_groupStateCallback code=%d stateInformation=%s\n", statusCode, stateInformation.c_str());
+      return;
+   }
+   _groupStateCallback(statusCode, stateInformation);
+
+}
+
+static void verifyAxolotlResult(std::string &info){
+    char result[256];
+    char msg[256];
+    
+    int findJSonToken(const char *p, int iPLen, const char *key, char *resp, int iMaxLen);
+    
+    int l=findJSonToken(info.c_str(),(int)info.length(),"result",&result[0],sizeof(result));
+    if(l>0)printf("result=[%.*s]\n",l,result);
+    
+    //{"error_code": -1, "result": "error", "error_msg": "Please provide a valid API key."}
+    //{"result": "error", "error_msg": "Device not found."}
+    
+    if(strcmp(result, "error")==0){
+        
+        l=findJSonToken(info.c_str(),(int)info.length(),"error_msg",&msg[0],sizeof(msg));
+        if(l>0)printf("msg=[%.*s]\n",l,msg);
+        
+        if(strcmp(msg, "Please provide a valid API key.")==0
+           || strcmp(msg,"Device not found.")==0){//TODO verify code
+            
+            //TODO delete all app data and restart SP
+            exitWithFatalErrorMsg("Please, uninstall Silent Phone, and then install again.");
+        }
+    }
+}
+
+void tryRegisterAxolotl(int firstStart, int iForce){
+    
+    if(!axoAppInterface)return;
+    
+    int isFileExists(const char *fn);
+    
+    char buffn[512];
+    int createFN(char *p, const char *fn);
+    createFN(buffn, "axoreg.txt");
+    
+    int rep = 0;
+    do{
+        if(firstStart || rep){
+            std::string info;
+            axoAppInterface->registerZinaDevice(&info);
+            t_logf(log_events, __FUNCTION__,"registerAxolotlDevice=[%s]",info.c_str());
+            
+            printf("registerAxolotlDevice=[%s]",info.c_str());
+            
+            rep = 0;
+            
+            verifyAxolotlResult(info);
+            mustAddPrekeyCnt = 0;
+            //if this fails i have to reset this using different apiKey()
+        }
+        else{
+            //  int cnt2 =  axoAppInterface->getNumPreKeys();
+            //axoAppInterface->newPreKeys(5);
+            // printf("cnt2=%d\n",cnt2);
+            if(iForce || !isFileExists(buffn)){
+                int cnt =  axoAppInterface->getNumPreKeys();
+                if(cnt < 1){
+                    rep = !rep;
+                    void deleteFile(const char *fn);
+                    deleteFile(buffn);
+                }
+                else {
+                    rep = 0;
+                    void saveFile(const char *fn,void *p, int iLen);
+                    saveFile(buffn, (void*)"ok", 2);
+                }
+            }
+            else{
+                rep = 0;
+            }
+        }
+    }while(rep);
+}
+
+/**
+ * iOS-specific CTAxoInterfaceBase::sharedInstance main initializer.
+ *
+ * Called by the t_initAxolotl initializer helper function on first
+ * on first access of the CTAxoInterfaceBase::sharedInstance, this 
+ * function initializes the local AppInterfaceImpl axoAppInterface instance.
+ */
 static int _initAxolotl(const char *db, const char *pw, int pwLen, const char *name, const char *api_key, const char *devid){
 
-   if(axoAppInterface)return 0;
+   if(axoAppInterface)
+       return 0;
 
    if (name == NULL)
       return -10;
@@ -206,145 +354,133 @@ static int _initAxolotl(const char *db, const char *pw, int pwLen, const char *n
    if (api_key == NULL)
       return -12;
    
-   int nameLen = strlen(name);
+   int nameLen = (int)strlen(name);
    
    if (nameLen == 0)
       return -11;
-   
-   int authLen = strlen(api_key);
+
+   int authLen = (int)strlen(api_key);
    
    if (authLen == 0)
       return -13;
    
    if (pw == NULL)
       return -14;
+    
    if (pwLen != 32)
       return -15;
- //  void deleteFile(const char *fn);
- //  deleteFile(db);
+    
+    // It is an error for SPi to attempt to initialize 
+    // the axo instance with a null/empty db path string.
+    if (db == NULL || strcmp(db,"") == 0) {
+        t_logf(log_events, __FUNCTION__,"Error: store->openStore called "
+               "with empty or nil database path");        
+        exitWithFatalErrorMsg("Unable to open database:\n Path not specified");
+        return -1;
+    }
+    
    int isFileExists(const char *fn);
    int firstStart = !isFileExists(db);
-   //ET SS (07/22/15) 89435b40e4f2ab41ace43cc46a4b1b6c
+
+   std::string dbPw((const char*)pw, pwLen);
+   
+   // initialize and open the persitent store singleton instance   
+   SQLiteStoreConv* store = SQLiteStoreConv::getStore();
+    
+   store->setKey(dbPw);
+       
+    // Log file protection attributes on the db path
+    void log_file_protection_prop(const char *fn);
+    log_file_protection_prop(db);
+
+    // Always call to set NSFileProtectionNone on db path
+    // (this is a no-op if already set)
+    setFileBackgroundReadable(db);
+    
+    int sql_code = store->openStore(std::string (db));
+    
+    if(sql_code == 0)
+        zinaDatabaseWasOpened();
+    else {
+        t_logf(log_events, __FUNCTION__,"Error: store->openStore failed: %d", sql_code);
+        
+        char msg[100];
+        sprintf(msg, "%s %d", "Unable to open database.\nError: ", sql_code);
+        exitWithFatalErrorMsg(msg);
+        
+        return -1;
+    }          
+   
+  // store->resetStore();
+    
+   auto ownAxoConv = ZinaConversation::loadLocalConversation(name,*store);
+
+   if (!ownAxoConv->isValid()) {  // no yet available, create one. An own conversation has the same local and remote name, empty device id
+
+       KeyPairUnique idKeyPair = EcCurve::generateKeyPair(EcCurveTypes::Curve25519);
+       ownAxoConv->setDHIs(move(idKeyPair));
+       ownAxoConv->storeConversation(*store);
+   }
+   
    axoAppInterface = new AppInterfaceImpl(std::string((const char*)name, nameLen),
                                           std::string((const char*)api_key, authLen),
                                           std::string(devid),
-                                          receiveMessage, messageStateReport,notifyCallback);
-   
+                                          receiveMessage,   messageStateReport,notifyCallback,
+                                          receiveGroupMessage, receiveGroupCommand, groupStateReport);
+    
+
+    if(drFlags.length()>0){
+        axoAppInterface->setDataRetentionFlags(drFlags);
+        axoAppInterface->setS3Helper(drISOn ? s3Helper: NULL);
+    }
+    else{
+        char *loadFile(const  char *fn, int &iLen);
+        
+        int drl=0,drOFl=0;
+        char * drF = loadFile(t_getDRJsonFlagFN(0), drl);
+        char * drOnOff = loadFile(t_getDRJsonFlagFN(1), drOFl);
+        
+        if(drl && drF)axoAppInterface->setDataRetentionFlags(string(drF,drl));
+        if(drOnOff)axoAppInterface->setS3Helper(drOnOff[0]=='1' ? s3Helper: NULL);
+        
+        if(drF)delete drF;
+        if(drOnOff)delete drOnOff;
+    
+    }
+    
    sipTransport = new SipTransport(axoAppInterface);
-   
    sipTransport->setSendDataFunction(sendDataFuncAxo);
    
    axoAppInterface->setTransport(sipTransport);
    axoAppInterface->setHttpHelper(httpHelper);
-   
-   
-   std::string dbPw((const char*)pw, pwLen);
-   
-   // initialize and open the persitent store singleton instance
-   
-   SQLiteStoreConv* store = SQLiteStoreConv::getStore();
-    
-   store->setKey(dbPw);
-   store->openStore(std::string (db));
-   
-  // store->resetStore();
-    
-   AxoConversation* ownAxoConv = AxoConversation::loadLocalConversation(name);
-   if (ownAxoConv == NULL) {  // no yet available, create one. An own conversation has the same local and remote name, empty device id
-      ownAxoConv = new AxoConversation(name, name, string());
-      const DhKeyPair* idKeyPair = EcCurve::generateKeyPair(EcCurveTypes::Curve25519);
-      ownAxoConv->setDHIs(idKeyPair);
-      ownAxoConv->storeConversation();
-   }
-   delete ownAxoConv;    // Not needed anymore here
-   
+
+   zinaHttpHelperSet = true;
+
    void tryRegisterAxolotl(int firstStart, int iForce);
 
    tryRegisterAxolotl(firstStart, 0);
    
+   if(!firstStart && mustAddPrekeyCnt){
+      axoAppInterface->newPreKeys(mustAddPrekeyCnt);
+      mustAddPrekeyCnt = 0;
+   }
+   
    return 1;
 }
 
-static void verifyAxolotlResult(std::string &info){
-   char result[256];
-   char msg[256];
-   
-   int findJSonToken(const char *p, int iPLen, const char *key, char *resp, int iMaxLen);
-   
-   int l=findJSonToken(info.c_str(),(int)info.length(),"result",&result[0],sizeof(result));
-   if(l>0)printf("result=[%.*s]\n",l,result);
-   
-   //{"error_code": -1, "result": "error", "error_msg": "Please provide a valid API key."}
-   //{"result": "error", "error_msg": "Device not found."}
-   
-   if(strcmp(result, "error")==0){
-      
-      l=findJSonToken(info.c_str(),(int)info.length(),"error_msg",&msg[0],sizeof(msg));
-      if(l>0)printf("msg=[%.*s]\n",l,msg);
-      
-      if(strcmp(msg, "Please provide a valid API key.")==0
-         || strcmp(msg,"Device not found.")==0){//TODO verify code
-         void exitShowApp(const char *msg);
-         //TODO delete all app data and restart SP
-         exitShowApp("Please, uninstall Silent Phone, and then install again.");
-      }
-   }
-}
-
-void tryRegisterAxolotl(int firstStart, int iForce){
-   
-   if(!axoAppInterface)return;
-   
-   int isFileExists(const char *fn);
-   
-   char buffn[512];
-   int createFN(char *p, const char *fn);
-   createFN(buffn, "axoreg.txt");
-   
-   int rep = 0;
-   do{
-      if(firstStart || rep){
-         std::string info;
-         axoAppInterface->registerAxolotlDevice(&info);
-         t_logf(log_events, __FUNCTION__,"registerAxolotlDevice=[%s]",info.c_str());
-       
-         printf("registerAxolotlDevice=[%s]",info.c_str());
-
-         rep = 0;
-         
-         verifyAxolotlResult(info);
-         //if this fails i have to reset this using different apiKey()
-      }
-      else{
-       //  int cnt2 =  axoAppInterface->getNumPreKeys();
-         //axoAppInterface->newPreKeys(5);
-        // printf("cnt2=%d\n",cnt2);
-         if(iForce || !isFileExists(buffn)){
-            int cnt =  axoAppInterface->getNumPreKeys();
-            if(cnt < 1){
-               rep = !rep;
-               void deleteFile(const char *fn);
-               deleteFile(buffn);
-            }
-            else {
-               rep = 0;
-               void saveFile(const char *fn,void *p, int iLen);
-               saveFile(buffn, (void*)"ok", 2);
-            }
-         }
-         else{
-            rep = 0;
-         }
-      }
-   }while(rep);
-}
-
+/**
+ * iOS-specific main initializer helper function.
+ *
+ * Called by the CTAxoInterfaceBase::sharedInstance accessor on first
+ * access, this function calls the _initAxolotl main initializer with the
+ * SQLiteStoreConv db filepath, axoKey, axoKey length, and local username.
+ */
 static int t_initAxolotl(const char *myUsername)
 {
-   const char *getAPIKey(void);
-   char * getFileStorePath(void);
-   unsigned char *get32ByteAxoKey(void);
-   const char *t_getDevID_md5(void);
+//   const char *getAPIKey(void);
+//   char * getFileStorePath(void);
+//   unsigned char *get32ByteAxoKey(void);
+//   const char *t_getDevID_md5(void);
    
    static char fn[1024];
     
@@ -354,8 +490,8 @@ static int t_initAxolotl(const char *myUsername)
     static int iOldApp = 0;
     if(iOldApp || isFileExists(fn)){
         iOldApp = 1;
-        void exitShowApp(const char *msg);
-        exitShowApp("Please, uninstall Silent Phone, and then install again.");
+
+        exitWithFatalErrorMsg("Please, uninstall Silent Phone, and then install again.");
         return -1;
     }
    
@@ -366,10 +502,52 @@ static int t_initAxolotl(const char *myUsername)
                       getAPIKey(),
                      //  "abcd1234abcd1234abcd1234abcd1234");//
                        t_getDevID_md5());
-
 }
 
+AppRepository * getChatDb(const char *dbPath) {   
+    
+    // It is an error for SPi to attempt to open the 
+    // zina chat store with a null/empty db path string.
+    if (dbPath == NULL || strcmp(dbPath,"") == 0) {
+        t_logf(log_events, __FUNCTION__,"Error: store->openStore called "
+               "with empty or nil database path");        
+        exitWithFatalErrorMsg("Unable to open database:\n Path not specified");
+        return NULL;
+    }
+    
+    // Log file protection attributes on the db path
+    void log_file_protection_prop(const char *fn);
+    log_file_protection_prop(dbPath);
+    
+    // Always call to set NSFileProtectionNone on db path
+    // (this is a no-op if already set)
+    setFileBackgroundReadable(dbPath);
+    
+    AppRepository *db = AppRepository::getStore();
+        
+    unsigned char *key = get32ByteAxoKey();    
+    std::string dbPw((const char*)key, 32);
+    db->setKey(dbPw);
+    
+    int sql_code = db->openStore(dbPath);
+    
+    if(sql_code != 0) {       
+        t_logf(log_events, __FUNCTION__,"Error: store->openStore failed: %d", sql_code);
 
+        char msg[100];
+        sprintf(msg, "%s %d", "Unable to open database.\nError: ", sql_code);
+        exitWithFatalErrorMsg(msg);
+        
+        return NULL;
+    }       
+    
+    // See SCSPLog_private class
+    set_zina_log_cb((void *)1, ios_log_zina);
+
+    zinaDatabaseWasOpened();
+    
+    return db;
+}
 
  /*
  {
@@ -423,7 +601,8 @@ const char *CTAxoInterfaceBase::generateMsgID(const char *msgToSend, char *dst, 
    
 }
 
-
+static CTMutex _sendMutex;
+/*
 static int64_t t_sendAxoMessage(const char *dstUsername, const char *msg){
    const char *t_getDevID_md5(void);
    char buf[4096];
@@ -462,6 +641,8 @@ static int64_t t_sendAxoMessage(const char *dstUsername, const char *msg){
    std::string attachment;
    std::string attributes;
    
+   CTMutexAutoLock _a(_sendMutex);
+   
    std::vector<int64_t>* msgIds = axoAppInterface->sendMessage(message, attachment, attributes);
    
    if (msgIds == NULL || msgIds->empty()) {
@@ -472,9 +653,34 @@ static int64_t t_sendAxoMessage(const char *dstUsername, const char *msg){
    
    return msgIds->at(0);
 }
+*/
+static int64_t t_sendMessageToEveryDevice(shared_ptr<list<shared_ptr<PreparedMessageData> > > prepMessageData)
+{
+   auto idVector = make_shared<vector<uint64_t> >();
+   
+   int64_t retCode = 0;
+   
 
+   while (!prepMessageData->empty()) {
+      auto& msgData = prepMessageData->front();
+      
+      printf("sendto: %s\n",msgData->receiverInfo.c_str());
 
-static int64_t t_sendJSONMessage( const char *msg, const char *attachment, const char *attributes){
+      idVector->push_back(msgData->transportId);
+      
+      if(!retCode && msgData->transportId){
+         retCode = msgData->transportId;
+      }
+
+      prepMessageData->pop_front();
+   }
+   
+  if(axoAppInterface->doSendMessages(idVector)<0)return 0;
+
+   return retCode;
+}
+
+static int64_t t_sendJSONMessage( const char *msg,  bool toSibling, bool normalMsg, const char *attachment, const char *attributes){
    
    char bufValue[1024];
    int findJSonToken(const char *p, int iPLen, const char *key, char *resp, int iMaxLen);
@@ -501,6 +707,27 @@ static int64_t t_sendJSONMessage( const char *msg, const char *attachment, const
       s_attributes.assign(attributes);
    }
    
+   CTMutexAutoLock _a(_sendMutex);
+
+#if 1
+   //this is tmp shortcut to support old API from UI
+   int result = 0;
+   auto list = toSibling ?
+                 axoAppInterface -> prepareMessageToSiblings(message, s_attachment, s_attributes, true, &result) :
+                 axoAppInterface->prepareMessage(message, s_attachment, s_attributes, true, &result);
+   
+   if(result != SUCCESS ){
+      
+      if(result != NO_DEVS_FOUND){//this not fail
+         return 0;
+      }
+      return 0;
+   }
+   return t_sendMessageToEveryDevice(list);
+   
+
+#else
+   
    std::vector<int64_t>* msgIds = axoAppInterface->sendMessage(message, s_attachment, s_attributes);
    
    if (msgIds == NULL || msgIds->empty()) {
@@ -514,33 +741,46 @@ static int64_t t_sendJSONMessage( const char *msg, const char *attachment, const
    }
    
    delete msgIds;
-
+   
    return ret;
-}
 #endif
 
+
+}
+#endif
+/* End #if defined(__APPLE__) */
+
 int CTAxoInterfaceBase::isAxolotlReady(){return sipTransport ? 1 : 0;}
+
+int CTAxoInterfaceBase::addPrekeys(int cnt){
+   if(!axoAppInterface){
+      mustAddPrekeyCnt = cnt;
+      return 0;
+   }
+   int ok = 200 == axoAppInterface->newPreKeys(cnt);
+   if(!ok){
+      mustAddPrekeyCnt = cnt;
+   }
+   
+   return 1;
+}
 
 class CTAxoInterface:public CTAxoInterfaceBase{
    //TODO store transport and AppInterfaceImpl here
 public:
    CTAxoInterface(const char *un){
-#ifndef ANDROID_NDK
+
+#if defined(__APPLE__)
       t_initAxolotl(un);
 #endif
    }
    
-#ifndef ANDROID_NDK
-   
-
-   int64_t sendJSONMessage( const char *msg, const char *attachment, const char *attributes){
-      return t_sendJSONMessage( msg, attachment, attributes);
-   }
-   
-   int64_t sendMessage(const char *dstUsername, const char *msg){
-      return t_sendAxoMessage(dstUsername, msg);
+#if defined(__APPLE__)
+   int64_t sendJSONMessage( const char *msg, bool toSibling, bool normalMsg, const char *attachment, const char *attributes){
+      return t_sendJSONMessage( msg, toSibling, normalMsg, attachment, attributes);
    }
 #endif
+    
    //from transport
    int32_t receiveMessage(uint8_t* data, size_t length){
       if(!sipTransport)return eErrorNoTransportReady;
@@ -563,22 +803,29 @@ public:
    }
 };
 
-#ifndef ANDROID_NDK
+#if defined(__APPLE__)
 void CTAxoInterfaceBase::setCallbacks(STATE_FUNC state, RECV_FUNC msgRec){//should call this from UI before init
    _messageStateReport = state;
    _receiveMessage = msgRec;
 }
 
-
+void CTAxoInterfaceBase::setGroupCallbacks(GROUP_STATE_FUNC state, GROUP_MSG_RECV_FUNC msgRec, GROUP_CMD_RECV_FUNC cmd){
+   _groupReceiveCommand = cmd;
+   _groupReceiveMessage = msgRec;
+   _groupStateCallback = state;
+}
 #endif
 
 void CTAxoInterfaceBase::setSendCallback(SEND_DATA_FUNC p){//should call this from transport side
    _sendDataFuncAxo = p;
 }
 
+int CTAxoInterfaceBase::isDBFailCode(int v){return v==zina::DATABASE_ERROR;}
+
 CTAxoInterfaceBase *CTAxoInterfaceBase::sharedInstance(const char *un){
    static CTAxoInterface *p = NULL;
-#ifndef ANDROID_NDK
+    
+#if defined(__APPLE__)
    static CTMutex _m;
    CTMutexAutoLock _a(_m);
 #endif
@@ -586,7 +833,14 @@ CTAxoInterfaceBase *CTAxoInterfaceBase::sharedInstance(const char *un){
    if(!p && !un){
       return NULL;
    }
-   if(!p)p = new CTAxoInterface(un);
+    if(!p){
+
+#if defined(__APPLE__)
+        t_logf(log_events, "CTAxoInterfaceBase::sharedInstance", " INITIALIZED with un: %s",un);
+#endif
+        
+        p = new CTAxoInterface(un);
+    }
    return p;
 }
 

@@ -55,10 +55,12 @@
             android:layout_above="@+id/button"
             android:choiceMode="singleChoice"
             android:dividerHeight="1px"
-            android:divider="?sp_dial_text_background"/>
+            android:divider="?sp_dial_text_background"
+            android:listSelector="@android:color/transparent"
+            android:overScrollMode="never" />
 
     <Button
-            style="@style/Widget.Button.Dark"
+            style="@style/Widget.Button"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_alignParentBottom="true"

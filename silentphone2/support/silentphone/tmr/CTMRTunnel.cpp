@@ -1,7 +1,32 @@
-//VoipPhone
-//Created by Janis Narbuts
-//Copyright (c) 2004-2012 Tivi LTD, www.tiviphone.com. All rights reserved.
+/*
+Created by Janis Narbuts
+Copyright (C) 2004-2012, Tivi LTD, www.tiviphone.com. All rights reserved.
+Copyright (C) 2012-2017, Silent Circle, LLC.  All rights reserved.
 
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+    * Any redistribution, use, or modification is done solely for personal
+      benefit and not for any commercial purpose or for monetary gain
+    * Redistributions of source code must retain the above copyright
+      notice, this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above copyright
+      notice, this list of conditions and the following disclaimer in the
+      documentation and/or other materials provided with the distribution.
+    * Neither the name Silent Circle nor the
+      names of its contributors may be used to endorse or promote products
+      derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL SILENT CIRCLE, LLC BE LIABLE FOR ANY
+DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
 #include "CTMRTunnel.h"
 #include "tmr_create_pack.h"
 
@@ -326,56 +351,76 @@ int CTMRConnector::workerThread(){
    CTSockCB scb;
    CTSockTcp *s = new CTSockTcp(scb);
    s->iIsRTPSock=1;
+#ifdef V4_ONLY_TMR
+   
    s->createSock();
    sock = s;
    s->_connect(&dst);
-   netBlock(s->sock);
    
-   iPackLen=createPack(0,tmp, sizeof(tmp)-1);
+#else
    
-   if(iRecreateCnt)Sleep((iRecreateCnt&7)*100);
-   
-   _send((unsigned char *)tmp, iPackLen);
+   int isFirst = tmr_info->dstAddr_ai.sock_len == 0;
+   sock = s;
+   T_ADDR_INFO_CONNECTED *ai = s->create_v4_v6_connect(&dst,isFirst ? NULL : &tmr_info->dstAddr_ai);
+   if(isFirst && ai)memcpy(&tmr_info->dstAddr_ai, ai, sizeof(T_ADDR_INFO_CONNECTED));
 
-   TCP_MEDIA_SOCKET ms;
-   memset(&ms, 0, sizeof(TCP_MEDIA_SOCKET));
-
-   ms.sock = s->sock;
-   ms.pUser = this;
-   ms.canRecSend = canRecSend;
-
-//#define T_TEST_STOP_SOCK
-#ifdef T_TEST_STOP_SOCK
-  int iMaxPacketsViaSocket=15+(getTC()&0x0f);
 #endif
-   while(!(eStatusFlag & eStoped) && !tmr_info->iStopping){
+   if(!tmr_info){
+      s->closeSocket();
+      delete s;
+      return 0;//we have no call
+   }
+   
+   if(s->isConected()){
+   
+      netBlock(s->sock);
       
-      //split
-      int rec = recvTMRPack(&ms,tmp, sizeof(tmp), ret_buf, sizeof(ret_buf));//recv
+      iPackLen=createPack(0,tmp, sizeof(tmp)-1);
       
-      if(rec<0){
-         printf("[Warn: recvTMRPack=%d]\n",rec);
-         break;
-      }
-      if(rec==0 || (eStatusFlag & eStoped) || tmr_info->iStopping){
-         break;//server closed the sock
-      }
+      if(iRecreateCnt)Sleep((iRecreateCnt&7)*100);
       
-     // printf("[recvTMRPack=%d %c]\n",rec,ret_buf[4]);
-
-      onRcv((unsigned char*)&ret_buf[0],rec);
+      _send((unsigned char *)tmp, iPackLen);
+      
+      TCP_MEDIA_SOCKET ms;
+      memset(&ms, 0, sizeof(TCP_MEDIA_SOCKET));
+      
+      ms.sock = s->sock;
+      ms.pUser = this;
+      ms.canRecSend = canRecSend;
+      
+      //#define T_TEST_STOP_SOCK
 #ifdef T_TEST_STOP_SOCK
-      iMaxPacketsViaSocket--;
-      if(iMaxPacketsViaSocket<0)break;//test
+      int iMaxPacketsViaSocket=15+(getTC()&0x0f);
 #endif
-
+      while(tmr_info && !(eStatusFlag & eStoped) && !tmr_info->iStopping){
+         
+         //split
+         int rec = recvTMRPack(&ms,tmp, sizeof(tmp), ret_buf, sizeof(ret_buf));//recv
+         
+         if(rec<0){
+            printf("[Warn: recvTMRPack=%d]\n",rec);
+            break;
+         }
+         if(!tmr_info || rec==0 || (eStatusFlag & eStoped) || tmr_info->iStopping){
+            break;//server closed the sock
+         }
+         
+         // printf("[recvTMRPack=%d %c]\n",rec,ret_buf[4]);
+         
+         onRcv((unsigned char*)&ret_buf[0],rec);
+#ifdef T_TEST_STOP_SOCK
+         iMaxPacketsViaSocket--;
+         if(iMaxPacketsViaSocket<0)break;//test
+#endif
+         
+      }
    }
    stop();
    Sleep(200);
    sock = NULL;
    
    int iResetInTh=1;
-   if(iIsMaster && !tmr_info->iStopping){
+   if(tmr_info && iIsMaster && !tmr_info->iStopping){
       reset();
       Sleep(100);
       iInThread=0;
@@ -388,7 +433,7 @@ int CTMRConnector::workerThread(){
    s->closeSocket();
    Sleep(200);
    delete s;
-   t_logf(log_audio_stats, __FUNCTION__,"exit th st[S%lld R%lld RT%d v%d sentat%llu mid%llu]",rtpPacketsSent,rtpPacketsReceived, roundtrip, tmr_info->iIsVideo, pingSentAt,tmr_info->mediaID);
+   t_logf(log_audio_stats, __FUNCTION__,"exit th st[S%lld R%lld RT%d v%d sentat%llu mid%llu]",rtpPacketsSent,rtpPacketsReceived, roundtrip, tmr_info? tmr_info->iIsVideo: -1, pingSentAt,tmr_info?tmr_info->mediaID:-1);
    if(iResetInTh)iInThread=0;
    return 0;
 }
@@ -426,7 +471,7 @@ int CTMRConnector::onRcv(unsigned char *pack, int iLen){
          unsigned int tFromPack;
          memcpy(&tFromPack, pack+1, 4);
          
-         unsigned int tt = t;
+         unsigned int tt = (unsigned int)t;
          
          int rtR = tt - tFromPack;
          if(!rtR)rtR=1;

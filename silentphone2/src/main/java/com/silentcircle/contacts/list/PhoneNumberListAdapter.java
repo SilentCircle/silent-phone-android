@@ -29,11 +29,14 @@ import android.provider.ContactsContract.CommonDataKinds.Phone;
 import android.provider.ContactsContract.Contacts;
 import android.provider.ContactsContract.Data;
 import android.provider.ContactsContract.Directory;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+import android.support.v4.content.ContextCompat;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.google.i18n.phonenumbers.PhoneNumberUtil;
 import com.silentcircle.common.GeoUtil;
 import com.silentcircle.common.extension.ExtendedPhoneDirectoriesManager;
 import com.silentcircle.common.extension.ExtensionsFactory;
@@ -42,8 +45,14 @@ import com.silentcircle.contacts.ContactPhotoManagerNew.DefaultImageRequest;
 import com.silentcircle.contacts.UpdateScContactDataService;
 import com.silentcircle.contacts.preference.ContactsPreferences;
 import com.silentcircle.contacts.utils.Constants;
+import com.silentcircle.logs.Log;
+import com.silentcircle.messaging.task.ScConversationLoader;
+import com.silentcircle.messaging.util.IOUtils;
 import com.silentcircle.silentphone2.R;
+import com.silentcircle.silentphone2.util.Utilities;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -70,27 +79,29 @@ public class PhoneNumberListAdapter extends ScContactEntryListAdapter {
 
     public static class PhoneQuery {
         public static final String[] PROJECTION_PRIMARY = new String[] {
-            Phone._ID,                          // 0
-            Phone.TYPE,                         // 1
-            Phone.LABEL,                        // 2
-            Phone.NUMBER,                       // 3
-            Phone.CONTACT_ID,                   // 4
-            Phone.LOOKUP_KEY,                   // 5
-            Phone.PHOTO_ID,                     // 6
-            Phone.DISPLAY_NAME_PRIMARY,         // 7
-            Phone.PHOTO_THUMBNAIL_URI,          // 8
+                Phone._ID,                          // 0
+                Phone.TYPE,                         // 1
+                Phone.LABEL,                        // 2
+                Phone.NUMBER,                       // 3
+                Phone.CONTACT_ID,                   // 4
+                Phone.LOOKUP_KEY,                   // 5
+                Phone.PHOTO_ID,                     // 6
+                Phone.DISPLAY_NAME_PRIMARY,         // 7
+                Phone.PHOTO_THUMBNAIL_URI,          // 8
+                Phone.SYNC2                         /** 9 {@link com.silentcircle.contacts.UpdateScContactDataService.ContactHashData#copyOfData} */
         };
 
         public static final String[] PROJECTION_ALTERNATIVE = new String[] {
-            Phone._ID,                          // 0
-            Phone.TYPE,                         // 1
-            Phone.LABEL,                        // 2
-            Phone.NUMBER,                       // 3
-            Phone.CONTACT_ID,                   // 4
-            Phone.LOOKUP_KEY,                   // 5
-            Phone.PHOTO_ID,                     // 6
-            Phone.DISPLAY_NAME_ALTERNATIVE,     // 7
-            Phone.PHOTO_THUMBNAIL_URI,          // 8
+                Phone._ID,                          // 0
+                Phone.TYPE,                         // 1
+                Phone.LABEL,                        // 2
+                Phone.NUMBER,                       // 3
+                Phone.CONTACT_ID,                   // 4
+                Phone.LOOKUP_KEY,                   // 5
+                Phone.PHOTO_ID,                     // 6
+                Phone.DISPLAY_NAME_ALTERNATIVE,     // 7
+                Phone.PHOTO_THUMBNAIL_URI,          // 8
+                Phone.SYNC2                         /** 9 {@link com.silentcircle.contacts.UpdateScContactDataService.ContactHashData#copyOfData} */
         };
 
         public static final int PHONE_ID                = 0;
@@ -113,8 +124,11 @@ public class PhoneNumberListAdapter extends ScContactEntryListAdapter {
 
     private boolean mUseCallableUri;
 
-    public PhoneNumberListAdapter(Context context, boolean enableScDir) {
-        super(context, enableScDir);
+    private boolean mCheckable = false;
+    private List<String> mSelectedItems = null;
+
+    public PhoneNumberListAdapter(Context context, boolean enableScDir, boolean enablePhoneDir) {
+        super(context, enableScDir, enablePhoneDir);
         setDefaultFilterHeaderText(R.string.list_filter_phones);
         mUnknownNameText = context.getText(android.R.string.unknownName);
         mCountryIso = GeoUtil.getCurrentCountryIso(context);
@@ -166,14 +180,15 @@ public class PhoneNumberListAdapter extends ScContactEntryListAdapter {
             if (isSearchMode()) {
                 final Uri baseUri;
                 if (isRemoteDirectoryQuery) {
-                    baseUri = Phone.CONTENT_FILTER_URI;
+                    baseUri = ContactsContract.CommonDataKinds.Phone.CONTENT_URI;//Phone.CONTENT_FILTER_URI;
                 } else if (mUseCallableUri && (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)) {
-                    baseUri = Callable.CONTENT_FILTER_URI;
+                    baseUri = ContactsContract.CommonDataKinds.Callable.CONTENT_URI;//Callable.CONTENT_FILTER_URI;
                 } else {
-                    baseUri = Phone.CONTENT_FILTER_URI;
+                    baseUri = ContactsContract.CommonDataKinds.Phone.CONTENT_URI;//Phone.CONTENT_FILTER_URI;
                 }
+
                 builder = baseUri.buildUpon();
-                builder.appendPath(query);      // Builder will encode the query
+//                builder.appendPath(query);      // Builder will encode the query
                 builder.appendQueryParameter(ContactsContract.DIRECTORY_PARAM_KEY, String.valueOf(directoryId));
                 if (isRemoteDirectoryQuery) {
                     builder.appendQueryParameter(ContactsContract.LIMIT_PARAM_KEY,
@@ -184,15 +199,29 @@ public class PhoneNumberListAdapter extends ScContactEntryListAdapter {
                         Callable.CONTENT_URI : Phone.CONTENT_URI;
                 builder = baseUri.buildUpon().appendQueryParameter(
                         ContactsContract.DIRECTORY_PARAM_KEY, String.valueOf(Directory.DEFAULT));
-                if (isSectionHeaderDisplayEnabled()) {
+//                if (isSectionHeaderDisplayEnabled()) {
                     builder.appendQueryParameter(Phone.EXTRA_ADDRESS_BOOK_INDEX, "true");
-                }
+//                }
                 applyFilter(loader, builder, directoryId, getFilter());
+            }
+
+            String prevSelection = "((" + Phone.DISPLAY_NAME_PRIMARY + " LIKE ?)"
+                    + " OR (" + Phone.NUMBER + " LIKE ?)"
+                    + " OR (" + Phone.NORMALIZED_NUMBER + " LIKE ?)";
+            String[] selectionArgs = new String[] { '%' + query + '%',
+                    '%' + query + '%',
+                    '%' + query + '%'};
+
+            String normalizedNumber = PhoneNumberUtil.normalizeDigitsOnly(query);
+            if (!TextUtils.isEmpty(normalizedNumber)) {
+                prevSelection += " OR (" + Phone.NORMALIZED_NUMBER + " LIKE ?))";
+                selectionArgs = IOUtils.concat(selectionArgs, new String[] { '%' + normalizedNumber + '%' });
+            } else {
+                prevSelection += ")";
             }
 
             // Ignore invalid phone numbers that are too long. These can potentially cause freezes
             // in the UI and there is no reason to display them.
-            final String prevSelection = loader.getSelection();
             final String newSelection;
             if (!TextUtils.isEmpty(prevSelection)) {
                 newSelection = prevSelection + " AND " + IGNORE_NUMBER_TOO_LONG_CLAUSE;
@@ -200,6 +229,7 @@ public class PhoneNumberListAdapter extends ScContactEntryListAdapter {
                 newSelection = IGNORE_NUMBER_TOO_LONG_CLAUSE;
             }
             loader.setSelection(newSelection);
+            loader.setSelectionArgs(selectionArgs);
 
             // Remove duplicates when it is possible.
             builder.appendQueryParameter(ContactsContract.REMOVE_DUPLICATE_ENTRIES, "true");
@@ -243,6 +273,16 @@ public class PhoneNumberListAdapter extends ScContactEntryListAdapter {
         loader.setFilterType(mScDirectoryFilterType);
     }
 
+    public void configureConversationDirLoader(ScConversationLoader loader) {
+        loader.setQueryString(getQueryString());
+        loader.setFilterType(mScConversationFilterType);
+    }
+
+    public void configureExactMatchLoader(ScV1UserLoader loader) {
+        loader.setQueryString(getQueryString());
+        loader.setFilterType(mScExactMatchFilterType);
+    }
+
     // Below special handling to lookup SC message entries, used when adding a new message
     // conversation based on an added or discovered SC contact
     final Uri lookupUri = ContactsContract.Data.CONTENT_URI;
@@ -255,10 +295,12 @@ public class PhoneNumberListAdapter extends ScContactEntryListAdapter {
             loader.setSelection(selectionMime);
         }
         else {
-            final String selection = selectionMime + " AND " +
-                    ContactsContract.Contacts.DISPLAY_NAME + " LIKE ?";
+            final String selection = selectionMime + " AND "
+                    + "((" + Phone.DISPLAY_NAME + " LIKE ?)"
+                    + " OR (" + Phone.SYNC2 + " LIKE ?))";
             loader.setSelection(selection);
-            loader.setSelectionArgs(new String[] { '%' + query + '%' });
+            loader.setSelectionArgs(new String[] { '%' + query + '%'
+                    , "silentphone:%" + query.replace("@", "%40") + '%'});
         }
 
         if (getContactNameDisplayOrder() == ContactsPreferences.DISPLAY_ORDER_PRIMARY) {
@@ -337,7 +379,8 @@ public class PhoneNumberListAdapter extends ScContactEntryListAdapter {
 
         int pi = getPartitionForPosition(position);
         if (cursor != null) {
-            if (((DirectoryPartition)getPartition(pi)).getDirectoryId() == SC_REMOTE_DIRECTORY) {
+            long directoryId = ((DirectoryPartition) getPartition(pi)).getDirectoryId();
+            if (directoryId == SC_REMOTE_DIRECTORY || directoryId == SC_EXISTING_CONVERSATIONS) {
                 return null;            // we don't have a data URI for SC directory entries/numbers
             }
             else {
@@ -357,6 +400,7 @@ public class PhoneNumberListAdapter extends ScContactEntryListAdapter {
         view.setUnknownNameText(mUnknownNameText);
         view.setQuickContactEnabled(isQuickContactEnabled());
         view.setPhotoPosition(mPhotoPosition);
+        view.setBackgroundResource(R.drawable.bg_action);
         return view;
     }
 
@@ -387,8 +431,19 @@ public class PhoneNumberListAdapter extends ScContactEntryListAdapter {
     @Override
     protected void bindView(View itemView, int partition, Cursor cursor, int position) {
         super.bindView(itemView, partition, cursor, position);
-        ContactListItemView view = (ContactListItemView)itemView;
+        ContactListItemView view = (ContactListItemView) itemView;
 
+        String uuid = getUuidForPosition(cursor);
+        view.setTag(R.id.view_holder_userid, uuid);
+
+        if (isCheckable()) {
+            view.setCheckable(true);
+            view.setLabel(null);
+            view.setChecked(isSelected(uuid));
+        }
+
+        boolean isExternal = isExternal(partition, cursor);
+        boolean isGroup = isGroup(partition, cursor);
         setHighlight(view, cursor);
 
         // Look at elements before and after this position, checking if contact IDs are same.
@@ -433,16 +488,29 @@ public class PhoneNumberListAdapter extends ScContactEntryListAdapter {
                     bindPhoto(view, partition, cursor);
                 }
             }
-        } 
-        else {
+        } else {
             unbindName(view);
 
             view.removePhotoView(true, false);
         }
 
         final DirectoryPartition directory = (DirectoryPartition) getPartition(partition);
-        if (!mSearchScData && !directory.getDirectoryType().equals(mContext.getString(R.string.scContactsList)))
-            bindPhoneNumber(view, cursor, directory.isDisplayNumber());
+        long directoryId = directory.getDirectoryId();
+        if (!mSearchScData
+                && !directory.getDirectoryType().equals(mContext.getString(R.string.scContactsList))) {
+            if (directoryId == SC_EXISTING_CONVERSATIONS && isGroup) {
+                // do not show label, number for group results
+                view.setPhoneNumber(null, mCountryIso);
+                view.setLabel(null);
+            }
+            else {
+                bindPhoneNumber(view, cursor, directory.isDisplayNumber());
+            }
+        } else {
+            bindScPhoneNumber(view, cursor, directory.isDisplayNumber());
+        }
+
+        view.setMarker(isExternal ? ContextCompat.getDrawable(getContext(), R.drawable.ic_marker_external) : null);
     }
 
     protected void bindPhoneNumber(ContactListItemView view, Cursor cursor, boolean displayNumber) {
@@ -469,6 +537,39 @@ public class PhoneNumberListAdapter extends ScContactEntryListAdapter {
             }
         }
         view.setPhoneNumber(text, mCountryIso);
+    }
+
+    protected void bindScPhoneNumber(ContactListItemView view, Cursor cursor, boolean displayNumber) {
+        // TODO: Do we want a label for SC entries ("Silent Circle")?
+//        CharSequence label = null;
+//        if (displayNumber &&  !cursor.isNull(PhoneQuery.PHONE_TYPE)) {
+//            final int type = cursor.getInt(PhoneQuery.PHONE_TYPE);
+//            final String customLabel = cursor.getString(PhoneQuery.PHONE_LABEL);
+//
+//            // TODO cache
+//            label = Phone.getTypeLabel(getContext().getResources(), type, customLabel);
+//        }
+//        view.setLabel(label);
+        view.setLabel(null);
+        final String text;
+        if (displayNumber) {
+            String numberText = null;
+            int entryDataIndex = cursor.getColumnIndex(Data.SYNC2);
+            if (entryDataIndex != -1) {
+                numberText = cursor.getString(entryDataIndex);
+
+                try {
+                    numberText = TextUtils.isEmpty(numberText) ? numberText : URLDecoder.decode(numberText, "UTF-8");
+                } catch (UnsupportedEncodingException ignore) {}
+            }
+
+            view.setPhoneNumber(!TextUtils.isEmpty(numberText) ? numberText : null, null);
+        }
+    }
+
+    protected void clearPhoneNumber(ContactListItemView view) {
+        view.setPhoneNumber(null, null);
+        view.setLabel(null);
     }
 
     protected void bindSectionHeaderAndDivider(final ContactListItemView view, int position) {
@@ -590,7 +691,7 @@ public class PhoneNumberListAdapter extends ScContactEntryListAdapter {
     }
 
     protected Uri getContactUri(int partitionIndex, Cursor cursor,
-            int contactIdColumn, int lookUpKeyColumn) {
+                                int contactIdColumn, int lookUpKeyColumn) {
         final DirectoryPartition directory = (DirectoryPartition) getPartition(partitionIndex);
         final long directoryId = directory.getDirectoryId();
         if (!isExtendedDirectory(directoryId)) {
@@ -604,4 +705,86 @@ public class PhoneNumberListAdapter extends ScContactEntryListAdapter {
                 .encodedFragment(cursor.getString(lookUpKeyColumn))
                 .build();
     }
+
+    public void setCheckable(boolean checkable) {
+        mCheckable = checkable;
+    }
+
+    public boolean isCheckable() {
+        return mCheckable;
+    }
+
+    public void setSelectedItems(List<String> items) {
+        mSelectedItems = items;
+    }
+
+    protected boolean isSelected(String uuid) {
+        return mSelectedItems != null && !TextUtils.isEmpty(uuid) && mSelectedItems.contains(uuid);
+    }
+
+    protected String getUuidForPosition(Cursor cursor) {
+        String uuid = Utilities.removeUriPartsSelective(cursor != null ? cursor.getString(PhoneQuery.PHONE_NUMBER) : null);
+        if (cursor != null) {
+            final int scIndex = cursor.getColumnIndex(ScDirectoryLoader.SC_UUID_FIELD);
+            if (scIndex >= 0) {
+                uuid = cursor.getString(scIndex);
+            }
+        }
+        return uuid;
+    }
+
+    /**
+     * Check whether entry in section SC_EXACT_MATCH_ON_V1_USER is for an external user or
+     * user from one's own organization.
+     *
+     */
+    protected boolean isExternal(int partitionIndex, @Nullable Cursor cursor) {
+        if (cursor == null) {
+            return false;
+        }
+
+        Partition partition = getPartition(partitionIndex);
+        if (!(partition instanceof DirectoryPartition)) {
+            return false;
+        }
+
+        boolean result = false;
+        DirectoryPartition directoryPartition = (DirectoryPartition) partition;
+        long directoryId = directoryPartition.getDirectoryId();
+        if (directoryId == SC_EXACT_MATCH_ON_V1_USER) {
+            final int index = cursor.getColumnIndex(ScDirectoryLoader.SC_PRIVATE_FIELD);
+            if (index >= 0) {
+                /*
+                 * assumption is that field will contain non-null value for organization only
+                 * if user is from an external organization.
+                 */
+                String organization = cursor.getString(index);
+                result = organization != null;
+            }
+        }
+        return result;
+    }
+
+    protected boolean isGroup(int partitionIndex, @Nullable Cursor cursor) {
+        if (cursor == null) {
+            return false;
+        }
+
+        Partition partition = getPartition(partitionIndex);
+        if (!(partition instanceof DirectoryPartition)) {
+            return false;
+        }
+
+        boolean result = false;
+        DirectoryPartition directoryPartition = (DirectoryPartition) partition;
+        long directoryId = directoryPartition.getDirectoryId();
+        if (directoryId == SC_EXISTING_CONVERSATIONS) {
+            final int index = cursor.getColumnIndex(ScDirectoryLoader.SC_PRIVATE_FIELD);
+            if (index >= 0) {
+                result = ScConversationLoader.GROUP.equals(cursor.getString(index));
+            }
+        }
+        return result;
+    }
+
 }

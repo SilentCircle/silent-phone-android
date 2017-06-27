@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2016-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -25,16 +25,17 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-
 package com.silentcircle.messaging.views.adapters;
 
+import android.support.v7.widget.RecyclerView;
+import android.text.format.DateUtils;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.SectionIndexer;
 
-import com.silentcircle.common.list.PinnedHeaderListView;
 import com.silentcircle.messaging.model.event.Event;
-import com.silentcircle.messaging.views.ListView;
+import com.silentcircle.messaging.views.PinnedHeaderChatRecyclerView;
+import com.silentcircle.silentphone2.R;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -42,10 +43,12 @@ import java.util.Date;
 import java.util.List;
 
 /**
- * Adapter to group events on conversation view by date. To be used with {@link PinnedHeaderListView}.
+ * Adapter to group events on conversation view by date. To be used with {@link PinnedHeaderChatRecyclerView}.
  */
 public class GroupingModelViewAdapter extends MultiSelectModelViewAdapter implements SectionIndexer,
-        PinnedHeaderListView.PinnedHeaderAdapter {
+        PinnedHeaderChatRecyclerView.PinnedHeaderAdapter {
+
+    public static final Boolean NEW_DATE = true;
 
     protected static final Integer VALUE_NO_DRAW = 1;
     protected static final int INVALID_POSITION = -1;
@@ -68,14 +71,12 @@ public class GroupingModelViewAdapter extends MultiSelectModelViewAdapter implem
         }
 
         /* left for de-bugging */
-        /*
         public String toString() {
             return "[" + position + ", " + dataPosition + ", " + length + ", "
                     + DateUtils.getRelativeTimeSpanString(date.getTime(),
                             System.currentTimeMillis(), DateUtils.DAY_IN_MILLIS,
                             DateUtils.FORMAT_SHOW_DATE | DateUtils.FORMAT_SHOW_YEAR) + "]";
         }
-         */
     }
 
     public static class EventDateIndexer implements SectionIndexer {
@@ -121,6 +122,9 @@ public class GroupingModelViewAdapter extends MultiSelectModelViewAdapter implem
 
         private Section[] getSections(List<?> models) {
             ArrayList<Section> sections = new ArrayList<>();
+            if (models == null) {
+                return sections.toArray(new Section[sections.size()]);
+            }
 
             Calendar previousDay = getDatePart(new Date());
             long previousTime = -1;
@@ -184,14 +188,55 @@ public class GroupingModelViewAdapter extends MultiSelectModelViewAdapter implem
         }
     }
 
+    @SuppressWarnings("FieldCanBeLocal")
+    private RecyclerView.AdapterDataObserver mChangeObserver = new RecyclerView.AdapterDataObserver() {
+
+        @Override
+        public void onChanged() {
+            refreshSections(getModelProvider().getItems());
+        }
+
+        @Override
+        public void onItemRangeChanged(int positionStart, int itemCount) {
+            refreshSections(getModelProvider().getItems());
+        }
+
+        @Override
+        public void onItemRangeChanged(int positionStart, int itemCount, Object payload) {
+            onItemRangeChanged(positionStart, itemCount);
+        }
+
+        @Override
+        public void onItemRangeInserted(int positionStart, int itemCount) {
+            refreshSections(getModelProvider().getItems());
+        }
+
+        @Override
+        public void onItemRangeRemoved(int positionStart, int itemCount) {
+            refreshSections(getModelProvider().getItems());
+        }
+
+        @Override
+        public void onItemRangeMoved(int fromPosition, int toPosition, int itemCount) {
+            refreshSections(getModelProvider().getItems());
+        }
+
+    };
+
     public GroupingModelViewAdapter(List<?> models, ViewType[] viewTypes) {
         super(models, viewTypes);
-        mIndexer = new EventDateIndexer(models);
+        refreshSections(models);
+        registerAdapterDataObserver(mChangeObserver);
     }
 
     @Override
     public int getCount() {
         return getModelProvider().getCount() + (mIndexer != null ? mIndexer.getSections().length : 0);
+    }
+
+    @Override
+    public int getItemCount() {
+        return getCount();
     }
 
     @Override
@@ -230,25 +275,9 @@ public class GroupingModelViewAdapter extends MultiSelectModelViewAdapter implem
     }
 
     @Override
-    public View getView(int position, View convertView, ViewGroup parent) {
-        if (isHeaderPosition(position)) {
-            Section section =
-                    (Section) mIndexer.getSections()[mIndexer.getSectionForPosition(position)];
-            return getHeaderView(convertView, parent, section.date);
-        } else {
-            return super.getView(position, convertView, parent);
-        }
-    }
-
-    @Override
-    public int getViewTypeCount() {
-        return getViewTypes().length;
-    }
-
-    @Override
     public void setModels(List<?> models) {
         super.setModels(models);
-        mIndexer = new EventDateIndexer(models);
+        refreshSections(models);
     }
 
     @Override
@@ -267,13 +296,13 @@ public class GroupingModelViewAdapter extends MultiSelectModelViewAdapter implem
         }
 
         Section section = (Section) mIndexer.getSections()[position];
-        convertView = getHeaderView(convertView, parent, section.date);
+        convertView = getHeaderView(convertView, parent, section.date, section.position);
 
         return convertView;
     }
 
     @Override
-    public void configurePinnedHeaders(PinnedHeaderListView listView) {
+    public void configurePinnedHeaders(PinnedHeaderChatRecyclerView listView) {
         if (mIndexer == null) {
             return;
         }
@@ -293,14 +322,12 @@ public class GroupingModelViewAdapter extends MultiSelectModelViewAdapter implem
             }
         }
 
-        int headerViewsCount = listView.getHeaderViewsCount();
-
         // Starting at the top, find and pin headers for partitions preceding the visible one(s)
         int maxTopHeader = -1;
         int topHeaderHeight = 0;
         for (int i = 0; i < size; i++) {
             if (mHeaderVisibility[i]) {
-                int position = listView.getPositionAt(topHeaderHeight) - headerViewsCount;
+                int position = listView.getPositionAt(topHeaderHeight);
                 int sectionPosition = getSectionForPosition(position);
 
                 if (i > sectionPosition) {
@@ -323,22 +350,9 @@ public class GroupingModelViewAdapter extends MultiSelectModelViewAdapter implem
                     listView.setFadingHeader(i, position, true);
                 }
                 else {
-                    Integer drawable = null;
                     if (section.position <= listView.getFirstVisiblePosition()) {
                         listView.setHeaderPinnedAtTop(i, topHeaderHeight, false);
                         topHeaderHeight += listView.getPinnedHeaderHeight(i);
-
-                        // header view should not be drawn in first pass, only its pinned version
-                        // should be drawn
-                        drawable = VALUE_NO_DRAW;
-                    }
-
-                    // mark header view as drawable or not drawable depending on whether it is pinned
-                    if (listView.getFirstVisiblePosition() == section.position) {
-                        View view = listView.getChildAt(0);
-                        if (view != null) {
-                            view.setTag(ListView.TAG_NO_DRAW, drawable);
-                        }
                     }
                 }
 
@@ -350,6 +364,10 @@ public class GroupingModelViewAdapter extends MultiSelectModelViewAdapter implem
         for (int i = maxTopHeader + 1; i < size; i++) {
             listView.setHeaderInvisible(i, true);
         }
+    }
+
+    public void refreshSections(List<?> models) {
+        mIndexer = new EventDateIndexer(models);
     }
 
     private boolean isLastDataPosition(int sectionPosition, int position) {
@@ -428,7 +446,6 @@ public class GroupingModelViewAdapter extends MultiSelectModelViewAdapter implem
         return getSectionPosition(position);
     }
 
-
     protected boolean isSectionHeaderVisible(int sectionIndex, int firstVisiblePosition,
             int lastVisiblePosition) {
         if (mIndexer == null) {
@@ -488,13 +505,15 @@ public class GroupingModelViewAdapter extends MultiSelectModelViewAdapter implem
         return sectionPosition;
     }
 
-    private View getHeaderView(View convertView, ViewGroup parent, Date date) {
+    private View getHeaderView(View convertView, ViewGroup parent, Date date, int position) {
         if (convertView == null || !(convertView.getTag() instanceof Date)) {
             ViewType viewType = getItemViewType(date);
             convertView = viewType.get(convertView, parent);
+            convertView.requestLayout();
         }
 
         convertView.setTag(date);
+        convertView.setTag(R.id.view_position, position);
 
         return convertView;
     }

@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2016-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -47,7 +47,12 @@ public enum Extra {
     REASON("REASON"),
     ALIAS("ALIAS"),
     DISPLAY_NAME("DISPLAY_NAME"),
-    IDS("IDS"),;
+    IDS("IDS"),
+    VALID("VALID"),
+    IS_GROUP("IS_GROUP"),
+    GROUP("GROUP"),
+    TASK("TASK"),
+    PARTICIPANTS("PARTICIPANTS");
 
     public final String INTENT_EXTRA_NAME_FORMAT = "com.silentcircle.messaging.extra.%s";
 
@@ -143,6 +148,10 @@ public enum Extra {
         return bundle == null ? null : bundle.getStringArrayList(getName());
     }
 
+    public boolean getBoolean(Bundle bundle) {
+        return bundle != null && bundle.getBoolean(getName(), false);
+    }
+
     public String getName() {
         return name;
     }
@@ -184,6 +193,20 @@ public enum Extra {
     public Bundle to(Bundle bundle, String value) {
         if (bundle != null) {
             bundle.putString(getName(), value);
+        }
+        return bundle;
+    }
+
+    public Bundle to(Bundle bundle, boolean value) {
+        if (bundle != null) {
+            bundle.putBoolean(getName(), value);
+        }
+        return bundle;
+    }
+
+    public Bundle to(Bundle bundle, int value) {
+        if (bundle != null) {
+            bundle.putInt(getName(), value);
         }
         return bundle;
     }
@@ -265,5 +288,12 @@ public enum Extra {
         return intent;
     }
 
+    public Intent remove(Intent intent) {
+        if (intent != null) {
+            intent.removeExtra(getName());
+        }
+
+        return intent;
+    }
 }
 

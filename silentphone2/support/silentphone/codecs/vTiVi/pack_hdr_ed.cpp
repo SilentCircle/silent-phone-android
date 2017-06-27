@@ -1,7 +1,7 @@
 /*
 Created by Janis Narbuts
 Copyright (C) 2004-2012, Tivi LTD, www.tiviphone.com. All rights reserved.
-Copyright (C) 2012-2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2012-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,7 +27,6 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-
 #define T_CAN_TEST_V
 
 #include "pack_hdr.h"
@@ -418,18 +417,22 @@ public:
 
 };
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-function" // ignore warning
 
 static inline long  t_getInt32(unsigned char* buf, int ofs)
 {
    long i=(((long)buf[ofs])&0xff)|((((long)buf[ofs+1])&0xff)<<8)|((((long)buf[ofs+2])&0xff)<<16)|((((long)buf[ofs+3])&0xff)<<24);;
    return i; 
 }
+
 static inline long  t_getInt16(unsigned char* buf, int ofs)
 {
    long i=(((long)buf[ofs])&0xff)|((((long)buf[ofs+1])&0xff)<<8);
    return i; 
 }
 
+#pragma clang diagnostic pop
 
 #ifndef T_CAN_TEST_V
 int TVHDR_PCK::encode(CTVLCE &vlc, unsigned char *out)
@@ -641,7 +644,7 @@ int TVHDR_PCK::decode(CTVLC &vlc, unsigned char *in)
 
 
    vers=in[1];
-   iSizeOfChunk=t_getInt16(in,2);
+   iSizeOfChunk=(int)t_getInt16(in,2);
    in+=4;
  
    iCanDraw=vlc.getBit(in);

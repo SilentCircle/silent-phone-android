@@ -1,48 +1,44 @@
 /*
  *  AES-256 file encryption program
  *
- *  Copyright (C) 2006-2013, ARM Limited, All Rights Reserved
+ *  Copyright (C) 2006-2015, ARM Limited, All Rights Reserved
+ *  SPDX-License-Identifier: Apache-2.0
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License"); you may
+ *  not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ *  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  *
  *  This file is part of mbed TLS (https://tls.mbed.org)
- *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
- *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License along
- *  with this program; if not, write to the Free Software Foundation, Inc.,
- *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#if !defined(POLARSSL_CONFIG_FILE)
-#include "polarssl/config.h"
+#if !defined(MBEDTLS_CONFIG_FILE)
+#include "mbedtls/config.h"
 #else
-#include POLARSSL_CONFIG_FILE
+#include MBEDTLS_CONFIG_FILE
 #endif
 
-#if defined(POLARSSL_PLATFORM_C)
-#include "polarssl/platform.h"
+#if defined(MBEDTLS_PLATFORM_C)
+#include "mbedtls/platform.h"
 #else
 #include <stdio.h>
-#define polarssl_fprintf    fprintf
-#define polarssl_printf     printf
+#define mbedtls_fprintf    fprintf
+#define mbedtls_printf     printf
 #endif
 
-#if defined(POLARSSL_AES_C) && defined(POLARSSL_SHA256_C) && \
- defined(POLARSSL_FS_IO)
-#include "polarssl/aes.h"
-#include "polarssl/sha256.h"
+#include "mbedtls/aes.h"
+#include "mbedtls/md.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#endif
 
 #if defined(_WIN32)
 #include <windows.h>
@@ -63,11 +59,13 @@
     "\n  example: aescrypt2 0 file file.aes hex:E76B2413958B00E193\n" \
     "\n"
 
-#if !defined(POLARSSL_AES_C) || !defined(POLARSSL_SHA256_C) || \
-    !defined(POLARSSL_FS_IO)
+#if !defined(MBEDTLS_AES_C) || !defined(MBEDTLS_SHA256_C) || \
+    !defined(MBEDTLS_FS_IO) || !defined(MBEDTLS_MD_C)
 int main( void )
 {
-    polarssl_printf("POLARSSL_AES_C and/or POLARSSL_SHA256_C and/or POLARSSL_FS_IO not defined.\n");
+    mbedtls_printf("MBEDTLS_AES_C and/or MBEDTLS_SHA256_C "
+                    "and/or MBEDTLS_FS_IO and/or MBEDTLS_MD_C "
+                    "not defined.\n");
     return( 0 );
 }
 #else
@@ -75,7 +73,7 @@ int main( int argc, char *argv[] )
 {
     int ret = 1;
 
-    int i, n;
+    unsigned int i, n;
     int mode, lastn;
     size_t keylen;
     FILE *fkey, *fin = NULL, *fout = NULL;
@@ -87,8 +85,8 @@ int main( int argc, char *argv[] )
     unsigned char buffer[1024];
     unsigned char diff;
 
-    aes_context aes_ctx;
-    sha256_context sha_ctx;
+    mbedtls_aes_context aes_ctx;
+    mbedtls_md_context_t sha_ctx;
 
 #if defined(_WIN32_WCE)
     long filesize, offset;
@@ -99,18 +97,25 @@ int main( int argc, char *argv[] )
       off_t filesize, offset;
 #endif
 
-    aes_init( &aes_ctx );
-    sha256_init( &sha_ctx );
+    mbedtls_aes_init( &aes_ctx );
+    mbedtls_md_init( &sha_ctx );
+
+    ret = mbedtls_md_setup( &sha_ctx, mbedtls_md_info_from_type( MBEDTLS_MD_SHA256 ), 1 );
+    if( ret != 0 )
+    {
+        mbedtls_printf( "  ! mbedtls_md_setup() returned -0x%04x\n", -ret );
+        goto exit;
+    }
 
     /*
      * Parse the command-line arguments.
      */
     if( argc != 5 )
     {
-        polarssl_printf( USAGE );
+        mbedtls_printf( USAGE );
 
 #if defined(_WIN32)
-        polarssl_printf( "\n  Press Enter to exit this program.\n" );
+        mbedtls_printf( "\n  Press Enter to exit this program.\n" );
         fflush( stdout ); getchar();
 #endif
 
@@ -125,25 +130,25 @@ int main( int argc, char *argv[] )
 
     if( mode != MODE_ENCRYPT && mode != MODE_DECRYPT )
     {
-        polarssl_fprintf( stderr, "invalide operation mode\n" );
+        mbedtls_fprintf( stderr, "invalide operation mode\n" );
         goto exit;
     }
 
     if( strcmp( argv[2], argv[3] ) == 0 )
     {
-        polarssl_fprintf( stderr, "input and output filenames must differ\n" );
+        mbedtls_fprintf( stderr, "input and output filenames must differ\n" );
         goto exit;
     }
 
     if( ( fin = fopen( argv[2], "rb" ) ) == NULL )
     {
-        polarssl_fprintf( stderr, "fopen(%s,rb) failed\n", argv[2] );
+        mbedtls_fprintf( stderr, "fopen(%s,rb) failed\n", argv[2] );
         goto exit;
     }
 
     if( ( fout = fopen( argv[3], "wb+" ) ) == NULL )
     {
-        polarssl_fprintf( stderr, "fopen(%s,wb+) failed\n", argv[3] );
+        mbedtls_fprintf( stderr, "fopen(%s,wb+) failed\n", argv[3] );
         goto exit;
     }
 
@@ -196,7 +201,7 @@ int main( int argc, char *argv[] )
 
     if( li_size.LowPart == 0xFFFFFFFF && GetLastError() != NO_ERROR )
     {
-        polarssl_fprintf( stderr, "SetFilePointer(0,FILE_END) failed\n" );
+        mbedtls_fprintf( stderr, "SetFilePointer(0,FILE_END) failed\n" );
         goto exit;
     }
 
@@ -212,7 +217,7 @@ int main( int argc, char *argv[] )
 
     if( fseek( fin, 0, SEEK_SET ) < 0 )
     {
-        polarssl_fprintf( stderr, "fseek(0,SEEK_SET) failed\n" );
+        mbedtls_fprintf( stderr, "fseek(0,SEEK_SET) failed\n" );
         goto exit;
     }
 
@@ -227,10 +232,10 @@ int main( int argc, char *argv[] )
 
         p = argv[2];
 
-        sha256_starts( &sha_ctx, 0 );
-        sha256_update( &sha_ctx, buffer, 8 );
-        sha256_update( &sha_ctx, (unsigned char *) p, strlen( p ) );
-        sha256_finish( &sha_ctx, digest );
+        mbedtls_md_starts( &sha_ctx );
+        mbedtls_md_update( &sha_ctx, buffer, 8 );
+        mbedtls_md_update( &sha_ctx, (unsigned char *) p, strlen( p ) );
+        mbedtls_md_finish( &sha_ctx, digest );
 
         memcpy( IV, digest, 16 );
 
@@ -248,7 +253,7 @@ int main( int argc, char *argv[] )
          */
         if( fwrite( IV, 1, 16, fout ) != 16 )
         {
-            polarssl_fprintf( stderr, "fwrite(%d bytes) failed\n", 16 );
+            mbedtls_fprintf( stderr, "fwrite(%d bytes) failed\n", 16 );
             goto exit;
         }
 
@@ -261,15 +266,15 @@ int main( int argc, char *argv[] )
 
         for( i = 0; i < 8192; i++ )
         {
-            sha256_starts( &sha_ctx, 0 );
-            sha256_update( &sha_ctx, digest, 32 );
-            sha256_update( &sha_ctx, key, keylen );
-            sha256_finish( &sha_ctx, digest );
+            mbedtls_md_starts( &sha_ctx );
+            mbedtls_md_update( &sha_ctx, digest, 32 );
+            mbedtls_md_update( &sha_ctx, key, keylen );
+            mbedtls_md_finish( &sha_ctx, digest );
         }
 
         memset( key, 0, sizeof( key ) );
-        aes_setkey_enc( &aes_ctx, digest, 256 );
-        sha256_hmac_starts( &sha_ctx, digest, 32, 0 );
+        mbedtls_aes_setkey_enc( &aes_ctx, digest, 256 );
+        mbedtls_md_hmac_starts( &sha_ctx, digest, 32 );
 
         /*
          * Encrypt and write the ciphertext.
@@ -281,19 +286,19 @@ int main( int argc, char *argv[] )
 
             if( fread( buffer, 1, n, fin ) != (size_t) n )
             {
-                polarssl_fprintf( stderr, "fread(%d bytes) failed\n", n );
+                mbedtls_fprintf( stderr, "fread(%d bytes) failed\n", n );
                 goto exit;
             }
 
             for( i = 0; i < 16; i++ )
                 buffer[i] = (unsigned char)( buffer[i] ^ IV[i] );
 
-            aes_crypt_ecb( &aes_ctx, AES_ENCRYPT, buffer, buffer );
-            sha256_hmac_update( &sha_ctx, buffer, 16 );
+            mbedtls_aes_crypt_ecb( &aes_ctx, MBEDTLS_AES_ENCRYPT, buffer, buffer );
+            mbedtls_md_hmac_update( &sha_ctx, buffer, 16 );
 
             if( fwrite( buffer, 1, 16, fout ) != 16 )
             {
-                polarssl_fprintf( stderr, "fwrite(%d bytes) failed\n", 16 );
+                mbedtls_fprintf( stderr, "fwrite(%d bytes) failed\n", 16 );
                 goto exit;
             }
 
@@ -303,11 +308,11 @@ int main( int argc, char *argv[] )
         /*
          * Finally write the HMAC.
          */
-        sha256_hmac_finish( &sha_ctx, digest );
+        mbedtls_md_hmac_finish( &sha_ctx, digest );
 
         if( fwrite( digest, 1, 32, fout ) != 32 )
         {
-            polarssl_fprintf( stderr, "fwrite(%d bytes) failed\n", 16 );
+            mbedtls_fprintf( stderr, "fwrite(%d bytes) failed\n", 16 );
             goto exit;
         }
     }
@@ -327,13 +332,13 @@ int main( int argc, char *argv[] )
          */
         if( filesize < 48 )
         {
-            polarssl_fprintf( stderr, "File too short to be encrypted.\n" );
+            mbedtls_fprintf( stderr, "File too short to be encrypted.\n" );
             goto exit;
         }
 
         if( ( filesize & 0x0F ) != 0 )
         {
-            polarssl_fprintf( stderr, "File size not a multiple of 16.\n" );
+            mbedtls_fprintf( stderr, "File size not a multiple of 16.\n" );
             goto exit;
         }
 
@@ -347,7 +352,7 @@ int main( int argc, char *argv[] )
          */
         if( fread( buffer, 1, 16, fin ) != 16 )
         {
-            polarssl_fprintf( stderr, "fread(%d bytes) failed\n", 16 );
+            mbedtls_fprintf( stderr, "fread(%d bytes) failed\n", 16 );
             goto exit;
         }
 
@@ -363,15 +368,15 @@ int main( int argc, char *argv[] )
 
         for( i = 0; i < 8192; i++ )
         {
-            sha256_starts( &sha_ctx, 0 );
-            sha256_update( &sha_ctx, digest, 32 );
-            sha256_update( &sha_ctx, key, keylen );
-            sha256_finish( &sha_ctx, digest );
+            mbedtls_md_starts( &sha_ctx );
+            mbedtls_md_update( &sha_ctx, digest, 32 );
+            mbedtls_md_update( &sha_ctx, key, keylen );
+            mbedtls_md_finish( &sha_ctx, digest );
         }
 
         memset( key, 0, sizeof( key ) );
-        aes_setkey_dec( &aes_ctx, digest, 256 );
-        sha256_hmac_starts( &sha_ctx, digest, 32, 0 );
+        mbedtls_aes_setkey_dec( &aes_ctx, digest, 256 );
+        mbedtls_md_hmac_starts( &sha_ctx, digest, 32 );
 
         /*
          * Decrypt and write the plaintext.
@@ -380,14 +385,14 @@ int main( int argc, char *argv[] )
         {
             if( fread( buffer, 1, 16, fin ) != 16 )
             {
-                polarssl_fprintf( stderr, "fread(%d bytes) failed\n", 16 );
+                mbedtls_fprintf( stderr, "fread(%d bytes) failed\n", 16 );
                 goto exit;
             }
 
             memcpy( tmp, buffer, 16 );
 
-            sha256_hmac_update( &sha_ctx, buffer, 16 );
-            aes_crypt_ecb( &aes_ctx, AES_DECRYPT, buffer, buffer );
+            mbedtls_md_hmac_update( &sha_ctx, buffer, 16 );
+            mbedtls_aes_crypt_ecb( &aes_ctx, MBEDTLS_AES_DECRYPT, buffer, buffer );
 
             for( i = 0; i < 16; i++ )
                 buffer[i] = (unsigned char)( buffer[i] ^ IV[i] );
@@ -399,7 +404,7 @@ int main( int argc, char *argv[] )
 
             if( fwrite( buffer, 1, n, fout ) != (size_t) n )
             {
-                polarssl_fprintf( stderr, "fwrite(%d bytes) failed\n", n );
+                mbedtls_fprintf( stderr, "fwrite(%d bytes) failed\n", n );
                 goto exit;
             }
         }
@@ -407,11 +412,11 @@ int main( int argc, char *argv[] )
         /*
          * Verify the message authentication code.
          */
-        sha256_hmac_finish( &sha_ctx, digest );
+        mbedtls_md_hmac_finish( &sha_ctx, digest );
 
         if( fread( buffer, 1, 32, fin ) != 32 )
         {
-            polarssl_fprintf( stderr, "fread(%d bytes) failed\n", 32 );
+            mbedtls_fprintf( stderr, "fread(%d bytes) failed\n", 32 );
             goto exit;
         }
 
@@ -422,7 +427,7 @@ int main( int argc, char *argv[] )
 
         if( diff != 0 )
         {
-            polarssl_fprintf( stderr, "HMAC check failed: wrong key, "
+            mbedtls_fprintf( stderr, "HMAC check failed: wrong key, "
                              "or file corrupted.\n" );
             goto exit;
         }
@@ -439,9 +444,9 @@ exit:
     memset( buffer, 0, sizeof( buffer ) );
     memset( digest, 0, sizeof( digest ) );
 
-    aes_free( &aes_ctx );
-    sha256_free( &sha_ctx );
+    mbedtls_aes_free( &aes_ctx );
+    mbedtls_md_free( &sha_ctx );
 
     return( ret );
 }
-#endif /* POLARSSL_AES_C && POLARSSL_SHA256_C && POLARSSL_FS_IO */
+#endif /* MBEDTLS_AES_C && MBEDTLS_SHA256_C && MBEDTLS_FS_IO */

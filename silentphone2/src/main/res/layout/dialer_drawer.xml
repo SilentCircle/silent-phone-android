@@ -19,44 +19,53 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
+        android:animateLayoutChanges="true"
         tools:context="com.silentcircle.silentphone2.fragments.DialDrawerFragment">
-
 
         <include
             layout="@layout/dialer_drawer_self_avatar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/spacing_normal"
+            />
+
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="1px"
+            android:background="?attr/sp_drawer_separator_color"
+            tools:ignore="ContentDescription"
             />
 
         <include
+            android:id="@+id/dialer_drawer_user_info"
             layout="@layout/dialer_drawer_user_info"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/spacing_normal"
+            android:visibility="gone"
+            tools:visibility="visible"
             />
 
         <com.silentcircle.messaging.views.OptionsItem
             android:id="@+id/show_oca_minutes"
             style="@style/Widget.MainDrawerOptionsItem"
-            android:layout_marginTop="@dimen/spacing_large"
             app:isCheckable="false"
             app:src="@drawable/ic_account_circle_white_24dp"
-            app:description="@string/dial_drawer_remaining_oca_minutes_description"
             app:text="@string/remaining_oca_minutes"
             android:visibility="gone"
             tools:visibility="visible"
             />
+        <!--&lt;!&ndash;app:description="@string/dial_drawer_remaining_oca_minutes_description"&ndash;&gt;-->
 
         <com.silentcircle.messaging.views.OptionsItem
             android:id="@+id/show_in_app_purchase"
             style="@style/Widget.MainDrawerOptionsItem"
             app:isCheckable="false"
             app:src="?sp_ic_in_app_purchase"
-            app:description="@string/make_payment"
             app:text="@string/in_app_purchase"
             android:visibility="gone"
             tools:visibility="visible"
             />
+        <!--&lt;!&ndash;app:description="@string/make_payment"&ndash;&gt;-->
 
         <com.silentcircle.messaging.views.OptionsItem
             android:id="@+id/dial_drawer_open_settings"
@@ -64,7 +73,54 @@
             app:isCheckable="false"
             app:src="@drawable/ic_settings_white_24dp"
             app:text="@string/settings"
-            app:description="@string/dial_drawer_settings_description"
+            />
+        <!--&lt;!&ndash;app:description="@string/dial_drawer_settings_description"&ndash;&gt;-->
+
+        <com.silentcircle.messaging.views.OptionsItem
+            android:id="@+id/dial_drawer_help_and_support"
+            style="@style/Widget.MainDrawerOptionsItem"
+            app:isCheckable="false"
+            app:src="@drawable/ic_help_white_24dp"
+            android:text="@string/sc_help"
+            />
+
+        <com.silentcircle.messaging.views.OptionsItem
+            android:id="@+id/dial_drawer_terms_of_service"
+            style="@style/Widget.MainDrawerOptionsItem"
+            app:isCheckable="false"
+            app:src="@drawable/ic_tos_white_24dp"
+            android:text="@string/sc_tos"
+            />
+
+        <com.silentcircle.messaging.views.OptionsItem
+            android:id="@+id/dial_drawer_privacy_statement"
+            style="@style/Widget.MainDrawerOptionsItem"
+            app:isCheckable="false"
+            app:src="@drawable/ic_privacy_statement_white_24dp"
+            android:text="@string/sc_privacy"
+            />
+
+        <com.silentcircle.messaging.views.OptionsItem
+            android:id="@+id/dial_drawer_manage_account"
+            style="@style/Widget.MainDrawerOptionsItem"
+            app:isCheckable="false"
+            app:src="@drawable/ic_manage_account_white_24dp"
+            app:imageMarginRight="22dp"
+            android:text="@string/sc_manage_account"
+            />
+
+        <ImageView
+            android:id="@+id/dial_drawer_action_rule"
+            android:layout_width="match_parent"
+            android:layout_height="1px"
+            android:background="?attr/sp_drawer_separator_color"
+            android:layout_marginLeft="@dimen/drawer_info_content_margin_left"
+            android:layout_marginStart="@dimen/drawer_info_content_margin_left"
+            android:layout_marginRight="@dimen/drawer_info_content_margin_left"
+            android:layout_marginEnd="@dimen/drawer_info_content_margin_left"
+            android:visibility="gone"
+            tools:visibility="visible"
+            tools:ignore="ContentDescription"
             />
 
         <com.silentcircle.messaging.views.OptionsItem
@@ -73,8 +129,10 @@
             app:isCheckable="false"
             app:src="@drawable/ic_exit_to_app_white_24dp"
             app:text="@string/go_offline"
-            app:description="@string/dial_drawer_go_offline_description"
+            android:visibility="gone"
+            tools:visibility="visible"
             />
+        <!--app:description="@string/dial_drawer_go_offline_description"-->
 
         <com.silentcircle.messaging.views.OptionsItem
             android:id="@+id/dial_drawer_wipe_phone"
@@ -82,30 +140,17 @@
             app:isCheckable="false"
             app:src="@drawable/ic_clear_white_24dp"
             app:text="@string/wipe_phone"
-            app:description="@string/dial_drawer_wipe_phone_description"
             android:visibility="gone"
             tools:visibility="visible"
             />
+        <!--app:description="@string/dial_drawer_wipe_phone_description"-->
 
         <ImageView
             android:layout_width="match_parent"
             android:layout_height="1px"
             android:background="?attr/sp_drawer_separator_color"
             android:layout_marginBottom="@dimen/spacing_large"
-            />
-
-        <include
-            layout="@layout/dialer_drawer_tos_privacy"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/spacing_large"
-            />
-
-        <ImageView
-            android:layout_width="match_parent"
-            android:layout_height="1px"
-            android:background="?attr/sp_drawer_separator_color"
-            android:layout_marginBottom="@dimen/spacing_large"
+            tools:ignore="ContentDescription"
             />
 
         <!-- information section -->
@@ -126,26 +171,32 @@
                 style="@style/Widget.Silent.SimpleText.Small"
                 android:textColor="?attr/sp_drawer_text_color"
                 android:paddingRight="@dimen/spacing_normal"
+                android:paddingEnd="@dimen/spacing_normal"
                 android:paddingTop="@dimen/spacing_normal"
-                tools:text="#39" />
+                tools:text="#39"
+                tools:ignore="RtlSymmetry" />
 
             <TextView
                 android:id="@+id/dial_drawer_build_flavor"
                 style="@style/Widget.Silent.SimpleText.Small"
                 android:textColor="?attr/sp_drawer_text_color"
                 android:paddingRight="@dimen/spacing_normal"
+                android:paddingEnd="@dimen/spacing_normal"
                 android:paddingTop="@dimen/spacing_normal"
-                tools:text="Normal" />
+                tools:text="Normal"
+                tools:ignore="RtlSymmetry" />
 
             <TextView
                 android:id="@+id/dial_drawer_build_detail"
                 style="@style/Widget.Silent.SimpleText.Small"
                 android:textColor="?attr/sp_drawer_text_color"
                 android:paddingRight="@dimen/spacing_normal"
+                android:paddingEnd="@dimen/spacing_normal"
                 android:paddingTop="@dimen/spacing_normal"
                 android:visibility="gone"
                 tools:text="some more details"
-                tools:visibility="visible" />
+                tools:visibility="visible"
+                tools:ignore="RtlSymmetry" />
 
         </LinearLayout>
 

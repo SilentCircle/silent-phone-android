@@ -90,6 +90,7 @@ unsigned char _a2u[128] = {
 		120,	121,	122,	123,	124,	125,	126,	127};
 */
 #ifdef NEEDED
+#if 0 // EA: unused function:
 static int search(int val,short *table,int size)
 {
 		int 			i;
@@ -100,6 +101,7 @@ static int search(int val,short *table,int size)
 		}
 		return (size);
 }
+#endif
 
 /*
  * linear2alaw() - Convert a 16-bit linear PCM value to 8-bit A-law
@@ -120,8 +122,8 @@ static int search(int val,short *table,int size)
  * For further information see John C. Bellamy's Digital Telephony, 1982,
  * John Wiley & Sons, pps 98-111 and 472-476.
  */
- const short seg_end[8] = {0xFF, 0x1FF, 0x3FF, 0x7FF,
-							0xFFF, 0x1FFF, 0x3FFF, 0x7FFF};
+// const short seg_end[8] = {0xFF, 0x1FF, 0x3FF, 0x7FF,
+//							0xFFF, 0x1FFF, 0x3FFF, 0x7FFF};
 
 static int seg_aend[8] = {0x1F, 0x3F, 0x7F, 0xFF,
    0x1FF, 0x3FF, 0x7FF, 0xFFF};

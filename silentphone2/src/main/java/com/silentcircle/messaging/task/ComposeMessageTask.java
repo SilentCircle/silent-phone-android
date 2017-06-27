@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2016-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,21 +27,21 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 package com.silentcircle.messaging.task;
 
+import android.location.Location;
 import android.os.AsyncTask;
 
+import com.silentcircle.messaging.model.CallData;
 import com.silentcircle.messaging.model.Conversation;
-import android.location.Location;
-
 import com.silentcircle.messaging.model.MessageStates;
 import com.silentcircle.messaging.model.event.Message;
 import com.silentcircle.messaging.repository.ConversationRepository;
-import com.silentcircle.messaging.model.CallData;
 import com.silentcircle.messaging.util.MessageUtils;
 
 public class ComposeMessageTask extends AsyncTask<String, Void, Message> {
 
     private static final String TAG = "ComposeMessageTask";
     private final boolean mShouldRequestDeliveryNotification;
+    private final boolean mIsRetained;
     private final Conversation mConversation;
     private final ConversationRepository mRepository;
     private final String mSelfUserName;
@@ -52,14 +52,10 @@ public class ComposeMessageTask extends AsyncTask<String, Void, Message> {
     public ComposeMessageTask(String self, Conversation conversation,
                               ConversationRepository repository,
                               Location location,
-                              boolean shouldRequestDeliveryNotification) {
-        mSelfUserName = self;
-        mConversation = conversation;
-        mRepository = repository;
-        mLocation = location;
-        mAttachment = null;
-        mCallData = null;
-        mShouldRequestDeliveryNotification = shouldRequestDeliveryNotification;
+                              boolean shouldRequestDeliveryNotification,
+                              boolean isRetained) {
+        this(self, conversation, repository, location, null, null,
+                shouldRequestDeliveryNotification, isRetained);
     }
 
     public ComposeMessageTask(String self, Conversation conversation,
@@ -67,7 +63,8 @@ public class ComposeMessageTask extends AsyncTask<String, Void, Message> {
                               Location location,
                               String attachment,
                               CallData callData,
-                              boolean shouldRequestDeliveryNotification) {
+                              boolean shouldRequestDeliveryNotification,
+                              boolean isRetained) {
         mSelfUserName = self;
         mConversation = conversation;
         mRepository = repository;
@@ -75,19 +72,21 @@ public class ComposeMessageTask extends AsyncTask<String, Void, Message> {
         mAttachment = attachment;
         mCallData = callData;
         mShouldRequestDeliveryNotification = shouldRequestDeliveryNotification;
+        mIsRetained = isRetained;
     }
 
     @Override
     protected Message doInBackground(String... messages) {
-        if (messages.length <= 0) {
+        if (messages == null || messages.length <= 0) {
             return null;
         }
 
         String messageText = messages[0];
         Message message = MessageUtils.composeMessage(mSelfUserName, messageText,
-                mShouldRequestDeliveryNotification, mConversation, mLocation, mAttachment, mCallData);
+                mShouldRequestDeliveryNotification, mConversation, mLocation, mAttachment,
+                mCallData, mIsRetained && !isNoteToSelf());
         message.setState(isNoteToSelf()
-                ? MessageStates.SENT
+                ? MessageStates.DELIVERED
                 : (mConversation.isLocationEnabled()
                         ? MessageStates.COMPOSING : MessageStates.COMPOSED));
         return save(message);

@@ -27,7 +27,7 @@ import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
-import android.util.Log;
+import com.silentcircle.logs.Log;
 
 import com.google.common.collect.Lists;
 import com.silentcircle.common.database.NoNullCursorAsyncQueryHandler;

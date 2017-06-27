@@ -1,7 +1,7 @@
 /*
 Created by Janis Narbuts
 Copyright (C) 2004-2012, Tivi LTD, www.tiviphone.com. All rights reserved.
-Copyright (C) 2012-2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2012-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,7 +27,6 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-
 #include <string.h>
 #include "CTLangStrings.h"
 
@@ -550,6 +549,7 @@ short * getLine(short *line, short *end, char *name, int iMaxNameLen, int &iName
       while(s[0]<' ')s++;
       
    }
+/* EA: code not executed
    while(0){
       //<=' '
       int iLastC=val->getChar(val->getLen()-1);
@@ -557,7 +557,7 @@ short * getLine(short *line, short *end, char *name, int iMaxNameLen, int &iName
       if(iLastC=='\n')break;
       val->remLastChar();
    }
-   
+ */
    return s;
 }
 int CTLangStrings::loadLang(char *p, int iLen){
@@ -581,6 +581,7 @@ int CTLangStrings::loadLang(char *p, int iLen){
    short *sh=new short[(iLen>>1)+2];
    
    int iDataLen=(iLen+1)>>1;
+/* EA: code not executed:
    if(0&& (iLen&1)==0){
       char *tmp=p;
       while(*tmp!='l' && tmp[1]!=0){
@@ -596,8 +597,9 @@ int CTLangStrings::loadLang(char *p, int iLen){
       iDataLen++;
    }
    else{
+ */
       memcpy(sh,p+2,iLen-2);
-   }
+//   }
    
    //debugss("loadLang3",1,1);
    short *end=sh+iDataLen;
@@ -634,7 +636,7 @@ int CTLangStrings::loadLang(char *p, int iLen){
    }
    
 endFnc:
-   delete sh;
+   delete[] sh;
    return 0;
 }
 

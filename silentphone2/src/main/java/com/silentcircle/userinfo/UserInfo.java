@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2016-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -25,11 +25,10 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-
 package com.silentcircle.userinfo;
 
 import android.content.Context;
-import android.util.Log;
+import com.silentcircle.logs.Log;
 
 import com.google.gson.TypeAdapter;
 import com.google.gson.annotations.SerializedName;
@@ -46,12 +45,55 @@ import java.io.IOException;
  * This is a class that has a 1:1 representation of the "v1/me" API as classes,
  * meant to be used in conjunction with the {@link com.google.gson.Gson} library
  * for cleanliness and excellent maintainability
- * {"display_alias": "nodid2", "display_name": "nodid2", "uuid": "nodid2",
- * "devices": {"ffb980158c0d45b7098fb3c85637ccf7": {"prekeys": 1364}, "44935f4beeeac03dae8e8afb8d6567ec": {"prekeys": 99}, "3754f9ad5fad2f5658105a5aa48a7616": {"prekeys": 91}, "b6af036da117da378bb5c54d3cc3997b": {"prekeys": 48}},
- * "display_tn": null, "avatar_url": null,
- * "permissions": {"maximum_burn_sec": 7776000, "outbound_calling_pstn": false, "outbound_calling": true, "create_conference": true, "initiate_video": true, "send_attachment": true},
- * "subscription": {"usage_details": {"minutes_left": 0, "base_minutes": 0, "current_modifier": 0}, "expires": "2016-07-08T00:00:00Z", "autorenew": true, "state": "paying", "model": "plan", "balance": {"amount": "0.00", "unit": "USD"}}}
-
+ *
+ * {
+ *   "display_alias": "nodid1",
+ *   "display_name": "nodid1",
+ *   "uuid": "nodid1",
+ *   "dr_enabled": false,
+ *   "display_plan": "Silent Circle Mobile (Annual)",
+ *   "devices": {
+ *     "d3c7ce9ef00a86c1184377348e66452c": {"prekeys": 86},
+ *     "16716b81f2c49328c6ece9365e755b7f": {"prekeys": 100}
+ *   },
+ *   "display_tn": null,
+ *   "avatar_url": null,
+ *   "display_organization": null,
+ *   "permissions": {
+ *     "maximum_burn_sec": 7776000,
+ *     "outbound_calling_pstn": false,
+ *     "outbound_calling": true,
+ *     "create_conference": true,
+ *     "outbound_messaging": true,
+ *     "send_attachment": true,
+ *     "initiate_video": true
+ *   },
+ *   "subscription":{
+ *     "usage_details": {
+ *       "minutes_left": 0,
+ *       "base_minutes": 0,
+ *       "current_modifier": 0
+ *     },
+ *     "expires": "2018-07-08T00:00:00Z",
+ *     "autorenew": true,
+ *     "state": "paying",
+ *     "model": "plan",
+ *     "balance": {
+ *       "amount": "0.00",
+ *       "unit": "USD"
+ *     }
+ *   },
+ *   "data_retention": {
+ *     "for_org_name": "Subman",
+ *     "retained_data": {
+ *       "attachment_plaintext": false,
+ *       "call_metadata": true,
+ *       "call_plaintext": false,
+ *       "message_metadata": true,
+ *       "message_plaintext": false
+ *     }
+ *   }
+ * }
  */
 @SuppressWarnings("unused")
 public class UserInfo {
@@ -59,10 +101,14 @@ public class UserInfo {
     private String display_tn;
     private String display_alias;
     private String display_name;
+    private String display_plan;
+    private String display_organization;
     private String avatar_url;
+    private boolean dr_enabled;
 
     private Subscription subscription;
     private Permissions permissions;
+    private DataRetention data_retention;
 
     @SerializedName("devices")
     private DeviceInfoMe devices;
@@ -135,6 +181,7 @@ public class UserInfo {
     public class Permissions {
         private boolean outbound_calling_pstn;
         private boolean outbound_calling;
+        private boolean outbound_messaging;
         private boolean initiate_video;
         private boolean create_conference;
         private boolean send_attachment;
@@ -146,6 +193,10 @@ public class UserInfo {
 
         public boolean isOutboundCalling() {
             return outbound_calling;
+        }
+
+        public boolean isOutboundMessaging() {
+            return outbound_messaging;
         }
 
         public boolean isInitiateVideo() {
@@ -165,6 +216,75 @@ public class UserInfo {
         }
     }
 
+    public class DataRetention {
+        private String for_org_name;
+        private RetentionFlags retained_data;
+        private BlockRetentionFlags block_retention_of;
+
+        public String getForOrgName() {
+            return for_org_name;
+        }
+
+        public RetentionFlags getRetentionFlags() {
+            return retained_data;
+        }
+
+        public BlockRetentionFlags getBlockRetentionFlags() {
+            return block_retention_of;
+        }
+
+        public class RetentionFlags {
+            private boolean attachment_plaintext;
+            private boolean call_plaintext;
+            private boolean call_metadata;
+            private boolean message_metadata;
+            private boolean message_plaintext;
+
+            public boolean isAttachmentPlaintext() {
+                return attachment_plaintext;
+            }
+
+            public boolean isCallMetadata() {
+                return call_metadata;
+            }
+
+            public boolean isCallPlaintext() {
+                return call_plaintext;
+            }
+
+            public boolean isMessageMetadata() {
+                return message_metadata;
+            }
+
+            public boolean isMessagePlaintext() {
+                return message_plaintext;
+            }
+
+        }
+
+        public class BlockRetentionFlags {
+            private boolean remote_metadata;
+            private boolean remote_data;
+            private boolean local_metadata;
+            private boolean local_data;
+
+            public boolean isRemoteMetadataBlocked() {
+                return remote_metadata;
+            }
+
+            public boolean isRemoteDataBlocked() {
+                return remote_data;
+            }
+
+            public boolean isLocalMetadataBlocked() {
+                return local_metadata;
+            }
+
+            public boolean isLocalDataBlocked() {
+                return local_data;
+            }
+        }
+    }
     public String getUuid() {
         return uuid;
     }
@@ -181,8 +301,20 @@ public class UserInfo {
         return display_name;
     }
 
+    public String getDisplayPlan() {
+        return display_plan;
+    }
+
+    public String getDisplayOrg() {
+        return display_organization;
+    }
+
     public String getAvatarUrl() {
         return avatar_url;
+    }
+
+    public boolean getDrEnabled() {
+        return dr_enabled;
     }
 
     public Subscription getSubscription() {
@@ -196,6 +328,8 @@ public class UserInfo {
     public DeviceInfoMe getDevices() {
         return devices;
     }
+
+    public DataRetention getDataRetention() { return data_retention; }
 
 
     /*

@@ -26,15 +26,12 @@
             android:id="@+id/main_toolbar"
             android:layout_height="wrap_content"
             android:layout_width="match_parent"
-            android:minHeight="?attr/actionBarSize"
-            android:background="?sp_actionbar_color"
-            app:titleTextAppearance="?sp_ab_title_style"
-            app:subtitleTextAppearance="?sp_ab_subtitle_style" />
+            style="@style/Toolbar" />
 
-    <ImageView
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="@color/sc_ng_text_dark" />
+    <!--<ImageView-->
+        <!--android:layout_width="match_parent"-->
+        <!--android:layout_height="1dp"-->
+        <!--android:background="@color/sc_ng_text_dark" />-->
 
     <com.silentcircle.contacts.widget.SlidingTabLayout
             android:id="@+id/sliding_tabs"

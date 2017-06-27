@@ -1,17 +1,33 @@
+/*
+Copyright 2016-2017 Silent Circle, LLC
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
 #include <stdint.h>
 #include <string.h>
 
 static int base64encode(const void* data_buf, size_t dataLength, char* result, size_t resultSize);
 static int base64decode (const char *in, size_t inLen, unsigned char *out, size_t *outLen);
 
-size_t b64Encode(const uint8_t *binData, size_t binLength, char *b64Data, size_t b64length)
-{
+size_t b64Encode(const uint8_t *binData, size_t binLength, char *b64Data, size_t b64length) {
     if (binLength == 0) {
         b64Data[0] = 0;
         return 0;
     }
 
-    base64encode(binData, binLength, b64Data, b64length);
+    if (base64encode(binData, binLength, b64Data, b64length) != 0) {
+        return 0;
+    }
     return strlen(b64Data);
 }
 
@@ -20,9 +36,11 @@ size_t b64Decode(const char *b64Data, size_t b64length, uint8_t *binData, size_t
     if (b64length == 0)
         return 0;
 
-    size_t codelength = binLength;
-    base64decode (b64Data, b64length, binData, &codelength);
-    return codelength;
+    size_t codeLength = binLength;
+    if (base64decode (b64Data, b64length, binData, &codeLength) != 0) {
+        return 0;
+    }
+    return codeLength;
 }
 
  
@@ -190,7 +208,7 @@ size_t hex2bin(const char* src, uint8_t* target)
         int32_t dl = char2int(src[1]);
         if (dh == -1 || dl == -1)
             return (size_t)-1;
-        *(target++) = (uint8_t)(dh << 4 | (dl & 0xf));
+        *target++ = (uint8_t)(dh << 4 | (dl & 0xf));
         src += 2;
     }
     return 0;

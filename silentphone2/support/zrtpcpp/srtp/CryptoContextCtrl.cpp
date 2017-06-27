@@ -368,7 +368,7 @@ void CryptoContextCtrl::update(uint32_t index)
         replay_window |= 1;
     }
     else {
-        replay_window |= ( 1 << -delta );
+        replay_window |= ( (uint64_t)1 << -delta );
     }
     if (index > s_l)
         s_l = index;

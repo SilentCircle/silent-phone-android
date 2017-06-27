@@ -37,7 +37,7 @@
             android:id="@android:id/list"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:filterTouchesWhenObscured="true"
+            android:filterTouchesWhenObscured="false"
             android:layout_marginStart="?attr/contact_browser_list_padding_left"
             android:layout_marginLeft="?attr/contact_browser_list_padding_left"
             android:layout_marginEnd="?attr/contact_browser_list_padding_right"

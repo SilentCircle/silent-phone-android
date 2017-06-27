@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2014-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -54,8 +54,6 @@ package com.silentcircle.messaging.util;
  *
  */
 
-import android.util.Log;
-
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
@@ -97,6 +95,10 @@ public class UUIDGen
      */
     public static UUID makeType1UUID() {
         return new UUID(instance.createTimeSafe(), instance.getSequenceNode());
+    }
+
+    public static UUID makeType1UUID(long when) {
+        return new UUID(instance.createTimeUnsafe(when), instance.getSequenceNode());
     }
 
     /** creates a type 1 uuid from raw bytes. */

@@ -36,7 +36,7 @@
  */
 
 #include <openssl/hmac.h>
-#include <zrtp/crypto/hmac256.h>
+#include <zrtp/crypto/hmac384.h>
 
 void hmac_sha384(uint8_t* key, uint32_t key_length, uint8_t* data, int32_t data_length, uint8_t* mac, uint32_t* mac_length)
 {

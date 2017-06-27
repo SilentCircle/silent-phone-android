@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+
+    <gradient
+        android:startColor="@color/chat_outgoing_message_color_light"
+        android:endColor="@color/chat_outgoing_message_color_light_transparent"
+        android:type="linear" />
+
+    <!--<size-->
+        <!--android:width="150dp"-->
+        <!--android:height=""/>-->
+</shape>

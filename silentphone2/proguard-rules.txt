@@ -21,8 +21,12 @@
 }
 
 # Implicit messaging native callbacks
--keep class axolotl.AxolotlNative {
+-keep class zina.ZinaNative {
     abstract <methods>;
+}
+
+-keep public class zina.ZinaNative$* {
+    *;
 }
 
 # SQLCipher package referenced in native libraries
@@ -38,7 +42,11 @@
 -keep class com.silentcircle.userinfo.SipNotifyHandler {
     *;
 }
-
+-keep class com.silentcircle.messaging.services.ZinaMessaging {
+    int groupMsgReceive(byte[], byte[], byte[]);
+    int groupCmdReceive(byte[]);
+    void groupStateCallback(int, byte[]);
+}
 # ICU library
 -keep class com.ibm.icu.** {
     *;

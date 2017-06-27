@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2014-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -28,34 +28,38 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 package com.silentcircle.accounts;
 
+import android.Manifest;
 import android.accounts.Account;
 import android.accounts.AccountAuthenticatorResponse;
 import android.accounts.AccountManager;
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.app.Dialog;
-import android.app.DialogFragment;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.support.v7.app.AlertDialog;
+import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.text.InputType;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
 
+import com.silentcircle.common.util.ExplainPermissionDialog;
 import com.silentcircle.keymanagersupport.KeyManagerSupport;
+import com.silentcircle.logs.Log;
 import com.silentcircle.silentphone2.R;
+import com.silentcircle.silentphone2.activities.DialerActivity;
+import com.silentcircle.silentphone2.activities.DialogHelperActivity;
 import com.silentcircle.silentphone2.activities.ProvisioningActivity;
 import com.silentcircle.silentphone2.services.TiviPhoneService;
 import com.silentcircle.silentphone2.util.ConfigurationUtilities;
@@ -71,7 +75,7 @@ import java.util.Arrays;
  *
  * Created by werner on 09.04.15.
  */
-public class AuthenticatorActivity extends AppCompatActivity {
+public class AuthenticatorActivity extends AppCompatActivity implements ExplainPermissionDialog.AfterReading {
     private AccountAuthenticatorResponse mAccountAuthenticatorResponse;
     private Bundle mResultBundle;
 
@@ -86,10 +90,16 @@ public class AuthenticatorActivity extends AppCompatActivity {
 
     private static final int KEY_STORE_CHECK = 1004;
 
+    private static final String KEY_MANAGER_CHECKED = "key_manager_checked";
+    private static final String KEY_MANAGER_CHECK_ACTIVE = "key_manager_check_active";
+
     private AccountManager mAccountManager;
     private Bundle mBlackPhoneArgs;
     private Bundle mOptions;
     private boolean mAddAccountEntry;
+    private boolean mOnBoardingSeen;
+    private boolean mKeyManagerChecked;
+    private boolean mKeyManagerCheckActive;
 
     private final Bundle mUserData = new Bundle();
 
@@ -127,11 +137,80 @@ public class AuthenticatorActivity extends AppCompatActivity {
             mAccountAuthenticatorResponse.onRequestContinued();
         }
 
+        if (icicle != null) {
+            mOnBoardingSeen = icicle.getBoolean(ProvisioningActivity.ONBOARDING_SEEN, false);
+            mKeyManagerChecked = icicle.getBoolean(KEY_MANAGER_CHECKED, false);
+            mKeyManagerCheckActive = icicle.getBoolean(KEY_MANAGER_CHECK_ACTIVE);
+        }
+
         final Intent intent = getIntent();
         mOptions = intent.getBundleExtra(ARG_OPTIONS_BUNDLE);
         mAccountManager = AccountManager.get(getBaseContext());
         mAddAccountEntry = intent.getBooleanExtra(ARG_IS_ADDING_NEW_ACCOUNT, false);
+
+        checkPhoneStatePermissions();
+    }
+
+    private void onCreateAfterPermission() {
         checkAndSetKeyManager();
+    }
+
+    @Override
+    public void explanationRead(final int token, final Bundle callerBundle) {
+        switch (token) {
+            case DialerActivity.PERMISSIONS_REQUEST_READ_PHONE_STATE:
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_PHONE_STATE}, token);
+                break;
+            case DialerActivity.PERMISSIONS_REQUEST_EXIT:
+                finish();
+                break;
+            default:
+                break;
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String permissions[], @NonNull int[] grantResults) {
+        // Occurs on rotation of permission dialog
+        if (permissions.length == 0) {
+            return;
+        }
+
+        switch (requestCode) {
+            case DialerActivity.PERMISSIONS_REQUEST_READ_PHONE_STATE: {
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    onCreateAfterPermission();
+                }
+                else {
+                    ExplainPermissionDialog.showExplanation(this, DialerActivity.PERMISSIONS_REQUEST_EXIT,
+                            getString(R.string.permission_main_not_granted_title),
+                            getString(R.string.permission_main_not_granted_explanation),
+                            null);
+                }
+                break;
+            }
+        }
+    }
+
+    private void checkPhoneStatePermissions() {
+        PackageManager pm = getPackageManager();
+
+        boolean needPhoneStatePermission = pm.hasSystemFeature(PackageManager.FEATURE_TELEPHONY);
+        if (needPhoneStatePermission &&
+                (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_PHONE_STATE) != PackageManager.PERMISSION_GRANTED)) {
+
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.READ_PHONE_STATE)) {
+                ExplainPermissionDialog.showExplanation(this, DialerActivity.PERMISSIONS_REQUEST_READ_PHONE_STATE,
+                        getString(R.string.permission_phone_title), getString(R.string.permission_phone_explanation), null);
+            }
+            else {
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_PHONE_STATE},
+                        DialerActivity.PERMISSIONS_REQUEST_READ_PHONE_STATE);
+            }
+        }
+        else {
+            onCreateAfterPermission();
+        }
     }
 
     /**
@@ -172,6 +251,9 @@ public class AuthenticatorActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == KEY_STORE_CHECK) {
+            if (!mKeyManagerCheckActive)
+                return;
+            mKeyManagerCheckActive = false;
             if (resultCode != RESULT_OK) {
                 Log.w(TAG, "KeyManager READY request failed - exit.");
                 finish();
@@ -181,6 +263,15 @@ public class AuthenticatorActivity extends AppCompatActivity {
             }
         }
     }
+
+    @Override
+    public void onSaveInstanceState (@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putBoolean(ProvisioningActivity.ONBOARDING_SEEN, mOnBoardingSeen);
+        outState.putBoolean(KEY_MANAGER_CHECKED, mKeyManagerChecked);
+        outState.putBoolean(KEY_MANAGER_CHECK_ACTIVE, mKeyManagerCheckActive);
+    }
+
         // We may need to enhance the "checkKeyManager" process in case we use keys to encrypt
     // the config files. Then we may need to check more often and at different places, needs to
     // be investigated.
@@ -190,7 +281,13 @@ public class AuthenticatorActivity extends AppCompatActivity {
             Log.w(TAG, "Cannot register with KeyManager.");
             finish();
         }
-        startActivityForResult(KeyManagerSupport.getKeyManagerReadyIntent(), KEY_STORE_CHECK);
+        if (!mKeyManagerChecked) {
+            mKeyManagerCheckActive = true;
+            startActivityForResult(KeyManagerSupport.getKeyManagerReadyIntent(), KEY_STORE_CHECK);
+        }
+        else {
+            keyManagerChecked();
+        }
     }
 
     // This is the second step of the of onCreate flow.
@@ -198,6 +295,7 @@ public class AuthenticatorActivity extends AppCompatActivity {
     // provisioning at this point.
     @SuppressLint("CommitPrefEdits")
     private void keyManagerChecked() {
+        mKeyManagerChecked = true;
         final Intent intent = getIntent();
 
         byte[] data = KeyManagerSupport.getSharedKeyData(getContentResolver(), ConfigurationUtilities.getShardAuthTag());
@@ -220,7 +318,8 @@ public class AuthenticatorActivity extends AppCompatActivity {
                         accountName = name;
                     }
                     else {
-                        showErrorInfo(getString(R.string.account_missing_name));
+                        DialogHelperActivity.showDialog(R.string.provisioning_error, R.string.account_missing_name, android.R.string.ok, -1);
+                        provisioningCancel();
                         return;
                     }
                 }
@@ -270,9 +369,7 @@ public class AuthenticatorActivity extends AppCompatActivity {
 
         mDeviceId = TiviPhoneService.getInstanceDeviceId(this, true);
 
-        if (mDeviceId != null) {
-            mDeviceId = Utilities.hashMd5(mDeviceId);
-        }
+        mDeviceId = Utilities.hashMd5(mDeviceId);
         if (mDeviceId == null) {
             finish();
             return;
@@ -297,6 +394,15 @@ public class AuthenticatorActivity extends AppCompatActivity {
             String accountName = intent.getStringExtra(AccountManager.KEY_ACCOUNT_NAME);
             final Account account = new Account(accountName, intent.getStringExtra(AccountManager.KEY_ACCOUNT_TYPE));
             // Creating the account on the device
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
+                if (Build.VERSION.RELEASE.equals("N") && Build.VERSION.PREVIEW_SDK_INT == 3) {
+                    // FIXME: See https://code.google.com/p/android/issues/detail?id=210466
+                    // Accounts are not removed when uninstalling on N preview 3
+                    try {
+                        mAccountManager.removeAccountExplicitly(account);
+                    } catch (Exception ignore) {}
+                }
+            }
             mAccountManager.addAccountExplicitly(account, "dummyPassword", null);
         }
         else {
@@ -308,11 +414,15 @@ public class AuthenticatorActivity extends AppCompatActivity {
     }
 
     public void backStep() {
-        getFragmentManager().popBackStack();
+        try {
+            getFragmentManager().popBackStack();
+        } catch (IllegalStateException ignore) {}
     }
 
     public void clearBackStack() {
-        getFragmentManager().popBackStackImmediate(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+        try {
+            getFragmentManager().popBackStackImmediate(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+        } catch (IllegalStateException ignore) {}
     }
 
     public JSONObject getJsonHolder() {
@@ -382,7 +492,12 @@ public class AuthenticatorActivity extends AppCompatActivity {
         FragmentTransaction ft = fm.beginTransaction();
         AccountStep1 step = (AccountStep1)fm.findFragmentByTag(ProvisioningActivity.STEP1_TAG);
         if (step == null) {
+            if (mBlackPhoneArgs != null) {
+                mBlackPhoneArgs.putBoolean(ProvisioningActivity.ONBOARDING_SEEN, mOnBoardingSeen);
+            }
             step = AccountStep1.newInstance(mBlackPhoneArgs);
+        } else {
+            step.setOnBoardingSeen(mOnBoardingSeen);
         }
         ft.replace(R.id.ProvisioningMainContainer, step, ProvisioningActivity.STEP1_TAG).commitAllowingStateLoss();
 
@@ -469,18 +584,6 @@ public class AuthenticatorActivity extends AppCompatActivity {
         mUserData.putString(AccountConstants.DEVICE_ID, mDeviceId);
     }
 
-    public void showErrorInfo(String msg) {
-        ErrorMsgDialogFragment errMsg = ErrorMsgDialogFragment.newInstance(msg);
-        FragmentManager fragmentManager = getFragmentManager();
-        errMsg.show(fragmentManager, "SilentPhoneProvisioningError");
-    }
-
-    public void showInputInfo(String msg) {
-        InfoMsgDialogFragment infoMsg = InfoMsgDialogFragment.newInstance(msg);
-        FragmentManager fragmentManager = getFragmentManager();
-        infoMsg.show(fragmentManager, "SilentPhoneProvisioningInfo");
-    }
-
     public void showPasswordCheck(EditText passwordInput, boolean checked) {
         if (checked) {
             passwordInput.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS |
@@ -493,97 +596,15 @@ public class AuthenticatorActivity extends AppCompatActivity {
             passwordInput.setSelection(passwordInput.getText().length());
     }
 
+    public void setOnBoardingSeen(boolean onBoardingSeen) {
+        mOnBoardingSeen = onBoardingSeen;
+    }
+
     static boolean checkPermissions(final Bundle options, Context ctx) {
         PackageManager pm = ctx.getPackageManager();
         final String callerPackage = options.getString(AccountManager.KEY_ANDROID_PACKAGE_NAME, null);
         final String myPackage = ctx.getPackageName();
         int result = pm.checkSignatures(myPackage, callerPackage);
         return result == PackageManager.SIGNATURE_MATCH;
-    }
-
-
-    /*
-     * Dialog classes to display Error and Information messages.
-     */
-    private static String MESSAGE = "message";
-    public static class ErrorMsgDialogFragment extends DialogFragment {
-        private AuthenticatorActivity mParent;
-
-        public static ErrorMsgDialogFragment newInstance(String msg) {
-            ErrorMsgDialogFragment f = new ErrorMsgDialogFragment();
-
-            Bundle args = new Bundle();
-            args.putString(MESSAGE, msg);
-            f.setArguments(args);
-
-            return f;
-        }
-
-        public ErrorMsgDialogFragment() {
-        }
-
-        @Override
-        public void onAttach(Activity activity) {
-            super.onAttach(activity);
-            mParent = (AuthenticatorActivity)activity;
-        }
-
-        @Override
-        public Dialog onCreateDialog(Bundle savedInstanceState) {
-            // Use the Builder class for convenient dialog construction
-            AlertDialog.Builder builder = new AlertDialog.Builder(mParent);
-            Bundle args = getArguments();
-            if (args == null)
-                return null;
-            builder.setTitle(getString(R.string.provisioning_error))
-                    .setMessage(args.getString(MESSAGE))
-                    .setPositiveButton(getString(R.string.close_dialog), new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int id) {
-                            mParent.provisioningCancel();
-                        }
-                    });
-            // Create the AlertDialog object and return it
-            return builder.create();
-        }
-    }
-
-    public static class InfoMsgDialogFragment extends DialogFragment {
-        private Activity mParent;
-
-        public static InfoMsgDialogFragment newInstance(String msg) {
-            InfoMsgDialogFragment f = new InfoMsgDialogFragment();
-
-            Bundle args = new Bundle();
-            args.putString(MESSAGE, msg);
-            f.setArguments(args);
-
-            return f;
-        }
-
-        public InfoMsgDialogFragment() {
-        }
-
-        @Override
-        public void onAttach(Activity activity) {
-            super.onAttach(activity);
-            mParent = activity;
-        }
-
-        @Override
-        public Dialog onCreateDialog(Bundle savedInstanceState) {
-            // Use the Builder class for convenient dialog construction
-            AlertDialog.Builder builder = new AlertDialog.Builder(mParent);
-            Bundle args = getArguments();
-            if (args == null)
-                return null;
-            builder.setTitle(getString(R.string.provisioning_info))
-                    .setMessage(args.getString(MESSAGE))
-                    .setPositiveButton(getString(R.string.confirm_dialog), new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int id) {
-                        }
-                    });
-            // Create the AlertDialog object and return it
-            return builder.create();
-        }
     }
 }

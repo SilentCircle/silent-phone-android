@@ -1,7 +1,7 @@
 /*
 Created by Janis Narbuts
 Copyright (C) 2004-2012, Tivi LTD, www.tiviphone.com. All rights reserved.
-Copyright (C) 2012-2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2012-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,7 +27,6 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-
 #ifndef _C_T_RTP_QUEUE_H
 #define _C_T_RTP_QUEUE_H
 
@@ -57,7 +56,7 @@ public:
    }
    void relBytes(unsigned char *p, int iBytes){
       iReleased+=iBytes;
-      iRelPos = p - &buf[0]; 
+      iRelPos = (int)(p - &buf[0]);
       if(iRelPos<0 || iRelPos+iBytes>eSize) puts("ERR relBytes");}
 };
 
@@ -427,7 +426,8 @@ public:
          static int dbg;
          if((dbg&127)==1){
             
-            
+
+#pragma mark audio stats log
             if(si<100 || dJit>0.2 || (dbg&((1<<12)-1))==1){
                t_logf(log_audio_stats, __FUNCTION__,"%p [bp=%u pp=%u dJit=%.3f ns=%d si=%d tq=%d  mb=%d pb=%d ef=%x errs=%d lr=%u spdq=%u mem=%d pf=%d]"
                       ,getEncryptedPtr_debug(this)
@@ -607,8 +607,8 @@ private:
          }
          int d = (int)(uiTS_recv - qPack[uiPos & eMaxPackInQueue].uiTS);
          int cd=abs(d - iNeedSamplesInBuf);
-         
-         printf("[cd=%d bd=%d ns=%d]\n",cd,bd,iNeedSamplesInBuf);
+#pragma mark cd= bd= ns= log
+//         printf("[cd=%d bd=%d ns=%d]\n",cd,bd,iNeedSamplesInBuf);
          
          if(d>0 && cd<bd){
             bd=cd;
@@ -634,7 +634,8 @@ private:
          }
       }
       else {
-         printf("[reset failed try later %d]\n",cnt);
+#pragma mark reset failed try log
+//         printf("[reset failed try later %d]\n",cnt);
          iResetPos = 1;
          if(!uiPlayPos)
             uiPlayPos = uiTS_recv -  (unsigned int)iNeedSamplesInBuf;

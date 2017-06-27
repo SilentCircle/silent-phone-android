@@ -1,12 +1,27 @@
+/*
+Copyright 2016-2017 Silent Circle, LLC
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
 #include "AppRepository.h"
 
 #include <iostream>
 #include <mutex>          // std::mutex, std::unique_lock
+#include <algorithm>
 
 #include <cryptcommon/ZrtpRandom.h>
 
-#include "../logging/AxoLogging.h"
-
+#include "../logging/ZinaLogging.h"
 
 /* *****************************************************************************
  * A few helping macros. 
@@ -41,7 +56,9 @@
 #define SQLITE_PREPARE sqlite3_prepare
 #endif
 
-#define DB_VERSION 2
+#define DB_VERSION 3
+
+using namespace std;
 
 static mutex sqlLock;
 
@@ -116,6 +133,7 @@ static const char* selectObjectsMsg = "SELECT data FROM objects WHERE event=?1 A
 static const char* deleteObjectSql = "DELETE FROM objects WHERE objectid=?1 AND event=?2 AND conv=?3;";
 static const char* deleteObjectMsgSql = "DELETE FROM objects WHERE event=?1 AND conv=?2;";
 
+static const char* deleteObjectsWithNameSql = "DELETE FROM objects WHERE conv=?1;";
 
 /* *****************************************************************************
  * SQL statements to process the attahcment status table.
@@ -134,7 +152,18 @@ static const char* deleteAttachmentStatusMsgIdSql = "DELETE FROM attachmentStatu
 static const char* deleteAttachmentStatusMsgIdSql2 = "DELETE FROM attachmentStatus WHERE msgId=?1 AND partnerName=?2;";
 static const char* deleteAttachmentStatusWithStatusSql = "DELETE FROM attachmentStatus WHERE status=?1;";
 
-using namespace axolotl;
+static const char* deleteAttachmentStatusWithNameSql = "DELETE FROM attachmentStatus WHERE partnerName=?1;";
+
+/* *****************************************************************************
+ * SQL statements to process the pending data retention event metadata
+ */
+static const char *createDrPending =
+  "CREATE TABLE IF NOT EXISTS drPendingEvent ( startTime INTEGER, data BLOB );";
+static const char* insertDrPendingSql = "INSERT OR REPLACE INTO drPendingEvent (startTime, data ) VALUES(?1, ?2);";
+static const char* selectDrPendingSql = "SELECT rowid,data from drPendingEvent ORDER BY startTime ASC;";
+static const char* deleteDrPendingSql = "DELETE FROM drPendingEvent where rowid = ?1";
+
+using namespace zina;
 
 static void *(*volatile memset_volatile)(void *, int, size_t) = memset;
 
@@ -224,10 +253,10 @@ AppRepository::~AppRepository()
 
 int AppRepository::openStore(const std::string& name)
 {
-    LOGGER(INFO, __func__ , " -->");
+    LOGGER(DEBUGGING, __func__ , " -->");
     unique_lock<mutex> lck(sqlLock);
     if (ready) {
-        LOGGER(INFO, __func__ , " <-- is ready");
+        LOGGER(DEBUGGING, __func__ , " <-- is ready");
         return SQLITE_OK;
     }
 
@@ -240,11 +269,13 @@ int AppRepository::openStore(const std::string& name)
         LOGGER(ERROR, __func__ , " <-- error code: ", sqlCode_);
         return(sqlCode_);
     }
-    if (keyData_ != NULL)
+    if (keyData_ != NULL) {
         sqlite3_key(db, keyData_->data(), static_cast<int>(keyData_->size()));
 
-    memset_volatile((void*)keyData_->data(), 0, keyData_->size());
-    delete keyData_; keyData_ = NULL;
+        memset_volatile((void *) keyData_->data(), 0, keyData_->size());
+        delete keyData_;
+        keyData_ = NULL;
+    }
 
     enableForeignKeys(db);
 
@@ -267,7 +298,7 @@ int AppRepository::openStore(const std::string& name)
     setUserVersion(db, DB_VERSION);
     ready = true;
     lck.unlock();
-    LOGGER(INFO, __func__ , " <--");
+    LOGGER(DEBUGGING, __func__ , " <--");
     return SQLITE_OK;
 }
 
@@ -280,10 +311,10 @@ static const char *lookupTables = "SELECT name FROM sqlite_master WHERE type='ta
 
 int32_t AppRepository::updateDb(int32_t oldVersion, int32_t newVersion) 
 {
-    LOGGER(INFO, __func__, " -->");
+    LOGGER(DEBUGGING, __func__, " -->");
     sqlite3_stmt* stmt;
 
-    if (oldVersion < 2) {
+    if (oldVersion == 1) {
         // check if attachmentStatus table is already available
         SQLITE_PREPARE(db, lookupTables, -1, &stmt, NULL);
         int32_t rc = sqlite3_step(stmt);
@@ -309,17 +340,28 @@ int32_t AppRepository::updateDb(int32_t oldVersion, int32_t newVersion)
         }
         oldVersion = 2;
     }
+    if (oldVersion == 2) {
+        // Add data retention tables
+        sqlCode_ = SQLITE_PREPARE(db, createDrPending, -1, &stmt, NULL);
+        sqlCode_ = sqlite3_step(stmt);
+        if (sqlCode_ != SQLITE_DONE) {
+            LOGGER(ERROR, __func__, ", SQL error: ", sqlCode_);
+            return sqlCode_;
+        }
+        sqlite3_finalize(stmt);
+        oldVersion = 3;
+    }
     if (oldVersion != newVersion) {
         LOGGER(ERROR, __func__, ", Version numbers mismatch");
         return SQLITE_ERROR;
     }
-    LOGGER(INFO, __func__, " <--");
+    LOGGER(DEBUGGING, __func__, " <--");
     return SQLITE_OK;
 }
 
 int AppRepository::createTables()
 {
-    LOGGER(INFO, __func__ , " -->");
+    LOGGER(DEBUGGING, __func__ , " -->");
     sqlite3_stmt* stmt;
 
     sqlCode_ = SQLITE_PREPARE(db, createConversations, -1, &stmt, NULL);
@@ -354,7 +396,15 @@ int AppRepository::createTables()
     }
     sqlite3_finalize(stmt);
 
-    LOGGER(INFO, __func__ , " <--");
+    sqlCode_ = SQLITE_PREPARE(db, createDrPending, -1, &stmt, NULL);
+    sqlCode_ = sqlite3_step(stmt);
+    if (sqlCode_ != SQLITE_DONE) {
+        ERRMSG;
+        goto cleanup;
+    }
+    sqlite3_finalize(stmt);
+
+    LOGGER(DEBUGGING, __func__ , " <--");
     return SQLITE_OK;
 
 cleanup:
@@ -366,7 +416,7 @@ cleanup:
 
 int32_t AppRepository::storeConversation(const string& name, const string& conversation)
 {
-    LOGGER(INFO, __func__ , " -->");
+    LOGGER(DEBUGGING, __func__ , " -->");
     sqlite3_stmt *stmt;
     int32_t sqlResult;
 
@@ -392,13 +442,13 @@ int32_t AppRepository::storeConversation(const string& name, const string& conve
 cleanup:
     sqlite3_finalize(stmt);
     sqlCode_ = sqlResult;
-    LOGGER(INFO, __func__ , " <-- ", sqlResult);
+    LOGGER(DEBUGGING, __func__ , " <-- ", sqlResult);
     return sqlResult;
 }
 
 int32_t AppRepository::loadConversation(const string& name, string* const conversation) const
 {
-    LOGGER(INFO, __func__ , " -->");
+    LOGGER(DEBUGGING, __func__ , " -->");
 
     sqlite3_stmt *stmt;
     int32_t len;
@@ -419,13 +469,13 @@ int32_t AppRepository::loadConversation(const string& name, string* const conver
 cleanup:
     sqlite3_finalize(stmt);
     sqlCode_ = sqlResult;
-    LOGGER(INFO, __func__ , " <-- ", sqlResult);
+    LOGGER(DEBUGGING, __func__ , " <-- ", sqlResult);
     return sqlResult;
 }
 
 bool AppRepository::existConversation(const string& name, int32_t* const sqlCode)
 {
-    LOGGER(INFO, __func__ , " -->");
+    LOGGER(DEBUGGING, __func__ , " -->");
     sqlite3_stmt *stmt;
     int32_t sqlResult;
     bool retVal = false;
@@ -443,13 +493,13 @@ cleanup:
     if (sqlCode != NULL)
         *sqlCode = sqlResult;
     sqlCode_ = sqlResult;
-    LOGGER(INFO, __func__ , " <-- ", sqlResult);
+    LOGGER(DEBUGGING, __func__ , " <-- ", sqlResult);
     return retVal;
 }
 
 int32_t AppRepository::deleteConversation(const string& name)
 {
-    LOGGER(INFO, __func__ , " -->");
+    LOGGER(DEBUGGING, __func__ , " -->");
     sqlite3_stmt *stmt;
     int32_t sqlResult;
 
@@ -463,13 +513,13 @@ int32_t AppRepository::deleteConversation(const string& name)
 cleanup:
     sqlite3_finalize(stmt);
     sqlCode_ = sqlResult;
-    LOGGER(INFO, __func__ , " <-- ", sqlResult);
+    LOGGER(DEBUGGING, __func__ , " <-- ", sqlResult);
     return sqlResult;
 }
 
 list<string>* AppRepository::listConversations(int32_t* const sqlCode) const
 {
-    LOGGER(INFO, __func__ , " -->");
+    LOGGER(DEBUGGING, __func__ , " -->");
     sqlite3_stmt *stmt;
     int32_t sqlResult;
     list<string>* result = new list<string>;
@@ -482,7 +532,7 @@ list<string>* AppRepository::listConversations(int32_t* const sqlCode) const
         result->push_back(data);
     }
     sqlite3_finalize(stmt);
-    LOGGER(INFO, __func__ , " <--");
+    LOGGER(DEBUGGING, __func__ , " <--");
     return result;
 
 cleanup:
@@ -491,7 +541,7 @@ cleanup:
     if (sqlCode != NULL)
         *sqlCode = sqlResult;
     sqlCode_ = sqlResult;
-    LOGGER(INFO, __func__ , " <-- ", sqlResult);
+    LOGGER(DEBUGGING, __func__ , " <-- ", sqlResult);
     return NULL;
 }
 
@@ -522,7 +572,7 @@ cleanup:
 
 int32_t AppRepository::insertEvent(const string& name, const string& eventId, const string& event)
 {
-    LOGGER(INFO, __func__ , " -->");
+    LOGGER(DEBUGGING, __func__ , " -->");
     sqlite3_stmt *stmt;
     int32_t msgNumber;
     int32_t sqlResult;
@@ -555,13 +605,13 @@ int32_t AppRepository::insertEvent(const string& name, const string& eventId, co
 cleanup:
     sqlite3_finalize(stmt);
     sqlCode_ = sqlResult;
-    LOGGER(INFO, __func__ , " <-- ", sqlResult);
+    LOGGER(DEBUGGING, __func__ , " <-- ", sqlResult);
     return sqlCode_;
 }
 
 int32_t AppRepository::updateEvent(const string& name, const string& eventId, const string& event)
 {
-    LOGGER(INFO, __func__ , " -->");
+    LOGGER(DEBUGGING, __func__ , " -->");
     sqlite3_stmt *stmt;
     int32_t sqlResult;
 
@@ -576,14 +626,14 @@ int32_t AppRepository::updateEvent(const string& name, const string& eventId, co
 cleanup:
     sqlite3_finalize(stmt);
     sqlCode_ = sqlResult;
-    LOGGER(INFO, __func__ , " <-- ", sqlResult);
+    LOGGER(DEBUGGING, __func__ , " <-- ", sqlResult);
     return sqlResult;
 
 }
 
 int32_t AppRepository::loadEvent(const string& name, const string& eventId, string* const event, int32_t* const msgNumber) const
 {
-    LOGGER(INFO, __func__ , " -->");
+    LOGGER(DEBUGGING, __func__ , " -->");
     sqlite3_stmt *stmt;
     int32_t len;
     int32_t sqlResult;
@@ -605,13 +655,13 @@ int32_t AppRepository::loadEvent(const string& name, const string& eventId, stri
 cleanup:
     sqlite3_finalize(stmt);
     sqlCode_ = sqlResult;
-    LOGGER(INFO, __func__ , " <-- ", sqlResult);
+    LOGGER(DEBUGGING, __func__ , " <-- ", sqlResult);
     return sqlResult;
 }
 
 int32_t AppRepository::loadEventWithMsgId(const string& eventId,  string* const event)
 {
-    LOGGER(INFO, __func__ , " -->");
+    LOGGER(DEBUGGING, __func__ , " -->");
     sqlite3_stmt *stmt;
     int32_t len;
     int32_t sqlResult;
@@ -631,13 +681,13 @@ int32_t AppRepository::loadEventWithMsgId(const string& eventId,  string* const 
 cleanup:
     sqlite3_finalize(stmt);
     sqlCode_ = sqlResult;
-    LOGGER(INFO, __func__ , " <-- ", sqlResult);
+    LOGGER(DEBUGGING, __func__ , " <-- ", sqlResult);
     return sqlResult;
 }
 
 bool AppRepository::existEvent(const string& name, const string& eventId, int32_t* const sqlCode)
 {
-    LOGGER(INFO, __func__ , " -->");
+    LOGGER(DEBUGGING, __func__ , " -->");
     sqlite3_stmt *stmt;
     int32_t sqlResult;
     bool retVal = false;
@@ -656,7 +706,7 @@ cleanup:
     if (sqlCode != NULL)
         *sqlCode = sqlResult;
     sqlCode_ = sqlResult;
-    LOGGER(INFO, __func__ , " <-- ", sqlResult);
+    LOGGER(DEBUGGING, __func__ , " <-- ", sqlResult);
     return retVal;
 }
 
@@ -668,9 +718,9 @@ static const char* selectEventBetweenDesc = "SELECT data, msgNumber FROM events 
 #define FROM_YOUNGEST_TO_OLDEST -1
 #define FROM_OLDEST_TO_YOUNGEST 1
 
-int32_t AppRepository::loadEvents(const string& name, uint32_t offset, int32_t number, int32_t direction, list<std::string*>* const events, int32_t* const lastMsgNumber) const
+int32_t AppRepository::loadEvents(const string& name, int32_t offset, int32_t number, int32_t direction, list<std::string*>* const events, int32_t* const lastMsgNumber) const
 {
-    LOGGER(INFO, __func__ , " -->");
+    LOGGER(DEBUGGING, __func__ , " -->");
     sqlite3_stmt *stmt;
     int32_t sqlResult;
 
@@ -707,13 +757,13 @@ int32_t AppRepository::loadEvents(const string& name, uint32_t offset, int32_t n
 cleanup:
     sqlite3_finalize(stmt);
     sqlCode_ = sqlResult;
-    LOGGER(INFO, __func__ , " <-- ", sqlResult);
+    LOGGER(DEBUGGING, __func__ , " <-- ", sqlResult);
     return sqlResult;
 }
 
 int32_t AppRepository::deleteEvent(const string& name, const string& eventId)
 {
-    LOGGER(INFO, __func__ , " -->");
+    LOGGER(DEBUGGING, __func__ , " -->");
     sqlite3_stmt *stmt;
     int32_t sqlResult;
 
@@ -728,13 +778,13 @@ int32_t AppRepository::deleteEvent(const string& name, const string& eventId)
 cleanup:
     sqlite3_finalize(stmt);
     sqlCode_ = sqlResult;
-    LOGGER(INFO, __func__ , " <-- ", sqlResult);
+    LOGGER(DEBUGGING, __func__ , " <-- ", sqlResult);
     return sqlResult;
 }
 
 int32_t AppRepository::deleteEventName(const string& name)
 {
-    LOGGER(INFO, __func__ , " -->");
+    LOGGER(DEBUGGING, __func__ , " -->");
     sqlite3_stmt *stmt;
     int32_t sqlResult;
 
@@ -749,14 +799,14 @@ int32_t AppRepository::deleteEventName(const string& name)
 cleanup:
     sqlite3_finalize(stmt);
     sqlCode_ = sqlResult;
-    LOGGER(INFO, __func__ , " <-- ", sqlResult);
+    LOGGER(DEBUGGING, __func__ , " <-- ", sqlResult);
     return sqlResult;
 }
 
 
 int32_t AppRepository::insertObject(const string& name, const string& eventId, const string& objectId, const string& object)
 {
-    LOGGER(INFO, __func__ , " -->");
+    LOGGER(DEBUGGING, __func__ , " -->");
     sqlite3_stmt *stmt;
     int32_t sqlResult;
 
@@ -775,13 +825,13 @@ int32_t AppRepository::insertObject(const string& name, const string& eventId, c
 cleanup:
     sqlite3_finalize(stmt);
     sqlCode_ = sqlResult;
-    LOGGER(INFO, __func__ , " <-- ", sqlResult);
+    LOGGER(DEBUGGING, __func__ , " <-- ", sqlResult);
     return sqlResult;
 }
 
 int32_t AppRepository::loadObject(const string& name, const string& eventId, const string& objectId, string* const object) const
 {
-    LOGGER(INFO, __func__ , " -->");
+    LOGGER(DEBUGGING, __func__ , " -->");
     sqlite3_stmt *stmt;
     int32_t len;
     int32_t sqlResult;
@@ -803,13 +853,13 @@ int32_t AppRepository::loadObject(const string& name, const string& eventId, con
 cleanup:
     sqlite3_finalize(stmt);
     sqlCode_ = sqlResult;
-    LOGGER(INFO, __func__ , " <-- ", sqlResult);
+    LOGGER(DEBUGGING, __func__ , " <-- ", sqlResult);
     return sqlResult;
 }
 
 bool AppRepository::existObject(const string& name, const string& eventId, const string& objId, int32_t* const sqlCode) const
 {
-    LOGGER(INFO, __func__ , " -->");
+    LOGGER(DEBUGGING, __func__ , " -->");
     sqlite3_stmt *stmt;
     int32_t sqlResult;
     bool retVal = false;
@@ -829,13 +879,13 @@ cleanup:
     if (sqlCode != NULL)
         *sqlCode = sqlResult;
     sqlCode_ = sqlResult;
-    LOGGER(INFO, __func__ , " <-- ", sqlResult);
+    LOGGER(DEBUGGING, __func__ , " <-- ", sqlResult);
     return retVal;
 }
 
 int32_t AppRepository::loadObjects(const string& name, const string& eventId, list<string*>* const objects) const
 {
-    LOGGER(INFO, __func__ , " -->");
+    LOGGER(DEBUGGING, __func__ , " -->");
     sqlite3_stmt *stmt;
     int32_t sqlResult;
 
@@ -853,13 +903,13 @@ int32_t AppRepository::loadObjects(const string& name, const string& eventId, li
 cleanup:
     sqlite3_finalize(stmt);
     sqlCode_ = sqlResult;
-    LOGGER(INFO, __func__ , " <-- ", sqlResult);
+    LOGGER(DEBUGGING, __func__ , " <-- ", sqlResult);
     return sqlResult;
 }
 
 int32_t AppRepository::deleteObject(const string& name, const string& eventId, const string& objectId)
 {
-    LOGGER(INFO, __func__ , " -->");
+    LOGGER(DEBUGGING, __func__ , " -->");
     sqlite3_stmt *stmt;
     int32_t sqlResult;
 
@@ -875,13 +925,13 @@ int32_t AppRepository::deleteObject(const string& name, const string& eventId, c
 cleanup:
     sqlite3_finalize(stmt);
     sqlCode_ = sqlResult;
-    LOGGER(INFO, __func__ , " <-- ", sqlResult);
+    LOGGER(DEBUGGING, __func__ , " <-- ", sqlResult);
     return sqlResult;
 }
 
 int32_t AppRepository::deleteObjectMsg(const std::string& name, const std::string& eventId)
 {
-    LOGGER(INFO, __func__ , " -->");
+    LOGGER(DEBUGGING, __func__ , " -->");
     sqlite3_stmt *stmt;
     int32_t sqlResult;
 
@@ -897,13 +947,34 @@ int32_t AppRepository::deleteObjectMsg(const std::string& name, const std::strin
 cleanup:
     sqlite3_finalize(stmt);
     sqlCode_ = sqlResult;
-    LOGGER(INFO, __func__ , " <-- ", sqlResult);
+    LOGGER(DEBUGGING, __func__ , " <-- ", sqlResult);
+    return sqlResult;
+}
+
+int32_t AppRepository::deleteObjectName(const std::string& name)
+{
+    LOGGER(DEBUGGING, __func__ , " -->");
+    sqlite3_stmt *stmt;
+    int32_t sqlResult;
+
+    // deleteObjectsWithNameSql = "DELETE FROM objects WHERE conv=?1;";
+    SQLITE_CHK(SQLITE_PREPARE(db, deleteObjectsWithNameSql, -1, &stmt, NULL));
+    SQLITE_CHK(sqlite3_bind_text(stmt, 1, name.data(), static_cast<int>(name.size()), SQLITE_STATIC));
+
+    sqlResult= sqlite3_step(stmt);
+//    std::cerr << "Deleted records: " << sqlite3_changes(db) << std::endl;
+    ERRMSG;
+
+cleanup:
+    sqlite3_finalize(stmt);
+    sqlCode_ = sqlResult;
+    LOGGER(DEBUGGING, __func__ , " <-- ", sqlResult);
     return sqlResult;
 }
 
 int32_t AppRepository::storeAttachmentStatus(const string& mesgId, const string& partnerName, int32_t status)
 {
-    LOGGER(INFO, __func__ , " -->");
+    LOGGER(DEBUGGING, __func__ , " -->");
     sqlite3_stmt *stmt;
     int32_t sqlResult;
 
@@ -923,13 +994,13 @@ int32_t AppRepository::storeAttachmentStatus(const string& mesgId, const string&
 cleanup:
     sqlite3_finalize(stmt);
     sqlCode_ = sqlResult;
-    LOGGER(INFO, __func__ , " <-- ", sqlResult);
+    LOGGER(DEBUGGING, __func__ , " <-- ", sqlResult);
     return sqlResult;
 }
 
 int32_t AppRepository::deleteAttachmentStatus(const string& mesgId, const string& partnerName)
 {
-    LOGGER(INFO, __func__ , " -->");
+    LOGGER(DEBUGGING, __func__ , " -->");
     sqlite3_stmt *stmt;
     int32_t sqlResult;
     // deleteAttachmentStatusMsgIdSql = "DELETE FROM attachmentStatus WHERE msgId=?1;";
@@ -951,13 +1022,13 @@ int32_t AppRepository::deleteAttachmentStatus(const string& mesgId, const string
 cleanup:
     sqlite3_finalize(stmt);
     sqlCode_ = sqlResult;
-    LOGGER(INFO, __func__ , " <-- ", sqlResult);
+    LOGGER(DEBUGGING, __func__ , " <-- ", sqlResult);
     return sqlResult;
 }
 
 int32_t AppRepository::deleteWithAttachmentStatus(int32_t status)
 {
-    LOGGER(INFO, __func__ , " -->");
+    LOGGER(DEBUGGING, __func__ , " -->");
     sqlite3_stmt *stmt;
     int32_t sqlResult;
     // static const char* deleteAttachmentStatusWithStatusSql = "DELETE FROM attachmentStatus WHERE status=?1;";
@@ -970,13 +1041,32 @@ int32_t AppRepository::deleteWithAttachmentStatus(int32_t status)
 cleanup:
     sqlite3_finalize(stmt);
     sqlCode_ = sqlResult;
-    LOGGER(INFO, __func__ , " <-- ", sqlResult);
+    LOGGER(DEBUGGING, __func__ , " <-- ", sqlResult);
+    return sqlResult;
+}
+
+int32_t AppRepository::deleteAttachmentStatusWithName(const std::string& name)
+{
+    LOGGER(DEBUGGING, __func__ , " -->");
+    sqlite3_stmt *stmt;
+    int32_t sqlResult;
+    // static const char* deleteAttachmentStatusWithNameSql = "DELETE FROM attachmentStatus WHERE partnerName=?1;";
+    SQLITE_CHK(SQLITE_PREPARE(db, deleteAttachmentStatusWithNameSql, -1, &stmt, NULL));
+    SQLITE_CHK(sqlite3_bind_text(stmt, 1, name.data(), static_cast<int>(name.size()), SQLITE_STATIC));
+
+    sqlResult= sqlite3_step(stmt);
+    ERRMSG;
+
+cleanup:
+    sqlite3_finalize(stmt);
+    sqlCode_ = sqlResult;
+    LOGGER(DEBUGGING, __func__ , " <-- ", sqlResult);
     return sqlResult;
 }
 
 int32_t AppRepository::loadAttachmentStatus(const string& mesgId, const string& partnerName, int32_t* const status)
 {
-    LOGGER(INFO, __func__ , " -->");
+    LOGGER(DEBUGGING, __func__ , " -->");
     sqlite3_stmt *stmt;
     int32_t sqlResult;
     *status = -1;
@@ -1001,13 +1091,13 @@ cleanup:
     ERRMSG;
     sqlite3_finalize(stmt);
     sqlCode_ = sqlResult;
-    LOGGER(INFO, __func__ , " <-- ", sqlResult);
+    LOGGER(DEBUGGING, __func__ , " <-- ", sqlResult);
     return sqlResult;
 }
 
 int32_t AppRepository::loadMsgsIdsWithAttachmentStatus(int32_t status, list<string>* const msgIds)
 {
-    LOGGER(INFO, __func__ , " -->");
+    LOGGER(DEBUGGING, __func__ , " -->");
     sqlite3_stmt *stmt;
     const unsigned char* pn;
     int32_t sqlResult;
@@ -1029,7 +1119,73 @@ int32_t AppRepository::loadMsgsIdsWithAttachmentStatus(int32_t status, list<stri
 cleanup:
     sqlite3_finalize(stmt);
     sqlCode_ = sqlResult;
-    LOGGER(INFO, __func__ , " <-- ", sqlResult);
+    LOGGER(DEBUGGING, __func__ , " <-- ", sqlResult);
+    return sqlResult;
+}
+
+int32_t AppRepository::storeDrPendingEvent(time_t startTime, const string& data)
+{
+    LOGGER(DEBUGGING, __func__ , " -->");
+    sqlite3_stmt *stmt;
+    int32_t sqlResult;
+
+    SQLITE_CHK(SQLITE_PREPARE(db, insertDrPendingSql, -1, &stmt, NULL));
+    SQLITE_CHK(sqlite3_bind_int64(stmt, 1, static_cast<int64_t>(startTime)));
+    SQLITE_CHK(sqlite3_bind_blob(stmt, 2, data.data(), static_cast<int>(data.size()), SQLITE_STATIC));
+
+    sqlResult = sqlite3_step(stmt);
+
+cleanup:
+    sqlite3_finalize(stmt);
+    sqlCode_ = sqlResult;
+    LOGGER(DEBUGGING, __func__ , " <-- ", sqlResult);
+    return sqlResult;
+}
+
+int32_t AppRepository::loadDrPendingEvents(list<pair<int64_t, string>>& objects) const
+{
+    LOGGER(DEBUGGING, __func__ , " -->");
+    sqlite3_stmt *stmt;
+    int32_t sqlResult;
+
+    // selectDrPendingSql = "SELECT data from drPendingEvent ORDER BY startTime ASC;";
+    SQLITE_CHK(SQLITE_PREPARE(db, selectDrPendingSql, -1, &stmt, NULL));
+    while ((sqlResult = sqlite3_step(stmt)) == SQLITE_ROW) {
+        int64_t rowid = sqlite3_column_int64(stmt, 0);
+        int32_t len = sqlite3_column_bytes(stmt, 1);
+        std::string data((const char*)sqlite3_column_blob(stmt, 1), len);
+        objects.push_back(make_pair(rowid, data));
+    }
+
+cleanup:
+    sqlite3_finalize(stmt);
+    sqlCode_ = sqlResult;
+    LOGGER(DEBUGGING, __func__ , " <-- ", sqlResult);
+    return sqlResult;
+}
+
+int32_t AppRepository::deleteDrPendingEvents(vector<int64_t>& rows)
+{
+    LOGGER(DEBUGGING, __func__ , " -->");
+    sqlite3_stmt *stmt;
+    int32_t sqlResult;
+
+    // deleteDrPendingSql = "DELETE FROM drPendingEvent where rowid = ?1";
+    SQLITE_CHK(SQLITE_PREPARE(db, deleteDrPendingSql, -1, &stmt, NULL));
+    // Vector is sorted in descending order first to ensure highest rows are
+    // deleted first.
+    std::sort(rows.begin(), rows.end(), std::greater<int>());
+    for (int64_t rowid : rows) {
+        SQLITE_CHK(sqlite3_bind_int64(stmt, 1, rowid));
+        sqlResult = sqlite3_step(stmt);
+        SQLITE_CHK(sqlite3_reset(stmt));
+        SQLITE_CHK(sqlite3_clear_bindings(stmt));
+    }
+
+cleanup:
+    sqlite3_finalize(stmt);
+    sqlCode_ = sqlResult;
+    LOGGER(DEBUGGING, __func__ , " <-- ", sqlResult);
     return sqlResult;
 }
 

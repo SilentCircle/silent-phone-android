@@ -1,51 +1,25 @@
+/*
+Copyright 2016-2017 Silent Circle, LLC
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
 #include "SQLiteStoreConv.h"
+#include "SQLiteStoreInternal.h"
+#include "../../util/Utilities.h"
 
-#include <iostream>
-#include <mutex>          // std::mutex, std::unique_lock
-
-#include <cryptcommon/ZrtpRandom.h>
-
-#include "../../logging/AxoLogging.h"
-
-
-/* *****************************************************************************
- * A few helping macros. 
- * These macros require some names/patterns in the methods that use these 
- * macros:
- * 
- * ERRMSG requires:
- * - a variable with name "db" is the pointer to sqlite3
- * - a char* with name "lastError" points to a buffer of at least SQL_CACHE_ERR_BUFF_SIZE chars
- *
- * SQLITE_CHK requires:
- * - a cleanup label, the macro goes to that label in case of error
- * - an integer (int) variable with name "rc" that stores return codes from sqlite
- * - ERRMSG
- */
-#define ERRMSG  {snprintf(lastError_, (size_t)DB_CACHE_ERR_BUFF_SIZE, \
-                          "SQLite3 error: %s, line: %d, error message: %s\n", __FILE__, __LINE__, sqlite3_errmsg(db));}
-
-#define SQLITE_CHK(func) {          \
-        sqlResult = (func);          \
-        if(sqlResult != SQLITE_OK) { \
-            ERRMSG;                 \
-            goto cleanup;           \
-        }                           \
-    }
-
-#define SQLITE_USE_V2
-
-#ifdef SQLITE_USE_V2
-#define SQLITE_PREPARE sqlite3_prepare_v2
-#else
-#define SQLITE_PREPARE sqlite3_prepare
-#endif
-
-#define DB_VERSION 2
+using namespace std;
 
 static mutex sqlLock;
-
-static void *(*volatile memset_volatile)(void *, int, size_t) = memset;
 
 static const char *beginTransactionSql  = "BEGIN TRANSACTION;";
 static const char *commitTransactionSql = "COMMIT;";
@@ -95,6 +69,9 @@ static const char* removeStagedMk = "DELETE FROM stagedMk WHERE name=?1 AND long
 
 static const char* removeStagedMkTime = "DELETE FROM stagedMk WHERE since < ?1;";
 
+static const char* hasStagedMkSql =
+        "SELECT NULL, CASE EXISTS (SELECT 0 FROM stagedMk WHERE name=?1 AND longDevId=?2 AND ownName=?3 AND ivkeymk=?4) WHEN 1 THEN 1 ELSE 0 END;";
+
 /* *****************************************************************************
  * SQL statements to process the Pre-key table.
  */
@@ -106,13 +83,38 @@ static const char* deletePreKey = "DELETE FROM PreKeys WHERE keyId=?1;";
 static const char* selectPreKeyAll = "SELECT keyId, preKeyData FROM PreKeys;";
 
 /* *****************************************************************************
- * SQL statements to process the message has table table.
+ * SQL statements to process the message hash table.
  */
 static const char* dropMsgHash = "DROP TABLE MsgHash;";
 static const char* createMsgHash = "CREATE TABLE MsgHash (msgHash BLOB NOT NULL PRIMARY KEY, since TIMESTAMP);";
 static const char* insertMsgHashSql = "INSERT INTO MsgHash (msgHash, since) VALUES (?1, strftime('%s', ?2, 'unixepoch'));";
 static const char* selectMsgHash = "SELECT msgHash FROM MsgHash WHERE msgHash=?1;";
 static const char* removeMsgHash = "DELETE FROM MsgHash WHERE since < ?1;";
+
+/* *****************************************************************************
+ * SQL statements to process the message trace/state table.
+ *
+ * Flags: hold the booleans attachment and received
+ */
+static const int32_t ATTACHMENT = 1;
+static const int32_t RECEIVED   = 2;
+static const char* dropMsgTrace = "DROP TABLE MsgTrace;";
+static const char* createMsgTrace =
+        "CREATE TABLE MsgTrace (name VARCHAR NOT NULL, messageId VARCHAR NOT NULL, deviceId VARCHAR NOT NULL, convstate VARCHAR NOT NULL, "
+        "attributes VARCHAR NOT NULL, stored TIMESTAMP DEFAULT(STRFTIME('%Y-%m-%dT%H:%M:%f', 'NOW')), flags INTEGER);";
+static const char* insertMsgTraceSql =
+        "INSERT INTO MsgTrace (name, messageId, deviceId, convstate, attributes, flags) VALUES (?1, ?2, ?3, ?4, ?5, ?6);";
+static const char* selectMsgTraceMsgId =
+        "SELECT name, messageId, deviceId, convstate, attributes, STRFTIME('%Y-%m-%dT%H:%M:%f', stored), flags FROM MsgTrace WHERE messageId=?1 ORDER BY ROWID ASC ;";
+static const char* selectMsgTraceName =
+        "SELECT name, messageId, deviceId, convstate, attributes, STRFTIME('%Y-%m-%dT%H:%M:%f', stored), flags FROM MsgTrace WHERE name=?1 ORDER BY ROWID ASC ;";
+static const char* selectMsgTraceDevId =
+        "SELECT name, messageId, deviceId, convstate, attributes, STRFTIME('%Y-%m-%dT%H:%M:%f', stored), flags FROM MsgTrace WHERE deviceId=?1 ORDER BY ROWID ASC ;";
+static const char* selectMsgTraceMsgDevId =
+        "SELECT name, messageId, deviceId, convstate, attributes, STRFTIME('%Y-%m-%dT%H:%M:%f', stored), flags FROM MsgTrace WHERE messageId=?1 AND deviceId=?2 ORDER BY ROWID ASC ;";
+
+// See comment in deleteMsgTrace regarding the not fully qualified SQL statement to remove old trace records.
+static const char* removeMsgTrace = "DELETE FROM MsgTrace WHERE STRFTIME('%s', stored)";
 
 
 #ifdef UNITTESTS
@@ -131,15 +133,16 @@ static void hexdump(const char* title, const unsigned char *s, size_t l) {
     }
     fprintf(stderr, "\n");
 }
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "OCUnusedGlobalDeclarationInspection"
 static void hexdump(const char* title, const std::string& in)
 {
     hexdump(title, (uint8_t*)in.data(), in.size());
 }
+#pragma clang diagnostic pop
 #endif
 
-using namespace axolotl;
-
-void Log(const char* format, ...);
+using namespace zina;
 
 static int32_t getUserVersion(sqlite3* db)
 {
@@ -198,14 +201,11 @@ int SQLiteStoreConv::beginTransaction()
     SQLITE_CHK(SQLITE_PREPARE(db, beginTransactionSql, -1, &stmt, NULL));
 
     sqlResult = sqlite3_step(stmt);
-    sqlite3_finalize(stmt);
     if (sqlResult != SQLITE_DONE) {
         ERRMSG;
-        return sqlResult;
     }
-    return SQLITE_OK;
 
- cleanup:
+cleanup:
     sqlite3_finalize(stmt);
     return sqlResult;
 }
@@ -218,14 +218,11 @@ int SQLiteStoreConv::commitTransaction()
     SQLITE_CHK(SQLITE_PREPARE(db, commitTransactionSql, -1, &stmt, NULL));
 
     sqlResult = sqlite3_step(stmt);
-    sqlite3_finalize(stmt);
     if (sqlResult != SQLITE_DONE) {
         ERRMSG;
-        return sqlResult;
     }
-    return SQLITE_OK;
 
- cleanup:
+cleanup:
     sqlite3_finalize(stmt);
     return sqlResult;
 }
@@ -238,16 +235,23 @@ int SQLiteStoreConv::rollbackTransaction()
     SQLITE_CHK(SQLITE_PREPARE(db, rollbackTransactionSql, -1, &stmt, NULL));
 
     sqlResult = sqlite3_step(stmt);
-    sqlite3_finalize(stmt);
     if (sqlResult != SQLITE_DONE) {
         ERRMSG;
-        return sqlResult;
     }
-    return SQLITE_OK;
 
-    cleanup:
+cleanup:
     sqlite3_finalize(stmt);
     return sqlResult;
+}
+
+static int32_t enableForeignKeys(sqlite3* db)
+{
+    sqlite3_stmt *stmt;
+
+    sqlite3_prepare_v2(db, "PRAGMA foreign_keys=ON;", -1, &stmt, NULL);
+    int32_t rc = sqlite3_step(stmt);
+    sqlite3_finalize(stmt);
+    return rc;
 }
 
 /*
@@ -263,33 +267,42 @@ int SQLiteStoreConv::rollbackTransaction()
  */
 int SQLiteStoreConv::openStore(const std::string& name)
 {
-    LOGGER(INFO, __func__ , " -->");
+    LOGGER(DEBUGGING, __func__ , " -->");
     if (keyData_ == NULL) {
         LOGGER(ERROR, __func__ , " No password defined.");
         return -1;
     }
     unique_lock<mutex> lck(sqlLock);
+    // Don't try to open twice
+    if (isReady_)
+        return SQLITE_CANTOPEN;
 
     // If name has size 0 then open im-memory DB, handy for testing
     const char *dbName = name.size() == 0 ? ":memory:" : name.c_str();
-    sqlCode_ = sqlite3_open_v2(dbName, &db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_FULLMUTEX, NULL);
+    int32_t sqlResult;
+    sqlCode_ = sqlResult = sqlite3_open_v2(dbName, &db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_FULLMUTEX, NULL);
 
     if (sqlCode_) {
         ERRMSG;
         LOGGER(ERROR, __func__, " Failed to open database: ", sqlCode_, ", ", lastError_);
         return(sqlCode_);
     }
-    sqlite3_key(db, keyData_->data(), static_cast<int>(keyData_->size()));
+    if (keyData_ != NULL) {
+        sqlite3_key(db, keyData_->data(), static_cast<int>(keyData_->size()));
 
-    memset_volatile((void*)keyData_->data(), 0, keyData_->size());
-    delete keyData_; keyData_ = NULL;
+        Utilities::wipeMemory((void *) keyData_->data(), keyData_->size());
+        delete keyData_;
+        keyData_ = NULL;
+    }
+
+    enableForeignKeys(db);
 
     int32_t version = getUserVersion(db);
     if (version != 0) {
         beginTransaction();
         if (updateDb(version, DB_VERSION) != SQLITE_OK) {
             sqlite3_close(db);
-            LOGGER(ERROR, __func__ , " <-- update failed.");
+            LOGGER(ERROR, __func__ , " <-- update failed, existing version: ", version);
             return SQLITE_ERROR;
         }
         commitTransaction();
@@ -305,14 +318,14 @@ int SQLiteStoreConv::openStore(const std::string& name)
 
     isReady_ = true;
     lck.unlock();
-    LOGGER(INFO, __func__ , " <-- ");
+    LOGGER(DEBUGGING, __func__ , " <-- ");
     return SQLITE_OK;
 }
 
 
 int SQLiteStoreConv::createTables()
 {
-    LOGGER(INFO, __func__ , " -->");
+    LOGGER(DEBUGGING, __func__ , " -->");
     sqlite3_stmt* stmt;
     int32_t sqlResult;
 
@@ -370,11 +383,44 @@ int SQLiteStoreConv::createTables()
     }
     sqlite3_finalize(stmt);
 
-    LOGGER(INFO, __func__ , " <-- ", sqlResult);
+    SQLITE_PREPARE(db, dropMsgTrace, -1, &stmt, NULL);
+    sqlite3_step(stmt);
+    sqlite3_finalize(stmt);
+
+    SQLITE_CHK(SQLITE_PREPARE(db, createMsgTrace, -1, &stmt, NULL));
+    sqlResult = sqlite3_step(stmt);
+    if (sqlResult != SQLITE_DONE) {
+        ERRMSG;
+        goto cleanup;
+    }
+    sqlite3_finalize(stmt);
+
+    sqlResult = createGroupTables();
+    if (sqlResult != SQLITE_OK) {
+        goto cleanup1;
+    }
+
+    sqlResult = createMessageQueuesTables();
+    if (sqlResult != SQLITE_OK) {
+        goto cleanup1;
+    }
+
+    sqlResult = createVectorClockTables();
+    if (sqlResult != SQLITE_OK) {
+        goto cleanup1;
+    }
+
+    sqlResult = createWaitForAckTables();
+    if (sqlResult != SQLITE_OK) {
+        goto cleanup1;
+    }
+
+    LOGGER(DEBUGGING, __func__ , " <-- ", sqlResult);
     return SQLITE_OK;
 
- cleanup:
+cleanup:
     sqlite3_finalize(stmt);
+cleanup1:
     LOGGER(ERROR, __func__, ", SQL error: ", sqlResult, ", ", lastError_);
     return sqlResult;
 }
@@ -382,18 +428,17 @@ int SQLiteStoreConv::createTables()
 /* *****************************************************************************
  * The SQLite master table.
  *
- * Used to check if we have valid attachmentStatus table.
+ * Used to check if we have valid message hash table.
  */
 static const char *lookupTables = "SELECT name FROM sqlite_master WHERE type='table' AND name='MsgHash';";
-
 
 int32_t SQLiteStoreConv::updateDb(int32_t oldVersion, int32_t newVersion) {
     sqlite3_stmt *stmt;
 
-    LOGGER(INFO, __func__, " -->");
+    LOGGER(DEBUGGING, __func__, " -->");
 
     // Version 2 adds the message hash table
-    if (oldVersion < 2) {
+    if (oldVersion == 1) {
         // check if MsgHash table is already available
         SQLITE_PREPARE(db, lookupTables, -1, &stmt, NULL);
         int32_t rc = sqlite3_step(stmt);
@@ -403,19 +448,85 @@ int32_t SQLiteStoreConv::updateDb(int32_t oldVersion, int32_t newVersion) {
         if (rc != SQLITE_ROW) {
             sqlCode_ = SQLITE_PREPARE(db, createMsgHash, -1, &stmt, NULL);
             sqlCode_ = sqlite3_step(stmt);
+            sqlite3_finalize(stmt);
             if (sqlCode_ != SQLITE_DONE) {
-                LOGGER(ERROR, __func__, ", SQL error: ", sqlCode_);
+                LOGGER(ERROR, __func__, ", SQL error adding hash table: ", sqlCode_);
                 return sqlCode_;
             }
         }
         oldVersion = 2;
     }
 
+    // Version 3 adds the message trace table
+    const char* traceTable =
+            "CREATE TABLE MsgTrace (name VARCHAR NOT NULL, messageId VARCHAR NOT NULL, deviceId VARCHAR NOT NULL, "
+                    "attributes VARCHAR NOT NULL, stored TIMESTAMP DEFAULT(STRFTIME('%Y-%m-%dT%H:%M:%f', 'NOW')), flags INTEGER);";
+
+    if (oldVersion == 2) {
+        SQLITE_PREPARE(db, traceTable, -1, &stmt, NULL);
+        sqlCode_ = sqlite3_step(stmt);
+        sqlite3_finalize(stmt);
+        if (sqlCode_ != SQLITE_DONE) {
+            LOGGER(ERROR, __func__, ", SQL error adding trace table: ", sqlCode_);
+            return sqlCode_;
+        }
+        oldVersion = 3;
+    }
+
+    // Version 4 adds the conversation state column to the trace table
+    if (oldVersion == 3) {
+        SQLITE_PREPARE(db, "ALTER TABLE MsgTrace ADD COLUMN convstate VARCHAR;", -1, &stmt, NULL);
+        sqlCode_ = sqlite3_step(stmt);
+        sqlite3_finalize(stmt);
+        if (sqlCode_ != SQLITE_DONE) {
+            LOGGER(ERROR, __func__, ", SQL error adding convstate column: ", sqlCode_);
+            return sqlCode_;
+        }
+        oldVersion = 4;
+    }
+
+    if (oldVersion == 4) {
+        sqlCode_ = updateGroupDataDb(oldVersion);
+        if (sqlCode_ != SQLITE_OK) {
+            return sqlCode_;
+        }
+        oldVersion = 5;
+    }
+
+    if (oldVersion == 5) {
+
+        sqlCode_ = updateMessageQueues(oldVersion);
+        if (sqlCode_ != SQLITE_OK) {
+            return sqlCode_;
+        }
+
+        oldVersion = 6;
+    }
+
+    if (oldVersion == 6) {
+        // Version 6 adds the burn time and avatar info column to the group table, vector clock table
+        sqlCode_ = updateGroupDataDb(oldVersion);
+        if (sqlCode_ != SQLITE_OK) {
+            return sqlCode_;
+        }
+
+        sqlCode_ = updateVectorClocksDb(oldVersion);
+        if (sqlCode_ != SQLITE_OK) {
+            return sqlCode_;
+        }
+        sqlCode_ = updateWaitForAckDb(oldVersion);
+        if (sqlCode_ != SQLITE_OK) {
+            return sqlCode_;
+        }
+
+        oldVersion = 7;
+    }
+
     if (oldVersion != newVersion) {
         LOGGER(ERROR, __func__, ", Version numbers mismatch");
         return SQLITE_ERROR;
     }
-    LOGGER(INFO, __func__ , " <-- ", sqlCode_);
+    LOGGER(DEBUGGING, __func__ , " <-- ", sqlCode_);
     return SQLITE_OK;
 }
 
@@ -430,7 +541,7 @@ shared_ptr<list<string> > SQLiteStoreConv::getKnownConversations(const string& o
     int32_t nameLen;
     int32_t sqlResult;
 
-    LOGGER(INFO, __func__, " -->");
+    LOGGER(DEBUGGING, __func__, " -->");
     shared_ptr<list<string> > names = make_shared<list<string> >();
 
     // selectConvNames = "SELECT name FROM Conversations WHERE ownName=?1 ORDER BY name;";
@@ -442,30 +553,47 @@ shared_ptr<list<string> > SQLiteStoreConv::getKnownConversations(const string& o
         string name((const char*)sqlite3_column_text(stmt, 0), static_cast<size_t>(nameLen));
         names->push_back(name);
     }
-    sqlite3_finalize(stmt);
-    if (sqlCode != NULL)
-        *sqlCode = sqlResult;
-    sqlCode_ = sqlResult;
-    LOGGER(INFO, __func__, " <-- ", sqlResult);
-    return names;
 
 cleanup:
     sqlite3_finalize(stmt);
     if (sqlCode != NULL)
         *sqlCode = sqlResult;
     sqlCode_ = sqlResult;
-    LOGGER(ERROR, __func__, ", SQL error: ", sqlResult, ", ", lastError_);
-    return shared_ptr<list<string> >();
+    LOGGER(DEBUGGING, __func__, " <-- ", sqlResult);
+    return names;
+
 }
 
+// This is a deprecated function
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "OCUnusedGlobalDeclarationInspection"
 shared_ptr<list<string> > SQLiteStoreConv::getLongDeviceIds(const string& name, const string& ownName, int32_t* sqlCode)
+{
+    LOGGER(DEBUGGING, __func__, " -->");
+    shared_ptr<list<string> > devIds = make_shared<list<string> >();
+
+    list<StringUnique> devs;
+    int32_t sqlResult = getLongDeviceIds(name, ownName, devs);
+    for (const auto& dev : devs) {
+        const string tmp(*dev);
+        devIds->push_back(tmp);
+    }
+
+    if (sqlCode != NULL)
+        *sqlCode = sqlResult;
+    sqlCode_ = sqlResult;
+    LOGGER(DEBUGGING, __func__, " <-- ", sqlResult);
+    return devIds;
+}
+#pragma clang diagnostic pop
+
+int32_t SQLiteStoreConv::getLongDeviceIds(const string& name, const string& ownName, list<StringUnique> &devIds)
 {
     sqlite3_stmt *stmt;
     int32_t idLen;
     int32_t sqlResult;
 
-    LOGGER(INFO, __func__, " -->");
-    shared_ptr<list<string> > devIds = make_shared<list<string> >();
+    LOGGER(DEBUGGING, __func__, " -->");
 
     // selectConvDevices = "SELECT longDevId FROM Conversations WHERE name=?1 AND ownName=?2;";
     SQLITE_CHK(SQLITE_PREPARE(db, selectConvDevices, -1, &stmt, NULL));
@@ -474,25 +602,17 @@ shared_ptr<list<string> > SQLiteStoreConv::getLongDeviceIds(const string& name, 
 
     while ((sqlResult = sqlite3_step(stmt)) == SQLITE_ROW) {
         idLen = sqlite3_column_bytes(stmt, 0);
-        string id((const char*)sqlite3_column_text(stmt, 0), static_cast<size_t>(idLen));
-        if (id.compare(0, id.size(), dummyId, id.size()) == 0)
+        StringUnique id(new string((const char*)sqlite3_column_text(stmt, 0), static_cast<size_t>(idLen)));
+        if (id->compare(0, id->size(), dummyId, id->size()) == 0)
             continue;
-        devIds->push_back(id);
+        devIds.push_back(move(id));
     }
-    sqlite3_finalize(stmt);
-    if (sqlCode != NULL)
-        *sqlCode = sqlResult;
-    sqlCode_ = sqlResult;
-    LOGGER(INFO, __func__, " <-- ", sqlResult);
-    return devIds;
 
 cleanup:
     sqlite3_finalize(stmt);
-    if (sqlCode != NULL)
-        *sqlCode = sqlResult;
     sqlCode_ = sqlResult;
-    LOGGER(ERROR, __func__, ", SQL error: ", sqlResult, ", ", lastError_);
-    return shared_ptr<list<string> >();
+    LOGGER(DEBUGGING, __func__, " <-- ", sqlResult);
+    return sqlResult;
 }
 
 
@@ -507,7 +627,7 @@ string* SQLiteStoreConv::loadConversation(const string& name, const string& long
     const char* devId;
     int32_t devIdLen;
 
-    LOGGER(INFO, __func__, " -->");
+    LOGGER(DEBUGGING, __func__, " -->");
     if (longDevId.size() > 0) {
         devId = longDevId.c_str();
         devIdLen = static_cast<int32_t>(longDevId.size());
@@ -537,11 +657,11 @@ cleanup:
     if (sqlCode != NULL)
         *sqlCode = sqlResult;
     sqlCode_ = sqlResult;
-    LOGGER(INFO, __func__, " <-- ", sqlResult);
+    LOGGER(DEBUGGING, __func__, " <-- ", sqlResult);
     return data;
 }
 
-void SQLiteStoreConv::storeConversation(const string& name, const string& longDevId, const string& ownName, const string& data, int32_t* sqlCode)
+int32_t SQLiteStoreConv::storeConversation(const string& name, const string& longDevId, const string& ownName, const string& data)
 {
     sqlite3_stmt *stmt;
     int32_t sqlResult;
@@ -549,7 +669,7 @@ void SQLiteStoreConv::storeConversation(const string& name, const string& longDe
     const char* devId;
     int32_t devIdLen;
 
-    LOGGER(INFO, __func__, " -->");
+    LOGGER(DEBUGGING, __func__, " -->");
     if (longDevId.size() > 0) {
         devId = longDevId.c_str();
         devIdLen = static_cast<int32_t>(longDevId.size());
@@ -596,11 +716,10 @@ void SQLiteStoreConv::storeConversation(const string& name, const string& longDe
 
 cleanup:
     sqlite3_finalize(stmt);
-    if (sqlCode != NULL)
-        *sqlCode = sqlResult;
     sqlCode_ = sqlResult;
     lck.unlock();
-    LOGGER(INFO, __func__, " <-- ", sqlResult);
+    LOGGER(DEBUGGING, __func__, " <-- ", sqlResult);
+    return sqlResult;
 }
 
 bool SQLiteStoreConv::hasConversation(const string& name, const string& longDevId, const string& ownName, int32_t* sqlCode) const 
@@ -612,7 +731,7 @@ bool SQLiteStoreConv::hasConversation(const string& name, const string& longDevI
     const char* devId;
     int32_t devIdLen;
 
-    LOGGER(INFO, __func__, " -->");
+    LOGGER(DEBUGGING, __func__, " -->");
     if (longDevId.size() > 0) {
         devId = longDevId.c_str();
         devIdLen = static_cast<int32_t>(longDevId.size());
@@ -637,19 +756,19 @@ cleanup:
     if (sqlCode != NULL)
         *sqlCode = sqlResult;
     sqlCode_ = sqlResult;
-    LOGGER(INFO, __func__, " <-- ", sqlResult);
+    LOGGER(DEBUGGING, __func__, " <-- ", sqlResult);
     return retVal;
 }
 
-void SQLiteStoreConv::deleteConversation(const string& name, const string& longDevId, const string& ownName, int32_t* sqlCode)
+int32_t SQLiteStoreConv::deleteConversation(const string& name, const string& longDevId, const string& ownName)
 {
-    sqlite3_stmt *stmt;
+    sqlite3_stmt *stmt = NULL;
     int32_t sqlResult;
 
     const char* devId;
     int32_t devIdLen;
 
-    LOGGER(INFO, __func__, " -->");
+    LOGGER(DEBUGGING, __func__, " -->");
     if (longDevId.size() > 0) {
         devId = longDevId.c_str();
         devIdLen = static_cast<int32_t>(longDevId.size());
@@ -658,6 +777,7 @@ void SQLiteStoreConv::deleteConversation(const string& name, const string& longD
         devId = dummyId;
         devIdLen = static_cast<int32_t>(strlen(dummyId));
     }
+
     //removeConversation = "DELETE FROM Conversations WHERE name=?1 AND longDevId=?2 AND ownName=?3;";
     SQLITE_CHK(SQLITE_PREPARE(db, removeConversation, -1, &stmt, NULL));
     SQLITE_CHK(sqlite3_bind_text(stmt, 1, name.data(), static_cast<int32_t>(name.size()), SQLITE_STATIC));
@@ -669,18 +789,21 @@ void SQLiteStoreConv::deleteConversation(const string& name, const string& longD
 
 cleanup:
     sqlite3_finalize(stmt);
-    if (sqlCode != NULL)
-        *sqlCode = sqlResult;
     sqlCode_ = sqlResult;
-    LOGGER(INFO, __func__, " <-- ", sqlResult);
+    LOGGER(DEBUGGING, __func__, " <-- ", sqlResult);
+    return sqlResult;
 }
 
-void SQLiteStoreConv::deleteConversationsName(const string& name, const string& ownName, int32_t* sqlCode)
+int32_t SQLiteStoreConv::deleteConversationsName(const string& name, const string& ownName)
 {
-    sqlite3_stmt *stmt;
+    sqlite3_stmt *stmt = nullptr;
     int32_t sqlResult;
 
-    LOGGER(INFO, __func__, " -->");
+    LOGGER(DEBUGGING, __func__, " -->");
+    if (isGroupMember(name)) {
+        sqlResult = SQLITE_CONSTRAINT;
+        goto cleanup;
+    }
     // removeConversations = "DELETE FROM Conversations WHERE name=?1 AND ownName=?2;";
     SQLITE_CHK(SQLITE_PREPARE(db, removeConversations, -1, &stmt, NULL));
     SQLITE_CHK(sqlite3_bind_text(stmt, 1, name.data(), static_cast<int32_t>(name.size()), SQLITE_STATIC));
@@ -691,23 +814,21 @@ void SQLiteStoreConv::deleteConversationsName(const string& name, const string& 
 
 cleanup:
     sqlite3_finalize(stmt);
-    if (sqlCode != NULL)
-        *sqlCode = sqlResult;
     sqlCode_ = sqlResult;
-    LOGGER(INFO, __func__, " <-- ", sqlResult);
+    LOGGER(DEBUGGING, __func__, " <-- ", sqlResult);
+    return sqlResult;
 }
 
-shared_ptr<list<string> > SQLiteStoreConv::loadStagedMks(const string& name, const string& longDevId, const string& ownName, int32_t* sqlCode) const
+int32_t SQLiteStoreConv::loadStagedMks(const string& name, const string& longDevId, const string& ownName, list<string> &keys) const
 {
     sqlite3_stmt *stmt;
     int32_t len;
     int32_t sqlResult;
-    shared_ptr<list<string> > keys = make_shared<list<string> >();
 
     const char* devId;
     int32_t devIdLen;
 
-    LOGGER(INFO, __func__, " -->");
+    LOGGER(DEBUGGING, __func__, " -->");
     if (longDevId.size() > 0) {
         devId = longDevId.c_str();
         devIdLen = static_cast<int32_t>(longDevId.size());
@@ -724,40 +845,60 @@ shared_ptr<list<string> > SQLiteStoreConv::loadStagedMks(const string& name, con
 
     sqlResult= sqlite3_step(stmt);
     ERRMSG;
-    if (sqlResult != SQLITE_ROW) {        // No stored MKs
-        sqlite3_finalize(stmt);
-        if (sqlCode != NULL)
-            *sqlCode = sqlResult;
-        sqlCode_ = sqlResult;
-        LOGGER(INFO, __func__, " <-- No stored message key");
-        return shared_ptr<list<string> >();
-    }
+
     while (sqlResult == SQLITE_ROW) {
         // Get the MK and its iv
         len = sqlite3_column_bytes(stmt, 0);
-        string mkivenc((const char*)sqlite3_column_blob(stmt, 0), static_cast<size_t>(len));
-        keys->push_back(mkivenc);
+        if (len > 0) {
+            string mkivenc((const char *) sqlite3_column_blob(stmt, 0), static_cast<size_t>(len));
+            keys.push_back(mkivenc);
+        }
         sqlResult = sqlite3_step(stmt);
     }
 
 cleanup:
     sqlite3_finalize(stmt);
-    if (sqlCode != NULL)
-        *sqlCode = sqlResult;
     sqlCode_ = sqlResult;
-    LOGGER(INFO, __func__, " <-- ", sqlResult);
-    return keys;
+    LOGGER(DEBUGGING, __func__, " <-- ", sqlResult);
+    return sqlResult;
 }
 
-void SQLiteStoreConv::insertStagedMk(const string& name, const string& longDevId, const string& ownName, const string& MKiv, int32_t* sqlCode)
+static bool hasStagedMk(sqlite3* db, const string& name, const string& longDevId, const string& ownName, const string& MKiv)
 {
     sqlite3_stmt *stmt;
     int32_t sqlResult;
+    int32_t exists = 0;
+
+    // char* hasStagedMkSql = "SELECT NULL, CASE EXISTS (SELECT 0 FROM stagedMk WHERE name=?1 AND longDevId=?2 AND ownName=?3 AND ivkeymk=?4) WHEN 1 THEN 1 ELSE 0 END;";
+    SQLITE_PREPARE(db, hasStagedMkSql, -1, &stmt, NULL);
+    sqlite3_bind_text(stmt,  1, name.data(), static_cast<int32_t>(name.size()), SQLITE_STATIC);
+    sqlite3_bind_text(stmt,  2, longDevId.data(), static_cast<int32_t>(longDevId.size()), SQLITE_STATIC);
+    sqlite3_bind_text(stmt,  3, ownName.data(), static_cast<int32_t>(ownName.size()), SQLITE_STATIC);
+    sqlite3_bind_blob(stmt,  4, MKiv.data(), static_cast<int32_t>(MKiv.size()), SQLITE_STATIC);
+
+    sqlResult = sqlite3_step(stmt);
+
+    if (sqlResult == SQLITE_ROW) {
+        exists = sqlite3_column_int(stmt, 1);
+    }
+    else
+        LOGGER(INFO, __func__, " SQL error: ", sqlResult);
+
+
+    sqlite3_finalize(stmt);
+    LOGGER(DEBUGGING, __func__, " <-- ", exists);
+    return exists == 1;
+}
+
+int32_t SQLiteStoreConv::insertStagedMk(const string& name, const string& longDevId, const string& ownName, const string& MKiv)
+{
+    sqlite3_stmt *stmt;
+    int32_t sqlResult = SQLITE_OK;
 
     const char* devId;
     int32_t devIdLen;
 
-    LOGGER(INFO, __func__, " -->");
+    LOGGER(DEBUGGING, __func__, " -->");
     if (longDevId.size() > 0) {
         devId = longDevId.c_str();
         devIdLen = static_cast<int32_t>(longDevId.size());
@@ -766,8 +907,14 @@ void SQLiteStoreConv::insertStagedMk(const string& name, const string& longDevId
         devId = dummyId;
         devIdLen = static_cast<int32_t>(strlen(dummyId));
     }
-    
-//     insertStagedMkSql = 
+
+    if (hasStagedMk(db, name, string(devId), ownName, MKiv)) {
+        sqlCode_ = sqlResult;
+        LOGGER(DEBUGGING, __func__, " <-- MK exists in DB, skip");
+        return sqlResult;
+    }
+
+//     insertStagedMkSql =
 //     "INSERT OR REPLACE INTO stagedMk (name, longDevId, ownName, since, otherkey, ivkeymk, ivkeyhdr) "
 //     "VALUES(?1, ?2, ?3, strftime('%s', ?4, 'unixepoch'), ?5, ?6, ?7);";
     SQLITE_CHK(SQLITE_PREPARE(db, insertStagedMkSql, -1, &stmt, NULL));
@@ -780,17 +927,16 @@ void SQLiteStoreConv::insertStagedMk(const string& name, const string& longDevId
     SQLITE_CHK(sqlite3_bind_null(stmt,  7));
 
     sqlResult = sqlite3_step(stmt);
-    ERRMSG;
+        ERRMSG;
 
 cleanup:
     sqlite3_finalize(stmt);
-    if (sqlCode != NULL)
-        *sqlCode = sqlResult;
     sqlCode_ = sqlResult;
-    LOGGER(INFO, __func__, " <-- ", sqlResult);
+    LOGGER(DEBUGGING, __func__, " <-- ", sqlResult);
+    return sqlResult;
 }
 
-void SQLiteStoreConv::deleteStagedMk(const string& name, const string& longDevId, const string& ownName, const string& MKiv, int32_t* sqlCode)
+int32_t SQLiteStoreConv::deleteStagedMk(const string& name, const string& longDevId, const string& ownName, const string& MKiv)
 {
     sqlite3_stmt *stmt;
     int32_t sqlResult;
@@ -798,7 +944,7 @@ void SQLiteStoreConv::deleteStagedMk(const string& name, const string& longDevId
     const char* devId;
     int32_t devIdLen;
 
-    LOGGER(INFO, __func__, " -->");
+    LOGGER(DEBUGGING, __func__, " -->");
     if (longDevId.size() > 0) {
         devId = longDevId.c_str();
         devIdLen = static_cast<int32_t>(longDevId.size());
@@ -819,48 +965,45 @@ void SQLiteStoreConv::deleteStagedMk(const string& name, const string& longDevId
 
 cleanup:
     sqlite3_finalize(stmt);
-    if (sqlCode != NULL)
-        *sqlCode = sqlResult;
     sqlCode_ = sqlResult;
-    LOGGER(INFO, __func__, " <-- ", sqlResult);
+    LOGGER(DEBUGGING, __func__, " <-- ", sqlResult);
+    return sqlResult;
 }
 
-void SQLiteStoreConv::deleteStagedMk(time_t timestamp, int32_t* sqlCode)
+int32_t SQLiteStoreConv::deleteStagedMk(time_t timestamp)
 {
     sqlite3_stmt *stmt;
 //    int32_t cleaned;
     int32_t sqlResult;
 
-    LOGGER(INFO, __func__, " -->");
+    LOGGER(DEBUGGING, __func__, " -->");
     // removeStagedMkTime = "DELETE FROM stagedMk WHERE since < ?1;";
     SQLITE_CHK(SQLITE_PREPARE(db, removeStagedMkTime, -1, &stmt, NULL));
     SQLITE_CHK(sqlite3_bind_int64(stmt, 1, timestamp));
 
     sqlResult= sqlite3_step(stmt);
 //    cleaned = sqlite3_changes(db);
-//    Log("Number of removed old MK: %d", cleaned);
+//    LOGGER(INFO, "Number of removed old MK: ", cleaned);
     ERRMSG;
 
 cleanup:
     sqlite3_finalize(stmt);
-    if (sqlCode != NULL)
-        *sqlCode = sqlResult;
     sqlCode_ = sqlResult;
-    LOGGER(INFO, __func__, " <-- ", sqlResult);
+    LOGGER(DEBUGGING, __func__, " <-- ", sqlResult);
+    return sqlResult;
 }
 
 // ******** PreKey store
-string* SQLiteStoreConv::loadPreKey(int32_t preKeyId, int32_t* sqlCode) const 
+int32_t SQLiteStoreConv::loadPreKey(const int32_t preKeyId, string &preKeyData) const
 {
     sqlite3_stmt *stmt;
     int32_t len;
-    string* preKeyData = NULL;
     int32_t sqlResult;
 
     // selectPreKey = "SELECT preKeyData FROM PreKeys WHERE keyid=?1;";
 
     // SELECT iv, preKeyData FROM PreKeys WHERE keyid=?1 ;
-    LOGGER(INFO, __func__, " -->");
+    LOGGER(DEBUGGING, __func__, " -->");
     SQLITE_CHK(SQLITE_PREPARE(db, selectPreKey, -1, &stmt, NULL));
     SQLITE_CHK(sqlite3_bind_int(stmt, 1, preKeyId));
 
@@ -869,25 +1012,24 @@ string* SQLiteStoreConv::loadPreKey(int32_t preKeyId, int32_t* sqlCode) const
     if (sqlResult == SQLITE_ROW) {        // No such pre key
         // Get the pre key data
         len = sqlite3_column_bytes(stmt, 0);
-        preKeyData = new string((const char*)sqlite3_column_blob(stmt, 0), len);
+        preKeyData.assign((const char*)sqlite3_column_blob(stmt, 0), static_cast<size_t >(len));
     }
 
 cleanup:
     sqlite3_finalize(stmt);
-    if (sqlCode != NULL)
-        *sqlCode = sqlResult;
     sqlCode_ = sqlResult;
-    LOGGER(INFO, __func__, " <-- ", sqlResult);
-    return preKeyData;
+    LOGGER(DEBUGGING, __func__, " <-- ", sqlResult);
+    return sqlResult;
 }
 
-void SQLiteStoreConv::storePreKey(int32_t preKeyId, const string& preKeyData, int32_t* sqlCode)
+int32_t SQLiteStoreConv::storePreKey(int32_t preKeyId, const string& preKeyData)
 {
     sqlite3_stmt *stmt;
     int32_t sqlResult;
 
     // insertPreKey = "INSERT INTO PreKeys (keyId, preKeyData) VALUES (?1, ?2);";
-    LOGGER(INFO, __func__, " -->");
+    LOGGER(DEBUGGING, __func__, " -->");
+
     SQLITE_CHK(SQLITE_PREPARE(db, insertPreKey, -1, &stmt, NULL));
     SQLITE_CHK(sqlite3_bind_int(stmt, 1, preKeyId));
     SQLITE_CHK(sqlite3_bind_blob(stmt, 2, preKeyData.data(), static_cast<int32_t>(preKeyData.size()), SQLITE_STATIC));
@@ -898,10 +1040,9 @@ void SQLiteStoreConv::storePreKey(int32_t preKeyId, const string& preKeyData, in
 
 cleanup:
     sqlite3_finalize(stmt);
-    if (sqlCode != NULL)
-        *sqlCode = sqlResult;
     sqlCode_ = sqlResult;
-    LOGGER(INFO, __func__, " <-- ", sqlResult);
+    LOGGER(DEBUGGING, __func__, " <-- ", sqlResult);
+    return sqlResult;
 }
 
 bool SQLiteStoreConv::containsPreKey(int32_t preKeyId, int32_t* sqlCode) const
@@ -910,7 +1051,7 @@ bool SQLiteStoreConv::containsPreKey(int32_t preKeyId, int32_t* sqlCode) const
     int32_t sqlResult;
     bool retVal = false;
 
-    LOGGER(INFO, __func__, " -->");
+    LOGGER(DEBUGGING, __func__, " -->");
 
     // SELECT preKeyData FROM PreKeys WHERE keyid=?1 ;
     SQLITE_CHK(SQLITE_PREPARE(db, selectPreKey, -1, &stmt, NULL));
@@ -926,16 +1067,16 @@ cleanup:
     if (sqlCode != NULL)
         *sqlCode = sqlResult;
     sqlCode_ = sqlResult;
-    LOGGER(INFO, __func__, " <-- ", sqlResult);
+    LOGGER(DEBUGGING, __func__, " <-- ", sqlResult);
     return retVal;
 }
 
-void SQLiteStoreConv::removePreKey(int32_t preKeyId, int32_t* sqlCode) 
+int32_t SQLiteStoreConv::removePreKey(int32_t preKeyId)
 {
     sqlite3_stmt *stmt;
     int32_t sqlResult;
 
-    LOGGER(INFO, __func__, " -->");
+    LOGGER(DEBUGGING, __func__, " -->");
 
     // DELETE FROM PreKeys WHERE keyId=?1
     SQLITE_CHK(SQLITE_PREPARE(db, deletePreKey, -1, &stmt, NULL));
@@ -946,12 +1087,13 @@ void SQLiteStoreConv::removePreKey(int32_t preKeyId, int32_t* sqlCode)
 
 cleanup:
     sqlite3_finalize(stmt);
-    if (sqlCode != NULL)
-        *sqlCode = sqlResult;
     sqlCode_ = sqlResult;
-    LOGGER(INFO, __func__, " <--", sqlResult);
+    LOGGER(DEBUGGING, __func__, " <--", sqlResult);
+    return sqlResult;
 }
 
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "OCUnusedGlobalDeclarationInspection"
 void SQLiteStoreConv::dumpPreKeys() const
 {
     sqlite3_stmt *stmt;
@@ -968,6 +1110,7 @@ cleanup:
     sqlite3_finalize(stmt);
     sqlCode_ = sqlResult;
 }
+#pragma clang diagnostic pop
 
 // ***** Message hash / time table to detect duplicate message from server
 
@@ -976,7 +1119,7 @@ int32_t SQLiteStoreConv::insertMsgHash(const string& msgHash)
     sqlite3_stmt *stmt;
     int32_t sqlResult;
 
-    LOGGER(INFO, __func__, " -->");
+    LOGGER(DEBUGGING, __func__, " -->");
 
     // char* insertMsgHashSql = "INSERT INTO MsgHash (msgHash, since) VALUES (?1, strftime('%s', ?2, 'unixepoch'));";
     SQLITE_CHK(SQLITE_PREPARE(db, insertMsgHashSql, -1, &stmt, NULL));
@@ -990,7 +1133,7 @@ int32_t SQLiteStoreConv::insertMsgHash(const string& msgHash)
 cleanup:
     sqlite3_finalize(stmt);
     sqlCode_ = sqlResult;
-    LOGGER(INFO, __func__, " <-- ", sqlResult);
+    LOGGER(DEBUGGING, __func__, " <-- ", sqlResult);
     return sqlResult;
 }
 
@@ -999,7 +1142,7 @@ int32_t SQLiteStoreConv::hasMsgHash(const string& msgHash)
     sqlite3_stmt *stmt;
     int32_t sqlResult;
 
-    LOGGER(INFO, __func__, " -->");
+    LOGGER(DEBUGGING, __func__, " -->");
 
     // char* selectMsgHash = "SELECT msgHash FROM MsgHash WHERE msgHash=?1;";
     SQLITE_CHK(SQLITE_PREPARE(db, selectMsgHash, -1, &stmt, NULL));
@@ -1010,7 +1153,7 @@ int32_t SQLiteStoreConv::hasMsgHash(const string& msgHash)
 cleanup:
     sqlite3_finalize(stmt);
     sqlCode_ = sqlResult;
-    LOGGER(INFO, __func__, " <-- ", sqlResult);
+    LOGGER(DEBUGGING, __func__, " <-- ", sqlResult);
     return sqlResult;
 }
 
@@ -1019,21 +1162,171 @@ int32_t SQLiteStoreConv::deleteMsgHashes(time_t timestamp)
     sqlite3_stmt *stmt;
     int32_t sqlResult;
 
-    LOGGER(INFO, __func__, " -->");
+    LOGGER(DEBUGGING, __func__, " -->");
 
     // char* removeMsgHash = "DELETE FROM MsgHash WHERE since < ?1;";
     SQLITE_CHK(SQLITE_PREPARE(db, removeMsgHash, -1, &stmt, NULL));
     SQLITE_CHK(sqlite3_bind_int64(stmt, 1, timestamp));
 
     sqlResult= sqlite3_step(stmt);
-//    cleaned = sqlite3_changes(db);
-//    Log("Number of removed old MK: %d", cleaned);
     if (sqlResult != SQLITE_DONE)
         ERRMSG;
 
 cleanup:
     sqlite3_finalize(stmt);
     sqlCode_ = sqlResult;
-    LOGGER(INFO, __func__, " <-- ", sqlResult);
+    LOGGER(DEBUGGING, __func__, " <-- ", sqlResult);
+    return sqlResult;
+}
+
+int32_t SQLiteStoreConv::insertMsgTrace(const string &name, const string &messageId, const string &deviceId,
+                                        const string& convState, const string &attributes, bool attachment, bool received)
+{
+    sqlite3_stmt *stmt;
+    int32_t sqlResult;
+
+    LOGGER(DEBUGGING, __func__, " -->");
+
+    int32_t flag = attachment ? ATTACHMENT : 0;
+    flag = received ? flag | RECEIVED : flag;
+
+    // char* insertMsgTraceSql = "INSERT INTO MsgTrace (name, messageId, deviceId, convstate, attributes, flags) VALUES (?1, ?2, ?3, ?4, ?5);";
+    SQLITE_CHK(SQLITE_PREPARE(db, insertMsgTraceSql, -1, &stmt, NULL));
+    SQLITE_CHK(sqlite3_bind_text(stmt, 1, name.data(), static_cast<int32_t>(name.size()), SQLITE_STATIC));
+    SQLITE_CHK(sqlite3_bind_text(stmt, 2, messageId.data(), static_cast<int32_t>(messageId.size()), SQLITE_STATIC));
+    SQLITE_CHK(sqlite3_bind_text(stmt, 3, deviceId.data(), static_cast<int32_t>(deviceId.size()), SQLITE_STATIC));
+    SQLITE_CHK(sqlite3_bind_text(stmt, 4, convState.data(), static_cast<int32_t>(convState.size()), SQLITE_STATIC));
+    SQLITE_CHK(sqlite3_bind_text(stmt, 5, attributes.data(), static_cast<int32_t>(attributes.size()), SQLITE_STATIC));
+    SQLITE_CHK(sqlite3_bind_int(stmt,  6, flag));
+
+    sqlResult= sqlite3_step(stmt);
+    if (sqlResult != SQLITE_DONE)
+        ERRMSG;
+
+cleanup:
+    sqlite3_finalize(stmt);
+    sqlCode_ = sqlResult;
+    LOGGER(DEBUGGING, __func__, " <-- ", sqlResult);
+    return sqlResult;
+}
+
+int32_t SQLiteStoreConv::loadMsgTrace(const string &name, const string &messageId, const string &deviceId, list<StringUnique> &traceRecords)
+{
+    sqlite3_stmt *stmt = NULL;
+    int32_t sqlResult;
+
+    LOGGER(DEBUGGING, __func__, " -->");
+
+    int32_t selection = 0;
+    if (!messageId.empty() && !deviceId.empty())
+        selection = 1;
+    else if (!name.empty())
+        selection = 2;
+    else if (!messageId.empty())
+        selection = 3;
+    else if (!deviceId.empty())
+        selection = 4;
+
+    switch (selection) {
+        case 1:
+            // char* selectMsgTraceMsgDevId =
+            //"SELECT name, messageId, deviceId, convstate, attributes, STRFTIME('%Y-%m-%dT%H:%M:%f', stored), flags FROM MsgTrace WHERE messageId=?1 AND deviceId=?2 ORDER BY ROWID ASC ;";
+            SQLITE_CHK(SQLITE_PREPARE(db, selectMsgTraceMsgDevId, -1, &stmt, NULL));
+            SQLITE_CHK(sqlite3_bind_text(stmt, 1, messageId.data(), static_cast<int32_t>(messageId.size()), SQLITE_STATIC));
+            SQLITE_CHK(sqlite3_bind_text(stmt, 2, deviceId.data(), static_cast<int32_t>(deviceId.size()), SQLITE_STATIC));
+            break;
+        case 2:
+            // char* selectMsgTraceName =
+            //      "SELECT name, messageId, deviceId, convstate, attributes, STRFTIME('%Y-%m-%dT%H:%M:%f', stored), flags FROM MsgTrace WHERE name=?1 ORDER BY ROWID ASC ;";
+            SQLITE_CHK(SQLITE_PREPARE(db, selectMsgTraceName, -1, &stmt, NULL));
+            SQLITE_CHK(sqlite3_bind_text(stmt, 1, name.data(), static_cast<int32_t>(name.size()), SQLITE_STATIC));
+            break;
+        case 3:
+            // char* selectMsgTraceMsgId =
+            //     "SELECT name, messageId, deviceId, convstate, attributes, STRFTIME('%Y-%m-%dT%H:%M:%f', stored), flags FROM MsgTrace WHERE messageId=?1 ORDER BY ROWID ASC ;";
+            SQLITE_CHK(SQLITE_PREPARE(db, selectMsgTraceMsgId, -1, &stmt, NULL));
+            SQLITE_CHK(sqlite3_bind_text(stmt, 1, messageId.data(), static_cast<int32_t>(messageId.size()), SQLITE_STATIC));
+            break;
+        case 4:
+            // char* selectMsgTraceDevId =
+            //     "SELECT name, messageId, deviceId, convstate, attributes, STRFTIME('%Y-%m-%dT%H:%M:%f', stored), flags FROM MsgTrace WHERE deviceId=?1 ORDER BY ROWID ASC ;";
+            SQLITE_CHK(SQLITE_PREPARE(db, selectMsgTraceDevId, -1, &stmt, NULL));
+            SQLITE_CHK(sqlite3_bind_text(stmt, 1, deviceId.data(), static_cast<int32_t>(deviceId.size()), SQLITE_STATIC));
+            break;
+        default:
+            sqlResult = SQLITE_ERROR;
+            goto cleanup;
+            break;
+    }
+
+    sqlResult= sqlite3_step(stmt);
+    ERRMSG;
+    if (sqlResult != SQLITE_ROW) {        // No stored records for this selection
+        LOGGER(INFO, __func__, " <-- No message trace records for: ", name, messageId, deviceId);
+        goto cleanup;
+    }
+    while (sqlResult == SQLITE_ROW) {
+        // Get trace fields and create a JSON formatted string
+        JsonUnique jsonUnique(cJSON_CreateObject());
+        cJSON* root = jsonUnique.get();
+        // name is usually the SC UID string
+        cJSON_AddStringToObject(root, "name", (const char*)sqlite3_column_text(stmt, 0));
+        cJSON_AddStringToObject(root, "msgId", (const char*)sqlite3_column_text(stmt, 1));
+        cJSON_AddStringToObject(root, "devId", (const char*)sqlite3_column_text(stmt, 2));
+        cJSON_AddStringToObject(root, "state", (const char*)sqlite3_column_text(stmt, 3));
+        cJSON_AddStringToObject(root, "attr", (const char*)sqlite3_column_text(stmt, 4));
+        cJSON_AddStringToObject(root, "time", (const char*)sqlite3_column_text(stmt, 5));
+
+        int32_t flag = sqlite3_column_int(stmt, 6);
+        cJSON_AddNumberToObject(root, "received", ((flag & RECEIVED) == RECEIVED) ? 1 : 0);
+        cJSON_AddNumberToObject(root, "attachment", ((flag & ATTACHMENT) == ATTACHMENT) ? 1 : 0);
+
+        CharUnique out(cJSON_PrintUnformatted(root));
+        traceRecords.push_back(StringUnique(new string(out.get())));
+
+        sqlResult = sqlite3_step(stmt);
+    }
+
+cleanup:
+    sqlite3_finalize(stmt);
+    sqlCode_ = sqlResult;
+    LOGGER(DEBUGGING, __func__, " <-- ", sqlResult);
+
+    return sqlResult;
+}
+
+
+int32_t SQLiteStoreConv::deleteMsgTrace(time_t timestamp)
+{
+    sqlite3_stmt *stmt;
+    int32_t sqlResult;
+
+    LOGGER(DEBUGGING, __func__, " -->");
+
+    // Bind with two strftime functions and compare them with < doesn't seem to work. Thus
+    // we use the trick and compile the full SQL statement as string and then prepare it.
+    // This is also required because for the trace records we store the timestamp in ISO
+    // format with fractions of a second to get a more precise timestamp. Otherwise we would
+    // have a timestamp with a precision of a full second. To remove old trace records it's
+    // OK to use a second based timestamp.
+
+    // char* removeMsgTrace = "DELETE FROM MsgTrace WHERE STRFTIME('%s', stored)";
+    char strfTime[400];
+    snprintf(strfTime, sizeof(strfTime)-1, "%s < strftime('%%s', %ld, 'unixepoch');", removeMsgTrace, timestamp);
+
+    SQLITE_CHK(SQLITE_PREPARE(db, strfTime, -1, &stmt, NULL));
+
+    // The following sequence somehow doesn't work even if the removeMsgTrace terminates with ' <?1;'
+//    SQLITE_CHK(SQLITE_PREPARE(db, removeMsgTrace, -1, &stmt, NULL));
+//    SQLITE_CHK(sqlite3_bind_text(stmt, 1, strfTime, -1, SQLITE_STATIC));
+
+    sqlResult= sqlite3_step(stmt);
+    if (sqlResult != SQLITE_DONE)
+        ERRMSG;
+
+cleanup:
+    sqlite3_finalize(stmt);
+    sqlCode_ = sqlResult;
+    LOGGER(DEBUGGING, __func__, " <-- ", sqlResult);
     return sqlResult;
 }

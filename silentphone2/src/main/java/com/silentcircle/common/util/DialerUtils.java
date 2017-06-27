@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2014-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -28,10 +28,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 package com.silentcircle.common.util;
 
+import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Resources;
+import android.support.v4.content.ContextCompat;
 import android.text.TextUtils;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
@@ -39,6 +41,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.silentcircle.SilentPhoneApplication;
 import com.silentcircle.silentphone2.R;
 
 /**
@@ -109,11 +112,25 @@ public class DialerUtils {
      */
     public static void configureEmptyListView(
             View emptyListView, int imageResId, int strResId, Resources res) {
+        configureEmptyListView(
+                emptyListView, imageResId, strResId, -1, res);
+    }
+
+    public static void configureEmptyListView(
+            View emptyListView, int imageResId, int strResId, int headerResId, Resources res) {
         ImageView emptyListViewImage =
                 (ImageView) emptyListView.findViewById(R.id.emptyListViewImage);
 
-        emptyListViewImage.setImageDrawable(res.getDrawable(imageResId));
+        emptyListViewImage.setImageDrawable(
+                ContextCompat.getDrawable(SilentPhoneApplication.getAppContext(), imageResId));
         emptyListViewImage.setContentDescription(res.getString(strResId));
+
+        if (headerResId != -1) {
+            TextView emptyListViewHeader =
+                    (TextView) emptyListView.findViewById(R.id.emptyListViewHeader);
+            emptyListViewHeader.setText(res.getString(headerResId));
+            emptyListViewHeader.setVisibility(View.VISIBLE);
+        }
 
         TextView emptyListViewMessage =
                 (TextView) emptyListView.findViewById(R.id.emptyListViewMessage);
@@ -153,4 +170,20 @@ public class DialerUtils {
         }
     }
 
+    public static void showInputMethod(Context ctx) {
+        InputMethodManager imm = (InputMethodManager) ctx.getSystemService(
+                Context.INPUT_METHOD_SERVICE);
+        if (imm != null) {
+            imm.toggleSoftInput(InputMethodManager.SHOW_IMPLICIT, 0);
+        }
+    }
+
+    public static void hideInputMethod(Activity activity) {
+        View view = activity.getCurrentFocus();
+        if (view != null) {
+            InputMethodManager imm = (InputMethodManager) activity.getSystemService(
+                    Context.INPUT_METHOD_SERVICE);
+            imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+        }
+    }
 }

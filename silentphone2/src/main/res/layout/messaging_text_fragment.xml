@@ -17,6 +17,7 @@
                 android:autoLink="web|email"
                 android:padding="@dimen/spacing_normal"
                 android:text="@string/sample_message"
+                android:textColor="?attr/sp_activity_primary_text_color"
                 android:textIsSelectable="true"
                 android:layout_height="match_parent" />
 
@@ -27,7 +28,7 @@
     <include
         android:id="@+id/export"
         layout="@layout/upload"
-        android:layout_width="fill_parent"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:visibility="gone" />

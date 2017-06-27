@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2016-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -46,13 +46,16 @@ import android.os.ParcelFileDescriptor;
 import android.provider.ContactsContract;
 import android.provider.MediaStore;
 import android.provider.OpenableColumns;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v7.app.AlertDialog;
 import android.text.TextUtils;
 import android.util.Base64;
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.webkit.MimeTypeMap;
 
+import com.silentcircle.common.waveform.WaveformDrawer;
+import com.silentcircle.logs.Log;
 import com.silentcircle.messaging.listener.DismissDialogOnClick;
 import com.silentcircle.messaging.model.event.Event;
 import com.silentcircle.messaging.model.event.Message;
@@ -62,6 +65,7 @@ import com.silentcircle.messaging.providers.TextProvider;
 import com.silentcircle.messaging.providers.VCardProvider;
 import com.silentcircle.messaging.providers.VideoProvider;
 import com.silentcircle.messaging.repository.EventRepository;
+import com.silentcircle.messaging.services.SCloudCleanupService;
 import com.silentcircle.messaging.services.SCloudService;
 import com.silentcircle.silentphone2.BuildConfig;
 import com.silentcircle.silentphone2.R;
@@ -70,6 +74,7 @@ import com.silentcircle.silentphone2.util.Utilities;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -80,7 +85,11 @@ import java.io.OutputStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
+
+import static com.silentcircle.messaging.services.SCloudService.SCLOUD_METADATA_DURATION;
+import static com.silentcircle.messaging.services.SCloudService.SCLOUD_METADATA_WAVEFORM;
 
 /**
  * Utilities for attachment handling.
@@ -100,13 +109,77 @@ public class AttachmentUtils {
     public static final long FILE_SIZE_SMALL = 1 * 1024 * 1024;
 
     public static final int MATCH_CONTACTS_URI = 1;
-    public static final int MATCH_VCARD_URI = 2;
+    public static final int MATCH_CONTACTS_VCARD_URI = 2;
+    public static final int MATCH_VCARD_URI = 3;
+
+    public static class PurgeAttachmentsRunnable implements Runnable {
+
+        private final Context mContext;
+        private final String mConversationId;
+        private final List<String> mAttachmentIds;
+
+        public PurgeAttachmentsRunnable(Context context, String conversationId, List<String> attachmentIds) {
+            mContext = context;
+            mConversationId = conversationId;
+            mAttachmentIds = attachmentIds;
+        }
+
+        @Override
+        public void run() {
+            for (String id : mAttachmentIds) {
+                Intent cleanupIntent = Action.PURGE_ATTACHMENTS.intent(mContext,
+                        SCloudCleanupService.class);
+                cleanupIntent.putExtra("KEEP_STATUS", false);
+                Extra.PARTNER.to(cleanupIntent, mConversationId);
+                Extra.ID.to(cleanupIntent, id);
+                mContext.startService(cleanupIntent);
+            }
+        }
+    };
+
+    public static class MetaData {
+
+        public String preview = null;
+        public String mimeType = null;
+        public String fileName = null;
+        public String displayName = null;
+        public String waveform = null;
+        public String duration = null;
+
+        @NonNull
+        public static MetaData parse(final String metaData) {
+            MetaData result = new MetaData();
+
+            try {
+                JSONObject metaDataJson = new JSONObject(metaData);
+
+                result.preview = metaDataJson.optString("preview", null);
+                result.fileName = metaDataJson.optString("FileName", null);
+                result.mimeType = metaDataJson.optString("MimeType", null);
+                result.displayName = metaDataJson.optString("DisplayName", null);
+
+                result.waveform = metaDataJson.optString(SCLOUD_METADATA_WAVEFORM, null);
+                result.duration = metaDataJson.optString(SCLOUD_METADATA_DURATION, null);
+            } catch (JSONException ignore) {
+                // fields left empty as it is not possible to display attachment information
+            }
+
+            return result;
+        }
+    }
 
     private static final UriMatcher CONTENT_URI_MATCHER = new UriMatcher(UriMatcher.NO_MATCH);
     static {
         // content://com.android.contacts/contacts/lookup/*/*
         CONTENT_URI_MATCHER.addURI(ContactsContract.AUTHORITY, "contacts/lookup/*/*",
                 MATCH_CONTACTS_URI);
+        // content://com.android.contacts/contacts/as_vcard/*
+        CONTENT_URI_MATCHER.addURI(ContactsContract.AUTHORITY, "contacts/as_vcard/*",
+                MATCH_CONTACTS_VCARD_URI);
+        // content://com.android.contacts/contacts/as_multi_vcard/*
+        CONTENT_URI_MATCHER.addURI(ContactsContract.AUTHORITY, "contacts/as_multi_vcard/*",
+                MATCH_CONTACTS_VCARD_URI);
+        // content://<package>.messaging.provider.vcard/*
         CONTENT_URI_MATCHER.addURI(VCardProvider.AUTHORITY, "*", MATCH_VCARD_URI);
     }
 
@@ -134,6 +207,7 @@ public class AttachmentUtils {
         return extension;
     }
 
+    @Nullable
     public static File getExternalStorageFile(String fileName) {
         if (!Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState())) {
             return null;
@@ -166,9 +240,13 @@ public class AttachmentUtils {
         if(scheme.equals("file")) {
             fileName = uri.getLastPathSegment();
         } else if (scheme.equals("content")) {
+            String[] proj = {
+                    OpenableColumns.DISPLAY_NAME,
+            };
+
             Cursor cursor = null;
             try {
-                cursor = context.getContentResolver().query(uri, null, null, null, null);
+                cursor = context.getContentResolver().query(uri, proj, null, null, null);
                 if (cursor != null && cursor.moveToFirst()) {
                     fileName = cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME));
                 }
@@ -209,35 +287,100 @@ public class AttachmentUtils {
     }
 
     public static long getFileSize(Context context, Uri uri) {
+        if (AttachmentUtils.matchAttachmentUri(uri) == AttachmentUtils.MATCH_CONTACTS_VCARD_URI) {
+            // This is a really buggy URI - {@link OpenableColumns.SIZE) returns null
+            // and {@link ParcelFileDescriptor#getStatSize() returns -1}
+            InputStream is = null;
+            ByteArrayOutputStream os = null;
+            try {
+                is = context.getContentResolver().openInputStream(uri);
+                os = new ByteArrayOutputStream();
+                IOUtils.pipe(is, os);
+
+                int size = os.size();
+                if (size > 0) {
+                    return size;
+                }
+            } catch (Exception ignore) {}
+            finally {
+                IOUtils.close(is, os);
+            }
+        }
+
+        try {
+            String[] proj = {
+                    OpenableColumns.SIZE,
+            };
+
+            Cursor returnCursor = context.getContentResolver().query(uri, proj, null, null, null);
+            int sizeIndex = returnCursor.getColumnIndex(OpenableColumns.SIZE);
+            if (sizeIndex != -1 && returnCursor.moveToFirst()) {
+                long size = returnCursor.getLong(sizeIndex);
+
+                if (size > 0L) {
+                    return size;
+                }
+            }
+        } catch (Exception ignore) {} // Covers providers that don't support querying
+
         try {
             ParcelFileDescriptor fd = context.getContentResolver().openFileDescriptor(uri, "r");
             long size = fd.getStatSize();
             fd.close();
-            return size;
+            return Math.max(0, size);
         } catch (Throwable exception) {
             return 0;
         }
     }
 
+    @Nullable
+    public static String getFileAsBase64String(Context context, Uri uri) {
+        InputStream inputStream = null;
+        ByteArrayOutputStream byteArrayOutputStream = null;
+        try {
+            ParcelFileDescriptor fd = context.getContentResolver().openFileDescriptor(uri, "r");
+            inputStream = new ParcelFileDescriptor.AutoCloseInputStream(fd);
+            byte[] buffer = new byte[16 * 1024];
+            byteArrayOutputStream = new ByteArrayOutputStream();
+                int size;
+                while ((size = inputStream.read(buffer)) != -1) {
+                    byteArrayOutputStream.write(buffer, 0, size);
+                }
+            return Base64.encodeToString(byteArrayOutputStream.toByteArray(), Base64.NO_WRAP);
+        } catch (Throwable exception) {
+            return null;
+        } finally {
+            IOUtils.close(inputStream, byteArrayOutputStream);
+       }
+    }
+
+    @Nullable
+    public static String getBitmapAsBase64String(Context context, Bitmap bitmap) {
+        ByteArrayOutputStream byteArrayOutputStream = null;
+        try {
+            byteArrayOutputStream = new ByteArrayOutputStream();
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream);
+            return Base64.encodeToString(byteArrayOutputStream.toByteArray(), Base64.NO_WRAP);
+        } catch (Throwable exception) {
+            return null;
+        } finally {
+            IOUtils.close(byteArrayOutputStream);
+        }
+    }
+
+    @Nullable
     public static byte[] getContent(Context context, Uri uri) {
         byte[] result = null;
 
-        InputStream stream = null;
+        InputStream inputStream = null;
         try {
             ParcelFileDescriptor fd = context.getContentResolver().openFileDescriptor(uri, "r");
-            stream = new ParcelFileDescriptor.AutoCloseInputStream(fd);
-            result = IOUtils.readFully(stream);
+            inputStream = new ParcelFileDescriptor.AutoCloseInputStream(fd);
+            result = IOUtils.readFully(inputStream);
         } catch (Throwable exception) {
             result = null;
         } finally {
-            if (stream != null) {
-                try {
-                    stream.close();
-                }
-                catch (IOException e) {
-                    // ignore exception when failing to close the stream
-                }
-            }
+            IOUtils.close(inputStream);
         }
         return result;
     }
@@ -386,6 +529,10 @@ public class AttachmentUtils {
 
         if(MIME.isPpt(mimeType)) {
             return R.drawable.ic_ppt;
+        }
+
+        if(MIME.isAudio(mimeType)) {
+            return R.drawable.ic_sound;
         }
 
         if(MIME.isOctetStream(mimeType)) {
@@ -555,6 +702,26 @@ public class AttachmentUtils {
         return false;
     }
 
+    public static boolean hasThumbnail(Message message) {
+        if (message == null) {
+            return false;
+        }
+
+        String metaData = message.getMetaData();
+        if (!TextUtils.isEmpty(metaData)) {
+            try {
+                JSONObject metaDataJson = new JSONObject(metaData);
+                if (metaDataJson.has(SCloudService.SCLOUD_METADATA_THUMBNAIL)) {
+                    return true;
+                }
+            } catch (JSONException e) {
+                return false;
+            }
+        }
+
+        return false;
+    }
+
     public static void removeAttachments(Context context) {
         File tempDir = getDir(context);
 
@@ -570,7 +737,7 @@ public class AttachmentUtils {
     }
 
     public static void setExportedFilename(Context context, String partner, String messageId, String exportedFilename) {
-        EventRepository eventRepository = MessageUtils.getEventRepository(context, partner);
+        EventRepository eventRepository = MessageUtils.getEventRepository(partner);
 
         if (eventRepository == null) {
             return;
@@ -649,6 +816,83 @@ public class AttachmentUtils {
             result = CONTENT_URI_MATCHER.match(uri);
         }
         return result;
+    }
+
+    /**
+     * Decodes the dB levels from their base64 version.
+     *
+     * The base64 version should encode each level as an unsigned byte with values in range [0, 255]
+     * which map dB values from range [MIN_DB, 0], where 0 dB is the loudest.
+     *
+     * @param base64Levels the base 64 string to decode
+     * @return a float array with dB levels
+     */
+    public static float[] getDBLevelsFromBase64(String base64Levels) {
+        if (base64Levels == null) {
+            return null;
+        }
+        byte[] levelsBytes = Base64.decode(base64Levels, Base64.NO_WRAP);
+        if (levelsBytes == null || levelsBytes.length == 0) {
+            return null;
+        }
+        int minDB = WaveformDrawer.MIN_LEVEL_DB;
+        float[] levels = new float[levelsBytes.length];
+        for (int i = 0; i < levelsBytes.length; i++) {
+            int value = levelsBytes[i] & 0xff; // decode it as unsigned byte
+            // convert [0 255] to [minDB 0]
+            float dBValue = ((value / 255.f) - 1) * (-minDB);
+            levels[i] = dBValue;
+        }
+        return levels;
+    }
+
+    /**
+     * Get a base64 version of dB levels.
+     *
+     * The float dB levels are mapped from [MIN_DB, 0] to [0, 255]. 1 byte is used per level, so
+     * precession is reduced and dB values below MIN_DB are clipped.
+     *
+     * @param levels the dB levels to encode to base64
+     * @return a base64 string of the levels
+     */
+    public static String getLevelsAsBase64String(float[] levels) {
+        int minDB = WaveformDrawer.MIN_LEVEL_DB;
+        byte[] levelsBytes = new byte[levels.length];
+        for (int i = 0; i < levels.length; i++) {
+            // convert [minDB 0] to [0 255]
+            float value = (levels[i] - minDB) / (-minDB) * 255;
+            value = Math.max(0, value);
+            levelsBytes[i] = (byte) value;
+        }
+        String base64Levels = Base64.encodeToString(levelsBytes, Base64.NO_WRAP);
+        return base64Levels;
+    }
+
+    /**
+     * Converts the duration in milliseconds to a string.
+     *
+     * The string will contain the duration in seconds with a precession of 3 decimal places.
+     *
+     * @param durationMS the duration in milliseconds
+     * @return the duration as a string
+     */
+    public static String getDurationAsString(long durationMS) {
+        if (durationMS <= 0) {
+            return null;
+        }
+        String durationString = String.format(Locale.US, "%.03f", ((float)durationMS) / 1000);
+        return  durationString;
+    }
+
+    /**
+     * Returns duration in milliseconds from provided string.
+     * @param durationString the string to decode
+     * @return the duration in milliseconds
+     */
+    public static long getDurationFromString(String durationString) {
+        float durationSec = Float.parseFloat(durationString);
+        long durationMS = (long) (durationSec * 1000);
+        return durationMS;
     }
 }
 

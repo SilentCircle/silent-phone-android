@@ -17,20 +17,20 @@
 package com.silentcircle.silentphone2.fragments;
 
 import android.accounts.Account;
+import android.annotation.TargetApi;
 import android.app.Activity;
-import android.content.ContentUris;
+import android.content.Context;
 import android.database.Cursor;
-import android.net.Uri;
+import android.os.Build;
 import android.provider.ContactsContract;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 
+import com.silentcircle.common.list.ContactListItemView;
 import com.silentcircle.contacts.list.ContactListFilter;
-import com.silentcircle.contacts.list.ScContactEntryListAdapter;
 import com.silentcircle.contacts.list.ScContactEntryListFragment;
-import com.silentcircle.contacts.list.ScContactListAdapter;
 import com.silentcircle.contacts.list.ScDefaultContactListAdapter;
 import com.silentcircle.silentphone2.R;
 import com.silentcircle.silentphone2.activities.ContactAdder;
@@ -45,14 +45,36 @@ public final class ContactAdderFragment extends ScContactEntryListFragment<ScDef
         setQuickContactEnabled(false);
         setAdjustSelectionBoundsEnabled(true);
         setPhotoLoaderEnabled(true);
-        setSectionHeaderDisplayEnabled(false);
+        setSectionHeaderDisplayEnabled(true);
         setDarkTheme(false);
         setVisibleScrollbarEnabled(true);
+        setShowEmptyListForNullQuery(false);
+        setQueryString(null, false);
+        useScDirectory(false);
+        setSearchMode(false);
     }
 
+    @TargetApi(Build.VERSION_CODES.M)
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        commonOnAttach(getActivity());
+    }
+
+    /*
+     * Deprecated on API 23
+     * Use onAttachToContext instead
+     */
+    @SuppressWarnings("deprecation")
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+            commonOnAttach(activity);
+        }
+    }
+
+    private void commonOnAttach(Activity activity) {
         mParent = (ContactAdder)activity;
     }
 
@@ -72,10 +94,18 @@ public final class ContactAdderFragment extends ScContactEntryListFragment<ScDef
                 super.bindView(itemView, partition, cursor, position);
                 itemView.setTag(cursor.getLong(ContactQuery.CONTACT_ID));
             }
+
+            @Override
+            protected ContactListItemView newView(Context context, int partition, Cursor cursor, int position, ViewGroup parent) {
+                ContactListItemView view = super.newView(context, partition, cursor, position, parent);
+                view.setBackgroundResource(R.drawable.bg_action);
+                return view;
+            }
         };
         adapter.setDisplayPhotos(true);
-        adapter.setFilter(ContactListFilter.createFilterWithType(ContactListFilter.FILTER_TYPE_DEFAULT));
+        adapter.setFilter(ContactListFilter.createFilterWithType(ContactListFilter.FILTER_TYPE_CUSTOM));
         adapter.setSectionHeaderDisplayEnabled(isSectionHeaderDisplayEnabled());
+        adapter.searchScData(false);
         return adapter;
     }
 

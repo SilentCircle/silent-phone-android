@@ -1,75 +1,95 @@
 
 DESTDIR=/usr/local
 PREFIX=mbedtls_
-OLDPREFIX=polarssl_
 
 .SILENT:
 
-all:	programs tests
+.PHONY: all no_test programs lib tests install uninstall clean test check covtest lcov apidoc apidoc_clean
 
-no_test:	programs
+all: programs tests
+	$(MAKE) post_build
 
-programs:	lib
+no_test: programs
+
+programs: lib
 	$(MAKE) -C programs
 
 lib:
 	$(MAKE) -C library
 
-tests:	lib
+tests: lib
 	$(MAKE) -C tests
 
-install:
-	mkdir -p $(DESTDIR)/include/polarssl
-	cp -r include/polarssl $(DESTDIR)/include
+ifndef WINDOWS
+install: no_test
+	mkdir -p $(DESTDIR)/include/mbedtls
+	cp -r include/mbedtls $(DESTDIR)/include
 	
 	mkdir -p $(DESTDIR)/lib
-	cp -RP library/libpolarssl.* library/libmbedtls.* $(DESTDIR)/lib
+	cp -RP library/libmbedtls.*    $(DESTDIR)/lib
+	cp -RP library/libmbedx509.*   $(DESTDIR)/lib
+	cp -RP library/libmbedcrypto.* $(DESTDIR)/lib
 	
 	mkdir -p $(DESTDIR)/bin
 	for p in programs/*/* ; do              \
 	    if [ -x $$p ] && [ ! -d $$p ] ;     \
 	    then                                \
 	        f=$(PREFIX)`basename $$p` ;     \
-	        o=$(OLDPREFIX)`basename $$p` ;  \
 	        cp $$p $(DESTDIR)/bin/$$f ;     \
-	        ln -sf $$f $(DESTDIR)/bin/$$o ; \
 	    fi                                  \
 	done
 
 uninstall:
-	rm -rf $(DESTDIR)/include/polarssl
-	rm -f $(DESTDIR)/lib/libpolarssl.*
+	rm -rf $(DESTDIR)/include/mbedtls
 	rm -f $(DESTDIR)/lib/libmbedtls.*
+	rm -f $(DESTDIR)/lib/libmbedx509.*
+	rm -f $(DESTDIR)/lib/libmbedcrypto.*
 	
 	for p in programs/*/* ; do              \
 	    if [ -x $$p ] && [ ! -d $$p ] ;     \
 	    then                                \
 	        f=$(PREFIX)`basename $$p` ;     \
-	        o=$(OLDPREFIX)`basename $$p` ;  \
 	        rm -f $(DESTDIR)/bin/$$f ;      \
-	        rm -f $(DESTDIR)/bin/$$o ;      \
 	    fi                                  \
 	done
+endif
+
+WARNING_BORDER      =*******************************************************\n
+NULL_ENTROPY_WARN_L1=****  WARNING!  MBEDTLS_TEST_NULL_ENTROPY defined! ****\n
+NULL_ENTROPY_WARN_L2=****  THIS BUILD HAS NO DEFINED ENTROPY SOURCES    ****\n
+NULL_ENTROPY_WARN_L3=****  AND IS *NOT* SUITABLE FOR PRODUCTION USE     ****\n
+
+NULL_ENTROPY_WARNING=\n$(WARNING_BORDER)$(NULL_ENTROPY_WARN_L1)$(NULL_ENTROPY_WARN_L2)$(NULL_ENTROPY_WARN_L3)$(WARNING_BORDER)
+
+# Post build steps
+post_build:
+ifndef WINDOWS
+	# If NULL Entropy is configured, display an appropriate warning
+	-scripts/config.pl get MBEDTLS_TEST_NULL_ENTROPY && ([ $$? -eq 0 ]) && \
+	    echo '$(NULL_ENTROPY_WARNING)'
+endif
 
 clean:
 	$(MAKE) -C library clean
 	$(MAKE) -C programs clean
 	$(MAKE) -C tests clean
-	find . \( -name \*.gcno -o -name \*.gcda -o -name *.info \) -exec rm {} +
+ifndef WINDOWS
+	find . \( -name \*.gcno -o -name \*.gcda -o -name \*.info \) -exec rm {} +
+endif
 
-check: tests
+check: lib tests
 	$(MAKE) -C tests check
 
-test-ref-configs:
-	tests/scripts/test-ref-configs.pl
+test: check
 
+ifndef WINDOWS
 # note: for coverage testing, build with:
-# CFLAGS='--coverage' make OFLAGS='-g3 -O0'
+# make CFLAGS='--coverage -g3 -O0'
 covtest:
-	make check
+	$(MAKE) check
 	programs/test/selftest
-	( cd tests && ./compat.sh )
-	( cd tests && ./ssl-opt.sh )
+	tests/compat.sh
+	tests/ssl-opt.sh
 
 lcov:
 	rm -rf Coverage
@@ -86,7 +106,5 @@ apidoc:
 	doxygen doxygen/mbedtls.doxyfile
 
 apidoc_clean:
-	if [ -d apidoc ] ;			\
-	then				    	\
-		rm -rf apidoc ;			\
-	fi
+	rm -rf apidoc
+endif

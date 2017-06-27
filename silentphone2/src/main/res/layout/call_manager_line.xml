@@ -54,7 +54,11 @@
                 android:orientation="vertical"
                 android:gravity="center_horizontal">
 
-            <com.silentcircle.silentphone2.views.CircleImageSelectable
+            <FrameLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content">
+
+                <com.silentcircle.silentphone2.views.CircleImageSelectable
                     android:id="@+id/caller_image"
                     android:layout_width="@dimen/in_call_btn_width"
                     android:layout_height="@dimen/in_call_btn_width"
@@ -65,6 +69,17 @@
                     spa:sp_round_image_stroke_color="?sp_dial_button_primary_color"
                     spa:sp_round_image_shadow_color="#80555555"/>
 
+                <include
+                    android:id="@+id/data_retention_status"
+                    layout="@layout/messaging_data_retention_status"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="right|bottom"
+                    android:visibility="gone"
+                    tools:visibility="visible" />
+
+            </FrameLayout>
+
             <TextView
                     android:id="@+id/caller_text"
                     style="@style/Widget.Silent.SimpleText.Small"
@@ -74,6 +89,7 @@
                     android:scrollHorizontally="true"
                     android:marqueeRepeatLimit ="marquee_forever"
                     android:gravity="center"
+                    android:textColor="@color/sc_ng_text_grey"
                     tools:text="Caller name"/>
         </LinearLayout>
 
@@ -126,6 +142,7 @@
                     android:textSize="14sp"
                     android:text="@string/verify_label"
                     android:visibility="gone"
+                    android:textColor="@color/sc_ng_text_grey"
                     tools:visibility="visible"
                     tools:text="Touch and verify"/>
 <!--
@@ -140,6 +157,7 @@
                     android:textSize="16sp"
                     android:textStyle="bold"
                     android:visibility="invisible"
+                    android:textColor="@color/sc_ng_text_grey"
                     tools:text="SASword1 SASword2"
                     tools:visibility="visible"/>
 

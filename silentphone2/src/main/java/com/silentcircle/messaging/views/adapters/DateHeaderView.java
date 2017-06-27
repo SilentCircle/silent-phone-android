@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2016-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -25,21 +25,16 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-
 package com.silentcircle.messaging.views.adapters;
 
 import android.content.Context;
 import android.graphics.Rect;
-import android.graphics.drawable.Drawable;
 import android.support.annotation.Nullable;
-import android.support.v4.content.ContextCompat;
-import android.support.v4.graphics.drawable.DrawableCompat;
 import android.util.AttributeSet;
-import android.util.TypedValue;
 import android.view.MotionEvent;
+import android.widget.FrameLayout;
 
 import com.silentcircle.messaging.util.DateUtils;
-import com.silentcircle.messaging.views.RelativeLayout;
 import com.silentcircle.messaging.views.TextView;
 import com.silentcircle.silentphone2.R;
 
@@ -48,9 +43,10 @@ import java.util.Date;
 /**
  * Header view with date string. To be used in conversation view as group header.
  */
-public class DateHeaderView extends RelativeLayout {
+public class DateHeaderView extends FrameLayout {
 
     private TextView mText;
+    private DateUtils mDateUtilsInstance;
 
     /*
      * These should be accessed only from UI thread.
@@ -62,44 +58,32 @@ public class DateHeaderView extends RelativeLayout {
 
     public DateHeaderView(Context context) {
         this(context, null);
+        init();
     }
 
     public DateHeaderView(Context context, AttributeSet attrs) {
         this(context, attrs, 0);
+        init();
     }
 
     public DateHeaderView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
+        init();
+    }
+
+    private void init() {
+        mDateUtilsInstance = DateUtils.getSharedInstance(getContext());
     }
 
     @Override
     protected void onFinishInflate() {
         super.onFinishInflate();
         mText = (TextView) findViewById(R.id.message_group_header);
-
-        // paddings are ignored with this
-        // if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
-        int paddingLeft = mText.getPaddingLeft();
-        int paddingTop = mText.getPaddingTop();
-        int paddingRight = mText.getPaddingRight();
-        int paddingBottom = mText.getPaddingBottom();
-
-        int backgroundTintColor;
-        TypedValue typedValue = new TypedValue();
-        getContext().getTheme().resolveAttribute(R.attr.sp_date_header_background_tint_color,
-                typedValue, true);
-        backgroundTintColor = ContextCompat.getColor(getContext(), typedValue.resourceId);
-
-        final Drawable originalDrawable = mText.getBackground();
-        final Drawable wrappedDrawable = DrawableCompat.wrap(originalDrawable);
-        DrawableCompat.setTint(wrappedDrawable, backgroundTintColor);
-        mText.setBackground(wrappedDrawable);
-        mText.setPadding(paddingLeft, paddingTop, paddingRight, paddingBottom);
     }
 
     public void setDate(@Nullable Date date) {
         if (date != null) {
-            CharSequence text = DateUtils.getMessageGroupDate(getContext(), date.getTime());
+            CharSequence text = mDateUtilsInstance.getMessageGroupDate(date.getTime());
             mText.setText(text);
             mText.setContentDescription(text);
         }

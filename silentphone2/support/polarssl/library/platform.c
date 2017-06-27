@@ -1,69 +1,97 @@
 /*
  *  Platform abstraction layer
  *
- *  Copyright (C) 2006-2014, ARM Limited, All Rights Reserved
+ *  Copyright (C) 2006-2016, ARM Limited, All Rights Reserved
+ *  SPDX-License-Identifier: Apache-2.0
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License"); you may
+ *  not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ *  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  *
  *  This file is part of mbed TLS (https://tls.mbed.org)
- *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
- *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License along
- *  with this program; if not, write to the Free Software Foundation, Inc.,
- *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#if !defined(POLARSSL_CONFIG_FILE)
-#include "polarssl/config.h"
+#if !defined(MBEDTLS_CONFIG_FILE)
+#include "mbedtls/config.h"
 #else
-#include POLARSSL_CONFIG_FILE
+#include MBEDTLS_CONFIG_FILE
 #endif
 
-#if defined(POLARSSL_PLATFORM_C)
+#if defined(MBEDTLS_PLATFORM_C)
 
-#include "polarssl/platform.h"
+#include "mbedtls/platform.h"
 
-#if defined(POLARSSL_PLATFORM_MEMORY)
-#if !defined(POLARSSL_PLATFORM_STD_MALLOC)
-static void *platform_malloc_uninit( size_t len )
+#if defined(MBEDTLS_PLATFORM_MEMORY)
+#if !defined(MBEDTLS_PLATFORM_STD_CALLOC)
+static void *platform_calloc_uninit( size_t n, size_t size )
 {
-    ((void) len);
+    ((void) n);
+    ((void) size);
     return( NULL );
 }
 
-#define POLARSSL_PLATFORM_STD_MALLOC   platform_malloc_uninit
-#endif /* !POLARSSL_PLATFORM_STD_MALLOC */
+#define MBEDTLS_PLATFORM_STD_CALLOC   platform_calloc_uninit
+#endif /* !MBEDTLS_PLATFORM_STD_CALLOC */
 
-#if !defined(POLARSSL_PLATFORM_STD_FREE)
+#if !defined(MBEDTLS_PLATFORM_STD_FREE)
 static void platform_free_uninit( void *ptr )
 {
     ((void) ptr);
 }
 
-#define POLARSSL_PLATFORM_STD_FREE     platform_free_uninit
-#endif /* !POLARSSL_PLATFORM_STD_FREE */
+#define MBEDTLS_PLATFORM_STD_FREE     platform_free_uninit
+#endif /* !MBEDTLS_PLATFORM_STD_FREE */
 
-void * (*polarssl_malloc)( size_t ) = POLARSSL_PLATFORM_STD_MALLOC;
-void (*polarssl_free)( void * )     = POLARSSL_PLATFORM_STD_FREE;
+void * (*mbedtls_calloc)( size_t, size_t ) = MBEDTLS_PLATFORM_STD_CALLOC;
+void (*mbedtls_free)( void * )     = MBEDTLS_PLATFORM_STD_FREE;
 
-int platform_set_malloc_free( void * (*malloc_func)( size_t ),
+int mbedtls_platform_set_calloc_free( void * (*calloc_func)( size_t, size_t ),
                               void (*free_func)( void * ) )
 {
-    polarssl_malloc = malloc_func;
-    polarssl_free = free_func;
+    mbedtls_calloc = calloc_func;
+    mbedtls_free = free_func;
     return( 0 );
 }
-#endif /* POLARSSL_PLATFORM_MEMORY */
+#endif /* MBEDTLS_PLATFORM_MEMORY */
 
-#if defined(POLARSSL_PLATFORM_SNPRINTF_ALT)
-#if !defined(POLARSSL_PLATFORM_STD_SNPRINTF)
+#if defined(_WIN32)
+#include <stdarg.h>
+int mbedtls_platform_win32_snprintf( char *s, size_t n, const char *fmt, ... )
+{
+    int ret;
+    va_list argp;
+
+    /* Avoid calling the invalid parameter handler by checking ourselves */
+    if( s == NULL || n == 0 || fmt == NULL )
+        return( -1 );
+
+    va_start( argp, fmt );
+#if defined(_TRUNCATE)
+    ret = _vsnprintf_s( s, n, _TRUNCATE, fmt, argp );
+#else
+    ret = _vsnprintf( s, n, fmt, argp );
+    if( ret < 0 || (size_t) ret == n )
+    {
+        s[n-1] = '\0';
+        ret = -1;
+    }
+#endif
+    va_end( argp );
+
+    return( ret );
+}
+#endif
+
+#if defined(MBEDTLS_PLATFORM_SNPRINTF_ALT)
+#if !defined(MBEDTLS_PLATFORM_STD_SNPRINTF)
 /*
  * Make dummy function to prevent NULL pointer dereferences
  */
@@ -76,24 +104,24 @@ static int platform_snprintf_uninit( char * s, size_t n,
     return( 0 );
 }
 
-#define POLARSSL_PLATFORM_STD_SNPRINTF    platform_snprintf_uninit
-#endif /* !POLARSSL_PLATFORM_STD_SNPRINTF */
+#define MBEDTLS_PLATFORM_STD_SNPRINTF    platform_snprintf_uninit
+#endif /* !MBEDTLS_PLATFORM_STD_SNPRINTF */
 
-int (*polarssl_snprintf)( char * s, size_t n,
+int (*mbedtls_snprintf)( char * s, size_t n,
                           const char * format,
-                          ... ) = POLARSSL_PLATFORM_STD_SNPRINTF;
+                          ... ) = MBEDTLS_PLATFORM_STD_SNPRINTF;
 
-int platform_set_snprintf( int (*snprintf_func)( char * s, size_t n,
+int mbedtls_platform_set_snprintf( int (*snprintf_func)( char * s, size_t n,
                                                  const char * format,
                                                  ... ) )
 {
-    polarssl_snprintf = snprintf_func;
+    mbedtls_snprintf = snprintf_func;
     return( 0 );
 }
-#endif /* POLARSSL_PLATFORM_SNPRINTF_ALT */
+#endif /* MBEDTLS_PLATFORM_SNPRINTF_ALT */
 
-#if defined(POLARSSL_PLATFORM_PRINTF_ALT)
-#if !defined(POLARSSL_PLATFORM_STD_PRINTF)
+#if defined(MBEDTLS_PLATFORM_PRINTF_ALT)
+#if !defined(MBEDTLS_PLATFORM_STD_PRINTF)
 /*
  * Make dummy function to prevent NULL pointer dereferences
  */
@@ -103,20 +131,20 @@ static int platform_printf_uninit( const char *format, ... )
     return( 0 );
 }
 
-#define POLARSSL_PLATFORM_STD_PRINTF    platform_printf_uninit
-#endif /* !POLARSSL_PLATFORM_STD_PRINTF */
+#define MBEDTLS_PLATFORM_STD_PRINTF    platform_printf_uninit
+#endif /* !MBEDTLS_PLATFORM_STD_PRINTF */
 
-int (*polarssl_printf)( const char *, ... ) = POLARSSL_PLATFORM_STD_PRINTF;
+int (*mbedtls_printf)( const char *, ... ) = MBEDTLS_PLATFORM_STD_PRINTF;
 
-int platform_set_printf( int (*printf_func)( const char *, ... ) )
+int mbedtls_platform_set_printf( int (*printf_func)( const char *, ... ) )
 {
-    polarssl_printf = printf_func;
+    mbedtls_printf = printf_func;
     return( 0 );
 }
-#endif /* POLARSSL_PLATFORM_PRINTF_ALT */
+#endif /* MBEDTLS_PLATFORM_PRINTF_ALT */
 
-#if defined(POLARSSL_PLATFORM_FPRINTF_ALT)
-#if !defined(POLARSSL_PLATFORM_STD_FPRINTF)
+#if defined(MBEDTLS_PLATFORM_FPRINTF_ALT)
+#if !defined(MBEDTLS_PLATFORM_STD_FPRINTF)
 /*
  * Make dummy function to prevent NULL pointer dereferences
  */
@@ -127,21 +155,21 @@ static int platform_fprintf_uninit( FILE *stream, const char *format, ... )
     return( 0 );
 }
 
-#define POLARSSL_PLATFORM_STD_FPRINTF   platform_fprintf_uninit
-#endif /* !POLARSSL_PLATFORM_STD_FPRINTF */
+#define MBEDTLS_PLATFORM_STD_FPRINTF   platform_fprintf_uninit
+#endif /* !MBEDTLS_PLATFORM_STD_FPRINTF */
 
-int (*polarssl_fprintf)( FILE *, const char *, ... ) =
-                                        POLARSSL_PLATFORM_STD_FPRINTF;
+int (*mbedtls_fprintf)( FILE *, const char *, ... ) =
+                                        MBEDTLS_PLATFORM_STD_FPRINTF;
 
-int platform_set_fprintf( int (*fprintf_func)( FILE *, const char *, ... ) )
+int mbedtls_platform_set_fprintf( int (*fprintf_func)( FILE *, const char *, ... ) )
 {
-    polarssl_fprintf = fprintf_func;
+    mbedtls_fprintf = fprintf_func;
     return( 0 );
 }
-#endif /* POLARSSL_PLATFORM_FPRINTF_ALT */
+#endif /* MBEDTLS_PLATFORM_FPRINTF_ALT */
 
-#if defined(POLARSSL_PLATFORM_EXIT_ALT)
-#if !defined(POLARSSL_PLATFORM_STD_EXIT)
+#if defined(MBEDTLS_PLATFORM_EXIT_ALT)
+#if !defined(MBEDTLS_PLATFORM_STD_EXIT)
 /*
  * Make dummy function to prevent NULL pointer dereferences
  */
@@ -150,16 +178,130 @@ static void platform_exit_uninit( int status )
     ((void) status);
 }
 
-#define POLARSSL_PLATFORM_STD_EXIT   platform_exit_uninit
-#endif /* !POLARSSL_PLATFORM_STD_EXIT */
+#define MBEDTLS_PLATFORM_STD_EXIT   platform_exit_uninit
+#endif /* !MBEDTLS_PLATFORM_STD_EXIT */
 
-void (*polarssl_exit)( int status ) = POLARSSL_PLATFORM_STD_EXIT;
+void (*mbedtls_exit)( int status ) = MBEDTLS_PLATFORM_STD_EXIT;
 
-int platform_set_exit( void (*exit_func)( int status ) )
+int mbedtls_platform_set_exit( void (*exit_func)( int status ) )
 {
-    polarssl_exit = exit_func;
+    mbedtls_exit = exit_func;
     return( 0 );
 }
-#endif /* POLARSSL_PLATFORM_EXIT_ALT */
+#endif /* MBEDTLS_PLATFORM_EXIT_ALT */
 
-#endif /* POLARSSL_PLATFORM_C */
+#if defined(MBEDTLS_HAVE_TIME)
+
+#if defined(MBEDTLS_PLATFORM_TIME_ALT)
+#if !defined(MBEDTLS_PLATFORM_STD_TIME)
+/*
+ * Make dummy function to prevent NULL pointer dereferences
+ */
+static mbedtls_time_t platform_time_uninit( mbedtls_time_t* timer )
+{
+    ((void) timer);
+    return( 0 );
+}
+
+#define MBEDTLS_PLATFORM_STD_TIME   platform_time_uninit
+#endif /* !MBEDTLS_PLATFORM_STD_TIME */
+
+mbedtls_time_t (*mbedtls_time)( mbedtls_time_t* timer ) = MBEDTLS_PLATFORM_STD_TIME;
+
+int mbedtls_platform_set_time( mbedtls_time_t (*time_func)( mbedtls_time_t* timer ) )
+{
+    mbedtls_time = time_func;
+    return( 0 );
+}
+#endif /* MBEDTLS_PLATFORM_TIME_ALT */
+
+#endif /* MBEDTLS_HAVE_TIME */
+
+#if defined(MBEDTLS_ENTROPY_NV_SEED)
+#if !defined(MBEDTLS_PLATFORM_NO_STD_FUNCTIONS) && defined(MBEDTLS_FS_IO)
+/* Default implementations for the platform independent seed functions use
+ * standard libc file functions to read from and write to a pre-defined filename
+ */
+int mbedtls_platform_std_nv_seed_read( unsigned char *buf, size_t buf_len )
+{
+    FILE *file;
+    size_t n;
+
+    if( ( file = fopen( MBEDTLS_PLATFORM_STD_NV_SEED_FILE, "rb" ) ) == NULL )
+        return -1;
+
+    if( ( n = fread( buf, 1, buf_len, file ) ) != buf_len )
+    {
+        fclose( file );
+        return -1;
+    }
+
+    fclose( file );
+    return( (int)n );
+}
+
+int mbedtls_platform_std_nv_seed_write( unsigned char *buf, size_t buf_len )
+{
+    FILE *file;
+    size_t n;
+
+    if( ( file = fopen( MBEDTLS_PLATFORM_STD_NV_SEED_FILE, "w" ) ) == NULL )
+        return -1;
+
+    if( ( n = fwrite( buf, 1, buf_len, file ) ) != buf_len )
+    {
+        fclose( file );
+        return -1;
+    }
+
+    fclose( file );
+    return( (int)n );
+}
+#endif /* MBEDTLS_PLATFORM_NO_STD_FUNCTIONS */
+
+#if defined(MBEDTLS_PLATFORM_NV_SEED_ALT)
+#if !defined(MBEDTLS_PLATFORM_STD_NV_SEED_READ)
+/*
+ * Make dummy function to prevent NULL pointer dereferences
+ */
+static int platform_nv_seed_read_uninit( unsigned char *buf, size_t buf_len )
+{
+    ((void) buf);
+    ((void) buf_len);
+    return( -1 );
+}
+
+#define MBEDTLS_PLATFORM_STD_NV_SEED_READ   platform_nv_seed_read_uninit
+#endif /* !MBEDTLS_PLATFORM_STD_NV_SEED_READ */
+
+#if !defined(MBEDTLS_PLATFORM_STD_NV_SEED_WRITE)
+/*
+ * Make dummy function to prevent NULL pointer dereferences
+ */
+static int platform_nv_seed_write_uninit( unsigned char *buf, size_t buf_len )
+{
+    ((void) buf);
+    ((void) buf_len);
+    return( -1 );
+}
+
+#define MBEDTLS_PLATFORM_STD_NV_SEED_WRITE   platform_nv_seed_write_uninit
+#endif /* !MBEDTLS_PLATFORM_STD_NV_SEED_WRITE */
+
+int (*mbedtls_nv_seed_read)( unsigned char *buf, size_t buf_len ) =
+            MBEDTLS_PLATFORM_STD_NV_SEED_READ;
+int (*mbedtls_nv_seed_write)( unsigned char *buf, size_t buf_len ) =
+            MBEDTLS_PLATFORM_STD_NV_SEED_WRITE;
+
+int mbedtls_platform_set_nv_seed(
+        int (*nv_seed_read_func)( unsigned char *buf, size_t buf_len ),
+        int (*nv_seed_write_func)( unsigned char *buf, size_t buf_len ) )
+{
+    mbedtls_nv_seed_read = nv_seed_read_func;
+    mbedtls_nv_seed_write = nv_seed_write_func;
+    return( 0 );
+}
+#endif /* MBEDTLS_PLATFORM_NV_SEED_ALT */
+#endif /* MBEDTLS_ENTROPY_NV_SEED */
+
+#endif /* MBEDTLS_PLATFORM_C */

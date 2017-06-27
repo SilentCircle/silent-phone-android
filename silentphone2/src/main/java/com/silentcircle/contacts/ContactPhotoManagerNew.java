@@ -16,11 +16,13 @@
 
 package com.silentcircle.contacts;
 
+import android.Manifest;
 import android.annotation.TargetApi;
 import android.app.ActivityManager;
 import android.content.ComponentCallbacks2;
 import android.content.ContentResolver;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.database.Cursor;
@@ -48,10 +50,13 @@ import android.provider.ContactsContract.Contacts.Photo;
 import android.provider.ContactsContract.Data;
 import android.provider.ContactsContract.Directory;
 import android.support.annotation.NonNull;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.graphics.drawable.RoundedBitmapDrawable;
 import android.support.v4.graphics.drawable.RoundedBitmapDrawableFactory;
 import android.text.TextUtils;
-import android.util.Log;
+
+import com.silentcircle.common.util.StringUtils;
+import com.silentcircle.logs.Log;
 import android.util.LruCache;
 import android.view.View;
 import android.view.ViewGroup;
@@ -63,6 +68,8 @@ import com.silentcircle.contacts.utils.BitmapUtil;
 import com.silentcircle.contacts.utils.UriUtils;
 import com.silentcircle.contacts.widget.LetterTileDrawable;
 import com.silentcircle.silentphone2.R;
+import com.silentcircle.silentphone2.util.ConfigurationUtilities;
+import com.silentcircle.silentphone2.util.PinnedCertificateHandling;
 
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
@@ -76,6 +83,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
 
 /**
  * Asynchronously loads contact photos and maintains a cache of photos.
@@ -108,6 +116,8 @@ public abstract class ContactPhotoManagerNew implements ComponentCallbacks2 {
     private static final Uri DEFAULT_IMAGE_URI = Uri.parse(DEFAULT_IMAGE_URI_SCHEME + "://");
 
     public static final String CONTACT_PHOTO_SERVICE = "contactPhotos";
+
+    public static final String FORCE_SQUARE_AVATAR_KEY = "forceSquare";
 
     // Static field used to cache the default letter avatar drawable that is created
     // using a null {@link DefaultImageRequest}
@@ -1393,6 +1403,10 @@ class ContactPhotoManagerImplNew extends ContactPhotoManagerNew implements Callb
         }
 
         private void queryPhotosForPreload() {
+            if (ContextCompat.checkSelfPermission(mContext, Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED) {
+                return;
+            }
+
             Cursor cursor = null;
             try {
                 Uri uri = Contacts.CONTENT_URI.buildUpon().appendQueryParameter(
@@ -1510,6 +1524,16 @@ class ContactPhotoManagerImplNew extends ContactPhotoManagerNew implements Callb
                     if (scheme.equals("http") || scheme.equals("https")) {
                         HttpsURLConnection urlConnection =
                                 (HttpsURLConnection) new URL(uri.toString()).openConnection();
+                        SSLContext context = PinnedCertificateHandling.getPinnedSslContext(
+                                ConfigurationUtilities.mNetworkConfiguration);
+                        if (context != null) {
+                            urlConnection.setSSLSocketFactory(context.getSocketFactory());
+                        }
+                        else {
+                            Log.e(TAG, "Cannot get a trusted/pinned SSL context; failing");
+                            throw new IllegalStateException("Failed to get pinned SSL context");
+                        }
+
                         int responseCode = urlConnection.getResponseCode();
                         if (responseCode == HttpsURLConnection.HTTP_OK) {
                             is = urlConnection.getInputStream();
@@ -1560,6 +1584,7 @@ class ContactPhotoManagerImplNew extends ContactPhotoManagerNew implements Callb
 
                 baos = new ByteArrayOutputStream();
                 bitmap.compress(Bitmap.CompressFormat.PNG, 100, baos);
+                bitmap.recycle();
             }
             return baos;
         }
@@ -1597,6 +1622,12 @@ class ContactPhotoManagerImplNew extends ContactPhotoManagerNew implements Callb
 
         public static Request createFromUri(Uri uri, int requestedExtent, boolean darkTheme,
                 boolean isCircular, DefaultImageProvider defaultProvider) {
+            // hack to override circular avatar for generated group images
+            if (uri != null) {
+                String forceSquare = uri.getQueryParameter(FORCE_SQUARE_AVATAR_KEY);
+                isCircular = TextUtils.isEmpty(forceSquare) ? isCircular : !Boolean.parseBoolean(forceSquare);
+                uri = StringUtils.removeQueryParameter(uri, FORCE_SQUARE_AVATAR_KEY);
+            }
             return new Request(0 /* no ID */, uri, requestedExtent, darkTheme, isCircular,
                     defaultProvider);
         }
@@ -1658,7 +1689,7 @@ class ContactPhotoManagerImplNew extends ContactPhotoManagerNew implements Callb
         public void applyDefaultImage(ImageView view, boolean isCircular) {
             final DefaultImageRequest request;
 
-            if (isCircular) {
+            if (true) {
                 request = ContactPhotoManagerNew.isBusinessContactUri(mUri)
                         ? DefaultImageRequest.EMPTY_CIRCULAR_BUSINESS_IMAGE_REQUEST
                         : DefaultImageRequest.EMPTY_CIRCULAR_DEFAULT_IMAGE_REQUEST;

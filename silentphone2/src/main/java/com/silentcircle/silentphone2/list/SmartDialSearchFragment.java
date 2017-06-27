@@ -49,7 +49,9 @@ public class SmartDialSearchFragment extends SearchFragment {
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
-        commonOnAttach();
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+            commonOnAttach();
+        }
     }
 
     private void commonOnAttach() {

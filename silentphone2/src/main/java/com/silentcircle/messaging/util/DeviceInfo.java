@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2014-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -33,9 +33,8 @@ import android.content.res.Resources;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.Base64;
-import android.util.Log;
 
-import com.silentcircle.messaging.services.AxoMessaging;
+import com.silentcircle.messaging.services.ZinaMessaging;
 import com.silentcircle.silentphone2.R;
 import com.silentcircle.silentphone2.util.Utilities;
 
@@ -76,7 +75,7 @@ public class DeviceInfo {
     public static String getDeviceVerificationString(Context context, @Nullable String partnerId) {
         if (partnerId == null)
             return null;
-        byte[][] devices = AxoMessaging.getIdentityKeys(IOUtils.encode(partnerId));
+        byte[][] devices = ZinaMessaging.getIdentityKeys(IOUtils.encode(partnerId));
 
         if (devices == null || devices.length == 0) {
             return null;

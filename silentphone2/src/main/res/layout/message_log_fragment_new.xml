@@ -8,31 +8,12 @@
     android:orientation="vertical"
     android:showDividers="end">
 
-    <FrameLayout
+    <include layout="@layout/banner_data_retention"
+        android:id="@+id/data_retention_status"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-
-        <TextView
-            android:id="@+id/filter_status"
-            style="@style/ContactListSeparatorTextViewStyle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="@dimen/conversation_log_outer_margin"
-            android:layout_marginStart="@dimen/conversation_log_outer_margin"
-            android:paddingBottom="@dimen/conversation_log_inner_margin"
-            android:paddingTop="@dimen/conversation_log_inner_margin"
-            android:visibility="gone"
-            tools:visibility="visible" />
-
-        <View
-            android:id="@+id/conversation_log_divider"
-            android:layout_width="match_parent"
-            android:layout_height="1px"
-            android:layout_gravity="bottom"
-            android:layout_marginEnd="@dimen/conversation_log_outer_margin"
-            android:layout_marginStart="@dimen/conversation_log_outer_margin"
-            android:background="#55ffffff" />
-    </FrameLayout>
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        tools:visibility="visible" />
 
     <FrameLayout
         android:layout_width="match_parent"
@@ -40,25 +21,24 @@
         <!-- clipChildren=false is required to ensure shadows drawn
             within list items aren't clipped by the list item bounds.
              filterTouchesWhenObscured="true" also protects the list items -->
-        <ListView
+        <com.silentcircle.messaging.views.RecyclerView
             android:id="@android:id/list"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:filterTouchesWhenObscured="true"
+            android:paddingTop="@dimen/conversation_log_list_margin_top"
+            android:filterTouchesWhenObscured="false"
             android:clipChildren="false"
             android:divider="@null"
             android:fadingEdge="none"
-            android:overScrollMode="never"
-            android:layout_marginTop="@dimen/conversation_log_list_margin_top"
-            android:nestedScrollingEnabled="true"
-            android:scrollbarStyle="outsideOverlay" />
+            android:overScrollMode="never" />
 
         <include
             android:id="@+id/empty_list_view"
             layout="@layout/empty_list_view"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:visibility="visible"
+            android:visibility="gone"
+            tools:visibility="visible"
             />
 
         <com.silentcircle.common.widget.ProgressBar
@@ -69,15 +49,6 @@
             android:background="?sp_activity_background_color"
             android:visibility="visible"
             tools:visibility="visible"
-            />
-
-        <!-- The top level filterTouchesWhenObscured="true" view protects the embedded buttons, fields -->
-        <com.silentcircle.messaging.views.ScreenLockView
-            android:id="@+id/password_overlay"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:filterTouchesWhenObscured="true"
-            android:visibility="gone"
             />
 
     </FrameLayout>

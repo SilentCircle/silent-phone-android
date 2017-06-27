@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2016-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -30,8 +30,11 @@ package com.silentcircle.messaging.model.event;
 
 import android.text.TextUtils;
 
+import com.silentcircle.logs.Log;
 import com.silentcircle.messaging.model.Burnable;
+import com.silentcircle.messaging.model.MessageStates;
 import com.silentcircle.messaging.util.IOUtils;
+import com.silentcircle.messaging.util.UUIDGen;
 
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
@@ -40,13 +43,12 @@ import java.util.Date;
 import java.util.Locale;
 import java.util.UUID;
 
+import static android.os.Build.VERSION_CODES.M;
+
 public class Event extends Burnable implements Comparable<Event> {
 
     protected static final SimpleDateFormat DATE_FORMAT =
             new SimpleDateFormat("dd/MM/yy hh:mm:ss.SSS", Locale.getDefault());
-
-    /* UUID v1 timestamp epoch in unix time, millis at 00:00:00.000 15 Oct 1582 */
-    protected static final long START_EPOCH = -12219292800000L;
 
     public static final Event NONE = new Event();
     private byte[] conversationID;
@@ -56,6 +58,8 @@ public class Event extends Burnable implements Comparable<Event> {
 
     protected byte[] attributes;
     protected byte[] attachment;
+
+    protected EventDeviceInfo[] eventDeviceInfo;
 
     protected long composeTime;
 
@@ -150,7 +154,7 @@ public class Event extends Burnable implements Comparable<Event> {
     public long getComposeTime() {
         if (composeTime == 0) {
             try {
-                composeTime = (UUID.fromString(getId()).timestamp() / 10000) + START_EPOCH;
+                composeTime = UUIDGen.getAdjustedTimestamp(UUID.fromString(getId()));
             } catch (Exception e) {
                 // failed to determine compose time, return 0 for unknown
                 composeTime = 0;
@@ -265,4 +269,11 @@ public class Event extends Burnable implements Comparable<Event> {
                 + "Compose time: " + (composeTime  == 0 ? "Unknown" : DATE_FORMAT.format(new Date(composeTime))) + "\n";
     }
 
+    public EventDeviceInfo[] getEventDeviceInfo() {
+        return eventDeviceInfo;
+    }
+
+    public void setEventDeviceInfo(EventDeviceInfo[] info) {
+        eventDeviceInfo = info;
+    }
 }

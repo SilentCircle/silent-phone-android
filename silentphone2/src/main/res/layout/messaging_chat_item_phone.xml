@@ -1,35 +1,98 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.silentcircle.messaging.views.CallEventView
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<com.silentcircle.messaging.views.CallEventView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:paddingBottom="0.5dp"
-    android:background="@drawable/bg_error_light"
-    android:filterTouchesWhenObscured="true"
-    android:gravity="center">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:background="@null"
+    android:filterTouchesWhenObscured="false"
+    android:paddingBottom="@dimen/spacing_normal"
+    android:paddingTop="@dimen/spacing_normal">
 
-    <com.silentcircle.messaging.views.TextView
-        android:id="@+id/phone_message"
-        style="@style/Widget.Text.Floating.Call"
-        android:layout_width="wrap_content"
+    <com.silentcircle.messaging.views.CheckableLinearLayout
+        android:id="@+id/phone_message_container"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginRight="@dimen/space_normal"
-        android:layout_marginEnd="@dimen/space_normal"
-        android:paddingBottom="@dimen/space_normal"
-        android:paddingTop="@dimen/space_normal"
-        android:text="@string/sample_phone_message"/>
-
-    <com.silentcircle.messaging.views.TextView
-        android:id="@+id/phone_time"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_toRightOf="@id/phone_message"
-        android:layout_marginRight="@dimen/space_normal"
-        android:layout_marginEnd="@dimen/space_normal"
-        android:paddingBottom="@dimen/space_normal"
-        android:paddingTop="@dimen/space_normal"
+        android:layout_marginEnd="@dimen/spacing_xlarge"
+        android:layout_marginLeft="@dimen/spacing_xlarge"
+        android:layout_marginRight="@dimen/spacing_xlarge"
+        android:layout_marginStart="@dimen/spacing_xlarge"
+        android:background="@drawable/bg_call_card_light"
         android:duplicateParentState="true"
-        android:text="@string/sample_24hr_time"
-        android:textColor="?sp_error_message_text_selector"/>
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <com.silentcircle.silentphone2.views.ResizingTextTextView
+            android:id="@+id/phone_message"
+            style="@style/Widget.Text.Floating.Call"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/spacing_tiny"
+            android:layout_marginLeft="@dimen/spacing_normal"
+            android:layout_marginStart="@dimen/spacing_normal"
+            android:layout_marginEnd="@dimen/spacing_normal"
+            android:layout_marginRight="@dimen/spacing_normal"
+            android:layout_marginTop="@dimen/spacing_tiny"
+            android:ellipsize="end"
+            android:singleLine="true"
+            app:resizing_text_min_size="@dimen/text_small"
+            tools:text="@string/sample_phone_message" />
+
+        <com.silentcircle.messaging.views.TextView
+            android:id="@+id/phone_time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBaseline="@id/phone_message"
+            android:layout_marginBottom="@dimen/spacing_tiny"
+            android:layout_marginLeft="@dimen/spacing_normal"
+            android:layout_marginStart="@dimen/spacing_normal"
+            android:layout_marginEnd="@dimen/spacing_normal"
+            android:layout_marginRight="@dimen/spacing_normal"
+            android:layout_marginTop="@dimen/spacing_tiny"
+            android:layout_toEndOf="@id/phone_message"
+            android:layout_toRightOf="@id/phone_message"
+            android:singleLine="true"
+            android:duplicateParentState="true"
+            android:text="@string/sample_24hr_time"
+            android:textColor="?sp_error_message_text_selector" />
+
+    </com.silentcircle.messaging.views.CheckableLinearLayout>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_below="@+id/phone_message_container"
+        android:layout_alignLeft="@+id/phone_message_container"
+        android:layout_alignStart="@+id/phone_message_container"
+        android:layout_gravity="start">
+
+        <ImageView
+            android:id="@+id/message_retained_notice"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="@dimen/spacing_tiny"
+            android:layout_marginRight="@dimen/spacing_tiny"
+            android:layout_gravity="center_vertical"
+            android:src="@drawable/ic_retention_notice"
+            android:tint="@color/sc_ng_text_grey_7"
+            android:contentDescription="@string/data_retention_call_retained"
+            android:visibility="gone"
+            tools:visibility="visible" />
+
+        <com.silentcircle.messaging.views.TextView
+            android:id="@+id/message_burn_notice"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="start|center_vertical"
+            android:drawableLeft="@drawable/ic_burn_notice"
+            android:drawableStart="@drawable/ic_burn_notice"
+            android:singleLine="true"
+            android:textColor="?sp_message_description_text_color"
+            android:textSize="@dimen/messaging_message_info_small_text_size"
+            tools:text="@string/sample_burn_notice" />
+
+    </LinearLayout>
 
 </com.silentcircle.messaging.views.CallEventView>

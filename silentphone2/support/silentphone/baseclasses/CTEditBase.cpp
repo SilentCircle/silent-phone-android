@@ -1,7 +1,7 @@
 /*
 Created by Janis Narbuts
 Copyright (C) 2004-2012, Tivi LTD, www.tiviphone.com. All rights reserved.
-Copyright (C) 2012-2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2012-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,8 +27,6 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-
-
 //#include "../os/CTOsGui.h"
 #if defined(__APPLE__) || defined(ANDROID_NDK) ||  defined(__linux__)
 
@@ -45,6 +43,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <string.h>
 #include <stdio.h>
 #include <time.h>
+#include <algorithm>
 
 #ifndef UNICODE
 #define UNICODE
@@ -304,7 +303,7 @@ int cmpU(CTStrBase *b1, CTStrBase *b2)
    */
 
    short *s1=b1->getText(),*s2=b2->getText();
-   int ret, iLen=min(b1->getLen(),b2->getLen());
+   int ret, iLen=std::min(b1->getLen(),b2->getLen());
    if(iLen==0)
    {
       return b1->getLen()-b2->getLen();
@@ -332,7 +331,7 @@ int cmpU_LastChar(CTStrBase *b1, CTStrBase *b2, int iLastChar)
 {
 
    short *s1=b1->getText(),*s2=b2->getText();
-   int ret, iLen=min(b1->getLen(),b2->getLen());
+   int ret, iLen=std::min(b1->getLen(),b2->getLen());
    if(iLen==0)
    {
       return b1->getLen()-b2->getLen();
@@ -391,7 +390,7 @@ CTEditBase::CTEditBase(const char *p,int iLen, int iIsUnicode)
 
 int CTStrBase::operator == (const char *p){
    if(!p)return 0;
-   int l = strlen(p);
+   int l = (int)strlen(p);
    if(l!=getLen() )return 0;
    if(l==0)return 1;
    short *pD=getText();
@@ -487,7 +486,7 @@ void CTEditBase::remLastChar(int iCharsToRemove)
 int CTEditBase::cmpN(const CTStrBase &b, int iChars)
 {
    int iLen2=((CTStrBase &)b).getLen();
-   iLen2=min(iLen2,iLen);
+   iLen2=std::min(iLen2,iLen);
    if(iChars<iLen2)
       return 0;
    return cmpmyUnicode(((CTStrBase &)b).getText(),pData,iChars);
@@ -574,7 +573,7 @@ int CTEditBase::insertText(int iAtPos, char *buf, int iCharCount, int iIsUnicode
          while(*tmp){iCharCount++;tmp++;}
       }
       else
-         iCharCount=strlen(buf);
+         iCharCount=(int)strlen(buf);
    }
    int iPos;
    iCharCount=checkSize(iCharCount,&iPos);
@@ -624,7 +623,7 @@ char *CTEditBase::getTextUtf8(char *pOut, int *iMaxLen){
 unsigned short  *
 t_utf8_to_ucs2(const unsigned char *str, int len, int *ucs2_len, unsigned short  *ucs2_str)
 {
-   unsigned int ch;
+   unsigned int ch = 0;
    int      cnt = 0;
    int             i_str, i_ucs2_str;
    
@@ -750,7 +749,7 @@ void CTEditBase::addText(const char *buf, int iCharCount, int iIsUnicode)
          while(*tmp){iCharCount++;tmp++;}
       }
       else
-         iCharCount=strlen(buf);
+         iCharCount=(int)strlen(buf);
 
    }
    int iPos;
@@ -832,12 +831,12 @@ void CTFontN::initFont()
    memset(bufCharW,0,sizeof(bufCharW));
 
 #if defined( _WIN32_WCE) 
-   int b=min(0xff+1,CHAR_CNT_IN_BUF);
+   int b=std::min(0xff+1,CHAR_CNT_IN_BUF);
 #elif _WIN32
 //   int b=min(0xffff+1,CHAR_CNT_IN_BUF);
-   int b=min(0xff+1,CHAR_CNT_IN_BUF);
+   int b=std::min(0xff+1,CHAR_CNT_IN_BUF);
 #else
-   int b=min(128,CHAR_CNT_IN_BUF);
+   int b=std::min(128,CHAR_CNT_IN_BUF);
 #endif
    for(i=32;i<b;i++)
    {

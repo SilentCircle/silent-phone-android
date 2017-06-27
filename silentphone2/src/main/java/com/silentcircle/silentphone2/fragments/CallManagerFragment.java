@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2014-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -30,7 +30,6 @@ package com.silentcircle.silentphone2.fragments;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
-import android.app.Fragment;
 import android.content.ClipData;
 import android.content.ClipDescription;
 import android.content.Context;
@@ -39,11 +38,12 @@ import android.content.res.TypedArray;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.graphics.drawable.DrawableCompat;
 import android.support.v7.widget.CardView;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.DragEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -56,23 +56,35 @@ import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
+import com.silentcircle.common.util.AsyncTasks;
+import com.silentcircle.common.util.DRUtils;
 import com.silentcircle.common.util.ViewUtil;
+import com.silentcircle.common.widget.DataRetentionBanner;
+import com.silentcircle.logs.Log;
+import com.silentcircle.messaging.fragments.UserInfoListenerFragment;
+import com.silentcircle.messaging.model.Contact;
+import com.silentcircle.messaging.util.AsyncUtils;
 import com.silentcircle.silentphone2.R;
 import com.silentcircle.silentphone2.activities.InCallCallback;
 import com.silentcircle.silentphone2.services.TiviPhoneService;
 import com.silentcircle.silentphone2.util.CallState;
 import com.silentcircle.silentphone2.util.ManageCallStates;
+import com.silentcircle.silentphone2.util.RedrawHandler;
 import com.silentcircle.silentphone2.util.Utilities;
 import com.silentcircle.silentphone2.views.CircleImageSelectable;
+import com.silentcircle.userinfo.LoadUserInfo;
+import com.silentcircle.userinfo.UserInfo;
 
 import java.util.ArrayList;
+
+import zina.ZinaNative;
 
 /**
  * The fragment handles the call manager UI and related actions.
  *
  * Created by werner on 28.02.14.
  */
-public class CallManagerFragment extends Fragment implements TiviPhoneService.ServiceStateChangeListener {
+public class CallManagerFragment extends UserInfoListenerFragment implements TiviPhoneService.ServiceStateChangeListener {
 
     private static final String TAG = CallManagerFragment.class.getSimpleName();
 
@@ -91,6 +103,8 @@ public class CallManagerFragment extends Fragment implements TiviPhoneService.Se
     private Drawable mSpeakerOff;
 
     private LinearLayout mMainLayout;
+    private ScrollView mScrollView;
+    private DataRetentionBanner mDataRetentionBanner;
 
     private int mSasVerifiedColor;
 
@@ -107,6 +121,9 @@ public class CallManagerFragment extends Fragment implements TiviPhoneService.Se
     private int mDragActiveColor;
     private int mDragEnteredColor;
 
+    private boolean mIsSelfDrEnabled;
+    private RedrawHandler mHandler;
+
     private final View.OnDragListener mCallViewDragListener = new View.OnDragListener() {
         @Override
         public boolean onDrag(View v, DragEvent event) {
@@ -121,6 +138,15 @@ public class CallManagerFragment extends Fragment implements TiviPhoneService.Se
         super.onCreate(savedInstanceState);
         // Indicate that this fragment would like to influence the set of actions in the action bar.
         setHasOptionsMenu(true);
+        mHandler = new RedrawHandler(new RedrawHandler.RedrawRunnable() {
+
+            @Override
+            public void run() {
+                if (mDataRetentionBanner != null) {
+                    mDataRetentionBanner.setVisibility(getFlags() == View.VISIBLE ? View.VISIBLE : View.GONE);
+                }
+            }
+        });
     }
 
     @Override
@@ -136,7 +162,7 @@ public class CallManagerFragment extends Fragment implements TiviPhoneService.Se
 
         if (array != null) {
             mSasVerifiedColor = array.getColor(R.styleable.SpaStyle_sp_sas_verified_color, ContextCompat.getColor(mParent, R.color.white_translucent));
-            mSecurityTextColorNormal = array.getColor(R.styleable.SpaStyle_sp_dial_text_color, ContextCompat.getColor(mParent, android.R.color.white));
+            mSecurityTextColorNormal = ContextCompat.getColor(mParent, android.R.color.white);
             mSecurityTextColorGreen = array.getColor(R.styleable.SpaStyle_sp_sec_info_green, ContextCompat.getColor(mParent, R.color.black_green));
             mSecurityTextColorYellow = array.getColor(R.styleable.SpaStyle_sp_sec_info_yellow, ContextCompat.getColor(mParent, R.color.black_yellow));
 
@@ -168,6 +194,8 @@ public class CallManagerFragment extends Fragment implements TiviPhoneService.Se
         DrawableCompat.setTint(mSpeakerOff, ViewUtil.getColorFromAttributeId(mParent, R.attr.sp_actionbar_title_text_color));
 
         View view = inflater.inflate(R.layout.call_manager_fragment, container, false);
+        mScrollView = (ScrollView) view.findViewById(R.id.scroll_view);
+        mDataRetentionBanner = (DataRetentionBanner) view.findViewById(R.id.data_retention_status);
         mMainLayout = (LinearLayout)view.findViewById(R.id.main_layout);
         if (mMainLayout == null)
             return null;
@@ -186,6 +214,7 @@ public class CallManagerFragment extends Fragment implements TiviPhoneService.Se
                 return handleDragEvent(v, event, false /* remove from conference */);
             }
         });
+
         return view;
     }
 
@@ -201,14 +230,13 @@ public class CallManagerFragment extends Fragment implements TiviPhoneService.Se
         createAndBindViews(R.id.conf_header, mConfArray);
         createAndBindViews(R.id.private_header, mPrivateArray);
         createAndBindViews(R.id.in_out_header, mInOutArray);
+//        updateDataRetentionBanner();
     }
 
     @Override
     public void onPause() {
         super.onPause();
     }
-
-
 
 
     @TargetApi(Build.VERSION_CODES.M)
@@ -226,7 +254,9 @@ public class CallManagerFragment extends Fragment implements TiviPhoneService.Se
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
-        commonOnAttach(activity);
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+            commonOnAttach(activity);
+        }
     }
 
     private void commonOnAttach(Activity activity) {
@@ -251,19 +281,24 @@ public class CallManagerFragment extends Fragment implements TiviPhoneService.Se
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         inflater.inflate(R.menu.callmanager, menu);
         super.onCreateOptionsMenu(menu, inflater);
-        ViewUtil.tintMenuIcons(getActivity(), menu);
+        Context context = getActivity();
+        if (context != null) {
+            ViewUtil.tintMenuIcons(context, menu);
+        }
     }
 
     @Override
     public void onPrepareOptionsMenu(Menu menu) {
         super.onPrepareOptionsMenu(menu);
-        final boolean muted = mCallback.getMuteStateCb();
-        MenuItem item = menu.findItem(R.id.call_manager_mic);
-        item.setIcon(muted ? mMicMute : mMicOpen);
+        if (mCallback != null) {
+            final boolean muted = mCallback.getMuteStateCb();
+            MenuItem item = menu.findItem(R.id.call_manager_mic);
+            item.setIcon(muted ? mMicMute : mMicOpen);
 
-        final boolean speaker = Utilities.isSpeakerOn(mParent);
-        item = menu.findItem(R.id.call_manager_speaker);
-        item.setIcon(speaker ? mSpeakerOn : mSpeakerOff);
+            final boolean speaker = Utilities.isSpeakerOn(mParent);
+            item = menu.findItem(R.id.call_manager_speaker);
+            item.setIcon(speaker ? mSpeakerOn : mSpeakerOff);
+        }
     }
 
         // InCallActivity handles the Menu selection
@@ -272,6 +307,15 @@ public class CallManagerFragment extends Fragment implements TiviPhoneService.Se
         return super.onOptionsItemSelected(item);
     }
 
+    @Override
+    public void onUserInfo(UserInfo userInfo, String errorInfo, boolean silent) {
+        if (!isAdded()) {
+            return;
+        }
+//        updateDataRetentionBanner();
+    }
+
+    @Nullable
     private CardView createCallView(CallState call, ViewGroup parent) {
         LayoutInflater inflater = (LayoutInflater) mParent.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         final CardView rowView = (CardView)inflater.inflate(R.layout.call_manager_line, parent, false);
@@ -307,13 +351,17 @@ public class CallManagerFragment extends Fragment implements TiviPhoneService.Se
     };
 
     private CardView bindCallView(CardView rowView, CallState call) {
+        if (rowView == null) {
+            return null;
+        }
+
         rowView.setTag(call);
 
         TextView textView = (TextView) rowView.findViewById(R.id.caller_text);
         String name = call.getNameFromAB();
         if (TextUtils.isEmpty(name))
             name = call.bufPeer.toString();
-        textView.setText(name);
+        textView.setText(!TextUtils.isEmpty(name) ? name : Contact.UNKNOWN_DISPLAY_NAME);
         textView.setSelected(true);
 
         TextView securityText = (TextView) rowView.findViewById(R.id.sec_info);
@@ -351,7 +399,7 @@ public class CallManagerFragment extends Fragment implements TiviPhoneService.Se
             // well in case we had no SDES security before (should not happen on SC infrastructure)
             if (call.iShowVerifySas) {
                 verifyLabel.setText(getString(R.string.verify_label));
-                securityText.setText(getString(R.string.secstate_secure));
+                securityText.setText(getString(R.string.secstate_secure_question));
                 securityText.setTextColor(mSecurityTextColorNormal);
             }
             else {
@@ -394,8 +442,19 @@ public class CallManagerFragment extends Fragment implements TiviPhoneService.Se
                 rowView.setOnLongClickListener(mRowLongClick);
             }
         }
+        View dataRetentionStatus = rowView.findViewById(R.id.data_retention_status);
+        boolean retentionState = /**getRetentionState(Utilities.getPeerName(call), false,
+                call.mPeerDisclosureFlag);**/false;
+        dataRetentionStatus.setVisibility(retentionState ? View.VISIBLE : View.GONE);
+        // if peer disclosure flag does not match partner's retention state, try to refresh user
+        // information
+//        // TODO: Remove this when the peer disclosure bug is resolved
+//        if (retentionState != call.mPeerDisclosureFlag) {
+//            updateDataRetentionBanner();
+//        }
         return rowView;
     }
+
     /* ****************************************************************************
      * Public functions used by InCallActivity
      **************************************************************************** */
@@ -405,7 +464,7 @@ public class CallManagerFragment extends Fragment implements TiviPhoneService.Se
      * @param call the call that changed its ZRTP state.
      * @param msg  the message id of the ZRTP status change.
      */
-    public void zrtpStateChange(CallState call, TiviPhoneService.CT_cb_msg msg) {
+    public void zrtpStateChange(@NonNull CallState call, TiviPhoneService.CT_cb_msg msg) {
         // mFullAdapter.notifyDataSetChanged();
         CardView callView = findViewForCall(call);
         if (callView != null)
@@ -419,6 +478,10 @@ public class CallManagerFragment extends Fragment implements TiviPhoneService.Se
      * @param msg  the message id of the status change.
      */
     public void callStateChange(CallState call, TiviPhoneService.CT_cb_msg msg) {
+        if (call == null) {
+            Log.e(TAG, "Call state is null, call action: " + msg);
+            return;
+        }
         switch (msg) {
             case eStartCall:
                 answerCall(false, call);
@@ -434,8 +497,11 @@ public class CallManagerFragment extends Fragment implements TiviPhoneService.Se
                     mMainLayout.findViewById(R.id.in_out_header).setVisibility(View.VISIBLE);
                     final int sectionIndex = getIndexOfSection(R.id.in_out_header) + 1;
                     CardView callView = createCallView(call, mMainLayout);
-                    mMainLayout.addView(callView, sectionIndex);
+                    if (callView != null) {
+                        mMainLayout.addView(callView, sectionIndex);
+                    }
                 }
+//                updateDataRetentionBanner();
                 return;
 
             case eCalling:
@@ -464,7 +530,7 @@ public class CallManagerFragment extends Fragment implements TiviPhoneService.Se
      * Call handling functions
      * ******************************************************************* */
 
-    private synchronized void answerCall(boolean userPressed, CallState call) {
+    private synchronized void answerCall(boolean userPressed, @NonNull CallState call) {
 
         if (userPressed) {
             TiviPhoneService.doCmd("*a" + call.iCallId);
@@ -475,28 +541,39 @@ public class CallManagerFragment extends Fragment implements TiviPhoneService.Se
         // call on hold and set answered call as selected call.
         if (call != TiviPhoneService.calls.selectedCall) {
             CallState otherCall = TiviPhoneService.calls.selectedCall;
-            setCallToHold(otherCall, true);
+            if (otherCall != null) {
+                setCallToHold(otherCall, true);
+            }
             final CardView callView = findViewForCall(otherCall);
-            bindCallView(callView, otherCall);
-            callView.invalidate();
+
+            // can be null if call list not yet populated
+            if (callView != null) {
+                bindCallView(callView, otherCall);
+                callView.invalidate();
+            }
 
             mCallback.activeCallChangedCb(null, call, false);
             setCallToHold(call, false);
         }
-        mInOutArray.remove(call);
-        final CardView callView = findViewForCall(call);
-        mMainLayout.removeView(callView);
 
+        mInOutArray.remove(call);
+        mPrivateArray.add(call);
         setConferenceOnHold();
 
-        final int sectionIndex = getIndexOfSection(R.id.private_header) + 1;
-        mMainLayout.addView(callView, sectionIndex);
-        mPrivateArray.add(call);
-        mMainLayout.findViewById(R.id.conf_header_explanation).setVisibility(View.VISIBLE);
-        if (mInOutArray.size() <= 0) {
-            mMainLayout.findViewById(R.id.in_out_header).setVisibility(View.GONE);
+        final CardView callView = findViewForCall(call);
+        // can be null if call list not yet populated
+        if (callView != null && mMainLayout != null) {
+            mMainLayout.removeView(callView);
+
+            final int sectionIndex = getIndexOfSection(R.id.private_header) + 1;
+            mMainLayout.addView(callView, sectionIndex);
+
+            mMainLayout.findViewById(R.id.conf_header_explanation).setVisibility(View.VISIBLE);
+            if (mInOutArray.size() <= 0) {
+                mMainLayout.findViewById(R.id.in_out_header).setVisibility(View.GONE);
+            }
+            bindCallView(callView, call);
         }
-        bindCallView(callView, call);
     }
 
 
@@ -521,6 +598,8 @@ public class CallManagerFragment extends Fragment implements TiviPhoneService.Se
         // Get the total number of active calls before we remove the terminating call
         // from its list.
         int totalCount = mConfArray.size() + mPrivateArray.size() + mInOutArray.size();
+
+//        updateDataRetentionBanner();
 
         // Now remove call from its list and remove section if it's empty now
         if (mInOutArray.contains(call)) {
@@ -547,6 +626,8 @@ public class CallManagerFragment extends Fragment implements TiviPhoneService.Se
         mMainLayout.removeView(callView);
         // Terminate the call and select another call as active (selected) call.
         call.callEnded = true;
+        if (userPressed)
+            call.callEndedByUser = true;
         switchToNextCall(call, userPressed);
         totalCount--;
         // After terminating the call only one left
@@ -644,7 +725,7 @@ public class CallManagerFragment extends Fragment implements TiviPhoneService.Se
         }
     }
 
-    private void setCallToHold(CallState call, boolean setToHold) {
+    private void setCallToHold(@NonNull CallState call, boolean setToHold) {
         if (setToHold) {
             TiviPhoneService.doCmd("*h" + call.iCallId);
         }
@@ -716,18 +797,22 @@ public class CallManagerFragment extends Fragment implements TiviPhoneService.Se
             CallState oldActive = TiviPhoneService.calls.selectedCall;
             if (call.iIsOnHold) {
                 if (call != oldActive) {            // toggle with another all
-                    setCallToHold(oldActive, true);
-                    callView = findViewForCall(oldActive);
-                    bindCallView(callView, oldActive);
+                    if (oldActive != null) {
+                        setCallToHold(oldActive, true);
+                        callView = findViewForCall(oldActive);
+                        bindCallView(callView, oldActive);
+                    }
                     mCallback.activeCallChangedCb(null, call, false);
                 }
                 setCallToHold(call, false);
             }
             else {
                 if (call != oldActive) {
-                    setCallToHold(oldActive, false);
-                    callView = findViewForCall(oldActive);
-                    bindCallView(callView, oldActive);
+                    if (oldActive != null) {
+                        setCallToHold(oldActive, false);
+                        callView = findViewForCall(oldActive);
+                        bindCallView(callView, oldActive);
+                    }
                     mCallback.activeCallChangedCb(null, call, false);
                 }
                 setCallToHold(call, true);
@@ -847,7 +932,12 @@ public class CallManagerFragment extends Fragment implements TiviPhoneService.Se
         return -1;
     }
 
+    @Nullable
     private CardView findViewForCall(CallState call) {
+        if (mMainLayout == null) {
+            return null;
+        }
+
         final int count = mMainLayout.getChildCount();
         for (int i = 0; i < count; i++) {
             View v = mMainLayout.getChildAt(i);
@@ -888,11 +978,13 @@ public class CallManagerFragment extends Fragment implements TiviPhoneService.Se
             CardView callView = findViewForCall(call);
             if (callView == null) {
                 callView = createCallView(call, mMainLayout);
-                if (callView != null)
+                if (callView != null) {
                     mMainLayout.addView(callView, ++sectionIndex);
+                }
             }
-            else
+            else {
                 bindCallView(callView, call);
+            }
         }
     }
 
@@ -922,15 +1014,17 @@ public class CallManagerFragment extends Fragment implements TiviPhoneService.Se
                     if (!toConference && !call.isInConference)
                         return false;
                     setDragElementBackground(call, mDragActiveColor);
-                    ((ScrollView)getView()).smoothScrollTo(0, (int)mMainLayout.findViewById(R.id.private_header).getY());
+                    (mScrollView).smoothScrollTo(0, (int)mMainLayout.findViewById(R.id.private_header).getY());
                     return true;
                 }
                 return false;
 
             case DragEvent.ACTION_DRAG_ENTERED:
                 setDragElementBackground(call, mDragEnteredColor);
-                mMainLayout.removeView(callView);
-                mMainLayout.addView(callView, index);
+                if (callView != null) {
+                    mMainLayout.removeView(callView);
+                    mMainLayout.addView(callView, index);
+                }
                 return true;
 
             case DragEvent.ACTION_DRAG_LOCATION:
@@ -1095,5 +1189,68 @@ public class CallManagerFragment extends Fragment implements TiviPhoneService.Se
             childView.invalidate();
         }
     }
+
+    private boolean getRetentionState(String peerName, boolean canRefreshUserInfo, boolean peerDisclosureFlag) {
+        boolean retentionState = false;
+        if (Utilities.canMessage(peerName)) {
+            byte[] partnerUserInfo = ZinaNative.getUserInfoFromCache(peerName);
+            if (partnerUserInfo != null) {
+                AsyncTasks.UserInfo userInfo = AsyncTasks.parseUserInfo(partnerUserInfo);
+                retentionState = DRUtils.isAnyDataRetainedForUser(userInfo);
+            }
+            // TODO: Remove this when the peer disclosure bug is resolved
+            if (retentionState != peerDisclosureFlag && canRefreshUserInfo) {
+                partnerUserInfo = ZinaNative.refreshUserData(peerName, null);
+                if (partnerUserInfo != null) {
+                    AsyncTasks.UserInfo userInfo = AsyncTasks.parseUserInfo(partnerUserInfo);
+                    retentionState = DRUtils.isAnyDataRetainedForUser(userInfo);
+                }
+            }
+        }
+        return retentionState;
+    }
+
+    private void updateDataRetentionBanner() {
+        AsyncUtils.execute(new Runnable() {
+            @Override
+            public void run() {
+                mIsSelfDrEnabled = LoadUserInfo.isLrcm() | LoadUserInfo.isLrcp();
+                boolean isDrEnabled = LoadUserInfo.isLrcm() | LoadUserInfo.isLrcp()
+                        // TODO show banner during call when messaging DR is active as well?
+                        | LoadUserInfo.isLrmp() | LoadUserInfo.isLrmp() | LoadUserInfo.isLrap();
+
+                mDataRetentionBanner.clearConversationPartners();
+                mDataRetentionBanner.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        mDataRetentionBanner.refreshBannerTitle();
+                    }
+                });
+
+                String peerName;
+                for (CallState call : mConfArray) {
+                    peerName = Utilities.getPeerName(call);
+                    mDataRetentionBanner.addConversationPartner(peerName);
+                    isDrEnabled |= getRetentionState(peerName, true, call.mPeerDisclosureFlag);
+                }
+                for (CallState call : mPrivateArray) {
+                    peerName = Utilities.getPeerName(call);
+                    mDataRetentionBanner.addConversationPartner(peerName);
+                    isDrEnabled |= getRetentionState(peerName, true, call.mPeerDisclosureFlag);
+                }
+                for (CallState call : mInOutArray) {
+                    peerName = Utilities.getPeerName(call);
+                    mDataRetentionBanner.addConversationPartner(peerName);
+                    isDrEnabled |= getRetentionState(peerName, true, call.mPeerDisclosureFlag);
+                }
+
+                android.os.Message message = android.os.Message.obtain();
+                message.arg1 = isDrEnabled ? View.VISIBLE : View.GONE;
+                message.what = RedrawHandler.REFRESH_DATA_RETENTION_BANNER;
+                mHandler.sendMessage(message);
+            }
+        });
+    }
+
 }
 

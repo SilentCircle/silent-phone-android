@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2014-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -30,9 +30,9 @@ package com.silentcircle.userinfo;
 
 import android.os.Handler;
 import android.os.Looper;
-import android.util.Log;
 
-import com.silentcircle.silentphone2.services.TiviPhoneService;
+import com.silentcircle.logs.Log;
+import com.silentcircle.messaging.services.ZinaMessaging;
 import com.silentcircle.silentphone2.util.ConfigurationUtilities;
 
 /**
@@ -70,12 +70,13 @@ public class SipNotifyHandler {
 
         // We need the phone service to get a context and also to make sure a set of initialized
         // configuration data. LoadUserInfo requires the user name (or UUID etc).
-        if (REFRESH_PROVISIONING.equals(eventString) && TiviPhoneService.phoneService != null) {
+        if (REFRESH_PROVISIONING.equals(eventString)) {
+            ZinaMessaging.getInstance().rescanSiblingDevices();
             // refreshUserData starts an AsyncTask which requires that it runs on main loop.
             Runnable stateChange = new Runnable() {
                 @Override
                 public void run() {
-                    LoadUserInfo li = new LoadUserInfo(TiviPhoneService.phoneService.getApplicationContext(), true);
+                    LoadUserInfo li = new LoadUserInfo(true);
                     li.refreshUserInfo();
                 }
             };

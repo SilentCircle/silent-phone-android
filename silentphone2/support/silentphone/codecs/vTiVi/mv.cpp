@@ -1,7 +1,7 @@
 /*
 Created by Janis Narbuts
 Copyright (C) 2004-2012, Tivi LTD, www.tiviphone.com. All rights reserved.
-Copyright (C) 2012-2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2012-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,7 +27,6 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-
 #define T_CAN_TEST_V
 
 #if 0
@@ -949,6 +948,8 @@ cnt=0;
 }
 
 #endif
+
+#if 0 // EA: unused function
 static inline int getPredMV_1x1S(const int id, T_CUR_VECTOR *r, MB_4 *mb[], int *x, int *y, int iIsB){
      int cnt=0;
    MB_4 *m;
@@ -1056,6 +1057,7 @@ static inline int getPredMV_1x1S(const int id, T_CUR_VECTOR *r, MB_4 *mb[], int 
    }
    return cnt;
 }
+#endif
 
 int getPredMV_1x1S_g( T_CUR_VECTOR *r, MB_4 *mb[],  int iIsB){
    int x[4]={0,0,0,0};
@@ -1553,8 +1555,10 @@ static int getPredMV_nxn(CTVLCX  * vlc,const int  m, const int id, T_CUR_VECTOR 
    else {vlc->addB(1);r->x=x[0];r->y=y[0];/*skX2.encV();iGainX++;*/}   
    return 4;
 }
+
+/* EA: unused
 static const int log2_tab_16[16] =  { 0, 1, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4 };
- 
+
 static unsigned int  log2bin(int value)
 {
    int s=value>>31;
@@ -1570,6 +1574,7 @@ static unsigned int  log2bin(int value)
   }
  return n + log2_tab_16[value];
 }
+*/
 
 void debugsi(char*,int);
 
@@ -1635,12 +1640,13 @@ static void decVec(CTVLCX *vlc, T_CUR_VECTOR *v, int m){
 #define getVec getVecO
 #endif
 
+/* EA: unused function
 static void saveVecO(CTVLCX  * vlc, int m,int id,  MB_4 *mbx[], T_CUR_VECTOR  * v, int prx, int pry, int iIsB){
    T_CUR_VECTOR va;
    va=*v;//v->x;va.y=v->y;
    //int bp=vlc->iBitPos;
     //  int bp=vlc->iBitPos;      int G=iGainX;
-   int cnt=getPredMV_nxn<0>(vlc,m,id,&va,mbx,prx,pry,  iIsB);
+   int cnt=getPredMV_nxn<0>(vlc,m,id,&va,mbx,prx,pry,iIsB);
    
    int dx=v->x-va.x;
    int dy=v->y-va.y;
@@ -1654,14 +1660,14 @@ static void saveVecO(CTVLCX  * vlc, int m,int id,  MB_4 *mbx[], T_CUR_VECTOR  * 
       vlc->addB(0);
    }
 }
-
+*/
 
 static void saveVecN(CTVLCX  * vlc, int m,int id,  MB_4 *mbx[], T_CUR_VECTOR  * v, int prx, int pry, int iIsB){
    T_CUR_VECTOR va;
    va=*v;//v->x;va.y=v->y;
    //int bp=vlc->iBitPos;
       //int bp=vlc->iBitPos;      int G=iGainX;
-   int cnt=getPredMV_nxn<0>(vlc,m,id,&va,mbx,prx,pry,  iIsB);
+   /*int cnt= */getPredMV_nxn<0>(vlc,m,id,&va,mbx,prx,pry,  iIsB);
    
    int dx=v->x-va.x;
    int dy=v->y-va.y;
@@ -1932,6 +1938,7 @@ int encMB_MV(CTVLCX  * vlc,MB_4 *mbx[], int *px, int *py, int iHas4x4, int iIsB)
         // v->iUpdateed=78;
       
       int isValidVector(int x, int y ,int pos1, int pos2,int iMBSize, int w ,int h);
+/* EA: code not executed:
       if(0&&c->iSad>v->iDev+300 && c->iSad>v->iPosibleMinSad+100 && v->iHada[rid]){
       if(mbx[PREV_MB] && mbx[PREV_MB]->iHada[rid]==0   &&  mbx[PREV_MB]->iMVMode==0 
          && isValidVector(mbx[PREV_MB]->vrefs[rid].x,mbx[PREV_MB]->vrefs[rid].y,v->i*16,v->j*16,16,v->xc*16,v->yc*16)){
@@ -1944,7 +1951,8 @@ int encMB_MV(CTVLCX  * vlc,MB_4 *mbx[], int *px, int *py, int iHas4x4, int iIsB)
          for(j=0;j<4;j++)v->mv2[j]=*c;
          for(j=0;j<16;j++)v->mv4[j]=*c;
       
-      }else if(0){
+      }
+      else if(0){
          
          c->x=0;c->y=0;
          for(j=0;j<4;j++)v->mv2[j]=*c;
@@ -1952,7 +1960,7 @@ int encMB_MV(CTVLCX  * vlc,MB_4 *mbx[], int *px, int *py, int iHas4x4, int iIsB)
       }
 
       }
-      
+*/
       
       saveVec(vlc,1,0,mbx,c,px[rid],py[rid],  iIsB);
       px[rid]=c->x;py[rid]=c->y;
@@ -2046,11 +2054,7 @@ int encMB_MV(CTVLCX  * vlc,MB_4 *mbx[], int *px, int *py, int iHas4x4, int iIsB)
    return 0;   
 }
 
-
-
-
-
-   
+/* EA: unused function
 static void getVecO(CTVLCX  * vlc,int m, int id, MB_4 *mbx[], T_CUR_VECTOR  * v,  int prx, int pry,int iIsB){
   
    getPredMV_nxn<1>(vlc,m,id,v,mbx,prx,pry, iIsB);
@@ -2065,6 +2069,7 @@ static void getVecO(CTVLCX  * vlc,int m, int id, MB_4 *mbx[], T_CUR_VECTOR  * v,
 //if(vlc->getVlc()!=0x5)iDecErrs++;
    
 }
+*/
 
 static void getVecN(CTVLCX  * vlc,int m, int id, MB_4 *mbx[], T_CUR_VECTOR  * v,  int prx, int pry,int iIsB){
   
@@ -2205,7 +2210,7 @@ int decMB_MV(CTVLCX  * vlc, int *px, int *py, MB_4 *mbx[], int iHas4x4,int iIsB)
             
             if(mgabs(v->r.s[0])>18){
                iDecErrs+=100;
-               debugss("rot err           ",v->r.s[0],v->r.s[1]);
+               debugss((char *)"rot err           ",v->r.s[0],v->r.s[1]);
             }            
          }
          else{
@@ -2218,7 +2223,7 @@ int decMB_MV(CTVLCX  * vlc, int *px, int *py, MB_4 *mbx[], int iHas4x4,int iIsB)
             }
             if(mgabs(v->r.s[1])>18){
                iDecErrs+=100;
-               debugss("rot err           ",v->r.s[0],v->r.s[1]);
+               debugss((char *)"rot err           ",v->r.s[0],v->r.s[1]);
             }
          }
 
@@ -2530,7 +2535,7 @@ int encodeTinaRefs(CTVLCX *vlc, MB_4 *mb4, int iCnt, int iCur, int iIsB){
 
    int iCurIsLast=!iIsB;//iCur+1==iMaxGroup;//only 2 refs
    //int iCurRef=MB_4::eM1;
-   int iMaxGroup=1;
+//   int iMaxGroup=1;
 
 //   int to;   
    //const int tab[3][2]={}
@@ -2612,7 +2617,7 @@ int decodeTinaBi(CTVLCX *vlc, MB_4 *mb4, int iCnt, int iCur, int iIsB){
        mb4->iIsBi=iIsBi;
    }
    if(to){
-      debugss("bi",to,0);
+      debugss((char *)"bi",to,0);
       return -2;
    }
    return vlc->isBitPosOk()?0:-5;
@@ -2634,7 +2639,7 @@ int decodeTinaMode(CTVLCX *vlc, MB_4 *mb4, int iCnt, int iHasBi){
        mb4->iMVMode=iCurMode;
    }
    if(to){
-      debugss("mode",to,0);
+      debugss((char *)"mode",to,0);
       return -2;
    }
    
@@ -2683,7 +2688,7 @@ int decodeTinaRot(CTVLCX *vlc, MB_4 *mb4, int xc, int yc){
       }
    }
    if(cnt){
-      debugss("rot",cnt,0);
+      debugss((char *)"rot",cnt,0);
       return -2;
    }
    return 0;
@@ -2786,7 +2791,7 @@ int decodeTinaMotion(void *pCtx, int &iMBSize2, int iCur, int iIsB, int w, int h
    if(r || iDecErrs){//            if(iDecErrF)return -101;
 
       printf("dec err %d bp=%d ok=%d in=%d\n",r,vlc.getBytePos(), vlc.isBitPosOk(), iMaxBytesIn);
-      debugss("dec err ", r,iDecErrs);
+      debugss((char *)"dec err ", r,iDecErrs);
 
       return r;
    }
@@ -2912,7 +2917,7 @@ int decodeTinaMotion(void *pCtx, int &iMBSize2, int iCur, int iIsB, int w, int h
             mb4->mv_eM1_dec_enc.iSad=0;
         //    mb4->iBlockMode=getMode(mb4);
             
-            if((mb4->iBlockMode==mb4->eRef_m)){// || mb4->iBlockMode==MB_4::eRMR_last+4)){
+            if(mb4->iBlockMode==mb4->eRef_m){// || mb4->iBlockMode==MB_4::eRMR_last+4)){
                /*
 // 0  1  4  5 
 // 2  3  6  7 
@@ -2976,10 +2981,10 @@ int decodeTinaMotion(void *pCtx, int &iMBSize2, int iCur, int iIsB, int w, int h
       iLen=bp;
    }
    else if(iLen!=bp){
-      debugss("dec err  len -------------------------------------------------------", -4,iDecErrs);
+      debugss((char *)"dec err  len -------------------------------------------------------", -4,iDecErrs);
       return -4;
    }
-   if(iDecErrs){debugss("--------------------------------------",iDecErrs,0);printf("[dec iDecErrs=%d]",iDecErrs);}
+   if(iDecErrs){debugss((char *)"--------------------------------------",iDecErrs,0);printf("[dec iDecErrs=%d]",iDecErrs);}
 /*
    static int iSaved=0;
    if((!iSaved && iDecErrs)||iLen==6760){
@@ -2991,6 +2996,8 @@ int decodeTinaMotion(void *pCtx, int &iMBSize2, int iCur, int iIsB, int w, int h
    return 0;
 
 }
+
+/* EA: unused function
 static inline void getModeC(MB_4 *m, int &bi, int &m2, int &m1, int &n, int &mode, int &r, int &m4x4){
    
    if(m->iIsBi){bi++;m1++;}
@@ -3002,6 +3009,7 @@ static inline void getModeC(MB_4 *m, int &bi, int &m2, int &m1, int &n, int &mod
       else n++;
    }
 }
+*/
 
 int getMvGain(){
 
@@ -3218,17 +3226,17 @@ int encodeTinaMotion(void *pCtx, int iMBSize2, int iCur, int  iIsB, int w, int h
 
    vlc.addB(iHasB);//has-b
 
-   int iBitPosDbg=vlc.iBitPos;
+//   int iBitPosDbg=vlc.iBitPos;
    //iRlePos=0;
 #if 1
    r=encodeTinaRefs(&vlc,mb4,xc*yc,iCur, iIsB);
 
 //void debugsi(char *c, int a);
    //int bpx=vlc.iBitPos;
-   int iBPBi=vlc.iBitPos;
+//   int iBPBi=vlc.iBitPos;
    if(iHasB)encodeTinaBi(&vlc,mb4,xc*yc,iCur, iIsB);
-   int iRefBiBits=vlc.iBitPos-iBitPosDbg;
-   int iBiBits=vlc.iBitPos-iBPBi;
+//   int iRefBiBits=vlc.iBitPos-iBitPosDbg;
+//   int iBiBits=vlc.iBitPos-iBPBi;
    //debugsi("b",vlc.iBitPos-bpx);
 #else
    if(iHasB)encodeTinaBi(&vlc,mb4,xc*yc,iCur, iIsB);

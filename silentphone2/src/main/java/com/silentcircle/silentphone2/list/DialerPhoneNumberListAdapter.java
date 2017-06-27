@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2016-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -29,14 +29,23 @@ package com.silentcircle.silentphone2.list;
 
 import android.content.Context;
 import android.content.res.Resources;
+import android.database.Cursor;
+import android.support.v4.content.ContextCompat;
+import android.text.TextUtils;
 import android.view.View;
 import android.view.ViewGroup;
 
 import com.silentcircle.common.list.ContactListItemView;
+import com.silentcircle.common.util.StringUtils;
 import com.silentcircle.contacts.ContactsUtils;
 import com.silentcircle.contacts.list.PhoneNumberListAdapter;
+import com.silentcircle.contacts.list.ScDirectoryLoader;
 import com.silentcircle.contacts.utils.PhoneNumberHelper;
 import com.silentcircle.silentphone2.R;
+import com.silentcircle.silentphone2.util.Utilities;
+import com.silentcircle.userinfo.LoadUserInfo;
+
+import java.util.List;
 
 /**
  * {@link PhoneNumberListAdapter} with the following added shortcuts, that are displayed as list
@@ -45,7 +54,7 @@ import com.silentcircle.silentphone2.R;
  * 2) Adding the phone number query to a contact
  *
  * These shortcuts can be enabled or disabled to toggle whether or not they show up in the
- * list.
+ * list. The shortcuts are placed at the top of the list items before the super's entries.
  */
 public class DialerPhoneNumberListAdapter extends PhoneNumberListAdapter {
 
@@ -59,36 +68,43 @@ public class DialerPhoneNumberListAdapter extends PhoneNumberListAdapter {
     public final static int SHORTCUT_DIRECT_CONVERSATION = 1;
     public final static int SHORTCUT_ADD_NUMBER_TO_CONTACTS = 2;
 //    public final static int SHORTCUT_MAKE_VIDEO_CALL = 2;
+    public final static int SHORTCUT_START_GROUP_CHAT = 3;
+    public final static int SHORTCUT_ADD_TO_GROUP_CHAT = 4;
 
-    public final static int SHORTCUT_COUNT = 3;
+    public final static int SHORTCUT_COUNT = 5;
 
-    private final boolean[] mShortcutEnabled = new boolean[SHORTCUT_COUNT];
+    private final boolean[] mShortcutEnabledMatrix = new boolean[SHORTCUT_COUNT];
+    private int mShortcutEnabledCount;
 
-    public DialerPhoneNumberListAdapter(Context context) {
-        super(context, true /* SC dir search */);
+    public DialerPhoneNumberListAdapter(Context context, boolean enablePhoneDir) {
+        super(context, true /* SC dir search */, enablePhoneDir);
 
         mCountryIso = ContactsUtils.getCurrentCountryIso(context);
 
         // Enable all shortcuts by default
-        for (int i = 0; i < mShortcutEnabled.length; i++) {
-            mShortcutEnabled[i] = true;
+        for (int i = 0; i < SHORTCUT_COUNT; i++) {
+            setShortcutEnabled(i, true);
         }
     }
 
     @Override
     public int getCount() {
-        return super.getCount() + getShortcutCount();
+        return super.getCount() + getEnabledShortcutCount();
+    }
+
+    /**
+     * Returns the position of an element with the proper offset so that it can be used by the super
+     * class.
+     */
+    public int getSuperPosition(int position) {
+        return position - getEnabledShortcutCount();
     }
 
     /**
      * @return The number of enabled shortcuts. Ranges from 0 to a maximum of SHORTCUT_COUNT
      */
-    public int getShortcutCount() {
-        int count = 0;
-        for (boolean aMShortcutEnabled : mShortcutEnabled) {
-            if (aMShortcutEnabled) count++;
-        }
-        return count;
+    public int getEnabledShortcutCount() {
+        return mShortcutEnabledCount;
     }
 
     @Override
@@ -98,7 +114,7 @@ public class DialerPhoneNumberListAdapter extends PhoneNumberListAdapter {
             // shortcutPos should always range from 1 to SHORTCUT_COUNT
             return super.getViewTypeCount() + shortcut;
         } else {
-            return super.getItemViewType(position);
+            return super.getItemViewType(getSuperPosition(position));
         }
     }
 
@@ -121,7 +137,7 @@ public class DialerPhoneNumberListAdapter extends PhoneNumberListAdapter {
                 return v;
             }
         } else {
-            return super.getView(position, convertView, parent);
+            return super.getView(getSuperPosition(position), convertView, parent);
         }
     }
 
@@ -131,36 +147,37 @@ public class DialerPhoneNumberListAdapter extends PhoneNumberListAdapter {
      * shortcut, -1 otherwise
      */
     public int getShortcutTypeFromPosition(int position) {
-        int shortcutCount = position - super.getCount();
-        if (shortcutCount >= 0) {
+        if(getEnabledShortcutCount() > 0 && position < SHORTCUT_COUNT) {
             // Iterate through the array of shortcuts, looking only for shortcuts where
-            // mShortcutEnabled[i] is true
-            for (int i = 0; shortcutCount >= 0 && i < mShortcutEnabled.length; i++) {
-                if (mShortcutEnabled[i]) {
-                    shortcutCount--;
-                    if (shortcutCount < 0) return i;
+            // mShortcutEnabledMatrix[i] is true
+            int positionIterator = 0;
+            for (int i = 0; i < SHORTCUT_COUNT; i++) {
+                if (mShortcutEnabledMatrix[i]) {
+                    if (positionIterator == position) {
+                        return i;
+                    }
+                    positionIterator++;
                 }
             }
-            throw new IllegalArgumentException("Invalid position - greater than cursor count "
-                    + " but not a shortcut.");
         }
         return SHORTCUT_INVALID;
     }
 
     @Override
     public boolean isEmpty() {
-        return getShortcutCount() == 0 && super.isEmpty();
+        return getEnabledShortcutCount() == 0 && super.isEmpty();
     }
 
     @Override
     public boolean isEnabled(int position) {
         final int shortcutType = getShortcutTypeFromPosition(position);
-        return shortcutType >= 0 || super.isEnabled(position);
+        return shortcutType >= 0 || super.isEnabled(getSuperPosition(position));
     }
 
     private void assignShortcutToView(ContactListItemView v, int shortcutType) {
         final CharSequence text;
         final int drawableId;
+        int bgDrawable = 0;
         final Resources resources = getContext().getResources();
 //        final String number = getFormattedQueryString();
         switch (shortcutType) {
@@ -178,23 +195,36 @@ public class DialerPhoneNumberListAdapter extends PhoneNumberListAdapter {
 //                break;
             case SHORTCUT_DIRECT_CONVERSATION:
                 text = resources.getString(R.string.search_shortcut_write_to, getQueryString());
-                drawableId = R.drawable.ic_action_silent_text;
+                drawableId = R.drawable.ic_chat_holo_dark;
+                break;
+            case SHORTCUT_START_GROUP_CHAT:
+                text = resources.getString(R.string.search_shortcut_group_chat);
+                drawableId = R.drawable.ic_group_red_24px;
+                break;
+            case SHORTCUT_ADD_TO_GROUP_CHAT:
+                text = resources.getString(R.string.search_shortcut_add_to_group_chat, getQueryString());
+                drawableId = R.drawable.ic_group_add_white_24px;
                 break;
             default:
                 throw new IllegalArgumentException("Invalid shortcut type");
         }
-        v.setDrawableResource(R.drawable.search_shortcut_background, drawableId);
+        v.setDrawableResource(R.drawable.search_shortcut_background_light, drawableId,
+                ContextCompat.getColor(getContext(), R.color.sc_ng_text_red_dark_actionbar));
         v.setDisplayName(text);
         v.setPhotoPosition(super.getPhotoPosition());
         v.setAdjustSelectionBoundsEnabled(false);
+        v.setBackgroundResource(R.drawable.bg_action);
     }
 
     /**
      * @return True if the shortcut state (disabled vs enabled) was changed by this operation
      */
     public boolean setShortcutEnabled(int shortcutType, boolean visible) {
-        final boolean changed = mShortcutEnabled[shortcutType] != visible;
-        mShortcutEnabled[shortcutType] = visible;
+        final boolean changed = mShortcutEnabledMatrix[shortcutType] != visible;
+        mShortcutEnabledMatrix[shortcutType] = visible;
+        if (changed) {
+            mShortcutEnabledCount += (visible) ? 1 : -1;
+        }
         return changed;
     }
 
@@ -204,7 +234,26 @@ public class DialerPhoneNumberListAdapter extends PhoneNumberListAdapter {
 
     @Override
     public void setQueryString(String queryString) {
+        if (queryString != null) {
+            queryString = mFormattedQueryString = Utilities.isRtl() ? StringUtils.rtrim(queryString) :
+                    StringUtils.ltrim(queryString);
+
+            if (!TextUtils.isEmpty(queryString) && Utilities.isValidPhoneNumber(queryString)) {
+                String e164Formatted = PhoneNumberHelper.formatNumberToE164(queryString, "ZZ");
+
+                if (!TextUtils.isEmpty(e164Formatted)) {
+                    queryString = mFormattedQueryString = e164Formatted;
+                }
+            }
+        }
+
+        CharSequence formatted = Utilities.formatNumberAssisted(queryString);
+        if (formatted != null) {
+            queryString = formatted.toString();
+        }
+
         mFormattedQueryString = PhoneNumberHelper.formatNumber(PhoneNumberHelper.normalizeNumber(queryString), mCountryIso);
         super.setQueryString(queryString);
     }
+
 }

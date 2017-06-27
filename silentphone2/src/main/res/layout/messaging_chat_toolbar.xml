@@ -4,27 +4,24 @@
         xmlns:tools="http://schemas.android.com/tools"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="?sp_actionbar_color"
-        android:minHeight="?attr/actionBarSize">
+        style="@style/Toolbar">
 
     <FrameLayout
-        android:layout_width="wrap_content"
+        android:layout_width="?attr/actionBarSize"
         android:layout_height="match_parent"
         android:minHeight="?attr/actionBarSize"
         android:minWidth="?attr/actionBarSize"
         android:layout_marginRight="@dimen/space_small"
         android:layout_marginEnd="@dimen/space_small"
-        android:background="@drawable/bg_action"
         android:addStatesFromChildren="true">
 
         <android.support.v7.widget.AppCompatImageButton
+            style="@style/Widget.AppCompat.Button.Colored"
             android:id="@+id/home"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:minHeight="?attr/actionBarSize"
-            android:minWidth="?attr/actionBarSize"
+            android:layout_width="?attr/actionBarSize"
+            android:layout_height="?attr/actionBarSize"
             android:src="@drawable/ic_arrow_back_black_24dp"
-            android:background="@null"
+            android:background="?attr/selectableItemBackgroundBorderless"
             android:tint="?sp_actionbar_title_text_color"
             android:layout_gravity="center"
             android:visibility="visible"
@@ -43,7 +40,8 @@
     </FrameLayout>
 
     <LinearLayout
-            android:layout_width="wrap_content"
+            android:id="@+id/title_container"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/messaging_toolbar_margin"
             android:layout_marginBottom="@dimen/messaging_toolbar_margin"
@@ -55,12 +53,15 @@
                 android:layout_height="@dimen/contact_photo_size"
                 android:layout_gravity="center"
                 android:layout_marginRight="@dimen/messaging_actionbar_photo_margin_right"
+                android:layout_marginEnd="@dimen/messaging_actionbar_photo_margin_right"
                 android:contentDescription="@string/messaging_avatar_voiceover"/>
 
         <LinearLayout
-                android:layout_width="wrap_content"
+                android:id="@+id/title_layout"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_vertical"
+                android:background="?attr/selectableItemBackgroundBorderless"
                 android:orientation="vertical">
 
             <TextView

@@ -1,16 +1,45 @@
+/*
+Copyright (C) 2016-2017, Silent Circle, LLC.  All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+    * Any redistribution, use, or modification is done solely for personal
+      benefit and not for any commercial purpose or for monetary gain
+    * Redistributions of source code must retain the above copyright
+      notice, this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above copyright
+      notice, this list of conditions and the following disclaimer in the
+      documentation and/or other materials provided with the distribution.
+    * Neither the name Silent Circle nor the
+      names of its contributors may be used to endorse or promote products
+      derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL SILENT CIRCLE, LLC BE LIABLE FOR ANY
+DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
 package com.silentcircle.keystore;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.Fragment;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
+import android.support.design.widget.TextInputLayout;
 import android.text.Editable;
 import android.text.InputType;
 import android.text.TextUtils;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -22,6 +51,9 @@ import android.widget.TextView;
 
 import com.silentcircle.common.util.DialerUtils;
 import com.silentcircle.silentphone2.R;
+import com.silentcircle.silentphone2.fragments.SettingsFragment;
+
+import java.util.Arrays;
 
 /**
  * This fragment handle the various password set, change and reset use actions.
@@ -44,6 +76,9 @@ public class PasswordFragment extends Fragment implements View.OnClickListener {
     private TextView pwStrength;
     private TextView mExplanation;
     private CheckBox passwordShow;
+    private TextInputLayout oldPasswordInputWrap;
+    private TextInputLayout passwordInputWrap;
+    private TextInputLayout passwordInput2Wrap;
 
     private boolean storeCreation;
     private boolean lockedDuringPwChange;
@@ -52,10 +87,38 @@ public class PasswordFragment extends Fragment implements View.OnClickListener {
 
     private KeyStoreActivity mParent;
 
+    private CharSequence mShowPin;
+    private CharSequence mPinHint;
+    private CharSequence mPinHint2;
+    private CharSequence mPinHintOld;
+    private CharSequence mSetPinExplanation;
+    private CharSequence mSetPasswordExplanation;
+    private String mCannotChangePassword;
+    private CharSequence mChangePinExplanation;
+    private CharSequence mChangePasswordExplanation;
+    private CharSequence mPinHintNew;
+    private CharSequence mPasswordHintNew;
+    private String mOldPinWrong;
+    private String mOldPasswordWrong;
+    private CharSequence mPasswordHint;
+    private CharSequence mResetPinExplanation;
+    private CharSequence mResetPasswordExplanation;
+    private String mNoPin;
+    private String mNoPassword;
+    private String mCannotLoadStore;
+    private CharSequence mEnterPinExplanation;
+    private CharSequence mEnterPasswordExplanation;
+    private String mPinShort;
+    private String mPinMatch;
+    private String mPasswordMatch;
+    private CharSequence mPasswordWeak;
+    private CharSequence mPasswordGood;
+    private CharSequence mPasswordStrong;
+
     /**
      * Use this factory method to create a new instance of this fragment using the provided parameters.
      *
-     * @param action whic password action to perform.
+     * @param action which password action to perform.
      * @return A new instance of fragment PasswordFragment.
      */
     public static PasswordFragment newInstance(String action, boolean usePin) {
@@ -77,6 +140,33 @@ public class PasswordFragment extends Fragment implements View.OnClickListener {
             mAction = getArguments().getString(ACTION);
             mUsePin = getArguments().getBoolean(USE_PIN);
         }
+        mShowPin = getString(R.string.show_pin);
+        mPinHint = getString(R.string.pin_hint);
+        mPinHint2 = getString(R.string.pin_hint2);
+        mPinHintOld = getString(R.string.pin_hint_old);
+        mSetPinExplanation = getString(R.string.key_store_set_pin_explanation);
+        mSetPasswordExplanation = getString(R.string.key_store_set_pw_explanation);
+        mCannotChangePassword = getString(R.string.cannot_change_password);
+        mChangePinExplanation = getString(R.string.key_store_change_pin_explanation);
+        mChangePasswordExplanation = getString(R.string.key_store_change_pw_explanation);
+        mPinHintNew = getString(R.string.pin_hint_new);
+        mPasswordHintNew = getString(R.string.password_hint_new);
+        mOldPinWrong = getString(R.string.old_pin_wrong);
+        mOldPasswordWrong = getString(R.string.old_password_wrong);
+        mPasswordHint = getString(R.string.password_hint);
+        mResetPinExplanation = getString(R.string.key_store_reset_pin_explanation);
+        mResetPasswordExplanation = getString(R.string.key_store_reset_pw_explanation);
+        mNoPin = getString(R.string.no_pin);
+        mNoPassword = getString(R.string.no_password);
+        mCannotLoadStore = getString(R.string.cannot_load_store);
+        mEnterPinExplanation = getString(R.string.key_store_enter_pin_explanation);
+        mEnterPasswordExplanation = getString(R.string.key_store_enter_pw_explanation);
+        mPinShort = getString(R.string.pin_short, MIN_PIN_LENGTH);
+        mPinMatch = getString(R.string.pin_match);
+        mPasswordMatch = getString(R.string.password_match);
+        mPasswordWeak = getString(R.string.pwstrength_weak);
+        mPasswordGood = getString(R.string.pwstrength_good);
+        mPasswordStrong = getString(R.string.pwstrength_strong);
     }
 
     @Override
@@ -85,6 +175,9 @@ public class PasswordFragment extends Fragment implements View.OnClickListener {
         if (fragmentView == null)
             return null;
 
+        oldPasswordInputWrap = (TextInputLayout) fragmentView.findViewById(R.id.oldPasswordInputWrap);
+        passwordInputWrap = (TextInputLayout) fragmentView.findViewById(R.id.passwordInputWrap);
+        passwordInput2Wrap = (TextInputLayout) fragmentView.findViewById(R.id.passwordInput2Wrap);
         passwordInput = (EditText)fragmentView.findViewById(R.id.passwordInput);
         passwordShow = (CheckBox)fragmentView.findViewById((R.id.passwordShow));
         passwordShow.setOnClickListener(this);
@@ -95,13 +188,13 @@ public class PasswordFragment extends Fragment implements View.OnClickListener {
 
         final int pinType = InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_VARIATION_PASSWORD;
         if (mUsePin) {
-            passwordShow.setText(R.string.show_pin);
+            passwordShow.setText(mShowPin);
             passwordInput.setInputType(pinType);
-            passwordInput.setHint(R.string.pin_hint);
+            passwordInputWrap.setHint(mPinHint);
             passwordInput2.setInputType(pinType);
-            passwordInput2.setHint(R.string.pin_hint2);
+            passwordInput2Wrap.setHint(mPinHint2);
             passwordInputOld.setInputType(pinType);
-            passwordInputOld.setHint(R.string.pin_hint_old);
+            oldPasswordInputWrap.setHint(mPinHintOld);
         }
 
         return fragmentView;
@@ -146,7 +239,9 @@ public class PasswordFragment extends Fragment implements View.OnClickListener {
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
-        commonOnAttach(activity);
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+            commonOnAttach(activity);
+        }
     }
 
     private void commonOnAttach(Activity activity) {
@@ -175,10 +270,10 @@ public class PasswordFragment extends Fragment implements View.OnClickListener {
     }
 
     private void setPasswordKeyStore() {
-        mExplanation.setText(getString(mUsePin ? R.string.key_store_set_pin_explanation : R.string.key_store_set_pw_explanation));
+        mExplanation.setText(mUsePin ? mSetPinExplanation : mSetPasswordExplanation);
         passwordInput.requestFocus();
         DialerUtils.showInputMethod(passwordInput);
-        passwordInput2.setVisibility(View.VISIBLE);
+        passwordInput2Wrap.setVisibility(View.VISIBLE);
         if (!mUsePin) {
             pwStrength.setVisibility(View.VISIBLE);
             passwordInput.addTextChangedListener(pwFilter);
@@ -198,7 +293,7 @@ public class PasswordFragment extends Fragment implements View.OnClickListener {
                     if (KeyStoreHelper.changePassword(passwordInput.getText())) {
                         if (!mUsePin)
                             passwordInput.removeTextChangedListener(pwFilter);
-                        passwordInput2.setVisibility(View.GONE);
+                        passwordInput2Wrap.setVisibility(View.GONE);
                         pwStrength.setVisibility(View.GONE);
                         storeCreation = false;
                         KeyStoreHelper.setUserPasswordType(mParent, mUsePin ?
@@ -209,7 +304,7 @@ public class PasswordFragment extends Fragment implements View.OnClickListener {
                         mParent.mHandler.sendEmptyMessage(KeyStoreActivity.KEY_STORE_READY);
                     }
                     else {
-                        mParent.showInputInfo(getString(R.string.cannot_change_password));
+                        mParent.showInputInfo(mCannotChangePassword);
                     }
                 }
                 passwordInput2.setText(null);
@@ -225,17 +320,17 @@ public class PasswordFragment extends Fragment implements View.OnClickListener {
      * database.rawExecSQL(String.format("PRAGMA key = '%s'", newPassword);
      */
     private void changePassword() {
-        mExplanation.setText(getString(mUsePin ? R.string.key_store_change_pin_explanation : R.string.key_store_change_pw_explanation));
-        passwordInputOld.setVisibility(View.VISIBLE);
+        mExplanation.setText(mUsePin ? mChangePinExplanation : mChangePasswordExplanation);
+        oldPasswordInputWrap.setVisibility(View.VISIBLE);
         passwordInputOld.setImeOptions(EditorInfo.IME_ACTION_NEXT);
         passwordInputOld.requestFocus();
         DialerUtils.showInputMethod(passwordInputOld);
 
-        passwordInput.setHint(mUsePin ? R.string.pin_hint_new : R.string.password_hint_new); // ask user for a new password
-        passwordInput.setVisibility(View.VISIBLE);
+        passwordInputWrap.setHint(mUsePin ? mPinHintNew : mPasswordHintNew); // ask user for a new password
+        passwordInputWrap.setVisibility(View.VISIBLE);
         passwordInput.setImeOptions(EditorInfo.IME_ACTION_NEXT);
 
-        passwordInput2.setVisibility(View.VISIBLE);
+        passwordInput2Wrap.setVisibility(View.VISIBLE);
         if (!mUsePin) {
             pwStrength.setVisibility(View.VISIBLE);
             passwordInput.addTextChangedListener(pwFilter);
@@ -253,7 +348,7 @@ public class PasswordFragment extends Fragment implements View.OnClickListener {
                 if (checkPassword(passwordInput.getText(), passwordInput2.getText())) {
                     KeyStoreHelper.closeDatabase();
                     if (!KeyStoreHelper.openOrCreateDatabase(KeyStoreActivity.toCharArray(passwordInputOld), mParent)) {
-                        mParent.showInputInfo(getString(mUsePin ? R.string.old_pin_wrong : R.string.old_password_wrong));
+                        mParent.showInputInfo(mUsePin ? mOldPinWrong : mOldPasswordWrong);
                         passwordInputOld.setText(null);
                         passwordInputOld.requestFocus();
                         if (!lockedDuringPwChange) {
@@ -268,8 +363,10 @@ public class PasswordFragment extends Fragment implements View.OnClickListener {
                         }
                         if (!mUsePin)
                             passwordInput.removeTextChangedListener(pwFilter);
-                        passwordInput.setHint(mUsePin ? R.string.pin_hint : R.string.password_hint);
+                        passwordInputWrap.setHint(mUsePin ? mPinHint : mPasswordHint);
+                        passwordInput2Wrap.setVisibility(View.GONE);
                         passwordInput2.setVisibility(View.GONE);
+                        oldPasswordInputWrap.setVisibility(View.GONE);
                         passwordInputOld.setVisibility(View.GONE);
                         passwordInputOld.setText(null);
                         pwStrength.setVisibility(View.GONE);
@@ -277,7 +374,7 @@ public class PasswordFragment extends Fragment implements View.OnClickListener {
                         mParent.mHandler.sendEmptyMessage(KeyStoreActivity.KEY_STORE_READY);
                     }
                     else {
-                        mParent.showInputInfo(getString(R.string.cannot_change_password));
+                        mParent.showInputInfo(mCannotChangePassword);
                     }
                 }
                 else {
@@ -295,12 +392,12 @@ public class PasswordFragment extends Fragment implements View.OnClickListener {
      * database.rawExecSQL(String.format("PRAGMA key = '%s'", newPassword);
      */
     private void resetToDefaultPassword() {
-        mExplanation.setText(getString(mUsePin ? R.string.key_store_reset_pin_explanation : R.string.key_store_reset_pw_explanation));
-        passwordInputOld.setVisibility(View.VISIBLE);
+        mExplanation.setText(mUsePin ? mResetPinExplanation : mResetPasswordExplanation);
+        oldPasswordInputWrap.setVisibility(View.VISIBLE);
         passwordInputOld.setImeOptions(EditorInfo.IME_ACTION_DONE);
         passwordInputOld.requestFocus();
         DialerUtils.showInputMethod(passwordInputOld);
-        passwordInput.setVisibility(View.INVISIBLE);
+        passwordInputWrap.setVisibility(View.INVISIBLE);
         passwordShow.setVisibility(View.VISIBLE);
 
         passwordInputOld.setOnEditorActionListener(new TextView.OnEditorActionListener() {
@@ -311,7 +408,7 @@ public class PasswordFragment extends Fragment implements View.OnClickListener {
 
                 KeyStoreHelper.closeDatabase();
                 if (!KeyStoreHelper.openOrCreateDatabase(KeyStoreActivity.toCharArray(passwordInputOld), mParent)) {
-                    mParent.showInputInfo(getString(mUsePin ? R.string.old_pin_wrong : R.string.old_password_wrong));
+                    mParent.showInputInfo(mUsePin ? mOldPinWrong : mOldPasswordWrong);
                     passwordInputOld.setText(null);
                     passwordInputOld.requestFocus();
                     if (!lockedDuringPwChange) {
@@ -319,39 +416,69 @@ public class PasswordFragment extends Fragment implements View.OnClickListener {
                         lockedDuringPwChange = true;
                     }
                 }
-                else if (KeyStoreHelper.changePassword(new String(KeyStoreHelper.getDefaultPassword(mParent)))) {
-                    if (lockedDuringPwChange) {
-                        ProviderDbBackend.sendUnlockRequests();
-                        lockedDuringPwChange = false;
-                    }
-                    passwordInputOld.setVisibility(View.GONE);
+                else if (changePwToDefaultOrSecure()) {
+                    oldPasswordInputWrap.setVisibility(View.GONE);
                     passwordInputOld.setText(null);
-                    passwordInput.setVisibility(View.VISIBLE);
-                    KeyStoreHelper.setUserPasswordType(mParent, KeyStoreHelper.USER_PW_TYPE_NONE);
-                    storeCreation = false;
+                    passwordInputWrap.setVisibility(View.VISIBLE);
                     mParent.mHandler.sendEmptyMessage(KeyStoreActivity.KEY_STORE_READY);
                 }
                 else {
-                    mParent.showInputInfo(getString(R.string.cannot_change_password));
+                    mParent.showInputInfo(mCannotChangePassword);
                 }
                 return true;
             }
         });
     }
 
+    // First try to get a secure password, generated from a HW backed key. If this
+    // fails fall back to the normal default key.
+    private boolean changePwToDefaultOrSecure() {
+        int pwType = KeyStoreHelper.USER_PW_SECURE;
+        char[] pw = KeyStoreHelper.getSecurePassword(mParent);
+        boolean changed;
+        if (pw == null) {
+            pw = KeyStoreHelper.getDefaultPassword(mParent);
+            pwType = KeyStoreHelper.USER_PW_TYPE_NONE;
+            changed = KeyStoreHelper.changePassword(new String(pw));
+        }
+        else {
+            changed = KeyStoreHelper.changePasswordBin(pw);
+        }
+        if (changed) {
+            if (lockedDuringPwChange) {
+                ProviderDbBackend.sendUnlockRequests();
+                lockedDuringPwChange = false;
+            }
+
+            KeyStoreHelper.setUserPasswordType(mParent, pwType);
+            storeCreation = false;
+            Arrays.fill(pw, '\0');
+        }
+        return changed;
+    }
+
     private void passwordReady() {
         if (passwordInput.getText() == null || passwordInput.getText().length() == 0) {
-            mParent.showInputInfo(getString(mUsePin ? R.string.no_pin : R.string.no_password));
+            mParent.showInputInfo(mUsePin ? mNoPin : mNoPassword);
             return;
         }
         if (KeyStoreHelper.openOrCreateDatabase(KeyStoreActivity.toCharArray(passwordInput), mParent)) {
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mParent);
+            boolean developer = prefs.getBoolean(SettingsFragment.DEVELOPER, false);
+
+            // See https://lab.silentcircle.org/eng/spa/issues/58
+            // For developers, we allow this
+            if (!developer) {
+                changePwToDefaultOrSecure();
+            }
+
             showNormalScreen();
             ProviderDbBackend.sendUnlockRequests();
             mParent.mHandler.sendEmptyMessage(KeyStoreActivity.KEY_STORE_READY);
         }
         else {
             KeyStoreHelper.closeDatabase();         // close DB, but do not stop service
-            mParent.showInputInfo(getString(R.string.cannot_load_store));
+            mParent.showInputInfo(mCannotLoadStore);
             passwordInput.requestFocus();
         }
         passwordInput.setText(null);
@@ -361,7 +488,8 @@ public class PasswordFragment extends Fragment implements View.OnClickListener {
     private void showNormalScreen() {
         if (storeCreation)
             return;
-        passwordInput.setVisibility(View.VISIBLE);
+        passwordInputWrap.setVisibility(View.VISIBLE);
+        // passwordInput.setVisibility(View.VISIBLE);
         passwordInput.setImeOptions(EditorInfo.IME_ACTION_DONE);
         passwordInput.requestFocus();
         DialerUtils.showInputMethod(passwordInput);
@@ -375,7 +503,7 @@ public class PasswordFragment extends Fragment implements View.OnClickListener {
                 return false;
             }
         });
-        mExplanation.setText(getString(mUsePin ? R.string.key_store_enter_pin_explanation : R.string.key_store_enter_pw_explanation));
+        mExplanation.setText(mUsePin ? mEnterPinExplanation : mEnterPasswordExplanation);
         passwordShow.setVisibility(View.VISIBLE);
     }
 
@@ -427,21 +555,21 @@ public class PasswordFragment extends Fragment implements View.OnClickListener {
      */
     private boolean checkPassword(CharSequence pw1, CharSequence pw2) {
         if (pw1 == null || pw2 == null || pw1.length() == 0 || pw2.length() == 0) {
-            mParent.showInputInfo(getString(mUsePin ? R.string.no_pin : R.string.no_password));
+            mParent.showInputInfo(mUsePin ? mNoPin : mNoPassword);
             return false;
         }
         if (mUsePin && pw1.length() < MIN_PIN_LENGTH) {
-            mParent.showInputInfo(getString(R.string.pin_short, MIN_PIN_LENGTH));
+            mParent.showInputInfo(mPinShort);
             return false;
         }
         if (pw1.length() != pw2.length()) {
-            mParent.showInputInfo(getString(mUsePin ? R.string.pin_match: R.string.password_match));
+            mParent.showInputInfo(mUsePin ? mPinMatch : mPasswordMatch);
             return false;
         }
         int len = pw1.length();
         for (int i = 0; i < len; i++) {
             if (pw1.charAt(i) != pw2.charAt(i)) {
-                mParent.showInputInfo(getString(mUsePin ? R.string.pin_match: R.string.password_match));
+                mParent.showInputInfo(mUsePin ? mPinMatch : mPasswordMatch);
                 return false;
             }
         }
@@ -496,13 +624,14 @@ public class PasswordFragment extends Fragment implements View.OnClickListener {
             strength += (upper) ? 1 : 0;
             strength += (other) ? 1 : 0;
 
-            pwStrength.setText(getString(R.string.pwstrength_weak));
+            CharSequence strengthText = mPasswordWeak;
             if (((strength >= 2 && strLength >= 7) || (strength >= 3 && strLength >= 6)) || strLength > 8) {
-                pwStrength.setText(getString(R.string.pwstrength_good));
+                strengthText = mPasswordGood;
             }
             if ((strength >= 3 && strLength >= 7) || strLength > 10) {
-                pwStrength.setText(getString(R.string.pwstrength_strong));
+                strengthText = mPasswordStrong;
             }
+            pwStrength.setText(strengthText);
         }
     }
 

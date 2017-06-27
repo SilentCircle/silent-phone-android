@@ -1,16 +1,25 @@
-#include <limits.h>
+/*
+Copyright 2016-2017 Silent Circle, LLC
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
 #include "gtest/gtest.h"
 
-#include "../axolotl/state/AxoConversation.h"
+#include "../ratchet/state/ZinaConversation.h"
 #include "../storage/sqlite/SQLiteStoreConv.h"
-#include "../axolotl/crypto/EcCurve.h"
-#include "../axolotl/crypto/EcCurveTypes.h"
-#include "../axolotl/crypto/Ec255PublicKey.h"
 #include "../util/UUID.h"
-#include "../logging/AxoLogging.h"
 
-#include <iostream>
-using namespace axolotl;
+using namespace zina;
 using namespace std;
 
 static std::string aliceName("alice@wonderland.org");
@@ -61,23 +70,23 @@ TEST_F(StoreTestFixture, Basic)
 //    SQLiteStoreConv* store = SQLiteStoreConv::getStore();
     string mkiv((const char*)keyInData, 32);
 
-    store->insertStagedMk(bobName, bobDev, aliceName, mkiv);
-    ASSERT_FALSE(SQL_FAIL(store->getSqlCode())) << store->getLastError();
+    int32_t result = store->insertStagedMk(bobName, bobDev, aliceName, mkiv);
+    ASSERT_FALSE(SQL_FAIL(result)) << store->getLastError();
 
-    shared_ptr<list<string> > keys = store->loadStagedMks(bobName, bobDev, aliceName);
-    ASSERT_FALSE(SQL_FAIL(store->getSqlCode())) << store->getLastError();
-    ASSERT_TRUE(keys.get() != NULL);
-    ASSERT_EQ(1, keys->size());
-    string both = keys->front();
-    keys->pop_front();
-    ASSERT_EQ(mkiv, both);
+    list<string> keys;
+    result = store->loadStagedMks(bobName, bobDev, aliceName, keys);
+    ASSERT_FALSE(SQL_FAIL(result)) << store->getLastError();
+    ASSERT_EQ(1, keys.size());
+    ASSERT_EQ(mkiv, keys.front());
 
-    store->deleteStagedMk(bobName, bobDev, aliceName, both);
+    store->deleteStagedMk(bobName, bobDev, aliceName, keys.front());
     ASSERT_FALSE(SQL_FAIL(store->getSqlCode())) << store->getLastError();
+    keys.pop_front();
 
-    keys = store->loadStagedMks(bobName, bobDev, aliceName);
-    ASSERT_FALSE(SQL_FAIL(store->getSqlCode())) << store->getLastError();
-    ASSERT_TRUE(keys.get() == NULL);
+    keys.clear();
+    result = store->loadStagedMks(bobName, bobDev, aliceName, keys);
+    ASSERT_FALSE(SQL_FAIL(result)) << store->getLastError();
+    ASSERT_TRUE(keys.empty());
 }
 
 TEST_F(StoreTestFixture, TimeDelete)
@@ -89,49 +98,49 @@ TEST_F(StoreTestFixture, TimeDelete)
     string mkiv_2(keyInDataE, 32);
     string mkiv_3(keyInDataF, 32);
 
-    store->insertStagedMk(bobName, bobDev, aliceName, mkiv);
-    ASSERT_FALSE(SQL_FAIL(store->getSqlCode())) << store->getLastError();
+    int32_t result = store->insertStagedMk(bobName, bobDev, aliceName, mkiv);
+    ASSERT_FALSE(SQL_FAIL(result)) << store->getLastError();
 
-    store->insertStagedMk(bobName, bobDev, aliceName, mkiv_1);
-    ASSERT_FALSE(SQL_FAIL(store->getSqlCode())) << store->getLastError();
+    result = store->insertStagedMk(bobName, bobDev, aliceName, mkiv_1);
+    ASSERT_FALSE(SQL_FAIL(result)) << store->getLastError();
 
-    shared_ptr<list<string> > keys = store->loadStagedMks(bobName, bobDev, aliceName);
-    ASSERT_FALSE(SQL_FAIL(store->getSqlCode())) << store->getLastError();
-    ASSERT_TRUE(keys.get() != NULL);
-    ASSERT_EQ(2, keys->size());
+    list<string> keys;
+    result = store->loadStagedMks(bobName, bobDev, aliceName, keys);
+    ASSERT_FALSE(SQL_FAIL(result)) << store->getLastError();
+    ASSERT_EQ(2, keys.size());
 
     sqlite3_sleep(5000);
 
-    store->insertStagedMk(bobName, bobDev, aliceName, mkiv_2);
-    ASSERT_FALSE(SQL_FAIL(store->getSqlCode())) << store->getLastError();
+    result = store->insertStagedMk(bobName, bobDev, aliceName, mkiv_2);
+    ASSERT_FALSE(SQL_FAIL(result)) << store->getLastError();
 
-    store->insertStagedMk(bobName, bobDev, aliceName, mkiv_3);
-    ASSERT_FALSE(SQL_FAIL(store->getSqlCode())) << store->getLastError();
+    result = store->insertStagedMk(bobName, bobDev, aliceName, mkiv_3);
+    ASSERT_FALSE(SQL_FAIL(result)) << store->getLastError();
 
-    keys = store->loadStagedMks(bobName, bobDev, aliceName);
-    ASSERT_FALSE(SQL_FAIL(store->getSqlCode())) << store->getLastError();
-    ASSERT_TRUE(keys.get() != NULL);
-    ASSERT_EQ(4, keys->size());
+    keys.clear();
+    result = store->loadStagedMks(bobName, bobDev, aliceName, keys);
+    ASSERT_FALSE(SQL_FAIL(result)) << store->getLastError();
+    ASSERT_EQ(4, keys.size());
 
     time_t now_4 = time(0) - 4;
     store->deleteStagedMk(now_4);
-    keys = store->loadStagedMks(bobName, bobDev, aliceName);
 
-    ASSERT_FALSE(SQL_FAIL(store->getSqlCode())) << store->getLastError();
-    ASSERT_TRUE(keys.get() != NULL);
-    ASSERT_EQ(2, keys->size());
+    keys.clear();
+    result = store->loadStagedMks(bobName, bobDev, aliceName, keys);
+    ASSERT_FALSE(SQL_FAIL(result)) << store->getLastError();
+    ASSERT_EQ(2, keys.size());
 }
 
 TEST(UUID, Basic)
 {
-    uuid_t uuid1;
+    uuid_t uuid1 = {0};
     struct timeval tv;
 
     time_t tm = time(0);
     uuid_generate_time(uuid1);
     time_t tm1 = uuid_time(uuid1, &tv);
 
-    uuid_string_t uuidString;
+    uuid_string_t uuidString = {'\0'};
     uuid_unparse(uuid1, uuidString);
 
     EXPECT_NEAR(tm, tm1, 1) << "tm1 may be off by 1";

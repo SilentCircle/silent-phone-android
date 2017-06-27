@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2016-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -28,57 +28,65 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package com.silentcircle.messaging.fragments;
 
 import android.app.Activity;
-import android.app.ListFragment;
-import android.content.BroadcastReceiver;
+import android.app.FragmentManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.res.Resources;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.annotation.Nullable;
+import android.support.v4.util.Pair;
+import android.support.v7.widget.DefaultItemAnimator;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.BaseAdapter;
-import android.widget.ListView;
 import android.widget.Toast;
 
+import com.google.common.base.Objects;
 import com.silentcircle.SilentPhoneApplication;
+import com.silentcircle.common.list.ContactEntry;
+import com.silentcircle.common.util.CallUtils;
 import com.silentcircle.common.util.DialerUtils;
 import com.silentcircle.common.util.ViewUtil;
+import com.silentcircle.common.widget.DataRetentionBanner;
 import com.silentcircle.contacts.ContactPhotoManagerNew;
-import com.silentcircle.keymanagersupport.KeyManagerSupport;
+import com.silentcircle.logs.Log;
 import com.silentcircle.messaging.activities.ConversationActivity;
+import com.silentcircle.messaging.listener.MessagingBroadcastReceiver;
 import com.silentcircle.messaging.model.Conversation;
-import com.silentcircle.messaging.model.MessageStates;
-import com.silentcircle.messaging.model.event.CallMessage;
 import com.silentcircle.messaging.model.event.Event;
-import com.silentcircle.messaging.model.event.IncomingMessage;
 import com.silentcircle.messaging.model.event.Message;
-import com.silentcircle.messaging.model.event.OutgoingMessage;
 import com.silentcircle.messaging.repository.ConversationRepository;
-import com.silentcircle.messaging.repository.EventRepository;
-import com.silentcircle.messaging.services.AxoMessaging;
+import com.silentcircle.messaging.services.ZinaMessaging;
 import com.silentcircle.messaging.thread.Updater;
 import com.silentcircle.messaging.util.Action;
 import com.silentcircle.messaging.util.AsyncUtils;
 import com.silentcircle.messaging.util.ContactsCache;
+import com.silentcircle.messaging.util.ConversationUtils;
 import com.silentcircle.messaging.util.Extra;
 import com.silentcircle.messaging.util.MessageUtils;
-import com.silentcircle.messaging.util.MessagingPreferences;
 import com.silentcircle.messaging.util.Notifications;
 import com.silentcircle.messaging.util.Updatable;
 import com.silentcircle.messaging.views.ConversationListItem;
-import com.silentcircle.messaging.views.ScreenLockView;
+import com.silentcircle.messaging.views.SwipeRevealLayout;
+import com.silentcircle.messaging.views.ViewBinderHelper;
+import com.silentcircle.messaging.views.adapters.PaddedDividerItemDecoration;
+import com.silentcircle.messaging.views.adapters.ResolvingUserAdapter;
 import com.silentcircle.silentphone2.R;
-import com.silentcircle.silentphone2.util.ConfigurationUtilities;
+import com.silentcircle.silentphone2.services.TiviPhoneService;
+import com.silentcircle.silentphone2.util.CallState;
+import com.silentcircle.silentphone2.util.Utilities;
+import com.silentcircle.userinfo.LoadUserInfo;
+import com.silentcircle.userinfo.UserInfo;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -91,8 +99,8 @@ import java.util.concurrent.TimeUnit;
 /**
  * Fragment to list conversations.
  */
-public class ConversationsFragment extends ListFragment implements Updatable,
-        ScreenLockView.OnUnlockListener, ConversationListItem.OnConversationItemClickListener,
+public class ConversationsFragment extends BaseFragment implements Updatable,
+        ConversationListItem.OnConversationItemClickListener,
         AlertDialogFragment.OnAlertDialogConfirmedListener {
 
     private static final String TAG = ConversationsFragment.class.getSimpleName();
@@ -105,29 +113,34 @@ public class ConversationsFragment extends ListFragment implements Updatable,
     /* Dialog request code for delete conversation confirmation */
     private static final int DELETE_CONVERSATION = 1;
 
-    /* Events page size to use when determining conversation's last event */
-    private static final int PAGE_SIZE = 10;
+    private static final long CONVERSATIONS_UPDATE_INTERVAL = TimeUnit.MINUTES.toMillis(1);
+
+    private static final ArrayList<Conversation> EMPTY_LIST = new ArrayList<>();
 
     private static final String LAST_CONVERSATION =
             "com.silentcircle.messaging.fragments.ConversationsFragment.lastConversation";
     private static final String LAST_MESSAGE_CACHE =
             "com.silentcircle.messaging.fragments.ConversationsFragment.lastMessageCache";
-    private static final String LOCK_TIME_PERSISTED =
-            "com.silentcircle.messaging.fragments.ConversationsFragment.lockTimePersisted";
     private static final String DELETE_CONVERSATION_ID =
             "com.silentcircle.messaging.fragments.ConversationsFragment.deleteConversationId";
+    private static final String DELETE_CONVERSATION_POSITION =
+            "com.silentcircle.messaging.fragments.ConversationsFragment.deleteConversationposition";
 
-    protected ScreenLockView mPasswordOverlay;
     protected View mProgressBar;
 
-    protected List<Conversation> mConversations;
+    protected List<Conversation> mConversations = new ArrayList<>();
     protected ConversationLogAdapter mAdapter;
-    protected BroadcastReceiver mViewUpdater;
-    protected int mSelectedItem;
+    protected MessagingBroadcastReceiver mViewUpdater;
     protected String mLastConversationId;
+    protected DataRetentionBanner mDataRetentionBanner;
+    protected com.silentcircle.messaging.views.RecyclerView mRecyclerView;
+    protected View mEmptyView;
 
-    protected ConcurrentHashMap<String, Message> mLastMessageCache = null;
+    protected ConcurrentHashMap<String, Event> mLastMessageCache = new ConcurrentHashMap<>();
     protected static final Event DUMMY_EVENT = new Event("Loading...");
+    protected static final Event NO_MESSAGES_EVENT = new Event("No messages");
+
+    protected ConcurrentHashMap<String, Boolean> mRetentionStateCache;
 
     private final Updater mUpdater;
     private final Handler mHandler;
@@ -135,9 +148,21 @@ public class ConversationsFragment extends ListFragment implements Updatable,
     private AsyncTask mConversationsRefreshTask;
     private AsyncTask mEventsRefreshTask;
 
-    private ContactsCache mContactsCache;
-
-    protected boolean mLockTimePersisted = true;
+    private Runnable mEventUpdater = new Runnable() {
+        @Override
+        public void run() {
+            if (mAdapter == null) {
+                return;
+            }
+            for (Event event : mLastMessageCache.values()) {
+                if (event instanceof Message && ((Message) event).isExpired()) {
+                    String conversationId = MessageUtils.getConversationId(event);
+                    mAdapter.doMessageLookup(getConversationPosition(conversationId), conversationId);
+                }
+            }
+            scheduleNextEventUpdate();
+        }
+    };
 
     public static ConversationsFragment newInstance(Bundle args) {
         ConversationsFragment fragment = new ConversationsFragment();
@@ -148,7 +173,7 @@ public class ConversationsFragment extends ListFragment implements Updatable,
     public ConversationsFragment() {
         mHandler = new Handler();
         mUpdater = new Updater(this);
-        mSelectedItem = ITEM_NOT_SELECTED;
+        mRetentionStateCache = new ConcurrentHashMap<>();
     }
 
     @Override
@@ -160,50 +185,86 @@ public class ConversationsFragment extends ListFragment implements Updatable,
             mLastMessageCache =
                 (HashMap<String, Message>) savedInstanceState.getSerializable(LAST_MESSAGE_CACHE);
              */
-            mLockTimePersisted = savedInstanceState.getBoolean(LOCK_TIME_PERSISTED, false);
         }
+        DUMMY_EVENT.setText(getString(R.string.messaging_conversation_list_loading));
+        NO_MESSAGES_EVENT.setText(getString(R.string.messaging_conversation_list_no_messages));
         return view;
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        ListView listView = getListView();
-        listView.setEmptyView(view.findViewById(R.id.empty_list_view));
-        listView.setItemsCanFocus(true);
-        listView.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
+        mDataRetentionBanner = (DataRetentionBanner) view.findViewById(R.id.data_retention_status);
 
-        mPasswordOverlay  = (ScreenLockView) view.findViewById(R.id.password_overlay);
-        mPasswordOverlay.setOnUnlockListener(this);
+        mRecyclerView = (com.silentcircle.messaging.views.RecyclerView) view.findViewById(android.R.id.list);
+        RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(getActivity()) {
+
+            @Override
+            public boolean supportsPredictiveItemAnimations() {
+                return false;
+            }
+        };
+        mRecyclerView.setLayoutManager(layoutManager);
+
+        mAdapter = new ConversationLogAdapter(getActivity());
+        mRecyclerView.setAdapter(mAdapter);
+
+        mRecyclerView.setHasFixedSize(true);
+        mRecyclerView.setOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
+            }
+
+            @Override
+            public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+                if (mAdapter != null) {
+                    mAdapter.clearSelectedPosition();
+                }
+            }
+        });
+
+        Resources resources = getResources();
+        PaddedDividerItemDecoration itemDecoration = new PaddedDividerItemDecoration(getActivity());
+        itemDecoration.setMargins(resources.getDimensionPixelSize(R.dimen.conversation_log_outer_margin_left),
+                resources.getDimensionPixelSize(R.dimen.conversation_log_outer_margin));
+        mRecyclerView.addItemDecoration(itemDecoration);
 
         mProgressBar = view.findViewById(R.id.list_view_progress);
 
-        mAdapter = new ConversationLogAdapter(getActivity());
-        setListAdapter(mAdapter);
+        mEmptyView = view.findViewById(R.id.empty_list_view);
+        DialerUtils.configureEmptyListView(mEmptyView, R.drawable.no_conversation_image,
+                R.string.chats_view_empty, R.string.chats_view_empty_header, getResources());
+        mRecyclerView.setEmptyView(mEmptyView);
 
-        DialerUtils.configureEmptyListView(
-                listView.getEmptyView(), R.drawable.empty_call_log, R.string.chat_view_empty,
-                getResources());
-        ViewUtil.addBottomPaddingToListViewForFab(listView, getResources());
+        DefaultItemAnimator animator = new DefaultItemAnimator();
+        animator.setSupportsChangeAnimations(false);
+        mRecyclerView.setItemAnimator(animator);
+
+        ViewUtil.addBottomPaddingToListViewForFab(mRecyclerView, getResources());
     }
 
-    @Override
-    public void onListItemClick(ListView list, View v, int position, long id) {
-        Conversation conversation = mConversations.get(position);
+    public void onListItemClick(RecyclerView list, View v, int position, long id) {
+        Activity activity = getActivity();
+        if (activity == null) {
+            return;
+        }
+
+        Conversation conversation = getConversation(position);
         if (conversation != null) {
-            list.setItemChecked(position, true);
-            mSelectedItem = position;
             mLastConversationId = conversation.getPartner().getUserId();
 
-            Intent intent = new Intent(getActivity(), ConversationActivity.class);
+            Intent intent = new Intent(activity, ConversationActivity.class);
             Extra.PARTNER.to(intent, conversation.getPartner().getUserId());
             Extra.ALIAS.to(intent, conversation.getPartner().getAlias());
-            getActivity().startActivity(intent);
+            // add unread message count as it is known in this view
+            intent.putExtra(ConversationActivity.UNREAD_MESSAGE_COUNT, getUnreadMessageCount()
+                - conversation.getUnreadMessageCount() - conversation.getUnreadCallMessageCount());
+            activity.startActivity(intent);
         }
         else {
-            mSelectedItem = ITEM_NOT_SELECTED;
-            Toast.makeText(getActivity(), "Unable to start conversation", Toast.LENGTH_SHORT).show();
+            Toast.makeText(activity, "Unable to start conversation", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -211,12 +272,11 @@ public class ConversationsFragment extends ListFragment implements Updatable,
     public void onResume() {
         super.onResume();
         registerViewUpdater();
-        refreshConversations(getActivity().getApplicationContext());
-        setHighlightedConversation();
-
-        lockViewIfNecessary();
+        refreshConversations();
 
         scheduleNextUpdate();
+
+        updateDataRetentionBanner();
 
         Notifications.cancelMessageNotification(SilentPhoneApplication.getAppContext(), null);
     }
@@ -225,8 +285,6 @@ public class ConversationsFragment extends ListFragment implements Updatable,
     public void setUserVisibleHint(boolean isVisibleToUser) {
         super.setUserVisibleHint(isVisibleToUser);
         if (isVisibleToUser) {
-            updateLastLockTimeIfNecessary();
-            lockViewIfNecessary();
             Notifications.cancelMessageNotification(SilentPhoneApplication.getAppContext(), null);
         }
     }
@@ -240,22 +298,24 @@ public class ConversationsFragment extends ListFragment implements Updatable,
 
            outState.putSerializable(LAST_MESSAGE_CACHE, mLastMessageCache);
         */
-        outState.putBoolean(LOCK_TIME_PERSISTED, mLockTimePersisted);
     }
 
     @Override
     public void onDestroyView() {
         mAdapter = null;
-        mPasswordOverlay = null;
         mProgressBar = null;
         super.onDestroyView();
     }
 
     @Override
     public void onPause() {
-        updateLastLockTimeIfNecessary();
-        getActivity().unregisterReceiver(mViewUpdater);
+        if (mAdapter != null) {
+            mAdapter.stopRequestProcessing();
+        }
+
+        unregisterMessagingReceiver(mViewUpdater);
         mHandler.removeCallbacks(mUpdater);
+        mHandler.removeCallbacks(mEventUpdater);
 
         cancelTasks();
 
@@ -263,58 +323,61 @@ public class ConversationsFragment extends ListFragment implements Updatable,
     }
 
     @Override
-    public void update() {
-        Context context = getActivity();
-        if (context != null) {
-            refreshConversations(context.getApplicationContext());
+    public void onDestroy() {
+        if (mAdapter != null) {
+            mAdapter.stopRequestProcessing();
         }
-        /*
-         * If periodic locks are necessary (while on the chat view, without leaving)
-         *
-        lockViewIfNecessary();
-         */
-        scheduleNextUpdate();
-    }
 
-    public ListView getListView() {
-        ListView listView = null;
-        try {
-            listView = super.getListView();
-        }
-        catch (Exception e) {
-            Log.e(TAG, "Failed to get list view: " + e.getMessage());
-        }
-        return listView;
+        super.onDestroy();
     }
 
     @Override
-    public void onUnlock() {
-        if (mPasswordOverlay != null) {
-            mPasswordOverlay.setVisibility(View.GONE);
+    public void update() {
+        Context context = getActivity();
+        if (context != null) {
+            refreshConversations();
         }
-        mLockTimePersisted = false;
-        updateLastLockTimeIfNecessary();
+        scheduleNextUpdate();
     }
 
     @Override
     public void onConversationClick(ConversationListItem view) {
-        onListItemClick(getListView(), view, (Integer) view.getTag(), 0);
+        onListItemClick(mRecyclerView, view, (Integer) view.getTag(), 0);
     }
 
     @Override
     public void onConversationDeleteClick(ConversationListItem view) {
+        if (mAdapter != null) {
+            mAdapter.clearSelectedPosition();
+        }
+
         Bundle bundle = new Bundle();
-        Conversation conversation = mConversations.get((Integer) view.getTag());
+        Integer position = (Integer) view.getTag();
+        if (position == null || position < 0 || position >= mConversations.size()) {
+            Log.w(TAG, "Trying to delete a conversation for view without position");
+            return;
+        }
+        Conversation conversation = getConversation(position);
+        if (conversation == null) {
+            Log.w(TAG, "Invalid position for conversation: " + position);
+            return;
+        }
         bundle.putString(DELETE_CONVERSATION_ID, conversation.getPartner().getUserId());
+        bundle.putInt(DELETE_CONVERSATION_POSITION, position);
         AlertDialogFragment dialogFragment = AlertDialogFragment.getInstance(
                 R.string.are_you_sure,
-                R.string.warning_delete_conversation,
+                conversation.getPartner().isGroup()
+                        ? R.string.warning_leave_group_conversation
+                        : R.string.warning_delete_conversation,
                 R.string.dialog_button_cancel,
                 R.string.delete,
                 bundle,
                 false);
         dialogFragment.setTargetFragment(this, DELETE_CONVERSATION);
-        dialogFragment.show(getFragmentManager(), AlertDialogFragment.TAG_ALERT_DIALOG);
+        FragmentManager fragmentManager = getFragmentManager();
+        fragmentManager.beginTransaction()
+                .add(dialogFragment, AlertDialogFragment.TAG_ALERT_DIALOG)
+                .commitAllowingStateLoss();
     }
 
     @Override
@@ -323,39 +386,114 @@ public class ConversationsFragment extends ListFragment implements Updatable,
     }
 
     @Override
+    public void onCallClick(ConversationListItem view) {
+        if (mAdapter != null) {
+            mAdapter.clearSelectedPosition();
+        }
+
+        Conversation conversation = getConversation((Integer) view.getTag());
+        if (conversation != null) {
+            final String userId = conversation.getPartner().getUserId();
+            CallUtils.checkAndLaunchSilentPhoneCall(getActivity(), userId);
+        }
+    }
+
+    @Override
     public void onAlertDialogConfirmed(DialogInterface dialog, int requestCode, Bundle bundle,
             boolean saveChoice) {
         if (requestCode == DELETE_CONVERSATION && bundle != null) {
-            String conversationPartner = bundle.getString(DELETE_CONVERSATION_ID);
-            if (TextUtils.isEmpty(conversationPartner))
-                return;
 
-            AxoMessaging axoMessaging = AxoMessaging.getInstance(SilentPhoneApplication.getAppContext());
+            /*
+             * Passed position cannot be used here as conversation list could be updated while
+             * showing dialog.
+             */
+            String conversationPartner = bundle.getString(DELETE_CONVERSATION_ID);
+            if (TextUtils.isEmpty(conversationPartner)) {
+                return;
+            }
+
+            ZinaMessaging axoMessaging = ZinaMessaging.getInstance();
             boolean axoRegistered = axoMessaging.isRegistered();
             if (axoRegistered) {
                 Log.d(TAG, "Delete conversation " + conversationPartner);
-                Conversation conversation =
-                        axoMessaging.getOrCreateConversation(conversationPartner);
-                axoMessaging.getConversations().remove(conversation);
-                refreshConversations(SilentPhoneApplication.getAppContext());
+
+                Conversation conversationToDelete = null;
+                for (final ListIterator<Conversation> iterator = mConversations.listIterator(); iterator.hasNext();) {
+                    final Conversation conversation = iterator.next();
+                    final int position = iterator.previousIndex();
+                    if (conversationPartner.equals(conversation.getPartner().getUserId())) {
+                        conversationToDelete = conversation;
+                        iterator.remove();
+                        if (mAdapter != null) {
+                            mAdapter.notifyItemRemoved(position);
+                        }
+                        break;
+                    }
+                }
+
+                if (conversationToDelete != null) {
+                    final ConversationRepository repository = axoMessaging.getConversations();
+                    deleteConversation(repository, conversationToDelete);
+                }
             }
             else {
                 Log.w(TAG, "Cannot delete conversation " + conversationPartner
-                        + ", Axolotl not registered");
+                        + ", Zina not registered");
+            }
+            // no need to leave group as invitation not accepted
+            refreshConversations();
+        }
+    }
+
+    @Override
+    public void onUserInfo(UserInfo userInfo, String errorInfo, boolean silent) {
+        if (!isAdded()) {
+            return;
+        }
+        updateDataRetentionBanner();
+    }
+
+    private void updateDataRetentionBanner() {
+        // check whether data will be retained locally and update banner
+        if (mDataRetentionBanner != null) {
+            boolean isDataRetained =
+                    (LoadUserInfo.isLrcm() | LoadUserInfo.isLrcp() | LoadUserInfo.isLrmp()
+                            | LoadUserInfo.isLrmm() | LoadUserInfo.isLrap());
+
+            int visibility = isDataRetained ? View.VISIBLE : View.GONE;
+            mDataRetentionBanner.setVisibility(visibility);
+            mDataRetentionBanner.refreshBannerTitle();
+        }
+    }
+
+    public void onCallStateChanged(@Nullable CallState call, TiviPhoneService.CT_cb_msg msg) {
+        if (mAdapter != null && call != null && mConversations != null) {
+            String conversationId = Utilities.getPeerName(call);
+            conversationId = Utilities.removeUriPartsSelective(conversationId);
+            if (!TextUtils.isEmpty(conversationId)) {
+                int position = 0;
+                for (Conversation conversation : mConversations) {
+                    if (conversationId.equals(conversation.getPartner().getUserId())) {
+                        Log.d(TAG, "Conversation changed for [" + conversationId
+                                + "] notify position " + position);
+                        mAdapter.notifyItemChanged(position);
+                        break;
+                    }
+                    position++;
+                }
             }
         }
     }
 
-    protected void refreshConversations(final Context context) {
-
-        if (mContactsCache == null) {
-            mContactsCache = ContactsCache.getInstance(context);
+    protected void refreshConversations() {
+        if (mAdapter != null) {
+            mAdapter.clearSelectedPosition();
         }
 
         cancelTasks();
 
         /* refresh conversations list */
-        mConversationsRefreshTask = AsyncUtils.execute(new RefreshConversationsList(context, this));
+        mConversationsRefreshTask = AsyncUtils.execute(new RefreshConversationsList(this));
 
         /* To show progress on every refresh, set it to visible here. This creates a flicker
          * as view is refreshed every minute to keep counters running.
@@ -377,59 +515,123 @@ public class ConversationsFragment extends ListFragment implements Updatable,
             mProgressBar.setVisibility(View.GONE);
         }
 
-        mConversations = conversations;
-        Collections.sort(mConversations);
-        setHighlightedConversation();
+        if (conversations != null) {
+            mConversations.clear();
+            mConversations.addAll(conversations);
+            Collections.sort(mConversations);
+        }
 
         if (mConversations.size() > 0) {
-            RefreshLastEventsCache refreshEventsCacheTask =
-                    new RefreshLastEventsCache(activity.getApplicationContext(), this);
+            if (mLastMessageCache.isEmpty()) {
+                for (Conversation conversation : mConversations) {
+                    mLastMessageCache.put(conversation.getPartner().getUserId(), DUMMY_EVENT);
+                }
+            }
 
+            RefreshLastEventsCache refreshEventsCacheTask = new RefreshLastEventsCache(this);
             Conversation[] conversationArray =
                     mConversations.toArray(new Conversation[mConversations.size()]);
             mEventsRefreshTask = AsyncUtils.executeSerial(refreshEventsCacheTask, conversationArray);
         }
 
         if (mAdapter != null) {
-            mAdapter.notifyDataSetChanged();
+            if (mAdapter.getItemCount() != mConversations.size()) {
+                mAdapter.setItems(mConversations);
+                mAdapter.notifyDataSetChanged();
+            }
+            else {
+                mAdapter.notifyItemRangeChanged(0, mConversations.size());
+            }
         }
     }
 
-    protected void updateConversationCache(final List<Conversation> conversations,
-            final Map<String, Message> lastMessageCache) {
-        mConversations = conversations;
-        Collections.sort(mConversations);
-        setHighlightedConversation();
-
-        if (mLastMessageCache == null) {
-            mLastMessageCache = new ConcurrentHashMap<>();
+    protected void updateConversationCache(@Nullable final Pair<String, Event> entry) {
+        if (entry != null && entry.first != null && entry.second != null) {
+            mLastMessageCache.put(entry.first, entry.second);
+            if (mAdapter != null) {
+                int position = getConversationPosition(entry.first);
+                if (position != ITEM_NOT_SELECTED) {
+                    mAdapter.notifyItemChanged(position);
+                }
+            }
         }
-        mLastMessageCache.clear();
+    }
+
+    @SuppressWarnings("unused")
+    protected void updateConversationCache(@Nullable final Map<String, Event> lastMessageCache) {
         if (lastMessageCache != null) {
+            mLastMessageCache.clear();
             mLastMessageCache.putAll(lastMessageCache);
         }
 
         if (mAdapter != null) {
-            mAdapter.notifyDataSetChanged();
+            mAdapter.notifyItemRangeChanged(0, mAdapter.getItemCount() - 1);
         }
     }
 
-    private void registerViewUpdater() {
+    @Nullable
+    private Conversation getConversation(int position) {
+        Conversation conversation = null;
+        if (position > ITEM_NOT_SELECTED && position < mConversations.size()) {
+            conversation = mConversations.get(position);
+        }
+        return conversation;
+    }
 
-        mViewUpdater = new BroadcastReceiver() {
+    private int getConversationPosition(String conversationId) {
+        if (TextUtils.isEmpty(conversationId)) {
+            return ITEM_NOT_SELECTED;
+        }
+        int result = ITEM_NOT_SELECTED;
+        int position = 0;
+        for (Conversation conversation : mConversations) {
+            if (TextUtils.equals(conversationId, conversation.getPartner().getUserId())) {
+                result = position;
+                break;
+            }
+            position++;
+        }
+        return result;
+    }
+
+    private int getUnreadMessageCount() {
+        int result = 0;
+        for (Conversation conversation : mConversations) {
+            if (conversation != null) {
+                result += conversation.getUnreadMessageCount()
+                        + conversation.getUnreadCallMessageCount();
+            }
+        }
+        return result;
+    }
+
+    private void registerViewUpdater() {
+        Activity activity = getActivity();
+        if (activity == null) {
+            return;
+        }
+
+        mViewUpdater = new MessagingBroadcastReceiver() {
 
             @Override
             public void onReceive(Context context, Intent intent) {
+                CharSequence conversationId = Extra.PARTNER.getCharSequence(intent);
                 switch (Action.from(intent)) {
                     case RECEIVE_MESSAGE:
                     case UPDATE_CONVERSATION:
                         /*
-                        CharSequence conversationId = Extra.PARTNER.getCharSequence(intent);
                         ConversationUtils.updateUnreadMessageCount(context, conversationId);
                          */
-                    case PROGRESS:
-                    case CANCEL:
-                        refreshConversations(context);
+                        if (!TextUtils.isEmpty(conversationId) && mAdapter != null) {
+                            String id = conversationId.toString();
+                            mAdapter.doMessageLookup(getConversationPosition(id), id);
+                        }
+                        refreshConversations();
+                        setConsumed(true);
+                        break;
+                    case REFRESH_SELF:
+                        updateDataRetentionBanner();
+                        // TODO a good way to refresh list without flicker
                         break;
                     default:
                         break;
@@ -437,66 +639,37 @@ public class ConversationsFragment extends ListFragment implements Updatable,
             }
         };
 
-        registerReceiver(mViewUpdater, Action.RECEIVE_MESSAGE.filter(), MESSAGE_PRIORITY);
-        registerReceiver(mViewUpdater, Action.UPDATE_CONVERSATION.filter(), MESSAGE_PRIORITY);
-        registerReceiver(mViewUpdater, Action.PROGRESS.filter(), MESSAGE_PRIORITY);
-        registerReceiver(mViewUpdater, Action.CANCEL.filter(), MESSAGE_PRIORITY);
-    }
-
-    private Intent registerReceiver(BroadcastReceiver receiver, IntentFilter filter, int priority) {
-        filter.setPriority(priority);
-        return getActivity().registerReceiver(receiver, filter);
+        IntentFilter filter = Action.filter(
+                // message events
+                Action.RECEIVE_MESSAGE, Action.UPDATE_CONVERSATION, Action.REFRESH_SELF);
+        registerMessagingReceiver(activity, mViewUpdater, filter, MESSAGE_PRIORITY);
     }
 
     private void scheduleNextUpdate() {
-        mHandler.postDelayed(mUpdater, TimeUnit.MINUTES.toMillis(1));
+        mHandler.removeCallbacks(mUpdater);
+        mHandler.postDelayed(mUpdater, CONVERSATIONS_UPDATE_INTERVAL);
+
+        scheduleNextEventUpdate();
     }
 
-    private void setHighlightedConversation() {
-        ListView listView = getListView();
-        if (listView != null && !TextUtils.isEmpty(mLastConversationId)
-                && mConversations != null) {
-            int conversationPosition = ITEM_NOT_SELECTED;
-            for (Conversation conversation : mConversations) {
-                conversationPosition += 1;
-                if (conversation != null
-                        && mLastConversationId.equals(conversation.getPartner().getUserId())) {
-                    break;
-                }
+    private void scheduleNextEventUpdate() {
+        mHandler.removeCallbacks(mEventUpdater);
+        long currentMillis = System.currentTimeMillis();
+        long autoRefreshTime = Long.MAX_VALUE;
+
+        // next update time is when next message will expire, minimum 1 second
+        for (Event event : mLastMessageCache.values()) {
+            if (event instanceof Message) {
+                autoRefreshTime =
+                        Math.max(
+                                Math.min(autoRefreshTime, ((Message) event).getExpirationTime()),
+                                currentMillis + TimeUnit.SECONDS.toMillis(1));
             }
-            if (conversationPosition > ITEM_NOT_SELECTED) {
-                mSelectedItem = conversationPosition;
-                listView.setItemChecked(mSelectedItem, true);
-            }
-        }
-    }
-
-    private void lockViewIfNecessary() {
-        Activity activity = getActivity();
-        if (activity == null) {
-            return;
         }
 
-        byte[] chatKeyData =
-                KeyManagerSupport.getPrivateKeyData(activity.getContentResolver(),
-                        ConfigurationUtilities.getChatProtectionKey());
-        MessagingPreferences preferences =
-                MessagingPreferences.getInstance(activity.getApplicationContext());
-
-        boolean lockingEnabled = chatKeyData != null;
-        boolean expired = lockingEnabled && preferences.isMessagingUnlockTimeExpired();
-
-        if (mPasswordOverlay != null) {
-            mPasswordOverlay.setVisibility(expired ? View.VISIBLE : View.GONE);
+        if (autoRefreshTime < Long.MAX_VALUE) {
+            mHandler.postDelayed(mEventUpdater, (autoRefreshTime - currentMillis));
         }
-    }
-
-    private void updateLastLockTimeIfNecessary() {
-        if (!mLockTimePersisted) {
-            MessagingPreferences.getInstance(getActivity().getApplicationContext())
-                    .setLastMessagingUnlockTime(System.currentTimeMillis());
-        }
-        mLockTimePersisted = true;
     }
 
     private void cancelTasks() {
@@ -510,32 +683,143 @@ public class ConversationsFragment extends ListFragment implements Updatable,
         }
     }
 
-    // ----------------------------------------------------------------------
-    private class ConversationLogAdapter extends BaseAdapter /* GroupingListAdapter */ {
+    private void deleteConversation(final ConversationRepository repository,
+            final Conversation conversationToDelete) {
+        // ensure that conversation won't appear during refresh by setting its modification time
+        conversationToDelete.setLastModified(0);
+        repository.save(conversationToDelete);
 
-        private final class ContactInfoRequest {
-            public ConversationListItem view;
-            public Conversation conversation;
-            public String number;
+        AsyncUtils.execute(new Runnable() {
+            @Override
+            public void run() {
+                String conversationPartner = conversationToDelete.getPartner().getUserId();
+                if (!ConversationUtils.deleteConversation(conversationPartner)) {
+                    Log.w(TAG, "Cannot delete conversation " + conversationPartner);
+                }
+            }
+        });
+    }
+
+    private class ConversationLogAdapter extends ResolvingUserAdapter<Conversation> {
+
+        class ViewHolder extends RecyclerView.ViewHolder {
+
+            SwipeRevealLayout swipeLayout;
+
+            ViewHolder(View itemView) {
+                super(itemView);
+                swipeLayout = (SwipeRevealLayout) itemView.findViewById(R.id.conversation_log_list_item);
+            }
+
+            public void bind(Conversation conversation, int position) {
+                final String userId = conversation.getPartner().getUserId();
+                final boolean isGroup = conversation.getPartner().isGroup();
+                final Event lastEvent = TextUtils.isEmpty(userId) ? DUMMY_EVENT : mLastMessageCache.get(userId);
+
+                ConversationListItem conversationListItem = (ConversationListItem) itemView;
+                conversationListItem.setEvent(lastEvent);
+                conversationListItem.setOnConversationItemClickListener(ConversationsFragment.this);
+                conversationListItem.setTag(position);
+                conversationListItem.setConversation(conversation);
+                conversationListItem.setIsCallable(
+                        !conversation.getPartner().isGroup()
+                        && !TiviPhoneService.calls.hasCallWith(userId));
+
+                Boolean retentionState = /**mRetentionStateCache.get(userId);**/false;
+                if (retentionState == null && !Utilities.canMessage(userId)) {
+                    retentionState = false;
+                }
+
+                ContactEntry contactEntry = !isGroup
+                        ? ContactsCache.getContactEntryFromCacheIfExists(userId)
+                        : ContactsCache.getTemporaryGroupContactEntry(userId,
+                            conversation.getPartner().getDisplayName());
+
+                conversationListItem.setAvatar(mContactPhotoManager, conversation, contactEntry);
+                conversationListItem.setContactEntry(contactEntry, conversation);
+
+                if (retentionState != null) {
+                    conversationListItem.setIsDataRetained(retentionState);
+                }
+
+                /*
+                 * Last event request. But running it on the same thread as contact request
+                 * slows down contact resolution.
+                 *
+                if (lastEvent == DUMMY_EVENT || !mLastMessageCache.containsKey(userId)) {
+                    doMessageLookup(position, userId);
+                }
+                 */
+
+                if (ContactsCache.hasExpired(contactEntry)/* || retentionState == null*/) {
+                    doContactRequest(userId, position, contactEntry);
+                }
+
+                mBinderHelper.bind(swipeLayout, userId);
+            }
+
+            public void close() {
+                swipeLayout.close(false);
+            }
+        }
+
+        class LastMessageRequest extends ResolvingUserAdapter.LookupRequest {
+
+            LastMessageRequest(String number, int position) {
+                super(number, position);
+            }
+
+            @Override
+            public boolean equals(Object obj) {
+                if (this == obj) return true;
+                if (obj == null) return false;
+                if (!(obj instanceof LastMessageRequest)) return false;
+
+                LastMessageRequest other = (LastMessageRequest) obj;
+                return Objects.equal(name, other.name);
+            }
+
+            @Override
+            public int hashCode() {
+                return name == null ? 0 : name.hashCode();
+            }
+
+            public boolean onRequestResult() {
+                Event event = ConversationUtils.getLastDisplayableEvent(name);
+                mLastMessageCache.put(name, event != null ? event : NO_MESSAGES_EVENT);
+                return true;
+            }
         }
 
         private final Context mContext;
         private final ContactPhotoManagerNew mContactPhotoManager;
+        private final ViewBinderHelper mBinderHelper;
 
-        public ConversationLogAdapter(Context context) {
+        ConversationLogAdapter(Context context) {
+            super(context);
             mContext = context;
             mContactPhotoManager =
                     ContactPhotoManagerNew.getInstance(mContext.getApplicationContext());
+            mBinderHelper = new ViewBinderHelper();
+            mBinderHelper.setOpenOnlyOne(true);
         }
 
         @Override
-        public int getCount() {
-            return mConversations != null ? mConversations.size() : 0;
+        public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+            View view = new ConversationListItem(mContext);
+            view.setLayoutParams(
+                    new RecyclerView.LayoutParams(RecyclerView.LayoutParams.MATCH_PARENT,
+                            RecyclerView.LayoutParams.WRAP_CONTENT));
+            return new ViewHolder(view);
         }
 
         @Override
-        public Object getItem(int position) {
-            return mConversations != null ? mConversations.get(position) : 0;
+        public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
+            Conversation conversation = (Conversation) getItem(position);
+            if (conversation != null) {
+                final ViewHolder viewHolder = (ViewHolder) holder;
+                viewHolder.bind(conversation, position);
+            }
         }
 
         @Override
@@ -544,58 +828,58 @@ public class ConversationsFragment extends ListFragment implements Updatable,
         }
 
         @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
-            Conversation conversation = (Conversation) getItem(position);
-            if (convertView == null) {
-                convertView = new ConversationListItem(getActivity());
-            }
-            String userId = conversation.getPartner().getUserId();
-            Event lastEvent = mLastMessageCache == null || TextUtils.isEmpty(userId)
-                    ? DUMMY_EVENT : mLastMessageCache.get(userId);
+        public void onRequestsProcessed() {
+            scheduleNextEventUpdate();
+        }
 
-            ConversationListItem conversationListItem = (ConversationListItem) convertView;
-            conversationListItem.setEvent(lastEvent);
-            conversationListItem.setOnConversationItemClickListener(ConversationsFragment.this);
-            conversationListItem.setTag(position);
-            conversationListItem.setConversation(conversation, mContactPhotoManager);
+        void clearSelectedPosition() {
+            mBinderHelper.closeAll();
+        }
 
-            return convertView;
+        void doMessageLookup(int position, String userId) {
+            LookupRequest request = new LastMessageRequest(userId, position);
+            addRequest(request);
+        }
+
+        public void saveStates(Bundle outState) {
+            mBinderHelper.saveStates(outState);
+        }
+
+        public void restoreStates(Bundle inState) {
+            mBinderHelper.restoreStates(inState);
         }
 
     }
 
     private static class RefreshConversationsList extends AsyncTask<Void, Void, List<Conversation>> {
 
-        private final Context mContext;
         private final WeakReference<ConversationsFragment> mFragmentReference;
 
-        public RefreshConversationsList(final Context context, final ConversationsFragment fragment) {
-            mContext = context;
+        RefreshConversationsList(final ConversationsFragment fragment) {
             mFragmentReference = new WeakReference<>(fragment);
-
         }
 
         @Override
         protected List<Conversation> doInBackground(Void... params) {
 
             // build cache of last messages for conversations
-            AxoMessaging axoMessaging = AxoMessaging.getInstance(mContext);
-            boolean axoRegistered = axoMessaging.isRegistered();
+            ZinaMessaging zinaMessaging = ZinaMessaging.getInstance();
+            boolean zinaRegistered = zinaMessaging.isRegistered();
 
-            if (!axoRegistered) {
+            if (!zinaRegistered) {
                 // return empty list if Axolotl has not been registered yet
-                return new ArrayList<>();
+                return EMPTY_LIST;
             }
 
-            ConversationRepository repository = axoMessaging.getConversations();
+            ConversationRepository repository = zinaMessaging.getConversations();
             List<Conversation> conversations = repository.list();
             Iterator<Conversation> iterator = conversations.iterator();
             while (iterator.hasNext()) {
                 Conversation conversation = iterator.next();
 
-                if (conversation == null || conversation.getLastModified() == 0
+                if (conversation == null || ((conversation.getLastModified() == 0
                         || !repository.historyOf(conversation).exists()
-                        || conversation.getPartner().getUserId() == null) {
+                        || conversation.getPartner().getUserId() == null))) {
                     iterator.remove();
                 }
             }
@@ -612,105 +896,66 @@ public class ConversationsFragment extends ListFragment implements Updatable,
         }
     }
 
-    private static class RefreshLastEventsCache extends AsyncTask<Conversation, Void, List<Conversation>> {
-
-        private final Context mContext;
+    private static class RefreshLastEventsCache extends AsyncTask<Conversation, Pair<String, Event>, Map<String, Event>> {
 
         private final WeakReference<ConversationsFragment> mFragmentReference;
 
-        private HashMap<String, Message> mLastMessages = new HashMap<>();
+        private HashMap<String, Event> mLastMessages = new HashMap<>();
 
-        public RefreshLastEventsCache(final Context context, final ConversationsFragment fragment) {
-            mContext = context;
+        RefreshLastEventsCache(final ConversationsFragment fragment) {
             mFragmentReference = new WeakReference<>(fragment);
         }
 
         @Override
-        protected List<Conversation> doInBackground(Conversation... params) {
+        protected Map<String, Event> doInBackground(Conversation... params) {
             // build cache of last messages for conversations
 
-            AxoMessaging axoMessaging = AxoMessaging.getInstance(mContext);
-            boolean axoRegistered = axoMessaging.isRegistered();
+            ZinaMessaging zinaMessaging = ZinaMessaging.getInstance();
+            boolean zinaRegistered = zinaMessaging.isRegistered();
 
-            if (!axoRegistered) {
-                return Arrays.asList(params);
+            if (!zinaRegistered) {
+                // no update if zina not available
+                return null;
             }
 
-            ConversationRepository repository = axoMessaging.getConversations();
-
-            List<Conversation> result = new ArrayList<>();
+            final ConversationRepository repository = zinaMessaging.getConversations();
             for (Conversation conversation : params) {
+                String conversationId = conversation.getPartner().getUserId();
+                Event event = ConversationUtils.getLastDisplayableEvent(repository, conversation);
+                event = (event != null) ? event : NO_MESSAGES_EVENT;
+                mLastMessages.put(conversationId, event);
 
-                String partnerUserName = conversation.getPartner().getUserId();
-                if (partnerUserName == null) {
-                    continue;
-                }
-                List<Event> events = null;
+                Pair<String, Event> progressEntry = new Pair<>(conversationId, event);
+                publishProgress(progressEntry);
+            }
 
-                // going downwards from top, youngest element
-                EventRepository.PagingContext pagingContext =
-                        new EventRepository.PagingContext(
-                                EventRepository.PagingContext.START_FROM_YOUNGEST, PAGE_SIZE);
-                int eventCount = 0;
-                boolean hasMessage = false;
-                do {
-                    List<Event> eventList = repository.historyOf(conversation).list(pagingContext);
-                    if (eventList != null) {
-                        eventCount = eventList.size();
-                        if (events == null) {
-                            events = eventList;
-                        }
-                        else {
-                            // FIXME: can we trust and look just at the next page?
-                            events.addAll(eventList);
-                        }
-                        eventList = MessageUtils.filter(eventList, false);
-                        hasMessage = findLastEvent(partnerUserName, eventList);
-                    }
-                } while (eventCount > 0 && !hasMessage);
-
-                if (events != null) {
-                    result.add(conversation);
-                }
-                if (!hasMessage) {
-                    mLastMessages.remove(partnerUserName);
+            // update unread message count for group conversations
+            for (Conversation conversation : params) {
+                if (conversation.getPartner().isGroup()) {
+                    ConversationUtils.updateUnreadMessageCount(repository, conversation);
                 }
             }
 
-            return result;
-        }
-
-        public HashMap<String, Message> getLastMessageCache() {
             return mLastMessages;
         }
 
         @Override
-        protected void onPostExecute(List<Conversation> conversations) {
-            ConversationsFragment fragment = mFragmentReference.get();
-            if (fragment != null) {
-                fragment.updateConversationCache(conversations, getLastMessageCache());
+        public void onProgressUpdate(Pair<String, Event>... values) {
+            if (values != null && values.length > 0) {
+                ConversationsFragment fragment = mFragmentReference.get();
+                if (fragment != null) {
+                    fragment.updateConversationCache(values[0]);
+                }
             }
         }
 
-        private boolean findLastEvent(String partnerUserName, List<Event> events) {
-            boolean hasMessage = false;
-            ListIterator<Event> iterator = events.listIterator(events.size());
-            while (iterator.hasPrevious() && partnerUserName != null) {
-                Event event = iterator.previous();
-                if (event instanceof IncomingMessage
-                        || event instanceof OutgoingMessage
-                        || event instanceof CallMessage) {
-                    if (!((Message) event).isExpired()
-                            && ((Message) event).getState() != MessageStates.BURNED) {
-                        mLastMessages.put(partnerUserName, (Message) event);
-                        hasMessage = true;
-                        break;
-                    }
-                }
+        @Override
+        protected void onPostExecute(Map<String, Event> result) {
+            ConversationsFragment fragment = mFragmentReference.get();
+            if (fragment != null) {
+                fragment.updateConversationCache(result);
             }
-            return hasMessage;
         }
     }
 
 }
-

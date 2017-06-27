@@ -308,7 +308,7 @@ wanneer u Silent Phone start, moet u deze pin invoeren. U kunt steeds de standaa
     <string name="remaining_oca_minutes_zero">Geen belminuten gebruikt. Uw saldo is %1$d minuten.</string>
 
     <plurals name="remaining_oca_minutes_info">
-        <item quantity="one">U hebt &#233;&#233;n minuut gebruikt van uw saldo van %2$d minuten.</item>
+        <item quantity="one">U hebt &#233;&#233;n minuut gebruikt van uw saldo van %1$d minuten.</item>
         <item quantity="other">U hebt %1$d minuten gebruikt van uw saldo van %2$d minuten.</item>
     </plurals>
 

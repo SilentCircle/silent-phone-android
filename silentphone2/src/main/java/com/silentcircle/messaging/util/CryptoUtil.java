@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2014-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -28,9 +28,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 package com.silentcircle.messaging.util;
 
-import android.util.Log;
+import android.support.annotation.Nullable;
 
-import java.math.BigInteger;
+import com.silentcircle.logs.Log;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -98,6 +99,7 @@ public class CryptoUtil {
         return byteArray;
     }
 
+    @Nullable
     public static CipherOutputStream getCipherOutputStream(File file, byte[] keyData, byte[] ivData) {
         if (file == null || keyData == null || ivData == null)
             return null;
@@ -119,7 +121,7 @@ public class CryptoUtil {
         return null;
     }
 
-
+    @Nullable
     public static CipherInputStream getCipherInputStream(File file, byte[] keyData, byte[] ivData) {
         if (file == null || keyData == null || ivData == null)
             return null;
@@ -140,4 +142,11 @@ public class CryptoUtil {
         }
         return null;
     }
+
+    public static byte[] getIV() {
+        byte[] IV = new byte[AES_BLOCK_SIZE];
+        RANDOM.nextBytes(IV);
+        return IV;
+    }
+
 }

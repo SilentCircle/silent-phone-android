@@ -1,3 +1,18 @@
+/*
+Copyright 2016-2017 Silent Circle, LLC
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
 /**
  * @file Logger.h
  * @author Werner Dittmann <Werner.Dittmann@t-online.de>
@@ -47,8 +62,8 @@ enum LoggingLogType {
 /**
  * @brief The LOGGER_INSTANCE default definition
  *
- * Define the standard LOGGER_INSTANCE as @c logInst. The source that include
- * this file may defines its onwl LOGGER_INSTANCE, hoever it must define it before
+ * Define the standard LOGGER_INSTANCE as @c logInst. The source that includes
+ * this file may defines its onw LOGGER_INSTANCE, however it must define it before
  * including this file. See the file description above.
  */
 #ifndef LOGGER_INSTANCE
@@ -86,9 +101,30 @@ enum LoggingLogType {
     else if (level > LOGGER_INSTANCE getLogLevel()) ; \
     else LOGGER_INSTANCE print<LoggingLogLevel::level >(args);}
 
+/**
+ * @brief Starts a logging code block.
+ *
+ * The marco works in the same way as the @c LOGGER marco, thus the code between @c LOGGER_BEGIN
+ * and @c LOGGER_END exists only if the level is less or equal the value defined in @c LOG_MAX_LEVEL.
+ */
+#define LOGGER_BEGIN(level) \
+    if (level > LOG_MAX_LEVEL) ;\
+    else if (level > LOGGER_INSTANCE getLogLevel()) ; \
+    else {
 
+/**
+ * @brief Closes a logging code block.
+ */
+#define LOGGER_END }
+
+/**
+ * @brief Groups the logging implementation
+ */
 namespace logging {
 
+    /**
+     * Virtual logging policy
+     */
     class LogPolicy
     {
     public:
@@ -99,7 +135,7 @@ namespace logging {
     };
 
     /**
-     * Implementation which allow to write into a file
+     * Logging policy implementation which allow to write into a file
      */
     class __EXPORT FileLogPolicy : public LogPolicy
     {
@@ -126,7 +162,9 @@ namespace logging {
 
         void openStream(const std::string& name) {};
         void closeStream() {};
-        void write(LoggingLogLevel level, const std::string& tag, const std::string& msg) { std::cerr << msg << std::endl;};
+        void write(LoggingLogLevel level, const std::string& tag, const std::string& msg) {
+            std::cerr << msg << std::endl;
+        };
         LoggingLogType getLoggingLogType() { return FULL; }
     };
 
@@ -147,6 +185,25 @@ namespace logging {
     };
 #endif
 
+#ifdef APPLE_LOGGER
+    /**
+     * Implements a logging Policy designed for iOS logging
+     */
+    class __EXPORT IosLogPolicy : public LogPolicy
+    {
+    public:
+        IosLogPolicy() {}
+        ~IosLogPolicy() {};
+
+        void openStream(const std::string& name) {};
+        void closeStream() {};
+        void write(LoggingLogLevel level, const std::string& tag, const std::string& msg)  {
+            void zina_log(const char *t, const char *buf);
+            zina_log(tag.c_str(), msg.c_str());
+        };
+        LoggingLogType getLoggingLogType() { return RAW; }
+    };
+#endif
 
 /**
  * The Logger class uses a LogPolicy which implements the low level functions to output
@@ -159,12 +216,11 @@ namespace logging {
  * - in this source file define you global Logger setup, for example
 
 @verbatim
-using namespace std;
 
 #define LOGGER_INSTANCE myGlobalLogger->
 #include "Logger.h"
 shared_ptr<logging::Logger<logging::CerrLogPolicy> >
-        myGlobalLogger = make_shared<logging::Logger<logging::CerrLogPolicy> >(string(""));
+        myGlobalLogger = make_shared<logging::Logger<logging::CerrLogPolicy> >(std::string(""));
 @endverbatim
 
  * Then declare the above Logger instance as external, either in an already existing include
@@ -215,8 +271,10 @@ return 0;
  * level - if it isn't compiled then it will not run :-). If you set @c MAX_LOG_LEVEL to
  * @c NONE then no log statement is left in the compiled code.
  */
+
+    // When creating a standalone (library) version of Logger then enable the __EXPORT attribute
     template<typename log_policy >
-    class __EXPORT Logger
+    class /* __EXPORT */ Logger
     {
         std::string getTime();
         std::string getLogLineHeader();
@@ -256,13 +314,13 @@ return 0;
          * @param name The LogPolicy implementation may use this.
          * @param tag The LogPolicy implementation may use this.
          */
-        Logger(const std::string& name, const std::string& tag);
+        explicit Logger(const std::string& name, const std::string& tag);
         ~Logger();
 
         /**
          * @brief Return the current log level.
          */
-        int getLogLevel() { return logLevel; }
+        LoggingLogLevel getLogLevel() { return logLevel; }
 
         /**
          * @brief Set the current log level.

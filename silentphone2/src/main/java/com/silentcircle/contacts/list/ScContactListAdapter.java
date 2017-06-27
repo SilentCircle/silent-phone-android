@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2013-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -47,17 +47,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 package com.silentcircle.contacts.list;
 
-import android.annotation.TargetApi;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
-import android.os.Build;
 import android.provider.ContactsContract;
 import android.provider.ContactsContract.Contacts;
 import android.provider.ContactsContract.Directory;
 import android.provider.ContactsContract.SearchSnippets;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.ViewGroup;
 
 import com.silentcircle.common.list.ContactListItemView;
@@ -183,7 +180,14 @@ public abstract class ScContactListAdapter extends ScContactEntryListAdapter {
     
     @Override
     public String getContactDisplayName(int position) {
-        return ((Cursor) getItem(position)).getString(ContactQuery.CONTACT_DISPLAY_NAME);
+        Object item = getItem(position);
+        if (item != null && item instanceof Cursor) {
+            String displayName = ((Cursor) item).getString(ContactQuery.CONTACT_DISPLAY_NAME);
+
+            return displayName != null ? displayName : "";
+        }
+
+        return null;
     }
 
     /**

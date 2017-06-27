@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2016-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -25,15 +25,16 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-
 package com.silentcircle.messaging.views;
 
 import android.content.Context;
+import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
+import android.view.ViewGroup;
 import android.widget.SeekBar;
 
 /**
@@ -46,6 +47,12 @@ public class VerticalSeekBar extends SeekBar {
     private int mPaddingRight;
     private int mPaddingTop;
     private int mPaddingBottom;
+
+    /**
+     * Used in case the rendered height is not available
+     * ({@link #getHeight() == 0})
+     */
+    private int mHeight;
 
     private OnVerticalSeekBarChangeListener mOnSeekBarChangeListener;
 
@@ -71,6 +78,12 @@ public class VerticalSeekBar extends SeekBar {
         mPaddingTop = getPaddingTop();
         mPaddingRight = getPaddingRight();
         mPaddingBottom = getPaddingBottom();
+
+        TypedArray ta = context.obtainStyledAttributes(attrs, new int[] { android.R.attr.layout_height });
+        if (ta != null) {
+            mHeight = ta.getDimensionPixelSize(0, ViewGroup.LayoutParams.MATCH_PARENT);
+            ta.recycle();
+        }
     }
 
     @Override
@@ -127,6 +140,7 @@ public class VerticalSeekBar extends SeekBar {
     public synchronized void setProgress(int progress) {
         super.setProgress(progress);
         setDescription(getHeight(), getThumb(), getScale());
+        updateThumbAndTrackPos(getWidth(), getHeight());
     }
 
     protected void onDraw(Canvas canvas) {
@@ -165,8 +179,8 @@ public class VerticalSeekBar extends SeekBar {
 
         // The max height does not incorporate padding, whereas the height
         // parameter does.
-        final int trackHeight = paddedHeight; // Math.min(mMaxHeight, paddedHeight);
-        final int trackWidth = paddedWidth; // Math.min(mMaxHeight, paddedHeight);
+        final int trackHeight = paddedHeight;;
+        final int trackWidth = paddedWidth;;
         final int thumbHeight = thumb == null ? 0 : thumb.getIntrinsicHeight();
         final int thumbWidth = thumb == null ? 0 : thumb.getIntrinsicWidth();
 
@@ -177,10 +191,10 @@ public class VerticalSeekBar extends SeekBar {
         if (thumbWidth > trackWidth) {
             final int offsetWidth = (paddedWidth - thumbWidth) / 2;
             trackOffset = offsetWidth + (thumbHeight - trackWidth) / 2;
-            thumbOffset = offsetWidth + 0;
+            thumbOffset = offsetWidth;
         } else {
             final int offsetWidth = (paddedWidth - trackWidth) / 2;
-            trackOffset = offsetWidth + 0;
+            trackOffset = offsetWidth;
             thumbOffset = offsetWidth + (trackWidth - thumbWidth) / 2;
         }
 
@@ -237,6 +251,10 @@ public class VerticalSeekBar extends SeekBar {
     private void setDescription(int h, Drawable thumb, float scale) {
         if (thumb == null) {
             return;
+        }
+
+        if (h == 0) {
+            h = mHeight;
         }
 
         int available = h - mPaddingTop - mPaddingBottom;

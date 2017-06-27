@@ -1,4 +1,4 @@
-# Copyright (C) 2009 Werner Dittman
+# Copyright (C) 2009 - 2016 Werner Dittman
 #
 # This file is free software; as a special exception the author gives
 # unlimited permission to copy and/or distribute it, with or without
@@ -14,9 +14,9 @@ PROJECT(libzrtpcpp)
 
 SET(CPACK_PACKAGE_VERSION_MAJOR 4)
 SET(CPACK_PACKAGE_VERSION_MINOR 6)
-SET(CPACK_PACKAGE_VERSION_PATCH 0)
+SET(CPACK_PACKAGE_VERSION_PATCH 4)
 
-set (VERSION 4.6.0)
+set (VERSION 4.6.4)
 set (SOVERSION 4)
 
 # Define supported command line parameters.
@@ -33,7 +33,7 @@ option(SQLCIPHER "Use SQLCipher DB as backend for ZRTP cache." OFF)
 option(SDES "Include SDES when not building for CCRTP." OFF)
 option(AXO "Include Axolotl support when not building for CCRTP." OFF)
 
-option(ANDROID "Generate Android makefiles (Android.mk)" ON)
+option(ANDROID "Generate Android makefiles (Android.mk)" OFF)
 option(JAVA "Generate Java support files (requires JDK and SWIG)" OFF)
 
 #
@@ -155,28 +155,30 @@ else()
 
 endif()
 
-if (SQLITE)
-    pkg_check_modules(SQLITE3 sqlite3>=3.7)
-    if (SQLITE3_FOUND)
-        check_include_files(sqlite3.h HAVE_SQLITE_H)
-        set(LIBS ${LIBS} -lsqlite3)
-        MESSAGE(STATUS "Using SQLite based ZRTP cache")
+if (NOT ANDROID)
+    if (SQLITE)
+        pkg_check_modules(SQLITE3 sqlite3>=3.7)
+        if (SQLITE3_FOUND)
+            check_include_files(sqlite3.h HAVE_SQLITE_H)
+            set(LIBS ${LIBS} -lsqlite3)
+            MESSAGE(STATUS "Using SQLite based ZRTP cache")
+        else()
+            message(FATAL_ERROR "SQLite3 library not found")
+        endif()
+    elseif(SQLCIPHER)
+        pkg_check_modules(SQLCIPHER sqlcipher>=3.7)
+        if (SQLCIPHER_FOUND)
+            set(CMAKE_REQUIRED_INCLUDES ${CMAKE_REQUIRED_INCLUDES} ${SQLCIPHER_INCLUDE_DIRS})
+            check_include_files(sqlite3.h HAVE_SQLCIPHER_H)
+            set(LIBS ${LIBS} -lsqlcipher)
+            MESSAGE(STATUS "Using SQlCipher based ZRTP cache")
+            add_definitions(-DSQL_CIPHER -DSQLITE_HAS_CODEC)
+        else()
+            message(FATAL_ERROR "SQLCipher library not found")
+        endif()
     else()
-        message(FATAL_ERROR "SQLite3 library not found")
+        MESSAGE(STATUS "Using file based ZRTP cache")
     endif()
-elseif(SQLCIPHER)
-    pkg_check_modules(SQLCIPHER sqlcipher>=3.7)
-    if (SQLCIPHER_FOUND)
-        set(CMAKE_REQUIRED_INCLUDES ${CMAKE_REQUIRED_INCLUDES} ${SQLCIPHER_INCLUDE_DIRS}) 
-        check_include_files(sqlite3.h HAVE_SQLCIPHER_H)
-        set(LIBS ${LIBS} -lsqlcipher)
-        MESSAGE(STATUS "Using SQlCipher based ZRTP cache")
-        add_definitions(-DSQL_CIPHER -DSQLITE_HAS_CODEC)
-    else()
-        message(FATAL_ERROR "SQLCipher library not found")
-    endif()
-else()
-    MESSAGE(STATUS "Using file based ZRTP cache")
 endif()
 
 # necessary and required modules checked, ready to generate config.h in top-level build directory

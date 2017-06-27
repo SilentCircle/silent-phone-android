@@ -22,7 +22,8 @@
  *****************************************************************************
 */
 
-
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-function" // ignore unused warnings
 
 /*****************************************************************************
  *                                                                           *
@@ -204,3 +205,5 @@ T_OPER32_STATIC Word32 Div_32 (Word32 L_num, Word16 denom_hi, Word16 denom_lo)
 
     return (L_32);
 }
+
+#pragma clang diagnostic pop

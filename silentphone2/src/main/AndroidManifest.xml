@@ -48,6 +48,7 @@
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="com.android.launcher.permission.INSTALL_SHORTCUT"/>
+    <uses-permission android:name="android.permission.USE_FINGERPRINT"/>
 
     <!-- To enable the AuthenticatorService -->
     <uses-permission android:name="android.permission.AUTHENTICATE_ACCOUNTS"/>
@@ -61,34 +62,34 @@
 
     <!-- SilentCircle permissions to use the key manager features -->
     <permission
-        android:name="com.silentcircle.keymngr.permission.READ_SC_KEY"
+        android:name="${AUTHORITY_BASE}.keymngr.permission.READ_SC_KEY"
         android:label="@string/permission_read_km"
         android:protectionLevel="signature" />
     <permission
-        android:name="com.silentcircle.keymngr.permission.WRITE_SC_KEY"
+        android:name="${AUTHORITY_BASE}.keymngr.permission.WRITE_SC_KEY"
         android:label="@string/permission_write_km"
         android:protectionLevel="signature" />
 
-    <uses-permission android:name="com.silentcircle.keymngr.permission.READ_SC_KEY" />
-    <uses-permission android:name="com.silentcircle.keymngr.permission.WRITE_SC_KEY" />
+    <uses-permission android:name="${AUTHORITY_BASE}.keymngr.permission.READ_SC_KEY" />
+    <uses-permission android:name="${AUTHORITY_BASE}.keymngr.permission.WRITE_SC_KEY" />
 
     <!-- SilentCircle permissions to use SilentContacts -->
     <permission
-        android:name="com.silentcircle.silentcontacts.permission.READ"
+        android:name="${AUTHORITY_BASE}.silentcontacts.permission.READ"
         android:label="@string/permission_read"
         android:protectionLevel="signature" />
     <permission
-        android:name="com.silentcircle.silentcontacts.permission.WRITE"
+        android:name="${AUTHORITY_BASE}.silentcontacts.permission.WRITE"
         android:label="@string/permission_write"
         android:protectionLevel="signature" />
 
-    <uses-permission android:name="com.silentcircle.silentcontacts.permission.READ" />
-    <uses-permission android:name="com.silentcircle.silentcontacts.permission.WRITE" />
+    <uses-permission android:name="${AUTHORITY_BASE}.silentcontacts.permission.READ" />
+    <uses-permission android:name="${AUTHORITY_BASE}.silentcontacts.permission.WRITE" />
 
     <!-- Push Notification -->
-    <permission android:name="com.silentcircle.silentphone.permission.C2D_MESSAGE"
+    <permission android:name="${AUTHORITY_BASE}.silentphone.permission.C2D_MESSAGE"
         android:protectionLevel="signature"/>
-    <uses-permission android:name="com.silentcircle.silentphone.permission.C2D_MESSAGE"/>
+    <uses-permission android:name="${AUTHORITY_BASE}.silentphone.permission.C2D_MESSAGE"/>
     <uses-permission android:name="com.google.android.c2dm.permission.RECEIVE" />
 
     <uses-feature
@@ -108,11 +109,25 @@
             android:xlargeScreens="true"/>
 
     <!--
-    ${backup} defined as placeholder in build.gradle
+    ${backup} defined as placeholder in build.gradle. For Develop/Debug builds it's
+    set to 'true', for release builds to 'false'.
+
+    Sine Android 6.0 Google added an additional backup that stores the App's data in Google's
+    cloud. Quote from the doc:
+     Since Android 6.0 (API 23), Android has offered the Auto Backup for Apps feature as a way
+     for developers to quickly add backup functionality to their apps. Auto Backup preserves app
+     data by uploading it to the user’s Google Drive account. The amount of data is limited to
+     25MB per user of your app and there is no charge for storing backup data.
+
+    See: https://developer.android.com/guide/topics/data/autobackup.html
+
+    We will _never_ allow this for SPA, not even for debug builds, thus the android:fullBackupContent
+    parameter is set to false. In Release builds this has no effect because 'allowBackup' is false.
     -->
     <application
         android:allowBackup="${backup}"
         android:hardwareAccelerated="true"
+        android:fullBackupContent="false"
         android:name="com.silentcircle.SilentPhoneApplication"
         android:icon="@drawable/ic_launcher_sp"
         android:label="@string/app_name"
@@ -160,7 +175,10 @@
 
             <intent-filter>
                 <action android:name="com.silentcircle.messaging.action.VIEW_CONVERSATIONS" />
-
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="com.silentcircle.messaging.action.NEW_CONVERSATION" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
             <intent-filter>
@@ -189,18 +207,44 @@
                 <category android:name="android.intent.category.DEFAULT"/>
                 <data android:mimeType="vnd.android.cursor.item/com.silentcircle.message"/>
             </intent-filter>
+            <intent-filter>
+                <action android:name="com.silentcircle.messaging.action.WIPE" />
+                <category android:name="android.intent.category.DEFAULT"/>
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="silentphone"/>
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="http"
+                    android:host="silentphone"/>
+            </intent-filter>
+            <meta-data android:name="android.app.shortcuts"
+                android:resource="@xml/dialer_activity_shortcuts" />
         </activity>
         <activity android:name=".activities.InCallActivity"
+                  android:taskAffinity=".Calling"
                   android:exported="false"
                   android:excludeFromRecents="true"/>
         <!-- android:screenOrientation="portrait" -->
+
+        <activity
+            android:name=".activities.HideTaskActivity"
+            android:theme="@android:style/Theme.NoDisplay"
+            android:excludeFromRecents="true" />
 
         <activity
             android:name=".activities.ProvisioningActivity"
             android:excludeFromRecents="true"
             android:exported="false"
             android:screenOrientation="portrait"
-            android:windowSoftInputMode="adjustPan" />
+            android:windowSoftInputMode="adjustPan"
+            android:theme="@style/SilentPhoneThemeAuthenticator" />
 
         <activity
                 android:name=".activities.CallInfoActivity"
@@ -216,12 +260,14 @@
 
         <activity
                 android:name=".activities.DialogHelperActivity"
+                android:theme="@style/Theme.AppCompat.Transparent.NoActionBar"
                 android:exported="false"/>
 
         <activity
                 android:name=".activities.DidSelectionActivity"
                 android:exported="false"
-                android:screenOrientation="portrait" />
+                android:screenOrientation="portrait"
+                android:theme="@style/SilentPhoneThemeAuthenticator" />
 
         <!-- the 'packageName' placeholder comes from build.gradle -->
         <!--
@@ -251,6 +297,7 @@
             android:exported="true" >
             <intent-filter android:priority="500" >
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.USER_PRESENT" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </receiver>
@@ -365,6 +412,12 @@
             android:enabled="true"
             android:exported="false" />
 
+        <provider
+            android:name="com.silentcircle.messaging.providers.AvatarProvider"
+            android:authorities="${AUTHORITY_BASE}.messaging.provider.avatar"
+            android:enabled="true"
+            android:exported="false" />
+
         <!-- Account Authenticator related activities and services -->
         <activity android:name="com.silentcircle.accounts.AuthenticatorActivity"
                   android:excludeFromRecents="true"
@@ -408,7 +461,7 @@
 
         <activity android:name="com.silentcircle.messaging.activities.SoundRecorderActivity"
             android:configChanges="orientation|screenSize"
-            android:theme="@style/SoundRecorderDialog"
+            android:theme="@style/SoundRecorderDialogBlack"
             android:exported="false">
             <intent-filter>
                 <action android:name="com.silentcircle.messaging.action.AUDIO_CAPTURE" />
@@ -432,11 +485,12 @@
 
         <!-- Main conversation activity -->
         <activity android:name="com.silentcircle.messaging.activities.ConversationActivity"
-            android:screenOrientation="portrait"
-            android:windowSoftInputMode="adjustResize"
+            android:screenOrientation="sensorPortrait"
+            android:windowSoftInputMode="adjustResize|stateHidden"
             android:theme="@style/SilentPhoneTheme"
             android:icon="@drawable/ic_launcher_st"
-            android:launchMode="singleTop">
+            android:launchMode="singleTop"
+            android:label="@string/activity_conversation_voiceover">
             <intent-filter>
                 <action android:name="android.intent.action.SENDTO"/>
                 <category android:name="android.intent.category.DEFAULT"/>
@@ -451,6 +505,7 @@
                 <data android:mimeType="message/*"/>
                 <data android:mimeType="multipart/*"/>
                 <data android:mimeType="text/*"/>
+                <data android:mimeType="plain/*"/>
                 <data android:mimeType="video/*"/>
             </intent-filter>
 
@@ -470,16 +525,21 @@
                   android:exported="false"
                   android:theme="@style/SilentPhoneTheme"/>
 
-        <receiver android:name="com.silentcircle.messaging.receivers.ChatNotification"
-                android:exported="false" android:enabled="true">
-            <intent-filter>
-                <action android:name="com.silentcircle.messaging.action.RECEIVE_MESSAGE" />
-            </intent-filter>
-        </receiver>
+        <activity android:name="com.silentcircle.messaging.activities.GroupManagementActivity"
+                  android:launchMode="singleTop"
+                  android:exported="false"
+                  android:theme="@style/SilentPhoneTheme"
+                  android:windowSoftInputMode="adjustPan"/>
 
         <activity android:name=".activities.ContactAdder"
                   android:exported="false"
+                  android:screenOrientation="sensorPortrait"
                   android:theme="@style/SilentPhoneTheme"/>
+
+        <activity android:name="com.silentcircle.userinfo.activities.AvatarCropActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/SilentPhoneTheme" />
 
         <activity
                   android:name="com.silentcircle.contacts.SCInviteActivity"
@@ -531,6 +591,56 @@
         <activity android:name="com.silentcircle.purchase.activities.SelectPurchaseCardActivity"
             android:theme="@style/InAppPaymentTheme"
             android:parentActivityName="com.silentcircle.purchase.activities.PaymentUseStripeActivity"/>
+
+        <activity
+            android:name=".passcode.PasscodeEnterActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:noHistory="true"
+            android:windowSoftInputMode="adjustPan"
+            android:theme="@style/SilentPhoneTheme"
+            android:launchMode="standard"/>
+
+        <activity
+            android:name=".passcode.PasscodeConfigurationActivity" >
+        </activity>
+
+        <!-- debug logging -->
+        <activity android:name="com.silentcircle.logs.activities.DebugLoggingActivity"
+            android:theme="@style/SilentPhoneTheme"
+            android:parentActivityName=".activities.DialerActivity"/>
+        <service android:name="com.silentcircle.logs.LogsService" />
+
+        <!-- Unwanted things added to the merged manifest by our GMS dependency - set them to not be enabled -->
+        <service
+            android:name="com.google.android.gms.measurement.AppMeasurementService"
+            android:enabled="false"
+            android:exported="false"
+            tools:replace="android:enabled,android:exported" />
+
+        <receiver
+            android:name="com.google.android.gms.measurement.AppMeasurementReceiver"
+            android:enabled="false"
+            android:exported="false"
+            tools:replace="android:enabled,android:exported" />
+
+        <service
+            android:name="com.google.firebase.iid.FirebaseInstanceIdService"
+            android:enabled="false"
+            android:exported="false"
+            tools:replace="android:enabled,android:exported" />
+
+        <receiver
+            android:name="com.google.firebase.iid.FirebaseInstanceIdReceiver"
+            android:enabled="false"
+            android:exported="false"
+            tools:replace="android:enabled,android:exported" />
+
+        <receiver
+            android:name="com.google.firebase.iid.FirebaseInstanceIdInternalReceiver"
+            android:enabled="false"
+            android:exported="false"
+            tools:replace="android:enabled,android:exported" />
 
     </application>
 

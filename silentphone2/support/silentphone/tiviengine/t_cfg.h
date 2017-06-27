@@ -1,7 +1,7 @@
 /*
 Created by Janis Narbuts
 Copyright (C) 2004-2012, Tivi LTD, www.tiviphone.com. All rights reserved.
-Copyright (C) 2012-2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2012-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,7 +27,6 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-
 #ifndef _T_CFG_H
 #define _T_CFG_H
 
@@ -217,6 +216,7 @@ typedef struct {
    int iUserRegister;//system user wants to go online, info
    int iHasNetwork;//system
    int iNetworkIsMobile;
+   int iDelayRegister;//we have to set this if ui needs to load DB for example
    
    int iTinaFakeID;
    
@@ -459,7 +459,7 @@ int setCfgValueSZ(char *sz, void *pCfg, char *key, int iKeyLen){
    int iSize;
    if(type == PHONE_CFG::e_char || type == PHONE_CFG::e_secure){
       pSet=sz;
-      iSize=strlen(sz);
+      iSize=(int)strlen(sz);
    }
    else{
       iSize=4;

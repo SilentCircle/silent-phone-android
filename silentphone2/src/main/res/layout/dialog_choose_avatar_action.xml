@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_centerInParent="true"
+    android:layout_gravity="center"
+    android:background="@color/sc_ng_background_1"
+    android:orientation="vertical"
+    android:paddingTop="@dimen/spacing_large"
+    android:gravity="center_vertical">
+
+    <LinearLayout
+        android:id="@+id/button_gallery"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingStart="@dimen/dialog_avatar_action_padding_start"
+        android:paddingLeft="@dimen/dialog_avatar_action_padding_start"
+        android:paddingRight="@dimen/spacing_normal"
+        android:paddingEnd="@dimen/spacing_normal"
+        android:layout_marginBottom="@dimen/spacing_normal"
+        android:paddingTop="@dimen/spacing_normal"
+        android:paddingBottom="@dimen/spacing_normal"
+        android:background="@drawable/bg_action"
+        android:addStatesFromChildren="true"
+        android:clickable="true"
+        android:contentDescription="@string/avatar_choose_image_from_gallery_voiceover"
+        android:orientation="horizontal">
+
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:importantForAccessibility="no"
+            android:src="@drawable/ic_photo_library_white"
+            android:tint="@color/sc_ng_text_dark" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="@dimen/spacing_normal"
+            android:layout_marginStart="@dimen/spacing_normal"
+            android:layout_gravity="center_vertical"
+            android:gravity="center_horizontal"
+            android:importantForAccessibility="no"
+            android:text="@string/avatar_action_select_from_gallery"
+            android:textColor="@color/sc_ng_text_dark" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/button_camera"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingStart="@dimen/dialog_avatar_action_padding_start"
+        android:paddingLeft="@dimen/dialog_avatar_action_padding_start"
+        android:paddingRight="@dimen/spacing_normal"
+        android:paddingEnd="@dimen/spacing_normal"
+        android:layout_marginBottom="@dimen/spacing_normal"
+        android:paddingTop="@dimen/spacing_normal"
+        android:paddingBottom="@dimen/spacing_normal"
+        android:background="@drawable/bg_action"
+        android:addStatesFromChildren="true"
+        android:clickable="true"
+        android:contentDescription="@string/avatar_take_a_photo_voiceover"
+        android:orientation="horizontal">
+
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:src="@drawable/ic_photo_camera_white"
+            android:tint="@color/sc_ng_text_dark"
+            android:importantForAccessibility="no"
+            />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="@dimen/spacing_normal"
+            android:layout_marginStart="@dimen/spacing_normal"
+            android:layout_gravity="center_vertical"
+            android:gravity="center_horizontal"
+            android:importantForAccessibility="no"
+            android:text="@string/avatar_action_take_a_photo"
+            android:textColor="@color/sc_ng_text_dark"
+            />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/button_delete_avatar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingStart="@dimen/dialog_avatar_action_padding_start"
+        android:paddingLeft="@dimen/dialog_avatar_action_padding_start"
+        android:paddingRight="@dimen/spacing_normal"
+        android:paddingEnd="@dimen/spacing_normal"
+        android:layout_marginBottom="@dimen/spacing_normal"
+        android:paddingTop="@dimen/spacing_normal"
+        android:paddingBottom="@dimen/spacing_normal"
+        android:background="@drawable/bg_action"
+        android:addStatesFromChildren="true"
+        android:clickable="true"
+        android:contentDescription="@string/avatar_delete_photo_voiceover"
+        android:orientation="horizontal">
+
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:src="@drawable/ic_action_delete_enabled"
+            android:tint="@color/sc_ng_text_dark"
+            android:importantForAccessibility="no"
+            />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="@dimen/spacing_normal"
+            android:layout_marginStart="@dimen/spacing_normal"
+            android:layout_gravity="center_vertical"
+            android:gravity="center_horizontal"
+            android:importantForAccessibility="no"
+            android:text="@string/avatar_action_delete"
+            android:textColor="@color/sc_ng_text_dark"
+            />
+
+    </LinearLayout>
+
+</LinearLayout>

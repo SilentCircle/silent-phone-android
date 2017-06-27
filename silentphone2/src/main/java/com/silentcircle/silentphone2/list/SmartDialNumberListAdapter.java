@@ -20,7 +20,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
 import android.provider.ContactsContract;
-import android.util.Log;
+import com.silentcircle.logs.Log;
 
 import com.silentcircle.common.list.ContactListItemView;
 import com.silentcircle.contacts.utils.PhoneNumberHelper;
@@ -28,6 +28,7 @@ import com.silentcircle.silentphone2.dialpad.SmartDialCursorLoader;
 import com.silentcircle.silentphone2.dialpad.SmartDialMatchPosition;
 import com.silentcircle.silentphone2.dialpad.SmartDialNameMatcher;
 import com.silentcircle.silentphone2.dialpad.SmartDialPrefix;
+import com.silentcircle.userinfo.LoadUserInfo;
 
 import java.util.ArrayList;
 
@@ -42,7 +43,7 @@ public class SmartDialNumberListAdapter extends DialerPhoneNumberListAdapter {
     private SmartDialNameMatcher mNameMatcher;
 
     public SmartDialNumberListAdapter(Context context) {
-        super(context);
+        super(context, LoadUserInfo.canCallOutboundOca(context));
         mNameMatcher = new SmartDialNameMatcher("", SmartDialPrefix.getMap());
 
         if (DEBUG) {

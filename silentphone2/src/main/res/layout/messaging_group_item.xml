@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_action"
+    android:layout_marginBottom="@dimen/spacing_normal"
+    android:paddingLeft="@dimen/activity_horizontal_margin_large"
+    android:paddingStart="@dimen/activity_horizontal_margin_large"
+    android:paddingRight="@dimen/activity_horizontal_margin_large"
+    android:paddingEnd="@dimen/activity_horizontal_margin_large">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/name"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/conversation_log_name_margin_bottom"
+            android:layout_marginEnd="@dimen/conversation_log_icon_margin"
+            android:layout_marginRight="@dimen/conversation_log_icon_margin"
+            android:layout_weight="1"
+            android:maxLines="1"
+            android:singleLine="true"
+            android:textColor="?attr/sp_activity_primary_text_color"
+            android:textSize="@dimen/conversation_log_name_text_size"
+            android:textStyle="bold"
+            tools:text="Name" />
+
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/description"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="@dimen/conversation_log_time_margin_right"
+        android:layout_marginRight="@dimen/conversation_log_time_margin_right"
+        android:ellipsize="marquee"
+        android:singleLine="true"
+        android:textColor="?attr/sp_activity_primary_text_color"
+        android:textSize="@dimen/conversation_log_name_text_size"
+        android:visibility="visible"
+        tools:text="Yesterday" />
+
+    <TextView
+        android:id="@+id/group_id"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="@dimen/conversation_log_time_margin_right"
+        android:layout_marginRight="@dimen/conversation_log_time_margin_right"
+        android:ellipsize="marquee"
+        android:singleLine="true"
+        android:textColor="?attr/sp_activity_primary_text_color"
+        android:textSize="@dimen/conversation_log_name_text_size"
+        android:visibility="visible"
+        tools:text="ID" />
+
+    <TextView
+        android:id="@+id/member_count"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="@dimen/conversation_log_time_margin_right"
+        android:layout_marginRight="@dimen/conversation_log_time_margin_right"
+        android:ellipsize="marquee"
+        android:singleLine="true"
+        android:textColor="?attr/sp_activity_primary_text_color"
+        android:textSize="@dimen/conversation_log_name_text_size"
+        android:visibility="visible"
+        tools:text="5" />
+
+</LinearLayout>

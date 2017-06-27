@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2014-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -30,29 +30,25 @@ package com.silentcircle.messaging.repository.DbRepository;
 
 import android.content.Context;
 import android.text.TextUtils;
-import android.util.Log;
 
+import com.silentcircle.SilentPhoneApplication;
 import com.silentcircle.messaging.model.SCloudObject;
-import com.silentcircle.messaging.model.event.Event;
 import com.silentcircle.messaging.model.json.JSONSCloudObjectAdapter;
 import com.silentcircle.messaging.repository.ObjectRepository;
-import com.silentcircle.messaging.util.CryptoUtil;
 import com.silentcircle.messaging.util.IOUtils;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.security.Key;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import axolotl.AxolotlNative;
+import zina.ZinaNative;
 
 /**
  * Object repository based on a DB.
@@ -63,6 +59,8 @@ public class DbObjectRepository implements ObjectRepository {
 
     private static final String TAG = "DbObjectRepository";
 
+    public static final String PATH_OBJECTS = "objects";
+
     private static final List<SCloudObject> EMPTY_LIST = new ArrayList<>();
 
     private final byte[] repoId;
@@ -71,7 +69,6 @@ public class DbObjectRepository implements ObjectRepository {
     private JSONSCloudObjectAdapter adapter = new JSONSCloudObjectAdapter();
     private static final ByteArrayOutputStream SHARED_BUFFER = new ByteArrayOutputStream();
     private File dataRoot;
-    private final Context context;
 
     /**
      * Construct event history.
@@ -83,16 +80,22 @@ public class DbObjectRepository implements ObjectRepository {
      * @param eventId The unique event inside the conversation
      */
 
-    DbObjectRepository(Context ctx, byte[] repoId, byte[] eventId) {
-        context = ctx;
+    DbObjectRepository(byte[] repoId, byte[] eventId) {
         this.repoId = repoId;
         this.eventId = eventId;
-        File repo = new File(context.getFilesDir(), "objects");
+        File repo = new File(SilentPhoneApplication.getAppContext().getFilesDir(), PATH_OBJECTS);
         repo = new File(repo, new String(repoId).trim());
 
         // Assuming: repoId is "bob", eventId is "evId_1" then dataRoot is: <app main dir>/objects/bob/evId_1
         // Event ids are unique inside a conversation repo
         dataRoot = new File(repo, new String(eventId).trim());
+    }
+
+    static void clear(Context ctx, byte[] repoId) {
+        // delete whole root folder for a conversation
+        File repo = new File(new File(ctx.getFilesDir(), PATH_OBJECTS),
+                new String(repoId).trim());
+        IOUtils.deleteRecursive(repo);
     }
 
     protected String identify(SCloudObject object) {
@@ -153,6 +156,7 @@ public class DbObjectRepository implements ObjectRepository {
         List<SCloudObject> objectsList = list();
         for (SCloudObject object: objectsList)
             remove(object);
+        IOUtils.deleteRecursive(dataRoot);
     }
 
     /**
@@ -165,20 +169,20 @@ public class DbObjectRepository implements ObjectRepository {
      */
     @Override
     public boolean exists() {
-        return AxolotlNative.existEvent(repoId, eventId);
+        return ZinaNative.existEvent(repoId, eventId);
     }
 
     @Override
     public boolean exists(String id) {
         byte[] idBytes = IOUtils.encode(id);
-        return AxolotlNative.existObject(repoId, eventId, idBytes);
+        return ZinaNative.existObject(repoId, eventId, idBytes);
     }
 
     @Override
     public SCloudObject findById(String objectId) {
         byte[] id = IOUtils.encode(objectId);
         int[] code = new int[1];
-        byte[] data = AxolotlNative.loadObject(repoId, eventId, id, code);
+        byte[] data = ZinaNative.loadObject(repoId, eventId, id, code);
         if (data != null) {
             return deserialize(new String(data));
         }
@@ -188,7 +192,7 @@ public class DbObjectRepository implements ObjectRepository {
     @Override
     public List<SCloudObject> list() {
         int[] code = new int[1];
-        byte[][] objects = AxolotlNative.loadObjects(repoId, eventId, code);
+        byte[][] objects = ZinaNative.loadObjects(repoId, eventId, code);
         if (objects == null || objects.length == 0)
             return EMPTY_LIST;
 
@@ -204,7 +208,7 @@ public class DbObjectRepository implements ObjectRepository {
         File dataFile = getDataFile(object);
         dataFile.delete();
         byte[] id = IOUtils.encode(identify(object));
-        AxolotlNative.deleteObject(repoId, eventId, id);
+        ZinaNative.deleteObject(repoId, eventId, id);
     }
 
     @Override
@@ -212,7 +216,7 @@ public class DbObjectRepository implements ObjectRepository {
         byte[] data = serialize(object).getBytes();
 
         byte[] id = IOUtils.encode(identify(object));
-        AxolotlNative.insertObject(repoId, eventId, id, data);
+        ZinaNative.insertObject(repoId, eventId, id, data);
         Arrays.fill(data, (byte) 0);
 
     }

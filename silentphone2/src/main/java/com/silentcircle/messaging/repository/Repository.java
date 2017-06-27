@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2016-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,6 +27,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 package com.silentcircle.messaging.repository;
 
+import android.support.annotation.Nullable;
+
 import java.util.List;
 
 public interface Repository<T> {
@@ -37,7 +39,7 @@ public interface Repository<T> {
 
     boolean exists(String id);
 
-    T findById(String id);
+    T findById(@Nullable String id);
 
     List<T> list();
 

@@ -1,7 +1,32 @@
-//VoipPhone
-//Created by Janis Narbuts
-//Copyright (c) 2004-2012 Tivi LTD, www.tiviphone.com. All rights reserved.
+/*
+Created by Janis Narbuts
+Copyright (C) 2004-2012, Tivi LTD, www.tiviphone.com. All rights reserved.
+Copyright (C) 2012-2017, Silent Circle, LLC.  All rights reserved.
 
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+    * Any redistribution, use, or modification is done solely for personal
+      benefit and not for any commercial purpose or for monetary gain
+    * Redistributions of source code must retain the above copyright
+      notice, this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above copyright
+      notice, this list of conditions and the following disclaimer in the
+      documentation and/or other materials provided with the distribution.
+    * Neither the name Silent Circle nor the
+      names of its contributors may be used to endorse or promote products
+      derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL SILENT CIRCLE, LLC BE LIABLE FOR ANY
+DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
 #ifndef _C_T_AUDIO_OUT_VOIP_H
 #define _C_T_AUDIO_OUT_VOIP_H
 
@@ -12,6 +37,14 @@
 #include "vad/CTVad.h"
 #include "CTJit.h"
 #include "CTRtpQueue.h"
+
+#include <algorithm>
+
+#ifdef __APPLE__
+int AudioManager_AudioIsInterrupted();
+#else
+static int AudioManager_AudioIsInterrupted(void) { return 0; }
+#endif
 
 int useRtpQueue();
 #define T_TEST_RTP_QUEUE useRtpQueue()
@@ -334,6 +367,10 @@ public:
          int j = (int)(rtp_q.getJit()*1000.);
          return sprintf((char*)p, "%d", j);
       }
+
+	  if(iLen==9 && strcmp(pid,"underflow")==0){
+         return sprintf((char*)p, "%d", iUnderflowDetected);
+      }
       
       return ao->msg(pid,iLen,p,iSizeofP);
    }
@@ -343,9 +380,14 @@ public:
    int isPlaying(){return iNeedStop==0 || iMSecPlay>0;}
    int play(){
       iDebugUnderFlow=0;
+      iMSecPlay = -1;
       if(iNeedStop){
+         reset();
          
-         iMSecPlay=-1;
+         iNeedStop=0;
+         
+          iAudioIsWorking=0;
+
          if(ao){
             puts("[play]");
             ao->addCB(this,this);
@@ -354,7 +396,7 @@ public:
          
          iPrevCanClearPlayedData=0;
          iCanClearPlayedData=0;
-         reset();
+
          rtp_q.setRate(getRate());
          int r=ao->play();
          iMSecPlay=-1;
@@ -374,7 +416,8 @@ public:
    {
       if(!iAudioIsWorking)return;
       iDebugUnderFlow=0;
-      if(iMs>0)
+
+      if(iMs>0 && !AudioManager_AudioIsInterrupted())
       {
          iMSecPlay=iMs*getRate()*sizeof(short)/1000;
       }
@@ -385,7 +428,7 @@ public:
    }
    void stop()
    {
-      if(iMSecPlay>0)return;
+      if(iMSecPlay>0 && !AudioManager_AudioIsInterrupted())return;
       if(iNeedStop==0)
       {
          iMSecPlay=-1;
@@ -400,7 +443,7 @@ public:
          rtp_q.reset();
       }
    }
-   
+
    int isPrevPackSpeech(){//if isPrevPackSpeech()>0 is speech
       return iPrevPackIsSpeech;
    }
@@ -480,7 +523,7 @@ private:
       iBufSizeInBytes=0;
    }
    void intiPriv(){
-      int TODO_convert_bytes_to_shorts;
+//      int TODO_convert_bytes_to_shorts;
       iBufSizeInBytes=2*(iRate*6);
       if(sbuf)delete sbuf;
       sbuf=new short[(iBufSizeInBytes>>1)+512];
@@ -495,6 +538,7 @@ private:
       
       iNeedStop=1;
    }
+public:
    void reset(){
       iOnlyInConference=0;
       iAudioIsWorking=0;
@@ -505,7 +549,7 @@ private:
       iCanRemoveNext=0;
       iPlaySlowerNext=0;
       iPlaySlowerMarker=0;
-      iMSecPlay=-1;iNeedStop=0;
+      iMSecPlay=-1;iNeedStop=1;
 
       iOverPlay=0;
       iPackLostInfo[0]=iPackLostInfo[2]=iPackLostInfo[1]=0;iPackLostPrevPrevV=iPackLostPrevV=0;
@@ -733,8 +777,8 @@ private:
             int iLim=jit.iBytesToSetBuf*2+iMinBufferSize;
             int iLim2=jit.iBytesToSetBuf*3;
             int iLim4=jit.iBytesToSetBuf+iRate/4;
-            iLim=min(iLim2,iLim);
-            iLim=min(iLim4,iLim);
+             iLim=std::min(iLim2,iLim);
+             iLim=std::min(iLim4,iLim);
             
             int ml=iMinBufferSize+iRate/8;
             if(iLim<ml)iLim=ml;
@@ -767,11 +811,11 @@ private:
 #ifdef   T_USE_PLAY_FASTER_REMOVE_BLOCKS
                   if(iCBB>iLim+frames*2 && (iPrevPackIsSpeech<-20 || iCBB*2>iRate*3 || iOverPlay>100)){
                      if(!iPrevRemoved){
-                        int mf=max(min(80,frames),160);
+                         int mf=std::max(std::min(80,frames),160);
                         if(!T_TEST_RTP_QUEUE){
                            unsigned int uiPrevP=uiPlayPos;
                            uiPlayPos=findBestAlign(uiPlayPos,mf);
-                           
+#pragma mark reducing play delay log
                            printf("reducing play delay %d\n",(int)uiPlayPos-(int)uiPrevP+frames*2);
                            rtp_q.iReducePlayDelayCnt++;
                            
@@ -789,7 +833,8 @@ private:
                               memcpy(samples,&samples[skip],more*sizeof(short));
                               getNextBufR(&samples[more],skip);
                            }
-                           printf("reducing play delay %d+%d\n",frames,skip);
+#pragma mark reducing play delay log                            
+//                           printf("reducing play delay %d+%d\n",frames,skip);
                            rtp_q.iReducePlayDelayCnt++;
                            iPrevPackIsSpeech=vad.isSilence2(samples,frames,getRate());
                         }

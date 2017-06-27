@@ -323,7 +323,7 @@
     <string name="remaining_oca_minutes_zero">Aucune minute d\'appel utilisée. Votre solde restant est de %1$d minutes.</string>
 
     <plurals name="remaining_oca_minutes_info">
-        <item quantity="one">Vous avez utilis&#233; une minute de votre solde de %2$d minutes.</item>
+        <item quantity="one">Vous avez utilis&#233; une minute de votre solde de %1$d minutes.</item>
         <item quantity="other">Vous avez utilis&#233; %1$d minutes de votre solde de %2$d minutes.</item>
     </plurals>
 

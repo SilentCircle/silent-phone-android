@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2014-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -31,7 +31,6 @@ package com.silentcircle.silentphone2.fragments;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.Fragment;
-import android.app.FragmentManager;
 import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Build;
@@ -39,7 +38,6 @@ import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -51,7 +49,9 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 
 import com.silentcircle.common.util.AsyncTasks;
+import com.silentcircle.logs.Log;
 import com.silentcircle.silentphone2.R;
+import com.silentcircle.silentphone2.activities.DialogHelperActivity;
 import com.silentcircle.silentphone2.activities.ProvisioningActivity;
 import com.silentcircle.silentphone2.util.ConfigurationUtilities;
 import com.silentcircle.silentphone2.util.Constants;
@@ -111,7 +111,6 @@ public class ProvisioningVertuStep2 extends Fragment implements View.OnClickList
 
     private JSONArray mRequiredArray;
 
-
     public static ProvisioningVertuStep2 newInstance() {
         return new ProvisioningVertuStep2();
     }
@@ -146,7 +145,9 @@ public class ProvisioningVertuStep2 extends Fragment implements View.OnClickList
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
-        commonOnAttach(activity);
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+            commonOnAttach(activity);
+        }
     }
 
     private void commonOnAttach(Activity activity) {
@@ -297,16 +298,16 @@ public class ProvisioningVertuStep2 extends Fragment implements View.OnClickList
     public void provisioningOk() {
         mCustomerData = new JSONObject();
         if (!checkInputAndCopy("psn", deviceProvisioningData[1])) {
-            mParent.showInputInfo(getString(R.string.provisioning_psn_invalid));
-            mParent.provisioningCancel(null);
+            DialogHelperActivity.showDialog(R.string.information_dialog, R.string.provisioning_psn_invalid, android.R.string.ok, -1);
+            mParent.provisioningCancel();
             return;
         }
         if (!checkInputAndCopy((String) usernameInput.getTag(), usernameInput.getText())) {
-            mParent.showInputInfo(getString(R.string.provisioning_user_req));
+            DialogHelperActivity.showDialog(R.string.information_dialog, R.string.provisioning_user_req, android.R.string.ok, -1);
             return;
         }
         if (!checkInputAndCopy((String) passwordInput.getTag(), passwordInput.getText())) {
-            mParent.showInputInfo(getString(R.string.provisioning_password_req));
+            DialogHelperActivity.showDialog(R.string.information_dialog, R.string.provisioning_password_req, android.R.string.ok, -1);
             return;
         }
         // if (!checkPassword(passwordInput.getText().toString(), passwordInput2.getText().toString())) {
@@ -315,15 +316,15 @@ public class ProvisioningVertuStep2 extends Fragment implements View.OnClickList
         // return;
         // }
         if (!checkInputAndCopy((String) firstNameInput.getTag(), firstNameInput.getText())) {
-            mParent.showInputInfo(getString(R.string.provisioning_firstname_req));
+            DialogHelperActivity.showDialog(R.string.information_dialog, R.string.provisioning_firstname_req, android.R.string.ok, -1);
             return;
         }
         if (!checkInputAndCopy((String) lastNameInput.getTag(), lastNameInput.getText())) {
-            mParent.showInputInfo(getString(R.string.provisioning_lastname_req));
+            DialogHelperActivity.showDialog(R.string.information_dialog, R.string.provisioning_lastname_req, android.R.string.ok, -1);
             return;
         }
         if (!checkInputAndCopy((String) emailInput.getTag(), emailInput.getText())) {
-            mParent.showInputInfo(getString(R.string.provisioning_email_req));
+            DialogHelperActivity.showDialog(R.string.information_dialog, R.string.provisioning_email_req, android.R.string.ok, -1);
             return;
         }
         mParent.vertuStep3(mCustomerData);
@@ -331,13 +332,6 @@ public class ProvisioningVertuStep2 extends Fragment implements View.OnClickList
 
     private class LoaderTask extends AsyncTask<URL, Integer, Integer> {
         private HttpsURLConnection urlConnection = null;
-
-        private void showDialog(int titleResId, int msgResId, int positiveBtnLabel, int negativeBtnLabel) {
-            com.silentcircle.silentphone2.dialogs.InfoMsgDialogFragment infoMsg =
-                    com.silentcircle.silentphone2.dialogs.InfoMsgDialogFragment.newInstance(titleResId, msgResId, positiveBtnLabel, negativeBtnLabel);
-            FragmentManager fragmentManager = mParent.getFragmentManager();
-            infoMsg.show(fragmentManager,TAG );
-        }
 
         @Override
         protected Integer doInBackground(URL... params) {
@@ -376,11 +370,13 @@ public class ProvisioningVertuStep2 extends Fragment implements View.OnClickList
                 if(!Utilities.isNetworkConnected(mParent)){
                     return Constants.NO_NETWORK_CONNECTION;
                 }
-                mParent.showErrorInfo(getString(R.string.provisioning_no_network) + e.getLocalizedMessage());
+                final String msg = getString(R.string.provisioning_no_network) + e.getLocalizedMessage();
+                DialogHelperActivity.showDialog(R.string.provisioning_error, msg, android.R.string.ok, -1);
+                mParent.provisioningCancel();
                 Log.e(TAG, "Network not available: " + e.getMessage());
                 return -1;
             } catch (Exception e) {
-                mParent.showInputInfo(getString(R.string.provisioning_error) + e.getLocalizedMessage());
+                DialogHelperActivity.showDialog(R.string.provisioning_error, e.getLocalizedMessage(), android.R.string.ok, -1);
                 Log.e(TAG, "Network connection problem: " + e.getMessage());
                 return -1;
             }finally {
@@ -407,24 +403,24 @@ public class ProvisioningVertuStep2 extends Fragment implements View.OnClickList
             }
             switch (result) {
                 case Constants.NO_NETWORK_CONNECTION:
-                    showDialog(R.string.information_dialog, R.string.connected_to_network, android.R.string.ok, -1);
+                    DialogHelperActivity.showDialog(R.string.provisioning_error, R.string.connected_to_network, android.R.string.ok, -1);
 //                    mParent.clearBackStack();
 //                    mParent.usernamePassword();
                     break;
                 case HttpsURLConnection.HTTP_NOT_FOUND:
-                    mParent.showInputInfo(getString(R.string.provisioning_error) + "\n" + mContent.toString());
+                    DialogHelperActivity.showDialog(R.string.provisioning_error, mContent.toString(), android.R.string.ok, -1);
 //                    mParent.clearBackStack();
 //                    mParent.usernamePassword();             // TODO: agree with Vertu about handling. step back?
                     break;
 
                 case HttpsURLConnection.HTTP_FORBIDDEN:
-                    mParent.showInputInfo(getString(R.string.provisioning_already_registered));
+                    DialogHelperActivity.showDialog(R.string.provisioning_error, R.string.provisioning_already_registered, android.R.string.ok, -1);
 //                    mParent.clearBackStack();
 //                    mParent.usernamePassword();
                     break;
 
                 default:
-                    mParent.showInputInfo(getString(R.string.provisioning_error) + "\n" + mContent.toString());
+                    DialogHelperActivity.showDialog(R.string.provisioning_error, mContent.toString(), android.R.string.ok, -1);
 //                    mParent.clearBackStack();
 //                    mParent.usernamePassword();
                     break;

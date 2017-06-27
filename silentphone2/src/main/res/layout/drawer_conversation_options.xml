@@ -1,19 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     style="@style/DrawerScrollStyle"
     android:layout_width="@dimen/drawer_width"
     android:layout_height="match_parent">
 
     <LinearLayout style="@style/Widget.Silence.LinearLayout.Vertical"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:paddingTop="@dimen/space_large">
 
         <com.silentcircle.messaging.views.OptionsItem
             android:id="@+id/location_sharing"
             style="@style/Widget.OptionsItem"
-            android:layout_marginTop="@dimen/conversation_option_margin_top"
-            app:src="@drawable/ic_location_wide_disabled"
-            app:srcChecked="@drawable/ic_location_wide_enabled"
+            app:src="@drawable/ic_location_1_disabled"
+            app:srcChecked="@drawable/ic_location_1"
             app:text="@string/share_location"
             app:description="@string/dialog_message_enable_device_location" />
 
@@ -59,7 +60,7 @@
             android:id="@+id/clear"
             style="@style/Widget.OptionsItem"
             app:isCheckable="false"
-            app:src="@drawable/ic_action_delete_wide_enabled"
+            app:src="@drawable/ic_action_delete_enabled"
             app:text="@string/clear_conversation"
             app:description="@string/clear_conversation_exp" />
 
@@ -143,13 +144,23 @@
                 app:description="@string/show_remote_dev_exp" />
 
         <com.silentcircle.messaging.views.OptionsItem
+            android:id="@+id/group_members"
+            style="@style/Widget.OptionsItem"
+            app:isCheckable="false"
+            app:src="@drawable/ic_group_white_24px"
+            app:text="@string/show_group_members"
+            app:description="@string/show_group_members_exp" />
+
+        <com.silentcircle.messaging.views.OptionsItem
             android:id="@+id/spam"
             style="@style/Widget.OptionsItem"
             app:isCheckable="false"
             app:src="?sp_ic_add_person"
             app:text="Spam"
+            app:imageMarginRight="@dimen/conversation_option_spam_image_margin"
             android:layout_marginBottom="0dp"
-            android:visibility="gone"/>
+            android:visibility="gone"
+            tools:visibility="visible" />
 
         <LinearLayout
             android:id="@+id/spam_options"

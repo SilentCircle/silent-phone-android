@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2013-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -173,13 +173,17 @@ public abstract class CompositeCursorAdapter extends BaseAdapter {
     }
 
     public void setHasHeader(int partitionIndex, boolean flag) {
-        mPartitions.get(partitionIndex).hasHeader = flag;
-        invalidate();
+        if (partitionIndex >= 0 && partitionIndex < mPartitions.size()) {
+            mPartitions.get(partitionIndex).hasHeader = flag;
+            invalidate();
+        }
     }
 
     public void setShowIfEmpty(int partitionIndex, boolean flag) {
-        mPartitions.get(partitionIndex).showIfEmpty = flag;
-        invalidate();
+        if (partitionIndex >= 0 && partitionIndex < mPartitions.size()) {
+            mPartitions.get(partitionIndex).showIfEmpty = flag;
+            invalidate();
+        }
     }
 
     public Partition getPartition(int partitionIndex) {

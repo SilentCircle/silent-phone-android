@@ -185,7 +185,6 @@
     <string name="listFoundAllContactsZero">"連絡先はありません"</string>
 
     <plurals name="searchFoundContacts">
-        <item quantity="one">"1&#20214;&#35211;&#12388;&#12363;&#12426;&#12414;&#12375;&#12383;"</item>
         <item quantity="other">"%d&#20214;&#35211;&#12388;&#12363;&#12426;&#12414;&#12375;&#12383;"</item>
     </plurals>
 

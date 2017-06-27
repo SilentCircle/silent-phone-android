@@ -13,7 +13,7 @@
 
     <style name="SilentPhoneThemeBase" parent="Theme.AppCompat.NoActionBar"/>
 
-    <style name="SilentPhoneTheme" parent="@style/SilentPhoneThemeBlack"/>
+    <style name="SilentPhoneTheme" parent="@style/SilentPhoneThemeLight"/>
 
     <style name="InAppPaymentTheme" parent="@style/SilentPhonePurchaseTheme" />
 
@@ -61,6 +61,7 @@
 
     <style name="SilentPhoneThemeBlack"  parent="SilentPhoneThemeBase">
 
+        <item name="colorPrimary">@color/sc_ng_text_grey</item>
         <item name="android:textColorPrimary">@color/sc_ng_text_grey</item>
         <item name="android:textColorSecondary">@color/sc_ng_text_grey_4</item>
         <!-- action mode home button uses this colour ??? -->
@@ -139,8 +140,8 @@
         <item name="sp_ic_new_chat">@drawable/ic_add_white</item>
         <item name="sp_ic_end_call">@drawable/ic_end_call_dark</item>
         <item name="sp_ic_keyboard">@drawable/ic_action_keyboard_dark</item>
-        <item name="sp_ic_view_list">@drawable/ic_action_view_as_list_dark</item>
-        <item name="sp_ic_edit">@drawable/ic_action_edit_dark</item>
+        <item name="sp_ic_view_list">@drawable/ic_list_white_24px</item>
+        <item name="sp_ic_edit">@drawable/ic_action_edit_white_24px</item>
         <item name="sp_ic_contact_picture">@drawable/ic_contact_picture_holo_dark</item>
         <item name="sp_ic_contacts">@drawable/ic_contacts_dark</item>
 
@@ -210,18 +211,23 @@
 
         <!-- Overall activity coloring -->
         <item name="sp_activity_background_color">@color/sc_ng_background</item>
+        <item name="sp_activity_secondary_background_color">@color/sc_ng_background_3</item>
         <item name="sp_activity_primary_text_color">@color/sc_ng_text_grey</item>
         <item name="sp_activity_secondary_text_color">@color/sc_ng_text_grey_4</item>
         <item name="sp_activity_button_background_selector">@drawable/bg_button_selector_dark</item>
         <item name="sp_activity_button_text_selector">@drawable/button_text_selector_dark</item>
+        <item name="sp_activity_text_selector">@color/text_selector_dark</item>
 
         <!-- dialpad background -->
         <item name="sp_diaplad_background_color">@color/sc_ng_background</item>
 
         <!-- Chat item coloring -->
         <item name="sp_incoming_message_background_selector">@color/incoming_message_background_selector</item>
+        <item name="sp_retained_incoming_message_background_selector">@color/incoming_message_retained_background_selector</item>
         <item name="sp_incoming_message_text_selector">@color/incoming_message_text_selector_dark</item>
         <item name="sp_outgoing_message_background_selector">@color/outgoing_message_background_selector</item>
+        <item name="sp_chat_compose_background_color">@color/translucent_subtle_grey</item>
+        <item name="sp_retained_outgoing_message_background_selector">@color/outgoing_message_retained_background_selector</item>
         <item name="sp_outgoing_message_text_selector">@color/outgoing_message_text_selector_dark</item>
         <item name="sp_message_description_text_color">@color/sc_ng_text_grey</item>
         <item name="sp_error_message_text_selector">@color/error_message_text_selector_dark</item>
@@ -232,6 +238,8 @@
         <item name="sp_incoming_message_background">@color/chat_incoming_message_color</item>
         <item name="sp_outgoing_message_background">@color/chat_outgoing_message_color</item>
         <item name="sp_attachment_grid_background">@color/chat_attachment_grid_color</item>
+        <item name="sp_call_message_background_selector">@color/call_message_background_selector</item>
+        <item name="sp_retained_call_message_background_selector">@color/call_message_retained_background_selector</item>
 
         <item name="android:windowActionModeOverlay">true</item>
         <item name="windowActionModeOverlay">true</item>
@@ -278,6 +286,8 @@
         <item name="list_item_name_text_color">@color/contact_list_name_text_color</item>
         <item name="list_item_name_text_size">16sp</item>
         <item name="list_item_text_offset_top">-2dp</item>
+        <item name="list_item_checkbox_size">@dimen/contact_browser_list_item_checkbox_size</item>
+        <item name="list_item_checkbox_drawable">@drawable/selection_checkbox_button_dark</item>
 
         <item name="activated_background">@drawable/list_item_activated_background_new</item>
         <item name="section_header_background">@drawable/list_title_holo</item>
@@ -304,6 +314,8 @@
 
     <style name="SilentPhoneThemeLight"  parent="SilentPhoneThemeBlack">
 
+        <item name="android:windowBackground">?attr/sp_activity_background_color</item>
+        <item name="colorPrimary">@color/sc_ng_text_dark</item>
         <item name="android:textColorPrimary">@color/sc_ng_text_dark</item>
         <item name="android:textColorSecondary">@color/sc_ng_text_grey_3</item>
 
@@ -311,7 +323,9 @@
         <item name="sp_actionbar_title_text_color">@color/sc_ng_text_grey</item>
 
         <!-- Actionbar styling -->
-        <item name="actionBarTheme">@style/ActionBar.Spa4</item>
+        <item name="android:actionBarStyle">@style/MyActionBar</item>
+        <item name="actionBarStyle">@style/MyActionBar</item>
+
         <!-- The style for the widgets on the ActionBar. -->
         <item name="actionBarWidgetTheme">@style/ActionBar.Spa4</item>
         <item name="android:actionBarWidgetTheme">@style/ActionBar.Spa4</item>
@@ -322,15 +336,20 @@
         <!--<item name="colorForeground">@color/sc_ng_background_3</item>-->
         <!-- Inactive thumb color -->
         <item name="colorSwitchThumbNormal">@color/sc_ng_text_grey_4</item>
+
+        <item name="android:actionMenuTextColor">@color/sc_ng_text_grey</item>
+        <item name="actionMenuTextColor">@color/sc_ng_text_grey</item>
+        <item name="android:itemTextAppearance">@color/sc_ng_text_grey</item>
         <!-- Actionbar styling, end  -->
 
         <!-- Attributes for number/name field text -->
         <item name="sp_dial_text_color">@color/sc_ng_text_dark</item>
+        <item name="sp_dial_text_background">@color/sc_ng_background_1</item>
 
         <!-- Settings for the drawers, they should all look the same, very similar -->
         <item name="sp_drawer_background">?sp_activity_background_color</item>
         <item name="sp_drawer_text_color">@color/sc_ng_text_dark</item>
-        <item name="sp_drawer_secondary_text_color">@color/sc_ng_text_grey_2</item>
+        <item name="sp_drawer_secondary_text_color">@color/sc_ng_text_grey_6</item>
         <item name="sp_drawer_separator_color">@color/sc_ng_text_dark</item>
 
         <!-- Attributes for round dial buttons -->
@@ -340,11 +359,13 @@
         <item name="sp_sas_verified_color">@color/sc_ng_text_grey_2</item>
 
         <!-- Overall activity coloring -->
-        <item name="sp_activity_background_color">@color/chat_background_color_light</item>
+        <item name="sp_activity_background_color">@color/activity_background_color_ligth</item>
+        <item name="sp_activity_secondary_background_color">@color/sc_ng_background_5</item>
         <item name="sp_activity_primary_text_color">@color/sc_ng_text_dark</item>
-        <item name="sp_activity_secondary_text_color">@color/sc_ng_text_grey_3</item>
+        <item name="sp_activity_secondary_text_color">@color/sc_ng_text_grey_6</item>
         <item name="sp_activity_button_background_selector">@drawable/bg_button_selector_light</item>
         <item name="sp_activity_button_text_selector">@drawable/button_text_selector_light</item>
+        <item name="sp_activity_text_selector">@color/text_selector_light</item>
 
         <item name="sp_diaplad_background_color">@color/sc_ng_text_grey</item>
 
@@ -352,16 +373,19 @@
         <item name="sp_incoming_message_background_selector">@color/incoming_message_background_selector_light</item>
         <item name="sp_incoming_message_text_selector">@color/incoming_message_text_selector_light</item>
         <item name="sp_outgoing_message_background_selector">@color/outgoing_message_background_selector_light</item>
+        <item name="sp_chat_compose_background_color">@color/translucent_subtle_white</item>
         <item name="sp_outgoing_message_text_selector">@color/outgoing_message_text_selector_light</item>
         <item name="sp_message_description_text_color">@color/sc_ng_text_dark</item>
         <item name="sp_error_message_text_selector">@color/error_message_text_selector_light</item>
         <item name="sp_date_header_text_color">@color/sc_ng_text_grey</item>
-        <item name="sp_date_header_background_tint_color">@color/sc_ng_background</item>
+        <item name="sp_date_header_background_tint_color">@color/date_header_background</item>
         <item name="sp_message_send_tint_color">@color/sc_ng_background</item>
         <item name="sp_message_action_button_background">@color/chat_background_color_light</item>
         <item name="sp_incoming_message_background">@color/chat_incoming_message_color_light</item>
         <item name="sp_outgoing_message_background">@color/chat_outgoing_message_color_light</item>
         <item name="sp_attachment_grid_background">@color/chat_attachment_grid_color_light</item>
+        <item name="sp_call_message_background_selector">@color/call_message_background_selector_light</item>
+        <item name="sp_retained_call_message_background_selector">@color/call_message_retained_background_selector_light</item>
 
         <item name="android:windowActionModeOverlay">true</item>
         <item name="windowActionModeOverlay">true</item>
@@ -374,6 +398,7 @@
         <item name="list_item_textColorPrimary">?attr/sp_activity_primary_text_color</item>
         <item name="list_item_textColorSecondary">?attr/sp_activity_secondary_text_color</item>
         <item name="list_item_name_text_color">?attr/sp_activity_primary_text_color</item>
+        <item name="list_item_checkbox_drawable">@drawable/selection_checkbox_button_light</item>
         <!-- CallLog -->
         <item name="call_log_primary_text_color">?sp_activity_primary_text_color</item>
         <item name="call_log_secondary_text_color">?sp_activity_secondary_text_color</item>
@@ -382,8 +407,7 @@
     </style>
 
     <!-- ActionBar styles -->
-    <style name="MyActionBar"
-           parent="android:Widget.Holo.Light.ActionBar.Solid.Inverse">
+    <style name="MyActionBar" parent="android:Widget.Holo.Light.ActionBar.Solid.Inverse">
         <item name="android:background">@color/silent_back_start</item>
     </style>
 
@@ -403,9 +427,13 @@
         <item name="android:textColor">?sp_actionbar_title_text_color</item>
     </style>
 
+    <style name="ActionBarLightTitleAppcompat">
+        <item name="titleTextAppearance">@style/ActionBarLightTitle</item>
+    </style>
+
     <style name="ActionBarBlackTitleSmall"
            parent="android:TextAppearance.Small">
-        <item name="android:textColor">@color/black_yellow</item>
+        <item name="android:textColor">?sp_actionbar_title_text_color</item>
     </style>
 
     <style name="SelectableItem" parent="SilentPhoneTheme">
@@ -413,6 +441,26 @@
     </style>
 
     <style name="SilentPhoneThemeAuthenticator" parent="@style/SilentPhoneThemeBlack">
+
+        <item name="sp_actionbar_color">@color/sc_ng_background</item>
+        <item name="sp_actionbar_title_text_color">@color/sc_ng_text_grey</item>
+
+        <!-- Actionbar styling -->
+        <item name="actionBarTheme">@style/ActionBar.Authenticator.Spa4</item>
+        <!-- The style for the widgets on the ActionBar. -->
+        <item name="actionBarWidgetTheme">@style/ActionBar.Authenticator.Spa4</item>
+        <item name="android:actionBarWidgetTheme">@style/ActionBar.Authenticator.Spa4</item>
+        <item name="android:colorControlNormal" tools:ignore="NewApi">@color/auth_active_body_text_grey</item>
+        <!-- for switch control in settings -->
+        <item name="android:colorForeground">@color/sc_ng_background_3</item>
+        <!-- Inactive thumb color -->
+        <item name="colorSwitchThumbNormal">@color/sc_ng_text_grey_4</item>
+
+        <item name="android:actionMenuTextColor">@color/sc_ng_text_grey</item>
+        <item name="actionMenuTextColor">@color/sc_ng_text_grey</item>
+        <item name="android:itemTextAppearance">@color/sc_ng_text_grey</item>
+        <!-- Actionbar styling, end  -->
+
         <item name="colorControlNormal">@color/auth_active_body_text_grey</item>
         <item name="colorControlActivated">@color/auth_active_headline_text_grey</item>
         <item name="colorControlHighlight">@color/auth_active_headline_text_grey</item>
@@ -422,6 +470,10 @@
 
     <style name="ActionBar.Spa4" parent="@style/Widget.AppCompat.ActionBar">
         <item name="colorControlNormal">?attr/sp_actionbar_title_text_color</item>
+    </style>
+
+    <style name="ActionBar.Authenticator.Spa4" parent="@style/Widget.AppCompat.ActionBar">
+        <item name="colorControlNormal">@color/auth_active_body_text_grey</item>
     </style>
 
     <style name="PopupMenu.Spa4" parent="android:Widget.PopupMenu">
@@ -481,4 +533,12 @@
     <style name="PaymentDialogWidgetHighlightColors" >
         <item name="colorControlActivated">?sp_dialog_text_color</item>
     </style>
+
+    <style name="TextAppearance.App.TextInputLayout" parent="@android:style/TextAppearance">
+        <item name="android:textColor">?attr/sp_activity_primary_text_color</item>
+        <item name="android:textSize">@dimen/text_normal</item>
+        <item name="colorAccent">@color/sc_ng_text_green</item>
+        <item name="colorControlActivated">@color/sc_ng_text_green</item>
+    </style>
+
 </resources>

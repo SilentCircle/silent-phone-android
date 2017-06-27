@@ -1,39 +1,107 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     style="@style/Compose"
-    android:gravity="center_vertical">
+    android:layout_height="wrap_content"
+    android:minHeight="@dimen/messaging_compose_height"
+    tools:context="com.silentcircle.messaging.activities.ConversationActivity">
 
-    <LinearLayout
+    <RelativeLayout
+        android:id="@+id/compose_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_toLeftOf="@+id/compose_send"
-        android:layout_toStartOf="@+id/compose_send"
+        android:layout_marginBottom="@dimen/messaging_compose_margin_bottom"
+        android:layout_marginEnd="@dimen/messaging_compose_margin_right"
         android:layout_marginLeft="@dimen/messaging_compose_margin_left"
+        android:layout_marginRight="@dimen/messaging_compose_margin_right"
         android:layout_marginStart="@dimen/messaging_compose_margin_left"
-        android:background="@drawable/bg_text">
+        android:layout_marginTop="@dimen/spacing_normal"
+        android:background="@drawable/bg_text"
+        android:backgroundTint="@color/chat_outgoing_message_color_light"
+        android:backgroundTintMode="multiply"
+        android:focusableInTouchMode="true"
+        android:gravity="center_vertical"
+        tools:ignore="UnusedAttribute">
+
+
+        <!--Recording related views - START -->
+        <ImageButton
+            android:id="@+id/rec_dot"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="10dp"
+            android:background="#00000000"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_recording_dot"
+            android:visibility="invisible" />
+
+        <TextView
+            android:id="@+id/sound_recording_timer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="10dp"
+            android:layout_toRightOf="@+id/rec_dot"
+            android:text="00:00"
+            android:textColor="@color/sc_ng_black"
+            android:textSize="18sp"
+            android:visibility="invisible" />
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_toRightOf="@id/sound_recording_timer"
+            android:clipChildren="true"
+            android:clipToPadding="true">
+
+            <TextView
+                android:id="@+id/sound_recording_cancel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentRight="true"
+                android:paddingRight="30dp"
+                android:text="@string/sound_recording_cancel"
+                android:textColor="@color/sc_ng_text_red"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:visibility="invisible" />
+
+            <!--Fakes masking of "sound_recording_cancel"-->
+            <View
+                android:layout_width="40dp"
+                android:layout_height="wrap_content"
+                android:layout_alignParentLeft="true"
+                android:layout_alignBottom="@+id/sound_recording_cancel"
+                android:layout_alignParentTop="@+id/sound_recording_cancel"
+                android:background="@drawable/bg_compose_gradient"/>
+
+        </RelativeLayout>
+        <!--Recording related views - END -->
 
         <com.silentcircle.messaging.views.ComposeText
             android:id="@+id/compose_text"
             style="@style/ComposeText"
-            android:layout_width="0dp"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_toLeftOf="@+id/compose_attach"
             android:layout_gravity="center_vertical"
-            android:layout_weight="1"
             android:hint="@string/messaging_compose_hint"
+            android:minHeight="@dimen/messaging_compose_text_min_height"
             android:textColorHint="@color/chat_compose_hint" />
 
         <ImageView
             android:id="@+id/compose_attach"
             style="@style/ComposeAttach"
-            android:layout_gravity="center_vertical"
+            android:layout_alignParentRight="true"
+            android:layout_centerVertical="true"
             android:contentDescription="@string/messaging_attach_file" />
 
-    </LinearLayout>
 
-    <ImageView
-        android:id="@+id/compose_send"
-        style="@style/ComposeSend"
-        android:contentDescription="@string/messaging_send_message"
-        android:filterTouchesWhenObscured="true" />
+    </RelativeLayout>
 
-</RelativeLayout>
+
+</FrameLayout>

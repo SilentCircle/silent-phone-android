@@ -1,7 +1,7 @@
 /*
 Created by Janis Narbuts
 Copyright (C) 2004-2012, Tivi LTD, www.tiviphone.com. All rights reserved.
-Copyright (C) 2012-2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2012-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,8 +27,6 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-
-
 #include "main.h"
 #include "../encrypt/md5/md5.h"
 
@@ -59,7 +57,7 @@ int createKey2(char *imei, const char *pwd, char *param, char *resp){
 int createKey1(char *imei, const char *pwd, char *resp){
    
    CTMd5 md51;
-   md51.update( (unsigned char *)pwd, strlen(pwd));
+   md51.update( (unsigned char *)pwd, (unsigned int)strlen(pwd));
    md51.update( (unsigned char *)":", 1);
    md51.update((unsigned char *)"INVITE", 6);
    md51.update( (unsigned char *)":", 1);
@@ -223,7 +221,7 @@ void checkLicenceSecondPart(PHONE_CFG &p_cfg){
 #ifndef _T_SOLD_REL
    if(p_cfg.iIsLKeyValid && p_cfg.tmpServ[0])
    {
-      p_cfg.str32GWaddr.uiLen=strlen(p_cfg.tmpServ);
+      p_cfg.str32GWaddr.uiLen=(unsigned int)strlen(p_cfg.tmpServ);
       strcpy(p_cfg.str32GWaddr.strVal,p_cfg.tmpServ);
    }
    else p_cfg.tmpServ[0]=0;
@@ -254,7 +252,7 @@ int checkFirstPart(PHONE_CFG *cfg, char* pwd_glob , int mask)
    
    l1=createKey1(imei,&pwd[0],&buf[0]);
    //tivi_log("lk3");
-   cfg->iFirstLicencePartIsOk=strlen(&buf[0]);
+   cfg->iFirstLicencePartIsOk=(int)strlen(&buf[0]);
    ok=strncmp(&buf[0],cfg->szLicenceKey,cfg->iFirstLicencePartIsOk)==0 && cfg->szLicenceKey[0]?1:0;
    //tivi_log("lk4");
    if(!ok){cfg->iFirstLicencePartIsOk=0; }

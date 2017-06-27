@@ -36,7 +36,7 @@ import android.provider.ContactsContract.Contacts;
 import android.provider.ContactsContract.Data;
 import android.provider.ContactsContract.Directory;
 import android.text.TextUtils;
-import android.util.Log;
+import com.silentcircle.logs.Log;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Objects;
@@ -46,6 +46,8 @@ import com.silentcircle.common.util.StopWatch;
 import com.silentcircle.silentphone2.R;
 import com.silentcircle.silentphone2.dialpad.SmartDialNameMatcher;
 import com.silentcircle.silentphone2.dialpad.SmartDialPrefix;
+
+import net.sqlcipher.database.SQLiteDiskIOException;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -518,7 +520,9 @@ public class DialerDatabaseHelperOrig extends SQLiteOpenHelper {
             if (DEBUG) {
                 Log.v(TAG, "Updating database");
             }
-            updateSmartDialDatabase();
+            try {
+                updateSmartDialDatabase();
+            } catch (SQLiteDiskIOException ignore) {}
             return null;
         }
 
@@ -771,7 +775,7 @@ public class DialerDatabaseHelperOrig extends SQLiteOpenHelper {
      * update.
      */
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
-    public void updateSmartDialDatabase() {
+    public void updateSmartDialDatabase() throws SQLiteDiskIOException {
         final SQLiteDatabase db = getWritableDatabase();
 
         synchronized(mLock) {

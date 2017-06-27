@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2014-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -33,12 +33,13 @@ import android.content.Context;
 import android.content.CursorLoader;
 import android.content.Loader;
 import android.database.Cursor;
+import android.database.MatrixCursor;
 import android.net.Uri;
 import android.os.CancellationSignal;
 import android.os.OperationCanceledException;
 import android.provider.ContactsContract;
 import android.provider.ContactsContract.Data;
-import android.util.Log;
+import com.silentcircle.logs.Log;
 
 import com.silentcircle.contacts.utils.ScCursorFilterWrapper;
 
@@ -112,7 +113,18 @@ public class CursorLoaderSc extends CursorLoader {
         if (mPreSelector != null) {
             preSelect();
         }
-        Cursor cursor = super.loadInBackground();
+        Cursor cursor;
+        try {
+            cursor = super.loadInBackground();
+        } catch (Throwable exception) {
+            // No READ_CONTACTS permission or lookup error
+            /** @see <a href="https://sentry.silentcircle.org/sentry/spa/issues/4603/events/68630/">this crash</a>
+             * on Oppo Electronics devices
+             * **/
+            // TODO: I put this here so we would show empty cursor, is that what we want?
+            return new MatrixCursor(getProjection(), 0);
+        }
+
         ScCursorFilterWrapper scCursor = null;
         if (cursor != null) {
             scCursor = new ScCursorFilterWrapper(cursor, mPreSelectedIds, CONTACT_ID, mPreSelector != null, mContentFilter, mContentColumn);

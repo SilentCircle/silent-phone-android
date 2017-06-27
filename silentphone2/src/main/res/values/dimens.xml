@@ -21,16 +21,19 @@
 
     <dimen name="button_height">48dp</dimen>
 
-        <!-- Per the design guidelines, navigation drawers should be between 240dp and 320dp:
+    <!-- Per the design guidelines, navigation drawers should be between 240dp and 320dp:
          https://developer.android.com/design/patterns/navigation-drawer.html -->
     <dimen name="navigation_drawer_width">300dp</dimen>
 
-    <dimen name="drawer_info_content_margin_left">60dp</dimen>
+    <dimen name="drawer_info_content_margin_left">66dp</dimen>
 
     <dimen name="spacing_small">4dp</dimen>
     <dimen name="spacing_normal">8dp</dimen>
     <dimen name="spacing_large">16dp</dimen>
     <dimen name="spacing_xlarge">32dp</dimen>
+
+    <dimen name="spacing_mlarge">24dp</dimen>
+    <dimen name="spacing_slarge">17dp</dimen>
 
     <!-- Height of edit text in dialpad fragment -->
     <dimen name="dialpad_horizontal_margin">0dip</dimen>
@@ -44,12 +47,12 @@
     <dimen name="dialpad_key_numbers_size">36dp</dimen>
     <!-- <dimen name="dialpad_key_numbers_from_top">4dp</dimen>    for round buttons -->
     <dimen name="dialpad_key_letters_size">11dp</dimen>
-<!--    <dimen name="dialpad_key_letters_from_top">41dp</dimen>   for round buttons: dialpad_key_numbers_size + dialpad_key_numbers_from_top + 2-->
+    <!--    <dimen name="dialpad_key_letters_from_top">41dp</dimen>   for round buttons: dialpad_key_numbers_size + dialpad_key_numbers_from_top + 2-->
     <dimen name="dialpad_key_plus_size">15dp</dimen>
     <dimen name="dialpad_key_letters_width">41dp</dimen>
     <dimen name="dialpad_key_circle_width">65dp</dimen>
     <dimen name="dial_key_letter_margin">-8dp</dimen>      <!-- brings letters near the digit -->
-    
+
     <!-- adjust to height of SAS text plus SAS label to avoid to much
          flickering-->
     <dimen name="indicator_size">20dp</dimen>
@@ -64,10 +67,23 @@
 
     <!-- width of round buttons on inCall screen and call manager screen -->
     <dimen name="in_call_btn_width">75dp</dimen>
-
     <dimen name="in_call_btn_width_small">40dp</dimen>
 
+    <dimen name="in_call_volume_indicator_width">200dp</dimen>
+    <dimen name="in_call_volume_indicator_height">200dp</dimen>
+    <dimen name="in_call_volume_indicator_bottom_margin">-54.5dp</dimen>
+
     <dimen name="in_call_card_width">300dp</dimen>
+
+    <dimen name="in_call_sas_widget_margin_top">@dimen/spacing_large</dimen>
+
+    <!-- underflow indicator -->
+    <dimen name="in_call_underflow_indicator_height">32dp</dimen>
+    <dimen name="in_call_underflow_indicator_top_margin">5dp</dimen>
+    <dimen name="in_call_underflow_indicator_bottom_margin">5dp</dimen>
+
+    <!-- Circle size for incoming call widget's each item. -->
+    <dimen name="incoming_call_widget_circle_size">56dp</dimen>
 
     <!-- **** Call Log -->
     <dimen name="call_log_icon_margin">4dip</dimen>
@@ -114,6 +130,8 @@
     <dimen name="contact_browser_list_item_photo_size">40dip</dimen>
     <dimen name="contact_browser_list_item_text_indent">8dip</dimen>
     <dimen name="contact_browser_list_top_margin">12dip</dimen>
+    <dimen name="contact_browser_list_bottom_margin">12dip</dimen>
+    <dimen name="contact_browser_list_item_checkbox_size">18dp</dimen>
 
     <!-- Minimum height of a row in the Editor -->
     <dimen name="editor_min_line_item_height">48dip</dimen>
@@ -136,10 +154,11 @@
     <dimen name="call_banner_height">122dp</dimen>
     <!-- Padding at the left and right edges of the "call banner". -->
     <dimen name="call_banner_side_padding">24dp</dimen>
-    <dimen name="call_name_text_size">45dp</dimen>
+    <dimen name="call_name_text_size">32dp</dimen>
     <dimen name="call_label_text_size">18sp</dimen>
     <dimen name="call_status_text_size">22sp</dimen>
-    <dimen name="call_name_text_min_size">34sp</dimen>
+    <dimen name="call_name_text_min_size">28sp</dimen>
+    <dimen name="call_priority_text_size">30dp</dimen>
 
     <!-- Padding at the top and bottom edges of the "call banner". -->
     <dimen name="call_banner_primary_call_container_top_padding">16dp</dimen>
@@ -197,6 +216,7 @@
 
     <!-- actionbar height + tab height -->
     <dimen name="actionbar_and_tab_height">56dp</dimen>
+    <dimen name="empty_list_header_text_size">20sp</dimen>
     <dimen name="empty_list_message_text_size">16sp</dimen>
 
     <!-- Dimensions for most recent call shortcut cards -->
@@ -239,14 +259,15 @@
     <dimen name="search_bottom_margin">8dp</dimen>
     <dimen name="search_collapsed_text_size">14sp</dimen>
 
-    <dimen name="search_list_padding_top">16dp</dimen>
+    <dimen name="search_list_padding_top">12dp</dimen>
     <dimen name="search_box_elevation">3dp</dimen>
     <!-- Size of the icon (voice search, back arrow) in the search box. -->
     <dimen name="search_box_icon_size">28dp</dimen>
 
     <!-- Size of the close icon.
      Because it expands diagonally, it needs to be shrunk to look relatively the same size -->
-    <dimen name="search_box_keyboard_toggle_icon_size">24dp</dimen>
+    <dimen name="search_box_keyboard_toggle_icon_size">56dp</dimen>
+    <dimen name="search_box_keyboard_toggle_icon_padding">16dp</dimen>
     <!-- Padding around back arrow icon in the search box -->
     <dimen name="search_box_navigation_icon_margin">14dp</dimen>
     <!-- Padding around keyboard toggle icon in the search box -->
@@ -259,6 +280,7 @@
     <!-- Dimensions for messaging widgets -->
     <dimen name="text_xxlarge">22sp</dimen>
     <dimen name="text_xlarge">18sp</dimen>
+    <dimen name="text_mlarge">15sp</dimen>
     <dimen name="text_normal">12sp</dimen>
     <dimen name="text_large">14sp</dimen>
     <dimen name="text_small">10sp</dimen>
@@ -293,24 +315,32 @@
     <dimen name="messaging_message_summary_text_padding">5dp</dimen>
     <dimen name="messaging_message_info_small_text_size">10sp</dimen>
     <dimen name="messaging_message_state_debug_text_size">7dp</dimen>
-    <dimen name="messaging_message_card_min_width">125dp</dimen>
-    <dimen name="messaging_message_card_min_height">55dp</dimen>
+    <dimen name="messaging_message_card_min_width">110dp</dimen>
+    <dimen name="messaging_message_card_min_height">42dp</dimen>
     <dimen name="messaging_message_thumbnail_margin_left">4dp</dimen>
     <dimen name="messaging_message_thumbnail_margin_right">4dp</dimen>
     <dimen name="messaging_message_thumbnail_margin_top">4dp</dimen>
+    <dimen name="messaging_message_waveform_margin_bottom">4dp</dimen>
+    <dimen name="messaging_group_incoming_message_margin_left">45dp</dimen>
+    <dimen name="messaging_group_incoming_message_avatar_margin_left">51dp</dimen>
+    <dimen name="messaging_incoming_message_avatar_margin_left">14dp</dimen>
+    <dimen name="messaging_incoming_message_margin_left">@dimen/spacing_normal</dimen>
     <dimen name="messaging_incoming_message_thumbnail_margin_right">5dp</dimen>
-    <dimen name="messaging_outgoig_message_thumbnail_margin_left">5dp</dimen>
+    <dimen name="messaging_outgoing_message_thumbnail_margin_left">5dp</dimen>
     <dimen name="messaging_message_thumbnail_width">128dp</dimen>
     <dimen name="messaging_message_thumbnail_height">96dp</dimen>
+    <dimen name="messaging_message_thumbnail_corner_radius">3dp</dimen>
     <dimen name="messaging_message_attachment_text_width">@dimen/messaging_message_thumbnail_width</dimen>
-    <dimen name="messaging_message_time_margin">10dp</dimen>
-    <dimen name="messaging_message_buttons_margin">-16dp</dimen>
+    <dimen name="messaging_message_time_margin_left">5dp</dimen>
+    <dimen name="messaging_message_time_margin_right">7dp</dimen>
+    <dimen name="messaging_message_buttons_margin">-7dp</dimen>
+    <dimen name="messaging_message_padding_top">4dp</dimen>
     <dimen name="messaging_message_padding_bottom">4dp</dimen>
     <dimen name="messaging_message_action_padding_left">4dp</dimen>
     <dimen name="messaging_message_action_padding_right">4dp</dimen>
     <dimen name="messaging_message_action_padding_top">0dp</dimen>
     <dimen name="messaging_message_action_padding_bottom">1dp</dimen>
-    <dimen name="messaging_message_attachment_progress_width">50dp</dimen>
+    <dimen name="messaging_message_attachment_progress_width">100dp</dimen>
     <dimen name="messaging_message_attachment_progress_height">50dp</dimen>
     <dimen name="messaging_unread_message_notification_size">20dp</dimen>
     <dimen name="messaging_unread_message_notification_margin">6dp</dimen>
@@ -319,9 +349,23 @@
     <dimen name="messaging_burn_seekbar_width">32dp</dimen>
     <dimen name="messaging_burn_seekbar_height">200dp</dimen>
     <dimen name="messaging_compose_margin_left">47dp</dimen>
+    <dimen name="messaging_compose_margin_right">54dp</dimen>
+    <dimen name="messaging_compose_margin_bottom">13dp</dimen>
+    <dimen name="messaging_compose_button_margin_bottom">7dp</dimen>
+    <dimen name="messaging_compose_width">60dp</dimen>
+    <dimen name="messaging_compose_height">60dp</dimen>
+    <dimen name="messaging_compose_text_min_height">43dp</dimen>
     <dimen name="messaging_message_avatar_padding_start">6dp</dimen>
     <dimen name="messaging_message_avatar_padding_top">8dp</dimen>
-    <dimen name="messaging_message_avatar_padding_bottom">5dp</dimen>
+    <!-- <dimen name="messaging_message_avatar_padding_bottom">5dp</dimen> -->
+    <dimen name="messaging_empty_chat_avatar_width">145dp</dimen>
+    <dimen name="messaging_empty_chat_avatar_height">145dp</dimen>
+    <dimen name="messaging_message_avatar_first_message_padding_top">18dp</dimen>
+    <dimen name="messaging_message_avatar_padding_bottom">0dp</dimen>
+    <dimen name="messaging_empty_chat_avatar_bg_width">170dp</dimen>
+    <dimen name="messaging_empty_chat_avatar_bg_height">170dp</dimen>
+    <dimen name="messaging_group_details_avatar_height">130dp</dimen>
+    <dimen name="messaging_group_details_button_drawable_padding">22dp</dimen>
 
     <!-- file viewer dimensions -->
     <dimen name="messaging_viewer_failure_text_margin_top">70dp</dimen>
@@ -342,10 +386,12 @@
     <dimen name="conversation_option_margin_top">20dp</dimen>
     <dimen name="conversation_option_margin_left">25dp</dimen>
     <dimen name="conversation_option_margin_right">10dp</dimen>
-    <dimen name="conversation_option_margin_bottom">20dp</dimen>
-    <dimen name="conversation_option_checkable_margin">10dp</dimen>
+    <dimen name="conversation_option_margin_bottom">4dp</dimen>
+    <dimen name="conversation_option_checkable_margin_left">10dp</dimen>
+    <dimen name="conversation_option_checkable_margin_right">16dp</dimen>
     <dimen name="conversation_option_image_margin">25dp</dimen>
-    <dimen name="conversation_option_description_margin_left">57dp</dimen>
+    <dimen name="conversation_option_spam_image_margin">17dp</dimen>
+    <dimen name="conversation_option_description_margin_left">75dp</dimen>
     <dimen name="conversation_option_description_margin_top">5dp</dimen>
     <dimen name="conversation_option_burn_margin_bottom">10dp</dimen>
     <dimen name="conversation_option_seeker_layout_margin_left">40dp</dimen>
@@ -353,19 +399,20 @@
     <dimen name="conversation_option_seeker_margin_left">5dp</dimen>
 
     <!-- conversation log dimensions -->
-    <dimen name="conversation_log_list_margin_top">18dp</dimen>
+    <dimen name="conversation_log_list_margin_top">12dp</dimen>
     <dimen name="conversation_log_margin_top">15dp</dimen>
     <dimen name="conversation_log_inner_margin">13dip</dimen>
     <dimen name="conversation_log_icon_margin">4dip</dimen>
     <dimen name="conversation_log_outer_margin">8dp</dimen>
-    <dimen name="conversation_log_outer_margin_left">36dp</dimen>
+    <dimen name="conversation_log_outer_margin_left">75dp</dimen>
     <dimen name="conversation_log_start_margin">16dp</dimen>
     <dimen name="conversation_log_name_margin_bottom">2dp</dimen>
     <dimen name="conversation_log_secondary_text_size">14sp</dimen>
     <dimen name="conversation_log_day_group_padding_top">15dp</dimen>
     <dimen name="conversation_log_day_group_padding_bottom">9dp</dimen>
     <dimen name="conversation_log_contact_photo_size">40dp</dimen>
-    <dimen name="conversation_log_unread_message_notification_size">20dp</dimen>
+    <dimen name="conversation_log_contact_photo_container_size">44dp</dimen>
+    <dimen name="conversation_log_unread_message_notification_size">18dp</dimen>
     <dimen name="conversation_log_unread_message_notification_text_size">10dp</dimen>
     <dimen name="conversation_log_action_view_margin_left">5dp</dimen>
     <dimen name="conversation_log_name_margin_left">10dp</dimen>
@@ -373,6 +420,7 @@
     <dimen name="conversation_log_time_margin_right">12dp</dimen>
     <dimen name="conversation_log_message_summary_text_padding">5dp</dimen>
     <dimen name="conversation_log_message_info_small_text_size">14sp</dimen>
+    <dimen name="conversation_log_action_button_size">68dp</dimen>
 
     <!-- vCard preview dimensions -->
     <dimen name="messaging_vcard_preview_width">320px</dimen>
@@ -388,10 +436,6 @@
     <item type="dimen" name="dialog_min_width_minor">85%</item>
     <item type="dimen" name="dialog_min_width_major">92%</item>
 
-    <!-- messaging protection screen dimensions -->
-    <dimen name="widget_screen_lock_label_text_size">14sp</dimen>
-    <dimen name="widget_screen_lock_button_text_size">16sp</dimen>
-
     <!-- in app billing -->
     <dimen name="in_app_payment_control_width_small">120dp</dimen>
     <dimen name="in_app_payment_control_width">250dp</dimen>
@@ -406,16 +450,35 @@
     <dimen name="dial_drawer_avatar_size">62dp</dimen>
     <dimen name="dial_drawer_avatar_padding_left">17dp</dimen>
     <dimen name="dial_drawer_avatar_padding_top">16dp</dimen>
-    <dimen name="dial_drawer_avatar_padding_bottom">16dp</dimen>
+    <dimen name="dial_drawer_avatar_padding_bottom">1dp</dimen>
 
     <dimen name="settings_item_margin_top">20dp</dimen>
     <dimen name="settings_item_margin_left">25dp</dimen>
     <dimen name="settings_item_margin_right">10dp</dimen>
     <dimen name="settings_item_margin_bottom">10dp</dimen>
-    <dimen name="settings_item_padding_left">2dp</dimen>
+    <dimen name="settings_item_padding_left">25dp</dimen>
+    <dimen name="settings_item_description_padding_left">27dp</dimen>
 
     <!-- Video Recorder-->
     <dimen name="camera_start_stop_button_height">100dp</dimen>
     <dimen name="camera_start_stop_button_min_height">80dp</dimen>
+
+    <dimen name="default_avatar_size">50dp</dimen>
+    <dimen name="dialog_avatar_action_padding_start">24dp</dimen>
+
+    <!-- Authorization activity, on-boarding -->
+    <dimen name="authorization_logo_margin_top">40dp</dimen>
+    <dimen name="authorization_logo_size">72dp</dimen>
+    <dimen name="authorization_heading_margin_top">23dp</dimen>
+    <dimen name="authorization_version_margin_top">18dp</dimen>
+    <dimen name="authorization_login_fields_margin_top">30dp</dimen>
+    <dimen name="authorization_login_field_max_height">78dp</dimen>
+    <dimen name="authorization_login_checkbox_padding">10dp</dimen>
+    <dimen name="authorization_onboarding_description_margin_top">28dp</dimen>
+
+    <!-- -->
+    <dimen name="widget_contact_selection_avatar_height">28dp</dimen>
+    <dimen name="widget_contact_selection_section_height">100dp</dimen>
+    <dimen name="widget_contact_selection_height">132dp</dimen>
 
 </resources>

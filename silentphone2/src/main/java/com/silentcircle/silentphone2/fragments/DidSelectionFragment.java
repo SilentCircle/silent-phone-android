@@ -1,9 +1,35 @@
+/*
+Copyright (C) 2016-2017, Silent Circle, LLC.  All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+    * Any redistribution, use, or modification is done solely for personal
+      benefit and not for any commercial purpose or for monetary gain
+    * Redistributions of source code must retain the above copyright
+      notice, this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above copyright
+      notice, this list of conditions and the following disclaimer in the
+      documentation and/or other materials provided with the distribution.
+    * Neither the name Silent Circle nor the
+      names of its contributors may be used to endorse or promote products
+      derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL SILENT CIRCLE, LLC BE LIABLE FOR ANY
+DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
 package com.silentcircle.silentphone2.fragments;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.Fragment;
-import android.app.FragmentManager;
 import android.content.Context;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -11,7 +37,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.support.v7.app.ActionBar;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
@@ -23,9 +48,10 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import com.silentcircle.common.util.AsyncTasks;
+import com.silentcircle.logs.Log;
 import com.silentcircle.silentphone2.R;
+import com.silentcircle.silentphone2.activities.DialogHelperActivity;
 import com.silentcircle.silentphone2.activities.DidSelectionActivity;
-import com.silentcircle.silentphone2.activities.ProvisioningActivity;
 import com.silentcircle.silentphone2.util.ConfigurationUtilities;
 import com.silentcircle.silentphone2.util.Constants;
 import com.silentcircle.silentphone2.util.PinnedCertificateHandling;
@@ -77,8 +103,9 @@ public class DidSelectionFragment extends Fragment implements AdapterView.OnItem
     private State mState;
     private Fragment mFragment;
 
-    private boolean mStateSaved = false;
-
+    private String mDidAreaList;
+    private String mDidNumberList;
+    private String mDidSelectionWrongFormat;
 
     public static DidSelectionFragment newInstance(String regions, String apiKey) {
         DidSelectionFragment f = new DidSelectionFragment();
@@ -126,6 +153,10 @@ public class DidSelectionFragment extends Fragment implements AdapterView.OnItem
             Log.w(TAG, "JSON exception reading regions: " + e);
             mParent.finish();
         }
+
+        mDidAreaList = getString(R.string.did_area_list);
+        mDidNumberList = getString(R.string.did_number_list);
+        mDidSelectionWrongFormat = getString(R.string.did_selection_wrong_format);
     }
 
     @Override
@@ -188,7 +219,9 @@ public class DidSelectionFragment extends Fragment implements AdapterView.OnItem
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
-        commonOnAttach(activity);
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+            commonOnAttach(activity);
+        }
     }
 
     private void commonOnAttach(Activity activity) {
@@ -210,18 +243,11 @@ public class DidSelectionFragment extends Fragment implements AdapterView.OnItem
     @Override
     public void onResume() {
         super.onResume();
-        mStateSaved = false;
     }
 
     @Override
     public void onPause() {
         super.onPause();
-    }
-
-    @Override
-    public void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
-        mStateSaved = true;
     }
 
     @Override
@@ -393,7 +419,7 @@ public class DidSelectionFragment extends Fragment implements AdapterView.OnItem
             JSONObject jsonObj = new JSONObject(content.toString());
             JSONArray jsonArray = jsonObj.getJSONArray("areas");
             if (jsonArray.length() < 1) {
-                showInputInfo(getString(R.string.did_no_area));
+                DialogHelperActivity.showDialog(R.string.information_dialog, R.string.did_no_area, android.R.string.ok, -1);
                 return;
             }
             mAreas = new String[jsonArray.length()];
@@ -409,7 +435,7 @@ public class DidSelectionFragment extends Fragment implements AdapterView.OnItem
             mListView.setAdapter(mAreaAdapter);
             mListView.setVisibility(View.VISIBLE);
             mAreaAdapter.notifyDataSetChanged();
-            mListTitle.setText(getString(R.string.did_area_list));
+            mListTitle.setText(mDidAreaList);
             mListTitle.setVisibility(View.VISIBLE);
             if (mActionBar != null) {
                 mActionBar.setTitle(R.string.did_area_list);
@@ -429,7 +455,7 @@ public class DidSelectionFragment extends Fragment implements AdapterView.OnItem
             JSONObject jsonObj = new JSONObject(content.toString());
             JSONArray jsonArray = jsonObj.getJSONArray("numbers");
             if (jsonArray.length() < 1) {
-                showInputInfo(getString(R.string.did_no_number));
+                DialogHelperActivity.showDialog(R.string.information_dialog, R.string.did_no_number, android.R.string.ok, -1);
                 return;
             }
             String[] numbers = new String[jsonArray.length()];
@@ -445,22 +471,14 @@ public class DidSelectionFragment extends Fragment implements AdapterView.OnItem
             mListView.setAdapter(numberAdapter);
             mListView.setVisibility(View.VISIBLE);
             numberAdapter.notifyDataSetChanged();
-            mListTitle.setText(getString(R.string.did_number_list));
+            mListTitle.setText(mDidNumberList);
             mListTitle.setVisibility(View.VISIBLE);
             if (mActionBar != null) {
-                mActionBar.setTitle(R.string.did_number_list);
+                mActionBar.setTitle(mDidNumberList);
                 mActionBar.setDisplayHomeAsUpEnabled(true);
             }
         } catch (JSONException e) {
             Log.w(TAG, "JSON exception reading numbers: " + e);
-        }
-    }
-
-    private void showInputInfo(String msg) {
-        ProvisioningActivity.InfoMsgDialogFragment infoMsg = ProvisioningActivity.InfoMsgDialogFragment.newInstance(msg);
-        FragmentManager fragmentManager = getFragmentManager();
-        if (fragmentManager != null && !mStateSaved) {
-            infoMsg.show(fragmentManager, "SilentPhoneDidInfo");
         }
     }
 
@@ -471,17 +489,9 @@ public class DidSelectionFragment extends Fragment implements AdapterView.OnItem
             msg = jsonObj.getString("error_msg");
         } catch (JSONException e) {
             Log.w(TAG, "JSON exception reading error message: " + e);
-            msg = getString(R.string.did_selection_wrong_format) + e.getMessage();
+            msg = mDidSelectionWrongFormat + e.getMessage();
         }
         return msg;
-    }
-
-    private void showDialog(int titleResId, int msgResId, int positiveBtnLabel, int nagetiveBtnLabel) {
-        com.silentcircle.silentphone2.dialogs.InfoMsgDialogFragment infoMsg = com.silentcircle.silentphone2.dialogs.InfoMsgDialogFragment.newInstance(titleResId, msgResId, positiveBtnLabel, nagetiveBtnLabel);
-        FragmentManager fragmentManager = mFragment.getFragmentManager();
-        if (fragmentManager != null && !mStateSaved) {
-            infoMsg.show(fragmentManager, TAG);
-        }
     }
 
     private class LoaderTask extends AsyncTask<URL, Integer, Integer> {
@@ -537,11 +547,12 @@ public class DidSelectionFragment extends Fragment implements AdapterView.OnItem
                 if(!Utilities.isNetworkConnected(mFragment.getActivity())){
                     return Constants.NO_NETWORK_CONNECTION;
                 }
-                showInputInfo(getString(R.string.provisioning_no_network) + e.getLocalizedMessage());
+                final String msg = getString(R.string.provisioning_no_network) + e.getLocalizedMessage();
+                DialogHelperActivity.showDialog(R.string.provisioning_error, msg, android.R.string.ok, -1);
                 Log.e(TAG, "Network not available: " + e.getMessage());
                 return -1;
             } catch (Exception e) {
-                showInputInfo(getString(R.string.provisioning_error) + e.getLocalizedMessage());
+                DialogHelperActivity.showDialog(R.string.provisioning_error, e.getLocalizedMessage(), android.R.string.ok, -1);
                 Log.e(TAG, "Network connection problem: " + e.getMessage());
                 return -1;
             } finally {
@@ -569,10 +580,10 @@ public class DidSelectionFragment extends Fragment implements AdapterView.OnItem
                 }
             }
             else if(result == Constants.NO_NETWORK_CONNECTION) {
-                showDialog(R.string.information_dialog, R.string.connected_to_network, android.R.string.ok, -1);
+                DialogHelperActivity.showDialog(R.string.information_dialog, R.string.connected_to_network, android.R.string.ok, -1);
             }
             else {
-                showInputInfo(parseAndShowError(content));
+                DialogHelperActivity.showDialog(R.string.information_dialog, parseAndShowError(content), android.R.string.ok, -1);
             }
         }
     }

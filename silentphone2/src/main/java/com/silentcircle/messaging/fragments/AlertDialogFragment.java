@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2016-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -25,7 +25,6 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-
 package com.silentcircle.messaging.fragments;
 
 import android.app.Activity;
@@ -185,7 +184,9 @@ public class AlertDialogFragment extends DialogFragment {
         try {
             OnAlertDialogConfirmedListener listener =
                     (OnAlertDialogConfirmedListener) fragment;
-            listener.onAlertDialogConfirmed(dialog, getTargetRequestCode(), bundle, saveChoice);
+            if (listener != null) {
+                listener.onAlertDialogConfirmed(dialog, getTargetRequestCode(), bundle, saveChoice);
+            }
         }
         catch (ClassCastException e) {
             throw new ClassCastException(
@@ -199,7 +200,9 @@ public class AlertDialogFragment extends DialogFragment {
         try {
             OnAlertDialogConfirmedListener listener =
                     (OnAlertDialogConfirmedListener) activity;
-            listener.onAlertDialogConfirmed(dialog, which, bundle, saveChoice);
+            if (listener != null) {
+                listener.onAlertDialogConfirmed(dialog, which, bundle, saveChoice);
+            }
         }
         catch (ClassCastException e) {
             throw new ClassCastException(

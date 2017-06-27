@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2014-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -34,12 +34,13 @@ import android.app.Fragment;
 import android.content.Context;
 import android.os.Build;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.silentcircle.logs.Log;
 import com.silentcircle.silentphone2.R;
+import com.silentcircle.silentphone2.activities.DialogHelperActivity;
 import com.silentcircle.silentphone2.activities.ProvisioningActivity;
 
 public class ProvisioningAutomatic extends Fragment implements View.OnClickListener, ProvisioningActivity.ProvisioningCallback {
@@ -89,7 +90,9 @@ public class ProvisioningAutomatic extends Fragment implements View.OnClickListe
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
-        commonOnAttach(activity);
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+            commonOnAttach(activity);
+        }
     }
 
     private void commonOnAttach(Activity activity) {
@@ -126,7 +129,8 @@ public class ProvisioningAutomatic extends Fragment implements View.OnClickListe
             mParent.finish();
         }
         else {
-            mParent.showErrorInfo(result);      // Show Error terminates activity after user confirmed message
+            DialogHelperActivity.showDialog(R.string.provisioning_error, result, android.R.string.ok, -1);
+            mParent.provisioningCancel();
         }
     }
 

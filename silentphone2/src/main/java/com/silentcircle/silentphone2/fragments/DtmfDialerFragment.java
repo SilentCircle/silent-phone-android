@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2014-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -39,7 +39,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.provider.Settings;
-import android.util.Log;
 import android.util.TypedValue;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -52,6 +51,7 @@ import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 
+import com.silentcircle.logs.Log;
 import com.silentcircle.silentphone2.R;
 import com.silentcircle.silentphone2.activities.InCallActivity;
 import com.silentcircle.silentphone2.services.TiviPhoneService;
@@ -129,6 +129,8 @@ public class DtmfDialerFragment extends Fragment implements View.OnClickListener
                 }
             }
         }
+        stopTimer();        // stop a possible pending timer, then restart
+        startTimer();
     }
 
     @Override
@@ -161,7 +163,9 @@ public class DtmfDialerFragment extends Fragment implements View.OnClickListener
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
-        commonOnAttach(activity);
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+            commonOnAttach(activity);
+        }
     }
 
     private void commonOnAttach(Activity activity) {
@@ -188,8 +192,12 @@ public class DtmfDialerFragment extends Fragment implements View.OnClickListener
         return super.onOptionsItemSelected(item);
     }
 
-    public void startTimer() {
-            mTimerHandler.postDelayed(mTimerRun, TIMEOUT_MS);
+    private void startTimer() {
+        mTimerHandler.postDelayed(mTimerRun, TIMEOUT_MS);
+    }
+
+    private void stopTimer() {
+        mTimerHandler.removeCallbacks(mTimerRun);
     }
 
     @Override
@@ -200,7 +208,7 @@ public class DtmfDialerFragment extends Fragment implements View.OnClickListener
                 return;
 
             case R.id.back:
-                mTimerHandler.removeCallbacks(mTimerRun);
+                stopTimer();
                 mParent.onBackPressed();
                 break;
 
@@ -218,7 +226,8 @@ public class DtmfDialerFragment extends Fragment implements View.OnClickListener
     private Runnable mTimerRun = new Runnable() {
         @Override
         public void run() {
-            mParent.onBackPressed();
+            if (mParent != null)
+                mParent.onBackPressed();
         }
     };
 
@@ -296,7 +305,7 @@ public class DtmfDialerFragment extends Fragment implements View.OnClickListener
     }
 
     private void keyPressed(int keyCode) {
-        mTimerHandler.removeCallbacks(mTimerRun);
+        stopTimer();
         switch (keyCode) {
             case KeyEvent.KEYCODE_1:
                 TiviPhoneService.doCmd(":D1");
@@ -352,7 +361,7 @@ public class DtmfDialerFragment extends Fragment implements View.OnClickListener
         KeyEvent event = new KeyEvent(KeyEvent.ACTION_DOWN, keyCode);
         mDestination.onKeyDown(keyCode, event);
         mDestination.setCursorVisible(false);
-        mTimerHandler.postDelayed(mTimerRun, TIMEOUT_MS);
+        startTimer();
     }
 
     private void setupKeypad(View fragmentView) {

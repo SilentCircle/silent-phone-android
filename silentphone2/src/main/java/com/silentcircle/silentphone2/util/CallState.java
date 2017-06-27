@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2014-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -28,8 +28,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 package com.silentcircle.silentphone2.util;
 
+import android.Manifest;
 import android.content.ContentUris;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -37,12 +39,13 @@ import android.net.Uri;
 import android.provider.ContactsContract;
 import android.provider.ContactsContract.Contacts;
 import android.provider.ContactsContract.PhoneLookup;
+import android.support.v4.content.ContextCompat;
 import android.telephony.PhoneNumberUtils;
 import android.text.TextUtils;
-import android.util.Log;
+import com.silentcircle.logs.Log;
 
 import com.silentcircle.common.util.AsyncTasks;
-import com.silentcircle.messaging.services.AxoMessaging;
+import com.silentcircle.messaging.services.ZinaMessaging;
 import com.silentcircle.silentphone2.services.TiviPhoneService;
 
 import java.io.InputStream;
@@ -61,16 +64,19 @@ public class CallState {
     private StringBuildHelper nameFromAB = new StringBuildHelper();//  from phoneBook  or sip
 
     public StringBuildHelper mAssertedName = new StringBuildHelper(); // getInfo(call.iEngID, call.iCallId, "AssertedId");
+    public StringBuildHelper sipCallId = new StringBuildHelper(); // getInfo(call.iEngID, call.iCallId, "callid")
 
     public StringBuildHelper bufDialed = new StringBuildHelper();
     public StringBuildHelper bufPeer = new StringBuildHelper();
     public StringBuildHelper mDisplayNameForCallLog = new StringBuildHelper();
     public StringBuildHelper mDefaultDisplayName = new StringBuildHelper();
     public StringBuildHelper bufMsg = new StringBuildHelper(512);
+    public String mCallerUuid;
 
     public StringBuildHelper bufSAS = new StringBuildHelper();
     public StringBuildHelper bufSecureMsg = new StringBuildHelper();
     public StringBuildHelper bufSecureMsgV = new StringBuildHelper();
+    public StringBuildHelper bufSipErrorMessage = new StringBuildHelper();
 
     public boolean iShowEnroll, iShowVerifySas;
     public int iShowWarningForNSec;
@@ -86,11 +92,6 @@ public class CallState {
     public long uiStartTime;
 
     /**
-     * Holds the call duration in ms - currently not used (duration computed dynamically).
-     */
-    public long iDuration;
-
-    /**
      * Set to true by phone engine if incoming call detected (eIncomingCall).
      */
     public boolean iIsIncoming;
@@ -104,6 +105,11 @@ public class CallState {
      * Set to 2 by phone engine if the call ended (eEndCall), otherwise it is 0.
      */
     public boolean callEnded;
+
+    /**
+     * True if the call was ended by the user
+     */
+    public boolean callEndedByUser;
 
     /**
      * If true the call is on hold (not yet used, hold function missing)
@@ -180,6 +186,7 @@ public class CallState {
     public boolean contactsDataChecked;
 
     public boolean mAnsweredElsewhere;
+    public boolean mDeclinedElsewhere;
 
     public int mPriority = NORMAL;
 
@@ -219,6 +226,7 @@ public class CallState {
         iIsIncoming = false;
         iActive = false;
         callEnded = false;
+        callEndedByUser = false;
         iIsOnHold = false;
         isInConference = false;
         iMuted = false;
@@ -232,7 +240,6 @@ public class CallState {
         iUserDataLoaded = 0;
 
         uiStartTime = 0;
-        iDuration = 0;
         callReleasedAt = 0;
         iCallId = 0;
         // pEng=NULL;
@@ -251,6 +258,7 @@ public class CallState {
         contactId = 0;
         secExceptionMsg = null;
         mAnsweredElsewhere = false;
+        mDeclinedElsewhere = false;
 
         mPriority = NORMAL;
         mPeerDisclosureFlag = false;
@@ -260,10 +268,15 @@ public class CallState {
         if (contactsDataChecked || service == null)
             return;
 
-        Uri lookupUri;
-        String phoneLookUpId;
         Context ctx = service.getBaseContext();
 
+        if (ContextCompat.checkSelfPermission(ctx, Manifest.permission.READ_CONTACTS)
+                != PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
+
+        Uri lookupUri;
+        String phoneLookUpId;
         String[] projection = null;
 
         // - The callerUuid for an incoming OCA call is the bufPeer (the 'From' header) name part
@@ -271,7 +284,8 @@ public class CallState {
         // - For an incoming SC call we use the PAI header.
         // - For an outgoing call we always use the bufPeer which is the request SIP URI in this case.
         String callerUuid = Utilities.removeUriPartsSelective((iIsIncoming && !isOcaCall) ? mAssertedName.toString() : bufPeer.toString());
-        byte[] callerData = AxoMessaging.getUserInfoFromCache(callerUuid);
+        mCallerUuid = callerUuid;
+        byte[] callerData = ZinaMessaging.getUserInfoFromCache(callerUuid);
 
         AsyncTasks.UserInfo callerInfo = AsyncTasks.parseUserInfo(callerData);
 

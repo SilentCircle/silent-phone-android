@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="@dimen/conversation_log_action_button_size"
+    android:paddingTop="@dimen/spacing_normal"
+    android:paddingBottom="@dimen/spacing_normal"
+    android:paddingLeft="@dimen/activity_horizontal_margin_large"
+    android:paddingStart="@dimen/activity_horizontal_margin_large"
+    android:paddingRight="@dimen/activity_horizontal_margin_small"
+    android:paddingEnd="@dimen/activity_horizontal_margin_small"
+    android:orientation="horizontal"
+    android:background="@drawable/bg_action">
+
+    <FrameLayout
+        android:id="@+id/icon_group"
+        android:layout_width="@dimen/conversation_log_contact_photo_container_size"
+        android:layout_height="@dimen/conversation_log_contact_photo_container_size"
+        android:layout_gravity="center_vertical">
+
+        <QuickContactBadge
+            android:id="@+id/quick_contact_photo"
+            android:layout_width="@dimen/conversation_log_contact_photo_size"
+            android:layout_height="@dimen/conversation_log_contact_photo_size"
+            android:layout_gravity="center_vertical"
+            android:nextFocusRight="@id/primary_action_view"
+            android:contentDescription="@string/messaging_avatar_voiceover"/>
+
+        <include
+            android:id="@+id/unread_message_notification"
+            layout="@layout/messaging_unread_message_notification"
+            android:layout_width="@dimen/conversation_log_unread_message_notification_size"
+            android:layout_height="@dimen/conversation_log_unread_message_notification_size"
+            android:layout_gravity="end|top"
+            android:visibility="gone"
+            tools:visibility="visible" />
+
+        <include
+            android:id="@+id/data_retention_status"
+            layout="@layout/messaging_data_retention_status"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="end|bottom"
+            android:visibility="gone"
+            tools:visibility="visible" />
+
+    </FrameLayout>
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:layout_gravity="center_vertical"
+        android:addStatesFromChildren="true">
+
+        <LinearLayout
+            android:id="@+id/name_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:addStatesFromChildren="true">
+
+            <TextView
+                android:id="@+id/name"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="@dimen/conversation_log_icon_margin"
+                android:layout_marginLeft="@dimen/conversation_log_name_margin_left"
+                android:layout_marginRight="@dimen/conversation_log_icon_margin"
+                android:layout_marginStart="@dimen/conversation_log_name_margin_left"
+                android:layout_gravity="center_vertical"
+                android:layout_weight="1"
+                android:maxLines="1"
+                android:singleLine="true"
+                android:textColor="?attr/sp_activity_primary_text_color"
+                android:textSize="@dimen/conversation_log_name_text_size"
+                tools:text="Name" />
+
+            <TextView
+                android:id="@+id/time"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical|end"
+                android:layout_marginEnd="@dimen/conversation_log_time_margin_right"
+                android:layout_marginRight="@dimen/conversation_log_time_margin_right"
+                android:ellipsize="marquee"
+                android:singleLine="true"
+                android:textColor="?attr/sp_activity_secondary_text_color"
+                android:textSize="@dimen/conversation_log_message_info_small_text_size"
+                android:visibility="visible"
+                tools:text="Yesterday" />
+
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/alias"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/conversation_log_name_margin_bottom"
+            android:layout_marginEnd="@dimen/conversation_log_icon_margin"
+            android:layout_marginLeft="@dimen/conversation_log_name_margin_left"
+            android:layout_marginRight="@dimen/conversation_log_icon_margin"
+            android:layout_marginStart="@dimen/conversation_log_name_margin_left"
+            android:maxLines="1"
+            android:singleLine="true"
+            android:textColor="?attr/sp_activity_primary_text_color"
+            android:textSize="@dimen/conversation_log_name_text_size"
+            tools:text="alias" />
+
+    </LinearLayout>
+
+    <ImageButton
+        style="@style/Widget.AppCompat.Button.Colored"
+        android:id="@+id/add_to_contacts"
+        android:layout_width="41dp"
+        android:layout_height="41dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:src="@drawable/ic_search_add_contact"
+        android:tint="?attr/sp_activity_primary_text_color"
+        android:layout_gravity="center_vertical"
+        android:contentDescription="@string/search_shortcut_add_to_contacts"
+        />
+
+    <ImageButton
+        style="@style/Widget.AppCompat.Button.Colored"
+        android:id="@+id/remove"
+        android:layout_width="41dp"
+        android:layout_height="41dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:src="@drawable/ic_clear_white_24dp"
+        android:tint="?attr/sp_activity_primary_text_color"
+        android:layout_gravity="center_vertical"
+        android:contentDescription="@string/remove"
+        />
+
+</LinearLayout>

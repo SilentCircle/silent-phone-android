@@ -63,6 +63,7 @@
             layout="@layout/dialpad"/>
     <Button
             android:id="@+id/back"
+            style="@style/Widget.Button"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/back"

@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2016-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -29,7 +29,6 @@ package com.silentcircle.keystore;
 
 import android.app.ActionBar;
 import android.app.Dialog;
-import android.app.DialogFragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.content.DialogInterface;
@@ -38,20 +37,20 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
+import android.app.DialogFragment;
+import android.app.AlertDialog;
 import android.text.Editable;
 import android.widget.TextView;
 
 import com.silentcircle.common.util.ViewUtil;
 import com.silentcircle.keymanagersupport.KeyManagerSupport;
-import com.silentcircle.messaging.fragments.MessagingPasswordFragment;
 import com.silentcircle.silentphone2.R;
+import com.silentcircle.silentphone2.passcode.AppLifecycleNotifierBaseActivity;
 import com.silentcircle.silentphone2.util.Utilities;
 
 import java.lang.ref.WeakReference;
 
-public class KeyStoreActivity extends AppCompatActivity {
+public class KeyStoreActivity extends AppLifecycleNotifierBaseActivity {
 
     @SuppressWarnings("unused")
     static private String TAG = "KeyManagerActivity";
@@ -67,11 +66,7 @@ public class KeyStoreActivity extends AppCompatActivity {
     public static String KEY_STORE_CHANGE_PIN = KEY_STORE_PIN_PREFIX +  "_CHANGE";
     public static String KEY_STORE_RESET_PIN = KEY_STORE_PIN_PREFIX +  "_RESET";
 
-    public static final String CHAT_PASSWORD_PREFIX = "com.silentcircle.keystore.action.MESSAGING_PW";
-    public static String KEY_STORE_SET_CHAT_PASSWORD_CHANGE = CHAT_PASSWORD_PREFIX +  "_RESET";
-
     private static final String USER_PASS_TAG = "spa_keystore_password_fragment";
-    private static final String MESSAGING_PASS_TAG = "spa_messaging_password_fragment";
 
     static final int KEY_STORE_READY = 1;
     static final int KEY_STORE_FAILED = 2;
@@ -211,10 +206,7 @@ public class KeyStoreActivity extends AppCompatActivity {
         else {
             updateExternalStorageState();
             invalidateOptionsMenu();
-            if (action.startsWith(CHAT_PASSWORD_PREFIX)) {
-                chatPasswordUi();
-            }
-            else if (action.startsWith(KEY_STORE_PASSWORD_PREFIX)) {
+            if (action.startsWith(KEY_STORE_PASSWORD_PREFIX)) {
                 action = action.replace(KEY_STORE_PASSWORD_PREFIX, "");
                 passwordUi(action, false);
             }
@@ -244,17 +236,6 @@ public class KeyStoreActivity extends AppCompatActivity {
             usernamePassword = PasswordFragment.newInstance(action, usePin);
         }
         ft.replace(R.id.ks_container, usernamePassword, USER_PASS_TAG).commitAllowingStateLoss();
-    }
-
-    private void chatPasswordUi() {
-        FragmentManager fm = getFragmentManager();
-        FragmentTransaction ft = fm.beginTransaction();
-        MessagingPasswordFragment messagingPasswordFragment =
-                (MessagingPasswordFragment) fm.findFragmentByTag(MESSAGING_PASS_TAG);
-        if (messagingPasswordFragment == null) {
-            messagingPasswordFragment = MessagingPasswordFragment.newInstance();
-        }
-        ft.replace(R.id.ks_container, messagingPasswordFragment, MESSAGING_PASS_TAG).commitAllowingStateLoss();
     }
 
     void updateExternalStorageState() {
@@ -330,7 +311,11 @@ public class KeyStoreActivity extends AppCompatActivity {
     void showInputInfo(String msg) {
         InfoMsgDialogFragment infoMsg = InfoMsgDialogFragment.newInstance(msg);
         FragmentManager fragmentManager = getFragmentManager();
-        infoMsg.show(fragmentManager, "SilentCircleKeyManagerInfo");
+        if (fragmentManager != null) {
+            fragmentManager.beginTransaction()
+                    .add(infoMsg, "SilentCircleKeyManagerInfo")
+                    .commitAllowingStateLoss();
+        }
     }
 
     /*

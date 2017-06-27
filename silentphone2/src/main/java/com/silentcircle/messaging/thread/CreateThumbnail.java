@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2016-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -50,9 +50,9 @@ import android.provider.BaseColumns;
 import android.provider.MediaStore;
 import android.provider.MediaStore.Audio.AudioColumns;
 import android.support.v4.content.ContextCompat;
-import android.util.Log;
 
 import com.silentcircle.common.util.ViewUtil;
+import com.silentcircle.logs.Log;
 import com.silentcircle.messaging.providers.AudioProvider;
 import com.silentcircle.messaging.providers.VCardProviderUtils;
 import com.silentcircle.messaging.providers.VideoProvider;
@@ -65,6 +65,8 @@ import com.silentcircle.silentphone2.R;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+
+import static android.graphics.BitmapFactory.decodeResource;
 
 public class CreateThumbnail  {
 
@@ -255,7 +257,7 @@ public class CreateThumbnail  {
     }
 
     private Bitmap decorateAudioThumbnail( Bitmap bitmap ) {
-        return decoratePlayableThumbnail( bitmap == null ? createEmptyThumbnail( Math.min( maximumWidth, maximumHeight ) ) : bitmap );
+        return ( bitmap == null ? createEmptyThumbnail( Math.min( maximumWidth, maximumHeight ) ) : bitmap );
     }
 
     protected Bitmap decorateUnknownThumbnail( Bitmap bitmap ) {
@@ -279,12 +281,20 @@ public class CreateThumbnail  {
     }
 
     private Bitmap decorateVideoThumbnail( Bitmap bitmap ) {
-        return decoratePlayableThumbnail(bitmap == null ? createEmptyThumbnail(maximumWidth, maximumWidth * 9 / 16) : bitmap);
+        return (bitmap == null ? createEmptyThumbnail(maximumWidth, maximumWidth * 9 / 16) : bitmap);
     }
 
     private Bitmap getAudioThumbnail() {
 
         Bitmap bitmap = null;
+        try {
+            // start with default bitmap for audio files
+            bitmap = BitmapFactory.decodeResource(mContext.getResources(), R.drawable.ic_sound);
+        } catch (Throwable t) {
+            // default black rectangle will be used
+            bitmap = createEmptyThumbnail(Math.min(maximumWidth, maximumHeight));
+        }
+
         if( uri.equals(AudioProvider.CONTENT_URI) ) {
             return decorateAudioThumbnail(resize(bitmap));
         } else {
@@ -330,7 +340,7 @@ public class CreateThumbnail  {
         options.outWidth = 96;
         options.outHeight = 128;
         options.inMutable = true;
-        return BitmapFactory.decodeResource(mContext.getResources(), resourceId, options);
+        return decodeResource(mContext.getResources(), resourceId, options);
     }
 
     private ContentType getContentType() {
@@ -496,9 +506,9 @@ public class CreateThumbnail  {
         double scale = 1;
         scale = Math.min( scale, (double) maximumWidth / targetWidth );
         scale = Math.min( scale, (double) maximumHeight / targetHeight );
-        targetWidth = (int) Math.floor( targetWidth * scale );
-        targetHeight = (int) Math.floor( targetHeight * scale );
-        return resize( bitmap, targetWidth, targetHeight );
+        targetWidth = (int) Math.floor(targetWidth * scale);
+        targetHeight = (int) Math.floor(targetHeight * scale);
+        return resize(bitmap, targetWidth, targetHeight);
     }
 
     private void setSampleSize( BitmapFactory.Options options ) {

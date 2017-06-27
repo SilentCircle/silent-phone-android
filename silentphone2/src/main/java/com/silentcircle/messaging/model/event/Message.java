@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2016-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -29,14 +29,13 @@ package com.silentcircle.messaging.model.event;
 
 import com.silentcircle.messaging.model.Location;
 import com.silentcircle.messaging.model.MessageStates;
+import com.silentcircle.messaging.model.RetentionInfo;
 import com.silentcircle.messaging.util.DateUtils;
 import com.silentcircle.messaging.util.IOUtils;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -44,6 +43,7 @@ public class Message extends Event {
 
     public static final long DEFAULT_EXPIRATION_TIME = java.lang.Long.MAX_VALUE;
 
+    // TODO better wording might be pending read/burn notification
     public static final long FAILURE_READ_NOTIFICATION = 1;
     public static final long FAILURE_BURN_NOTIFICATION = 2;
 
@@ -53,9 +53,10 @@ public class Message extends Event {
     protected long burnNotice;
     private long expirationTime;
     private long deliveryTime;
-    private List<Long> netMessageIds = new ArrayList<>();
     private Location location;
     private Set<Long> failures = new HashSet<>();
+    private boolean isRetained;
+    private RetentionInfo retentionInfo;
 
     private String metaData;
 
@@ -74,8 +75,8 @@ public class Message extends Event {
         this.burnNotice = 0L;
         this.expirationTime = DEFAULT_EXPIRATION_TIME;
         this.deliveryTime = 0L;
-        this.netMessageIds = new ArrayList<>();
         this.failures = new HashSet<>();
+        this.retentionInfo = null;
     }
 
     public boolean expires() {
@@ -213,14 +214,6 @@ public class Message extends Event {
         this.metaData = metaData;
     }
 
-    public List<Long> getNetMessageIds() {
-        return netMessageIds;
-    }
-
-    public void addNetMessageId(long netMessageId) {
-        this.netMessageIds.add(netMessageId);
-    }
-
     public void setFailureFlag(long failure) {
         failures.add(failure);
     }
@@ -242,8 +235,25 @@ public class Message extends Event {
         Collections.addAll(failures, flags);
     }
 
+    public boolean isRetained() {
+        return /**isRetained;**/false;
+    }
+
+    public void setRetained(boolean retained) {
+        isRetained = retained;
+    }
+
+    public RetentionInfo getRetentionInfo() {
+        return /**retentionInfo;**/null;
+    }
+
+    public void setRetentionInfo(RetentionInfo info) {
+        retentionInfo = info;
+    }
+
     public String toFormattedString() {
         long deliveryTime = getDeliveryTime();
+        RetentionInfo retentionInfo = getRetentionInfo();
         return super.toFormattedString()
                 + "Sender: " + getSender() + "\n"
                 + (deliveryTime == 0
@@ -258,7 +268,9 @@ public class Message extends Event {
                     + "Read time: " + DATE_FORMAT.format(new Date(getReadTime())) + "\n")
                 + "Burn time: " + DateUtils.getShortTimeString(TimeUnit.SECONDS.toMillis(getBurnNotice())) + "\n"
                 /* + "Read receipt requested: " + isRequestReceipt() + "\n" */
-                + "Has attachment: " + hasAttachment() + "\n";
+                + "Has attachment: " + hasAttachment() + "\n"
+                + "Is retained: " + isRetained() + "\n"
+                + (retentionInfo != null ? retentionInfo : "");
     }
 
 }

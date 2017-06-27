@@ -16,7 +16,7 @@
 
 package com.silentcircle.silentphone2.dialpad;
 
-import android.util.Log;
+import com.silentcircle.logs.Log;
 
 import java.util.ArrayList;
 

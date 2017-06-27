@@ -10,7 +10,8 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:scaleType="center"
-        android:src="@drawable/message_notification_background" />
+        android:src="@drawable/message_notification_background"
+        android:importantForAccessibility="no" />
 
     <TextView
         android:id="@+id/unread_message_count"

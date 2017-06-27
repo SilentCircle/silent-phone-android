@@ -137,6 +137,7 @@
             tools:visibility="visible"/>
 
     <Button
+            style="@style/Widget.Button"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:id="@+id/did_ok_button"

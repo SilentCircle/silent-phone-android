@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2016-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -34,11 +34,11 @@ import android.util.AttributeSet;
 public class TextView extends AppCompatTextView {
 
     public TextView(Context context) {
-        super(context);
+        this(context, null);
     }
 
     public TextView(Context context, AttributeSet attrs) {
-        super(context, attrs);
+        this(context, attrs, 0);
     }
 
     public TextView(Context context, AttributeSet attrs, int defStyle) {

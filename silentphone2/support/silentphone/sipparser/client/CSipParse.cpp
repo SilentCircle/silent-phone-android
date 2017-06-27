@@ -1,7 +1,7 @@
 /*
 Created by Janis Narbuts
 Copyright (C) 2004-2012, Tivi LTD, www.tiviphone.com. All rights reserved.
-Copyright (C) 2012-2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2012-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,7 +27,6 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-
 ///ADD to ren sipUri parse, contact params /contact 
 #include "CTSip.h"
 
@@ -223,6 +222,10 @@ int CSip::tryParseHdr()
          }
          return UNKNOWN;
       case 18:
+         if  (CMP(strList[tokensParsed],"X\rSC\rDISPLAY\rALIAS",18)){//1 + 2 + 7 + 5   + 3 =18
+            {tokensParsed++;parseXSCDisplayAlias();           return 0;}
+         }
+
          if (CMP(strList[tokensParsed],proxy_authen,18))
          {tokensParsed++;parseAut(&gspSIPMsg->hdrProxyAuthen) ;         return 0;}//parseProxyAuthenticate();           return 0;}
          return UNKNOWN;
@@ -278,7 +281,7 @@ int CSip::splitSIP(char *pFrom)
             }
             strList[n].iFirst=34;
             strList[n].iLast=34;
-            strList[n].uiLen=cur-strList[n].strVal;//
+            strList[n].uiLen=(unsigned int)(cur-strList[n].strVal);//
             n++;
             strList[n].strVal=cur+1;
             strList[n].iFirst=34;
@@ -289,7 +292,7 @@ int CSip::splitSIP(char *pFrom)
             flag=FLAG60 ;//flag|=FLAG60 ;
             if (cur!=strList[n].strVal)//>0)//
             {
-               strList[n].uiLen=cur-strList[n].strVal;//
+               strList[n].uiLen=(unsigned int)(cur-strList[n].strVal);//
                n++;
             }
             strList[n].iFirst=60;
@@ -303,7 +306,7 @@ int CSip::splitSIP(char *pFrom)
             if (cur!=strList[n].strVal)
             {
                strList[n].iLast=62;
-               strList[n].uiLen=cur-strList[n].strVal;//
+               strList[n].uiLen=(unsigned int)(cur-strList[n].strVal);//
                n++;
             }
             strList[n].strVal=cur+1;
@@ -317,13 +320,13 @@ int CSip::splitSIP(char *pFrom)
   
             if ((*(cur+1)=='\n') || ((*(cur+1)=='\r') && (*(cur+2)=='\n'))) 
             {
-               strList[n].uiLen=cur-strList[n].strVal;
+               strList[n].uiLen=(unsigned int)(cur-strList[n].strVal);
                if (cur==strList[n].strVal)n--;//
                //                     if (strList[n].uiLen==0) n--;
                if (strList[n].iLast==0) 
                   strList[n].iLast=cur[0];
                if (flag) return DROP;
-               gspSIPMsg->uiBytesParsed=cur-gspSIPMsg->rawDataBuffer+2;
+               gspSIPMsg->uiBytesParsed=(unsigned int)(cur-gspSIPMsg->rawDataBuffer+2);
                return n;
             }
          case 9:
@@ -341,7 +344,7 @@ int CSip::splitSIP(char *pFrom)
             {
                if (strList[n].iLast==0) strList[n].iLast=cur[0];
                
-               strList[n].uiLen=cur-strList[n].strVal;//
+               strList[n].uiLen=(unsigned int)(cur-strList[n].strVal);//
                n++;
                strList[n].iFirst=cur[0];
             }
@@ -456,7 +459,7 @@ int CSip::parseSipUri(SIP_URI * sipUri, int j,int i, int iIsFirstLine)
       }
       
    }
-   sipUri->dstrSipAddr.uiLen=strList[j].strVal-sipUri->dstrSipAddr.strVal+strList[j].uiLen;
+   sipUri->dstrSipAddr.uiLen=(unsigned int)(strList[j].strVal-sipUri->dstrSipAddr.strVal+strList[j].uiLen);
    sipUri->dstrSipAddr.iLast=strList[j].iLast;
    j++;
    return j;
@@ -491,7 +494,7 @@ int CSip::parseFirstLine()
          gspSIPMsg->sipHdr.dstrReasonPhrase=strList[3];
          // for (i=3;i<(j-1);i++){}
          //gspSIPMsg->sipHdr.dstrReasonPhrase.uiLen=strList[i].strVal-strList[3].strVal+strList[i].uiLen;
-         gspSIPMsg->sipHdr.dstrReasonPhrase.uiLen=strList[j-1].strVal-strList[3].strVal+strList[j-1].uiLen;
+         gspSIPMsg->sipHdr.dstrReasonPhrase.uiLen=(unsigned int)(strList[j-1].strVal-strList[3].strVal+strList[j-1].uiLen);
       }
       
       gspSIPMsg->sipHdr.iFlag|=SIP_INTERACTION_RESPONSE;
@@ -557,7 +560,7 @@ int CSip::parseFirstLine()
       if  (gspSIPMsg->sipHdr.iFlag==0){printError("Error in first line!",DROP); return DROP;}
    }
    gspSIPMsg->sipHdr.dstrFullRow.strVal=strList[0].strVal;
-   gspSIPMsg->sipHdr.dstrFullRow.uiLen=strList[i-1].strVal-strList[0].strVal+strList[i-1].uiLen;
+   gspSIPMsg->sipHdr.dstrFullRow.uiLen=(unsigned int)(strList[i-1].strVal-strList[0].strVal+strList[i-1].uiLen);
    
    return 0; 
 }
@@ -628,7 +631,7 @@ int CSip::parseAut(HDR_AUT * aut)
    
    
    aut->dstrFullRow=strList[j-1];
-   aut->dstrFullRow.uiLen=strList[j+i-1].strVal-strList[j-1].strVal+strList[j+i-1].uiLen;
+   aut->dstrFullRow.uiLen=(unsigned int)(strList[j+i-1].strVal-strList[j-1].strVal+strList[j+i-1].uiLen);
    
    if (CMP(strList[j],"DIGEST",6)==0) {printError("Error in authorization",DROP); return DROP;}
    j++;
@@ -718,7 +721,7 @@ int CSip::parseCallID()
    if (i==1) gspSIPMsg->dstrCallID=strList[tokensParsed];
    else
    {
-      strList[tokensParsed].uiLen=strList[tokensParsed+i-1].strVal-strList[tokensParsed].strVal+strList[tokensParsed+i-1].uiLen;
+      strList[tokensParsed].uiLen=(unsigned int)(strList[tokensParsed+i-1].strVal-strList[tokensParsed].strVal+strList[tokensParsed+i-1].uiLen);
       gspSIPMsg->dstrCallID=strList[tokensParsed];
    }
    
@@ -738,7 +741,7 @@ int CSip::parseCallInfo()
    j=tokensParsed;
    
    gspSIPMsg->hdrCallInfo.dstrFullRow=strList[j-1];
-   gspSIPMsg->hdrCallInfo.dstrFullRow.uiLen=strList[j+i-1].strVal-strList[j-1].strVal+strList[j+i-1].uiLen;
+   gspSIPMsg->hdrCallInfo.dstrFullRow.uiLen=(unsigned int)(strList[j+i-1].strVal-strList[j-1].strVal+strList[j+i-1].uiLen);
    
    for (;j<tokensParsed+i;j++)
    {
@@ -786,7 +789,7 @@ int CSip::parseCallRate()
    if (i==1) gspSIPMsg->dstrCallRate=strList[tokensParsed];
    else
    {
-      strList[tokensParsed].uiLen=strList[tokensParsed+i-1].strVal-strList[tokensParsed].strVal+strList[tokensParsed+i-1].uiLen;
+      strList[tokensParsed].uiLen=(unsigned int)(strList[tokensParsed+i-1].strVal-strList[tokensParsed].strVal+strList[tokensParsed+i-1].uiLen);
       gspSIPMsg->dstrCallRate=strList[tokensParsed];
    }
    
@@ -845,7 +848,7 @@ int CSip::parseContact()
    iLastToken=tokensParsed+i;
    
    gspSIPMsg->hldContact.x[gspSIPMsg->hldContact.uiCount].dstrFullRow=strList[j-1];
-   gspSIPMsg->hldContact.x[gspSIPMsg->hldContact.uiCount].dstrFullRow.uiLen=strList[j+i-1].strVal-strList[j-1].strVal+strList[j+i-1].uiLen;
+   gspSIPMsg->hldContact.x[gspSIPMsg->hldContact.uiCount].dstrFullRow.uiLen=(unsigned int)(strList[j+i-1].strVal-strList[j-1].strVal+strList[j+i-1].uiLen);
    if (strList[j+i-1].iLast=='>' || strList[j+i-1].iLast=='"')
       gspSIPMsg->hldContact.x[gspSIPMsg->hldContact.uiCount].dstrFullRow.uiLen++;
    
@@ -929,7 +932,7 @@ int CSip::parseContentType()
    // for (j=tokensParsed;j<tokensParsed+i;j++) printStr(strList[j]);
    j=tokensParsed;
    gspSIPMsg->hdrContType.dstrFullRow=strList[j-1];
-   gspSIPMsg->hdrContType.dstrFullRow.uiLen=strList[j+i-1].strVal-strList[j-1].strVal+strList[j+i-1].uiLen;
+   gspSIPMsg->hdrContType.dstrFullRow.uiLen=(unsigned int)(strList[j+i-1].strVal-strList[j-1].strVal+strList[j+i-1].uiLen);
    
    if (i<2) 
    {printError("Error: in contType",DROP); return DROP;}
@@ -972,7 +975,7 @@ int CSip::parseCSeq()
    //  for (j=tokensParsed;j<tokensParsed+i;j++) printStr(strList[j]);
    
    gspSIPMsg->hdrCSeq.dstrFullRow=strList[tokensParsed-1];
-   gspSIPMsg->hdrCSeq.dstrFullRow.uiLen=strList[tokensParsed+i-1].strVal-strList[tokensParsed-1].strVal+strList[tokensParsed+i-1].uiLen;
+   gspSIPMsg->hdrCSeq.dstrFullRow.uiLen=(unsigned int)(strList[tokensParsed+i-1].strVal-strList[tokensParsed-1].strVal+strList[tokensParsed+i-1].uiLen);
    //j=tokensParsed;
    
    if (i!=2) 
@@ -1027,7 +1030,7 @@ int CSip::parseEvent()
    if (i==1) gspSIPMsg->dstrEvent=strList[tokensParsed];
    else
    {
-      strList[tokensParsed].uiLen=strList[tokensParsed+i-1].strVal-strList[tokensParsed].strVal+strList[tokensParsed+i-1].uiLen;
+      strList[tokensParsed].uiLen=(unsigned int)(strList[tokensParsed+i-1].strVal-strList[tokensParsed].strVal+strList[tokensParsed+i-1].uiLen);
       gspSIPMsg->dstrEvent=strList[tokensParsed];
    }
    
@@ -1074,7 +1077,7 @@ int CSip::parseFromTo(HDR_TO_FROM * ft)
    
    j=tokensParsed;
    ft->dstrFullRow=strList[j-1];
-   ft->dstrFullRow.uiLen=strList[j+i-1].strVal-strList[j-1].strVal+strList[j+i-1].uiLen;
+   ft->dstrFullRow.uiLen=(unsigned int)(strList[j+i-1].strVal-strList[j-1].strVal+strList[j+i-1].uiLen);
    if (strList[j+i-1].iLast=='>' || strList[j+i-1].iLast=='"')
       ft->dstrFullRow.uiLen++; 
    
@@ -1086,7 +1089,7 @@ int CSip::parseFromTo(HDR_TO_FROM * ft)
          if(j>=n){printError("ERROR From to uri",j);return DROP;}
          if (strList[j+1].iLast==':') break;
       }
-      ft->dstrName.uiLen=strList[j].strVal-ft->dstrName.strVal+strList[j].uiLen;
+      ft->dstrName.uiLen=(unsigned int)(strList[j].strVal-ft->dstrName.strVal+strList[j].uiLen);
       j++;
       //ft->flag|=1;
    }
@@ -1154,7 +1157,7 @@ int CSip::parsePortaBilling()
    {printError("Error: in hdrPortaBill",DROP); return DROP;}
    
    gspSIPMsg->hdrPortaBill.dstrFullRow=strList[j-1];
-   gspSIPMsg->hdrPortaBill.dstrFullRow.uiLen=strList[j+i-1].strVal-strList[j-1].strVal+strList[j+i-1].uiLen;
+   gspSIPMsg->hdrPortaBill.dstrFullRow.uiLen=(unsigned int)(strList[j+i-1].strVal-strList[j-1].strVal+strList[j+i-1].uiLen);
    int iOk=0;
    
    for (;j<tokensParsed+i;j++)
@@ -1233,7 +1236,7 @@ int CSip::parseReason(){
    for(int v=1;v<i;v+=2){
       if(CMP(strList[j+v],"CAUSE",5) && strList[j+v].iFirst==';' && strList[j+v].iLast=='='){
          gspSIPMsg->hdrReason.cause=strList[j+v+1];
-         gspSIPMsg->hdrReason.cause.uiVal = strtoul((gspSIPMsg->hdrReason.cause.strVal),NULL,0);
+         gspSIPMsg->hdrReason.cause.uiVal = (unsigned int)strtoul((gspSIPMsg->hdrReason.cause.strVal),NULL,0);
          
          if(gspSIPMsg->hdrReason.cause.uiVal<1 || gspSIPMsg->hdrReason.cause.uiVal>5000){
             printError("Error: parseReason (code_int out of range)",DROP);
@@ -1265,7 +1268,7 @@ int CSip::parseProxyRequire()
    {printError("Error: Proxy Require not found:",DROP); return DROP;}
    
    gspSIPMsg->hldProxReq.x[gspSIPMsg->hldProxReq.uiCount].dstrFullRow=strList[j-1];
-   gspSIPMsg->hldProxReq.x[gspSIPMsg->hldProxReq.uiCount].dstrFullRow.uiLen=strList[j+i-1].strVal-strList[j-1].strVal+strList[j+i-1].uiLen;
+   gspSIPMsg->hldProxReq.x[gspSIPMsg->hldProxReq.uiCount].dstrFullRow.uiLen=(unsigned int)(strList[j+i-1].strVal-strList[j-1].strVal+strList[j+i-1].uiLen);
    
    for (;j<i+tokensParsed-1;j++)
    {
@@ -1290,7 +1293,7 @@ int CSip::parseRoutes(HLD_ROUTE * rt, int iMustBeSIP_scheme)
    j=tokensParsed;
    
    rt->x[rt->uiCount].dstrFullRow=strList[j-1];
-   rt->x[rt->uiCount].dstrFullRow.uiLen=strList[j+i-1].strVal-strList[j-1].strVal+strList[j+i-1].uiLen;
+   rt->x[rt->uiCount].dstrFullRow.uiLen=(unsigned int)(strList[j+i-1].strVal-strList[j-1].strVal+strList[j+i-1].uiLen);
    
    for (;j<i+tokensParsed-1;)
    {
@@ -1339,7 +1342,7 @@ int CSip::parseSupportReq(HLD_SUP * sup)
    {printError("Error: Supported not found:",DROP); return DROP;}
    
    sup->x[sup->uiCount].dstrFullRow=strList[j-1];
-   sup->x[sup->uiCount].dstrFullRow.uiLen=strList[j+i-1].strVal-strList[j-1].strVal+strList[j+i-1].uiLen;
+   sup->x[sup->uiCount].dstrFullRow.uiLen=(unsigned int)(strList[j+i-1].strVal-strList[j-1].strVal+strList[j+i-1].uiLen);
    
    for (;j<i+tokensParsed;j++)
    {
@@ -1360,6 +1363,43 @@ int CSip::parseUserAgent(){ return 0; }
 
 int CSip::parseWarning(){ return 0; }
 
+/*
+ X-SC-Display-Alias: johngalt;type=username
+ X-SC-Display-Alias: john.galt@example.com;type=email
+ X-SC-Display-Alias: +19703254746;type=tn
+ */
+int CSip::parseXSCDisplayAlias(){
+   int i,j;
+   
+   TOKENS_IN_LINE;
+   
+   if (i==0)
+   {printError("Error: parseXSCDisplayAlias not found:",DROP); return DROP;}
+   
+   if(i<3){printError("Error: parseXSCDisplayAlias i<3",DROP); return DROP;}
+   
+   
+   j=tokensParsed;
+   
+   gspSIPMsg->hdrXSCDisplayAlias.dstrFullRow=strList[j-1];
+   gspSIPMsg->hdrXSCDisplayAlias.dstrFullRow.uiLen=(unsigned int)(strList[j+i-1].strVal-strList[j-1].strVal+strList[j+i-1].uiLen);
+   
+   int typeIdx =j+i-2;
+   
+   
+   if(strList[typeIdx].iFirst==';' && strList[typeIdx].iLast=='=' && CMP(strList[typeIdx],"TYPE",4)){
+      gspSIPMsg->hdrXSCDisplayAlias.dstrAlias.strVal=strList[j-1].strVal;
+      gspSIPMsg->hdrXSCDisplayAlias.dstrAlias.uiLen=(unsigned int)(strList[typeIdx-1].strVal-strList[j-1].strVal+strList[typeIdx-1].uiLen);
+      
+      gspSIPMsg->hdrXSCDisplayAlias.dstrType=strList[typeIdx+1];
+   }
+   
+   
+   
+   tokensParsed+=i;
+   return 0;
+}
+
 int CSip::parseXSCMessageMeta(){
    int i,j;
    
@@ -1368,7 +1408,7 @@ int CSip::parseXSCMessageMeta(){
    j=tokensParsed;
    
    gspSIPMsg->hdrXSCMsgMeta.dstrFullRow=strList[j-1];
-   gspSIPMsg->hdrXSCMsgMeta.dstrFullRow.uiLen=strList[j+i-1].strVal-strList[j-1].strVal+strList[j+i-1].uiLen;
+   gspSIPMsg->hdrXSCMsgMeta.dstrFullRow.uiLen=(unsigned int)(strList[j+i-1].strVal-strList[j-1].strVal+strList[j+i-1].uiLen);
    
    int tokens = 0;
    
@@ -1403,7 +1443,7 @@ int CSip::parseUnknown()
    j=tokensParsed;
    
    gspSIPMsg->hldUnknownHdr.x[gspSIPMsg->hldUnknownHdr.uiCount]=strList[j-1];
-   gspSIPMsg->hldUnknownHdr.x[gspSIPMsg->hldUnknownHdr.uiCount].uiLen=strList[j+i-1].strVal-strList[j-1].strVal+strList[j+i-1].uiLen;
+   gspSIPMsg->hldUnknownHdr.x[gspSIPMsg->hldUnknownHdr.uiCount].uiLen=(unsigned int)(strList[j+i-1].strVal-strList[j-1].strVal+strList[j+i-1].uiLen);
    if (strList[j+i-1].iLast=='>' || strList[j+i-1].iLast=='"')
       gspSIPMsg->hldUnknownHdr.x[gspSIPMsg->hldUnknownHdr.uiCount].uiLen++;
    
@@ -1435,7 +1475,7 @@ int CSip::parseVia()
    j=tokensParsed;
    
    gspSIPMsg->hldVia.x[viaNr].dstrFullRow=strList[j-1];
-   gspSIPMsg->hldVia.x[viaNr].dstrFullRow.uiLen=strList[j+i-1].strVal-strList[j-1].strVal+strList[j+i-1].uiLen;
+   gspSIPMsg->hldVia.x[viaNr].dstrFullRow.uiLen=(unsigned int)(strList[j+i-1].strVal-strList[j-1].strVal+strList[j+i-1].uiLen);
    
    
    
@@ -1459,7 +1499,7 @@ int CSip::parseVia()
    {
       if (strList[j].uiLen>5) {printError("Error in port!",DROP); return DROP;}
       gspSIPMsg->hldVia.x[viaNr].dstrPort=strList[j];
-      gspSIPMsg->hldVia.x[viaNr].dstrPort.uiVal=strtoul((strList[j].strVal),NULL,0);
+      gspSIPMsg->hldVia.x[viaNr].dstrPort.uiVal=(unsigned int)strtoul((strList[j].strVal),NULL,0);
       if ((gspSIPMsg->hldVia.x[viaNr].dstrPort.uiVal>256*256-1) || (gspSIPMsg->hldVia.x[viaNr].dstrPort.uiVal<1)) {printError("Error in port!",DROP); return DROP;}
       
       //      printf("port=%d\n",gspSIPMsg->hldVia.x[viaNr].dstrPort);   

@@ -1,29 +1,17 @@
 /*
-Copyright © 2012-2014, Silent Circle, LLC.  All rights reserved.
+Copyright 2016-2017 Silent Circle, LLC
 
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-    * Any redistribution, use, or modification is done solely for personal 
-      benefit and not for any commercial purpose or for monetary gain
-    * Redistributions of source code must retain the above copyright
-      notice, this list of conditions and the following disclaimer.
-    * Redistributions in binary form must reproduce the above copyright
-      notice, this list of conditions and the following disclaimer in the
-      documentation and/or other materials provided with the distribution.
-    * Neither the name Silent Circle nor the
-      names of its contributors may be used to endorse or promote products
-      derived from this software without specific prior written permission.
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL SILENT CIRCLE, LLC BE LIABLE FOR ANY
-DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
 */
 
 #define DEBUG 1
@@ -31,10 +19,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "scloud.h"
 #include "scloudPriv.h"
 #include "../utilities.h"
-#include "../../axolotl/crypto/HKDF.h"
-
-#include <zrtp/crypto/hmac256.h>
-#include <zrtp/crypto/skein256.h>
+#include "../../ratchet/crypto/HKDF.h"
+#include "../../logging/ZinaLogging.h"
 
 #ifndef roundup
 #define roundup(x, y)   ((((x) % (y)) == 0) ? \
@@ -167,8 +153,13 @@ SCLError SCloudCalculateKey(SCloudContextRef ctx, size_t blocksize)
 
     int32_t numBytes = symKeyLen + blockLen + SCLOUD_LOCATOR_LEN;          // blockLen is the IV we need
 
+    if(ctx->contextStr == NULL || ctx->contextStrLen == 0) {
+        RETERR(kSCLError_ImproperInitialization);
+    }
+
     // Use HDKF with 2 input parameters: ikm, info
-    axolotl::HKDF::deriveSecrets(hash, SKEIN256_DIGEST_LENGTH,             // hash as input key material to HASH KDF
+    zina::HKDF::deriveSecrets(hash, SKEIN256_DIGEST_LENGTH,             // hash as input key material to HASH KDF
+                                 ctx->contextStr, ctx->contextStrLen, // secret salt to avoid attacks on convergent encryption
                                  (uint8_t*)scCloudKeyLabel, strlen(scCloudKeyLabel), // fixed string "ScloudDerivedKeyIvLocator" as info
                                  derivedData, numBytes);
 
@@ -178,18 +169,8 @@ SCLError SCloudCalculateKey(SCloudContextRef ctx, size_t blocksize)
     // make a copy of the IV which gets modified during encryption
     COPY((ctx->key.symKey+symKeyLen), ctx->iv, blockLen);
 
-    // Copy the locator 
-    if (ctx->contextStr != NULL) {
-        uint8_t hashedLocator[SKEIN256_DIGEST_LENGTH];
-        data[0] = derivedData+symKeyLen+blockLen; dataLen[0] = SCLOUD_LOCATOR_LEN;
-        data[1] = ctx->contextStr; dataLen[1] = ctx->contextStrLen;
-        data[2] = NULL; dataLen[2] = 0;
-        skein256(data, dataLen, hashedLocator);
-        COPY(hashedLocator, ctx->locator, SCLOUD_LOCATOR_LEN);
-    }
-    else {
-        COPY((derivedData+symKeyLen+blockLen), ctx->locator, SCLOUD_LOCATOR_LEN);
-    }
+    // Copy the locator
+    COPY((derivedData+symKeyLen+blockLen), ctx->locator, SCLOUD_LOCATOR_LEN);
 
     if (ctx->key.keySuite == kSCloudKeySuite_AES128) {
         aes_encrypt_key128(ctx->key.symKey, &ctx->aes_enc);
@@ -271,6 +252,12 @@ done:
     return err;
 }
 
+static void computeHash(SCloudContextRef ctx, uint8_t *buffer, size_t bufferSize)
+{
+    LOGGER(INFO, __func__, " -->");
+    skein256(buffer, static_cast<unsigned int>(bufferSize), ctx->key.hash);
+    LOGGER(INFO, __func__, " <--");
+}
 
 static SCLError sCloudEncryptNextInternal (SCloudContextRef ctx, uint8_t *buffer, size_t *bufferSize) 
 {
@@ -372,13 +359,12 @@ static SCLError sCloudEncryptNextInternal (SCloudContextRef ctx, uint8_t *buffer
     } while (bufferLeft && ctx->state != kSCloudState_Done);
 
     if(IsntSCLError(err) && bytesUsed) {
-        aes_cbc_encrypt(buffer, buffer, bytesUsed, ctx->iv, &ctx->aes_enc);
+        aes_cbc_encrypt(buffer, buffer, static_cast<int>(bytesUsed), ctx->iv, &ctx->aes_enc);
     }
+    computeHash(ctx, buffer, bytesUsed);
     *bufferSize = bytesUsed;
 
-done:
     return err;
-
 }
 
 SCLError SCloudEncryptNext(SCloudContextRef ctx, uint8_t *buffer, size_t *bufferSize)
@@ -403,6 +389,26 @@ SCLError SCloudEncryptNext(SCloudContextRef ctx, uint8_t *buffer, size_t *buffer
 
 done:
     return err;
+}
+
+static SCLError checkHash(SCloudContextRef scloudRef, uint8_t* in, size_t inSize) {
+    SCLError err = kSCLError_NoErr;
+
+    LOGGER(INFO, __func__, " --> ", scloudRef->key.keyVersion);
+
+    // Key versions <=2 don't have hash check data, thus assume success
+    if (scloudRef->key.keyVersion <= 2)
+        return err;
+
+    uint8_t hash[SKEIN256_DIGEST_LENGTH];
+
+    skein256(in, static_cast<unsigned int>(inSize), hash);
+    if (memcmp(hash, scloudRef->key.hash, SKEIN256_DIGEST_LENGTH) == 0) {
+        LOGGER(INFO, __func__, " <--");
+        return err;
+    }
+    LOGGER(ERROR, __func__, " <-- failed");
+    return kSCLError_BadIntegrity;
 }
 
 
@@ -498,6 +504,9 @@ SCLError SCloudDecryptNext(SCloudContextRef scloudRef, uint8_t* in, size_t inSiz
     if( inSize == 0 && scloudRef->state == kSCloudState_Done) {
         RETERR(kSCLError_EndOfIteration);
     }
+
+    if (checkHash(scloudRef, in, inSize) != kSCLError_NoErr)
+        return kSCLError_BadIntegrity;
 
     while (true) {
         uint8_t *p1 = ptBuf + ptBufLen;

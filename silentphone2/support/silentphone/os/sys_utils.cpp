@@ -1,7 +1,7 @@
 /*
 Created by Janis Narbuts
 Copyright (C) 2004-2012, Tivi LTD, www.tiviphone.com. All rights reserved.
-Copyright (C) 2012-2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2012-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,7 +27,6 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-
 //#include "CSessions.h"
 #include "../tiviengine/main.h"
 #include <stdlib.h>
@@ -126,8 +125,8 @@ unsigned int getTickCount()
 {
    struct timeval v;
    if(gettimeofday(&v,0)==0)
-      return v.tv_sec*1000+
-      (v.tv_usec>>10); 
+      return (unsigned int)(v.tv_sec*1000+
+      (v.tv_usec>>10));
    return 0;
 }
 
@@ -142,6 +141,18 @@ void tivi_sleep_ms(unsigned int ms ){
       ms-=s*1000;
    }
    usleep(ms*1000); 
+}
+
+void sleepForMs(int msec, int step, int *exiting){
+   int stepNS = step * 1000;
+   
+   stepNS-=4;
+   if(stepNS<5)stepNS=5;
+   
+   usleep(stepNS);
+   //    for(int i=step; i<msec && !iExiting;i+=step)usleep(stepNS);
+   for(int i=step; i<msec && !exiting[0]; i+=step)
+      usleep(stepNS);
 }
 
 static char bufCfgPath[1024]={0};
@@ -164,7 +175,7 @@ int get_time()//TODO add to os globals
 #ifdef _WIN32_WCE
    return getDaysFromNYear(1970)*24*60*60;;
 #else
-   return time(NULL);
+   return (int)time(NULL);
 #endif
 }
 
@@ -238,7 +249,7 @@ int getPathW(short *p, int iMaxLen)//TODO rename exec path
 {
 #if defined(ANDROID_NDK) || defined(__APPLE__)
    int iLen=0;
-   char * getFileStorePath();;
+   extern char * getFileStorePath();
    char *path= getFileStorePath();
    while(path[iLen]){
       p[iLen]=path[iLen];
@@ -334,7 +345,7 @@ char *t_createDevId(char *p, void *p1, int iLen1, void *p2, int iLen2)
 
 char *t_createDevId_PC(char *p, void *p1, int iLen1)
 {
-   int isDevIDUSB();
+   extern int isDevIDUSB();
    int iIsUSB=isDevIDUSB();
    if(iLen1<11){
       

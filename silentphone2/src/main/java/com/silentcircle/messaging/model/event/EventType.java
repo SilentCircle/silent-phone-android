@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2016-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -30,10 +30,12 @@ package com.silentcircle.messaging.model.event;
 public enum EventType {
     EVENT(0, Event.class),
     MESSAGE(1, Message.class),
+    MESSAGE_STATE_EVENT(2, MessageStateEvent.class),
     INCOMING_MESSAGE(17, IncomingMessage.class),
     OUTGOING_MESSAGE(33, OutgoingMessage.class),
     PHONE_MESSAGE(40, CallMessage.class),
     ERROR_EVENT(48, ErrorEvent.class),
+    INFO_EVENT(50, InfoEvent.class),
     CALL(80, Call.class),
     INCOMING_CALL(81, IncomingCall.class),
     OUTGOING_CALL(82, OutgoingCall.class);

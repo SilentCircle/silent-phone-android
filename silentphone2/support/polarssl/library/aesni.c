@@ -1,23 +1,22 @@
 /*
  *  AES-NI support functions
  *
- *  Copyright (C) 2006-2014, ARM Limited, All Rights Reserved
+ *  Copyright (C) 2006-2015, ARM Limited, All Rights Reserved
+ *  SPDX-License-Identifier: Apache-2.0
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License"); you may
+ *  not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ *  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  *
  *  This file is part of mbed TLS (https://tls.mbed.org)
- *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
- *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License along
- *  with this program; if not, write to the Free Software Foundation, Inc.,
- *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
 /*
@@ -25,24 +24,28 @@
  * [CLMUL-WP] http://software.intel.com/en-us/articles/intel-carry-less-multiplication-instruction-and-its-usage-for-computing-the-gcm-mode/
  */
 
-#if !defined(POLARSSL_CONFIG_FILE)
-#include "polarssl/config.h"
+#if !defined(MBEDTLS_CONFIG_FILE)
+#include "mbedtls/config.h"
 #else
-#include POLARSSL_CONFIG_FILE
+#include MBEDTLS_CONFIG_FILE
 #endif
 
-#if defined(POLARSSL_AESNI_C)
+#if defined(MBEDTLS_AESNI_C)
 
-#include "polarssl/aesni.h"
+#include "mbedtls/aesni.h"
 
 #include <string.h>
 
-#if defined(POLARSSL_HAVE_X86_64)
+#ifndef asm
+#define asm __asm
+#endif
+
+#if defined(MBEDTLS_HAVE_X86_64)
 
 /*
  * AES-NI support detection routine
  */
-int aesni_supports( unsigned int what )
+int mbedtls_aesni_has_support( unsigned int what )
 {
     static int done = 0;
     static unsigned int c = 0;
@@ -89,7 +92,7 @@ int aesni_supports( unsigned int what )
 /*
  * AES-NI AES-ECB block en(de)cryption
  */
-int aesni_crypt_ecb( aes_context *ctx,
+int mbedtls_aesni_crypt_ecb( mbedtls_aes_context *ctx,
                      int mode,
                      const unsigned char input[16],
                      unsigned char output[16] )
@@ -97,7 +100,7 @@ int aesni_crypt_ecb( aes_context *ctx,
     asm( "movdqu    (%3), %%xmm0    \n\t" // load input
          "movdqu    (%1), %%xmm1    \n\t" // load round key 0
          "pxor      %%xmm1, %%xmm0  \n\t" // round 0
-         "addq      $16, %1         \n\t" // point to next round key
+         "add       $16, %1         \n\t" // point to next round key
          "subl      $1, %0          \n\t" // normal rounds = nr - 1
          "test      %2, %2          \n\t" // mode?
          "jz        2f              \n\t" // 0 = decrypt
@@ -105,7 +108,7 @@ int aesni_crypt_ecb( aes_context *ctx,
          "1:                        \n\t" // encryption loop
          "movdqu    (%1), %%xmm1    \n\t" // load round key
          AESENC     xmm1_xmm0      "\n\t" // do round
-         "addq      $16, %1         \n\t" // point to next round key
+         "add       $16, %1         \n\t" // point to next round key
          "subl      $1, %0          \n\t" // loop
          "jnz       1b              \n\t"
          "movdqu    (%1), %%xmm1    \n\t" // load round key
@@ -115,7 +118,7 @@ int aesni_crypt_ecb( aes_context *ctx,
          "2:                        \n\t" // decryption loop
          "movdqu    (%1), %%xmm1    \n\t"
          AESDEC     xmm1_xmm0      "\n\t" // do round
-         "addq      $16, %1         \n\t"
+         "add       $16, %1         \n\t"
          "subl      $1, %0          \n\t"
          "jnz       2b              \n\t"
          "movdqu    (%1), %%xmm1    \n\t" // load round key
@@ -135,7 +138,7 @@ int aesni_crypt_ecb( aes_context *ctx,
  * GCM multiplication: c = a times b in GF(2^128)
  * Based on [CLMUL-WP] algorithms 1 (with equation 27) and 5.
  */
-void aesni_gcm_mult( unsigned char c[16],
+void mbedtls_aesni_gcm_mult( unsigned char c[16],
                      const unsigned char a[16],
                      const unsigned char b[16] )
 {
@@ -246,7 +249,7 @@ void aesni_gcm_mult( unsigned char c[16],
 /*
  * Compute decryption round keys from encryption round keys
  */
-void aesni_inverse_key( unsigned char *invkey,
+void mbedtls_aesni_inverse_key( unsigned char *invkey,
                         const unsigned char *fwdkey, int nr )
 {
     unsigned char *ik = invkey;
@@ -423,7 +426,7 @@ static void aesni_setkey_enc_256( unsigned char *rk,
 
          /*
           * Main "loop" - Generating one more key than necessary,
-          * see definition of aes_context.buf
+          * see definition of mbedtls_aes_context.buf
           */
          "2:                                \n\t"
          AESKEYGENA xmm1_xmm2 ",0x01        \n\tcall 1b \n\t"
@@ -441,7 +444,7 @@ static void aesni_setkey_enc_256( unsigned char *rk,
 /*
  * Key expansion, wrapper
  */
-int aesni_setkey_enc( unsigned char *rk,
+int mbedtls_aesni_setkey_enc( unsigned char *rk,
                       const unsigned char *key,
                       size_t bits )
 {
@@ -450,12 +453,12 @@ int aesni_setkey_enc( unsigned char *rk,
         case 128: aesni_setkey_enc_128( rk, key ); break;
         case 192: aesni_setkey_enc_192( rk, key ); break;
         case 256: aesni_setkey_enc_256( rk, key ); break;
-        default : return( POLARSSL_ERR_AES_INVALID_KEY_LENGTH );
+        default : return( MBEDTLS_ERR_AES_INVALID_KEY_LENGTH );
     }
 
     return( 0 );
 }
 
-#endif /* POLARSSL_HAVE_X86_64 */
+#endif /* MBEDTLS_HAVE_X86_64 */
 
-#endif /* POLARSSL_AESNI_C */
+#endif /* MBEDTLS_AESNI_C */

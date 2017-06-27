@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources xmlns:android="http://schemas.android.com/apk/res/android">
+<resources xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools">
 
     <style name="Compose">
-        <item name="android:layout_width">fill_parent</item>
+        <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">wrap_content</item>
-        <!--<item name="android:background">@color/chat_main_background</item>-->
-        <item name="android:padding">@dimen/spacing_small</item>
+        <item name="android:background">?sp_chat_compose_background_color</item>
+        <item name="android:paddingLeft">@dimen/spacing_small</item>
         <item name="android:gravity">center_vertical</item>
         <item name="android:layout_alignParentBottom">true</item>
+        <item name="android:clickable">true</item>
     </style>
 
     <style name="_ComposeText">
@@ -20,42 +21,38 @@
     </style>
 
     <style name="ComposeText" parent="_ComposeText" >
-        <item name="android:paddingTop">@dimen/spacing_small</item>
-        <item name="android:paddingBottom">@dimen/spacing_small</item>
+        <item name="android:paddingTop">0dp</item>
+        <item name="android:paddingBottom">0dp</item>
         <item name="android:paddingLeft">@dimen/spacing_normal</item>
         <item name="android:paddingRight">@dimen/spacing_normal</item>
+        <item name="android:background">@android:color/transparent</item>
     </style>
 
     <style name="ComposeSend">
-        <item name="android:layout_width">wrap_content</item>
-        <item name="android:layout_height">wrap_content</item>
-        <item name="android:layout_alignParentRight">true</item>
-        <item name="android:layout_alignTop">@+id/compose_text</item>
-        <item name="android:layout_alignBottom">@+id/compose_text</item>
-        <item name="android:padding">@dimen/spacing_small</item>
-        <item name="android:scaleType">fitEnd</item>
-        <item name="android:background">@drawable/bg_selectable</item>
+        <item name="android:layout_width">@dimen/messaging_compose_width</item>
+        <item name="android:layout_height">@dimen/messaging_compose_height</item>
+        <item name="android:scaleType">center</item>
+        <item name="android:background">?attr/selectableItemBackgroundBorderless</item>
         <item name="android:src">@drawable/ic_action_send</item>
-        <!-- TODO: ?sp_ attribute needed -->
-        <item name="android:tint">?sp_message_send_tint_color</item>
+    </style>
+
+    <style name="ComposeRecord">
+        <item name="android:layout_width">@dimen/messaging_compose_width</item>
+        <item name="android:layout_height">@dimen/messaging_compose_height</item>
+        <item name="android:scaleType">fitCenter</item>
+        <item name="android:padding">2dp</item>
+        <item name="android:background">?attr/selectableItemBackgroundBorderless</item>
+        <item name="android:src">@drawable/action_button_voice_recording</item>
     </style>
 
     <style name="ComposeAttach">
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">wrap_content</item>
-        <!--<item name="android:padding">@dimen/spacing_small</item>-->
-        <!--<item name="android:scaleType">fitEnd</item>-->
-        <!--<item name="android:background">@drawable/bg_selectable</item>-->
-        <item name="android:src">@drawable/ic_action_attachment_dark</item>
+        <item name="android:layout_marginRight">@dimen/spacing_normal</item>
+        <item name="android:gravity">center</item>
+        <item name="android:src">@drawable/ic_clear_white_24dp</item>
         <item name="android:tint">@color/sc_ng_text_dark</item>
-    </style>
-
-    <style name="StartChat">
-        <item name="android:layout_width">wrap_content</item>
-        <item name="android:layout_height">wrap_content</item>
-        <item name="android:padding">@dimen/spacing_small</item>
-        <item name="android:background">@drawable/bg_selectable</item>
-        <item name="android:src">@drawable/ic_action_start_chat</item>
+        <item name="android:rotation">45</item>
     </style>
 
 </resources>

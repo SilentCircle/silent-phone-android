@@ -1,7 +1,7 @@
 /*
 Created by Janis Narbuts
 Copyright (C) 2004-2012, Tivi LTD, www.tiviphone.com. All rights reserved.
-Copyright (C) 2012-2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2012-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,7 +27,6 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-
 //#include <string.h>
 
 #define T_CAN_TEST_V
@@ -212,6 +211,8 @@ static void ssim_axb_core( const unsigned char *pix1, int stride1,
    sums[2] = ss;
    sums[3] = s12;
 }
+
+/* EA: unused function
 static float pixel_ssim_x(unsigned char *pix1, int stride1,
                            unsigned char *pix2, int stride2, int iIs16x16)
 {
@@ -222,6 +223,7 @@ static float pixel_ssim_x(unsigned char *pix1, int stride1,
    return ssim_end1(sum[0],sum[1],sum[2],sum[3]);
    
 }
+ */
 
 float get_ssim(unsigned char *cur, unsigned char *ref, int stride, int k){
    if(k){

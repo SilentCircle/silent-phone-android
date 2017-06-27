@@ -4,3 +4,4 @@ APP_ABI := armeabi-v7a
 
 # Enable c++11 extensions in source code
 APP_CPPFLAGS += -std=c++11
+NDK_TOOLCHAIN_VERSION=clang

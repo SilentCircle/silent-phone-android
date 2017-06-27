@@ -37,8 +37,8 @@ void ZrtpPacketDHPart::initialize() {
     void* allocated = &data;
     memset(allocated, 0, sizeof(data));
 
-    zrtpHeader = (zrtpPacketHeader_t *)&((DHPartPacket_t *)allocated)->hdr; // the standard header
-    DHPartHeader = (DHPart_t *)&((DHPartPacket_t *)allocated)->dhPart;
+    zrtpHeader = &((DHPartPacket_t *)allocated)->hdr; // the standard header
+    DHPartHeader = &((DHPartPacket_t *)allocated)->dhPart;
     pv = ((uint8_t*)allocated) + sizeof(DHPartPacket_t);    // point to the public key value
 
     setZrtpId();
@@ -46,7 +46,7 @@ void ZrtpPacketDHPart::initialize() {
 
 // The fixed numbers below are taken from ZRTP specification, chap 5.1.5
 void ZrtpPacketDHPart::setPubKeyType(const char* pkt) {
-    // Well - the algo type is only 4 char thus cast to int32 and compare
+    // Well - the algorithm type is only 4 char thus cast to int32 and compare
     if (*(int32_t*)pkt == *(int32_t*)dh2k) {
         dhLength = 256;
     }
@@ -68,15 +68,15 @@ void ZrtpPacketDHPart::setPubKeyType(const char* pkt) {
     else
         return;
 
-    int length = sizeof(DHPartPacket_t) + dhLength + (2 * ZRTP_WORD_SIZE); // HMAC field is 2*ZRTP_WORD_SIZE
-    setLength(length / ZRTP_WORD_SIZE);
+    uint16_t length = static_cast<uint16_t>(sizeof(DHPartPacket_t) + dhLength + (2 * ZRTP_WORD_SIZE)); // HMAC field is 2*ZRTP_WORD_SIZE
+    setLength(static_cast<uint16_t>(length / ZRTP_WORD_SIZE));
 }
 
 ZrtpPacketDHPart::ZrtpPacketDHPart(uint8_t *data) {
     DEBUGOUT((fprintf(stdout, "Creating DHPart packet from data\n")));
 
-    zrtpHeader = (zrtpPacketHeader_t *)&((DHPartPacket_t *)data)->hdr;  // the standard header
-    DHPartHeader = (DHPart_t *)&((DHPartPacket_t *)data)->dhPart;
+    zrtpHeader = &((DHPartPacket_t *)data)->hdr;  // the standard header
+    DHPartHeader = &((DHPartPacket_t *)data)->dhPart;
 
     int16_t len = getLength();
     DEBUGOUT((fprintf(stdout, "DHPart length: %d\n", len)));

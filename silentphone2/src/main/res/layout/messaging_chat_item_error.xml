@@ -5,7 +5,7 @@
     android:layout_height="wrap_content"
     android:paddingBottom="0.5dp"
     android:background="@drawable/bg_error_light"
-    android:filterTouchesWhenObscured="true"
+    android:filterTouchesWhenObscured="false"
     android:gravity="center">
 
     <com.silentcircle.messaging.views.TextView

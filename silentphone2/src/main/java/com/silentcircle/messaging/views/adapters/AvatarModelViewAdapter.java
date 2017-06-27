@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2016-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -25,13 +25,13 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-
 package com.silentcircle.messaging.views.adapters;
 
+import android.graphics.drawable.Drawable;
 import android.support.annotation.Nullable;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.LinearLayout;
+import android.widget.AbsListView;
 import android.widget.QuickContactBadge;
 import android.widget.SectionIndexer;
 
@@ -39,9 +39,11 @@ import com.silentcircle.SilentPhoneApplication;
 import com.silentcircle.common.list.ContactEntry;
 import com.silentcircle.contacts.ContactPhotoManagerNew;
 import com.silentcircle.messaging.model.event.IncomingMessage;
+import com.silentcircle.messaging.util.AsyncUtils;
 import com.silentcircle.messaging.util.AvatarUtils;
 import com.silentcircle.messaging.util.ContactsCache;
-import com.silentcircle.messaging.views.AvatarListView;
+import com.silentcircle.messaging.util.MessageUtils;
+import com.silentcircle.messaging.views.AvatarChatRecyclerView;
 import com.silentcircle.silentphone2.R;
 
 import java.util.ArrayList;
@@ -51,7 +53,8 @@ import java.util.List;
 /**
  *
  */
-public class AvatarModelViewAdapter extends GroupingModelViewAdapter implements AvatarListView.PinnedAvatarAdapter {
+public class AvatarModelViewAdapter extends GroupingModelViewAdapter implements
+        AvatarChatRecyclerView.PinnedAvatarAdapter {
 
     private SectionIndexer mIndexer;
     private boolean mAvatarVisibility[];
@@ -129,6 +132,9 @@ public class AvatarModelViewAdapter extends GroupingModelViewAdapter implements 
 
         private Section[] getSections(List<?> models) {
             ArrayList<Section> sections = new ArrayList<>();
+            if (models == null) {
+                return sections.toArray(new Section[sections.size()]);
+            }
 
             int position = 0;
             Section section = null;
@@ -141,6 +147,8 @@ public class AvatarModelViewAdapter extends GroupingModelViewAdapter implements 
                     String sender = ((IncomingMessage) model).getSender();
                     if (sender != null && !sender.equals(previousSender)) {
                         previousSender = sender;
+                        setSectionLength(section, length);
+                        length = 0;
                         section = new Section(sender, mAdapter.getScreenPosition(position), position, 0);
                         sections.add(section);
                     }
@@ -171,18 +179,20 @@ public class AvatarModelViewAdapter extends GroupingModelViewAdapter implements 
                         - section.position;
             }
         }
-
     }
-
 
     public AvatarModelViewAdapter(List<?> models, ViewType[] viewTypes) {
         super(models, viewTypes);
-        mIndexer = new AvatarIndexer(this, models);
+        refreshSections(models);
     }
 
     @Override
     public int getPinnedAvatarCount() {
         if (mIndexer == null) {
+            return 0;
+        }
+
+        if (!isGroupConversation()) {
             return 0;
         }
 
@@ -192,7 +202,7 @@ public class AvatarModelViewAdapter extends GroupingModelViewAdapter implements 
     @Override
     public void setModels(List<?> models) {
         super.setModels(models);
-        mIndexer = new AvatarIndexer(this, models);
+        refreshSections(models);
     }
 
     @Override
@@ -201,41 +211,51 @@ public class AvatarModelViewAdapter extends GroupingModelViewAdapter implements 
             return null;
         }
 
-        Section section = (Section) mIndexer.getSections()[viewIndex];
+        if (!isGroupConversation()) {
+            return null;
+        }
+
+        final Section section = (Section) mIndexer.getSections()[viewIndex];
         QuickContactBadge view = mUserIdToAvatarMap.get(section.userId);
         if (view == null) {
             view = new QuickContactBadge(parent.getContext());
             int size = (int) parent.getContext().getResources().getDimension(R.dimen.contact_photo_size);
-            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(size, size);
+            AbsListView.LayoutParams params = new AbsListView.LayoutParams(size, size);
             view.setLayoutParams(params);
-
-            ContactEntry contactEntry = ContactsCache.getContactEntryFromCache(section.userId);
-            AvatarUtils.setPhoto(sContactPhotoManager, view, contactEntry);
+            setAvatar(section.userId, view);
             /* avoid showing triangle for badge */
             view.setEnabled(false);
 
             mUserIdToAvatarMap.put(section.userId, view);
         }
 
+        Drawable drawable = view.getDrawable();
+        if (drawable != null && !drawable.isVisible()) {
+            drawable.setVisible(true, true);
+        }
+
         return view;
     }
 
-    protected boolean isSectionAvatarVisible(int sectionIndex, int firstVisiblePosition,
-            int lastVisiblePosition) {
-        if (mIndexer == null) {
-            return false;
+    /*
+    public void refreshCachedAvatars() {
+        for (Map.Entry<String, QuickContactBadge> entry : mUserIdToAvatarMap.entrySet()) {
+            String key = entry.getKey();
+            QuickContactBadge view = entry.getValue();
+            if (!TextUtils.isEmpty(key) && view != null) {
+                setAvatar(key, view);
+            }
         }
-
-        Section section = (Section) mIndexer.getSections()[sectionIndex];
-        boolean visible = !((section.position + section.length) < firstVisiblePosition
-                || section.position > lastVisiblePosition);
-
-        return visible;
     }
+     */
 
     @Override
-    public void configurePinnedAvatars(AvatarListView listView) {
+    public void configurePinnedAvatars(AvatarChatRecyclerView listView) {
         if (mIndexer == null) {
+            return;
+        }
+
+        if (!isGroupConversation()) {
             return;
         }
 
@@ -274,6 +294,47 @@ public class AvatarModelViewAdapter extends GroupingModelViewAdapter implements 
         for (int i = maxTopHeader + 1; i < size; i++) {
             listView.setAvatarInvisible(i, true);
         }
+    }
+
+    @Override
+    public void refreshSections(List<?> models) {
+        super.refreshSections(models);
+        if (isGroupConversation()) {
+            mIndexer = new AvatarIndexer(this, models);
+        }
+    }
+
+    private boolean isSectionAvatarVisible(int sectionIndex, int firstVisiblePosition,
+            int lastVisiblePosition) {
+        if (mIndexer == null) {
+            return false;
+        }
+
+        Section section = (Section) mIndexer.getSections()[sectionIndex];
+        boolean visible = !((section.position + section.length) < firstVisiblePosition
+                || section.position > lastVisiblePosition);
+
+        return visible;
+    }
+
+    private void setAvatar(final String userId, final QuickContactBadge view) {
+        ContactEntry contactEntry = ContactsCache.getContactEntryFromCache(userId);
+        AvatarUtils.setPhoto(sContactPhotoManager, view, contactEntry);
+        if (contactEntry == null) {
+            postAvatarUpdate(userId, view);
+        }
+    }
+
+    private void postAvatarUpdate(final String userId, final QuickContactBadge view) {
+        AsyncUtils.execute(new Runnable() {
+            @Override
+            public void run() {
+                ContactEntry contactEntry = ContactsCache.getContactEntry(userId);
+                AvatarUtils.setPhoto(sContactPhotoManager, view, contactEntry);
+                view.postInvalidate();
+                MessageUtils.requestRefresh();
+            }
+        });
     }
 
 }

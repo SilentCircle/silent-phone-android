@@ -1,7 +1,7 @@
 /*
 Created by Janis Narbuts
 Copyright (C) 2004-2012, Tivi LTD, www.tiviphone.com. All rights reserved.
-Copyright (C) 2012-2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2012-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,7 +27,6 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-
 #ifndef _C_T_TCP_H
 #define _C_T_TCP_H
 #include "../os/CTiViSock.h"
@@ -167,21 +166,35 @@ static int netNonBlock( int fd )
    return( fcntl( fd, F_SETFL, fcntl( fd, F_GETFL ) | O_NONBLOCK ) );
 #endif
 }
-	
+
 
 class CTSockTcp: public CTSockBase{
 
+   T_ADDR_INFO_CONNECTED ai;
    ADDR addrConnected;
    int iConnected;
    int iSending;
    void *p_apple_backgr;
    int iPrevRec;
    int iNeedCallCloseSocket;
+   int sockToCloseWhileTryingToConnect;
 public:
+   
+   static void setTAI(struct addrinfo *ai, T_ADDR_INFO_CONNECTED *tai){
+      
+      tai->family = ai->ai_family;
+      tai->sockType = ai->ai_socktype;
+      tai->protocol = ai->ai_protocol;
+      tai->sock_len =  ai->ai_addrlen;
+      if(tai->sock_len > sizeof(T_ADDR_INFO_CONNECTED::sock_addr))tai->sock_len = sizeof(T_ADDR_INFO_CONNECTED::sock_addr);
+      memcpy(&tai->sock_addr[0], ai->ai_addr,tai->sock_len);
+      
+   }
    int iIsRTPSock;
    ADDR &getAddrConnected(){return addrConnected;}
    CTSockTcp(CTSockCB &):CTSockBase()
    {
+      sockToCloseWhileTryingToConnect=0;
       iIsRTPSock=0;
       iNeedCallCloseSocket=0;
       iPrevRec=-100;
@@ -191,28 +204,110 @@ public:
       iNeedClose=0;
       iConnected=0;
       iSending=0;
+      memset(&ai, 0, sizeof(T_ADDR_INFO_CONNECTED));
    }
    CTSockTcp(CTSockTcp *s):CTSockBase()
    {
+      ai = s->ai;
       sock=s->sock;
       iIsBinded=s->iIsBinded;;
       addr=s->addr;
       iNeedClose=0;
       iConnected=1;
+      sockToCloseWhileTryingToConnect=0;
    }
    CTSockTcp(CTSockTcp *s, SOCKET so):CTSockBase()
    {
+      ai = s->ai;
       sock=so;
       iIsBinded=s->iIsBinded;
       addr=s->addr;
       iNeedClose=0;
       iConnected=1;
+      sockToCloseWhileTryingToConnect=0;
    }
 
    ~CTSockTcp()
    {
       closeSocket();
    }
+   T_ADDR_INFO_CONNECTED* create_v4_v6_connect(ADDR *a, T_ADDR_INFO_CONNECTED *pai = NULL){
+      if(sock && iNeedClose==0)return 0;
+      iNeedClose=0;
+      iConnected = 0;
+
+
+      if(!pai){
+         struct addrinfo hints, *res, *res0;
+         int error;
+         
+         memset(&hints, 0, sizeof(hints));
+         hints.ai_family = PF_UNSPEC;
+         hints.ai_socktype = SOCK_STREAM;
+         hints.ai_flags = AI_DEFAULT;
+         
+         char buf[256];
+         
+         char *psz = CTSock::removePort(buf, sizeof(buf), &a->bufAddr[0]);
+         
+         char port[16];
+         snprintf(port, sizeof(port), "%u", a->getPort());
+         
+         error = getaddrinfo(psz, port, &hints, &res0);
+         
+         printf("[dns tcp %s=%p e=%d]",psz,res0,error);
+         
+         for (res = res0; res; res = res->ai_next) {
+            int s = socket(res->ai_family, res->ai_socktype,
+                       res->ai_protocol);
+            if (s < 0) {
+
+               continue;
+            }
+            
+            sockToCloseWhileTryingToConnect = s;
+            
+            if (connect(s, res->ai_addr, res->ai_addrlen) < 0) {
+               sockToCloseWhileTryingToConnect = 0;
+               close(s);
+               s = -1;
+               continue;
+            }
+            iConnected = 1;
+            iNeedCallCloseSocket = 1;
+            
+            printf("tcp_connected %s=%p f=%d",psz,res,res->ai_family);
+            
+            setTAI(res, &ai);
+            sock = s;
+            
+            break;
+         }
+         if(!sock)return NULL;
+         return &ai;
+      }
+      
+      sock = socket(pai->family, pai->sockType,
+                      pai->protocol);
+      
+      if(sock < 0){
+         return NULL;
+      }
+      else{
+         //const struct sockaddr *, socklen_t
+         if (connect(sock, (const struct sockaddr *)&pai->sock_addr[0], pai->sock_len) < 0) {
+            close(sock);
+            sock = 0;
+            return NULL;
+         }
+         
+      }
+      iNeedCallCloseSocket=1;
+      iConnected =1;
+
+      return pai;
+   }
+   
    int createSock()
    {
       if(sock && iNeedClose==0)return 0;
@@ -253,6 +348,8 @@ public:
 
    int closeSocket()
    {
+      if(sockToCloseWhileTryingToConnect)closesocket(sockToCloseWhileTryingToConnect);
+      sockToCloseWhileTryingToConnect=0;
       if(iNeedClose){
          if(iNeedCallCloseSocket)closesocket(sock);
          iNeedCallCloseSocket=0;
@@ -439,7 +536,7 @@ public:
        */
       if(iNeedClose || !iConnected)return -1;
      // iSending=1;
-      int r=send(sock,buf,iLen,0);
+      int r=(int)send(sock,buf,iLen,0);
       
       if( r < 0 )
       {
@@ -473,7 +570,7 @@ public:
       int ret;
       while(1){
 
-         ret=recv(sock,buf,iLen,0);
+         ret=(int)recv(sock,buf,iLen,0);
          if(iNeedClose)return -1;
          /*
           if( errno == EPIPE || errno == ECONNRESET )addrConnected.clear();
@@ -772,7 +869,7 @@ typedef struct{
       if(iContentLen || (pContent && pContent[0]))
       {
        // puts(pContent);
-         ret=s->_send(pContent,iContentLen?iContentLen:strlen(pContent));
+         ret=s->_send(pContent,iContentLen?iContentLen:(int)strlen(pContent));
       }
       while(1)
       {

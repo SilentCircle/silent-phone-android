@@ -20,7 +20,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.drawable.Drawable;
-import android.util.Log;
+import com.silentcircle.logs.Log;
 
 import java.util.ArrayList;
 

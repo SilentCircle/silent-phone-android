@@ -28,13 +28,12 @@
             android:id="@+id/shortcut_card_list"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:filterTouchesWhenObscured="true"
+            android:filterTouchesWhenObscured="false"
             android:paddingTop="0.0000001dp"
             android:clipToPadding="false"
             android:fadingEdge="none"
-            android:divider="@null"/>
-    <!--       android:paddingTop="@dimen/action_bar_height_large"
-     -->
+            android:divider="@null"
+            android:visibility="gone" />
 
     <FrameLayout
             android:layout_width="match_parent"
@@ -45,10 +44,10 @@
                 android:layout_height="match_parent"
                 android:orientation="vertical">
 
-            <ImageView
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:background="@color/sc_ng_text_dark" />
+            <!--<ImageView-->
+                <!--android:layout_width="match_parent"-->
+                <!--android:layout_height="1dp"-->
+                <!--android:background="@color/sc_ng_text_dark" />-->
 
             <com.silentcircle.contacts.widget.SlidingTabLayout
                     android:id="@+id/sliding_tabs"

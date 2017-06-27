@@ -7,15 +7,30 @@
     </style>
 
     <style name="Dialog.Spa4" parent="Theme.AppCompat.Light.Dialog.Alert">
-        <item name="android:textColor">@color/sc_ng_text_dark</item>
         <item name="android:textColorPrimary">@color/sc_ng_text_dark</item>
         <item name="android:windowBackground">@color/sc_ng_background_1</item>
+        <item name="android:colorPrimary">@color/sc_ng_text_dark</item>
         <item name="android:colorAccent">@color/sc_ng_text_red</item>
         <item name="android:windowTitleStyle">@style/DialogWindowTitle.Spa4</item>
         <item name="android:windowMinWidthMajor" type="dimen">@dimen/dialog_min_width_major</item>
         <item name="android:windowMinWidthMinor" type="dimen">@dimen/dialog_min_width_minor</item>
         <item name="windowMinWidthMajor" type="dimen">@dimen/dialog_min_width_major</item>
         <item name="windowMinWidthMinor" type="dimen">@dimen/dialog_min_width_minor</item>
+    </style>
+
+    <style name="FingerprintDialog" parent="android:Theme.Material.Light.Dialog">
+        <item name="android:windowTitleStyle">@style/FingerprintDialog.Title</item>
+        <item name="android:colorAccent">@color/sc_ng_text_red</item>
+    </style>
+
+    <style name="FingerprintDialog.Title" parent="TextAppearance.AppCompat.Title">
+        <item name="android:textColor">@color/sc_ng_text_dark</item>
+        <!--<item name="android:textStyle">bold</item>-->
+    </style>
+
+    <style name="FingerprintDialog.NegativeButton" parent="Base.Widget.AppCompat.Button.ButtonBar.AlertDialog">
+        <item name="android:textColor">@color/sc_ng_text_dark</item>
+        <!--<item name="android:textStyle">bold</item>-->
     </style>
 
 </resources>

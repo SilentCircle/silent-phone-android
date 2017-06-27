@@ -25,7 +25,14 @@
     android:id="@+id/pinned_header_list_layout"
     android:orientation="vertical"
     android:layout_width="match_parent"
-    android:layout_height="match_parent" >
+    android:layout_height="match_parent"
+    android:background="?attr/sp_activity_background_color">
+
+    <ViewStub
+        android:id="@+id/header_stub"
+        android:layout="@layout/footer_panel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
 
     <RelativeLayout
             android:id="@+id/sc_dir_options"
@@ -35,7 +42,6 @@
             android:layout_marginStart="?attr/contact_browser_list_padding_left"
             android:layout_marginRight="?attr/contact_browser_list_padding_right"
             android:layout_marginEnd="?attr/contact_browser_list_padding_right"
-            android:background="?attr/sp_activity_background_color"
             android:clickable="true"
             android:visibility="gone"
             tools:visibility="visible">
@@ -65,10 +71,11 @@
                 android:indeterminate="true"
                 android:id="@+id/progressBar"
                 android:layout_below="@+id/use_sc_own_org"
-                android:visibility="invisible"
+                android:visibility="gone"
                 android:layout_centerHorizontal="true"
                 tools:visibility="visible"/>
     </RelativeLayout>
+
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
@@ -83,23 +90,36 @@
             android:layout_marginStart="?attr/contact_browser_list_padding_left"
             android:layout_marginRight="?attr/contact_browser_list_padding_right"
             android:layout_marginEnd="?attr/contact_browser_list_padding_right"
+            android:listSelector="@android:color/transparent"
             android:clipToPadding="false"
             android:fastScrollEnabled="true"
-            android:fadingEdge="none" />
-        <ProgressBar
+            android:fadingEdge="none"
+            android:overScrollMode="never" />
+
+        <FrameLayout
             android:id="@+id/search_progress"
-            style="?android:attr/progressBarStyleLarge"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:visibility="gone" />
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@color/black_background_transparent"
+            android:clickable="true"
+            android:visibility="gone"
+            tools:visibility="visible">
+
+            <com.silentcircle.common.widget.ProgressBar
+                style="?android:attr/progressBarStyleLarge"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_gravity="center"
+                android:indeterminate="true" />
+
+        </FrameLayout>
 
      </FrameLayout>
 
     <ViewStub
         android:id="@+id/footer_stub"
         android:layout="@layout/footer_panel"
-        android:layout_width="fill_parent"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content" />
 
 </LinearLayout>

@@ -1,7 +1,7 @@
 /*
 Created by Janis Narbuts
 Copyright (C) 2004-2012, Tivi LTD, www.tiviphone.com. All rights reserved.
-Copyright (C) 2012-2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2012-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,8 +27,6 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-
-
 #ifndef _C_TIVI_PH_MEDIA_B_H
 #define _C_TIVI_PH_MEDIA_B_H 
 
@@ -131,10 +129,21 @@ private:
 };
 
 
+template<class T>
+class CListItemRel: public CListItem{
+   T *t;
+public:
+   T *getPtr(){return t;}
+   CListItemRel(T *a):CListItem(-1),t(a){}
+   ~CListItemRel(){delete t;}
+   
+};
+
+
 class CTMediaIDS{
    void resetSeqNumbers(){
       
-      unsigned int getTickCount();
+      extern unsigned int getTickCount();
       unsigned int t = getTickCount();
       
       CTMd5 md5;
@@ -154,7 +163,14 @@ class CTMediaIDS{
       m[0].seq&=0x7fff;
    }
    
+   CTZRTP *pzrtp;
+   CTZRTP *sdes_only;
+   
+   CTList relList;
+   
 public:
+   int iIsSdesOnly;
+   
    typedef struct{
       unsigned int uiSSRC;
       unsigned short seq;
@@ -164,6 +180,7 @@ public:
    
    CTMediaIDS():tmrTunnel(NULL){
       pzrtp=NULL;
+      sdes_only=NULL;
       
       resetSeqNumbers();
       
@@ -171,7 +188,8 @@ public:
       holdSounds.reset();
    }
    ~CTMediaIDS(){
-      if(pzrtp)delete pzrtp;pzrtp=NULL; 
+      if(pzrtp)delete pzrtp;pzrtp=NULL;
+      if(sdes_only)delete sdes_only;sdes_only=NULL;
    }
    void init(unsigned int uiA_SSRC, unsigned int uiV_SSRC){
       
@@ -184,32 +202,79 @@ public:
       tmrTunnel = NULL;
    }
    
-   CTZRTP *pzrtp;
+   CTZRTP *getZRTP(){return iIsSdesOnly? sdes_only : pzrtp;}
+   int ownZRTP(CTZRTP *z){return sdes_only == z || pzrtp == z; }
    
-   void initZRTP(CTZrtpCb *cb, void *g){
-      
-      if(!pzrtp){
-         pzrtp=new CTZRTP(g);
+   
+   void initZRTP(CTZrtpCb *cb, void *g, int sdesOnly, int callid, void *pSes){
+      initZRTP_priv(cb,g, sdesOnly);
+
+      if(sdes_only){
+         sdes_only->init_zrtp(0,(char *)"empty_zid",callid,1,1);
+         sdes_only->pSes=pSes;
       }
-      pzrtp->zrtpcb=cb;
+      if(pzrtp){
+         pzrtp->init_zrtp(0,(char *)"empty_zid",callid,1,1);
+         pzrtp->pSes=pSes;
+      }
+      
    }
+private:
+   void initZRTP_priv(CTZrtpCb *cb, void *g, int sdesOnly){
+      
+      if(!pzrtp) pzrtp=new CTZRTP(g);
+      
+      iIsSdesOnly = sdesOnly;
+      
+      if(sdesOnly){
+         if(sdes_only){
+            sdes_only->stop(sdes_only->AudioStream);
+            sdes_only->stop(sdes_only->VideoStream);
+
+            auto a = new CListItemRel<CTZRTP>(sdes_only);
+            relList.addToTail(a);
+         }
+      }
+      sdes_only =new CTZRTP(g);
+
+      
+      pzrtp->zrtpcb=cb;
+      sdes_only->zrtpcb = cb;
+   }
+public:
    void stop(){
       
       if(pzrtp){
          pzrtp->stop(pzrtp->AudioStream);
          pzrtp->stop(pzrtp->VideoStream);
       }
+      
+      if(sdes_only){
+         sdes_only->stop(sdes_only->AudioStream);
+         sdes_only->stop(sdes_only->VideoStream);
+         
+      }
       if(tmrTunnel){
          tmrTunnel->stop();
-
       }
    }
    void release(){
       CTMRTunnelAV::deleteAfter5Sec(tmrTunnel);
       tmrTunnel = NULL;
-      if(pzrtp)
-         pzrtp->release_zrtp();
-       pOwner=NULL;
+      if(pzrtp)  pzrtp->release_zrtp();
+      if(sdes_only)  sdes_only->release_zrtp();
+      delete sdes_only;sdes_only=NULL;
+      
+      auto a = (CListItemRel<CTZRTP>*)relList.getLRoot();
+      while(a){
+         
+         CTZRTP *z = a->getPtr();
+         z->release_zrtp();
+         a = (CListItemRel<CTZRTP>*)relList.getNext(a);
+      }
+      relList.removeAll();
+      
+      pOwner=NULL;
    }
    
    CTHoldSounds holdSounds;
@@ -335,7 +400,7 @@ public:
    {
       iFWDetected=0;
       iSdpParsed=0;
-      pzrtp=NULL;
+      sdes_or_zrtp=NULL;
       pMediaIDS=NULL;
       iRTPSource=0;
       iStarted=0;
@@ -398,20 +463,23 @@ public:
                            CRTPX *rtp, ADDR *addrPubl, ADDR *addrPriv, int iAddIce);
    
    
-   void setBaseData(CTZRTP *z, CALL_STAT *cs, CTMediaIDS *m){
+   void setBaseData(CTZRTP *z, CALL_STAT *cs, CTMediaIDS *m, int sdesonly){
+       iIsSdesOnly=sdesonly;
       pMediaIDS=m;
-      pzrtp=z;
+      sdes_or_zrtp=z;
       pCallStatus=cs;
+      iSdpParsed=0;
       
    }
-   inline CTZRTP *getZRTP(){return pzrtp;}
+   inline CTZRTP *getZRTP(){return sdes_or_zrtp;}
 protected:
    
    int iFWDetected;
    
    int iType;
    CTMediaIDS *pMediaIDS;
-   CTZRTP *pzrtp;
+   CTZRTP *sdes_or_zrtp;//SDES only, or SDES+ZRTP calls,
+    int iIsSdesOnly;
    CALL_STAT *pCallStatus;
    int iSdpParsed;//--//
 };

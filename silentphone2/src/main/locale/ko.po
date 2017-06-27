@@ -1,0 +1,5111 @@
+# Korean translations for PROJECT.
+# Copyright (C) 2017 ORGANIZATION
+# This file is distributed under the same license as the PROJECT project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2017.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2017-05-23 20:04+0000\n"
+"PO-Revision-Date: 2017-05-15 15:59+0900\n"
+"Last-Translator: \n"
+"Language: ko\n"
+"Language-Team: ko <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=(0)\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.3.4\n"
+
+msgctxt "next"
+msgid "Next"
+msgstr "다음"
+
+msgctxt "back"
+msgid "Back"
+msgstr "뒤로"
+
+msgctxt "dismiss_call"
+msgid "Decline"
+msgstr "거부"
+
+msgctxt "answer_call"
+msgid "Answer"
+msgstr "응답"
+
+msgctxt "verify_infotext_top"
+msgid "Compare with partner"
+msgstr "파트너와 비교"
+
+msgctxt "verify_infotext_bottom"
+msgid "and enter partner’s name here"
+msgstr "파트너의 이름 입력"
+
+msgctxt "accept_video"
+msgid "Accept"
+msgstr "응답"
+
+msgctxt "close_dialog"
+msgid "Close"
+msgstr "닫음"
+
+msgctxt "cancel_dialog"
+msgid "Cancel"
+msgstr "취소"
+
+msgctxt "confirm_dialog"
+msgid "Confirm"
+msgstr "확인"
+
+msgctxt "record_dialog"
+msgid "Record"
+msgstr "녹음"
+
+msgctxt "stop_dialog"
+msgid "Stop"
+msgstr "정지"
+
+msgctxt "provision_later"
+msgid "Later"
+msgstr "나중에"
+
+msgctxt "crypto_padlock"
+msgid "Padlock to show security state"
+msgstr "보안 상태 확인을 위해 잠금"
+
+msgctxt "error_code"
+msgid "Error code:"
+msgstr "에러 코드:"
+
+msgctxt "go_offline"
+msgid "Go offline"
+msgstr "오프라인으로 연결"
+
+msgctxt "wipe_phone"
+msgid "Wipe Silent Phone"
+msgstr "사일런트폰 전체 삭제"
+
+#. Enable translation of server provided SIP message.
+msgctxt "sip_state_calling"
+msgid "Calling…"
+msgstr "전화 연결 중..."
+
+msgctxt "sip_state_connecting"
+msgid "Connecting…"
+msgstr "연결 중..."
+
+msgctxt "sip_state_ringing"
+msgid "Ringing"
+msgstr "통화 연결 중"
+
+msgctxt "sip_state_ended"
+msgid "Call ended"
+msgstr "통화 종료"
+
+msgctxt "sip_state_online"
+msgid "Online"
+msgstr "온라인"
+
+msgctxt "sip_state_offline"
+msgid "Offline"
+msgstr "오프라인"
+
+msgctxt "sip_error_register"
+msgid "Cannot register"
+msgstr "등록 불가"
+
+msgctxt "sip_error_generic"
+msgid "Cannot connect"
+msgstr "연결 불가"
+
+msgctxt "sip_error_decline"
+msgid "Call declined"
+msgstr "전화 종료"
+
+msgctxt "sip_error_no_user"
+msgid "User not found"
+msgstr "사용자 없음"
+
+msgctxt "sip_error_no_cover"
+msgid "No radio coverage"
+msgstr "네트워크 연결 없음"
+
+msgctxt "sip_error_no_server"
+msgid "Could not reach server"
+msgstr "서버 연결 불가"
+
+msgctxt "sip_error_call_answered_elsewhere"
+msgid "Call answered elsewhere"
+msgstr "다른 폰에서 응답함"
+
+msgctxt "sip_error_call_declined_elsewhere"
+msgid "Call declined elsewhere"
+msgstr "다른 폰에서 연결 끊음"
+
+msgctxt "sip_error_call_decline_dr_blocked_errblk"
+msgid ""
+"User not available\n"
+"\n"
+"The user/device you are trying to reach is not available at this time."
+msgstr ""
+"사용자 연결 불가\n"
+"연결하려는 사용자/단말기 연결이 불가능함"
+
+msgctxt "sip_error_call_decline_dr_rejected_errdrj_log"
+msgid ""
+"Call declined\n"
+"\n"
+"The remote party declined to communicate with users subject to data "
+"retention."
+msgstr ""
+"연결 거부됨\n"
+"상대방이 기록 확인을 위해 연결을 거부함"
+
+msgctxt "sip_error_call_decline_dr_blocked_errblk_log"
+msgid "User not available"
+msgstr "사용자 연결 불가"
+
+msgctxt "sip_error_call_decline_dr_rejected_errdrj"
+msgid "Call declined: data retention rejected"
+msgstr "연결 거부됨: 거부 기록에 의해 거절됨"
+
+#. incoming call type message
+msgctxt "call_error"
+msgid "Error"
+msgstr "에러"
+
+msgctxt "call_unavailable"
+msgid "Unavailable"
+msgstr "연결 불가능"
+
+#. Strings to display security status, handle with care during translations
+msgctxt "secstate_secure"
+msgid "SECURE"
+msgstr "보안 확인"
+
+msgctxt "secstate_secure_question"
+msgid "SECURE?"
+msgstr "보안 확인?"
+
+msgctxt "secstate_not_secure"
+msgid "Not SECURE"
+msgstr "보안되지 않음"
+
+msgctxt "secstate_looking"
+msgid "Looking for peer"
+msgstr "연결 확인 중"
+
+msgctxt "secstate_going_sec"
+msgid "Going secure"
+msgstr "보안 연결 중"
+
+msgctxt "secstate_sec_disabled"
+msgid "Not SECURE - not enabled"
+msgstr "보안 안됨 - 연결 불가"
+
+msgctxt "to_server_only"
+msgid "to server"
+msgstr "서버 연결"
+
+#. Strings for the crypto panel
+msgctxt "crypto_peer_name"
+msgid "Peer name"
+msgstr "상대방 이름"
+
+msgctxt "crypto_peer_client"
+msgid "ZRTP Peer client"
+msgstr "상대방 ZRTP 연결 "
+
+msgctxt "crypto_peer_client_id"
+msgid "ZRTP client ID"
+msgstr "상대방 ZRTP ID"
+
+msgctxt "crypto_peer_client_proto"
+msgid "Protocol version"
+msgstr "프로토콜 버전"
+
+msgctxt "crypto_secure_since"
+msgid "Secure since"
+msgstr "보안 시작"
+
+msgctxt "crypto_crypto_components"
+msgid "Crypto Components"
+msgstr "보안 구성 요소"
+
+msgctxt "crypto_crypto_components_tls"
+msgid "TLS Ciphers:"
+msgstr "TLS 암호:"
+
+msgctxt "crypto_crypto_components_zhash"
+msgid "ZRTP Hash:"
+msgstr "ZRTP 암호조각:"
+
+msgctxt "crypto_crypto_components_pk"
+msgid "Key Exchange:"
+msgstr "키 변환:"
+
+msgctxt "crypto_crypto_components_cipher"
+msgid "Cipher:"
+msgstr "암호:"
+
+msgctxt "crypto_crypto_components_hash"
+msgid "Hash:"
+msgstr "암호조각:"
+
+msgctxt "crypto_crypto_components_sauth"
+msgid "SRTP Auth Tag:"
+msgstr "SRTP 인증 태그:"
+
+msgctxt "crypto_shared_secrets"
+msgid "Shared Secrets"
+msgstr "비밀 공유"
+
+#. strings for the call manager section headers
+msgctxt "call_mng_conference"
+msgid "Conference"
+msgstr "다자 통화"
+
+msgctxt "call_mng_private"
+msgid "Private"
+msgstr "개인"
+
+msgctxt "call_mng_in_out"
+msgid "Incoming, outgoing"
+msgstr "전화오기, 전화걸기"
+
+#. strings for the ZRTP warning/error panel
+msgctxt "zrtp_we_error"
+msgid "ZRTP Error"
+msgstr "ZRTP 에러"
+
+msgctxt "zrtp_we_warn"
+msgid "ZRTP Warning"
+msgstr "ZRTP 경고"
+
+msgctxt "srtp_we_warn"
+msgid "SRTP Warning"
+msgstr "SRTP 경고"
+
+msgctxt "zrtp_show_details"
+msgid "Show details"
+msgstr "내용 보임"
+
+msgctxt "zrtp_hide_details"
+msgid "Hide details"
+msgstr "내용 숨김"
+
+#. Strings for the provisioning activity and messages
+msgctxt "provisioning_welcome"
+msgid "Welcome to Silent Circle"
+msgstr "사일런트 써클에 오신 것을 환영합니다."
+
+msgctxt "provisioning_vertu_welcome"
+msgid "Welcome to Silent Circle in partnership with Vertu"
+msgstr "베르투와의 사일런트 써클에 오신 것을 환영합니다."
+
+msgctxt "provisioning_username_hint"
+msgid "Username"
+msgstr "사용자 이름"
+
+msgctxt "provisioning_password_hint"
+msgid "Password"
+msgstr "패스워드"
+
+msgctxt "provisioning_firstname_hint"
+msgid "Enter first name"
+msgstr "이름 입력"
+
+msgctxt "provisioning_lastname_hint"
+msgid "Enter last name"
+msgstr "성 입력"
+
+msgctxt "provisioning_email_hint"
+msgid "E-mail address"
+msgstr "이메일 주소"
+
+msgctxt "provisioning_no_network"
+msgid "Network not available:"
+msgstr "네트워크 연결 안됨:"
+
+msgctxt "provisioning_no_data"
+msgid "No provisioning data available"
+msgstr "제공된 데이터 없음"
+
+msgctxt "provisioning_wrong_format"
+msgid "Wrong data format:"
+msgstr "잘못된 데이터 양식:"
+
+msgctxt "provisioning_error"
+msgid "Provisioning Error"
+msgstr "제공 에러"
+
+msgctxt "provisioning_info"
+msgid "Information"
+msgstr "정보"
+
+msgctxt "provisioning_user_req"
+msgid "Username is required. Please check."
+msgstr "사용자 이름 입력 필요. 확인 후 입력하세요."
+
+msgctxt "provisioning_user_invalid"
+msgid "Username must be lowercase alphanumeric (a–z,0–9) and start with a letter."
+msgstr "사용자 이름은 알파벳 소문자와 숫자 (a–z,0–9)로 입력 가능하 알파벳으로 시작되어야 함."
+
+msgctxt "provisioning_psn_invalid"
+msgid "No valid serial number found!"
+msgstr "유효한 시리얼 넘버 없음!"
+
+msgctxt "provisioning_password_req"
+msgid "Password is required. Please check."
+msgstr "패스워드 입력 요망. 확인 후 입력하세요."
+
+msgctxt "provisioning_firstname_req"
+msgid "A first name is required. Please check."
+msgstr "이름 입력 요망. 확인 후 입력하세요."
+
+msgctxt "provisioning_lastname_req"
+msgid "A last name is required. Please check."
+msgstr "성 입력 요망. 확인 후 입력하세요."
+
+msgctxt "provisioning_email_req"
+msgid "An email address is required. Please check."
+msgstr "이메일 주소 입력 요망. 확인 후 입력하세요."
+
+msgctxt "provisioning_email_invalid"
+msgid "Email address invalid. Please check."
+msgstr "입력하신 이메일 주소 틀림. 확인 후 입력하세요."
+
+msgctxt "provisioning_already_registered"
+msgid "Device already registered."
+msgstr "단말기 등록이 이미 되었습니다."
+
+msgctxt "provisioning_agreement"
+msgid "By logging in, you are agreeing to our"
+msgstr "로그인 하므로써 이 약관에 동의함."
+
+msgctxt "provisioning_manage_accounts"
+msgid ""
+"<a href=\"https://accounts.silentcircle.com/\">Create new account or "
+"manage existing account</a>"
+msgstr "<a href=\"https://accounts.silentcircle.com/\">새로운 계정 만들기 또는 기존 계정 관리</a>"
+
+msgctxt "provisioning_manage_accounts_dev"
+msgid ""
+"<a href=\"https://accounts-dev.silentcircle.com/\">Create new account or "
+"manage existing account</a>"
+msgstr ""
+"<a href=\"https://accounts-dev.silentcircle.com/\">로운 계정 만들기 또는 기존 계정 "
+"관리</a>"
+
+msgctxt "pwstrength_weak"
+msgid "Password strength: WEAK"
+msgstr "패스워드 보안강도: 약"
+
+msgctxt "pwstrength_good"
+msgid "Password strength: GOOD"
+msgstr "패스워드 보안강도: 좋음"
+
+msgctxt "pwstrength_strong"
+msgid "Password strength: STRONG"
+msgstr "패스워드 보안강도: 강함"
+
+msgctxt "provisioning_show_pw"
+msgid "Show password"
+msgstr "패스워드 보기"
+
+msgctxt "provisioning_privacy_tc"
+msgid ""
+"I have read and accepted the privacy policy and terms and conditions from"
+" <a href=\"https://accounts.silentcircle.com/terms/\">Silent Circle</a>"
+msgstr ""
+"사일런트 써클에서 제공한 <a href=\"https://accounts.silentcircle.com/terms/\">개인정보 "
+"정책과 이용약관을 읽었으며 동의합니다</a>."
+
+msgctxt "provisioning_terms"
+msgid "terms of service"
+msgstr "서비스 이용조건"
+
+msgctxt "provisioning_privacy"
+msgid "privacy policy"
+msgstr "개인정보 보호 정책"
+
+msgctxt "provisioning_get_news"
+msgid "I would like to receive exclusive news and invitations from Services"
+msgstr "새로운 서비스 정보와 뉴스에 관해 받아보기를 희망합니다."
+
+msgctxt "provisioning_new_account"
+msgid "Create new account"
+msgstr "새로운 계정 만들기"
+
+msgctxt "provisioning_existing_account"
+msgid "Login to existing account"
+msgstr "기존의 계정에 로그인하기"
+
+msgctxt "provisioning_existing_account_bp"
+msgid "Login"
+msgstr "로그인"
+
+msgctxt "provisioning_sso"
+msgid "Login SSO"
+msgstr "로그인 인증"
+
+msgctxt "provisioning_create"
+msgid "Create"
+msgstr "새로 만들기"
+
+msgctxt "provisioning_forgot_pwd"
+msgid "I forgot my password."
+msgstr "패스워드를 잊었습니다."
+
+msgctxt "provisioning_auth_token_hint"
+msgid "Enter authentication token"
+msgstr "인증번호 입력"
+
+msgctxt "provisioning_auth_token_text"
+msgid ""
+"Two-factor authentication is enabled. Please enter an authentication "
+"token below."
+msgstr "두 단계 인증이 가능합니다. 아래의 인증번호를 입력하세요."
+
+msgctxt "provisioning_auth_token_error"
+msgid "Provisioning Error: You have specified an incorrect authentication token."
+msgstr "입력 에러: 잘못된 인증번호를 입력 하였습니다."
+
+msgctxt "provisioning_all_fields_required"
+msgid "All fields are required"
+msgstr "모든 공란을 채우세요."
+
+#, c-format
+msgctxt "provisioning_domain_error"
+msgid ""
+"An enterprise server could not be located, or could not be authenticated,"
+" for the %s domain"
+msgstr "%의 도메인에 대하여 기업용 서버가 없음, 또는 인증되지 않음"
+
+msgctxt "provisioning_ssl_date_invalid"
+msgid "The date of the certificate is invalid"
+msgstr "인증된 날짜가 유효하지 않음"
+
+msgctxt "provisioning_ssl_expired"
+msgid "The certificate has expired"
+msgstr "인증서가 만료되었음"
+
+msgctxt "provisioning_ssl_idmismatch"
+msgid "Hostname mismatch"
+msgstr "서버 인증이 올바르지 않음"
+
+msgctxt "provisioning_ssl_notyetvalid"
+msgid "The certificate is not yet valid"
+msgstr "인증서가 아직 유효하지 않음"
+
+msgctxt "provisioning_ssl_untrusted"
+msgid "The certificate authority is not trusted"
+msgstr "인증서가 공인되지 않음"
+
+msgctxt "provisioning_version"
+msgid "version"
+msgstr "버전"
+
+msgctxt "thanks_number"
+msgid "Phone:"
+msgstr "휴대폰:"
+
+msgctxt "thanks_name"
+msgid "Name:"
+msgstr "이름:"
+
+msgctxt "thanks_organization"
+msgid "Organization:"
+msgstr "조직:"
+
+msgctxt "thanks_data_retention"
+msgid "Data retention:"
+msgstr "데이터 남은 양:"
+
+msgctxt "thanks_data_retention_on"
+msgid "ON ⓘ"
+msgstr "켜기 ⓘ"
+
+msgctxt "thanks_plan"
+msgid "Plan:"
+msgstr "요금 플랜:"
+
+msgctxt "thanks_minutes"
+msgid "Remaining minutes:"
+msgstr "남은 시간:"
+
+msgctxt "thanks_credit"
+msgid "Remaining credit:"
+msgstr "남은 금액:"
+
+msgctxt "preferred_sas_type"
+msgid "Preferred SAS type"
+msgstr "원하는 SAS 타입"
+
+msgctxt "sas_char_mode"
+msgid "SAS displayed as four characters"
+msgstr "4개 알파벳으로 보이는 SAS"
+
+msgctxt "sas_word_mode"
+msgid "SAS displayed as two words"
+msgstr "2개 단어로 구성된 SAS"
+
+msgctxt "sas_emoji_mode"
+msgid "SAS displayed as four emojis"
+msgstr "4개의 이모티콘으로 보이는 SAS"
+
+msgctxt "sp_ringtone"
+msgid "Ringtone"
+msgstr "벨소리"
+
+msgctxt "no_ringtone"
+msgid "Default"
+msgstr "기본값"
+
+msgctxt "preferred_algorithms"
+msgid "Prefer non-NIST suite"
+msgstr "NIST 비선호"
+
+msgctxt "nist_preferred"
+msgid ""
+"Always prefer non-NIST algorithms if available: Twofish, Skein, and "
+"Bernstein curves."
+msgstr "항상 NIST 알고리즘 비선호: Twofish, Skein, Bernstein 커브"
+
+msgctxt "block_screenshots_title"
+msgid "Enhance local screen security"
+msgstr "화면 보호기 보안 강화"
+
+msgctxt "block_screenshots_description"
+msgid ""
+"Prefer maximum security over a nicer UI; prevent Android from saving "
+"screen images for multitasking, and disable screenshots."
+msgstr "가장 좋은 화면과 최대한의 보안 선택; 스크린 화면 캡춰 막기 및 멀티태스킹을 통한 스크린 저장과 안드로이드 시스템 분리"
+
+msgctxt "block_dr_title"
+msgid "Block data retention"
+msgstr "데이터 저장 막기"
+
+msgctxt "block_dr_description"
+msgid ""
+"Never allow detailed metadata, messages, attachments, or call audio to be"
+" retained by your organization or by other organizations."
+msgstr "본인이 속한 그룹은 물론 타인에게 데이타, 메시지 내용, 첨부 파일, 전화 내용 오픈 기능 끄기"
+
+msgctxt "block_local_dr_title"
+msgid "Block local data retention"
+msgstr "휴대폰 데이터 저장 끄기"
+
+msgctxt "block_local_dr_description"
+msgid ""
+"Never allow detailed metadata, messages, attachments, or call audio to be"
+" retained by this device and uploaded to a server for retention"
+msgstr "데이타, 메시지 내용, 첨부 파일, 전화 내용 등이 휴대폰과 서버에 저 기능 끄기"
+
+msgctxt "block_remote_dr_title"
+msgid "Block remote data retention"
+msgstr "원격 데이터 저장 기능 끄기"
+
+msgctxt "block_remote_dr_description"
+msgid ""
+"Refuse to communicate with other users who are subject to data retention "
+"and whose devices are retaining detailed metadata, messages, attachments,"
+" or call audio for upload to a retention server."
+msgstr "데이터, 메시지, 첨부 파일, 전화 내용 등에 접근/서버 저장을 할 수 있는 타인과의 커뮤니케이션 차단 "
+
+msgctxt "block_local_data_retention"
+msgid "Block local data retention"
+msgstr "데이터 저장 차단"
+
+msgctxt "block_local_metadata_retention"
+msgid "Block local metadata retention"
+msgstr "일반 데이터 저장 차단"
+
+msgctxt "block_remote_data_retention"
+msgid "Block remote data retention"
+msgstr "원격 데이터 저장 차단"
+
+msgctxt "block_remote_metadata_retention"
+msgid "Block remote metadata retention"
+msgstr "원격 일반 데이터 저장 차단"
+
+#. String describing the Dial ImageButton            Used by
+#. AccessibilityService to announce the purpose of the button.
+msgctxt "description_dial_button"
+msgid "Dial"
+msgstr "전화걸기"
+
+#. String describing the Delete/Backspace ImageButton       Used by
+#. AccessibilityService to announce the purpose of the button.
+msgctxt "description_delete_button"
+msgid "backspace"
+msgstr "뒤로"
+
+msgctxt "description_pick_contact_button"
+msgid "Pick contact"
+msgstr "전화번호부 찾기"
+
+msgctxt "zrtp_common_cmp"
+msgid ""
+"You should verbally compare the authentication code with the person you "
+"are calling. If it doesn’t match, it indicates that someone may have "
+"intercepted the call."
+msgstr "상대방과 구두로 인증코드를 비교해야 함. 인증코드가 맞지 않으면 제3자가 도청하고 있을 수 있음"
+
+msgctxt "zrtp_common_cls"
+msgid "Connection Error. Please close and call again."
+msgstr "연결 에러. 통화를 끊고 재시도 필요."
+
+msgctxt "zrtp_common_upd"
+msgid ""
+"The person you are calling needs to update their Silent Phone application"
+" to the latest version."
+msgstr "전화 상대방이 새로운 버전의 사일런트폰 업데이트 필요."
+
+msgctxt "zrtp_common_app"
+msgid "Application Error. Please re-install Silent Phone."
+msgstr "애플리케이션 에러. 사일런트폰 재설치 필."
+
+#. Permissions
+msgctxt "permission_read"
+msgid "Read secure contacts"
+msgstr "안전한 연락처 읽기"
+
+msgctxt "permission_write"
+msgid "Write secure contacts"
+msgstr "안전한 연락처 쓰기"
+
+#. Permissions key manager
+msgctxt "permission_read_km"
+msgid "Read access to Silent Circle key manager"
+msgstr "사일런트 써클 담당에게 접근하여 메시지 읽기"
+
+msgctxt "permission_write_km"
+msgid "Write access to Silent Circle key manager"
+msgstr "사일런트 써클 담당자에게 접근하여 메시지 쓰기"
+
+#. Only TAG names changed, copy existing translations
+msgctxt "provisioning_stepInfo_1"
+msgid "Step 1 of 3"
+msgstr "3단계 중 1단계"
+
+msgctxt "provisioning_stepInfo_2"
+msgid "Step 2 of 3"
+msgstr "3단계 중 2단계"
+
+msgctxt "provisioning_stepInfo_3"
+msgid "Step 3 of 3"
+msgstr "3단계 중 3단계"
+
+msgctxt "provisioning_vertu_email_info"
+msgid ""
+"An alternate email address is necessary to receive important updates and "
+"benefits regarding your account."
+msgstr "중요한 업데이트 정보와 계정 관리를 위해 추가 이메일 주소 필요"
+
+msgctxt "provisioning_vertu_welcome_long"
+msgid ""
+"As a Vertu Customer you enjoy 12 months of complimentary access to Silent"
+" Circle’s encrypted communications services."
+msgstr "베르투 고객으로서 12개월의 사일런트 써클 서비스 제공 가능"
+
+msgctxt "video_audio_mute"
+msgid "Toggle mute audio"
+msgstr "무음 전환"
+
+#. The following until end are MISSING translations in SPA2 for languages
+#. other than English
+msgctxt "provisioning_infoText"
+msgid "Account Creation"
+msgstr "계정 만들기"
+
+msgctxt "provisioning_bp_email_info"
+msgid ""
+"An email address is necessary to receive important updates and "
+"information regarding your account."
+msgstr "중요한 업데이트 정보와 계정 관리를 위해 이메일 주소 필요"
+
+msgctxt "mute_button"
+msgid "Mute"
+msgstr "무음"
+
+msgctxt "video_button"
+msgid "Video"
+msgstr "비디오"
+
+msgctxt "add_call"
+msgid "Add call"
+msgstr "전화걸기"
+
+msgctxt "audio_options_button"
+msgid "Audio options"
+msgstr "전화걸기 선택"
+
+msgctxt "verify_label"
+msgid "Touch and verify"
+msgstr "터치로 확하기"
+
+msgctxt "verify_question"
+msgid "Verify ?"
+msgstr "확인?"
+
+msgctxt "compare_with"
+msgid "Compare with"
+msgstr "비교하기"
+
+msgctxt "stop_video"
+msgid "Audio only"
+msgstr "음만 켜기"
+
+msgctxt "pause_video"
+msgid "Pause video"
+msgstr "화면 멈추기"
+
+msgctxt "send_video"
+msgid "Send video"
+msgstr "화면 보내기"
+
+msgctxt "prepare"
+msgid "Preparing …"
+msgstr "준비 중..."
+
+msgctxt "call_manager"
+msgid "Call Manager"
+msgstr "담당자 전화하기"
+
+msgctxt "dtmf_dialer"
+msgid "Tone dialer"
+msgstr "전화걸기"
+
+msgctxt "security_options_header"
+msgid "Security options"
+msgstr "보안 옵션"
+
+msgctxt "call_info_generic"
+msgid "Call information"
+msgstr "전화 정보"
+
+msgctxt "call_info_security"
+msgid "Call security information"
+msgstr "전화 보안 정보"
+
+msgctxt "call_info_security_detail"
+msgid "More details"
+msgstr "추가 정보"
+
+msgctxt "build_info_header"
+msgid "Silent Phone Build"
+msgstr "사일런트 폰 구성"
+
+#, c-format
+msgctxt "dial_drawer_build_flavor"
+msgid "Build configuration: %s"
+msgstr "구성: %s"
+
+msgctxt "account_creation_error"
+msgid "Account creation - error"
+msgstr "계정 생성 - 에러"
+
+msgctxt "account_creation_wrong_format"
+msgid "Account creation - server sent wrong data format:"
+msgstr "계정 생성 - 서버가 잘못된 데이터 양식을 보냄:"
+
+msgctxt "account_creation_no_data"
+msgid "Account creation - server returned wrong data."
+msgstr "계정 생성 - 서버에 잘못된 데이터를 보냄"
+
+msgctxt "other_settings"
+msgid "Other options"
+msgstr "다른 선택"
+
+msgctxt "call_settings"
+msgid "Call options"
+msgstr "전화 선택"
+
+msgctxt "theme_black"
+msgid "Black"
+msgstr "검정"
+
+#. Strings for BlackPhone integration
+msgctxt "bp_is_online"
+msgid "Silent Phone online"
+msgstr "사일런트 폰 온라인"
+
+msgctxt "bp_is_offline"
+msgid "Silent Phone currently offline"
+msgstr "사일런트 폰 오프라인 상태"
+
+msgctxt "bp_not_started"
+msgid "Silent Phone not started"
+msgstr "사일런트 폰 시작 전"
+
+msgctxt "bp_registering"
+msgid "Silent Phone registering"
+msgstr "사일런트 폰 등록 중"
+
+msgctxt "bp_status_unknown"
+msgid "Unknown status"
+msgstr "확인 불가능 상태"
+
+#. Audio options
+msgctxt "audio_bt"
+msgid "BlueTooth headset"
+msgstr "블루투스 헤드셋"
+
+msgctxt "audio_speaker"
+msgid "Speaker"
+msgstr "스피커"
+
+msgctxt "audio_ear_phone"
+msgid "Earpiece"
+msgstr "이어폰"
+
+msgctxt "end_call_button"
+msgid "End call"
+msgstr "전화 끊기"
+
+msgctxt "call_quality"
+msgid "Quality"
+msgstr "품질"
+
+msgctxt "call_quality_bad"
+msgid "bad"
+msgstr "나쁨"
+
+msgctxt "call_quality_weak"
+msgid "weak"
+msgstr "약함"
+
+msgctxt "call_quality_acceptable"
+msgid "acceptable"
+msgstr "보통"
+
+msgctxt "call_quality_good"
+msgid "good"
+msgstr "좋음"
+
+msgctxt "call_quality_very_good"
+msgid "very good"
+msgstr "아주 좋음"
+
+msgctxt "in_call_drawer_zrtp_confirmed"
+msgid "yes, verified"
+msgstr "상대방 보안 확인됨"
+
+msgctxt "in_call_drawer_zrtp_not_confirmed"
+msgid "yes, not verified"
+msgstr "상대방 보안 확인안됨"
+
+msgctxt "in_call_drawer_sdes_active"
+msgid "active"
+msgstr "연결 상태"
+
+msgctxt "navigation_drawer_open"
+msgid "Open navigation drawer"
+msgstr "네비게이션 지도 그리기 열기"
+
+msgctxt "navigation_drawer_close"
+msgid "Close navigation drawer"
+msgstr "네비게이션 지도 그리기 닫기"
+
+msgctxt "valid_until"
+msgid "Valid until:"
+msgstr "유효기간 만료:"
+
+msgctxt "subscription_expired"
+msgid "Your Silent Circle subscription is expired."
+msgstr "사일런트 써클 가입이 만료됨."
+
+msgctxt "sip_error_not_online"
+msgid "User not online"
+msgstr "상대방이 온라인 상태가 아님"
+
+msgctxt "license_code_invalid"
+msgid ""
+"This license code doesn't appear to be valid. If you are having trouble "
+"with activating your Blackphone and Silent Circle accounts, please "
+"contact customer support at support@blackphone.ch"
+msgstr ""
+"라이센스 코드가 유효하지 않음. 블랙폰이나 사일런트 써클 계정에 문제가 있을 경우, 고객서비스 센터에 연락을 주세요. "
+"support@blackphone.ch"
+
+msgctxt "license_code_duplicate"
+msgid ""
+"This license code appears to have been activated already. If you are "
+"resetting your phone, simply log into your Silent Circle account "
+"normally. If you are having trouble activating your Blackphone and Silent"
+" Circle accounts, please contact customer support at "
+"support@blackphone.ch"
+msgstr ""
+"라이센스 코드가 인증되었음. 폰을 세팅 중이면, 간단하게 로그인하세요. 블랙폰이나 사일런트 써클 계정에 문제가 있을 경우, "
+"고객서비스 센터에 연락을 주세요. support@blackphone.ch"
+
+#. ************************** String for the Contacts part
+#. ******************************
+#. Menu item used to add a number from the call log to contacts
+msgctxt "recentCalls_addToContact"
+msgid "Add to contacts"
+msgstr "연락처 추가"
+
+#. Text displayed when the call log is empty
+msgctxt "recentCalls_empty"
+msgid "Call log is empty."
+msgstr "전화기록 없음"
+
+#. Menu item used to remove all calls from the call log
+msgctxt "recentCalls_deleteAll"
+msgid "Clear call log"
+msgstr "전화기록 삭제"
+
+#. Menu item used to copy a number from the call log to the dialer so it can
+#. be edited before calling it
+msgctxt "recentCalls_editNumberBeforeCall"
+msgid "Edit number before call"
+msgstr "전화걸기 전 번호 수정"
+
+#. Menu item used to remove a single call from the call log
+msgctxt "recentCalls_removeFromRecentList"
+msgid "Remove from call log"
+msgstr "전화기록에서 삭제"
+
+#. Menu item used to remove related call entries from the call log
+msgctxt "recentCalls_removeSameFromRecentList"
+msgid "Remove related entries"
+msgstr "연관된 기록 삭제"
+
+#. Title for incoming call details screen
+msgctxt "type_incoming"
+msgid "Incoming call"
+msgstr "전화받기"
+
+#. Title for outgoing call details screen
+msgctxt "type_outgoing"
+msgid "Outgoing call"
+msgstr "전화걸기"
+
+#. Title for missed call details screen
+msgctxt "type_missed"
+msgid "Missed call"
+msgstr "부재중 전화"
+
+#. Title bar for call history screen
+msgctxt "callHistoryTitle"
+msgid "Call history"
+msgstr "통화 기록"
+
+#. Title bar for call detail screen
+msgctxt "callDetailTitle"
+msgid "Call details"
+msgstr "통화 내역"
+
+#. String used to display calls from unknown numbers in the call log
+msgctxt "unknown"
+msgid "Unknown"
+msgstr "정보 없음"
+
+#. String used to display calls from private numbers in the call log
+msgctxt "private_num"
+msgid "Private number"
+msgstr "개인 번호"
+
+#. String used to display calls from pay phone in the call log
+msgctxt "payphone"
+msgid "Pay phone"
+msgstr "공중 전화"
+
+#, c-format
+msgctxt "call_log_item_count_and_date"
+msgid "(%1$d) %2$s"
+msgstr "(%1$d) %2$s"
+
+#. A nicely formatted call duration displayed when viewing call details. For
+#. example "42 mins 28 secs"
+#, c-format
+msgctxt "callDetailsDurationFormat"
+msgid "%1$s mins %2$s secs"
+msgstr "%1$s 분 %2$s 초"
+
+#. Toast for call detail screen when couldn't read the requested details
+msgctxt "toast_call_detail_error"
+msgid "Couldn't read details for the requested call."
+msgstr "요구한 전화의 구체적인 내용을 알 수 없음"
+
+#. Title of the confirmation dialog for clearing the call log. [CHAR LIMIT=37]
+msgctxt "clearCallLogConfirmation_title"
+msgid "Clear call log?"
+msgstr "통화기록을 삭제할까요?"
+
+#. Confirmation dialog for clearing the call log. [CHAR LIMIT=NONE]
+msgctxt "clearCallLogConfirmation"
+msgid "All your call records will be deleted."
+msgstr "모든 통화기록이 삭제됩니다."
+
+#. Silent phone number type
+msgctxt "phoneTypeSilent"
+msgid "Silent Phone"
+msgstr "사일런트 폰"
+
+#. Directory partition name
+msgctxt "contactsList"
+msgid "Contacts"
+msgstr "연락처"
+
+msgctxt "scContactsList"
+msgid "Silent Circle contacts"
+msgstr "사일런트 써클 연락처"
+
+msgctxt "scRemoteContactsList"
+msgid "Silent Circle"
+msgstr "사일런트 써클"
+
+#, fuzzy
+msgctxt "scExistingConversationsList"
+msgid "Silent Circle groups"
+msgstr "대화 기록"
+
+msgctxt "scV1UserList"
+msgid "Exact match outside your organization"
+msgstr "사용자의 그룹 외에 일치하는 연락처"
+
+#. The name of the invisible local contact directory
+msgctxt "local_invisible_directory"
+msgid "Other"
+msgstr "타 연락처"
+
+#. The label in section header in the contact list for a local contacts [CHAR
+#. LIMIT=128]
+msgctxt "local_search_label"
+msgid "Phone contacts"
+msgstr "전화 연락처"
+
+#. String describing the text on the header of the profile contact in the
+#. contacts list          This may be programatically capitalized. [CHAR
+#. LIMIT=20]
+msgctxt "user_profile_contacts_list_header"
+msgid "Me"
+msgstr "나"
+
+#. The label in section header in the contact list for a contact directory
+#. [CHAR LIMIT=128]
+msgctxt "directory_search_label"
+msgid "Directory"
+msgstr "연락처"
+
+#. Displayed at the top of search results indicating that more contacts were
+#. found than shown [CHAR LIMIT=64]
+#, c-format
+msgctxt "foundTooManyContacts"
+msgid "More than %d found."
+msgstr "%d 이상 발견"
+
+#. Displayed at the top of the contacts showing the zero total number of
+#. contacts found when "Only contacts with phones" not selected. [CHAR
+#. LIMIT=30]
+msgctxt "listFoundAllContactsZero"
+msgid "No contacts"
+msgstr "연락처 없음"
+
+#. Displayed at the top of the results showing the zero total number of
+#. results found when "Only contacts with phones" not selected. [CHAR LIMIT=30]
+msgctxt "listFoundAllResultsZero"
+msgid "No results"
+msgstr "결과 없음"
+
+#. Displayed at the top of the contacts showing the total number of contacts
+#. found when typing search query
+#, c-format
+msgctxt "searchFoundContacts"
+msgid "1 found"
+msgid_plural "%d found"
+msgstr[0] ""
+"1 찾음\n"
+"%d  찾음"
+
+#. Shown as the display name for a person when the name is missing or unknown.
+#. [CHAR LIMIT=18]
+msgctxt "missing_name"
+msgid "(No name)"
+msgstr "(연락처 없음)"
+
+#. Menu item to indicate you are done editing a contact and want to save the
+#. changes you've made
+msgctxt "menu_done"
+msgid "Done"
+msgstr "마침"
+
+#. Menu item to indicate you want to cancel the current editing process and
+#. NOT save the changes you've made [CHAR LIMIT=12]
+msgctxt "menu_doNotSave"
+msgid "Cancel"
+msgstr "취소"
+
+#. Menu item to search contacts
+msgctxt "menu_search"
+msgid "Search"
+msgstr "찾기"
+
+#. Action string for calling a custom phone number
+#, c-format
+msgctxt "call_custom"
+msgid "Call %s"
+msgstr "통화 %s"
+
+#. Action string for calling a home phone number
+msgctxt "call_home"
+msgid "Call home"
+msgstr "유선번호 걸기"
+
+#. Action string for calling a mobile phone number
+msgctxt "call_mobile"
+msgid "Call mobile"
+msgstr "이동전화 걸기"
+
+#. Action string for calling a work phone number
+msgctxt "call_work"
+msgid "Call work"
+msgstr "사무실 걸기"
+
+#. Action string for calling a work fax phone number
+msgctxt "call_fax_work"
+msgid "Call work fax"
+msgstr "사무실 팩스 걸기"
+
+#. Action string for calling a home fax phone number
+msgctxt "call_fax_home"
+msgid "Call home fax"
+msgstr "유선 팩스 걸기"
+
+#. Action string for calling a pager phone number
+msgctxt "call_pager"
+msgid "Call pager"
+msgstr "삐삐 걸기"
+
+#. Action string for calling an other phone number
+msgctxt "call_other"
+msgid "Call"
+msgstr "기타 전화 걸기"
+
+#. Action string for calling a callback number
+msgctxt "call_callback"
+msgid "Call callback"
+msgstr "부재중 전화 걸기"
+
+#. Action string for calling a car phone number
+msgctxt "call_car"
+msgid "Call car"
+msgstr "차량번호 걸기"
+
+#. Action string for calling a company main phone number
+msgctxt "call_company_main"
+msgid "Call company main"
+msgstr "회사 대표전화 걸기"
+
+#. Action string for calling a ISDN phone number
+msgctxt "call_isdn"
+msgid "Call ISDN"
+msgstr "ISDN 번호 걸기"
+
+#. Action string for calling a main phone number
+msgctxt "call_main"
+msgid "Call main"
+msgstr "대표번호 걸기"
+
+#. Action string for calling an other fax phone number
+msgctxt "call_other_fax"
+msgid "Call fax"
+msgstr "팩스 걸기"
+
+#. Action string for calling a radio phone number
+msgctxt "call_radio"
+msgid "Call radio"
+msgstr "TRS 전화 걸기"
+
+#. Action string for calling a Telex phone number
+msgctxt "call_telex"
+msgid "Call telex"
+msgstr "전보 번호 걸기"
+
+#. Action string for calling a TTY/TDD phone number
+msgctxt "call_tty_tdd"
+msgid "Call TTY/TDD"
+msgstr "TTY/TDD 번호 걸기"
+
+#. Action string for calling a work mobile phone number
+msgctxt "call_work_mobile"
+msgid "Call work mobile"
+msgstr "회사 이동전화 걸기"
+
+#. Action string for calling a work pager phone number
+msgctxt "call_work_pager"
+msgid "Call work pager"
+msgstr "회사 삐삐 걸기"
+
+#. Action string for calling an assistant phone number
+#, c-format
+msgctxt "call_assistant"
+msgid "Call %s"
+msgstr "전화 %"
+
+#. Action string for calling a MMS phone number
+msgctxt "call_mms"
+msgid "Call MMS"
+msgstr "MMS 보내기"
+
+#. Generic action string for starting an IM chat
+msgctxt "chat"
+msgid "Text"
+msgstr "문자 보내기"
+
+#. Toast shown when text is copied to the clipboard [CHAR LIMIT=64]
+msgctxt "toast_text_copied"
+msgid "Text copied"
+msgstr "문자 복사됨"
+
+msgctxt "toast_copied_to_clipboard"
+msgid "Copied to clipboard"
+msgstr "클립보드에 복사됨"
+
+#. Contact list filter selection indicating that the list shows all contacts
+#. with phone numbers [CHAR LIMIT=64]
+msgctxt "list_filter_phones"
+msgid "All contacts with phone numbers"
+msgstr "전화번호부의 연락처"
+
+#. An allowable value for the "view names as" contact display option
+msgctxt "display_options_view_given_name_first"
+msgid "Given name first"
+msgstr "이름 먼저 표기"
+
+#. An allowable value for the "view names as" contact display option
+msgctxt "display_options_view_family_name_first"
+msgid "Family name first"
+msgstr "성 먼저 표기"
+
+#. String describing a contact picture that introduces users to the contact
+#. detail screen.           Used by AccessibilityService to announce the
+#. purpose of the button.           [CHAR LIMIT=NONE]
+#. String describing the text for photo of a contact in a contacts list.
+#. Note: AccessibilityServices use this attribute to announce what the view
+#. represents.               This is especially valuable for views without
+#. textual representation like ImageView.
+#, c-format
+msgctxt "description_quick_contact_for"
+msgid "Quick contact for %1$s"
+msgstr "%1$s 빠른 연락처 보기"
+
+#. ****************  Strings for Key store part ******************
+msgctxt "cannot_load_store"
+msgid ""
+"Cannot open key store. The password or PIN you entered is incorrect, "
+"please try again."
+msgstr "저장된 키를 열 수 없음. 입력된 패스워드가 정확하지 않음, 다시 시도하세요."
+
+msgctxt "password_hint"
+msgid "Enter Password"
+msgstr "패스워드 입력"
+
+msgctxt "password_hint_old"
+msgid "Enter old password"
+msgstr "이전 패스워드 입력"
+
+msgctxt "password_hint_new"
+msgid "Enter new password"
+msgstr "새로운 패스워드 입력"
+
+msgctxt "password_hint2"
+msgid "Enter password (verify)"
+msgstr "패스워 입력(확인)"
+
+msgctxt "cannot_change_password"
+msgid "Password change failed. Using existing password."
+msgstr "패스워드 변경 실패. 기존 패스워드 사용."
+
+msgctxt "old_password_wrong"
+msgid "Old password is wrong. Locking key store."
+msgstr "이전 패스워드 입력 실패. 저장된 키를 잠금."
+
+msgctxt "old_pin_wrong"
+msgid "Old pin is wrong. Locking key store."
+msgstr "이전 패스워드 입력 실패. 저장된 키를 잠금."
+
+msgctxt "key_store_change_pw"
+msgid "Change password"
+msgstr "패스워드 변경"
+
+msgctxt "no_password"
+msgid "Missing password."
+msgstr "패스워드 분실."
+
+msgctxt "information_dialog"
+msgid "Information"
+msgstr "정보"
+
+msgctxt "show_pw"
+msgid "Show password"
+msgstr "패스워드 보기"
+
+msgctxt "password_match"
+msgid "Passwords do not match. Please check."
+msgstr "패스워드 불일치. 확인 후 입력."
+
+#. ******************** New or modified ***********************
+#. Strings new after 2.0.1 release
+msgctxt "video_control_explanation"
+msgid ""
+"Tap on screen to toggle video control buttons. \n"
+"\n"
+"Touch small preview window to move it."
+msgstr ""
+"비디오 켜기 버튼을 스크린에 표시. \n"
+"\n"
+"작은 미리보기 화면을 터치하여 옮기기."
+
+msgctxt "start_on_boot"
+msgid "Start Silent Phone on boot"
+msgstr "휴대폰 켤 때 사일런트 폰 시작"
+
+msgctxt "start_on_boot_explanation"
+msgid "Start Silent Phone during the device's startup procedure."
+msgstr "휴대폰 켜기 과정에서 사일런트 폰 시작."
+
+msgctxt "reset_feature_discovery"
+msgid "Reset tutorial screens"
+msgstr "학습하기 화면 다시 시작"
+
+msgctxt "reset_feature_discovery_explanation"
+msgid "Show the tutorial screens again in case you missed them."
+msgstr "사용 내용을 모를 때 학습하기 화면을 다시 보기."
+
+msgctxt "reset_warnings"
+msgid "Reset warnings"
+msgstr "재시작 경고"
+
+msgctxt "reset_warnings_explanation"
+msgid "Show all previously dismissed warnings again."
+msgstr "이전에 경고화면 다시 보기."
+
+msgctxt "enable_traversal"
+msgid "Enable firewall traversal"
+msgstr "보안 방화벽 기능 켜기"
+
+msgctxt "enable_traversal_explanation"
+msgid ""
+"If Silent Phone detects a restrictive firewall, try extra hard to "
+"complete your call."
+msgstr "만약 사일런트 폰이 제한적으로 막힌 경우, 기능을 최대화 하여 전화걸기 완성하기."
+
+msgctxt "force_traversal"
+msgid "Force firewall traversal"
+msgstr "강제적으로 방화벽 뚫기"
+
+msgctxt "force_traversal_explanation"
+msgid ""
+"Use a more reliable but lower-quality method of connecting the call "
+"audio, which may be needed on particularly bad networks."
+msgstr "좋지 않은 네트워크 환경에서도 믿을 만한 평범한 품질로 전화걸기."
+
+msgctxt "setting_underflow"
+msgid "Dropout tone"
+msgstr "전화끊기 상태음"
+
+msgctxt "setting_underflow_summary"
+msgid ""
+"Play low tone if no media packets are arriving. If heard often, you or "
+"your partner may want to change networks."
+msgstr "만약 신호가 없을 경우 낮은 상태음 들려주기. 만약 상태음이 들리면, 네트워크를 변경 가능하게 하기."
+
+msgctxt "setting_echo_option"
+msgid "Echo canceler"
+msgstr "에코음 제거하기"
+
+msgctxt "setting_echo_option_summary"
+msgid ""
+"Automatic control of echo canceler. If not selected the echo canceler is "
+"always active"
+msgstr "자동 에코음 제거하기. 에코음 제거하기 기능이 선택되지 않을 경우 항상 작동시키기"
+
+msgctxt "setting_errors_option"
+msgid "Show all errors"
+msgstr "모든 에러 보여주기"
+
+msgctxt "setting_errors_option_summary"
+msgid ""
+"Minor software errors that don't affect your experience are hidden by "
+"default."
+msgstr "커뮤니케이션에 영향을 미치지 않는 작은 소프트웨어 에러는 자동으로 숨기기"
+
+#. ******* Strings for the dial assist activity
+msgctxt "sp_dial_helper_title"
+msgid "Dial assist"
+msgstr "전화걸기"
+
+msgctxt "sp_dial_helper_select_explanation"
+msgid ""
+"To simplify dialing, turn on Dial Assist and select a country. The number"
+" will automatically be formatted with your country code. Otherwise, dial "
+"'+' and the country code."
+msgstr ""
+"전화걸기를 쉽게하려면, 전화걸기를 열고 국가를 선택하세요. 자동으로 국가가 선택되어 지며, 만약 선택을 하지 않을 경우 ‘+’와 "
+"국가 코드를 입력하세요."
+
+msgctxt "sp_dial_helper_select_explanation_1"
+msgid ""
+"To call other Silent Circle subscribers, simply dial their Silent Circle "
+"subscriber name."
+msgstr "다른 사일런트 써클 가입자에게 전화를 걸 경우, 가입자 계정 이름을 찾아 전화걸기를 하세요."
+
+msgctxt "sp_dial_helper_select"
+msgid "Select your country"
+msgstr "국가 선택"
+
+msgctxt "sp_dial_helper_none"
+msgid "No dial assist"
+msgstr "전화걸기 없음"
+
+msgctxt "sp_dial_helper_simple"
+msgid "Simple dial assist"
+msgstr "간편하게 전화걸기"
+
+#. Explain specific dial support functions
+msgctxt "sp_dial_helper_null_explanation"
+msgid "Dial assist disabled."
+msgstr "전화걸기 기능이 활성화 되지 않음."
+
+msgctxt "sp_dial_helper_simple_explanation"
+msgid "Adds '+' to form an international phone number."
+msgstr "‘+’를 추가하여 국제전화로 걸기"
+
+msgctxt "sp_dial_helper_nanp_explanation"
+msgid "Adds '+' or '+1' or replaces a leading '011' with a '+' sign."
+msgstr "‘+’ 또는 ‘+1’을 추가하거나 ‘+’를 ‘011’로 대체하기"
+
+#, c-format
+msgctxt "sp_dial_helper_00_0_explanation"
+msgid ""
+"Replaces a leading '%1$s' with country code %2$s and a leading '%3$s' "
+"with the '+' sign."
+msgstr "국가 코드 %2$s를 ‘%1$s’로 대체하여 시작하기 그리고 ‘+’를 ‘%3$s’로 대체하여 시작하기"
+
+#, c-format
+msgctxt "sp_dial_helper_00_x_explanation"
+msgid ""
+"Adds '%2$s' to dialed digits and replaces a leading '%3$s' with the '+' "
+"sign."
+msgstr "‘%2$s’를 번호에 추가하여 ‘+’로 시작하는 ‘%3$s’로 대체하여 시작하기"
+
+#. ******* Strings for the key store management activity
+msgctxt "key_store_set_pw_explanation"
+msgid ""
+"Set this password to encrypt Silent Phone. You will need to enter this "
+"password to start the application. Silent Circle cannot reset this "
+"password for you."
+msgstr ""
+"사일런트 폰 암호화에 패스워드 사용하기. 사일런트 폰을 시작하려면 이 패스워드를 입력하세요. 사일런트 써클은 이 패스워드를 리셋해 "
+"드리지 않습니다."
+
+msgctxt "key_store_change_pw_explanation"
+msgid "Change your encryption password."
+msgstr "패스워드 변경"
+
+msgctxt "key_store_reset_pw_explanation"
+msgid "Stop using password encryption of Silent Phone."
+msgstr "사일런트 폰 패스워드 사용 중지"
+
+msgctxt "key_store_enter_pw_explanation"
+msgid "Enter your encryption password."
+msgstr "패스워드 입력"
+
+msgctxt "key_store_set_pin_explanation"
+msgid ""
+"Set this PIN to encrypt Silent Phone. You will need to enter this PIN to "
+"start the application. Silent Circle cannot reset this PIN for you."
+msgstr ""
+"사일런트 폰 암호화에 간편번호 패스워드 사용하기. 사일런트 폰을 시작하려면 이 번호 패스워드를 입력하세요. 싸일런트 써클은 번호 "
+"패스워드를 리셋해 드리지 않습니다."
+
+msgctxt "key_store_change_pin_explanation"
+msgid "Change your encryption PIN."
+msgstr "간편번호 패스워드 변경"
+
+msgctxt "key_store_reset_pin_explanation"
+msgid "Stop using PIN encryption of Silent Phone."
+msgstr "간편번호 패스워드 사용 중지"
+
+msgctxt "key_store_enter_pin_explanation"
+msgid "Enter your encryption PIN."
+msgstr "간편번호 패스워드 입력"
+
+msgctxt "pin_hint"
+msgid "Enter PIN"
+msgstr "간편번호 패스워드 입력"
+
+msgctxt "pin_hint_old"
+msgid "Enter old PIN"
+msgstr "이전 패스워드 입력"
+
+msgctxt "pin_hint_new"
+msgid "Enter new PIN"
+msgstr "새로운 패스워드 입력"
+
+msgctxt "pin_hint2"
+msgid "Enter PIN (verify)"
+msgstr "패스워드 입력(확인)"
+
+msgctxt "no_pin"
+msgid "Missing PIN."
+msgstr "패스워드 분실."
+
+msgctxt "show_pin"
+msgid "Show PIN"
+msgstr "패스워드 보이기"
+
+msgctxt "pin_match"
+msgid "PINs do not match. Please check."
+msgstr "패스워드 불일치. 확인 후 입력."
+
+#, c-format
+msgctxt "pin_short"
+msgid "PIN is too short. Enter at least %d digits"
+msgstr "간편번호 패스워드가 너무 짧습니다. 최소 %d 숫자 입력 필요"
+
+msgctxt "passcode_title"
+msgid "Passcode"
+msgstr "패스워드"
+
+msgctxt "passcode_change"
+msgid "Change passcode"
+msgstr "패스워드 변경"
+
+msgctxt "passcode_enable"
+msgid "Turn passcode on"
+msgstr "패스워드 켜기"
+
+msgctxt "passcode_disable"
+msgid "Turn passcode off"
+msgstr "패스워드 끄기"
+
+msgctxt "passcode_timeout"
+msgid "Require passcode"
+msgstr "패스워드 요청"
+
+msgctxt "passcode_set"
+msgid "Passcode set."
+msgstr "패스워드 셋팅."
+
+msgctxt "passcode_disabled"
+msgid "Passcode disabled."
+msgstr "패스워드 사용 불가능"
+
+msgctxt "passcode_wipe"
+msgid "Wipe data"
+msgstr "데이터 전체 삭제"
+
+msgctxt "passcode_wipe_description"
+msgid "Wipe all data on Silent Phone after 10 failed passcode attempts"
+msgstr "10번의 패스워드 입력 실패 시 사일런트 폰의 모든 데이터 삭제"
+
+msgctxt "fingerprint_unlock"
+msgid "Fingerprint unlock"
+msgstr "지문 인식으로 열기"
+
+msgctxt "fingerprint_unlock_description"
+msgid "Unlock Silent Phone with your fingerprint"
+msgstr "지문 인식으로 사일런트 폰 열기"
+
+msgctxt "fingerprint_enroll_title"
+msgid "Enroll fingerprints"
+msgstr "지문 등록"
+
+msgctxt "fingerprint_enroll_message"
+msgid ""
+"In order to use Fingerprint unlock, you need to first enroll at least one"
+" fingerprint."
+msgstr "지문 인식을 위해서는, 한 개 이상의 지문을 등록해야 함."
+
+msgctxt "fingerprint_enroll_action"
+msgid "Enroll"
+msgstr "등록"
+
+msgctxt "fingerprint_changed_title"
+msgid "Fingerprint unlock unavailable"
+msgstr "지문 인식 불가능"
+
+msgctxt "fingerprint_changed_message"
+msgid ""
+"If you have recently enrolled a new fingerprint, you will need to re-"
+"enable Fingerprint unlock in Silent Phone's passcode settings."
+msgstr "새로운 지문 등록 시, 사일런트 폰 패스워드 셋팅에서 지문 인식으로 열기를 선택해야 함."
+
+msgctxt "fingerprint_dialog_unlock_title"
+msgid "Use fingerprint to unlock"
+msgstr "지문 인식으로 열기"
+
+msgctxt "fingerprint_dialog_enroll_title"
+msgid "Enable fingerprint"
+msgstr "지문 인식 등록"
+
+msgctxt "fingerprint_touch"
+msgid "Touch sensor"
+msgstr "터치 센서"
+
+msgctxt "fingerprint_not_recognized"
+msgid "Fingerprint not recognized. Try again"
+msgstr "지문 인식 실패, 재 시도"
+
+msgctxt "fingerprint_recognized"
+msgid "Fingerprint recognized."
+msgstr "지문 인지 완료"
+
+msgctxt "fingerprint_use_passcode"
+msgid "Use passcode"
+msgstr "패스워드 사용"
+
+msgctxt "passcode_enter_any"
+msgid "Enter a passcode"
+msgstr "패스워드 입력"
+
+msgctxt "passcode_enter_your"
+msgid "Enter your passcode"
+msgstr "패스워드 입력"
+
+msgctxt "passcode_enter_old"
+msgid "Enter your old passcode"
+msgstr "이전 패스워드 입력"
+
+msgctxt "passcode_enter_new"
+msgid "Enter your new passcode"
+msgstr "새로운 패스워드 입력"
+
+msgctxt "passcode_reenter"
+msgid "Re-enter your new passcode"
+msgstr "새로운 패스워드 입력 확인"
+
+msgctxt "passcode_mismatch"
+msgid "The passcodes didn't match."
+msgstr "패스워드 불일치."
+
+msgctxt "passcode_wrong"
+msgid "Wrong passcode."
+msgstr "잘못된 패스워드"
+
+msgctxt "passcode_try_again"
+msgid "Try again."
+msgstr "재시도"
+
+#, c-format
+msgctxt "passcode_try_left"
+msgid "You have %1$d try left."
+msgstr "%1$d의 기회가 남았습니다."
+
+#, c-format
+msgctxt "passcode_tries_left"
+msgid "You have %1$d tries left."
+msgstr "%1$d의 기회가 남았습니다."
+
+msgctxt "passcode_data_wiped_warn"
+msgid "Data will be wiped."
+msgstr "데이터가 삭제될 예정입니다."
+
+msgctxt "passcode_sp_locked"
+msgid "Silent Phone is locked"
+msgstr "사일런트 폰이 잠겼습니다."
+
+msgctxt "passcode_locked_try_again"
+msgid "try again in"
+msgstr "다시 시도 하세요."
+
+#, c-format
+msgctxt "passcode_minute"
+msgid "%1$d minute"
+msgstr "%1$d 분"
+
+#, c-format
+msgctxt "passcode_minutes"
+msgid "%1$d minutes"
+msgstr "%1$d 분"
+
+msgctxt "passcode_timeout_immediately"
+msgid "Immediately"
+msgstr "즉시"
+
+msgctxt "in"
+msgid "in"
+msgstr "내에"
+
+msgctxt "seconds"
+msgid "seconds"
+msgstr "초"
+
+msgctxt "minute"
+msgid "minute"
+msgstr "분"
+
+msgctxt "minutes"
+msgid "minutes"
+msgstr "분"
+
+msgctxt "enabled"
+msgid "Enabled"
+msgstr "사용가능"
+
+msgctxt "not_enabled"
+msgid "Not enabled"
+msgstr "사용 불가능"
+
+msgctxt "key_store_title"
+msgid "Encrypt local app data"
+msgstr "앱에 저장된 데이터 암호화"
+
+msgctxt "key_store_type_default"
+msgid "Not encrypted"
+msgstr "암호화되지 않음"
+
+msgctxt "key_store_type_pw"
+msgid "Password set"
+msgstr "패스워드 셋팅"
+
+msgctxt "key_store_type_pin"
+msgid "PIN set"
+msgstr "간편번호 패스워드 셋팅"
+
+msgctxt "key_store_set_pw"
+msgid "Set password"
+msgstr "패스워드 입력"
+
+msgctxt "key_store_set_pin"
+msgid "Set PIN"
+msgstr "간편번호 패스워드 입력"
+
+msgctxt "key_store_change_pin"
+msgid "Change PIN"
+msgstr "간편번호 패스워드 변경"
+
+msgctxt "key_store_reset_default"
+msgid "Clear password/PIN"
+msgstr "패스워드 삭제"
+
+msgctxt "re_provision"
+msgid "Reload account data"
+msgstr "계정 정보 재설정"
+
+msgctxt "re_provision_explanation"
+msgid "Reload Silent Phone's account and configuration data."
+msgstr "사일런트 폰 계정 및 입력 데이터 재설정"
+
+#. ******** String for DID selection activity
+msgctxt "did_title"
+msgid "Phone number selection"
+msgstr "휴대폰 번호 선택"
+
+msgctxt "did_region_area_explanation"
+msgid "Select your phone number from a region and area"
+msgstr "국가 번호 및 지역 번호 설정"
+
+msgctxt "did_currently_selected"
+msgid "Currently selected"
+msgstr "현재 선택"
+
+msgctxt "did_region"
+msgid "Region:"
+msgstr "국가:"
+
+msgctxt "did_area"
+msgid "Area:"
+msgstr "지역:"
+
+msgctxt "did_number"
+msgid "Number:"
+msgstr "번호:"
+
+msgctxt "did_region_list"
+msgid "Select region"
+msgstr "국가 선택:"
+
+msgctxt "did_area_list"
+msgid "Select area"
+msgstr "지역 선택:"
+
+msgctxt "did_number_list"
+msgid "Select number"
+msgstr "번호 선택"
+
+msgctxt "did_selection_wrong_format"
+msgid "Phone number selection - server sent wrong data format:"
+msgstr "전화번호 선택 - 서버가 잘못된 데이터 포맷을 보냈음"
+
+msgctxt "did_no_area"
+msgid "Currently no area available in this region. Select another region."
+msgstr "현재 선택가능한 지역 없음. 다른 국가 선택."
+
+msgctxt "did_no_number"
+msgid "Currently no phone number available, select another region or area."
+msgstr "선택 가능한 전화번호 없음. 다른 국가와 지역번호 선택."
+
+msgctxt "did_ask_to_complete"
+msgid "Complete the phone number selection."
+msgstr "전화번호 선택 완성."
+
+msgctxt "no_internet"
+msgid "No Internet connection"
+msgstr "인터넷 접속 없음"
+
+msgctxt "mobile_internet_available"
+msgid "Mobile Internet available"
+msgstr "모바일 인터넷 연결 가능"
+
+msgctxt "directory_use_sc"
+msgid "Search Silent Circle Global Directory"
+msgstr "사일런트 써클 글로벌 연결 번호 찾기"
+
+#. <string name="directory_use_sc">Search Silent Circle Directory</string>
+msgctxt "directory_own_org_only"
+msgid "Members of my own organization"
+msgstr "내 그룹에 속한 멤버"
+
+msgctxt "network_trouble_detected"
+msgid "Network trouble detected"
+msgstr "네트워크 장애로 부터 보호됨"
+
+msgctxt "network_not_available_title"
+msgid "Network not available"
+msgstr "네트워크 연결 안됨:"
+
+msgctxt "network_not_available_description"
+msgid ""
+"Creating a new conversation requires network access so we can search for "
+"the other party. Try connecting to a network or disabling airplane mode."
+msgstr "새로운 커뮤니케이션을 위해 네트워크 접속 필요. 네트워크 연결 또는 비행기 모드 잠김이 되었는지 확인 필요"
+
+msgctxt "sign_in"
+msgid "Sign in"
+msgstr "등록"
+
+msgctxt "sign_in_to_sc"
+msgid "Sign in to your Silent Circle account"
+msgstr "사일런트 써클 계정 등록"
+
+msgctxt "sc_help"
+msgid "Help & Support"
+msgstr "고객 센터"
+
+msgctxt "sc_privacy"
+msgid "Privacy Statement"
+msgstr "개인정보 보호 정책"
+
+msgctxt "sc_tos"
+msgid "Terms of Service"
+msgstr "서비스 이용조건"
+
+msgctxt "sc_manage_account"
+msgid "Manage Account"
+msgstr "계정 관리"
+
+msgctxt "sc_privacy_link"
+msgid ""
+"<a href=\"https://accounts.silentcircle.com/privacy-policy/\">Privacy "
+"Statement</a>"
+msgstr ""
+"<a href=\"https://accounts.silentcircle.com/privacy-policy/\">개인 정보 보호 "
+"정책</a>"
+
+msgctxt "sc_tos_link"
+msgid "<a href=\"https://accounts.silentcircle.com/terms/\">Terms of Service</a>"
+msgstr "<a href=\"https://accounts.silentcircle.com/terms/\">서비스 약관</a>"
+
+#, c-format
+msgctxt "number_missed_calls"
+msgid "Missed call"
+msgid_plural "%d missed calls"
+msgstr[0] ""
+"부재중 전화\n"
+"%d 부재중 전화"
+
+msgctxt "no_video_available"
+msgid "Video is not available for this call."
+msgstr "영상전화 불가능"
+
+msgctxt "call_in_progress"
+msgid "Call in progress"
+msgstr "통화 연결 중"
+
+msgctxt "network_trouble_title"
+msgid "Network trouble detected"
+msgstr "네트워크 장애로 부터 보호됨"
+
+msgctxt "network_trouble_underflow_description"
+msgid ""
+"The tone you heard or are hearing indicates that no audio is being "
+"received from the other party. This is called dropout tone and indicates "
+"the silence is not intentional. This may be caused by your network "
+"environment or that of the remote party. To improve the quality of your "
+"call, you or the other party may try moving closer to your wireless base "
+"station, moving to a place with more signal bars, changing networks or "
+"internet service providers, or contacting your organization's networking "
+"staff."
+msgstr ""
+"현재 전화로 들리는 신호는 상대방으로부터 아무런 신호가 없다는 얘기입니다. 전화 걸기 실패이며 무음이 의도된 것은 아닙니다. "
+"네트워크 환경이 좋지 않아서 발생된 가능성이 높으며 네트워크 신호가 잘 잡히는 곳으로 이동하여 다시 시도 하세요. 만약 계속 연결이"
+" 어려우면 네트워크 환경을 다시 체크하세요."
+
+msgctxt "server_cert_failure"
+msgid "Certificate check failed - retrying"
+msgstr "인증서 실패 - 재시도"
+
+msgctxt "remaining_oca_minutes"
+msgid "Account info"
+msgstr "계 정보"
+
+msgctxt "remaining_oca_minutes_fail"
+msgid "No Silent World information available"
+msgstr "사일런트 월드 사용정보 없음"
+
+#, c-format
+msgctxt "remaining_oca_minutes_zero"
+msgid "No call minutes used. Monthly plan: %1$d minutes."
+msgstr "현재 사용 시간 없음. 월 사용량: %1$d 분."
+
+msgctxt "remaining_oca_minutes_dialog"
+msgid "Silent Circle account"
+msgstr "사일런트 써클 계정"
+
+msgctxt "remaining_oca_minutes_loading_dialog"
+msgid "Retrieving account information…"
+msgstr "계정 저장 중..."
+
+msgctxt "avatar_upload_loading_dialog"
+msgid "Uploading avatar…"
+msgstr "프로필 사진 업로드 중..."
+
+msgctxt "avatar_delete_loading_dialog"
+msgid "Deleting avatar…"
+msgstr "프로필 사진 삭제 중..."
+
+msgctxt "avatar_fetch_loading_dialog"
+msgid "Fetching avatar…"
+msgstr "프로필 사진 등록 중..."
+
+#, c-format
+msgctxt "remaining_oca_minutes_info"
+msgid "You used one minute of your %1$d minutes."
+msgid_plural ""
+"Plan: %1$d minutes\n"
+"Remaining: %2$d minutes"
+msgstr[0] ""
+"전체 사용 가능한 %1$d분 중에 1분을 사용하였습니다.\n"
+"요금 플랜: %1$d 분"
+
+msgctxt "manage_account"
+msgid ""
+"&lt;br&gt;&lt;br&gt;&lt;a "
+"href=https://accounts.silentcircle.com/&gt;Manage account&lt;/a&gt;"
+msgstr ""
+"&lt;br&gt;&lt;br&gt;&lt;a "
+"href=https://accounts.silentcircle.com/&gt;계정관리&lt;/a&gt;"
+
+msgctxt "manage_account_dev"
+msgid ""
+"&lt;br&gt;&lt;br&gt;&lt;a href=https://accounts-"
+"dev.silentcircle.com/&gt;Manage account&lt;/a&gt;"
+msgstr ""
+"&lt;br&gt;&lt;br&gt;&lt;a href=https://accounts-"
+"dev.silentcircle.com/&gt;계정관리&lt;/a&gt;"
+
+#, c-format
+msgctxt "remaining_credit"
+msgid "Remaining credit: %1$.2f %2$s"
+msgstr "남은 사용 가능 시간: %1$.2f %2$s"
+
+msgctxt "setting_p2p"
+msgid "Use media relay"
+msgstr "서버간 연결 사용"
+
+msgctxt "setting_p2p_summary"
+msgid ""
+"Always use media relay server to conceal remote party's location. Adds "
+"latency."
+msgstr "상대방의 위치나 환경에 따라 항상 서버 연결 사용. 연결 지연 가능 "
+
+#. SPA-259 added string
+msgctxt "connected_to_network"
+msgid ""
+"Network unavailable. \n"
+"\n"
+"Ensure your device can connect to the Internet and try again."
+msgstr ""
+"네트워크 연결 불가. \n"
+"\n"
+"휴대폰에서 인터넷 연결이 가능한지 다시 확인하세요. "
+
+msgctxt "provisioning_error_message"
+msgid "Please re-launch the app and login again."
+msgstr "앱을 다시 설치 하시고 로그인 하세요."
+
+#. end SPA-259
+msgctxt "re_provisioning_device_not_found"
+msgid ""
+"This device is not known to the provisioning server. To re-provision this"
+" device you need to enter your Silent Circle username and password. \n"
+"\n"
+"To continue press OK."
+msgstr ""
+"이 휴대폰은 인증이 되지 않았습니다. 사용자 계정과 패스워드를 입력하여 단말기 인증을 받고 사용하세요. \n"
+"\n"
+"계속 하시려면 OK를 누르세요."
+
+#. **************************  New Dialer layout
+#. *************************
+msgctxt "tab_recents"
+msgid "CALLS"
+msgstr "전화 기록"
+
+msgctxt "tab_all_contacts"
+msgid "CONTACTS"
+msgstr "연락처"
+
+msgctxt "tab_chat"
+msgid "CHATS"
+msgstr "대화 나누기"
+
+#. Button text for the "call back" button displayed underneath an entry in the
+#. call log.      Tapping causes a call to be placed to the caller represented
+#. by the call log entry.      [CHAR LIMIT=30]
+msgctxt "call_log_action_call_back"
+msgid "CALL BACK"
+msgstr "부재중 전화 전화걸기"
+
+#. Button text for the "DETAILS" button displayed underneath an entry in the
+#. call log.          Tapping navigates the user to the call details screen
+#. where the user can view details for          the call log entry.
+#. [CHAR LIMIT=30]
+msgctxt "call_log_action_details"
+msgid "DETAILS"
+msgstr "세부 내용"
+
+#. Button text for the "report" button displayed underneath an entry in the
+#. call log.          Tapping causes the call log entry to be reported as a bad
+#. id.          [CHAR LIMIT=30]
+msgctxt "call_log_action_report"
+msgid "REPORT"
+msgstr "사일런트 써클에 알리기"
+
+#. Button text for the "write back" button displayed underneath an entry in
+#. the call log.      Tapping causes a conversation to be started with the
+#. caller represented by the call log entry.      [CHAR LIMIT=30]
+msgctxt "call_log_action_write_back"
+msgid "WRITE BACK"
+msgstr "다시 쓰기"
+
+#. Button text for the "invite" button displayed underneath an entry in the
+#. call log.      Tapping causes an invitation to Silent Circle to be sent via
+#. SMS or email.      [CHAR LIMIT=30]
+msgctxt "call_log_action_invite"
+msgid "INVITE TO SILENT CIRCLE"
+msgstr "사일런트 써클에 초대하기"
+
+#. Content description for dismiss button on badge. [CHAR LIMIT=NONE]
+msgctxt "description_dismiss"
+msgid "Dismiss"
+msgstr "지우기"
+
+#. Message displayed when there is no application available to handle a
+#. particular action.      [CHAR LIMIT=NONE]
+msgctxt "activity_not_available"
+msgid "No installed activity available to handle selected action."
+msgstr "선택한 명령 실행을 할 수 없음"
+
+#. Note: AccessibilityServices use this attribute to announce what the view
+#. represents.     This is especially valuable for views without textual
+#. representation like ImageView.
+#, c-format
+msgctxt "description_num_calls"
+msgid "<xliff:g id=\"numberOfCalls\">%1$s</xliff:g> calls."
+msgstr "<xliff:g id=\"numberOfCalls\">%1$s</xliff:g> 전화 기록."
+
+#. String describing the "call back" action for an entry in the call log.  The
+#. call back      action triggers a return call to the named user.      Note:
+#. AccessibilityServices uses this attribute to announce the purpose of the
+#. button.      [CHAR LIMIT=NONE]
+#, c-format
+msgctxt "description_call_back_action"
+msgid ""
+"Call back <xliff:g id=\"nameOrNumber\" example=\"John "
+"Smith\">%1$s</xliff:g>"
+msgstr "<xliff:g id=\"nameOrNumber\" example=\"John Smith\">%1$s</xliff:g>로 전화 걸기"
+
+#. String describing the "details" action for an entry in the call log.  The
+#. details action          displays the call details screen for an entry in the
+#. call log.  This shows the calls to          and from the specified number
+#. associated with the call log entry.          [CHAR LIMIT=NONE]
+#, c-format
+msgctxt "description_details_action"
+msgid ""
+"Call details for <xliff:g id=\"nameOrNumber\" example=\"John "
+"Smith\">%1$s</xliff:g>"
+msgstr "<xliff:g id=\"nameOrNumber\" example=\"John Smith\">%1$s</xliff:g>의 전화 내용"
+
+#. String describing the button to access the contact details for a name or
+#. number.          Note: AccessibilityServices use this attribute to announce
+#. what the view represents.               This is especially valuable for
+#. views without textual representation like ImageView.
+#, c-format
+msgctxt "description_contact_details"
+msgid "Contact details for <xliff:g id=\"nameOrNumber\">%1$s</xliff:g>"
+msgstr "<xliff:g id=\"nameOrNumber\">%1$s</xliff:g>의 연락처"
+
+#. String describing an incoming missed call entry in the call log.      Note:
+#. AccessibilityServices uses this attribute to announce what the view
+#. represents.      [CHAR LIMIT=NONE]
+#, c-format
+msgctxt "description_incoming_missed_call"
+msgid ""
+"Missed call from <xliff:g id=\"nameOrNumber\" example=\"John "
+"Smith\">%1$s</xliff:g>, <xliff:g id=\"typeOrLocation\" "
+"example=\"Mobile\">%2$s</xliff:g>, <xliff:g id=\"timeOfCall\" example=\"2"
+" min ago\">%3$s</xliff:g>."
+msgstr ""
+"<xliff:g id=\"nameOrNumber\" example=\"John Smith\">%1$s</xliff:g>, "
+"<xliff:g id=\"typeOrLocation\" example=\"Mobile\">%2$s</xliff:g>, "
+"<xliff:g id=\"timeOfCall\" example=\"2 min ago\">%3$s</xliff:g>로 부터 부재중 "
+"전화"
+
+#. String describing an incoming answered call entry in the call log.
+#. Note: AccessibilityServices uses this attribute to announce what the view
+#. represents.          [CHAR LIMIT=NONE]
+#, c-format
+msgctxt "description_incoming_answered_call"
+msgid ""
+"Answered call from <xliff:g id=\"nameOrNumber\" example=\"John "
+"Smith\">%1$s</xliff:g>, <xliff:g id=\"typeOrLocation\" "
+"example=\"Mobile\">%2$s</xliff:g>, <xliff:g id=\"timeOfCall\" example=\"2"
+" min ago\">%3$s</xliff:g>."
+msgstr ""
+"<xliff:g id=\"nameOrNumber\" example=\"John Smith\">%1$s</xliff:g>, "
+"<xliff:g id=\"typeOrLocation\" example=\"Mobile\">%2$s</xliff:g>, "
+"<xliff:g id=\"timeOfCall\" example=\"2 min ago\">%3$s</xliff:g> 수신 기록"
+
+#. String describing an outgoing call entry in the call log.          Note:
+#. AccessibilityServices uses this attribute to announce what the view
+#. represents.          [CHAR LIMIT=NONE]
+#, c-format
+msgctxt "description_outgoing_call"
+msgid ""
+"Call to <xliff:g id=\"nameOrNumber\" example=\"John "
+"Smith\">%1$s</xliff:g>, <xliff:g id=\"typeOrLocation\" "
+"example=\"Mobile\">%2$s</xliff:g>, <xliff:g id=\"timeOfCall\" example=\"2"
+" min ago\">%3$s</xliff:g>."
+msgstr ""
+"<xliff:g id=\"nameOrNumber\" example=\"John Smith\">%1$s</xliff:g>, "
+"<xliff:g id=\"typeOrLocation\" example=\"Mobile\">%2$s</xliff:g>, "
+"<xliff:g id=\"timeOfCall\" example=\"2 min ago\">%3$s</xliff:g> 발신 기록"
+
+#. Delimiter used between each item in a textual list; for example "Alpha,
+#. Beta".      [CHAR LIMIT=3]
+msgctxt "list_delimeter"
+msgid ", "
+msgstr ","
+
+#. String used as a header in the call log above calls which occurred today.
+#. [CHAR LIMIT=65]
+msgctxt "call_log_header_today"
+msgid "Today"
+msgstr "오늘"
+
+#. String used as a header in the call log above calls which occurred
+#. yesterday.          [CHAR LIMIT=65]
+msgctxt "call_log_header_yesterday"
+msgid "Yesterday"
+msgstr "어제"
+
+#. String used as a header in the call log above calls which occurred two days
+#. or more ago.          [CHAR LIMIT=65]
+msgctxt "call_log_header_other"
+msgid "Older"
+msgstr "오래된 기록"
+
+#. Text displayed when the list of missed calls is empty
+msgctxt "recentMissed_empty"
+msgid "You have no recent missed calls."
+msgstr "최근 부재 중 전화 없음"
+
+#. Title for the recent calls footer that brings users to the full call
+#. history when clicked
+msgctxt "recents_footer_text"
+msgid "View full call history"
+msgstr "통화 기록 전체 보기"
+
+#. Shown when there are no contacts in the all contacts list.
+msgctxt "all_contacts_empty"
+msgid "You have no contacts."
+msgstr "연락처 없음"
+
+#. Title for the call log tab containing the list of all voicemails and calls
+#. [CHAR LIMIT=30]
+msgctxt "call_log_all_title"
+msgid "ALL"
+msgstr "모든 통화 기록"
+
+#. Title for the call log tab containing the list of all missed calls only
+#. [CHAR LIMIT=30]
+msgctxt "call_log_missed_title"
+msgid "MISSED"
+msgstr "부재중 전화"
+
+#. *****
+#. Shortcut item used to call a number directly from search
+#, c-format
+msgctxt "search_shortcut_call_number"
+msgid "Call <xliff:g id=\"number\">%s</xliff:g> "
+msgstr "<xliff:g id=\"number\">%s</xliff:g> 전화 걸기"
+
+#. Shortcut item used to add a number directly from search
+msgctxt "search_shortcut_add_to_contacts"
+msgid "Add to contacts"
+msgstr "연락처 추가"
+
+#. Shortcut item to start conversation from search
+#, c-format
+msgctxt "search_shortcut_write_to"
+msgid "Write to <xliff:g id=\"number\">%s</xliff:g>"
+msgstr "<xliff:g id=\"number\">%s</xliff:g>에게 보내기"
+
+msgctxt "search_shortcut_group_chat"
+msgid "New group conversation"
+msgstr "새로운 그룹톡하기"
+
+#, c-format
+msgctxt "search_shortcut_add_to_group_chat"
+msgid "Add <xliff:g id=\"number\">%s</xliff:g> to selection"
+msgstr "<xliff:g id=\"number\">%s</xliff:g> 추가하기"
+
+#. Message displayed when there is no application available to handle the add
+#. contact menu option. [CHAR LIMIT=NONE]
+msgctxt "add_contact_not_available"
+msgid "Re-enable the Contacts application to use this feature."
+msgstr "연락처 다시 사용하기"
+
+#. Content description for the fake action menu up button as used      inside
+#. search. [CHAR LIMIT=NONE]
+msgctxt "action_menu_back_from_search"
+msgid "stop searching"
+msgstr "검색 중지"
+
+#. String describing the icons used in conversation starter
+msgctxt "description_clear_search"
+msgid "Clear search"
+msgstr "검색 기록 삭제"
+
+msgctxt "description_dial_pad_toggle"
+msgid "Dial pad toggle"
+msgstr "전화번호로 입력"
+
+msgctxt "description_keyboard_toggle"
+msgid "Keyboard toggle"
+msgstr "키보드 입력"
+
+#. Hint displayed in dialer search box when there is no query that is
+#. currently typed.      [CHAR LIMIT=30]
+msgctxt "dialer_hint_find_contact"
+msgid "Enter name or number"
+msgstr "이름 또는 번호 입력"
+
+msgctxt "dialer_hint_find_messaging_contact"
+msgid "Enter name"
+msgstr "이름 입력"
+
+#. Title for the sms disambiguation dialog
+msgctxt "sms_disambig_title"
+msgid "Choose number"
+msgstr "번호 선택"
+
+#. Title for the call disambiguation dialog
+msgctxt "call_disambig_title"
+msgid "Choose number"
+msgstr "번호 선택"
+
+#. Message next to disambiguation dialog check box
+msgctxt "make_primary"
+msgid "Remember this choice"
+msgstr "이 선택 기억하기"
+
+msgctxt "low_volume"
+msgid "Volume may be too low."
+msgstr "소리가 작을 수 있음."
+
+msgctxt "urgent_call"
+msgid "Urgent"
+msgstr "긴급 통화"
+
+msgctxt "emergency_call"
+msgid "Emergency"
+msgstr "비상 전화"
+
+msgctxt "call_mng_conference_explanation"
+msgid "Drag call into conference"
+msgstr "다자 통화"
+
+msgctxt "call_mng_private_explanation"
+msgid "Drag here to remove from conference"
+msgstr "다자 통화에서 나가기"
+
+msgctxt "account_manager_label"
+msgid "Silent Circle account"
+msgstr "사일런트 써클 계정"
+
+msgctxt "account_access_label"
+msgid "Access account"
+msgstr "계정 확인"
+
+msgctxt "account_exists"
+msgid ""
+"An account exists already - cannot create an additional account on this "
+"device."
+msgstr "계정이 이미 존재함 - 이 휴대폰에서 새로운 계정 생성 불가"
+
+msgctxt "account_missing_name"
+msgid "Missing username for this account."
+msgstr "계정 이름 불일치"
+
+#. Used to display as default status when the contact is available for chat
+#. [CHAR LIMIT=19]
+msgctxt "status_available"
+msgid "Available"
+msgstr "사용 가능"
+
+#. Used to display as default status when the contact is away or idle for
+#. chat [CHAR LIMIT=19]
+msgctxt "status_away"
+msgid "Away"
+msgstr "원격"
+
+#. Used to display as default status when the contact is busy or Do not
+#. disturb for chat [CHAR LIMIT=19]
+msgctxt "status_busy"
+msgid "Busy"
+msgstr "통화 중"
+
+#. String a header on the call details screen.  Appears above the list calls
+#. to or from a          particular number.          [CHAR LIMIT=65]
+msgctxt "call_detail_list_header"
+msgid "Calls list"
+msgstr "통화 기록"
+
+#. String resources for messaging functionality
+#. ********************************************
+msgctxt "messaging_send_message"
+msgid "Send"
+msgstr "보내기"
+
+msgctxt "messaging_attach_file"
+msgid "Attach"
+msgstr "첨부"
+
+msgctxt "messaging_compose_hint"
+msgid "Type message…"
+msgstr "메시지 입력..."
+
+msgctxt "undisclosed_location"
+msgid "(undisclosed location)"
+msgstr "(숨겨진 공간)"
+
+msgctxt "optimizing"
+msgid "Optimizing…"
+msgstr "최적화 중..."
+
+msgctxt "processing"
+msgid "Processing…"
+msgstr "처리 중..."
+
+msgctxt "loading"
+msgid "Loading…"
+msgstr "입력 중..."
+
+msgctxt "uploading"
+msgid "Uploading…"
+msgstr "업로드 중..."
+
+msgctxt "encrypting"
+msgid "Encrypting…"
+msgstr "암호화 중..."
+
+msgctxt "decrypting"
+msgid "Decrypting…"
+msgstr "암호화 해제 중..."
+
+msgctxt "downloading"
+msgid "Downloading…"
+msgstr "다운로드 중..."
+
+msgctxt "exporting"
+msgid "Exporting…"
+msgstr "보내는 중..."
+
+msgctxt "thumbnail"
+msgid "Thumbnail"
+msgstr "썸네일로 보기"
+
+msgctxt "attachment"
+msgid "Attachment"
+msgstr "첨부"
+
+msgctxt "delivered"
+msgid "Delivered"
+msgstr "전달됨"
+
+msgctxt "notify_resend_request"
+msgid "The recipient has requested that this message be sent again."
+msgstr "수진자가 재송신을 요청하였습니다."
+
+msgctxt "location"
+msgid "Location"
+msgstr "위치"
+
+msgctxt "share_location"
+msgid "Share location"
+msgstr "위치 공유"
+
+msgctxt "silent_phone_call"
+msgid "Call using Silent Phone"
+msgstr "사일런트 폰으로 전화하기"
+
+msgctxt "burn_notice"
+msgid "Burn Notice"
+msgstr "삭제 알림"
+
+msgctxt "autolock"
+msgid "Automatic Lock"
+msgstr "자동으로 잠그기"
+
+msgctxt "send_receipts"
+msgid "Send read receipts"
+msgstr "수신 알림"
+
+msgctxt "clear_conversation"
+msgid "Clear conversation"
+msgstr "대화 삭제"
+
+msgctxt "clear_conversation_exp"
+msgid "Clears all messages"
+msgstr "모든 메시지 지우기"
+
+msgctxt "save_conversation"
+msgid "Save Conversation"
+msgstr "메시지 저장"
+
+msgctxt "verify_description_verified"
+msgid "For added security, you have verified this message with the recipient."
+msgstr "보안 강화를 위해, 수신자에게 이 메시지를 확인하였습니다."
+
+msgctxt "verify_description_unverified"
+msgid "For added security, verify this message with the recipient."
+msgstr "보안 강화를 위해, 수신자에게 이 메시지를 확인하십시오."
+
+msgctxt "reset_keys"
+msgid "Reset Keys"
+msgstr "키 재설정"
+
+msgctxt "no_expiration"
+msgid "Messages do not expire"
+msgstr "메시지 영구 보관"
+
+#, c-format
+msgctxt "messages_expire"
+msgid ""
+"Messages expire <xliff:g id=\"expire_timeout\" example=\"in 1 "
+"minute\">%1$s</xliff:g>"
+msgstr ""
+"메시지 보관 기간 <xliff:g id=\"expire_timeout\" example=\"in 1 "
+"minute\">%1$s</xliff:g>"
+
+msgctxt "are_you_sure"
+msgid "Are you sure?"
+msgstr "재확인"
+
+msgctxt "rekey_messaging_sessions"
+msgid "Re-key messaging sessions"
+msgstr "새로운 메시지 생성"
+
+msgctxt "cannot_be_undone"
+msgid "This action cannot be undone."
+msgstr "취소 불가"
+
+msgctxt "save_will_expose_data"
+msgid ""
+"Saving this conversation will expose all of its messages to another "
+"application of your choice. Messages with an attachment or a burn notice "
+"will NOT be exported."
+msgstr "이 대화기록 저장은 다른 사용자에게 보여질 수 있습니다. 메시지, 첨부 파일, 삭제 경고 등은 보내지지 않습니다."
+
+msgctxt "error_attachment_unavailable"
+msgid "File no longer available. Please contact sender."
+msgstr "파일이 더이상 존재하지 않음. 보낸 사람에게 재전송 요청."
+
+msgctxt "warning_delete_conversation"
+msgid "Deleting the conversation will destroy all of its data."
+msgstr "대화내용 삭제는 모든 데이터 삭제를 의미합니다."
+
+msgctxt "warning_leave_group_conversation"
+msgid ""
+"Leaving the group will destroy all its data on this device. To join the "
+"group again, you'll need to be added by another member."
+msgstr "그룹톡에서 나가기를 하면 휴대폰의 모든 데이터를 삭제하게 됩니다. 그룹톡을 다시 희망하시면 다시 톡방을 개설하세요."
+
+msgctxt "warning_media_to_be_exported"
+msgid ""
+"This media is currently private. In order to proceed, <xliff:g "
+"id=\"application_name\">Silent Phone</xliff:g> must grant other "
+"applications access to the decrypted file."
+msgstr ""
+"현재 프라이빗으로 보호되고 있습니다. 계속하시려면 <xliff:g id=\"application_name\">사일런트 "
+"폰</xliff:g>에서 다른 앱 사용하기를 허락하여 주십시오."
+
+msgctxt "warning_rekey_conversation"
+msgid "Are you sure you want to establish new keys for messaging sessions?"
+msgstr "메시지 보내기에 새로운 키를 사용하시길 원합니까?"
+
+msgctxt "warning_ringtone_picked_unavailable"
+msgid "Unable to launch system's ringtone picker activity."
+msgstr "시스템 전화벨 소리 선택 불가"
+
+msgctxt "warning_selected_action_unavailable"
+msgid "Unable to launch selected action."
+msgstr "선택한 실행 불가"
+
+msgctxt "info_feature_discovery_reset"
+msgid "Tutorial screens reset"
+msgstr "학습 화면 재시작"
+
+msgctxt "info_warnings_reset"
+msgid "Warnings reset"
+msgstr "재시작 경고"
+
+msgctxt "share_from"
+msgid "Share securely"
+msgstr "보안을 통해 공유하기"
+
+#, c-format
+msgctxt "n_selected"
+msgid "<xliff:g id=\"count\">%1$d</xliff:g> selected"
+msgstr "<xliff:g id=\"count\">%1$d</xliff:g> 선택"
+
+msgctxt "delete"
+msgid "Delete"
+msgstr "지우기"
+
+msgctxt "sync"
+msgid "Synchronize"
+msgstr "동기화하기"
+
+msgctxt "view"
+msgid "View"
+msgstr "보기"
+
+msgctxt "share"
+msgid "Share"
+msgstr "공유"
+
+msgctxt "save"
+msgid "Save"
+msgstr "저장"
+
+msgctxt "copy"
+msgid "Copy"
+msgstr "복사"
+
+msgctxt "info"
+msgid "Info"
+msgstr "개인 정보"
+
+msgctxt "burn"
+msgid "Burn"
+msgstr "삭제"
+
+msgctxt "resend"
+msgid "Resend"
+msgstr "재전송"
+
+msgctxt "options"
+msgid "Options"
+msgstr "선택"
+
+msgctxt "forward"
+msgid "Forward"
+msgstr "전달하기"
+
+msgctxt "import_contact"
+msgid "Import contact"
+msgstr "연락처 보기"
+
+#, c-format
+msgctxt "import_contacts"
+msgid "Import %d contacts"
+msgstr "연락처 %d 읽음"
+
+msgctxt "search"
+msgid "Search"
+msgstr "찾기"
+
+msgctxt "submit"
+msgid "Submit"
+msgstr "보내기"
+
+msgctxt "status_on"
+msgid "On"
+msgstr "켜기"
+
+msgctxt "status_off"
+msgid "Off"
+msgstr "끄기"
+
+msgctxt "settings"
+msgid "Settings"
+msgstr "셋팅"
+
+msgctxt "wipe"
+msgid "Wipe"
+msgstr "전체 삭제"
+
+msgctxt "immediately"
+msgid "Immediately"
+msgstr "즉시"
+
+msgctxt "got_it"
+msgid "Got it"
+msgstr "동의"
+
+msgctxt "just_now"
+msgid "just now"
+msgstr "지금"
+
+msgctxt "remove"
+msgid "Remove"
+msgstr "삭제"
+
+msgctxt "connecting"
+msgid "connecting"
+msgstr "연결 중..."
+
+msgctxt "online"
+msgid "online"
+msgstr "온라인"
+
+msgctxt "offline"
+msgid "offline"
+msgstr "오프라인"
+
+msgctxt "you"
+msgid "You"
+msgstr "사용자"
+
+#. Attachement grid
+msgctxt "take_photo"
+msgid "Take Photo"
+msgstr "사진 찍기"
+
+msgctxt "gallery"
+msgid "Gallery"
+msgstr "사진첩"
+
+msgctxt "take_video"
+msgid "Take Video"
+msgstr "비디오 찍기"
+
+msgctxt "record_audio"
+msgid "Record Audio"
+msgstr "녹음"
+
+msgctxt "send_file"
+msgid "Send File"
+msgstr "파일 보내기"
+
+msgctxt "share_contact"
+msgid "Share Contact"
+msgstr "전화번호부 찾기"
+
+#. voiceovers for conversation view
+msgctxt "messaging_back_button_voiceover"
+msgid "Back to conversations"
+msgstr "뒤로"
+
+msgctxt "messaging_avatar_voiceover"
+msgid "Avatar"
+msgstr "프로필 사진"
+
+msgctxt "messaging_burn_button_voiceover"
+msgid "Burn"
+msgstr "삭제"
+
+msgctxt "messaging_location_button_voiceover"
+msgid "Location"
+msgstr "위치"
+
+msgctxt "messaging_start_conversation_voiceover"
+msgid "Start conversation"
+msgstr "대화 시작"
+
+msgctxt "messaging_burn_delay_voiceover"
+msgid "Set burn delay"
+msgstr "바로 삭제 끄기"
+
+msgctxt "activity_conversation_voiceover"
+msgid "Conversation"
+msgstr "대화"
+
+msgctxt "capture_audio_label"
+msgid "Record audio with Silent Phone"
+msgstr "사일런트 폰으로 녹음하기"
+
+msgctxt "capture_video_label"
+msgid "Capture video with Silent Phone"
+msgstr "사일런트 폰으로 비디오 찍기"
+
+msgctxt "capture_picture_error"
+msgid "There was a problem taking a picture. Please try again."
+msgstr "사진 촬영 에러. 다시 시도."
+
+msgctxt "record_currently_on_call"
+msgid "Recording is not supported during a call"
+msgstr "통화 중 녹음 불가"
+
+msgctxt "attachment_wait_until_complete"
+msgid "Please wait until attachments are complete"
+msgstr ""
+
+msgctxt "dialog_title_cannot_enable_location_sharing"
+msgid "Cannot enable location sharing"
+msgstr "위치 공유 불가"
+
+msgctxt "dialog_title_failed_to_send_message"
+msgid "Failed to send message"
+msgstr "메시지 보내기 실패"
+
+msgctxt "dialog_title_unable_to_send_messages"
+msgid "Unable to send messages"
+msgstr "메시지를 보낼 수 없음"
+
+msgctxt "dialog_title_unable_to_call"
+msgid "Unable to call"
+msgstr "전화통화를 할 수 없음"
+
+msgctxt "dialog_title_choose_action"
+msgid "Choose action"
+msgstr "선택"
+
+msgctxt "dialog_title_error"
+msgid "Error"
+msgstr "에러"
+
+msgctxt "dialog_title_select_notification_light"
+msgid "Select notification light"
+msgstr "알림 플래쉬 선택"
+
+msgctxt "dialog_title_select_notification_vibrate"
+msgid "Select vibrate pattern"
+msgstr "진동 패턴 선택"
+
+msgctxt "dialog_title_select_messaging_theme"
+msgid "Select chat theme"
+msgstr "대화 주제 선택"
+
+msgctxt "dialog_title_choose_avatar_action"
+msgid "Choose avatar action"
+msgstr "프로필 사진 액션 선택"
+
+msgctxt "dialog_title_device_deleted"
+msgid "This device has been deleted"
+msgstr "이 휴대폰은 등록 제거 되었습니다."
+
+msgctxt "dialog_title_data_retention"
+msgid "Data retention"
+msgstr "데이터 저장"
+
+msgctxt "dialog_title_data_retention_blocking_cannot_be_disabled"
+msgid "Blocking cannot be disabled"
+msgstr "위협방지를 꺼놓을 수 없음"
+
+msgctxt "dialog_title_group_invitation"
+msgid "Group invitation"
+msgstr "그룹 초대"
+
+msgctxt "dialog_message_enable_device_location"
+msgid ""
+"To use this option, enable Location under device Settings. Location may "
+"be empty if only GPS is used."
+msgstr "이 옵션을 선택하시면, 휴대폰의 위치사용이 가능합니다. GPS만 켜놓을 경우 위치정보가 비어있을 수 있음"
+
+#, c-format
+msgctxt "dialog_message_current_location_mode"
+msgid "Current location mode is \"%s\"."
+msgstr "현재 위치정보 모드는 \"%s\""
+
+#, c-format
+msgctxt "dialog_message_failed_to_send_to"
+msgid ""
+"Failed to write to user %1$s.\n"
+"\n"
+"%2$s"
+msgstr ""
+"%1$s에게 보내는 메시지 전송 실.\n"
+"\n"
+"%2$s"
+
+#, c-format
+msgctxt "dialog_call_failed_to_send_to"
+msgid ""
+"Failed to call %1$s.\n"
+"\n"
+"%2$s"
+msgstr "%1$s에게 전화걸기 실패. %2$s"
+
+msgctxt "dialog_message_file_too_large"
+msgid "The file you have selected is too large."
+msgstr "파일 용량이 너무 큽니다."
+
+msgctxt "dialog_message_wipe_phone"
+msgid ""
+"This will clear conversations, call history, and other Silent Phone data."
+" The application will exit. You will need to log back in when you restart"
+" Silent Phone."
+msgstr ""
+"이 선택은 대화기록, 전화통화 기록, 그 외 사일런트 폰 데이터를 삭제합니다. 그리고 앱을 자동으로 나가며 휴대폰을 다시 부팅 시,"
+" 재로그인 해야 합니다."
+
+#, c-format
+msgctxt "dialog_message_wipe_after_timer"
+msgid ""
+"This device has been removed from the list of authorized devices so it "
+"will close in %s and all of the application data will be cleared."
+msgstr "이 휴대폰은 단말 등록 리스트에서 제거되어 %s안에 닫힌 후 앱에 저장된 데이터가 제거될 예정입니다."
+
+#, c-format
+msgctxt "dialog_message_close_after_timer"
+msgid ""
+"This device has been removed from the list of authorized devices so it "
+"will close in %s. Please clear application data manually."
+msgstr "이 휴대폰은 단말 등록 리스트에서 제거되어 %s안에 닫힙니다. 앱에 저장된 데이터를 수동으로 제거 하십시오."
+
+#, c-format
+msgctxt "dialog_message_invited_to_group_conversation"
+msgid ""
+"You have been invited to group conversation %1$s by %2$s.\n"
+"Please accept or decline the invitation."
+msgstr ""
+"%1$s의 %2$s로부터 그룹톡방에 초대되었습니다.\n"
+"초대를 선택하시거나 거절하세요."
+
+msgctxt "dialog_message_group_conversation_burn_change_expires_messages"
+msgid ""
+"Changing burn time for group conversation will remove messages which are "
+"expired with new burn value."
+msgstr "삭제 시간 변경은 기존에 나누었던 그룹 대화를 새로운 시간에 맞추어 삭제하게 됩니다."
+
+msgctxt "dialog_message_dr_enabled"
+msgid ""
+"Your organization imposes a policy of retaining data about your "
+"communication, however you have blocked Silent Phone from retaining this "
+"data. Communication is now prohibited. To restore communication either "
+"unset \"Block local data retention\" in Silent Phone settings or ask your"
+" organization's administrator to remove your data retention policy."
+msgstr ""
+"속한 그룹에서 데이터 저장을 가능하도록 하였으나 사일런트 폰에서 저장 기능을 막도록 하였습니다. 대화가 막혀있으며 사일런트 폰 "
+"셋팅에 있는 휴대폰 데이터 저장기능 끄기를 취소하거나 데이터 저장이 가능하도록 그룹 관리자에게 요청을 하십시오."
+
+msgctxt "dialog_message_remote_dr_enabled"
+msgid ""
+"Conversation partner's organization imposes a policy of retaining data "
+"about your communication, however you have blocked Silent Phone from "
+"retaining this data. Communication is now prohibited. To restore "
+"communication unset \"Block remote data retention\" in Silent Phone "
+"settings."
+msgstr ""
+"대화 상대방이 데이터 저장이 가능하도록 하였으나 사일런트 폰에서 저장기능을 껐으므로 커뮤니케이션이 불가합니다. 사일런트 폰 셋팅에서"
+" 휴대폰 데이터 저장기능 끄기를 취소하여 데이터 저장을 사용하세요."
+
+#, c-format
+msgctxt "dialog_message_communication_dr_blocked"
+msgid ""
+"The user to whom you sent this message has declined to communicate with "
+"other users who are subject to data retention. As your organization %1$s "
+"imposes a policy of retaining data there's no way to respect both of your"
+" wishes. Communication between you is blocked. To allow communication, "
+"you could ask that user to deselect \"Block remote data retention\" in "
+"his or her Silent Phone settings or you could ask your organization to "
+"disable data retention on your account."
+msgstr ""
+"메시지를 보낸 상대방이 타 사용자와의 데이터 저장 기능을 꺼놓아 대화가 거부되었습니다. 소속된 그룹에서 원격 데이터 저장 기능을 "
+"꺼놓았으므로 데이터 저장 권한을 받아서 사일런트 폰 셋팅에서 데이터 저장 기능을 활성화하여 사용하도록 하십시오."
+
+msgctxt "dialog_message_communication_dr_required"
+msgid ""
+"The user to whom you sent this message is subject to data retention and "
+"you have declined to communicate with other users who are subject to data"
+" retention. Communication between you is blocked. To allow communication,"
+" you could deselect \"Block remote data retention\" in your Silent Phone "
+"settings."
+msgstr ""
+"메시지를 보낸 상대방이 데이터 저장이 불가능하며 현재 데이터 저장이 불가능한 사용자와는 커뮤니케이션이 불가능하도록 셋팅되어 "
+"있습니다. 사일런트 폰 셋팅에서 원격 데이터 저장 선택을 취소하시면 커뮤니케이션이 가능합니다."
+
+msgctxt "dialog_message_communication_blocked_remote"
+msgid ""
+"The user to whom you sent this message is subject to data retention, "
+"however the user blocked the data retention functions on the client. "
+"Communication is blocked."
+msgstr "메시지를 보낸 상대방이 데이터 저장이 불가능합니다. 상대방이 데이터 저장 기능을 꺼놨으며 커뮤니케이션은 막혔습니다."
+
+msgctxt "dialog_message_dr_blocked_by_default"
+msgid ""
+"For your protection, we've enabled blocking of data retention. If you are"
+" a non-organizational user this blocking is enabled by default. If you "
+"are part of an organization, your organization has blocked the use of "
+"data retention."
+msgstr ""
+"정보보호를 위해 데이터 저장 기능을 막았습니다. 개인사용자의 경우 기본 기능으로 데이터 저장 기능이 막혀 있습니다. 그룹 사용자의 "
+"경우 그룹에서 데이터 사용을 막아놓습니다."
+
+msgctxt "dialog_button_ok"
+msgid "OK"
+msgstr "OK"
+
+msgctxt "dialog_button_yes"
+msgid "Yes"
+msgstr "예"
+
+msgctxt "dialog_button_no"
+msgid "No"
+msgstr "아니오"
+
+msgctxt "dialog_button_save"
+msgid "Save"
+msgstr "저장"
+
+msgctxt "dialog_button_cancel"
+msgid "Cancel"
+msgstr "취소"
+
+msgctxt "dialog_button_accept"
+msgid "Accept"
+msgstr "응답"
+
+msgctxt "dialog_button_decline"
+msgid "Decline"
+msgstr "거부"
+
+msgctxt "dialog_button_create"
+msgid "Create"
+msgstr "새로 만들기"
+
+msgctxt "dialog_button_invite"
+msgid "Add to conversation"
+msgstr "대화 추가"
+
+msgctxt "location_mode_off"
+msgid "Location services not enabled"
+msgstr "위치서비스 불가"
+
+msgctxt "location_mode_device"
+msgid "Device only (GPS)"
+msgstr "휴대폰 기능(GPS)만으로 작동"
+
+msgctxt "location_mode_battery_saving"
+msgid "Battery saving"
+msgstr "배터리 절약 모드"
+
+msgctxt "location_mode_high_accuracy"
+msgid "High accuracy"
+msgstr "높은 정확도"
+
+msgctxt "chats_view_empty_header"
+msgid "Start a conversation"
+msgstr "대화 시작"
+
+msgctxt "chats_view_empty"
+msgid "Tap the plus icon to call, text, send files, & more"
+msgstr "+ 아이콘을 선택하여 전화, 문자, 파일보내기 그리고 기타 등등"
+
+msgctxt "chat_view_empty"
+msgid ""
+"Conversation is empty\n"
+"Type below to send a message\n"
+"Touch phone icon above to call"
+msgstr ""
+"대화내용이 없습니다.\n"
+"아래칸에 메시지를 적어서 보내세요.\n"
+"상단의 전화 아이콘을 눌러 전화를 거세요"
+
+msgctxt "phone_chat_view_empty"
+msgid ""
+"Conversation is empty\n"
+"Touch phone icon above to call"
+msgstr ""
+"대화내용이 없습니다.\n"
+"상단의 폰 아이콘을 선택하여 전화를 거세요."
+
+msgctxt "group_chat_view_empty"
+msgid ""
+"Conversation is empty\n"
+"Type below to send a message"
+msgstr ""
+"대화내용이 없습니다.\n"
+"아래칸에 메시지를 적어서 보내세요"
+
+#, c-format
+msgctxt "conversation_with"
+msgid "Conversation with %1$s"
+msgstr "%1$s와의 대화"
+
+msgctxt "username_unknown"
+msgid "Unknown"
+msgstr "정보 없음"
+
+#, c-format
+msgctxt "toast_saved_to"
+msgid "Saved to <xliff:g id=\"file_path\">%1$s</xliff:g>"
+msgstr "<xliff:g id=\"file_path\">%1$s</xliff:g>에 저장하기"
+
+#, c-format
+msgctxt "toast_deleted_from"
+msgid "Deleted from <xliff:g id=\"file_path\">%1$s</xliff:g>"
+msgstr "<xliff:g id=\"file_path\">%1$s</xliff:g>에서 삭제됨"
+
+#, c-format
+msgctxt "unable_to_display_file"
+msgid "Unable to display file <xliff:g id=\"file_path\">%1$s</xliff:g>"
+msgstr "<xliff:g id=\"file_path\">%1$s</xliff:g>파일을 열기 불가능함"
+
+#, c-format
+msgctxt "toast_failed_to_export_file"
+msgid "Failed to export file <xliff:g id=\"file_path\">%1$s</xliff:g>"
+msgstr " <xliff:g id=\"file_path\">%1$s</xliff:g>파일을 보내기 실패"
+
+msgctxt "toast_no_browser_found"
+msgid "Could not open the link. No browser application found."
+msgstr "링크를 열 수가 없음. 브라우져를 찾을 수 없음"
+
+msgctxt "show_remote_dev"
+msgid "Status of devices"
+msgstr "휴대폰 상태"
+
+msgctxt "show_remote_dev_exp"
+msgid "Shows status of the conversation partner's devices"
+msgstr "대화 상대방의 휴대폰 상태 보이기"
+
+msgctxt "show_group_members"
+msgid "Group members"
+msgstr "그룹 멤버"
+
+msgctxt "show_group_members_exp"
+msgid "Shows the current group members in the conversation"
+msgstr "현재 그룹 대화에 참여한 멤버들 보이기"
+
+msgctxt "no_axo_device"
+msgid "No device available for messaging"
+msgstr "메시지를 보낼 단말기 없음"
+
+msgctxt "axo_ask_register"
+msgid "Register this device for messaging?"
+msgstr "메시지 전송을 위해 휴대폰 등록?"
+
+msgctxt "axo_menu_register"
+msgid "Chat feature"
+msgstr "대화 나누기"
+
+msgctxt "menu_devices"
+msgid "Devices"
+msgstr "휴대폰"
+
+msgctxt "axo_local_device"
+msgid "Fingerprint of local device:"
+msgstr "휴대폰에 지문 등록하기:"
+
+msgctxt "axo_local_device_id_empty"
+msgid "Local device id empty"
+msgstr "휴대폰 단말기 아이디 없음"
+
+msgctxt "axo_devices"
+msgid "Available devices"
+msgstr "단말기 사용 가능"
+
+#, c-format
+msgctxt "axo_devices_n"
+msgid "One device available"
+msgid_plural "%d devices available"
+msgstr[0] ""
+"한개의 단말기 사용 가능\n"
+"%d 단말기 사용 가능"
+
+msgctxt "axo_remote_devices"
+msgid "Remote devices"
+msgstr "원격 단말기"
+
+#, c-format
+msgctxt "axo_remote_devices_n"
+msgid "One remote device"
+msgid_plural "%d remote devices"
+msgstr[0] ""
+"한개의 원격 단말기\n"
+"%d 원격 단말기"
+
+msgctxt "axo_remote_dev_header_1"
+msgid "Device name/fingerprint/device id"
+msgstr "휴대폰 이름/지문/휴대폰 아이디"
+
+msgctxt "axo_remote_dev_header_2"
+msgid "Verified"
+msgstr "확인됨"
+
+msgctxt "axo_remote_dev_rescan"
+msgid "Check for new devices"
+msgstr "새로운 휴대폰 체크하기"
+
+msgctxt "axo_remote_dev_renew"
+msgid "Rekey messaging sessions"
+msgstr "메시지 세션에 새로운 키 적용"
+
+msgctxt "axo_device_explanation"
+msgid ""
+"The list may show a device more than once if the app was removed and "
+"installed again. To enhance security a new installation creates a new "
+"security setup. \n"
+"\n"
+"Click on the remove button to delete an old device."
+msgstr ""
+"앱이 지워졌다 다시 설치되면 휴대폰정보가 한번 이상 보이게 될 수 있음. 보안 강화를 위한 새로운 설치가 새로운 보안설정을 하게 "
+"됩니다.\n"
+"\n"
+"\n"
+"기존 휴대폰에서 제거 버튼을 클릭하세요."
+
+msgctxt "axo_device_explanation_remote"
+msgid ""
+"The list may show a device more than once if the app was removed and "
+"installed again on the partner's device."
+msgstr "상대방의 휴대폰에서 앱이 지워졌다 다시 설치되면 휴대폰정보가 한번 이상 보이게 될 수 있음"
+
+msgctxt "axo_device_options_voiceover"
+msgid "Action"
+msgstr "실행"
+
+msgctxt "axo_force_re_register"
+msgid "Force ZINA re-register"
+msgstr "ZINA를 실행하여 재등록"
+
+msgctxt "message_state_unknown"
+msgid "Unknown"
+msgstr "정보 없음"
+
+msgctxt "message_state_resend_requested"
+msgid "Resend requested"
+msgstr "요구 재전송"
+
+msgctxt "message_state_composing"
+msgid "Composing"
+msgstr "구성 중"
+
+msgctxt "message_state_composed"
+msgid "Composed"
+msgstr "구성됨"
+
+msgctxt "message_state_sent"
+msgid "Sent"
+msgstr "발송 완료"
+
+msgctxt "message_state_sent_to_server"
+msgid "Sent to server"
+msgstr "서버로 발송 완료"
+
+msgctxt "message_state_delivered"
+msgid "Delivered"
+msgstr "전달"
+
+msgctxt "message_state_received"
+msgid "Received"
+msgstr "수신"
+
+msgctxt "message_state_read"
+msgid "Read"
+msgstr "읽음"
+
+msgctxt "message_state_burned"
+msgid "Burned"
+msgstr "삭제됨"
+
+msgctxt "message_state_sync"
+msgid "Sync"
+msgstr "공유됨"
+
+msgctxt "message_state_unused"
+msgid "Unused"
+msgstr "미사용"
+
+msgctxt "message_state_failed"
+msgid "Failed"
+msgstr "실패"
+
+#, c-format
+msgctxt "message_info_user_added_new_device"
+msgid "%1$s added device '%2$s'"
+msgstr "%1$s 추가된 휴대폰 %2$s"
+
+#, c-format
+msgctxt "message_info_user_removed_device"
+msgid "%1$s removed device '%2$s'"
+msgstr "%1$s 삭제된 휴대폰 %2$s"
+
+msgctxt "message_error_no_error"
+msgid "No error"
+msgstr "에러 아님"
+
+msgctxt "message_error_unknown"
+msgid "Unknown error code"
+msgstr "알려지지 않은 에러 코드"
+
+msgctxt "message_error_msg_generic"
+msgid "Generic error code, unspecified error"
+msgstr "일반적인 에러 코드, 구분되지 않은 에러"
+
+msgctxt "message_error_msg_version"
+msgid "Unsupported protocol version"
+msgstr "지원되지 않은 프로토콜"
+
+msgctxt "message_error_msg_buffer"
+msgid "Buffer too small to store some data"
+msgstr "저장하기에 너무 작은 데이터"
+
+msgctxt "message_error_msg_not_dec"
+msgid "Could not decrypt a received message"
+msgstr "수신된 메시지 암호화 해제를 할 수 없음"
+
+msgctxt "message_error_msg_own_id"
+msgid "Found no own identity for registration"
+msgstr "등록된 계정이름을 찾을 수 없음"
+
+msgctxt "message_error_msg_no_js"
+msgid "Missing a required JSON field"
+msgstr "Java언어로 요구된 값을 찾을 수 없음"
+
+msgctxt "message_error_msg_no_dev"
+msgid "No registered messaging devices found for the user"
+msgstr "사용자의 등록된 휴대폰을 찾을 수 없음"
+
+msgctxt "message_error_msg_no_key"
+msgid "Offered pre-key not found - unknown pre-key id"
+msgstr "입력된 프리키를 찾을 수 없음 - 알려지지 않은 프리키 아이디"
+
+msgctxt "message_error_msg_no_session"
+msgid "No session data for this user found"
+msgstr "사용자의 데이터 사용기록 없음"
+
+msgctxt "message_error_msg_not_init"
+msgid "Session not initialized"
+msgstr "현재 세션 시작"
+
+msgctxt "message_error_msg_old"
+msgid "Message too old to decrypt"
+msgstr "메시지가 오래되어 암호화 해제불가"
+
+msgctxt "message_error_msg_corrupt"
+msgid "Incoming data corrupt"
+msgstr "데이터 수신 중 데이터 깨짐"
+
+msgctxt "message_error_axo_conv_exists"
+msgid "ZINA conversation exists while trying to setup new one"
+msgstr "새로운 셋업 중에 ZINA 대화가 기록에 있음 발견"
+
+msgctxt "message_error_mac_check_failed"
+msgid "HMAC check of encrypted message failed"
+msgstr "암호화된 메시지의 HMAC 체크 실패"
+
+msgctxt "message_error_msg_padding_failed"
+msgid "Incorrect padding of decrypted message"
+msgstr "암호화 해제된 메시지 깨짐"
+
+msgctxt "message_error_sup_padding_failed"
+msgid "Incorrect padding of decrypted supplementary data"
+msgstr "암호화 해제된 데이터 깨짐"
+
+msgctxt "message_error_no_staged_keys"
+msgid "Not a real error, just to report that no staged keys available"
+msgstr "에러 아님, 정식으로 암호화된 키가 없음을 보고하기"
+
+msgctxt "message_error_recv_id_mismatch"
+msgid "Mismatch of receiver's long term identity"
+msgstr "수신자의 아이디 일치 실패"
+
+msgctxt "message_error_sender_id_mismatch"
+msgid "Mismatch of sender's long term identity"
+msgstr "송신자의 아이디 일치 실패"
+
+msgctxt "message_error_recv_data_length"
+msgid "Expected length of data does not match received length"
+msgstr "보내진 메시지와 수신된 메시지의 내용 길이 불일치"
+
+msgctxt "message_error_wrong_recv_dev_id"
+msgid "Expected device id does not match actual device id"
+msgstr "예측된 휴대폰 아이디와 실제 휴대폰 아이디가 불일치"
+
+msgctxt "message_error_network_error"
+msgid "Network error or server request failed"
+msgstr "네트워크 에러 또는 서버 요청 실패"
+
+msgctxt "message_error_data_missing"
+msgid "Some data is missing for this function"
+msgstr "일부 데이터가 이 기능 실행 시 손실됨"
+
+msgctxt "message_error_database_error"
+msgid "Database access failed"
+msgstr "데이터 접근 실패"
+
+msgctxt "message_error_reject_data_retention"
+msgid "Rejected due to retention policy"
+msgstr "데이터 저장 정책에 의해 거부됨"
+
+msgctxt "message_error_pre_key_hash_wrong"
+msgid "Pre-key check failed"
+msgstr "사전 키 체크 실패"
+
+msgctxt "message_error_illegal_argument"
+msgid "Value of an argument is illegal/out of range (internal error)"
+msgstr "발생된 문는 불법/역외 밖 (내부 에러)"
+
+msgctxt "message_error_remote_decrypt_failed"
+msgid "Recipient failed to process message"
+msgstr "메시지 프로세스 실패"
+
+msgctxt "message_error_pub_no_curve"
+msgid "Curve not supported"
+msgstr "우회 전송 지원 불가"
+
+msgctxt "message_error_pub_key_type"
+msgid "Private and public key use different curves"
+msgstr "개인과 공공 키는 다른 커브를 사용함"
+
+msgctxt "message_error_rat_key_type"
+msgid "Their identity key and our identity key use different curve types"
+msgstr "상대방과 우리의 아이디 키가 다른 커브를 사용하고 있음"
+
+msgctxt "message_error_enc_block"
+msgid "The IV or other data length did not match the cipher's block size"
+msgstr "IV 또는 다른 데이터 길이가 암호화 제어 사이즈와 다름"
+
+msgctxt "message_error_enc_key"
+msgid "Key size not supported for this cipher"
+msgstr "이 암호화 메시지는 암호화 해제 키가 지원되지 않음"
+
+#, c-format
+msgctxt "message_error_group_400"
+msgid "Group database error code: %1$d"
+msgstr "그룹 데이터 에러 코드: %1$d"
+
+msgctxt "message_error_group_450"
+msgid "Maximum members for this group reached."
+msgstr "최대 그룹 멤버에 도달하였음"
+
+msgctxt "message_error_group_451"
+msgid "Message has type group command but no data."
+msgstr "메시지가 그룹 전송을 하고 있으나 데이터는 없음"
+
+msgctxt "message_error_group_452"
+msgid "Message is group command but has no command."
+msgstr "메시지가 그룹 전송을 하고 있으나 명령어가 없음"
+
+msgctxt "message_error_group_453"
+msgid "Message is normal group message command but has no data."
+msgstr "메시지는 평범한 그룹 메시지이나 데이터가 없음"
+
+msgctxt "message_error_group_454"
+msgid "Cannot store a new member data in database."
+msgstr "새로운 멤버 데이터를 데이터베이스에 저장할 수 없음"
+
+msgctxt "message_error_group_455"
+msgid "Group does not exist or is not active."
+msgstr "그룹이 존재하지 않거나 활동기록이 없음"
+
+msgctxt "message_error_group_456"
+msgid "Group update type not known."
+msgstr "업데이트된 그룹이 알려지지 않음"
+
+msgctxt "message_error_group_457"
+msgid "No vector clock for group/event pair."
+msgstr "그룹 이벤트를 위한 시간 설정 없음"
+
+msgctxt "message_error_group_458"
+msgid "Currently preparing and sending group updates."
+msgstr "그룹 업데이트를 준비하여 발송 중"
+
+msgctxt "message_error_group_459"
+msgid "A prepared change set is not available."
+msgstr "사전 셋팅 수정이 불가능합니다."
+
+#. Texts for message attachment viewer
+msgctxt "messaging_compose_length_error"
+msgid "Sorry, you have hit the maximum character limit"
+msgstr "죄송합니다. 최대 허용 알파벳을 입력하였습니다."
+
+#, c-format
+msgctxt "messaging_file_viewer_view_with"
+msgid "Open <xliff:g id=\"file_name\">%1$s</xliff:g>"
+msgstr " <xliff:g id=\"file_name\">%1$s</xliff:g> 열기"
+
+msgctxt "messaging_image_viewer_unable_to_display_image"
+msgid "Unable to display image"
+msgstr "이미지 열기 실패"
+
+msgctxt "messaging_file_viewer_failure"
+msgid ""
+"Cannot open this file. It may be saved, shared, or viewed with another "
+"application."
+msgstr "파일을 열 수 없음. 저장되거나 공유되거나 또는 다른 앱에서 보여졌을 가능성 높음"
+
+#, c-format
+msgctxt "messaging_pdf_viewer_showing_page_voiceover"
+msgid "Showing page %1$d of %2$d"
+msgstr "%2$d 의 %1$d 보이기"
+
+msgctxt "messaging_pdf_viewer_button_previous_page_voiceover"
+msgid "Go to previous page"
+msgstr "이전 페이지 연결"
+
+msgctxt "messaging_pdf_viewer_button_next_page_voiceover"
+msgid "Go to next page"
+msgstr "다음 페이지 연결"
+
+msgctxt "messaging_could_not_view_link"
+msgid "Could not open link."
+msgstr "인터넷 링크 연결 불가"
+
+#. Texts for messaging options in main drawer menu
+msgctxt "messaging_options"
+msgid "Messaging options"
+msgstr "메시지 옵션"
+
+msgctxt "messaging_burn_animation_text"
+msgid "Animate message burn"
+msgstr "애니메이션 메시지 삭제"
+
+msgctxt "messaging_burn_animation_explanation"
+msgid "Show animation when burning messages."
+msgstr "메시지 삭제 시 애니메이션 실행"
+
+msgctxt "messaging_attachment_export_warning"
+msgid "Warn when exporting"
+msgstr "송수 시 경고"
+
+msgctxt "messaging_attachment_export_warn_explanation"
+msgid "Warn when exporting message attachments."
+msgstr "메시지 첨부 송부 시 경고 진행"
+
+msgctxt "messaging_sounds"
+msgid "Play sound for messages"
+msgstr "메시지 사운드 실행"
+
+msgctxt "messaging_sounds_explanation"
+msgid "Play sound when a new message arrives or a message is removed."
+msgstr "메시지 도착 또는 메시지 삭제 시 사운드 실행"
+
+msgctxt "messaging_ringtone_title"
+msgid "Notification tone"
+msgstr "알림음"
+
+msgctxt "messaging_light_title"
+msgid "Notification light"
+msgstr "알림 조명"
+
+msgctxt "messaging_vibrate_title"
+msgid "Vibrate pattern"
+msgstr "진동 패턴"
+
+msgctxt "messaging_vibrate_off"
+msgid "Off"
+msgstr "끄기"
+
+msgctxt "messaging_vibrate_default"
+msgid "Default"
+msgstr "기본값"
+
+msgctxt "messaging_vibrate_short"
+msgid "Short"
+msgstr "짧게"
+
+msgctxt "messaging_vibrate_long"
+msgid "Long"
+msgstr "길게"
+
+msgctxt "messaging_light_off"
+msgid "Off"
+msgstr "끄기"
+
+msgctxt "messaging_light_default"
+msgid "Default"
+msgstr "기본값"
+
+msgctxt "messaging_light_red"
+msgid "Red"
+msgstr "빨강"
+
+msgctxt "messaging_light_blue"
+msgid "Blue"
+msgstr "파랑"
+
+msgctxt "messaging_light_green"
+msgid "Green"
+msgstr "초록"
+
+msgctxt "messaging_light_white"
+msgid "White"
+msgstr "흰색"
+
+msgctxt "messaging_light_purple"
+msgid "Purple"
+msgstr "보라"
+
+msgctxt "messaging_theme_title"
+msgid "Application theme"
+msgstr "주제 정하기"
+
+msgctxt "messaging_theme_dark"
+msgid "Dark theme"
+msgstr "어둡게"
+
+msgctxt "messaging_theme_light"
+msgid "Light theme"
+msgstr "밝게"
+
+msgctxt "messaging_group_management"
+msgid "Group management"
+msgstr "그룹 관리"
+
+msgctxt "contact_adder_title"
+msgid "Add to contacts"
+msgstr "연락처 추가"
+
+msgctxt "contact_save_existing"
+msgid "Add to contact"
+msgstr "연락처 추가"
+
+msgctxt "contact_create_new"
+msgid "Create new contact"
+msgstr "새로운 계정 만들기"
+
+msgctxt "contactCreationFailure"
+msgid "Contact creation failed, check logs."
+msgstr "연락처 생성 실패, 로그인 확인."
+
+msgctxt "contactNameLabel"
+msgid "Contact Name"
+msgstr "연락처"
+
+#. Dialog title when importing contacts from an external source. [CHAR
+#. LIMIT=36]
+msgctxt "dialog_auto_import"
+msgid "Start to import saved contacts?"
+msgstr "기존 연락처를 가져올까요?"
+
+#, c-format
+msgctxt "dialog_auto_import_text"
+msgid ""
+"You may import the saved contacts at a later time. Use the contact's "
+"import functions and select the file <b>%s</b>"
+msgstr "나중에 연락처를 가져올 수 있습니다. 연락처 가져오기 사용하고 파일을 선택하세요."
+
+msgctxt "messaging_vcard_section_phone"
+msgid "Phone"
+msgstr "휴대폰"
+
+msgctxt "messaging_vcard_section_birthday"
+msgid "Birthday"
+msgstr "생일"
+
+msgctxt "messaging_vcard_section_email"
+msgid "Email"
+msgstr "이메일 "
+
+msgctxt "messaging_vcard_section_im"
+msgid "IM"
+msgstr "메신저"
+
+msgctxt "messaging_vcard_section_address"
+msgid "Address"
+msgstr "주소"
+
+msgctxt "messaging_vcard_section_organization"
+msgid "Organization"
+msgstr "그룹"
+
+msgctxt "messaging_vcard_section_notes"
+msgid "Notes"
+msgstr "노트"
+
+msgctxt "messaging_vcard_address_type_home"
+msgid "Home"
+msgstr "집"
+
+msgctxt "messaging_vcard_address_type_work"
+msgid "Work"
+msgstr "사무실"
+
+msgctxt "messaging_vcard_address_type_other"
+msgid "Other"
+msgstr "타 연락처"
+
+msgctxt "messaging_vcard_im_type_aim"
+msgid "AIM"
+msgstr "AIM"
+
+msgctxt "messaging_vcard_im_type_msn"
+msgid "Windows Live"
+msgstr "Windows Live"
+
+msgctxt "messaging_vcard_im_type_yahoo"
+msgid "Yahoo"
+msgstr "야후"
+
+msgctxt "messaging_vcard_im_type_skype"
+msgid "Skype"
+msgstr "스카이프"
+
+msgctxt "messaging_vcard_im_type_qq"
+msgid "QQ"
+msgstr "QQ"
+
+msgctxt "messaging_vcard_im_type_hangouts"
+msgid "Hangouts"
+msgstr "Hangouts"
+
+msgctxt "messaging_vcard_im_type_icq"
+msgid "ICQ"
+msgstr "ICQ"
+
+msgctxt "messaging_vcard_im_type_jabber"
+msgid "Jabber"
+msgstr "Jabber"
+
+msgctxt "messaging_vcard_im_type_other"
+msgid "Other"
+msgstr "기타 메신저"
+
+msgctxt "messaging_vcard_phone_type_home"
+msgid "Home"
+msgstr "집"
+
+msgctxt "messaging_vcard_phone_type_mobile"
+msgid "Mobile"
+msgstr "이동전화"
+
+msgctxt "messaging_vcard_phone_type_work"
+msgid "Work"
+msgstr "사무실"
+
+msgctxt "messaging_vcard_phone_type_silent"
+msgid "Silent Circle"
+msgstr "사일런트 써클"
+
+msgctxt "messaging_vcard_phone_type_other"
+msgid "Other"
+msgstr "타 연락처"
+
+#, c-format
+msgctxt "messaging_vcard_importing_contact"
+msgid "Importing contact for %s"
+msgstr "%1$s 연락처 가져오기"
+
+msgctxt "messaging_vcard_cannot_show_selected_contact"
+msgid "Cannot show selected contact!"
+msgstr "선택한 연락처 가져오기 불가!"
+
+msgctxt "messaging_conversation_list_loading"
+msgid "Loading…"
+msgstr "입력 중..."
+
+msgctxt "messaging_conversation_list_no_messages"
+msgid "No messages"
+msgstr "메시지 없음"
+
+msgctxt "messaging_conversation_list_prefix_you"
+msgid "You: "
+msgstr "사용자:"
+
+msgctxt "messaging_conversation_list_prefix_draft"
+msgid "Draft: "
+msgstr "임시:"
+
+msgctxt "messaging_conversation_select_recipient_hint"
+msgid "Enter recipient's username"
+msgstr "수신자 이름 입력"
+
+msgctxt "messaging_conversation_select_conversation_partner"
+msgid "Recipient's username"
+msgstr "수신자 이름"
+
+#, c-format
+msgctxt "messaging_conversation_list_file_sent"
+msgid "%1$s sent"
+msgstr "%1$s 보내기"
+
+#, c-format
+msgctxt "messaging_conversation_list_file_received"
+msgid "%1$s received"
+msgstr "%1$s 수신"
+
+msgctxt "messaging_conversation_list_type_file"
+msgid "File"
+msgstr "파일"
+
+msgctxt "messaging_conversation_list_type_audio"
+msgid "Audio"
+msgstr "음성"
+
+msgctxt "messaging_conversation_list_type_video"
+msgid "Video"
+msgstr "비디오"
+
+msgctxt "messaging_conversation_list_type_image"
+msgid "Image"
+msgstr "이미지"
+
+msgctxt "messaging_conversation_list_type_contact"
+msgid "Contact"
+msgstr "연락처"
+
+msgctxt "messaging_conversation_list_failed_attachment"
+msgid "Failed attachment"
+msgstr "파일 첨부 실패"
+
+msgctxt "messaging_conversation_list_call_voiceover"
+msgid "Make a call"
+msgstr "통화 시작"
+
+msgctxt "messaging_conversation_list_delete_conversation_voiceover"
+msgid "Delete conversation"
+msgstr "대화 삭제"
+
+msgctxt "user_validation_generic_error"
+msgid "Check whether entered user name is correct."
+msgstr "이름 입력을 확인하세요."
+
+msgctxt "user_validation_username_empty"
+msgid "Provided user name is empty."
+msgstr "입력한 사용자 이름 없음"
+
+msgctxt "user_validation_no_connection"
+msgid "Ensure your device can connect to the Internet and try again."
+msgstr "인터넷 연결을 확인 후 다시 시도."
+
+msgctxt "debug_information_title"
+msgid "Debug information"
+msgstr "정보 오류 수정"
+
+msgctxt "debug_information_toggle_json_view"
+msgid "Toggle JSON view"
+msgstr "Java 언어로 보기"
+
+msgctxt "invite_sms_not_setup"
+msgid ""
+"Sorry, this device doesn't appear to support SMS, so we can't send out an"
+" invitation."
+msgstr "죄송합니다. 휴대폰에 문자기능이 없어 초대를 할 수 없습니다. "
+
+msgctxt "invite_email_not_setup"
+msgid ""
+"Sorry, you need to setup an email account before we can send out "
+"invitations by email."
+msgstr "죄송합니다. 이메일 주소를 셋팅하여 이메일로 보낼 수 있도록 하세요."
+
+msgctxt "invite_no_phone_or_email"
+msgid ""
+"Sorry, the contact appears to have no phone or email, so we can't send "
+"out an invitation."
+msgstr "죄송합니다. 연락처에 전화번호와 주소가 없어 초대를 보낼 수 없습니다."
+
+msgctxt "basic_account_info"
+msgid ""
+"You are limited in your usage of Silent Phone. Visit the <a "
+"href=\"https://accounts.silentcircle.com/\">Silent Circle website</a> and"
+" upgrade your account."
+msgstr ""
+"사일런트 폰 사용에 한정되어 있습니다. <a href=\"https://accounts.silentcircle.com/\">사일런트"
+" 써클 사이트를 방문하여 계정을 업그레이드 하세요</a>."
+
+msgctxt "basic_account_info_free"
+msgid ""
+"You are limited in your usage of Silent Phone. Visit the <a "
+"href=\"https://accounts.silentcircle.com/\">Silent Circle website</a> and"
+" upgrade your account. \n"
+"\n"
+"In the meantime, you can still receive secure calls and messages."
+msgstr ""
+"사일런트 폰 사용에 한정되어 있습니다. <a href=\"https://accounts.silentcircle.com/\">사일런트"
+" 써클 사이트를 방문하여 계정을 업그레이드 하세요</a>. \n"
+"\n"
+"현재 보안전화 및 메시지는 계속 수신이 가능합니다."
+
+msgctxt "expired_account_info"
+msgid ""
+"Your account has expired. Visit the <a "
+"href=\"https://accounts.silentcircle.com/\">Silent Circle website</a> and"
+" renew your account to make secure calls."
+msgstr ""
+"계정이 만료되었습니다. <a href=\"https://accounts.silentcircle.com/\">보안전화를 계속하시려면 "
+"사일런트 써클 사이트를 방문하여 계정을 갱신하세요</a>."
+
+msgctxt "minutes_gone_info"
+msgid ""
+"You have run out of minutes. Visit the <a "
+"href=\"https://accounts.silentcircle.com/\">Silent Circle website</a> and"
+" add credit to your account to make secure calls."
+msgstr ""
+"사용시간이 만료되었습니다. <a href=\"https://accounts.silentcircle.com/\">보안전화를 계속 "
+"하시려면 사일런트 써클 사이트를 방문하여 충전을 하세요</a>."
+
+msgctxt "credit_gone_info"
+msgid ""
+"You have run out of credit. Visit the <a "
+"href=\"https://accounts.silentcircle.com/\">Silent Circle website</a> and"
+" add credit to your account to make secure calls."
+msgstr ""
+"충전이 소진되었습니다. <a href=\"https://accounts.silentcircle.com/\">보안전화를 계속 하시려면"
+" 사일런트 써클 사이트를 방문하여 충전을 하세요</a>."
+
+msgctxt "minutes_low_info"
+msgid ""
+"You are running low on minutes. Visit the <a "
+"href=\"https://accounts.silentcircle.com/\">Silent Circle website</a> and"
+" add credit to your account to make secure calls."
+msgstr ""
+"사용시간이 얼마 남지 않았습니다. <a href=\"https://accounts.silentcircle.com/\">보안전화를 "
+"계속 하시려면 사일런트 써클 사이트를 방문하여 충전을 하세요</a>."
+
+msgctxt "credit_low_info"
+msgid ""
+"You are running low on credit. Visit the <a "
+"href=\"https://accounts.silentcircle.com/\">Silent Circle website</a> and"
+" add credit to your account to make secure calls."
+msgstr ""
+"충전이 소진되어 가고 있습니다. <a href=\"https://accounts.silentcircle.com/\">보안전화를 계속"
+" 하시려면 사일런트 써클 사이트를 방문하여 충전을 하세요</a>."
+
+msgctxt "dialog_title_need_funding"
+msgid "Funding required"
+msgstr "충전 필요"
+
+msgctxt "dialog_message_need_funding"
+msgid ""
+"To use Silent Circle's services, you must fund your account with a "
+"minimum of $5.00 USD. \n"
+"\n"
+"Click below to begin."
+msgstr "사일런트 써클 서비스를 계속 사용하시려면 최소 $5의 충전을 하세요."
+
+msgctxt "dialog_positive_need_funding"
+msgid "Fund account"
+msgstr "충전"
+
+msgctxt "dialog_title_pstn_disabled"
+msgid "No Silent World service"
+msgstr "사일런트 월드 사용 만료"
+
+msgctxt "dialog_message_pstn_disabled"
+msgid ""
+"This call to an outside number cannot be placed because your account does"
+" not include Silent World service."
+msgstr "사일런트 월드 서비스 계정이 가입되지 않아 외부로의 전화가 연결되지 않습니다."
+
+msgctxt "silent_world_contact_info"
+msgid "Silent World call"
+msgstr "사일런트 월드 전화하기"
+
+msgctxt "battery_info"
+msgid ""
+"Please acknowledge the request in the next dialog to keep SilentPhone "
+"connected. If SilentPhone is not connect then you cannot receive calls or"
+" text messages. SilentPhone has an advanced power management if in "
+"standby mode and the impacts on battery lifetime are negligible."
+msgstr ""
+"대화 요청을 위해 사일런트 폰 연결 확인 요망. 만약 사일런트 폰이 연결되지 않을 시 전화와 문자 전송이 불가능하며 대기 모드에서 "
+"배터리 잔량 확인 필요"
+
+msgctxt "provisioning_corp_email_hint"
+msgid "Corporate email address"
+msgstr "그룹 이메일 주소"
+
+#. in-app purchase
+msgctxt "in_app_purchase"
+msgid "In App Purchase"
+msgstr "앱에서 충전하기"
+
+msgctxt "select_amount"
+msgid "Please provide an amount to purchase"
+msgstr "충전금액을 설정하세요."
+
+msgctxt "select"
+msgid "SELECT"
+msgstr "선택"
+
+msgctxt "purchase"
+msgid "PURCHASE"
+msgstr "구입"
+
+msgctxt "select_a_card"
+msgid "Select a card"
+msgstr "카드 선택"
+
+msgctxt "select_card"
+msgid "Please select a card to purchase"
+msgstr "구입하실 카드를 선택하세요."
+
+msgctxt "specified_amount"
+msgid "Please provide an amount to purchase"
+msgstr "구입하실 금액을 입력하세요."
+
+msgctxt "amount"
+msgid "Amount"
+msgstr "구입 금액"
+
+msgctxt "new_card"
+msgid "New card"
+msgstr "새로운 카드"
+
+#. <string name="auto_refill_payment">Automatically make $10.00 payment when
+#. account balance is lower $10.00.</string>
+msgctxt "make_payment"
+msgid "Make payment for secure calls"
+msgstr "보안전화 구매"
+
+msgctxt "creating_token"
+msgid "Creating Token…"
+msgstr "인증번호 생성..."
+
+msgctxt "validationErrors"
+msgid "Validation Errors"
+msgstr "인증 실패"
+
+msgctxt "cardNumber"
+msgid "Card Number"
+msgstr "신용카드 번호"
+
+msgctxt "invalid_card_info"
+msgid "Please provide correct credit card information"
+msgstr "정확한 신용카드 정보를 입력하세요"
+
+msgctxt "invalid_card_number"
+msgid "The card number that you entered is invalid"
+msgstr "입력하신 신용카드 정보가 유효하지 않습니다"
+
+msgctxt "invalid_expiration_date"
+msgid "The expiration date that you entered is invalid"
+msgstr "입력하신 신용카드 유효기간이 일치하지 않습니다"
+
+msgctxt "invalid_cvc"
+msgid "The CVC code that you entered is invalid"
+msgstr "입력하신 신용카드 CVC가 일치하지 않습니다."
+
+msgctxt "minimum_payment"
+msgid "The minimum amount is $5"
+msgstr "최소 결제 금액은 $5입니다."
+
+msgctxt "getting_cc_info"
+msgid "Getting Credit Cards…"
+msgstr "신용카드 처리 ..."
+
+msgctxt "processing_payment"
+msgid "Processing Payment…"
+msgstr "지불 처리 중..."
+
+msgctxt "payment_successful"
+msgid "Thanks for your payment."
+msgstr "구매해 주셔서 감사합니다."
+
+msgctxt "exception_occur"
+msgid "Please try it again. If it still exists, Please contact app provider."
+msgstr "다시 시도하세요. 이 현상 계속 되면 앱 구매처를 컨택하세요."
+
+msgctxt "confirm_payment_title"
+msgid "Confirm Payment"
+msgstr "구매 확인"
+
+#, c-format
+msgctxt "confirm_payment_message"
+msgid "%1$s will be charged to the credit card ending with %2$s"
+msgstr "%1$s가 신용카드에서 %2$s로 지불될 예정입니다."
+
+msgctxt "amount_level_4"
+msgid "Other"
+msgstr "기타"
+
+msgctxt "card_ending_with"
+msgid "Ending:"
+msgstr "종료:"
+
+#. android:description
+msgctxt "click_to_purchase"
+msgid "Click this button to continue purchasing"
+msgstr "구매를 위해서 이 버튼을 클릭하세요"
+
+msgctxt "input_card_number"
+msgid "Please provide your card number into the text edit"
+msgstr "신용카드 번호를 입력하세요."
+
+msgctxt "expiration_year"
+msgid "Please select expiration year from drop down"
+msgstr "아래를 선택하여 신용카드 유효기간 연도를 입력하세요."
+
+msgctxt "expiration_month"
+msgid "Please select expiration month from drop down"
+msgstr "아래를 선택하여 신용카드 유효기간 월을 입력하세요."
+
+msgctxt "cvc_number"
+msgid "Please provide cvc number on the back of your card into the text edit"
+msgstr "신용카드 뒷면의 CVC번호를 입력하세요"
+
+msgctxt "click_register_card_stripe"
+msgid ""
+"Please click the save button to register your card to Stripe and save "
+"this Stripe token"
+msgstr "Stripe 저장하기 버튼을 클릭하고 Stripe 인증번호를 저장하세요"
+
+#. payment menu
+msgctxt "payment_history"
+msgid "Payment History"
+msgstr "지불 기록"
+
+#. Miscellaneous
+msgctxt "dialer_activity_conversation_button"
+msgid "Start new conversation"
+msgstr "새로운 대화 시작"
+
+msgctxt "dialer_activity_conversation_shortcut"
+msgid "New conversation"
+msgstr ""
+
+#. Error when wiping data (dev devices only)
+msgctxt "wipe_data_failed"
+msgid "Wiping data has failed - please uninstall manually!"
+msgstr "데이터 삭제 실패 - 수동으로 삭제를 하세요!"
+
+msgctxt "dial_drawer_remaining_oca_minutes_description"
+msgid "Show account status"
+msgstr "계정 정보 보기"
+
+msgctxt "dial_drawer_settings_description"
+msgid "Configure the application"
+msgstr "앱 작동"
+
+msgctxt "dial_drawer_go_offline_description"
+msgid "Shut down the application"
+msgstr "앱 닫기"
+
+msgctxt "dial_drawer_wipe_phone_description"
+msgid "Clear application data and log out"
+msgstr "앱에 저장된 데이터 삭제 후 로그아웃"
+
+msgctxt "dial_drawer_avatar_voiceover"
+msgid "Avatar"
+msgstr "프로필 사진"
+
+msgctxt "data_retention_on"
+msgid "Data retention ON ⓘ"
+msgstr "데이터 저장 ON ⓘ"
+
+msgctxt "data_retention_communication_blocked"
+msgid "Communication blocked ⓘ"
+msgstr "대화 막힘 ⓘ"
+
+msgctxt "data_retention_calls_blocked"
+msgid "Calls blocked ⓘ"
+msgstr "전화 막힘 ⓘ"
+
+msgctxt "data_retention_messaging_blocked"
+msgid "Messaging blocked ⓘ"
+msgstr "메시지 막힘 ⓘ"
+
+msgctxt "data_retention_your_organization"
+msgid "Your organization"
+msgstr "사용자 그룹"
+
+msgctxt "data_retention_remote_organization"
+msgid "Remote organization"
+msgstr "원격 그룹"
+
+#, c-format
+msgctxt "data_retention_data_retained_by"
+msgid "%1$s imposes a data retention policy"
+msgstr "%1$s 데이터 저장 기능을 부여합니다."
+
+msgctxt "data_retention_data_retains"
+msgid " and retains"
+msgstr "계속 저장하기"
+
+msgctxt "data_retention_message_plaintext"
+msgid "message contents"
+msgstr "메시지 내용"
+
+msgctxt "data_retention_message_metadata"
+msgid "message metadata"
+msgstr "일반 데이터 메시지"
+
+msgctxt "data_retention_calls"
+msgid "call audio"
+msgstr "음성 전화"
+
+msgctxt "data_retention_call_metadata"
+msgid "call metadata"
+msgstr "일반 데이터 전화"
+
+msgctxt "data_retention_message_attachments"
+msgid "attachment contents"
+msgstr "첨부 내용"
+
+msgctxt "data_retention_for_user"
+msgid "For user"
+msgstr "사용자"
+
+msgctxt "data_retention_retaining_organization"
+msgid "Retaining organization"
+msgstr "그룹"
+
+msgctxt "data_retention_retaining_organizations"
+msgid "Retaining organizations"
+msgstr "그룹"
+
+msgctxt "data_retention_data_retained"
+msgid "Data being retained:"
+msgstr "저장될 데이터"
+
+msgctxt "data_retention_data_retention_description_remote"
+msgid ""
+"Recipient's organization has a policy retaining conversation data. Silent"
+" Phone is retaining this data and uploading it to recipient's "
+"organization."
+msgstr "수신자 그룹이 대화내용 데이터 저장 기능이 있습니다. 사일런트 폰의 대화내용은 저장되며 데이터가 수신 그룹에 보내집니다."
+
+msgctxt "data_retention_data_retention_description_both"
+msgid ""
+"Your organization and recipient's organization have a policy of retaining"
+" conversation data. Silent Phone is retaining this data and uploading it "
+"to your organization and recipient's organization"
+msgstr "발신자 수신자 그룹 모두 대화내용 데이터 저장 기능이 있습니다. 사일런트 폰의 대화내용은 저장되며 데이터가 수신 그룹에 보내집니다."
+
+msgctxt "data_retention_data_retention_description_local"
+msgid ""
+"Your organization has a policy of retaining conversation data. Silent "
+"Phone is retaining this data and uploading it to your organization."
+msgstr "발신자 그룹이 대화내용 저장 기능이 있습니다. 사일런트 폰은 대화 내용은 저장되며 데이터가 발신자 그룹에 보내집니다. "
+
+msgctxt "data_retention_policy_error"
+msgid "Policy error"
+msgstr "보호정책 에러"
+
+msgctxt "data_retention_call_retained"
+msgid "Call retained"
+msgstr "통화 저장"
+
+msgctxt "data_retention_message_retained"
+msgid "Message retained"
+msgstr "메시지 저장"
+
+msgctxt "data_retention_message_not_delivered"
+msgid "Message not delivered!"
+msgstr "메시지 전송 실패!"
+
+msgctxt "data_retention_communication_dr_blocked"
+msgid "Message not delivered due to your organization's data retention policy"
+msgstr "발신자 그룹의 데이터 저장 정책에 의하여 메시지가 전되지 않았습니다"
+
+msgctxt "data_retention_communication_dr_required"
+msgid "Message not delivered due to recipient's data retention policy"
+msgstr "수신자의 데이터 저장 정책에 의해 메시지가 전송되지 않았습니다"
+
+msgctxt "data_retention_communication_blocked_remote"
+msgid ""
+"Message not delivered due to recipient's data retention settings (blocked"
+" data retention)"
+msgstr "수지자의 데이터 저장 정책에 의해 메시지가 전송되지 않았습니다(데이터 저장 거부)"
+
+msgctxt "messaging_checked_verified"
+msgid "Verified"
+msgstr "확인됨"
+
+#, c-format
+msgctxt "redirect_uri_mismatch"
+msgid "Redirect URI does not match: %s"
+msgstr "재전송된 URL이 일치하지 않음: %s"
+
+#, c-format
+msgctxt "redirect_uri_query_missing"
+msgid "Redirect URI does not contain a query string: %s."
+msgstr "재전송된 URL이 검색문자열을 가지고 있음: %s"
+
+msgctxt "redirect_uri_malformed"
+msgid "Redirect URI does not contain necessary data."
+msgstr "재전송된 URL이 요구된 데이터값을 가지고 있지 않음"
+
+#, c-format
+msgctxt "redirect_uri_error"
+msgid "Redirect URI error. Error code: %s."
+msgstr "재전송된 URL 에러. 에러 코드: %s"
+
+#, c-format
+msgctxt "redirect_ssl_error"
+msgid "Got a SSL Error: %s"
+msgstr "SSL 에러: %s"
+
+#, c-format
+msgctxt "redirect_wrong_uri"
+msgid "Server provided a wrong redirect URI: %s"
+msgstr "서버가 잘못된 URL 재전송을 보냄: %s"
+
+#, c-format
+msgctxt "hw_device_id_mismatch"
+msgid ""
+"HW device identifiers do not match: \n"
+"Stored: %1$s\n"
+"Actual: %2$s \n"
+"\n"
+"Please uninstall and install the application."
+msgstr ""
+"하드웨어 단말기가 일치하지 않음: \n"
+"저장됨: %1$s\n"
+"유효값: %2$s\n"
+"\n"
+"앱을 삭제하고 재설치하세요."
+
+#. The percentage, used for expressing progress.
+#, c-format
+msgctxt "percentage"
+msgid "%s%%"
+msgstr "%s%%"
+
+msgctxt "permission_phone_title"
+msgid "Why access to Phone?"
+msgstr "폰 데이터에 접근하려 합니다."
+
+msgctxt "permission_phone_explanation"
+msgid ""
+"Silent Phone does not initiate phone calls that require the device's "
+"phone application. \n"
+"\n"
+"However, Silent Phone monitors if you have an active call or if you "
+"receive a call while you are using Silent Phone. In these cases Silent "
+"Phone either manages the Silent Phone call or informs you about the "
+"incoming call using a notification tone."
+msgstr ""
+"사일런트 폰은 휴대폰의 앱을 임의로 실행하지 않음 \n"
+"\n"
+"그러나, 사일런트 폰은 통화 발생/수신 시 모니터링을 하게 됩니다. 사일런트 폰은 보안관리를 실행하거나 앱 실행 중 전화받기를 "
+"알려줍니다."
+
+msgctxt "permission_sp_main_title"
+msgid "Required Silent Phone Permissions"
+msgstr "사일런트 폰 "
+
+msgctxt "permission_sp_main_explanation"
+msgid ""
+"&lt;b&gt;Audio&lt;/b&gt;: to setup calls or to record audio attachments "
+"(if enabled)."
+msgstr "&lt;b&gt;Audio&lt;/b&gt;:를 실행하여 전화걸기 설정 또는 녹음파일 첨부 가능"
+
+msgctxt "permission_main_not_granted_title"
+msgid "Silent Phone permissions missing"
+msgstr "사일런트 폰 저장안하기 허용"
+
+msgctxt "permission_main_not_granted_explanation"
+msgid ""
+"Silent Phone cannot work without the required permissions, exiting. You "
+"may start Silent Phone again and grant the required permissions."
+msgstr "명령없이 실행이 불가능하여 나가는 중. 사일런트 폰 다시켜기를 하여 정확한 명령을 실행하세요."
+
+msgctxt "permission_location_title"
+msgid "Why access to Location?"
+msgstr "위치정보에 접근하려 합니다."
+
+msgctxt "permission_location_explanation"
+msgid ""
+"Silent Phone accesses the location to attach location information to a "
+"message if you enable this feature."
+msgstr "이 기능을 활성화하면 사일런트 폰이 위치정보에 접급하여 위치정보 공유를 시작합니다."
+
+msgctxt "permission_storage_title"
+msgid "Why access to Storage?"
+msgstr "데이터에 접근하려 합니다."
+
+msgctxt "permission_storage_explanation"
+msgid ""
+"On user request Silent Phone can store or share attachments. This "
+"requires permission to access external storage."
+msgstr "사용자에 의해 데이터 저장과 파일 전송을 할 수 있습니다. 외부저장 기능을 활성화 합니다."
+
+msgctxt "permission_camera_title"
+msgid "Why access to Camera?"
+msgstr "카메라에 접근하려 합니다."
+
+msgctxt "permission_camera_explanation"
+msgid ""
+"Silent Phone accesses the camera to allow for capturing photo and video "
+"attachments. The camera is also used to access the video chat feature."
+msgstr "카메라에 접근하여 사진촬영 및 비디오 촬영을 허락합니다. 그리고, 비디오는 영상전화에도 활용될 예정입니다."
+
+#. Texts for avatar action dialog
+msgctxt "avatar_choose_image_from_gallery_voiceover"
+msgid "Choose image from gallery"
+msgstr "사진앨범에서 이미지 선택"
+
+msgctxt "avatar_take_a_photo_voiceover"
+msgid "Take a photo"
+msgstr "사진찍기"
+
+msgctxt "avatar_delete_photo_voiceover"
+msgid "Delete avatar photo"
+msgstr "프로필 사진 삭제"
+
+msgctxt "avatar_show_as_square"
+msgid "Show square"
+msgstr "네모 모양"
+
+msgctxt "avatar_show_as_circle"
+msgid "Show circle"
+msgstr "원 모양"
+
+msgctxt "avatar_could_not_show_image"
+msgid "Could not show image"
+msgstr "이미지 보기 실패"
+
+msgctxt "avatar_action_select_from_gallery"
+msgid "Select an image"
+msgstr "이미지 선택"
+
+msgctxt "avatar_action_take_a_photo"
+msgid "Take a photo"
+msgstr "사진 찍기"
+
+msgctxt "avatar_action_delete"
+msgid "Delete avatar"
+msgstr "프로필 사진 삭제"
+
+msgctxt "navigation_drawer_expand_details_voiceover"
+msgid "show account details"
+msgstr "계정 내용 보임"
+
+msgctxt "navigation_drawer_collapse_details_voiceover"
+msgid "hide account details"
+msgstr "계정 내용 숨김"
+
+#. debug logging
+msgctxt "setting_debug_logging"
+msgid "Enable debug mode"
+msgstr "에러 수정 모드"
+
+msgctxt "setting_debug_logging_summary"
+msgid "Store on your device certain details that can help when reporting issues."
+msgstr "에러내용을 신고할 수 있도록 접수시킬 수 있도록 세부 내용 저장"
+
+msgctxt "setting_send_logs"
+msgid "Report issue and send logs"
+msgstr "에러 내용에 대하여 접수하기"
+
+msgctxt "setting_debug_logging_config"
+msgid "Select debug lookback interval"
+msgstr "에러 수정 선택 후 대기"
+
+msgctxt "description_of_problem"
+msgid "Description of issue"
+msgstr "에러 내"
+
+msgctxt "send_logs"
+msgid "Report issue and send logs"
+msgstr "에러 접수하기"
+
+msgctxt "logging_error"
+msgid "Error"
+msgstr "에러"
+
+msgctxt "logging_net_work_connection_error"
+msgid "Please connect to the internet and try again."
+msgstr "인터넷 연결 후 다시 시도"
+
+msgctxt "logging_no_api_key_error"
+msgid "Error code #307477."
+msgstr "에러 코드 #307477"
+
+msgctxt "logging_io_error"
+msgid "Error code #199607."
+msgstr "에러 코드 #199607"
+
+msgctxt "failed_to_send_logs"
+msgid "Failed to report issue."
+msgstr "에러 접수 실패"
+
+msgctxt "upload_logs_successfully"
+msgid "Issue reported successfully."
+msgstr "에러 접수 성공"
+
+msgctxt "error_read_logs"
+msgid "Error while reading encrypted log files."
+msgstr "암호화된 파일 읽기 실패"
+
+msgctxt "can_not_store_decrypted_logs"
+msgid "Could not create temporary directory for decrypted logs."
+msgstr "임시 연락처 생성 실패"
+
+msgctxt "permission_storage_explanation_1"
+msgid ""
+"On your request Silent Phone can store debugging information for "
+"reporting issues which requires your permission for saving these "
+"encrypted logs to external storage."
+msgstr "사용자의 요청에 의해 에러 수정 정보를 접수할 수 있으며 암호화된 데이터를 외부 저장장치에 저장할 수 있음"
+
+msgctxt "no_decrypted_log_files"
+msgid "No decrypted log files."
+msgstr "암호해제된 파일 없음"
+
+msgctxt "one_day"
+msgid "One day"
+msgstr "1일"
+
+msgctxt "two_day"
+msgid "Two days"
+msgstr "2일"
+
+msgctxt "three_day"
+msgid "Three days"
+msgstr "3일"
+
+#. end debug logging
+msgctxt "onboarding_enterprise_privacy_platform"
+msgid "Enterprise privacy platform"
+msgstr "기업 보안 플랫폼"
+
+msgctxt "onboarding_connect_with_people"
+msgid "Connect with people"
+msgstr "인간과의 커뮤니케이션"
+
+msgctxt "onboarding_lets_get_started"
+msgid "Let's get started"
+msgstr "서비스 시작"
+
+msgctxt "onboarding_silent_circle_is"
+msgid ""
+"Silent Circle is a secure communications company offering mobile devices,"
+" software applications, and communication management services to the "
+"Enterprise."
+msgstr "사일런트 써클은 휴대폰, 소프트웨어, 그리고 기업에 보안 커뮤니케이션을 제공하는 회사입니다."
+
+msgctxt "onboarding_private_encrypted"
+msgid ""
+"Private, encrypted communication and secure file transfer to any device, "
+"for everyone in your enterprise."
+msgstr "어떤 휴대폰, 누구에게도 보안된 개인 커뮤니케이션과 암호화된 파일 전송 가능"
+
+msgctxt "onboarding_search_for"
+msgid "Search for partners in your contact list, by email address or full name."
+msgstr "이메일 또는 이름으로 사용자 찾기"
+
+msgctxt "title_activity_simple_chat_ui"
+msgid "SimpleChatUi"
+msgstr "심플 메시지 UI"
+
+msgctxt "discovery_onboarding_1_title"
+msgid "Settings and account information"
+msgstr "계정 정보 셋팅"
+
+msgctxt "discovery_onboarding_1_desc"
+msgid ""
+"Tap the menu icon to access your Silent Phone settings, manage your "
+"account, & more."
+msgstr "메뉴를 선택하여 사일런트 폰 셋팅, 계정 관리 등 실행"
+
+msgctxt "discovery_onboarding_2_title"
+msgid "Call, text, or send photos, videos, & more"
+msgstr "전화, 메시지, 사진전송, 영상전화 등"
+
+msgctxt "discovery_onboarding_2_desc"
+msgid ""
+"Touch the plus icon to create new conversations, make calls, or search "
+"your contacts. In a conversation you can send audio recordings, photos, "
+"videos, file attachments, your location, & more."
+msgstr "+를 선택하여 새로운 메시지, 전화, 연락처 찾기 실행. 대화 중에 녹음, 사진전송, 영상보내기, 파일 보내기, 위치 보내기 가능"
+
+msgctxt "discovery_conversation_1_title"
+msgid "Call securely"
+msgstr "보안 통화"
+
+msgctxt "discovery_conversation_1_desc"
+msgid "Tap the call icon to make a secure call or video call to this person."
+msgstr "Call 선택하여 보안전화, 보안영상전화 걸기"
+
+msgctxt "discovery_conversation_2_title"
+msgid "Send voice messages"
+msgstr "음성 메모 보내기"
+
+msgctxt "discovery_conversation_2_desc"
+msgid ""
+"Hold the record icon and start talking to record a voice message. Release"
+" to send it immediately."
+msgstr "녹음 버튼을 눌러 음성 메모를 저장하세요. 버튼에서 떼면 바로 음성메모가 보내집니다."
+
+msgctxt "discovery_conversation_3_title"
+msgid "More options to communicate"
+msgstr "더 다양 커뮤니케이션 선택"
+
+msgctxt "discovery_conversation_3_desc"
+msgid ""
+"Tap here to send pictures, take pictures, record video, share contacts, "
+"and send files."
+msgstr "사진 보내기, 사진 촬영, 비디오 영상, 연락처 찾기, 파일 보내기."
+
+msgctxt "discovery_conversation_4_title"
+msgid "Set burn time"
+msgstr "삭제 시간 설정"
+
+msgctxt "discovery_conversation_4_desc"
+msgid ""
+"Tap the burn icon to adjust the burn time. This sets how long your "
+"messages can be read by the other person."
+msgstr "삭제 아이콘을 선택하여 삭제 시간 설정. 상대방이 읽을 수 있는 시간 설정 가능"
+
+msgctxt "discovery_conversation_5_title"
+msgid "Add to contacts"
+msgstr "연락처 추가"
+
+msgctxt "discovery_conversation_5_desc"
+msgid ""
+"Tap the add to contacts button to add this person as a new entry to your "
+"address book or to associate this person's Silent Phone information with "
+"an existing contact."
+msgstr "연락처 추가 버튼을 선택하여 휴대폰 주소록에 저장하거나 사일런트 폰에 있는 연락처에 저장하기"
+
+msgctxt "discovery_conversation_6_title"
+msgid "Share location & more"
+msgstr "위치 정보 공유"
+
+msgctxt "discovery_conversation_6_desc"
+msgid ""
+"Touch this menu icon to enable sharing your location with each message, "
+"to clear the conversation, and to see security information for the "
+"devices in this conversation."
+msgstr "메시지 전송 시 위치정보를 전송하거나 대화를 삭제하거나 대화내용의 저장정보를 확인하기 위해 메뉴의 아이콘 선택"
+
+msgctxt "discovery_search_1_title"
+msgid "Select a contact"
+msgstr "전화번호부 찾기"
+
+msgctxt "discovery_search_1_desc"
+msgid ""
+"Everyone in your contacts who can be reached securely with Silent Phone "
+"is shown right at the top. Contacts are matched by email and by Silent "
+"World phone numbers."
+msgstr "사일런트 폰으로 보안통신이 가능한 상대방은 오른쪽 상단에 표시됨. 연락처는 이메일 또는 사일런트 월드 전화번호로 검색 가능 "
+
+msgctxt "discovery_search_2_title"
+msgid "Call anyone with Silent World"
+msgstr "사일런트 월드의 연락처에 전화걸기"
+
+msgctxt "discovery_search_2_desc"
+msgid ""
+"You have Silent World on your account. Select any contact with a phone "
+"number and you can make a non-secure traditional call."
+msgstr "사일런트 계정 보유. 연락처 정보에 있는 상대방에 기존방식의 보안되지 않은 전화걸기 가능."
+
+msgctxt "discovery_search_3_title"
+msgid "Search for contacts"
+msgstr "연락처 찾기"
+
+#, c-format
+msgctxt "discovery_search_3_desc"
+msgid ""
+"Enter a name, phone number, email, or Silent Circle username and we'll "
+"try to find the contact. We search your device contacts and the %1$s "
+"directory."
+msgstr ""
+"이름, 전화번호, 이메일 주소, 또는 사일런트 써클 계정을 입력하여 연락처 찾기. 휴대폰에 저장된 연락처와 %1$s 연락처 찾기 "
+"가능."
+
+msgctxt "discovery_search_4_title"
+msgid "Dial numbers"
+msgstr "전화걸기"
+
+msgctxt "discovery_search_4_desc"
+msgid ""
+"Touch the dialpad to search for a number or to call a phone number "
+"directly."
+msgstr "다이얼패드로 전화번호 찾기 또는 직접 전화하기"
+
+msgctxt "message_info_title"
+msgid "Event information"
+msgstr "발생 내용"
+
+msgctxt "message_info_id"
+msgid "Id"
+msgstr "ID"
+
+msgctxt "message_info_message_composed_at"
+msgid "Message composed at"
+msgstr "메시지 구성"
+
+msgctxt "message_info_message_sent_to"
+msgid "Message sent to"
+msgstr "메시지 수신자"
+
+msgctxt "message_info_message_read_at"
+msgid "Message read at"
+msgstr "메시지 읽기"
+
+msgctxt "message_info_message_delivered_at"
+msgid "Message delivered at"
+msgstr "메시지 전송"
+
+msgctxt "message_info_message_expires_in"
+msgid "Message expires in"
+msgstr "메시지 유효기간 만료"
+
+msgctxt "message_info_text"
+msgid "Text"
+msgstr "문자"
+
+msgctxt "message_info_sender"
+msgid "Sender"
+msgstr "신자"
+
+msgctxt "message_info_burn_delay"
+msgid "Burn delay"
+msgstr "삭제 연기"
+
+msgctxt "message_info_has_attachments"
+msgid "Has attachments"
+msgstr "첨부 보유"
+
+msgctxt "message_info_is_retained"
+msgid "Is retained"
+msgstr "저장됨"
+
+msgctxt "message_info_trace"
+msgid "Trace"
+msgstr "추적"
+
+msgctxt "message_info_local_retention_info"
+msgid "Local retention info"
+msgstr "휴대폰 저장 정보"
+
+msgctxt "message_info_remote_retention_info"
+msgid "Remote retention info"
+msgstr "원격 저장 정보"
+
+msgctxt "message_info_retaining_organization"
+msgid "Retaining organization"
+msgstr "그룹 저장"
+
+msgctxt "message_info_call_type"
+msgid "Call type"
+msgstr "화 유형"
+
+msgctxt "message_info_call_time"
+msgid "Call started at"
+msgstr "발신처"
+
+msgctxt "message_info_call_duration"
+msgid "Call duration"
+msgstr "통화 시간"
+
+msgctxt "message_info_call_error"
+msgid "Error"
+msgstr "에러"
+
+msgctxt "message_info_error_device_id"
+msgid "Device id"
+msgstr "휴대폰 ID"
+
+msgctxt "message_info_error_number"
+msgid "Error code"
+msgstr "에러 코드"
+
+msgctxt "message_info_error_text"
+msgid "Error"
+msgstr "에러"
+
+msgctxt "message_info_error_message_id"
+msgid "Message id"
+msgstr "메시 ID"
+
+msgctxt "message_info_error_recipient_device_id"
+msgid "Recipient's device"
+msgstr "수신자 휴대폰 정보"
+
+msgctxt "message_info_error_is_duplicate"
+msgid "Is duplicate"
+msgstr "복사됨"
+
+msgctxt "message_info_tab_info"
+msgid "Info"
+msgstr "정보"
+
+msgctxt "message_info_tab_json"
+msgid "Json"
+msgstr "자바스크립트"
+
+msgctxt "message_info_tab_trace"
+msgid "Trace"
+msgstr "추적"
+
+msgctxt "message_info_tab_no_trace_available"
+msgid "No trace information available"
+msgstr "정보 파악 불가"
+
+msgctxt "group_messaging_create_group"
+msgid "Create a group"
+msgstr "그룹 생성"
+
+msgctxt "group_messaging_invite_user"
+msgid "Invite participant"
+msgstr "초대"
+
+msgctxt "group_messaging_invite_notification"
+msgid "You have a new group conversation invitation"
+msgstr "단체톡방에서 초대받음"
+
+msgctxt "group_messaging_group_empty"
+msgid ""
+"No members in group yet\n"
+"To invite someone into conversation tap the plus icon"
+msgstr ""
+"그룹 사용자 없음\n"
+"+로 상대방 초대하기"
+
+msgctxt "group_messaging_no_known_groups"
+msgid "No groups known on this device"
+msgstr "휴대폰에 등록된 그룹 없음"
+
+#, c-format
+msgctxt "group_messaging_member_count"
+msgid "Member count: %1$d/%2$d"
+msgstr "멤버 수: %1$d/%2$d"
+
+msgctxt "group_messaging_group_details"
+msgid "Group details"
+msgstr "그룹 정보"
+
+msgctxt "group_messaging_group_members"
+msgid "Group members"
+msgstr "그룹 멤버"
+
+msgctxt "group_messaging_group_title"
+msgid "Group name"
+msgstr "그룹 이름"
+
+msgctxt "group_messaging_group_description"
+msgid "Description"
+msgstr "이름"
+
+msgctxt "group_messaging_group_creator"
+msgid "Creator"
+msgstr "생성자"
+
+msgctxt "group_messaging_group_participants"
+msgid "People"
+msgstr "멤버"
+
+msgctxt "group_messaging_leave_group"
+msgid "Leave group"
+msgstr "그룹 탈퇴"
+
+msgctxt "group_messaging_sync_group"
+msgid "Synchronize group"
+msgstr "그룹 가입"
+
+#, c-format
+msgctxt "group_messaging_invite"
+msgid "You added %1$s"
+msgstr "%1$s를 초대함"
+
+#, c-format
+msgctxt "group_messaging_invite_failed"
+msgid "Failed to add %1$s"
+msgstr "%1$s 초대 실패"
+
+#, c-format
+msgctxt "group_messaging_invite_answer_accepted"
+msgid "%1$s accepted invitation!"
+msgstr "%1$s가 초대를 받아들임!"
+
+#, c-format
+msgctxt "group_messaging_invite_answer_declined"
+msgid "%1$s declined invitation!"
+msgstr "%1$s가 초대를 거부함!"
+
+msgctxt "group_messaging_invite_answer_self_accepted"
+msgid "You accepted invitation!"
+msgstr "초대를 받아들임!"
+
+msgctxt "group_messaging_invite_answer_self_declined"
+msgid "You declined invitation!"
+msgstr "초대를 거부함!"
+
+#, c-format
+msgctxt "group_messaging_leave_notification"
+msgid "%1$s left"
+msgstr "%1$s가 나감"
+
+#, c-format
+msgctxt "group_messaging_hello_received"
+msgid "%1$s joined"
+msgstr "%1$s가 참여함"
+
+msgctxt "group_messaging_title_known_groups"
+msgid "Messaging groups"
+msgstr "그룹 메시지"
+
+msgctxt "group_messaging_title_create_group"
+msgid "Create group"
+msgstr "그룹 생성"
+
+msgctxt "group_messaging_group_created"
+msgid "Group created"
+msgstr "그룹 생성됨"
+
+#, c-format
+msgctxt "group_messaging_group_created_by"
+msgid "Group created by %1$s on %2$s"
+msgstr "%2$s에 %1$s에 의해 그룹 대화 생성됨"
+
+#, c-format
+msgctxt "group_messaging_group_created_this"
+msgid "Group created by you on %1$s"
+msgstr "%1$s에 사용자에 의해 그룹 대화 생성됨"
+
+#, c-format
+msgctxt "group_messaging_no_devices_for_user"
+msgid "%1$s has no registered devices"
+msgstr ""
+
+#, c-format
+msgctxt "group_messaging_group_id"
+msgid "Group id: %1$s"
+msgstr "그룹 아이디: %1$s"
+
+#, c-format
+msgctxt "group_messaging_new_burn_by"
+msgid "%1$s changed burn time to %2$s"
+msgstr "%1$s에 의해 삭제시간이 %2$s로 변경됨"
+
+#. Have an extra string if this reads: You changed group name to ... , in some
+#. languages we need to          change the verb
+#, c-format
+msgctxt "group_messaging_new_burn_this"
+msgid "You changed burn time to %1$s"
+msgstr "사용자에 의해 삭제시간이 %1$s로 변경됨"
+
+#, c-format
+msgctxt "group_messaging_new_burn"
+msgid "Burn time set to %1$s"
+msgstr "메시지 삭제 시간이 %1$s로 설정됨"
+
+#, c-format
+msgctxt "group_messaging_new_name_by"
+msgid "%1$s changed group name to '%2$s'"
+msgstr "%1$s가 그룹 이름을 ‘%2$s’로 변경함"
+
+#. Have an extra string if this reads: You changed group name to ... , in some
+#. languages we need to          change the verb
+#, c-format
+msgctxt "group_messaging_new_name_this"
+msgid "You changed group name to '%1$s'"
+msgstr "사용자가 그룹 이름을 ‘%1$s’로 변경함"
+
+#, c-format
+msgctxt "group_messaging_new_name"
+msgid "Group name changed to '%1$s'"
+msgstr "그룹 이름이 ’%1$s’로 변경됨"
+
+msgctxt "group_messaging_new_avatar_this"
+msgid "You changed group avatar"
+msgstr "사용자가 그룹 프로필 사진을 변경함"
+
+msgctxt "group_messaging_new_avatar"
+msgid "Group avatar updated"
+msgstr "그룹 프로필 사진 업데이트됨"
+
+#, c-format
+msgctxt "group_messaging_new_avatar_by"
+msgid "%1$s changed group avatar"
+msgstr "%1$s가 그룹 프로필 사진을 변경함"
+
+msgctxt "group_messaging_avatar_removed"
+msgid "Group avatar removed"
+msgstr "그룹 프로필 사진 지움"
+
+msgctxt "group_messaging_avatar_removed_this"
+msgid "You removed group avatar"
+msgstr "사용자가 그룹 프로필 사진을 지움"
+
+#, c-format
+msgctxt "group_messaging_avatar_removed_by"
+msgid "%1$s removed group avatar"
+msgstr "%1$s가 그룹 프로필 사진을 지움"
+
+#, c-format
+msgctxt "group_messaging_group_maximum_members"
+msgid "Maximum members in group: %1$d"
+msgstr "최대 그룹 멤버 수: %1$d"
+
+msgctxt "group_messaging_edit_group_details"
+msgid "Edit group"
+msgstr "그룹 편집"
+
+msgctxt "group_messaging_edit_group_maximum_members"
+msgid "Maximum number of members:"
+msgstr "최대 그룹 멤버 수"
+
+msgctxt "group_messaging_edit_group_members_failed_already_more"
+msgid "Group already has more members than desired maximum"
+msgstr "최대 그룹 멤버가 참여함"
+
+msgctxt "group_messaging_edit_group_name_voiceover"
+msgid "Edit group name"
+msgstr "그룹 이름 편집"
+
+msgctxt "group_messaging_edit_group_name_empty"
+msgid "Group name cannot be empty"
+msgstr "그룹 이름은 반드시 만들어야 합니다."
+
+msgctxt "group_messaging_edit_group_name_failed"
+msgid "Could not update group name"
+msgstr "그룹 이름을 업데이트 할 수 없음"
+
+msgctxt "group_messaging_edit_group_members_failed"
+msgid "Could not update maximum number of group members"
+msgstr "최대 그룹 멤버 숫자를 업데이트 할 수 없음"
+
+msgctxt "group_messaging_edit_group_members_updated"
+msgid "Maximum number of group members updated"
+msgstr "그룹 멤버 숫자 업데이트됨"
+
+msgctxt "group_messaging_edit_group_members_failed_maximum"
+msgid "Maximum number of group participants is 30"
+msgstr "최대 그룹 대화 참여 인원 30"
+
+msgctxt "group_messaging_edit_group_members_failed_minimum"
+msgid "Minimum number of group participants is 3"
+msgstr "최소 그룹 대화 참여 인원 3"
+
+msgctxt "group_messaging_edit_group_avatar_failed"
+msgid "Could not update group avatar"
+msgstr "그룹 프로필 사진을 업데이트 할 수 없음"
+
+msgctxt "group_messaging_edit_group_burn_failed"
+msgid "Could not update group burn delay"
+msgstr ""
+
+msgctxt "group_messaging_create_group_name"
+msgid "Group name"
+msgstr "그룹 이름"
+
+msgctxt "group_messaging_create_group_description"
+msgid "Group description"
+msgstr "그룹 설명"
+
+msgctxt "group_messaging_create_group_maximum_members_default"
+msgid "30"
+msgstr "30"
+
+msgctxt "group_messaging_create_group_name_not_empty"
+msgid "Group name should not be empty"
+msgstr "그룹 이름은 반드시 만들어야 합니다"
+
+msgctxt "group_messaging_create_group_description_not_empty"
+msgid "Group description should not be empty"
+msgstr "그룹 설명은 반드시 만들어야 합니다"
+
+msgctxt "group_messaging_create_group_name_already_used"
+msgid "Group with this name already exists"
+msgstr "위의 이름으로 사용하는 그룹이 있습니다"
+
+msgctxt "group_messaging_create_group_failed"
+msgid "Failed to create group conversation"
+msgstr "그룹 대화 생성 실패"
+
+#, c-format
+msgctxt "group_messaging_create_group_member_count_limits"
+msgid "Maximum member count must be between %1$d and %2$d"
+msgstr "최대 참여자는 %1$d에서 %2$d까지 가능"
+
+msgctxt "group_messaging_create_group_select_participants_hint"
+msgid "Select group participants by clicking on contact items"
+msgstr "이름을 선택하여 그룹 참여자 선택"
+
+#, c-format
+msgctxt "group_messaging_create_group_selection_counter"
+msgid "%1$d of %2$d selected"
+msgstr ""
+
+msgctxt "group_messaging_invitation_pending"
+msgid "Invitation pending"
+msgstr "초대 대기 중"
+
+msgctxt "group_messaging_maximum_number_of_participants_selected"
+msgid "Maximum number or participants selected"
+msgstr "최대 참여 가능한 대화자가 참여하였음"
+
+#, c-format
+msgctxt "group_messaging_could_not_validate_user"
+msgid "Could not validate user %1$s"
+msgstr "사용자 %1$s를 확인할 수 없음"
+
+msgctxt "group_messaging_add_participants"
+msgid "Add participants"
+msgstr "대화참석 추가"
+
+msgctxt "group_messaging_add_participants_voiceover"
+msgid "add participants"
+msgstr "대화참석 추가"
+
+msgctxt "group_messaging_new_group_conversation"
+msgid "New group conversation"
+msgstr "새 그룹 대화"
+
+msgctxt "group_messaging_conversation_with"
+msgid "Conversation with"
+msgstr "대화자"
+
+msgctxt "group_messaging_group_conversation_created"
+msgid "Created on"
+msgstr "작성"
+
+msgctxt "group_messaging_group_conversation_advanced_details"
+msgid "Extended configuration"
+msgstr "확장 구성"
+
+msgctxt "group_messaging_group_sync_successful"
+msgid "Device synchronization successful"
+msgstr "휴대폰 동기화 성공"
+
+msgctxt "group_messaging_group_sync_failed"
+msgid "Device synchronization failed"
+msgstr "휴대폰 동기화 실패"
+
+#, c-format
+msgctxt "group_messaging_leaving_group"
+msgid "Leaving group %1$s"
+msgstr "%1$s 그룹 나가기"
+
+msgctxt "group_messaging_leaving_group_unknown"
+msgid "Leaving group"
+msgstr ""
+
+msgctxt "fab_action_new_conversation"
+msgid "New conversation"
+msgstr "새로운 대화"
+
+msgctxt "fab_action_new_group_conversation"
+msgid "New group conversation"
+msgstr "새 그룹 대화"
+
+msgctxt "tooltip_record_button"
+msgid "Hold to record, release to send"
+msgstr "눌러서 녹음 시작, 손떼면 자동 전송"
+
+msgctxt "sound_recording_error"
+msgid "An error occurred while recording"
+msgstr "녹음 에러 발생"
+
+msgctxt "sound_recording_cancel"
+msgid "&lt; Slide to cancel"
+msgstr "밀어서 취소"
+

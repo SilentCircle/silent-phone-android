@@ -18,16 +18,26 @@ package com.silentcircle.common.animation;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
+import android.animation.AnimatorSet;
+import android.animation.LayoutTransition;
+import android.animation.ObjectAnimator;
+import android.animation.TypeEvaluator;
 import android.animation.ValueAnimator;
 import android.annotation.TargetApi;
+import android.graphics.Matrix;
 import android.os.Build;
+import android.support.annotation.Nullable;
+import android.support.v4.view.ViewCompat;
+import android.support.v4.view.ViewPropertyAnimatorCompat;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.ViewPropertyAnimator;
+import android.view.animation.AlphaAnimation;
+import android.view.animation.Animation;
 import android.view.animation.DecelerateInterpolator;
 import android.view.animation.Interpolator;
+import android.view.animation.LinearInterpolator;
 import android.view.animation.PathInterpolator;
-
-import java.lang.Float;
 
 public class AnimUtils {
     public static final int DEFAULT_DURATION = -1;
@@ -66,15 +76,21 @@ public class AnimUtils {
 
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
     public static void fadeOut(final View fadeOut, int durationMs, final AnimationCallback callback) {
+        fadeOut(fadeOut, durationMs, callback, true);
+    }
+
+    public static void fadeOut(final View fadeOut, int durationMs, final AnimationCallback callback, final boolean setGone) {
         fadeOut.setAlpha(1);
         ViewPropertyAnimator animator = fadeOut.animate();
         animator.cancel();
         animator = (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN) ? animator.alpha(0) : animator.alpha(0).withLayer();
-        
+
         animator.setListener(new AnimatorListenerAdapter() {
             @Override
             public void onAnimationEnd(Animator animation) {
-                fadeOut.setVisibility(View.GONE);
+                if (setGone) {
+                    fadeOut.setVisibility(View.GONE);
+                }
                 if (callback != null) {
                     callback.onAnimationEnd();
                 }
@@ -82,7 +98,9 @@ public class AnimUtils {
 
             @Override
             public void onAnimationCancel(Animator animation) {
-                fadeOut.setVisibility(View.GONE);
+                if(setGone) {
+                    fadeOut.setVisibility(View.GONE);
+                }
                 fadeOut.setAlpha(0);
                 if (callback != null) {
                     callback.onAnimationCancel();
@@ -96,12 +114,23 @@ public class AnimUtils {
     }
 
     public static void fadeIn(View fadeIn, int durationMs) {
-        fadeIn(fadeIn, durationMs, NO_DELAY, null);
+        fadeIn(fadeIn, durationMs, true);
+    }
+
+    public static void fadeIn(View fadeIn, int durationMs, boolean resetStart) {
+        fadeIn(fadeIn, durationMs, NO_DELAY, null, resetStart);
     }
 
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
     public static void fadeIn(final View fadeIn, int durationMs, int delay, final AnimationCallback callback) {
-        fadeIn.setAlpha(0);
+        fadeIn(fadeIn, durationMs, delay, callback, true);
+    }
+
+    @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
+    public static void fadeIn(final View fadeIn, int durationMs, int delay, final AnimationCallback callback, boolean resetStart) {
+        if (resetStart) {
+            fadeIn.setAlpha(0);
+        }
         ViewPropertyAnimator animator = fadeIn.animate();
         animator.cancel();
 
@@ -235,5 +264,107 @@ public class AnimUtils {
             }
         });
         animator.start();
+    }
+
+    public static void changeHeight(final View view, int startHeight, int endHeight, int duration) {
+        ValueAnimator animator = ValueAnimator.ofInt(startHeight, endHeight);
+        animator.setDuration(duration);
+        animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            public void onAnimationUpdate(ValueAnimator animation) {
+                Integer value = (Integer) animation.getAnimatedValue();
+                view.getLayoutParams().height = value;
+                view.requestLayout();
+            }
+        });
+        animator.start();
+    }
+
+    public static void blinkView(final View blinkView) {
+        blinkView.setVisibility(View.VISIBLE);
+        blinkView.setAlpha(1.f);
+        ObjectAnimator fadeOut = ObjectAnimator.ofFloat(blinkView, "alpha", 0f).setDuration(300);
+        fadeOut.setInterpolator(new DecelerateInterpolator(1.2f));
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+            fadeOut.setAutoCancel(true);
+        }
+        AnimatorSet animSetFade = new AnimatorSet();
+
+        animSetFade.play(fadeOut);
+        animSetFade.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationStart(Animator animation) {
+                super.onAnimationStart(animation);
+                blinkView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
+            }
+
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                super.onAnimationEnd(animation);
+                blinkView.setLayerType(View.LAYER_TYPE_NONE, null);
+            }
+
+            @Override
+            public void onAnimationCancel(Animator animation) {
+                super.onAnimationCancel(animation);
+                blinkView.setLayerType(View.LAYER_TYPE_NONE, null);
+            }
+        });
+        animSetFade.start();
+    }
+
+    public static class MatrixEvaluator implements TypeEvaluator<Matrix> {
+
+        float[] mTempStartValues = new float[9];
+
+        float[] mTempEndValues = new float[9];
+
+        Matrix mTempMatrix = new Matrix();
+
+        @Override
+        public Matrix evaluate(float fraction, Matrix startValue, Matrix endValue) {
+            startValue.getValues(mTempStartValues);
+            endValue.getValues(mTempEndValues);
+            for (int i = 0; i < 9; i++) {
+                float diff = mTempEndValues[i] - mTempStartValues[i];
+                mTempEndValues[i] = mTempStartValues[i] + (fraction * diff);
+            }
+            mTempMatrix.setValues(mTempEndValues);
+            return mTempMatrix;
+        }
+    }
+
+    public static void startLayoutTransition(ViewGroup viewGroup, final int transitionType) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT) {
+            return;
+        }
+        final LayoutTransition transition = new LayoutTransition();
+        transition.enableTransitionType(transitionType);
+        transition.addTransitionListener(new LayoutTransition.TransitionListener() {
+            @Override
+            public void startTransition(LayoutTransition transition, ViewGroup container, View view, int transitionType) {}
+
+            @Override
+            public void endTransition(LayoutTransition transition2, ViewGroup container, View view, int transitionType) {
+                transition.disableTransitionType(transitionType);
+            }
+        });
+        viewGroup.setLayoutTransition(transition);
+    }
+
+    public static Animation createFlashingAnimation() {
+        final Animation animation = new AlphaAnimation(0, 1);
+        animation.setDuration(300);
+        animation.setInterpolator(new LinearInterpolator());
+        animation.setRepeatCount(Animation.INFINITE);
+        animation.setRepeatMode(Animation.REVERSE);
+        animation.setStartOffset(200);
+        return animation;
+    }
+
+    public static void setViewRotation(@Nullable final View view, int duration, int rotation) {
+        if (view != null) {
+            final ViewPropertyAnimatorCompat animation = ViewCompat.animate(view);
+            animation.setDuration(duration).rotation(rotation).start();
+        }
     }
 }

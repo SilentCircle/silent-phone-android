@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_checked="true" android:color="@color/chat_incoming_message_checked_color" />
+    <item android:state_hovered="true" android:color="@color/chat_incoming_message_pressed_color" />
+    <item android:state_pressed="true" android:color="@color/chat_incoming_message_pressed_color" />
+    <item android:state_enabled="true" android:color="@color/chat_incoming_message_color_light" />
+    <item android:color="@color/chat_incoming_message_disabled_color" />
+</selector>

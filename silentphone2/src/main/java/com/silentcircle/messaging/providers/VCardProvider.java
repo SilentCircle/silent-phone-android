@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2016-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -38,12 +38,15 @@ import android.net.Uri;
 import android.os.ParcelFileDescriptor;
 import android.provider.ContactsContract;
 import android.provider.OpenableColumns;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.text.TextUtils;
-import android.util.Log;
+import com.silentcircle.logs.Log;
 
 import com.silentcircle.messaging.util.IOUtils;
 import com.silentcircle.silentphone2.BuildConfig;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -97,7 +100,7 @@ public class VCardProvider extends ContentProvider {
     }
 
     @Override
-    public Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder) {
+    public Cursor query(@NonNull Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder) {
         /* only support for file name query is implemented */
         String name = getContactName(uri);
         String[] columns = new String[] {OpenableColumns.DISPLAY_NAME};
@@ -107,17 +110,17 @@ public class VCardProvider extends ContentProvider {
     }
 
     @Override
-    public String getType(Uri uri) {
+    public String getType(@NonNull Uri uri) {
         return MIME_TYPES.get(VCARD_FILE_EXTENSION);
     }
 
     @Override
-    public Uri insert(Uri uri, ContentValues values) {
+    public Uri insert(@NonNull Uri uri, ContentValues values) {
         return null;
     }
 
     @Override
-    public int delete(Uri uri, String selection, String[] selectionArgs) {
+    public int delete(@NonNull Uri uri, String selection, String[] selectionArgs) {
         String name = getContactName(uri);
         File file = new File(mContext.getFilesDir(), name + VCARD_FILE_EXTENSION);
         if (file.exists()) {
@@ -127,12 +130,12 @@ public class VCardProvider extends ContentProvider {
     }
 
     @Override
-    public int update(Uri uri, ContentValues values, String selection, String[] selectionArgs) {
+    public int update(@NonNull Uri uri, ContentValues values, String selection, String[] selectionArgs) {
         return 0;
     }
 
     @Override
-    public ParcelFileDescriptor openFile(Uri uri, String mode) throws FileNotFoundException {
+    public ParcelFileDescriptor openFile(@NonNull Uri uri, @NonNull String mode) throws FileNotFoundException {
         File file = getVCardFile(uri);
         if (file.exists()) {
             writeVCardToFile(file, uri);
@@ -191,15 +194,19 @@ public class VCardProvider extends ContentProvider {
         return name;
     }
 
+    @Nullable
     private String getVCardAsString(final Uri uri) throws IOException {
         String lookupKey = uri.getLastPathSegment();
         Uri vCardUri = Uri.withAppendedPath(ContactsContract.Contacts.CONTENT_VCARD_URI, lookupKey);
 
         AssetFileDescriptor descriptor;
+        byte[] buffer = null;
         descriptor = mContext.getContentResolver().openAssetFileDescriptor(vCardUri, "r");
-        FileInputStream inputStream = descriptor.createInputStream();
-        byte[] buffer = new byte[(int) descriptor.getDeclaredLength()];
-        inputStream.read(buffer);
-        return new String(buffer);
+        if (descriptor != null) {
+            FileInputStream inputStream = descriptor.createInputStream();
+            buffer = IOUtils.readFully(inputStream);
+            IOUtils.close(inputStream, descriptor);
+        }
+        return buffer != null ? new String(buffer) : null;
     }
 }

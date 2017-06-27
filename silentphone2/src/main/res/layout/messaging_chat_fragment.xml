@@ -1,20 +1,57 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/chat_content"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:clipChildren="false">
 
-    <com.silentcircle.messaging.views.AvatarListView
-        android:id="@+id/chat_events"
+    <include layout="@layout/banner_data_retention"
+        android:id="@+id/data_retention_status"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        tools:visibility="visible" />
+
+    <ViewStub
+        android:id="@+id/footer_stub"
+        android:layout="@layout/footer_panel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true" />
+
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:filterTouchesWhenObscured="true"
-        android:divider="@drawable/none"
-        android:dividerHeight="@dimen/messaging_chat_item_divider_height"
-        android:listSelector="@drawable/none"
-        android:stackFromBottom="true"
-        android:transcriptMode="normal"
-        android:background="@null"
-        />
+        android:layout_below="@id/data_retention_status"
+        android:layout_above="@id/footer_stub">
+
+        <com.silentcircle.messaging.views.AvatarChatRecyclerView
+            android:id="@+id/chat_events"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="?attr/sp_activity_background_color"
+            android:divider="@drawable/none"
+            android:dividerHeight="@dimen/messaging_chat_item_divider_height"
+            android:filterTouchesWhenObscured="false"
+            android:listSelector="@drawable/none"
+            android:overScrollMode="never"
+            android:scrollbars="vertical"
+            android:scrollbarStyle="outsideOverlay"
+            android:scrollbarThumbVertical="@android:color/darker_gray"
+            android:scrollbarSize="@dimen/spacing_small"
+            android:transcriptMode="normal"
+            app:stackFromEnd="true" />
+
+        <include
+            android:id="@+id/empty_list_view"
+            layout="@layout/empty_chat_list_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="gone"
+            tools:visibility="visible" />
+
+    </FrameLayout>
 
 </RelativeLayout>

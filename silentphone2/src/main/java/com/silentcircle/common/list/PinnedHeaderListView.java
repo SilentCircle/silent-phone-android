@@ -570,7 +570,7 @@ public class PinnedHeaderListView extends AutoScrollListView
                         / mAnimationDuration;
             }
         }
-        if (header.visible) {
+        if (header.visible && header.view.getWidth() > 0) {
             View view = header.view;
             int saveCount = canvas.save();
             int translateX = ViewUtil.isViewLayoutRtl(this) ?

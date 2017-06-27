@@ -1,43 +1,42 @@
 /*
  *  Convert PEM to DER
  *
- *  Copyright (C) 2006-2013, ARM Limited, All Rights Reserved
+ *  Copyright (C) 2006-2015, ARM Limited, All Rights Reserved
+ *  SPDX-License-Identifier: Apache-2.0
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License"); you may
+ *  not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ *  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  *
  *  This file is part of mbed TLS (https://tls.mbed.org)
- *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
- *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License along
- *  with this program; if not, write to the Free Software Foundation, Inc.,
- *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#if !defined(POLARSSL_CONFIG_FILE)
-#include "polarssl/config.h"
+#if !defined(MBEDTLS_CONFIG_FILE)
+#include "mbedtls/config.h"
 #else
-#include POLARSSL_CONFIG_FILE
+#include MBEDTLS_CONFIG_FILE
 #endif
 
-#if defined(POLARSSL_PLATFORM_C)
-#include "polarssl/platform.h"
+#if defined(MBEDTLS_PLATFORM_C)
+#include "mbedtls/platform.h"
 #else
 #include <stdio.h>
-#define polarssl_free       free
-#define polarssl_malloc     malloc
-#define polarssl_printf     printf
+#define mbedtls_free       free
+#define mbedtls_calloc    calloc
+#define mbedtls_printf     printf
 #endif
 
-#if defined(POLARSSL_BASE64_C) && defined(POLARSSL_FS_IO)
-#include "polarssl/error.h"
-#include "polarssl/base64.h"
+#if defined(MBEDTLS_BASE64_C) && defined(MBEDTLS_FS_IO)
+#include "mbedtls/error.h"
+#include "mbedtls/base64.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -54,10 +53,10 @@
     "    output_file=%%s      default: file.der\n"      \
     "\n"
 
-#if !defined(POLARSSL_BASE64_C) || !defined(POLARSSL_FS_IO)
+#if !defined(MBEDTLS_BASE64_C) || !defined(MBEDTLS_FS_IO)
 int main( void )
 {
-    polarssl_printf("POLARSSL_BASE64_C and/or POLARSSL_FS_IO not defined.\n");
+    mbedtls_printf("MBEDTLS_BASE64_C and/or MBEDTLS_FS_IO not defined.\n");
     return( 0 );
 }
 #else
@@ -96,14 +95,14 @@ int convert_pem_to_der( const unsigned char *input, size_t ilen,
     if( s2 <= s1 || s2 > end )
         return( -1 );
 
-    ret = base64_decode( NULL, &len, (const unsigned char *) s1, s2 - s1 );
-    if( ret == POLARSSL_ERR_BASE64_INVALID_CHARACTER )
+    ret = mbedtls_base64_decode( NULL, 0, &len, (const unsigned char *) s1, s2 - s1 );
+    if( ret == MBEDTLS_ERR_BASE64_INVALID_CHARACTER )
         return( ret );
 
     if( len > *olen )
         return( -1 );
 
-    if( ( ret = base64_decode( output, &len, (const unsigned char *) s1,
+    if( ( ret = mbedtls_base64_decode( output, len, &len, (const unsigned char *) s1,
                                s2 - s1 ) ) != 0 )
     {
         return( ret );
@@ -136,7 +135,7 @@ static int load_file( const char *path, unsigned char **buf, size_t *n )
     *n = (size_t) size;
 
     if( *n + 1 == 0 ||
-        ( *buf = polarssl_malloc( *n + 1 ) ) == NULL )
+        ( *buf = mbedtls_calloc( 1, *n + 1 ) ) == NULL )
     {
         fclose( f );
         return( -1 );
@@ -196,7 +195,7 @@ int main( int argc, char *argv[] )
     if( argc == 0 )
     {
     usage:
-        polarssl_printf( USAGE );
+        mbedtls_printf( USAGE );
         goto exit;
     }
 
@@ -222,66 +221,66 @@ int main( int argc, char *argv[] )
     /*
      * 1.1. Load the PEM file
      */
-    polarssl_printf( "\n  . Loading the PEM file ..." );
+    mbedtls_printf( "\n  . Loading the PEM file ..." );
     fflush( stdout );
 
     ret = load_file( opt.filename, &pem_buffer, &pem_size );
 
     if( ret != 0 )
     {
-#ifdef POLARSSL_ERROR_C
-        polarssl_strerror( ret, buf, 1024 );
+#ifdef MBEDTLS_ERROR_C
+        mbedtls_strerror( ret, buf, 1024 );
 #endif
-        polarssl_printf( " failed\n  !  load_file returned %d - %s\n\n", ret, buf );
+        mbedtls_printf( " failed\n  !  load_file returned %d - %s\n\n", ret, buf );
         goto exit;
     }
 
-    polarssl_printf( " ok\n" );
+    mbedtls_printf( " ok\n" );
 
     /*
      * 1.2. Convert from PEM to DER
      */
-    polarssl_printf( "  . Converting from PEM to DER ..." );
+    mbedtls_printf( "  . Converting from PEM to DER ..." );
     fflush( stdout );
 
     if( ( ret = convert_pem_to_der( pem_buffer, pem_size, der_buffer, &der_size ) ) != 0 )
     {
-#ifdef POLARSSL_ERROR_C
-        polarssl_strerror( ret, buf, 1024 );
+#ifdef MBEDTLS_ERROR_C
+        mbedtls_strerror( ret, buf, 1024 );
 #endif
-        polarssl_printf( " failed\n  !  convert_pem_to_der %d - %s\n\n", ret, buf );
+        mbedtls_printf( " failed\n  !  convert_pem_to_der %d - %s\n\n", ret, buf );
         goto exit;
     }
 
-    polarssl_printf( " ok\n" );
+    mbedtls_printf( " ok\n" );
 
     /*
      * 1.3. Write the DER file
      */
-    polarssl_printf( "  . Writing the DER file ..." );
+    mbedtls_printf( "  . Writing the DER file ..." );
     fflush( stdout );
 
     ret = write_file( opt.output_file, der_buffer, der_size );
 
     if( ret != 0 )
     {
-#ifdef POLARSSL_ERROR_C
-        polarssl_strerror( ret, buf, 1024 );
+#ifdef MBEDTLS_ERROR_C
+        mbedtls_strerror( ret, buf, 1024 );
 #endif
-        polarssl_printf( " failed\n  !  write_file returned %d - %s\n\n", ret, buf );
+        mbedtls_printf( " failed\n  !  write_file returned %d - %s\n\n", ret, buf );
         goto exit;
     }
 
-    polarssl_printf( " ok\n" );
+    mbedtls_printf( " ok\n" );
 
 exit:
     free( pem_buffer );
 
 #if defined(_WIN32)
-    polarssl_printf( "  + Press Enter to exit this program.\n" );
+    mbedtls_printf( "  + Press Enter to exit this program.\n" );
     fflush( stdout ); getchar();
 #endif
 
     return( ret );
 }
-#endif /* POLARSSL_BASE64_C && POLARSSL_FS_IO */
+#endif /* MBEDTLS_BASE64_C && MBEDTLS_FS_IO */

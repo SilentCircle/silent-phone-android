@@ -1,0 +1,19 @@
+[submodule "silentphone2/support/zrtpcpp"]
+	path = silentphone2/support/zrtpcpp
+	url = ../zrtpcpp.git
+[submodule "polarssl"]
+	path = polarssl
+	url = ../polarssl.git
+[submodule "silentphone2/support/silentphone"]
+	path = silentphone2/support/silentphone
+	url = ../tiviengine.git
+[submodule "silentphone2/support/polarssl"]
+	path = silentphone2/support/polarssl
+	url = ../polarssl.git
+[submodule "silentphone2/support/axolotl"]
+	path = silentphone2/support/axolotl
+	url = ../libzina.git
+[submodule "silentphone2/support/aec"]
+	path = silentphone2/support/aec
+	url = ../aec.git
+

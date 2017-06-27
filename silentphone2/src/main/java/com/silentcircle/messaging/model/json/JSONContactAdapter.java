@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2016-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -28,32 +28,60 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package com.silentcircle.messaging.model.json;
 
 import com.silentcircle.messaging.model.Contact;
+import com.silentcircle.messaging.model.Device;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 
 public class JSONContactAdapter extends JSONAdapter {
 
-	public JSONObject adapt( Contact contact ) {
-		JSONObject json = new JSONObject();
-		try {
-			json.put( "alias", contact.getAlias() );
-			json.put( "device", contact.getDevice() );
-			json.put( "username", contact.getUserId() );
-			json.put( "display_name", contact.getDisplayName() );
-		} catch( JSONException exception ) {
-			// This should never happen because we control all of the keys.
-		}
-		return json;
-	}
+    private final JSONDeviceAdapter deviceAdapter = new JSONDeviceAdapter();
 
-	public Contact adapt( JSONObject json ) {
+    public static final String TAG_CONTACT_ALIAS = "alias";
+    public static final String TAG_CONTACT_DEVICE = "device";
+    public static final String TAG_CONTACT_USER_NAME = "username";
+    public static final String TAG_CONTACT_DISPLAY_NAME = "display_name";
+    public static final String TAG_CONTACT_IS_VALIDATED = "is_validated";
+    public static final String TAG_CONTACT_IS_GROUP = "is_group";
+    public static final String TAG_CONTACT_DEVICES = "devices";
 
-		Contact contact = new Contact(getString(json, "username"));
-		contact.setAlias(getString(json, "alias"));
-		contact.setDevice(getString(json, "device"));
-		contact.setDisplayName(getString(json, "display_name"));
-		return contact;
-	}
+    public JSONObject adapt(Contact contact) {
+        JSONObject json = new JSONObject();
+        try {
+            json.put(TAG_CONTACT_ALIAS, contact.getAlias());
+            json.put(TAG_CONTACT_DEVICE, contact.getDevice());
+            json.put(TAG_CONTACT_USER_NAME, contact.getUserId());
+            json.put(TAG_CONTACT_DISPLAY_NAME, contact.getDisplayName());
+            json.put(TAG_CONTACT_IS_VALIDATED, contact.isValidated());
+            json.put(TAG_CONTACT_IS_GROUP, contact.isGroup());
+            json.put(TAG_CONTACT_DEVICES, deviceAdapter.adapt(contact.getDeviceInfo()));
+        } catch (JSONException exception) {
+            // This should never happen because we control all of the keys.
+        }
+        return json;
+    }
+
+    public Contact adapt(JSONObject json) {
+
+        Contact contact = new Contact(getString(json, TAG_CONTACT_USER_NAME));
+        contact.setAlias(getString(json, TAG_CONTACT_ALIAS));
+        contact.setDevice(getString(json, TAG_CONTACT_DEVICE));
+        contact.setDisplayName(getString(json, TAG_CONTACT_DISPLAY_NAME));
+        contact.setValidated(getBoolean(json, TAG_CONTACT_IS_VALIDATED));
+        contact.setGroup(getBoolean(json, TAG_CONTACT_IS_GROUP, false));
+        JSONArray devicesJson = getJSONArray(json, TAG_CONTACT_DEVICES);
+        if (devicesJson != null && devicesJson.length() > 0) {
+            for (int i = 0; i < devicesJson.length(); i++) {
+                try {
+                    JSONObject deviceJson = devicesJson.getJSONObject(i);
+                    Device device = deviceAdapter.adapt(deviceJson);
+                    contact.addDeviceInfo(device);
+                } catch (JSONException exception) {
+                }
+            }
+        }
+        return contact;
+    }
 }

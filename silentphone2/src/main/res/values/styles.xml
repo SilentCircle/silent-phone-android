@@ -117,6 +117,7 @@
         <item name="android:layout_height">match_parent</item>
         <item name="android:background">?attr/sp_drawer_background</item>
         <item name="android:scrollbarStyle">outsideOverlay</item>
+        <item name="android:overScrollMode">never</item>
         <!--
         <item name="android:scrollbarStyle">insideInset</item>
         <item name="android:scrollbarStyle">outsideInset</item>
@@ -146,6 +147,7 @@
         <item name="colorControlActivated">@color/sc_ng_text_green</item>
         <item name="colorControlHighlight">@color/sc_ng_background_1</item>
         <item name="colorControlNormal">?attr/sp_activity_primary_text_color</item>
+        <item name="android:colorControlNormal" tools:ignore="NewApi">?attr/sp_activity_primary_text_color</item>
     </style>
 
     <style name="Widget.Silent.DrawerSimpleText">
@@ -203,17 +205,21 @@
     </style>
 
     <style name="Widget.Silent.SettingsButton" parent="Widget.Silent.TransparentButton">
-        <item name="android:layout_marginLeft">@dimen/settings_item_margin_left</item>
-        <item name="android:layout_marginStart">@dimen/settings_item_margin_left</item>
-        <item name="android:layout_marginRight">@dimen/settings_item_margin_right</item>
-        <item name="android:layout_marginEnd">@dimen/settings_item_margin_right</item>
+        <item name="android:layout_marginLeft">0dp</item>
+        <item name="android:layout_marginStart">0dp</item>
+        <item name="android:layout_marginRight">0dp</item>
+        <item name="android:layout_marginEnd">0dp</item>
+        <item name="android:paddingLeft">@dimen/settings_item_margin_left</item>
+        <item name="android:paddingStart">@dimen/settings_item_margin_left</item>
+        <item name="android:paddingRight">@dimen/settings_item_margin_right</item>
+        <item name="android:paddingEnd">@dimen/settings_item_margin_right</item>
         <item name="android:layout_marginBottom">0dp</item>
-        <item name="android:textStyle">bold</item>
+        <item name="android:textStyle">normal</item>
         <item name="android:textSize">@dimen/text_xlarge</item>
         <item name="android:textAppearance">?android:attr/textAppearanceMedium</item>
         <item name="android:textColor">?attr/sp_drawer_text_color</item>
         <item name="android:background">@drawable/bg_widget_options_item</item>
-        <item name="android:paddingLeft">@dimen/settings_item_padding_left</item>
+        <!--<item name="android:paddingLeft">@dimen/settings_item_padding_left</item>-->
         <item name="android:paddingBottom">0dp</item>
     </style>
 
@@ -252,6 +258,38 @@
     <style name="Widget.Silent.CryptoInfoText.Small" parent="Widget.Silent.SimpleText.Small">
         <item name="android:textColor">?sp_dialog_text_color</item>
     </style>
+
+    <style name="Widget.Silent.AccountDetail" />
+
+    <style name="Widget.Silent.AccountDetail.Label" parent="Widget.Silent.SimpleText.Medium">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_marginLeft">@dimen/dial_drawer_avatar_padding_left</item>
+        <item name="android:layout_marginStart" tools:ignore="NewApi">@dimen/dial_drawer_avatar_padding_left</item>
+        <item name="android:layout_marginRight">@dimen/spacing_small</item>
+        <item name="android:layout_marginEnd" tools:ignore="NewApi">@dimen/spacing_small</item>
+        <item name="android:textColor">?attr/sp_activity_secondary_text_color</item>
+        <item name="android:textSize">@dimen/text_mlarge</item>
+    </style>
+
+    <style name="Widget.Silent.AccountDetail.Value" parent="Widget.Silent.SimpleText.Medium">
+        <item name="android:layout_marginRight">@dimen/spacing_normal</item>
+        <item name="android:layout_marginEnd" tools:ignore="NewApi">@dimen/spacing_normal</item>
+        <item name="android:textColor">?attr/sp_activity_secondary_text_color</item>
+        <item name="android:textSize">@dimen/text_mlarge</item>
+        <item name="android:gravity">center_vertical|end</item>
+        <item name="android:singleLine">true</item>
+        <item name="android:lines">1</item>
+        <item name="android:ellipsize">end</item>
+        <item name="resizing_text_min_size">@dimen/text_small</item>
+    </style>
+
+    <style name="Widget.Silent.AccountDetail.Container">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:paddingTop">@dimen/spacing_normal</item>
+        <item name="android:paddingBottom">@dimen/spacing_normal</item>
+    </style>
+
 
     <!-- ************ Styles for SCA part ************************* -->
 
@@ -438,7 +476,7 @@
         <item name="android:padding">0dp</item>
     </style>
 
-    <style name="SoundRecorderDialog" parent="android:Theme.Dialog">
+    <style name="SoundRecorderDialogBlack" parent="android:Theme.Dialog">
         <item name="android:windowNoTitle">true</item>
         <item name="android:padding">0dp</item>
 
@@ -449,9 +487,39 @@
         <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:windowSoftInputMode">stateUnspecified|adjustPan</item>
         <item name="android:colorBackgroundCacheHint">@null</item>
+
+        <item name="sp_activity_background_color">@color/sc_ng_background</item>
+        <item name="sp_activity_primary_text_color">@color/sc_ng_text_grey</item>
+        <item name="sp_activity_secondary_text_color">@color/sc_ng_text_grey_4</item>
+        <item name="sp_activity_button_background_selector">@drawable/bg_button_selector_dark</item>
+        <item name="sp_activity_button_text_selector">@drawable/button_text_selector_dark</item>
+
+        <item name="colorAccent">@color/sc_ng_text_green</item>
+        <item name="colorControlActivated">@color/sc_ng_text_green</item>
+        <item name="colorControlHighlight">@color/sc_ng_background_1</item>
+        <item name="colorControlNormal">?attr/sp_activity_primary_text_color</item>
+        <item name="android:colorControlNormal" tools:ignore="NewApi">?attr/sp_activity_primary_text_color</item>
+
+        <item name="android:textColor">?sp_activity_primary_text_color</item>
+        <item name="android:textColorPrimary">?sp_activity_primary_text_color</item>
+        <item name="android:textColorSecondary">?sp_activity_secondary_text_color</item>
     </style>
 
-    <style name="Widget.Switch" />
+    <style name="SoundRecorderDialogLight" parent="SoundRecorderDialogBlack">
+        <item name="sp_activity_background_color">@color/activity_background_color_ligth</item>
+        <item name="sp_activity_primary_text_color">@color/sc_ng_text_dark</item>
+        <item name="sp_activity_secondary_text_color">@color/sc_ng_text_grey_6</item>
+        <item name="sp_activity_button_background_selector">@drawable/bg_button_selector_light</item>
+        <item name="sp_activity_button_text_selector">@drawable/button_text_selector_light</item>
+    </style>
+    
+    <style name="Widget.Switch">
+        <item name="android:textColor">?attr/sp_activity_primary_text_color</item>
+        <item name="colorSwitchThumbNormal">@color/sc_ng_text_grey</item>
+        <item name="colorControlActivated">@color/sc_ng_text_green</item>
+        <item name="android:colorForeground">?attr/sp_activity_secondary_text_color</item>
+        <item name="track">@drawable/btn_switch_bg_selector</item>
+    </style>
 
     <style name="Widget.Switch.Light">
         <item name="android:textColor">?sp_actionbar_title_text_color</item>
@@ -513,6 +581,10 @@
         <item name="android:filterTouchesWhenObscured">true</item>
     </style>
 
+    <style name="Widget.ImageButton" parent="Widget.AppCompat.ImageButton">
+        <item name="android:background">@android:color/transparent</item>
+    </style>
+
     <style name="Widget.RadioButton" parent="@style/Widget.AppCompat.CompoundButton.RadioButton">
         <item name="colorControlNormal">?attr/sp_activity_primary_text_color</item>
         <item name="android:colorControlNormal" tools:ignore="NewApi">?attr/sp_activity_primary_text_color</item>
@@ -538,4 +610,31 @@
         <item name="android:colorControlNormal" tools:ignore="NewApi">@color/sc_ng_text_dark</item>
     </style>
 
+    <style name="InfoDialogMessage">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:textColor">?attr/sp_dialog_text_color</item>
+        <item name="android:paddingTop">@dimen/spacing_large</item>
+        <item name="android:paddingLeft">@dimen/spacing_mlarge</item>
+        <item name="android:paddingRight">@dimen/spacing_slarge</item>
+        <item name="android:textColorPrimary">?sp_dialog_text_color</item>
+        <item name="android:textSize">@dimen/text_mlarge</item>
+    </style>
+
+    <!-- Customize theme for transparent activity -->
+    <style name="Theme.AppCompat.Transparent.NoActionBar" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowIsFloating">true</item>
+        <item name="android:backgroundDimEnabled">false</item>
+    </style>
+
+    <style name="Toolbar">
+        <item name="android:background">?attr/sp_actionbar_color</item>
+        <item name="android:minHeight">?attr/actionBarSize</item>
+        <item name="android:elevation" tools:ignore="NewApi">@dimen/spacing_small</item>
+        <item name="titleTextAppearance">?attr/sp_ab_title_style</item>
+        <item name="subtitleTextAppearance">?attr/sp_ab_subtitle_style</item>
+    </style>
 </resources>

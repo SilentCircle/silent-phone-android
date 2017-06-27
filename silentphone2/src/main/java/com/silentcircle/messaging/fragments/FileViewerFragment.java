@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2016-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -52,6 +52,8 @@ public class FileViewerFragment extends BaseFragment {
 
     public interface Callback {
         void onError(Uri uri, String mimeType);
+
+        void viewWithExternalApplication();
     }
 
     public static final String EXTRA_TYPE = "type";
@@ -68,6 +70,10 @@ public class FileViewerFragment extends BaseFragment {
         arguments.putString(EXTRA_TYPE, mimeType);
         fragment.setArguments(arguments);
         return fragment;
+    }
+
+    public boolean onExitView() {
+        return false;
     }
 
     protected void dispatchError() {

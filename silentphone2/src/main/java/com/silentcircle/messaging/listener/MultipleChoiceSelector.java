@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2016-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -31,6 +31,8 @@ import android.support.v7.view.ActionMode;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import com.silentcircle.SilentPhoneApplication;
+import com.silentcircle.common.util.ViewUtil;
 import com.silentcircle.messaging.views.MultiChoiceModeListener;
 import com.silentcircle.messaging.views.adapters.HasChoiceMode;
 
@@ -41,6 +43,8 @@ public class MultipleChoiceSelector<T> implements MultiChoiceModeListener {
         void onActionPerformed();
 
         void performAction(int menuActionId, int... positions);
+
+        void performAction(int menuActionId, String... ids);
     }
 
     private final MultipleChoiceSelector.ActionPerformer performer;
@@ -67,6 +71,7 @@ public class MultipleChoiceSelector<T> implements MultiChoiceModeListener {
     @Override
     public boolean onCreateActionMode(ActionMode mode, Menu menu) {
         mode.getMenuInflater().inflate(menuResourceID, menu);
+        ViewUtil.tintMenuIcons(SilentPhoneApplication.getAppContext(), menu);
         choices.setInChoiceMode(true);
         return true;
     }
@@ -80,7 +85,9 @@ public class MultipleChoiceSelector<T> implements MultiChoiceModeListener {
     @Override
     public void onItemCheckedStateChanged(ActionMode mode, int position, long itemId, boolean checked) {
         count += checked ? 1 : -1;
-        mode.setTitle(String.format(titleFormat, Integer.valueOf(count)));
+        if (mode != null) {
+            mode.setTitle(String.format(titleFormat, Math.max(1, count)));
+        }
     }
 
     @Override
@@ -91,6 +98,11 @@ public class MultipleChoiceSelector<T> implements MultiChoiceModeListener {
     @Override
     public void performAction(int menuActionId, int... positions) {
         performer.performAction(menuActionId, positions);
+    }
+
+    @Override
+    public void performAction(int menuActionId, String... ids) {
+        performer.performAction(menuActionId, ids);
     }
 
 }

@@ -20,6 +20,15 @@
     <item quantity="other"><xliff:g id="number_of_people">%1$d</xliff:g> people have sent you <xliff:g id="number_of_messages" example="2 messages">%2$s</xliff:g>.</item>
   </plurals>
 
+    <plurals name="notify_generic_new_messages_subtitle">
+        <item quantity="zero"><xliff:g id="number_of_messages" example="2 messages">%2$s</xliff:g> in <xliff:g id="number_of_people">%1$d</xliff:g> conversations.</item>
+        <item quantity="one"><xliff:g id="number_of_messages" example="2 messages">%2$s</xliff:g> in <xliff:g id="number_of_people">%1$d</xliff:g> conversation.</item>
+        <item quantity="two"><xliff:g id="number_of_messages" example="2 messages">%2$s</xliff:g> in <xliff:g id="number_of_people">%1$d</xliff:g> conversations.</item>
+        <item quantity="few"><xliff:g id="number_of_messages" example="2 messages">%2$s</xliff:g> in <xliff:g id="number_of_people">%1$d</xliff:g> conversations.</item>
+        <item quantity="many"><xliff:g id="number_of_messages" example="2 messages">%2$s</xliff:g> in <xliff:g id="number_of_people">%1$d</xliff:g> conversations.</item>
+        <item quantity="other"><xliff:g id="number_of_messages" example="2 messages">%2$s</xliff:g> in <xliff:g id="number_of_people">%1$d</xliff:g> conversations.</item>
+    </plurals>
+
     <plurals name="notify_new_calls_subtitle">
         <item quantity="zero"><xliff:g id="number_of_people">%1$d</xliff:g> people have called you <xliff:g id="number_of_messages" example="2 messages">%2$s</xliff:g>.</item>
         <item quantity="one"><xliff:g id="number_of_people">%1$d</xliff:g> person has called you <xliff:g id="number_of_messages" example="2 messages">%2$s</xliff:g>.</item>
@@ -37,6 +46,15 @@
       <item quantity="many"><xliff:g id="count">%1$d</xliff:g> messages</item>
       <item quantity="other"><xliff:g id="count">%1$d</xliff:g> messages</item>
   </plurals>
+
+    <plurals name="generic_n_messages">
+        <item quantity="zero"><xliff:g id="count">%1$d</xliff:g> messages</item>
+        <item quantity="one">One new message</item>
+        <item quantity="two"><xliff:g id="count">%1$d</xliff:g> messages</item>
+        <item quantity="few"><xliff:g id="count">%1$d</xliff:g> messages</item>
+        <item quantity="many"><xliff:g id="count">%1$d</xliff:g> messages</item>
+        <item quantity="other"><xliff:g id="count">%1$d</xliff:g> messages</item>
+    </plurals>
 
     <plurals name="n_calls">
         <item quantity="zero"><xliff:g id="count">%1$d</xliff:g> times</item>
@@ -72,6 +90,26 @@
       <item quantity="other"><xliff:g id="count">%1$d</xliff:g>d</item>
   </plurals>
 
+    <plurals name="time_seconds">
+        <item quantity="one"><xliff:g id="count">%1$d</xliff:g>\u0020second</item>
+        <item quantity="other"><xliff:g id="count">%1$d</xliff:g>\u0020seconds</item>
+    </plurals>
+
+    <plurals name="time_minutes">
+        <item quantity="one"><xliff:g id="count">%1$d</xliff:g>\u0020minute</item>
+        <item quantity="other"><xliff:g id="count">%1$d</xliff:g>\u0020minutes</item>
+    </plurals>
+
+    <plurals name="time_hours">
+        <item quantity="one"><xliff:g id="count">%1$d</xliff:g>\u0020hour</item>
+        <item quantity="other"><xliff:g id="count">%1$d</xliff:g>\u0020hours</item>
+    </plurals>
+
+    <plurals name="time_days">
+        <item quantity="one"><xliff:g id="count">%1$d</xliff:g>\u0020day</item>
+        <item quantity="other"><xliff:g id="count">%1$d</xliff:g>\u0020days</item>
+    </plurals>
+
     <plurals name="duration_seconds">
         <item quantity="one">1 second</item>
         <item quantity="other"><xliff:g id="count">%d</xliff:g> seconds</item>
@@ -83,7 +121,6 @@
     </plurals>
 
     <plurals name="duration_hours">
-        <item quantity="zero">0 hours</item>
         <item quantity="one">1 hour</item>
         <item quantity="other"><xliff:g id="count">%d</xliff:g> hours</item>
     </plurals>
@@ -91,6 +128,18 @@
     <plurals name="duration_days">
         <item quantity="one">1 day</item>
         <item quantity="other"><xliff:g id="count">%d</xliff:g> days</item>
+    </plurals>
+
+    <plurals name="n_devices">
+        <item quantity="one">1 device</item>
+        <item quantity="other"><xliff:g id="count">%d</xliff:g> devices</item>
+    </plurals>
+
+    <plurals name="n_participants">
+        <!-- zero is ignored -->
+        <item quantity="zero">No participants selected</item>
+        <item quantity="one">1 participant selected</item>
+        <item quantity="other"><xliff:g id="count">%1$d</xliff:g> participants selected</item>
     </plurals>
 
 </resources>

@@ -5,14 +5,24 @@
     android:id="@+id/activity"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".activity.ConversationActivity">
+    tools:context="com.silentcircle.messaging.activities.ConversationActivity">
 
     <FrameLayout
         android:id="@+id/chat"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:layout_above="@+id/attachment_grid_placehodler"
+        android:layout_below="@+id/conversation_toolbar"
+        android:clipToPadding="false"
+        android:clipChildren="false"/>
+
+    <!-- Dummy view used by  compose_elements_notifier-->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
         android:layout_above="@+id/upload"
-        android:layout_below="@+id/conversation_toolbar" />
+        android:id="@+id/top_view"
+        android:visibility="invisible"/>
 
     <include
         android:id="@+id/upload"
@@ -27,15 +37,45 @@
         layout="@layout/compose"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="@dimen/spacing_normal"
-        android:layout_above="@+id/attachment_grid_placehodler"
-        android:layout_marginEnd="@dimen/spacing_normal"
-        android:layout_marginRight="@dimen/spacing_normal" />
+        android:layout_above="@+id/mini_mode_empty_space" />
+
+    <ImageView
+        android:id="@+id/db_circle"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:src="@drawable/ic_db_circle"
+        android:padding="8dp"
+        android:layout_alignRight="@+id/compose_send"
+        android:layout_alignLeft="@+id/compose_send"
+        android:layout_alignTop="@+id/compose_send"
+        android:layout_alignBottom="@+id/compose_send"
+        android:visibility="invisible"
+        android:contentDescription="@null" />
+
+    <ImageView
+        android:id="@+id/compose_send"
+        style="@style/ComposeRecord"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentRight="true"
+        android:layout_above="@+id/mini_mode_empty_space"
+        android:layout_marginBottom="@dimen/messaging_compose_button_margin_bottom"
+        android:contentDescription="@string/messaging_send_message"
+        android:filterTouchesWhenObscured="false" />
+
+    <ImageView
+        android:id="@+id/compose_send_dummy"
+        style="@style/ComposeSend"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentRight="true"
+        android:layout_above="@+id/mini_mode_empty_space"
+        android:layout_marginBottom="@dimen/messaging_compose_button_margin_bottom"
+        android:visibility="invisible"
+        android:contentDescription="@null" />
 
     <include
         android:id="@+id/burn_delay_container"
         layout="@layout/compose_burn_delay_container"
-        android:layout_above="@+id/attachment_grid_placehodler"
+        android:layout_above="@+id/mini_mode_empty_space"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentLeft="true"
@@ -45,6 +85,21 @@
         android:layout_marginStart="@dimen/spacing_normal"
         android:layout_marginRight="@dimen/spacing_small"
         android:layout_marginEnd="@dimen/spacing_small" />
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:id="@+id/mini_mode_empty_space"
+        android:layout_above="@+id/attachment_grid_placehodler" />
+
+    <!-- Used to measure the height of all the bottom elements (compose, upload etc) -->
+    <com.silentcircle.common.widget.ViewHeightNotifier
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/compose_elements_notifier"
+        android:layout_above="@+id/attachment_grid_placehodler"
+        android:layout_alignTop="@+id/top_view"
+        android:visibility="invisible" />
 
     <FrameLayout
         android:layout_width="match_parent"
@@ -59,7 +114,6 @@
             android:layout_height="wrap_content" />
 
     </FrameLayout>
-
 
     <include
         android:id="@+id/progress"

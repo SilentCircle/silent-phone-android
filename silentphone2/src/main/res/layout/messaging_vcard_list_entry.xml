@@ -1,15 +1,50 @@
 <?xml version="1.0" encoding="utf-8"?>
-<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@android:id/text1"
-    android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:textSize="@dimen/text_xlarge"
-    android:gravity="center_vertical"
-    android:paddingLeft="@dimen/spacing_xlarge"
-    android:ellipsize="end"
-    android:singleLine="true"
-    android:textColor="@drawable/message_summary_text_color"
-    android:background="@drawable/bg_vcard_list_entry"
-    android:minHeight="?android:attr/listPreferredItemHeightSmall"
-    tools:text="Everything about a contact" />
+    android:layout_width="match_parent"
+    android:orientation="horizontal"
+    android:paddingTop="@dimen/spacing_normal"
+    android:paddingBottom="@dimen/spacing_normal"
+    android:background="@drawable/bg_action">
+
+    <FrameLayout
+        android:id="@+id/icon_group"
+        android:layout_width="@dimen/conversation_log_contact_photo_container_size"
+        android:layout_height="@dimen/conversation_log_contact_photo_container_size"
+        android:layout_gravity="center_vertical"
+        android:layout_marginLeft="@dimen/spacing_large"
+        android:layout_marginStart="@dimen/spacing_large"
+        android:layout_marginRight="@dimen/spacing_normal"
+        android:layout_marginEnd="@dimen/spacing_normal">
+
+        <ImageView
+            android:id="@+id/vcard_photo"
+            android:layout_width="@dimen/conversation_log_contact_photo_size"
+            android:layout_height="@dimen/conversation_log_contact_photo_size"
+            android:layout_gravity="center_vertical"
+            android:nextFocusRight="@id/primary_action_view"
+            android:contentDescription="@string/messaging_avatar_voiceover"
+            android:src="@drawable/ic_profile"
+            />
+
+    </FrameLayout>
+
+    <TextView
+        android:id="@+id/vcard_name"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textSize="@dimen/text_xlarge"
+        android:gravity="center_vertical"
+        android:paddingLeft="0dp"
+        android:paddingStart="0dp"
+        android:paddingRight="@dimen/spacing_xlarge"
+        android:paddingEnd="@dimen/spacing_xlarge"
+        android:ellipsize="end"
+        android:singleLine="true"
+        android:textColor="?attr/sp_activity_primary_text_color"
+        android:minHeight="?android:attr/listPreferredItemHeightSmall"
+        tools:text="Everything about a contact"
+        />
+
+</LinearLayout>

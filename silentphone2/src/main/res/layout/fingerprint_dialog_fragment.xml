@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:clipChildren="false"
+    android:clipToPadding="false"
+    tools:targetApi="M" >
+
+    <FrameLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:clipChildren="false"
+        android:clipToPadding="false">
+
+        <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+            android:id="@+id/fingerprint_container"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginBottom="8dp"
+            android:layout_marginStart="24dp"
+            android:layout_marginEnd="24dp"
+            android:layout_marginTop="16dp"
+            android:clipChildren="false"
+            android:clipToPadding="false">
+
+            <!--<TextView-->
+                <!--android:id="@+id/fingerprint_description"-->
+                <!--android:layout_width="wrap_content"-->
+                <!--android:layout_height="wrap_content"-->
+                <!--android:layout_alignParentStart="true"-->
+                <!--android:layout_alignParentTop="true"-->
+                <!--android:text="@string/fingerprint_unlock"-->
+                <!--android:textColor="?android:attr/textColorSecondary"-->
+                <!--android:textAppearance="@android:style/TextAppearance.Material.Subhead"-->
+                <!--android:layout_alignParentLeft="true" />-->
+
+
+            <ImageView
+                android:id="@+id/fingerprint_icon"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentStart="true"
+                android:layout_below="@+id/fingerprint_description"
+                android:layout_marginTop="20dp"
+                android:src="@drawable/ic_fp_40px" />
+
+            <TextView
+                android:id="@+id/fingerprint_status"
+                style="@android:style/TextAppearance.Material.Body1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignBottom="@+id/fingerprint_icon"
+                android:layout_alignTop="@+id/fingerprint_icon"
+                android:layout_marginStart="16dp"
+                android:layout_toEndOf="@+id/fingerprint_icon"
+                android:gravity="center_vertical"
+                android:text= "@string/fingerprint_touch"
+                android:textColor="@color/fingerprint_hint_color" />
+        </RelativeLayout>
+    </FrameLayout>
+
+    <LinearLayout
+        android:id="@+id/buttonPanel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
+        android:paddingTop="4dp"
+        android:paddingBottom="4dp"
+        android:gravity="bottom"
+        style="?android:attr/buttonBarStyle">
+
+        <Space
+            android:id="@+id/spacer"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:visibility="invisible" />
+        <Button
+            android:id="@+id/cancel_button"
+            style="@style/FingerprintDialog.NegativeButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/fingerprint_use_passcode"/>
+
+        <Button
+            android:id="@+id/second_dialog_button"
+            style="?android:attr/buttonBarPositiveButtonStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:visibility="gone"/>
+    </LinearLayout>
+
+</LinearLayout>

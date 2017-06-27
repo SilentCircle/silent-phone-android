@@ -2,16 +2,18 @@ set(THREADS_USE_PTHREADS_WIN32 true)
 find_package(Threads)
 
 set(libs
-     mbedtls
+    mbedtls
 )
 
 set(targets
-     ssl_client1
-     ssl_client2
-     ssl_server
-     ssl_fork_server
-     ssl_mail_client
-     mini_client
+    dtls_client
+    dtls_server
+    ssl_client1
+    ssl_client2
+    ssl_server
+    ssl_fork_server
+    ssl_mail_client
+    mini_client
 )
 
 if(USE_PKCS11_HELPER_LIBRARY)
@@ -21,6 +23,12 @@ endif(USE_PKCS11_HELPER_LIBRARY)
 if(ENABLE_ZLIB_SUPPORT)
     set(libs ${libs} ${ZLIB_LIBRARIES})
 endif(ENABLE_ZLIB_SUPPORT)
+
+add_executable(dtls_client dtls_client.c)
+target_link_libraries(dtls_client ${libs})
+
+add_executable(dtls_server dtls_server.c)
+target_link_libraries(dtls_server ${libs})
 
 add_executable(ssl_client1 ssl_client1.c)
 target_link_libraries(ssl_client1 ${libs})

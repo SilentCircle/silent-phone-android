@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2013-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -72,7 +72,7 @@ import android.provider.ContactsContract.RawContacts;
 import android.support.v4.util.Pair;
 import android.telephony.PhoneNumberUtils;
 import android.text.TextUtils;
-import android.util.Log;
+import com.silentcircle.logs.Log;
 
 import com.silentcircle.vcard.VCardUtils.PhoneNumberUtilsPort;
 
@@ -2297,7 +2297,7 @@ public class VCardEntry {
         else if (propertyName.equals(VCardConstants.PROPERTY_TEL)) {
             String phoneNumber = null;
             boolean isSip = false;
-            if (VCardConfig.isVersion40(mVCardType)) {
+            if (VCardConfig.isVersion40(mVCardType) && propValue != null) {
                 // Given propValue is in URI format, not in phone number format used until
                 // vCard 3.0.
                 if (propValue.startsWith("sip:")) {
@@ -2322,7 +2322,7 @@ public class VCardEntry {
                 handleSipCase(propValue, typeCollection);
             }
             else {
-                if (propValue.length() == 0) {
+                if (propValue == null || propValue.length() == 0) {
                     return;
                 }
 
@@ -2409,7 +2409,7 @@ public class VCardEntry {
         }
         else if (propertyName.equals(VCardConstants.PROPERTY_IMPP)) {
             // See also RFC 4770 (for vCard 3.0)
-            if (propValue.startsWith("sip:")) {
+            if (propValue != null && propValue.startsWith("sip:")) {
                 final Collection<String> typeCollection = paramMap.get(VCardConstants.PARAM_TYPE);
                 handleSipCase(propValue, typeCollection);
             }

@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:id="@+id/simpleGroupUi"
+              android:orientation="vertical"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent">
+
+    <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/action"
+            android:textAppearance="@style/TextAppearance.AppCompat.Medium"/>
+
+    <android.support.design.widget.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+        <android.support.design.widget.TextInputEditText
+                android:id="@+id/groupName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Group name"
+                />
+    </android.support.design.widget.TextInputLayout>
+
+    <android.support.design.widget.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+        <android.support.design.widget.TextInputEditText
+                android:id="@+id/groupDescription"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Group description"
+                />
+    </android.support.design.widget.TextInputLayout>
+
+    <android.support.design.widget.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+        <android.support.design.widget.TextInputEditText
+                android:id="@+id/groupUser"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="User id"
+                />
+    </android.support.design.widget.TextInputLayout>
+
+    <android.support.design.widget.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+        <android.support.design.widget.TextInputEditText
+                android:id="@+id/groupMsg"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Message"
+                />
+    </android.support.design.widget.TextInputLayout>
+
+    <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/actionResult"
+            android:textAppearance="@style/TextAppearance.AppCompat.Medium"/>
+
+    <Button
+            android:text="Perform action"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/doAction"/>
+
+</LinearLayout>

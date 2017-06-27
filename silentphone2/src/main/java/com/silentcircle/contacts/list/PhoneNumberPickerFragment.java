@@ -20,7 +20,6 @@ import android.content.Loader;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
@@ -30,9 +29,9 @@ import android.widget.CheckBox;
 
 import com.silentcircle.common.list.ContactListItemView;
 import com.silentcircle.common.list.ContactListItemView.PhotoPosition;
-
 import com.silentcircle.common.list.OnPhoneNumberPickerActionListener;
 import com.silentcircle.contacts.list.ShortcutIntentBuilder.OnShortcutIntentCreatedListener;
+import com.silentcircle.logs.Log;
 import com.silentcircle.silentphone2.R;
 import com.silentcircle.userinfo.LoadUserInfo;
 // import com.silentcircle.contacts.utils.AccountFilterUtil;
@@ -72,6 +71,8 @@ public class PhoneNumberPickerFragment extends ScContactEntryListFragment<ScCont
 
     private CheckBox mScDirectoryBox;
     private CheckBox mScInOrgBox;
+
+    private View mProgress;
 
     private PhotoPosition mPhotoPosition = ContactListItemView.getDefaultPhotoPosition(false);
 
@@ -121,14 +122,14 @@ public class PhoneNumberPickerFragment extends ScContactEntryListFragment<ScCont
     public void onStart() {
         super.onStart();                // super: ScContactEntryListFragment - configures loader etc
         if (mShowScDirectoryOption) {
-            if (!ScDirectoryLoader.mErrorOnPreviousSearch) {
+            if (!ScDirectoryLoader.getHelper().mErrorOnPreviousSearch) {
                 useScDirectory(true);
                 useScDirectoryOrganization(false);
             }
             else {
                 useScDirectory(false);
                 useScDirectoryOrganization(false);
-                ScDirectoryLoader.mErrorOnPreviousSearch = false;
+                ScDirectoryLoader.getHelper().mErrorOnPreviousSearch = false;
             }
         }
 //        if (mScDirectoryBox != null && mScDirectoryBox.isChecked()) {
@@ -247,7 +248,7 @@ public class PhoneNumberPickerFragment extends ScContactEntryListFragment<ScCont
                 else
                     mScInOrgBox.setVisibility(View.GONE);
                 cb.setChecked(checked);
-                ScDirectoryLoader.mErrorOnPreviousSearch = false;
+                ScDirectoryLoader.getHelper().mErrorOnPreviousSearch = false;
                 break;
 
             case R.id.use_sc_own_org:
@@ -294,7 +295,7 @@ public class PhoneNumberPickerFragment extends ScContactEntryListFragment<ScCont
 
     @Override
     protected ScContactEntryListAdapter createListAdapter() {
-        PhoneNumberListAdapter adapter = new PhoneNumberListAdapter(getActivity(), true);
+        PhoneNumberListAdapter adapter = new PhoneNumberListAdapter(getActivity(), true, LoadUserInfo.canCallOutboundOca(getActivity()));
         adapter.setDisplayPhotos(true);
         adapter.setUseCallableUri(mUseCallableUri);
         return adapter;
@@ -330,6 +331,7 @@ public class PhoneNumberPickerFragment extends ScContactEntryListFragment<ScCont
         if (mShowScDirectoryOption) {
             view.findViewById(R.id.sc_dir_options).setVisibility(View.VISIBLE);
         }
+        mProgress = view.findViewById(R.id.search_progress);
         return view;
     }
 
@@ -406,6 +408,12 @@ public class PhoneNumberPickerFragment extends ScContactEntryListFragment<ScCont
         final PhoneNumberListAdapter adapter = (PhoneNumberListAdapter) getAdapter();
         if (adapter != null) {
             adapter.setPhotoPosition(photoPosition);
+        }
+    }
+
+    public void setProgressEnabled(boolean enabled) {
+        if (mProgress != null) {
+            mProgress.setVisibility(enabled ? View.VISIBLE : View.GONE);
         }
     }
 }

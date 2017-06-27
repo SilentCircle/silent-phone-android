@@ -1548,14 +1548,16 @@ public class ViewDragHelper {
      *         deltas that it consumed.
      */
     public void processNestedScroll(View target, int dx, int dy, int[] consumed) {
-        final int targetX = mCapturedView.getLeft() + dx;
-        final int targetY = mCapturedView.getTop() + dy;
-        dragTo(targetX, targetY, dx, dy);
-        if (consumed != null) {
-            final int unconsumedX = targetX - mCapturedView.getLeft();
-            final int unconsumedY = targetY - mCapturedView.getTop();
-            consumed[0] = unconsumedX - dx;
-            consumed[1] = unconsumedY - dy;
+        if (mCapturedView != null) {
+            final int targetX = mCapturedView.getLeft() + dx;
+            final int targetY = mCapturedView.getTop() + dy;
+            dragTo(targetX, targetY, dx, dy);
+            if (consumed != null) {
+                final int unconsumedX = targetX - mCapturedView.getLeft();
+                final int unconsumedY = targetY - mCapturedView.getTop();
+                consumed[0] = unconsumedX - dx;
+                consumed[1] = unconsumedY - dy;
+            }
         }
     }
 

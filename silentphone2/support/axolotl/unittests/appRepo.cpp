@@ -1,13 +1,28 @@
+/*
+Copyright 2016-2017 Silent Circle, LLC
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
 #include <limits.h>
 #include "gtest/gtest.h"
 
 #include "../appRepository/AppRepository.h"
-#include "../axolotl/Constants.h"
-#include "../logging/AxoLogging.h"
+#include "../Constants.h"
+#include "../logging/ZinaLogging.h"
 
 #include <list>
 
-using namespace axolotl;
+using namespace zina;
 using namespace std;
 
 static const uint8_t keyInData[] = {0,1,2,3,4,5,6,7,8,9,19,18,17,16,15,14,13,12,11,10,20,21,22,23,24,25,26,27,28,20,31,30};
@@ -105,7 +120,7 @@ TEST_F(AppRepoTestFixture, Event)
     ASSERT_EQ(11, msgNum);
 
     std::list<std::string*> result;
-    store->loadEvents(name, -1, -1, &result, &msgNumber);
+    store->loadEvents(name, -1, -1, -1, &result, &msgNumber);
     ASSERT_EQ(11, result.size());
 
     while (!result.empty()) {
@@ -115,7 +130,7 @@ TEST_F(AppRepoTestFixture, Event)
         delete msg;
     }
 
-    sqlCode = store->loadEvents(name, -1, 5, &result, &msgNumber);
+    sqlCode = store->loadEvents(name, -1, 5, -1, &result, &msgNumber);
     ASSERT_FALSE(SQL_FAIL(sqlCode)) << store->getLastError();
     ASSERT_EQ(5, result.size());
 
@@ -127,7 +142,7 @@ TEST_F(AppRepoTestFixture, Event)
     }
     result.clear();
 
-    sqlCode = store->loadEvents(name, 2, 3, &result, &msgNumber);
+    sqlCode = store->loadEvents(name, 2, 3, 0, &result, &msgNumber);
     ASSERT_FALSE(SQL_FAIL(sqlCode)) << store->getLastError();
     ASSERT_EQ(3, result.size());
 

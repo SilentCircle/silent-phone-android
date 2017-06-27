@@ -1,136 +1,146 @@
 /*
  *  RSA simple decryption program
  *
- *  Copyright (C) 2006-2011, ARM Limited, All Rights Reserved
+ *  Copyright (C) 2006-2015, ARM Limited, All Rights Reserved
+ *  SPDX-License-Identifier: Apache-2.0
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License"); you may
+ *  not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ *  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  *
  *  This file is part of mbed TLS (https://tls.mbed.org)
- *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
- *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License along
- *  with this program; if not, write to the Free Software Foundation, Inc.,
- *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#if !defined(POLARSSL_CONFIG_FILE)
-#include "polarssl/config.h"
+#if !defined(MBEDTLS_CONFIG_FILE)
+#include "mbedtls/config.h"
 #else
-#include POLARSSL_CONFIG_FILE
+#include MBEDTLS_CONFIG_FILE
 #endif
 
-#if defined(POLARSSL_PLATFORM_C)
-#include "polarssl/platform.h"
+#if defined(MBEDTLS_PLATFORM_C)
+#include "mbedtls/platform.h"
 #else
 #include <stdio.h>
-#define polarssl_printf     printf
+#include <stdlib.h>
+#define mbedtls_printf     printf
+#define mbedtls_exit       exit
+#define MBEDTLS_EXIT_SUCCESS EXIT_SUCCESS
+#define MBEDTLS_EXIT_FAILURE EXIT_FAILURE
 #endif
 
-#if defined(POLARSSL_BIGNUM_C) && defined(POLARSSL_RSA_C) && \
-    defined(POLARSSL_FS_IO) && defined(POLARSSL_ENTROPY_C) && \
-    defined(POLARSSL_CTR_DRBG_C)
-#include "polarssl/rsa.h"
-#include "polarssl/entropy.h"
-#include "polarssl/ctr_drbg.h"
+#if defined(MBEDTLS_BIGNUM_C) && defined(MBEDTLS_RSA_C) && \
+    defined(MBEDTLS_FS_IO) && defined(MBEDTLS_ENTROPY_C) && \
+    defined(MBEDTLS_CTR_DRBG_C)
+#include "mbedtls/rsa.h"
+#include "mbedtls/entropy.h"
+#include "mbedtls/ctr_drbg.h"
 
-#include <stdio.h>
 #include <string.h>
+
 #endif
 
-#if !defined(POLARSSL_BIGNUM_C) || !defined(POLARSSL_RSA_C) ||  \
-    !defined(POLARSSL_FS_IO) || !defined(POLARSSL_ENTROPY_C) || \
-    !defined(POLARSSL_CTR_DRBG_C)
+#if !defined(MBEDTLS_BIGNUM_C) || !defined(MBEDTLS_RSA_C) ||  \
+    !defined(MBEDTLS_FS_IO) || !defined(MBEDTLS_ENTROPY_C) || \
+    !defined(MBEDTLS_CTR_DRBG_C)
 int main( void )
 {
-    polarssl_printf("POLARSSL_BIGNUM_C and/or POLARSSL_RSA_C and/or "
-           "POLARSSL_FS_IO and/or POLARSSL_ENTROPY_C and/or "
-           "POLARSSL_CTR_DRBG_C not defined.\n");
+    mbedtls_printf("MBEDTLS_BIGNUM_C and/or MBEDTLS_RSA_C and/or "
+           "MBEDTLS_FS_IO and/or MBEDTLS_ENTROPY_C and/or "
+           "MBEDTLS_CTR_DRBG_C not defined.\n");
     return( 0 );
 }
 #else
 int main( int argc, char *argv[] )
 {
     FILE *f;
-    int ret, c;
+    int return_val, exit_val, c;
     size_t i;
-    rsa_context rsa;
-    entropy_context entropy;
-    ctr_drbg_context ctr_drbg;
+    mbedtls_rsa_context rsa;
+    mbedtls_entropy_context entropy;
+    mbedtls_ctr_drbg_context ctr_drbg;
     unsigned char result[1024];
     unsigned char buf[512];
     const char *pers = "rsa_decrypt";
     ((void) argv);
 
     memset(result, 0, sizeof( result ) );
-    ret = 1;
+    exit_val = MBEDTLS_EXIT_SUCCESS;
 
     if( argc != 1 )
     {
-        polarssl_printf( "usage: rsa_decrypt\n" );
+        mbedtls_printf( "usage: rsa_decrypt\n" );
 
 #if defined(_WIN32)
-        polarssl_printf( "\n" );
+        mbedtls_printf( "\n" );
 #endif
 
-        goto exit;
+        mbedtls_exit( MBEDTLS_EXIT_FAILURE );
     }
 
-    polarssl_printf( "\n  . Seeding the random number generator..." );
+    mbedtls_printf( "\n  . Seeding the random number generator..." );
     fflush( stdout );
 
-    entropy_init( &entropy );
-    if( ( ret = ctr_drbg_init( &ctr_drbg, entropy_func, &entropy,
-                               (const unsigned char *) pers,
-                               strlen( pers ) ) ) != 0 )
+    mbedtls_rsa_init( &rsa, MBEDTLS_RSA_PKCS_V15, 0 );
+    mbedtls_ctr_drbg_init( &ctr_drbg );
+    mbedtls_entropy_init( &entropy );
+
+    return_val = mbedtls_ctr_drbg_seed( &ctr_drbg, mbedtls_entropy_func,
+                                        &entropy, (const unsigned char *) pers,
+                                        strlen( pers ) );
+    if( return_val != 0 )
     {
-        polarssl_printf( " failed\n  ! ctr_drbg_init returned %d\n", ret );
+        exit_val = MBEDTLS_EXIT_FAILURE;
+        mbedtls_printf( " failed\n  ! mbedtls_ctr_drbg_seed returned %d\n",
+                        return_val );
         goto exit;
     }
 
-    polarssl_printf( "\n  . Reading private key from rsa_priv.txt" );
+    mbedtls_printf( "\n  . Reading private key from rsa_priv.txt" );
     fflush( stdout );
 
     if( ( f = fopen( "rsa_priv.txt", "rb" ) ) == NULL )
     {
-        polarssl_printf( " failed\n  ! Could not open rsa_priv.txt\n" \
+        exit_val = MBEDTLS_EXIT_FAILURE;
+        mbedtls_printf( " failed\n  ! Could not open rsa_priv.txt\n" \
                 "  ! Please run rsa_genkey first\n\n" );
         goto exit;
     }
 
-    rsa_init( &rsa, RSA_PKCS_V15, 0 );
-
-    if( ( ret = mpi_read_file( &rsa.N , 16, f ) ) != 0 ||
-        ( ret = mpi_read_file( &rsa.E , 16, f ) ) != 0 ||
-        ( ret = mpi_read_file( &rsa.D , 16, f ) ) != 0 ||
-        ( ret = mpi_read_file( &rsa.P , 16, f ) ) != 0 ||
-        ( ret = mpi_read_file( &rsa.Q , 16, f ) ) != 0 ||
-        ( ret = mpi_read_file( &rsa.DP, 16, f ) ) != 0 ||
-        ( ret = mpi_read_file( &rsa.DQ, 16, f ) ) != 0 ||
-        ( ret = mpi_read_file( &rsa.QP, 16, f ) ) != 0 )
+    if( ( return_val = mbedtls_mpi_read_file( &rsa.N , 16, f ) ) != 0 ||
+        ( return_val = mbedtls_mpi_read_file( &rsa.E , 16, f ) ) != 0 ||
+        ( return_val = mbedtls_mpi_read_file( &rsa.D , 16, f ) ) != 0 ||
+        ( return_val = mbedtls_mpi_read_file( &rsa.P , 16, f ) ) != 0 ||
+        ( return_val = mbedtls_mpi_read_file( &rsa.Q , 16, f ) ) != 0 ||
+        ( return_val = mbedtls_mpi_read_file( &rsa.DP, 16, f ) ) != 0 ||
+        ( return_val = mbedtls_mpi_read_file( &rsa.DQ, 16, f ) ) != 0 ||
+        ( return_val = mbedtls_mpi_read_file( &rsa.QP, 16, f ) ) != 0 )
     {
-        polarssl_printf( " failed\n  ! mpi_read_file returned %d\n\n", ret );
+        exit_val = MBEDTLS_EXIT_FAILURE;
+        mbedtls_printf( " failed\n  ! mbedtls_mpi_read_file returned %d\n\n",
+                        return_val );
+        fclose( f );
         goto exit;
     }
 
-    rsa.len = ( mpi_msb( &rsa.N ) + 7 ) >> 3;
+    rsa.len = ( mbedtls_mpi_bitlen( &rsa.N ) + 7 ) >> 3;
 
     fclose( f );
 
     /*
      * Extract the RSA encrypted value from the text file
      */
-    ret = 1;
-
     if( ( f = fopen( "result-enc.txt", "rb" ) ) == NULL )
     {
-        polarssl_printf( "\n  ! Could not open %s\n\n", "result-enc.txt" );
+        exit_val = MBEDTLS_EXIT_FAILURE;
+        mbedtls_printf( "\n  ! Could not open %s\n\n", "result-enc.txt" );
         goto exit;
     }
 
@@ -144,39 +154,43 @@ int main( int argc, char *argv[] )
 
     if( i != rsa.len )
     {
-        polarssl_printf( "\n  ! Invalid RSA signature format\n\n" );
+        exit_val = MBEDTLS_EXIT_FAILURE;
+        mbedtls_printf( "\n  ! Invalid RSA signature format\n\n" );
         goto exit;
     }
 
     /*
      * Decrypt the encrypted RSA data and print the result.
      */
-    polarssl_printf( "\n  . Decrypting the encrypted data" );
+    mbedtls_printf( "\n  . Decrypting the encrypted data" );
     fflush( stdout );
 
-    if( ( ret = rsa_pkcs1_decrypt( &rsa, ctr_drbg_random, &ctr_drbg,
-                                   RSA_PRIVATE, &i, buf, result,
-                                   1024 ) ) != 0 )
+    return_val = mbedtls_rsa_pkcs1_decrypt( &rsa, mbedtls_ctr_drbg_random,
+                                            &ctr_drbg, MBEDTLS_RSA_PRIVATE, &i,
+                                            buf, result, 1024 );
+    if( return_val != 0 )
     {
-        polarssl_printf( " failed\n  ! rsa_pkcs1_decrypt returned %d\n\n", ret );
+        exit_val = MBEDTLS_EXIT_FAILURE;
+        mbedtls_printf( " failed\n  ! mbedtls_rsa_pkcs1_decrypt returned %d\n\n",
+                        return_val );
         goto exit;
     }
 
-    polarssl_printf( "\n  . OK\n\n" );
+    mbedtls_printf( "\n  . OK\n\n" );
 
-    polarssl_printf( "The decrypted result is: '%s'\n\n", result );
-
-    ret = 0;
+    mbedtls_printf( "The decrypted result is: '%s'\n\n", result );
 
 exit:
-    ctr_drbg_free( &ctr_drbg );
-    entropy_free( &entropy );
+    mbedtls_ctr_drbg_free( &ctr_drbg );
+    mbedtls_entropy_free( &entropy );
+    mbedtls_rsa_free( &rsa );
 
 #if defined(_WIN32)
-    polarssl_printf( "  + Press Enter to exit this program.\n" );
+    mbedtls_printf( "  + Press Enter to exit this program.\n" );
     fflush( stdout ); getchar();
 #endif
 
-    return( ret );
+    return( exit_val );
 }
-#endif /* POLARSSL_BIGNUM_C && POLARSSL_RSA_C && POLARSSL_FS_IO */
+#endif /* MBEDTLS_BIGNUM_C && MBEDTLS_RSA_C && MBEDTLS_FS_IO */
+

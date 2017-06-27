@@ -25,7 +25,7 @@ import android.animation.ValueAnimator.AnimatorUpdateListener;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.RectF;
-import android.util.Log;
+import com.silentcircle.logs.Log;
 import android.view.MotionEvent;
 import android.view.VelocityTracker;
 import android.view.View;

@@ -22,3 +22,4 @@
 *.ogg binary
 *.xml text eol=lf
 *.zip binary
+*.jpg binary

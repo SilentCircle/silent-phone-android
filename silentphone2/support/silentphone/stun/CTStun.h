@@ -1,7 +1,7 @@
 /*
 Created by Janis Narbuts
 Copyright (C) 2004-2012, Tivi LTD, www.tiviphone.com. All rights reserved.
-Copyright (C) 2012-2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2012-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,7 +27,6 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-
 #ifndef _C_T_STUN_H
 #define _C_T_STUN_H
 //#define DBG_PRF printf
@@ -50,6 +49,7 @@ unsigned int getTickCount();
 #if defined(_WIN32) && !defined(__SYMBIAN32__) && !defined(_WIN32_WCE)
 #define USE_FAST_COUNTER
 #endif
+int isIPv6(void);
 
 class CTStun{
    CTSockCB *cbsock;//TODO
@@ -66,6 +66,7 @@ public:
       REST_NAT=4,
       SYMMETRIC=8,
       MOB_NAT=16,
+      IPV6_STUN_DISSABLED=32,//TODO fix ipv6
       NO_IP_STUN_OFF=0x02000000,
       HAS_IP_STUN_OFF=0x04000000,
       NOT_DETECTDED=0x08000000,
@@ -126,7 +127,7 @@ protected:
          
          sock = new CTSock(*cbsock);
          iSockCreated = 1;
-         sock->createSock(&addrToBind,true);
+         sock->createSock(&addrToBind,true, isIPv6());
          sock->addr.ip = addrToBind.ip;
 
       }
@@ -205,7 +206,7 @@ public:
 
       if(*(int*)(p+4)!=iSendSeq)
          return 0;
-      if(a->ip!=addrStun.ip && a->ip!=addrStun2.ip)
+      if(!a->sameIP(addrStun) && !a->sameIP(addrStun2))
          return 0;
       
       
@@ -229,6 +230,7 @@ public:
    }
    int getNatType()
    {
+      if(check_v6())return 0;
       if(!addrStun.ip)return 0;
       constr();
       iListen=0;
@@ -239,6 +241,7 @@ public:
    }
    int getNatTypeListen()
    {
+      if(check_v6())return 0;
       ADDR recAddr;
       int rec;
       char buf[100];
@@ -275,8 +278,10 @@ public:
       th.wait();
       return 0;
    }
+   
    int getExtAddrListen(int iGetAddrOnly=0)
    {
+      if(check_v6())return 0;
       ADDR recAddr;
       int rec;
       char buf[100];
@@ -312,6 +317,8 @@ public:
    int getExtAddr()
    {
       if(!addrStun.ip)return 0;
+      if(check_v6())return 0;
+      
 
       constr();
       iListen=0;
@@ -332,10 +339,25 @@ public:
          if(iListen)
          {
             sock->sendTo("1",1,&sock->addr);
+            if(iSockCreated)sock->closeSocket();
          }
       }
    }
 protected:
+   int check_v6(){
+      
+      const int enable_stun_with_v6 = 1;
+      if(enable_stun_with_v6 || !isIPv6())return 0;
+      
+      iNatType = IPV6_STUN_DISSABLED;
+      iPingTime=1000;
+      addrExt1.ip = ipBinded;
+      if(sock)addrExt1.setPort(sock->addr.getPort());
+      if(!addrExt1.getPort())addrExt1.setPort(49998);
+      addrExt2 = addrExt1;
+      
+      return 1;
+   }
    int thFncResend(){
       
       // Sleep(1);
@@ -346,6 +368,9 @@ protected:
          iNextResend=ST_RETRANSMIT_MS;
       Sleep(10);
       iTimeStamp=10;
+      int hasIP(void);
+      if(!hasIP())iMaxCheckTime=(iMaxCheckTime/10)+500;
+      
       
       //self->send();
       

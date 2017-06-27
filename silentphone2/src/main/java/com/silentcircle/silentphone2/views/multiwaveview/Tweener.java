@@ -23,7 +23,7 @@ import android.animation.ObjectAnimator;
 import android.animation.PropertyValuesHolder;
 import android.animation.TimeInterpolator;
 import android.animation.ValueAnimator.AnimatorUpdateListener;
-import android.util.Log;
+import com.silentcircle.logs.Log;
 
 import java.util.ArrayList;
 import java.util.HashMap;

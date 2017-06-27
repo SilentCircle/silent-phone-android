@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2016-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -25,7 +25,6 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-
 package com.silentcircle.purchase.activities;
 
 import android.app.FragmentTransaction;
@@ -41,7 +40,7 @@ import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
-import android.util.Log;
+import com.silentcircle.logs.Log;
 import android.view.Display;
 import android.view.Gravity;
 import android.view.MenuItem;
@@ -57,6 +56,7 @@ import android.widget.Toast;
 import com.silentcircle.contacts.utils.AsyncTaskExecutor;
 import com.silentcircle.contacts.utils.AsyncTaskExecutors;
 import com.silentcircle.keymanagersupport.KeyManagerSupport;
+import com.silentcircle.messaging.util.IOUtils;
 import com.silentcircle.purchase.data.StripeToken;
 import com.silentcircle.purchase.dialogs.PurchaseDialogFragment;
 import com.silentcircle.purchase.fragments.PaymentFormFragment;
@@ -524,6 +524,8 @@ class HandlePaymentTask extends AsyncTask<String, Void, String> {
             URL requestUrl = null;
             mTask = params[0].trim();
 
+            BufferedReader reader = null;
+
             try{
                 // Get the correct URL for the request
                 if(mTask.equals(GET_PUBLISHABLE_KEY_TASK)) {
@@ -595,7 +597,7 @@ class HandlePaymentTask extends AsyncTask<String, Void, String> {
                 if (ConfigurationUtilities.mTrace) Log.d(TAG, "HTTP code: " + ret);
 
                 if (ret == HttpsURLConnection.HTTP_OK) {
-                    BufferedReader reader = new BufferedReader( new InputStreamReader(new BufferedInputStream(urlConnection.getInputStream())));
+                    reader = new BufferedReader( new InputStreamReader(new BufferedInputStream(urlConnection.getInputStream())));
                     StringBuilder builder = new StringBuilder();
                     String line;
                     while ((line = reader.readLine()) != null){
@@ -605,7 +607,7 @@ class HandlePaymentTask extends AsyncTask<String, Void, String> {
                     return builder.toString();
                 }
                 else {
-                    BufferedReader reader = new BufferedReader(new InputStreamReader(new BufferedInputStream(urlConnection.getErrorStream())));
+                    reader = new BufferedReader(new InputStreamReader(new BufferedInputStream(urlConnection.getErrorStream())));
                     StringBuilder builder = new StringBuilder();
                     String line;
                     while ((line = reader.readLine()) != null) {
@@ -628,6 +630,8 @@ class HandlePaymentTask extends AsyncTask<String, Void, String> {
                 Log.e(TAG, "MalformedURLException: "+e.getMessage());
             }catch (IOException e){
                 Log.e(TAG, "IOException: "+e.getMessage());
+            } finally {
+                IOUtils.close(reader);
             }
 
             return null;

@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2016-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -25,7 +25,6 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-
 package com.silentcircle.silentphone2.fragments;
 
 import android.annotation.TargetApi;
@@ -33,6 +32,7 @@ import android.app.Activity;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
+import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -43,15 +43,14 @@ import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
-import android.text.method.LinkMovementMethod;
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -68,12 +67,22 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.silentcircle.SilentPhoneApplication;
+import com.silentcircle.common.util.DRUtils;
 import com.silentcircle.common.util.RingtoneUtils;
 import com.silentcircle.common.util.ViewUtil;
 import com.silentcircle.keystore.KeyStoreActivity;
 import com.silentcircle.keystore.KeyStoreHelper;
+import com.silentcircle.keystore.ProviderDbBackend;
+import com.silentcircle.logs.Log;
+import com.silentcircle.logs.LogsService;
+import com.silentcircle.logs.activities.DebugLoggingActivity;
 import com.silentcircle.messaging.activities.AxoRegisterActivity;
-import com.silentcircle.messaging.services.AxoMessaging;
+import com.silentcircle.messaging.activities.ConversationActivity;
+import com.silentcircle.messaging.activities.GroupManagementActivity;
+import com.silentcircle.messaging.fragments.UserInfoListenerFragment;
+import com.silentcircle.messaging.services.ZinaMessaging;
+import com.silentcircle.messaging.util.MessageUtils;
 import com.silentcircle.messaging.util.MessagingPreferences;
 import com.silentcircle.silentphone2.BuildConfig;
 import com.silentcircle.silentphone2.R;
@@ -81,16 +90,25 @@ import com.silentcircle.silentphone2.activities.DialerActivity;
 import com.silentcircle.silentphone2.dialhelpers.FindDialHelper;
 import com.silentcircle.silentphone2.dialogs.InfoMsgDialogFragment;
 import com.silentcircle.silentphone2.fragments.DialDrawerFragment.DrawerCallbacks;
+import com.silentcircle.silentphone2.passcode.PasscodeConfigurationActivity;
+import com.silentcircle.silentphone2.passcode.PasscodeManager;
 import com.silentcircle.silentphone2.services.TiviPhoneService;
 import com.silentcircle.silentphone2.util.ConfigurationUtilities;
 import com.silentcircle.silentphone2.views.SettingsItem;
 import com.silentcircle.userinfo.LoadUserInfo;
 import com.silentcircle.userinfo.UserInfo;
 
+import java.util.Arrays;
+
+import zina.ZinaNative;
+
+import static com.silentcircle.keystore.KeyStoreHelper.USER_PW_SECURE;
+import static com.silentcircle.keystore.KeyStoreHelper.USER_PW_TYPE_NONE;
+
 /**
  *
  */
-public class SettingsFragment extends Fragment implements View.OnClickListener,
+public class SettingsFragment extends UserInfoListenerFragment implements View.OnClickListener,
         LoadUserInfo.Listener, SettingsItem.OnCheckedChangeListener,
         RadioGroup.OnCheckedChangeListener,
         SingleChoiceDialogFragment.OnSingleChoiceDialogItemSelectedListener {
@@ -108,8 +126,14 @@ public class SettingsFragment extends Fragment implements View.OnClickListener,
     public static String ENABLE_UNDERFLOW_TONE = "enable_underflow_tone";
     public static String DEVELOPER = "developer";
     public static String DEVELOPER_SSL_DEBUG = "developer_ssl_debug";
-    public static String DEVELOPER_AXO_DEBUG = "developer_axo_debug";
+    public static String DEVELOPER_ZINA_DEBUG = "developer_zina_debug";
     public static String BLOCK_SCREENSHOTS = "block_screenshots";
+    public static String FORCE_FEATURE_DISCOVERY = "force_feature_discovery";
+
+    //DebugLogging
+    public static final String ENABLE_DEBUG_LOGGING = "enable_debug_logging";
+    public static final String DEBUG_LOGGING_INTERVAL_SELECTION = "debug_logging_interval_selection";
+    public static final int DEBUG_LOGGING_INTERVAL_DIALOG = 2000;
 
     public static final int MESSAGE_LIGHTS_SELECTION_DIALOG = 1000;
     public static final int MESSAGE_VIBRATE_SELECTION_DIALOG = 1010;
@@ -172,21 +196,30 @@ public class SettingsFragment extends Fragment implements View.OnClickListener,
         super.onResume();
 
         setBuildInfo();
+        prepareDeveloper();
         prepareSasOptions();
         prepareNistCheckbox();
+
         prepareKeyStoreOptions();
+        preparePasscodeOptions();
         prepareRingtone();
         prepareDialHelperOption();
         prepareOnBoot();
+        prepareResetFeatureDiscovery();
+        prepareResetWarnings();
         prepareShowErrors();
         // prepareReProvision();
         // prepareUiTheme();
         prepareAdvancedSettings();
         prepareMessagingSettings();
         prepareBlockScreenshots();
-        prepareDeveloper();
+//        prepareBlockDr();
         prepareDeveloperMenu();
+        prepareForceFeatureDiscovery();
         showAdvancedSettings();
+
+        //DebugLogging
+        prepareDebugLoggingSettings();
     }
 
     /*
@@ -197,7 +230,9 @@ public class SettingsFragment extends Fragment implements View.OnClickListener,
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
-        commonOnAttach(activity);
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+            commonOnAttach(activity);
+        }
     }
 
     private void commonOnAttach(Activity activity) {
@@ -274,6 +309,14 @@ public class SettingsFragment extends Fragment implements View.OnClickListener,
                 toggleBootCheckbox();
                 break;
 
+            case R.id.reset_feature_discovery:
+                resetFeatureDiscovery();
+                break;
+
+            case R.id.reset_warnings:
+                resetWarnings();
+                break;
+
             case R.id.errors_option_check:
                 toggleErrorsCheckbox();
                 break;
@@ -329,15 +372,25 @@ public class SettingsFragment extends Fragment implements View.OnClickListener,
                         R.array.message_theme_array, mMessageThemeIndex, MESSAGE_THEME_SELECTION_DIALOG);
                 break;
 
-            case R.id.messaging_lock_configuration:
-                mCallbacks.onDrawerItemSelected(DrawerCallbacks.MESSAGING_LOCK_SCREEN,
-                        KeyStoreActivity.KEY_STORE_SET_CHAT_PASSWORD_CHANGE);
+            case R.id.messaging_group_list:
+                {
+                    Intent intent = new Intent(mParent, GroupManagementActivity.class);
+                    startActivity(intent);
+                    mParent.overridePendingTransition(0, 0);
+                }
                 break;
 
-            case R.id.settings_chat_device_management:
+            case R.id.settings_device_management:
                 {
                     Intent intent = new Intent(mParent, AxoRegisterActivity.class);
                     intent.setAction(AxoRegisterActivity.ACTION_MANAGE);
+                    startActivity(intent);
+                }
+                break;
+
+            case R.id.settings_passcode_configuration:
+                {
+                    Intent intent = new Intent(mParent, PasscodeConfigurationActivity.class);
                     startActivity(intent);
                 }
                 break;
@@ -352,9 +405,13 @@ public class SettingsFragment extends Fragment implements View.OnClickListener,
 
             case R.id.settings_force_axo_reregister:
                 {
-                    AxoMessaging axoMessaging = AxoMessaging.getInstance(mParent);
+                    ZinaMessaging axoMessaging = ZinaMessaging.getInstance();
                     axoMessaging.registerDeviceMessaging(true);
                 }
+                break;
+
+            case R.id.settings_force_feature_discovery:
+                toggleForceFeatureDiscovery();
                 break;
 
             case R.id.settings_axo_register:
@@ -371,6 +428,37 @@ public class SettingsFragment extends Fragment implements View.OnClickListener,
 
             case R.id.settings_block_screenshots:
                 toggleBlockScreenshots();
+                break;
+
+            case R.id.settings_block_local_dr:
+                toggleBlockLocalDr();
+                break;
+
+            case R.id.settings_block_remote_dr:
+                toggleBlockRemoteDr();
+                break;
+
+            case R.id.settings_bldr:
+            case R.id.settings_blmr:
+            case R.id.settings_brdr:
+            case R.id.settings_brmr:
+                toggleBlockDr(view.getId());
+                break;
+
+            //DebugLogging
+            case R.id.debug_logging_option:
+                toggleDebugLoggingCheckbox();
+                break;
+
+            case R.id.send_logs_option:
+                getActivity().startActivity(new Intent(getActivity(), DebugLoggingActivity.class));
+                break;
+
+            case R.id.send_logs_config_option:
+                SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mParent);
+                mDebugLoggingIntervalSelection = prefs.getInt(DEBUG_LOGGING_INTERVAL_SELECTION, 0);
+                showSelectionDialog(R.string.setting_debug_logging_config,
+                        R.array.logging_interval_array, mDebugLoggingIntervalSelection, DEBUG_LOGGING_INTERVAL_DIALOG);
                 break;
 
             default: {
@@ -439,36 +527,7 @@ public class SettingsFragment extends Fragment implements View.OnClickListener,
             return;
         }
 
-        if (errorInfo != null) {
-            showInputInfo(errorInfo);
-
-            return;
-        }
-
-        if (LoadUserInfo.checkIfExpired() == LoadUserInfo.VALID) {
-            showInputInfo(R.string.expired_account_info);
-
-            return;
-        }
-
-        if (LoadUserInfo.checkIfUsesMinutes() == LoadUserInfo.VALID) {
-            // User is using minutes
-            final int baseMinutes = userInfo.getSubscription().getUsageDetails().getBaseMinutes()
-                    + userInfo.getSubscription().getUsageDetails().getCurrentModifier();
-            final int minutesLeft = userInfo.getSubscription().getUsageDetails().getMinutesLeft();
-            final int minutesUsed = baseMinutes - minutesLeft;
-
-            final String msg = (minutesUsed <= 0 && minutesLeft != 0)
-                    ? getString(R.string.remaining_oca_minutes_zero, baseMinutes) :
-                    getResources().getQuantityString(R.plurals.remaining_oca_minutes_info,
-                            minutesUsed, baseMinutes, minutesLeft);
-            showInputInfo(msg);
-        } else if(LoadUserInfo.checkIfUsesCredit() == LoadUserInfo.VALID) {
-            // User is using credit
-            showInputInfo(getString(R.string.remaining_credit,
-                    userInfo.getSubscription().getBalance().getAmount(),
-                    userInfo.getSubscription().getBalance().getUnit()));
-        }
+        refreshBlockDrState();
     }
 
     public void updateRingtone(Uri ringtone) {
@@ -480,18 +539,27 @@ public class SettingsFragment extends Fragment implements View.OnClickListener,
             SharedPreferences.Editor e = prefs.edit();
             e.putString(RINGTONE_KEY, toneString).apply();
         }
-        else
+        else {
             toneString = prefs.getString(RINGTONE_KEY, null);
+        }
 
-        Uri tone = RingtoneUtils.getDefaultRingtoneUri(mParent);
-        if (!TextUtils.isEmpty(toneString))
+        Uri tone = null;
+        try {
+            tone = RingtoneUtils.getDefaultRingtoneUri(mParent);
+        } catch (SecurityException ignore) {}
+        if (!TextUtils.isEmpty(toneString)) {
             tone = Uri.parse(toneString);
+        }
 
-        Ringtone ring = RingtoneManager.getRingtone(mParent, tone);
-        if (ring != null)
-            mRingtoneName.setDescription(ring.getTitle(mParent));
-        else
-            mRingtoneName.setDescription(getString(R.string.no_ringtone));
+        if (mRingtoneName != null && tone != null) {
+            Ringtone ring = RingtoneManager.getRingtone(mParent, tone);
+            if (ring != null) {
+                mRingtoneName.setDescription(ring.getTitle(mParent));
+            }
+            else {
+                mRingtoneName.setDescription(getString(R.string.no_ringtone));
+            }
+        }
     }
 
     private String createDetailInfo() {
@@ -501,18 +569,24 @@ public class SettingsFragment extends Fragment implements View.OnClickListener,
         Configuration config = getResources().getConfiguration();
         final int size = config.screenLayout & Configuration.SCREENLAYOUT_SIZE_MASK;
         final String swSetting = getString(R.string.sw_setting);
-//        return "Active configuration: " +
-//                (ConfigurationUtilities.mUseDevelopConfiguration ? " Develop" : "Production") +
-//                "\nDevice information:\n" +
-//                Build.MANUFACTURER + ", " + Build.BRAND + ", " + Build.MODEL + ", " + Build.DEVICE +
-//                "\nScreen density: " + metrics.densityDpi + " (" + size + ", " + swSetting + ")" +
-//                ((DialerActivity.mAutoAnswerForTesting) ? "\nAuto answered: " + DialerActivity.mAutoAnsweredTesting : "");
-        return getResources().getString(R.string.active_configuration)+": " +
-                (ConfigurationUtilities.mUseDevelopConfiguration ? getResources().getString(R.string.develop) : getResources().getString(R.string.production) )+
-                "\n"+getResources().getString(R.string.device_information)+"\n" +
-                Build.MANUFACTURER + ", " + Build.BRAND + ", " + Build.MODEL + ", " + Build.DEVICE +
-                "\n"+getResources().getString(R.string.screen_density)+": " + metrics.densityDpi + " (" + size + ", " + swSetting + ")" +
-                ((/*DialerActivity.mAutoAnswerForTesting*/ false) ? "\n"+getResources().getString(R.string.auto_answered) + /*DialerActivity.mAutoAnsweredTesting*/ false : "");
+
+        StringBuilder detailInfo = new StringBuilder();
+        detailInfo.append(getString(R.string.active_configuration,
+                (ConfigurationUtilities.mUseDevelopConfiguration
+                        ? getString(R.string.develop) : getString(R.string.production))));
+        detailInfo.append("\n").append(getString(R.string.device_information)).append("\n")
+                .append(Build.MANUFACTURER).append(", ")
+                .append(Build.BRAND).append(", ")
+                .append(Build.MODEL).append(", ")
+                .append(Build.DEVICE);
+        detailInfo.append("\n").append(getString(R.string.screen_density, metrics.densityDpi + " (" + size + ", " + swSetting + ")"));
+        if (DialerActivity.mAutoAnswerForTesting) {
+            detailInfo.append("\n").append(getString(R.string.auto_answered, DialerActivity.mAutoAnsweredTesting));
+        }
+        if (BuildConfig.DEBUG) {
+            detailInfo.append("\n").append(getString(R.string.build_time, BuildConfig.SPA_BUILD_DATE));
+        }
+        return detailInfo.toString();
     }
 
     private void setBuildInfo() {
@@ -548,6 +622,14 @@ public class SettingsFragment extends Fragment implements View.OnClickListener,
         }
     }
 
+    private void preparePasscodeOptions() {
+        SettingsItem passcodeEntry = (SettingsItem) mDrawerView.findViewById(R.id.settings_passcode_configuration);
+        passcodeEntry.setOnClickListener(this);
+        boolean enabled = PasscodeManager.getSharedManager().isPasscodeEnabled();
+        String passcodeDescreption = (enabled) ? getString(R.string.enabled) : getString(R.string.not_enabled);
+        passcodeEntry.setDescription(passcodeDescreption);
+    }
+
     public void prepareKeyStoreOptions() {
         SettingsItem typeView = (SettingsItem) mDrawerView.findViewById(R.id.settings_set_passphrase);
         typeView.setOnClickListener(this);
@@ -579,7 +661,8 @@ public class SettingsFragment extends Fragment implements View.OnClickListener,
         final int type = KeyStoreHelper.getUserPasswordType(mParent);
         PopupMenu popupMenu = new PopupMenu(mParent, mDrawerView.findViewById(R.id.settings_set_passphrase));
         switch (type) {
-            case KeyStoreHelper.USER_PW_TYPE_NONE:
+            case USER_PW_TYPE_NONE:
+            case USER_PW_SECURE:
                 popupMenu.getMenu().add(Menu.NONE, R.string.key_store_set_pw, Menu.NONE, R.string.key_store_set_pw);
                 popupMenu.getMenu().add(Menu.NONE, R.string.key_store_set_pin, Menu.NONE, R.string.key_store_set_pin);
                 break;
@@ -648,6 +731,13 @@ public class SettingsFragment extends Fragment implements View.OnClickListener,
                 ? sasTypeTexts[WORD_MODE]
                 : "2".equals(result) ? sasTypeTexts[EMOJI_MODE] : sasTypeTexts[CHAR_MODE];
         mSasType.setDescription(sasTypeText);
+        mSasType
+            .setVisibility(mDeveloper ? View.VISIBLE : View.GONE);
+        if (!mDeveloper && !mSas256Enabled) { // upgrade handling
+            mSasType.setDescription(sasTypeTexts[WORD_MODE]);
+            TiviPhoneService.doCmd("set cfg.iDisable256SAS=0");
+            mSas256Enabled = true;
+        }
     }
 
     private void selectSasType() {
@@ -655,7 +745,7 @@ public class SettingsFragment extends Fragment implements View.OnClickListener,
 
         // Enable this for debug/development builds only. After some testing/discussing we either add it
         // permanently or remove the Emoji SAS
-        if (ConfigurationUtilities.mTrace) {
+        if (mDeveloper) {
             popupMenu.getMenu().add(Menu.NONE, R.string.sas_char_mode, Menu.NONE, sasTypeTexts[CHAR_MODE]);
             popupMenu.getMenu().add(Menu.NONE, R.string.sas_emoji_mode, Menu.NONE, sasTypeTexts[EMOJI_MODE]);
             popupMenu.getMenu().add(Menu.NONE, R.string.sas_word_mode, Menu.NONE, sasTypeTexts[WORD_MODE]);
@@ -708,6 +798,12 @@ public class SettingsFragment extends Fragment implements View.OnClickListener,
         String result = TiviPhoneService.getInfo(-1, -1, "cfg.iPreferNIST");
         mNistPreferred = "1".equals(result);             // 1 -> true, do prefer NIST
         mNistBox.setChecked(!mNistPreferred);            // The checkbox title asks for the inverted intention
+        mNistBox
+            .setVisibility(mDeveloper ? View.VISIBLE : View.GONE);
+        if (!mDeveloper && mNistPreferred) { // upgrade handling
+            TiviPhoneService.doCmd("set cfg.iPreferNIST=0");
+            mNistBox.setChecked(false);
+        }
     }
 
     private void toggleNistCheckbox() {
@@ -732,6 +828,10 @@ public class SettingsFragment extends Fragment implements View.OnClickListener,
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mParent);
         mStartOnBoot = prefs.getBoolean(START_ON_BOOT, true);
         mBootBox.setChecked(mStartOnBoot);
+        if (!mDeveloper && !mStartOnBoot) { // upgrade handling
+            toggleBootCheckbox();
+        }
+        mBootBox.setVisibility(mDeveloper ? View.VISIBLE : View.GONE);
     }
 
     private void toggleBootCheckbox() {
@@ -739,6 +839,111 @@ public class SettingsFragment extends Fragment implements View.OnClickListener,
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mParent);
         prefs.edit().putBoolean(START_ON_BOOT, mStartOnBoot).apply();
         mBootBox.setChecked(mStartOnBoot);
+    }
+
+    /**
+     * Reset feature discovery
+     */
+    private SettingsItem mResetFeatureDiscovery;
+
+    private void prepareResetFeatureDiscovery() {
+        mResetFeatureDiscovery = (SettingsItem) mDrawerView.findViewById(R.id.reset_feature_discovery);
+        mResetFeatureDiscovery.setOnClickListener(this);
+    }
+
+    private void resetFeatureDiscovery() {
+        SharedPreferences prefs1 = getActivity().getSharedPreferences(ConversationActivity.SHARED_PREFS_NAME, Context.MODE_PRIVATE);
+        prefs1.edit().putBoolean(ConversationActivity.KEY_FEATURE_DISCOVERY, false).apply();
+        ConversationActivity.mFeatureDiscoveryRan = false;
+
+        SharedPreferences prefs2 = getActivity().getSharedPreferences(DialerActivity.SHARED_PREFS_NAME, Context.MODE_PRIVATE);
+        prefs2.edit().putBoolean(DialerActivity.KEY_FEATURE_DISCOVERY_ONBOARDING, false).apply();
+        DialerActivity.mOnboardingFeatureDiscoveryRan = false;
+        prefs2.edit().putBoolean(DialerActivity.KEY_FEATURE_DISCOVERY_NEW_CONVERSATION, false).apply();
+        DialerActivity.mNewConversationFeatureDiscoveryRan = false;
+
+        Toast.makeText(mParent, R.string.info_feature_discovery_reset, Toast.LENGTH_LONG).show();
+    }
+
+    /**
+     * Reset warnings
+     */
+    private SettingsItem mResetWarnings;
+
+    private void prepareResetWarnings() {
+        mResetWarnings = (SettingsItem) mDrawerView.findViewById(R.id.reset_warnings);
+        mResetWarnings.setOnClickListener(this);
+    }
+
+    private void resetWarnings() {
+        MessagingPreferences.getInstance(getActivity())
+            .setWarnWhenDecryptAttachment(true);
+        mMessageAttachmentDecryptWarnBox
+            .setChecked(true);
+        Toast
+            .makeText(mParent, R.string.info_warnings_reset, Toast.LENGTH_LONG)
+            .show();
+    }
+
+    /*
+     *** Debug Logging checkbox handling
+     */
+    private int mDebugLoggingIntervalSelection = -1;
+    private static Runnable sLogsCleanupRunnable = new Runnable() {
+        @Override
+        public void run() {
+            Context context = SilentPhoneApplication.getAppContext();
+            Intent intent = new Intent(context, LogsService.class);
+            context.startService(intent);
+        }
+    };
+    private boolean mEnableDebugLogging;
+    private SettingsItem mEnableDebugLoggingBox;
+    private Button mSendLogsBtn, mModifyLoggingSettingBtn;
+    private void prepareDebugLoggingSettings(){
+        mEnableDebugLoggingBox = (SettingsItem) mDrawerView.findViewById(R.id.debug_logging_option);
+        mEnableDebugLoggingBox.setOnClickListener(this);
+
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mParent);
+        mEnableDebugLogging = prefs.getBoolean(ENABLE_DEBUG_LOGGING, false);
+        mEnableDebugLoggingBox.setChecked(mEnableDebugLogging);
+
+        mSendLogsBtn = (Button) mDrawerView.findViewById(R.id.send_logs_option);
+        mSendLogsBtn.setOnClickListener(this);
+        mModifyLoggingSettingBtn = (Button) mDrawerView.findViewById(R.id.send_logs_config_option);
+        mModifyLoggingSettingBtn.setOnClickListener(this);
+        if(mEnableDebugLogging){
+            mSendLogsBtn.setVisibility(View.VISIBLE);
+            mModifyLoggingSettingBtn.setVisibility(View.VISIBLE);
+        }
+        else{
+            mSendLogsBtn.setVisibility(View.GONE);
+            mModifyLoggingSettingBtn.setVisibility(View.GONE);
+        }
+    }
+    private void toggleDebugLoggingCheckbox(){
+        mEnableDebugLogging = !mEnableDebugLogging;
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mParent);
+        prefs.edit().putBoolean(ENABLE_DEBUG_LOGGING, mEnableDebugLogging).apply();
+        mEnableDebugLoggingBox.setChecked(mEnableDebugLogging);
+
+        //turn on/off store log entries into a file
+        com.silentcircle.logs.Log.setIsDebugLoggingEnabled(mEnableDebugLogging);
+        if(mEnableDebugLogging){
+            mSendLogsBtn.setVisibility(View.VISIBLE);
+            mModifyLoggingSettingBtn.setVisibility(View.VISIBLE);
+            if(!prefs.getBoolean(LogsService.LOGS_SERVICE_SCHEDULED, false)) {
+                SilentPhoneApplication.setLogFile();
+                // TODO: Why not now?
+                new Handler().postDelayed(sLogsCleanupRunnable, LogsService.INTERVAL);
+                PreferenceManager.getDefaultSharedPreferences(getActivity()).edit().putBoolean(LogsService.LOGS_SERVICE_SCHEDULED, true).apply();
+            }
+        }
+        else{
+            mSendLogsBtn.setVisibility(View.GONE);
+            mModifyLoggingSettingBtn.setVisibility(View.GONE);
+            prefs.edit().putBoolean(LogsService.LOGS_SERVICE_SCHEDULED, false).apply();
+        }
     }
 
     /*
@@ -780,38 +985,99 @@ public class SettingsFragment extends Fragment implements View.OnClickListener,
                                           ? View.VISIBLE : View.GONE);
         mDeveloperHeader.setVisibility(mDeveloper ? View.VISIBLE : View.GONE);
         mDeveloperContent.setVisibility(mDeveloper ? View.VISIBLE : View.GONE);
-        mDrawerView.findViewById(R.id.settings_block_screenshots)
-          .setVisibility(mDeveloper ? View.VISIBLE : View.GONE);
-        mDrawerView.findViewById(R.id.messaging_theme)
-          .setVisibility(mDeveloper ? View.VISIBLE : View.GONE);
-        mDrawerView.findViewById(R.id.messaging_lock_configuration)
-          .setVisibility(mDeveloper ? View.VISIBLE : View.GONE);
         mDrawerView.findViewById(R.id.reload_account_data)
           .setVisibility(mDeveloper ? View.VISIBLE : View.GONE);
         mDrawerView.findViewById(R.id.settings_force_axo_reregister)
-          .setVisibility(AxoMessaging.getInstance(mParent.getApplicationContext())
+          .setVisibility(ZinaMessaging.getInstance()
                          .isRegistered() && mDeveloper ? View.VISIBLE : View.GONE);
-
+        mDrawerView.findViewById(R.id.settings_force_feature_discovery)
+          .setVisibility(mDeveloper ? View.VISIBLE : View.GONE);
     }
 
     private void toggleDeveloperCheckbox() {
         mDeveloper = !mDeveloper;
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mParent);
         prefs.edit().putBoolean(DEVELOPER, mDeveloper).apply();
+        int visibility = mDeveloper ? View.VISIBLE : View.GONE;
         mDeveloperOptionBox.setChecked(mDeveloper);
-        mDeveloperHeader.setVisibility(mDeveloper ? View.VISIBLE : View.GONE);
-        mDeveloperContent.setVisibility(mDeveloper ? View.VISIBLE : View.GONE);
-        mDrawerView.findViewById(R.id.settings_block_screenshots)
-          .setVisibility(mDeveloper ? View.VISIBLE : View.GONE);
-        mDrawerView.findViewById(R.id.messaging_theme)
-          .setVisibility(mDeveloper ? View.VISIBLE : View.GONE);
-        mDrawerView.findViewById(R.id.messaging_lock_configuration)
-          .setVisibility(mDeveloper ? View.VISIBLE : View.GONE);
-        mDrawerView.findViewById(R.id.reload_account_data)
-          .setVisibility(mDeveloper ? View.VISIBLE : View.GONE);
+        mDeveloperHeader.setVisibility(visibility);
+        mDeveloperContent.setVisibility(visibility);
+//        mBldrBox.setVisibility(visibility);
+//        mBlmrBox.setVisibility(visibility);
+//        mBrdrBox.setVisibility(visibility);
+//        mBrmrBox.setVisibility(visibility);
+        mDrawerView.findViewById(R.id.reload_account_data).setVisibility(visibility);
         mDrawerView.findViewById(R.id.settings_force_axo_reregister)
-          .setVisibility(AxoMessaging.getInstance(mParent.getApplicationContext())
+          .setVisibility(ZinaMessaging.getInstance()
                          .isRegistered() && mDeveloper ? View.VISIBLE : View.GONE);
+        mDrawerView.findViewById(R.id.settings_force_feature_discovery)
+          .setVisibility(mDeveloper ? View.VISIBLE : View.GONE);
+        DialerActivity.setDeveloperMode(mDeveloper);
+
+        if (!mDeveloper) {
+            changePwToDefaultOrSecure();
+        }
+
+        prepareSasOptions();
+        prepareBlockScreenshots();
+        prepareMessagingSettings();
+        prepareNistCheckbox();
+        prepareOnBoot();
+        prepareAdvancedSettings();
+        showAdvancedSettings();
+
+        TiviPhoneService.phoneService.refreshNotification();
+    }
+
+    // If not already set to secure or none then re-key to secure or default password.
+    // This is done if user switches off the developer mode.
+    //
+    // First try to get a secure password, generated from a HW backed key. If this
+    // fails fall back to the normal default key.
+    private boolean changePwToDefaultOrSecure() {
+        int pwType = KeyStoreHelper.getUserPasswordType(mParent);
+        if (pwType == USER_PW_TYPE_NONE || pwType == USER_PW_SECURE) {
+            return false;
+        }
+        pwType = USER_PW_SECURE;
+        char[] pw = KeyStoreHelper.getSecurePassword(mParent);
+        boolean changed;
+        if (pw == null) {
+            pw = KeyStoreHelper.getDefaultPassword(mParent);
+            pwType = USER_PW_TYPE_NONE;
+            changed = KeyStoreHelper.changePassword(new String(pw));
+        }
+        else {
+            changed = KeyStoreHelper.changePasswordBin(pw);
+        }
+        if (changed) {
+            KeyStoreHelper.setUserPasswordType(mParent, pwType);
+        }
+        Arrays.fill(pw, '\0');
+        return changed;
+    }
+
+
+    /**
+     * Feature discovery handling
+     */
+    private boolean mForceFeatureDiscovery;
+    private SettingsItem mForceFeatureDiscoveryBox;
+
+    private void prepareForceFeatureDiscovery() {
+        mForceFeatureDiscoveryBox = (SettingsItem) mDrawerView.findViewById(R.id.settings_force_feature_discovery);
+        mForceFeatureDiscoveryBox.setOnClickListener(this);
+
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mParent);
+        mForceFeatureDiscovery = prefs.getBoolean(FORCE_FEATURE_DISCOVERY, false);
+        mForceFeatureDiscoveryBox.setChecked(mForceFeatureDiscovery);
+    }
+
+    private void toggleForceFeatureDiscovery() {
+        mForceFeatureDiscovery = !mForceFeatureDiscovery;
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mParent);
+        prefs.edit().putBoolean(FORCE_FEATURE_DISCOVERY, mForceFeatureDiscovery).apply();
+        mForceFeatureDiscoveryBox.setChecked(mForceFeatureDiscovery);
     }
 
     /**
@@ -823,10 +1089,15 @@ public class SettingsFragment extends Fragment implements View.OnClickListener,
     private void prepareBlockScreenshots() {
         mBlockScreenshotsBox = (SettingsItem) mDrawerView.findViewById(R.id.settings_block_screenshots);
         mBlockScreenshotsBox.setOnClickListener(this);
+        mBlockScreenshotsBox
+            .setVisibility(mDeveloper ? View.VISIBLE : View.GONE);
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mParent);
         mBlockScreenshots = prefs.getBoolean(BLOCK_SCREENSHOTS, false);
         mBlockScreenshotsBox.setChecked(mBlockScreenshots);
+        if (mBlockScreenshots) { // upgrade handling
+            toggleBlockScreenshots();
+        }
     }
 
     private void toggleBlockScreenshots() {
@@ -835,6 +1106,153 @@ public class SettingsFragment extends Fragment implements View.OnClickListener,
         prefs.edit().putBoolean(BLOCK_SCREENSHOTS, mBlockScreenshots).apply();
         mBlockScreenshotsBox.setChecked(mBlockScreenshots);
         ViewUtil.setBlockScreenshots(getActivity());
+    }
+
+    /**
+     * Handle DR preferences.
+     */
+    private boolean mBlockLocalDr;
+    private boolean mBlockRemoteDr;
+    private SettingsItem mBlockLocalDrBox;
+    private SettingsItem mBlockRemoteDrBox;
+    private SettingsItem mBldrBox;
+    private SettingsItem mBlmrBox;
+    private SettingsItem mBrdrBox;
+    private SettingsItem mBrmrBox;
+
+    private void prepareBlockDr() {
+        mBlockLocalDrBox = (SettingsItem) mDrawerView.findViewById(R.id.settings_block_local_dr);
+        mBlockRemoteDrBox = (SettingsItem) mDrawerView.findViewById(R.id.settings_block_remote_dr);
+
+        mBldrBox = (SettingsItem) mDrawerView.findViewById(R.id.settings_bldr);
+        mBlmrBox = (SettingsItem) mDrawerView.findViewById(R.id.settings_blmr);
+        mBrdrBox = (SettingsItem) mDrawerView.findViewById(R.id.settings_brdr);
+        mBrmrBox = (SettingsItem) mDrawerView.findViewById(R.id.settings_brmr);
+
+        // granular DR settings visible only on debug builds
+        int visibility = mDeveloper ? View.VISIBLE : View.GONE;
+        mBldrBox.setVisibility(visibility);
+        mBlmrBox.setVisibility(visibility);
+        mBrdrBox.setVisibility(visibility);
+        mBrmrBox.setVisibility(visibility);
+
+        mBlockLocalDrBox.setOnClickListener(this);
+        mBlockRemoteDrBox.setOnClickListener(this);
+
+        mBldrBox.setOnClickListener(this);
+        mBlmrBox.setOnClickListener(this);
+        mBrdrBox.setOnClickListener(this);
+        mBrmrBox.setOnClickListener(this);
+
+        refreshBlockDrState();
+    }
+
+    private void refreshBlockDrState() {
+        mBlockLocalDr = LoadUserInfo.isBlmr() | LoadUserInfo.isBldr();
+        mBlockRemoteDr = LoadUserInfo.isBrmr() | LoadUserInfo.isBrdr();
+
+        if (mBlockLocalDrBox != null) {
+            mBlockLocalDrBox.setChecked(mBlockLocalDr);
+            /*
+             * Leave enabled to allow dialog about blocking to be shown.
+             * mBlockLocalDrBox.setEnabled(!LoadUserInfo.isBldrs() && !LoadUserInfo.isBlmrs());
+             */
+        }
+        if (mBlockRemoteDrBox != null) {
+            mBlockRemoteDrBox.setChecked(mBlockRemoteDr);
+            /*
+             * Leave enabled to allow dialog about blocking to be shown.
+             * mBlockRemoteDrBox.setEnabled(!LoadUserInfo.isBrdrs() && !LoadUserInfo.isBrmrs());
+             */
+        }
+
+        if (mBldrBox != null) {
+            mBldrBox.setChecked(LoadUserInfo.isBldr());
+        }
+        if (mBlmrBox != null) {
+            mBlmrBox.setChecked(LoadUserInfo.isBlmr());
+        }
+        if (mBrdrBox != null) {
+            mBrdrBox.setChecked(LoadUserInfo.isBrdr());
+        }
+        if (mBrmrBox != null) {
+            mBrmrBox.setChecked(LoadUserInfo.isBrmr());
+        }
+    }
+
+    private void toggleBlockLocalDr() {
+        if (mBlockLocalDr && (LoadUserInfo.isBlmrs() | LoadUserInfo.isBldrs())) {
+            InfoMsgDialogFragment.showDialog(mParent, R.string.dialog_title_data_retention_blocking_cannot_be_disabled,
+                    R.string.dialog_message_dr_blocked_by_default, android.R.string.ok, -1);
+            mBlockLocalDrBox.setChecked(mBlockLocalDr);
+            return;
+        }
+        mBlockLocalDr = !mBlockLocalDr;
+        LoadUserInfo.setBldr(mBlockLocalDr);
+        LoadUserInfo.setBlmr(mBlockLocalDr);
+        mBlockLocalDrBox.setChecked(mBlockLocalDr);
+        mBldrBox.setChecked(mBlockLocalDr);
+        mBlmrBox.setChecked(mBlockLocalDr);
+        updateDrSettings(true);
+    }
+
+    private void toggleBlockRemoteDr() {
+        if (mBlockRemoteDr && (LoadUserInfo.isBrmrs() | LoadUserInfo.isBrdrs())) {
+            InfoMsgDialogFragment.showDialog(mParent, R.string.dialog_title_data_retention_blocking_cannot_be_disabled,
+                    R.string.dialog_message_dr_blocked_by_default, android.R.string.ok, -1);
+            mBlockRemoteDrBox.setChecked(mBlockRemoteDr);
+            return;
+        }
+        mBlockRemoteDr = !mBlockRemoteDr;
+        LoadUserInfo.setBrdr(mBlockRemoteDr);
+        LoadUserInfo.setBrmr(mBlockRemoteDr);
+        mBlockRemoteDrBox.setChecked(mBlockRemoteDr);
+        mBrdrBox.setChecked(mBlockRemoteDr);
+        mBrmrBox.setChecked(mBlockRemoteDr);
+        updateDrSettings(false);
+    }
+
+    private void toggleBlockDr(int id) {
+        boolean showWarning = false;
+        switch (id) {
+            case R.id.settings_bldr:
+                LoadUserInfo.setBldr(!LoadUserInfo.isBldr());
+                mBldrBox.setChecked(LoadUserInfo.isBldr());
+                showWarning = LoadUserInfo.isBldr();
+                break;
+            case R.id.settings_blmr:
+                LoadUserInfo.setBlmr(!LoadUserInfo.isBlmr());
+                mBlmrBox.setChecked(LoadUserInfo.isBlmr());
+                showWarning = LoadUserInfo.isBlmr();
+                break;
+            case R.id.settings_brdr:
+                LoadUserInfo.setBrdr(!LoadUserInfo.isBrdr());
+                mBrdrBox.setChecked(LoadUserInfo.isBrdr());
+                break;
+            case R.id.settings_brmr:
+                LoadUserInfo.setBrmr(!LoadUserInfo.isBrmr());
+                mBrmrBox.setChecked(LoadUserInfo.isBrmr());
+                break;
+        }
+        updateDrSettings(showWarning);
+    }
+
+    private void updateDrSettings(boolean showWarning) {
+        ZinaMessaging zinaMessaging = ZinaMessaging.getInstance();
+        if (zinaMessaging.isReady()) {
+            ZinaNative.setDataRetentionFlags(LoadUserInfo.getLocalRetentionFlags());
+        }
+        // Update phone service's DR info
+        TiviPhoneService.setDataRetention(LoadUserInfo.isLrcm() | LoadUserInfo.isLrcp(),
+                LoadUserInfo.isBldr() | LoadUserInfo.isBlmr() | LoadUserInfo.isBrdr() | LoadUserInfo.isBrmr());
+
+        // Show a message if communication will be blocked
+        if (showWarning && (DRUtils.isLocalCallDrBlockedAndEnabled()
+                || DRUtils.isLocalMessagingDrBlockedAndEnabled())) {
+            InfoMsgDialogFragment.showDialog(mParent, R.string.information_dialog,
+                    R.string.dialog_message_dr_enabled, android.R.string.ok, -1);
+        }
+        MessageUtils.requestRefresh();
     }
 
     /*
@@ -858,7 +1276,7 @@ public class SettingsFragment extends Fragment implements View.OnClickListener,
         mDeveloperAxoDebugRadioGroup = (RadioGroup) mDrawerView.findViewById(R.id.developer_axo_debug_radio_group);
         mDeveloperAxoDebugRadioGroup.setOnCheckedChangeListener(this);
 
-        mDeveloperAxoRadioButtonId = getRadioButtonIdAxo(prefs.getInt(DEVELOPER_AXO_DEBUG, 2));
+        mDeveloperAxoRadioButtonId = getRadioButtonIdAxo(prefs.getInt(DEVELOPER_ZINA_DEBUG, 2));
         mDeveloperAxoDebugRadioGroup.check(mDeveloperAxoRadioButtonId);
     }
 
@@ -920,12 +1338,12 @@ public class SettingsFragment extends Fragment implements View.OnClickListener,
     private void checkDeveloperAxoDebugLevelRadioGroup() {
         mDeveloperAxoRadioButtonId = mDeveloperAxoDebugRadioGroup.getCheckedRadioButtonId();
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mParent);
-        prefs.edit().putInt(DEVELOPER_AXO_DEBUG, getRadioButtonIndexAxo(mDeveloperAxoRadioButtonId)).apply();
+        prefs.edit().putInt(DEVELOPER_ZINA_DEBUG, getRadioButtonIndexAxo(mDeveloperAxoRadioButtonId)).apply();
 
         RadioButton checkedRadioButton = (RadioButton) mDrawerView.findViewById(mDeveloperAxoRadioButtonId);
         int level = Integer.valueOf(checkedRadioButton.getText().toString());
 
-        mCallbacks.onDrawerItemSelected(DrawerCallbacks.DEVELOPER_AXO_DEBUG, level);
+        mCallbacks.onDrawerItemSelected(DrawerCallbacks.DEVELOPER_ZINA_DEBUG, level);
     }
 
     private int getRadioButtonIdAxo(int index) {
@@ -1012,14 +1430,24 @@ public class SettingsFragment extends Fragment implements View.OnClickListener,
             selected = Uri.parse(toneString);
         }
 
+        startRingtoneSelection(selected, RingtoneManager.TYPE_RINGTONE,
+                Settings.System.DEFAULT_RINGTONE_URI, DialerActivity.RINGTONE_SELECTED);
+    }
+
+    private void startRingtoneSelection(Uri selected, int typeRingtone, Uri defaultRingtoneUri, int ringtoneSelected) {
         Intent intent = new Intent(RingtoneManager.ACTION_RINGTONE_PICKER);
-        intent.putExtra(RingtoneManager.EXTRA_RINGTONE_TYPE, RingtoneManager.TYPE_RINGTONE);
+        intent.putExtra(RingtoneManager.EXTRA_RINGTONE_TYPE, typeRingtone);
         intent.putExtra(RingtoneManager.EXTRA_RINGTONE_EXISTING_URI, selected);
-        intent.putExtra(RingtoneManager.EXTRA_RINGTONE_DEFAULT_URI, Settings.System.DEFAULT_RINGTONE_URI);
+        intent.putExtra(RingtoneManager.EXTRA_RINGTONE_DEFAULT_URI, defaultRingtoneUri);
         intent.putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_SILENT, false);
         intent.putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_DEFAULT, true);
 
-        startActivityForResult(intent, DialerActivity.RINGTONE_SELECTED);
+        try {
+            startActivityForResult(intent, ringtoneSelected);
+        } catch (ActivityNotFoundException e) {
+            Log.w(TAG, "Unable to launch ringtone picker activity " + e.getMessage());
+            Toast.makeText(mParent, R.string.warning_ringtone_picked_unavailable, Toast.LENGTH_SHORT).show();
+        }
     }
 
     @Override
@@ -1054,7 +1482,7 @@ public class SettingsFragment extends Fragment implements View.OnClickListener,
     }
 
     private void showInputInfo(String msg) {
-        InfoMsgDialogFragment infoMsg = InfoMsgDialogFragment.newInstance(R.string.remaining_oca_minutes_dialog, msg, R.string.confirm_dialog, -1);
+        InfoMsgDialogFragment infoMsg = InfoMsgDialogFragment.newInstance(R.string.remaining_oca_minutes_dialog, msg, R.string.dialog_button_ok, -1);
         FragmentManager fragmentManager = getFragmentManager();
         if (fragmentManager == null) {
             Log.e(TAG, "Could not get Fragment manager: " + msg);
@@ -1069,7 +1497,7 @@ public class SettingsFragment extends Fragment implements View.OnClickListener,
 
     // This is a distinct function because of an issue with AlertDialog.Builder#set*(String) stripping links
     private void showInputInfo(int msgResId) {
-        InfoMsgDialogFragment infoMsg = InfoMsgDialogFragment.newInstance(R.string.remaining_oca_minutes_dialog, msgResId, R.string.confirm_dialog, -1);
+        InfoMsgDialogFragment infoMsg = InfoMsgDialogFragment.newInstance(R.string.remaining_oca_minutes_dialog, msgResId, R.string.dialog_button_ok, -1);
         FragmentManager fragmentManager = getFragmentManager();
         if (fragmentManager == null) {
             Log.e(TAG, "Could not get Fragment manager: " + getString(msgResId));
@@ -1080,10 +1508,6 @@ public class SettingsFragment extends Fragment implements View.OnClickListener,
         FragmentTransaction ft = getFragmentManager().beginTransaction();
         ft.add(infoMsg, "SilentPhoneOcaInfo");
         ft.commitAllowingStateLoss();
-
-        // Make possible links clickable
-        fragmentManager.executePendingTransactions();
-        ((TextView)infoMsg.getDialog().findViewById(android.R.id.message)).setMovementMethod(LinkMovementMethod.getInstance());
     }
 
     /*
@@ -1133,26 +1557,31 @@ public class SettingsFragment extends Fragment implements View.OnClickListener,
         mDrawerView.findViewById(R.id.settings_force_axo_reregister).setOnClickListener(this);
         mDrawerView.findViewById(R.id.settings_axo_register).setOnClickListener(this);
 
-        AxoMessaging axoMessaging = AxoMessaging.getInstance(mParent.getApplicationContext());
+        ZinaMessaging axoMessaging = ZinaMessaging.getInstance();
         boolean isRegisterButtonVisible = axoMessaging.isRegistered();
         mDrawerView.findViewById(R.id.settings_axo_register)
                 .setVisibility(isRegisterButtonVisible ? View.GONE : View.VISIBLE);
+
+        mDrawerView.findViewById(R.id.settings_set_passphrase)
+                .setVisibility(mDeveloper
+                        ? View.VISIBLE : ((KeyStoreHelper.getUserPasswordType(mParent) == USER_PW_TYPE_NONE ||
+                        KeyStoreHelper.getUserPasswordType(mParent) == USER_PW_SECURE)
+                        ? View.GONE : View.VISIBLE));
     }
 
     private void toggleEnableTraversalBox() {
         mEnableTraversal = !mEnableTraversal;
-        boolean show = ((DialerActivity)mParent).isAdvancedSettings();
         mEnableTraversalBox.setChecked(mEnableTraversal);
         if (mEnableTraversal) {
             TiviPhoneService.doCmd("set cfg.iEnableFWTraversal=1");
-            if (show)
+            if (mDeveloper)
                 mDrawerView.findViewById(R.id.force_traversal).setVisibility(View.VISIBLE);
         }
         else {
             TiviPhoneService.doCmd("set cfg.iEnableFWTraversal=0");
             TiviPhoneService.doCmd("set cfg.iForceFWTraversal=0");
             mForceTraversal = false;
-            if (show)
+            if (mDeveloper)
                 mDrawerView.findViewById(R.id.force_traversal).setVisibility(View.GONE);
         }
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mParent);
@@ -1217,6 +1646,8 @@ public class SettingsFragment extends Fragment implements View.OnClickListener,
         mMessageAttachmentDecryptWarnBox = (SettingsItem) mDrawerView.findViewById(R.id.attachment_decrypt_warn_check);
         mMessageAttachmentDecryptWarnBox.setChecked(MessagingPreferences.getInstance(getActivity()).getWarnWhenDecryptAttachment());
         mMessageAttachmentDecryptWarnBox.setOnCheckedChangeListener(this);
+        mMessageAttachmentDecryptWarnBox
+            .setVisibility(mDeveloper ? View.VISIBLE : View.GONE);
 
         /* message ring tone */
         mMessageRingtone = (SettingsItem) mDrawerView.findViewById(R.id.messaging_ringtone);
@@ -1235,18 +1666,29 @@ public class SettingsFragment extends Fragment implements View.OnClickListener,
         updateMessageVibratePattern();
 
         mMessageTheme = (SettingsItem) mDrawerView.findViewById(R.id.messaging_theme);
-        mMessageTheme.setVisibility(View.VISIBLE);
+        mMessageTheme
+            .setVisibility(mDeveloper ? View.VISIBLE : View.GONE);
+        if (!mDeveloper) { // upgrade handling
+            MessagingPreferences mprefs = MessagingPreferences.getInstance(mParent);
+            if (mprefs.getMessageTheme() != MessagingPreferences.INDEX_THEME_LIGHT) {
+                mprefs.setMessageTheme(MessagingPreferences.INDEX_THEME_LIGHT);
+                updateMessageTheme();
+                getActivity().recreate();
+            }
+        }
         mMessageTheme.setOnClickListener(this);
         updateMessageTheme();
 
-        mDrawerView.findViewById(R.id.messaging_lock_configuration).setOnClickListener(this);
+        mDrawerView.findViewById(R.id.messaging_group_list).setOnClickListener(this);
+        mDrawerView.findViewById(R.id.messaging_group_list)
+            .setVisibility(mDeveloper ? View.VISIBLE : View.GONE);
 
-        if (AxoMessaging.getInstance(mParent.getApplicationContext()).isReady()) {
-            mDrawerView.findViewById(R.id.settings_chat_device_management).setVisibility(View.VISIBLE);
-            mDrawerView.findViewById(R.id.settings_chat_device_management).setOnClickListener(this);
+        if (ZinaMessaging.getInstance().isReady()) {
+            mDrawerView.findViewById(R.id.settings_device_management).setVisibility(View.VISIBLE);
+            mDrawerView.findViewById(R.id.settings_device_management).setOnClickListener(this);
         }
         else {
-            mDrawerView.findViewById(R.id.settings_chat_device_management).setVisibility(View.GONE);
+            mDrawerView.findViewById(R.id.settings_device_management).setVisibility(View.GONE);
         }
     }
 
@@ -1277,12 +1719,14 @@ public class SettingsFragment extends Fragment implements View.OnClickListener,
             tone = Uri.parse(toneString);
         }
 
-        Ringtone ring = RingtoneManager.getRingtone(mParent, tone);
-        if (ring != null) {
-            mMessageRingtone.setDescription(ring.getTitle(mParent));
-        }
-        else {
-            mMessageRingtone.setDescription(getString(R.string.no_ringtone));
+        // if item is not initialized, it will be populated in onResume
+        if (mMessageRingtone != null) {
+            Ringtone ring = RingtoneManager.getRingtone(mParent, tone);
+            if (ring != null) {
+                mMessageRingtone.setDescription(ring.getTitle(mParent));
+            } else {
+                mMessageRingtone.setDescription(getString(R.string.no_ringtone));
+            }
         }
     }
 
@@ -1320,14 +1764,8 @@ public class SettingsFragment extends Fragment implements View.OnClickListener,
             selected = RingtoneUtils.getDefaultRingtoneUri(mParent, RingtoneManager.TYPE_NOTIFICATION);
         }
 
-        Intent intent = new Intent(RingtoneManager.ACTION_RINGTONE_PICKER);
-        intent.putExtra(RingtoneManager.EXTRA_RINGTONE_TYPE, RingtoneManager.TYPE_NOTIFICATION);
-        intent.putExtra(RingtoneManager.EXTRA_RINGTONE_EXISTING_URI, selected);
-        intent.putExtra(RingtoneManager.EXTRA_RINGTONE_DEFAULT_URI, Settings.System.DEFAULT_NOTIFICATION_URI);
-        intent.putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_SILENT, false);
-        intent.putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_DEFAULT, true);
-
-        startActivityForResult(intent, DialerActivity.MESSAGE_RINGTONE_SELECTED);
+        startRingtoneSelection(selected, RingtoneManager.TYPE_NOTIFICATION,
+                Settings.System.DEFAULT_NOTIFICATION_URI, DialerActivity.MESSAGE_RINGTONE_SELECTED);
     }
 
     private void showSelectionDialog(int titleId, int itemArrayId, int selectedItemIndex, int requestCode) {
@@ -1336,34 +1774,52 @@ public class SettingsFragment extends Fragment implements View.OnClickListener,
                 getResources().getTextArray(itemArrayId),
                 selectedItemIndex);
         fragment.setTargetFragment(this, requestCode);
-        fragment.show(getFragmentManager(), SingleChoiceDialogFragment.TAG_CHOICE_DIALOG);
+        FragmentManager fragmentManager = getFragmentManager();
+        if (fragmentManager != null) {
+            fragmentManager.beginTransaction()
+                .add(fragment, SingleChoiceDialogFragment.TAG_CHOICE_DIALOG)
+                .commitAllowingStateLoss();
+        }
     }
 
     private void showAdvancedSettings() {
-        // Show dropout tone option (underflow) always
+        // dropout tone option
         String result = TiviPhoneService.getInfo(-1, -1, "cfg.iAudioUnderflow");
         mUseUnderflow = "1".equals(result);             // 1 -> true,
         mUnderflowBox.setChecked(mUseUnderflow);
+        mUnderflowBox
+            .setVisibility(mDeveloper ? View.VISIBLE : View.GONE);
+        if (!mUseUnderflow) { // upgrade handling
+            toggleUnderflowCheckbox();
+        }
 
-        boolean show = ((DialerActivity)mParent).isAdvancedSettings();
-        View v = mDrawerView.findViewById(R.id.media_relay_check);
-        if (show) {
+        if (mDeveloper) {
             result = TiviPhoneService.getInfo(0, -1, "cfg.iCanUseP2Pmedia");
-            mUseMediaRelay = "0".equals(result);             // 1 -> true, client can use p2p
-            mMediaRelayBox.setChecked(mUseMediaRelay);      // The checkbox title asks for the inverted intention
-            v.setVisibility(View.VISIBLE);
+            mUseMediaRelay = "0".equals(result); // 1 -> true, client can use p2p
+            mMediaRelayBox.setChecked(mUseMediaRelay); // The checkbox title asks for the inverted intention
+            mDrawerView.findViewById(R.id.media_relay_check)
+                .setVisibility(View.VISIBLE);
+        } else {
+            mDrawerView.findViewById(R.id.media_relay_check)
+                .setVisibility(View.GONE);
         }
-        else
-            v.setVisibility(View.GONE);
 
-        // Show force FW enable only if FW enabled is set
-        v = mDrawerView.findViewById(R.id.force_traversal);
-        if (show && mEnableTraversal) {
-            mForceTraversalBox.setChecked(mForceTraversal);
-            v.setVisibility(View.VISIBLE);
+        mDrawerView.findViewById(R.id.traversal_check)
+            .setVisibility(mDeveloper ? View.VISIBLE : View.GONE);
+        if (mDeveloper) {
+            // Show force FW enable only if FW enabled is set
+            if (mEnableTraversal) {
+                mForceTraversalBox.setChecked(mForceTraversal);
+                mDrawerView.findViewById(R.id.force_traversal)
+                    .setVisibility(View.VISIBLE);
+            }
+        } else {
+            if (!mEnableTraversal) { // upgrade handling
+                toggleEnableTraversalBox();
+            }
+            mDrawerView.findViewById(R.id.force_traversal)
+                .setVisibility(View.GONE);
         }
-        else
-            v.setVisibility(View.GONE);
     }
 
     @Override
@@ -1397,11 +1853,58 @@ public class SettingsFragment extends Fragment implements View.OnClickListener,
 
                 preferences.setMessageTheme(index);
                 updateMessageTheme();
-                /* change theme for whole app in debugg builds */
+                /* change theme for whole app in debug builds */
                 if (BuildConfig.DEBUG) {
                     getActivity().recreate();
                 }
                 break;
+            case DEBUG_LOGGING_INTERVAL_DIALOG:
+                SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mParent);
+                prefs.edit().putInt(SettingsFragment.DEBUG_LOGGING_INTERVAL_SELECTION, index).apply();
         }
+    }
+
+    public static void applyDefaultDeprecatedSettings(Context ctx) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(ctx);
+        boolean developer = prefs.getBoolean(DEVELOPER, false);
+
+        if (developer) {
+            return;
+        }
+
+        // Set light theme
+        MessagingPreferences mprefs = MessagingPreferences.getInstance(ctx);
+        if (mprefs.getMessageTheme() != MessagingPreferences.INDEX_THEME_LIGHT) {
+            mprefs.setMessageTheme(MessagingPreferences.INDEX_THEME_LIGHT);
+        }
+
+        // Do not prefer NIST
+        TiviPhoneService.doCmd("set cfg.iPreferNIST=0");
+
+        // Set 2 word SAS phrase
+        TiviPhoneService.doCmd("set cfg.iDisable256SAS=0");
+
+        // Turn regular FW traversal on; disable "forced' mode
+        prefs.edit().putBoolean(ENABLE_FW_TRAVERSAL, true)
+                .putBoolean(FORCE_FW_TRAVERSAL, false).apply();
+        String enabled = TiviPhoneService.getInfo(-1, -1, "cfg.iEnableFWTraversal");
+        if ("0".equals(enabled)) {
+            TiviPhoneService.doCmd("set cfg.iEnableFWTraversal=1");
+        }
+        String forced = TiviPhoneService.getInfo(-1, -1, "cfg.iForceFWTraversal");
+        if ("1".equals(forced)) {
+            TiviPhoneService.doCmd("set cfg.iForceFWTraversal=0");
+        }
+
+        // Do not start on boot
+        prefs.edit().putBoolean(START_ON_BOOT, false).apply();
+
+        // Do not block screenshots
+        prefs.edit().putBoolean(BLOCK_SCREENSHOTS, false).apply();
+
+        // Enable underflow
+        TiviPhoneService.doCmd("set cfg.iAudioUnderflow=1");
+        TiviPhoneService.doCmd(":s");
+        prefs.edit().putBoolean(ENABLE_UNDERFLOW_TONE, true).apply();
     }
 }

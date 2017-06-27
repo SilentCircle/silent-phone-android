@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2014-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -47,7 +47,7 @@ import android.media.ImageReader;
 import android.os.Build;
 import android.os.Handler;
 import android.os.HandlerThread;
-import android.util.Log;
+import com.silentcircle.logs.Log;
 import android.util.Size;
 import android.view.MotionEvent;
 import android.view.Surface;
@@ -94,6 +94,7 @@ public class CameraPreviewControl2 implements CameraPreviewController, TextureVi
     final private TextureView mTextureView;
 
     private int mHeight;
+    private int mWidth;
 
     int[] mRgbBuffer;
     final private Context mContext;
@@ -312,7 +313,7 @@ public class CameraPreviewControl2 implements CameraPreviewController, TextureVi
 
             // RowStride of planes may differ from width set to image reader, depends
             // on device and camera hardware, for example on Nexus 6P the rowStride is
-            // 384 and the image width is 352.
+            // 384 and the image width is 352. Allocate buffer to hold the whole image.
             final Image.Plane[] planes = image.getPlanes();
             final int total = planes[0].getRowStride() * mHeight;
             if (mRgbBuffer == null || mRgbBuffer.length < total)
@@ -406,11 +407,11 @@ public class CameraPreviewControl2 implements CameraPreviewController, TextureVi
             if (sizes.length == 0)
                 return false;
             Size videoSize = chooseOptimalSize(sizes, WIDTH, HEIGHT);
-            int videoWidth = videoSize.getWidth();
+            mWidth = videoSize.getWidth();
             mHeight = videoSize.getHeight();
-            if (ConfigurationUtilities.mTrace) Log.d(TAG, "Video width: " + videoWidth + ", height: " + mHeight);
+            if (ConfigurationUtilities.mTrace) Log.d(TAG, "Video width: " + mWidth + ", height: " + mHeight);
 
-            mImageReader = ImageReader.newInstance(videoWidth, mHeight, ImageFormat.YUV_420_888, 3);
+            mImageReader = ImageReader.newInstance(mWidth, mHeight, ImageFormat.YUV_420_888, 3);
             mImageReader.setOnImageAvailableListener(mImageAvailable, mBackgroundHandler);
 
             // Get all available size for the textureSurface preview window
@@ -484,7 +485,7 @@ public class CameraPreviewControl2 implements CameraPreviewController, TextureVi
         try {
             setUpCaptureRequestBuilder(mPreviewBuilder);
             mPreviewSession.setRepeatingRequest(mPreviewBuilder.build(), null, mBackgroundHandler);
-        } catch (CameraAccessException e) {
+        } catch (CameraAccessException | IllegalStateException | IllegalArgumentException e) {
             e.printStackTrace();
         }
     }
@@ -618,6 +619,9 @@ public class CameraPreviewControl2 implements CameraPreviewController, TextureVi
 
                 final int y1 = yPlane.get(yPos++) & 0xff;
 
+                // Even if the camera provides mor data limit the width to the requested optimal size
+                if (j >= mWidth)
+                    continue;
                 /*
                   The ordering of the u (Cb) and v (Cr) bytes inside the planes is a bit strange.
                   The _first_ byte of the u-plane and the _second_ byte of the v-plane build the
@@ -626,7 +630,7 @@ public class CameraPreviewControl2 implements CameraPreviewController, TextureVi
                   but keep the offset of the interleaving.
                  */
                 final int u = (uPlane.get(uvPos) & 0xff) - 128;
-                final int v = (vPlane.get(uvPos+1) & 0xff) - 128;
+                final int v = (vPlane.get(uvPos/*+1*/) & 0xff) - 128; // TODO: Investigate further
                 if ((j & 1) == 1) {
                     uvPos += 2;
                 }
@@ -647,7 +651,7 @@ public class CameraPreviewControl2 implements CameraPreviewController, TextureVi
                 mRgbBuffer[bufferIndex++] = ((r << 6) & 0xff0000) | ((g >> 2) & 0xff00) | ((b >> 10) & 0xff);
             }
         }
-        TiviPhoneService.nv21ToRGB32(null, mRgbBuffer, null, width, mHeight, mNativeRotation);
+        TiviPhoneService.nv21ToRGB32(null, mRgbBuffer, null, mWidth, mHeight, mNativeRotation);
     }
 
     /**

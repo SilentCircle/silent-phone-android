@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2014-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -29,30 +29,60 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package com.silentcircle.silentphone2.activities;
 
 import android.app.Activity;
-import android.support.v7.app.AlertDialog;
-import android.app.Dialog;
-import android.app.DialogFragment;
 import android.app.FragmentManager;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.v7.app.AppCompatActivity;
+
+import com.silentcircle.SilentPhoneApplication;
+import com.silentcircle.silentphone2.dialogs.InfoMsgDialogFragment;
 
 /**
- * A very simple list to display some trace information
+ * A very simple Activity to display a Dialog
  */
-public class DialogHelperActivity extends AppCompatActivity {
-    public static final String MESSAGE = "message";
-    public static final String TITLE = "title";
-    public static final String NEGATIVE_BUTTON = "negative_button";
-    public static final String POSITIVE_BUTTON = "positive_button";
-    public static final String NEUTRAL_BUTTON  = "neutral_button";
-    
-    
+public class DialogHelperActivity extends Activity implements InfoMsgDialogFragment.InfoDialogCallback {
+
+    @SuppressWarnings("unused")
+    private static final String TAG = "DialogHelperActivity";
+
+    private InfoMsgDialogFragment mInfoMsg;
+
+    // Static helper function to start this DialogHelperActivity
+    public static void showDialog(int titleResId, int msgResId, int positiveBtnLabel, int negativeBtnLabel) {
+
+        Intent intent = new Intent(SilentPhoneApplication.getAppContext(), DialogHelperActivity.class);
+        intent.putExtra(InfoMsgDialogFragment.MESSAGE, msgResId);
+
+        showDialogCommon(intent, titleResId, positiveBtnLabel, negativeBtnLabel);
+    }
+
+    public static void showDialog(int titleResId, String msg, int positiveBtnLabel, int negativeBtnLabel) {
+        Intent intent = new Intent(SilentPhoneApplication.getAppContext(), DialogHelperActivity.class);
+        intent.putExtra(InfoMsgDialogFragment.MESSAGE, msg);
+
+        showDialogCommon(intent, titleResId, positiveBtnLabel, negativeBtnLabel);
+    }
+
+    private static void showDialogCommon(Intent intent, int titleResId, int positiveBtnLabel, int negativeBtnLabel) {
+
+        intent.putExtra(InfoMsgDialogFragment.TITLE, titleResId);
+        intent.putExtra(InfoMsgDialogFragment.POSITIVE_BTN_LABEL, positiveBtnLabel);
+        intent.putExtra(InfoMsgDialogFragment.NEGATIVE_BTN_LABEL, negativeBtnLabel);
+
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        SilentPhoneApplication.getAppContext().startActivity(intent);
+    }
+
+    private void showInfo(Bundle args) {
+        mInfoMsg = InfoMsgDialogFragment.newInstance(args);
+        FragmentManager fragmentManager = getFragmentManager();
+        mInfoMsg.show(fragmentManager, "SilentDialogHelper");
+    }
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
+//        getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         Intent intent = getIntent();
         Bundle args = intent.getExtras();
         if (args == null) {
@@ -60,79 +90,38 @@ public class DialogHelperActivity extends AppCompatActivity {
             finish();
             return;
         }
+        args.putBoolean("helper_activity", true);
         showInfo(args);
     }
 
-    public void showInfo(Bundle args) {
-        InfoMsgDialogFragment infoMsg = InfoMsgDialogFragment.newInstance(args);
-        FragmentManager fragmentManager = getFragmentManager();
-        infoMsg.show(fragmentManager, "SilentDialogHelper");
+
+    /**
+     * Callback if user clicks positive button
+     */
+    @Override
+    public void onClickedPositive() {
+        mInfoMsg.dismiss();
+        super.onBackPressed();
+        finish();
     }
 
-    public static class InfoMsgDialogFragment extends DialogFragment {
-        private Activity mParent;
+    /**
+     * Callback if user clicks negative button
+     */
+    @Override
+    public void onClickedNegative() {
+        mInfoMsg.dismiss();
+        super.onBackPressed();
+        finish();
+    }
 
-        private int mPositive;
-        private int mNegative;
-        private int mNeutral;
-
-        public static InfoMsgDialogFragment newInstance(Bundle args) {
-            InfoMsgDialogFragment f = new InfoMsgDialogFragment();
-            f.setArguments(args);
-
-            return f;
-        }
-
-        public InfoMsgDialogFragment() {
-        }
-
-        @Override
-        public void onAttach(Activity activity) {
-            super.onAttach(activity);
-            mParent = activity;
-        }
-
-        @Override
-        public Dialog onCreateDialog(Bundle savedInstanceState) {
-            // Use the Builder class for convenient dialog construction
-            AlertDialog.Builder builder = new AlertDialog.Builder(mParent);
-            Bundle args = getArguments();
-            if (args == null)
-                return null;
-
-            int positive = args.getInt(POSITIVE_BUTTON, 0);
-            mPositive = positive != 0 ? positive : android.R.string.ok;
-            mNegative = args.getInt(NEGATIVE_BUTTON, 0);
-            mNeutral = args.getInt(NEUTRAL_BUTTON, 0);
-
-            builder.setTitle(args.getString(TITLE))
-                    .setMessage(args.getString(MESSAGE))
-                    .setPositiveButton(getString(mPositive), new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int id) {
-                            mParent.setResult(RESULT_OK);
-                            mParent.finish();
-                        }
-                    });
-            if (mNegative != 0) {
-                builder.setNegativeButton(getString(mNegative), new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        mParent.setResult(RESULT_CANCELED);
-                        mParent.finish();
-                    }
-                });
-            }
-            if (mNeutral != 0) {
-                builder.setNeutralButton(getString(mNegative), new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        mParent.setResult(RESULT_FIRST_USER);
-                        mParent.finish();
-                    }
-                });
-            }
-            // Create the AlertDialog object and return it
-            return builder.create();
-        }
+    /**
+     * Callback if user cancels (with back button) the dialog
+     */
+    @Override
+    public void onClickedCancel() {
+        mInfoMsg.dismiss();
+        super.onBackPressed();
+        finish();
     }
 }

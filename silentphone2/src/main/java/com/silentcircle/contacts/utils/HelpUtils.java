@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2013-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -55,8 +55,9 @@ import android.content.pm.PackageManager.NameNotFoundException;
 import android.net.Uri;
 import android.support.v4.view.MenuItemCompat;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.MenuItem;
+
+import com.silentcircle.logs.Log;
 
 import java.util.Locale;
 

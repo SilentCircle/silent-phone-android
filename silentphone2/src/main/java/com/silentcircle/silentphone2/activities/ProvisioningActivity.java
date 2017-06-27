@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2014-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -34,32 +34,27 @@ import android.accounts.AccountManagerFuture;
 import android.accounts.AuthenticatorException;
 import android.accounts.OperationCanceledException;
 import android.app.Activity;
-import android.preference.PreferenceManager;
-import android.support.v7.app.AlertDialog;
-import android.app.Dialog;
-import android.app.DialogFragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.text.Editable;
 import android.text.InputType;
 import android.text.TextUtils;
 import android.text.TextWatcher;
-import android.util.Log;
-import android.view.View;
 import android.widget.EditText;
 
 import com.silentcircle.accounts.AccountConstants;
 import com.silentcircle.common.util.AsyncTasks;
 import com.silentcircle.keymanagersupport.KeyManagerSupport;
+import com.silentcircle.logs.Log;
 import com.silentcircle.silentphone2.R;
 import com.silentcircle.silentphone2.fragments.ProvisioningAutomatic;
 import com.silentcircle.silentphone2.fragments.ProvisioningUserPassword;
@@ -110,6 +105,7 @@ public class ProvisioningActivity extends AppCompatActivity {
     public static final String DEVICE_ID = "device_id";
     public static final String USE_EXISTING = "use_existing";
     public static final String USERNAME = "username";
+    public static final String ONBOARDING_SEEN = "onboarding_seen";
 
     private static final int DID_SELECTION_DONE = 11;
 
@@ -137,7 +133,6 @@ public class ProvisioningActivity extends AppCompatActivity {
 
     private Activity mContext;
 
-    private boolean mIsPaused = false;
     private boolean mIsDestroyed = false;
     private CheckDeviceStatus mCheckDeviceStatusTask;
 
@@ -175,7 +170,6 @@ public class ProvisioningActivity extends AppCompatActivity {
         final SharedPreferences prefs =  getSharedPreferences(PREF_KM_API_KEY, Context.MODE_PRIVATE);
         final String feature = prefs.getString(StatusProvider.BP_FEATURECODE, null);
         useAccountManager(feature);
-        mIsPaused = false;
         mIsDestroyed = false;
     }
 
@@ -186,9 +180,13 @@ public class ProvisioningActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+    }
+
+    @Override
     protected void onPause() {
         super.onPause();
-        mIsPaused = true;
         cancelCheckDeviceStatusTask();
     }
 
@@ -199,11 +197,15 @@ public class ProvisioningActivity extends AppCompatActivity {
     }
 
     public void backStep() {
-        getFragmentManager().popBackStack();
+        try {
+            getFragmentManager().popBackStack();
+        } catch (IllegalStateException ignore) {}
     }
 
     public void clearBackStack() {
-        getFragmentManager().popBackStackImmediate(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+        try {
+            getFragmentManager().popBackStackImmediate(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+        } catch (IllegalStateException ignore) {}
     }
 
     public JSONObject getJsonHolder() {
@@ -298,14 +300,14 @@ public class ProvisioningActivity extends AppCompatActivity {
                             final Bundle userData = result.getBundle(AccountManager.KEY_USERDATA);
                             if (userData == null) {
                                 Log.e(LOG_TAG, "AccountManager did not provide provisioning data");
-                                provisioningCancel(null);
+                                provisioningCancel();
                                 return;
                             }
                             final String authorization = userData.getString(AccountConstants.SC_AUTHORIZATION, null);
                             deviceId = userData.getString(AccountConstants.DEVICE_ID, null);
                             if (authorization == null || deviceId == null) {
                                 Log.e(LOG_TAG, "AccountManager returned incomplete provisioning data: " + (deviceId == null ? "device id" : "authorization"));
-                                provisioningCancel(null);
+                                provisioningCancel();
                                 return;
                             }
                             checkDeviceStatus(authorization);
@@ -317,7 +319,7 @@ public class ProvisioningActivity extends AppCompatActivity {
                         } catch (AuthenticatorException e) {
                             Log.w(LOG_TAG, "getAuthTokenByFeatures Authenticator exception", e);
                         }
-                        provisioningCancel(null);
+                        provisioningCancel();
                     }
                 }, null);
 
@@ -364,18 +366,6 @@ public class ProvisioningActivity extends AppCompatActivity {
         checkStartDidSelection();
     }
 
-    public void showErrorInfo(String msg) {
-        ErrorMsgDialogFragment errMsg = ErrorMsgDialogFragment.newInstance(msg);
-        FragmentManager fragmentManager = getFragmentManager();
-        errMsg.show(fragmentManager, "SilentPhoneProvisioningError");
-    }
-
-    public void showInputInfo(String msg) {
-        InfoMsgDialogFragment infoMsg = InfoMsgDialogFragment.newInstance(msg);
-        FragmentManager fragmentManager = getFragmentManager();
-        infoMsg.show(fragmentManager, "SilentPhoneProvisioningInfo");
-    }
-
     public void showPasswordCheck(EditText passwordInput, boolean checked) {
         if (checked) {
             passwordInput.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS |
@@ -388,7 +378,7 @@ public class ProvisioningActivity extends AppCompatActivity {
             passwordInput.setSelection(passwordInput.getText().length());
     }
 
-    public void provisioningCancel(View view) {
+    public void provisioningCancel() {
         setResult(Activity.RESULT_CANCELED);
         finish();
     }
@@ -502,7 +492,7 @@ public class ProvisioningActivity extends AppCompatActivity {
             }
             if (provisioningResult >= 0) {
                 // Start loading my user info asap, the authorization data is available in KeyManager
-                LoadUserInfo li = new LoadUserInfo(getApplicationContext(), true);
+                LoadUserInfo li = new LoadUserInfo(true);
                 li.refreshUserInfo();
 
                 SharedPreferences prefs = getSharedPreferences(PREF_KM_API_KEY, Context.MODE_PRIVATE);
@@ -532,7 +522,8 @@ public class ProvisioningActivity extends AppCompatActivity {
                 runOnUiThread(new Runnable() {
                     public void run() {
                         result = getString(R.string.error_code) + result;
-                        showErrorInfo(result);
+                        DialogHelperActivity.showDialog(R.string.provisioning_error, result, android.R.string.ok, -1);
+                        provisioningCancel();
                     }
                 });
             }
@@ -602,91 +593,6 @@ public class ProvisioningActivity extends AppCompatActivity {
         return 0;
 
     }
-    /*
-     * Dialog classes to display Error and Information messages.
-     */
-    private static String MESSAGE = "message";
-    public static class ErrorMsgDialogFragment extends DialogFragment {
-        private ProvisioningActivity mParent;
-
-        public static ErrorMsgDialogFragment newInstance(String msg) {
-            ErrorMsgDialogFragment f = new ErrorMsgDialogFragment();
-
-            Bundle args = new Bundle();
-            args.putString(MESSAGE, msg);
-            f.setArguments(args);
-
-            return f;
-        }
-
-        public ErrorMsgDialogFragment() {
-        }
-
-        @Override
-        public void onAttach(Activity activity) {
-            super.onAttach(activity);
-            mParent = (ProvisioningActivity)activity;
-        }
-
-        @Override
-        public Dialog onCreateDialog(Bundle savedInstanceState) {
-            // Use the Builder class for convenient dialog construction
-            AlertDialog.Builder builder = new AlertDialog.Builder(mParent);
-            Bundle args = getArguments();
-            if (args == null)
-                return null;
-            builder.setTitle(getString(R.string.provisioning_error))
-                //.setMessage(args.getString(MESSAGE))
-                .setMessage(getString(R.string.provisioning_error_message))
-                .setPositiveButton(getString(R.string.close_dialog), new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
-                        mParent.provisioningCancel(null);
-                    }
-                });
-            // Create the AlertDialog object and return it
-            return builder.create();
-        }
-    }
-
-    public static class InfoMsgDialogFragment extends DialogFragment {
-        private Activity mParent;
-
-        public static InfoMsgDialogFragment newInstance(String msg) {
-            InfoMsgDialogFragment f = new InfoMsgDialogFragment();
-
-            Bundle args = new Bundle();
-            args.putString(MESSAGE, msg);
-            f.setArguments(args);
-
-            return f;
-        }
-
-        public InfoMsgDialogFragment() {
-        }
-
-        @Override
-        public void onAttach(Activity activity) {
-            super.onAttach(activity);
-            mParent = activity;
-        }
-
-        @Override
-        public Dialog onCreateDialog(Bundle savedInstanceState) {
-            // Use the Builder class for convenient dialog construction
-            AlertDialog.Builder builder = new AlertDialog.Builder(mParent);
-            Bundle args = getArguments();
-            if (args == null)
-                return null;
-            builder.setTitle(getString(R.string.provisioning_info))
-                .setMessage(args.getString(MESSAGE))
-                .setPositiveButton(getString(R.string.confirm_dialog), new DialogInterface.OnClickListener() {
-                       public void onClick(DialogInterface dialog, int id) {
-                       }
-                   });
-            // Create the AlertDialog object and return it
-            return builder.create();
-        }
-    }
 
     private void checkStartDidSelection() {
         LoaderTaskGetRegionList loaderTask = new LoaderTaskGetRegionList();
@@ -702,18 +608,6 @@ public class ProvisioningActivity extends AppCompatActivity {
         }
         if (ConfigurationUtilities.mTrace) Log.d(LOG_TAG, "DID region URL: " + regionUrl);
         loaderTask.execute(regionUrl);
-    }
-
-    private void showDialog(int titleResId, int msgResId, int positiveBtnLabel, int negativeBtnLabel) {
-        if (isFinishing() || mIsDestroyed) {
-            return;
-        }
-
-        com.silentcircle.silentphone2.dialogs.InfoMsgDialogFragment infoMsg = com.silentcircle.silentphone2.dialogs.InfoMsgDialogFragment.newInstance(titleResId, msgResId, positiveBtnLabel, negativeBtnLabel);
-        FragmentManager fragmentManager = mContext.getFragmentManager();
-        if (fragmentManager != null) {
-            infoMsg.show(fragmentManager, LOG_TAG);
-        }
     }
 
     private class LoaderTaskGetRegionList extends AsyncTask<URL, Integer, Integer> {
@@ -752,11 +646,12 @@ public class ProvisioningActivity extends AppCompatActivity {
                     return Constants.NO_NETWORK_CONNECTION;
                 }
                 //TODO: should we remove the "no network" dialog here? keep the rest which are not related on client side issue for debug purpose
-                showInputInfo(getString(R.string.provisioning_no_network) + e.getLocalizedMessage());
+                final String msg = getString(R.string.provisioning_no_network) + e.getLocalizedMessage();
+                DialogHelperActivity.showDialog(R.string.provisioning_error, msg, android.R.string.ok, -1);
                 Log.e(LOG_TAG, "Network not available: " + e.getMessage());
                 return -1;
             } catch (Exception e) {
-                showInputInfo(getString(R.string.provisioning_error) + e.getLocalizedMessage());
+                DialogHelperActivity.showDialog(R.string.provisioning_error, e.getLocalizedMessage(), android.R.string.ok, -1);
                 Log.e(LOG_TAG, "Network connection problem: " + e.getMessage());
                 return -1;
             } finally {
@@ -776,8 +671,8 @@ public class ProvisioningActivity extends AppCompatActivity {
                 startActivityForResult(intent, DID_SELECTION_DONE);
             }
             else if(result == Constants.NO_NETWORK_CONNECTION) {
-                provisioningCancel(null);
-                showDialog(R.string.information_dialog, R.string.connected_to_network, android.R.string.ok, -1);
+                provisioningCancel();
+                DialogHelperActivity.showDialog(R.string.provisioning_error, R.string.connected_to_network, android.R.string.ok, -1);
             }
             else {
                 // continue provisioning
@@ -869,7 +764,7 @@ public class ProvisioningActivity extends AppCompatActivity {
                 automaticProvisioning(mAuthorization);
             }
             else if(result == Constants.NO_NETWORK_CONNECTION) {
-                showDialog(R.string.information_dialog, R.string.connected_to_network, android.R.string.ok, -1);
+                DialogHelperActivity.showDialog(R.string.information_dialog, R.string.connected_to_network, android.R.string.ok, -1);
             }
             else if (result == HttpsURLConnection.HTTP_FORBIDDEN || result == HttpsURLConnection.HTTP_NOT_FOUND) {
                 if (ConfigurationUtilities.mTrace) Log.d(LOG_TAG, "Device status check - not found on provisioning server");
@@ -878,7 +773,7 @@ public class ProvisioningActivity extends AppCompatActivity {
                 usernamePassword();
             }
             else {
-                showDialog(R.string.information_dialog, R.string.connected_to_network,
+                DialogHelperActivity.showDialog(R.string.information_dialog, R.string.connected_to_network,
                         android.R.string.ok, -1);
             }
         }

@@ -17,7 +17,7 @@
 package com.silentcircle.common.extension;
 
 import android.content.Context;
-import android.util.Log;
+import com.silentcircle.logs.Log;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;

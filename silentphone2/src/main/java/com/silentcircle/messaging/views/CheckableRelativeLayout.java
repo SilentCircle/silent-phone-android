@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2016-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -29,7 +29,9 @@ package com.silentcircle.messaging.views;
 
 import android.content.Context;
 import android.util.AttributeSet;
-import android.widget.*;
+import android.widget.Checkable;
+
+import com.silentcircle.silentphone2.R;
 
 public class CheckableRelativeLayout extends android.widget.RelativeLayout implements Checkable {
 
@@ -37,7 +39,7 @@ public class CheckableRelativeLayout extends android.widget.RelativeLayout imple
             android.R.attr.state_checked
     };
 
-    private boolean checked;
+    private boolean mChecked;
 
     public CheckableRelativeLayout(Context context) {
         super(context);
@@ -52,23 +54,36 @@ public class CheckableRelativeLayout extends android.widget.RelativeLayout imple
     }
 
     @Override
-    public boolean isChecked() {
-        return checked;
-    }
-
-    @Override
     protected int[] onCreateDrawableState(int extraSpace) {
         final int[] state = super.onCreateDrawableState(extraSpace + 1);
-        if (checked) {
+        if (isChecked()) {
             mergeDrawableStates(state, STATE_CHECKED);
         }
         return state;
     }
 
     @Override
+    public void drawableStateChanged() {
+        super.drawableStateChanged();
+        /*
+         * Force re-draw on Lollipop and later to work around issue where there is no re-draw
+         * on state_pressed. Cached version is drawn without applying correct tint colour for
+         * state_pressed when using background tint colour selector.
+         *
+         * When using drawable selector for everything works fine.
+         */
+        invalidate();
+    }
+
+    @Override
+    public boolean isChecked() {
+        return mChecked;
+    }
+
+    @Override
     public void setChecked(boolean checked) {
-        if (checked != this.checked) {
-            this.checked = checked;
+        if (checked != mChecked) {
+            mChecked = checked;
             refreshDrawableState();
         }
     }

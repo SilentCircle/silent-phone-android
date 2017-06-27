@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2016-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -39,6 +39,7 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListAdapter;
 
+import com.silentcircle.common.util.ViewUtil;
 import com.silentcircle.messaging.views.adapters.ModelViewAdapter;
 import com.silentcircle.silentphone2.R;
 
@@ -117,6 +118,11 @@ public class ListView extends com.silentcircle.common.list.PinnedHeaderListView 
             delegate.performAction(menuActionId, positions);
         }
 
+        @Override
+        public void performAction(final int menuActionId, final String... ids) {
+            delegate.performAction(menuActionId, ids);
+        }
+
         public void setItemCheckedState(int position, boolean checked) {
             setItemChecked(position, checked);
             onItemCheckedStateChanged(currentMode, position, 0, checked);
@@ -126,6 +132,12 @@ public class ListView extends com.silentcircle.common.list.PinnedHeaderListView 
             boolean checked = getCheckedItemPositions().get(position, false);
             setItemCheckedState(position, checked);
             return checked;
+        }
+
+        public void exitActionMode() {
+            if (currentMode != null) {
+                currentMode.finish();
+            }
         }
 
     }
@@ -241,7 +253,7 @@ public class ListView extends com.silentcircle.common.list.PinnedHeaderListView 
     }
 
     public void setItemsChecked(boolean checked) {
-        ListAdapter adapter = getAdapter();
+        ListAdapter adapter = ViewUtil.getAdapter(this);;
         int length = adapter == null ? 0 : adapter.getCount();
         for (int i = 0; i < length; i++) {
             setItemChecked(i, checked);
@@ -280,6 +292,12 @@ public class ListView extends com.silentcircle.common.list.PinnedHeaderListView 
         ((StartActionModeOnItemLongClick) getOnItemLongClickListener()).setDelegate(listener);
     }
 
+    public void exitActionMode() {
+        if (multiChoiceModeCallback != null) {
+            multiChoiceModeCallback.exitActionMode();
+        }
+    }
+
     @Override
     protected boolean drawChild(Canvas canvas, View child, long drawingTime) {
         boolean more = false;
@@ -297,7 +315,7 @@ public class ListView extends com.silentcircle.common.list.PinnedHeaderListView 
     // check whether position is a header position
     private boolean isHeaderPosition(int position) {
         boolean result = false;
-        ListAdapter adapter = getAdapter();
+        ListAdapter adapter = ViewUtil.getAdapter(this);
         if (adapter instanceof ModelViewAdapter
                 && !((ModelViewAdapter) adapter).isDataPosition(position)) {
             result = true;

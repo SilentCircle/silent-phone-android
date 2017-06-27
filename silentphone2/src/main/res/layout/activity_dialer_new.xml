@@ -6,8 +6,14 @@
         android:id="@+id/drawer_layout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:fitsSystemWindows="true"
         tools:context="com.silentcircle.silentphone2.activities.DialerActivity">
+
+    <!-- Currently used for processing time on slow networks when initiating a call -->
+    <com.silentcircle.common.widget.ProgressBar
+        android:id="@+id/dialer_progress_bar"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone"/>
 
     <!-- As the main content view, the view below consumes the entire
          space available using match_parent in both dimensions. -->
@@ -15,20 +21,17 @@
             android:id="@+id/dialer_main_layout"
             android:layout_width="match_parent"
             android:layout_height="match_parent">
-
         <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:orientation="vertical">
-
             <!-- We use a Toolbar so that our drawer can be displayed
          in front of the action bar -->
             <android.support.v7.widget.Toolbar
                     android:id="@+id/dialer_toolbar"
                     android:layout_height="wrap_content"
                     android:layout_width="match_parent"
-                    android:minHeight="?attr/actionBarSize"
-                    android:background="?attr/sp_actionbar_color">
+                    style="@style/Toolbar">
                 <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -72,23 +75,22 @@
             </FrameLayout>
         </LinearLayout>
 
-        <FrameLayout
-                android:id="@+id/floating_action_button_container"
-                android:background="@drawable/fab_red"
-                android:layout_width="@dimen/floating_action_button_width"
-                android:layout_height="@dimen/floating_action_button_height"
-                android:layout_marginBottom="@dimen/floating_action_button_margin_bottom"
-                android:layout_gravity="center_horizontal|bottom">
-
-            <ImageButton
-                    android:id="@+id/floating_action_button"
-                    android:background="@drawable/floating_action_button"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:contentDescription="Dial pad"
-                    android:src="?sp_ic_new_chat"/>
-
-        </FrameLayout>
+        <android.support.design.widget.FloatingActionButton
+            android:id="@+id/floating_action_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginRight="@dimen/floating_action_button_margin_right"
+            android:layout_marginEnd="@dimen/floating_action_button_margin_right"
+            android:layout_marginBottom="@dimen/floating_action_button_margin_bottom"
+            android:paddingBottom="@dimen/spacing_large"
+            android:paddingLeft="@dimen/spacing_large"
+            android:paddingRight="@dimen/spacing_large"
+            android:layout_gravity="end|bottom"
+            android:src="?attr/sp_ic_new_chat"
+            app:fabSize="normal"
+            app:backgroundTint="@color/sc_ng_text_red_dark_actionbar"
+            app:elevation="@dimen/spacing_small"
+            />
 
         <!-- Host container for the contact tile drag shadow -->
         <FrameLayout

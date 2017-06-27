@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2014-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -40,9 +40,9 @@ import android.content.res.TypedArray;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.Surface;
@@ -63,6 +63,7 @@ import android.widget.TextView;
 import com.silentcircle.common.animation.AnimUtils;
 import com.silentcircle.common.animation.AnimationListenerAdapter;
 import com.silentcircle.common.util.AsyncTasks;
+import com.silentcircle.logs.Log;
 import com.silentcircle.silentphone2.R;
 import com.silentcircle.silentphone2.activities.InCallActivity;
 import com.silentcircle.silentphone2.activities.InCallCallback;
@@ -114,6 +115,7 @@ public class InCallVideoFragmentHw extends Fragment implements View.OnClickListe
     private LinearLayout mControlLayoutBottom;
     private LinearLayout mControlLayoutTop;
     private LinearLayout mVerifySas;
+    private TextView mVerifySasButton;
     private TextView mNumberName;
     private TextView mControlExplanation;
     private TextView mMainSecureState;
@@ -130,7 +132,7 @@ public class InCallVideoFragmentHw extends Fragment implements View.OnClickListe
     private Drawable mEndCall;
 
     private boolean mPauseVideo;
-    private boolean mVideoAccepted;
+    public boolean mVideoAccepted;
     private boolean mIsNear;
 
     private ImageView mPreviewMuteIcon;
@@ -350,6 +352,11 @@ public class InCallVideoFragmentHw extends Fragment implements View.OnClickListe
         mVerifySas = (LinearLayout)fragmentView.findViewById(R.id.verify_sas);
         mVerifySas.setOnClickListener(this);
 
+        mVerifySasButton = (TextView) mVerifySas.findViewById(R.id.verify_label);
+        if (mVerifySasButton != null) {
+            mVerifySasButton.setOnClickListener(this);
+        }
+
         setCallInformation();
 
         ViewTreeObserver vto = fragmentView.getViewTreeObserver();
@@ -412,7 +419,9 @@ public class InCallVideoFragmentHw extends Fragment implements View.OnClickListe
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
-        commonOnAttach(activity);
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+            commonOnAttach(activity);
+        }
     }
 
     private void commonOnAttach(Activity activity) {
@@ -456,9 +465,8 @@ public class InCallVideoFragmentHw extends Fragment implements View.OnClickListe
                 break;
 
             case R.id.VideoAccept:
-                mVideoAccepted = true;
-                switchVideoOn(true);
-               break;
+                mCallback.activateVideoCb(true);
+                break;
 
             case R.id.VideoView:
                 toggleButtonsDisplay(true);
@@ -493,6 +501,7 @@ public class InCallVideoFragmentHw extends Fragment implements View.OnClickListe
                 break;
 
             case R.id.verify_sas:
+            case R.id.verify_label:
                 verifySas();
                 break;
 
@@ -512,7 +521,7 @@ public class InCallVideoFragmentHw extends Fragment implements View.OnClickListe
      * @param call the call that changed its ZRTP state.
      * @param msg  the message id of the ZRTP status change.
      */
-    public void zrtpStateChange(CallState call, TiviPhoneService.CT_cb_msg msg) {
+    public void zrtpStateChange(@NonNull CallState call, TiviPhoneService.CT_cb_msg msg) {
         // The main call screen shows the current active call only
         if (call != TiviPhoneService.calls.selectedCall)
             return;
@@ -671,8 +680,8 @@ public class InCallVideoFragmentHw extends Fragment implements View.OnClickListe
 
         if(!TextUtils.isEmpty(bufSas)) {
             mVerifySas.setVisibility(View.VISIBLE);
+            mVerifySasButton.setVisibility(verifySas ? View.VISIBLE : View.GONE);
 
-            (mVerifySas.findViewById(R.id.verify_label)).setVisibility(verifySas ? View.VISIBLE : View.GONE);
             ((TextView)mVerifySas.findViewById(R.id.sas_text)).setText(bufSas);
             ((TextView)mVerifySas.findViewById(R.id.sas_text)).setTextColor(verifySas ? InCallMainFragment.mNameNumberTextColorNormal :
                     InCallMainFragment.mSasVerifiedColor);
@@ -765,7 +774,7 @@ public class InCallVideoFragmentHw extends Fragment implements View.OnClickListe
      * Methods to handle the video switching
      * ******************************************************************* */
     private void activateVideoScreen() {
-        if (mCamera.isCapturing() || mParent == null || mCallback == null)
+        if (mCamera == null || mCamera.isCapturing() || mParent == null || mCallback == null)
             return;
 
         boolean isSpeaker = Utilities.isSpeakerOn(mParent.getBaseContext());
@@ -798,7 +807,9 @@ public class InCallVideoFragmentHw extends Fragment implements View.OnClickListe
      * blank the screen because we acquired the lock after the sensor triggered.
      */
     private void deactivateVideoScreen() {
-        mCamera.stop();
+        if (mCamera != null) {
+            mCamera.stop();
+        }
         if (mParent == null || mCallback == null)
             return;
         if (!mParent.getPhoneService().isHeadsetPlugged() && !mParent.getPhoneService().btHeadsetScoActive()) {
@@ -808,6 +819,10 @@ public class InCallVideoFragmentHw extends Fragment implements View.OnClickListe
     }
 
     public void switchCamera() {
+        if (mCamera == null) {
+            return;
+        }
+
         if (mCamera.getNumCameras() <= 1)
             return;
         if (mPauseVideo)         // Don't switch cameras if video is set to pause

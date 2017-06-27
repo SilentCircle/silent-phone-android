@@ -1,7 +1,22 @@
+/*
+Copyright 2016-2017 Silent Circle, LLC
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
 #include <limits.h>
 
 #include "../attachments/fileHandler/scloud.h"
-#include "../logging/AxoLogging.h"
+#include "../logging/ZinaLogging.h"
 
 #include "gtest/gtest.h"
 #include <iostream>
@@ -73,7 +88,7 @@ TEST_F(ScloudTestFixture, SCloudBasic)
     size_t blobSize = 0;
 
 
-    err = SCloudEncryptNew(NULL, 0, (void*)inData, sizeof(inData), (void*)metadata.data(), metadata.size(),
+    err = SCloudEncryptNew((void*)inData_1, sizeof(inData_1), (void*)inData, sizeof(inData), (void*)metadata.data(), metadata.size(),
                            NULL, NULL, &scCtxEnc );
     ASSERT_EQ(kSCLError_NoErr, err);
 
@@ -90,6 +105,12 @@ TEST_F(ScloudTestFixture, SCloudBasic)
     string locator((char*)buffer, bufSize);
 //    cerr << "Locator: " << locator << ", length: " << bufSize << endl;
 
+    bufSize = 1024;
+    SCloudEncryptNext(scCtxEnc, buffer, &bufSize);
+    ASSERT_EQ(kSCLError_NoErr, err);
+//     cerr << "length: " << bufSize << endl;
+//     hexdump("Encrypted", buffer, bufSize);
+
     err = SCloudEncryptGetKeyBLOB( scCtxEnc, &blob, &blobSize);
     ASSERT_EQ(kSCLError_NoErr, err);
     ASSERT_FALSE(blob == NULL);
@@ -105,12 +126,6 @@ TEST_F(ScloudTestFixture, SCloudBasic)
     string segment((char*)blob, blobSize);
     free(blob);
 //    cerr << "segment: " << segment << ", length: " << blobSize << endl;
-
-    bufSize = 1024;
-    SCloudEncryptNext(scCtxEnc, buffer, &bufSize);
-    ASSERT_EQ(kSCLError_NoErr, err);
-//     cerr << "length: " << bufSize << endl;
-//     hexdump("Encrypted", buffer, bufSize);
 
     err = SCloudDecryptNew((uint8_t*)key.data(), key.size(), NULL, NULL, &scCtxDec);
     ASSERT_EQ(kSCLError_NoErr, err);
@@ -157,7 +172,7 @@ TEST_F(ScloudTestFixture, SCloudBigBuffer)
     uint8_t* blob = NULL;
     size_t blobSize = 0;
 
-    err = SCloudEncryptNew(NULL, 0, (void*)bigData, 64*1024, (void*)metadataBig.data(), metadataBig.size(),
+    err = SCloudEncryptNew((void*)inData_1, sizeof(inData_1), (void*)bigData, 64*1024, (void*)metadataBig.data(), metadataBig.size(),
                            NULL, NULL, &scCtxEnc );
     ASSERT_EQ(kSCLError_NoErr, err);
 
@@ -173,13 +188,6 @@ TEST_F(ScloudTestFixture, SCloudBigBuffer)
 
     string locator((char*)buffer, bufSize);
 
-    err = SCloudEncryptGetKeyBLOB( scCtxEnc, &blob, &blobSize);
-    ASSERT_EQ(kSCLError_NoErr, err);
-    ASSERT_FALSE(blob == NULL);
-
-    string key((char*)blob, blobSize);
-    free(blob);
-
     size_t expectedSize = 32 + metadataBig.size() + (64*1024);
     size_t pad = expectedSize % 16;
     expectedSize += (pad == 0) ? 16 : 16 - pad;
@@ -193,6 +201,13 @@ TEST_F(ScloudTestFixture, SCloudBigBuffer)
     err = SCloudEncryptNext(scCtxEnc, bigBuffer, &actual);
     ASSERT_EQ(kSCLError_NoErr, err);
     ASSERT_EQ(required, actual);
+
+    err = SCloudEncryptGetKeyBLOB( scCtxEnc, &blob, &blobSize);
+    ASSERT_EQ(kSCLError_NoErr, err);
+    ASSERT_FALSE(blob == NULL);
+
+    string key((char*)blob, blobSize);
+    free(blob);
 
     err = SCloudDecryptNew((uint8_t*)key.data(), key.size(), NULL, NULL, &scCtxDec);
     ASSERT_EQ(kSCLError_NoErr, err);

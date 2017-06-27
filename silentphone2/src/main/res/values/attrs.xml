@@ -115,18 +115,23 @@
 
         <!-- main activity background and text colors -->
         <attr name="sp_activity_background_color" format="reference|color"/>
+        <attr name="sp_activity_secondary_background_color" format="reference|color"/>
         <attr name="sp_activity_primary_text_color" format="reference|color"/>
         <attr name="sp_activity_secondary_text_color" format="reference|color"/>
         <attr name="sp_activity_button_background_selector" format="reference|color"/>
         <attr name="sp_activity_button_text_selector" format="reference|color"/>
+        <attr name="sp_activity_text_selector" format="reference|color"/>
 
         <!-- dialpad background -->
         <attr name="sp_diaplad_background_color" format="reference|color"/>
 
         <!-- message bubble background and text colours -->
         <attr name="sp_incoming_message_background_selector" format="reference|color"/>
+        <attr name="sp_retained_incoming_message_background_selector" format="reference|color"/>
         <attr name="sp_incoming_message_text_selector" format="reference|color"/>
         <attr name="sp_outgoing_message_background_selector" format="reference|color"/>
+        <attr name="sp_chat_compose_background_color" format="reference|color"/>
+        <attr name="sp_retained_outgoing_message_background_selector" format="reference|color"/>
         <attr name="sp_outgoing_message_text_selector" format="reference|color"/>
         <attr name="sp_message_description_text_color" format="reference|color"/>
         <attr name="sp_error_message_text_selector" format="reference|color"/>
@@ -137,6 +142,8 @@
         <attr name="sp_outgoing_message_background" format="reference|color"/>
         <attr name="sp_incoming_message_background" format="reference|color"/>
         <attr name="sp_attachment_grid_background"  format="reference|color"/>
+        <attr name="sp_call_message_background_selector" format="reference|color"/>
+        <attr name="sp_retained_call_message_background_selector" format="reference|color"/>
 
     </declare-styleable>
 
@@ -195,6 +202,8 @@
         <attr name="list_item_text_offset_top" format="dimension"/>
         <attr name="list_item_name_text_size" format="dimension"/>
         <attr name="list_item_background_color" format="reference" />
+        <attr name="list_item_checkbox_size" format="dimension"/>
+        <attr name="list_item_checkbox_drawable" format="reference"/>
     </declare-styleable>
 
     <declare-styleable name="InterpolatingLayout_Layout">
@@ -292,17 +301,22 @@
         <attr name="srcChecked" format="reference" />
         <attr name="tintColor" format="reference" />
         <attr name="text" format="reference|string" />
-        <attr name="textColor" format="reference|color" />
         <attr name="description" format="reference|string" />
         <attr name="textSize" format="reference|dimension" />
         <attr name="descriptionSize" format="reference|dimension" />
         <attr name="isCheckable" format="boolean" />
         <attr name="imageMarginLeft" format="reference|dimension" />
         <attr name="imageMarginRight" format="reference|dimension" />
-        <attr name="checkableMargin" format="reference|dimension" />
+        <attr name="checkableMarginLeft" format="reference|dimension" />
+        <attr name="checkableMarginRight" format="reference|dimension" />
         <attr name="descriptionMarginTop" format="reference|dimension" />
         <attr name="descriptionMarginLeft" format="reference|dimension" />
+        <attr name="descriptionMarginRight" format="reference|dimension" />
         <attr name="descriptionColor" format="reference|color" />
+        <attr name="containerPaddingLeft" format="reference|dimension" />
+        <attr name="containerPaddingTop" format="reference|dimension" />
+        <attr name="containerPaddingRight" format="reference|dimension" />
+        <attr name="containerPaddingBottom" format="reference|dimension" />
     </declare-styleable>
 
     <declare-styleable name="SettingsItem" parent="OptionsItem">
@@ -332,6 +346,39 @@
     <declare-styleable name="SlidingTabLayout">
         <attr name="slidingTabTextColor" format="reference|color" />
         <attr name="slidingTabSelectedTextColor" format="reference|color" />
+    </declare-styleable>
+
+    <declare-styleable name="PageIndicator">
+        <attr name="srcActive" format="reference" />
+        <attr name="srcInactive" format="reference" />
+        <attr name="itemMargin" format="reference|dimension" />
+    </declare-styleable>
+
+    <declare-styleable name="TriangleDrawable">
+        <attr name="triangleColor" format="reference|color" />
+        <attr name="position1x" format="float" />
+        <attr name="position2x" format="float" />
+        <attr name="position3x" format="float" />
+        <attr name="position1y" format="float" />
+        <attr name="position2y" format="float" />
+        <attr name="position3y" format="float" />
+    </declare-styleable>
+
+    <declare-styleable name="SwipeRevealLayout">
+        <attr name="dragEdge">
+            <flag name="left" value="1" />
+            <flag name="right" value="2" />
+            <flag name="top" value="4" />
+            <flag name="bottom" value="8" />
+            <flag name="leftright" value="16" />
+        </attr>
+
+        <attr name="mode">
+            <enum name="normal" value="0" />
+            <enum name="same_level" value="1" />
+        </attr>
+
+        <attr name="flingVelocity" format="integer" />
     </declare-styleable>
 
 </resources>

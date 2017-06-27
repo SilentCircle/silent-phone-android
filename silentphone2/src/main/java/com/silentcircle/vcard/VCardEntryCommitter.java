@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2013-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -54,7 +54,7 @@ import android.content.OperationApplicationException;
 import android.net.Uri;
 import android.os.RemoteException;
 import android.provider.ContactsContract;
-import android.util.Log;
+import com.silentcircle.logs.Log;
 
 import java.util.ArrayList;
 

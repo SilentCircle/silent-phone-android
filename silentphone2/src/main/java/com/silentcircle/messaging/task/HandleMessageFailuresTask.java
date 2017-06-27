@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2016-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -25,24 +25,30 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-
 package com.silentcircle.messaging.task;
 
 import android.content.Context;
 import android.os.AsyncTask;
-import android.util.Log;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 
+import com.silentcircle.logs.Log;
 import com.silentcircle.messaging.model.Conversation;
+import com.silentcircle.messaging.model.MessageErrorCodes;
 import com.silentcircle.messaging.model.event.Event;
 import com.silentcircle.messaging.model.event.Message;
+import com.silentcircle.messaging.providers.AvatarProvider;
 import com.silentcircle.messaging.repository.ConversationRepository;
-import com.silentcircle.messaging.services.AxoMessaging;
+import com.silentcircle.messaging.services.ZinaMessaging;
 import com.silentcircle.messaging.util.MessageUtils;
 import com.silentcircle.silentphone2.util.ConfigurationUtilities;
 import com.silentcircle.silentphone2.util.Utilities;
 
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+
+import zina.ZinaNative;
 
 /**
  * .
@@ -64,6 +70,7 @@ public class HandleMessageFailuresTask extends AsyncTask<String, Void, Integer> 
     @Override
     protected Integer doInBackground(String... params) {
         int count = 0;
+        Log.d(TAG, "Started HandleMessageFailuresTask");
 
         if (!Utilities.isNetworkConnected(mContext)) {
             // return indication for re-run if no network available
@@ -72,7 +79,7 @@ public class HandleMessageFailuresTask extends AsyncTask<String, Void, Integer> 
         }
 
         // check Axolotl registration state
-        AxoMessaging axoMessaging = AxoMessaging.getInstance(mContext);
+        ZinaMessaging axoMessaging = ZinaMessaging.getInstance();
         boolean axoRegistered = axoMessaging.isRegistered();
 
         if (!axoRegistered) {
@@ -88,13 +95,15 @@ public class HandleMessageFailuresTask extends AsyncTask<String, Void, Integer> 
         while (iterator.hasNext()) {
             Conversation conversation = iterator.next();
 
+            correctConversationAvatar(repository, conversation);
+
             if (conversation == null || !repository.historyOf(conversation).exists()) {
                 continue;
             }
 
             List<Event> events = repository.historyOf(conversation).list();
             if (events != null && events.size() > 0) {
-                count += searchFailedMessages(count, repository, conversation, events);
+                count += searchFailedMessages(repository, conversation, events);
             }
         }
 
@@ -104,16 +113,25 @@ public class HandleMessageFailuresTask extends AsyncTask<String, Void, Integer> 
         return count;
     }
 
-    private int searchFailedMessages(int count, ConversationRepository repository,
+    private int searchFailedMessages(ConversationRepository repository,
             Conversation conversation, List<Event> events) {
+        int count = 0;
         for (Event event : events) {
             if (event instanceof Message) {
                 Message message = (Message) event;
                 int saveAction = SAVE_ACTION_NONE;
 
                 Long[] flags = message.getFailureFlags();
-                if (flags.length != 0) {
-                    saveAction = handleFailure(message);
+                if (flags.length != 0 && conversation.getPartner().isGroup())  {
+                    message.clearFailureFlag(Message.FAILURE_READ_NOTIFICATION);
+                    message.clearFailureFlag(Message.FAILURE_BURN_NOTIFICATION);
+                    saveAction = SAVE_ACTION_UPDATE;
+                }
+
+                flags = message.getFailureFlags();
+                if (flags.length != 0
+                        && Utilities.canMessage(conversation.getPartner().getUserId())) {
+                    saveAction = handleFailure(conversation, message);
                 }
 
                 if (saveAction == SAVE_ACTION_REMOVE) {
@@ -132,27 +150,52 @@ public class HandleMessageFailuresTask extends AsyncTask<String, Void, Integer> 
         return count;
     }
 
-    private int handleFailure(Message message) {
+    private int handleFailure(Conversation conversation, Message message) {
         int save = SAVE_ACTION_NONE;
 
+        final boolean isGroup = conversation.getPartner().isGroup();
+        final String conversationId = conversation.getPartner().getUserId();
+
         if (ConfigurationUtilities.mTrace) {
-            Log.d(TAG, "handleFailure: " + message.getId() + " " + message.getFailureFlags());
+            Log.d(TAG, "handleFailure: " + message.getId() + " " + Arrays.toString(message.getFailureFlags()));
         }
+        ZinaMessaging zinaMessaging = ZinaMessaging.getInstance();
 
         if (message.hasFailureFlagSet(Message.FAILURE_READ_NOTIFICATION)) {
-            AxoMessaging.getInstance(mContext).sendReadNotification(message);
+            zinaMessaging.sendReadNotification(message);
             if (!message.hasFailureFlagSet(Message.FAILURE_READ_NOTIFICATION)) {
                 save = SAVE_ACTION_UPDATE;
             }
         }
         if (message.hasFailureFlagSet(Message.FAILURE_BURN_NOTIFICATION)) {
-            String conversationId = MessageUtils.getConversationId(message);
-            AxoMessaging.getInstance(mContext).sendBurnNoticeRequest(
-                    message, conversationId);
+            if (isGroup) {
+                int result = ZinaNative.burnGroupMessage(conversationId,
+                        new String[]{message.getId()});
+                if (result == MessageErrorCodes.SUCCESS || result == MessageErrorCodes.OK) {
+                    result = ZinaMessaging.applyGroupChangeSet(conversationId);
+                }
+                if (result == MessageErrorCodes.SUCCESS) {
+                    save = SAVE_ACTION_REMOVE;
+                }
+            }
+            else {
+                zinaMessaging.sendBurnNoticeRequest(message, conversationId);
+            }
             if (!message.hasFailureFlagSet(Message.FAILURE_BURN_NOTIFICATION)) {
                 save = SAVE_ACTION_REMOVE;
             }
         }
         return save;
+    }
+
+    private void correctConversationAvatar(@NonNull ConversationRepository repository,
+            @Nullable Conversation conversation) {
+        if (conversation != null && conversation.getAvatar() != null
+                && conversation.getAvatarIvAsByteArray() == null) {
+            Log.d(TAG, "Removing old avatar from conversation structure: " + conversation.getPartner().getUserId());
+            AvatarProvider.deleteConversationAvatar(mContext, conversation.getAvatar());
+            conversation.setAvatar(null);
+            repository.save(conversation);
+        }
     }
 }

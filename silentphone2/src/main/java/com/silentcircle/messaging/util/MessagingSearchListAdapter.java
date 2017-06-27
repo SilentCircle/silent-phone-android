@@ -16,23 +16,28 @@
 package com.silentcircle.messaging.util;
 
 import android.content.Context;
+import android.database.Cursor;
+import android.view.View;
+import android.view.ViewGroup;
 
+import com.silentcircle.common.list.ContactListItemView;
+import com.silentcircle.silentphone2.R;
 import com.silentcircle.silentphone2.list.DialerPhoneNumberListAdapter;
-import com.silentcircle.silentphone2.util.Utilities;
 
 /**
  * List adapter to display regular search results.
  */
 public class MessagingSearchListAdapter extends DialerPhoneNumberListAdapter {
 
-    public MessagingSearchListAdapter(Context context) {
-        super(context);
+    public MessagingSearchListAdapter(Context context, boolean enableConversations) {
+        super(context, false);
+        if (enableConversations) {
+            addPartition(0, createLocalScConversationPartition());
+        }
     }
 
     @Override
     public void setQueryString(String queryString) {
-        final boolean showMessagingShortcuts = Utilities.isValidSipUsername(queryString);
-
         boolean changed = setShortcutEnabled(SHORTCUT_DIRECT_CALL, false);
         // Either one of the add contacts options should be enabled. If the user entered
         // a dial-able number, then clicking add to contact should add it as a number.
@@ -41,11 +46,28 @@ public class MessagingSearchListAdapter extends DialerPhoneNumberListAdapter {
 
         // For NGA: Don't show the "add to contacts option"
         changed |= setShortcutEnabled(SHORTCUT_ADD_NUMBER_TO_CONTACTS, false);
-        changed |= setShortcutEnabled(SHORTCUT_DIRECT_CONVERSATION, showMessagingShortcuts);
-//        changed |= setShortcutEnabled(SHORTCUT_MAKE_VIDEO_CALL, showNumberShortcuts /* && CallUtil.isVideoEnabled(getContext())*/);
+        changed |= setShortcutEnabled(SHORTCUT_DIRECT_CONVERSATION,
+                false);
+        changed |= setShortcutEnabled(SHORTCUT_START_GROUP_CHAT, false);
+        changed |= setShortcutEnabled(SHORTCUT_ADD_TO_GROUP_CHAT, false);
+
         if (changed) {
             notifyDataSetChanged();
         }
         super.setQueryString(queryString);
     }
+
+    @Override
+    protected ContactListItemView newView(
+            Context context, int partition, Cursor cursor, int position, ViewGroup parent) {
+        ContactListItemView view = super.newView(context, partition, cursor, position, parent);
+        view.setBackgroundResource(R.drawable.bg_action);
+        return view;
+    }
+
+    @Override
+    protected void bindView(View itemView, int partition, Cursor cursor, int position) {
+        super.bindView(itemView, partition, cursor, position);
+    }
+
 }

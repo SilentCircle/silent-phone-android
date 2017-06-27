@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2014-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -99,8 +99,9 @@ public interface InCallCallback {
 
     /**
      * The user starts a video call.
+     * @param fromAcceptance if the user is activating the video from accepting a video call
      */
-    void activateVideoCb();
+    void activateVideoCb(boolean fromAcceptance);
 
     /**
      * Remove video fragment after user stopped a video call.

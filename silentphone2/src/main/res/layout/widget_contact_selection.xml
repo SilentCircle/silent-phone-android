@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <com.silentcircle.messaging.views.RecyclerView
+        android:id="@+id/contact_selection_list"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:clipChildren="false"
+        android:divider="@null"
+        android:fadingEdge="none"
+        android:filterTouchesWhenObscured="false"
+        android:overScrollMode="never"
+        android:orientation="horizontal"/>
+
+</LinearLayout>

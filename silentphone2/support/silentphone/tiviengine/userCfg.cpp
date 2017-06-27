@@ -1,7 +1,7 @@
 /*
 Created by Janis Narbuts
 Copyright (C) 2004-2012, Tivi LTD, www.tiviphone.com. All rights reserved.
-Copyright (C) 2012-2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2012-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,8 +27,6 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-
-
 #if  1
 
 #ifdef _WIN32
@@ -38,6 +36,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 void tivi_log1(const char *p, int val);
 
 #include <stdlib.h>
+#include <string>
 
 #include "../baseclasses/CTEditBase.h"
 #include "../tiviengine/main.h"
@@ -119,11 +118,42 @@ static int _fillCfg(char *dest, int iMaxSize, STR_XML *src)
    return 0;
 }
 
+static int _fillCfgFromString(char *dest, int iMaxSize, const std::string& src)
+{
+    char s[256];
+    if (src.size() < sizeof(s) && src.size() < iMaxSize)
+    {
+        memcpy(s, src.c_str(), src.size());
+        s[src.size()] = 0;
+        trim(s);
+        strncpy(dest, s, iMaxSize);
+    }
+    return 0;
+}
+
 //dest is char always array
 #define fillCfg(dest, src) _fillCfg(dest, sizeof(dest), src)
 
+//dest is char always array
+#define fillCfgFromString(dest, src) _fillCfgFromString(dest, sizeof(dest), src)
+
+static std::string sipPwd;
+int32_t setSIPPassword(const std::string& password) {
+    sipPwd = password;
+    return 0;
+}
+
+static std::string sipAuthName;
+int32_t setSIPAuthName(const std::string& authName) {
+    sipAuthName = authName;
+    return 0;
+}
+
 void FindXMLVal(NODE *node, int level, int cfgFlag, PHONE_CFG &cfg)
 {
+    bool passwordSet = false;
+    bool authnameSet = false;
+
    NODE *tmpNode;
    tmpNode = node;
    if CMP_XML(tmpNode->name,"CFG",3) cfgFlag|=CFG_F_TRUE;
@@ -155,7 +185,19 @@ void FindXMLVal(NODE *node, int level, int cfgFlag, PHONE_CFG &cfg)
          nameValue *tmpNV;
 
          tmpNV=tmpNode->nV;
-         // atributes
+
+          if (cfgFlag == (CFG_F_USER|CFG_F_TRUE)) {
+              if (!sipPwd.empty()) {
+                  fillCfgFromString(cfg.user.pwd, sipPwd);
+                  passwordSet = true;
+              }
+              if (!sipAuthName.empty()) {
+                  fillCfgFromString(cfg.user.authname, sipAuthName);
+                  authnameSet = true;
+              }
+          }
+
+          // atributes
          while(tmpNV)
          {
 
@@ -176,31 +218,33 @@ void FindXMLVal(NODE *node, int level, int cfgFlag, PHONE_CFG &cfg)
                }
                break;
             case CFG_F_USER|CFG_F_TRUE:
-               if (CMP_XML(tmpNV->name,"LOGINNAME",9))
-                  fillCfg(cfg.user.un,&tmpNV->value);
-               else if(CMP_XML(tmpNV->name,"PWDP",4))
-               {
+               if (CMP_XML(tmpNV->name,"LOGINNAME",9)) {
+                   fillCfg(cfg.user.un, &tmpNV->value);
+               }
+               else if(CMP_XML(tmpNV->name,"PWDP",4) && !passwordSet) {
                   cfg.iPlainPasswordDetected=1;
                   fillCfg(cfg.user.pwd,&tmpNV->value);
                }
-               else if (CMP_XML(tmpNV->name,"PWD",3))
+               else if (CMP_XML(tmpNV->name,"PWD",3) && !passwordSet)
                {
                   cfg.iPlainPasswordDetected=1;
                   decodePwd(tmpNV->value.s,cfg.user.pwd, sizeof(cfg.user.pwd));
                }
-               else if (CMP_XML(tmpNV->name,"PWDA",4))
+               else if (CMP_XML(tmpNV->name,"PWDA",4) && !passwordSet)
                {
                   //int decryptPWD(const char *hexIn, int iLen, char *outPwd, int iMaxOut, int iIndex);
                   
                   decryptPWD(tmpNV->value.s,tmpNV->value.len, cfg.user.pwd, sizeof(cfg.user.pwd), cfg.iIndex);
                }
-               else
-               if (CMP_XML(tmpNV->name,"FROMNAME",8))
-                  fillCfg(cfg.user.nick,&tmpNV->value);else
-               if (CMP_XML(tmpNV->name,"PHONENR",7))
-                  fillCfg(cfg.user.nr,&tmpNV->value);
-               else if (CMP_XML(tmpNV->name,"SAVEPWD",7))
-                  cfg.iDontSavePwd=!atoi(tmpNV->value.s);
+               else if (CMP_XML(tmpNV->name,"FROMNAME",8)) {
+                   fillCfg(cfg.user.nick, &tmpNV->value);
+               }
+               else if (CMP_XML(tmpNV->name,"PHONENR",7)) {
+                   fillCfg(cfg.user.nr, &tmpNV->value);
+               }
+               else if (CMP_XML(tmpNV->name,"SAVEPWD",7)) {
+                   cfg.iDontSavePwd = !atoi(tmpNV->value.s);
+               }
                else if (CMP_XML(tmpNV->name,"COUNTRY",7))
                {
                   fillCfg(cfg.user.country,&tmpNV->value);
@@ -209,7 +253,7 @@ void FindXMLVal(NODE *node, int level, int cfgFlag, PHONE_CFG &cfg)
                {
                   fillCfg(cfg.partnerId,&tmpNV->value);
                }
-               else if (CMP_XML(tmpNV->name,"AUTHNAME",8))
+               else if (CMP_XML(tmpNV->name,"AUTHNAME",8) && !authnameSet)
                {
                   fillCfg(cfg.user.authname,&tmpNV->value);
                }
@@ -264,6 +308,14 @@ void FindXMLVal(NODE *node, int level, int cfgFlag, PHONE_CFG &cfg)
                else if (CMP_XML(tmpNV->name,"PXIFNAT",7))
                {
                   fillCfg(cfg.bufpxifnat,&tmpNV->value);
+                  void *findGlobalCfgKey(const char *key);
+                  static int *g_enable = (int *)findGlobalCfgKey("iEnableFWTraversal");
+                  if(g_enable && *g_enable && cfg.bufpxifnat[0]){
+                     ADDR a = cfg.bufpxifnat;
+                     if(a.getPort()!=443 && (a.getPort()==5060 || a.getPort()==5061 || a.getPort()==0)){
+                        snprintf(cfg.bufpxifnat, sizeof(cfg.bufpxifnat),"%s:443",a.bufAddr);
+                     }
+                  }
                }
                else if (CMP_XML(tmpNV->name,"STUN",4))
                {
@@ -295,7 +347,7 @@ void FindXMLVal(NODE *node, int level, int cfgFlag, PHONE_CFG &cfg)
                }
                else if (CMP_XML(tmpNV->name,"EXPIRES",7))
                {
-                  cfg.uiExpires=strtoul(tmpNV->value.s,NULL,0);
+                  cfg.uiExpires=(int)strtoul(tmpNV->value.s,NULL,0);
                }
                else if (CMP_XML(tmpNV->name,"AUTO",4))
                {
@@ -326,18 +378,20 @@ void FindXMLVal(NODE *node, int level, int cfgFlag, PHONE_CFG &cfg)
                }
                else if(CMP_XML(tmpNV->name,"WFLAG",5))
                {
-                  int ff=strtoul(tmpNV->value.s,NULL,0);
+                  int ff=(int)strtoul(tmpNV->value.s,NULL,0);
                   cfg.iShowDiscl=ff&4;
                   cfg.iWarnCamMicUsage=ff&2;
                   cfg.iWarnNetworkUsage=ff&1;
                }
                else if(CMP_XML(tmpNV->name,"APPRIO",6)){
-                  cfg.iAPPrio=strtoul(tmpNV->value.s,NULL,0);
+                  cfg.iAPPrio=(int)strtoul(tmpNV->value.s,NULL,0);
                }
                else if(CMP_XML(tmpNV->name,"NODIALERHELPER",14)){//nodialerhelper
-                  cfg.iDisableDialingHelper=strtoul(tmpNV->value.s,NULL,0);
+                  cfg.iDisableDialingHelper=(int)strtoul(tmpNV->value.s,NULL,0);
                }
-
+               else if(CMP_XML(tmpNV->name,"DEBUG",5)){//nodialerhelper
+                  cfg.iDebug=tmpNV->value.s[0]-'0';
+               }
                break;
 
             case CFG_F_PHONE|CFG_F_TRUE|CFG_F_GUI:
@@ -428,7 +482,7 @@ void FindXMLVal(NODE *node, int level, int cfgFlag, PHONE_CFG &cfg)
                else if (CMP_XML(tmpNV->name,"DISABLED",8))
                   fillCfg(cfg.szACodecsDisabled,&tmpNV->value);
                else if(CMP_XML(tmpNV->name,"RESPWITHONE",11)){
-                  cfg.iResponseOnlyWithOneCodecIn200Ok=strtoul(tmpNV->value.s,NULL,0);
+                  cfg.iResponseOnlyWithOneCodecIn200Ok=(int)strtoul(tmpNV->value.s,NULL,0);
                }
                break;
             case CFG_F_AUDIO|CFG_F_TRUE|CFG_F_SDP:
@@ -446,9 +500,9 @@ void FindXMLVal(NODE *node, int level, int cfgFlag, PHONE_CFG &cfg)
                else if (CMP_XML(tmpNV->name,"AEC",3))
                   cfg.iUseAEC=tmpNV->value.s[0]!='0';
                else if(CMP_XML(tmpNV->name,"PCKSZ",5))
-                  cfg.iPayloadSizeSend=strtoul(tmpNV->value.s,NULL,0);
+                  cfg.iPayloadSizeSend=(int)strtoul(tmpNV->value.s,NULL,0);
                else if(CMP_XML(tmpNV->name,"PCKSZG",6))
-                  cfg.iPayloadSizeSend3G=strtoul(tmpNV->value.s,NULL,0);
+                  cfg.iPayloadSizeSend3G=(int)strtoul(tmpNV->value.s,NULL,0);
                break;
 
             
@@ -473,6 +527,9 @@ void FindXMLVal(NODE *node, int level, int cfgFlag, PHONE_CFG &cfg)
 
       tmpNode = tmpNode->next;
    }
+    if (passwordSet) {
+        cfg.iDontSavePwd = 1;
+    }
 }
 
 
@@ -522,7 +579,7 @@ void guiSaveUserCfg(PHONE_CFG *p, short *fn)
    
    if(!p->iDontSavePwd){
       
-      if(iAESpwdOK){
+      if(iAESpwdOK > 0 && (int)strlen(pwdAES) > 0){
          p->iPlainPasswordDetected = 0;
          fprintf(f,"pwda=\"%s\" ",pwdAES);
          tivi_log1("aes pwd ok",0);
@@ -564,6 +621,7 @@ void guiSaveUserCfg(PHONE_CFG *p, short *fn)
    fprintf(f," lang=\"%s\"",p->szLangFN);
    fprintf(f," apprio=\"%d\"",p->iAPPrio);
    fprintf(f," nodialerhelper=\"%d\"",p->iDisableDialingHelper);
+   fprintf(f," debug=\"%d\"",p->iDebug);
    
    
 
@@ -627,7 +685,7 @@ void guiSaveUserCfg(PHONE_CFG *p, short *fn)
 void setCfgFN(CTEditBase &b, const char *fn){
 #if defined(ANDROID_NDK) || defined(__APPLE__) || defined(__linux__)
    
-   char * getFileStorePath();
+   extern char * getFileStorePath();
    b.setText(getFileStorePath());
    b.addChar('/');
    b.addText(fn);
@@ -657,7 +715,7 @@ void setCfgFN(CTEditBase &b, int iIndex){
 
 #if defined(ANDROID_NDK) || defined(__APPLE__) || defined(__linux__)
  
-   char * getFileStorePath();
+   extern char * getFileStorePath();
    b.setText(getFileStorePath());
    if(iIndex)
       b.addInt(iIndex,"/tivi_cfg%d.xml");
@@ -736,6 +794,7 @@ void setFileBackgroundReadable(CTEditBase &b){
 
 int saveCfg(void *cfg, int iIndex)
 {
+   
    if(((PHONE_CFG*)cfg)->iDontReadSaveCfg)return 0;
    
    void *findGlobalCfgKey(const char *key);

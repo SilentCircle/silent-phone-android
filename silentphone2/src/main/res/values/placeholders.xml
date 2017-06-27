@@ -1,17 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-	<!-- Placeholders for the layout designer; not visible in end-user UI -->
-	<string name="sample_duration" translatable="false">Messages expire in 5 minutes</string>
-	<string name="sample_sas_phrase" translatable="false">Alpha Bravo Charlie Delta</string>
-	<string name="sample_message" translatable="false">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec a diam lectus. Sed sit amet ipsum mauris. Maecenas congue ligula ac quam viverra nec consectetur ante hendrerit. Donec et mollis dolor. Praesent et diam eget libero egestas mattis sit amet vitae augue. Nam tincidunt congue enim, ut porta lorem lacinia consectetur. Donec ut libero sed arcu vehicula ultricies a non tortor. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aenean ut gravida lorem. Ut turpis felis, pulvinar a semper sed, adipiscing id dolor. Pellentesque auctor nisi id magna consequat sagittis. Curabitur dapibus enim sit amet elit pharetra tincidunt feugiat nisl imperdiet. Ut convallis libero in urna ultrices accumsan. Donec sed odio eros. Donec viverra mi quis quam pulvinar at malesuada arcu rhoncus. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. In rutrum accumsan ultricies. Mauris vitae nisi at sem facilisis semper ac in est.</string>
-	<string name="sample_phone_message" translatable="false">Outgoing call (5:35)</string>
-	<string name="sample_error" translatable="false">You must enter a valid foo with that bar.</string>
-	<string name="sample_recipient" translatable="false">Bob Coder</string>
-	<string name="sample_title" translatable="false">Round and Round</string>
-	<string name="sample_stylized_username" translatable="false">\@alicesmith</string>
-	<string name="sample_time_relative" translatable="false">5 minutes ago</string>
-	<string name="sample_24hr_time" translatable="false">15:32</string>
-	<string name="sample_burn_notice" translatable="false">25d 30m</string>
+    <!-- Placeholders for the layout designer; not visible in end-user UI -->
+    <string name="sample_duration" translatable="false">Messages expire in 5 minutes</string>
+    <string name="sample_sas_phrase" translatable="false">Alpha Bravo Charlie Delta</string>
+    <string name="sample_message" translatable="false">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</string>
+    <string name="sample_message_long" translatable="false">Lorem ipsum dolor sit amet, consectetur
+        adipiscing elit. Donec a diam lectus. Sed sit amet ipsum mauris. Maecenas congue ligula ac
+        quam viverra nec consectetur ante hendrerit. Donec et mollis dolor. Praesent et diam eget
+        libero egestas mattis sit amet vitae augue. Nam tincidunt congue enim, ut porta lorem lacinia
+        consectetur. Donec ut libero sed arcu vehicula ultricies a non tortor. Lorem ipsum dolor sit
+        amet, consectetur adipiscing elit. Aenean ut gravida lorem. Ut turpis felis, pulvinar a semper
+        sed, adipiscing id dolor. Pellentesque auctor nisi id magna consequat sagittis. Curabitur
+        dapibus enim sit amet elit pharetra tincidunt feugiat nisl imperdiet. Ut convallis libero in
+        urna ultrices accumsan. Donec sed odio eros. Donec viverra mi quis quam pulvinar at malesuada
+        arcu rhoncus. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus
+        mus. In rutrum accumsan ultricies. Mauris vitae nisi at sem facilisis semper ac in est.</string>
+    <string name="sample_phone_message" translatable="false">Outgoing call (5:35)</string>
+    <string name="sample_error" translatable="false">You must enter a valid foo with that bar.</string>
+    <string name="sample_recipient" translatable="false">Bob Coder</string>
+    <string name="sample_title" translatable="false">Round and Round</string>
+    <string name="sample_stylized_username" translatable="false">\@alicesmith</string>
+    <string name="sample_time_relative" translatable="false">5 minutes ago</string>
+    <string name="sample_24hr_time" translatable="false">15:32</string>
+    <string name="sample_burn_notice" translatable="false">25d 30m</string>
+    <string name="sample_sender" translatable="false">Message sender</string>
+    <string name="sample_retention_description" translatable="false">ACME Corp. retains message text, metadata, calls, call metadata, message attachments.</string>
 
 </resources>

@@ -1,7 +1,7 @@
 /*
 Created by Janis Narbuts
 Copyright (C) 2004-2012, Tivi LTD, www.tiviphone.com. All rights reserved.
-Copyright (C) 2012-2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2012-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,16 +27,16 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-
 #include "../baseclasses/CTBase.h"
 #include "../baseclasses/CTEditBase.h"
 #include "../os/CTiViSock.h"
 #include "../os/CTThread.h"
 #include "../os/CTTcp.h"
 #include "../encrypt/tls/CTTLS.h"
-#include "axolotl/../util/cJSON.h"
+#include "ratchet/../util/cJSON.h"
 #include <stdlib.h>
 
+    
 #ifdef ANDROID
 void androidLog(const char* format, ...);
 #endif
@@ -50,37 +50,77 @@ void androidLog(const char* format, ...);
  * provisioning servers of the production network.
  */
 static const char *productionCert=
-// Entrust root certificate, serial number 37:4a:d2:43, SHA1: 99:A6:9B:E6
+// Entrust Certificate Authority ‐ L1M (EV SSL)
+// Signing Algorithm: SHA256RSA
+// entrust_l1m_sha2.cer, serial number: 61:a1:e7:d2:00:00:00:00:51:d3:66:a6
+// SHA1 Fingerprint=CC:13:66:95:63:90:65:FA:B4:70:74:D2:8C:55:31:4C:66:07:7E:90
+// Valid until: Oct 15 15:55:03 2030 GMT
 "-----BEGIN CERTIFICATE-----\r\n"
-"MIIE2DCCBEGgAwIBAgIEN0rSQzANBgkqhkiG9w0BAQUFADCBwzELMAkGA1UEBhMC\r\n"
-"VVMxFDASBgNVBAoTC0VudHJ1c3QubmV0MTswOQYDVQQLEzJ3d3cuZW50cnVzdC5u\r\n"
-"ZXQvQ1BTIGluY29ycC4gYnkgcmVmLiAobGltaXRzIGxpYWIuKTElMCMGA1UECxMc\r\n"
-"KGMpIDE5OTkgRW50cnVzdC5uZXQgTGltaXRlZDE6MDgGA1UEAxMxRW50cnVzdC5u\r\n"
-"ZXQgU2VjdXJlIFNlcnZlciBDZXJ0aWZpY2F0aW9uIEF1dGhvcml0eTAeFw05OTA1\r\n"
-"MjUxNjA5NDBaFw0xOTA1MjUxNjM5NDBaMIHDMQswCQYDVQQGEwJVUzEUMBIGA1UE\r\n"
-"ChMLRW50cnVzdC5uZXQxOzA5BgNVBAsTMnd3dy5lbnRydXN0Lm5ldC9DUFMgaW5j\r\n"
-"b3JwLiBieSByZWYuIChsaW1pdHMgbGlhYi4pMSUwIwYDVQQLExwoYykgMTk5OSBF\r\n"
-"bnRydXN0Lm5ldCBMaW1pdGVkMTowOAYDVQQDEzFFbnRydXN0Lm5ldCBTZWN1cmUg\r\n"
-"U2VydmVyIENlcnRpZmljYXRpb24gQXV0aG9yaXR5MIGdMA0GCSqGSIb3DQEBAQUA\r\n"
-"A4GLADCBhwKBgQDNKIM0VBuJ8w+vN5Ex/68xYMmo6LIQaO2f55M28Qpku0f1BBc/\r\n"
-"I0dNxScZgSYMVHINiC3ZH5oSn7yzcdOAGT9HZnuMNSjSuQrfJNqc1lB5gXpa0zf3\r\n"
-"wkrYKZImZNHkmGw6AIr1NJtl+O3jEP/9uElY3KDegjlrgbEWGWG5VLbmQwIBA6OC\r\n"
-"AdcwggHTMBEGCWCGSAGG+EIBAQQEAwIABzCCARkGA1UdHwSCARAwggEMMIHeoIHb\r\n"
-"oIHYpIHVMIHSMQswCQYDVQQGEwJVUzEUMBIGA1UEChMLRW50cnVzdC5uZXQxOzA5\r\n"
-"BgNVBAsTMnd3dy5lbnRydXN0Lm5ldC9DUFMgaW5jb3JwLiBieSByZWYuIChsaW1p\r\n"
-"dHMgbGlhYi4pMSUwIwYDVQQLExwoYykgMTk5OSBFbnRydXN0Lm5ldCBMaW1pdGVk\r\n"
-"MTowOAYDVQQDEzFFbnRydXN0Lm5ldCBTZWN1cmUgU2VydmVyIENlcnRpZmljYXRp\r\n"
-"b24gQXV0aG9yaXR5MQ0wCwYDVQQDEwRDUkwxMCmgJ6AlhiNodHRwOi8vd3d3LmVu\r\n"
-"dHJ1c3QubmV0L0NSTC9uZXQxLmNybDArBgNVHRAEJDAigA8xOTk5MDUyNTE2MDk0\r\n"
-"MFqBDzIwMTkwNTI1MTYwOTQwWjALBgNVHQ8EBAMCAQYwHwYDVR0jBBgwFoAU8Bdi\r\n"
-"E1U9s/8KAGv7UISX8+1i0BowHQYDVR0OBBYEFPAXYhNVPbP/CgBr+1CEl/PtYtAa\r\n"
-"MAwGA1UdEwQFMAMBAf8wGQYJKoZIhvZ9B0EABAwwChsEVjQuMAMCBJAwDQYJKoZI\r\n"
-"hvcNAQEFBQADgYEAkNwwAvpkdMKnCqV8IY00F6j7Rw7/JXyNEwr75Ji174z4xRAN\r\n"
-"95K+8cPV1ZVqBLssziY2ZcgxxufuP+NXdYR6Ee9GTxj005i7qIcyunL2POI9n9cd\r\n"
-"2cNgQ4xYDiKWL2KjLB+6rQXvqzJ4h6BUcxm1XAX5Uj5tLUUL9wqT6u0G+bI=\r\n"
+"MIIFLTCCBBWgAwIBAgIMYaHn0gAAAABR02amMA0GCSqGSIb3DQEBCwUAMIG+MQsw\r\n"
+"CQYDVQQGEwJVUzEWMBQGA1UEChMNRW50cnVzdCwgSW5jLjEoMCYGA1UECxMfU2Vl\r\n"
+"IHd3dy5lbnRydXN0Lm5ldC9sZWdhbC10ZXJtczE5MDcGA1UECxMwKGMpIDIwMDkg\r\n"
+"RW50cnVzdCwgSW5jLiAtIGZvciBhdXRob3JpemVkIHVzZSBvbmx5MTIwMAYDVQQD\r\n"
+"EylFbnRydXN0IFJvb3QgQ2VydGlmaWNhdGlvbiBBdXRob3JpdHkgLSBHMjAeFw0x\r\n"
+"NDEyMTUxNTI1MDNaFw0zMDEwMTUxNTU1MDNaMIG6MQswCQYDVQQGEwJVUzEWMBQG\r\n"
+"A1UEChMNRW50cnVzdCwgSW5jLjEoMCYGA1UECxMfU2VlIHd3dy5lbnRydXN0Lm5l\r\n"
+"dC9sZWdhbC10ZXJtczE5MDcGA1UECxMwKGMpIDIwMTQgRW50cnVzdCwgSW5jLiAt\r\n"
+"IGZvciBhdXRob3JpemVkIHVzZSBvbmx5MS4wLAYDVQQDEyVFbnRydXN0IENlcnRp\r\n"
+"ZmljYXRpb24gQXV0aG9yaXR5IC0gTDFNMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8A\r\n"
+"MIIBCgKCAQEA0IHBOSPCsdHs91fdVSQ2kSAiSPf8ylIKsKs/M7WwhAf23056sPuY\r\n"
+"Ij0BrFb7cW2y7rmgD1J3q5iTvjOK64dex6qwymmPQwhqPyK/MzlG1ZTy4kwFItln\r\n"
+"gJHxBEoOm3yiydJs/TwJhL39axSagR3nioPvYRZ1R5gTOw2QFpi/iuInMlOZmcP7\r\n"
+"lhw192LtjL1JcdJDQ6Gh4yEqI3CodT2ybEYGYW8YZ+QpfrI8wcVfCR5uRE7sIZlY\r\n"
+"FUj0VUgqtzS0BeN8SYwAWN46lsw53GEzVc4qLj/RmWLoquY0djGqr3kplnjLgRSv\r\n"
+"adr7BLlZg0SqCU+01CwBnZuUMWstoc/B5QIDAQABo4IBKzCCAScwDgYDVR0PAQH/\r\n"
+"BAQDAgEGMB0GA1UdJQQWMBQGCCsGAQUFBwMCBggrBgEFBQcDATASBgNVHRMBAf8E\r\n"
+"CDAGAQH/AgEAMDMGCCsGAQUFBwEBBCcwJTAjBggrBgEFBQcwAYYXaHR0cDovL29j\r\n"
+"c3AuZW50cnVzdC5uZXQwMAYDVR0fBCkwJzAloCOgIYYfaHR0cDovL2NybC5lbnRy\r\n"
+"dXN0Lm5ldC9nMmNhLmNybDA7BgNVHSAENDAyMDAGBFUdIAAwKDAmBggrBgEFBQcC\r\n"
+"ARYaaHR0cDovL3d3dy5lbnRydXN0Lm5ldC9ycGEwHQYDVR0OBBYEFMP30LUqMK2v\r\n"
+"DZEhcDlU3byJcMc6MB8GA1UdIwQYMBaAFGpyJnrQHu995ztpUdRsjZ+QEmarMA0G\r\n"
+"CSqGSIb3DQEBCwUAA4IBAQC0h8eEIhopwKR47PVPG7SEl2937tTPWa+oQ5YvHVje\r\n"
+"pvMVWy7ZQ5xMQrkXFxGttLFBx2YMIoYFp7Qi+8VoaIqIMthx1hGOjlJ+Qgld2dnA\r\n"
+"DizvRGsf2yS89byxqsGK5Wbb0CTz34mmi/5e0FC6m3UAyQhKS3Q/WFOv9rihbISY\r\n"
+"Jnz8/DVRZZgeO2x28JkPxLkJ1YXYJKd/KsLak0tkuHB8VCnTglTVz6WUwzOeTTRn\r\n"
+"4Dh2ZgCN0C/GqwmqcvrOLzWJ/MDtBgO334wlV/H77yiI2YIowAQPlIFpI+CRKMVe\r\n"
+"1QzX1CA778n4wI+nQc1XRG5sZ2L+hN/nYNjvv9QiHg3n\r\n"
 "-----END CERTIFICATE-----\r\n"
 
-// Entrust root certificate, serial number 45:6b:50:54, SHA1: B3:1E:B1:B7
+// Entrust Root Certificate Authority—G2
+// Signing Algorithm: SHA256RSA
+// entrust_g2_ca.cer, serial number: 4a 53 8c 28
+// SHA1 Fingerprint=8C:F4:27:FD:79:0C:3A:D1:66:06:8D:E8:1E:57:EF:BB:93:22:72:D4
+// Valid Until: 12/7/2030
+"-----BEGIN CERTIFICATE-----\r\n"
+"MIIEPjCCAyagAwIBAgIESlOMKDANBgkqhkiG9w0BAQsFADCBvjELMAkGA1UEBhMC\r\n"
+"VVMxFjAUBgNVBAoTDUVudHJ1c3QsIEluYy4xKDAmBgNVBAsTH1NlZSB3d3cuZW50\r\n"
+"cnVzdC5uZXQvbGVnYWwtdGVybXMxOTA3BgNVBAsTMChjKSAyMDA5IEVudHJ1c3Qs\r\n"
+"IEluYy4gLSBmb3IgYXV0aG9yaXplZCB1c2Ugb25seTEyMDAGA1UEAxMpRW50cnVz\r\n"
+"dCBSb290IENlcnRpZmljYXRpb24gQXV0aG9yaXR5IC0gRzIwHhcNMDkwNzA3MTcy\r\n"
+"NTU0WhcNMzAxMjA3MTc1NTU0WjCBvjELMAkGA1UEBhMCVVMxFjAUBgNVBAoTDUVu\r\n"
+"dHJ1c3QsIEluYy4xKDAmBgNVBAsTH1NlZSB3d3cuZW50cnVzdC5uZXQvbGVnYWwt\r\n"
+"dGVybXMxOTA3BgNVBAsTMChjKSAyMDA5IEVudHJ1c3QsIEluYy4gLSBmb3IgYXV0\r\n"
+"aG9yaXplZCB1c2Ugb25seTEyMDAGA1UEAxMpRW50cnVzdCBSb290IENlcnRpZmlj\r\n"
+"YXRpb24gQXV0aG9yaXR5IC0gRzIwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK\r\n"
+"AoIBAQC6hLZy254Ma+KZ6TABp3bqMriVQRrJ2mFOWHLP/vaCeb9zYQYKpSfYs1/T\r\n"
+"RU4cctZOMvJyig/3gxnQaoCAAEUesMfnmr8SVycco2gvCoe9amsOXmXzHHfV1IWN\r\n"
+"cCG0szLni6LVhjkCsbjSR87kyUnEO6fe+1R9V77w6G7CebI6C1XiUJgWMhNcL3hW\r\n"
+"wcKUs/Ja5CeanyTXxuzQmyWC48zCxEXFjJd6BmsqEZ+pCm5IO2/b1BEZQvePB7/1\r\n"
+"U1+cPvQXLOZprE4yTGJ36rfo5bs0vBmLrpxR57d+tVOxMyLlbc9wPBr64ptntoP0\r\n"
+"jaWvYkxN4FisZDQSA/i2jZRjJKRxAgMBAAGjQjBAMA4GA1UdDwEB/wQEAwIBBjAP\r\n"
+"BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBRqciZ60B7vfec7aVHUbI2fkBJmqzAN\r\n"
+"BgkqhkiG9w0BAQsFAAOCAQEAeZ8dlsa2eT8ijYfThwMEYGprmi5ZiXMRrEPR9RP/\r\n"
+"jTkrwPK9T3CMqS/qF8QLVJ7UG5aYMzyorWKiAHarWWluBh1+xLlEjZivEtRh2woZ\r\n"
+"Rkfz6/djwUAFQKXSt/S1mja/qYh2iARVBCuch38aNzx+LaUa2NSJXsq9rD1s2G2v\r\n"
+"1fN2D807iDginWyTmsQ9v4IbZT+mD12q/OWyFcq1rca8PdCE6OoGcrBNOTJ4vz4R\r\n"
+"nAuknZoh8/CbCzB428Hch0P+vGOaysXCHMnHjf87ElgI5rY97HosTvuDls4MPGmH\r\n"
+"VHOkc8KT/1EQrBVUAdj8BbGJoX90g5pJ19xOe4pIb4tF9g==\r\n"
+"-----END CERTIFICATE-----\r\n"
+
+// Entrust Root Certificate Authority, serial number 45:6b:50:54, SHA1: B3:1E:B1:B7
+// Signing Algorithm: SHA1RSA
+// Valid Until: 11/27/2026
+// https://www.entrust.com/get-support/ssl-certificate-support/root-certificate-downloads/
 "-----BEGIN CERTIFICATE-----\r\n"
 "MIIEkTCCA3mgAwIBAgIERWtQVDANBgkqhkiG9w0BAQUFADCBsDELMAkGA1UEBhMC\r\n"
 "VVMxFjAUBgNVBAoTDUVudHJ1c3QsIEluYy4xOTA3BgNVBAsTMHd3dy5lbnRydXN0\r\n"
@@ -114,31 +154,13 @@ static const char *productionCert=
  * provisioning servers of the development network.
  */
 static const char *developmentCert =
-// // Entrust root certificate, serial number: 38:63:DE:F8, SHA1: 50:30:06:09
-// "-----BEGIN CERTIFICATE-----\r\n"
-// "MIIEKjCCAxKgAwIBAgIEOGPe+DANBgkqhkiG9w0BAQUFADCBtDEUMBIGA1UEChMLRW50cnVzdC5u\r\n"
-// "ZXQxQDA+BgNVBAsUN3d3dy5lbnRydXN0Lm5ldC9DUFNfMjA0OCBpbmNvcnAuIGJ5IHJlZi4gKGxp\r\n"
-// "bWl0cyBsaWFiLikxJTAjBgNVBAsTHChjKSAxOTk5IEVudHJ1c3QubmV0IExpbWl0ZWQxMzAxBgNV\r\n"
-// "BAMTKkVudHJ1c3QubmV0IENlcnRpZmljYXRpb24gQXV0aG9yaXR5ICgyMDQ4KTAeFw05OTEyMjQx\r\n"
-// "NzUwNTFaFw0yOTA3MjQxNDE1MTJaMIG0MRQwEgYDVQQKEwtFbnRydXN0Lm5ldDFAMD4GA1UECxQ3\r\n"
-// "d3d3LmVudHJ1c3QubmV0L0NQU18yMDQ4IGluY29ycC4gYnkgcmVmLiAobGltaXRzIGxpYWIuKTEl\r\n"
-// "MCMGA1UECxMcKGMpIDE5OTkgRW50cnVzdC5uZXQgTGltaXRlZDEzMDEGA1UEAxMqRW50cnVzdC5u\r\n"
-// "ZXQgQ2VydGlmaWNhdGlvbiBBdXRob3JpdHkgKDIwNDgpMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8A\r\n"
-// "MIIBCgKCAQEArU1LqRKGsuqjIAcVFmQqK0vRvwtKTY7tgHalZ7d4QMBzQshowNtTK91euHaYNZOL\r\n"
-// "Gp18EzoOH1u3Hs/lJBQesYGpjX24zGtLA/ECDNyrpUAkAH90lKGdCCmziAv1h3edVc3kw37XamSr\r\n"
-// "hRSGlVuXMlBvPci6Zgzj/L24ScF2iUkZ/cCovYmjZy/Gn7xxGWC4LeksyZB2ZnuU4q941mVTXTzW\r\n"
-// "nLLPKQP5L6RQstRIzgUyVYr9smRMDuSYB3Xbf9+5CFVghTAp+XtIpGmG4zU/HoZdenoVve8AjhUi\r\n"
-// "VBcAkCaTvA5JaJG/+EfTnZVCwQ5N328mz8MYIWJmQ3DW1cAH4QIDAQABo0IwQDAOBgNVHQ8BAf8E\r\n"
-// "BAMCAQYwDwYDVR0TAQH/BAUwAwEB/zAdBgNVHQ4EFgQUVeSB0RGAvtiJuQijMfmhJAkWuXAwDQYJ\r\n"
-// "KoZIhvcNAQEFBQADggEBADubj1abMOdTmXx6eadNl9cZlZD7Bh/KM3xGY4+WZiT6QBshJ8rmcnPy\r\n"
-// "T/4xmf3IDExoU8aAghOY+rat2l098c5u9hURlIIM7j+VrxGrD9cv3h8Dj1csHsm7mhpElesYT6Yf\r\n"
-// "zX1XEC+bBAlahLVu2B064dae0Wx5XnkcFMXj0EyTO2U87d89vqbllRrDtRnDvV5bu/8j72gZyxKT\r\n"
-// "J1wDLW8w0B62GqzeWvfRqqgnpv55gcR5mTNXuhKwqeBCbJPKVt7+bYQLCIt+jerXmCHG8+c8eS9e\r\n"
-// "nNFMFY3h7CI3zJpDC5fcgJCNs2ebb0gIFVbPv/ErfF6adulZkMV8gzURZVE=\r\n"
-// "-----END CERTIFICATE-----\r\n"
 
-// Entrust root certificate G2, serial number: 1246989352 (0x4a538c28),
-// SHA1: 8C:F4:27:FD:79:0C:3A:D1:66:06:8D:E8:1E:57:EF:BB:93:22:72:D4
+// Entrust Root Certificate Authority—G2
+// Signing Algorithm: SHA256RSA
+// entrust_g2_ca.cer, serial number: 4a 53 8c 28
+// SHA1 Fingerprint=8C:F4:27:FD:79:0C:3A:D1:66:06:8D:E8:1E:57:EF:BB:93:22:72:D4
+// Valid Until: 12/7/2030
+// https://www.entrust.com/get-support/ssl-certificate-support/root-certificate-downloads/
 "-----BEGIN CERTIFICATE-----\r\n"
 "MIIEPjCCAyagAwIBAgIESlOMKDANBgkqhkiG9w0BAQsFADCBvjELMAkGA1UEBhMC\r\n"
 "VVMxFjAUBgNVBAoTDUVudHJ1c3QsIEluYy4xKDAmBgNVBAsTH1NlZSB3d3cuZW50\r\n"
@@ -163,10 +185,13 @@ static const char *developmentCert =
 "1fN2D807iDginWyTmsQ9v4IbZT+mD12q/OWyFcq1rca8PdCE6OoGcrBNOTJ4vz4R\r\n"
 "nAuknZoh8/CbCzB428Hch0P+vGOaysXCHMnHjf87ElgI5rY97HosTvuDls4MPGmH\r\n"
 "VHOkc8KT/1EQrBVUAdj8BbGJoX90g5pJ19xOe4pIb4tF9g==\r\n"
-"-----END CERTIFICATE-----\r\n"  
+"-----END CERTIFICATE-----\r\n"
 
-// Entrust root certificate
-// Serial Number: 1164660820 (0x456b5054), SHA1 Fingerprint=B3:1E:B1:B7:40:E3:6C:84:02:DA:DC:37:D4:4D:F5:D4:67:49:52:F9
+// Entrust Root Certificate Authority, serial number 45:6b:50:54
+// Signing Algorithm: SHA1RSA
+// SHA1 Fingerprint=B3:1E:B1:B7:40:E3:6C:84:02:DA:DC:37:D4:4D:F5:D4:67:49:52:F9
+// Valid Until: 11/27/2026
+// https://www.entrust.com/get-support/ssl-certificate-support/root-certificate-downloads/
 "-----BEGIN CERTIFICATE-----\r\n"
 "MIIEkTCCA3mgAwIBAgIERWtQVDANBgkqhkiG9w0BAQUFADCBsDELMAkGA1UEBhMC\r\n"
 "VVMxFjAUBgNVBAoTDUVudHJ1c3QsIEluYy4xOTA3BgNVBAsTMHd3dy5lbnRydXN0\r\n"
@@ -195,27 +220,93 @@ static const char *developmentCert =
 "0vdXcDazv/wor3ElhVsT/h5/WrQ8\r\n"
 "-----END CERTIFICATE-----\r\n"
 
+// ISRG Root X1 - Let's Encrypt
+// https://letsencrypt.org/certs/isrgrootx1.pem.txt
+// Serial number: 82:10:cf:b0:d2:40:e3:59:44:63:e0:bb:63:82:8b:00
+// Fingerprint SHA1: CA:BD:2A:79:A1:07:6A:31:F2:1D:25:36:35:CB:03:9D:43:29:A5:E8
+// Used for https://sentry.silentcircle.org
+//"-----BEGIN CERTIFICATE-----\r\n"
+//"MIIFazCCA1OgAwIBAgIRAIIQz7DSQONZRGPgu2OCiwAwDQYJKoZIhvcNAQELBQAw\r\n"
+//"TzELMAkGA1UEBhMCVVMxKTAnBgNVBAoTIEludGVybmV0IFNlY3VyaXR5IFJlc2Vh\r\n"
+//"cmNoIEdyb3VwMRUwEwYDVQQDEwxJU1JHIFJvb3QgWDEwHhcNMTUwNjA0MTEwNDM4\r\n"
+//"WhcNMzUwNjA0MTEwNDM4WjBPMQswCQYDVQQGEwJVUzEpMCcGA1UEChMgSW50ZXJu\r\n"
+//"ZXQgU2VjdXJpdHkgUmVzZWFyY2ggR3JvdXAxFTATBgNVBAMTDElTUkcgUm9vdCBY\r\n"
+//"MTCCAiIwDQYJKoZIhvcNAQEBBQADggIPADCCAgoCggIBAK3oJHP0FDfzm54rVygc\r\n"
+//"h77ct984kIxuPOZXoHj3dcKi/vVqbvYATyjb3miGbESTtrFj/RQSa78f0uoxmyF+\r\n"
+//"0TM8ukj13Xnfs7j/EvEhmkvBioZxaUpmZmyPfjxwv60pIgbz5MDmgK7iS4+3mX6U\r\n"
+//"A5/TR5d8mUgjU+g4rk8Kb4Mu0UlXjIB0ttov0DiNewNwIRt18jA8+o+u3dpjq+sW\r\n"
+//"T8KOEUt+zwvo/7V3LvSye0rgTBIlDHCNAymg4VMk7BPZ7hm/ELNKjD+Jo2FR3qyH\r\n"
+//"B5T0Y3HsLuJvW5iB4YlcNHlsdu87kGJ55tukmi8mxdAQ4Q7e2RCOFvu396j3x+UC\r\n"
+//"B5iPNgiV5+I3lg02dZ77DnKxHZu8A/lJBdiB3QW0KtZB6awBdpUKD9jf1b0SHzUv\r\n"
+//"KBds0pjBqAlkd25HN7rOrFleaJ1/ctaJxQZBKT5ZPt0m9STJEadao0xAH0ahmbWn\r\n"
+//"OlFuhjuefXKnEgV4We0+UXgVCwOPjdAvBbI+e0ocS3MFEvzG6uBQE3xDk3SzynTn\r\n"
+//"jh8BCNAw1FtxNrQHusEwMFxIt4I7mKZ9YIqioymCzLq9gwQbooMDQaHWBfEbwrbw\r\n"
+//"qHyGO0aoSCqI3Haadr8faqU9GY/rOPNk3sgrDQoo//fb4hVC1CLQJ13hef4Y53CI\r\n"
+//"rU7m2Ys6xt0nUW7/vGT1M0NPAgMBAAGjQjBAMA4GA1UdDwEB/wQEAwIBBjAPBgNV\r\n"
+//"HRMBAf8EBTADAQH/MB0GA1UdDgQWBBR5tFnme7bl5AFzgAiIyBpY9umbbjANBgkq\r\n"
+//"hkiG9w0BAQsFAAOCAgEAVR9YqbyyqFDQDLHYGmkgJykIrGF1XIpu+ILlaS/V9lZL\r\n"
+//"ubhzEFnTIZd+50xx+7LSYK05qAvqFyFWhfFQDlnrzuBZ6brJFe+GnY+EgPbk6ZGQ\r\n"
+//"3BebYhtF8GaV0nxvwuo77x/Py9auJ/GpsMiu/X1+mvoiBOv/2X/qkSsisRcOj/KK\r\n"
+//"NFtY2PwByVS5uCbMiogziUwthDyC3+6WVwW6LLv3xLfHTjuCvjHIInNzktHCgKQ5\r\n"
+//"ORAzI4JMPJ+GslWYHb4phowim57iaztXOoJwTdwJx4nLCgdNbOhdjsnvzqvHu7Ur\r\n"
+//"TkXWStAmzOVyyghqpZXjFaH3pO3JLF+l+/+sKAIuvtd7u+Nxe5AW0wdeRlN8NwdC\r\n"
+//"jNPElpzVmbUq4JUagEiuTDkHzsxHpFKVK7q4+63SM1N95R1NbdWhscdCb+ZAJzVc\r\n"
+//"oyi3B43njTOQ5yOf+1CceWxG1bQVs5ZufpsMljq4Ui0/1lvh+wjChP4kqKOJ2qxq\r\n"
+//"4RgqsahDYVvTH9w7jXbyLeiNdd8XM2w9U/t7y0Ff/9yi0GE44Za4rF2LN9d11TPA\r\n"
+//"mRGunUHBcnWEvgJBQl9nJEiU0Zsnvgc/ubhPgXRR4Xq37Z0j4r7g1SgEEzwxA57d\r\n"
+//"emyPxgcYxn/eR44/KJ4EBs+lVDR3veyJm+kXQ99b21/+jh5Xos1AnX5iItreGCc=\r\n"
+//"-----END CERTIFICATE-----\r\n"
+
+// IdenTrust DST Root CA X3
+// https://www.identrust.com/certificates/trustid/root-download-x3.html
+// Serial number: 44:af:b0:80:d6:a3:27:ba:89:30:39:86:2e:f8:40:6b
+// Fingerprint SHA1: DA:C9:02:4F:54:D8:F6:DF:94:93:5F:B1:73:26:38:CA:6A:D7:7C:13
+// Used for https://sentry.silentcircle.org
+"-----BEGIN CERTIFICATE-----\r\n"
+"MIIDSjCCAjKgAwIBAgIQRK+wgNajJ7qJMDmGLvhAazANBgkqhkiG9w0BAQUFADA/\r\n"
+"MSQwIgYDVQQKExtEaWdpdGFsIFNpZ25hdHVyZSBUcnVzdCBDby4xFzAVBgNVBAMT\r\n"
+"DkRTVCBSb290IENBIFgzMB4XDTAwMDkzMDIxMTIxOVoXDTIxMDkzMDE0MDExNVow\r\n"
+"PzEkMCIGA1UEChMbRGlnaXRhbCBTaWduYXR1cmUgVHJ1c3QgQ28uMRcwFQYDVQQD\r\n"
+"Ew5EU1QgUm9vdCBDQSBYMzCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEB\r\n"
+"AN+v6ZdQCINXtMxiZfaQguzH0yxrMMpb7NnDfcdAwRgUi+DoM3ZJKuM/IUmTrE4O\r\n"
+"rz5Iy2Xu/NMhD2XSKtkyj4zl93ewEnu1lcCJo6m67XMuegwGMoOifooUMM0RoOEq\r\n"
+"OLl5CjH9UL2AZd+3UWODyOKIYepLYYHsUmu5ouJLGiifSKOeDNoJjj4XLh7dIN9b\r\n"
+"xiqKqy69cK3FCxolkHRyxXtqqzTWMIn/5WgTe1QLyNau7Fqckh49ZLOMxt+/yUFw\r\n"
+"7BZy1SbsOFU5Q9D8/RhcQPGX69Wam40dutolucbY38EVAjqr2m7xPi71XAicPNaD\r\n"
+"aeQQmxkqtilX4+U9m5/wAl0CAwEAAaNCMEAwDwYDVR0TAQH/BAUwAwEB/zAOBgNV\r\n"
+"HQ8BAf8EBAMCAQYwHQYDVR0OBBYEFMSnsaR7LHH62+FLkHX/xBVghYkQMA0GCSqG\r\n"
+"SIb3DQEBBQUAA4IBAQCjGiybFwBcqR7uKGY3Or+Dxz9LwwmglSBd49lZRNI+DT69\r\n"
+"ikugdB/OEIKcdBodfpga3csTS7MgROSR6cz8faXbauX+5v3gTt23ADq1cEmv8uXr\r\n"
+"AvHRAosZy5Q6XkjEGB5YGV8eAlrwDPGxrancWYaLbumR9YbK+rlmM6pZW87ipxZz\r\n"
+"R8srzJmwN0jP41ZL9c8PDHIyh8bwRLtTcm1D9SZImlJnt1ir/md2cXjbDaJWFBM5\r\n"
+"JDGFoqgCWjBH4d1QB7wCCZAA62RjYJsWvIjJEubSfZGL+T0yjWW06XyxV3bqxbYo\r\n"
+"Ob8VZRzI9neWagqNdwvYkQsEjgfbKbYK7p2CNTUQ\r\n"
+"-----END CERTIFICATE-----\r\n"
+
 ;
 
 // Default certificate: use the production network
 static const char *provisioningCert = productionCert;
 
-
 /*
  * Silent Phone uses two links: the first to use the production server,
  * the second one to use the development server.
  */
-static const char *productionLink = "https://sccps.silentcircle.com";
-static const char *developmentLink = "https://sccps-dev.silentcircle.com";
+static const char *productionApiLink = "https://sccps.silentcircle.com";
+static const char *productionWebLink = "https://accounts.silentcircle.com";
+static const char *developmentApiLink = "https://sccps-dev.silentcircle.com";
+static const char *developmentWebLink = "https://accounts-dev.silentcircle.com";
 
 // Default link: use the production network
-static const char *provisioningLink = productionLink;
+static const char *provisioningApiLink = productionApiLink;
+static const char *provisioningWebLink = productionWebLink;
 
 /**
  * @brief Set provisioning link and certificate for use in development network.
  */
 void setProvisioningToDevelop() {
-    provisioningLink = developmentLink;
+    provisioningApiLink = developmentApiLink;
+    provisioningWebLink = developmentWebLink;
     provisioningCert = developmentCert;
 }
 
@@ -223,7 +314,8 @@ void setProvisioningToDevelop() {
  * @brief Set provisioning link and certificate for use in production network.
  */
 void setProvisioningToProduction() {
-    provisioningLink = productionLink;    
+    provisioningApiLink = productionApiLink;
+    provisioningWebLink = productionWebLink;
     provisioningCert = productionCert;
 }
 
@@ -232,7 +324,15 @@ void setProvisioningToProduction() {
 */
 const char* getCurrentProvSrv()
 {
-	return provisioningLink;
+	return provisioningApiLink;
+}
+
+/**
+* @brief Returns current web server
+*/
+const char* getCurrentWebSrv()
+{
+	return provisioningWebLink;
 }
 
 int retryConnectProvServ(){
@@ -256,10 +356,10 @@ int showSSLErrorMsg(void *ret, const char *p);
 void tmp_log(const char *p);
 
 static int respF(void *p, int i){
-  
+
    int *rc=(int*)p;
    *rc=1;
-   
+
    return 0;
 }
 
@@ -272,7 +372,7 @@ typedef struct{
 }SSL_RET;
 
 int showSSLErrorMsg2(void *ret, const char *p){
-   
+
    SSL_RET *s=(SSL_RET*)ret;
 #if defined(_WIN32) || defined(_WIN64)
    //#OZ-299, this part should be off.
@@ -310,9 +410,9 @@ static char* download_page2Loc(const char *url, char *buf, int iMaxLen, int &iRe
 #endif
    //const char *getPrefLang()
 
-   int r = s->splitUrl((char*)url, strlen(url), &bufA[0], &bufU[0]);
+   int r = s->splitUrl((char*)url, (int)strlen(url), &bufA[0], &bufU[0]);
    if(r < 0) {
-      cb(cbRet,-1,"Check url");
+      cb(cbRet,-1,"Malformed request.\n(Error Code: 201)"); // Malformed url
       return 0;
    }
 
@@ -320,7 +420,7 @@ static char* download_page2Loc(const char *url, char *buf, int iMaxLen, int &iRe
    ssl_ret.cb = cb;
    ssl_ret.ptr = cbRet;
 
-   int iLen = strlen(provisioningCert);
+   int iLen = (int)strlen(provisioningCert);
 
    if (iLen > 0) {
        tls->errMsg = &showSSLErrorMsg2;
@@ -341,24 +441,24 @@ static char* download_page2Loc(const char *url, char *buf, int iMaxLen, int &iRe
        tls->setCert(const_cast<char *>(provisioningCert), iLen, &bufZ[0]);
    }
    else {
-       cb(cbRet,-1,"No cert");
+       cb(cbRet,-1,"Malformed request.\n(Error Code: 202)"); // No certificate
        return 0;
    }
 
    int iRespCode=0;
-   
+
    CTTHttp<CTTLS>::HTTP_W_TH wt;
    wt.ptr=&iRespCode;
    wt.respFnc=respF;
    s->waitResp(&wt,60);
    cb(cbRet,1,"Downloading...");
-   s->getUrl(tls,&bufU[0],&bufA[0],pReq,pContent, pContent?strlen(pContent):0,pContent?"application/json":"");//locks
-   
+   s->getUrl(tls,&bufU[0],&bufA[0],pReq,pContent, pContent?(int)strlen(pContent):0,pContent?"application/json":"");//locks
+
    iRespContentLen=0;
    char *p=s->getContent(iRespContentLen);
 
    if(p)cb(cbRet,1,"Downloading ok");
-   
+
    int c=0;
    while(iRespCode==0){Sleep(100);c++;if(c>600)break;}//wait for waitResp thread
 
@@ -373,7 +473,7 @@ char* download_page2(const char *url, char *buf, int iMaxLen, int &iRespContentL
 }
 
 static void dummy_cb(void *p, int ok, const char *pMsg){
-   
+
 }
 
 char* t_post_json(const char *url, char *bufResp, int iMaxLen, int &iRespContentLen, const char *pContent) {
@@ -385,7 +485,7 @@ char* t_post_json(const char *url, char *bufResp, int iMaxLen, int &iRespContent
 char* t_send_http_json(const char *url, const char *meth,  char *bufResp, int iMaxLen, int &iRespContentLen, const char *pContent) {
     char bufReq[1024];
     static int x = 2; //random
-    snprintf(bufReq, sizeof(bufReq)-10, "%s%s", provisioningLink, url);
+    snprintf(bufReq, sizeof(bufReq)-10, "%s%s", provisioningApiLink, url);
 
     return download_page2Loc(bufReq, bufResp, iMaxLen, iRespContentLen, dummy_cb, &x, meth, pContent);
 }
@@ -395,31 +495,31 @@ char* t_send_http_json(const char *url, const char *meth,  char *bufResp, int iM
 //#define PROV_TEST
 
 int findJSonToken(const char *p, int iPLen, const char *key, char *resp, int iMaxLen){
-   
-   int iKeyLen=strlen(key);
+
+   int iKeyLen=(int)strlen(key);
    resp[0]=0;
-   
+
    for(int i=0;i<iPLen;i++){
       if(i+iKeyLen+3>iPLen)return -1;
-      if(p[i]=='"' && p[i+iKeyLen+1]=='"' && p[i+iKeyLen+2]==':' 
+      if(p[i]=='"' && p[i+iKeyLen+1]=='"' && p[i+iKeyLen+2]==':'
          && strncmp(key,&p[i+1],iKeyLen)==0){
-         
+
          i+=iKeyLen+2;
          while(p[i] && p[i]!='"' && i<iPLen)i++;
          if(i>=iPLen)return -2;
          i++;
-         
+
          int l=0;
          iMaxLen--;
-         
+
          while(p[i] && p[i]!='"' && l<iMaxLen && i<iPLen){resp[l]=p[i];i++;l++;}
          if(i>=iPLen)return -2;
          resp[l]=0;
-         
+
          return l;
       }
    }
-   
+
    return 0;
 }
 
@@ -429,29 +529,35 @@ int findJSonToken(const char *p, int iPLen, const char *key, char *resp, int iMa
  * into a WebView.
  */
 
-int getDomainAuthURL(const char *pLink, const char *pUsername, char *auth_url, int auth_sz, char *redirect_url, int redirect_sz, void (*cb)(void *p, int ok, const char *pMsg), void *cbRet) {
-   int iRespContentLen=0;
-   char bufJSonValue[32]; /* "auth_url" -> authURL */
-   char bufResp[4096];
-   char *p=NULL;
-   char *pUN=NULL;
-   int  len=0;
+int getDomainAuthURL(const char *pLink,
+                     const char *pUsername,
+                     char *auth_url, int auth_sz,
+                     char *redirect_url, int redirect_sz,
+                     char *auth_type, int auth_type_sz,
+                     void (*cb)(void *p, int ok, const char *pMsg), void *cbRet)
+{
+    int iRespContentLen=0;
+    char bufResp[4096];
+    char *p=NULL;
+    char *pUN=NULL;
+    int  len=0;
 
-   memset(bufResp, 0, sizeof(bufResp));
-   p = download_page2Loc(pLink, bufResp, sizeof(bufResp) - 1, iRespContentLen, cb, cbRet, "GET", NULL);
+    memset(bufResp, 0, sizeof(bufResp));
+    p = download_page2Loc(pLink, bufResp, sizeof(bufResp) - 1, iRespContentLen, cb, cbRet, "GET", NULL);
 
-   cb(cbRet, 1, "JSON from ");
-   cb(cbRet, 1, pLink);
-   if (p == NULL) {
-      // Failed to download JSON
-//      cb(cbRet, 0, "Please check network connection.");
-       cb(cbRet, 0, "getDomainAuthURL: ERR: Failed to download JSON");
-      return -4;
-   }
+    cb(cbRet, 1, "JSON from ");
+    cb(cbRet, 1, pLink);
 
-   /* FIXME: We should *really* be using a proper JSON library in tiviengine/. */
+    // Failed to download JSON
+    if (p == NULL)
+    {
+        cb(cbRet, 0, "Please check network connection.\n(Error Code: 301)");
+        return -4;
+    }
 
-   /*
+    /* FIXME: We should *really* be using a proper JSON library in tiviengine/. */
+
+    /*
     * Example JSON response:
     *
     * {
@@ -461,74 +567,54 @@ int getDomainAuthURL(const char *pLink, const char *pUsername, char *auth_url, i
     * }
     */
 
-   /* check auth_type */
-   memset(bufJSonValue, 0, sizeof(bufJSonValue));
-   len = findJSonToken(p, iRespContentLen, "auth_type", bufJSonValue, sizeof(bufJSonValue) - 1);
-   if(len <= 0) {
-//      cb(cbRet, -1, "ERR: JSon field 'auth_type' not found");
-       cb(cbRet, -1, "getDomainAuthURL: ERR: JSON field 'auth_type' not found");
-      return -3;
-   }
+    /* check auth_type */
+    len = findJSonToken(p, iRespContentLen, "auth_type", auth_type, auth_type_sz - 1);
 
-   if (strcmp(bufJSonValue, "adfs") != 0) {
-//      cb(cbRet, -1, "Server reported auth_type other than adfs!");
-       cb(cbRet, -1, "getDomainAuthURL: ERR: Server reported auth_type other than adfs!");
-      return -2;
-   }
+    if(len <= 0)
+    {
+        // JSON field 'auth_type' not found
+       cb(cbRet, -1, "Incomplete sign in, please enter a correct domain.");
+       return -3;
+    }
 
-   /* get the authentication URL */
-   memset(bufJSonValue, 0, sizeof(bufJSonValue));
-   len = findJSonToken(p, iRespContentLen, "auth_uri", auth_url, auth_sz - 1);
-   if(len <= 0) {
-//      cb(cbRet, -1, "ERR: JSon field 'auth_url' not found");
-       cb(cbRet, -1, "getDomainAuthURL: ERR: JSON field 'auth_url' not found");
+    if (strcmp(auth_type, "ADFS") != 0 && strcmp(auth_type, "OIDC") != 0)
+    {
+        // Server reported unknown auth_type
+       cb(cbRet, -1, "Single sign on not supported for this domain.");
+       return -2;
+    }
 
-      return -1;
-   }
+    /* get the authentication URL */
+    int authuri_len = findJSonToken(p, iRespContentLen, "auth_uri", auth_url, auth_sz - 1);
 
-   pUN = auth_url + len;
+    /* get the redirect URL */
+    int redirecturi_len = findJSonToken(p, iRespContentLen, "redirect_uri", redirect_url, redirect_sz - 1);
 
-   /* can we append the username? */
-   memset(bufJSonValue, 0, sizeof(bufJSonValue));
-   len = findJSonToken(p, iRespContentLen, "can_do_username", bufJSonValue, sizeof(bufJSonValue) - 1);
-   if(len <= 0) {
-      /* No need to hard fail here, we just don't get to auto-fill the username on the webpage */
-      cb(cbRet, 0, "getDomainAuthURL: WARN: JSon field 'can_do_username' not found");
-      return 0;
-   }
+    if(authuri_len <= 0 || redirecturi_len < 0)
+    {
+        // TODO: Return the contents of the 'error' token
+        // and if this token does not exist then return the
+        // contents of the 'msg' token
+        
+        // no url
+        cb(cbRet, -1, "Malformed response.\n(Error Code: 408)");
+        return -1;
+    }
 
-   /* afawct, most webpages will either use it, or ignore it.  So, lazily default to adding it. */
-   if (strcmp(bufJSonValue, "false") != 0) {
-      unsigned int maxlen = auth_sz - (pUN - auth_url + 1);
+    pUN = auth_url + authuri_len;
 
-      if (strnlen(pUsername, maxlen - strlen("&username=")) == maxlen - strlen("&username=")) {
-         cb(cbRet, 0, "getDomainAuthURL: INFO: Username would have been truncated, not auto-filling webpage");
-         return 0;
-      }
-
-      snprintf(pUN, maxlen, "&username=%s", pUsername);
-   }
-   
-   len = findJSonToken(p, iRespContentLen, "redirect_uri", redirect_url, redirect_sz - 1);
-   if(len <= 0) {
-      //      cb(cbRet, -1, "ERR: JSon field 'auth_url' not found");
-      cb(cbRet, -1, "getDomainAuthURL: ERR: JSON field 'redirect_uri' not found");
-      
-      return -1;
-   }
-
-   return 0;
+    return 0;
 }
 
 static int getToken(const char *pLink, char *resp, int iMaxLen, void (*cb)(void *p, int ok, const char *pMsg), void *cbRet, const char *pReq="GET", const char *pContent=NULL){
-   
+
    int iRespContentLen=0;
-   
+
    char bufResp[4096];
-   
+
 #if 0
    const char *pTest="{\"api_key\": \"z46d3856f8ff292f2eb8dab4e5e51edf5b951fb6e6eb01c80662157z\", \"result\": \"success\"}";
-   
+
    iRespContentLen=strlen(pTest);
    l=findJSonToken(pTest,iRespContentLen,"api_key",&bufResp[0],1023);
    if(l>0)printf("token=[%.*s]\n",l,bufResp);
@@ -537,115 +623,120 @@ static int getToken(const char *pLink, char *resp, int iMaxLen, void (*cb)(void 
    if(l>0)printf("token=[%.*s]\n",l,bufResp);
    exit(1);
 #endif
-   
-   
+
+
    memset(bufResp,0,sizeof(bufResp));
 
-   
+
    char *p=download_page2Loc(pLink, &bufResp[0], sizeof(bufResp)-50, iRespContentLen,cb,cbRet, pReq, pContent);
-   
+
    if(!p){
-      cb(cbRet,0,"Please check network connection.");//download json fail
+      cb(cbRet,0,"Please check network connection.\n(Error Code: 302)");//download json fail
       return -1;
    }
 #if 1//def PROV_TEST
-    
+
     //09/08/15 per JC in Messages
-    printf("pLink = [%s]\n", pLink); 
+    printf("pLink = [%s]\n", pLink);
     printf("pContent = [%s]\n", pContent);
     //------------------------------------
-    
+
    printf("rec[%.*s]\n",iRespContentLen,p);//rem
    printf("rec-t[%s]\n",bufResp);//rem
 #endif
-    
+
     cJSON* root = cJSON_Parse(p);
-    
+
     if(!root) {
-        
-        cb(cbRet, 0, "ERR: Malformed response");
-        
+
+        cb(cbRet, 0, "Malformed response.\n(Error Code: 401)");
+
         cJSON_Delete(root);
-        
+
         return -1;
     }
-    
+
     cJSON *result = cJSON_GetObjectItem(root,"result");
-    
+
     if(!result) {
-        
-        cb(cbRet, 0, "ERR: Result is not found");
-        
-        
+
+        // Result is not found
+        cb(cbRet, 0, "Malformed response.\n(Error Code: 402)");
+
+
         cJSON_Delete(root);
-        
+
         return -1;
     }
-    
+
     if(strcmp(result->valuestring, "success")) {
-        
+
         cJSON *error_msg = cJSON_GetObjectItem(root, "error_msg");
-        
+
         if(error_msg) {
-            
+
             cJSON *error_code = cJSON_GetObjectItem(root, "error_code");
-            
+
             int code = -1;
-            
+
             // If the user is required to enter his two factor authentication code
-            if(error_code->valueint == 4)
+            if(error_code != NULL && error_code->valueint == 4)
                 code = -4;
 
             cb(cbRet, code, error_msg->valuestring);
         }
         else {
-         
-            cb(cbRet, -1, "Could not download configuration");
+
+            cb(cbRet, -1, "Could not download configuration.\n(Error Code: 101)");
         }
-        
+
         cJSON_Delete(root);
-        
+
         return -1;
     }
-    
+
     cJSON *apiKey = cJSON_GetObjectItem(root, "api_key");
-    
+
     if(!apiKey) {
-        
-        cb(cbRet, 0, "ERR: API key not found");
-        
+
+        // API key not found
+        cb(cbRet, 0, "Malformed response.\n(Error Code: 403)");
+
         cJSON_Delete(root);
-        
+
         return -1;
     }
-    
+
     char *apiKeyStr = apiKey->valuestring;
-    
+
     if(strlen(apiKeyStr) <= 0 || strlen(apiKeyStr) > 256 || strlen(apiKeyStr) > iMaxLen) {
-        
-        cb(cbRet, 0, "ERR: Find api_key failed");
-        
+
+        // Find api_key failed
+        cb(cbRet, 0, "Malformed response.\n(Error Code: 404)");
+
         cJSON_Delete(root);
-        
+
         return -1;
     }
-    
+
     int ret=snprintf(resp,iMaxLen,"%s", &apiKeyStr[0]);
     resp[iMaxLen]=0;
-    
+
     cJSON_Delete(root);
-    
+
 #if defined(__APPLE__)
 #ifndef PROV_TEST
-   int storeAPIKeyToKC(const char *p);
-   storeAPIKeyToKC(resp);
+//   int storeAPIKeyToKC(const char *p);
+//   storeAPIKeyToKC(resp);
+    int storeProvAPIKey(const char *p);
+    storeProvAPIKey(resp);
 #endif
 #endif
-   
+
    return ret;
 }
 
-const char *pFN_to_save[]  ={"settings.txt","tivi_cfg10555.xml","tivi_cfg.xml","tivi_cfg1.xml",NULL};
+const char *pFN_to_save[]  ={"settings.txt","tivi_cfg10555.xml","tivi_cfg.xml",NULL};
 int isFileExistsW(const short *fn);
 void setCfgFN(CTEditBase &b, int iIndex);
 void setCfgFN(CTEditBase &b, const char *fn);
@@ -657,9 +748,9 @@ void delProvFiles(const int *p, int iCnt){
       setCfgFN(b,pFN_to_save[i]);
       deleteFileW(b.getText());
    }
-   
+
    char buf[64];
-   
+
    for(int i=0;i<iCnt;i++){
       printf("del prov %d\n",p[i]);
       if(p[i]==1)continue;//dont delete if created by user
@@ -676,40 +767,35 @@ static char bufAPIKey[1024]="";
 
 const char *getAPIKey(){
 #if defined(__APPLE__)
-   
+
    if(!bufAPIKey[0]){
-      const char *getAPIKeyFromKC(void);
-      const char *k = getAPIKeyFromKC();
+
+       const char * getAPIKeyForProv(void);
+       const char *k = getAPIKeyForProv();
+
       if(k && k[0]){
-         puts("key-KC ok");
-         strncpy(bufAPIKey, k, sizeof(bufAPIKey));
-         bufAPIKey[sizeof(bufAPIKey)-1]=0;
+        puts("key-KC ok");
+        strncpy(bufAPIKey, k, sizeof(bufAPIKey));
+        bufAPIKey[sizeof(bufAPIKey)-1]=0;
       }
       else{
-         //download API key using SIP UN and PASS
-         puts("download");
-         int getApiKeySipUserPassNoCB(const char *pSipUN, const char *pSipPWD);
-         
-         char* findSZByServKey(void *pEng, const char *key);
-         void *getAccountByID(int idx);
-         void *a = getAccountByID(0);
-         if(a){
-            
-            char* un = findSZByServKey(a, "un");
-            char* pwd = findSZByServKey(a, "pwd");//sip pass
+          
+          //ET 04/21/16
+          printf("prov.cpp getAPIKey() invoked.");
+          printf("APIKey not found in NSUserDefaults or keychain.");
 
-            getApiKeySipUserPassNoCB(un, pwd);//It can lock the getAPIKey up to 60sec
-         }
+          printf("Generate out of bounds crash instead of returning NULL apiKey");
+          char wtf[] = {'w','t','f'}; int whuh = 1000;
+          printf("WTF?? -> %c", wtf[whuh]);
+          
+          return NULL;
       }
       return &bufAPIKey[0];
    }
-   
+
 #endif
    return &bufAPIKey[0];
 }
-/*
-
-*/
 
 int provClearAPIKey(){
    int ret=bufAPIKey[0];
@@ -727,45 +813,45 @@ int checkProv(const char *pUserCode, void (*cb)(void *p, int ok, const char *pMs
     http://sccps.silentcircle.com/provisioning/silent_phone/tivi_cfg_glob.txt?api_key=12345
     */
    char bufReq[1024];
-   const char *t_getDevID_md5();
-   const char *t_getDev_name();
-   
+   extern const char *t_getDevID_md5();
+   extern const char *t_getDev_name();
+
    const char *dev_id=t_getDevID_md5();
    const char *dev_name=t_getDev_name();
-   
+
 
 #define CHK_BUF \
    if(l+100>sizeof(bufReq)){\
       return -1;\
    }
 
-   int l=snprintf(bufReq, sizeof(bufReq)-10, "%s/provisioning/use_code/?provisioning_code=", provisioningLink);
-   
-   CHK_BUF 
-   
-   l+=fixPostEncodingToken(&bufReq[l],sizeof(bufReq)-10-l,pUserCode,strlen(pUserCode));
-   
+   int l=snprintf(bufReq, sizeof(bufReq)-10, "%s/provisioning/use_code/?provisioning_code=", provisioningApiLink);
+
    CHK_BUF
-   
+
+   l+=fixPostEncodingToken(&bufReq[l],sizeof(bufReq)-10-l,pUserCode,(int)strlen(pUserCode));
+
+   CHK_BUF
+
    l+=snprintf(&bufReq[l],sizeof(bufReq)-10-l,"&device_id=%s&device_name=",dev_id);
-   
-   CHK_BUF 
-   
-   l+=fixPostEncodingToken(&bufReq[l],sizeof(bufReq)-10-l, dev_name,strlen(dev_name));
-   
+
    CHK_BUF
-   
+
+   l+=fixPostEncodingToken(&bufReq[l],sizeof(bufReq)-10-l, dev_name,(int)strlen(dev_name));
+
+   CHK_BUF
+
 #undef CHK_BUF
-   
-   
+
+
    int r=getToken(&bufReq[0], &bufAPIKey[0],255,cb,cbRet);
    if(r<0){
 
       return -1;
    }
-   
+
    cb(cbRet,1,"Configuration code ok");
-   
+
    return checkProvWithAPIKey(&bufAPIKey[0],cb, cbRet);;
 }
 
@@ -780,69 +866,8 @@ static void copyJSON_value(char *dst, const char *src, int iMax){
    }
    *dst=0;
 }
-/*
- #SP-650
- 
- POST https://sccps.silentcircle.com/v1/me/device/{device_id}/api-key/
- 
- Request payload:
- {"username":"xxx","sip_password":"xyz"}
- 
- Response payload:
- {"apikey": "sfsdfdsfs", "result": "success"}
- */
-//the getApiKeySipUserPass will store an API key into the KC and the bufAPIKey;
 
-int getApiKeySipUserPass(const char *pSipUN, const char *pSipPWD, void (*cb)(void *p, int ok, const char *pMsg), void *cbRet){
-   
-   /*
-    /v1/me/device/[device_id]/
-    http://sccps.silentcircle.com/provisioning/silent_phone/tivi_cfg.xml?api_key=12345
-    http://sccps.silentcircle.com/provisioning/silent_phone/settings.txt?api_key=12345
-    http://sccps.silentcircle.com/provisioning/silent_phone/tivi_cfg_glob.txt?api_key=12345
-    */
-   char bufReq[1024];
-   char bufContent[1024];
-
-   const char *t_getDevID_md5();
-   const char *dev_id=t_getDevID_md5();
-   
-   
-#define CHK_BUF \
-   if(l+100>sizeof(bufReq)){\
-      return -1;\
-   }
-   
-   int l=snprintf(bufReq,sizeof(bufReq)-10,"%s/v1/me/device/%s/api-key/",provisioningLink,dev_id);
-   
-   CHK_BUF
-   
-   char locPassword[128];
-   copyJSON_value(locPassword, pSipPWD, sizeof(locPassword)-1);
-   char locUN[128];
-   copyJSON_value(locUN, pSipUN, sizeof(locUN)-1);
-   
-   
-   l = snprintf(bufContent, sizeof(bufContent),
-                "{\r\n"
-                "\"username\": \"%s\",\r\n"
-                "\"sip_password\": \"%s\"\r\n"
-                 "}\r\n",locUN, locPassword);//TODO encode pwd
-
-   
-#undef CHK_BUF
-   
-   
-   int r=getToken(&bufReq[0], &bufAPIKey[0],255,cb,cbRet,"POST",bufContent);
-   if(r<0){
-      return -1;
-   }
-   
-   cb(cbRet,1,"Configuration code ok");
-   return 0;
-}
-
-int checkProvAuthCookie(const char *pUN, const char *auth_cookie, const char *pdevID, void (*cb)(void *p, int ok, const char *pMsg), void *cbRet){
+int checkProvAuthCookie(const char *pUN, const char *auth_code, const char *auth_type, const char *auth_state, const char *pdevID, void (*cb)(void *p, int ok, const char *pMsg), void *cbRet){
    /*
     /v1/me/device/[device_id]/
     http://sccps.silentcircle.com/provisioning/silent_phone/tivi_cfg.xml?api_key=12345
@@ -851,24 +876,21 @@ int checkProvAuthCookie(const char *pUN, const char *auth_cookie, const char *pd
     */
    char bufReq[1024];
    char bufContent[4096];
-   const char *t_getDevID_md5();
-   const char *t_getDev_name();
-   const char *t_getVersion();
+   extern const char *t_getDevID_md5();
+   extern const char *t_getDev_name();
+   extern const char *t_getVersion();
    const char *dev_id=t_getDevID_md5();
    const char *dev_name=t_getDev_name();
-   char locAuthCookie[2048];
-   char locUN[128];
-   
-   
+
 #define CHK_BUF \
 if(l+100>sizeof(bufReq)){\
 return -1;\
 }
-   
-   int l=snprintf(bufReq,sizeof(bufReq)-10,"%s/v1/me/device/%s/",provisioningLink,dev_id);
-   
+
+   int l=snprintf(bufReq,sizeof(bufReq)-10,"%s/v1/me/device/%s/",provisioningApiLink,dev_id);
+
    CHK_BUF
-   
+
 #ifdef __APPLE__
    const char *dev_class = "ios";
 #endif
@@ -885,14 +907,23 @@ return -1;\
    const char *dev_class = "Linux";
 #endif
 
-   copyJSON_value(locAuthCookie, auth_cookie, sizeof(locAuthCookie)-1);
-   copyJSON_value(locUN, pUN, sizeof(locUN)-1);
-   
+    char locAuthCode[2048];
+    char locAuthType[2048];
+    char locAuthState[2048];
+
+    char locUN[128];
+
+    copyJSON_value(locAuthCode, auth_code, sizeof(locAuthCode)-1);
+    copyJSON_value(locAuthType, auth_type, sizeof(locAuthType)-1);
+    copyJSON_value(locAuthState, auth_state, sizeof(locAuthState)-1);
+    copyJSON_value(locUN, pUN, sizeof(locUN)-1);
+
    l = snprintf(bufContent, sizeof(bufContent),
                 "{\r\n"
                    "\"username\": \"%s\",\r\n"
-                   "\"auth_type\": \"adfs\",\r\n"
-                   "\"auth_cookie\": \"%s\",\r\n"
+                   "\"auth_type\": \"%s\",\r\n"
+                   "\"auth_code\": \"%s\",\r\n"
+                   "\"state\": \"%s\",\r\n"
                    "\"device_name\": \"%s\",\r\n"
 #if defined (_WIN32) || defined(_WIN64)
 				   "\"app\": \"silent_phone_free\",\r\n"
@@ -902,20 +933,20 @@ return -1;\
                  "\"persistent_device_id\": \"%s\",\r\n"
                    "\"device_class\": \"%s\",\r\n"
                    "\"version\": \"%s\"\r\n"
-                "}\r\n", locUN, locAuthCookie, dev_name, pdevID, dev_class, t_getVersion());
-   
+                "}\r\n", locUN, locAuthType, locAuthCode, locAuthState, dev_name, pdevID, dev_class, t_getVersion());
+
 #undef CHK_BUF
-   
+
     // 09/08/15 for logging per JC in Messages
     cb(cbRet,1,bufContent);
-    
+
    int r=getToken(&bufReq[0], &bufAPIKey[0],255,cb,cbRet,"PUT",bufContent);
    if(r<0){
       return -1;
    }
-   
+
    cb(cbRet,1,"Configuration code ok");
-   
+
    return checkProvWithAPIKey(&bufAPIKey[0],cb, cbRet);;
 }
 
@@ -927,23 +958,23 @@ int checkProvUserPass(const char *pUN, const char *pPWD, const char *pTFA, const
     http://sccps.silentcircle.com/provisioning/silent_phone/tivi_cfg_glob.txt?api_key=12345
     */
    char bufReq[1024];
-   char bufContent[1024];
-   const char *t_getDevID_md5();
-   const char *t_getDev_name();
-   const char *t_getVersion();
+//   char bufContent[1024];
+   extern const char *t_getDevID_md5();
+   extern const char *t_getDev_name();
+   extern const char *t_getVersion();
    const char *dev_id=t_getDevID_md5();
    const char *dev_name=t_getDev_name();
-   
-   
+
+
 #define CHK_BUF \
 if(l+100>sizeof(bufReq)){\
 return -1;\
 }
-   
-   int l=snprintf(bufReq,sizeof(bufReq)-10,"%s/v1/me/device/%s/?enable_tfa=1",provisioningLink,dev_id);
-   
+
+   int l=snprintf(bufReq,sizeof(bufReq)-10,"%s/v1/me/device/%s/?enable_tfa=1",provisioningApiLink,dev_id);
+
    CHK_BUF
-   
+
 #ifdef __APPLE__
    const char *dev_class = "ios";
 #endif
@@ -964,7 +995,7 @@ return -1;\
    copyJSON_value(locPassword, pPWD, sizeof(locPassword)-1);
    char locUN[128];
    copyJSON_value(locUN, pUN, sizeof(locUN)-1);
-   
+
     cJSON *root;
     root = cJSON_CreateObject();
     cJSON_AddStringToObject(root, "username", locUN);
@@ -978,41 +1009,41 @@ return -1;\
     cJSON_AddStringToObject(root, "persistent_device_id", pdevID);
     cJSON_AddStringToObject(root, "device_class", dev_class);
     cJSON_AddStringToObject(root, "version", t_getVersion());
-    
+
     if(pTFA != NULL)
         cJSON_AddStringToObject(root, "tfa_code", pTFA);
-    
+
    char * rendered = cJSON_Print(root);
-    
+
     cJSON_Delete(root);
-    
+
    CHK_BUF
 
 #undef CHK_BUF
-   
-   
+
+
    int r=getToken(&bufReq[0], &bufAPIKey[0],255,cb,cbRet,"PUT",rendered);
-    
+
     free(rendered);
-    
+
    if(r<0){
       return -1;
    }
-   
+
    cb(cbRet,1,"Configuration code ok");
-   
+
    return checkProvWithAPIKey(&bufAPIKey[0],cb, cbRet);;
 }
 
 static int t_addJSON(int canTrim, char *pos, int iSize, const char *tag, const char *value){
-   
+
    char bufJSonValue[1024];
    copyJSON_value(bufJSonValue, value, sizeof(bufJSonValue)-1);
-   
+
    if(canTrim)trim(bufJSonValue);
-   
+
    if(!bufJSonValue[0] || iSize < 120 || strlen(value) > 80)return 0;
-   
+
    return snprintf(pos, iSize, "\"%s\":\"%s\",", tag, bufJSonValue);
 }
 
@@ -1022,67 +1053,67 @@ int createUserOnWeb(const char *pUN, const char *pPWD,
 
    int c, l = 0;
    int iRespContentLen=0;
-   
+
    char bufResp[4096];
    char bufBody[4096];
 
-   
-   
+
+
    char url[1024];
-   int ul = snprintf(url,sizeof(url)-10,"%s/v1/user/",provisioningLink);
-   
-   ul+=fixPostEncodingToken(&url[ul],sizeof(url)-10-ul,pUN,strlen(pUN));
+   int ul = snprintf(url,sizeof(url)-10,"%s/v1/user/",provisioningApiLink);
+
+   ul+=fixPostEncodingToken(&url[ul],sizeof(url)-10-ul,pUN,(int)strlen(pUN));
    url[ul] = '/'; ul++; url[ul]=0;
- 
+
    bufBody[0]='{';l = 1;
-   
+
    c = t_addJSON(1, &bufBody[l], sizeof(bufBody)-l, "username", pUN);
    if(!c){
       cb(cbRet,0,"Please check Username field.");
       return -1;
    }
    l+=c;
-   
+
    c = t_addJSON(0 , &bufBody[l], sizeof(bufBody)-l, "password", pPWD);
    if(!c){
       cb(cbRet,0,"Please check Password field.");
       return -1;
    }
    l+=c;
-   
+
    c = t_addJSON(1 , &bufBody[l], sizeof(bufBody)-l, "email", pEM);
    if(!c){
       cb(cbRet,0,"Please check Email field.");
       return -1;
    }
    l+=c;
-   
+
    c = t_addJSON(1 , &bufBody[l], sizeof(bufBody)-l, "first_name", pFN); l+=c;
    c = t_addJSON(1 , &bufBody[l], sizeof(bufBody)-l, "last_name", pLN); l+=c;
 
    bufBody[l - 1] = '}';//remove last , from JSON
-   
+
    memset(bufResp,0,sizeof(bufResp));
-   
+
    char *p=download_page2Loc(url, &bufResp[0], sizeof(bufResp)-50, iRespContentLen,cb,cbRet, "PUT", bufBody);
-   
+
    if(!p){
-      cb(cbRet,0,"Please check network connection.");//download json fail
+      cb(cbRet,0,"Please check network connection.\n(Error Code: 303)");//download json fail
       return -1;
    }
 #ifdef PROV_TEST
    printf("rec[%.*s]\n",iRespContentLen,p);//rem
    printf("rec-t[%s]\n",bufResp);//rem
 #endif
-   
+
    /*
     {"last_name": "N", "hash": "7c4219a8bcdbfe71aaa7381a72c0b57d3471ee39", "keys": [], "active_st_device": null, "country_code": "", "silent_text": true, "subscription": {"expires": "1900-01-01T00:00:00Z", "has_expired": true}, "first_name": "J", "display_name": "J N", "avatar_url": null, "silent_phone": false, "force_password_change": false, "permissions": {"can_send_media": true, "silent_text": true, "can_receive_voicemail": false, "silent_desktop": false, "silent_phone": false, "conference_create"
     */
-   
+
    char bufJSonValue[1024];
    l=findJSonToken(p,iRespContentLen,"result",&bufJSonValue[0],1023);
    if(l<=0){
-      cb(cbRet,0,"ERR: Result is not found");
+      cb(cbRet,0,"Malformed response.\n(Error Code: 405)");
       return -1;
    }
    if(strcmp(&bufJSonValue[0],"success")){
@@ -1090,11 +1121,11 @@ int createUserOnWeb(const char *pUN, const char *pPWD,
       if(l>0)
          cb(cbRet,-1,&bufJSonValue[0]);
       else{
-         cb(cbRet,-1,"Could not download configuration!");
+         cb(cbRet,-1,"Could not download configuration.\n(Error Code: 102)");
       }
       return -1;
    }
-   
+
    void saveCfgFile(const char *fn, void *p, int iLen);
    saveCfgFile("userData.json", bufResp, iRespContentLen);
 
@@ -1104,33 +1135,33 @@ int createUserOnWeb(const char *pUN, const char *pPWD,
 int checkUserCreate(const char *pUN, const char *pPWD, const char *pdevID,
                     const char *pEM, const char *pFN, const char *pLN,
                     void (*cb)(void *p, int ok, const char *pMsg), void *cbRet){
-   
+
    int r = createUserOnWeb(pUN, pPWD, pEM, pFN, pLN, cb, cbRet);
    if(r < 0)return r;
-   
+
    return checkProvUserPass(pUN, pPWD, NULL, pdevID, cb, cbRet);
 }
 
 int checkProvWithAPIKey(const char *pAPIKey, void (*cb)(void *p, int ok, const char *pMsg), void *cbRet){
-   
+
 
    char bufReq[1024];
    char bufCfg[4096];
-   
-   const char *pFN_to_download[]   = {"settings.txt","tivi_cfg_glob.txt","tivi_cfg.xml","tivi_cfg1.xml",NULL};
 
-   const char *pFNErr[]={"D-Err1","D-Err2","D-Err3","D-Err4","D-Err5","D-Err6",NULL};
-   
+   const char *pFN_to_download[]   = {"settings.txt","tivi_cfg_glob.txt","tivi_cfg.xml",NULL};
+
+//   const char *pFNErr[]={"D-Err1","D-Err2","D-Err3","D-Err4","D-Err5","D-Err6",NULL};
+
    const char *p10_200ok="HTTP/1.0 200 OK";
    const char *p11_200ok="HTTP/1.1 200 OK";
-   
-   int iLen200ok=strlen(p10_200ok);
-   
+
+   int iLen200ok=(int)strlen(p10_200ok);
+
    int iCfgPos=0;
-   
+
    for(int i=0;;i++){
       if(!pFN_to_download[i] || !pFN_to_save[i])break;
-      snprintf(bufReq,sizeof(bufReq)-1,"%s/provisioning/silent_phone/%s?api_key=%s",provisioningLink,pFN_to_download[i],pAPIKey);
+      snprintf(bufReq,sizeof(bufReq)-1,"%s/provisioning/silent_phone/%s?api_key=%s",provisioningApiLink,pFN_to_download[i],pAPIKey);
 #ifdef ANDROID
       androidLog("++++ Provisioning request: %s", bufReq);
 #endif
@@ -1162,19 +1193,19 @@ int checkProvWithAPIKey(const char *pAPIKey, void (*cb)(void *p, int ok, const c
 
       printf("Saving %s content=[%.*s]\n",pFN_to_save[i], iRespContentLen,p);
 #else
-      
+
       if(strncmp("tivi_cfg", pFN_to_save[i],8) || 0==strcmp("tivi_cfg_glob.txt", pFN_to_download[i])){
 #ifndef PROV_TEST
          saveCfgFile(pFN_to_save[i],p,iRespContentLen);
 #endif
-         
+
        //  printf("Saving %s content=[%.*s]\n",pFN_to_save[i], iRespContentLen,p);
       }
       else{
          iCfgPos=saveCfgFile(iCfgPos, p,iRespContentLen);
          //printf("Saving pos=%d content=[%.*s]\n",iCfgPos-1, iRespContentLen,p);
       }
-      
+
 #endif
    }
    cb(cbRet,1,"OK");
@@ -1190,7 +1221,7 @@ int saveCfgFile(int iNextPosToTest, void *p, int iLen){
    char fn[64];
    CTEditBase b(1024);
 #define MAX_CFG_FILES 10000
-   
+
    for(int i=iNextPosToTest;i<MAX_CFG_FILES;i++){
       if(i)snprintf(fn, sizeof(fn)-1, "tivi_cfg%d.xml", i); else strcpy(fn,"tivi_cfg.xml");
       setCfgFN(b, fn);
@@ -1204,18 +1235,18 @@ int saveCfgFile(int iNextPosToTest, void *p, int iLen){
    saveFileW(b.getText(),p,iLen);
    setOwnerAccessOnly(b.getText());
    setFileBackgroundReadable(b);
-   
+
    return iNextPosToTest;
 }
 
 
 
 void saveCfgFile(const char *fn, void *p, int iLen){
-   
+
    CTEditBase b(1024);
    setCfgFN(b,fn);
    saveFileW(b.getText(),p,iLen);
-   
+
    setOwnerAccessOnly(b.getText());
    setFileBackgroundReadable(b);
 }
@@ -1228,11 +1259,11 @@ int isProvisioned(int iCheckNow){
 #endif
 
    if(iProvisioned!=-1 && !iCheckNow)return iProvisioned;
-   
+
    CTEditBase b(1024);
-   
+
 //   setCfgFN(b,0);
-   
+
    do{
       iProvisioned=0;
       /*
@@ -1241,7 +1272,7 @@ int isProvisioned(int iCheckNow){
          break;
       }
       */
-      int getGCfgFileID();
+      extern int getGCfgFileID();
       setCfgFN(b,getGCfgFileID());
       if(isFileExistsW(b.getText())){
          setCfgFN(b,0);
@@ -1256,9 +1287,9 @@ int isProvisioned(int iCheckNow){
          }
          break;
       }
-      
+
       tivi_log1("isProvisioned fail ",getGCfgFileID());
-      
+
    }while(0);
    //int isFileExists(const char *fn);
    return iProvisioned;
@@ -1274,21 +1305,21 @@ public:
    int okCode;
    char bufMsg[256];
 
-   
+
    CTProvNoCallBack(){
       reset();
    }
    void setSteps(int i){iSteps=i;}
    void reset(){
-      
+
       memset(bufMsg, 0, sizeof(bufMsg));
       iHasData=0;
       okCode=0;
       iProvStat=0;
-      
+
    }
    void provCallBack(void *p, int ok, const char *pMsg){
-      
+
       //if(pMsg)tmp_log(pMsg);
       if(ok<=0){
          if(okCode<ok)return;
@@ -1311,7 +1342,7 @@ public:
       iHasData=0;
       return &bufMsg[0];
    }
-   
+
 };
 
 CTProvNoCallBack provNCB;
@@ -1336,39 +1367,3 @@ int checkProvAPIKeyNoCallBack(const char *pApiKey){
    provNCB.setSteps(11);
    return checkProvWithAPIKey(pApiKey, provCallBack, &provNCB);
 }
-
-int getApiKeySipUserPassNoCB(const char *pSipUN, const char *pSipPWD){
-   provNCB.reset();
-   provNCB.setSteps(11);
-   return  getApiKeySipUserPass(pSipUN, pSipPWD,provCallBack, &provNCB);
-}
-
-/*
--(void)cbTLS:(int)ok  msg:(const char*)msg {
-   NSLog(@"prov=[%s] %d",msg,ok);
-   
-   if(ok<=0){
-      if(iPrevErr==-2)return;
-      iPrevErr=ok;
-      dispatch_async(dispatch_get_main_queue(), ^{
-         
-         [self showMsgMT:@"Can not download configuration, check code ID and try again."  msg:msg];
-      });
-   }
-   else{
-      iProvStat++;
-      
-      dispatch_async(dispatch_get_main_queue(), ^{
-         float f=(float)iProvStat/14.;
-         if(f>1.)f=1.;
-         [uiProg setProgress:f animated:YES];
-      });
-   }
-}
-
- */
-
-
-
-
-

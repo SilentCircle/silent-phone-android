@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2016-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -28,14 +28,21 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package com.silentcircle.messaging.repository;
 
 
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+
 import com.silentcircle.messaging.model.Conversation;
+
+import java.util.List;
 
 public interface ConversationRepository extends Repository<Conversation> {
 
 // TODO: check if we need this with axolotl:	ResourceStateRepository contextOf(Conversation conversation);
 
-    Conversation findByPartner(String partner);
+    @Nullable
+    Conversation findByPartner(@Nullable final String partner);
 
-    EventRepository historyOf(Conversation conversation);
+    EventRepository historyOf(@NonNull final Conversation conversation);
 
+    List<Conversation> listCached();
 }

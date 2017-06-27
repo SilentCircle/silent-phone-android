@@ -1,7 +1,7 @@
 /*
 Created by Janis Narbuts
 Copyright (C) 2004-2012, Tivi LTD, www.tiviphone.com. All rights reserved.
-Copyright (C) 2012-2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2012-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,8 +27,6 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-
-
 #ifndef _C_TIVI_SES_H
 #define _C_TIVI_SES_H 
 
@@ -223,7 +221,7 @@ public:
 
 
    virtual int onRecMsg(int id, int SesId, char *sz, int iLen)=0;
-   virtual int onEndCall(int SesId, int iDontShowMissed)=0;
+   virtual int onEndCall(int SesId, const char *reason)=0;
    virtual void onTimer(){}
    virtual void dbg(char *p, int iLen){}
 
@@ -246,11 +244,12 @@ public:
    int iEngineIndex;
 };
 
-
+/* unused function:
 static int timeDiff(unsigned int uiCmp, unsigned int uiNow){
    int d = (int)(uiNow-uiCmp);
    return d;
 }
+*/
 
 #define T_SEND_480_AFTER 40
 
@@ -299,6 +298,16 @@ typedef struct {
          if(!sSIPMsg.dstrCallID.uiLen || !sSIPMsg.dstrCallID.strVal)return 0;
          return snprintf(p,iMax,"%.*s",sSIPMsg.dstrCallID.uiLen, sSIPMsg.dstrCallID.strVal);
       }
+      if(strcmp(key,"x-sc-alias")==0){
+         if(!sSIPMsg.hdrXSCDisplayAlias.dstrAlias.uiLen || !sSIPMsg.hdrXSCDisplayAlias.dstrAlias.strVal)return 0;
+         if(!sSIPMsg.hdrXSCDisplayAlias.dstrType.uiLen || !sSIPMsg.hdrXSCDisplayAlias.dstrType.strVal){
+            return snprintf(p,iMax,"%.*s",sSIPMsg.hdrXSCDisplayAlias.dstrAlias.uiLen, sSIPMsg.hdrXSCDisplayAlias.dstrAlias.strVal);
+         }
+         return snprintf(p,iMax,"%.*s;%.*s"
+                         ,sSIPMsg.hdrXSCDisplayAlias.dstrAlias.uiLen, sSIPMsg.hdrXSCDisplayAlias.dstrAlias.strVal
+                         ,sSIPMsg.hdrXSCDisplayAlias.dstrType.uiLen, sSIPMsg.hdrXSCDisplayAlias.dstrType.strVal);
+      }
+      
       
       if(strcmp(key,"peername")==0){
          
@@ -370,7 +379,7 @@ typedef struct {
    
    void setMBase(CTSesMediaBase *m){
       if(m){
-         m->setBaseData(pMediaIDS?pMediaIDS->pzrtp:NULL,&cs,pMediaIDS);
+          m->setBaseData(pMediaIDS?pMediaIDS->getZRTP():NULL,&cs,pMediaIDS,(pMediaIDS ? pMediaIDS->iIsSdesOnly : 1));
       }
       if(pMediaIDS)pMediaIDS->pOwner=this;
       iIsSession=1;
@@ -380,6 +389,21 @@ typedef struct {
    void stopMediaIDS(){
       if(pMediaIDS)pMediaIDS->stop();
    }
+   
+   int isNewSDP(char *p, int len){
+      
+      CTMd5 md5;
+      
+      md5.update(p,(unsigned int)len);
+      unsigned char b[16];
+      md5.final(b);
+      if(memcmp(b, sdpMd5Hash, 16)==0)return 1;
+      memcpy(sdpMd5Hash, b, 16);
+      return 0;
+   }
+   
+   int iSdesOnly;
+   
    CTMediaIDS *pMediaIDS;
    CTSesMediaBase *mBase;//private
    
@@ -387,6 +411,8 @@ typedef struct {
    
    //todo keepalive ses
    //todo reg ses
+   
+   unsigned char sdpMd5Hash[16];
 
    SIP_MSG sSIPMsg;
 	
@@ -435,6 +461,7 @@ typedef struct {
    int iReceivedVideoSDP;
    
    int iDontShowMissed;//Call completed elsewhere sip_reason_hdr
+   int iDeclinedElsewhere;
    
    inline operator int(){
       return ses_id();
@@ -625,14 +652,28 @@ class CTReinviteMonitor{
    t_ph_tick uiReinviteAt;
    int iNewIP;
    int iNewExtIP;
+   int iWasOnline;
 public:
    CTReinviteMonitor(){reset();}
-   void reset(){iNewIP=0;uiReinviteAt=0;}
+    void reset(){iNewIP=0;uiReinviteAt=0;iWasOnline=0;}
    void onNewIP(){iNewIP=1;}
    void onNewExtIP(){iNewExtIP=1;}
    void onOnline(t_ph_tick *now){
       if((iNewIP|iNewExtIP) && now){
-         uiReinviteAt=*now+2*T_GT_SECOND;
+          
+         /*
+         Trigger a reinvite the second time the account comes online.
+         What we want to do here is issue a reinvite on network change 
+         and not at launch (first time the account comes online).
+         Also the 2 seconds delay exists in order to prevent issuing
+         multiple reinvites when there are a lot of network changes in
+         a short period of time. So we always count 2 seconds after the
+         last time the account has come online. 
+         */
+         if(iWasOnline)
+             uiReinviteAt=*now+2*T_GT_SECOND;
+          
+         iWasOnline=1;
          iNewExtIP=iNewIP=0;
       }
    }
@@ -686,7 +727,7 @@ public:
 
    void *pTransMsgList;
 
-   int iActiveCallCnt;
+   int iSessionCallCnt;
    
 
    STR_T<128> userPreferdSipAddr;
@@ -750,7 +791,7 @@ public:
          n++;
          
       }
-      return 0;
+      return n;
    }
    
    int isSecondIncomingCallFromSameUser(SIP_MSG *sMsg){
@@ -863,7 +904,7 @@ public:
     }
    CSesBase *prevRetSes;
    
-    CSesBase *getNewSes(int bCaller, ADDR *paddr, int iMeth=0)
+    CSesBase *getNewSes(int sdes_only, int bCaller, ADDR *paddr, int iMeth=0)
     {
        int i;
 
@@ -896,12 +937,13 @@ public:
           spSes=&pSessionArray[i];
           if(iMeth!=METHOD_REGISTER)prevRetSes=spSes;
           
+          spSes->iSdesOnly = sdes_only;
           spSes->cs.iInUse=1;
           spSes->cs.iCaller=bCaller;
 
           spSes->dstConAddr=*paddr;
 
-          iActiveCallCnt++;
+          iSessionCallCnt++;
           spSes->cs.iCallStat=CALL_STAT::EInit;
           if(bCaller)
           {
@@ -915,10 +957,10 @@ public:
           
           //spSes->uiSipCseq=0;
           
-          CTMediaIDS* initMediaIDS(void *pThis, int iCallId, CSessionsBase *sb, int iCaller);
+          CTMediaIDS* initMediaIDS(void *pThis, int iCallId, CSessionsBase *sb, int iCaller, int iSdesOnly);
           if(iMeth==METHOD_INVITE){
              
-             spSes->pMediaIDS = initMediaIDS(spSes,spSes->ses_id(),this,bCaller);
+             spSes->pMediaIDS = initMediaIDS(spSes,spSes->ses_id(),this,bCaller, sdes_only);
              if(p_cfg.iNet == CTStun::FIREWALL){
                // enableTMR(1,spSes);
              }
@@ -933,14 +975,17 @@ public:
     }
     void freeSes(CSesBase *spSes)
     {
-       if(spSes)
+        if(spSes && spSes->cs.iInUse)
        {
-          iActiveCallCnt--;
+          iSessionCallCnt--;
           spSes->clear(this);
        }
     }
    
    void enableTMR(int iEnable, CSesBase *spSes){
+      
+      int hasIP(void);
+      if(!hasIP())iEnable=0;;
       
       void *findGlobalCfgKey(const char *key);
       static const int *g_enable = (const int *)findGlobalCfgKey("iEnableFWTraversal");
@@ -1032,7 +1077,7 @@ protected:
       iBytesSent(0),
       iBytesRec(0),
       iMaxSesions(iMaxSesions),
-      iActiveCallCnt(0),
+      iSessionCallCnt(0),
       threadSip(),
       cPhoneCallback(cPhoneCallback),
       sockSip(*cPhoneCallback),
@@ -1212,6 +1257,8 @@ private:
    unsigned int uiPosContentStart;
    STR strDstAddr;
    
+   char *params;
+   int paramLen;
 
 
 public:
@@ -1226,6 +1273,7 @@ public:
    
    const char *pSipHdrUriAdd;
 
+   char endReason[256];
    SIP_MSG *getSipMsg(){return sMsg;}
    
 
@@ -1234,6 +1282,9 @@ public:
       ,iContentAdded(0),uiPosToContentLen(0)
       ,iBufMalloced(0)
    {
+      endReason[0]=0;
+      buf = NULL;
+      params = NULL; paramLen = 0;
       iMustSendFromSIPRecvThread=0;
       pSipHdrUriAdd=NULL;
       cPhoneCallback=NULL;
@@ -1258,6 +1309,10 @@ public:
       if(s && psMsg->sipHdr.uiMethodID == METHOD_BYE){
          addRtpStats(s);
       }
+      if(params && paramLen>0){
+         addParams(params, paramLen);
+         paramLen=0;
+      }
       
       addContent();
       sendSip(sc, buf,(int) uiLen, &sMsg->addrSipMsgRec);
@@ -1270,6 +1325,8 @@ public:
    :spSes(NULL),sMsg(psMsg),iRetLen(NULL),uiLen(0)
    ,iContentAdded(0),uiPosToContentLen(0)
    {
+      endReason[0]=0;
+      params = NULL; paramLen = 0;
       iMustSendFromSIPRecvThread=0;
       pSipHdrUriAdd=NULL;
       cPhoneCallback=NULL;
@@ -1282,6 +1339,8 @@ public:
       :spSes(NULL),sMsg(psMsg),iRetLen(NULL),uiLen(0)
       ,iContentAdded(0),uiPosToContentLen(0)
    {
+      endReason[0]=0;
+      params = NULL; paramLen = 0;
       iMustSendFromSIPRecvThread=0;
       pSipHdrUriAdd=NULL;
       cPhoneCallback=NULL;
@@ -1293,6 +1352,8 @@ public:
       :spSes(pSes),uiLen(0),iContentAdded(0),uiPosToContentLen(0)
       ,uiPosContentStart(0),iBufMalloced(0)
    {
+      endReason[0]=0;
+      params = NULL; paramLen = 0;
       iMustSendFromSIPRecvThread=0;
       pSipHdrUriAdd=NULL;
       cPhoneCallback=NULL;
@@ -1324,7 +1385,7 @@ public:
       }
       
    };
-   ~CMakeSip(){if(iBufMalloced && buf)delete buf;buf=NULL;}
+   ~CMakeSip(){if(iBufMalloced && buf)delete buf;buf=NULL; if(params)delete params;}
    void addContent()
    {
       
@@ -1358,6 +1419,7 @@ public:
    };
    int makeReq(int id, PHONE_CFG * cfg, ADDR *addrExt=NULL,STR_64 *str64ExtADDR=NULL);
    
+   void setRespReason(const char *p){t_snprintf(endReason,sizeof(endReason)-1, "%s",p);}
    int makeResp(int id, PHONE_CFG * cfg =NULL, char *pDst=NULL, int iDstLen=0);
    int addAuth(const char *un, const char *pwd, SIP_MSG *psMsg);
    int addContent(const char *type, char *pCont, int iContLen);//NEW
@@ -1398,7 +1460,9 @@ public:
    }
    inline int sendSip(CTSipSock &sc, char *buf, int iLen, ADDR *addr)
    {
-
+      if(cPhoneCallback  && cPhoneCallback->p_cfg.iDebug){
+         cPhoneCallback->dbg(buf,iLen);
+      }
       return sc.sendTo(buf,iLen,addr,iMustSendFromSIPRecvThread);
    }
 private:

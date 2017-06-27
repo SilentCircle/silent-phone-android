@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2014-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -35,8 +35,9 @@ import android.support.v7.app.AppCompatActivity;
 import com.silentcircle.silentphone2.R;
 import com.silentcircle.silentphone2.dialhelpers.FindDialHelper;
 import com.silentcircle.silentphone2.fragments.DialHelperSelectorFragment;
+import com.silentcircle.silentphone2.passcode.AppLifecycleNotifierBaseActivity;
 
-public class DialHelperSelectorActivity extends AppCompatActivity {
+public class DialHelperSelectorActivity extends AppLifecycleNotifierBaseActivity {
 
     @SuppressWarnings("unused")
     private static final String TAG = DialHelperSelectorActivity.class.getSimpleName();

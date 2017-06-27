@@ -60,8 +60,8 @@ class __EXPORT ZrtpPacketConfirm : public ZrtpPacketBase {
         /// Check if SAS verify flag is set
         const bool isSASFlag()            { return (confirmHeader->flags & 0x4) == 0x4; }
 
-        /// Check if SAS verify flag is set
-        const bool isDisclosureFlag()     { return (confirmHeader->flags & 0x4) == 0x1; }
+        /// Check if Disclosure flag is set
+        const bool isDisclosureFlag()     { return (confirmHeader->flags & 0x1) == 0x1; }
 
         /// Check if PBXEnrollment flag is set
         const bool isPBXEnrollment()      { return (confirmHeader->flags & 0x8) == 0x8; }

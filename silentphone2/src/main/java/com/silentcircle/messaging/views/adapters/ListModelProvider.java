@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2016-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -54,17 +54,17 @@ public class ListModelProvider implements ModelProvider {
 
     @Override
     public int getCount() {
-        return items.size();
+        return items == null ? 0 : items.size();
     }
 
     @Override
     public Object getItem(int position) {
-        return items.get(position);
+        return items == null ? null : items.get(position);
     }
 
     @Override
     public long getItemId(int position) {
-        return items.get(position).hashCode();
+        return items == null ? 0 : items.get(position).hashCode();
     }
 
     @Override

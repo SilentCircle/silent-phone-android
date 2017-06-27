@@ -690,6 +690,10 @@ ZrtpPacketDHPart* ZRtp::prepareDHPart2(ZrtpPacketDHPart *dhPart1, uint32_t* errM
 
     // get and check Responder's public value, see chap. 5.4.3 in the spec
     pvr = dhPart1->getPv();
+    if (pvr == NULL) {
+        *errMsg = IgnorePacket;
+        return NULL;
+    }
     if (!dhContext->checkPubKey(pvr)) {
         *errMsg = DHErrorWrongPV;
         return NULL;

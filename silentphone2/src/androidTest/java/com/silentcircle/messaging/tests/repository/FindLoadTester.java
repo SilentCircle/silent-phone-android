@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2014-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -31,7 +31,6 @@ package com.silentcircle.messaging.tests.repository;
 import android.test.AndroidTestCase;
 import android.util.Log;
 
-import com.silentcircle.messaging.model.Contact;
 import com.silentcircle.messaging.model.Conversation;
 import com.silentcircle.messaging.repository.DbRepository.DbConversationRepository;
 
@@ -40,7 +39,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import axolotl.AxolotlNative;
+import zina.ZinaNative;
 
 /**
  * Perform some find stress testing.
@@ -80,15 +79,15 @@ public class FindLoadTester extends AndroidTestCase {
             if (dbFile.exists())
                 dbFile.delete();
             Log.d("RepoTester", "DB path: " + dbFile.getAbsolutePath());
-            AxolotlNative.repoOpenDatabase(dbFile.getAbsolutePath(), repoKey);
+            ZinaNative.repoOpenDatabase(dbFile.getAbsolutePath(), repoKey);
             firstSetup = true;
         }
     }
 
     public void testConversationFromThreads() throws Exception {
-        assertTrue(AxolotlNative.repoIsOpen());
+        assertTrue(ZinaNative.repoIsOpen());
 
-        DbConversationRepository testConv = new DbConversationRepository(getContext(), userName);
+        DbConversationRepository testConv = new DbConversationRepository(userName);
         assertTrue(testConv.exists());   // Does a repo for this local user exist?
 
         assertFalse(testConv.exists(partners[0]));  // not yet
@@ -111,12 +110,12 @@ public class FindLoadTester extends AndroidTestCase {
             service.submit(new Runnable() {
                 @Override
                 public void run() {
-                    DbConversationRepository testConv = new DbConversationRepository(getContext(), userName);
+                    DbConversationRepository testConv = new DbConversationRepository(userName);
                     for (int i = 0; i < 100; i++) {
                         Conversation convRead = testConv.findById(partners[0]);
                         if (convRead == null) {
 
-                            System.out.println("AAA convRead: " + convRead + " - " + android.os.Process.myTid() + " - " + i);
+                            Log.d(TAG, "convRead: " + convRead + " - " + android.os.Process.myTid() + " - " + i);
                         }
                         if (convRead == null) {
                             mHadNullConversation = true;

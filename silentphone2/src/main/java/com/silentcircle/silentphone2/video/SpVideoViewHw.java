@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2014-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -35,7 +35,7 @@ import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
 import android.util.AttributeSet;
-import android.util.Log;
+import com.silentcircle.logs.Log;
 import android.view.TextureView;
 
 import com.silentcircle.silentphone2.util.ConfigurationUtilities;

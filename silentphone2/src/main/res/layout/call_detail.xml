@@ -26,10 +26,7 @@
             android:layout_height="wrap_content"
             android:layout_width="match_parent"
             android:layout_alignParentTop="true"
-            android:minHeight="?attr/actionBarSize"
-            android:background="?sp_actionbar_color"
-            ex:titleTextAppearance="?sp_ab_title_style"
-            ex:subtitleTextAppearance="?sp_ab_subtitle_style"/>
+            style="@style/Toolbar"/>
 
     <RelativeLayout
                     android:layout_width="match_parent"

@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2014-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -28,11 +28,15 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 package com.silentcircle.silentphone2.util;
 
+import android.accounts.Account;
+import android.accounts.AccountManager;
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Activity;
+import android.app.ActivityManager;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
@@ -40,11 +44,15 @@ import android.graphics.Paint;
 import android.graphics.drawable.Drawable;
 import android.media.AudioManager;
 import android.net.ConnectivityManager;
+import android.net.Network;
+import android.net.NetworkCapabilities;
 import android.net.NetworkInfo;
+import android.net.Uri;
 import android.os.Build;
 import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.support.v4.content.ContextCompat;
+import android.telephony.PhoneNumberUtils;
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.util.TypedValue;
@@ -54,17 +62,27 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.google.android.gms.iid.InstanceID;
 import com.google.i18n.phonenumbers.NumberParseException;
 import com.google.i18n.phonenumbers.PhoneNumberUtil;
 import com.google.i18n.phonenumbers.Phonenumber;
+import com.silentcircle.SilentPhoneApplication;
+import com.silentcircle.accounts.AccountConstants;
+import com.silentcircle.common.list.ContactEntry;
+import com.silentcircle.common.util.API;
+import com.silentcircle.common.util.HttpUtil;
+import com.silentcircle.contacts.ContactPhotoManagerNew;
+import com.silentcircle.logs.Log;
+import com.silentcircle.messaging.providers.AvatarProvider;
+import com.silentcircle.messaging.util.AvatarUtils;
+import com.silentcircle.messaging.util.ContactsCache;
 import com.silentcircle.messaging.util.IOUtils;
-import com.silentcircle.common.util.SearchUtil;
 import com.silentcircle.messaging.util.MessagingPreferences;
-import com.silentcircle.silentphone2.BuildConfig;
 import com.silentcircle.silentphone2.R;
 import com.silentcircle.silentphone2.activities.DialerActivity;
 import com.silentcircle.silentphone2.dialhelpers.FindDialHelper;
 import com.silentcircle.silentphone2.services.TiviPhoneService;
+import com.silentcircle.silentphone2.views.BlurrableImageView;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -75,6 +93,8 @@ import java.security.Security;
 import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static android.content.Context.ACTIVITY_SERVICE;
 
 /**
  * This class has static functions only, mainly used for convenience
@@ -118,12 +138,51 @@ public class Utilities {
         if (call.image != null) {
             iw.setImageBitmap(call.image);
         }
-        else { // No caller image, set dummy image
-            if (mDefaultAvatar != null)
-                iw.setImageDrawable(mDefaultAvatar);
-            else
-                iw.setImageResource(R.drawable.ic_contact_picture_holo_dark);
+        else {
+            String uuid = call.iIsIncoming ? getPeerName(call) : call.bufDialed.toString();
+            ContactEntry contactEntry = ContactsCache.getContactEntryFromCacheIfExists(uuid);
+            Uri photoUri = null;
+            if (contactEntry != null) {
+                photoUri = contactEntry.photoUri;
+                if (photoUri != null && AvatarProvider.AUTHORITY.equals(photoUri.getAuthority())) {
+                    photoUri = photoUri.buildUpon()
+                            .appendQueryParameter(AvatarProvider.PARAM_AVATAR_SIZE,
+                                    String.valueOf(AvatarProvider.MAX_AVATAR_SIZE))
+                            .appendQueryParameter(AvatarProvider.PARAM_AVATAR_ID,
+                                    String.valueOf(R.drawable.ic_contact_picture_holo_dark))
+                            .build();
+                }
+            }
+            AvatarUtils.setPhoto(
+                    ContactPhotoManagerNew.getInstance(SilentPhoneApplication.getAppContext()),
+                    iw, photoUri, ContactPhotoManagerNew.TYPE_DEFAULT, false);
+
+            if (iw instanceof BlurrableImageView) {
+                ((BlurrableImageView) iw).setBlurred(call.iShowVerifySas);
+            }
         }
+    }
+
+    @Nullable
+    public static String getPeerName(@Nullable final CallState call) {
+        if (call == null) {
+            return null;
+        }
+        // asserted name will always be uuid (for sso, for regular users it will be uuid
+        // or user name, never alias)
+        // asserted name may be absent on occasions, then bufPeer has to be used
+        String peerName = call.mAssertedName.toString();
+        if (call.isOcaCall || TextUtils.isEmpty(peerName)) {
+            peerName = call.bufPeer.toString();
+        } else {
+            String[] nameWithHeaderFields = Utilities.splitFields(peerName, ";");
+            if (nameWithHeaderFields != null && nameWithHeaderFields.length > 1) {
+                peerName = nameWithHeaderFields[0];
+            }
+            peerName = Utilities.getUsernameFromUriNumberSelective(peerName);
+            peerName = Utilities.removeSipPrefix(peerName);
+        }
+        return peerName;
     }
 
     static public void turnOnSpeaker(Context context, boolean flag, boolean store) {
@@ -318,11 +377,6 @@ public class Utilities {
         mSelectedTheme = (theme == MessagingPreferences.INDEX_THEME_DARK
                 ? R.style.SilentPhoneThemeBlack
                 : R.style.SilentPhoneThemeLight);
-
-        // Theming enabled only for debug builds, production builds have black theme only
-        if (!BuildConfig.DEBUG) {
-            mSelectedTheme = R.style.SilentPhoneThemeBlack;
-        }
 
         if (mSelectedTheme == 0) {
             // Change here if standard (startup) theme changes
@@ -543,7 +597,7 @@ public class Utilities {
      * This function does not truncate zero bytes.
      *
      * @param bytes the input array
-     * @return a character array with hex characters
+     * @return a character array with hex characters, all uppercase
      */
     public static char[] bytesToHexChars(byte[] bytes) {
         return bytesToHexChars(bytes, false);
@@ -659,11 +713,39 @@ public class Utilities {
         }
     }
 
-    public static boolean isNetworkConnected(Context context){
-        ConnectivityManager connMgr = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+    public static boolean isNetworkConnected(Context context) {
+        // More reliable system-validated check (for newer APIs)
+        // FIXME: Remove this improvement later on to avoid confusion
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            return hasInternetConnection(context);
+        }
+
+        ConnectivityManager connMgr = (ConnectivityManager) context.
+                getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
 
         return networkInfo != null && networkInfo.isConnected();
+    }
+
+    public static boolean isNetworkConnectedOrConnecting(Context context){
+        ConnectivityManager connMgr = (ConnectivityManager) context.
+                getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
+
+        return networkInfo != null && networkInfo.isConnectedOrConnecting();
+    }
+
+    @TargetApi(Build.VERSION_CODES.M)
+    public static boolean hasInternetConnection(Context context) {
+        ConnectivityManager connectivityManager = (ConnectivityManager)context.
+                getSystemService(Context.CONNECTIVITY_SERVICE);
+
+        Network network = connectivityManager.getActiveNetwork();
+        NetworkCapabilities capabilities = connectivityManager
+                .getNetworkCapabilities(network);
+
+        return capabilities != null
+                && capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED);
     }
 
     /**
@@ -804,8 +886,61 @@ public class Utilities {
         }
     }
 
-    public static boolean canMessage(String partner) {
-        return SearchUtil.isUuid(partner) || Utilities.isValidSipUsername(partner);
+    public static CharSequence formatNumberAssisted(String number) {
+        if (TextUtils.isEmpty(number)) {
+            return null;
+        }
+
+        // TODO: Optimize logic
+        boolean wasModified = false;
+        char firstChar = number.charAt(0);
+        String formatted = null;
+        if (firstChar == '+' || Character.isDigit(firstChar)) {
+            StringBuilder modified = new StringBuilder(20);
+            wasModified = FindDialHelper.getDialHelper().analyseModifyNumberString(number, modified);
+            if (wasModified) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    formatted = PhoneNumberUtils.formatNumber(modified.toString(), "Z");
+                } else {
+                    formatted = PhoneNumberUtils.formatNumber(modified.toString());
+                }
+
+                return !TextUtils.isEmpty(formatted) ? formatted
+                        : !TextUtils.isEmpty(modified) ? modified : number;
+            } else if (firstChar == '+') {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    formatted = PhoneNumberUtils.formatNumber(number, "Z");
+                } else {
+                    formatted = PhoneNumberUtils.formatNumber(number);
+                }
+
+                if (formatted == null || formatted.equals(number)) {
+                    return null;
+                }
+
+                return !TextUtils.isEmpty(formatted) ? formatted : number;
+            }
+        }
+
+        return null;
+    }
+
+    public static void formatNumberAssistedInput(EditText editText) {
+        if (TextUtils.isEmpty(editText.getText())) {
+            return;
+        }
+
+        String number = editText.getText().toString();
+        CharSequence assisted = formatNumberAssisted(number);
+
+        if (assisted != null) {
+            editText.setText(assisted);
+            editText.setSelection(editText.getText().length());
+        }
+    }
+
+    public static boolean canMessage(@Nullable String partner) {
+        return isUuid(partner) || isValidSipUsername(partner);
     }
 
     public static String[] splitFields(String field, String separator) {
@@ -816,5 +951,70 @@ public class Utilities {
             return null;
         }
         return parts;
+    }
+
+    private static String uuidRegex = "u[a-z0-9]{24,25}";
+    private static Pattern uuidPattern = Pattern.compile(uuidRegex);
+
+    public static boolean isUuid(String name) {
+        return !TextUtils.isEmpty(name) && Utilities.uuidPattern.matcher(name).matches();
+    }
+
+    /**
+     * Wipe application data and remove account associated with application.
+     *
+     * @return {@code true} if application data is successfully cleared, {@code false} if
+     * application data could not be cleared or Android version is older that KitKat where
+     * API to clear data is not available.
+     */
+    @SuppressWarnings("deprecation")
+    public static boolean wipePhone(@Nullable Context context) {
+        if (context == null) {
+            return false;
+        }
+
+        // Unregister from GCM
+        try {
+            InstanceID.getInstance(context).deleteInstanceID();
+        } catch (Exception ignore) {}
+
+        // Delete the account from the account manager
+        AccountManager am = AccountManager.get(context);
+        Account[] accounts = new Account[0];
+        try {
+            accounts = am.getAccountsByType(AccountConstants.ACCOUNT_TYPE);
+        } catch (SecurityException ignore) {
+            Log.d(TAG, "Could not obtain app's associated account.");
+        }
+
+        if (accounts.length > 0) {
+            // We force only one account to be created of {@link AccountConstants#ACCOUNT_TYPE}
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
+                am.removeAccountExplicitly(accounts[0]);
+            }
+            else {
+                am.removeAccount(accounts[0], null, null);
+            }
+        }
+
+        boolean result = false;
+        // Clear app data (only for API 19+)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            result = ((ActivityManager) context.getSystemService(ACTIVITY_SERVICE)).clearApplicationUserData();
+        }
+        return result;
+    }
+
+    public static String getTimeString(long miliSeconds) {
+        long minutes = (long) Math.floor((miliSeconds / 1000.0) / 60);
+        long seconds = miliSeconds / 1000 - minutes * 60;
+
+        return String.format(Locale.US, "%02d:%02d", minutes, seconds);
+    }
+
+    public static boolean hasCamera() {
+        Context context = SilentPhoneApplication.getAppContext();
+        PackageManager packageManager = context.getPackageManager();
+        return packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA);
     }
 }

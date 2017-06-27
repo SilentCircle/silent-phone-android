@@ -1,6 +1,23 @@
 /**
  * @file
  * TCP/IP communication module documentation file.
+ *
+ *  Copyright (C) 2006-2015, ARM Limited, All Rights Reserved
+ *  SPDX-License-Identifier: Apache-2.0
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License"); you may
+ *  not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ *  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ *  This file is part of mbed TLS (https://tls.mbed.org)
  */
 
 /**
@@ -13,10 +30,10 @@
  * (or Host-to-host) layer.
  * SSL/TLS resides on top of that, in the Application layer, and makes use of
  * its basic provisions:
- * - listening on a port (see \c net_bind()).
- * - accepting a connection (through \c net_accept()).
- * - read/write (through \c net_recv()/\c net_send()).
- * - close a connection (through \c net_close()).
+ * - listening on a port (see \c mbedtls_net_bind()).
+ * - accepting a connection (through \c mbedtls_net_accept()).
+ * - read/write (through \c mbedtls_net_recv()/\c mbedtls_net_send()).
+ * - close a connection (through \c mbedtls_net_close()).
  *
  * This way you have the means to, for example, implement and use an UDP or
  * IPSec communication solution as a basis.

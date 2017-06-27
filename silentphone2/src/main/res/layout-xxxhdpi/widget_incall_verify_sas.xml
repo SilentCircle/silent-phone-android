@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    tools:context=".fragments.InCallMainFragment">
+
+    <LinearLayout
+        android:id="@+id/indicators"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_marginTop="0dp"
+        android:baselineAligned="false"
+        android:gravity="center_vertical"
+        android:paddingLeft="@dimen/activity_horizontal_margin"
+        android:paddingRight="@dimen/activity_horizontal_margin">
+
+        <TextView
+            android:id="@+id/sec_info"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/sc_ng_text_grey"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:visibility="visible"
+            android:text="@string/verify_question"
+            tools:visibility="visible"
+            android:layout_gravity="center_horizontal" />
+
+        <LinearLayout
+            android:id="@+id/verify_sas"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_normal"
+            android:gravity="center_horizontal"
+            android:orientation="vertical"
+            android:layout_gravity="center_horizontal">
+
+            <TextView
+                android:id="@+id/verify_label"
+                style="@style/Widget.Silent"
+                android:filterTouchesWhenObscured="false"
+                android:maxLines="1"
+                android:text="@string/compare_with"
+                android:textAppearance="?android:textAppearanceSmall"
+                android:textColor="@color/sc_ng_text_grey" />
+
+            <com.silentcircle.common.widget.AdjustingTextView
+                android:id="@+id/username"
+                style="@style/Widget.Silent"
+                android:layout_width="match_parent"
+                android:gravity="center"
+                android:filterTouchesWhenObscured="false"
+                android:maxLines="1"
+                android:textAppearance="?android:textAppearanceSmall"
+                android:textStyle="bold"
+                android:textColor="@color/sc_ng_text_grey"
+                app:minTextSize="@dimen/text_small"
+                tools:text="Amanda C" />
+
+            <TextView
+                android:id="@+id/sas_text"
+                style="@style/Widget.Silent"
+                android:layout_marginTop="@dimen/spacing_small"
+                android:filterTouchesWhenObscured="false"
+                android:maxLines="1"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="@color/sc_ng_text_grey"
+                tools:text="SASword1 SASword2" />
+
+        </LinearLayout>
+
+        <FrameLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="@dimen/spacing_large">
+
+<!--
+            <TextView
+                android:layout_width="300dp"
+                android:layout_height="wrap_content"
+                android:text="xxxhdpi"
+                android:clickable="false"
+                android:textColor="@color/silent_white" />
+-->
+
+            <Button
+                android:id="@+id/btn_verify_sas"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingTop="@dimen/spacing_normal"
+                android:paddingBottom="@dimen/spacing_normal"
+                android:paddingLeft="@dimen/spacing_xlarge"
+                android:paddingRight="@dimen/spacing_xlarge"
+                android:text="@string/verify_label"
+                android:textColor="@color/sc_ng_text_grey"
+                android:background="@drawable/bg_button"
+                android:backgroundTint="@color/sc_ng_background_4"
+                android:layout_gravity="center_horizontal"
+                tools:visibility="visible" />
+
+            <LinearLayout
+                android:id="@+id/btn_verify_sas_with_dr"
+                android:layout_height="wrap_content"
+                android:layout_width="wrap_content"
+                android:orientation="horizontal"
+                android:background="@color/sc_ng_text_red_dark"
+                android:clickable="true"
+                android:focusable="true"
+                android:visibility="gone"
+                android:layout_gravity="center_horizontal"
+                tools:visibility="visible">
+
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingLeft="@dimen/spacing_normal"
+                    android:paddingStart="@dimen/spacing_normal"
+                    android:paddingRight="@dimen/spacing_normal"
+                    android:paddingEnd="@dimen/spacing_normal"
+                    android:src="@drawable/ic_data_retention"
+                    android:importantForAccessibility="no"
+                    android:layout_gravity="center_vertical" />
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:background="@color/chat_message_notification_color"
+                    android:paddingLeft="@dimen/spacing_normal"
+                    android:paddingStart="@dimen/spacing_normal"
+                    android:paddingRight="@dimen/spacing_normal"
+                    android:paddingEnd="@dimen/spacing_normal"
+                    android:gravity="center">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/verify_label"
+                        android:textColor="@color/sc_ng_text_grey"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/data_retention_on"
+                        android:textColor="@color/sc_ng_text_dark"
+                        android:textStyle="bold"/>
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+        </FrameLayout>
+
+    </LinearLayout>
+
+</LinearLayout>

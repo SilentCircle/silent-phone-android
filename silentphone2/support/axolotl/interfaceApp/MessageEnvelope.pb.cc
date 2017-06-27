@@ -13,10 +13,11 @@
 #include <google/protobuf/io/zero_copy_stream_impl_lite.h>
 // @@protoc_insertion_point(includes)
 
-namespace axolotl {
+namespace zina {
 
 void protobuf_ShutdownFile_MessageEnvelope_2eproto() {
   delete MessageEnvelope::default_instance_;
+  delete RatchetData::default_instance_;
 }
 
 #ifdef GOOGLE_PROTOBUF_NO_STATIC_INITIALIZER
@@ -32,7 +33,9 @@ void protobuf_AddDesc_MessageEnvelope_2eproto() {
 
 #endif
   MessageEnvelope::default_instance_ = new MessageEnvelope();
+  RatchetData::default_instance_ = new RatchetData();
   MessageEnvelope::default_instance_->InitAsDefaultInstance();
+  RatchetData::default_instance_->InitAsDefaultInstance();
   ::google::protobuf::internal::OnShutdown(&protobuf_ShutdownFile_MessageEnvelope_2eproto);
 }
 
@@ -56,31 +59,36 @@ struct StaticDescriptorInitializer_MessageEnvelope_2eproto {
 #ifndef _MSC_VER
 const int MessageEnvelope::kNameFieldNumber;
 const int MessageEnvelope::kScClientDevIdFieldNumber;
-const int MessageEnvelope::kDeviceIdFieldNumber;
+const int MessageEnvelope::kMsgTypeFieldNumber;
 const int MessageEnvelope::kSupplementFieldNumber;
 const int MessageEnvelope::kMessageFieldNumber;
 const int MessageEnvelope::kMsgIdFieldNumber;
 const int MessageEnvelope::kRecvIdHashFieldNumber;
 const int MessageEnvelope::kSenderIdHashFieldNumber;
-const int MessageEnvelope::kRecvDeviceIdFieldNumber;
 const int MessageEnvelope::kRecvDevIdBinFieldNumber;
-const int MessageEnvelope::kUidFieldNumber;
+const int MessageEnvelope::kRatchetFieldNumber;
 #endif  // !_MSC_VER
 
 MessageEnvelope::MessageEnvelope()
   : ::google::protobuf::MessageLite() {
   SharedCtor();
-  // @@protoc_insertion_point(constructor:axolotl.MessageEnvelope)
+  // @@protoc_insertion_point(constructor:zina.MessageEnvelope)
 }
 
 void MessageEnvelope::InitAsDefaultInstance() {
+#ifdef GOOGLE_PROTOBUF_NO_STATIC_INITIALIZER
+  ratchet_ = const_cast< ::zina::RatchetData*>(
+      ::zina::RatchetData::internal_default_instance());
+#else
+  ratchet_ = const_cast< ::zina::RatchetData*>(&::zina::RatchetData::default_instance());
+#endif
 }
 
 MessageEnvelope::MessageEnvelope(const MessageEnvelope& from)
   : ::google::protobuf::MessageLite() {
   SharedCtor();
   MergeFrom(from);
-  // @@protoc_insertion_point(copy_constructor:axolotl.MessageEnvelope)
+  // @@protoc_insertion_point(copy_constructor:zina.MessageEnvelope)
 }
 
 void MessageEnvelope::SharedCtor() {
@@ -88,20 +96,19 @@ void MessageEnvelope::SharedCtor() {
   _cached_size_ = 0;
   name_ = const_cast< ::std::string*>(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   scclientdevid_ = const_cast< ::std::string*>(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  device_id_ = 0u;
+  msgtype_ = 0u;
   supplement_ = const_cast< ::std::string*>(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   message_ = const_cast< ::std::string*>(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   msgid_ = const_cast< ::std::string*>(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   recvidhash_ = const_cast< ::std::string*>(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   senderidhash_ = const_cast< ::std::string*>(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  recvdeviceid_ = const_cast< ::std::string*>(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   recvdevidbin_ = const_cast< ::std::string*>(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  uid_ = const_cast< ::std::string*>(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  ratchet_ = NULL;
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
 }
 
 MessageEnvelope::~MessageEnvelope() {
-  // @@protoc_insertion_point(destructor:axolotl.MessageEnvelope)
+  // @@protoc_insertion_point(destructor:zina.MessageEnvelope)
   SharedDtor();
 }
 
@@ -127,20 +134,15 @@ void MessageEnvelope::SharedDtor() {
   if (senderidhash_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
     delete senderidhash_;
   }
-  if (recvdeviceid_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    delete recvdeviceid_;
-  }
   if (recvdevidbin_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
     delete recvdevidbin_;
-  }
-  if (uid_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    delete uid_;
   }
   #ifdef GOOGLE_PROTOBUF_NO_STATIC_INITIALIZER
   if (this != &default_instance()) {
   #else
   if (this != default_instance_) {
   #endif
+    delete ratchet_;
   }
 }
 
@@ -176,7 +178,7 @@ void MessageEnvelope::Clear() {
         scclientdevid_->clear();
       }
     }
-    device_id_ = 0u;
+    msgtype_ = 0u;
     if (has_supplement()) {
       if (supplement_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
         supplement_->clear();
@@ -203,21 +205,14 @@ void MessageEnvelope::Clear() {
       }
     }
   }
-  if (_has_bits_[8 / 32] & 1792) {
-    if (has_recvdeviceid()) {
-      if (recvdeviceid_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-        recvdeviceid_->clear();
-      }
-    }
+  if (_has_bits_[8 / 32] & 768) {
     if (has_recvdevidbin()) {
       if (recvdevidbin_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
         recvdevidbin_->clear();
       }
     }
-    if (has_uid()) {
-      if (uid_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-        uid_->clear();
-      }
+    if (has_ratchet()) {
+      if (ratchet_ != NULL) ratchet_->::zina::RatchetData::Clear();
     }
   }
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
@@ -232,7 +227,7 @@ bool MessageEnvelope::MergePartialFromCodedStream(
       mutable_unknown_fields());
   ::google::protobuf::io::CodedOutputStream unknown_fields_stream(
       &unknown_fields_string);
-  // @@protoc_insertion_point(parse_start:axolotl.MessageEnvelope)
+  // @@protoc_insertion_point(parse_start:zina.MessageEnvelope)
   for (;;) {
     ::std::pair< ::google::protobuf::uint32, bool> p = input->ReadTagWithCutoff(127);
     tag = p.first;
@@ -259,18 +254,18 @@ bool MessageEnvelope::MergePartialFromCodedStream(
         } else {
           goto handle_unusual;
         }
-        if (input->ExpectTag(24)) goto parse_device_id;
+        if (input->ExpectTag(24)) goto parse_msgType;
         break;
       }
 
-      // optional uint32 device_id = 3;
+      // optional uint32 msgType = 3;
       case 3: {
         if (tag == 24) {
-         parse_device_id:
+         parse_msgType:
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
-                 input, &device_id_)));
-          set_has_device_id();
+                 input, &msgtype_)));
+          set_has_msgtype();
         } else {
           goto handle_unusual;
         }
@@ -339,19 +334,6 @@ bool MessageEnvelope::MergePartialFromCodedStream(
         } else {
           goto handle_unusual;
         }
-        if (input->ExpectTag(74)) goto parse_recvDeviceId;
-        break;
-      }
-
-      // optional string recvDeviceId = 9;
-      case 9: {
-        if (tag == 74) {
-         parse_recvDeviceId:
-          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
-                input, this->mutable_recvdeviceid()));
-        } else {
-          goto handle_unusual;
-        }
         if (input->ExpectTag(82)) goto parse_recvDevIdBin;
         break;
       }
@@ -365,16 +347,16 @@ bool MessageEnvelope::MergePartialFromCodedStream(
         } else {
           goto handle_unusual;
         }
-        if (input->ExpectTag(90)) goto parse_uid;
+        if (input->ExpectTag(98)) goto parse_ratchet;
         break;
       }
 
-      // optional string uid = 11;
-      case 11: {
-        if (tag == 90) {
-         parse_uid:
-          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
-                input, this->mutable_uid()));
+      // optional .zina.RatchetData ratchet = 12;
+      case 12: {
+        if (tag == 98) {
+         parse_ratchet:
+          DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
+               input, mutable_ratchet()));
         } else {
           goto handle_unusual;
         }
@@ -396,17 +378,17 @@ bool MessageEnvelope::MergePartialFromCodedStream(
     }
   }
 success:
-  // @@protoc_insertion_point(parse_success:axolotl.MessageEnvelope)
+  // @@protoc_insertion_point(parse_success:zina.MessageEnvelope)
   return true;
 failure:
-  // @@protoc_insertion_point(parse_failure:axolotl.MessageEnvelope)
+  // @@protoc_insertion_point(parse_failure:zina.MessageEnvelope)
   return false;
 #undef DO_
 }
 
 void MessageEnvelope::SerializeWithCachedSizes(
     ::google::protobuf::io::CodedOutputStream* output) const {
-  // @@protoc_insertion_point(serialize_start:axolotl.MessageEnvelope)
+  // @@protoc_insertion_point(serialize_start:zina.MessageEnvelope)
   // optional string name = 1;
   if (has_name()) {
     ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
@@ -419,9 +401,9 @@ void MessageEnvelope::SerializeWithCachedSizes(
       2, this->scclientdevid(), output);
   }
 
-  // optional uint32 device_id = 3;
-  if (has_device_id()) {
-    ::google::protobuf::internal::WireFormatLite::WriteUInt32(3, this->device_id(), output);
+  // optional uint32 msgType = 3;
+  if (has_msgtype()) {
+    ::google::protobuf::internal::WireFormatLite::WriteUInt32(3, this->msgtype(), output);
   }
 
   // optional bytes supplement = 4;
@@ -454,27 +436,21 @@ void MessageEnvelope::SerializeWithCachedSizes(
       8, this->senderidhash(), output);
   }
 
-  // optional string recvDeviceId = 9;
-  if (has_recvdeviceid()) {
-    ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
-      9, this->recvdeviceid(), output);
-  }
-
   // optional bytes recvDevIdBin = 10;
   if (has_recvdevidbin()) {
     ::google::protobuf::internal::WireFormatLite::WriteBytesMaybeAliased(
       10, this->recvdevidbin(), output);
   }
 
-  // optional string uid = 11;
-  if (has_uid()) {
-    ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
-      11, this->uid(), output);
+  // optional .zina.RatchetData ratchet = 12;
+  if (has_ratchet()) {
+    ::google::protobuf::internal::WireFormatLite::WriteMessage(
+      12, this->ratchet(), output);
   }
 
   output->WriteRaw(unknown_fields().data(),
                    unknown_fields().size());
-  // @@protoc_insertion_point(serialize_end:axolotl.MessageEnvelope)
+  // @@protoc_insertion_point(serialize_end:zina.MessageEnvelope)
 }
 
 int MessageEnvelope::ByteSize() const {
@@ -495,11 +471,11 @@ int MessageEnvelope::ByteSize() const {
           this->scclientdevid());
     }
 
-    // optional uint32 device_id = 3;
-    if (has_device_id()) {
+    // optional uint32 msgType = 3;
+    if (has_msgtype()) {
       total_size += 1 +
         ::google::protobuf::internal::WireFormatLite::UInt32Size(
-          this->device_id());
+          this->msgtype());
     }
 
     // optional bytes supplement = 4;
@@ -539,13 +515,6 @@ int MessageEnvelope::ByteSize() const {
 
   }
   if (_has_bits_[8 / 32] & (0xffu << (8 % 32))) {
-    // optional string recvDeviceId = 9;
-    if (has_recvdeviceid()) {
-      total_size += 1 +
-        ::google::protobuf::internal::WireFormatLite::StringSize(
-          this->recvdeviceid());
-    }
-
     // optional bytes recvDevIdBin = 10;
     if (has_recvdevidbin()) {
       total_size += 1 +
@@ -553,11 +522,11 @@ int MessageEnvelope::ByteSize() const {
           this->recvdevidbin());
     }
 
-    // optional string uid = 11;
-    if (has_uid()) {
+    // optional .zina.RatchetData ratchet = 12;
+    if (has_ratchet()) {
       total_size += 1 +
-        ::google::protobuf::internal::WireFormatLite::StringSize(
-          this->uid());
+        ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
+          this->ratchet());
     }
 
   }
@@ -583,8 +552,8 @@ void MessageEnvelope::MergeFrom(const MessageEnvelope& from) {
     if (from.has_scclientdevid()) {
       set_scclientdevid(from.scclientdevid());
     }
-    if (from.has_device_id()) {
-      set_device_id(from.device_id());
+    if (from.has_msgtype()) {
+      set_msgtype(from.msgtype());
     }
     if (from.has_supplement()) {
       set_supplement(from.supplement());
@@ -603,14 +572,11 @@ void MessageEnvelope::MergeFrom(const MessageEnvelope& from) {
     }
   }
   if (from._has_bits_[8 / 32] & (0xffu << (8 % 32))) {
-    if (from.has_recvdeviceid()) {
-      set_recvdeviceid(from.recvdeviceid());
-    }
     if (from.has_recvdevidbin()) {
       set_recvdevidbin(from.recvdevidbin());
     }
-    if (from.has_uid()) {
-      set_uid(from.uid());
+    if (from.has_ratchet()) {
+      mutable_ratchet()->::zina::RatchetData::MergeFrom(from.ratchet());
     }
   }
   mutable_unknown_fields()->append(from.unknown_fields());
@@ -631,15 +597,14 @@ void MessageEnvelope::Swap(MessageEnvelope* other) {
   if (other != this) {
     std::swap(name_, other->name_);
     std::swap(scclientdevid_, other->scclientdevid_);
-    std::swap(device_id_, other->device_id_);
+    std::swap(msgtype_, other->msgtype_);
     std::swap(supplement_, other->supplement_);
     std::swap(message_, other->message_);
     std::swap(msgid_, other->msgid_);
     std::swap(recvidhash_, other->recvidhash_);
     std::swap(senderidhash_, other->senderidhash_);
-    std::swap(recvdeviceid_, other->recvdeviceid_);
     std::swap(recvdevidbin_, other->recvdevidbin_);
-    std::swap(uid_, other->uid_);
+    std::swap(ratchet_, other->ratchet_);
     std::swap(_has_bits_[0], other->_has_bits_[0]);
     _unknown_fields_.swap(other->_unknown_fields_);
     std::swap(_cached_size_, other->_cached_size_);
@@ -647,12 +612,691 @@ void MessageEnvelope::Swap(MessageEnvelope* other) {
 }
 
 ::std::string MessageEnvelope::GetTypeName() const {
-  return "axolotl.MessageEnvelope";
+  return "zina.MessageEnvelope";
+}
+
+
+// ===================================================================
+
+#ifndef _MSC_VER
+const int RatchetData::kUseVersionFieldNumber;
+const int RatchetData::kMaxVersionFieldNumber;
+const int RatchetData::kContextIdFieldNumber;
+const int RatchetData::kCurveTypeFieldNumber;
+const int RatchetData::kFlagsFieldNumber;
+const int RatchetData::kRatchetMsgTypeFieldNumber;
+const int RatchetData::kNpFieldNumber;
+const int RatchetData::kPNpFieldNumber;
+const int RatchetData::kRatchetFieldNumber;
+const int RatchetData::kMacFieldNumber;
+const int RatchetData::kLocalPreKeyIdFieldNumber;
+const int RatchetData::kRemotePreKeyFieldNumber;
+const int RatchetData::kRemoteIdKeyFieldNumber;
+const int RatchetData::kPreKeyHashFieldNumber;
+#endif  // !_MSC_VER
+
+RatchetData::RatchetData()
+  : ::google::protobuf::MessageLite() {
+  SharedCtor();
+  // @@protoc_insertion_point(constructor:zina.RatchetData)
+}
+
+void RatchetData::InitAsDefaultInstance() {
+}
+
+RatchetData::RatchetData(const RatchetData& from)
+  : ::google::protobuf::MessageLite() {
+  SharedCtor();
+  MergeFrom(from);
+  // @@protoc_insertion_point(copy_constructor:zina.RatchetData)
+}
+
+void RatchetData::SharedCtor() {
+  ::google::protobuf::internal::GetEmptyString();
+  _cached_size_ = 0;
+  useversion_ = 0;
+  maxversion_ = 0;
+  contextid_ = 0u;
+  curvetype_ = 0;
+  flags_ = 0u;
+  ratchetmsgtype_ = 0;
+  np_ = 0;
+  pnp_ = 0;
+  ratchet_ = const_cast< ::std::string*>(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  mac_ = const_cast< ::std::string*>(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  localprekeyid_ = 0;
+  remoteprekey_ = const_cast< ::std::string*>(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  remoteidkey_ = const_cast< ::std::string*>(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  prekeyhash_ = const_cast< ::std::string*>(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  ::memset(_has_bits_, 0, sizeof(_has_bits_));
+}
+
+RatchetData::~RatchetData() {
+  // @@protoc_insertion_point(destructor:zina.RatchetData)
+  SharedDtor();
+}
+
+void RatchetData::SharedDtor() {
+  if (ratchet_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
+    delete ratchet_;
+  }
+  if (mac_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
+    delete mac_;
+  }
+  if (remoteprekey_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
+    delete remoteprekey_;
+  }
+  if (remoteidkey_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
+    delete remoteidkey_;
+  }
+  if (prekeyhash_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
+    delete prekeyhash_;
+  }
+  #ifdef GOOGLE_PROTOBUF_NO_STATIC_INITIALIZER
+  if (this != &default_instance()) {
+  #else
+  if (this != default_instance_) {
+  #endif
+  }
+}
+
+void RatchetData::SetCachedSize(int size) const {
+  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
+  _cached_size_ = size;
+  GOOGLE_SAFE_CONCURRENT_WRITES_END();
+}
+const RatchetData& RatchetData::default_instance() {
+#ifdef GOOGLE_PROTOBUF_NO_STATIC_INITIALIZER
+  protobuf_AddDesc_MessageEnvelope_2eproto();
+#else
+  if (default_instance_ == NULL) protobuf_AddDesc_MessageEnvelope_2eproto();
+#endif
+  return *default_instance_;
+}
+
+RatchetData* RatchetData::default_instance_ = NULL;
+
+RatchetData* RatchetData::New() const {
+  return new RatchetData;
+}
+
+void RatchetData::Clear() {
+#define OFFSET_OF_FIELD_(f) (reinterpret_cast<char*>(      \
+  &reinterpret_cast<RatchetData*>(16)->f) - \
+   reinterpret_cast<char*>(16))
+
+#define ZR_(first, last) do {                              \
+    size_t f = OFFSET_OF_FIELD_(first);                    \
+    size_t n = OFFSET_OF_FIELD_(last) - f + sizeof(last);  \
+    ::memset(&first, 0, n);                                \
+  } while (0)
+
+  if (_has_bits_[0 / 32] & 255) {
+    ZR_(useversion_, pnp_);
+  }
+  if (_has_bits_[8 / 32] & 16128) {
+    if (has_ratchet()) {
+      if (ratchet_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
+        ratchet_->clear();
+      }
+    }
+    if (has_mac()) {
+      if (mac_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
+        mac_->clear();
+      }
+    }
+    localprekeyid_ = 0;
+    if (has_remoteprekey()) {
+      if (remoteprekey_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
+        remoteprekey_->clear();
+      }
+    }
+    if (has_remoteidkey()) {
+      if (remoteidkey_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
+        remoteidkey_->clear();
+      }
+    }
+    if (has_prekeyhash()) {
+      if (prekeyhash_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
+        prekeyhash_->clear();
+      }
+    }
+  }
+
+#undef OFFSET_OF_FIELD_
+#undef ZR_
+
+  ::memset(_has_bits_, 0, sizeof(_has_bits_));
+  mutable_unknown_fields()->clear();
+}
+
+bool RatchetData::MergePartialFromCodedStream(
+    ::google::protobuf::io::CodedInputStream* input) {
+#define DO_(EXPRESSION) if (!(EXPRESSION)) goto failure
+  ::google::protobuf::uint32 tag;
+  ::google::protobuf::io::StringOutputStream unknown_fields_string(
+      mutable_unknown_fields());
+  ::google::protobuf::io::CodedOutputStream unknown_fields_stream(
+      &unknown_fields_string);
+  // @@protoc_insertion_point(parse_start:zina.RatchetData)
+  for (;;) {
+    ::std::pair< ::google::protobuf::uint32, bool> p = input->ReadTagWithCutoff(127);
+    tag = p.first;
+    if (!p.second) goto handle_unusual;
+    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+      // optional int32 useVersion = 1;
+      case 1: {
+        if (tag == 8) {
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
+                 input, &useversion_)));
+          set_has_useversion();
+        } else {
+          goto handle_unusual;
+        }
+        if (input->ExpectTag(16)) goto parse_maxVersion;
+        break;
+      }
+
+      // optional int32 maxVersion = 2;
+      case 2: {
+        if (tag == 16) {
+         parse_maxVersion:
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
+                 input, &maxversion_)));
+          set_has_maxversion();
+        } else {
+          goto handle_unusual;
+        }
+        if (input->ExpectTag(24)) goto parse_contextId;
+        break;
+      }
+
+      // optional uint32 contextId = 3;
+      case 3: {
+        if (tag == 24) {
+         parse_contextId:
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
+                 input, &contextid_)));
+          set_has_contextid();
+        } else {
+          goto handle_unusual;
+        }
+        if (input->ExpectTag(32)) goto parse_curveType;
+        break;
+      }
+
+      // optional int32 curveType = 4;
+      case 4: {
+        if (tag == 32) {
+         parse_curveType:
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
+                 input, &curvetype_)));
+          set_has_curvetype();
+        } else {
+          goto handle_unusual;
+        }
+        if (input->ExpectTag(40)) goto parse_flags;
+        break;
+      }
+
+      // optional uint32 flags = 5;
+      case 5: {
+        if (tag == 40) {
+         parse_flags:
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
+                 input, &flags_)));
+          set_has_flags();
+        } else {
+          goto handle_unusual;
+        }
+        if (input->ExpectTag(48)) goto parse_ratchetMsgType;
+        break;
+      }
+
+      // optional int32 ratchetMsgType = 6;
+      case 6: {
+        if (tag == 48) {
+         parse_ratchetMsgType:
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
+                 input, &ratchetmsgtype_)));
+          set_has_ratchetmsgtype();
+        } else {
+          goto handle_unusual;
+        }
+        if (input->ExpectTag(56)) goto parse_Np;
+        break;
+      }
+
+      // optional int32 Np = 7;
+      case 7: {
+        if (tag == 56) {
+         parse_Np:
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
+                 input, &np_)));
+          set_has_np();
+        } else {
+          goto handle_unusual;
+        }
+        if (input->ExpectTag(64)) goto parse_PNp;
+        break;
+      }
+
+      // optional int32 PNp = 8;
+      case 8: {
+        if (tag == 64) {
+         parse_PNp:
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
+                 input, &pnp_)));
+          set_has_pnp();
+        } else {
+          goto handle_unusual;
+        }
+        if (input->ExpectTag(74)) goto parse_ratchet;
+        break;
+      }
+
+      // optional bytes ratchet = 9;
+      case 9: {
+        if (tag == 74) {
+         parse_ratchet:
+          DO_(::google::protobuf::internal::WireFormatLite::ReadBytes(
+                input, this->mutable_ratchet()));
+        } else {
+          goto handle_unusual;
+        }
+        if (input->ExpectTag(82)) goto parse_mac;
+        break;
+      }
+
+      // optional bytes mac = 10;
+      case 10: {
+        if (tag == 82) {
+         parse_mac:
+          DO_(::google::protobuf::internal::WireFormatLite::ReadBytes(
+                input, this->mutable_mac()));
+        } else {
+          goto handle_unusual;
+        }
+        if (input->ExpectTag(88)) goto parse_localPreKeyId;
+        break;
+      }
+
+      // optional int32 localPreKeyId = 11;
+      case 11: {
+        if (tag == 88) {
+         parse_localPreKeyId:
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
+                 input, &localprekeyid_)));
+          set_has_localprekeyid();
+        } else {
+          goto handle_unusual;
+        }
+        if (input->ExpectTag(98)) goto parse_remotePreKey;
+        break;
+      }
+
+      // optional bytes remotePreKey = 12;
+      case 12: {
+        if (tag == 98) {
+         parse_remotePreKey:
+          DO_(::google::protobuf::internal::WireFormatLite::ReadBytes(
+                input, this->mutable_remoteprekey()));
+        } else {
+          goto handle_unusual;
+        }
+        if (input->ExpectTag(106)) goto parse_remoteIdKey;
+        break;
+      }
+
+      // optional bytes remoteIdKey = 13;
+      case 13: {
+        if (tag == 106) {
+         parse_remoteIdKey:
+          DO_(::google::protobuf::internal::WireFormatLite::ReadBytes(
+                input, this->mutable_remoteidkey()));
+        } else {
+          goto handle_unusual;
+        }
+        if (input->ExpectTag(114)) goto parse_preKeyHash;
+        break;
+      }
+
+      // optional bytes preKeyHash = 14;
+      case 14: {
+        if (tag == 114) {
+         parse_preKeyHash:
+          DO_(::google::protobuf::internal::WireFormatLite::ReadBytes(
+                input, this->mutable_prekeyhash()));
+        } else {
+          goto handle_unusual;
+        }
+        if (input->ExpectAtEnd()) goto success;
+        break;
+      }
+
+      default: {
+      handle_unusual:
+        if (tag == 0 ||
+            ::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_END_GROUP) {
+          goto success;
+        }
+        DO_(::google::protobuf::internal::WireFormatLite::SkipField(
+            input, tag, &unknown_fields_stream));
+        break;
+      }
+    }
+  }
+success:
+  // @@protoc_insertion_point(parse_success:zina.RatchetData)
+  return true;
+failure:
+  // @@protoc_insertion_point(parse_failure:zina.RatchetData)
+  return false;
+#undef DO_
+}
+
+void RatchetData::SerializeWithCachedSizes(
+    ::google::protobuf::io::CodedOutputStream* output) const {
+  // @@protoc_insertion_point(serialize_start:zina.RatchetData)
+  // optional int32 useVersion = 1;
+  if (has_useversion()) {
+    ::google::protobuf::internal::WireFormatLite::WriteInt32(1, this->useversion(), output);
+  }
+
+  // optional int32 maxVersion = 2;
+  if (has_maxversion()) {
+    ::google::protobuf::internal::WireFormatLite::WriteInt32(2, this->maxversion(), output);
+  }
+
+  // optional uint32 contextId = 3;
+  if (has_contextid()) {
+    ::google::protobuf::internal::WireFormatLite::WriteUInt32(3, this->contextid(), output);
+  }
+
+  // optional int32 curveType = 4;
+  if (has_curvetype()) {
+    ::google::protobuf::internal::WireFormatLite::WriteInt32(4, this->curvetype(), output);
+  }
+
+  // optional uint32 flags = 5;
+  if (has_flags()) {
+    ::google::protobuf::internal::WireFormatLite::WriteUInt32(5, this->flags(), output);
+  }
+
+  // optional int32 ratchetMsgType = 6;
+  if (has_ratchetmsgtype()) {
+    ::google::protobuf::internal::WireFormatLite::WriteInt32(6, this->ratchetmsgtype(), output);
+  }
+
+  // optional int32 Np = 7;
+  if (has_np()) {
+    ::google::protobuf::internal::WireFormatLite::WriteInt32(7, this->np(), output);
+  }
+
+  // optional int32 PNp = 8;
+  if (has_pnp()) {
+    ::google::protobuf::internal::WireFormatLite::WriteInt32(8, this->pnp(), output);
+  }
+
+  // optional bytes ratchet = 9;
+  if (has_ratchet()) {
+    ::google::protobuf::internal::WireFormatLite::WriteBytesMaybeAliased(
+      9, this->ratchet(), output);
+  }
+
+  // optional bytes mac = 10;
+  if (has_mac()) {
+    ::google::protobuf::internal::WireFormatLite::WriteBytesMaybeAliased(
+      10, this->mac(), output);
+  }
+
+  // optional int32 localPreKeyId = 11;
+  if (has_localprekeyid()) {
+    ::google::protobuf::internal::WireFormatLite::WriteInt32(11, this->localprekeyid(), output);
+  }
+
+  // optional bytes remotePreKey = 12;
+  if (has_remoteprekey()) {
+    ::google::protobuf::internal::WireFormatLite::WriteBytesMaybeAliased(
+      12, this->remoteprekey(), output);
+  }
+
+  // optional bytes remoteIdKey = 13;
+  if (has_remoteidkey()) {
+    ::google::protobuf::internal::WireFormatLite::WriteBytesMaybeAliased(
+      13, this->remoteidkey(), output);
+  }
+
+  // optional bytes preKeyHash = 14;
+  if (has_prekeyhash()) {
+    ::google::protobuf::internal::WireFormatLite::WriteBytesMaybeAliased(
+      14, this->prekeyhash(), output);
+  }
+
+  output->WriteRaw(unknown_fields().data(),
+                   unknown_fields().size());
+  // @@protoc_insertion_point(serialize_end:zina.RatchetData)
+}
+
+int RatchetData::ByteSize() const {
+  int total_size = 0;
+
+  if (_has_bits_[0 / 32] & (0xffu << (0 % 32))) {
+    // optional int32 useVersion = 1;
+    if (has_useversion()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::Int32Size(
+          this->useversion());
+    }
+
+    // optional int32 maxVersion = 2;
+    if (has_maxversion()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::Int32Size(
+          this->maxversion());
+    }
+
+    // optional uint32 contextId = 3;
+    if (has_contextid()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::UInt32Size(
+          this->contextid());
+    }
+
+    // optional int32 curveType = 4;
+    if (has_curvetype()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::Int32Size(
+          this->curvetype());
+    }
+
+    // optional uint32 flags = 5;
+    if (has_flags()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::UInt32Size(
+          this->flags());
+    }
+
+    // optional int32 ratchetMsgType = 6;
+    if (has_ratchetmsgtype()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::Int32Size(
+          this->ratchetmsgtype());
+    }
+
+    // optional int32 Np = 7;
+    if (has_np()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::Int32Size(
+          this->np());
+    }
+
+    // optional int32 PNp = 8;
+    if (has_pnp()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::Int32Size(
+          this->pnp());
+    }
+
+  }
+  if (_has_bits_[8 / 32] & (0xffu << (8 % 32))) {
+    // optional bytes ratchet = 9;
+    if (has_ratchet()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::BytesSize(
+          this->ratchet());
+    }
+
+    // optional bytes mac = 10;
+    if (has_mac()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::BytesSize(
+          this->mac());
+    }
+
+    // optional int32 localPreKeyId = 11;
+    if (has_localprekeyid()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::Int32Size(
+          this->localprekeyid());
+    }
+
+    // optional bytes remotePreKey = 12;
+    if (has_remoteprekey()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::BytesSize(
+          this->remoteprekey());
+    }
+
+    // optional bytes remoteIdKey = 13;
+    if (has_remoteidkey()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::BytesSize(
+          this->remoteidkey());
+    }
+
+    // optional bytes preKeyHash = 14;
+    if (has_prekeyhash()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::BytesSize(
+          this->prekeyhash());
+    }
+
+  }
+  total_size += unknown_fields().size();
+
+  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
+  _cached_size_ = total_size;
+  GOOGLE_SAFE_CONCURRENT_WRITES_END();
+  return total_size;
+}
+
+void RatchetData::CheckTypeAndMergeFrom(
+    const ::google::protobuf::MessageLite& from) {
+  MergeFrom(*::google::protobuf::down_cast<const RatchetData*>(&from));
+}
+
+void RatchetData::MergeFrom(const RatchetData& from) {
+  GOOGLE_CHECK_NE(&from, this);
+  if (from._has_bits_[0 / 32] & (0xffu << (0 % 32))) {
+    if (from.has_useversion()) {
+      set_useversion(from.useversion());
+    }
+    if (from.has_maxversion()) {
+      set_maxversion(from.maxversion());
+    }
+    if (from.has_contextid()) {
+      set_contextid(from.contextid());
+    }
+    if (from.has_curvetype()) {
+      set_curvetype(from.curvetype());
+    }
+    if (from.has_flags()) {
+      set_flags(from.flags());
+    }
+    if (from.has_ratchetmsgtype()) {
+      set_ratchetmsgtype(from.ratchetmsgtype());
+    }
+    if (from.has_np()) {
+      set_np(from.np());
+    }
+    if (from.has_pnp()) {
+      set_pnp(from.pnp());
+    }
+  }
+  if (from._has_bits_[8 / 32] & (0xffu << (8 % 32))) {
+    if (from.has_ratchet()) {
+      set_ratchet(from.ratchet());
+    }
+    if (from.has_mac()) {
+      set_mac(from.mac());
+    }
+    if (from.has_localprekeyid()) {
+      set_localprekeyid(from.localprekeyid());
+    }
+    if (from.has_remoteprekey()) {
+      set_remoteprekey(from.remoteprekey());
+    }
+    if (from.has_remoteidkey()) {
+      set_remoteidkey(from.remoteidkey());
+    }
+    if (from.has_prekeyhash()) {
+      set_prekeyhash(from.prekeyhash());
+    }
+  }
+  mutable_unknown_fields()->append(from.unknown_fields());
+}
+
+void RatchetData::CopyFrom(const RatchetData& from) {
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+bool RatchetData::IsInitialized() const {
+
+  return true;
+}
+
+void RatchetData::Swap(RatchetData* other) {
+  if (other != this) {
+    std::swap(useversion_, other->useversion_);
+    std::swap(maxversion_, other->maxversion_);
+    std::swap(contextid_, other->contextid_);
+    std::swap(curvetype_, other->curvetype_);
+    std::swap(flags_, other->flags_);
+    std::swap(ratchetmsgtype_, other->ratchetmsgtype_);
+    std::swap(np_, other->np_);
+    std::swap(pnp_, other->pnp_);
+    std::swap(ratchet_, other->ratchet_);
+    std::swap(mac_, other->mac_);
+    std::swap(localprekeyid_, other->localprekeyid_);
+    std::swap(remoteprekey_, other->remoteprekey_);
+    std::swap(remoteidkey_, other->remoteidkey_);
+    std::swap(prekeyhash_, other->prekeyhash_);
+    std::swap(_has_bits_[0], other->_has_bits_[0]);
+    _unknown_fields_.swap(other->_unknown_fields_);
+    std::swap(_cached_size_, other->_cached_size_);
+  }
+}
+
+::std::string RatchetData::GetTypeName() const {
+  return "zina.RatchetData";
 }
 
 
 // @@protoc_insertion_point(namespace_scope)
 
-}  // namespace axolotl
+}  // namespace zina
 
 // @@protoc_insertion_point(global_scope)

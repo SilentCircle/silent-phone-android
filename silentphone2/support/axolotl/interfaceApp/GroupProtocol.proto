@@ -1,0 +1,151 @@
+// Copyright 2016 Silent Circle, LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package zina;
+
+option optimize_for = LITE_RUNTIME;
+
+// Required Is Forever:
+// You should be very careful about marking fields as required. If at some point you wish
+// to stop writing or sending a required field, it will be problematic to change the field
+// to an optional field – old readers will consider messages without this field to be
+// incomplete and may reject or drop them unintentionally. You should consider writing
+// application-specific custom validation routines for your buffers instead. Some engineers
+// at Google have come to the conclusion that using required does more harm than good; they
+// prefer to use only optional and repeated. However, this view is not universal.
+
+message VClock {
+  optional bytes device_id  = 1;        // Support binary device id data
+  optional int64 value      = 2;
+}
+
+// A message helper to store the local vector clocks. Mainly to serialze/deserialize
+// the VC data to store/read from persistent storage (database in our case).
+message LocalVClock {
+  repeated VClock vclock    = 1;
+  optional bytes update_id  = 2;
+}
+
+message Member {
+  optional string user_id = 1;      // SP short_id of member (not device)
+}
+
+enum GroupUpdateType {
+  // For proto 3 compatibility, also the first value is the default if not set
+  TYPE_NONE             = 0;
+  GROUP_SET_NAME        = 1;
+  GROUP_SET_AVATAR      = 2;
+  GROUP_SET_BURN        = 3;
+  GROUP_ADD_MEMBER      = 4;
+  GROUP_REMOVE_MEMBER   = 5;
+  GROUP_BURN_MESSSAGE   = 6;
+}
+
+message GroupUpdateSetName {
+  optional bytes update_id                  = 1;
+  repeated VClock vclock                    = 2;
+  optional string name                      = 3;
+}
+
+message GroupUpdateSetAvatar {
+  optional bytes update_id                  = 1;
+  repeated VClock vclock                    = 2;
+  optional string avatar                    = 3;    // link/key for group avatar
+}
+
+message GroupUpdateSetBurn {
+  optional bytes update_id                  = 1;
+  repeated VClock vclock                    = 2;
+
+  enum BurnMode {
+    // For proto 3 compatibility, also the first value is the default if not set
+    BURN_NONE                   = 0;
+
+    // A mode in which the time a message burns is based on the time
+    // it was sent and the current relative burn time on the group
+    // (not the burn time in effect when the message was sent or
+    // received).
+    FROM_SEND_RETROACTIVE       = 1;
+  }
+  optional BurnMode burn_mode               = 3;
+
+  // In seconds, the oldest a message is allowed to be in this group
+  // (based on the send time) before it is burned
+  optional uint64 burn_ttl_sec              = 4;
+}
+message GroupUpdateAddMember {
+  optional bytes update_id                  = 1;
+  repeated Member addMember                 = 2;
+}
+
+message GroupUpdateRmMember {
+  optional bytes update_id                  = 1;
+  repeated Member rmMember                  = 2;
+}
+
+message GroupBurnMessage {
+  optional bytes update_id                  = 1;
+  repeated string msgId                     = 2;    // Which message(s) to burn
+  optional Member member                    = 3;    // Member who burned the message, usually the author of the message
+}
+
+enum GroupUpdateResult {
+  // For proto 3 compatibility, also the first value is the default if not set
+  RESULT_NONE           = 0;
+
+  // The update was accepted and applied to the local state.  If a
+  // vector clock is present, the update was a descendant of our
+  // current clock state.
+  ACCEPTED_OK           = 1;
+
+  // The update the was accepted and applied to the local state after
+  // conflict resolution.  With a vector clock, we saw that the update
+  // was a sibling to the local state and our conflict resolution
+  // policy accepted the update.
+  ACCEPTED_CONFLICT     = 2;
+
+  // The update was discarded because it represented no change to the
+  // current local state.
+  REJECTED_NOP          = 3;
+
+  // The update was discarded because the local state had already
+  // moved past the point of the update.  That is, we could determine
+  // from the vector clocks that the updated represented a descendant
+  // of our current state.
+  REJECTED_PAST         = 4;
+
+  // The update was discarded after conflict resolution.  With a
+  // vector clock, we determined the update was a sibling to the local
+  // state and our conflict resolution policy rejected the update.
+  REJECTED_CONFLICT     = 5;
+}
+
+message GroupUpdateAck {
+  optional GroupUpdateType type     = 1;
+  optional bytes update_id          = 2;
+  optional GroupUpdateResult result = 3;
+}
+
+message GroupChangeSet {
+  optional bytes group_id                       = 1;    // group UUID, currently not used. The group id is part of other
+                                                        // message data already
+  optional GroupUpdateSetName updateName        = 2;    // set group name
+  optional GroupUpdateSetAvatar updateAvatar    = 3;    // set group avatar
+  optional GroupUpdateSetBurn updateBurn        = 4;    // set group burn time
+  optional GroupUpdateAddMember updateAddMember = 5;    // add group member
+  optional GroupUpdateRmMember updateRmMember   = 6;    // remove group member
+  optional GroupBurnMessage burnMessage         = 8;    // burn a message (manual burn)
+
+  repeated GroupUpdateAck acks                  = 7;    // set of ACKs to return
+}

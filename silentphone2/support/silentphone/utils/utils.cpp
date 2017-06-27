@@ -1,8 +1,32 @@
-//VoipPhone
-//Created by Janis Narbuts
-//Copyright (c) 2004-2012 Tivi LTD, www.tiviphone.com. All rights reserved.
+/*
+Created by Janis Narbuts
+Copyright (C) 2004-2012, Tivi LTD, www.tiviphone.com. All rights reserved.
+Copyright (C) 2012-2017, Silent Circle, LLC.  All rights reserved.
 
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+    * Any redistribution, use, or modification is done solely for personal
+      benefit and not for any commercial purpose or for monetary gain
+    * Redistributions of source code must retain the above copyright
+      notice, this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above copyright
+      notice, this list of conditions and the following disclaimer in the
+      documentation and/or other materials provided with the distribution.
+    * Neither the name Silent Circle nor the
+      names of its contributors may be used to endorse or promote products
+      derived from this software without specific prior written permission.
 
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL SILENT CIRCLE, LLC BE LIABLE FOR ANY
+DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
@@ -511,7 +535,8 @@ int cleanPhoneNumber(char *p, int iLen){
       if(p[i]=='@')iAtFound=1;
       
       if(!wasAlpha && !iAtFound){
-         if(isdigit(p[i]) || (i==0 && (p[0]=='+' || p[0]=='*'))){
+         //keep * and # at any place
+         if(isdigit(p[i]) || p[i]=='*' || p[i]=='#' || (i==0 && (p[0]=='+' || p[0]=='*'))){
             dst[iOutLen]=p[i];
             iOutLen++;
          }
@@ -602,10 +627,10 @@ static const unsigned int crc32_tab[] = {
  *
  * entries are padded to a word size to make for faster lookups
  */
-static const unsigned short crc16_tab[] = {
-	0x0000, 0x1081, 0x2102, 0x3183, 0x4204, 0x5285, 0x6306, 0x7387,
-	0x8408, 0x9489, 0xa50a, 0xb58b, 0xc60c, 0xd68d, 0xe70e, 0xf78f
-};
+//static const unsigned short crc16_tab[] = {
+//	0x0000, 0x1081, 0x2102, 0x3183, 0x4204, 0x5285, 0x6306, 0x7387,
+//	0x8408, 0x9489, 0xa50a, 0xb58b, 0xc60c, 0xd68d, 0xe70e, 0xf78f
+//};
 
 /* calculates crc32 on buffer 'ptr' of 'cnt' bytes. 
  * crc is the initial crc to use. use ~0U initially, or pass the result of
@@ -691,7 +716,7 @@ int t_snprintf(char *buf, int iMaxSize, const char *format, ...){
 int findChar(const char *p, char c){
    const char *start=p;
    for(;*p;p++){
-      if(*p==c)return p-start;
+      if(*p==c)return (int)(p-start);
    }
    return -1;
 }
@@ -741,7 +766,7 @@ char *trim(char *sz)
          sz[i]=sz[i+x];
    }
    else
-      i=strlen(sz);
+      i=(int)strlen(sz);
    i-=x;
    while(i>0)
    {
@@ -755,8 +780,8 @@ char *trim(char *sz)
 char *stripText(char *dst, int iMax, const char *src, const char *cmp){
    
    int i;
-   int l_src=strlen(src);
-   int l_cmp=strlen(cmp);
+   int l_src=(int)strlen(src);
+   int l_cmp=(int)strlen(cmp);
    
    if(iMax<=0)return dst;
    char *ret=dst;
@@ -969,7 +994,7 @@ int hex2Bin(unsigned char *Bin, char * Hex)
 {
    int iLen;
    //char * tmp=Hex;
-   iLen=strlen(Hex);
+   iLen=(int)strlen(Hex);
    return hex2BinL(Bin,Hex,iLen);
 }  
 
@@ -983,7 +1008,7 @@ int hex2Bin(unsigned char *Bin, char * Hex)
 void  encryptPwd(const char *szPwd, char *szDst, int iMaxLen)
 {
    //memcpy(szDst,szPwd,strlen(szPwd)+1);
-   int i,iLen=strlen(szPwd);
+   int i,iLen=(int)strlen(szPwd);
    unsigned  char tmp[256];
 
    iMaxLen-=2;
@@ -1004,7 +1029,7 @@ void  encryptPwd(const char *szPwd, char *szDst, int iMaxLen)
 int decodePwd(char *szSrc,char *szPwd, int iMaxLen)
 {
    //memcpy(szDst,szPwd,strlen(szPwd)+1);
-   int i,iLen=strlen(szSrc);
+   int i,iLen=(int)strlen(szSrc);
    unsigned char tmp[256];
    int iPwdLen;
    szPwd[0]=0;
@@ -1046,7 +1071,7 @@ unsigned int ipstr2long(int iLen,char *p)//TODO (char *p, int iLen=0)
 	int	cur_byte;
 
    if (iLen==0)
-      iLen=strlen(p);
+      iLen=(int)strlen(p);
    if (iLen<MIN_IP_LEN || iLen>MAX_IP_LEN) return 0;
    memcpy(bufIp,p,iLen);
    bufIp[iLen]=0;
@@ -1260,8 +1285,8 @@ int containChar(char * sz,char * szChars)
    int iLen,iCLen,i,j;
    int iPos=-1;
    if(szChars==NULL || sz==NULL)return 1;
-   iLen=strlen(sz);
-   iCLen=strlen(szChars);
+   iLen=(int)strlen(sz);
+   iCLen=(int)strlen(szChars);
 
    if(iLen==0 || iCLen==0)return iPos;
    for(i=0;i<iLen && iPos!=1 ;i++)
@@ -1410,9 +1435,9 @@ int getNBits(register unsigned char *p, register int iPos, int iBits)
 
 int isValidSz(char *sz,char c,char *szValidChars)
 {
-   int  j,i,iLen=0,iVCLen=strlen(szValidChars);
+   int  j,i,iLen=0,iVCLen=(int)strlen(szValidChars);
    int bValidFound=0;
-   iLen=strlen(sz);
+   iLen=(int)strlen(sz);
 
    if (iLen==0)return bValidFound;
 
@@ -1440,7 +1465,7 @@ int parseColor(char *buf, int iLen = 0)
    int i;
    int id=1;
    if(iLen==0)
-      iLen=strlen(buf);
+      iLen=(int)strlen(buf);
 
    iR=atoi(buf);
    
@@ -1635,7 +1660,7 @@ int genereteRecTone(char* data,int iMaxLen,char * ds, int iBitRate)
      int iTakts=120;
      int iOffset=0;
      int iLen=0;
-     iLen=strlen(ds);
+     iLen=(int)strlen(ds);
      if (iLen==0)return 0;
      delta=iBitRate*2*60/iTakts;
 
@@ -1643,7 +1668,7 @@ int genereteRecTone(char* data,int iMaxLen,char * ds, int iBitRate)
      if (ds[i]=='*')
      {
         int j;
-        j=strtoul(&ds[i+1],NULL,0);
+        j=(int)strtoul(&ds[i+1],NULL,0);
         if (j>39 && j<201)
         {
            iTakts=j;
@@ -1695,7 +1720,7 @@ int genereteRecTone(char* data,int iMaxLen,char * ds, int iBitRate)
                  {
                     
                     int j=0;
-                    j=strtoul(&ds[i+1],NULL,0);
+                    j=(int)strtoul(&ds[i+1],NULL,0);
                     if (j==0)return 0;
                     i++;
                     delta=iBitRate*2*60*4/iTakts/j;
@@ -1709,7 +1734,7 @@ int genereteRecTone(char* data,int iMaxLen,char * ds, int iBitRate)
                  if (ds[i]=='[')
                  {
                     int j=0;
-                    j=strtoul(&ds[i+1],NULL,0);
+                    j=(int)strtoul(&ds[i+1],NULL,0);
                     i++;
                     if (j>0 ||j<128)
                     {
@@ -1734,7 +1759,7 @@ int genereteRecTone(char* data,int iMaxLen,char * ds, int iBitRate)
                if (ds[i+1]=='(')
                {
                   int j=0;
-                  j=strtoul(&ds[i+2],NULL,0);
+                  j=(int)strtoul(&ds[i+2],NULL,0);
                   if (j==0)return 0;
                   i++;
                   delta=iBitRate*2*60*4/iTakts/j;
@@ -1769,7 +1794,7 @@ int genereteRecTone(char* data,int iMaxLen,char * ds, int iBitRate)
 
 char * findImgData(char * fn,int &iSize, char *img_data, int iAllSize)
 {
-   int iLen=strlen(fn);
+   int iLen=(int)strlen(fn);
    char *p=NULL;
    char * tmp=img_data;
    int iSizeOfObj,x=0;
@@ -1997,7 +2022,7 @@ char *loadFileW(const  short *fn, int &iLen)
    if(f==NULL)return NULL;
 
    fseek (f , 0 , SEEK_END);
-   iLen = ftell (f);
+   iLen = (int)ftell (f);
    fseek(f,0,SEEK_SET);
    //rewind (f);
 
@@ -2096,7 +2121,7 @@ char *loadFile(const  char *fn, int &iLen)
    }
    iLen=0;
    fseek (f , 0 , SEEK_END);
-   iLen = ftell (f);
+   iLen = (int)ftell (f);
    fseek(f,0,SEEK_SET);
    //rewind (f);
 

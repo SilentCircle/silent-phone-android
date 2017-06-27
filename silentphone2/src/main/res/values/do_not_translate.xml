@@ -15,7 +15,6 @@
     <string name="app_name" translatable="false">Silent Phone</string>
     <string name="silent_circle" translatable="false">Silent Circle</string>
     <string name="by_silent_circle" translatable="false">by Silent Circle</string>
-    <string name="app_name_sca" translatable="false">Silent Phone Contacts</string>
 
     <string name="switch_to_production" translatable="false">Use production environment</string>
     <string name="switch_to_develop" translatable="false">Use development environment</string>
@@ -26,16 +25,17 @@
 
     <!-- SPA-565 : the following strings need to be translated in order to fixed the bug -->
     <!-- as Werner commented in the ticket, these strings may not be seen in production build -->
-    <string name="active_configuration" translatable="false">Active configuration </string>
+    <string name="active_configuration" translatable="false">Active configuration: %s</string>
     <string name="production" translatable="false">Production</string>
     <string name="develop" translatable="false">Develop</string>
     <string name="normal" translatable="false">normal</string>
-    <string name="device_information" translatable="false">Device information </string>
-    <string name="screen_density" translatable="false">Screen density </string>
-    <string name="auto_answered" translatable="false">Auto answered</string>
+    <string name="device_information" translatable="false">Device information:</string>
+    <string name="screen_density" translatable="false">Screen density: %s</string>
+    <string name="auto_answered" translatable="false">Auto answered: %d</string>
+    <string name="build_time" translatable="false">Build time: %s</string>
     <!-- end SPA-565 -->
 
-    <!-- The font-family to use for the text inside the searchbox.
+    <!-- The font-family to use for the text inside the search box.
      Do not translate. -->
     <string name="search_font_family" translatable="false">sans-serif</string>
 
@@ -283,10 +283,10 @@
 
     <!--
     Text and explanation strings for ZRTP/PBX enrollment functions. If the application
-    supports enrollemnt it may decide what to show to the user.
+    supports enrollment it may decide what to show to the user.
 
      The string name coding is:
-       s5   - message is in enumeartion function message group
+       s5   - message is in enumeration function message group
        cnnn - sequence number
     -->
 
@@ -301,4 +301,9 @@
 
     <!-- action bar overflow -->
     <string name="action_bar_overflow" translatable="false">Action Bar Overflow</string>
+
+    <!-- These strings are for developer builds *only* -->
+    <string name="setting_feature_discovery_option" translatable="false">Force feature discovery</string>
+    <string name="setting_feature_discovery_summary" translatable="false">Always show feature discovery information screens.</string>
+
 </resources>

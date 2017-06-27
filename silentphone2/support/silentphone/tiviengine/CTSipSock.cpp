@@ -1,7 +1,7 @@
 /*
 Created by Janis Narbuts
 Copyright (C) 2004-2012, Tivi LTD, www.tiviphone.com. All rights reserved.
-Copyright (C) 2012-2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2012-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,12 +27,12 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-
 #include "../baseclasses/CTBase.h"
 #include "CTSipSock.h"
 #include "../sipparser/client/sip_utils.inl"
 
 #include "tivi_log.h"
+#include "algorithm"
 
 #ifdef _WIN32
 #define snprintf _snprintf
@@ -53,6 +53,7 @@ int mustUseTLS();
  * SIP servers of the production network.
  */
 static const char *productionCert =
+
 // Silent Circle root certificate, serial number be:31:b0:4b:ae:49:f2:71, SHA1: E8:F3:C4:98
 "-----BEGIN CERTIFICATE-----\r\n"
 "MIIErTCCA5WgAwIBAgIJAL4xsEuuSfJxMA0GCSqGSIb3DQEBBQUAMIGVMQswCQYD\r\n"
@@ -83,7 +84,11 @@ static const char *productionCert =
 "mg==\r\n"
 "-----END CERTIFICATE-----\r\n"
 
- // Entrust root certificate, serial number 45:6b:50:54, SHA1: B3:1E:B1:B7
+// Entrust Root Certificate Authority, serial number 45:6b:50:54
+// Signing Algorithm: SHA1RSA
+// SHA1 Fingerprint=B3:1E:B1:B7:40:E3:6C:84:02:DA:DC:37:D4:4D:F5:D4:67:49:52:F9
+// Valid Until: 11/27/2026
+// https://www.entrust.com/get-support/ssl-certificate-support/root-certificate-downloads/
 "-----BEGIN CERTIFICATE-----\r\n"
 "MIIEkTCCA3mgAwIBAgIERWtQVDANBgkqhkiG9w0BAQUFADCBsDELMAkGA1UEBhMC\r\n"
 "VVMxFjAUBgNVBAoTDUVudHJ1c3QsIEluYy4xOTA3BgNVBAsTMHd3dy5lbnRydXN0\r\n"
@@ -112,6 +117,10 @@ static const char *productionCert =
 "0vdXcDazv/wor3ElhVsT/h5/WrQ8\r\n"
 "-----END CERTIFICATE-----\r\n"
 ;
+
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-variable" // suppress warning
 
 /*
  * Silent Phone uses the following certificate chain to setup TLS with the
@@ -173,6 +182,8 @@ static const char *developmentCert =
 
 ;
 
+#pragma clang diagnostic pop
+
 // Default certificate: use the production network
 static const char *sipCert = productionCert;
 
@@ -211,8 +222,7 @@ void tivi_slog(const char* format, ...)
    }
 #if  defined(__APPLE__)
    return;
-#endif
-   
+#else
    
 #define T_TLOG_FN "sip_log.txt"
    
@@ -240,6 +250,7 @@ void tivi_slog(const char* format, ...)
    va_end( arg );
    
    fclose(f);
+#endif
 }
 #endif
 
@@ -320,6 +331,7 @@ CTSipSock::CTSipSock(CTSockCB &c):CTSockBase(),udp(c),tcp(NULL),sockCB(c),tls(NU
    iSending=0;
    tcp = new CTSockTcp(c);
    tls = new CTTLS(c);
+   lastRecvTS=0;
 }
 
 void CTSipSock::setSockType(const char *p){
@@ -378,11 +390,11 @@ int CTSipSock::getInfo(const char *key, char *p, int iMax){
    }
    else if(iType==eTCP){
       strcpy(p,"none, TCP");
-      return strlen(p);
+      return (int)strlen(p);
    }
    else {
       strcpy(p,"none, UDP");
-      return strlen(p);
+      return (int)strlen(p);
    }
    return 0;
 }
@@ -455,7 +467,7 @@ void CTSipSock::checkCert(ADDR *address){
    //TODO T_getSometing(NULL,"sipCertFN","getBySock",this);
    //or T_getSometing(NULL,"sipCertFN","getByServ",&address->bufAddr[0]);
 
-    int iLen=strlen(sipCert);
+    int iLen=(int)strlen(sipCert);
     int showSSLErrorMsg(void *ret, const char *p);
 
     tls->errMsg = &showSSLErrorMsg;
@@ -713,7 +725,7 @@ int CTSipSock::sendToReal(const char *buf, int iLen, ADDR *address){
  
     if(iExiting)return -1;
 
-    if ((iFlagRecreate && (iFlagRecreate&4)==0) || (iType==eTLS && tls && (tls->isClosed() || !tls->isConected())) ||
+    if ((iFlagRecreate && (iFlagRecreate&4)==0) || (iType==eTLS && tls && tls->wasConnected() && (tls->isClosed() || !tls->isConected())) ||
         (iType==eTCP && (!tcp || ((tcp && tcp->getAddrConnected().ip && tcp->getAddrConnected()!=*address))))  ||
         (iType==eTLS && (!tls || ((tls && tls->getAddrConnected().ip && tls->getAddrConnected()!=*address))))
     ) {
@@ -723,7 +735,7 @@ int CTSipSock::sendToReal(const char *buf, int iLen, ADDR *address){
             if(tcp)t_logf(log_events, __FUNCTION__, "[tcp %d=%d,%d=%d]",tcp->getAddrConnected().ip,address->ip,tcp->getAddrConnected().getPort(),address->getPort());
         }
         else if(iType==eTLS){
-            int isRelease();
+            extern int isRelease();
 
             if(tls && !isRelease()){
                 char bufA[32];
@@ -747,7 +759,7 @@ int CTSipSock::sendToReal(const char *buf, int iLen, ADDR *address){
     if(iType==eTCP){
 
         if(tcp){
-            if(!tcp->isConected()){tcp->_connect(address);}
+            if(!tcp->isConected()){lastRecvTS = 0;tcp->_connect(address);}
             if(tcp->isConected()){
                 t_logf(log_events, __FUNCTION__, "[tcp-connected]");
                 if(iLen<20){
@@ -759,7 +771,7 @@ int CTSipSock::sendToReal(const char *buf, int iLen, ADDR *address){
                     Sleep(60);//wait recv starts listen
                 }
                 int r=tcp->_send(buf,iLen);
-                if(iLen>0)t_logf(log_events, __FUNCTION__,"sent[%d]-tcp\n[%.*s]",r,min(iLen,10),buf);
+                if(iLen>0)t_logf(log_events, __FUNCTION__,"sent[%d]-tcp\n[%.*s]",r,std::min(iLen,10),buf);
                 if(r<0){
                     t_logf(log_events, __FUNCTION__,"[tcp recreate]");
                     iFlagRecreate|=2;
@@ -778,7 +790,13 @@ int CTSipSock::sendToReal(const char *buf, int iLen, ADDR *address){
                 tls->enableBackgroundForVoip(1);
                 checkCert(address);
                 t_logf(log_events, __FUNCTION__, "tls-connect");
-                tls->_connect(address);
+                lastRecvTS = 0;
+                int hasActiveCalls(void);
+               //we have to use the same SIP proxy if we have active calls
+                tls->_connect(address, prevConnected.hasIPSet() && hasActiveCalls()? &prevConnected : NULL);
+                if(tls->isConected()){
+                   prevConnected = tls->getAddrConnected();
+                }
             }
             if (tls->isConected()){
                 int r=0;
@@ -788,7 +806,7 @@ int CTSipSock::sendToReal(const char *buf, int iLen, ADDR *address){
                 else {
                     r=tls->_send(buf,iLen);
                     if (iLen > 0)
-                        t_logf(log_events, __FUNCTION__,"sent[%d]-tls [%.*s]", r, min(iLen, 20), buf);
+                        t_logf(log_events, __FUNCTION__,"sent[%d]-tls [%.*s]", r, std::min(iLen, 20), buf);
 
                     if (r < 0) {
                         t_logf(log_events, __FUNCTION__,"f-recr err:%d",r);
@@ -831,7 +849,7 @@ static int t_recvTCP(void *pSock, char *buf, int len){
 static int recFrom2(T_SOCK_CB *cb, char *buf, int iLen, char *tmpBuf, int iTmpSize, int *iBytesInNTB){
    int rec=0;
    int ctx=0;
-   int r;
+   int r=0;
    int sk=0;
    
    int iBytesInNextTmpBuf=*iBytesInNTB;
@@ -900,7 +918,7 @@ static int recFrom2(T_SOCK_CB *cb, char *buf, int iLen, char *tmpBuf, int iTmpSi
       }
       
       
-      int i_TODO_set_wait_timeout_when_first_part_received;
+//      int i_TODO_set_wait_timeout_when_first_part_received;
       
       if(!iFail){
          
@@ -928,11 +946,19 @@ static int recFrom2(T_SOCK_CB *cb, char *buf, int iLen, char *tmpBuf, int iTmpSi
    return rec;
 }
 
+unsigned int CTSipSock::getLastRecvTimestamp(){
+   return lastRecvTS;
+}
 
 int CTSipSock::recvFrom(char *buf, int iLen, ADDR *address){
    if(iExiting)return -1;
    if(iIsSuspended){Sleep(20);return -1;}
-   if(iType==eUDP){if(!udp.iIsBinded)udp.Bind(&addr,1);return udp.recvFrom(buf,iLen,address);}
+   if(iType==eUDP){
+      if(!udp.iIsBinded)udp.Bind(&addr,1);
+      int ret = udp.recvFrom(buf,iLen,address);
+      if(ret>0)lastRecvTS = getTickCount();
+      return ret;
+   }
    
    CTAutoIntUnlock a(&iIsReceiving);
    
@@ -959,6 +985,9 @@ int CTSipSock::recvFrom(char *buf, int iLen, ADDR *address){
             return rec;
          }
       }
+      else{
+         lastRecvTS = getTickCount();
+      }
       
 
 
@@ -983,9 +1012,8 @@ int CTSipSock::recvFrom(char *buf, int iLen, ADDR *address){
             return rec;
          }
       }
-      else if(rec==0){
-      //  puts("[tls rec=0 recreate]");
-        //iFlagRecreate=1;
+      else {
+         lastRecvTS = getTickCount();
       }
 
       *address=tls->getAddrConnected();

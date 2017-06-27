@@ -1,72 +1,86 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<!--Conversations activity uses SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN flags, so that the root layout is
+rendered behind system UI like status & navigation bar and the keyboard-->
+<android.support.design.widget.CoordinatorLayout
+    android:id="@+id/conversation_coordinator_layout"
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_height="match_parent"
-    android:layout_width="match_parent">
+    android:layout_width="match_parent"
+    android:background="?sp_activity_background_color">
 
-    <com.silentcircle.common.widget.KeyboardNotifierLinearLayout
-        android:id="@+id/conversation_root"
+    <!-- Makes sure that the area behind the status bar has the same color as
+    "android:colorPrimaryDark"-->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="100dp"
+        android:background="@color/black_background"/>
+
+
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="?sp_activity_background_color"
-        android:orientation="vertical"
         android:fitsSystemWindows="true">
 
-        <include
-            android:id="@+id/conversation_toolbar"
-            layout="@layout/messaging_chat_toolbar"
+        <!-- KeyboardNotifierLinearLayout is inside another layout  with fitsSystemWindows set to true
+        so that it gets resized when the keyboard visibility is toggled-->
+        <com.silentcircle.common.widget.KeyboardNotifierLinearLayout
+            android:id="@+id/conversation_root"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:minHeight="?android:attr/actionBarSize" />
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:fitsSystemWindows="true">
 
-        <FrameLayout
-            android:id="@+id/container"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent">
-
-            <android.support.v4.widget.DrawerLayout
-                android:id="@+id/drawer"
+            <include
+                android:id="@+id/conversation_toolbar"
+                layout="@layout/messaging_chat_toolbar"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent">
+                android:layout_height="wrap_content"
+                android:minHeight="?android:attr/actionBarSize" />
 
+            <FrameLayout
+                android:id="@+id/container"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="?sp_activity_background_color">
 
-                <FrameLayout
-                    android:id="@+id/content"
+                <android.support.v4.widget.DrawerLayout
+                    android:id="@+id/drawer"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent">
 
-                    <include layout="@layout/activity_conversation" />
+                    <FrameLayout
+                        android:id="@+id/content"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent">
 
-                </FrameLayout>
+                        <include layout="@layout/activity_conversation" />
 
-                <com.silentcircle.messaging.views.ConversationOptionsDrawer
-                    android:id="@+id/drawer_content"
-                    style="@style/Widget.Silence.Drawer"
-                    android:layout_gravity="end" />
+                    </FrameLayout>
 
-            </android.support.v4.widget.DrawerLayout>
+                    <com.silentcircle.messaging.views.ConversationOptionsDrawer
+                        android:id="@+id/drawer_content"
+                        style="@style/Widget.Silence.Drawer"
+                        android:layout_gravity="end" />
 
-            <com.silentcircle.common.widget.ProgressBar
-                android:id="@+id/conversation_progress"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:indeterminate="true"
-                android:background="@color/sc_ng_text_dark"
-                android:visibility="visible"
-                tools:visibility="visible"
-                />
+                </android.support.v4.widget.DrawerLayout>
 
-            <com.silentcircle.messaging.views.ScreenLockView
-                android:id="@+id/password_overlay"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:filterTouchesWhenObscured="true"
-                />
+                <com.silentcircle.common.widget.ProgressBar
+                    android:id="@+id/conversation_progress"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:indeterminate="true"
+                    android:background="@color/sc_ng_text_dark"
+                    android:visibility="visible"
+                    tools:visibility="visible"
+                    />
 
-        </FrameLayout>
+            </FrameLayout>
 
-    </com.silentcircle.common.widget.KeyboardNotifierLinearLayout>
+        </com.silentcircle.common.widget.KeyboardNotifierLinearLayout>
+
+    </FrameLayout>
 
     <FrameLayout
         android:id="@+id/camera_fragment_container"
@@ -74,4 +88,4 @@
         android:layout_height="match_parent"
         android:visibility="gone"/>
 
-</RelativeLayout>
+</android.support.design.widget.CoordinatorLayout>

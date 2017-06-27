@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2016-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,10 +27,17 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 package com.silentcircle.messaging.views.adapters;
 
+import android.os.Debug;
+import android.support.annotation.IntDef;
+import android.support.annotation.NonNull;
+import android.support.v7.widget.RecyclerView;
+import android.util.SparseBooleanArray;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Checkable;
 
 import com.silentcircle.messaging.util.ComparableWeakReference;
+import com.silentcircle.silentphone2.R;
 
 import java.lang.ref.WeakReference;
 import java.util.HashSet;
@@ -41,15 +48,20 @@ import java.util.Set;
  * Extends {@link ModelViewAdapter} to implement {@link HasChoiceMode} and apply its mode to
  * inflated views that also implement the {@link HasChoiceMode} interface.
  */
-public class MultiSelectModelViewAdapter extends ModelViewAdapter implements HasChoiceMode {
+public class MultiSelectModelViewAdapter extends ModelViewAdapter implements HasChoiceMode, View.OnClickListener,
+        View.OnLongClickListener {
+
+    public interface OnItemClickListener {
+
+        void onItemClick(@NonNull View view, int position, @NonNull Object item, String itemId);
+
+        void onItemLongClick(@NonNull View view, int position, @NonNull Object item, String itemId);
+    }
 
     private boolean mInChoiceMode;
-    private Set<ComparableWeakReference<View>> mViews = new HashSet<>();
+    private Set<String> mCheckedIds;
 
-    public interface OnClearViewListener {
-
-        void onClearView(final View view);
-    }
+    private OnItemClickListener mListener;
 
     public MultiSelectModelViewAdapter(List<?> models, ViewType[] viewTypes) {
         super(models, viewTypes);
@@ -64,14 +76,38 @@ public class MultiSelectModelViewAdapter extends ModelViewAdapter implements Has
     }
 
     @Override
-    public View getView(int position, View convertView, ViewGroup parent) {
-        View view = super.getView(position, convertView, parent);
+    public EventViewHolder onCreateViewHolder(ViewGroup parent, int viewTypeIndex) {
+        EventViewHolder viewHolder = super.onCreateViewHolder(parent, viewTypeIndex);
+        View view = viewHolder.itemView;
+        view.setOnClickListener(this);
+        view.setOnLongClickListener(this);
+
+        return viewHolder;
+    }
+
+    @Override
+    public void onBindViewHolder(EventViewHolder viewHolder, int position) {
+        super.onBindViewHolder(viewHolder, position);
+        updateView(viewHolder);
+    }
+
+    @Override
+    public void onBindViewHolder(EventViewHolder viewHolder, int position, List<Object> payloads) {
+        super.onBindViewHolder(viewHolder, position, payloads);
+        updateView(viewHolder);
+    }
+
+    private void updateView(EventViewHolder viewHolder) {
+        View view = viewHolder.getView();
         if (view instanceof HasChoiceMode) {
             ((HasChoiceMode) view).setInChoiceMode(isInChoiceMode());
         }
-
-        mViews.add(new ComparableWeakReference<>(view));
-        return view;
+        if (view instanceof Checkable) {
+            String eventId = (String) view.getTag(R.id.view_event_id);
+            if (eventId != null && mCheckedIds != null) {
+                ((Checkable) view).setChecked(mCheckedIds.contains(eventId));
+            }
+        }
     }
 
     @Override
@@ -84,13 +120,30 @@ public class MultiSelectModelViewAdapter extends ModelViewAdapter implements Has
         mInChoiceMode = inChoiceMode;
     }
 
-    public void clearViews(final OnClearViewListener listener) {
-        for (WeakReference<View> viewReference : mViews) {
-            View view = viewReference.get();
-            if (view != null && listener != null) {
-                listener.onClearView(view);
-            }
+    public void setOnItemClickListener(OnItemClickListener listener) {
+        mListener = listener;
+    }
+
+    public void setCheckedIds(Set<String> checkedIds) {
+        mCheckedIds = checkedIds;
+    }
+
+    @Override
+    public void onClick(View view) {
+        if (mListener != null && view != null) {
+            mListener.onItemClick(view, (Integer) view.getTag(R.id.view_position), view.getTag(),
+                    (String) view.getTag(R.id.view_event_id));
         }
-        mViews.clear();
+    }
+
+    @Override
+    public boolean onLongClick(View view) {
+        boolean result = false;
+        if (mListener != null && view != null) {
+            mListener.onItemLongClick(view, (Integer) view.getTag(R.id.view_position), view.getTag(),
+                    (String) view.getTag(R.id.view_event_id));
+            result = true;
+        }
+        return result;
     }
 }

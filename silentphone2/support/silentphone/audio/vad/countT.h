@@ -24,11 +24,16 @@
 #ifndef count_h
 #define count_h "$Id $"
 
+// EA note: the compiler complains about these static declarations as unused, but they are used in some .c file
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-function"
 
 static void move16 (void){}
 static void move32 (void){}
 static void logic16 (void){}
 static void logic32 (void){}
 static void test (void){}
+
+#pragma clang diagnostic pop
 
 #endif

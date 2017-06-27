@@ -1,183 +1,208 @@
 <?xml version="1.0" encoding="utf-8"?>
-
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<com.silentcircle.messaging.views.SwipeRevealLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/conversation_log_list_item"
-    class="com.silentcircle.contacts.calllognew.CallLogListItemView"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@drawable/bg_action"
     android:addStatesFromChildren="true"
-    android:orientation="vertical"
-    android:paddingTop="@dimen/spacing_small"
-    android:paddingBottom="@dimen/spacing_small">
+    app:dragEdge="leftright"
+    app:mode="same_level">
 
-    <!-- Day group heading. Used to show a "today", "yesterday", "last week" or "other" heading
-         above a group of messaging log entries. -->
-    <TextView
-        android:id="@+id/conversation_log_day_group_label"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="start"
-        android:layout_marginEnd="@dimen/conversation_log_outer_margin"
-        android:layout_marginLeft="@dimen/conversation_log_start_margin"
-        android:layout_marginRight="@dimen/conversation_log_outer_margin"
-        android:layout_marginStart="@dimen/conversation_log_start_margin"
-        android:fontFamily="sans-serif-medium"
-        android:paddingBottom="@dimen/conversation_log_day_group_padding_bottom"
-        android:paddingTop="@dimen/conversation_log_day_group_padding_top"
-        android:textColor="@color/sc_ng_text_grey"
-        android:textSize="@dimen/conversation_log_secondary_text_size"
-        tools:visibility="visible"
-        tools:text="Today"
-        android:visibility="gone"/>
-
-    <!-- Linear layout to separate the primary area containing the contact badge and caller
-         information and the secondary action (call details / play voicemail). -->
-    <LinearLayout
-        android:id="@+id/conversation_log_row"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:baselineAligned="false"
-        android:gravity="center_vertical"
+    <FrameLayout
+        android:id="@+id/call_layout"
+        android:layout_width="@dimen/conversation_log_action_button_size"
+        android:layout_height="@dimen/conversation_log_action_button_size"
         android:addStatesFromChildren="true"
-        android:orientation="vertical">
+        android:background="@color/conversation_call_action_background_color">
 
-        <!-- Primary area containing the contact badge and caller information -->
+        <ImageButton
+            android:id="@+id/conversation_log_call"
+            style="@style/Widget.AppCompat.Button.Colored"
+            android:layout_width="@dimen/conversation_log_contact_photo_size"
+            android:layout_height="@dimen/conversation_log_contact_photo_size"
+            android:layout_gravity="center"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/messaging_conversation_list_call_voiceover"
+            android:src="@drawable/ic_call_light"
+            android:tint="@android:color/white" />
+
+    </FrameLayout>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/conversation_log_action_button_size">
+
         <LinearLayout
-            android:id="@+id/primary_action_view"
+            android:id="@+id/conversation_log_row_container"
+            class="com.silentcircle.contacts.calllognew.CallLogListItemView"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:focusable="true"
-            android:gravity="center_vertical"
-            android:nextFocusLeft="@+id/quick_contact_photo"
-            android:nextFocusRight="@+id/call_back_action"
-            android:orientation="horizontal"
-            android:paddingBottom="@dimen/conversation_log_outer_margin"
-            android:paddingEnd="@dimen/conversation_log_outer_margin"
-            android:paddingLeft="@dimen/conversation_log_start_margin"
-            android:paddingRight="@dimen/conversation_log_outer_margin"
-            android:paddingStart="@dimen/conversation_log_start_margin"
-            android:paddingTop="@dimen/conversation_log_outer_margin"
-            android:addStatesFromChildren="true">
+            android:layout_height="match_parent"
+            android:addStatesFromChildren="true"
+            android:background="@drawable/bg_action"
+            android:orientation="vertical"
+            android:gravity="center_vertical">
 
-            <FrameLayout
-                android:layout_width="@dimen/conversation_log_contact_photo_size"
-                android:layout_height="@dimen/conversation_log_contact_photo_size"
-                android:layout_gravity="center_vertical"
-                android:id="@+id/icon_group">
-
-                <QuickContactBadge
-                    android:id="@+id/quick_contact_photo"
-                    android:layout_width="@dimen/conversation_log_contact_photo_size"
-                    android:layout_height="@dimen/conversation_log_contact_photo_size"
-                    android:layout_gravity="top"
-                    android:nextFocusRight="@id/primary_action_view" />
-
-                <include layout="@layout/messaging_unread_message_notification"
-                    android:id="@+id/unread_message_notification"
-                    android:layout_height="@dimen/conversation_log_unread_message_notification_size"
-                    android:layout_width="@dimen/conversation_log_unread_message_notification_size"
-                    android:layout_gravity="right|bottom"
-                    android:visibility="visible" />
-
-            </FrameLayout>
-
+            <!-- Linear layout to separate the primary area containing the contact badge and caller
+                 information and the secondary action (call details / play voicemail). -->
             <LinearLayout
-                android:id="@+id/conversation_action_view"
-                android:layout_width="0dp"
+                android:id="@+id/conversation_log_row"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginLeft="@dimen/conversation_log_action_view_margin_left"
-                android:layout_marginStart="@dimen/conversation_log_action_view_margin_left"
-                android:layout_weight="1"
-                android:gravity="center_vertical"
-                android:orientation="vertical"
-                android:focusable="false"
-                android:clickable="false"
                 android:addStatesFromChildren="true"
-                android:filterTouchesWhenObscured="true"
-                android:descendantFocusability="blocksDescendants">
+                android:baselineAligned="false"
+                android:gravity="center_vertical"
+                android:orientation="vertical">
 
+                <!-- Primary area containing the contact badge and caller information -->
                 <LinearLayout
+                    android:id="@+id/primary_action_view"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:addStatesFromChildren="true"
+                    android:focusable="true"
+                    android:gravity="center_vertical"
+                    android:nextFocusLeft="@+id/quick_contact_photo"
+                    android:nextFocusRight="@+id/call_back_action"
                     android:orientation="horizontal"
-                    android:gravity="center_vertical">
+                    android:paddingBottom="@dimen/conversation_log_outer_margin"
+                    android:paddingEnd="@dimen/conversation_log_outer_margin"
+                    android:paddingLeft="@dimen/conversation_log_start_margin"
+                    android:paddingRight="@dimen/conversation_log_outer_margin"
+                    android:paddingStart="@dimen/conversation_log_start_margin"
+                    android:paddingTop="@dimen/conversation_log_outer_margin">
 
-                    <TextView
-                        android:id="@+id/name"
+                    <FrameLayout
+                        android:id="@+id/icon_group"
+                        android:layout_width="@dimen/conversation_log_contact_photo_container_size"
+                        android:layout_height="@dimen/conversation_log_contact_photo_container_size"
+                        android:layout_gravity="center_vertical">
+
+                        <QuickContactBadge
+                            android:id="@+id/quick_contact_photo"
+                            android:layout_width="@dimen/conversation_log_contact_photo_size"
+                            android:layout_height="@dimen/conversation_log_contact_photo_size"
+                            android:layout_gravity="center_vertical"
+                            android:nextFocusRight="@id/primary_action_view"
+                            android:contentDescription="@string/messaging_avatar_voiceover"/>
+
+                        <include
+                            android:id="@+id/unread_message_notification"
+                            layout="@layout/messaging_unread_message_notification"
+                            android:layout_width="@dimen/conversation_log_unread_message_notification_size"
+                            android:layout_height="@dimen/conversation_log_unread_message_notification_size"
+                            android:layout_gravity="right|top"
+                            android:visibility="visible" />
+
+                        <include
+                            android:id="@+id/data_retention_status"
+                            layout="@layout/messaging_data_retention_status"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="right|bottom"
+                            android:visibility="gone"
+                            tools:visibility="visible" />
+
+                    </FrameLayout>
+
+                    <LinearLayout
+                        android:id="@+id/conversation_action_view"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
+                        android:layout_marginLeft="@dimen/conversation_log_action_view_margin_left"
+                        android:layout_marginStart="@dimen/conversation_log_action_view_margin_left"
                         android:layout_weight="1"
-                        android:layout_marginBottom="@dimen/conversation_log_name_margin_bottom"
-                        android:layout_marginEnd="@dimen/conversation_log_icon_margin"
-                        android:layout_marginRight="@dimen/conversation_log_icon_margin"
-                        android:layout_marginLeft="@dimen/conversation_log_name_margin_left"
-                        android:layout_marginStart="@dimen/conversation_log_name_margin_left"
-                        android:singleLine="true"
-                        android:maxLines="1"
-                        android:textColor="?attr/sp_activity_primary_text_color"
-                        android:textSize="@dimen/conversation_log_name_text_size"
-                        tools:text="Name" />
+                        android:addStatesFromChildren="true"
+                        android:clickable="false"
+                        android:descendantFocusability="blocksDescendants"
+                        android:filterTouchesWhenObscured="false"
+                        android:focusable="false"
+                        android:gravity="center_vertical"
+                        android:orientation="vertical">
 
-                    <TextView
-                        android:id="@+id/message_time"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginEnd="@dimen/conversation_log_time_margin_right"
-                        android:layout_marginRight="@dimen/conversation_log_time_margin_right"
-                        android:ellipsize="marquee"
-                        android:singleLine="true"
-                        android:textColor="?attr/sp_activity_secondary_text_color"
-                        android:textSize="@dimen/conversation_log_message_info_small_text_size"
-                        android:visibility="visible"
-                        tools:text="Yesterday"
-                        android:layout_gravity="end" />
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                android:id="@+id/name"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_marginBottom="@dimen/conversation_log_name_margin_bottom"
+                                android:layout_marginEnd="@dimen/conversation_log_icon_margin"
+                                android:layout_marginLeft="@dimen/conversation_log_name_margin_left"
+                                android:layout_marginRight="@dimen/conversation_log_icon_margin"
+                                android:layout_marginStart="@dimen/conversation_log_name_margin_left"
+                                android:layout_weight="1"
+                                android:maxLines="1"
+                                android:singleLine="true"
+                                android:textColor="?attr/sp_activity_primary_text_color"
+                                android:textSize="@dimen/conversation_log_name_text_size"
+                                tools:text="Name" />
+
+                            <TextView
+                                android:id="@+id/message_time"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="end"
+                                android:layout_marginEnd="@dimen/conversation_log_time_margin_right"
+                                android:layout_marginRight="@dimen/conversation_log_time_margin_right"
+                                android:ellipsize="marquee"
+                                android:singleLine="true"
+                                android:textColor="?attr/sp_activity_secondary_text_color"
+                                android:textSize="@dimen/conversation_log_message_info_small_text_size"
+                                android:visibility="visible"
+                                tools:text="Yesterday" />
+
+                        </LinearLayout>
+
+                        <TextView
+                            android:id="@+id/message_text"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginLeft="@dimen/conversation_log_name_margin_left"
+                            android:layout_marginStart="@dimen/conversation_log_name_margin_left"
+                            android:layout_marginEnd="@dimen/conversation_log_icon_margin"
+                            android:layout_marginRight="@dimen/conversation_log_icon_margin"
+                            android:drawablePadding="@dimen/space_small"
+                            android:ellipsize="end"
+                            android:lines="1"
+                            android:maxLines="1"
+                            android:textColor="?attr/sp_activity_secondary_text_color"
+                            android:textSize="@dimen/conversation_log_secondary_text_size"
+                            android:visibility="visible"
+                            tools:text="Message text" />
+
+                    </LinearLayout>
 
                 </LinearLayout>
-
-
-                <TextView
-                    android:id="@+id/message_text"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginEnd="@dimen/conversation_log_icon_margin"
-                    android:layout_marginRight="@dimen/conversation_log_icon_margin"
-                    android:layout_marginLeft="@dimen/conversation_log_name_margin_left"
-                    android:layout_marginStart="@dimen/conversation_log_name_margin_left"
-                    android:ellipsize="end"
-                    android:maxLines="1"
-                    android:lines="1"
-                    android:textColor="?attr/sp_activity_secondary_text_color"
-                    android:textSize="@dimen/conversation_log_secondary_text_size"
-                    android:visibility="visible"
-                    tools:text="Message text" />
-                <!-- TODO adjust @drawable/message_summary_text_color for this field -->
 
             </LinearLayout>
 
         </LinearLayout>
 
-        <!-- Viewstub with additional expandable actions for a call log entry -->
-        <ViewStub
-            android:id="@+id/conversation_log_entry_actions_stub"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:inflatedId="@+id/conversation_log_entry_actions"
-            android:layout="@layout/call_log_list_item_actions" />
+    </FrameLayout>
 
-    </LinearLayout>
+    <FrameLayout
+        android:id="@+id/delete_layout"
+        android:layout_width="@dimen/conversation_log_action_button_size"
+        android:layout_height="@dimen/conversation_log_action_button_size"
+        android:addStatesFromChildren="true"
+        android:background="@color/conversation_delete_action_background_color">
 
-    <View
-        android:id="@+id/conversation_log_divider"
-        android:layout_width="match_parent"
-        android:layout_height="1px"
-        android:layout_gravity="bottom"
-        android:layout_marginEnd="@dimen/conversation_log_outer_margin"
-        android:layout_marginRight="@dimen/conversation_log_outer_margin"
-        android:layout_marginLeft="@dimen/conversation_log_outer_margin_left"
-        android:layout_marginStart="@dimen/conversation_log_outer_margin_left"
-        android:visibility="gone"
-        android:background="#55ffffff" />
+        <ImageButton
+            android:id="@+id/conversation_log_delete"
+            style="@style/Widget.AppCompat.Button.Colored"
+            android:layout_width="@dimen/conversation_log_contact_photo_size"
+            android:layout_height="@dimen/conversation_log_contact_photo_size"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:layout_gravity="center"
+            android:contentDescription="@string/messaging_conversation_list_delete_conversation_voiceover"
+            android:src="@drawable/ic_delete_white_24px"
+            android:tint="@color/silent_white" />
 
-</LinearLayout>
+    </FrameLayout>
+
+</com.silentcircle.messaging.views.SwipeRevealLayout>

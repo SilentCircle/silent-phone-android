@@ -1,17 +1,60 @@
-package axolotl;
+// Copyright 2016 Silent Circle, LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+package zina;
 
 option optimize_for = LITE_RUNTIME;
 
 message MessageEnvelope {
-  optional string name           = 1;
-  optional string scClientDevId  = 2;
-  optional uint32 device_id      = 3;
-  optional bytes  supplement     = 4;
-  optional bytes  message        = 5;
-  optional string msgId          = 6;
-  optional bytes  recvIdHash     = 7;
-  optional bytes  senderIdHash   = 8;
-  optional string recvDeviceId   = 9;
-  optional bytes  recvDevIdBin   = 10;
-  optional string uid            = 11;
+//    reserved 9, 11;                         // We don't use these fields anymore
+
+    optional string name           = 1;     // Sender's name
+    optional string scClientDevId  = 2;     // Device id of the device the Sender used to send the message
+    optional uint32 msgType        = 3;     // the message type, a real message, a command, etc
+    optional bytes  supplement     = 4;     // message supplementary data such as attributes
+    // Version 1: the wire-format as documented in ZinaRatchet.cpp, version 2 and better: the encrypted message only
+    optional bytes  message        = 5;
+    optional string msgId          = 6;     // The message id, a UUID string
+    optional bytes  recvIdHash     = 7;     // short hashes of the receiver's and sender's identity public keys
+    optional bytes  senderIdHash   = 8;
+// OBSOLETE   optional string recvDeviceId  = 9;  Not used anymore, not set, don't reuse the number
+    optional bytes  recvDevIdBin   = 10;    // shortened (4 bytes) id of the intended device id of the receiver's device
+// OBSOLETE    optional string uid = 11;     Not used anymore, not set, don't reuse the number
+    optional RatchetData ratchet   = 12;
+}
+
+message RatchetData {
+    optional int32 useVersion   = 1;        // Sender used this version to setup the ratchet data
+    optional int32 maxVersion   = 2;        // Sender supports protocol version up to this version
+    optional uint32 contextId   = 3;        // The context id of the current active ratchet context
+
+    optional int32 curveType    = 4;        // Which elliptic curve to use, current versions support Curve25519 only
+    optional uint32 flags       = 5;        // We may define some additional flag to control processing, currently not in use
+    optional int32 ratchetMsgType = 6;      // Normal ratchet message -> 1 or ratchet set-up message -> 2
+
+
+    optional int32 Np           = 7;        // purported message number of this message in the ratchet defined by 'ratchet'
+    optional int32 PNp          = 8;        // purported message number of this message in the previous ratchet
+
+    optional bytes ratchet      = 9;        // The public ECDH ratchet key
+    optional bytes mac          = 10;       // HMAC over encrypted data
+
+    // The next fields are used if the message is a ratchet set-up message. Alice sets these
+    // fields if she uses the version 2 or better to send a set-up message. To support backward
+    // compatibility we currently use version 1 set-up messages only. Once we dismiss support
+    // for version 1 protocol Alice uses these fields only.
+    optional int32 localPreKeyId = 11;      // Alice used this pre-key of Bob id to set-up conversation with Bob
+    optional bytes remotePreKey = 12;       // The public key of Alice's generated pre-key
+    optional bytes remoteIdKey  = 13;       // The public key of Alice's long term identity key
+    optional bytes preKeyHash = 14;         // Hash of the pre-key Alice use to setup the ratchet context
 }

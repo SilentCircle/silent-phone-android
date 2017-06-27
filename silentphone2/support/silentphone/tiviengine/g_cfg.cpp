@@ -1,7 +1,7 @@
 /*
 Created by Janis Narbuts
 Copyright (C) 2004-2012, Tivi LTD, www.tiviphone.com. All rights reserved.
-Copyright (C) 2012-2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2012-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,8 +27,6 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-
-
 #include <stdlib.h>
 #include <string.h>
 #include "../baseclasses/CTEditBase.h"
@@ -100,7 +98,15 @@ typedef struct{
    int iRetroRingtone;//TODO remove
    
    int iShowAxoErrorMessages;
+   int iDontSendDeliveryNotifications;
    
+   int iShowMessageNotifications;
+   
+   int iBlockLocalDataRetention;
+   int iBlockRemoteDataRetention;
+    
+   int iDisableCallKit;
+   int iEnableNativeRingtone;
 
    int iForceFWTraversal;
    int iEnableFWTraversal;
@@ -111,7 +117,8 @@ typedef struct{
    char szLastUsedAccount[128];
    
    char szRingTone[64];
-   
+   char szTextTone[64];
+    
    char szOnHoldMusic[64];
    char szPutOnHoldSound[64];
    char szWelcomeSound[64];
@@ -121,6 +128,14 @@ typedef struct{
    char szRecentsMaxHistory[32];
    char szMessageNotifcations[64];
    
+    // Passocde
+    int iPasscodeEnableWipe;
+    int iPasscodeEnableTouchID;
+    char szPasscodeTimeout[32];
+    
+    //DebugLogging:
+    int iEnableDebugLogging;
+    char szDebugLoggingSetting[32];
    
 }TG_SETTINS;
 
@@ -152,7 +167,11 @@ public:
       g_Settings.iEnableSHA384=1;
       g_Settings.iSASConfirmClickCount=10;
       g_Settings.iAudioUnderflow = 1;
-
+      g_Settings.iShowRXLed = 1;
+#ifdef __APPLE__
+      int isTablet(void);
+      g_Settings.iKeepScreenOnIfBatOk = isTablet();//ipad, not iphone
+#endif
       
       int iCfgLen=0;
       char *p=loadFileW(b.getText(),iCfgLen);
@@ -180,8 +199,23 @@ public:
       M_FNC_INT_T(g_Settings.iDisableTwofish,iDisableTwofish);
       
       M_FNC_INT_T(g_Settings.iShowAxoErrorMessages,iShowAxoErrorMessages);
+      M_FNC_INT_T(g_Settings.iDontSendDeliveryNotifications,iDontSendDeliveryNotifications);
       
+      g_Settings.iShowMessageNotifications = 1;
+      M_FNC_INT_T(g_Settings.iShowMessageNotifications,iShowMessageNotifications);
 
+     // M_FNC_INT_T(g_Settings.iBlockLocalDataRetention,iBlockLocalDataRetention);
+      //M_FNC_INT_T(g_Settings.iBlockRemoteDataRetention,iBlockRemoteDataRetention);
+   
+      g_Settings.iBlockLocalDataRetention = 1;//block DR
+      g_Settings.iBlockRemoteDataRetention = 1;//block DR 
+      
+      g_Settings.iDisableCallKit = 0;
+      M_FNC_INT_T(g_Settings.iDisableCallKit, iDisableCallKit);
+       
+      g_Settings.iEnableNativeRingtone = 0;
+      M_FNC_INT_T(g_Settings.iEnableNativeRingtone, iEnableNativeRingtone);
+       
       int r = M_FNC_INT_T(g_Settings.iPreferNIST,iPreferNIST);
       
       if( r<0 ){//iPreferNIST is not detected 
@@ -218,6 +252,7 @@ public:
       M_FNC_INT_T(g_Settings.iDisableSkeinHash,iDisableSkeinHash);
       
       M_FNC_INT_T(g_Settings.iForceFWTraversal,iForceFWTraversal);
+      
       g_Settings.iEnableFWTraversal = 1;
       M_FNC_INT_T(g_Settings.iEnableFWTraversal,iEnableFWTraversal);
       
@@ -238,10 +273,13 @@ public:
       
       g_Settings.iSASConfirmClickCount=10;
       
-      strcpy(g_Settings.szRingTone,"Default");
       getCFGItemSz(g_Settings.szLastUsedAccount,sizeof(g_Settings.szLastUsedAccount),p,iCfgLen,"szLastUsedAccount");
       
+      strcpy(g_Settings.szRingTone,"Default");
       getCFGItemSz(g_Settings.szRingTone,sizeof(g_Settings.szRingTone),p,iCfgLen,"szRingTone");
+
+      strcpy(g_Settings.szTextTone,"Default");
+      getCFGItemSz(g_Settings.szTextTone,sizeof(g_Settings.szTextTone),p,iCfgLen,"szTextTone");
 
       getCFGItemSz(g_Settings.szDialingPrefCountry,sizeof(g_Settings.szDialingPrefCountry),p,iCfgLen,"szDialingPrefCountry");
       
@@ -251,6 +289,22 @@ public:
       getCFGItemSz(g_Settings.szRecentsMaxHistory,sizeof(g_Settings.szRecentsMaxHistory),p,iCfgLen,"szRecentsMaxHistory");
       getCFGItemSz(g_Settings.szMessageNotifcations,sizeof(g_Settings.szMessageNotifcations),p,iCfgLen,"szMessageNotifcations");
       
+       //DebugLogging:
+       g_Settings.iEnableDebugLogging = 0;
+       M_FNC_INT_T(g_Settings.iEnableDebugLogging, iEnableDebugLogging);
+       strcpy(g_Settings.szDebugLoggingSetting,"1 day");
+       getCFGItemSz(g_Settings.szDebugLoggingSetting,sizeof(g_Settings.szDebugLoggingSetting),p,iCfgLen,"szDebugLoggingSetting");
+       
+       // Passcode
+       g_Settings.iPasscodeEnableWipe = 0;
+       M_FNC_INT_T(g_Settings.iPasscodeEnableWipe, iPasscodeEnableWipe);
+       
+       g_Settings.iPasscodeEnableTouchID = 1;
+       M_FNC_INT_T(g_Settings.iPasscodeEnableTouchID, iPasscodeEnableTouchID);
+       
+       strcpy(g_Settings.szPasscodeTimeout, "1 minute");
+       getCFGItemSz(g_Settings.szPasscodeTimeout, sizeof(g_Settings.szPasscodeTimeout), p, iCfgLen, "szPasscodeTimeout");
+       
       //strncmp(g_Settings.szRecentsMaxHistory, "szRec",5)==0 old bug fix, where it was storeing key: value with value as ""
       if(!g_Settings.szDialingPrefCountry[0] || strncmp(g_Settings.szDialingPrefCountry, "szRec",5)==0){
          setDefaultDialingPref();
@@ -291,16 +345,19 @@ public:
       SAVE_G_CFG_I(g_Settings.iDisableBernsteinCurve3617,iDisableBernsteinCurve3617);
       SAVE_G_CFG_I(g_Settings.iDisableBernsteinCurve25519,iDisableBernsteinCurve25519);
 
-      
       SAVE_G_CFG_I(g_Settings.iHideCfg,iHideCfg);
       
       SAVE_G_CFG_I(g_Settings.iShowAxoErrorMessages,iShowAxoErrorMessages);
+      SAVE_G_CFG_I(g_Settings.iShowMessageNotifications,iShowMessageNotifications);
+      SAVE_G_CFG_I(g_Settings.iDontSendDeliveryNotifications,iDontSendDeliveryNotifications);
       
+      SAVE_G_CFG_I(g_Settings.iBlockLocalDataRetention,iBlockLocalDataRetention);
+      SAVE_G_CFG_I(g_Settings.iBlockRemoteDataRetention,iBlockRemoteDataRetention);
       
-      
+      SAVE_G_CFG_I(g_Settings.iDisableCallKit, iDisableCallKit);
+      SAVE_G_CFG_I(g_Settings.iEnableNativeRingtone, iEnableNativeRingtone);
+       
       SAVE_G_CFG_I(g_Settings.iEnableDialHelper,iEnableDialHelper);
-      
-      
       
       SAVE_G_CFG_I(g_Settings.iDontSimplifyVideoUI,iDontSimplifyVideoUI);
       SAVE_G_CFG_I(g_Settings.iDisplayUnsolicitedVideo,iDisplayUnsolicitedVideo);
@@ -323,6 +380,8 @@ public:
       
       l+=t_snprintf(&dst[l],sizeof(dst)-1-l,"%s: %s\n","szRingTone",g_Settings.szRingTone);
 
+      l+=t_snprintf(&dst[l],sizeof(dst)-1-l,"%s: %s\n","szTextTone",g_Settings.szTextTone);
+
       if(!g_Settings.szDialingPrefCountry[0]){
          setDefaultDialingPref();
       }
@@ -333,8 +392,15 @@ public:
       
       l+=t_snprintf(&dst[l],sizeof(dst)-1-l,"%s: %s\n","szMessageNotifcations",g_Settings.szMessageNotifcations);
       
+       //DebugLogging
+       SAVE_G_CFG_I(g_Settings.iEnableDebugLogging,iEnableDebugLogging);
+       l+=t_snprintf(&dst[l],sizeof(dst)-1-l,"%s: %s\n","szDebugLoggingSetting",g_Settings.szDebugLoggingSetting);
       
-      
+       // Passcode
+       SAVE_G_CFG_I(g_Settings.iPasscodeEnableWipe, iPasscodeEnableWipe);
+       SAVE_G_CFG_I(g_Settings.iPasscodeEnableTouchID, iPasscodeEnableTouchID);
+       l+=t_snprintf(&dst[l], sizeof(dst)-1-l, "%s: %s\n", "szPasscodeTimeout", g_Settings.szPasscodeTimeout);
+       
       saveFileW(b.getText(),&dst[0],l);
       
       setFileBackgroundReadable(b);
@@ -347,7 +413,45 @@ public:
 };
 CTG gs;
 
-static char szRingToneNames[1024]="Default,Retro,Bells chromatic";
+static char szTextToneNames[1024] = "Default";
+
+struct{
+    const char *disp_name;
+    const char *file_name;
+}tableTT[]={
+    {"Default","default"},
+    {"Aurora","sms_alert_aurora"},
+    {"Bamboo","sms_alert_bamboo"},
+    {"Circles","sms_alert_circles"},
+    {"Complete","sms_alert_complete"},
+    {"Hello","sms_alert_hello"},
+    {"Input","sms_alert_input"},
+    {"Keys","sms_alert_keys"},
+    {"Note","sms_alert_note"},
+    {"Popcorn","sms_alert_popcorn"},
+    {"Synth","sms_alert_synth"},
+    {NULL,NULL}
+};
+
+void initTTList(){
+    
+    int l=0;
+    
+    for(int i=0;;i++) {
+        
+        if(!tableTT[i].disp_name)
+            break;
+        
+        l += t_snprintf(&szTextToneNames[l], sizeof(szTextToneNames),"%s,",tableTT[i].disp_name);
+    }
+    
+    if(l)
+        szTextToneNames[l-1]=0;
+    
+    puts(szTextToneNames);
+}
+
+static char szRingToneNames[1024] = "Default";
 
 struct{
    const char *disp_name;
@@ -355,12 +459,10 @@ struct{
 }tableRT[]={
    {"Default","ring"},
    {"Retro","ring_retro"},
-  // {"Bells chromatic", "bells-chromatic"},
    {"On Site","cisco"},
    {"Take a Memo","trimline"},
    {"The Victorian","european_major_third"},
    {"Touch Base","v120"},
-   
    {"Bright Idea","piano_arpeg"},
    {"Coronation","fanfare"},
    {"Delta","jazz_sax_in_the_subway"},
@@ -370,27 +472,24 @@ struct{
    {"Two Way Street","oboe"},
    {"WhisperZ","piccolo_flutter"},
    {"Whole In Time","whole_in_time"},
-//   {"Funny", "funny"},
    {NULL,NULL}
 };
-/*
- apple/ios/VoipPhone/ringtones/dance_synth.caf
- #	apple/ios/VoipPhone/ringtones/fanfare.caf
- #	apple/ios/VoipPhone/ringtones/foghorn.caf
- #	apple/ios/VoipPhone/ringtones/jazz_sax_in_the_subway.caf
- #	apple/ios/VoipPhone/ringtones/piccolo_flutter.caf
- #	apple/ios/VoipPhone/ringtones/trimline.caf
- #	apple/ios/VoipPhone/ringtones/whole_in_time.caf
- */
 
 void initRTList(){
    
    int l=0;
-   for(int i=0;;i++){
-      if(!tableRT[i].disp_name)break;
+    
+   for(int i=0;;i++) {
+       
+      if(!tableRT[i].disp_name)
+          break;
+       
       l += t_snprintf(&szRingToneNames[l], sizeof(szRingToneNames),"%s,",tableRT[i].disp_name);
    }
-   if(l)szRingToneNames[l-1]=0;
+    
+   if(l)
+       szRingToneNames[l-1]=0;
+    
    puts(szRingToneNames);
 }
 
@@ -401,6 +500,7 @@ void t_save_glob(){
 void t_init_glob(){
    gs.init();
    initRTList();
+   initTTList();
 }
 
 void setDefaultDialingPref(){
@@ -466,8 +566,16 @@ return &g_Settings._K;\
    
    GLOB_I_CHK(iHideCfg);
    
-   GLOB_I_CHK(iShowAxoErrorMessages)
+   GLOB_I_CHK(iShowAxoErrorMessages);
+   GLOB_I_CHK(iDontSendDeliveryNotifications);
+   GLOB_I_CHK(iShowMessageNotifications);
    
+   GLOB_I_CHK(iBlockLocalDataRetention);
+   GLOB_I_CHK(iBlockRemoteDataRetention);
+   
+   GLOB_I_CHK(iDisableCallKit);
+   GLOB_I_CHK(iEnableNativeRingtone);
+    
    GLOB_I_CHK(iDontSimplifyVideoUI);
    GLOB_I_CHK(iDisplayUnsolicitedVideo);
    
@@ -499,14 +607,24 @@ return &g_Settings._K;\
    GLOB_I_CHK(ao_volume);
    
    GLOB_SZ_CHK(szLastUsedAccount);
-   
+
+   GLOB_SZ_CHK_O(szTextTone,&szTextToneNames[0]);
+
    GLOB_SZ_CHK_O(szRingTone,&szRingToneNames[0]);
    
    //TODO if (this is changing) fix recent list and save 
    GLOB_SZ_CHK_O(szRecentsMaxHistory, "5 minutes,1 hour,12 hours,1 day,1 week,1 month,1 year");
    GLOB_SZ_CHK_O(szMessageNotifcations, "Notification only,Sender only,Message and Sender");
   
+    //DbugLogging:
+    GLOB_I_CHK(iEnableDebugLogging);
+    GLOB_SZ_CHK_O(szDebugLoggingSetting, "1 day,2 day,3 day");
    
+    // Passcode
+    GLOB_I_CHK(iPasscodeEnableWipe);
+    GLOB_I_CHK(iPasscodeEnableTouchID);
+    GLOB_SZ_CHK_O(szPasscodeTimeout, "Immediately,10 seconds,30 seconds,1 minute,2 minutes,5 minutes,15 minutes,30 minutes");
+    
    /*
     5 minutes
     1 hour
@@ -587,18 +705,45 @@ void *findGlobalCfgKey(const char *key){
    int iSize;
    char *opt;
    int type;
-   return findGlobalCfgKey((char*)key,strlen(key),iSize,&opt,&type);
+   return findGlobalCfgKey((char*)key,(int)strlen(key),iSize,&opt,&type);
 }
 
+const char * getTexttone(const char *p) {
+    
+    if(!p)
+        p = (char*)findGlobalCfgKey("szTextTone");
+    
+    if(!p || !p[0])
+        return tableTT[0].file_name;
+    
+    for(int i=0;;i++) {
+        
+        if(!tableTT[i].disp_name)
+            break;
+        
+        if(strcmp(tableTT[i].disp_name, p) == 0)
+            return tableTT[i].file_name;
+    }
+    
+    return tableTT[0].file_name;
+}
 
-const char * getRingtone(const char *p){
-   if(!p)p = (char*)findGlobalCfgKey("szRingTone");
+const char * getEmergencyRingtone(){return "emergency";}
+const char * getRingtone(const char *p) {
+    
+   if(!p)
+       p = (char*)findGlobalCfgKey("szRingTone");
    
-   if(!p || !p[0])return tableRT[0].file_name;
+   if(!p || !p[0])
+       return tableRT[0].file_name;
    
-   for(int i=0;;i++){
-      if(!tableRT[i].disp_name)break;
-      if(strcmp(tableRT[i].disp_name, p)==0)return tableRT[i].file_name;
+   for(int i=0;;i++) {
+       
+      if(!tableRT[i].disp_name)
+          break;
+       
+      if(strcmp(tableRT[i].disp_name, p)==0)
+          return tableRT[i].file_name;
    }
    
    return tableRT[0].file_name;
@@ -647,7 +792,7 @@ int setGlobalValueByKey(const char *key, int iKeyLen, char *sz){
 }
 
 int setGlobalValueByKey(const char *key,  char *sz){
-   return setGlobalValueByKey(key,strlen(key),sz);
+   return setGlobalValueByKey(key,(int)strlen(key),sz);
 }
 
 int hasActiveCalls();

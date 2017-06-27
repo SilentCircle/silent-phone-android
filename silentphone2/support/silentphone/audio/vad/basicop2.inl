@@ -14,6 +14,10 @@
 
 #include <stdlib.h>
 
+// EA note: the compiler complains about these static declarations as unused, but they are used in some .c file
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-function"
+
 /*___________________________________________________________________________
  |                                                                           |
  |   Local Functions                                                         |
@@ -1338,7 +1342,7 @@ T_BOP_STATIC Word16 mult_r (Word16 var1, Word16 var2)
 
 T_BOP_STATIC Word32 L_shl (Word32 L_var1, Word16 var2)
 {
-    Word32 L_var_out;
+    Word32 L_var_out = 0;
 
     if (var2 <= 0)
     {
@@ -2013,12 +2017,12 @@ T_BOP_STATIC Word16 div_s (Word16 var1, Word16 var2)
 
     if ((var1 > var2) || (var1 < 0) || (var2 < 0))
     {
-        T_PRINTF ("Division Error var1=%d  var2=%d\n", var1, var2);
+//        T_PRINTF ("Division Error var1=%d  var2=%d\n", var1, var2);
         exit(0); /* exit (0); */
     }
     if (var2 == 0)
     {
-        T_PRINTF ("Division by 0, Fatal error \n");
+//        T_PRINTF ("Division by 0, Fatal error \n");
         exit(0);//abort(); /* exit (0); */
         //should i return word32 max
     }
@@ -2134,3 +2138,5 @@ T_BOP_STATIC Word16 norm_l (Word32 L_var1)
 #endif
     return (var_out);
 }
+
+#pragma clang diagnostic pop

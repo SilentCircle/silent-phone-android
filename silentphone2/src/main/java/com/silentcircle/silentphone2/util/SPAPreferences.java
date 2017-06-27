@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2016-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -25,35 +25,50 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-
 package com.silentcircle.silentphone2.util;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
+import android.support.annotation.IntDef;
+
+import com.silentcircle.silentphone2.fragments.SettingsFragment;
+
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 
 /**
  * Created by rli on 9/22/15.
  */
 public class SPAPreferences {
+
     public static final String C2DM_REGISTRATION_PREFERENCE = "c2dm_registration_preference";
 
-    private static SPAPreferences mInstance;
-    private Context mContext;
+    public static final String PREFERENCE_ACCOUNT_DETAILS_EXPANDED = "sp_drawer_account_details_expanded";
+
+    @IntDef({INDEX_ACCOUNT_DETAILS_HIDDEN, INDEX_ACCOUNT_DETAILS_PARTIALLY_VISIBLE,
+            INDEX_ACCOUNT_DETAILS_VISIBLE})
+    @Retention(RetentionPolicy.SOURCE)
+    public @interface AccountDetailsVisibility {}
+
+    public static final int INDEX_ACCOUNT_DETAILS_HIDDEN = 0;
+    public static final int INDEX_ACCOUNT_DETAILS_PARTIALLY_VISIBLE = 1;
+    public static final int INDEX_ACCOUNT_DETAILS_VISIBLE = 2;
+
+    private static SPAPreferences sInstance;
     private final SharedPreferences mPreferences;
     private final SharedPreferences.Editor mEditor;
 
     public static synchronized SPAPreferences getInstance(final Context context) {
-        if (mInstance == null) {
-            mInstance = new SPAPreferences(context);
+        if (sInstance == null) {
+            sInstance = new SPAPreferences(context);
         }
-        return mInstance;
+        return sInstance;
     }
 
     @SuppressLint("CommitPrefEdits")
     private SPAPreferences(Context context) {
-        mContext = context.getApplicationContext();
         mPreferences = PreferenceManager.getDefaultSharedPreferences(context);
         mEditor = mPreferences.edit();
     }
@@ -66,4 +81,18 @@ public class SPAPreferences {
     public synchronized String getRegistrationId() {
         return mPreferences.getString(C2DM_REGISTRATION_PREFERENCE, "");
     }
+
+    public synchronized void setAccountDetailsExpanded(@AccountDetailsVisibility int expanded) {
+        mEditor.putInt(PREFERENCE_ACCOUNT_DETAILS_EXPANDED, expanded);
+        mEditor.commit();
+    }
+
+    public synchronized int getAccountDetailsExpanded() {
+        return mPreferences.getInt(PREFERENCE_ACCOUNT_DETAILS_EXPANDED, INDEX_ACCOUNT_DETAILS_VISIBLE);
+    }
+
+    public synchronized boolean isDeveloper() {
+        return mPreferences.getBoolean(SettingsFragment.DEVELOPER, false);
+    }
+
 }

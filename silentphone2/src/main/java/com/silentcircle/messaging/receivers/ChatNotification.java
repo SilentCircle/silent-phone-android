@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2016-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -30,19 +30,13 @@ package com.silentcircle.messaging.receivers;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.text.TextUtils;
-import android.util.Log;
 
-import com.silentcircle.common.list.ContactEntry;
 import com.silentcircle.contacts.ContactsUtils;
-import com.silentcircle.messaging.services.AxoMessaging;
-import com.silentcircle.messaging.util.ContactsCache;
-import com.silentcircle.messaging.util.ConversationUtils;
+import com.silentcircle.logs.Log;
+import com.silentcircle.messaging.services.ZinaMessaging;
+import com.silentcircle.messaging.util.Action;
 import com.silentcircle.messaging.util.Extra;
 import com.silentcircle.messaging.util.Notifications;
-import com.silentcircle.silentphone2.R;
 
 /**
  * Receiver for chat message updates.
@@ -50,7 +44,7 @@ import com.silentcircle.silentphone2.R;
  * This receiver is intended to receive notifications about chat message updates and arrival
  * and show notification, when a new chat message arrives but application is in background.
  */
-public class ChatNotification extends BroadcastReceiver implements AxoMessaging.AxoMessagingStateCallback {
+public class ChatNotification extends BroadcastReceiver implements ZinaMessaging.AxoMessagingStateCallback {
 
     private static final String TAG = ChatNotification.class.getSimpleName();
 
@@ -66,7 +60,7 @@ public class ChatNotification extends BroadcastReceiver implements AxoMessaging.
         mLastNotificationIntent = null;
         mContext = null;
 
-        AxoMessaging axoMessaging = AxoMessaging.getInstance(context.getApplicationContext());
+        ZinaMessaging axoMessaging = ZinaMessaging.getInstance();
         boolean axoRegistered = axoMessaging.isRegistered();
         if (!axoRegistered) {
             Log.d(TAG, "Axolotl not yet registered, wait for it before showing notification.");
@@ -75,7 +69,7 @@ public class ChatNotification extends BroadcastReceiver implements AxoMessaging.
             axoMessaging.addStateChangeListener(this);
         }
         else {
-            sendMessageNotification(context, intent);
+            handleNotificationIntent(context, intent);
         }
     }
 
@@ -83,16 +77,32 @@ public class ChatNotification extends BroadcastReceiver implements AxoMessaging.
     public void axoRegistrationStateChange(boolean registered) {
         Log.d(TAG, "Axolotl state: " + registered + ", intent: " + mLastNotificationIntent);
         if (registered && mLastNotificationIntent != null && mContext != null) {
-            sendMessageNotification(mContext, mLastNotificationIntent);
+            handleNotificationIntent(mContext, mLastNotificationIntent);
 
-            AxoMessaging axoMessaging = AxoMessaging.getInstance(mContext.getApplicationContext());
+            ZinaMessaging axoMessaging = ZinaMessaging.getInstance();
             axoMessaging.removeStateChangeListener(this);
             mLastNotificationIntent = null;
             mContext = null;
         }
     }
 
-    private void sendMessageNotification(Context context, Intent intent) {
+    public static void handleNotificationIntent(Context context, Intent intent) {
+        switch (Action.from(intent)) {
+            case RECEIVE_MESSAGE:
+                sendMessageNotification(context, intent);
+                break;
+            case DATA_RETENTION_EVENT:
+                sendPolicyErrorNotification(context, intent);
+                break;
+            default:
+                break;
+//            case INVITE:
+//                sendInviteNotification(context, intent);
+//                break;
+        }
+    }
+
+    private static void sendMessageNotification(Context context, Intent intent) {
         String conversationPartnerId = Extra.PARTNER.from(intent);
 
         // create intent used to launch conversation activity.
@@ -104,5 +114,16 @@ public class ChatNotification extends BroadcastReceiver implements AxoMessaging.
          * that does not seem to be secure.
          */
         Notifications.sendMessageNotification(context, messagingIntent);
+    }
+
+    private static void sendPolicyErrorNotification(Context context, Intent intent) {
+        String conversationPartnerId = Extra.PARTNER.from(intent);
+        String reason = Extra.REASON.from(intent);
+
+        // create intent used to launch conversation activity.
+        Intent messagingIntent = ContactsUtils.getMessagingIntent(conversationPartnerId, context);
+
+        // Show notification.
+        Notifications.sendPolicyNotification(context, messagingIntent, reason);
     }
 }

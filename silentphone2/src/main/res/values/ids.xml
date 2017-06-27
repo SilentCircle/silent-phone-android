@@ -6,6 +6,10 @@
 
     <!-- id used in alarm notification for a new message -->
     <item type="id" name="messaging_notification" />
+    <item type="id" name="policy_notification" />
+
+    <!-- id used in alarm notification for a new group conversation invitation -->
+    <item type="id" name="invite_notification" />
 
     <!-- id for list item's position tag -->
     <item type="id" name="position" />
@@ -13,5 +17,15 @@
     <!-- id for no-draw flag -->
     <item type="id" name="no_draw_flag" />
     <item type="id" name="new_group_flag" />
+    <item type="id" name="group_conversation_flag" />
+    <item type="id" name="new_date_flag" />
+    <item type="id" name="sender_display_name" />
+
+    <item type="id" name="view_holder" />
+    <item type="id" name="view_position" />
+    <item type="id" name="view_event_id" />
+    <item type="id" name="view_holder_userid" />
+
+    <item type="id" name="settings_item_checked" />
 
 </resources>

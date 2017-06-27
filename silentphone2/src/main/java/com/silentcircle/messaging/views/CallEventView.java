@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2016-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -25,24 +25,34 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-
 package com.silentcircle.messaging.views;
 
 import android.content.Context;
+import android.content.res.ColorStateList;
+import android.graphics.PorterDuff;
+import android.graphics.drawable.Drawable;
+import android.support.v4.content.ContextCompat;
+import android.support.v4.graphics.drawable.DrawableCompat;
 import android.util.AttributeSet;
+import android.util.TypedValue;
 import android.view.View;
-
+import android.view.ViewGroup;
 
 import com.silentcircle.common.util.CallUtils;
+import com.silentcircle.messaging.model.CallData;
 import com.silentcircle.messaging.model.event.CallMessage;
 import com.silentcircle.messaging.util.DateUtils;
 import com.silentcircle.silentphone2.R;
+import com.silentcircle.silentphone2.views.ResizingTextTextView;
 
-public class CallEventView extends CheckableRelativeLayout implements View.OnClickListener {
+public class CallEventView extends BaseMessageEventView implements View.OnClickListener {
 
     private CallMessage mCallMessage;
-    private TextView mPhoneMessageView;
+    private ResizingTextTextView mPhoneMessageView;
     private TextView mPhoneTimeView;
+    private TextView mBurnNotice;
+    private View mRetentionNotice;
+    private ViewGroup mContainer;
 
     public CallEventView(Context context) {
         this(context, null);
@@ -59,8 +69,11 @@ public class CallEventView extends CheckableRelativeLayout implements View.OnCli
     @Override
     protected void onFinishInflate() {
         super.onFinishInflate();
-        mPhoneMessageView = (TextView) findViewById(R.id.phone_message);
+        mPhoneMessageView = (ResizingTextTextView) findViewById(R.id.phone_message);
         mPhoneTimeView = (TextView) findViewById(R.id.phone_time);
+        mBurnNotice = (TextView) findViewById(R.id.message_burn_notice);
+        mRetentionNotice = findViewById(R.id.message_retained_notice);
+        mContainer = (ViewGroup) findViewById(R.id.phone_message_container);
     }
 
     public void setCallData(CallMessage callMessage) {
@@ -71,9 +84,13 @@ public class CallEventView extends CheckableRelativeLayout implements View.OnCli
 
         mPhoneMessageView.setCompoundDrawablesWithIntrinsicBounds(drawableResId, 0, 0, 0);
         mPhoneMessageView.setText(CallUtils.formatCallData(getContext(), callMessage.getCallType(),
-                callMessage.getCallDuration()));
+                callMessage.getCallDuration(),
+                CallData.translateSipErrorMsg(getContext(), callMessage.getErrorMessage())));
 
         mPhoneTimeView.setText(callTime);
+
+        restoreViews(callMessage.isRetained());
+        updateBurnNotice();
     }
 
     @Override
@@ -86,6 +103,33 @@ public class CallEventView extends CheckableRelativeLayout implements View.OnCli
 
     @Override
     public void onClick(View v) {
-
     }
+
+    @Override
+    public void setBurnNotice(CharSequence text, int visibility) {
+        if (mBurnNotice.getVisibility() != visibility) {
+            mBurnNotice.setVisibility(visibility);
+        }
+        if (text != null && !text.equals(mBurnNotice.getText())) {
+            mBurnNotice.setText(text);
+        }
+    }
+
+    private void restoreViews(boolean isRetained) {
+        Drawable background = ContextCompat.getDrawable(getContext(), R.drawable.bg_call_card_light);
+        int backgroundColorSelectorId = R.attr.sp_call_message_background_selector;
+
+        ColorStateList backgroundTintColor;
+        TypedValue typedValue = new TypedValue();
+        getContext().getTheme().resolveAttribute(backgroundColorSelectorId, typedValue, true);
+        backgroundTintColor = ContextCompat.getColorStateList(getContext(), typedValue.resourceId);
+
+        background = DrawableCompat.wrap(background);
+        DrawableCompat.setTintList(background, backgroundTintColor);
+        DrawableCompat.setTintMode(background, PorterDuff.Mode.MULTIPLY);
+        mContainer.setBackground(background);
+
+        mRetentionNotice.setVisibility(isRetained ? View.VISIBLE : View.GONE);
+    }
+
 }

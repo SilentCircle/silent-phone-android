@@ -200,6 +200,7 @@ outptr[RGB_BLUE] = range_limit[(9535 * (y - 16) + 16531 * (cb - 128)) >> 13];
   }
 }
 
+/* EA: not used
 METHODDEF(void)
 ycc_rgb_convert_old (j_decompress_ptr cinfo,
 		 JSAMPIMAGE input_buf, JDIMENSION input_row,
@@ -211,7 +212,7 @@ ycc_rgb_convert_old (j_decompress_ptr cinfo,
   register JSAMPROW inptr0, inptr1, inptr2;
   register JDIMENSION col;
   JDIMENSION num_cols = cinfo->output_width;
-  /* copy these pointers into registers if possible */
+  // copy these pointers into registers if possible
   register JSAMPLE * range_limit = cinfo->sample_range_limit;
   register int * Crrtab = cconvert->Cr_r_tab;
   register int * Cbbtab = cconvert->Cb_b_tab;
@@ -229,7 +230,7 @@ ycc_rgb_convert_old (j_decompress_ptr cinfo,
       y  = GETJSAMPLE(inptr0[col]);
       cb = GETJSAMPLE(inptr1[col]);
       cr = GETJSAMPLE(inptr2[col]);
-      /* Range-limiting is essential due to noise introduced by DCT losses. */
+      // Range-limiting is essential due to noise introduced by DCT losses.
       outptr[RGB_RED] =   range_limit[y + Crrtab[cr]];
       outptr[RGB_GREEN] = range_limit[y +
 			      ((int) RIGHT_SHIFT(Cbgtab[cb] + Crgtab[cr],
@@ -239,6 +240,7 @@ ycc_rgb_convert_old (j_decompress_ptr cinfo,
     }
   }
 }
+*/
 
 /**************** Cases other than YCbCr -> RGB **************/
 

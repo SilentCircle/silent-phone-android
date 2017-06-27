@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2014-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -28,6 +28,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 package com.silentcircle.keystore;
 
+import android.support.annotation.Nullable;
+
 import com.silentcircle.silentphone2.util.Utilities;
 
 import java.security.MessageDigest;
@@ -38,7 +40,7 @@ import java.security.NoSuchAlgorithmException;
  *
  * Created by werner on 30.07.14.
  */
-public class GenerateDefault {
+class GenerateDefault {
 
     private static final String SILENT_CIRCLE = "SilentCircle";
 
@@ -48,7 +50,8 @@ public class GenerateDefault {
      * @param s input string
      * @return salted digest. The salt is a fixed string.
      */
-    protected static char[] generateDefault(String s) {
+    @Nullable
+    static char[] generateDefault(String s) {
         if (s == null || s.isEmpty()) {
             return null;
         }

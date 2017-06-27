@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <it.sephiroth.android.library.imagezoom.ImageViewTouchPanable
+        android:id="@+id/image_viewer"
+        style="@style/Widget.Silence.ImageView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:padding="0dp"
+        android:src="@drawable/bg_profile"
+        />
+
+    <RelativeLayout
+        android:id="@+id/avatar_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <com.silentcircle.common.widget.SquareImageView
+            android:id="@+id/avatar_border"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:src="@drawable/bg_frame"
+            android:layout_gravity="center"
+            android:layout_centerInParent="true"
+            android:scaleType="fitXY"
+            android:importantForAccessibility="no"
+            />
+
+        <ImageView
+            android:id="@+id/avatar_border_top"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_above="@id/avatar_border"
+            android:src="@color/black_translucent"
+            android:layout_alignParentTop="true"
+            android:importantForAccessibility="no"
+            />
+
+        <ImageView
+            android:id="@+id/avatar_border_bottom"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_below="@id/avatar_border"
+            android:src="@color/black_translucent"
+            android:importantForAccessibility="no"
+            />
+
+        <ImageView
+            android:id="@+id/avatar_border_left"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_above="@id/avatar_border_bottom"
+            android:layout_toLeftOf="@id/avatar_border"
+            android:layout_toStartOf="@id/avatar_border"
+            android:src="@color/black_translucent"
+            android:importantForAccessibility="no"
+            android:layout_below="@+id/avatar_border_top" />
+
+        <ImageView
+            android:id="@+id/avatar_border_right"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_above="@id/avatar_border_bottom"
+            android:layout_toRightOf="@id/avatar_border"
+            android:layout_toEndOf="@id/avatar_border"
+            android:src="@color/black_translucent"
+            android:importantForAccessibility="no"
+            android:layout_below="@+id/avatar_border_top" />
+
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:minHeight="@dimen/action_bar_height_large"
+        android:layout_gravity="bottom"
+        android:layout_marginTop="@dimen/spacing_large"
+        android:layout_marginBottom="@dimen/spacing_large">
+
+        <android.support.v7.widget.AppCompatImageButton
+            android:id="@+id/button_cancel"
+            style="@style/Widget.AppCompat.Button.Colored"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="false"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true"
+            android:layout_marginLeft="@dimen/spacing_large"
+            android:layout_marginStart="@dimen/spacing_large"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_action_cancel"
+            android:tint="@color/sc_ng_text_grey"
+            android:contentDescription="@string/cancel_dialog"
+            android:layout_centerVertical="true" />
+
+        <android.support.v7.widget.AppCompatImageButton
+            android:id="@+id/button_accept"
+            style="@style/Widget.AppCompat.Button.Colored"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="false"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentEnd="true"
+            android:layout_marginRight="@dimen/spacing_large"
+            android:layout_marginEnd="@dimen/spacing_large"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_done_24px"
+            android:tint="@color/sc_ng_text_grey"
+            android:contentDescription="@string/dialog_button_ok"
+            android:layout_centerVertical="true" />
+
+        <ImageView
+            android:id="@+id/image_preview"
+            android:layout_width="@dimen/dial_drawer_avatar_size"
+            android:layout_height="@dimen/dial_drawer_avatar_size"
+            android:scaleType="centerCrop"
+            android:src="@drawable/ic_avatar_placeholder_circular"
+            android:layout_gravity="center"
+            android:importantForAccessibility="no"
+            android:layout_centerInParent="true"
+            android:visibility="gone" />
+
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top"
+        android:layout_marginTop="@dimen/spacing_large"
+        android:layout_marginBottom="@dimen/spacing_large">
+
+        <Button
+            android:id="@+id/button_circle"
+            style="?android:attr/buttonBarButtonStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="false"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentEnd="true"
+            android:layout_marginRight="@dimen/spacing_large"
+            android:layout_marginEnd="@dimen/spacing_large"
+            android:src="@drawable/ic_done_24px"
+            android:tint="@color/sc_ng_text_grey"
+            android:contentDescription="@string/dialog_button_ok"
+            android:layout_centerVertical="true"
+            android:text="@string/avatar_show_as_circle" />
+
+    </RelativeLayout>
+
+
+</FrameLayout>

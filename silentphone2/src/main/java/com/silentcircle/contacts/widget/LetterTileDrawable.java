@@ -28,7 +28,7 @@ import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.text.TextUtils;
-import android.util.Log;
+import com.silentcircle.logs.Log;
 
 import com.silentcircle.contacts.utils.BitmapUtil;
 import com.silentcircle.silentphone2.R;
@@ -238,7 +238,13 @@ public class LetterTileDrawable extends Drawable {
      * The default is 0.0f.
      */
     public void setOffset(float offset) {
-        Assert.assertTrue(offset >= -0.5f && offset <= 0.5f);
+        if (offset < -0.5f) {
+            offset = -0.5f;
+        }
+        else if (offset > 0.5f) {
+            offset = 0.5f;
+        }
+//        Assert.assertTrue(offset >= -0.5f && offset <= 0.5f);
         mOffset = offset;
     }
 

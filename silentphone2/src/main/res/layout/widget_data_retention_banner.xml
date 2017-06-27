@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/data_retention_status_root"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:animateLayoutChanges="true"
+    android:background="@color/sc_ng_text_red"
+    android:gravity="center"
+    android:orientation="horizontal"
+    android:addStatesFromChildren="true">
+
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:importantForAccessibility="no"
+        android:src="@drawable/ic_data_retention"
+        android:paddingTop="@dimen/spacing_small"
+        android:paddingBottom="@dimen/spacing_small" />
+
+    <TextView
+        android:id="@+id/dr_banner_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="@dimen/spacing_normal"
+        android:layout_marginStart="@dimen/spacing_normal"
+        android:text="@string/data_retention_on"
+        android:textColor="@color/sc_ng_text_grey" />
+
+</LinearLayout>

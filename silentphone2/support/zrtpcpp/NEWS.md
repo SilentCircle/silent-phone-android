@@ -1,3 +1,34 @@
+## GNU ZRTP 4.6.4 ##
+
+Some fixes to slience Windows C/C++ compiler, fix a few include
+statements when using openSSL, small fixes to check disclosure
+flag. Reset valid flags when adding a new cache record to avoid
+wrong security message. 
+
+
+## GNU ZRTP 4.6.3 ##
+
+A small fix inside the ZRTP main module to ignore malformed
+DH1 packets and avoid an NULL pointer access. 
+
+
+## GNU ZRTP 4.6.2 ##
+
+A small fix in the ZrtpCWrapper to fix an issue within 4.6.1
+;-)
+
+
+## GNU ZRTP 4.6.1 ##
+
+A small fix in the ZrtpCWrapper to initialize and use the ZRTP 
+master instance in case of multi-stream usage. Does not affect
+the main ZRTP usage, only projects that use the wrapper such
+as PJSIP or Gstreamer projects.
+
+These project should re-compile if they use the multi-stream
+feature.
+
+
 ## GNU ZRTP 4.6.0 ##
 
 Only a small add-on to the code to implement handling of the

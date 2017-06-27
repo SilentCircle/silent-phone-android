@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2013-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -44,10 +44,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 package com.silentcircle.contacts.calllognew;
 
-import android.provider.ContactsContract.Data;
 import android.provider.ContactsContract.CommonDataKinds.Email;
 import android.provider.ContactsContract.CommonDataKinds.SipAddress;
+import android.provider.ContactsContract.Data;
 import android.provider.ContactsContract.PhoneLookup;
+import android.provider.ContactsContract.CommonDataKinds.Website;
 
 /**
  * The query to look up the {@link ContactInfo} for a given number in the Call Log.
@@ -87,6 +88,17 @@ final class PhoneQuery {
             Email.LOOKUP_KEY,
             Email.PHOTO_URI};
 
+    public static final String[] _PROJECTION_WEB = new String[] {
+            Email._ID,
+            Website.CONTACT_ID,
+            Data.DISPLAY_NAME,
+            Website.TYPE,
+            Website.LABEL,
+            Website.URL,
+            Website.PHOTO_ID,
+            Website.LOOKUP_KEY,
+            Website.PHOTO_URI};
+
     public static final int PERSON_ID = 0;
     public static final int NAME = 1;
     public static final int PHONE_TYPE = 2;
@@ -114,4 +126,13 @@ final class PhoneQuery {
     public static final int EMAIL_PHOTO_ID = 6;
     public static final int EMAIL_LOOKUP_KEY = 7;
     public static final int EMAIL_PHOTO_URI = 8;
+
+    public static final int WEB_PERSON_ID = 1;   // CONTACT_ID, same a PhoneLookup_ID
+    public static final int WEB_NAME = 2;
+    public static final int WEB_ADDRESS_TYPE = 3;
+    public static final int WEB_LABEL = 4;
+    public static final int WEB_ADDRESS = 5;
+    public static final int WEB_PHOTO_ID = 6;
+    public static final int WEB_LOOKUP_KEY = 7;
+    public static final int WEB_PHOTO_URI = 8;
 }

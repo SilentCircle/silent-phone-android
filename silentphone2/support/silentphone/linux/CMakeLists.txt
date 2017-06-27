@@ -43,6 +43,11 @@ else()
 endif()
 
 add_definitions(-g -O2 -fno-strict-aliasing)
+add_definitions("-I${polarDir}/include -I${polarDir}/configs -DMBEDTLS_CONFIG_FILE='<config-sc.h>'")
+MESSAGE(STATUS "-I${polarDir}/configs -DMBEDTLS_CONFIG_FILE='<config-sc.h>'")
+
+#set(CMAKE_C_FLAGS ${CMAKE_C_FLAGS} -I${polarDir}/configs "-DMBEDTLS_CONFIG_FILE=<config_sc.h>")
+#set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} -I${polarDir}/configs "-DMBEDTLS_CONFIG_FILE='<config_sc.h>'")
 if(CMAKE_COMPILER_IS_GNUCXX)
     add_definitions(-Wno-long-long -Wno-char-subscripts -std=c++11)
     add_definitions(-fpermissive)  ############### Don't use this for production code !!!!
@@ -62,7 +67,9 @@ set(linuxObjs
 
 add_executable(tivilinux ${linuxObjs})
 target_link_libraries(tivilinux ${zrtpDir}/build/clients/tivi/libzrtptivi.so)
-target_link_libraries(tivilinux ${polarDir}/library/libpolarssl.a)
+target_link_libraries(tivilinux ${polarDir}/build/library/libmbedtls.a)
+target_link_libraries(tivilinux ${polarDir}/build/library/libmbedx509.a)
+target_link_libraries(tivilinux ${polarDir}/build/library/libmbedcrypto.a)
 target_link_libraries(tivilinux ${axoDir}/buildStatic/libaxolotl++.a)
 target_link_libraries(tivilinux ${LIBS})
 # SET_TARGET_PROPERTIES(tivilinux PROPERTIES LINK_FLAGS -m32)

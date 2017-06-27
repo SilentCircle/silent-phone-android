@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2016-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,7 +27,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 package com.silentcircle.silentphone2.activities;
 
-import android.app.FragmentManager;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -116,12 +115,6 @@ public class DidSelectionActivity extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
-        showInputInfo(getString(R.string.did_ask_to_complete));
-    }
-
-    private void showInputInfo(String msg) {
-        ProvisioningActivity.InfoMsgDialogFragment infoMsg = ProvisioningActivity.InfoMsgDialogFragment.newInstance(msg);
-        FragmentManager fragmentManager = getFragmentManager();
-        infoMsg.show(fragmentManager, "SilentPhoneDidActivityInfo");
+        DialogHelperActivity.showDialog(R.string.information_dialog, R.string.did_ask_to_complete, android.R.string.ok, -1);
     }
 }

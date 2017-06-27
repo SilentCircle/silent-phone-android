@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2016-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -35,6 +35,22 @@ import org.json.JSONObject;
 
 public class JSONConversationAdapter extends JSONAdapter {
 
+    public static final String TAG_CONVERSATION_BURN_DELAY = "burn_delay";
+    public static final String TAG_CONVERSATION_BURN_NOTICE = "burn_notice";
+    public static final String TAG_CONVERSATION_ID = "id";
+    public static final String TAG_CONVERSATION_IS_LOCATION_ENABLED = "is_location_enabled";
+    public static final String TAG_CONVERSATION_SEND_RECEIPTS = "send_receipts";
+    public static final String TAG_CONVERSATION_PARTNER = "partner";
+    public static final String TAG_CONVERSATION_UNREAD_MESSAGE_COUNT = "unread_messages";
+    public static final String TAG_CONVERSATION_UNREAD_CALL_COUNT = "unread_call_messages";
+    public static final String TAG_CONVERSATION_PREVIEW_EVENT_ID = "preview_event_id";
+    public static final String TAG_CONVERSATION_LAST_MODIFIED = "last_modified";
+    public static final String TAG_CONVERSATION_FAILURES = "failures";
+    public static final String TAG_CONVERSATION_DRAFT_TEXT = "unsent_text";
+    public static final String TAG_CONVERSATION_AVATAR = "avatar";
+    public static final String TAG_CONVERSATION_AVATAR_URL = "avatar_url";
+    public static final String TAG_CONVERSATION_AVATAR_IV = "avatar_iv";
+
     private final JSONContactAdapter contactAdapter = new JSONContactAdapter();
 
     public JSONObject adapt(Conversation conversation) {
@@ -43,18 +59,21 @@ public class JSONConversationAdapter extends JSONAdapter {
 
         try {
 
-            json.put("burn_delay", conversation.getBurnDelay());
-            json.put("burn_notice", conversation.hasBurnNotice());
-            json.put("id", conversation.getId());
-            json.put("is_location_enabled", conversation.isLocationEnabled());
-            json.put("send_receipts", conversation.shouldSendReadReceipts());
-            json.put("partner", contactAdapter.adapt(conversation.getPartner()));
-            json.put("unread_messages", conversation.getUnreadMessageCount());
-            json.put("unread_call_messages", conversation.getUnreadCallMessageCount());
-            json.put("preview_event_id", conversation.getPreviewEventID());
-            json.put("last_modified", conversation.getLastModified());
-            json.put("failures", conversation.getFailures());
-            json.put("unsent_text", conversation.getUnsentText());
+            json.put(TAG_CONVERSATION_BURN_DELAY, conversation.getBurnDelay());
+            json.put(TAG_CONVERSATION_BURN_NOTICE, conversation.hasBurnNotice());
+            json.put(TAG_CONVERSATION_ID, conversation.getId());
+            json.put(TAG_CONVERSATION_IS_LOCATION_ENABLED, conversation.isLocationEnabled());
+            json.put(TAG_CONVERSATION_SEND_RECEIPTS, conversation.shouldSendReadReceipts());
+            json.put(TAG_CONVERSATION_PARTNER, contactAdapter.adapt(conversation.getPartner()));
+            json.put(TAG_CONVERSATION_UNREAD_MESSAGE_COUNT, conversation.getUnreadMessageCount());
+            json.put(TAG_CONVERSATION_UNREAD_CALL_COUNT, conversation.getUnreadCallMessageCount());
+            json.put(TAG_CONVERSATION_PREVIEW_EVENT_ID, conversation.getPreviewEventID());
+            json.put(TAG_CONVERSATION_LAST_MODIFIED, conversation.getLastModified());
+            json.put(TAG_CONVERSATION_FAILURES, conversation.getFailures());
+            json.put(TAG_CONVERSATION_DRAFT_TEXT, conversation.getUnsentText());
+            json.put(TAG_CONVERSATION_AVATAR, conversation.getAvatar());
+            json.put(TAG_CONVERSATION_AVATAR_URL, conversation.getAvatarUrl());
+            json.put(TAG_CONVERSATION_AVATAR_IV, conversation.getAvatarIv());
 
         } catch (JSONException exception) {
             // This should never happen because we are hard-coding all of the keys.
@@ -66,19 +85,23 @@ public class JSONConversationAdapter extends JSONAdapter {
 
     public Conversation adapt(JSONObject json) {
 
-        Conversation conversation = new Conversation(contactAdapter.adapt(getJSONObject(json, "partner")));
+        Conversation conversation =
+                new Conversation(contactAdapter.adapt(getJSONObject(json, TAG_CONVERSATION_PARTNER)));
 
-        conversation.setBurnDelay(getLong(json, "burn_delay", BurnDelay.getDefaultDelay()));
-        conversation.setBurnNotice(getBoolean(json, "burn_notice"));
-        conversation.setId(getString(json, "id"));
-        conversation.setLocationEnabled(getBoolean(json, "is_location_enabled"));
-        conversation.setSendReadReceipts(getBoolean(json, "send_receipts"));
-        conversation.setUnreadMessageCount(getInt(json, "unread_messages"));
-        conversation.setUnreadCallMessageCount(getInt(json, "unread_call_messages"));
-        conversation.setPreviewEventID(getString(json, "preview_event_id"));
-        conversation.setLastModified(getLong(json, "last_modified"));
-        conversation.setFailures(getInt(json, "failures"));
-        conversation.setUnsentText(getString(json, "unsent_text", null));
+        conversation.setBurnDelay(getLong(json, TAG_CONVERSATION_BURN_DELAY, BurnDelay.getDefaultDelay()));
+        conversation.setBurnNotice(getBoolean(json, TAG_CONVERSATION_BURN_NOTICE));
+        conversation.setId(getString(json, TAG_CONVERSATION_ID));
+        conversation.setLocationEnabled(getBoolean(json, TAG_CONVERSATION_IS_LOCATION_ENABLED));
+        conversation.setSendReadReceipts(getBoolean(json, TAG_CONVERSATION_SEND_RECEIPTS));
+        conversation.setUnreadMessageCount(getInt(json, TAG_CONVERSATION_UNREAD_MESSAGE_COUNT));
+        conversation.setUnreadCallMessageCount(getInt(json, TAG_CONVERSATION_UNREAD_CALL_COUNT));
+        conversation.setPreviewEventID(getString(json, TAG_CONVERSATION_PREVIEW_EVENT_ID));
+        conversation.setLastModified(getLong(json, TAG_CONVERSATION_LAST_MODIFIED));
+        conversation.setFailures(getInt(json, TAG_CONVERSATION_FAILURES));
+        conversation.setUnsentText(getString(json, TAG_CONVERSATION_DRAFT_TEXT, null));
+        conversation.setAvatar(getString(json, TAG_CONVERSATION_AVATAR, null));
+        conversation.setAvatarUrl(getString(json, TAG_CONVERSATION_AVATAR_URL, null));
+        conversation.setAvatarIv(getString(json, TAG_CONVERSATION_AVATAR_IV, null));
 
         return conversation;
 

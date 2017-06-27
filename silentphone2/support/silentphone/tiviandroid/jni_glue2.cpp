@@ -1,7 +1,7 @@
 /*
 Created by Janis Narbuts
 Copyright (C) 2004-2012, Tivi LTD, www.tiviphone.com. All rights reserved.
-Copyright (C) 2012-2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2012-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -39,7 +39,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <common/icuUtf.h>
 
 #include <android/log.h>
-#include <polarssl/debug.h>
+#include <mbedtls/debug.h>
+
+#include "sc_logs.h"
 
 #include "com_silentcircle_silentphone2_services_PhoneServiceNative.h"
 
@@ -107,6 +109,8 @@ int provClearAPIKey();
 void setFileStorePath(const char *p);
 void setImei(char *p);
 void setPWDKey(unsigned char *k, int iLen);
+int32_t setSIPPassword(const std::string& password);
+int32_t setSIPAuthName(const std::string& password);
 
 void setProvisioningToDevelop();
 void setProvisioningToProduction();
@@ -134,11 +138,17 @@ int getCountersZrtp(int iCallID, int* counters);     // Implemented in tiviengin
  */
 void debugsi(char *c, int a){}
 
-int isBackgroundReadable(const char *fn){}
+int isBackgroundReadable(const char *fn) {
+    return 1;
+}
+
 void setFileAttributes(const char *fn, int iProtect){}
 void log_file_protection_prop(const char *fn){}
 void relARPool(void *p){}
 
+int AudioManager_AudioIsInterupted() {
+    return 0;
+}
 
 char *getResFile(const char *fn, int &iLen) {
     iLen = 0;
@@ -158,10 +168,13 @@ static jobject thisTiviPhoneService = NULL;
 static jmethodID wakupCallBackMethod = NULL;
 static jmethodID stateCallBackMethod = NULL;
 
-
 static int iIs3G = 0;
 static int iAPILevel = 5;
 static int iDebugable = 0;
+
+//DebugLogging
+static int iLoggingEnabled = 0; //Logging is enabled by default
+static bool isNativeCode = true; //skip print debug log for the log passed from Java code.
 
 static int iFirst = 1;
 
@@ -223,14 +236,43 @@ int showSSLErrorMsg(void *ret, const char *p){
 }
 
 int androidLog(char const *format, va_list arg) {
-    LOG(if (iDebugable)__android_log_vprint(ANDROID_LOG_DEBUG, "native", format, arg);)
+    if (isNativeCode) {
+        LOG(if (iDebugable)__android_log_vprint(ANDROID_LOG_DEBUG, "native", format, arg);)
+    }
+    else {
+        isNativeCode = true;
+    }
+
+    //DebugLogging
+    //iLoggingEnabled is "OFF" by default
+    if(iLoggingEnabled){
+        char log[1024];
+        vsnprintf (log, 1024, format, arg);
+        writeToFile(log);
+    }
+    return 1;
 }
 
+// Move/copy code from androidLog above and have it local, when compiling
+// with clang. It seems that optimization fails with regard to va_list
 void androidLog(const char* format, ...)
 {
     va_list arg;
     va_start(arg, format);
-    androidLog(format, arg);
+
+    if(isNativeCode) {
+        LOG(if (iDebugable)__android_log_vprint(ANDROID_LOG_DEBUG, "native", format, arg);)
+    } else{
+        isNativeCode = true;
+    }
+
+    //DebugLogging
+    //iLoggingEnabled is "OFF" by default
+    if(iLoggingEnabled){
+        char log[1024];
+        vsnprintf (log, 1024, format, arg);
+        writeToFile(log);
+    }
     va_end( arg );
 }
 
@@ -266,6 +308,24 @@ const char *t_getDev_name(){
 float cpu_usage()
 {
     return 0.1;
+}
+
+static bool arrayToString(JNIEnv* env, jbyteArray array, std::string* output)
+{
+    if (array == NULL)
+        return false;
+
+    size_t dataLen = static_cast<size_t>(env->GetArrayLength(array));
+    if (dataLen == 0)
+        return false;
+
+    const uint8_t* tmp = (uint8_t*)env->GetByteArrayElements(array, 0);
+    if (tmp == NULL)
+        return false;
+
+    output->assign((const char*)tmp, dataLen);
+    env->ReleaseByteArrayElements(array, (jbyte*)tmp, 0);
+    return true;
 }
 
 #ifdef WITH_AXOLOTL
@@ -652,23 +712,22 @@ JNI_FUNCTION(savePath)(JNIEnv* env, jclass thiz, jstring str)
 }
 
 #define DEBUG_OPTION_SSL  "ssl_level:"
-#define DEBUG_OPTION_AXO  "axo_level:"
+#define DEBUG_OPTION_ZINA  "zina_level:"
 
 static void handleDebugOptions(const char *options)
 {
-    void setAxoLogLevel(int32_t level);
+    void setZinaLogLevel(int32_t level);
 
-    debug_set_log_mode(POLARSSL_DEBUG_LOG_RAW);
     if (t_isEqual(options, DEBUG_OPTION_SSL, sizeof(DEBUG_OPTION_SSL)-1 )) {
         int ret = atoi(options + sizeof(DEBUG_OPTION_SSL)-1);
         if (ret >= 0 && ret <= 4)
-            debug_set_threshold(ret);
+            mbedtls_debug_set_threshold(ret);
         else
-            debug_set_threshold(0);
+            mbedtls_debug_set_threshold(0);
     }
-    if (t_isEqual(options, DEBUG_OPTION_AXO, sizeof(DEBUG_OPTION_AXO)-1 )) {
-        int ret = atoi(options + sizeof(DEBUG_OPTION_AXO)-1);
-        setAxoLogLevel(ret);
+    if (t_isEqual(options, DEBUG_OPTION_ZINA, sizeof(DEBUG_OPTION_ZINA)-1 )) {
+        int ret = atoi(options + sizeof(DEBUG_OPTION_ZINA)-1);
+        setZinaLogLevel(ret);
     }
 }
 
@@ -697,9 +756,8 @@ JNI_FUNCTION(doInit)( JNIEnv* env, jobject thiz, jint iDebugFlag)
             return com_silentcircle_silentphone2_services_PhoneServiceNative_NO_STATE_CALLBACK;
         }
     }
-    debug_set_log_mode(POLARSSL_DEBUG_LOG_RAW);
     if (iDebugable > 0 && iDebugable <= 4)
-        debug_set_threshold(iDebugable);
+        mbedtls_debug_set_threshold(iDebugable);
     return 0;
 }
 
@@ -836,6 +894,33 @@ JNI_FUNCTION(setKeyData)(JNIEnv* env, jclass thiz, jbyteArray byteArray)
     int iLen = env->GetArrayLength(byteArray);
     setPWDKey(k, iLen);
     env->ReleaseByteArrayElements(byteArray, (jbyte*)k, 0);
+    return 0;
+}
+
+JNIEXPORT jint JNICALL
+JNI_FUNCTION(setSIPPassword)(JNIEnv* env, jclass thiz, jbyteArray byteArray)
+{
+    std::string pwd;
+    if (!arrayToString(env, byteArray, &pwd)) {
+        return -1;
+    }
+    setSIPPassword(pwd);
+    return 0;
+}
+
+JNIEXPORT jint JNICALL
+JNI_FUNCTION(setSIPAuthName)(JNIEnv* env, jclass thiz, jstring name)
+{
+    if (name == nullptr) {
+        return -1;
+    }
+    const char *tmp = (const char *)env->GetStringUTFChars(name, 0);
+    std::string authName(tmp);
+    env->ReleaseStringUTFChars(name, tmp);
+    if (authName.empty()) {
+        return -1;
+    }
+    setSIPAuthName(authName);
     return 0;
 }
 
@@ -991,14 +1076,80 @@ JNI_FUNCTION(getNumAccounts)(JNIEnv* env, jclass thiz)
 JNIEXPORT void JNICALL
 JNI_FUNCTION(setPushToken)(JNIEnv* env, jclass thiz, jstring str)
 {
- __android_log_write(ANDROID_LOG_VERBOSE,"tivi","TiviPhoneService_setPushToken");
- if(str == NULL){
-     return;
- }
- const char *regId = (const char *)env->GetStringUTFChars(str, 0);
- setPushToken(regId);
- env->ReleaseStringUTFChars(str, regId);
- return;
+    __android_log_write(ANDROID_LOG_VERBOSE,"tivi","TiviPhoneService_setPushToken");
+    if(str == NULL){
+        return;
+    }
+    const char *regId = (const char *)env->GetStringUTFChars(str, 0);
+    setPushToken(regId);
+    env->ReleaseStringUTFChars(str, regId);
+    return;
+}
+
+JNIEXPORT void JNICALL
+JNI_FUNCTION(initLoggingStaticVariables)(){
+    initLoggingStaticVariables();
+}
+
+JNIEXPORT void JNICALL
+JNI_FUNCTION(setLogFileName)(JNIEnv* env, jclass thiz, jstring logFileName)
+{
+    char *temp = (char *)env->GetStringUTFChars(logFileName, 0);
+    setCurrentFilePath(temp);
+    env->ReleaseStringUTFChars(logFileName, temp);
+    return;
+}
+
+JNIEXPORT void JNICALL
+JNI_FUNCTION(scLog)(JNIEnv* env, jclass thiz, jstring logEntry)
+{
+    const char *log = (const char *)env->GetStringUTFChars(logEntry, 0);
+
+    isNativeCode = false;
+    androidLog("%s", log);
+    env->ReleaseStringUTFChars(logEntry, log);
+
+    return;
+}
+
+JNIEXPORT jstring JNICALL
+JNI_FUNCTION(decryptLogs)(JNIEnv* env, jclass thiz, jobjectArray logFilePaths, jstring logBaseDir)
+{
+    jsize count = env->GetArrayLength(logFilePaths);
+    char *logFileNames[count];
+    jstring str;
+    for (int i=0; i<count; i++) {
+        str = (jstring)env->GetObjectArrayElement(logFilePaths, i);
+        const char* temp = env->GetStringUTFChars(str, NULL);
+        size_t len = strlen(temp) + 1;
+        logFileNames[i] = new char[len];
+        memcpy(logFileNames[i], temp, len);
+        env->ReleaseStringUTFChars(str, temp);
+        env->DeleteLocalRef(str);
+    }
+    char *dir = (char *)env->GetStringUTFChars( logBaseDir, NULL);
+    char * error = decryptLogs(logFileNames, count, dir);
+    env->ReleaseStringUTFChars(logBaseDir, dir);
+
+    for (int i=0; i<count; i++) {
+        delete[] logFileNames[i];
+    }
+    if(error == NULL){
+        str = NULL;
+    }
+    else{
+        str = env->NewStringUTF(error);
+        free(error);
+    }
+
+    return str;
+}
+
+JNIEXPORT void JNICALL
+JNI_FUNCTION(setLoggingEnabled)(JNIEnv* env, jclass thiz, jint isLoggingEnabled)
+{
+    iLoggingEnabled = isLoggingEnabled;
+    return;
 }
 
 #ifdef __cplusplus

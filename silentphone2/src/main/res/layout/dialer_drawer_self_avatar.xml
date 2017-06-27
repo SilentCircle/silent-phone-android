@@ -1,19 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
-
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="@drawable/bg_profile"
-        android:layout_alignTop="@+id/self_avatar_container"
-        android:layout_alignBottom="@id/self_avatar_container"
-        android:layout_alignParentEnd="true"
-        android:layout_alignParentRight="true"
-        />
+    android:layout_height="wrap_content">
 
     <FrameLayout
         android:id="@+id/self_avatar_container"
@@ -23,7 +13,8 @@
         android:paddingStart="@dimen/dial_drawer_avatar_padding_left"
         android:paddingTop="@dimen/dial_drawer_avatar_padding_top"
         android:paddingBottom="@dimen/dial_drawer_avatar_padding_bottom"
-        android:layout_centerVertical="true">
+        android:layout_centerVertical="true"
+        tools:ignore="RtlSymmetry">
 
         <ImageView
             android:id="@+id/self_avatar"
@@ -31,7 +22,17 @@
             android:layout_height="@dimen/dial_drawer_avatar_size"
             android:scaleType="centerCrop"
             android:src="@drawable/ic_avatar_placeholder_circular"
-            android:layout_gravity="center" />
+            android:layout_gravity="center"
+            android:contentDescription="@string/dial_drawer_avatar_voiceover"/>
+
+        <include
+            android:id="@+id/data_retention_status"
+            layout="@layout/messaging_data_retention_status"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="end|bottom"
+            android:visibility="gone"
+            tools:visibility="visible" />
 
     </FrameLayout>
 
@@ -43,33 +44,66 @@
         android:layout_marginLeft="@dimen/space_large"
         android:layout_marginRight="@dimen/space_large"
         android:layout_marginStart="@dimen/space_large"
-        android:layout_toEndOf="@+id/self_avatar_container"
-        android:layout_toRightOf="@+id/self_avatar_container"
+        android:layout_toEndOf="@id/self_avatar_container"
+        android:layout_toRightOf="@id/self_avatar_container"
+        android:layout_marginTop="15dp"
         android:layout_alignParentEnd="true"
         android:layout_alignParentRight="true"
-        android:layout_centerVertical="true"
         android:orientation="vertical">
+
+
+        <com.silentcircle.common.widget.AdjustingTextView
+            android:id="@+id/self_avatar_display_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_small"
+            android:layout_marginBottom="@dimen/spacing_tiny"
+            android:layout_gravity="center_vertical"
+            android:gravity="center_vertical"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textColor="?attr/sp_activity_primary_text_color"
+            android:textSize="@dimen/text_xlarge"
+            android:textStyle="bold"
+            android:includeFontPadding="false"
+            app:minTextSize="@dimen/text_small"
+            tools:text="Display name" />
+
+        <com.silentcircle.silentphone2.views.ResizingTextTextView
+            android:id="@+id/self_avatar_alias"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_tiny"
+            android:layout_marginBottom="@dimen/spacing_tiny"
+            android:includeFontPadding="false"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textColor="?attr/sp_activity_secondary_text_color"
+            android:textSize="@dimen/text_mlarge"
+            app:resizing_text_min_size="@dimen/text_small"
+            tools:text="username"
+            />
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_tiny"
+            android:layout_marginBottom="@dimen/spacing_small"
             android:orientation="horizontal">
 
             <com.silentcircle.common.widget.AdjustingTextView
-                android:id="@+id/self_avatar_display_name"
-                tools:text="Display name"
-                android:layout_width="0dp"
+                android:id="@+id/self_avatar_online_status_text"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
                 android:layout_gravity="center_vertical"
+                android:gravity="center_vertical"
                 android:ellipsize="end"
-                android:singleLine="true"
-                android:textColor="@color/sc_ng_text_grey"
-                android:textSize="@dimen/text_xlarge"
-                android:textStyle="bold"
+                android:maxLines="1"
+                android:textColor="?attr/sp_activity_secondary_text_color"
+                android:textSize="@dimen/text_mlarge"
                 android:includeFontPadding="false"
                 app:minTextSize="@dimen/text_small"
-                />
+                tools:text="online" />
 
             <ImageView
                 android:id="@+id/self_avatar_online_status"
@@ -80,22 +114,24 @@
                 android:layout_gravity="center_vertical"
                 android:scaleType="center"
                 android:src="@drawable/bg_online_status_indicator"
+                tools:ignore="ContentDescription" />
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
                 />
 
-        </LinearLayout>
+            <ImageView
+                android:id="@+id/self_avatar_expand_details"
+                android:layout_width="@dimen/spacing_xlarge"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop"
+                android:src="@drawable/ic_arrow_drop_down_white_24px"
+                android:tint="?attr/sp_activity_secondary_text_color"
+                android:contentDescription="@string/navigation_drawer_expand_details_voiceover" />
 
-        <com.silentcircle.common.widget.AdjustingTextView
-            android:id="@+id/self_avatar_alias"
-            tools:text="username"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:includeFontPadding="false"
-            android:ellipsize="none"
-            android:singleLine="true"
-            android:textColor="@color/sc_ng_text_grey_5"
-            android:textSize="@dimen/text_xlarge"
-            app:minTextSize="@dimen/text_small"
-            />
+        </LinearLayout>
 
     </LinearLayout>
 

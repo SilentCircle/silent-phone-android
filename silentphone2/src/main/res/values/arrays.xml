@@ -2,9 +2,9 @@
 <resources>
 
     <array name="snooze_dismiss_drawables">
-        <item>@drawable/ic_call_dark</item>
+        <item>@drawable/ic_lockscreen_answer</item>
         <item>@null</item>
-        <item>@drawable/ic_end_call_dark</item>
+        <item>@drawable/ic_lockscreen_decline</item>
         <item>@null</item>
     </array>
     <array name="snooze_dismiss_descriptions">
@@ -81,6 +81,13 @@
     <array name="message_theme_array">
         <item>@string/messaging_theme_dark</item>
         <item>@string/messaging_theme_light</item>
+    </array>
+
+    <!--debug logging interval -->
+    <array name="logging_interval_array">
+        <item>@string/one_day</item>
+        <item>@string/two_day</item>
+        <item>@string/three_day</item>
     </array>
 
 </resources>

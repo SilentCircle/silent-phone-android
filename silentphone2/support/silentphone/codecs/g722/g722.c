@@ -31,7 +31,7 @@
 
 /*! \file */
 
-#include "config.h"
+#include "g722config.h"
 
 //#define SPANDSP_USE_MMX
 //#ifndef __APPLE__

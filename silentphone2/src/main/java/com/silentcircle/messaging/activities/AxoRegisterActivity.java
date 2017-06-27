@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2014-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -36,9 +36,10 @@ import android.text.TextUtils;
 import android.view.MenuItem;
 
 import com.silentcircle.common.util.ViewUtil;
-import com.silentcircle.messaging.fragments.AxoDevicesFragment;
-import com.silentcircle.messaging.services.AxoMessaging;
+import com.silentcircle.messaging.fragments.DevicesFragment;
+import com.silentcircle.messaging.services.ZinaMessaging;
 import com.silentcircle.silentphone2.R;
+import com.silentcircle.silentphone2.passcode.AppLifecycleNotifierBaseActivity;
 import com.silentcircle.silentphone2.util.Utilities;
 
 /**
@@ -46,7 +47,7 @@ import com.silentcircle.silentphone2.util.Utilities;
  *
  * Created by werner on 20.06.15.
  */
-public class AxoRegisterActivity  extends AppCompatActivity {
+public class AxoRegisterActivity  extends AppLifecycleNotifierBaseActivity {
 
     @SuppressWarnings("unused")
     private static final String TAG = "AxoRegisterActivity";
@@ -61,9 +62,9 @@ public class AxoRegisterActivity  extends AppCompatActivity {
         Utilities.setTheme(this);
         super.onCreate(savedInstanceState);
         ViewUtil.setBlockScreenshots(this);
-        setContentView(R.layout.activity_axo_devices);
+        setContentView(R.layout.activity_devices);
         restoreActionBar();
-        setTitle(R.string.axo_menu_devices);
+        setTitle(R.string.menu_devices);
         String action = getIntent().getAction();
         if (TextUtils.isEmpty(action)) {
             finish();
@@ -73,10 +74,10 @@ public class AxoRegisterActivity  extends AppCompatActivity {
         if (savedInstanceState == null) {
             Bundle arg = new Bundle();
             arg.putString(ACTION, action);
-            AxoDevicesFragment axoDevicesFragment = AxoDevicesFragment.newInstance(arg);
+            DevicesFragment devicesFragment = DevicesFragment.newInstance(arg);
 
             getFragmentManager().beginTransaction()
-                    .add(R.id.axo_devices_container, axoDevicesFragment)
+                    .add(R.id.devices_container, devicesFragment)
                     .commit();
         }
     }
@@ -97,13 +98,13 @@ public class AxoRegisterActivity  extends AppCompatActivity {
     }
 
     public void noRegistration() {
-        AxoMessaging axoMessaging = AxoMessaging.getInstance(getApplicationContext());
+        ZinaMessaging axoMessaging = ZinaMessaging.getInstance();
         axoMessaging.setAskToRegister(false);
         finish();
     }
 
     public void registerDevice() {
-        AxoMessaging axoMessaging = AxoMessaging.getInstance(getApplicationContext());
+        ZinaMessaging axoMessaging = ZinaMessaging.getInstance();
         axoMessaging.registerDeviceMessaging(false);
         finish();
     }

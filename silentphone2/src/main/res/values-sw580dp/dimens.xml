@@ -56,7 +56,7 @@
     <dimen name="detail_update_section_side_padding">0dip</dimen>
 
     <!-- Contact list (vertical scroll bar comes left) -->
-    <dimen name="contact_browser_list_top_margin">16dip</dimen>
+    <dimen name="contact_browser_list_top_margin">0dip</dimen><!-- 16dip</dimen> -->
     <dimen name="list_header_extra_top_padding">@dimen/contact_browser_list_top_margin</dimen>
 
     <!-- Left padding of the auto complete field to line hint text up with member list -->

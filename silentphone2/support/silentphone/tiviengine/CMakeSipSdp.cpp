@@ -1,7 +1,7 @@
 /*
 Created by Janis Narbuts
 Copyright (C) 2004-2012, Tivi LTD, www.tiviphone.com. All rights reserved.
-Copyright (C) 2012-2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2012-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,7 +27,6 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-
 #include "../encrypt/md5/md5.h"
 #include "CSessions.h"
 #include "digestmd5.h"
@@ -118,6 +117,19 @@ int CMakeSip::addParams(const char *p, int iLenAdd)
    if(!p)return 0;
    
    if(iLenAdd<=0)iLenAdd=(int)strlen(p);
+   
+   if(!buf && p!=params && iLenAdd > 0){
+      char *pNew = new char [iLenAdd+1 + paramLen];
+      if(params && paramLen>0)memcpy(pNew, params, paramLen);
+      memcpy(pNew+paramLen, p, iLenAdd);
+      paramLen+=iLenAdd;
+      pNew[paramLen]=0;
+      params = pNew;
+      return 0;
+      
+   }
+   
+   if(!buf)return 0;
    
    ADD_L_STR(buf,uiLen,p,iLenAdd);
    
@@ -649,7 +661,7 @@ int CMakeSip::makeReq(int id, PHONE_CFG * cfg, ADDR *addrExt,STR_64 *str64ExtADD
    if(id != METHOD_CANCEL_IGNORE && (hrr->uiCount || iReplaceRoute))//(toMake & (METHOD_BYE |METHOD_ACK)) && ???
    {
       
-      uiLen+=addRoute(s+uiLen, 255, hrr, "Route: ",
+      uiLen+=addRoute(s+uiLen, DATA_SIZE-uiLen-10, hrr, "Route: ",
                       !((sMsg->hdrCSeq.uiMethodID && sMsg->sipHdr.dstrStatusCode.uiVal) ||
                         (spSes->cs.iCaller && sMsg->hdrCSeq.uiMethodID==0))
                       ,iReplaceRoute, &hc->x[iContactId].sipUri.dstrSipAddr);
@@ -702,11 +714,11 @@ int CMakeSip::makeReq(int id, PHONE_CFG * cfg, ADDR *addrExt,STR_64 *str64ExtADD
             {
                //TODO add reg addr -store to file (later check if rem)
                uiLen+= sprintf(s+uiLen,";expires=%u",cfg->uiExpires);
-               int _TODO_is_serv;
-               if(0){
-                  ADD_STR(s,uiLen,";nat=yes");
-               }
-               else if(1){//isTiViServ(cfg)){
+//               int _TODO_is_serv;
+//               if(0){
+//                  ADD_STR(s,uiLen,";nat=yes");
+//               }
+//               else if(1){//isTiViServ(cfg)){
                   
                   if(cfg->iUseOnlyNatIp==0){//TODO cfg
                      if(cfg->iNetworkIsMobile)
@@ -743,7 +755,7 @@ int CMakeSip::makeReq(int id, PHONE_CFG * cfg, ADDR *addrExt,STR_64 *str64ExtADD
                            ADD_STR(s,uiLen,";nat=symetric");//TODO
                      }
                   }
-               }
+//               }
                
             }
          
@@ -878,13 +890,18 @@ int CMakeSip::makeResp(int id, PHONE_CFG *cfg, char *uri, int iUriLen)
          ADD_STR(s,uiLen,"SIP/2.0 487 Request Terminated\r\n");
          break;
       case 488:
-         /// uiLen+=sprintf(s+uiLen,"SIP/2.0 488 Not Acceptable Here\r\n");
          ADD_STR(s,uiLen,"SIP/2.0 488 Not Acceptable Here\r\n");
+         break;
       case 491:
          ADD_STR(s, uiLen,"SIP/2.0 491 Request Pending\r\n");
          break;
+      case 493:
+         ADD_STR(s, uiLen,"SIP/2.0 493 Undecipherable\r\n");
+         break;
+      case 500:
+         ADD_STR(s,uiLen,"SIP/2.0 500 Internal Server Error\n");
+         break;
       case 501:
-         /// uiLen+=sprintf(s+uiLen,"SIP/2.0 488 Not Acceptable Here\r\n");
          ADD_STR(s,uiLen,"SIP/2.0 501 Not Implemented\r\n");
          break;
       case 603:
@@ -893,6 +910,13 @@ int CMakeSip::makeResp(int id, PHONE_CFG *cfg, char *uri, int iUriLen)
          break;
       default:
          ADD_STR(s,uiLen,"SIP/2.0 400 Bad Request\r\n");
+   }
+   
+   if(endReason[0]){
+      uiLen-=2;//rem \r\n
+      ADD_0_STR(s,uiLen," - ");
+      ADD_0_STR(s,uiLen,endReason);
+      ADD_CRLF(s, uiLen);
    }
 
    /*
@@ -946,7 +970,7 @@ int CMakeSip::makeResp(int id, PHONE_CFG *cfg, char *uri, int iUriLen)
 
    if(sMsg->hldRecRoute.uiCount)
    {
-      uiLen+=addRoute(s+uiLen, 256,  &sMsg->hldRecRoute,"Record-Route: ",1,0,NULL);
+      uiLen+=addRoute(s+uiLen, DATA_SIZE-uiLen-10,  &sMsg->hldRecRoute,"Record-Route: ",1,0,NULL);
    }
    
    

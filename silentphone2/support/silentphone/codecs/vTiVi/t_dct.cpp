@@ -1,7 +1,7 @@
 /*
 Created by Janis Narbuts
 Copyright (C) 2004-2012, Tivi LTD, www.tiviphone.com. All rights reserved.
-Copyright (C) 2012-2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2012-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,7 +27,6 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-
 //#include "fdct.h"
 #define T_CAN_TEST_V
 
@@ -862,6 +861,7 @@ static void dct4x4dc_s_p_d(unsigned char *src,unsigned char *src2, int stride, D
     }
 }
 
+#if 0 // EA: these methods are not used and are throwing a lot of warnings
 int sadHadaX(unsigned char *src,unsigned char *src2, int stride, int *s)
 {
     int tmp[4][4];
@@ -1121,7 +1121,7 @@ int __sadHada(unsigned char *src,unsigned char *src2, int stride, int *s)
     return iSad+iBits;//(iSad*2)>>2;
     */
 }
-
+#endif // EA: end of commented out code
 
 static inline  int xabs(int a){return a>=0?a:-a;}
 
@@ -1169,7 +1169,6 @@ int sadHada4(unsigned char *src,unsigned char *src2, int stride1, int stride2, c
    };
    int *m=(int*)&pow_mult[0];
 
-   int x;
    i=1;
    {
       const int s03 = tmp[i][0] + tmp[i][3];//3
@@ -1455,8 +1454,8 @@ static void t_fvc1_x(unsigned char *src,unsigned char *src2, int stride,DCT_TYPE
    int i;
    int tmp[16];
    int *t=&tmp[0];
-   int z=50;
-   int z2=z;
+//   int z=50;
+//   int z2=z;
 #define _FR(A1,B1,C1,D1,A,B,C,D)\
 A1 = (17 * A + 17 * B + 17 * C + 17 * D) ;\
 B1 = (22 * A + 10 * B - 10 * C - 22 * D) ;\
@@ -2040,7 +2039,8 @@ static void t_iTina_x_test(DCT_TYPE *d, unsigned char *dstp, int stride){
 //def __SYMBIAN32__
 static int iB;void debugsi(char *c, int a){}
 #else
-static int iB;void debugsi(char *c, int a);
+//static int iB;
+void debugsi(char *c, int a);
 #endif
 template<int iAdd>
 static void t_iTina_x(DCT_TYPE *d, unsigned char *dstp, int stride){
@@ -3169,7 +3169,7 @@ void t_fhaar01(short *ps)
    int r01,r02,r03,r04;
    
    int ofs=1;
-   int pos;
+//   int pos;
 #define P(_A,_B) (_A)+8*(_B)
    int x,y,a,b;
    int step=1;
@@ -3231,7 +3231,7 @@ void t_fhaar0(short *p)
    int r01,r02,r03,r04;
    
    int ofs=1;
-   int pos;
+//   int pos;
 #define P(_A,_B) (_A)+8*(_B)
    int x,y;
    int step=1;
@@ -3649,7 +3649,7 @@ void idwt(short *p){
 
 void fdwt_c(int *p)
 {
-   int s1,s2,s3,s4,d1,d2,d3,d4;
+   int s1,s2,d1,d2;
 #undef P
 #define P(_W) p[_W<<2]
 
@@ -3674,7 +3674,7 @@ void fdwt_c(int *p)
 }
 void idwt_c(int *p)
 {
-   int a1,a2,a3,a4,a5,a6,a7,a8;
+   int a1,a2,a3,a4;
 
  //  I(a1,a2,P(0),P(1));
   // P(0)=a1;P(1)=a2;
@@ -3695,7 +3695,7 @@ void idwt_c(int *p)
 }
 void fdwt_r(int *p)
 {
-   int s1,s2,s3,s4,d1,d2,d3,d4;
+   int s1,s2,d1,d2;
 #undef P
 #define P(_W) p[_W]
 
@@ -3722,7 +3722,7 @@ void fdwt_r(int *p)
 }
 void idwt_r(int *p)
 {
-   int a1,a2,a3,a4,a5,a6,a7,a8;
+   int a1,a2,a3,a4;
 //   I(a1,a2,P(0),P(1));
  //  P(0)=a1;P(1)=a2;
 

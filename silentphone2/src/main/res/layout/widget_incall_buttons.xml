@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/bottomButtons"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="0dp"
+    android:animateLayoutChanges="true"
+    android:orientation="vertical"
+    android:padding="0dp"
+    tools:visibility="visible">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/button_background_color"
+        android:gravity="bottom|center_horizontal"
+        android:orientation="horizontal"
+        android:paddingEnd="@dimen/button_cluster_horizontal_padding"
+        android:paddingStart="@dimen/button_cluster_horizontal_padding">
+
+        <ImageButton
+            android:id="@+id/mute_image"
+            style="@style/InCallCompoundButton"
+            android:contentDescription="@string/mute_button"
+            android:filterTouchesWhenObscured="false"
+            android:src="?sp_ic_mic" />
+
+        <ImageButton
+            android:id="@+id/video_image"
+            style="@style/InCallCompoundButton"
+            android:contentDescription="@string/video_button"
+            android:filterTouchesWhenObscured="false"
+            android:src="?sp_ic_video" />
+
+        <ImageButton
+            android:id="@+id/add_image"
+            style="@style/InCallCompoundButton"
+            android:contentDescription="@string/add_call"
+            android:filterTouchesWhenObscured="false"
+            android:src="?sp_ic_add_call" />
+
+        <ImageButton
+            android:id="@+id/start_chat_image"
+            style="@style/InCallCompoundButton"
+            android:contentDescription="@string/chat"
+            android:filterTouchesWhenObscured="false"
+            android:src="?sp_ic_start_chat"
+            android:visibility="visible" />
+
+        <ImageButton
+            android:id="@+id/audio_image"
+            style="@style/InCallCompoundButton"
+            android:contentDescription="@string/audio_options_button"
+            android:filterTouchesWhenObscured="false"
+            android:src="?sp_ic_volume_on" />
+
+    </LinearLayout>
+
+</LinearLayout>

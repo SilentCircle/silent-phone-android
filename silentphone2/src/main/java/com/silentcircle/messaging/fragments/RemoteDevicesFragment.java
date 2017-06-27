@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2014-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -31,15 +31,17 @@ package com.silentcircle.messaging.fragments;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.Fragment;
+import android.app.FragmentManager;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.v4.content.ContextCompat;
 import android.text.TextUtils;
 import android.util.Base64;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -49,12 +51,15 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import com.silentcircle.SilentPhoneApplication;
+import com.silentcircle.common.util.ViewUtil;
+import com.silentcircle.common.widget.ProgressBar;
 import com.silentcircle.contacts.ContactsUtils;
+import com.silentcircle.logs.Log;
 import com.silentcircle.messaging.activities.ShowRemoteDevicesActivity;
-import com.silentcircle.messaging.services.AxoMessaging;
+import com.silentcircle.messaging.services.ZinaMessaging;
 import com.silentcircle.messaging.util.DeviceInfo;
 import com.silentcircle.messaging.util.IOUtils;
 import com.silentcircle.silentphone2.BuildConfig;
@@ -72,17 +77,27 @@ import java.util.List;
  *
  * Created by werner on 21.06.15.
  */
-public class RemoteDevicesFragment extends Fragment implements View.OnClickListener {
+public class RemoteDevicesFragment extends Fragment implements View.OnClickListener,
+        AlertDialogFragment.OnAlertDialogConfirmedListener {
+
     @SuppressWarnings("unused")
     private static final String TAG = RemoteDevicesFragment.class.getSimpleName();
 
+    /* Dialog request code for delete conversation confirmation */
+    private static final int REKEY_CONVERSATION = 1;
+
     ShowRemoteDevicesActivity mParent;
+    private String mDevicesHeader;
     private ListView mDevicesList;
     private ProgressBar mProgressBar;
     private String mPartner;
     private View mRootView;
     private boolean mNameMissing;
 
+    private int mColorBase;
+    private int mColorGreen;
+    private CharSequence mNoDevices;
+    private CharSequence mLocalDeviceIdEmpty;
 
     public static RemoteDevicesFragment newInstance(Bundle args) {
         RemoteDevicesFragment f = new RemoteDevicesFragment();
@@ -105,6 +120,11 @@ public class RemoteDevicesFragment extends Fragment implements View.OnClickListe
         }
         // Indicate that this fragment would like to influence the set of actions in the action bar.
         setHasOptionsMenu(true);
+        mColorBase = ViewUtil.getColorFromAttributeId(mParent, R.attr.sp_activity_primary_text_color);
+        mColorGreen = ContextCompat.getColor(mParent, R.color.sc_ng_text_green);
+        mDevicesHeader = getString(R.string.axo_remote_devices);
+        mNoDevices = getString(R.string.no_axo_device);
+        mLocalDeviceIdEmpty = getString(R.string.axo_local_device_id_empty);
     }
 
     @TargetApi(Build.VERSION_CODES.M)
@@ -122,7 +142,9 @@ public class RemoteDevicesFragment extends Fragment implements View.OnClickListe
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
-        commonOnAttach(activity);
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+            commonOnAttach(activity);
+        }
     }
 
     private void commonOnAttach(Activity activity) {
@@ -152,7 +174,7 @@ public class RemoteDevicesFragment extends Fragment implements View.OnClickListe
     @Override
     public void onResume() {
         super.onResume();
-        getDevicesInfo();
+        doRescan();
     }
 
     @Override
@@ -190,15 +212,8 @@ public class RemoteDevicesFragment extends Fragment implements View.OnClickListe
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.axo_renew:
-                mDevicesList.setVisibility(View.INVISIBLE);
-                mRootView.findViewById(R.id.AxoDeviceListHeader).setVisibility(View.INVISIBLE);
-                mRootView.findViewById(R.id.AxoDeviceListExplanation).setVisibility(View.INVISIBLE);
-                mRootView.findViewById(R.id.AxoDeviceHeader).setVisibility(View.INVISIBLE);
-                mProgressBar.setVisibility(View.VISIBLE);
-                AxoCommandInBackground aib = new AxoCommandInBackground();
-                aib.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, "removeAxoConversation", mPartner);
+                confirmConversationRekey();
                 return true;
-
             case R.id.axo_rescan:
                 doRescan();
                 return true;
@@ -206,55 +221,53 @@ public class RemoteDevicesFragment extends Fragment implements View.OnClickListe
         return false;
     }
 
+    @Override
+    public void onAlertDialogConfirmed(DialogInterface dialog, int requestCode, Bundle bundle,
+                                       boolean saveChoice) {
+        if (requestCode == REKEY_CONVERSATION) {
+            setProgressBarVisibility();
+            AxoCommandInBackground aib = new AxoCommandInBackground();
+            aib.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, "reKeyAllDevices", mPartner);
+        }
+    }
+
     private void doRescan() {
-        mDevicesList.setVisibility(View.INVISIBLE);
-        mRootView.findViewById(R.id.AxoDeviceListHeader).setVisibility(View.INVISIBLE);
-        mRootView.findViewById(R.id.AxoDeviceListExplanation).setVisibility(View.INVISIBLE);
-        mRootView.findViewById(R.id.AxoDeviceHeader).setVisibility(View.INVISIBLE);
-        mProgressBar.setVisibility(View.VISIBLE);
+        setProgressBarVisibility();
         AxoCommandInBackground aib = new AxoCommandInBackground();
         aib.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, "rescanUserDevices", mPartner);
     }
 
     private String getUsername() {
-        AxoMessaging axo = AxoMessaging.getInstance(mParent);
+        ZinaMessaging axo = ZinaMessaging.getInstance();
         return axo.getUserName();
     }
 
-    /** Request the identity key and associated device info from Axolotl conversation */
+    /** Request the identity key and associated device info from ZINA conversation */
     private void getDevicesInfo() {
-        byte[] ownDevice = AxoMessaging.getOwnIdentityKey();
+        byte[] ownDevice = ZinaMessaging.getOwnIdentityKey();
         if (ownDevice != null)
             parseSetOwnDevice(new String(ownDevice));
 
-        setOwnDeviceId(Utilities.hashMd5(TiviPhoneService.getInstanceDeviceId(mParent, false)));
+        setOwnDeviceId(Utilities.hashMd5(TiviPhoneService.getInstanceDeviceId(
+                SilentPhoneApplication.getAppContext(), false)));
 
-        byte[][] devices = AxoMessaging.getIdentityKeys(IOUtils.encode(mPartner));
+        byte[][] devices = ZinaMessaging.getIdentityKeys(IOUtils.encode(mPartner));
         if (devices == null || devices.length == 0) {
             emptyDeviceInfo();
             return;
         }
         ArrayList<DeviceInfo.DeviceData> devData = new ArrayList<>(5);
-        boolean rescan = false;
         for (byte[] device : devices) {
             DeviceInfo.DeviceData devInfo = DeviceInfo.parseDeviceInfo(new String(device));
-            if (devInfo != null && TextUtils.isEmpty(devInfo.name) && !mNameMissing) {
-                rescan = true;
-                mNameMissing = true;
-                break;
+            if (devInfo != null) {
+                devData.add(devInfo);
             }
-            devData.add(devInfo);
         }
-        if (rescan) {
-            doRescan();
-        }
-        else {
-            setupDeviceList(devData);
-        }
+        setupDeviceList(devData);
     }
 
     private void emptyDeviceInfo() {
-        ((TextView)mRootView.findViewById(R.id.AxoDeviceHeader)).setText(getText(R.string.no_axo_device));
+        ((TextView)mRootView.findViewById(R.id.AxoDeviceHeader)).setText(mNoDevices);
         mRootView.findViewById(R.id.AxoDeviceHeader).setVisibility(View.VISIBLE);
     }
 
@@ -262,10 +275,12 @@ public class RemoteDevicesFragment extends Fragment implements View.OnClickListe
         TextView tv = (TextView) mRootView.findViewById(R.id.AxoDeviceHeader);
         tv.setVisibility(View.VISIBLE);
 
-        Resources res = getResources();
-        int count = devData.size();
-        String axoDevices = res.getQuantityString(R.plurals.axo_remote_devices, count, count);
-        tv.setText(axoDevices);
+        if (isAdded()) {
+            Resources res = getResources();
+            int count = devData.size();
+            mDevicesHeader = res.getQuantityString(R.plurals.axo_remote_devices_n, count, count);
+        }
+        tv.setText(mDevicesHeader);
         mRootView.findViewById(R.id.AxoDeviceListExplanation).setVisibility(View.VISIBLE);
         mRootView.findViewById(R.id.AxoDeviceListHeader).setVisibility(View.VISIBLE);
 
@@ -297,14 +312,39 @@ public class RemoteDevicesFragment extends Fragment implements View.OnClickListe
             return;
         TextView tv = (TextView) view.findViewById(R.id.AxoLocalDeviceId);
         tv.setText(TextUtils.isEmpty(ownDeviceId)
-                ? getString(R.string.axo_local_device_id_empty)
+                ? mLocalDeviceIdEmpty
                 : ownDeviceId);
+    }
+
+    private void confirmConversationRekey() {
+        AlertDialogFragment dialogFragment = AlertDialogFragment.getInstance(
+                R.string.rekey_messaging_sessions,
+                R.string.warning_rekey_conversation,
+                R.string.dialog_button_cancel,
+                R.string.dialog_button_ok,
+                null,
+                false);
+        dialogFragment.setTargetFragment(this, REKEY_CONVERSATION);
+        FragmentManager fragmentManager = getFragmentManager();
+        if (fragmentManager != null) {
+            fragmentManager.beginTransaction()
+                    .add(dialogFragment, AlertDialogFragment.TAG_ALERT_DIALOG)
+                    .commitAllowingStateLoss();
+        }
+    }
+
+    private void setProgressBarVisibility() {
+        mDevicesList.setVisibility(View.INVISIBLE);
+        mRootView.findViewById(R.id.AxoDeviceListHeader).setVisibility(View.INVISIBLE);
+        mRootView.findViewById(R.id.AxoDeviceListExplanation).setVisibility(View.INVISIBLE);
+        mRootView.findViewById(R.id.AxoDeviceHeader).setVisibility(View.INVISIBLE);
+        mProgressBar.setVisibility(View.VISIBLE);
     }
 
     private class DevicesArrayAdapter extends ArrayAdapter<DeviceInfo.DeviceData> {
         private final Context context;
 
-        public DevicesArrayAdapter(Context context, List<DeviceInfo.DeviceData> values) {
+        DevicesArrayAdapter(Context context, List<DeviceInfo.DeviceData> values) {
             super(context, R.layout.axo_remote_devices_line, values);
             this.context = context;
         }
@@ -325,7 +365,7 @@ public class RemoteDevicesFragment extends Fragment implements View.OnClickListe
             tv = (TextView)rowView.findViewById(R.id.id_key);
             tv.setText(devData.identityKey);
 
-            ImageView iv = (ImageView)rowView.findViewById(R.id.verify_check);
+            ImageView iv = (ImageView) rowView.findViewById(R.id.verify_check);
             switch (devData.zrtpVerificationState) {
                 case "0":
                     iv.setVisibility(View.INVISIBLE);
@@ -333,11 +373,13 @@ public class RemoteDevicesFragment extends Fragment implements View.OnClickListe
                     break;
                 case "1":
                     iv.setImageResource(R.drawable.ic_check_white_24dp);
+                    iv.setColorFilter(mColorBase);
                     iv.setVisibility(View.VISIBLE);
                     tv.setVisibility(View.VISIBLE);
                     break;
                 case "2":
                     iv.setImageResource(R.drawable.ic_check_green_24dp);
+                    iv.setColorFilter(mColorGreen);
                     iv.setVisibility(View.VISIBLE);
                     tv.setVisibility(View.GONE);
                     break;
@@ -360,7 +402,8 @@ public class RemoteDevicesFragment extends Fragment implements View.OnClickListe
             if (commands.length >= 1)
                 data = IOUtils.encode(commands[1]);
             mCommand = commands[0];
-            AxoMessaging.axoCommand(mCommand, data);
+            int[] code = new int[1];
+            ZinaMessaging.zinaCommand(mCommand, data, code);
             return (int) (System.currentTimeMillis() - startTime);
         }
 
@@ -368,7 +411,9 @@ public class RemoteDevicesFragment extends Fragment implements View.OnClickListe
         protected void onPostExecute(Integer time) {
             if (ConfigurationUtilities.mTrace) Log.d(TAG, "Processing time for async command '" + mCommand + "': " + time);
             mProgressBar.setVisibility(View.INVISIBLE);
-            getDevicesInfo();
+            if (mParent != null) {
+                getDevicesInfo();
+            }
         }
     }
 }

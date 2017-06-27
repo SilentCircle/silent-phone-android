@@ -1,7 +1,7 @@
 /*
 Created by Janis Narbuts
 Copyright (C) 2004-2012, Tivi LTD, www.tiviphone.com. All rights reserved.
-Copyright (C) 2012-2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2012-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,8 +27,6 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-
-
 //#define _T_SOLD_REL
 
 
@@ -114,7 +112,7 @@ int tina_decode(void *ctx, unsigned char *pI, int iLen, CTBmpBase *cVO){
    d->iDeblockB=1;
 #endif
    int ret=d->decode(pI,iLen,NULL);
-   if(ret<0)debugss("dec ret inlen",ret,iLen);
+   if(ret<0)debugss((char *)"dec ret inlen",ret,iLen);
    return ret;
 }
 

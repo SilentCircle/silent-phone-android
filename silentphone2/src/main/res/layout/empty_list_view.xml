@@ -27,6 +27,16 @@
         android:paddingBottom="@dimen/actionbar_and_tab_height"
         android:layout_centerInParent="true" >
 
+        <TextView
+            android:id="@+id/emptyListViewHeader"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingBottom="15dp"
+            android:gravity="center_horizontal|top"
+            android:textSize="@dimen/empty_list_header_text_size"
+            android:textColor="@color/empty_list_header_text_color"
+            android:visibility="gone"/>
+
         <ImageView
             android:id="@+id/emptyListViewImage"
             android:layout_height="wrap_content"
@@ -37,6 +47,7 @@
             android:id="@+id/emptyListViewMessage"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="15dp"
             android:minHeight="84dp"
             android:gravity="center_horizontal|top"
             android:textSize="@dimen/empty_list_message_text_size"

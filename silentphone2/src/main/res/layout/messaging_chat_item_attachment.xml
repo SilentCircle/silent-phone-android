@@ -1,36 +1,71 @@
 <?xml version="1.0" encoding="utf-8"?>
-<merge xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools">
-
-    <FrameLayout
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools"
         android:id="@+id/attachment_layout"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:duplicateParentState="true" >
 
         <RelativeLayout
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:duplicateParentState="true">
 
-            <ImageView
-                android:id="@+id/message_preview"
-                style="@style/Widget.Image.Preview"
-                android:layout_marginEnd="@dimen/messaging_incoming_message_thumbnail_margin_right"
+            <com.silentcircle.common.waveform.SoundAttachmentPreview
+                android:id="@+id/message_sound_preview"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="@dimen/messaging_message_thumbnail_margin_right"
                 android:layout_marginLeft="@dimen/messaging_message_thumbnail_margin_left"
-                android:layout_marginRight="@dimen/messaging_incoming_message_thumbnail_margin_right"
+                android:layout_marginRight="@dimen/messaging_message_thumbnail_margin_right"
                 android:layout_marginStart="@dimen/messaging_message_thumbnail_margin_left"
                 android:layout_marginTop="@dimen/messaging_message_thumbnail_margin_top"
-                android:contentDescription="@string/thumbnail" />
+                android:layout_marginBottom="@dimen/messaging_message_waveform_margin_bottom"
+                android:contentDescription="@string/thumbnail"
+                android:duplicateParentState="true"
+                android:visibility="gone"/>
+
+            <com.silentcircle.messaging.views.BoundedImageView
+                android:id="@+id/message_preview"
+                style="@style/Widget.Image.Preview"
+                android:scaleType="centerCrop"
+                android:layout_marginEnd="@dimen/messaging_message_thumbnail_margin_right"
+                android:layout_marginLeft="@dimen/messaging_message_thumbnail_margin_left"
+                android:layout_marginRight="@dimen/messaging_message_thumbnail_margin_right"
+                android:layout_marginStart="@dimen/messaging_message_thumbnail_margin_left"
+                android:layout_marginTop="@dimen/messaging_message_thumbnail_margin_top"
+                android:minWidth="@dimen/messaging_message_thumbnail_width"
+                android:minHeight="@dimen/messaging_message_thumbnail_height"
+                android:contentDescription="@string/thumbnail"
+                android:duplicateParentState="true" />
 
             <ImageView
                 android:id="@+id/message_icon"
                 style="@style/Widget.Image.Preview"
-                android:layout_marginEnd="@dimen/messaging_incoming_message_thumbnail_margin_right"
+                android:layout_marginEnd="@dimen/messaging_message_thumbnail_margin_right"
                 android:layout_marginLeft="@dimen/messaging_message_thumbnail_margin_left"
                 android:layout_marginRight="@dimen/messaging_incoming_message_thumbnail_margin_right"
                 android:layout_marginStart="@dimen/messaging_message_thumbnail_margin_left"
                 android:layout_marginTop="@dimen/messaging_message_thumbnail_margin_top"
                 android:contentDescription="@string/thumbnail"
                 android:scaleType="fitCenter" />
+
+            <ImageView
+                android:id="@+id/message_preview_play"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="@dimen/messaging_incoming_message_thumbnail_margin_right"
+                android:layout_marginLeft="@dimen/messaging_message_thumbnail_margin_left"
+                android:layout_marginRight="@dimen/messaging_incoming_message_thumbnail_margin_right"
+                android:layout_marginStart="@dimen/messaging_message_thumbnail_margin_left"
+                android:layout_marginTop="@dimen/messaging_message_thumbnail_margin_top"
+                android:padding="@dimen/space_large"
+                android:src="@drawable/ic_action_play"
+                android:contentDescription="@string/thumbnail"
+                android:scaleType="centerInside"
+                android:layout_centerInParent="true"
+                android:visibility="gone"
+                tools:visibility="visible" />
 
             <ProgressBar
                 android:id="@+id/message_preview_progress"
@@ -57,5 +92,3 @@
             tools:visibility="visible" />
 
     </FrameLayout>
-
-</merge>

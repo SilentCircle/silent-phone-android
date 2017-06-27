@@ -1,7 +1,7 @@
 /*
 Created by Janis Narbuts
 Copyright (C) 2004-2012, Tivi LTD, www.tiviphone.com. All rights reserved.
-Copyright (C) 2012-2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2012-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,7 +27,6 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-
 #ifndef _C_TIVI_PH_MEDIA_H
 #define _C_TIVI_PH_MEDIA_H
 
@@ -99,7 +98,7 @@ public:
       CTSockRecvCB old(NULL,NULL);
       CTSockRecvCB newcb(NULL,NULL);
       setCB(newcb,old);
-      sendTo("1",1,&a);
+      //sendTo("1",1,&a);
    };
    //int close(){sock.close();th.close();};
    void close(){
@@ -691,13 +690,14 @@ public:
    
    inline int onRtp(char *p, int iLen, ADDR *a, int iCanChangeSSRC=0)
    {
+     // char _b[64];a->toStr(_b,1);printf("[rec onrtp %s]\n",_b);
       
-      if(ice.active() && !iCanResetMedia && (addrDst.ip!=a->ip || iLen==ice.ePackLen)){
+      if(ice.active() && !iCanResetMedia && (addrDst!=*a || iLen==ice.ePackLen)){
          int r = ice.recData(p,iLen, a);
          if(r==-1)return eRtpNotMine;
          if(r==0)return eRtpIce;
       }
-      else if (iCanResetMedia==0 && (addrDst.ip!=a->ip))
+      else if (iCanResetMedia==0 && (addrDst!=*a))
          return eRtpNotMine;
       
       if(iLen<12)return eRtpBad;
@@ -711,6 +711,8 @@ public:
          return CRTPX::eRtpNotMine;
       
       if(parseRtp(p,iLen)<0)return eRtpBad;
+      
+      if(!a->ip && a->sameV6(addrDst))a->ip = addrDst.ip;//dns64, nat64
       
       
       return eRtpOk;
@@ -841,7 +843,7 @@ public:
     * 
     * @return number of 32 bit integer elements required, or < 0 to indicate failure.
     */
-   int getNumberOfCountersZrtp() { return pzrtp ? pzrtp->getNumberOfCountersZrtp(): -1;}
+   int getNumberOfCountersZrtp() { return sdes_or_zrtp ? sdes_or_zrtp->getNumberOfCountersZrtp(): -1;}
    
    /**
     * @brief Read statistic counters of ZRTP
@@ -851,10 +853,10 @@ public:
     * 
     * @return number of 32-bit counters returned in buffer or < 0 to indicate failure.
     */
-   int getCountersZrtp(int32_t* counters) { return pzrtp ? pzrtp->getCountersZrtp(counters): -1;}
+   int getCountersZrtp(int32_t* counters) { return sdes_or_zrtp ? sdes_or_zrtp->getCountersZrtp(counters): -1;}
    // End of statistic functions
 
-   inline  int isSesActive(){return iIsActive && rtp.addrDst.ip;}
+   inline  int isSesActive(){return iIsActive && rtp.addrDst.hasIPSet();}
    virtual int onSdp(char *pSdp, int iLen, int iIsReq, int iForceMedia);
    virtual int onSend(char *p, int iLen, int iCurType, void* pMediaParam, int iIsVoice);
    virtual int onSendUAlawSpliter(char *p, int iLen, int iPartSize, int iCurType, void* pMediaParam, int iIsVoice);

@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2014-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -28,6 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 package com.silentcircle.contacts;
 
+import android.Manifest;
 import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.app.IntentService;
@@ -35,22 +36,28 @@ import android.content.ContentProviderOperation;
 import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
 import android.provider.ContactsContract;
 import android.provider.ContactsContract.CommonDataKinds.Email;
+import android.provider.ContactsContract.CommonDataKinds.Website;
 import android.provider.ContactsContract.CommonDataKinds.Phone;
 import android.provider.ContactsContract.CommonDataKinds.SipAddress;
 import android.provider.ContactsContract.RawContacts;
 import android.support.annotation.Nullable;
+import android.support.v4.content.ContextCompat;
 import android.text.TextUtils;
-import android.util.Log;
+
+import com.silentcircle.common.util.StringUtils;
+import com.silentcircle.keymanagersupport.KeyManagerSupport;
+import com.silentcircle.logs.Log;
 
 import com.silentcircle.accounts.AccountConstants;
 import com.silentcircle.common.util.AsyncTasks;
 import com.silentcircle.contacts.utils.PhoneNumberHelper;
-import com.silentcircle.messaging.services.AxoMessaging;
+import com.silentcircle.messaging.services.ZinaMessaging;
 import com.silentcircle.messaging.util.IOUtils;
 import com.silentcircle.silentphone2.BuildConfig;
 import com.silentcircle.silentphone2.R;
@@ -67,8 +74,10 @@ import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Locale;
@@ -198,8 +207,9 @@ public class UpdateScContactDataService extends IntentService {
     private static boolean mSeenForce;              // Run update only after we saw a first "force update"
 
     // Query to find all data records that belong to SC account entries
-    private final static String subQuery = ContactsContract.Data.MIMETYPE + "='vnd.android.cursor.item/com.silentcircle.phone' OR " +
-            ContactsContract.Data.MIMETYPE + "='vnd.android.cursor.item/com.silentcircle.message'";
+    private final static String subQuery =
+            ContactsContract.Data.MIMETYPE + "='" + SC_PHONE_CONTENT_TYPE + "' OR " +
+            ContactsContract.Data.MIMETYPE + "='" + SC_MSG_CONTENT_TYPE + "'";
 
     private static class ScContactData {
         String mimeType;
@@ -241,8 +251,8 @@ public class UpdateScContactDataService extends IntentService {
     // Remember known hashes to avoid to many duplicate discovery runs. Run discovery
     // only if we have a yet unknown hash. Contacts sends several change notifications
     // to our observer and many of them can be ignored.
-//    private static ArrayList<String> mKnownHashes = new ArrayList<>();
-//    private boolean mRunDiscovery;
+    private static ArrayList<String> mKnownHashes = new ArrayList<>();
+    private boolean mRunDiscovery;
 
     StringBuilder mContent = new StringBuilder();
 
@@ -252,12 +262,15 @@ public class UpdateScContactDataService extends IntentService {
 
     @Override
     protected void onHandleIntent(Intent intent) {
-        if(intent == null) {
+        if(intent == null || TextUtils.isEmpty(intent.getAction())) {
             return;
         }
-        if(TextUtils.isEmpty(intent.getAction())) {
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CONTACTS)
+                != PackageManager.PERMISSION_GRANTED) {
             return;
         }
+
         SC_CALL = getResources().getString(R.string.call_other);
         SC_TEXT = getResources().getString(R.string.chat);
         SC_WORLD = getResources().getString(R.string.silent_world_contact_info);
@@ -268,6 +281,7 @@ public class UpdateScContactDataService extends IntentService {
 
         if (ACTION_UPDATE_FORCE.equals(intent.getAction())) {
             mForceReDiscover = true;
+            mKnownHashes.clear();
         }
         if (!mSeenForce) {
             if (!mForceReDiscover)
@@ -289,7 +303,7 @@ public class UpdateScContactDataService extends IntentService {
 
         // This is a hack: if we install multiple APK for testing purposes the re-register
         // the contact updater only for the main APK, for other APKs run it only once
-        if (BuildConfig.MAIN_PACKAGE)
+        if (BuildConfig.MAIN_PACKAGE && TiviPhoneService.phoneService != null)
             TiviPhoneService.phoneService.contactObserverRegister();
     }
 
@@ -307,9 +321,9 @@ public class UpdateScContactDataService extends IntentService {
         if (mForceReDiscover) {
             rediscoverContacts();
         }
-//        if (mRunDiscovery)
+        if (mRunDiscovery)
             applyChanges();
-        if (ConfigurationUtilities.mTrace) Log.d(TAG, "Process contacts done, run discovery "/* + mRunDiscovery*/);
+        if (ConfigurationUtilities.mTrace) Log.d(TAG, "Process contacts done, run discovery " + mRunDiscovery);
     }
 
     private boolean checkScAccount() {
@@ -346,35 +360,49 @@ public class UpdateScContactDataService extends IntentService {
     private void readAllScData(Cursor cursor) {
         CachedContactData contactData = null;
 
-        while (cursor.moveToNext()) {
-            long contactId = cursor.getLong(CONTACT_ID);
+        if (cursor.moveToFirst()) {
+            /**
+             * @see <a href="https://code.google.com/p/android/issues/detail?id=32472">this bug</a>
+             * for reasoning for using a do...while
+             * **/
+            do {
+                try {
+                    long contactId = cursor.getLong(CONTACT_ID);
 
-            if (contactData == null || contactData.contactId != contactId) {
-                contactData = new CachedContactData();
-                contactData.contactId = contactId;
-                contactData.lookupUri = ContactsContract.Contacts.getLookupUri(contactId, cursor.getString(LOOKUP_KEY)).toString();
-                contactData.rawContactId = cursor.getLong(RAW_CONTACT);  // get the SC raw contact id for the data
-                contactData.scData = new ArrayList<>();
-                mCachedScContacts.add(contactData);
-            }
-            ScContactData scd = new ScContactData();
-            contactData.scData.add(scd);
+                    if (contactData == null || contactData.contactId != contactId) {
+                        contactData = new CachedContactData();
+                        contactData.contactId = contactId;
+                        contactData.lookupUri = ContactsContract.Contacts.getLookupUri(contactId, cursor.getString(LOOKUP_KEY)).toString();
+                        contactData.rawContactId = cursor.getLong(RAW_CONTACT);  // get the SC raw contact id for the data
+                        contactData.scData = new ArrayList<>();
+                        mCachedScContacts.add(contactData);
+                    }
+                    ScContactData scd = new ScContactData();
+                    contactData.scData.add(scd);
 
-            scd.mimeType = cursor.getString(MIME_TYPE);
-            scd.scDataId = cursor.getLong(_ID);
-            scd.data = cursor.getString(DATA);          // The SC specific URI
-            scd.addedManually = cursor.getInt(SYNC1);
-            scd.copyOfData = cursor.getString(SYNC2);   // Get copy of original data, used to detect modifications
-            scd.mirroredId = cursor.getLong(SYNC4);     // Get data _ID of the mirrored original data
-            scd.displayName = cursor.getString(DISPLAY_NAME);
-//            Log.d(TAG, String.format("++++ Cache SC contact record, data: '%s', id: %d", scd.data, scd.scDataId));
+                    scd.mimeType = cursor.getString(MIME_TYPE);
+                    scd.scDataId = cursor.getLong(_ID);
+                    scd.data = cursor.getString(DATA);          // The SC specific URI
+                    scd.addedManually = cursor.getInt(SYNC1);
+                    scd.copyOfData = cursor.getString(SYNC2);   // Get copy of original data, used to detect modifications
+                    scd.mirroredId = cursor.getLong(SYNC4);     // Get data _ID of the mirrored original data
+                    scd.displayName = cursor.getString(DISPLAY_NAME) != null ? cursor.getString(DISPLAY_NAME) : " ";
+                    //            Log.d(TAG, String.format("++++ Cache SC contact record, data: '%s', id: %d", scd.data, scd.scDataId));
+                } catch (Exception e) {
+                    Log.w(TAG, "Failed to read SC contact entry.");
+                    e.printStackTrace();
+
+                    continue;
+                }
+            } while (cursor.moveToNext());
         }
     }
 
     private void rediscoverContacts() {
-        String query = ContactsContract.Data.MIMETYPE + "='" + Phone.CONTENT_ITEM_TYPE +
-                "' OR " +
-                ContactsContract.Data.MIMETYPE + "='" + Email.CONTENT_ITEM_TYPE + '\'';
+        String query = ContactsContract.Data.MIMETYPE + " IN (" +
+                "'" + Phone.CONTENT_ITEM_TYPE + "'," +
+                "'" + Email.CONTENT_ITEM_TYPE + "'," +
+                "'" + Website.CONTENT_ITEM_TYPE + "')";
 
         // Get all data records, sorted by contact id
         Cursor cursor = mResolver.query(mDataUri, mAllData, query, null, ContactsContract.Data.CONTACT_ID);
@@ -385,22 +413,35 @@ public class UpdateScContactDataService extends IntentService {
         ArrayList<String> computedHashes = new ArrayList<>();
 //        Log.d(TAG, String.format("++++ Found %d normal contact records with query '%s'", cursor.getCount(), query.toString()));
         mHashDataArray.clear();
-        while (cursor.moveToNext()) {
-            ContactHashData chd = createHashStructure(cursor);
-            if (chd != null) {
-                mHashDataArray.add(chd);
-//                computedHashes.add(chd.hash);
-//                if (!mRunDiscovery)
-//                    mRunDiscovery = !mKnownHashes.contains(chd.hash);
-            }
+        if (cursor.moveToFirst()) {
+            /**
+             * @see <a href="https://code.google.com/p/android/issues/detail?id=32472">this bug</a>
+             * for reasoning for using a do...while
+             * **/
+            do {
+                try {
+                    ContactHashData chd = createHashStructure(cursor);
+                    if (chd != null) {
+                        mHashDataArray.add(chd);
+                        computedHashes.add(chd.hash);
+                        if (!mRunDiscovery)
+                            mRunDiscovery = !mKnownHashes.contains(chd.hash);
+                    }
+                } catch (Exception e) {
+                    Log.w(TAG, "Failed to read SC contact entry.");
+                    e.printStackTrace();
+
+                    continue;
+                }
+            } while (cursor.moveToNext());
         }
-//        Log.d(TAG, String.format("++++ Created %d hash data structures, run discovery: %b", mHashDataArray.size(), mRunDiscovery));
+        Log.d(TAG, String.format("++++ Created %d hash data structures, run discovery: %b", mHashDataArray.size(), mRunDiscovery));
         cursor.close();
-        if (/*mRunDiscovery && */ mHashDataArray.size() > 0) {
+        if (mRunDiscovery && mHashDataArray.size() > 0) {
             JSONObject requestData = createRequestJson(mHashDataArray);
             discoverContacts(requestData);
         }
-//        mKnownHashes = computedHashes;      // set the probably updated known hashes
+        mKnownHashes = computedHashes;      // set the probably updated known hashes
     }
 
     // Create a ContactHashData for inserting a new data entry, get data from contact data cursor
@@ -420,10 +461,15 @@ public class UpdateScContactDataService extends IntentService {
         else if (Email.CONTENT_ITEM_TYPE.equals(mimeType)) {
             if (!fillHashEmail(chd.copyOfData, chd))
                 return null;
+        } else if (Website.CONTENT_ITEM_TYPE.equals(mimeType)) {
+            if (!fillHashWebsite(chd.copyOfData, chd)) {
+                return null;
+            }
         }
+
         chd.dataId = cursor.getLong(_ID);               // SC raw contact data mirrors this data
         chd.contact_id = cursor.getLong(CONTACT_ID);
-        chd.displayName = cursor.getString(DISPLAY_NAME);
+        chd.displayName = cursor.getString(DISPLAY_NAME) != null ? cursor.getString(DISPLAY_NAME) : " ";
         chd.lookupUri = ContactsContract.Contacts.getLookupUri(chd.contact_id, cursor.getString(LOOKUP_KEY)).toString();
         chd.scRawContactId = getScRawContactForContact(chd.contact_id);
         chd.rawContactId = cursor.getLong(RAW_CONTACT);
@@ -475,9 +521,32 @@ public class UpdateScContactDataService extends IntentService {
         if (TextUtils.isEmpty(email)) {
             return false;
         }
-        chd.hash = Utilities.hashSha256(email.trim());
+        chd.hash = Utilities.hashSha256(email.toLowerCase().trim());
         chd.contactData = email;
 //        Log.d(TAG, String.format("++++ email to hash: '%s', hash: %s", email, chd.hash));
+        return true;
+    }
+
+    /*
+     * Hashes website data in the form of "silentphone:<alias0>"
+     */
+    private boolean fillHashWebsite(final String website, ContactHashData chd) {
+        if (TextUtils.isEmpty(website)) {
+            return false;
+        }
+
+        if (!website.startsWith("silentphone:")) {
+            return false;
+        }
+
+        String alias = StringUtils.ltrim(website, "silentphone:");
+        try {
+            alias = URLDecoder.decode(alias, "UTF-8");
+        } catch (UnsupportedEncodingException ignore) {}
+
+        chd.hash = Utilities.hashSha256(alias);
+        chd.contactData = alias;
+//        Log.d(TAG, String.format("++++ website to hash: '%s', hash: %s", email, chd.hash));
         return true;
     }
 
@@ -504,7 +573,7 @@ public class UpdateScContactDataService extends IntentService {
 
                     String uuid = userData.getString("uuid");
                     userData.put("lookup_uri", chd.lookupUri);          // Add to name-lookup cache
-                    AxoMessaging.addAliasToUuid(chd.contactData, uuid, IOUtils.encode(userData.toString()));
+                    ZinaMessaging.addAliasToUuid(chd.contactData, uuid, IOUtils.encode(userData.toString()));
 
                     // Add only one pair of SC data records per UUID
                     if (uuidProcessed.contains(uuid))
@@ -534,10 +603,13 @@ public class UpdateScContactDataService extends IntentService {
                 // This creates new SC contact entries for each non-discovered contact. We remove the old
                 // records below. This requires that we unregister the Contact change listener during the
                 // processing.
+                // For "silentcircle:<alias0>" website entries, ignore them as they are no longer valid
                 else {
 //                    Log.d(TAG, String.format("++++ undiscovered: %s, mime: %s", chd.contactData, chd.mimeType));
-                    if (!Email.CONTENT_ITEM_TYPE.equals(chd.mimeType))
+                    if (!Email.CONTENT_ITEM_TYPE.equals(chd.mimeType)
+                            && !Website.CONTENT_ITEM_TYPE.equals(chd.mimeType)) {
                         addScContactData(chd);
+                    }
                 }
                 iterator.remove();                              // Done with this hash data, remove it
             }
@@ -562,7 +634,7 @@ public class UpdateScContactDataService extends IntentService {
         for (CachedContactData contact : mCachedScContacts) {
             for (Iterator<ScContactData> iterator = contact.scData.iterator(); iterator.hasNext();) {
                 ScContactData scData = iterator.next();
-                if (uuid != null && scData.data.contains(uuid)) {
+                if (uuid != null && scData != null && scData.data != null && scData.data.contains(uuid)) {
                     iterator.remove();
                     return scData;
                 }
@@ -621,7 +693,7 @@ public class UpdateScContactDataService extends IntentService {
         // the original contact data with the SC specific UUID sip address. This guarantees
         // that we will be able to query this entry and also that it is added for calls and message
         if (chd.discovered) {
-            byte[] userData = AxoMessaging.getUserInfoFromCache(chd.contactData);
+            byte[] userData = ZinaMessaging.getUserInfoFromCache(chd.contactData);
             AsyncTasks.UserInfo ui = AsyncTasks.parseUserInfo(userData);
             if (ui != null) {
                 chd.contactData = ui.mUuid + getString(R.string.sc_sip_domain_0);
@@ -668,7 +740,9 @@ public class UpdateScContactDataService extends IntentService {
 
         // Treat the e-mail address similar to a SIP name. Either we use a SIP name or a
         // SSO (e-mail) and add an SC phone / message entry for it
-        if (SipAddress.CONTENT_ITEM_TYPE.equals(chd.mimeType) || Email.CONTENT_ITEM_TYPE.equals(chd.mimeType)) {
+        if (SipAddress.CONTENT_ITEM_TYPE.equals(chd.mimeType)
+                || Email.CONTENT_ITEM_TYPE.equals(chd.mimeType)
+                || Website.CONTENT_ITEM_TYPE.equals(chd.mimeType)) {
             scheme = "sip:";
             numberWithScheme = chd.contactData;
             isSip = true;
@@ -745,7 +819,7 @@ public class UpdateScContactDataService extends IntentService {
         JSONArray hashes = new JSONArray();
         for (ContactHashData cdh : hashDataArray) {
             if (!TextUtils.isEmpty(cdh.hash))
-                hashes.put(cdh.hash.substring(0, 5));
+                hashes.put(cdh.hash.substring(0, 6));
         }
         try {
             root.put("contacts", hashes);
@@ -767,10 +841,24 @@ public class UpdateScContactDataService extends IntentService {
         else {
             return -1;
         }
+
+        byte[] data = KeyManagerSupport.getSharedKeyData(getContentResolver(),
+                ConfigurationUtilities.getShardAuthTag());
+        if (data == null) {
+            Log.w(TAG, "No API key data available");
+            return -1;
+        }
+        String devAuthorization = null;
+        try {
+            devAuthorization = new String(data, "UTF-8");
+        }  catch (UnsupportedEncodingException ignore) {
+        }
+
         URL mRequestUrlDiscoverContact;
         try {
-            mRequestUrlDiscoverContact = new URL(ConfigurationUtilities.getProvisioningBaseUrl(getApplicationContext()) +
-                    "v2/contacts/validate/");
+            mRequestUrlDiscoverContact = new URL(ConfigurationUtilities.getProvisioningBaseUrl(getApplicationContext())
+                    + "v2/contacts/validate/"
+                    + "?api_key=" + devAuthorization);
         } catch (MalformedURLException e) {
             e.printStackTrace();
             return -1;

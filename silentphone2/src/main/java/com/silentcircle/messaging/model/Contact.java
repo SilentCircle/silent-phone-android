@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2016-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,120 +27,209 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 package com.silentcircle.messaging.model;
 
+import android.text.TextUtils;
+
 import com.silentcircle.messaging.util.IOUtils;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
 
 
 public class Contact extends Burnable {
 
-	private static final byte [] UNKNOWN_ALIAS = IOUtils.toByteArray("(unknown)");
+    public static final String UNKNOWN_DISPLAY_NAME = "anonymous";
+    public static final String UNKNOWN_USER_ID = "+anonymous";
 
-	private static String toString( byte [] value ) {
-		return value == null ? null : new String( value );
-	}
+    private static final byte[] UNKNOWN_ALIAS = IOUtils.toByteArray("(unknown)");
 
-	protected byte [] alias;
-	protected byte [] userId;
-	protected byte [] device;
-	protected byte [] displayName;
+    private static String toString(byte[] value) {
+        return value == null ? null : new String(value);
+    }
 
+    protected byte[] alias;
+    protected byte[] userId;
+    protected byte[] device;
+    protected byte[] displayName;
 
-//	public Contact() {
-//	}
+    protected boolean isValidated;
+    protected boolean isGroup;
 
-	public Contact( byte [] userId ) {
-		this.userId = userId;
-	}
+    protected List<Device> devices = new ArrayList<>();
 
-	public Contact( CharSequence username ) {
-		this( IOUtils.toByteArray( username ) );
-	}
+    public Contact(byte[] userId) {
+        this.userId = userId;
+    }
 
-	@Override
-	public void clear() {
-		removeAlias();
-		removeDevice();
-		removeUserId();
+    public Contact(CharSequence username) {
+        this(IOUtils.toByteArray(username));
+    }
+
+    @Override
+    public void clear() {
+        removeAlias();
+        removeDevice();
+        removeUserId();
         removeDisplayName();
-	}
+        isValidated = false;
+        isGroup = false;
+        devices.clear();
+    }
 
-	@Override
-	public boolean equals( Object o ) {
-		return o != null && hashCode() == o.hashCode();
-	}
+    @Override
+    public boolean equals(Object o) {
+        return o != null && hashCode() == o.hashCode();
+    }
 
-	public String getAlias() {
-		return toString( getAliasAsByteArray() );
-	}
-	public byte [] getAliasAsByteArray() {
-		return alias;
-	}
+    public String getAlias() {
+        return toString(getAliasAsByteArray());
+    }
 
-	public String getDevice() {
-		return toString( getDeviceAsByteArray() );
-	}
-	public byte [] getDeviceAsByteArray() {
-		return device;
-	}
+    public byte[] getAliasAsByteArray() {
+        return alias;
+    }
 
-	public String getUserId() {
-		return toString( getUserIdAsByteArray() );
-	}
-	public byte [] getUserIdAsByteArray() {
-		return userId;
-	}
+    public String getDevice() {
+        return toString(getDeviceAsByteArray());
+    }
+
+    public byte[] getDeviceAsByteArray() {
+        return device;
+    }
+
+    public String getUserId() {
+        return toString(getUserIdAsByteArray());
+    }
+
+    public byte[] getUserIdAsByteArray() {
+        return userId;
+    }
 
     public String getDisplayName() {
-        return toString( getDisplayNameAsByteArray() );
+        return toString(getDisplayNameAsByteArray());
     }
-    public byte [] getDisplayNameAsByteArray() {
+
+    public byte[] getDisplayNameAsByteArray() {
         return displayName;
     }
 
-	@Override
-	public int hashCode() {
-		return userId == null ? 0 : Arrays.hashCode(userId);
-	}
+    @Override
+    public int hashCode() {
+        return userId == null ? 0 : Arrays.hashCode(userId);
+    }
 
-	public void removeAlias() {
-		burn( alias );
-	}
-	public void removeDevice() {
-		burn( device );
-	}
-	public void removeUserId() {
-		burn(userId);
-	}
+    public void removeAlias() {
+        burn(alias);
+    }
+
+    public void removeDevice() {
+        burn(device);
+    }
+
+    public void removeUserId() {
+        burn(userId);
+    }
+
     public void removeDisplayName() {
         burn(displayName);
     }
 
-	public void setAlias( byte [] alias ) {
-		this.alias = alias;
-	}
-	public void setAlias( CharSequence alias ) {
-		setAlias( IOUtils.toByteArray( alias ) );
-	}
+    public void setAlias(byte[] alias) {
+        this.alias = alias;
+    }
 
-	public void setDevice( byte [] device ) {
-		this.device = device;
-	}
-	public void setDevice( CharSequence device ) {
-		setDevice( IOUtils.toByteArray( device ) );
-	}
+    public void setAlias(CharSequence alias) {
+        setAlias(IOUtils.toByteArray(alias));
+    }
 
-	public void setUserId(byte[] userId) {
-		this.userId = userId;
-	}
-	public void setUserId(CharSequence userId) {
-		setUserId(IOUtils.toByteArray(userId));
-	}
+    public void setDevice(byte[] device) {
+        this.device = device;
+    }
+
+    public void setDevice(CharSequence device) {
+        setDevice(IOUtils.toByteArray(device));
+    }
+
+    public void setUserId(byte[] userId) {
+        this.userId = userId;
+    }
+
+    public void setUserId(CharSequence userId) {
+        setUserId(IOUtils.toByteArray(userId));
+    }
 
     public void setDisplayName(byte[] dpName) {
         this.displayName = dpName;
     }
+
     public void setDisplayName(CharSequence dpName) {
         setDisplayName(IOUtils.toByteArray(dpName));
+    }
+
+    public void setValidated(boolean isValidated) {
+        this.isValidated = isValidated;
+    }
+
+    public boolean isValidated() {
+        return this.isValidated;
+    }
+
+    public boolean isGroup() {
+        return isGroup;
+    }
+
+    public void setGroup(boolean group) {
+        isGroup = group;
+    }
+
+    public List<Device> getDeviceInfo() {
+        return new ArrayList<>(devices);
+    }
+
+    public void addDeviceInfo(String name, String deviceId, String identityKey,
+            String zrtpVerificationStatus) {
+        addDeviceInfo(new Device(name, deviceId, identityKey, zrtpVerificationStatus));
+    }
+
+    public void addDeviceInfo(Device device) {
+        devices.add(device);
+    }
+
+    public void removeDeviceInfo(String deviceId) {
+        Iterator<Device> iterator = devices.iterator();
+        while (iterator.hasNext()) {
+            Device device = iterator.next();
+            if (device != null && TextUtils.equals(device.getDeviceId(), deviceId)) {
+                iterator.remove();
+            }
+        }
+    }
+
+    public void updateDeviceInfo(String name, String deviceId, String identityKey,
+            String zrtpVerificationStatus) {
+        for (Device device : devices) {
+            if (device != null && TextUtils.equals(device.getDeviceId(), deviceId)) {
+                device.setName(name);
+                device.setIdentityKey(identityKey);
+                device.setZrtpVerificationState(zrtpVerificationStatus);
+            }
+        }
+    }
+
+    public boolean hasDevice(String deviceId) {
+        boolean result = false;
+        for (Device device : devices) {
+            if (device != null && TextUtils.equals(device.getDeviceId(), deviceId)) {
+                result = true;
+                break;
+            }
+        }
+        return result;
+    }
+
+    // A small help to just get the size, avoids getDeviceInfo().size()
+    public int numDeviceInfos() {
+        return devices.size();
     }
 }

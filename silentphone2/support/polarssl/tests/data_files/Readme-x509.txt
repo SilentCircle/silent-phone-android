@@ -26,6 +26,7 @@ Finally, other CAs for specific purposes:
 - test-ca-v1.crt: v1 "CA", signs
     server1-v1.crt: v1 "intermediate CA", signs
         server2-v1*.crt: EE cert (without of with chain in same file)
+- keyUsage.decipherOnly.crt: has the decipherOnly keyUsage bit set
 
 End-entity certificates
 -----------------------
@@ -79,7 +80,7 @@ Certificate revocation lists
 
 Signing CA in parentheses (same meaning as certificates).
 
-- crl-ec-sha*: (2) server6.crt
+- crl-ec-sha*.pem: (2) server6.crt
 - crl-future.pem: (2) server6.crt + unknown
 - crl-rsa-pss-*.pem: (1) server9{,badsign,with-ca}.crt + cert_sha384.crt + unknown
 - crl.pem, crl_expired.pem: (1) server1{,.cert_type,.key_usage,.v1}.crt + unknown

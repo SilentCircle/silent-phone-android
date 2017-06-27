@@ -1,7 +1,7 @@
 /*
 Created by Janis Narbuts
 Copyright (C) 2004-2012, Tivi LTD, www.tiviphone.com. All rights reserved.
-Copyright (C) 2012-2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2012-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,7 +27,6 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-
 #ifndef _VEC_CALC_H
 #define _VEC_CALC_H
 
@@ -197,6 +196,8 @@ typedef struct _VEC_IMG_STRUCT{
    
 }VEC_IMG_STRUCT;
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-function" // don't throw this warning
 static void swapVecStr(VEC_IMG_STRUCT *p1, VEC_IMG_STRUCT *p2)
 {
    int v=p2->iRefCreated;p2->iRefCreated=p1->iRefCreated;p1->iRefCreated=v;
@@ -212,6 +213,7 @@ static void swapVecStr(VEC_IMG_STRUCT *p1, VEC_IMG_STRUCT *p2)
    CTPIC::swap(&p1->ref_H_V_VH[2],&p2->ref_H_V_VH[2]);
 
 }
+#pragma clang diagnostic pop
 
 typedef struct{
    unsigned char *pImg;

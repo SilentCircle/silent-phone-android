@@ -55,7 +55,7 @@ http://code.google.com/p/android/issues/detail?id=3414, comments 56 and 57
                         android:ellipsize="marquee"
                         android:marqueeRepeatLimit ="3"
                         android:scrollHorizontally="true"
-                        android:textColor="@color/translucent_white"
+                        android:textColor="?attr/sp_activity_secondary_text_color"
                         tools:text="device id string"
                         tools:context="com.silentcircle.messaging.activities.ShowRemoteDevicesActivity"/>
         </LinearLayout>
@@ -72,7 +72,8 @@ http://code.google.com/p/android/issues/detail?id=3414, comments 56 and 57
                 android:background="@null"
                 android:src="@drawable/ic_call_dark"
                 android:tint="?attr/sp_activity_primary_text_color"
-                tools:visibility="visible"/>
+                tools:visibility="visible"
+                android:contentDescription="@string/silent_phone_call"/>
         <ImageButton
                 android:id="@+id/verify_check"
                 android:layout_width="wrap_content"
@@ -81,6 +82,6 @@ http://code.google.com/p/android/issues/detail?id=3414, comments 56 and 57
                 android:background="@null"
                 android:visibility="invisible"
                 android:src="@drawable/ic_check_white_24dp"
-                android:tint="?attr/sp_activity_primary_text_color"
-                tools:visibility="visible"/>
+                tools:visibility="visible"
+                android:contentDescription="@string/axo_remote_dev_header_2"/>
 </LinearLayout>

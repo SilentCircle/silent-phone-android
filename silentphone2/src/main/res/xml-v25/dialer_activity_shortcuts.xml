@@ -1,0 +1,15 @@
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="compose"
+        android:enabled="true"
+        android:icon="@drawable/ic_add_shortcut"
+        android:shortcutShortLabel="@string/dialer_activity_conversation_shortcut"
+        android:shortcutLongLabel="@string/dialer_activity_conversation_shortcut"
+        android:shortcutDisabledMessage="@string/dialer_activity_conversation_shortcut">
+        <intent
+            android:action="com.silentcircle.messaging.action.NEW_CONVERSATION"
+            android:targetPackage="com.silentcircle.silentphone"
+            android:targetClass="com.silentcircle.silentphone2.activities.DialerActivity" />
+        <categories android:name="android.shortcut.conversation" />
+    </shortcut>
+</shortcuts>

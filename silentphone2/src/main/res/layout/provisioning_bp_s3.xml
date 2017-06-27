@@ -26,34 +26,7 @@
             android:text="@string/provisioning_infoText"/>
 
 
-    <RelativeLayout
-        android:id="@+id/relative_container"
-        android:layout_width="203px"
-        android:layout_height="203px"
-        android:layout_centerInParent="true">
-
-        <ImageView
-            android:id="@+id/ProvisioningInProgress"
-            tools:ignore="PxUsage"
-            android:layout_width="175px"
-            android:layout_height="175px"
-            android:layout_centerInParent="true"
-            android:visibility="invisible"
-            android:contentDescription="@string/silent_circle"
-            android:src="@drawable/dot_circle"
-            tools:visibility="visible"/>
-
-        <ProgressBar
-            android:id="@+id/ProgressBar"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_centerInParent="true"
-            android:visibility="invisible"
-            android:indeterminate="true"
-            android:indeterminateDrawable="@drawable/progressbar_sc"
-            tools:visibility="visible"/>
-
-    </RelativeLayout>
+    <include layout="@layout/widget_progress_bar" />
 
     <ScrollView
             android:id="@+id/Scroll"

@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2014-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -115,7 +115,7 @@ public class AccountStep2 extends Fragment implements View.OnClickListener{
         Bundle args = getArguments();
         if (args != null) {
             mUseExistingAccount = args.getBoolean(ProvisioningActivity.USE_EXISTING, true);
-            final String roninCode = args.getString(AuthenticatorActivity.ARG_RONIN_CODE, null);
+//            final String roninCode = args.getString(AuthenticatorActivity.ARG_RONIN_CODE, null);
         }
         mRequiredArray = mUseExistingAccount ? USERNAME_PASSWORD_ONLY : ALL_FIELDS_REQUIRED;
     }
@@ -135,7 +135,9 @@ public class AccountStep2 extends Fragment implements View.OnClickListener{
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
-        commonOnAttach(activity);
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+            commonOnAttach(activity);
+        }
     }
 
     private void commonOnAttach(Activity activity) {
@@ -199,7 +201,7 @@ public class AccountStep2 extends Fragment implements View.OnClickListener{
         mUsernameInput.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
             public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
-                return actionId == EditorInfo.IME_ACTION_NEXT && !checkValid(mUsernameInput, mUsernameLayout, getString(R.string.provisioning_user_req), true);
+                return isAdded() && actionId == EditorInfo.IME_ACTION_NEXT && !checkValid(mUsernameInput, mUsernameLayout, getString(R.string.provisioning_user_req), true);
             }
         });
 
@@ -241,7 +243,7 @@ public class AccountStep2 extends Fragment implements View.OnClickListener{
         mPasswordInput.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
             public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
-                return actionId == EditorInfo.IME_ACTION_NEXT && !checkValid(mPasswordInput, mPasswordLayout, getString(R.string.provisioning_password_req), true);
+                return isAdded() && actionId == EditorInfo.IME_ACTION_NEXT && !checkValid(mPasswordInput, mPasswordLayout, getString(R.string.provisioning_password_req), true);
             }
         });
 
@@ -283,7 +285,7 @@ public class AccountStep2 extends Fragment implements View.OnClickListener{
         mFirstNameInput.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
             public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
-                return actionId == EditorInfo.IME_ACTION_NEXT && !checkValid(mFirstNameInput, mFirstNameLayout, getString(R.string.provisioning_firstname_req), true);
+                return isAdded() && actionId == EditorInfo.IME_ACTION_NEXT && !checkValid(mFirstNameInput, mFirstNameLayout, getString(R.string.provisioning_firstname_req), true);
             }
         });
 
@@ -322,7 +324,7 @@ public class AccountStep2 extends Fragment implements View.OnClickListener{
         mLastNameInput.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
             public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
-                return actionId == EditorInfo.IME_ACTION_DONE && !checkValid(mLastNameInput, mLastNameLayout, getString(R.string.provisioning_lastname_req), true);
+                return isAdded() && actionId == EditorInfo.IME_ACTION_DONE && !checkValid(mLastNameInput, mLastNameLayout, getString(R.string.provisioning_lastname_req), true);
             }
         });
 
@@ -361,7 +363,7 @@ public class AccountStep2 extends Fragment implements View.OnClickListener{
         mEmailInput.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
             public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
-                return actionId == EditorInfo.IME_ACTION_NEXT && !checkValid(mEmailInput, mEmailLayout, getString(R.string.provisioning_email_req), true);
+                return isAdded() && actionId == EditorInfo.IME_ACTION_NEXT && !checkValid(mEmailInput, mEmailLayout, getString(R.string.provisioning_email_req), true);
             }
         });
 
@@ -542,14 +544,12 @@ public class AccountStep2 extends Fragment implements View.OnClickListener{
         }
     }
 
-    public final static boolean isValidEmail(CharSequence target) {
-        if (target == null)
-            return false;
+    public static boolean isValidEmail(CharSequence target) {
+        return target != null && android.util.Patterns.EMAIL_ADDRESS.matcher(target).matches();
 
-        return android.util.Patterns.EMAIL_ADDRESS.matcher(target).matches();
     }
 
-    public final static boolean isValidUser(CharSequence target) {
+    public static boolean isValidUser(CharSequence target) {
         if (target == null)
             return false;
 

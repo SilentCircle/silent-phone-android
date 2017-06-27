@@ -1,82 +1,107 @@
 /*
  *  SSL client with options
  *
- *  Copyright (C) 2006-2013, ARM Limited, All Rights Reserved
+ *  Copyright (C) 2006-2015, ARM Limited, All Rights Reserved
+ *  SPDX-License-Identifier: Apache-2.0
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License"); you may
+ *  not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ *  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  *
  *  This file is part of mbed TLS (https://tls.mbed.org)
- *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
- *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License along
- *  with this program; if not, write to the Free Software Foundation, Inc.,
- *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#if !defined(POLARSSL_CONFIG_FILE)
-#include "polarssl/config.h"
+#if !defined(MBEDTLS_CONFIG_FILE)
+#include "mbedtls/config.h"
 #else
-#include POLARSSL_CONFIG_FILE
+#include MBEDTLS_CONFIG_FILE
 #endif
 
-#if defined(POLARSSL_PLATFORM_C)
-#include "polarssl/platform.h"
+#if defined(MBEDTLS_PLATFORM_C)
+#include "mbedtls/platform.h"
 #else
 #include <stdio.h>
-#define polarssl_free       free
-#define polarssl_malloc     malloc
-#define polarssl_fprintf    fprintf
-#define polarssl_printf     printf
+#include <stdlib.h>
+#define mbedtls_free       free
+#define mbedtls_time       time
+#define mbedtls_time_t     time_t
+#define mbedtls_calloc    calloc
+#define mbedtls_fprintf    fprintf
+#define mbedtls_printf     printf
 #endif
 
-#if defined(POLARSSL_SSL_SERVER_NAME_INDICATION) && defined(POLARSSL_FS_IO)
-#define POLARSSL_SNI
-#endif
+#if !defined(MBEDTLS_ENTROPY_C) || \
+    !defined(MBEDTLS_SSL_TLS_C) || !defined(MBEDTLS_SSL_SRV_C) || \
+    !defined(MBEDTLS_NET_C) || !defined(MBEDTLS_CTR_DRBG_C)
+int main( void )
+{
+    mbedtls_printf("MBEDTLS_ENTROPY_C and/or "
+           "MBEDTLS_SSL_TLS_C and/or MBEDTLS_SSL_SRV_C and/or "
+           "MBEDTLS_NET_C and/or MBEDTLS_CTR_DRBG_C and/or not defined.\n");
+    return( 0 );
+}
+#else
 
-#if defined(_WIN32)
-#include <windows.h>
-#endif
-
-#if defined(POLARSSL_ENTROPY_C) && \
-    defined(POLARSSL_SSL_TLS_C) && defined(POLARSSL_SSL_SRV_C) && \
-    defined(POLARSSL_NET_C) && defined(POLARSSL_CTR_DRBG_C)
-#include "polarssl/net.h"
-#include "polarssl/ssl.h"
-#include "polarssl/entropy.h"
-#include "polarssl/ctr_drbg.h"
-#include "polarssl/certs.h"
-#include "polarssl/x509.h"
-#include "polarssl/error.h"
-#include "polarssl/debug.h"
+#include "mbedtls/net_sockets.h"
+#include "mbedtls/ssl.h"
+#include "mbedtls/entropy.h"
+#include "mbedtls/ctr_drbg.h"
+#include "mbedtls/certs.h"
+#include "mbedtls/x509.h"
+#include "mbedtls/error.h"
+#include "mbedtls/debug.h"
+#include "mbedtls/timing.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
+
+#if !defined(_MSC_VER)
+#include <inttypes.h>
 #endif
 
 #if !defined(_WIN32)
 #include <signal.h>
 #endif
 
-#if defined(POLARSSL_SSL_CACHE_C)
-#include "polarssl/ssl_cache.h"
+#if defined(MBEDTLS_SSL_CACHE_C)
+#include "mbedtls/ssl_cache.h"
 #endif
 
-#if defined(POLARSSL_MEMORY_BUFFER_ALLOC_C)
-#include "polarssl/memory_buffer_alloc.h"
+#if defined(MBEDTLS_SSL_TICKET_C)
+#include "mbedtls/ssl_ticket.h"
+#endif
+
+#if defined(MBEDTLS_SSL_COOKIE_C)
+#include "mbedtls/ssl_cookie.h"
+#endif
+
+#if defined(MBEDTLS_MEMORY_BUFFER_ALLOC_C)
+#include "mbedtls/memory_buffer_alloc.h"
+#endif
+
+#if defined(MBEDTLS_SSL_SERVER_NAME_INDICATION) && defined(MBEDTLS_FS_IO)
+#define SNI_OPTION
+#endif
+
+#if defined(_WIN32)
+#include <windows.h>
 #endif
 
 #define DFL_SERVER_ADDR         NULL
-#define DFL_SERVER_PORT         4433
+#define DFL_SERVER_PORT         "4433"
 #define DFL_DEBUG_LEVEL         0
 #define DFL_NBIO                0
+#define DFL_READ_TIMEOUT        0
 #define DFL_CA_FILE             ""
 #define DFL_CA_PATH             ""
 #define DFL_CRT_FILE            ""
@@ -85,28 +110,35 @@
 #define DFL_KEY_FILE2           ""
 #define DFL_PSK                 ""
 #define DFL_PSK_IDENTITY        "Client_identity"
+#define DFL_ECJPAKE_PW          NULL
 #define DFL_PSK_LIST            NULL
 #define DFL_FORCE_CIPHER        0
 #define DFL_VERSION_SUITES      NULL
-#define DFL_RENEGOTIATION       SSL_RENEGOTIATION_DISABLED
+#define DFL_RENEGOTIATION       MBEDTLS_SSL_RENEGOTIATION_DISABLED
 #define DFL_ALLOW_LEGACY        -2
 #define DFL_RENEGOTIATE         0
 #define DFL_RENEGO_DELAY        -2
-#define DFL_RENEGO_PERIOD       -1
+#define DFL_RENEGO_PERIOD       ( (uint64_t)-1 )
 #define DFL_EXCHANGES           1
-#define DFL_MIN_VERSION         SSL_MINOR_VERSION_1
+#define DFL_MIN_VERSION         -1
 #define DFL_MAX_VERSION         -1
-#define DFL_ARC4                SSL_ARC4_DISABLED
-#define DFL_AUTH_MODE           SSL_VERIFY_OPTIONAL
-#define DFL_MFL_CODE            SSL_MAX_FRAG_LEN_NONE
+#define DFL_ARC4                -1
+#define DFL_AUTH_MODE           -1
+#define DFL_MFL_CODE            MBEDTLS_SSL_MAX_FRAG_LEN_NONE
 #define DFL_TRUNC_HMAC          -1
-#define DFL_TICKETS             SSL_SESSION_TICKETS_ENABLED
-#define DFL_TICKET_TIMEOUT      -1
+#define DFL_TICKETS             MBEDTLS_SSL_SESSION_TICKETS_ENABLED
+#define DFL_TICKET_TIMEOUT      86400
 #define DFL_CACHE_MAX           -1
 #define DFL_CACHE_TIMEOUT       -1
 #define DFL_SNI                 NULL
 #define DFL_ALPN_STRING         NULL
 #define DFL_DHM_FILE            NULL
+#define DFL_TRANSPORT           MBEDTLS_SSL_TRANSPORT_STREAM
+#define DFL_COOKIES             1
+#define DFL_ANTI_REPLAY         -1
+#define DFL_HS_TO_MIN           0
+#define DFL_HS_TO_MAX           0
+#define DFL_BADMAC_LIMIT        -1
 #define DFL_EXTENDED_MS         -1
 #define DFL_ETM                 -1
 
@@ -128,13 +160,13 @@
 /*
  * Size of the basic I/O buffer. Able to hold our default response.
  *
- * You will need to adapt the ssl_get_bytes_avail() test in ssl-opt.sh
+ * You will need to adapt the mbedtls_ssl_get_bytes_avail() test in ssl-opt.sh
  * if you change this value to something outside the range <= 100 or > 500
  */
 #define IO_BUF_LEN      200
 
-#if defined(POLARSSL_X509_CRT_PARSE_C)
-#if defined(POLARSSL_FS_IO)
+#if defined(MBEDTLS_X509_CRT_PARSE_C)
+#if defined(MBEDTLS_FS_IO)
 #define USAGE_IO \
     "    ca_file=%%s          The single file containing the top-level CA(s) you fully trust\n" \
     "                        default: \"\" (pre-loaded)\n" \
@@ -153,90 +185,128 @@
 #else
 #define USAGE_IO \
     "\n"                                                    \
-    "    No file operations available (POLARSSL_FS_IO not defined)\n" \
+    "    No file operations available (MBEDTLS_FS_IO not defined)\n" \
     "\n"
-#endif /* POLARSSL_FS_IO */
+#endif /* MBEDTLS_FS_IO */
 #else
 #define USAGE_IO ""
-#endif /* POLARSSL_X509_CRT_PARSE_C */
+#endif /* MBEDTLS_X509_CRT_PARSE_C */
 
-#if defined(POLARSSL_KEY_EXCHANGE__SOME__PSK_ENABLED)
+#if defined(MBEDTLS_KEY_EXCHANGE__SOME__PSK_ENABLED)
 #define USAGE_PSK                                                   \
     "    psk=%%s              default: \"\" (in hex, without 0x)\n" \
     "    psk_identity=%%s     default: \"Client_identity\"\n"
 #else
 #define USAGE_PSK ""
-#endif /* POLARSSL_KEY_EXCHANGE__SOME__PSK_ENABLED */
+#endif /* MBEDTLS_KEY_EXCHANGE__SOME__PSK_ENABLED */
 
-#if defined(POLARSSL_SSL_SESSION_TICKETS)
+#if defined(MBEDTLS_SSL_SESSION_TICKETS)
 #define USAGE_TICKETS                                       \
     "    tickets=%%d          default: 1 (enabled)\n"       \
-    "    ticket_timeout=%%d   default: ticket default (1d)\n"
+    "    ticket_timeout=%%d   default: 86400 (one day)\n"
 #else
 #define USAGE_TICKETS ""
-#endif /* POLARSSL_SSL_SESSION_TICKETS */
+#endif /* MBEDTLS_SSL_SESSION_TICKETS */
 
-#if defined(POLARSSL_SSL_CACHE_C)
+#if defined(MBEDTLS_SSL_CACHE_C)
 #define USAGE_CACHE                                             \
     "    cache_max=%%d        default: cache default (50)\n"    \
     "    cache_timeout=%%d    default: cache default (1d)\n"
 #else
 #define USAGE_CACHE ""
-#endif /* POLARSSL_SSL_CACHE_C */
+#endif /* MBEDTLS_SSL_CACHE_C */
 
-#if defined(POLARSSL_SNI)
+#if defined(SNI_OPTION)
 #define USAGE_SNI                                                           \
-    "    sni=%%s              name1,cert1,key1[,name2,cert2,key2[,...]]\n"  \
-    "                         default: disabled\n"
+    "    sni=%%s              name1,cert1,key1,ca1,crl1,auth1[,...]\n"  \
+    "                        default: disabled\n"
 #else
 #define USAGE_SNI ""
-#endif /* POLARSSL_SNI */
+#endif /* SNI_OPTION */
 
-#if defined(POLARSSL_SSL_MAX_FRAGMENT_LENGTH)
+#if defined(MBEDTLS_SSL_MAX_FRAGMENT_LENGTH)
 #define USAGE_MAX_FRAG_LEN                                      \
     "    max_frag_len=%%d     default: 16384 (tls default)\n"   \
     "                        options: 512, 1024, 2048, 4096\n"
 #else
 #define USAGE_MAX_FRAG_LEN ""
-#endif /* POLARSSL_SSL_MAX_FRAGMENT_LENGTH */
+#endif /* MBEDTLS_SSL_MAX_FRAGMENT_LENGTH */
 
-#if defined(POLARSSL_SSL_TRUNCATED_HMAC)
+#if defined(MBEDTLS_SSL_TRUNCATED_HMAC)
 #define USAGE_TRUNC_HMAC \
     "    trunc_hmac=%%d       default: library default\n"
 #else
 #define USAGE_TRUNC_HMAC ""
 #endif
 
-#if defined(POLARSSL_SSL_ALPN)
+#if defined(MBEDTLS_SSL_ALPN)
 #define USAGE_ALPN \
     "    alpn=%%s             default: \"\" (disabled)\n"   \
     "                        example: spdy/1,http/1.1\n"
 #else
 #define USAGE_ALPN ""
-#endif /* POLARSSL_SSL_ALPN */
+#endif /* MBEDTLS_SSL_ALPN */
 
-#if defined(POLARSSL_SSL_EXTENDED_MASTER_SECRET)
+#if defined(MBEDTLS_SSL_DTLS_HELLO_VERIFY)
+#define USAGE_COOKIES \
+    "    cookies=0/1/-1      default: 1 (enabled)\n"        \
+    "                        0: disabled, -1: library default (broken)\n"
+#else
+#define USAGE_COOKIES ""
+#endif
+
+#if defined(MBEDTLS_SSL_DTLS_ANTI_REPLAY)
+#define USAGE_ANTI_REPLAY \
+    "    anti_replay=0/1     default: (library default: enabled)\n"
+#else
+#define USAGE_ANTI_REPLAY ""
+#endif
+
+#if defined(MBEDTLS_SSL_DTLS_BADMAC_LIMIT)
+#define USAGE_BADMAC_LIMIT \
+    "    badmac_limit=%%d     default: (library default: disabled)\n"
+#else
+#define USAGE_BADMAC_LIMIT ""
+#endif
+
+#if defined(MBEDTLS_SSL_PROTO_DTLS)
+#define USAGE_DTLS \
+    "    dtls=%%d             default: 0 (TLS)\n"                           \
+    "    hs_timeout=%%d-%%d    default: (library default: 1000-60000)\n"    \
+    "                        range of DTLS handshake timeouts in millisecs\n"
+#else
+#define USAGE_DTLS ""
+#endif
+
+#if defined(MBEDTLS_SSL_EXTENDED_MASTER_SECRET)
 #define USAGE_EMS \
     "    extended_ms=0/1     default: (library default: on)\n"
 #else
 #define USAGE_EMS ""
 #endif
 
-#if defined(POLARSSL_SSL_ENCRYPT_THEN_MAC)
+#if defined(MBEDTLS_SSL_ENCRYPT_THEN_MAC)
 #define USAGE_ETM \
     "    etm=0/1             default: (library default: on)\n"
 #else
 #define USAGE_ETM ""
 #endif
 
-#if defined(POLARSSL_SSL_RENEGOTIATION)
+#if defined(MBEDTLS_SSL_RENEGOTIATION)
 #define USAGE_RENEGO \
     "    renegotiation=%%d    default: 0 (disabled)\n"      \
     "    renegotiate=%%d      default: 0 (disabled)\n"      \
     "    renego_delay=%%d     default: -2 (library default)\n" \
-    "    renego_period=%%d    default: (library default)\n"
+    "    renego_period=%%d    default: (2^64 - 1 for TLS, 2^48 - 1 for DTLS)\n"
 #else
 #define USAGE_RENEGO ""
+#endif
+
+#if defined(MBEDTLS_KEY_EXCHANGE_ECJPAKE_ENABLED)
+#define USAGE_ECJPAKE \
+    "    ecjpake_pw=%%s       default: none (disabled)\n"
+#else
+#define USAGE_ECJPAKE ""
 #endif
 
 #define USAGE \
@@ -247,17 +317,25 @@
     "    debug_level=%%d      default: 0 (disabled)\n"      \
     "    nbio=%%d             default: 0 (blocking I/O)\n"  \
     "                        options: 1 (non-blocking), 2 (added delays)\n" \
+    "    read_timeout=%%d     default: 0 ms (no timeout)\n"    \
     "\n"                                                    \
-    "    auth_mode=%%s        default: \"optional\"\n"      \
+    USAGE_DTLS                                              \
+    USAGE_COOKIES                                           \
+    USAGE_ANTI_REPLAY                                       \
+    USAGE_BADMAC_LIMIT                                      \
+    "\n"                                                    \
+    "    auth_mode=%%s        default: (library default: none)\n"      \
     "                        options: none, optional, required\n" \
     USAGE_IO                                                \
     USAGE_SNI                                               \
     "\n"                                                    \
     USAGE_PSK                                               \
+    USAGE_ECJPAKE                                           \
     "\n"                                                    \
     "    allow_legacy=%%d     default: (library default: no)\n"      \
     USAGE_RENEGO                                            \
     "    exchanges=%%d        default: 1\n"                 \
+    "\n"                                                    \
     USAGE_TICKETS                                           \
     USAGE_CACHE                                             \
     USAGE_MAX_FRAG_LEN                                      \
@@ -266,11 +344,11 @@
     USAGE_EMS                                               \
     USAGE_ETM                                               \
     "\n"                                                    \
-    "    min_version=%%s      default: \"ssl3\"\n"          \
-    "    max_version=%%s      default: \"tls1_2\"\n"        \
-    "    arc4=%%d             default: 0 (disabled)\n"      \
+    "    arc4=%%d             default: (library default: 0)\n" \
+    "    min_version=%%s      default: (library default: tls1)\n"       \
+    "    max_version=%%s      default: (library default: tls1_2)\n"     \
     "    force_version=%%s    default: \"\" (none)\n"       \
-    "                        options: ssl3, tls1, tls1_1, tls1_2\n"     \
+    "                        options: ssl3, tls1, tls1_1, tls1_2, dtls1, dtls1_2\n" \
     "\n"                                                                \
     "    version_suites=a,b,c,d      per-version ciphersuites\n"        \
     "                                in order from ssl3 to tls1_2\n"    \
@@ -278,27 +356,29 @@
     "    force_ciphersuite=<name>    default: all enabled\n"            \
     " acceptable ciphersuite names:\n"
 
-#if !defined(POLARSSL_ENTROPY_C) || \
-    !defined(POLARSSL_SSL_TLS_C) || !defined(POLARSSL_SSL_SRV_C) || \
-    !defined(POLARSSL_NET_C) || !defined(POLARSSL_CTR_DRBG_C)
-#include <stdio.h>
-int main( void )
-{
-    polarssl_printf("POLARSSL_ENTROPY_C and/or "
-           "POLARSSL_SSL_TLS_C and/or POLARSSL_SSL_SRV_C and/or "
-           "POLARSSL_NET_C and/or POLARSSL_CTR_DRBG_C not defined.\n");
-    return( 0 );
+
+#define PUT_UINT64_BE(out_be,in_le,i)                                   \
+{                                                                       \
+    (out_be)[(i) + 0] = (unsigned char)( ( (in_le) >> 56 ) & 0xFF );    \
+    (out_be)[(i) + 1] = (unsigned char)( ( (in_le) >> 48 ) & 0xFF );    \
+    (out_be)[(i) + 2] = (unsigned char)( ( (in_le) >> 40 ) & 0xFF );    \
+    (out_be)[(i) + 3] = (unsigned char)( ( (in_le) >> 32 ) & 0xFF );    \
+    (out_be)[(i) + 4] = (unsigned char)( ( (in_le) >> 24 ) & 0xFF );    \
+    (out_be)[(i) + 5] = (unsigned char)( ( (in_le) >> 16 ) & 0xFF );    \
+    (out_be)[(i) + 6] = (unsigned char)( ( (in_le) >> 8  ) & 0xFF );    \
+    (out_be)[(i) + 7] = (unsigned char)( ( (in_le) >> 0  ) & 0xFF );    \
 }
-#else
+
 /*
  * global options
  */
 struct options
 {
     const char *server_addr;    /* address on which the ssl service runs    */
-    int server_port;            /* port on which the ssl service runs       */
+    const char *server_port;    /* port on which the ssl service runs       */
     int debug_level;            /* level of debugging                       */
     int nbio;                   /* should I/O be blocking?                  */
+    uint32_t read_timeout;      /* timeout on mbedtls_ssl_read() in milliseconds    */
     const char *ca_file;        /* the file with the CA certificate(s)      */
     const char *ca_path;        /* the path with the CA certificate(s) reside */
     const char *crt_file;       /* the file with the server certificate     */
@@ -308,13 +388,14 @@ struct options
     const char *psk;            /* the pre-shared key                       */
     const char *psk_identity;   /* the pre-shared key identity              */
     char *psk_list;             /* list of PSK id/key pairs for callback    */
+    const char *ecjpake_pw;     /* the EC J-PAKE password                   */
     int force_ciphersuite[2];   /* protocol/ciphersuite to use, or all      */
     const char *version_suites; /* per-version ciphersuites                 */
     int renegotiation;          /* enable / disable renegotiation           */
     int allow_legacy;           /* allow legacy renegotiation               */
     int renegotiate;            /* attempt renegotiation?                   */
     int renego_delay;           /* delay before enforcing renegotiation     */
-    int renego_period;          /* period for automatic renegotiation       */
+    uint64_t renego_period;     /* period for automatic renegotiation       */
     int exchanges;              /* number of data exchanges                 */
     int min_version;            /* minimum protocol version accepted        */
     int max_version;            /* maximum protocol version accepted        */
@@ -331,13 +412,26 @@ struct options
     const char *dhm_file;       /* the file with the DH parameters          */
     int extended_ms;            /* allow negotiation of extended MS?        */
     int etm;                    /* allow negotiation of encrypt-then-MAC?   */
+    int transport;              /* TLS or DTLS?                             */
+    int cookies;                /* Use cookies for DTLS? -1 to break them   */
+    int anti_replay;            /* Use anti-replay for DTLS? -1 for default */
+    uint32_t hs_to_min;         /* Initial value of DTLS handshake timer    */
+    uint32_t hs_to_max;         /* Max value of DTLS handshake timer        */
+    int badmac_limit;           /* Limit of records with bad MAC            */
 } opt;
 
-static void my_debug( void *ctx, int level, const char *str )
+static void my_debug( void *ctx, int level,
+                      const char *file, int line,
+                      const char *str )
 {
-    ((void) level);
+    const char *p, *basename;
 
-    polarssl_fprintf( (FILE *) ctx, "%s", str );
+    /* Extract basename from file */
+    for( p = basename = file; *p != '\0'; p++ )
+        if( *p == '/' || *p == '\\' )
+            basename = p + 1;
+
+    mbedtls_fprintf( (FILE *) ctx, "%s:%04d: |%d| %s", basename, line, level, str );
     fflush(  (FILE *) ctx  );
 }
 
@@ -353,11 +447,11 @@ static int my_recv( void *ctx, unsigned char *buf, size_t len )
     if( first_try )
     {
         first_try = 0;
-        return( POLARSSL_ERR_NET_WANT_READ );
+        return( MBEDTLS_ERR_SSL_WANT_READ );
     }
 
-    ret = net_recv( ctx, buf, len );
-    if( ret != POLARSSL_ERR_NET_WANT_READ )
+    ret = mbedtls_net_recv( ctx, buf, len );
+    if( ret != MBEDTLS_ERR_SSL_WANT_READ )
         first_try = 1; /* Next call will be a new operation */
     return( ret );
 }
@@ -370,13 +464,28 @@ static int my_send( void *ctx, const unsigned char *buf, size_t len )
     if( first_try )
     {
         first_try = 0;
-        return( POLARSSL_ERR_NET_WANT_WRITE );
+        return( MBEDTLS_ERR_SSL_WANT_WRITE );
     }
 
-    ret = net_send( ctx, buf, len );
-    if( ret != POLARSSL_ERR_NET_WANT_WRITE )
+    ret = mbedtls_net_send( ctx, buf, len );
+    if( ret != MBEDTLS_ERR_SSL_WANT_WRITE )
         first_try = 1; /* Next call will be a new operation */
     return( ret );
+}
+
+/*
+ * Return authmode from string, or -1 on error
+ */
+static int get_auth_mode( const char *s )
+{
+    if( strcmp( s, "none" ) == 0 )
+        return( MBEDTLS_SSL_VERIFY_NONE );
+    if( strcmp( s, "optional" ) == 0 )
+        return( MBEDTLS_SSL_VERIFY_OPTIONAL );
+    if( strcmp( s, "required" ) == 0 )
+        return( MBEDTLS_SSL_VERIFY_REQUIRED );
+
+    return( -1 );
 }
 
 /*
@@ -389,13 +498,16 @@ static int my_send( void *ctx, const unsigned char *buf, size_t len )
             goto error;         \
     *p++ = '\0';
 
-#if defined(POLARSSL_SNI)
+#if defined(SNI_OPTION)
 typedef struct _sni_entry sni_entry;
 
 struct _sni_entry {
     const char *name;
-    x509_crt *cert;
-    pk_context *key;
+    mbedtls_x509_crt *cert;
+    mbedtls_pk_context *key;
+    mbedtls_x509_crt* ca;
+    mbedtls_x509_crl* crl;
+    int authmode;
     sni_entry *next;
 };
 
@@ -405,21 +517,28 @@ void sni_free( sni_entry *head )
 
     while( cur != NULL )
     {
-        x509_crt_free( cur->cert );
-        polarssl_free( cur->cert );
+        mbedtls_x509_crt_free( cur->cert );
+        mbedtls_free( cur->cert );
 
-        pk_free( cur->key );
-        polarssl_free( cur->key );
+        mbedtls_pk_free( cur->key );
+        mbedtls_free( cur->key );
+
+        mbedtls_x509_crt_free( cur->ca );
+        mbedtls_free( cur->ca );
+
+        mbedtls_x509_crl_free( cur->crl );
+        mbedtls_free( cur->crl );
 
         next = cur->next;
-        polarssl_free( cur );
+        mbedtls_free( cur );
         cur = next;
     }
 }
 
 /*
- * Parse a string of triplets name1,crt1,key1[,name2,crt2,key2[,...]]
- * into a usable sni_entry list.
+ * Parse a string of sextuples name1,crt1,key1,ca1,crl1,auth1[,...]
+ * into a usable sni_entry list. For ca1, crl1, auth1, the special value
+ * '-' means unset. If ca1 is unset, then crl1 is ignored too.
  *
  * Modifies the input string! This is not production quality!
  */
@@ -428,7 +547,7 @@ sni_entry *sni_parse( char *sni_string )
     sni_entry *cur = NULL, *new = NULL;
     char *p = sni_string;
     char *end = p;
-    char *crt_file, *key_file;
+    char *crt_file, *key_file, *ca_file, *crl_file, *auth_str;
 
     while( *end != '\0' )
         ++end;
@@ -436,35 +555,59 @@ sni_entry *sni_parse( char *sni_string )
 
     while( p <= end )
     {
-        if( ( new = polarssl_malloc( sizeof( sni_entry ) ) ) == NULL )
+        if( ( new = mbedtls_calloc( 1, sizeof( sni_entry ) ) ) == NULL )
         {
             sni_free( cur );
             return( NULL );
         }
-
-        memset( new, 0, sizeof( sni_entry ) );
-
-        if( ( new->cert = polarssl_malloc( sizeof( x509_crt ) ) ) == NULL ||
-            ( new->key = polarssl_malloc( sizeof( pk_context ) ) ) == NULL )
-        {
-            polarssl_free( new->cert );
-            polarssl_free( new );
-            sni_free( cur );
-            return( NULL );
-        }
-
-        x509_crt_init( new->cert );
-        pk_init( new->key );
 
         GET_ITEM( new->name );
         GET_ITEM( crt_file );
         GET_ITEM( key_file );
+        GET_ITEM( ca_file );
+        GET_ITEM( crl_file );
+        GET_ITEM( auth_str );
 
-        if( x509_crt_parse_file( new->cert, crt_file ) != 0 ||
-            pk_parse_keyfile( new->key, key_file, "" ) != 0 )
-        {
+        if( ( new->cert = mbedtls_calloc( 1, sizeof( mbedtls_x509_crt ) ) ) == NULL ||
+            ( new->key = mbedtls_calloc( 1, sizeof( mbedtls_pk_context ) ) ) == NULL )
             goto error;
+
+        mbedtls_x509_crt_init( new->cert );
+        mbedtls_pk_init( new->key );
+
+        if( mbedtls_x509_crt_parse_file( new->cert, crt_file ) != 0 ||
+            mbedtls_pk_parse_keyfile( new->key, key_file, "" ) != 0 )
+            goto error;
+
+        if( strcmp( ca_file, "-" ) != 0 )
+        {
+            if( ( new->ca = mbedtls_calloc( 1, sizeof( mbedtls_x509_crt ) ) ) == NULL )
+                goto error;
+
+            mbedtls_x509_crt_init( new->ca );
+
+            if( mbedtls_x509_crt_parse_file( new->ca, ca_file ) != 0 )
+                goto error;
         }
+
+        if( strcmp( crl_file, "-" ) != 0 )
+        {
+            if( ( new->crl = mbedtls_calloc( 1, sizeof( mbedtls_x509_crl ) ) ) == NULL )
+                goto error;
+
+            mbedtls_x509_crl_init( new->crl );
+
+            if( mbedtls_x509_crl_parse_file( new->crl, crl_file ) != 0 )
+                goto error;
+        }
+
+        if( strcmp( auth_str, "-" ) != 0 )
+        {
+            if( ( new->authmode = get_auth_mode( auth_str ) ) < 0 )
+                goto error;
+        }
+        else
+            new->authmode = DFL_AUTH_MODE;
 
         new->next = cur;
         cur = new;
@@ -481,17 +624,23 @@ error:
 /*
  * SNI callback.
  */
-int sni_callback( void *p_info, ssl_context *ssl,
+int sni_callback( void *p_info, mbedtls_ssl_context *ssl,
                   const unsigned char *name, size_t name_len )
 {
-    sni_entry *cur = (sni_entry *) p_info;
+    const sni_entry *cur = (const sni_entry *) p_info;
 
     while( cur != NULL )
     {
         if( name_len == strlen( cur->name ) &&
             memcmp( name, cur->name, name_len ) == 0 )
         {
-            return( ssl_set_own_cert( ssl, cur->cert, cur->key ) );
+            if( cur->ca != NULL )
+                mbedtls_ssl_set_hs_ca_chain( ssl, cur->ca, cur->crl );
+
+            if( cur->authmode != DFL_AUTH_MODE )
+                mbedtls_ssl_set_hs_authmode( ssl, cur->authmode );
+
+            return( mbedtls_ssl_set_hs_own_cert( ssl, cur->cert, cur->key ) );
         }
 
         cur = cur->next;
@@ -500,9 +649,9 @@ int sni_callback( void *p_info, ssl_context *ssl,
     return( -1 );
 }
 
-#endif /* POLARSSL_SNI */
+#endif /* SNI_OPTION */
 
-#if defined(POLARSSL_KEY_EXCHANGE__SOME__PSK_ENABLED)
+#if defined(MBEDTLS_KEY_EXCHANGE__SOME__PSK_ENABLED)
 
 #define HEX2NUM( c )                    \
         if( c >= '0' && c <= '9' )      \
@@ -524,7 +673,7 @@ int unhexify( unsigned char *output, const char *input, size_t *olen )
     size_t j;
 
     *olen = strlen( input );
-    if( *olen % 2 != 0 || *olen / 2 > POLARSSL_PSK_MAX_LEN )
+    if( *olen % 2 != 0 || *olen / 2 > MBEDTLS_PSK_MAX_LEN )
         return( -1 );
     *olen /= 2;
 
@@ -548,7 +697,7 @@ struct _psk_entry
 {
     const char *name;
     size_t key_len;
-    unsigned char key[POLARSSL_PSK_MAX_LEN];
+    unsigned char key[MBEDTLS_PSK_MAX_LEN];
     psk_entry *next;
 };
 
@@ -562,7 +711,7 @@ void psk_free( psk_entry *head )
     while( head != NULL )
     {
         next = head->next;
-        polarssl_free( head );
+        mbedtls_free( head );
         head = next;
     }
 }
@@ -586,7 +735,7 @@ psk_entry *psk_parse( char *psk_string )
 
     while( p <= end )
     {
-        if( ( new = polarssl_malloc( sizeof( psk_entry ) ) ) == NULL )
+        if( ( new = mbedtls_calloc( 1, sizeof( psk_entry ) ) ) == NULL )
             goto error;
 
         memset( new, 0, sizeof( psk_entry ) );
@@ -612,7 +761,7 @@ error:
 /*
  * PSK callback
  */
-int psk_callback( void *p_info, ssl_context *ssl,
+int psk_callback( void *p_info, mbedtls_ssl_context *ssl,
                   const unsigned char *name, size_t name_len )
 {
     psk_entry *cur = (psk_entry *) p_info;
@@ -622,8 +771,7 @@ int psk_callback( void *p_info, ssl_context *ssl,
         if( name_len == strlen( cur->name ) &&
             memcmp( name, cur->name, name_len ) == 0 )
         {
-            return( ssl_set_psk( ssl, cur->key, cur->key_len,
-                                 name, name_len ) );
+            return( mbedtls_ssl_set_hs_psk( ssl, cur->key, cur->key_len ) );
         }
 
         cur = cur->next;
@@ -631,9 +779,9 @@ int psk_callback( void *p_info, ssl_context *ssl,
 
     return( -1 );
 }
-#endif /* POLARSSL_KEY_EXCHANGE__SOME__PSK_ENABLED */
+#endif /* MBEDTLS_KEY_EXCHANGE__SOME__PSK_ENABLED */
 
-static int listen_fd, client_fd = -1;
+static mbedtls_net_context listen_fd, client_fd;
 
 /* Interruption handler to ensure clean exit (for valgrind testing) */
 #if !defined(_WIN32)
@@ -642,8 +790,8 @@ void term_handler( int sig )
 {
     ((void) sig);
     received_sigterm = 1;
-    net_close( listen_fd ); /* causes net_accept() to abort */
-    net_close( client_fd ); /* causes net_read() to abort */
+    mbedtls_net_free( &listen_fd ); /* causes mbedtls_net_accept() to abort */
+    mbedtls_net_free( &client_fd ); /* causes net_read() to abort */
 }
 #endif
 
@@ -652,40 +800,53 @@ int main( int argc, char *argv[] )
     int ret = 0, len, written, frags, exchanges_left;
     int version_suites[4][2];
     unsigned char buf[IO_BUF_LEN];
-#if defined(POLARSSL_KEY_EXCHANGE__SOME__PSK_ENABLED)
-    unsigned char psk[POLARSSL_PSK_MAX_LEN];
+#if defined(MBEDTLS_KEY_EXCHANGE__SOME__PSK_ENABLED)
+    unsigned char psk[MBEDTLS_PSK_MAX_LEN];
     size_t psk_len = 0;
     psk_entry *psk_info = NULL;
 #endif
     const char *pers = "ssl_server2";
+    unsigned char client_ip[16] = { 0 };
+    size_t cliip_len;
+#if defined(MBEDTLS_SSL_COOKIE_C)
+    mbedtls_ssl_cookie_ctx cookie_ctx;
+#endif
 
-    entropy_context entropy;
-    ctr_drbg_context ctr_drbg;
-    ssl_context ssl;
-#if defined(POLARSSL_SSL_RENEGOTIATION)
+    mbedtls_entropy_context entropy;
+    mbedtls_ctr_drbg_context ctr_drbg;
+    mbedtls_ssl_context ssl;
+    mbedtls_ssl_config conf;
+#if defined(MBEDTLS_TIMING_C)
+    mbedtls_timing_delay_context timer;
+#endif
+#if defined(MBEDTLS_SSL_RENEGOTIATION)
     unsigned char renego_period[8] = { 0 };
 #endif
-#if defined(POLARSSL_X509_CRT_PARSE_C)
-    x509_crt cacert;
-    x509_crt srvcert;
-    pk_context pkey;
-    x509_crt srvcert2;
-    pk_context pkey2;
+#if defined(MBEDTLS_X509_CRT_PARSE_C)
+    uint32_t flags;
+    mbedtls_x509_crt cacert;
+    mbedtls_x509_crt srvcert;
+    mbedtls_pk_context pkey;
+    mbedtls_x509_crt srvcert2;
+    mbedtls_pk_context pkey2;
     int key_cert_init = 0, key_cert_init2 = 0;
 #endif
-#if defined(POLARSSL_DHM_C) && defined(POLARSSL_FS_IO)
-    dhm_context dhm;
+#if defined(MBEDTLS_DHM_C) && defined(MBEDTLS_FS_IO)
+    mbedtls_dhm_context dhm;
 #endif
-#if defined(POLARSSL_SSL_CACHE_C)
-    ssl_cache_context cache;
+#if defined(MBEDTLS_SSL_CACHE_C)
+    mbedtls_ssl_cache_context cache;
 #endif
-#if defined(POLARSSL_SNI)
+#if defined(MBEDTLS_SSL_SESSION_TICKETS)
+    mbedtls_ssl_ticket_context ticket_ctx;
+#endif
+#if defined(SNI_OPTION)
     sni_entry *sni_info = NULL;
 #endif
-#if defined(POLARSSL_SSL_ALPN)
+#if defined(MBEDTLS_SSL_ALPN)
     const char *alpn_list[10];
 #endif
-#if defined(POLARSSL_MEMORY_BUFFER_ALLOC_C)
+#if defined(MBEDTLS_MEMORY_BUFFER_ALLOC_C)
     unsigned char alloc_buf[100000];
 #endif
 
@@ -693,30 +854,39 @@ int main( int argc, char *argv[] )
     char *p, *q;
     const int *list;
 
-#if defined(POLARSSL_MEMORY_BUFFER_ALLOC_C)
-    memory_buffer_alloc_init( alloc_buf, sizeof(alloc_buf) );
+#if defined(MBEDTLS_MEMORY_BUFFER_ALLOC_C)
+    mbedtls_memory_buffer_alloc_init( alloc_buf, sizeof(alloc_buf) );
 #endif
 
     /*
      * Make sure memory references are valid in case we exit early.
      */
-    listen_fd = 0;
-    memset( &ssl, 0, sizeof( ssl_context ) );
-#if defined(POLARSSL_X509_CRT_PARSE_C)
-    x509_crt_init( &cacert );
-    x509_crt_init( &srvcert );
-    pk_init( &pkey );
-    x509_crt_init( &srvcert2 );
-    pk_init( &pkey2 );
+    mbedtls_net_init( &client_fd );
+    mbedtls_net_init( &listen_fd );
+    mbedtls_ssl_init( &ssl );
+    mbedtls_ssl_config_init( &conf );
+    mbedtls_ctr_drbg_init( &ctr_drbg );
+#if defined(MBEDTLS_X509_CRT_PARSE_C)
+    mbedtls_x509_crt_init( &cacert );
+    mbedtls_x509_crt_init( &srvcert );
+    mbedtls_pk_init( &pkey );
+    mbedtls_x509_crt_init( &srvcert2 );
+    mbedtls_pk_init( &pkey2 );
 #endif
-#if defined(POLARSSL_DHM_C) && defined(POLARSSL_FS_IO)
-    dhm_init( &dhm );
+#if defined(MBEDTLS_DHM_C) && defined(MBEDTLS_FS_IO)
+    mbedtls_dhm_init( &dhm );
 #endif
-#if defined(POLARSSL_SSL_CACHE_C)
-    ssl_cache_init( &cache );
+#if defined(MBEDTLS_SSL_CACHE_C)
+    mbedtls_ssl_cache_init( &cache );
 #endif
-#if defined(POLARSSL_SSL_ALPN)
+#if defined(MBEDTLS_SSL_SESSION_TICKETS)
+    mbedtls_ssl_ticket_init( &ticket_ctx );
+#endif
+#if defined(MBEDTLS_SSL_ALPN)
     memset( (void *) alpn_list, 0, sizeof( alpn_list ) );
+#endif
+#if defined(MBEDTLS_SSL_COOKIE_C)
+    mbedtls_ssl_cookie_init( &cookie_ctx );
 #endif
 
 #if !defined(_WIN32)
@@ -731,19 +901,19 @@ int main( int argc, char *argv[] )
         if( ret == 0 )
             ret = 1;
 
-        polarssl_printf( USAGE );
+        mbedtls_printf( USAGE );
 
-        list = ssl_list_ciphersuites();
+        list = mbedtls_ssl_list_ciphersuites();
         while( *list )
         {
-            polarssl_printf(" %-42s", ssl_get_ciphersuite_name( *list ) );
+            mbedtls_printf(" %-42s", mbedtls_ssl_get_ciphersuite_name( *list ) );
             list++;
             if( !*list )
                 break;
-            polarssl_printf(" %s\n", ssl_get_ciphersuite_name( *list ) );
+            mbedtls_printf(" %s\n", mbedtls_ssl_get_ciphersuite_name( *list ) );
             list++;
         }
-        polarssl_printf("\n");
+        mbedtls_printf("\n");
         goto exit;
     }
 
@@ -751,6 +921,7 @@ int main( int argc, char *argv[] )
     opt.server_port         = DFL_SERVER_PORT;
     opt.debug_level         = DFL_DEBUG_LEVEL;
     opt.nbio                = DFL_NBIO;
+    opt.read_timeout        = DFL_READ_TIMEOUT;
     opt.ca_file             = DFL_CA_FILE;
     opt.ca_path             = DFL_CA_PATH;
     opt.crt_file            = DFL_CRT_FILE;
@@ -760,6 +931,7 @@ int main( int argc, char *argv[] )
     opt.psk                 = DFL_PSK;
     opt.psk_identity        = DFL_PSK_IDENTITY;
     opt.psk_list            = DFL_PSK_LIST;
+    opt.ecjpake_pw          = DFL_ECJPAKE_PW;
     opt.force_ciphersuite[0]= DFL_FORCE_CIPHER;
     opt.version_suites      = DFL_VERSION_SUITES;
     opt.renegotiation       = DFL_RENEGOTIATION;
@@ -781,6 +953,12 @@ int main( int argc, char *argv[] )
     opt.sni                 = DFL_SNI;
     opt.alpn_string         = DFL_ALPN_STRING;
     opt.dhm_file            = DFL_DHM_FILE;
+    opt.transport           = DFL_TRANSPORT;
+    opt.cookies             = DFL_COOKIES;
+    opt.anti_replay         = DFL_ANTI_REPLAY;
+    opt.hs_to_min           = DFL_HS_TO_MIN;
+    opt.hs_to_max           = DFL_HS_TO_MAX;
+    opt.badmac_limit        = DFL_BADMAC_LIMIT;
     opt.extended_ms         = DFL_EXTENDED_MS;
     opt.etm                 = DFL_ETM;
 
@@ -792,13 +970,19 @@ int main( int argc, char *argv[] )
         *q++ = '\0';
 
         if( strcmp( p, "server_port" ) == 0 )
-        {
-            opt.server_port = atoi( q );
-            if( opt.server_port < 1 || opt.server_port > 65535 )
-                goto usage;
-        }
+            opt.server_port = q;
         else if( strcmp( p, "server_addr" ) == 0 )
             opt.server_addr = q;
+        else if( strcmp( p, "dtls" ) == 0 )
+        {
+            int t = atoi( q );
+            if( t == 0 )
+                opt.transport = MBEDTLS_SSL_TRANSPORT_STREAM;
+            else if( t == 1 )
+                opt.transport = MBEDTLS_SSL_TRANSPORT_DATAGRAM;
+            else
+                goto usage;
+        }
         else if( strcmp( p, "debug_level" ) == 0 )
         {
             opt.debug_level = atoi( q );
@@ -811,6 +995,8 @@ int main( int argc, char *argv[] )
             if( opt.nbio < 0 || opt.nbio > 2 )
                 goto usage;
         }
+        else if( strcmp( p, "read_timeout" ) == 0 )
+            opt.read_timeout = atoi( q );
         else if( strcmp( p, "ca_file" ) == 0 )
             opt.ca_file = q;
         else if( strcmp( p, "ca_path" ) == 0 )
@@ -831,9 +1017,11 @@ int main( int argc, char *argv[] )
             opt.psk_identity = q;
         else if( strcmp( p, "psk_list" ) == 0 )
             opt.psk_list = q;
+        else if( strcmp( p, "ecjpake_pw" ) == 0 )
+            opt.ecjpake_pw = q;
         else if( strcmp( p, "force_ciphersuite" ) == 0 )
         {
-            opt.force_ciphersuite[0] = ssl_get_ciphersuite_id( q );
+            opt.force_ciphersuite[0] = mbedtls_ssl_get_ciphersuite_id( q );
 
             if( opt.force_ciphersuite[0] == 0 )
             {
@@ -846,16 +1034,16 @@ int main( int argc, char *argv[] )
             opt.version_suites = q;
         else if( strcmp( p, "renegotiation" ) == 0 )
         {
-            opt.renegotiation = (atoi( q )) ? SSL_RENEGOTIATION_ENABLED :
-                                              SSL_RENEGOTIATION_DISABLED;
+            opt.renegotiation = (atoi( q )) ? MBEDTLS_SSL_RENEGOTIATION_ENABLED :
+                                              MBEDTLS_SSL_RENEGOTIATION_DISABLED;
         }
         else if( strcmp( p, "allow_legacy" ) == 0 )
         {
             switch( atoi( q ) )
             {
-                case -1: opt.allow_legacy = SSL_LEGACY_BREAK_HANDSHAKE; break;
-                case 0:  opt.allow_legacy = SSL_LEGACY_NO_RENEGOTIATION; break;
-                case 1:  opt.allow_legacy = SSL_LEGACY_ALLOW_RENEGOTIATION; break;
+                case -1: opt.allow_legacy = MBEDTLS_SSL_LEGACY_BREAK_HANDSHAKE; break;
+                case 0:  opt.allow_legacy = MBEDTLS_SSL_LEGACY_NO_RENEGOTIATION; break;
+                case 1:  opt.allow_legacy = MBEDTLS_SSL_LEGACY_ALLOW_RENEGOTIATION; break;
                 default: goto usage;
             }
         }
@@ -871,39 +1059,48 @@ int main( int argc, char *argv[] )
         }
         else if( strcmp( p, "renego_period" ) == 0 )
         {
-            opt.renego_period = atoi( q );
-            if( opt.renego_period < 2 || opt.renego_period > 255 )
+#if defined(_MSC_VER)
+            opt.renego_period = _strtoui64( q, NULL, 10 );
+#else
+            if( sscanf( q, "%" SCNu64, &opt.renego_period ) != 1 )
+                goto usage;
+#endif /* _MSC_VER */
+            if( opt.renego_period < 2 )
                 goto usage;
         }
         else if( strcmp( p, "exchanges" ) == 0 )
         {
             opt.exchanges = atoi( q );
-            if( opt.exchanges < 1 )
+            if( opt.exchanges < 0 )
                 goto usage;
         }
         else if( strcmp( p, "min_version" ) == 0 )
         {
             if( strcmp( q, "ssl3" ) == 0 )
-                opt.min_version = SSL_MINOR_VERSION_0;
+                opt.min_version = MBEDTLS_SSL_MINOR_VERSION_0;
             else if( strcmp( q, "tls1" ) == 0 )
-                opt.min_version = SSL_MINOR_VERSION_1;
-            else if( strcmp( q, "tls1_1" ) == 0 )
-                opt.min_version = SSL_MINOR_VERSION_2;
-            else if( strcmp( q, "tls1_2" ) == 0 )
-                opt.min_version = SSL_MINOR_VERSION_3;
+                opt.min_version = MBEDTLS_SSL_MINOR_VERSION_1;
+            else if( strcmp( q, "tls1_1" ) == 0 ||
+                     strcmp( q, "dtls1" ) == 0 )
+                opt.min_version = MBEDTLS_SSL_MINOR_VERSION_2;
+            else if( strcmp( q, "tls1_2" ) == 0 ||
+                     strcmp( q, "dtls1_2" ) == 0 )
+                opt.min_version = MBEDTLS_SSL_MINOR_VERSION_3;
             else
                 goto usage;
         }
         else if( strcmp( p, "max_version" ) == 0 )
         {
             if( strcmp( q, "ssl3" ) == 0 )
-                opt.max_version = SSL_MINOR_VERSION_0;
+                opt.max_version = MBEDTLS_SSL_MINOR_VERSION_0;
             else if( strcmp( q, "tls1" ) == 0 )
-                opt.max_version = SSL_MINOR_VERSION_1;
-            else if( strcmp( q, "tls1_1" ) == 0 )
-                opt.max_version = SSL_MINOR_VERSION_2;
-            else if( strcmp( q, "tls1_2" ) == 0 )
-                opt.max_version = SSL_MINOR_VERSION_3;
+                opt.max_version = MBEDTLS_SSL_MINOR_VERSION_1;
+            else if( strcmp( q, "tls1_1" ) == 0 ||
+                     strcmp( q, "dtls1" ) == 0 )
+                opt.max_version = MBEDTLS_SSL_MINOR_VERSION_2;
+            else if( strcmp( q, "tls1_2" ) == 0 ||
+                     strcmp( q, "dtls1_2" ) == 0 )
+                opt.max_version = MBEDTLS_SSL_MINOR_VERSION_3;
             else
                 goto usage;
         }
@@ -911,8 +1108,8 @@ int main( int argc, char *argv[] )
         {
             switch( atoi( q ) )
             {
-                case 0:     opt.arc4 = SSL_ARC4_DISABLED;   break;
-                case 1:     opt.arc4 = SSL_ARC4_ENABLED;    break;
+                case 0:     opt.arc4 = MBEDTLS_SSL_ARC4_DISABLED;   break;
+                case 1:     opt.arc4 = MBEDTLS_SSL_ARC4_ENABLED;    break;
                 default:    goto usage;
             }
         }
@@ -920,48 +1117,54 @@ int main( int argc, char *argv[] )
         {
             if( strcmp( q, "ssl3" ) == 0 )
             {
-                opt.min_version = SSL_MINOR_VERSION_0;
-                opt.max_version = SSL_MINOR_VERSION_0;
+                opt.min_version = MBEDTLS_SSL_MINOR_VERSION_0;
+                opt.max_version = MBEDTLS_SSL_MINOR_VERSION_0;
             }
             else if( strcmp( q, "tls1" ) == 0 )
             {
-                opt.min_version = SSL_MINOR_VERSION_1;
-                opt.max_version = SSL_MINOR_VERSION_1;
+                opt.min_version = MBEDTLS_SSL_MINOR_VERSION_1;
+                opt.max_version = MBEDTLS_SSL_MINOR_VERSION_1;
             }
             else if( strcmp( q, "tls1_1" ) == 0 )
             {
-                opt.min_version = SSL_MINOR_VERSION_2;
-                opt.max_version = SSL_MINOR_VERSION_2;
+                opt.min_version = MBEDTLS_SSL_MINOR_VERSION_2;
+                opt.max_version = MBEDTLS_SSL_MINOR_VERSION_2;
             }
             else if( strcmp( q, "tls1_2" ) == 0 )
             {
-                opt.min_version = SSL_MINOR_VERSION_3;
-                opt.max_version = SSL_MINOR_VERSION_3;
+                opt.min_version = MBEDTLS_SSL_MINOR_VERSION_3;
+                opt.max_version = MBEDTLS_SSL_MINOR_VERSION_3;
+            }
+            else if( strcmp( q, "dtls1" ) == 0 )
+            {
+                opt.min_version = MBEDTLS_SSL_MINOR_VERSION_2;
+                opt.max_version = MBEDTLS_SSL_MINOR_VERSION_2;
+                opt.transport = MBEDTLS_SSL_TRANSPORT_DATAGRAM;
+            }
+            else if( strcmp( q, "dtls1_2" ) == 0 )
+            {
+                opt.min_version = MBEDTLS_SSL_MINOR_VERSION_3;
+                opt.max_version = MBEDTLS_SSL_MINOR_VERSION_3;
+                opt.transport = MBEDTLS_SSL_TRANSPORT_DATAGRAM;
             }
             else
                 goto usage;
         }
         else if( strcmp( p, "auth_mode" ) == 0 )
         {
-            if( strcmp( q, "none" ) == 0 )
-                opt.auth_mode = SSL_VERIFY_NONE;
-            else if( strcmp( q, "optional" ) == 0 )
-                opt.auth_mode = SSL_VERIFY_OPTIONAL;
-            else if( strcmp( q, "required" ) == 0 )
-                opt.auth_mode = SSL_VERIFY_REQUIRED;
-            else
+            if( ( opt.auth_mode = get_auth_mode( q ) ) < 0 )
                 goto usage;
         }
         else if( strcmp( p, "max_frag_len" ) == 0 )
         {
             if( strcmp( q, "512" ) == 0 )
-                opt.mfl_code = SSL_MAX_FRAG_LEN_512;
+                opt.mfl_code = MBEDTLS_SSL_MAX_FRAG_LEN_512;
             else if( strcmp( q, "1024" ) == 0 )
-                opt.mfl_code = SSL_MAX_FRAG_LEN_1024;
+                opt.mfl_code = MBEDTLS_SSL_MAX_FRAG_LEN_1024;
             else if( strcmp( q, "2048" ) == 0 )
-                opt.mfl_code = SSL_MAX_FRAG_LEN_2048;
+                opt.mfl_code = MBEDTLS_SSL_MAX_FRAG_LEN_2048;
             else if( strcmp( q, "4096" ) == 0 )
-                opt.mfl_code = SSL_MAX_FRAG_LEN_4096;
+                opt.mfl_code = MBEDTLS_SSL_MAX_FRAG_LEN_4096;
             else
                 goto usage;
         }
@@ -973,8 +1176,8 @@ int main( int argc, char *argv[] )
         {
             switch( atoi( q ) )
             {
-                case 0: opt.trunc_hmac = SSL_TRUNC_HMAC_DISABLED; break;
-                case 1: opt.trunc_hmac = SSL_TRUNC_HMAC_ENABLED; break;
+                case 0: opt.trunc_hmac = MBEDTLS_SSL_TRUNC_HMAC_DISABLED; break;
+                case 1: opt.trunc_hmac = MBEDTLS_SSL_TRUNC_HMAC_ENABLED; break;
                 default: goto usage;
             }
         }
@@ -982,8 +1185,8 @@ int main( int argc, char *argv[] )
         {
             switch( atoi( q ) )
             {
-                case 0: opt.extended_ms = SSL_EXTENDED_MS_DISABLED; break;
-                case 1: opt.extended_ms = SSL_EXTENDED_MS_ENABLED; break;
+                case 0: opt.extended_ms = MBEDTLS_SSL_EXTENDED_MS_DISABLED; break;
+                case 1: opt.extended_ms = MBEDTLS_SSL_EXTENDED_MS_ENABLED; break;
                 default: goto usage;
             }
         }
@@ -991,8 +1194,8 @@ int main( int argc, char *argv[] )
         {
             switch( atoi( q ) )
             {
-                case 0: opt.etm = SSL_ETM_DISABLED; break;
-                case 1: opt.etm = SSL_ETM_ENABLED; break;
+                case 0: opt.etm = MBEDTLS_SSL_ETM_DISABLED; break;
+                case 1: opt.etm = MBEDTLS_SSL_ETM_ENABLED; break;
                 default: goto usage;
             }
         }
@@ -1020,6 +1223,34 @@ int main( int argc, char *argv[] )
             if( opt.cache_timeout < 0 )
                 goto usage;
         }
+        else if( strcmp( p, "cookies" ) == 0 )
+        {
+            opt.cookies = atoi( q );
+            if( opt.cookies < -1 || opt.cookies > 1)
+                goto usage;
+        }
+        else if( strcmp( p, "anti_replay" ) == 0 )
+        {
+            opt.anti_replay = atoi( q );
+            if( opt.anti_replay < 0 || opt.anti_replay > 1)
+                goto usage;
+        }
+        else if( strcmp( p, "badmac_limit" ) == 0 )
+        {
+            opt.badmac_limit = atoi( q );
+            if( opt.badmac_limit < 0 )
+                goto usage;
+        }
+        else if( strcmp( p, "hs_timeout" ) == 0 )
+        {
+            if( ( p = strchr( q, '-' ) ) == NULL )
+                goto usage;
+            *p++ = '\0';
+            opt.hs_to_min = atoi( q );
+            opt.hs_to_max = atoi( p );
+            if( opt.hs_to_min == 0 || opt.hs_to_max < opt.hs_to_min )
+                goto usage;
+        }
         else if( strcmp( p, "sni" ) == 0 )
         {
             opt.sni = q;
@@ -1028,33 +1259,58 @@ int main( int argc, char *argv[] )
             goto usage;
     }
 
-#if defined(POLARSSL_DEBUG_C)
-    debug_set_threshold( opt.debug_level );
+#if defined(MBEDTLS_DEBUG_C)
+    mbedtls_debug_set_threshold( opt.debug_level );
 #endif
 
     if( opt.force_ciphersuite[0] > 0 )
     {
-        const ssl_ciphersuite_t *ciphersuite_info;
-        ciphersuite_info = ssl_ciphersuite_from_id( opt.force_ciphersuite[0] );
+        const mbedtls_ssl_ciphersuite_t *ciphersuite_info;
+        ciphersuite_info = mbedtls_ssl_ciphersuite_from_id( opt.force_ciphersuite[0] );
 
         if( opt.max_version != -1 &&
             ciphersuite_info->min_minor_ver > opt.max_version )
         {
-            polarssl_printf("forced ciphersuite not allowed with this protocol version\n");
+            mbedtls_printf("forced ciphersuite not allowed with this protocol version\n");
             ret = 2;
             goto usage;
         }
         if( opt.min_version != -1 &&
             ciphersuite_info->max_minor_ver < opt.min_version )
         {
-            polarssl_printf("forced ciphersuite not allowed with this protocol version\n");
+            mbedtls_printf("forced ciphersuite not allowed with this protocol version\n");
             ret = 2;
             goto usage;
         }
-        if( opt.max_version > ciphersuite_info->max_minor_ver )
+
+        /* If we select a version that's not supported by
+         * this suite, then there will be no common ciphersuite... */
+        if( opt.max_version == -1 ||
+            opt.max_version > ciphersuite_info->max_minor_ver )
+        {
             opt.max_version = ciphersuite_info->max_minor_ver;
+        }
         if( opt.min_version < ciphersuite_info->min_minor_ver )
+        {
             opt.min_version = ciphersuite_info->min_minor_ver;
+            /* DTLS starts with TLS 1.1 */
+            if( opt.transport == MBEDTLS_SSL_TRANSPORT_DATAGRAM &&
+                opt.min_version < MBEDTLS_SSL_MINOR_VERSION_2 )
+                opt.min_version = MBEDTLS_SSL_MINOR_VERSION_2;
+        }
+
+        /* Enable RC4 if needed and not explicitly disabled */
+        if( ciphersuite_info->cipher == MBEDTLS_CIPHER_ARC4_128 )
+        {
+            if( opt.arc4 == MBEDTLS_SSL_ARC4_DISABLED )
+            {
+                mbedtls_printf("forced RC4 ciphersuite with RC4 disabled\n");
+                ret = 2;
+                goto usage;
+            }
+
+            opt.arc4 = MBEDTLS_SSL_ARC4_ENABLED;
+        }
     }
 
     if( opt.version_suites != NULL )
@@ -1077,7 +1333,7 @@ int main( int argc, char *argv[] )
 
         if( i != 4 )
         {
-            polarssl_printf( "too few values for version_suites\n" );
+            mbedtls_printf( "too few values for version_suites\n" );
             ret = 1;
             goto exit;
         }
@@ -1087,24 +1343,24 @@ int main( int argc, char *argv[] )
         /* Get the suites identifiers from their name */
         for( i = 0; i < 4; i++ )
         {
-            version_suites[i][0] = ssl_get_ciphersuite_id( name[i] );
+            version_suites[i][0] = mbedtls_ssl_get_ciphersuite_id( name[i] );
 
             if( version_suites[i][0] == 0 )
             {
-                polarssl_printf( "unknown ciphersuite: '%s'\n", name[i] );
+                mbedtls_printf( "unknown ciphersuite: '%s'\n", name[i] );
                 ret = 2;
                 goto usage;
             }
         }
     }
 
-#if defined(POLARSSL_KEY_EXCHANGE__SOME__PSK_ENABLED)
+#if defined(MBEDTLS_KEY_EXCHANGE__SOME__PSK_ENABLED)
     /*
      * Unhexify the pre-shared key and parse the list if any given
      */
     if( unhexify( psk, opt.psk, &psk_len ) != 0 )
     {
-        polarssl_printf( "pre-shared key not valid hex\n" );
+        mbedtls_printf( "pre-shared key not valid hex\n" );
         goto exit;
     }
 
@@ -1112,13 +1368,13 @@ int main( int argc, char *argv[] )
     {
         if( ( psk_info = psk_parse( opt.psk_list ) ) == NULL )
         {
-            polarssl_printf( "psk_list invalid" );
+            mbedtls_printf( "psk_list invalid" );
             goto exit;
         }
     }
-#endif /* POLARSSL_KEY_EXCHANGE__SOME__PSK_ENABLED */
+#endif /* MBEDTLS_KEY_EXCHANGE__SOME__PSK_ENABLED */
 
-#if defined(POLARSSL_SSL_ALPN)
+#if defined(MBEDTLS_SSL_ALPN)
     if( opt.alpn_string != NULL )
     {
         p = (char *) opt.alpn_string;
@@ -1136,75 +1392,81 @@ int main( int argc, char *argv[] )
                 *p++ = '\0';
         }
     }
-#endif /* POLARSSL_SSL_ALPN */
+#endif /* MBEDTLS_SSL_ALPN */
 
     /*
      * 0. Initialize the RNG and the session data
      */
-    polarssl_printf( "\n  . Seeding the random number generator..." );
+    mbedtls_printf( "\n  . Seeding the random number generator..." );
     fflush( stdout );
 
-    entropy_init( &entropy );
-    if( ( ret = ctr_drbg_init( &ctr_drbg, entropy_func, &entropy,
+    mbedtls_entropy_init( &entropy );
+    if( ( ret = mbedtls_ctr_drbg_seed( &ctr_drbg, mbedtls_entropy_func, &entropy,
                                (const unsigned char *) pers,
                                strlen( pers ) ) ) != 0 )
     {
-        polarssl_printf( " failed\n  ! ctr_drbg_init returned -0x%x\n", -ret );
+        mbedtls_printf( " failed\n  ! mbedtls_ctr_drbg_seed returned -0x%x\n", -ret );
         goto exit;
     }
 
-    polarssl_printf( " ok\n" );
+    mbedtls_printf( " ok\n" );
 
-#if defined(POLARSSL_X509_CRT_PARSE_C)
+#if defined(MBEDTLS_X509_CRT_PARSE_C)
     /*
      * 1.1. Load the trusted CA
      */
-    polarssl_printf( "  . Loading the CA root certificate ..." );
+    mbedtls_printf( "  . Loading the CA root certificate ..." );
     fflush( stdout );
 
-#if defined(POLARSSL_FS_IO)
+#if defined(MBEDTLS_FS_IO)
     if( strlen( opt.ca_path ) )
         if( strcmp( opt.ca_path, "none" ) == 0 )
             ret = 0;
         else
-            ret = x509_crt_parse_path( &cacert, opt.ca_path );
+            ret = mbedtls_x509_crt_parse_path( &cacert, opt.ca_path );
     else if( strlen( opt.ca_file ) )
         if( strcmp( opt.ca_file, "none" ) == 0 )
             ret = 0;
         else
-            ret = x509_crt_parse_file( &cacert, opt.ca_file );
+            ret = mbedtls_x509_crt_parse_file( &cacert, opt.ca_file );
     else
 #endif
-#if defined(POLARSSL_CERTS_C)
-        ret = x509_crt_parse( &cacert, (const unsigned char *) test_ca_list,
-                              strlen( test_ca_list ) );
+#if defined(MBEDTLS_CERTS_C)
+        for( i = 0; mbedtls_test_cas[i] != NULL; i++ )
+        {
+            ret = mbedtls_x509_crt_parse( &cacert,
+                                  (const unsigned char *) mbedtls_test_cas[i],
+                                  mbedtls_test_cas_len[i] );
+            if( ret != 0 )
+                break;
+        }
 #else
     {
         ret = 1;
-        polarssl_printf("POLARSSL_CERTS_C not defined.");
+        mbedtls_printf("MBEDTLS_CERTS_C not defined.");
     }
 #endif
     if( ret < 0 )
     {
-        polarssl_printf( " failed\n  !  x509_crt_parse returned -0x%x\n\n", -ret );
+        mbedtls_printf( " failed\n  !  mbedtls_x509_crt_parse returned -0x%x\n\n", -ret );
         goto exit;
     }
 
-    polarssl_printf( " ok (%d skipped)\n", ret );
+    mbedtls_printf( " ok (%d skipped)\n", ret );
 
     /*
      * 1.2. Load own certificate and private key
      */
-    polarssl_printf( "  . Loading the server cert. and key..." );
+    mbedtls_printf( "  . Loading the server cert. and key..." );
     fflush( stdout );
 
-#if defined(POLARSSL_FS_IO)
+#if defined(MBEDTLS_FS_IO)
     if( strlen( opt.crt_file ) && strcmp( opt.crt_file, "none" ) != 0 )
     {
         key_cert_init++;
-        if( ( ret = x509_crt_parse_file( &srvcert, opt.crt_file ) ) != 0 )
+        if( ( ret = mbedtls_x509_crt_parse_file( &srvcert, opt.crt_file ) ) != 0 )
         {
-            polarssl_printf( " failed\n  !  x509_crt_parse_file returned -0x%x\n\n",
+            mbedtls_printf( " failed\n  !  mbedtls_x509_crt_parse_file returned -0x%x\n\n",
                     -ret );
             goto exit;
         }
@@ -1212,24 +1474,24 @@ int main( int argc, char *argv[] )
     if( strlen( opt.key_file ) && strcmp( opt.key_file, "none" ) != 0 )
     {
         key_cert_init++;
-        if( ( ret = pk_parse_keyfile( &pkey, opt.key_file, "" ) ) != 0 )
+        if( ( ret = mbedtls_pk_parse_keyfile( &pkey, opt.key_file, "" ) ) != 0 )
         {
-            polarssl_printf( " failed\n  !  pk_parse_keyfile returned -0x%x\n\n", -ret );
+            mbedtls_printf( " failed\n  !  mbedtls_pk_parse_keyfile returned -0x%x\n\n", -ret );
             goto exit;
         }
     }
     if( key_cert_init == 1 )
     {
-        polarssl_printf( " failed\n  !  crt_file without key_file or vice-versa\n\n" );
+        mbedtls_printf( " failed\n  !  crt_file without key_file or vice-versa\n\n" );
         goto exit;
     }
 
     if( strlen( opt.crt_file2 ) && strcmp( opt.crt_file2, "none" ) != 0 )
     {
         key_cert_init2++;
-        if( ( ret = x509_crt_parse_file( &srvcert2, opt.crt_file2 ) ) != 0 )
+        if( ( ret = mbedtls_x509_crt_parse_file( &srvcert2, opt.crt_file2 ) ) != 0 )
         {
-            polarssl_printf( " failed\n  !  x509_crt_parse_file(2) returned -0x%x\n\n",
+            mbedtls_printf( " failed\n  !  mbedtls_x509_crt_parse_file(2) returned -0x%x\n\n",
                     -ret );
             goto exit;
         }
@@ -1237,16 +1499,16 @@ int main( int argc, char *argv[] )
     if( strlen( opt.key_file2 ) && strcmp( opt.key_file2, "none" ) != 0 )
     {
         key_cert_init2++;
-        if( ( ret = pk_parse_keyfile( &pkey2, opt.key_file2, "" ) ) != 0 )
+        if( ( ret = mbedtls_pk_parse_keyfile( &pkey2, opt.key_file2, "" ) ) != 0 )
         {
-            polarssl_printf( " failed\n  !  pk_parse_keyfile(2) returned -0x%x\n\n",
+            mbedtls_printf( " failed\n  !  mbedtls_pk_parse_keyfile(2) returned -0x%x\n\n",
                     -ret );
             goto exit;
         }
     }
     if( key_cert_init2 == 1 )
     {
-        polarssl_printf( " failed\n  !  crt_file2 without key_file2 or vice-versa\n\n" );
+        mbedtls_printf( " failed\n  !  crt_file2 without key_file2 or vice-versa\n\n" );
         goto exit;
     }
 #endif
@@ -1257,548 +1519,746 @@ int main( int argc, char *argv[] )
         strcmp( opt.crt_file2, "none" ) != 0 &&
         strcmp( opt.key_file2, "none" ) != 0 )
     {
-#if !defined(POLARSSL_CERTS_C)
-        polarssl_printf( "Not certificated or key provided, and \n"
-                "POLARSSL_CERTS_C not defined!\n" );
+#if !defined(MBEDTLS_CERTS_C)
+        mbedtls_printf( "Not certificated or key provided, and \n"
+                "MBEDTLS_CERTS_C not defined!\n" );
         goto exit;
 #else
-#if defined(POLARSSL_RSA_C)
-        if( ( ret = x509_crt_parse( &srvcert,
-                                    (const unsigned char *) test_srv_crt_rsa,
-                                    strlen( test_srv_crt_rsa ) ) ) != 0 )
+#if defined(MBEDTLS_RSA_C)
+        if( ( ret = mbedtls_x509_crt_parse( &srvcert,
+                                    (const unsigned char *) mbedtls_test_srv_crt_rsa,
+                                    mbedtls_test_srv_crt_rsa_len ) ) != 0 )
         {
-            polarssl_printf( " failed\n  !  x509_crt_parse returned -0x%x\n\n", -ret );
+            mbedtls_printf( " failed\n  !  mbedtls_x509_crt_parse returned -0x%x\n\n", -ret );
             goto exit;
         }
-        if( ( ret = pk_parse_key( &pkey,
-                                  (const unsigned char *) test_srv_key_rsa,
-                                  strlen( test_srv_key_rsa ), NULL, 0 ) ) != 0 )
+        if( ( ret = mbedtls_pk_parse_key( &pkey,
+                                  (const unsigned char *) mbedtls_test_srv_key_rsa,
+                                  mbedtls_test_srv_key_rsa_len, NULL, 0 ) ) != 0 )
         {
-            polarssl_printf( " failed\n  !  pk_parse_key returned -0x%x\n\n", -ret );
+            mbedtls_printf( " failed\n  !  mbedtls_pk_parse_key returned -0x%x\n\n", -ret );
             goto exit;
         }
         key_cert_init = 2;
-#endif /* POLARSSL_RSA_C */
-#if defined(POLARSSL_ECDSA_C)
-        if( ( ret = x509_crt_parse( &srvcert2,
-                                    (const unsigned char *) test_srv_crt_ec,
-                                    strlen( test_srv_crt_ec ) ) ) != 0 )
+#endif /* MBEDTLS_RSA_C */
+#if defined(MBEDTLS_ECDSA_C)
+        if( ( ret = mbedtls_x509_crt_parse( &srvcert2,
+                                    (const unsigned char *) mbedtls_test_srv_crt_ec,
+                                    mbedtls_test_srv_crt_ec_len ) ) != 0 )
         {
-            polarssl_printf( " failed\n  !  x509_crt_parse2 returned -0x%x\n\n", -ret );
+            mbedtls_printf( " failed\n  !  x509_crt_parse2 returned -0x%x\n\n", -ret );
             goto exit;
         }
-        if( ( ret = pk_parse_key( &pkey2,
-                                  (const unsigned char *) test_srv_key_ec,
-                                  strlen( test_srv_key_ec ), NULL, 0 ) ) != 0 )
+        if( ( ret = mbedtls_pk_parse_key( &pkey2,
+                                  (const unsigned char *) mbedtls_test_srv_key_ec,
+                                  mbedtls_test_srv_key_ec_len, NULL, 0 ) ) != 0 )
         {
-            polarssl_printf( " failed\n  !  pk_parse_key2 returned -0x%x\n\n", -ret );
+            mbedtls_printf( " failed\n  !  pk_parse_key2 returned -0x%x\n\n", -ret );
             goto exit;
         }
         key_cert_init2 = 2;
-#endif /* POLARSSL_ECDSA_C */
-#endif /* POLARSSL_CERTS_C */
+#endif /* MBEDTLS_ECDSA_C */
+#endif /* MBEDTLS_CERTS_C */
     }
 
-    polarssl_printf( " ok\n" );
-#endif /* POLARSSL_X509_CRT_PARSE_C */
+    mbedtls_printf( " ok\n" );
+#endif /* MBEDTLS_X509_CRT_PARSE_C */
 
-#if defined(POLARSSL_DHM_C) && defined(POLARSSL_FS_IO)
+#if defined(MBEDTLS_DHM_C) && defined(MBEDTLS_FS_IO)
     if( opt.dhm_file != NULL )
     {
-        polarssl_printf( "  . Loading DHM parameters..." );
+        mbedtls_printf( "  . Loading DHM parameters..." );
         fflush( stdout );
 
-        if( ( ret = dhm_parse_dhmfile( &dhm, opt.dhm_file ) ) != 0 )
+        if( ( ret = mbedtls_dhm_parse_dhmfile( &dhm, opt.dhm_file ) ) != 0 )
         {
-            polarssl_printf( " failed\n  ! dhm_parse_dhmfile returned -0x%04X\n\n",
+            mbedtls_printf( " failed\n  ! mbedtls_dhm_parse_dhmfile returned -0x%04X\n\n",
                      -ret );
             goto exit;
         }
 
-        polarssl_printf( " ok\n" );
+        mbedtls_printf( " ok\n" );
     }
 #endif
 
-#if defined(POLARSSL_SNI)
+#if defined(SNI_OPTION)
     if( opt.sni != NULL )
     {
-        polarssl_printf( "  . Setting up SNI information..." );
+        mbedtls_printf( "  . Setting up SNI information..." );
         fflush( stdout );
 
         if( ( sni_info = sni_parse( opt.sni ) ) == NULL )
         {
-            polarssl_printf( " failed\n" );
+            mbedtls_printf( " failed\n" );
             goto exit;
         }
 
-        polarssl_printf( " ok\n" );
+        mbedtls_printf( " ok\n" );
     }
-#endif /* POLARSSL_SNI */
+#endif /* SNI_OPTION */
 
     /*
      * 2. Setup the listening TCP socket
      */
-    polarssl_printf( "  . Bind on tcp://localhost:%-4d/ ...", opt.server_port );
+    mbedtls_printf( "  . Bind on %s://%s:%s/ ...",
+            opt.transport == MBEDTLS_SSL_TRANSPORT_STREAM ? "tcp" : "udp",
+            opt.server_addr ? opt.server_addr : "*",
+            opt.server_port );
     fflush( stdout );
 
-    if( ( ret = net_bind( &listen_fd, opt.server_addr,
-                                      opt.server_port ) ) != 0 )
+    if( ( ret = mbedtls_net_bind( &listen_fd, opt.server_addr, opt.server_port,
+                          opt.transport == MBEDTLS_SSL_TRANSPORT_STREAM ?
+                          MBEDTLS_NET_PROTO_TCP : MBEDTLS_NET_PROTO_UDP ) ) != 0 )
     {
-        polarssl_printf( " failed\n  ! net_bind returned -0x%x\n\n", -ret );
+        mbedtls_printf( " failed\n  ! mbedtls_net_bind returned -0x%x\n\n", -ret );
         goto exit;
     }
 
-    polarssl_printf( " ok\n" );
+    mbedtls_printf( " ok\n" );
 
     /*
      * 3. Setup stuff
      */
-    polarssl_printf( "  . Setting up the SSL/TLS structure..." );
+    mbedtls_printf( "  . Setting up the SSL/TLS structure..." );
     fflush( stdout );
 
-    if( ( ret = ssl_init( &ssl ) ) != 0 )
+    if( ( ret = mbedtls_ssl_config_defaults( &conf,
+                    MBEDTLS_SSL_IS_SERVER,
+                    opt.transport,
+                    MBEDTLS_SSL_PRESET_DEFAULT ) ) != 0 )
     {
-        polarssl_printf( " failed\n  ! ssl_init returned -0x%x\n\n", -ret );
+        mbedtls_printf( " failed\n  ! mbedtls_ssl_config_defaults returned -0x%x\n\n", -ret );
         goto exit;
     }
 
-    ssl_set_endpoint( &ssl, SSL_IS_SERVER );
-    ssl_set_authmode( &ssl, opt.auth_mode );
+    if( opt.auth_mode != DFL_AUTH_MODE )
+        mbedtls_ssl_conf_authmode( &conf, opt.auth_mode );
 
-#if defined(POLARSSL_SSL_MAX_FRAGMENT_LENGTH)
-    if( ( ret = ssl_set_max_frag_len( &ssl, opt.mfl_code ) ) != 0 )
+#if defined(MBEDTLS_SSL_PROTO_DTLS)
+    if( opt.hs_to_min != DFL_HS_TO_MIN || opt.hs_to_max != DFL_HS_TO_MAX )
+        mbedtls_ssl_conf_handshake_timeout( &conf, opt.hs_to_min, opt.hs_to_max );
+#endif /* MBEDTLS_SSL_PROTO_DTLS */
+
+#if defined(MBEDTLS_SSL_MAX_FRAGMENT_LENGTH)
+    if( ( ret = mbedtls_ssl_conf_max_frag_len( &conf, opt.mfl_code ) ) != 0 )
     {
-        polarssl_printf( " failed\n  ! ssl_set_max_frag_len returned %d\n\n", ret );
+        mbedtls_printf( " failed\n  ! mbedtls_ssl_conf_max_frag_len returned %d\n\n", ret );
         goto exit;
     };
 #endif
 
-#if defined(POLARSSL_SSL_TRUNCATED_HMAC)
+#if defined(MBEDTLS_SSL_TRUNCATED_HMAC)
     if( opt.trunc_hmac != DFL_TRUNC_HMAC )
-        ssl_set_truncated_hmac( &ssl, opt.trunc_hmac );
+        mbedtls_ssl_conf_truncated_hmac( &conf, opt.trunc_hmac );
 #endif
 
-#if defined(POLARSSL_SSL_EXTENDED_MASTER_SECRET)
+#if defined(MBEDTLS_SSL_EXTENDED_MASTER_SECRET)
     if( opt.extended_ms != DFL_EXTENDED_MS )
-        ssl_set_extended_master_secret( &ssl, opt.extended_ms );
+        mbedtls_ssl_conf_extended_master_secret( &conf, opt.extended_ms );
 #endif
 
-#if defined(POLARSSL_SSL_ENCRYPT_THEN_MAC)
+#if defined(MBEDTLS_SSL_ENCRYPT_THEN_MAC)
     if( opt.etm != DFL_ETM )
-        ssl_set_encrypt_then_mac( &ssl, opt.etm );
+        mbedtls_ssl_conf_encrypt_then_mac( &conf, opt.etm );
 #endif
 
-#if defined(POLARSSL_SSL_ALPN)
+#if defined(MBEDTLS_SSL_ALPN)
     if( opt.alpn_string != NULL )
-        if( ( ret = ssl_set_alpn_protocols( &ssl, alpn_list ) ) != 0 )
+        if( ( ret = mbedtls_ssl_conf_alpn_protocols( &conf, alpn_list ) ) != 0 )
         {
-            polarssl_printf( " failed\n  ! ssl_set_alpn_protocols returned %d\n\n", ret );
+            mbedtls_printf( " failed\n  ! mbedtls_ssl_conf_alpn_protocols returned %d\n\n", ret );
             goto exit;
         }
 #endif
 
-    ssl_set_rng( &ssl, ctr_drbg_random, &ctr_drbg );
-    ssl_set_dbg( &ssl, my_debug, stdout );
+    mbedtls_ssl_conf_rng( &conf, mbedtls_ctr_drbg_random, &ctr_drbg );
+    mbedtls_ssl_conf_dbg( &conf, my_debug, stdout );
 
-#if defined(POLARSSL_SSL_CACHE_C)
+#if defined(MBEDTLS_SSL_CACHE_C)
     if( opt.cache_max != -1 )
-        ssl_cache_set_max_entries( &cache, opt.cache_max );
+        mbedtls_ssl_cache_set_max_entries( &cache, opt.cache_max );
 
     if( opt.cache_timeout != -1 )
-        ssl_cache_set_timeout( &cache, opt.cache_timeout );
+        mbedtls_ssl_cache_set_timeout( &cache, opt.cache_timeout );
 
-    ssl_set_session_cache( &ssl, ssl_cache_get, &cache,
-                                 ssl_cache_set, &cache );
+    mbedtls_ssl_conf_session_cache( &conf, &cache,
+                                   mbedtls_ssl_cache_get,
+                                   mbedtls_ssl_cache_set );
 #endif
 
-#if defined(POLARSSL_SSL_SESSION_TICKETS)
-    if( ( ret = ssl_set_session_tickets( &ssl, opt.tickets ) ) != 0 )
+#if defined(MBEDTLS_SSL_SESSION_TICKETS)
+    if( opt.tickets == MBEDTLS_SSL_SESSION_TICKETS_ENABLED )
     {
-        polarssl_printf( " failed\n  ! ssl_set_session_tickets returned %d\n\n", ret );
-        goto exit;
-    }
+        if( ( ret = mbedtls_ssl_ticket_setup( &ticket_ctx,
+                        mbedtls_ctr_drbg_random, &ctr_drbg,
+                        MBEDTLS_CIPHER_AES_256_GCM,
+                        opt.ticket_timeout ) ) != 0 )
+        {
+            mbedtls_printf( " failed\n  ! mbedtls_ssl_ticket_setup returned %d\n\n", ret );
+            goto exit;
+        }
 
-    if( opt.ticket_timeout != -1 )
-        ssl_set_session_ticket_lifetime( &ssl, opt.ticket_timeout );
+        mbedtls_ssl_conf_session_tickets_cb( &conf,
+                mbedtls_ssl_ticket_write,
+                mbedtls_ssl_ticket_parse,
+                &ticket_ctx );
+    }
 #endif
+
+#if defined(MBEDTLS_SSL_PROTO_DTLS)
+    if( opt.transport == MBEDTLS_SSL_TRANSPORT_DATAGRAM )
+    {
+#if defined(MBEDTLS_SSL_COOKIE_C)
+        if( opt.cookies > 0 )
+        {
+            if( ( ret = mbedtls_ssl_cookie_setup( &cookie_ctx,
+                                          mbedtls_ctr_drbg_random, &ctr_drbg ) ) != 0 )
+            {
+                mbedtls_printf( " failed\n  ! mbedtls_ssl_cookie_setup returned %d\n\n", ret );
+                goto exit;
+            }
+
+            mbedtls_ssl_conf_dtls_cookies( &conf, mbedtls_ssl_cookie_write, mbedtls_ssl_cookie_check,
+                                       &cookie_ctx );
+        }
+        else
+#endif /* MBEDTLS_SSL_COOKIE_C */
+#if defined(MBEDTLS_SSL_DTLS_HELLO_VERIFY)
+        if( opt.cookies == 0 )
+        {
+            mbedtls_ssl_conf_dtls_cookies( &conf, NULL, NULL, NULL );
+        }
+        else
+#endif /* MBEDTLS_SSL_DTLS_HELLO_VERIFY */
+        {
+            ; /* Nothing to do */
+        }
+
+#if defined(MBEDTLS_SSL_DTLS_ANTI_REPLAY)
+        if( opt.anti_replay != DFL_ANTI_REPLAY )
+            mbedtls_ssl_conf_dtls_anti_replay( &conf, opt.anti_replay );
+#endif
+
+#if defined(MBEDTLS_SSL_DTLS_BADMAC_LIMIT)
+        if( opt.badmac_limit != DFL_BADMAC_LIMIT )
+            mbedtls_ssl_conf_dtls_badmac_limit( &conf, opt.badmac_limit );
+#endif
+    }
+#endif /* MBEDTLS_SSL_PROTO_DTLS */
 
     if( opt.force_ciphersuite[0] != DFL_FORCE_CIPHER )
-        ssl_set_ciphersuites( &ssl, opt.force_ciphersuite );
-    else
-        ssl_set_arc4_support( &ssl, opt.arc4 );
+        mbedtls_ssl_conf_ciphersuites( &conf, opt.force_ciphersuite );
+
+#if defined(MBEDTLS_ARC4_C)
+    if( opt.arc4 != DFL_ARC4 )
+        mbedtls_ssl_conf_arc4_support( &conf, opt.arc4 );
+#endif
 
     if( opt.version_suites != NULL )
     {
-        ssl_set_ciphersuites_for_version( &ssl, version_suites[0],
-                                          SSL_MAJOR_VERSION_3,
-                                          SSL_MINOR_VERSION_0 );
-        ssl_set_ciphersuites_for_version( &ssl, version_suites[1],
-                                          SSL_MAJOR_VERSION_3,
-                                          SSL_MINOR_VERSION_1 );
-        ssl_set_ciphersuites_for_version( &ssl, version_suites[2],
-                                          SSL_MAJOR_VERSION_3,
-                                          SSL_MINOR_VERSION_2 );
-        ssl_set_ciphersuites_for_version( &ssl, version_suites[3],
-                                          SSL_MAJOR_VERSION_3,
-                                          SSL_MINOR_VERSION_3 );
+        mbedtls_ssl_conf_ciphersuites_for_version( &conf, version_suites[0],
+                                          MBEDTLS_SSL_MAJOR_VERSION_3,
+                                          MBEDTLS_SSL_MINOR_VERSION_0 );
+        mbedtls_ssl_conf_ciphersuites_for_version( &conf, version_suites[1],
+                                          MBEDTLS_SSL_MAJOR_VERSION_3,
+                                          MBEDTLS_SSL_MINOR_VERSION_1 );
+        mbedtls_ssl_conf_ciphersuites_for_version( &conf, version_suites[2],
+                                          MBEDTLS_SSL_MAJOR_VERSION_3,
+                                          MBEDTLS_SSL_MINOR_VERSION_2 );
+        mbedtls_ssl_conf_ciphersuites_for_version( &conf, version_suites[3],
+                                          MBEDTLS_SSL_MAJOR_VERSION_3,
+                                          MBEDTLS_SSL_MINOR_VERSION_3 );
     }
 
     if( opt.allow_legacy != DFL_ALLOW_LEGACY )
-        ssl_legacy_renegotiation( &ssl, opt.allow_legacy );
-#if defined(POLARSSL_SSL_RENEGOTIATION)
-    ssl_set_renegotiation( &ssl, opt.renegotiation );
+        mbedtls_ssl_conf_legacy_renegotiation( &conf, opt.allow_legacy );
+#if defined(MBEDTLS_SSL_RENEGOTIATION)
+    mbedtls_ssl_conf_renegotiation( &conf, opt.renegotiation );
 
     if( opt.renego_delay != DFL_RENEGO_DELAY )
-        ssl_set_renegotiation_enforced( &ssl, opt.renego_delay );
+        mbedtls_ssl_conf_renegotiation_enforced( &conf, opt.renego_delay );
 
     if( opt.renego_period != DFL_RENEGO_PERIOD )
     {
-        renego_period[7] = opt.renego_period;
-        ssl_set_renegotiation_period( &ssl, renego_period );
+        PUT_UINT64_BE( renego_period, opt.renego_period, 0 );
+        mbedtls_ssl_conf_renegotiation_period( &conf, renego_period );
     }
 #endif
 
-#if defined(POLARSSL_X509_CRT_PARSE_C)
+#if defined(MBEDTLS_X509_CRT_PARSE_C)
     if( strcmp( opt.ca_path, "none" ) != 0 &&
         strcmp( opt.ca_file, "none" ) != 0 )
     {
-        ssl_set_ca_chain( &ssl, &cacert, NULL, NULL );
+        mbedtls_ssl_conf_ca_chain( &conf, &cacert, NULL );
     }
     if( key_cert_init )
-        if( ( ret = ssl_set_own_cert( &ssl, &srvcert, &pkey ) ) != 0 )
+        if( ( ret = mbedtls_ssl_conf_own_cert( &conf, &srvcert, &pkey ) ) != 0 )
         {
-            polarssl_printf( " failed\n  ! ssl_set_own_cert returned %d\n\n", ret );
+            mbedtls_printf( " failed\n  ! mbedtls_ssl_conf_own_cert returned %d\n\n", ret );
             goto exit;
         }
     if( key_cert_init2 )
-        if( ( ret = ssl_set_own_cert( &ssl, &srvcert2, &pkey2 ) ) != 0 )
+        if( ( ret = mbedtls_ssl_conf_own_cert( &conf, &srvcert2, &pkey2 ) ) != 0 )
         {
-            polarssl_printf( " failed\n  ! ssl_set_own_cert returned %d\n\n", ret );
+            mbedtls_printf( " failed\n  ! mbedtls_ssl_conf_own_cert returned %d\n\n", ret );
             goto exit;
         }
 #endif
 
-#if defined(POLARSSL_SNI)
+#if defined(SNI_OPTION)
     if( opt.sni != NULL )
-        ssl_set_sni( &ssl, sni_callback, sni_info );
+        mbedtls_ssl_conf_sni( &conf, sni_callback, sni_info );
 #endif
 
-#if defined(POLARSSL_KEY_EXCHANGE__SOME__PSK_ENABLED)
+#if defined(MBEDTLS_KEY_EXCHANGE__SOME__PSK_ENABLED)
     if( strlen( opt.psk ) != 0 && strlen( opt.psk_identity ) != 0 )
     {
-        ret = ssl_set_psk( &ssl, psk, psk_len,
+        ret = mbedtls_ssl_conf_psk( &conf, psk, psk_len,
                            (const unsigned char *) opt.psk_identity,
                            strlen( opt.psk_identity ) );
         if( ret != 0 )
         {
-            polarssl_printf( "  failed\n  ssl_set_psk returned -0x%04X\n\n", - ret );
+            mbedtls_printf( "  failed\n  mbedtls_ssl_conf_psk returned -0x%04X\n\n", - ret );
             goto exit;
         }
     }
 
     if( opt.psk_list != NULL )
-        ssl_set_psk_cb( &ssl, psk_callback, psk_info );
+        mbedtls_ssl_conf_psk_cb( &conf, psk_callback, psk_info );
 #endif
 
-#if defined(POLARSSL_DHM_C)
+#if defined(MBEDTLS_DHM_C)
     /*
      * Use different group than default DHM group
      */
-#if defined(POLARSSL_FS_IO)
+#if defined(MBEDTLS_FS_IO)
     if( opt.dhm_file != NULL )
-        ret = ssl_set_dh_param_ctx( &ssl, &dhm );
-    else
+        ret = mbedtls_ssl_conf_dh_param_ctx( &conf, &dhm );
 #endif
-        ret = ssl_set_dh_param( &ssl, POLARSSL_DHM_RFC5114_MODP_2048_P,
-                                      POLARSSL_DHM_RFC5114_MODP_2048_G );
-
     if( ret != 0 )
     {
-        polarssl_printf( "  failed\n  ssl_set_dh_param returned -0x%04X\n\n", - ret );
+        mbedtls_printf( "  failed\n  mbedtls_ssl_conf_dh_param returned -0x%04X\n\n", - ret );
         goto exit;
     }
 #endif
 
-    if( opt.min_version != -1 )
-        ssl_set_min_version( &ssl, SSL_MAJOR_VERSION_3, opt.min_version );
+    if( opt.min_version != DFL_MIN_VERSION )
+        mbedtls_ssl_conf_min_version( &conf, MBEDTLS_SSL_MAJOR_VERSION_3, opt.min_version );
 
-    if( opt.max_version != -1 )
-        ssl_set_max_version( &ssl, SSL_MAJOR_VERSION_3, opt.max_version );
+    if( opt.max_version != DFL_MIN_VERSION )
+        mbedtls_ssl_conf_max_version( &conf, MBEDTLS_SSL_MAJOR_VERSION_3, opt.max_version );
 
-    polarssl_printf( " ok\n" );
+    if( ( ret = mbedtls_ssl_setup( &ssl, &conf ) ) != 0 )
+    {
+        mbedtls_printf( " failed\n  ! mbedtls_ssl_setup returned -0x%x\n\n", -ret );
+        goto exit;
+    }
+
+    if( opt.nbio == 2 )
+        mbedtls_ssl_set_bio( &ssl, &client_fd, my_send, my_recv, NULL );
+    else
+        mbedtls_ssl_set_bio( &ssl, &client_fd, mbedtls_net_send, mbedtls_net_recv,
+                             opt.nbio == 0 ? mbedtls_net_recv_timeout : NULL );
+
+#if defined(MBEDTLS_TIMING_C)
+    mbedtls_ssl_set_timer_cb( &ssl, &timer, mbedtls_timing_set_delay,
+                                            mbedtls_timing_get_delay );
+#endif
+
+    mbedtls_printf( " ok\n" );
 
 reset:
 #if !defined(_WIN32)
     if( received_sigterm )
     {
-        polarssl_printf( " interrupted by SIGTERM\n" );
+        mbedtls_printf( " interrupted by SIGTERM\n" );
         ret = 0;
         goto exit;
     }
 #endif
 
-#ifdef POLARSSL_ERROR_C
+    if( ret == MBEDTLS_ERR_SSL_CLIENT_RECONNECT )
+    {
+        mbedtls_printf( "  ! Client initiated reconnection from same port\n" );
+        goto handshake;
+    }
+
+#ifdef MBEDTLS_ERROR_C
     if( ret != 0 )
     {
         char error_buf[100];
-        polarssl_strerror( ret, error_buf, 100 );
-        polarssl_printf("Last error was: %d - %s\n\n", ret, error_buf );
+        mbedtls_strerror( ret, error_buf, 100 );
+        mbedtls_printf("Last error was: %d - %s\n\n", ret, error_buf );
     }
 #endif
 
-    if( client_fd != -1 )
-        net_close( client_fd );
+    mbedtls_net_free( &client_fd );
 
-    ssl_session_reset( &ssl );
+    mbedtls_ssl_session_reset( &ssl );
 
     /*
      * 3. Wait until a client connects
      */
-    client_fd = -1;
-
-    polarssl_printf( "  . Waiting for a remote connection ..." );
+    mbedtls_printf( "  . Waiting for a remote connection ..." );
     fflush( stdout );
 
-    if( ( ret = net_accept( listen_fd, &client_fd, NULL ) ) != 0 )
+    if( ( ret = mbedtls_net_accept( &listen_fd, &client_fd,
+                    client_ip, sizeof( client_ip ), &cliip_len ) ) != 0 )
     {
 #if !defined(_WIN32)
         if( received_sigterm )
         {
-            polarssl_printf( " interrupted by signal\n" );
+            mbedtls_printf( " interrupted by signal\n" );
             ret = 0;
             goto exit;
         }
 #endif
 
-        polarssl_printf( " failed\n  ! net_accept returned -0x%x\n\n", -ret );
+        mbedtls_printf( " failed\n  ! mbedtls_net_accept returned -0x%x\n\n", -ret );
         goto exit;
     }
 
     if( opt.nbio > 0 )
-        ret = net_set_nonblock( client_fd );
+        ret = mbedtls_net_set_nonblock( &client_fd );
     else
-        ret = net_set_block( client_fd );
+        ret = mbedtls_net_set_block( &client_fd );
     if( ret != 0 )
     {
-        polarssl_printf( " failed\n  ! net_set_(non)block() returned -0x%x\n\n", -ret );
+        mbedtls_printf( " failed\n  ! net_set_(non)block() returned -0x%x\n\n", -ret );
         goto exit;
     }
 
-    if( opt.nbio == 2 )
-        ssl_set_bio( &ssl, my_recv, &client_fd, my_send, &client_fd );
-    else
-        ssl_set_bio( &ssl, net_recv, &client_fd, net_send, &client_fd );
+    mbedtls_ssl_conf_read_timeout( &conf, opt.read_timeout );
 
-    polarssl_printf( " ok\n" );
+#if defined(MBEDTLS_SSL_DTLS_HELLO_VERIFY)
+    if( opt.transport == MBEDTLS_SSL_TRANSPORT_DATAGRAM )
+    {
+        if( ( ret = mbedtls_ssl_set_client_transport_id( &ssl,
+                        client_ip, cliip_len ) ) != 0 )
+        {
+            mbedtls_printf( " failed\n  ! "
+                    "mbedtls_ssl_set_client_transport_id() returned -0x%x\n\n", -ret );
+            goto exit;
+        }
+    }
+#endif /* MBEDTLS_SSL_DTLS_HELLO_VERIFY */
+
+#if defined(MBEDTLS_KEY_EXCHANGE_ECJPAKE_ENABLED)
+    if( opt.ecjpake_pw != DFL_ECJPAKE_PW )
+    {
+        if( ( ret = mbedtls_ssl_set_hs_ecjpake_password( &ssl,
+                        (const unsigned char *) opt.ecjpake_pw,
+                                        strlen( opt.ecjpake_pw ) ) ) != 0 )
+        {
+            mbedtls_printf( " failed\n  ! mbedtls_ssl_set_hs_ecjpake_password returned %d\n\n", ret );
+            goto exit;
+        }
+    }
+#endif
+
+    mbedtls_printf( " ok\n" );
 
     /*
      * 4. Handshake
      */
-    polarssl_printf( "  . Performing the SSL/TLS handshake..." );
+handshake:
+    mbedtls_printf( "  . Performing the SSL/TLS handshake..." );
     fflush( stdout );
 
-    while( ( ret = ssl_handshake( &ssl ) ) != 0 )
+    do ret = mbedtls_ssl_handshake( &ssl );
+    while( ret == MBEDTLS_ERR_SSL_WANT_READ ||
+           ret == MBEDTLS_ERR_SSL_WANT_WRITE );
+
+    if( ret == MBEDTLS_ERR_SSL_HELLO_VERIFY_REQUIRED )
     {
-        if( ret != POLARSSL_ERR_NET_WANT_READ && ret != POLARSSL_ERR_NET_WANT_WRITE )
+        mbedtls_printf( " hello verification requested\n" );
+        ret = 0;
+        goto reset;
+    }
+    else if( ret != 0 )
+    {
+        mbedtls_printf( " failed\n  ! mbedtls_ssl_handshake returned -0x%x\n\n", -ret );
+
+#if defined(MBEDTLS_X509_CRT_PARSE_C)
+        if( ret == MBEDTLS_ERR_X509_CERT_VERIFY_FAILED )
         {
-            polarssl_printf( " failed\n  ! ssl_handshake returned -0x%x\n\n", -ret );
-            goto reset;
+            char vrfy_buf[512];
+            flags = mbedtls_ssl_get_verify_result( &ssl );
+
+            mbedtls_x509_crt_verify_info( vrfy_buf, sizeof( vrfy_buf ), "  ! ", flags );
+
+            mbedtls_printf( "%s\n", vrfy_buf );
         }
+#endif
+
+        goto reset;
+    }
+    else /* ret == 0 */
+    {
+        mbedtls_printf( " ok\n    [ Protocol is %s ]\n    [ Ciphersuite is %s ]\n",
+                mbedtls_ssl_get_version( &ssl ), mbedtls_ssl_get_ciphersuite( &ssl ) );
     }
 
-    polarssl_printf( " ok\n    [ Protocol is %s ]\n    [ Ciphersuite is %s ]\n",
-            ssl_get_version( &ssl ), ssl_get_ciphersuite( &ssl ) );
+    if( ( ret = mbedtls_ssl_get_record_expansion( &ssl ) ) >= 0 )
+        mbedtls_printf( "    [ Record expansion is %d ]\n", ret );
+    else
+        mbedtls_printf( "    [ Record expansion is unknown (compression) ]\n" );
 
-#if defined(POLARSSL_SSL_ALPN)
+#if defined(MBEDTLS_SSL_MAX_FRAGMENT_LENGTH)
+    mbedtls_printf( "    [ Maximum fragment length is %u ]\n",
+                    (unsigned int) mbedtls_ssl_get_max_frag_len( &ssl ) );
+#endif
+
+#if defined(MBEDTLS_SSL_ALPN)
     if( opt.alpn_string != NULL )
     {
-        const char *alp = ssl_get_alpn_protocol( &ssl );
-        polarssl_printf( "    [ Application Layer Protocol is %s ]\n",
+        const char *alp = mbedtls_ssl_get_alpn_protocol( &ssl );
+        mbedtls_printf( "    [ Application Layer Protocol is %s ]\n",
                 alp ? alp : "(none)" );
     }
 #endif
 
-#if defined(POLARSSL_X509_CRT_PARSE_C)
+#if defined(MBEDTLS_X509_CRT_PARSE_C)
     /*
      * 5. Verify the server certificate
      */
-    polarssl_printf( "  . Verifying peer X.509 certificate..." );
+    mbedtls_printf( "  . Verifying peer X.509 certificate..." );
 
-    if( ( ret = ssl_get_verify_result( &ssl ) ) != 0 )
+    if( ( flags = mbedtls_ssl_get_verify_result( &ssl ) ) != 0 )
     {
         char vrfy_buf[512];
 
-        polarssl_printf( " failed\n" );
+        mbedtls_printf( " failed\n" );
 
-        x509_crt_verify_info( vrfy_buf, sizeof( vrfy_buf ), "  ! ", ret );
+        mbedtls_x509_crt_verify_info( vrfy_buf, sizeof( vrfy_buf ), "  ! ", flags );
 
-        polarssl_printf( "%s\n", vrfy_buf );
+        mbedtls_printf( "%s\n", vrfy_buf );
     }
     else
-        polarssl_printf( " ok\n" );
+        mbedtls_printf( " ok\n" );
 
-    if( ssl_get_peer_cert( &ssl ) )
+    if( mbedtls_ssl_get_peer_cert( &ssl ) != NULL )
     {
-        polarssl_printf( "  . Peer certificate information    ...\n" );
-        x509_crt_info( (char *) buf, sizeof( buf ) - 1, "      ",
-                       ssl_get_peer_cert( &ssl ) );
-        polarssl_printf( "%s\n", buf );
+        char crt_buf[512];
+
+        mbedtls_printf( "  . Peer certificate information    ...\n" );
+        mbedtls_x509_crt_info( crt_buf, sizeof( crt_buf ), "      ",
+                       mbedtls_ssl_get_peer_cert( &ssl ) );
+        mbedtls_printf( "%s\n", crt_buf );
     }
-#endif /* POLARSSL_X509_CRT_PARSE_C */
+#endif /* MBEDTLS_X509_CRT_PARSE_C */
+
+    if( opt.exchanges == 0 )
+        goto close_notify;
 
     exchanges_left = opt.exchanges;
 data_exchange:
     /*
      * 6. Read the HTTP Request
      */
-    polarssl_printf( "  < Read from client:" );
+    mbedtls_printf( "  < Read from client:" );
     fflush( stdout );
 
-    do
+    /*
+     * TLS and DTLS need different reading styles (stream vs datagram)
+     */
+    if( opt.transport == MBEDTLS_SSL_TRANSPORT_STREAM )
     {
-        int terminated = 0;
+        do
+        {
+            int terminated = 0;
+            len = sizeof( buf ) - 1;
+            memset( buf, 0, sizeof( buf ) );
+            ret = mbedtls_ssl_read( &ssl, buf, len );
+
+            if( ret == MBEDTLS_ERR_SSL_WANT_READ ||
+                ret == MBEDTLS_ERR_SSL_WANT_WRITE )
+                continue;
+
+            if( ret <= 0 )
+            {
+                switch( ret )
+                {
+                    case MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY:
+                        mbedtls_printf( " connection was closed gracefully\n" );
+                        goto close_notify;
+
+                    case 0:
+                    case MBEDTLS_ERR_NET_CONN_RESET:
+                        mbedtls_printf( " connection was reset by peer\n" );
+                        ret = MBEDTLS_ERR_NET_CONN_RESET;
+                        goto reset;
+
+                    default:
+                        mbedtls_printf( " mbedtls_ssl_read returned -0x%x\n", -ret );
+                        goto reset;
+                }
+            }
+
+            if( mbedtls_ssl_get_bytes_avail( &ssl ) == 0 )
+            {
+                len = ret;
+                buf[len] = '\0';
+                mbedtls_printf( " %d bytes read\n\n%s\n", len, (char *) buf );
+
+                /* End of message should be detected according to the syntax of the
+                 * application protocol (eg HTTP), just use a dummy test here. */
+                if( buf[len - 1] == '\n' )
+                    terminated = 1;
+            }
+            else
+            {
+                int extra_len, ori_len;
+                unsigned char *larger_buf;
+
+                ori_len = ret;
+                extra_len = (int) mbedtls_ssl_get_bytes_avail( &ssl );
+
+                larger_buf = mbedtls_calloc( 1, ori_len + extra_len + 1 );
+                if( larger_buf == NULL )
+                {
+                    mbedtls_printf( "  ! memory allocation failed\n" );
+                    ret = 1;
+                    goto reset;
+                }
+
+                memset( larger_buf, 0, ori_len + extra_len );
+                memcpy( larger_buf, buf, ori_len );
+
+                /* This read should never fail and get the whole cached data */
+                ret = mbedtls_ssl_read( &ssl, larger_buf + ori_len, extra_len );
+                if( ret != extra_len ||
+                    mbedtls_ssl_get_bytes_avail( &ssl ) != 0 )
+                {
+                    mbedtls_printf( "  ! mbedtls_ssl_read failed on cached data\n" );
+                    ret = 1;
+                    goto reset;
+                }
+
+                larger_buf[ori_len + extra_len] = '\0';
+                mbedtls_printf( " %u bytes read (%u + %u)\n\n%s\n",
+                        ori_len + extra_len, ori_len, extra_len,
+                        (char *) larger_buf );
+
+                /* End of message should be detected according to the syntax of the
+                 * application protocol (eg HTTP), just use a dummy test here. */
+                if( larger_buf[ori_len + extra_len - 1] == '\n' )
+                    terminated = 1;
+
+                mbedtls_free( larger_buf );
+            }
+
+            if( terminated )
+            {
+                ret = 0;
+                break;
+            }
+        }
+        while( 1 );
+    }
+    else /* Not stream, so datagram */
+    {
         len = sizeof( buf ) - 1;
         memset( buf, 0, sizeof( buf ) );
-        ret = ssl_read( &ssl, buf, len );
 
-        if( ret == POLARSSL_ERR_NET_WANT_READ ||
-            ret == POLARSSL_ERR_NET_WANT_WRITE )
-            continue;
+        do ret = mbedtls_ssl_read( &ssl, buf, len );
+        while( ret == MBEDTLS_ERR_SSL_WANT_READ ||
+               ret == MBEDTLS_ERR_SSL_WANT_WRITE );
 
         if( ret <= 0 )
         {
             switch( ret )
             {
-                case POLARSSL_ERR_SSL_PEER_CLOSE_NOTIFY:
-                    polarssl_printf( " connection was closed gracefully\n" );
+                case MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY:
+                    mbedtls_printf( " connection was closed gracefully\n" );
+                    ret = 0;
                     goto close_notify;
 
-                case 0:
-                case POLARSSL_ERR_NET_CONN_RESET:
-                    polarssl_printf( " connection was reset by peer\n" );
-                    ret = POLARSSL_ERR_NET_CONN_RESET;
-                    goto reset;
-
                 default:
-                    polarssl_printf( " ssl_read returned -0x%x\n", -ret );
+                    mbedtls_printf( " mbedtls_ssl_read returned -0x%x\n", -ret );
                     goto reset;
             }
         }
 
-        if( ssl_get_bytes_avail( &ssl ) == 0 )
-        {
-            len = ret;
-            buf[len] = '\0';
-            polarssl_printf( " %d bytes read\n\n%s\n", len, (char *) buf );
-
-            /* End of message should be detected according to the syntax of the
-             * application protocol (eg HTTP), just use a dummy test here. */
-            if( buf[len - 1] == '\n' )
-                terminated = 1;
-        }
-        else
-        {
-            int extra_len, ori_len;
-            unsigned char *larger_buf;
-
-            ori_len = ret;
-            extra_len = ssl_get_bytes_avail( &ssl );
-
-            larger_buf = polarssl_malloc( ori_len + extra_len + 1 );
-            if( larger_buf == NULL )
-            {
-                polarssl_printf( "  ! memory allocation failed\n" );
-                ret = 1;
-                goto reset;
-            }
-
-            memset( larger_buf, 0, ori_len + extra_len );
-            memcpy( larger_buf, buf, ori_len );
-
-            /* This read should never fail and get the whole cached data */
-            ret = ssl_read( &ssl, larger_buf + ori_len, extra_len );
-            if( ret != extra_len ||
-                ssl_get_bytes_avail( &ssl ) != 0 )
-            {
-                polarssl_printf( "  ! ssl_read failed on cached data\n" );
-                ret = 1;
-                goto reset;
-            }
-
-            larger_buf[ori_len + extra_len] = '\0';
-            polarssl_printf( " %u bytes read (%u + %u)\n\n%s\n",
-                    ori_len + extra_len, ori_len, extra_len,
-                    (char *) larger_buf );
-
-            /* End of message should be detected according to the syntax of the
-             * application protocol (eg HTTP), just use a dummy test here. */
-            if( larger_buf[ori_len + extra_len - 1] == '\n' )
-                terminated = 1;
-
-            polarssl_free( larger_buf );
-        }
-
-        if( terminated )
-        {
-            ret = 0;
-            break;
-        }
+        len = ret;
+        buf[len] = '\0';
+        mbedtls_printf( " %d bytes read\n\n%s", len, (char *) buf );
+        ret = 0;
     }
-    while( 1 );
 
     /*
      * 7a. Request renegotiation while client is waiting for input from us.
-     * (only if we're going to exhange more data afterwards)
+     * (only on the first exchange, to be able to test retransmission)
      */
-#if defined(POLARSSL_SSL_RENEGOTIATION)
-    if( opt.renegotiate && exchanges_left > 1 )
+#if defined(MBEDTLS_SSL_RENEGOTIATION)
+    if( opt.renegotiate && exchanges_left == opt.exchanges )
     {
-        polarssl_printf( "  . Requestion renegotiation..." );
+        mbedtls_printf( "  . Requestion renegotiation..." );
         fflush( stdout );
 
-        while( ( ret = ssl_renegotiate( &ssl ) ) != 0 )
+        while( ( ret = mbedtls_ssl_renegotiate( &ssl ) ) != 0 )
         {
-            if( ret != POLARSSL_ERR_NET_WANT_READ &&
-                ret != POLARSSL_ERR_NET_WANT_WRITE )
+            if( ret != MBEDTLS_ERR_SSL_WANT_READ &&
+                ret != MBEDTLS_ERR_SSL_WANT_WRITE )
             {
-                polarssl_printf( " failed\n  ! ssl_renegotiate returned %d\n\n", ret );
+                mbedtls_printf( " failed\n  ! mbedtls_ssl_renegotiate returned %d\n\n", ret );
                 goto reset;
             }
         }
 
-        polarssl_printf( " ok\n" );
+        mbedtls_printf( " ok\n" );
     }
-#endif /* POLARSSL_SSL_RENEGOTIATION */
+#endif /* MBEDTLS_SSL_RENEGOTIATION */
 
     /*
      * 7. Write the 200 Response
      */
-    polarssl_printf( "  > Write to client:" );
+    mbedtls_printf( "  > Write to client:" );
     fflush( stdout );
 
     len = sprintf( (char *) buf, HTTP_RESPONSE,
-                   ssl_get_ciphersuite( &ssl ) );
+                   mbedtls_ssl_get_ciphersuite( &ssl ) );
 
-    for( written = 0, frags = 0; written < len; written += ret, frags++ )
+    if( opt.transport == MBEDTLS_SSL_TRANSPORT_STREAM )
     {
-        while( ( ret = ssl_write( &ssl, buf + written, len - written ) ) <= 0 )
+        for( written = 0, frags = 0; written < len; written += ret, frags++ )
         {
-            if( ret == POLARSSL_ERR_NET_CONN_RESET )
+            while( ( ret = mbedtls_ssl_write( &ssl, buf + written, len - written ) )
+                           <= 0 )
             {
-                polarssl_printf( " failed\n  ! peer closed the connection\n\n" );
-                goto reset;
-            }
+                if( ret == MBEDTLS_ERR_NET_CONN_RESET )
+                {
+                    mbedtls_printf( " failed\n  ! peer closed the connection\n\n" );
+                    goto reset;
+                }
 
-            if( ret != POLARSSL_ERR_NET_WANT_READ && ret != POLARSSL_ERR_NET_WANT_WRITE )
-            {
-                polarssl_printf( " failed\n  ! ssl_write returned %d\n\n", ret );
-                goto reset;
+                if( ret != MBEDTLS_ERR_SSL_WANT_READ &&
+                    ret != MBEDTLS_ERR_SSL_WANT_WRITE )
+                {
+                    mbedtls_printf( " failed\n  ! mbedtls_ssl_write returned %d\n\n", ret );
+                    goto reset;
+                }
             }
         }
     }
+    else /* Not stream, so datagram */
+    {
+        do ret = mbedtls_ssl_write( &ssl, buf, len );
+        while( ret == MBEDTLS_ERR_SSL_WANT_READ ||
+               ret == MBEDTLS_ERR_SSL_WANT_WRITE );
+
+        if( ret < 0 )
+        {
+            mbedtls_printf( " failed\n  ! mbedtls_ssl_write returned %d\n\n", ret );
+            goto reset;
+        }
+
+        frags = 1;
+        written = ret;
+    }
 
     buf[written] = '\0';
-    polarssl_printf( " %d bytes written in %d fragments\n\n%s\n", written, frags, (char *) buf );
+    mbedtls_printf( " %d bytes written in %d fragments\n\n%s\n", written, frags, (char *) buf );
     ret = 0;
 
     /*
@@ -1811,14 +2271,14 @@ data_exchange:
      * 8. Done, cleanly close the connection
      */
 close_notify:
-    polarssl_printf( "  . Closing the connection..." );
+    mbedtls_printf( "  . Closing the connection..." );
 
     /* No error checking, the connection might be closed already */
-    do ret = ssl_close_notify( &ssl );
-    while( ret == POLARSSL_ERR_NET_WANT_WRITE );
+    do ret = mbedtls_ssl_close_notify( &ssl );
+    while( ret == MBEDTLS_ERR_SSL_WANT_WRITE );
     ret = 0;
 
-    polarssl_printf( " done\n" );
+    mbedtls_printf( " done\n" );
 
     goto reset;
 
@@ -1826,60 +2286,67 @@ close_notify:
      * Cleanup and exit
      */
 exit:
-#ifdef POLARSSL_ERROR_C
+#ifdef MBEDTLS_ERROR_C
     if( ret != 0 )
     {
         char error_buf[100];
-        polarssl_strerror( ret, error_buf, 100 );
-        polarssl_printf("Last error was: -0x%X - %s\n\n", -ret, error_buf );
+        mbedtls_strerror( ret, error_buf, 100 );
+        mbedtls_printf("Last error was: -0x%X - %s\n\n", -ret, error_buf );
     }
 #endif
 
-    polarssl_printf( "  . Cleaning up..." );
+    mbedtls_printf( "  . Cleaning up..." );
     fflush( stdout );
 
-    if( client_fd != -1 )
-        net_close( client_fd );
+    mbedtls_net_free( &client_fd );
+    mbedtls_net_free( &listen_fd );
 
-#if defined(POLARSSL_DHM_C) && defined(POLARSSL_FS_IO)
-    dhm_free( &dhm );
+#if defined(MBEDTLS_DHM_C) && defined(MBEDTLS_FS_IO)
+    mbedtls_dhm_free( &dhm );
 #endif
-#if defined(POLARSSL_X509_CRT_PARSE_C)
-    x509_crt_free( &cacert );
-    x509_crt_free( &srvcert );
-    pk_free( &pkey );
-    x509_crt_free( &srvcert2 );
-    pk_free( &pkey2 );
+#if defined(MBEDTLS_X509_CRT_PARSE_C)
+    mbedtls_x509_crt_free( &cacert );
+    mbedtls_x509_crt_free( &srvcert );
+    mbedtls_pk_free( &pkey );
+    mbedtls_x509_crt_free( &srvcert2 );
+    mbedtls_pk_free( &pkey2 );
 #endif
-#if defined(POLARSSL_SNI)
+#if defined(SNI_OPTION)
     sni_free( sni_info );
 #endif
-#if defined(POLARSSL_KEY_EXCHANGE__SOME__PSK_ENABLED)
+#if defined(MBEDTLS_KEY_EXCHANGE__SOME__PSK_ENABLED)
     psk_free( psk_info );
 #endif
-#if defined(POLARSSL_DHM_C) && defined(POLARSSL_FS_IO)
-    dhm_free( &dhm );
+#if defined(MBEDTLS_DHM_C) && defined(MBEDTLS_FS_IO)
+    mbedtls_dhm_free( &dhm );
 #endif
 
-    ssl_free( &ssl );
-    ctr_drbg_free( &ctr_drbg );
-    entropy_free( &entropy );
+    mbedtls_ssl_free( &ssl );
+    mbedtls_ssl_config_free( &conf );
+    mbedtls_ctr_drbg_free( &ctr_drbg );
+    mbedtls_entropy_free( &entropy );
 
-#if defined(POLARSSL_SSL_CACHE_C)
-    ssl_cache_free( &cache );
+#if defined(MBEDTLS_SSL_CACHE_C)
+    mbedtls_ssl_cache_free( &cache );
+#endif
+#if defined(MBEDTLS_SSL_SESSION_TICKETS)
+    mbedtls_ssl_ticket_free( &ticket_ctx );
+#endif
+#if defined(MBEDTLS_SSL_COOKIE_C)
+    mbedtls_ssl_cookie_free( &cookie_ctx );
 #endif
 
-#if defined(POLARSSL_MEMORY_BUFFER_ALLOC_C)
-#if defined(POLARSSL_MEMORY_DEBUG)
-    memory_buffer_alloc_status();
+#if defined(MBEDTLS_MEMORY_BUFFER_ALLOC_C)
+#if defined(MBEDTLS_MEMORY_DEBUG)
+    mbedtls_memory_buffer_alloc_status();
 #endif
-    memory_buffer_alloc_free();
+    mbedtls_memory_buffer_alloc_free();
 #endif
 
-    polarssl_printf( " done.\n" );
+    mbedtls_printf( " done.\n" );
 
 #if defined(_WIN32)
-    polarssl_printf( "  + Press Enter to exit this program.\n" );
+    mbedtls_printf( "  + Press Enter to exit this program.\n" );
     fflush( stdout ); getchar();
 #endif
 
@@ -1889,6 +2356,6 @@ exit:
 
     return( ret );
 }
-#endif /* POLARSSL_BIGNUM_C && POLARSSL_ENTROPY_C && POLARSSL_SSL_TLS_C &&
-          POLARSSL_SSL_SRV_C && POLARSSL_NET_C && POLARSSL_RSA_C &&
-          POLARSSL_CTR_DRBG_C */
+#endif /* MBEDTLS_BIGNUM_C && MBEDTLS_ENTROPY_C && MBEDTLS_SSL_TLS_C &&
+          MBEDTLS_SSL_SRV_C && MBEDTLS_NET_C && MBEDTLS_RSA_C &&
+          MBEDTLS_CTR_DRBG_C */

@@ -213,7 +213,7 @@ char* zrtp_getMultiStrParams(ZrtpContext* zrtpContext, int32_t *length) {
 }
 
 void zrtp_setMultiStrParams(ZrtpContext* zrtpContext, char* parameters, int32_t length, ZrtpContext* master) {
-    if (!zrtpContext || !zrtpContext->zrtpEngine)
+    if (!zrtpContext || !zrtpContext->zrtpEngine || !master)
         return;
 
     if (parameters == NULL)

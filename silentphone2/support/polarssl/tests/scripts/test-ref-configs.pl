@@ -1,9 +1,15 @@
 #!/usr/bin/perl
 
-# test standard configurations:
-# - build
-# - run test suite
-# - run compat.sh
+# test-ref-configs.pl
+#
+# This file is part of mbed TLS (https://tls.mbed.org)
+#
+# Copyright (c) 2013-2016, ARM Limited, All Rights Reserved
+#
+# Purpose
+#
+# For each reference configuration file in the configs directory, build the
+# configuration, run the test suites and compat.sh
 #
 # Usage: tests/scripts/test-ref-configs.pl [config-name [...]]
 
@@ -11,16 +17,20 @@ use warnings;
 use strict;
 
 my %configs = (
-    'config-psk-rc4-tls1_0.h'
-        => '-m tls1   -f \'^PSK.*RC4\|TLS-PSK.*RC4\'',
-    'config-mini-tls1_1.h'
-        => '-m tls1_1 -f \'^DES-CBC3-SHA$\|^TLS-RSA-WITH-3DES-EDE-CBC-SHA$\'',
-    'config-suite-b.h'
-        => "-m tls1_2 -f 'ECDHE-ECDSA.*AES.*GCM' -p mbedTLS",
-    'config-picocoin.h'
-        => 0,
-    'config-ccm-psk-tls1_2.h'
-        => '-m tls1_2 -f \'^TLS-PSK-WITH-AES-...-CCM-8\'',
+    'config-mini-tls1_1.h' => {
+        'compat' => '-m tls1_1 -f \'^DES-CBC3-SHA$\|^TLS-RSA-WITH-3DES-EDE-CBC-SHA$\'',
+    },
+    'config-suite-b.h' => {
+        'compat' => "-m tls1_2 -f 'ECDHE-ECDSA.*AES.*GCM' -p mbedTLS",
+    },
+    'config-picocoin.h' => {
+    },
+    'config-ccm-psk-tls1_2.h' => {
+        'compat' => '-m tls1_2 -f \'^TLS-PSK-WITH-AES-...-CCM-8\'',
+    },
+    'config-thread.h' => {
+        'opt' => '-f ECJPAKE.*nolog',
+    },
 );
 
 # If no config-name is provided, use all known configs.
@@ -40,9 +50,7 @@ if ($#ARGV >= 0) {
 
 -d 'library' && -d 'include' && -d 'tests' or die "Must be run from root\n";
 
-my $test = system( "grep -i cmake Makefile >/dev/null" ) ? 'check' : 'test';
-
-my $config_h = 'include/polarssl/config.h';
+my $config_h = 'include/mbedtls/config.h';
 
 system( "cp $config_h $config_h.bak" ) and die;
 sub abort {
@@ -50,7 +58,7 @@ sub abort {
     die $_[0];
 }
 
-while( my ($conf, $args) = each %configs ) {
+while( my ($conf, $data) = each %configs ) {
     system( "cp $config_h.bak $config_h" ) and die;
     system( "make clean" ) and die;
 
@@ -61,18 +69,31 @@ while( my ($conf, $args) = each %configs ) {
     system( "cp configs/$conf $config_h" )
         and abort "Failed to activate $conf\n";
 
-    system( "make" ) and abort "Failed to build: $conf\n";
-    system( "make $test" ) and abort "Failed test suite: $conf\n";
+    system( "CFLAGS='-Os -Werror -Wall -Wextra' make" ) and abort "Failed to build: $conf\n";
+    system( "make test" ) and abort "Failed test suite: $conf\n";
 
-    if( $args )
+    my $compat = $data->{'compat'};
+    if( $compat )
     {
-        print "\nrunning compat.sh $args\n";
-        system( "cd tests && ./compat.sh $args" )
+        print "\nrunning compat.sh $compat\n";
+        system( "tests/compat.sh $compat" )
             and abort "Failed compat.sh: $conf\n";
     }
     else
     {
         print "\nskipping compat.sh\n";
+    }
+
+    my $opt = $data->{'opt'};
+    if( $opt )
+    {
+        print "\nrunning ssl-opt.sh $opt\n";
+        system( "tests/ssl-opt.sh $opt" )
+            and abort "Failed ssl-opt.sh: $conf\n";
+    }
+    else
+    {
+        print "\nskipping ssl-opt.sh\n";
     }
 }
 

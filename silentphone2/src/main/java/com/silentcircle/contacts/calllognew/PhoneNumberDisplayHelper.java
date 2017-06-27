@@ -19,7 +19,6 @@ package com.silentcircle.contacts.calllognew;
 import android.content.res.Resources;
 import android.provider.CallLog.Calls;
 import android.text.TextUtils;
-import android.util.Log;
 
 import com.silentcircle.silentphone2.R;
 

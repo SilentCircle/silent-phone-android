@@ -20,11 +20,31 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
 
-                <ImageView android:id="@+id/contact_avatar"
-                    android:layout_height="wrap_content"
+                <RelativeLayout
                     android:layout_width="match_parent"
-                    android:scaleType="fitCenter"
-                    android:adjustViewBounds="true" />
+                    android:layout_height="wrap_content">
+
+                    <ImageView android:id="@+id/contact_avatar"
+                        android:layout_height="wrap_content"
+                        android:layout_width="match_parent"
+                        android:scaleType="fitCenter"
+                        android:adjustViewBounds="true"
+                        android:importantForAccessibility="no"
+                        />
+
+                    <View android:id="@+id/contact_avatar_gradient"
+                        android:layout_height="match_parent"
+                        android:layout_width="match_parent"
+                        android:background="@drawable/contact_avatar_gradient"
+                        android:importantForAccessibility="no"
+                        android:layout_alignTop="@id/contact_avatar"
+                        android:layout_alignBottom="@id/contact_avatar"
+                        android:layout_alignParentEnd="true"
+                        android:layout_alignParentRight="true"
+                        />
+
+                </RelativeLayout>
+
 
                 <!-- android:src="@drawable/ic_avatar_placeholder" -->
 
@@ -41,6 +61,7 @@
                         android:textSize="@dimen/text_xxlarge"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:textColor="?attr/sp_activity_primary_text_color"
                         tools:text="@string/sample_recipient" />
 
                     <TextView
@@ -50,14 +71,15 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:visibility="gone"
+                        android:textColor="?attr/sp_activity_primary_text_color"
                         tools:text="@string/sample_recipient" />
 
                     <TextView
                         android:id="@+id/username"
                         style="@style/Widget.Silence.TextView"
-                        android:textColor="@color/silent_glass"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:textColor="?attr/sp_activity_primary_text_color"
                         tools:text="@string/sample_stylized_username" />
 
                 </LinearLayout>

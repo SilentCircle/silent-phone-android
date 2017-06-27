@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2014-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -40,7 +40,7 @@ import java.util.ArrayList;
  * Created by werner on 14.03.14.
  */
 // @SuppressLint("unused")
-@SuppressWarnings("unused")
+@SuppressWarnings({"unused", "JniMissingFunction"})
 public abstract class PhoneServiceNative extends Service  {
 
     /**
@@ -76,9 +76,7 @@ public abstract class PhoneServiceNative extends Service  {
      * libtivi linked with database sqlcipher
      ************************************************************************************************* */
     static {
-        System.loadLibrary("stlport_shared");
-        System.loadLibrary("sqlcipher_android");
-        System.loadLibrary("database_sqlcipher");
+        System.loadLibrary("sqlcipher");
         System.loadLibrary("gnustl_shared");
         System.loadLibrary("tina");
         System.loadLibrary("aec");
@@ -94,6 +92,10 @@ public abstract class PhoneServiceNative extends Service  {
     public static native String getInfo(int iEngineID, int iCallID, String z);
 
     public static native int setKeyData(byte[] key);
+
+    public static native int setSIPPassword(byte[] key);
+
+    public static native int setSIPAuthName(String authName);
 
     public static native int initPhone(int configuration, int debugFlag, String versionName);
 
@@ -118,6 +120,13 @@ public abstract class PhoneServiceNative extends Service  {
     public static native int[] getZrtpCounters(int iCallID);
 
     public static native void setPushToken(String gcmRegID);
+
+    //DebugLogging
+    public static native void initLoggingStaticVariables();
+    public static native void scLog(String logEntry);
+    public static native void setLogFileName(String logFileName);
+    public static native String decryptLogs(String[] logFileNames, String logBaseDir);
+    public static native void setLoggingEnabled(int mIsDebugLoggingEnabled);
 
     // Callback from native code to monitor if SIP stack requires a wake lock - currently not used
     abstract void wakeCallback(int iLock);

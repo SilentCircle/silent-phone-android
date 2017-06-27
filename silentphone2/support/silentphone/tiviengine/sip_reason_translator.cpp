@@ -1,7 +1,7 @@
 /*
 Created by Janis Narbuts
 Copyright (C) 2004-2012, Tivi LTD, www.tiviphone.com. All rights reserved.
-Copyright (C) 2012-2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2012-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -81,11 +81,11 @@ static CListItemTR_MSG *getLine(char *p, int iLen, int &iPos){
       
       name=&p[iPos];
       while(iPos<iLen){iPos++;if(p[iPos-1]=='^')break;}
-      nl=&p[iPos]-name-1;
+      nl=(int)(&p[iPos]-name-1);
       
       resp=&p[iPos];
       while(iPos<iLen){iPos++;if(p[iPos-1]<' ')break;}
-      rl=&p[iPos]-resp;
+      rl=(int)(&p[iPos]-resp);
       if(p[iPos-1]<' ')rl--;
       if(rl<=0 || nl<=0)return NULL;
       it =new CListItemTR_MSG(name,nl,id,resp,rl);

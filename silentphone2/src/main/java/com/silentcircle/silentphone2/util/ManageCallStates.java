@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2014-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -198,6 +198,31 @@ public class ManageCallStates {
             return;
         c.callReleasedAt = System.currentTimeMillis() + 5000;
 
+    }
+
+    public boolean hasCallWith(String user) {
+        boolean result = false;
+        if (!TextUtils.isEmpty(user)) {
+            for (CallState callState : calls) {
+                if (callState == null) {
+                    continue;
+                }
+                if (callState.iInUse && !callState.callEnded && callState.callReleasedAt == 0) {
+                    String assertedName = callState.mAssertedName.toString();
+                    String[] nameFields = Utilities.splitFields(assertedName, ";");
+                    if (nameFields != null) {
+                        assertedName = nameFields[0];
+                    }
+                    if (Utilities.removeUriPartsSelective(assertedName).equals(user)
+                            || callState.bufPeer.toString().equals(user)
+                            || callState.bufDialed.toString().equals(user)) {
+                        result = true;
+                        break;
+                    }
+                }
+            }
+        }
+        return result;
     }
 
     public CallState getEmptyCall() {

@@ -1,0 +1,4 @@
+<resources>
+    <dimen name="call_priority_text_size">24dp</dimen>
+    <dimen name="in_call_sas_widget_margin_top">28dp</dimen>
+</resources>

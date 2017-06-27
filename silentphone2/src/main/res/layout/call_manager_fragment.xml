@@ -8,11 +8,24 @@
 // +++LICENSE_END+++
  -->
 
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-            xmlns:tools="http://schemas.android.com/tools"
+<RelativeLayout  xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <include layout="@layout/banner_data_retention"
+        android:id="@+id/data_retention_status"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        tools:visibility="visible" />
+
+    <ScrollView
+            android:id="@+id/scroll_view"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="@color/black_background">
+            android:background="@color/black_background"
+            android:layout_below="@+id/data_retention_status">
 
     <LinearLayout
             android:id="@+id/main_layout"
@@ -70,3 +83,4 @@
                 tools:context=".activities.InCallActivity"/>
     </LinearLayout>
 </ScrollView>
+</RelativeLayout>

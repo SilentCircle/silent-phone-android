@@ -1,7 +1,7 @@
 /*
 Created by Janis Narbuts
 Copyright (C) 2004-2012, Tivi LTD, www.tiviphone.com. All rights reserved.
-Copyright (C) 2012-2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2012-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,7 +27,6 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-
 //#define DReo
 #include <stdio.h>
 #include <string.h>
@@ -61,7 +60,7 @@ int findMediaId(SDP *sdp, int eType, int n)//TOD
 
 int hasAttrib(SDP &sdp, const char *attr, int iType){
    int i;
-   int iAttribLen=strlen(attr);
+   int iAttribLen=(int)strlen(attr);
    
    for(i=0;i<sdp.attribs.iAttribCnt;i++){
       
@@ -210,7 +209,7 @@ int parseSDP(SDP *psdp, char *buf, int iLen)
                      psdp->media[psdp->iMediaCnt-1].uiSSRC=x;
                }
                while(*buf>=' '){buf++;}
-               psdp->attribs.n[n].iLen=buf-psdp->attribs.n[n].p;
+               psdp->attribs.n[n].iLen=(int)(buf-psdp->attribs.n[n].p);
                if(n+1<psdp->attribs.eMaxAttribCnt)psdp->attribs.iAttribCnt=n+1;
                
             }
@@ -224,7 +223,7 @@ int parseSDP(SDP *psdp, char *buf, int iLen)
             buf+=2;
             psdp->s.pSessName=buf;
             while(*buf>=' '){buf++;}
-            psdp->s.iLen=buf-psdp->s.pSessName;
+            psdp->s.iLen=(int)(buf-psdp->s.pSessName);
             break;
          case 'c':
             buf+=2;//--> test

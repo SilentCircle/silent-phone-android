@@ -702,6 +702,14 @@ public abstract class ImageViewTouchBase extends ImageView implements IDisposabl
         Log.d(LOG_TAG, "matrix: { x: " + tx + ", y: " + ty + ", scalex: " + scalex + ", scaley: " + scaley + " }");
     }
 
+    protected int getCurrentWidth() {
+        return mThisWidth;
+    }
+
+    protected int getCurrentHeight() {
+        return mThisHeight;
+    }
+
     protected RectF getBitmapRect() {
         return getBitmapRect(mSuppMatrix);
     }

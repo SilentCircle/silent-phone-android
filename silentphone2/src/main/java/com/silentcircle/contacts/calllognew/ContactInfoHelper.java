@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2013-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -48,7 +48,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 package com.silentcircle.contacts.calllognew;
 
+import android.Manifest;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.DatabaseUtils;
 import android.net.Uri;
@@ -60,6 +62,7 @@ import android.provider.ContactsContract.Contacts;
 import android.provider.ContactsContract.PhoneLookup;
 import android.support.annotation.NonNull;
 import android.support.annotation.WorkerThread;
+import android.support.v4.content.ContextCompat;
 import android.telephony.PhoneNumberUtils;
 import android.text.TextUtils;
 
@@ -69,7 +72,8 @@ import com.silentcircle.contacts.UpdateScContactDataService;
 import com.silentcircle.contacts.utils.Constants;
 import com.silentcircle.contacts.utils.PhoneNumberHelper;
 import com.silentcircle.contacts.utils.UriUtils;
-import com.silentcircle.messaging.services.AxoMessaging;
+import com.silentcircle.messaging.services.ZinaMessaging;
+import com.silentcircle.silentphone2.R;
 import com.silentcircle.silentphone2.util.ConfigurationUtilities;
 import com.silentcircle.silentphone2.util.Utilities;
 
@@ -120,7 +124,7 @@ public class ContactInfoHelper {
             }
             else {
                 // This "number" is really a SIP address.
-                ContactInfo sipInfo = queryContactInfoForSipAddress(number);
+                ContactInfo sipInfo = queryContactInfoForSipAddress(mContext, number);
                 if (sipInfo == null || sipInfo == ContactInfo.EMPTY) {
                     // Check whether the "username" part of the SIP address is
                     // actually the phone number of a contact.
@@ -138,7 +142,7 @@ public class ContactInfoHelper {
 
             if (phoneInfo == null || phoneInfo == ContactInfo.EMPTY) {
                 // Check whether the phone number has been saved as an "Internet call" number.
-                phoneInfo = queryContactInfoForSipAddress(number);
+                phoneInfo = queryContactInfoForSipAddress(mContext, number);
             }
             info = phoneInfo;
         }
@@ -171,7 +175,7 @@ public class ContactInfoHelper {
                 // name to the user's display name. The view/display functions prefer the
                 // info.name if set, then the formattedNumber, and number is the lowest priority
                 int[] errorCode = new int[1];
-                byte[] data = AxoMessaging.getUserInfo(pureNumber, null, errorCode);
+                byte[] data = ZinaMessaging.getUserInfo(pureNumber, null, errorCode);
                 AsyncTasks.UserInfo ui = AsyncTasks.parseUserInfo(data);
                 if (ui != null && ui.mDisplayName != null) {
                     updatedInfo.name = ui.mDisplayName;
@@ -186,6 +190,57 @@ public class ContactInfoHelper {
             }
         }
         return updatedInfo;
+    }
+
+    /**
+     * Returns the contact information for the given number.
+     * <p>
+     * If the number does not match any contact, returns a contact info containing only the number
+     * and the formatted number.
+     * <p>
+     * If an error occurs during the lookup, it returns null.
+     *
+     * @param number the number to look up
+     * @param countryIso the country associated with this number
+     */
+    public ContactInfo lookupNumberWithoutAxoCache(String number, String countryIso) {
+        final ContactInfo info;
+
+        if (Utilities.isUriNumber(number)) {
+            // Try to remove the domain name
+            String address = Utilities.removeUriPartsSelective(number);
+
+            // If it still has a domain name then it's a SSO. the above remove
+            // function only removes SC SIP address domain and SC namespace domain.
+            if (Utilities.isUriNumber(address)) {
+                info = queryContactInfoForEmailAddress(number);
+            }
+            else {
+                // This "number" is really a SIP address.
+                ContactInfo sipInfo = queryContactInfoForSipAddress(mContext, number);
+                if (sipInfo == null || sipInfo == ContactInfo.EMPTY) {
+                    // Check whether the "username" part of the SIP address is
+                    // actually the phone number of a contact.
+                    String username = Utilities.removeSipParts(number);
+                    if (PhoneNumberUtils.isGlobalPhoneNumber(username)) {
+                        sipInfo = queryContactInfoForPhoneNumber(username, countryIso);
+                    }
+                }
+                info = sipInfo;
+            }
+        }
+        else {
+            // Look for a contact that has the given phone number.
+            ContactInfo phoneInfo = queryContactInfoForPhoneNumber(number, countryIso);
+
+            if (phoneInfo == null || phoneInfo == ContactInfo.EMPTY) {
+                // Check whether the phone number has been saved as an "Internet call" number.
+                phoneInfo = queryContactInfoForSipAddress(mContext, number);
+            }
+            info = phoneInfo;
+        }
+
+        return info;
     }
 
     /**
@@ -233,7 +288,12 @@ public class ContactInfoHelper {
      * The {@link ContactInfo#formattedNumber} field is always set to {@code null} in the returned
      * value.
      */
-    private ContactInfo lookupContactFromUri(Uri uri) {
+    private ContactInfo lookupContactFromUri(Context context, Uri uri) {
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.READ_CONTACTS)
+                != PackageManager.PERMISSION_GRANTED) {
+            return null;
+        }
+
         final ContactInfo info;
         Cursor phonesCursor =
                 mContext.getContentResolver().query(uri, PhoneQuery._PROJECTION, null, null, null);
@@ -277,8 +337,27 @@ public class ContactInfoHelper {
         DatabaseUtils.appendEscapedSQLString(sb, '%' + sipAddress);
         sb.append(" AND (" + ContactsContract.Data.MIMETYPE + "='" + UpdateScContactDataService.SC_PHONE_CONTENT_TYPE +
                 "' OR " + ContactsContract.Data.MIMETYPE + "='" + SipAddress.CONTENT_ITEM_TYPE + "')");
+        return sb.toString();
+    }
+
+    // Creates a selection clause to query for specific website entry.
+    @NonNull
+    private static String createScWebLookupClause(final String webAddress) {
+        final StringBuilder sb = new StringBuilder();
+        sb.append(ContactsContract.Data.DATA1).append("=");
+        DatabaseUtils.appendEscapedSQLString(sb, webAddress);
+        sb.append(" AND ").append(ContactsContract.Data.MIMETYPE).append("='")
+                .append(ContactsContract.CommonDataKinds.Website.CONTENT_ITEM_TYPE).append("'");
 
         return sb.toString();
+    }
+
+    public static ContactInfo queryContactInfoForScUuid(Context context, String uuid) {
+        ContactInfo contactInfo = queryContactInfoForSipAddress(context, "sip:" + uuid + context.getString(R.string.sc_sip_domain_0));
+        if (contactInfo == null || ContactInfo.EMPTY.equals(contactInfo)) {
+            contactInfo = queryContactInfoForWebAddress(context, "silentphone:" + uuid);
+        }
+        return contactInfo;
     }
 
     /**
@@ -290,23 +369,28 @@ public class ContactInfoHelper {
      * <p>
      * If the lookup fails for some other reason, it returns null.
      */
-    private ContactInfo queryContactInfoForSipAddress(String sipAddress) {
+    public static ContactInfo queryContactInfoForSipAddress(Context context, String sipAddress) {
         final ContactInfo info;
 
         Uri lookupUri = ContactsContract.Data.CONTENT_URI;
         String selection = createScSipLookupClause(sipAddress);
 
-        info = lookupContactFromUriSip16(lookupUri, selection);
+        info = lookupContactFromUriSip16(context, lookupUri, selection);
         if (info != null && info != ContactInfo.EMPTY) {
             info.formattedNumber = Utilities.removeUriPartsSelective(sipAddress);
         }
         return info;
     }
 
-    private ContactInfo lookupContactFromUriSip16(Uri uri, String selection) {
+    private static ContactInfo lookupContactFromUriSip16(Context context, Uri uri, String selection) {
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.READ_CONTACTS)
+                != PackageManager.PERMISSION_GRANTED) {
+            return null;
+        }
+
         final ContactInfo info;
         Cursor phonesCursor =
-                mContext.getContentResolver().query(uri, PhoneQuery._PROJECTION_SIP, selection, null, null);
+                context.getContentResolver().query(uri, PhoneQuery._PROJECTION_SIP, selection, null, null);
 
         if (phonesCursor != null) {
             try {
@@ -325,6 +409,70 @@ public class ContactInfoHelper {
                     info.photoId = phonesCursor.getLong(PhoneQuery.SIP_PHOTO_ID);
                     info.photoUri =
                             UriUtils.parseUriOrNull(phonesCursor.getString(PhoneQuery.SIP_PHOTO_URI));
+                    info.formattedNumber = null;
+                }
+                else {
+                    info = ContactInfo.EMPTY;
+                }
+            } finally {
+                phonesCursor.close();
+            }
+        } else {
+            // Failed to fetch the data, ignore this request.
+            info = null;
+        }
+        return info;
+    }
+
+    /**
+     * Determines the contact information for the given WEB address.
+     * <p>
+     * It returns the contact info if found.
+     * <p>
+     * If no contact corresponds to the given WEB address, returns {@link ContactInfo#EMPTY}.
+     * <p>
+     * If the lookup fails for some other reason, it returns null.
+     */
+    public static ContactInfo queryContactInfoForWebAddress(Context context, String sipAddress) {
+        final ContactInfo info;
+
+        Uri lookupUri = ContactsContract.Data.CONTENT_URI;
+        String selection = createScWebLookupClause(sipAddress);
+
+        info = lookupContactFromUriWeb(context, lookupUri, selection);
+        if (info != null && info != ContactInfo.EMPTY) {
+            info.formattedNumber = Utilities.removeUriPartsSelective(sipAddress);
+        }
+        return info;
+    }
+
+    private static ContactInfo lookupContactFromUriWeb(Context context, Uri uri, String selection) {
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.READ_CONTACTS)
+                != PackageManager.PERMISSION_GRANTED) {
+            return null;
+        }
+
+        ContactInfo info = ContactInfo.EMPTY;
+        Cursor phonesCursor =
+                context.getContentResolver().query(uri, PhoneQuery._PROJECTION_WEB, selection, null, null);
+
+        if (phonesCursor != null) {
+            try {
+                // DatabaseUtils.dumpCursor(phonesCursor);
+                if (phonesCursor.moveToFirst()) {
+                    info = new ContactInfo();
+                    long contactId = phonesCursor.getLong(PhoneQuery.WEB_PERSON_ID);
+                    String lookupKey = phonesCursor.getString(PhoneQuery.WEB_LOOKUP_KEY);
+                    info.lookupKey = lookupKey;
+                    info.lookupUri = ContactsContract.Contacts.getLookupUri(contactId, lookupKey);
+                    info.name = phonesCursor.getString(PhoneQuery.WEB_NAME);
+                    info.type = phonesCursor.getInt(PhoneQuery.WEB_ADDRESS_TYPE);
+                    info.label = phonesCursor.getString(PhoneQuery.WEB_LABEL);
+                    info.number = phonesCursor.getString(PhoneQuery.WEB_ADDRESS);
+                    info.normalizedNumber = null;
+                    info.photoId = phonesCursor.getLong(PhoneQuery.WEB_PHOTO_ID);
+                    info.photoUri =
+                            UriUtils.parseUriOrNull(phonesCursor.getString(PhoneQuery.WEB_PHOTO_URI));
                     info.formattedNumber = null;
                 }
                 else {
@@ -362,7 +510,7 @@ public class ContactInfoHelper {
         }
         // The "contactNumber" is a regular phone number, so use the PhoneLookup table.
         Uri uri = Uri.withAppendedPath(PhoneLookup.CONTENT_FILTER_URI, Uri.encode(contactNumber));
-        ContactInfo info = lookupContactFromUri(uri);
+        ContactInfo info = lookupContactFromUri(mContext, uri);
         if (info != null && info != ContactInfo.EMPTY) {
             info.formattedNumber = formatPhoneNumber(number, null, countryIso);
         }

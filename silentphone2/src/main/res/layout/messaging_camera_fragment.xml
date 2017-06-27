@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:id="@+id/camera_fragment_root">
 
     <FrameLayout
         android:layout_width="fill_parent"
@@ -12,79 +13,106 @@
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:layout_gravity="top|center_horizontal"
-            android:id="@+id/video_preview_texture_view"
-            android:background="@android:color/black"/>
+            android:id="@+id/video_preview_texture_view"/>
 
-    </FrameLayout>
+        <ImageView
+            android:id="@+id/photo_playback"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top|center_horizontal"
+            android:visibility="invisible"/>
 
-    <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginLeft="25dp"
-        android:layout_marginTop="20dp"
-        android:layout_gravity="top|left"
-        android:paddingLeft="8dp"
-        android:paddingRight="8dp"
-        android:paddingTop="3dp"
-        android:paddingBottom="3dp"
-        android:background="@drawable/bg_video_record_info"
-        android:id="@+id/video_record_info_layout"
-        android:visibility="invisible">
-        <ImageButton
-            android:layout_width="wrap_content"
+        <View
+            android:id="@+id/blink_layer"
+            android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_marginRight="5dp"
-            android:background="#00000000"
-            android:src="@drawable/ic_recording_indicator"
-            android:scaleType="fitCenter"/>
+            android:background="@android:color/white"
+            android:visibility="invisible"/>
 
-        <com.silentcircle.messaging.views.TextView
-            android:id="@+id/video_countdown_text_view"
+        <LinearLayout
             android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:textSize="18sp"
-            android:text="00:00"
-            android:textColor="@android:color/white"
-            android:gravity="center"/>
-    </LinearLayout>
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="25dp"
+            android:layout_marginTop="20dp"
+            android:layout_gravity="top|left"
+            android:paddingLeft="8dp"
+            android:paddingRight="8dp"
+            android:paddingTop="3dp"
+            android:paddingBottom="3dp"
+            android:background="@drawable/bg_video_record_info"
+            android:id="@+id/video_record_info_layout"
+            android:visibility="invisible">
+            <ImageButton
+                android:id="@+id/recording_dot"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_marginRight="5dp"
+                android:background="#00000000"
+                android:src="@drawable/ic_recording_dot"
+                android:scaleType="fitCenter"/>
 
-    <ImageButton
-        android:layout_width="80dp"
-        android:layout_height="80dp"
-        android:paddingTop="25dp"
-        android:paddingBottom="25dp"
-        android:id="@+id/video_flash_toggle_button"
-        android:layout_gravity="top|right"
-        android:background="#00000000"
-        android:src="@drawable/ic_flash_off_dark"
-        android:scaleType="center"/>
+            <com.silentcircle.messaging.views.TextView
+                android:id="@+id/video_countdown_text_view"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_marginLeft="5dp"
+                android:textSize="18sp"
+                android:text="00:00"
+                android:textColor="@android:color/white"
+                android:gravity="center"/>
+        </LinearLayout>
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom"
-        android:orientation="vertical">
-
-        <ImageButton
+        <android.support.v7.widget.AppCompatImageButton
             android:layout_width="80dp"
             android:layout_height="80dp"
             android:paddingTop="25dp"
             android:paddingBottom="25dp"
-            android:layout_gravity="right"
-            android:id="@+id/video_record_flip_button"
+            android:id="@+id/video_flash_toggle_button"
+            android:layout_gravity="top|right"
             android:background="#00000000"
-            android:src="@drawable/ic_camera_rear_dark"
+            android:src="@drawable/ic_flash_off_dark"
             android:scaleType="center"/>
 
-        <ImageButton
-            android:layout_width="fill_parent"
-            android:layout_height="@dimen/camera_start_stop_button_height"
+    </FrameLayout>
 
+    <RelativeLayout
+        android:id="@+id/bottom_buttons_layout"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/camera_start_stop_button_height"
+        android:layout_gravity="bottom"
+        android:background="#55000000">
+
+        <android.support.v7.widget.AppCompatImageButton
+            android:id="@+id/video_record_flip_button"
+            style="@style/Widget.ImageButton"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:layout_alignParentLeft="true"
+            android:layout_centerVertical="true"
+            android:paddingBottom="25dp"
+            android:paddingTop="25dp"
+            android:scaleType="center"
+            android:src="@drawable/ic_camera_rear_dark" />
+
+        <android.support.v7.widget.AppCompatImageButton
+            android:layout_width="wrap_content"
+            style="@style/Widget.ImageButton"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
             android:id="@+id/video_record_start_stop_button"
-            android:background="#55000000"
             android:src="@drawable/ic_videocam_dark"
             android:scaleType="centerInside"/>
-    </LinearLayout>
+
+        <android.support.v7.widget.AppCompatImageButton
+            android:layout_width="wrap_content"
+            style="@style/Widget.ImageButton"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:id="@+id/video_capture_photo"
+            android:src="@drawable/ic_photocapture_dark"
+            android:scaleType="centerInside"
+            android:visibility="gone"/>
+    </RelativeLayout>
 
     <FrameLayout
         android:id="@+id/share_button_frame"
@@ -96,9 +124,9 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-
+            android:background="#00000000"
             android:id="@+id/share_button"
-            android:src="@drawable/ic_action_send"
+            android:src="@drawable/ic_action_attachment_send"
             android:scaleType="centerInside"/>
     </FrameLayout>
 

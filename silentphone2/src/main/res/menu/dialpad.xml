@@ -12,7 +12,8 @@
       xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item android:id="@+id/dial_menu_search"
-          android:title="@string/menu_search"
-          android:icon="@drawable/ic_ab_search_holo_light"
-          app:showAsAction="always" />
+        android:title="@string/menu_search"
+        android:icon="@drawable/ic_ab_search_holo_light"
+        app:showAsAction="always" />
+
 </menu>

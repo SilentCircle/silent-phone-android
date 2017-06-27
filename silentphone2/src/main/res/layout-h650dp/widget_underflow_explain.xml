@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="200dp"
+    android:layout_height="@dimen/in_call_underflow_indicator_height"
+    android:gravity="center"
+    android:background="@color/sc_ng_red_dark">
+        <ImageView
+            android:id="@+id/underflow_image"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:gravity="center"
+            android:src="@drawable/ic_signal_cellular_connected_no_internet_4_bar_white_48dp"
+            android:layout_marginLeft="7dp"
+            android:layout_marginStart="7dp"
+            android:layout_centerVertical="true"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true" />
+        <TextView
+            android:layout_width="200dp"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="-15dp"
+            android:layout_marginStart="-15dp"
+            android:text="@string/network_trouble_detected"
+            android:textColor="@android:color/white"
+            android:textSize="16sp"
+            android:gravity="center_horizontal"
+            android:id="@+id/textView"
+            android:layout_centerVertical="true"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentEnd="true"
+            android:layout_toRightOf="@+id/underflow_image"
+            android:layout_toEndOf="@+id/underflow_image" />
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/ic_help_white_24dp"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentEnd="true"
+            android:layout_marginTop="40dp"
+            android:layout_marginRight="2dp"
+            android:layout_marginEnd="2dp"
+            android:layout_marginBottom="2dp"/>
+</RelativeLayout>

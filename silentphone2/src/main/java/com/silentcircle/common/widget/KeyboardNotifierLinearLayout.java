@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2016-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -40,14 +40,18 @@ import com.silentcircle.common.util.ViewUtil;
 
 public class KeyboardNotifierLinearLayout extends LinearLayout{
 
+    @SuppressWarnings("unused")
+    private static final String TAG = KeyboardNotifierLinearLayout.class.getSimpleName();
+
     public interface KeyboardListener {
         public void onKeyboardHeightChanged(boolean isVisible, int keyboardHeight);
     }
 
     private KeyboardListener mListener;
     private Rect mRect = new Rect();
-    private int mKeyboardHeight;
     private int mKeyboardHeightSent;
+    private int mBottomInsetCached = -1;
+
 
     public void setListener(KeyboardListener listener) {
         this.mListener = listener;
@@ -73,38 +77,72 @@ public class KeyboardNotifierLinearLayout extends LinearLayout{
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        if (mBottomInsetCached == -1) {
+            Rect inset = ViewUtil.getViewInset(getRootView());
+            mBottomInsetCached = (inset != null) ? inset.bottom : 0;
+        }
+
+        notifyKeyboardAppeared(View.MeasureSpec.getSize(heightMeasureSpec));
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-//        System.out.println("onMeasure() was called");
-        notifyKeyboardAppeared();
     }
 
-    private void notifyKeyboardAppeared() {
+    private void notifyKeyboardAppeared(int height) {
         if (mListener == null) {
             return;
         }
-        mKeyboardHeight = getKeyboardHeight();
+        int keyboardHeight = getKeyboardHeight(height);
         if (mListener != null) {
-            if (mKeyboardHeightSent == mKeyboardHeight) {
+            if (mKeyboardHeightSent == keyboardHeight) {
                 return;
             }
-            mKeyboardHeightSent = mKeyboardHeight;
-            mListener.onKeyboardHeightChanged(mKeyboardHeight != 0, mKeyboardHeight);
+            mKeyboardHeightSent = keyboardHeight;
+            mListener.onKeyboardHeightChanged(keyboardHeight != 0, keyboardHeight);
         }
     }
-    
-    public int getKeyboardHeight() {
+
+
+    /*
+     * This method makes use of getWindowVisibleDisplayFrame() which works nice but is quite
+     * costly and performance bad in low-end devices even when scrolling. The advantage of this method
+     * is that this view does not need to have its height reduced by the keyboard in order to measure it.
+     */
+//    public int getKeyboardHeight() {
+//        View rootView = getRootView();
+//        getWindowVisibleDisplayFrame(mRect);
+//        int statusBarHeight = (mRect.top != 0 ? ViewUtil.getStatusBarHeight(getContext()) : 0);
+//
+//        Rect inset = ViewUtil.getViewInset(rootView);
+//        int bottomInset = (inset != null) ? inset.bottom : 0;
+//
+//        int usableViewHeight = rootView.getHeight() - statusBarHeight - bottomInset;
+//        return usableViewHeight - (mRect.bottom - mRect.top);
+//    }
+
+
+    /*
+     * This method requires the view's height to me reduced when the keyboard appears. It then calculates the
+     * usable view height using the root view and the status bar and navigation bar heights and subtracts
+     * those 2 to get the keyboard height.
+     */
+    public int getKeyboardHeight(int height) {
         View rootView = getRootView();
-        getWindowVisibleDisplayFrame(mRect);
-        int statusBarHeight = (mRect.top != 0 ? ViewUtil.getStatusBarHeight(getContext()) : 0);
+        int statusBarHeight = ViewUtil.getStatusBarHeight(getContext());
 
-        Rect inset = ViewUtil.getViewInset(rootView);
-        int bottomInset = (inset != null) ? inset.bottom : 0;
+        int usableViewHeight = rootView.getMeasuredHeight() - statusBarHeight - mBottomInsetCached;
 
-        int usableViewHeight = rootView.getHeight() - statusBarHeight - bottomInset;
-        return usableViewHeight - (mRect.bottom - mRect.top);
+        if (rootView.getMeasuredHeight() == 0 || height == 0) {
+            return 0;
+        }
+        int keyboardHeight = usableViewHeight - height;
+//        Log.d("notifier", rootView.getHeight() + " "
+//                + rootView.getMeasuredHeight() + " " + height + " " + statusBarHeight + " " + mBottomInsetCached);
+
+        // filter out common miscalculations
+        return (keyboardHeight <= mBottomInsetCached) ? 0 : keyboardHeight;
     }
 
+
     public boolean isKeyboardVisible() {
-        return getKeyboardHeight() != 0;
+        return getKeyboardHeight(getMeasuredHeight()) != 0;
     }
 }

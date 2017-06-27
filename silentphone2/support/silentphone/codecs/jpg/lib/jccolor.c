@@ -226,6 +226,8 @@ rgb_ycc_convert (j_compress_ptr cinfo,
     }
   }
 }
+
+#if 0 // EA: not used
 METHODDEF(void)
 rgb_ycc_convert_old (j_compress_ptr cinfo,
 		 JSAMPARRAY input_buf, JSAMPIMAGE output_buf,
@@ -302,6 +304,7 @@ rgb_ycc_convert_old (j_compress_ptr cinfo,
     }
   }
 }
+#endif
 
 
 /**************** Cases other than RGB -> YCbCr **************/

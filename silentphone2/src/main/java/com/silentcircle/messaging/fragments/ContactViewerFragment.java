@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2016-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,25 +27,31 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 package com.silentcircle.messaging.fragments;
 
+import android.app.Activity;
 import android.content.ContentProviderOperation;
 import android.content.ContentProviderResult;
 import android.content.ContentResolver;
-import android.content.Intent;
+import android.content.Context;
 import android.content.OperationApplicationException;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.RemoteException;
 import android.provider.ContactsContract;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
-import android.util.Log;
+
+import com.silentcircle.common.util.ViewUtil;
+import com.silentcircle.logs.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
+import android.widget.BaseAdapter;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -85,8 +91,9 @@ public class ContactViewerFragment extends FileViewerFragment {
     private ContactView mCard;
     private Button mButtonImportVcard;
     private Button mButtonImportAllVCards;
-    private Button mButtonBack;
     private ListView mVCardListView;
+
+    private boolean mViewFlipped;
 
     private class VCardHandler implements VCardEntryHandler {
 
@@ -112,7 +119,7 @@ public class ContactViewerFragment extends FileViewerFragment {
 
         private final ContactView mCard;
         private final int mPosition;
-        private final ArrayList<String> mEntries = new ArrayList<>();
+        private final List<VCardEntry> mEntries = new ArrayList<>();
 
         private int mCurrentPosition;
         private VCardEntry mEntry;
@@ -153,7 +160,7 @@ public class ContactViewerFragment extends FileViewerFragment {
         public void onEnd() {
         }
 
-        public List<String> getEntries() {
+        public List<VCardEntry> getEntries() {
             return mEntries;
         }
 
@@ -162,7 +169,7 @@ public class ContactViewerFragment extends FileViewerFragment {
         }
 
         private void addEntry(VCardEntry entry) {
-            mEntries.add(entry.getDisplayName());
+            mEntries.add(entry);
         }
 
         private void populateCard(VCardEntry entry) {
@@ -279,35 +286,98 @@ public class ContactViewerFragment extends FileViewerFragment {
         }
     }
 
+    private class VCardAdapter extends BaseAdapter {
+
+        private final Context mContext;
+        private final List<VCardEntry> mEntries;
+
+        VCardAdapter(Context context, List<VCardEntry> entries) {
+            super();
+            mContext = context;
+            mEntries = entries;
+        }
+
+        @Override
+        public int getCount() {
+            return mEntries != null ? mEntries.size() : 0;
+        }
+
+        @Override
+        public Object getItem(int position) {
+            if (mEntries == null) {
+                return null;
+            }
+            return (position >= 0 && position < mEntries.size()) ? mEntries.get(position) : null;
+        }
+
+        @Override
+        public long getItemId(int position) {
+            return 0;
+        }
+
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+            if (convertView == null) {
+                convertView = LayoutInflater.from(mContext).inflate(R.layout.messaging_vcard_list_entry, parent, false);
+            }
+            ImageView photoView = (ImageView) convertView.findViewById(R.id.vcard_photo);
+            TextView nameView = (TextView) convertView.findViewById(R.id.vcard_name);
+            VCardEntry entry = (VCardEntry) getItem(position);
+
+            nameView.setText(null);
+            photoView.setImageResource(R.drawable.ic_profile);
+            if (entry != null) {
+                nameView.setText(entry.getDisplayName());
+                Bitmap avatar = getAvatar(entry);
+                if (avatar != null) {
+                    photoView.setImageBitmap(avatar);
+                }
+            }
+            return convertView;
+        }
+
+        @Nullable
+        private Bitmap getAvatar(@NonNull VCardEntry entry) {
+            Bitmap result = null;
+            try {
+                List<VCardEntry.PhotoData> photos = entry.getPhotoList();
+                if (photos != null && photos.size() > 0) {
+                    VCardEntry.PhotoData photoEntry = photos.get(0);
+                    Bitmap photo = AttachmentUtils.getPreviewImage(
+                            photoEntry.getBytes(), DisplayMetrics.DENSITY_DEFAULT);
+                    result = ViewUtil.getCircularBitmap(photo);
+                }
+            }
+            catch (Throwable t) {
+                // Default avatar will be shown
+            }
+            return result;
+        }
+    }
+
     private View.OnClickListener mButtonImportVCardClickListener = new View.OnClickListener() {
 
         @Override
         public void onClick(View v) {
-            Intent fileViewerIntent = new Intent(Intent.ACTION_VIEW);
-            File exportedFile = AttachmentUtils.copyToExternalStorage(getActivity(),
-                    getFile(), getFile().getName());
-            if (exportedFile != null) {
-                Uri data = Uri.fromFile(exportedFile);
-                fileViewerIntent.setDataAndType(data, getType());
-                startActivity(fileViewerIntent);
-            } else {
-                Toast.makeText(getActivity(),
-                        getString(R.string.toast_failed_to_export_file,
-                                getFile().getName()),
+            Activity activity = getActivity();
+            if (activity == null) {
+                return;
+            }
+
+            Callback callback = getCallback();
+            if (callback == null) {
+                return;
+            }
+
+            try {
+                callback.viewWithExternalApplication();
+            }
+            catch (Throwable t) {
+                File file = getFile();
+                Toast.makeText(activity,
+                        getString(R.string.toast_failed_to_export_file, file == null ? "" : file.getName()),
                         Toast.LENGTH_SHORT).show();
             }
-        }
-    };
-
-    private View.OnClickListener mButtonBackOnClickListener = new View.OnClickListener() {
-
-        @Override
-        public void onClick(View v) {
-            mViewFlipper.setInAnimation(getActivity(), R.anim.dialpad_slide_in_left);
-            mViewFlipper.setOutAnimation(getActivity(), R.anim.dialpad_slide_out_right);
-            mViewFlipper.showPrevious();
-            mViewFlipper.setInAnimation(getActivity(), R.anim.dialpad_slide_in_right);
-            mViewFlipper.setOutAnimation(getActivity(), R.anim.dialpad_slide_out_left);
         }
     };
 
@@ -367,15 +437,13 @@ public class ContactViewerFragment extends FileViewerFragment {
         mButtonImportAllVCards = (Button) view.findViewById(R.id.button_import_all_vcards);
         mButtonImportAllVCards.setOnClickListener(mButtonImportVCardClickListener);
 
-        mButtonBack = (Button) view.findViewById(R.id.button_back);
-        mButtonBack.setOnClickListener(mButtonBackOnClickListener);
-
         mVCardListView = (ListView) view.findViewById(R.id.vcard_list);
         mVCardListView.setVisibility(View.GONE);
         mVCardListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                mViewFlipped = true;
                 prepareForShow(position);
                 mViewFlipper.showNext();
             }
@@ -394,12 +462,33 @@ public class ContactViewerFragment extends FileViewerFragment {
         mCard = null;
         mButtonImportVcard = null;
         mButtonImportAllVCards = null;
-        mButtonBack = null;
         mVCardListView = null;
         mViewFlipper = null;
     }
 
+    public boolean onExitView() {
+        boolean result = false;
+        if (mViewFlipped) {
+            result = true;
+            if (mViewFlipper != null) {
+                mViewFlipper.setInAnimation(getActivity(), R.anim.dialpad_slide_in_left);
+                mViewFlipper.setOutAnimation(getActivity(), R.anim.dialpad_slide_out_right);
+                mViewFlipper.showPrevious();
+                mViewFlipper.setInAnimation(getActivity(), R.anim.dialpad_slide_in_right);
+                mViewFlipper.setOutAnimation(getActivity(), R.anim.dialpad_slide_out_left);
+
+            }
+            mViewFlipped = false;
+        }
+        return result;
+    }
+
     private void prepareForShow() {
+        Context context = getActivity();
+        if (context == null) {
+            return;
+        }
+
         final int[] possibleVCardVersions = new int[] { VCARD_VERSION_V30, VCARD_VERSION_V21 };
         final VCardEntryConstructor constructor =
                 new VCardEntryConstructor(VCardSourceDetector.PARSE_TYPE_UNKNOWN);
@@ -414,20 +503,17 @@ public class ContactViewerFragment extends FileViewerFragment {
             dispatchError();
         }
         else {
-            List<String> entries = vCardHandler.getEntries();
+            List<VCardEntry> entries = vCardHandler.getEntries();
             if (entries != null && entries.size() > 1) {
                 mButtonImportAllVCards.setText(getString(R.string.import_contacts, entries.size()));
                 mButtonImportAllVCards.setVisibility(View.VISIBLE);
-                ArrayAdapter<String> adapter = new ArrayAdapter<>(getActivity(),
-                        R.layout.messaging_vcard_list_entry, entries);
-                mVCardListView.setAdapter(adapter);
+                mVCardListView.setAdapter(new VCardAdapter(context, entries));
                 mVCardListView.setVisibility(View.VISIBLE);
-                mViewFlipper.setInAnimation(getActivity(), R.anim.dialpad_slide_in_right);
-                mViewFlipper.setOutAnimation(getActivity(), R.anim.dialpad_slide_out_left);
+                mViewFlipper.setInAnimation(context, R.anim.dialpad_slide_in_right);
+                mViewFlipper.setOutAnimation(context, R.anim.dialpad_slide_out_left);
             }
             else {
                 // Viewing single contact, hide back button
-                mButtonBack.setVisibility(View.GONE);
                 mViewFlipper.showNext();
             }
         }

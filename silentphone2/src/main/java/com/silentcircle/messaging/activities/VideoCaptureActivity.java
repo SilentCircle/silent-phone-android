@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2016-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -35,7 +35,7 @@ import android.media.CamcorderProfile;
 import android.media.MediaRecorder;
 import android.net.Uri;
 import android.os.Bundle;
-import android.util.Log;
+import com.silentcircle.logs.Log;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.TextureView;
@@ -501,7 +501,7 @@ public class VideoCaptureActivity extends Activity {
 
         mMediaRecorder.setProfile(mCamcorderProfile);
 
-        mMediaRecorder.setOrientationHint(CameraHelper.getOrientationHint(this, mCameraId, mCamera));
+        mMediaRecorder.setOrientationHint(CameraHelper.getOrientationHint(this, mCameraId));
 
         try {
             mMediaRecorder.prepare();

@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2016-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -30,7 +30,7 @@ package com.silentcircle.messaging.services;
 import android.app.IntentService;
 import android.content.Intent;
 import android.text.TextUtils;
-import android.util.Log;
+import com.silentcircle.logs.Log;
 
 import com.silentcircle.messaging.util.AttachmentUtils;
 import com.silentcircle.messaging.util.Extra;

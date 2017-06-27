@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2014-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -39,6 +39,12 @@ public class WakeLockHelper {
     public WakeLockHelper(Context context, String tag) {
         PowerManager pm = (PowerManager)context.getSystemService(Context.POWER_SERVICE);
         wl = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, tag);
+        bIsActive = false;
+    }
+
+    public WakeLockHelper(Context context, String tag, int level) {
+        PowerManager pm = (PowerManager)context.getSystemService(Context.POWER_SERVICE);
+        wl = pm.newWakeLock(level, tag);
         bIsActive = false;
     }
 

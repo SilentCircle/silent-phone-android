@@ -1,7 +1,7 @@
 /*
 Created by Janis Narbuts
 Copyright (C) 2004-2012, Tivi LTD, www.tiviphone.com. All rights reserved.
-Copyright (C) 2012-2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2012-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,7 +27,6 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-
 #if 1
 
 #define T_CAN_TEST_V
@@ -619,6 +618,7 @@ static const int zzzff_zigzag_direct[64] = {
 */
 };   //
 
+/* EA: unused variables
 const int ff_alternate_h_scan[64] = {
     0,  1,   2,  3,  8,  9, 16, 17,
     10, 11,  4,  5,  6,  7, 15, 14,
@@ -640,6 +640,7 @@ const int ff_alternate_v_scan[64] = {
     53, 61, 22, 30,  7, 15, 23, 31,
     38, 46, 54, 62, 39, 47, 55, 63,
 };
+*/
 
 static const int tabzz4x4[]={
    /*
@@ -756,6 +757,7 @@ static const int tabzz4x4[]={
    0+48,1+48,4+48,8+48, 5+48,2+48,3+48,6+48, 9+48,12+48,13+48,10+48, 7+48,11+48,14+48,15+48,
 */
 };
+#if 0 // EA: unused variables
 const int tabzz4x4_second[]={
 0, 16,32,48, 4,20,36,52,
 17, 1,49,33,24, 8,56,40,
@@ -836,6 +838,7 @@ const int zig_zag_haar2d[]={
  5,44,33,40,37,12,54,34,
  6,20,52,48,38,36,32, 4,
 };
+#endif // unused variables
 //utils
 #ifdef _CREATE_ZZ_TBL
 #include <stdlib.h>
@@ -1182,6 +1185,7 @@ void loadPred(){
 }
 static inline int mmabs(int a){return (a>=0)?a:-a;}
 //#define mmabs abs
+/* EA: unused function
 static inline int sadGain(unsigned char *p1, register short *ref, int stride)
 {
    register int i,j;
@@ -1198,6 +1202,7 @@ static inline int sadGain(unsigned char *p1, register short *ref, int stride)
    }
    return iSad;
 }
+ */
 static inline int sadGainUU(unsigned char *p1, unsigned char *ref, int stride , unsigned char * t)
 {
    register int i,j;
@@ -1235,6 +1240,7 @@ static inline int sadGainUU_16(unsigned char *p1, unsigned char *ref, int stride
    return iSad;
 }
 
+/* EA: unused function
 static inline int sadFX(unsigned char *p1, register int *ref, int stride, int iMax){
    register int i,j;
    register int iSad=0;
@@ -1251,6 +1257,7 @@ static inline int sadFX(unsigned char *p1, register int *ref, int stride, int iM
    }
    return iSad;
 }
+ */
 static inline int sadF4x4_sq(unsigned char *p1, unsigned char *ref, const int stride, int iMax){
    /*
    register int i,j;
@@ -1259,14 +1266,11 @@ static inline int sadF4x4_sq(unsigned char *p1, unsigned char *ref, const int st
    for(i=0;i<4;i++){
       for(j=0;j<12;j+=3){
          const int d=p1[j]-ref[j];
-         iSad+=mmabs(d);//*d;
-         
-
+         iSad+=mmabs(d);
       }
       if(iSad>iMax)return iSad;
       p1+=stride;
       ref+=stride;
-      
    }
    return iSad;
    */
@@ -1274,6 +1278,7 @@ static inline int sadF4x4_sq(unsigned char *p1, unsigned char *ref, const int st
    return sadHada4_t(p1,ref,stride);
 }
 
+#if 0 // EA: unused functions
 static inline int sadInt(unsigned char *p1, unsigned char *ref, int stride, int iMax){
    register int i,j;
    register int iSad=0;
@@ -1290,6 +1295,8 @@ static inline int sadInt(unsigned char *p1, unsigned char *ref, int stride, int 
    }
    return iSad;
 }
+#endif
+
 static int testSendPic(unsigned char *p1, unsigned char *ref, const int stride){
    register int j;
    register int iSad=0;
@@ -1318,7 +1325,7 @@ static int testSendPic(unsigned char *p1, unsigned char *ref, const int stride){
     
 }
 static int calcPicDev4(unsigned char *p1, unsigned char *ref, const int stride){
-   register int j;
+//   register int j;
    register int iSad=0;
    register int iSadSq=0;
    int i,d;
@@ -1343,6 +1350,7 @@ static int calcPicDev4(unsigned char *p1, unsigned char *ref, const int stride){
     return variance;//400;
     
 }
+#if 0 // EA: unused functions
 static inline int sadIntT(unsigned char *p1, unsigned char *ref, const int stride, const int strRef, int *t){
    register int i,j;
    register int iSad=0;
@@ -1360,7 +1368,7 @@ static inline int sadIntT(unsigned char *p1, unsigned char *ref, const int strid
 }
 static inline int canSkipMD(unsigned char *p1, unsigned char *ref, const int stride, int L){
    int i,j;
-   int iSad=0;
+   //int iSad=0;
    //stride -=24;
    for(i=0;i<16;i++){
       for(j=0;j<48;j+=3){
@@ -1397,6 +1405,8 @@ static inline int sadF(unsigned char *p1, register int *ref, int stride, int iMa
    for(i=0;i<64;i++,p++)iSad+=mmabs((*p)-iMean);
    return iSad+mmabs(iMean);
 }
+#endif // unused functions
+
 static inline int sadIntMd(unsigned char *p1,unsigned char *ref, int stride, int iMax){
    register int i,j;
    register int iSad=0;
@@ -2340,60 +2350,61 @@ void initTabZ(int q, int *p, const int *tab, int id, int iIsB, int iConstQ)
    //const int tid0[]={4,8};
    //const int tid1[]={4,8};
    
-   const int tab_q_haar[]={
-      1,4,2,4,1,4,2,4, 
-      4,4,4,4,4,4,4,4, 
-      2,4,2,4,2,4,2,4, 
-      4,4,4,4,4,4,4,4, 
-      1,4,2,4,1,4,2,4, 
-      4,4,4,4,4,4,4,4, 
-      2,4,2,4,2,4,2,4, 
-      4,4,4,4,4,4,4,4, 
-   };   
+//   const int tab_q_haar[]={
+//      1,4,2,4,1,4,2,4, 
+//      4,4,4,4,4,4,4,4, 
+//      2,4,2,4,2,4,2,4, 
+//      4,4,4,4,4,4,4,4, 
+//      1,4,2,4,1,4,2,4, 
+//      4,4,4,4,4,4,4,4, 
+//      2,4,2,4,2,4,2,4, 
+//      4,4,4,4,4,4,4,4, 
+//   };   
    
    
-   const int tt[]={
-
-      /*
-      16,10,16,16,16,16,16,24,
-      10,12,16,16,16,16,24,40,
-      16,16,16,20,20,24,40,40,
-      16,16,20,20,24,40,40,60,
-      16,16,20,24,40,40,60,60,
-      16,16,24,40,40,60,60,60,
-      16,24,40,40,60,60,60,80,
-      24,40,40,60,60,60,80,99,
-      */
-      16,10,16,16,16,16,16,16,
-      10,12,16,16,16,16,16,16,
-      16,16,16,16,16,16,16,16,
-      16,16,16,16,16,16,16,16,
-      16,16,16,16,16,16,16,16,
-      16,16,16,16,16,16,16,16,
-      16,16,16,16,16,16,16,16,
-      16,16,16,16,16,16,16,16,
-
-   };
+//   const int tt[]={
+//
+//      /*
+//      16,10,16,16,16,16,16,24,
+//      10,12,16,16,16,16,24,40,
+//      16,16,16,20,20,24,40,40,
+//      16,16,20,20,24,40,40,60,
+//      16,16,20,24,40,40,60,60,
+//      16,16,24,40,40,60,60,60,
+//      16,24,40,40,60,60,60,80,
+//      24,40,40,60,60,60,80,99,
+//      */
+//      16,10,16,16,16,16,16,16,
+//      10,12,16,16,16,16,16,16,
+//      16,16,16,16,16,16,16,16,
+//      16,16,16,16,16,16,16,16,
+//      16,16,16,16,16,16,16,16,
+//      16,16,16,16,16,16,16,16,
+//      16,16,16,16,16,16,16,16,
+//      16,16,16,16,16,16,16,16,
+//
+//   };
    //q=4;
    
-   const int q4x4[]={
-      9,10,13,13,
-      10,10,13,13,
-      13,13,16,16,
-      13,13,16,16,
-      9,10,13,13,
-      10,10,13,13,
-      13,13,16,16,
-      13,13,16,16,
-      9,10,13,13,
-      10,10,13,13,
-      13,13,16,16,
-      13,13,16,16,
-      9,10,13,13,
-      10,10,13,13,
-      13,13,16,16,
-      13,13,16,16,
-   };
+//   const int q4x4[]={
+//      9,10,13,13,
+//      10,10,13,13,
+//      13,13,16,16,
+//      13,13,16,16,
+//      9,10,13,13,
+//      10,10,13,13,
+//      13,13,16,16,
+//      13,13,16,16,
+//      9,10,13,13,
+//      10,10,13,13,
+//      13,13,16,16,
+//      13,13,16,16,
+//      9,10,13,13,
+//      10,10,13,13,
+//      13,13,16,16,
+//      13,13,16,16,
+//   };
+    
 /*
 static const uint8_t x264_zigzag_scan4[2][16] =
 {{ // frame
@@ -2408,7 +2419,7 @@ static const uint8_t x264_zigzag_scan4[2][16] =
    int v;
    //if(id && q>80)q=80;
    int quality=q;
-   int iqIn=q;
+   //int iqIn=q;
 
    if(quality>100)quality=100;
    if (quality < 50)
@@ -2523,40 +2534,40 @@ static const uint8_t x264_zigzag_scan4[2][16] =
       14,18,14,18,
    };
 */
-   const int t_test[]={
-      //70,280,70,280,
-      //280,320,280,320,
-      
-      //3x+y;x-3y
-      //112 82
-      60,140,60,140,
-      140,280,140,280,
-      60,140,60,140,
-      140,280,140,280,
-/*
-      80,150,80,150,
-      150,300,150,300,
-      80,150,80,150,
-      150,300,150,300,
-*/
-      /*
-      80,160,80,160,
-      160,360,160,360,
-      80,160,80,160,
-      160,360,160,360,
-      */
-      /*
-      70,120,70,120,
-      120,200,120,200,
-      70,120,70,120,
-      120,200,120,200,
-*/
-      //5x+2y
-      60,120,60,120,
-      120,240,120,240,
-      60,120,60,120,
-      120,240,120,240,
-   };
+//   const int t_test[]={
+//      //70,280,70,280,
+//      //280,320,280,320,
+//      
+//      //3x+y;x-3y
+//      //112 82
+//      60,140,60,140,
+//      140,280,140,280,
+//      60,140,60,140,
+//      140,280,140,280,
+///*
+//      80,150,80,150,
+//      150,300,150,300,
+//      80,150,80,150,
+//      150,300,150,300,
+//*/
+//      /*
+//      80,160,80,160,
+//      160,360,160,360,
+//      80,160,80,160,
+//      160,360,160,360,
+//      */
+//      /*
+//      70,120,70,120,
+//      120,200,120,200,
+//      70,120,70,120,
+//      120,200,120,200,
+//*/
+//      //5x+2y
+//      60,120,60,120,
+//      120,240,120,240,
+//      60,120,60,120,
+//      120,240,120,240,
+//   };
    
    /*
    const int t_test[]={
@@ -2635,13 +2646,13 @@ static const uint8_t x264_zigzag_scan4[2][16] =
       64,64,64,64,
    };
 
-   const int uvsk_dct[]={
-      8,8,10,16,
-      8,10,16,18,
-      10,16,18,20,
-      16,18,20,24,
-   };
-   int qSt=iQIn>>2;
+//   const int uvsk_dct[]={
+//      8,8,10,16,
+//      8,10,16,18,
+//      10,16,18,20,
+//      16,18,20,24,
+//   };
+//   int qSt=iQIn>>2;
 
    for(i=0;i<16;i++){
 
@@ -2699,14 +2710,14 @@ static const uint8_t x264_zigzag_scan4[2][16] =
       p[i+128+48]=p[i+128+32]=p[i+128+16]=p[i+128];
    }
    
-   if(1){//iQIn<84){
+//   if(1){//iQIn<84){
       p[128+128]=((p[128]+12)>>3);//((96-iQIn)>>3);//// (20*q+50)/100;//p[128];
       if(p[128+128]<16)p[128+128]=(p[128+128]*3+16)>>2;
       else if(p[128+128]>32)p[128+128]=(p[128+128]+32)>>1;
-   }
-   else{
-      p[128+128]=4;
-   }
+//   }
+//   else{
+//      p[128+128]=4;
+//   }
 #if 0
 	static const int aanscales[64] = {
 	  /* precomputed values scaled up by 14 bits */
@@ -2844,12 +2855,14 @@ void initQ4x4(int *p, int id ,int iIsB, int a,int b, int c){
    enum{
       ASX(abv,1),
    };
+#ifdef FIX__B_C
       static const int tt[]={
          A1,A2,A1,A2,
          A2,A3,A2,A3,
          A1,A2,A1,A2,
          A2,A3,A2,A3,
       };
+#endif
 #undef A1
 #undef A2
 #undef A3
@@ -3047,7 +3060,7 @@ int encAritmNH_S(unsigned char *out , int *in ,int iCnt);
 int encAritmUC(unsigned char *out , unsigned char *in ,int iCnt);
 
 inline void fill_dc128_k0(unsigned char *pCur, int stride){
-   int i,j;
+   int j;
    unsigned int *pI=(unsigned int *)pCur;
    stride>>=2;
    for(j=0;j<8;j++,pCur+=stride){
@@ -3062,7 +3075,7 @@ inline void fill_dc128_k0(unsigned char *pCur, int stride){
 
 inline void fill_dc128(unsigned char *pCur, int stride)
 {
-   int i,j;
+   int j;
    for(j=0;j<8;j++,pCur+=stride){
       pCur[0]=128;
       pCur[3]=128;
@@ -3119,7 +3132,7 @@ typedef struct  {
 
 int loadBlockK(DCT_TYPE *p,  unsigned char *pCur, unsigned char *pRef, int stride)
 {
-   int i,j;
+   int j;
    //DCT_TYPE *p=&mb->dct[0];
    for(j=0;j<TVAL_8;j++){
       p[0]=pRef[0]-128;
@@ -3137,7 +3150,7 @@ int loadBlockK(DCT_TYPE *p,  unsigned char *pCur, unsigned char *pRef, int strid
 }
 int loadBlockKX(DCT_TYPE *dct,  unsigned char *pCur, unsigned char *pRef, int stride)
 {
-   int i,j;
+   int j;
  
    for(j=0;j<TVAL_8;j++){
       *dct=pRef[0]-128;dct++;
@@ -3241,7 +3254,7 @@ static inline int canSkip(unsigned char *pCur,unsigned char *pRef ,const int iSi
    const int iSize3=iSize*3;
 #define fnc(_A) t[_A]
    
-   const int skipCoef=0;
+//   const int skipCoef=0;
    iSad=0;
 
    int stridex=-stride-3;
@@ -3336,6 +3349,7 @@ static inline int canSkip(unsigned char *pCur,unsigned char *pRef ,const int iSi
 
    return iCanBeNonDif  && (ma+10)*4<iSad?4:0;
 }
+/* EA: unused function
 static inline int canSkipUV(unsigned char *pCur,unsigned char *pRef ,const int iSize,int stride, unsigned char *t, unsigned char *ta){
    register int h=2;
    register int v=2;
@@ -3368,6 +3382,9 @@ static inline int canSkipUV(unsigned char *pCur,unsigned char *pRef ,const int i
    
    return 0;
 }
+*/
+
+#undef  fnc
 
 inline int loadBlockFast(DCT_TYPE *p, DCT_TYPE *pic, unsigned char *pCur, unsigned char *pRef, int stride, int iIsRefFrame, int iIsY)
 {
@@ -3432,7 +3449,7 @@ int loadBlock(IMG_MB *mb, DCT_TYPE *pic, unsigned char *pCur, unsigned char *pRe
 
    if(mb->iSkip==5)return sadD;
 
-   int _TODO_rem_retHERE;
+//   int _TODO_rem_retHERE;
 //return 0x7fff;
 
    if((iIsRefFrame ==0 &&((m<3 && sadD<40))) || m<2 || sadD<12)
@@ -3756,6 +3773,7 @@ typedef struct{
    int iPrevDev;
 }MB16_2;
 
+/* EA: unused function
 static void addTransSkip(char *p, int &iLen, int sk){
 #ifndef _T_DIS_DBG
    char *v="";
@@ -3780,6 +3798,7 @@ static void addTransSkip(char *p, int &iLen, int sk){
    iLen+=sprintf(p+iLen," %s",v);
 #endif
 }
+*/
 
 char * getStats(int x, int y, int w, char *p){
 
@@ -3987,6 +4006,7 @@ static inline int notZeros(DCT_TYPE *zv, int *zz, int frm=0, int cnt=TVAL_DCT_SZ
    return z;//last;
 }
 
+/* EA: unused function
 static inline int zeros(DCT_TYPE *zv, int *zz, int frm=0){
 
    int z=0;
@@ -3998,6 +4018,8 @@ static inline int zeros(DCT_TYPE *zv, int *zz, int frm=0){
    }
    return iZeros;//last;
 }
+ */
+
 template<class T>
 static inline int notZerosF(T *zv, int frm=0, int cnt=TVAL_DCT_SZ){
 
@@ -4071,12 +4093,12 @@ static int x264_mb_decimate_score( T *dct, int i_max )
 #endif
 }
 
-const int t4x4PL[]={
-   4,3,3,1, 3,3,1,0,  3,1,0,0, 1,0,0,0,
-   4,3,3,1, 3,3,1,0,  3,1,0,0, 1,0,0,0,
-   4,3,3,1, 3,3,1,0,  3,1,0,0, 1,0,0,0,
-   4,3,3,1, 3,3,1,0,  3,1,0,0, 1,0,0,0,
-};
+//const int t4x4PL[]={
+//   4,3,3,1, 3,3,1,0,  3,1,0,0, 1,0,0,0,
+//   4,3,3,1, 3,3,1,0,  3,1,0,0, 1,0,0,0,
+//   4,3,3,1, 3,3,1,0,  3,1,0,0, 1,0,0,0,
+//   4,3,3,1, 3,3,1,0,  3,1,0,0, 1,0,0,0,
+//};
 const int t4x4P[]={
 //   3,4,3,2,  4,3,2,1,   3,2,1,1,   1,1,1,1,  //120330 93KB
    //--4,2,3,2,   2,1,2,1,   3,2,3,2,   2,1,2,1, //116900 81 KB
@@ -4121,15 +4143,15 @@ const int t4x4B[]={
    */
 };
 
-const int t4x4K[]={
-   //--3,2,0,0, 2,1,0,0, 0,0,0,0, 0,0,0,0,  
-   3,2,0,1,    2,1,0,1,    0,0,0,0,    1,1,0,0,  
-   3,2,0,1,    2,1,0,1,    0,0,0,0,    1,1,0,0,  
-   3,2,0,1,    2,1,0,1,    0,0,0,0,    1,1,0,0,  
-   3,2,0,1,    2,1,0,1,    0,0,0,0,    1,1,0,0,  
-   //--??--3,2,1,0, 2,1,0,0, 1,0,0,0, 0,0,0,0,  
-//   3,3,0,0, 3,2,0,0,   0,0,0,0, 0,0,0,0,  
-};
+//const int t4x4K[]={
+//   //--3,2,0,0, 2,1,0,0, 0,0,0,0, 0,0,0,0,  
+//   3,2,0,1,    2,1,0,1,    0,0,0,0,    1,1,0,0,  
+//   3,2,0,1,    2,1,0,1,    0,0,0,0,    1,1,0,0,  
+//   3,2,0,1,    2,1,0,1,    0,0,0,0,    1,1,0,0,  
+//   3,2,0,1,    2,1,0,1,    0,0,0,0,    1,1,0,0,  
+//   //--??--3,2,1,0, 2,1,0,0, 1,0,0,0, 0,0,0,0,  
+////   3,3,0,0, 3,2,0,0,   0,0,0,0, 0,0,0,0,  
+//};
 static const int ti6[]={
    1,1,1,0,0,0,0,0,        1,1,0,0,0,0,0,0,        1,0,0,0,0,0,0,0,        0,0,0,0,0,0,0,0,
    0,0,0,0,0,0,0,0,        0,0,0,0,0,0,0,0,        0,0,0,0,0,0,0,0,        0,0,0,0,0,0,0,0
@@ -4142,10 +4164,10 @@ static const int ti15[]={
    1,1,1,1,1,0,0,0,        1,1,1,1,0,0,0,0,        1,1,1,0,0,0,0,0,        1,1,0,0,0,0,0,0,
    1,0,0,0,0,0,0,0,        0,0,0,0,0,0,0,0,        0,0,0,0,0,0,0,0,        0,0,0,0,0,0,0,0
 };
-static const int ti21[]={
-   1,1,1,1,1,1,0,0,  1,1,1,1,1,0,0,0,  1,1,1,1,0,0,0,0,        
-   1,1,1,0,0,0,0,0,  1,1,0,0,0,0,0,0,  1,0,0,0,0,0,0,0,   0,0,0,0,0,0,0,0,        0,0,0,0,0,0,0,0,        
-};
+//static const int ti21[]={
+//   1,1,1,1,1,1,0,0,  1,1,1,1,1,0,0,0,  1,1,1,1,0,0,0,0,        
+//   1,1,1,0,0,0,0,0,  1,1,0,0,0,0,0,0,  1,0,0,0,0,0,0,0,   0,0,0,0,0,0,0,0,        0,0,0,0,0,0,0,0,        
+//};
 const int nti8x8_4x4[]={
    0,0,0,0,1,1,1,1,
    0,0,0,0,1,1,1,1,
@@ -4171,7 +4193,7 @@ static int iBitGainX=0;
 static int iBitGainX1=0;
 static int iBitGainXNZ=0;
 static int iBitGainX1sc=0;
-static int iBlockXCnt=0;
+//static int iBlockXCnt=0;
 #if 1
 //!defined(__SYMBIAN32__) && !defined(_WIN32_WCE)
 #ifdef T_CAN_TEST_V
@@ -4216,6 +4238,7 @@ void createTable_int(char *name, int *tab, int iSize,char *fn);
 
 typedef int (t_guant_fnc)(unsigned int v,unsigned int t, const unsigned int iTabSh12);
 
+/* EA: unused functions
 inline static int quant_dif_try2(unsigned int v,unsigned int t, const unsigned int iTabSh12){
   return ((v+(t>>1))*iTabSh12)>>15;//  *1.11;
 }
@@ -4246,8 +4269,10 @@ inline static int quant_pic_nonKey(unsigned int v,unsigned int t, const unsigned
 //--  return ((v+((t>>1)))*iTabSh12)>>15;//  *1.11;
   return ((v*2+t)*iTabSh12)>>16;//  *1.11;
 }
-static int iMaxXX=0;
-static int iM1XX=1;
+ */
+
+//static int iMaxXX=0;
+//static int iM1XX=1;
 int setFSTabValx( int t0, int t1);
 
 extern "C"{
@@ -4605,10 +4630,10 @@ initFSTab();
       */
       short qq[64]={
          //tab_uv[0]/2,tab_uv[1],0,0,0,0,0,0,
-         (tab_uv[128]>>3)+2,0,0,0,0,0,0,0,
+         static_cast<short>((tab_uv[128]>>3)+2),0,0,0,0,0,0,0,
 //         tab_uv[1]  ,0,0,0,0,0,0,0,
-         (tab_uv[128]>>3)+3,0,0,0,0,0,0,0,
-         tab_uv[128]>>3,0,0,0,0,0,0,0,
+         static_cast<short>((tab_uv[128]>>3)+3),0,0,0,0,0,0,0,
+         static_cast<short>(tab_uv[128]>>3),0,0,0,0,0,0,0,
          0,0,0,0,0,0,0,0,
          0,0,0,0,0,0,0,0,
          0,0,0,0,0,0,0,0,
@@ -4635,9 +4660,9 @@ initFSTab();
       */
       short qq[16]={
          //tab_y[128]/4
-         0,tab_y[129]*2/3,0,0,
+         0,static_cast<short>(tab_y[129]*2/3),0,0,
          0,0,0,0,
-         tab_y[130]/3,0,0,0,
+         static_cast<short>(tab_y[130]/3),0,0,0,
          0,0,0,0,
       };
      // short qq[64];
@@ -5247,7 +5272,7 @@ initFSTab();
       int i;
       const int *tab=(const int *)(k?&tabSK_UV[0]:&tabSK_Y[0]);
       //const int *tabQ=(const int *)(k?&tab_uv[128]:&tab_y[128]);
-      int s=0,v,si;
+      int v,si;
       for(i=0;i<iCnt;i++)
       {
          v=dct[i];
@@ -5488,7 +5513,7 @@ initFSTab();
 //      int t;
       const int *tabSh12=tab+64;
       const int *t8x8=k?(i_sIsB?&ti6[0]:(iPic?&ti15[0]:&ti10[0])):(i_sIsB?&ti10[0]:&ti8x8_d[0]);
-      const int bias =tab[0]/2;
+//      const int bias =tab[0]/2;
 //(((1<<15)*12)>>5)
 
       for(i=0;i<TVAL_DCT_SZ;i++){
@@ -5582,8 +5607,8 @@ const int iIsLossLess=iFirstCoefOnly && tab[128]==1;
       else{
         // if(iPic){for(i=0;i<TVAL_DCT_SZ;i++){if(!ti10[i])q_dct[i]=0;}}
       }
-      const int tqlim[]={4,4,8,8,1,1};
-      const int iQLIM=iFirstCoefOnly?(2+iIsB):(tqlim[iIs4x4]+tab[0]+((tab[2] + tab[1])>>2)+iIsB*2-iIsRefFrame);;//((tab[iFirstCoefOnly?128:0]*3)>>1);
+//      const int tqlim[]={4,4,8,8,1,1};
+//      const int iQLIM=iFirstCoefOnly?(2+iIsB):(tqlim[iIs4x4]+tab[0]+((tab[2] + tab[1])>>2)+iIsB*2-iIsRefFrame);;//((tab[iFirstCoefOnly?128:0]*3)>>1);
       
       
       if(iFirstCoefOnly){
@@ -6113,7 +6138,7 @@ const int iIsLossLess=iFirstCoefOnly && tab[128]==1;
       T_ALIGN_64(DCT_TYPE,dctC,64);
       if(iSkUV)return 0;
 
-      int sum=0,i;
+       int sum=0;//,i;
       int ret=0;
       int iMinPosSad=getMinPosSad();
       //return 0;
@@ -6269,7 +6294,7 @@ const int iIsLossLess=iFirstCoefOnly && tab[128]==1;
          }
          
  
-         int _TODO_dont_decode_if_refM2_iQIsMax;
+//         int _TODO_dont_decode_if_refM2_iQIsMax;
 
          int iRndNO=iRndN;
          if((/*iQVal<70 &&  */decodeAllFramesParts()!=3 && !iIsB) || (iIsB && decodeAllFramesParts()==3)){
@@ -6423,18 +6448,18 @@ const int iIsLossLess=iFirstCoefOnly && tab[128]==1;
 */
       };
       //0, 4, 1, 2,
-      const int s_it_B[]={
-         3,1,1,0,
-         1,1,0,0,
-         1,0,0,0,
-         0,0,0,0,
-/*
-         1,2,2,8,             
-         2,4,8,12,             
-         2,8,2,12,             
-         8,12,12,16,
-         */
-      };
+//      const int s_it_B[]={
+//         3,1,1,0,
+//         1,1,0,0,
+//         1,0,0,0,
+//         0,0,0,0,
+///*
+//         1,2,2,8,             
+//         2,4,8,12,             
+//         2,8,2,12,             
+//         8,12,12,16,
+//         */
+//      };
 
       
 //      const int *s_it=iIsB?&s_it_B[0]:&s_it_P[0];
@@ -6495,7 +6520,7 @@ const int iIsLossLess=iFirstCoefOnly && tab[128]==1;
       int iMSendIt[4]={0,0,0,0};
       int dc=0;
       //arm compilatoram nepatik int iSendItVal=(iIsB?8:(iLowQval?6:4))+2;
-      int iSendItVal=(iIsB?4:2);
+//      int iSendItVal=(iIsB?4:2);
      /// iSendItVal+=2;
       for(j=0;j<4;j++){
          iBits=0;
@@ -6952,21 +6977,21 @@ const int iIsLossLess=iFirstCoefOnly && tab[128]==1;
          }
          else {
             static int iX;iX++;
-            if(0){//iIsB==0 && iX==3){
-               iX=0;
-               loadBlock(mb,&pic[0],pCur,pRef,stride, iDecode==0,iIsY);
-               iSkDct=0;
-               mb->iDifSad=sadGainUU(pCur,pRef,stride,t_d1);
-               mb->iIsDif=1;
-               mb->iIs4x4=1;
-            }
-            else{
+//            if(0){//iIsB==0 && iX==3){
+//               iX=0;
+//               loadBlock(mb,&pic[0],pCur,pRef,stride, iDecode==0,iIsY);
+//               iSkDct=0;
+//               mb->iDifSad=sadGainUU(pCur,pRef,stride,t_d1);
+//               mb->iIsDif=1;
+//               mb->iIs4x4=1;
+//            }
+//            else {
             r=0;
             int dcd=0;
             int retd=eMBDif;
 
             T_ALIGN_64(DCT_TYPE,d2x2,64);
-            T_ALIGN_64(DCT_TYPE,p2x2,64);
+//            T_ALIGN_64(DCT_TYPE,p2x2,64);
             int iD2x2=100000;
             int iIsRef=iDecode==0 && iIsB==0;
             mb->iEncBits=iD2x2;
@@ -6995,13 +7020,19 @@ const int iIsLossLess=iFirstCoefOnly && tab[128]==1;
                iD2x2=0;
                //mb->iCanRestore=0;
             }
-            
-            else if(1){if(iD2x2<140)mb->iIs4x4=1;/*else if(iD2x2>160)mb->iIs4x4=0;*/ retd=picOrDif(mb,pCur,pRef,stride,dcd,iIsRef,iCanRestoreX);iSkDct=1;}else iSkDct=0;
-            if(0&&retd==eMBDif && mb->iEncBits>80){
-               mb->iEncBits*=17;
-               mb->iEncBits>>=4;
+            else { //if(1){
+                if(iD2x2<140)
+                    mb->iIs4x4=1;/*else if(iD2x2>160)mb->iIs4x4=0;*/
+                retd=picOrDif(mb,pCur,pRef,stride,dcd,iIsRef,iCanRestoreX);
+                iSkDct=1;
             }
-            if(mb->iIs4x4!=4 && (iD2x2<110 || iD2x2+20<mb->iEncBits) && ( 
+            //else iSkDct=0;
+            
+//            if(0&&retd==eMBDif && mb->iEncBits>80){
+//               mb->iEncBits*=17;
+//               mb->iEncBits>>=4;
+//            }
+            if(mb->iIs4x4!=4 && (iD2x2<110 || iD2x2+20<mb->iEncBits) && (
                (retd==eMBDif && iD2x2+10<mb->iEncBits)||
                //(mb->iEncBits>140 && ((retd==eMBDif && iD2x2+10<mb->iEncBits) ||
                 (mb->cnt<15 && retd==eMBPic && iEncPicOnly==0 && iD2x2<mb->iEncBits))){
@@ -7013,11 +7044,11 @@ const int iIsLossLess=iFirstCoefOnly && tab[128]==1;
                mb->iEncBits=iD2x2;
                //mb->iCanRestore=0;
             }
-            else if(0){//retd==eMBPic && mb->iEncBits>80){
-               //ipahi japastraadaa 16dc
-               int iP2x2=calc2x2Bits<0>(p2x2,pCur,pRef,stride,iIsB,iIsRef);
-               if(iP2x2<mb->iEncBits){iBitsGain2x2_test+=(mb->iEncBits-iP2x2);iBitsGain2x2_test_better++;}else iBitsGain2x2_test_better--;
-            }
+//            else if(0){//retd==eMBPic && mb->iEncBits>80){
+//               //ipahi japastraadaa 16dc
+//               int iP2x2=calc2x2Bits<0>(p2x2,pCur,pRef,stride,iIsB,iIsRef);
+//               if(iP2x2<mb->iEncBits){iBitsGain2x2_test+=(mb->iEncBits-iP2x2);iBitsGain2x2_test_better++;}else iBitsGain2x2_test_better--;
+//            }
             //mb->iCanRestore=iCanRestoreX;
             //mb->iDifSad=mmabs(mb->dct[0])*8+mmabs(mb->dct[1])*32+mmabs(mb->dct[8])*32;
 
@@ -7051,7 +7082,7 @@ const int iIsLossLess=iFirstCoefOnly && tab[128]==1;
                      {mb->iQuantCoefSum=0;mb->iCoefsQuant=-2;mb->iSkip=1;mb->iIsDif=1; return 0;}
                   }
                }
-            }
+//            }
 
 #if 0
             //loadBlockK(&mb->dct[0],pCur,pRef,stride);
@@ -7206,32 +7237,32 @@ const int iIsLossLess=iFirstCoefOnly && tab[128]==1;
          //if(!sum && iIsKey==0)iCanRestore=1;
          if(iSkipRestore)iCanRestore=0;
          if(mb->iIs4x4==4 && mb->iEncBits<80 && !iIsB)iCanRestore=0;
-         int _TODO_dont_decode_if_refM2_iQIsMax;
+//         int _TODO_dont_decode_if_refM2_iQIsMax;
          int iDecBlock=decodeAllFramesParts()==2;
          if(iIsB && decodeAllFramesParts()==3)iDecBlock=1;
          if(iDecBlock==0 && decodeAllFramesParts()==1 && (iIsKey || (iDecode==0 || !iIsB)))iDecBlock=1;
          //if(mb->iEncBits<36 && mb->iIs4x4)iCanRestore=0;
 
          iDecBlock=1;
-         int s_psnr[4];
+//         int s_psnr[4];
          int iUsePsnr=1;
          if(iCanRestore){
             if(iUsePsnr){
-               if(mb->iIs4x4==2 && 0){
-                  s_psnr[0]=getBlockPSNR(pCur,pRef,4,4,stride,3);
-                  s_psnr[1]=getBlockPSNR(pCur+12,pRef+12,4,4,stride,3);
-                  s_psnr[2]=getBlockPSNR(pCur+stride*4,pRef+stride*4,4,4,stride,3);
-                  s_psnr[3]=getBlockPSNR(pCur+12+stride*4,pRef+12+stride*4,4,4,stride,3);
-
-                  mb->iStartPsnr=s_psnr[0]+s_psnr[1]+s_psnr[2]+s_psnr[3];
-                  if(mb->iStartPsnr>4200*4)iCanRestore=0;
-               }
-               else {
+//               if(mb->iIs4x4==2 && 0){
+//                  s_psnr[0]=getBlockPSNR(pCur,pRef,4,4,stride,3);
+//                  s_psnr[1]=getBlockPSNR(pCur+12,pRef+12,4,4,stride,3);
+//                  s_psnr[2]=getBlockPSNR(pCur+stride*4,pRef+stride*4,4,4,stride,3);
+//                  s_psnr[3]=getBlockPSNR(pCur+12+stride*4,pRef+12+stride*4,4,4,stride,3);
+//
+//                  mb->iStartPsnr=s_psnr[0]+s_psnr[1]+s_psnr[2]+s_psnr[3];
+//                  if(mb->iStartPsnr>4200*4)iCanRestore=0;
+//               }
+//               else {
                   mb->iStartPsnr=getBlockPSNR(pCur,pRef,TVAL_8,TVAL_8,stride,3);
                   if(mb->iStartPsnr>4200 || (iIsB==0 && sum>1 && mb->iStartPsnr<2800))iCanRestore=0;
 
                  // if(mb->iStartPsnr>3600)return 0;
-               }
+//               }
                
             }
             if(iCanRestore){
@@ -7312,29 +7343,29 @@ const int iIsLossLess=iFirstCoefOnly && tab[128]==1;
          if(iCanRestore)
          {
             if(iUsePsnr){
-               if(mb->iIs4x4==2 && 0){
-                  int psnr[4];
-                  int iBlocksEnc=4;
-                  int iPsnrDif;
-#define PSNR_CHK(_ID, _FRBL, _FRD, _OFS)\
-                  psnr[_ID]=getBlockPSNR(pCur+(_OFS),pRef+(_OFS),4,4,stride,3);\
-                  iPsnrDif=psnr[_ID]-s_psnr[_ID];\
-                  if(psnr[_ID]==s_psnr[_ID])iBlocksEnc--;\
-                  else if(s_psnr[_ID]*9>psnr[_ID]*8 || iPsnrDif<300){\
-                     putBlock4(&saved[_FRBL],pCur+(_OFS),stride);\
-                     iBlocksEnc--;\
-                     memset(&dctQ[_FRD],0,16*sizeof(DCT_TYPE));\
-                  }
-
-                  PSNR_CHK(0,   0, 0,0)
-                  PSNR_CHK(1,   4,16,12)
-                  PSNR_CHK(2,  32,32,stride*4)
-                  PSNR_CHK(3,32+4,48,12+stride*4)
-
-                  if(iBlocksEnc==0)return 0;
-                  else return sum;
-               }
-               else {
+//               if(mb->iIs4x4==2 && 0){
+//                  int psnr[4];
+//                  int iBlocksEnc=4;
+//                  int iPsnrDif;
+//#define PSNR_CHK(_ID, _FRBL, _FRD, _OFS)\
+//                  psnr[_ID]=getBlockPSNR(pCur+(_OFS),pRef+(_OFS),4,4,stride,3);\
+//                  iPsnrDif=psnr[_ID]-s_psnr[_ID];\
+//                  if(psnr[_ID]==s_psnr[_ID])iBlocksEnc--;\
+//                  else if(s_psnr[_ID]*9>psnr[_ID]*8 || iPsnrDif<300){\
+//                     putBlock4(&saved[_FRBL],pCur+(_OFS),stride);\
+//                     iBlocksEnc--;\
+//                     memset(&dctQ[_FRD],0,16*sizeof(DCT_TYPE));\
+//                  }
+//
+//                  PSNR_CHK(0,   0, 0,0)
+//                  PSNR_CHK(1,   4,16,12)
+//                  PSNR_CHK(2,  32,32,stride*4)
+//                  PSNR_CHK(3,32+4,48,12+stride*4)
+//
+//                  if(iBlocksEnc==0)return 0;
+//                  else return sum;
+//               }
+//               else {
                   int psnr=getBlockPSNR(pCur,pRef,TVAL_8,TVAL_8,stride,3);
                   //if(mb->iStartPsnr*6>psnr*5){
                   //if(mb->iStartPsnr*10>psnr*9){
@@ -7352,7 +7383,7 @@ const int iIsLossLess=iFirstCoefOnly && tab[128]==1;
                      mb->iMaxCoef=-1000-iPsnrDif;
                      return 0;
                   }
-               }
+//               }
                if(mb->iStartPsnr>iBSendPsnr[0])iBSendPsnr[0]=mb->iStartPsnr;
                mb->iCanRestore=0;
               // debugss("rest !ok",psnr-mb->iStartPsnr,mb->iMaxCoef);
@@ -7439,13 +7470,13 @@ const int iIsLossLess=iFirstCoefOnly && tab[128]==1;
       //dcx[4]=mmabs(med-clip255(dcl*2-dct));
       if(iGetDc)return dcx[iP];
       predict_8x8_xdc(dcx[iP],pC,stride,0);
-      if(0 && iCurBl>0 && iCurBl>=iBlStride)
-      {
-         void t_loop_pred(unsigned char *pix, int xstride, int ystride);
-         t_loop_pred(pC,stride,3);
-         t_loop_pred(pC,3,stride);
-
-      }
+//      if(0 && iCurBl>0 && iCurBl>=iBlStride)
+//      {
+//         void t_loop_pred(unsigned char *pix, int xstride, int ystride);
+//         t_loop_pred(pC,stride,3);
+//         t_loop_pred(pC,3,stride);
+//
+//      }
       return dcx[iP];
 
    }
@@ -7615,8 +7646,8 @@ const int iIsLossLess=iFirstCoefOnly && tab[128]==1;
       int pico[64];
       int m=0;
       //iPredRet=0;
-      unsigned char *pC=pCur;
-      unsigned char *pR=pRef;
+//      unsigned char *pC=pCur;
+//      unsigned char *pR=pRef;
       DCT_TYPE ipR;
       DCT_TYPE ipC;
       int iSadDC=0;
@@ -7673,16 +7704,16 @@ const int iIsLossLess=iFirstCoefOnly && tab[128]==1;
       sadP=0x7fff;
       int iSetPred=1;
      // ij=0;
-      if(0)//ij==0)
-      {
-         iSetPred=0;
-         iPredRet=5;
-         //fncPred[iPredRet](pC,stride,flag);
-         predict_8x8_xdc(128,pC,stride,flag);
-         sadP=sadM;//sadF(pC,&pic[0],stride,sadP);
-      }
-      else{
-         
+//      if(0)//ij==0)
+//      {
+//         iSetPred=0;
+//         iPredRet=5;
+//         //fncPred[iPredRet](pC,stride,flag);
+//         predict_8x8_xdc(128,pC,stride,flag);
+//         sadP=sadM;//sadF(pC,&pic[0],stride,sadP);
+//      }
+//      else{
+       
          iSetPred=0;
 //         int dcx;
          //iPredRet=getBestPred(pC,stride,med,dcx);
@@ -7709,7 +7740,7 @@ const int iIsLossLess=iFirstCoefOnly && tab[128]==1;
          }
          */
          //
-      }
+//      }
 
       //return 0x7fff;
 
@@ -8732,6 +8763,7 @@ const int iIsLossLess=iFirstCoefOnly && tab[128]==1;
       //iEncValues+=
          //enc4x4(v,&img2[iEncValues],k,iAdd);
       //return 0;
+#if 0 // EA: unused code, already returned above
       short blx[120];
       //enc5x(v,&blx[0],k,iAdd);
       //
@@ -8749,7 +8781,7 @@ const int iIsLossLess=iFirstCoefOnly && tab[128]==1;
       
       
       int iMax=0;
-      int *old=p;
+//      int *old=p;
      // p[0]=iAdd;
       int i;
       int cnt=0;
@@ -8765,14 +8797,14 @@ const int iIsLossLess=iFirstCoefOnly && tab[128]==1;
       
       int iValCnt=notZeros(v,pTab,1);
       
-      if(0)//iIsKey || iHasDifOnly)
-      {
-         p[0]=iValCnt>>1;
-         if(iValCnt&1)p[0]=-p[0]-1;
-      }
-      else{
+//      if(0)//iIsKey || iHasDifOnly)
+//      {
+//         p[0]=iValCnt>>1;
+//         if(iValCnt&1)p[0]=-p[0]-1;
+//      }
+//      else{
          if(iAdd==1)p[0]=iValCnt;else if(iAdd==0) p[0]=-iValCnt-1;
-      }
+//      }
       
       p++;
       p[0]=v[0];
@@ -8800,6 +8832,7 @@ const int iIsLossLess=iFirstCoefOnly && tab[128]==1;
       
  
       return iMax;//iValCnt+2;//iMax;
+#endif // unused code
    }
    inline int dec2x(DCT_TYPE *v, int k, int &iAdd, int &coefs){
       //memset(&v[0],0,sizeof(DCT_TYPE)*(TVAL_DCT_SZ));
@@ -9099,12 +9132,12 @@ const int iIsLossLess=iFirstCoefOnly && tab[128]==1;
    inline int dec4x_15_pic_new_last_one(DCT_TYPE *v, int k, const int *tabDeq=NULL){
       int i,j;
       int iCoefsLeft[4]={0,0,0,0};
-int iLastID[4]={0,0,0,0};
+//int iLastID[4]={0,0,0,0};
       int *xTab=(int*)&tabzz4x4[0];
       iDecDct4x4=0;
       //int iLastS;
       int iLastCnt=0;
-      const int iLim=k?12:14;
+//      const int iLim=k?12:14;
 
       int findScoreCntLast_dec_def(int code, int id, int &iCnt, int &iLast);
 
@@ -9377,9 +9410,9 @@ int iLastID[4]={0,0,0,0};
 
       //const static int etenc[]={0,1,2,15,3,4,5,6,7,8,9,10,11,12,13,14,};
       //dec_coef_m15();
-int bp=vlc.iBitPos;
+//int bp=vlc.iBitPos;
       dec_c_cnt4(&iCoefsLeft[0]);
-int iBits4Cnt=vlc.iBitPos-bp;
+//int iBits4Cnt=vlc.iBitPos-bp;
       const int iLim=k?12:14;
 
          //int coze=-5;
@@ -9401,7 +9434,7 @@ int iLastID[4]={0,0,0,0};
          //int m=0;if(cl<7)m=vlc.getB();
          
          //if(val)pr1[i][!!k]++; else pr0[i][!!k]++;
-         int r,z=0;
+          int r;//,z=0;
          for(i=1;cl>0;i++){
             if(i>15)return -4;
             //const int i2=;
@@ -9463,7 +9496,7 @@ if(cl==1 && tr[j]<8)g[j]++;
          //for(;i<16;i++)pr0[i]++;
          xTab+=16;
       }
-      int iMaxSC=0;
+//      int iMaxSC=0;
       /*
       if(!this->iVisDecoder){
          int findScoreCntLast(int iCnt, int iLast, int  *tab);
@@ -9548,7 +9581,7 @@ if(cl==1 && tr[j]<8)g[j]++;
 //      DCT_TYPE val;
       int *xTab=(int*)&tabzz4x4[0];
 
-      int bp=vlc.iBitPos;
+//      int bp=vlc.iBitPos;
 
       iCoefsLeft[0]=vlc.getVlc();
       iCoefsLeft[1]=vlc.getVlc();
@@ -9712,11 +9745,11 @@ if(cl==1 && tr[j]<8)g[j]++;
      
       iDecDct4x4=0;
 #ifdef _TEST_T_BITS
-int i_mCurDV[4]={0,0,0,0};
-
-int iLastC[4]={0,0,0,0};
-int i_mMaxV[4]={0,0,0,0};
-int iBitsNewLen=0;
+//int i_mCurDV[4]={0,0,0,0};
+//
+//int iLastC[4]={0,0,0,0};
+//int i_mMaxV[4]={0,0,0,0};
+//int iBitsNewLen=0;
 #endif
       int cl;
       int c;
@@ -9734,8 +9767,8 @@ int iBitsNewLen=0;
          memset(&v[j<<4],0,sizeof(DCT_TYPE)*16);
          //int h=iCoefsLeft[j]>>1;
 #ifdef _TEST_T_BITS
-int iMaxV=0;
-int iCurDV=0;
+//int iMaxV=0;
+//int iCurDV=0;
 #endif
          for(i=1;cl>0;i++){
             r=(DCT_TYPE)vlc.getNextAC(i);
@@ -9946,9 +9979,10 @@ if( //iDeQDif==1 &&
       //int *xTab=(int*)&ZIG_ZAG_TAB[0];
 
       if(iDecAdd){
-         if(0&&iIsKey)
-            iAdd=0;
-         else if(iHasDifOnly)
+//         if(0&&iIsKey)
+//            iAdd=0;
+//         else
+         if(iHasDifOnly)
             iAdd=1;
          else {
             if(mbType[iMbTypePos]){
@@ -10197,7 +10231,7 @@ if( //iDeQDif==1 &&
    }
    inline int enc2xT(DCT_TYPE *v){
       int i,j,f=0;;
-      int vals[4],val;
+       int vals[4];//,val;
       int mSend[16],iSend;
       int sc=0;
       int dcs=2;
@@ -10312,12 +10346,12 @@ if( //iDeQDif==1 &&
       return f;
    }
    inline int dec2xT(DCT_TYPE *v, int *qQ){
-      int i,j,f=0;;
-      int vals[4],val,sc,dcs=2;
-      int iSend,mSend[16];
+      int j,f=0; //,i
+      int sc,dcs=2; // ,vals[4],val,
+      int mSend[16]; // ,iSend
 //      static const int pt[]={0,1,4,3,2,5,6,7,8,9,10,11,12,13,14,15,};
 //iBitGainX1+=8;
-      int bp=vlc.iBitPos;
+//      int bp=vlc.iBitPos;
       sc=dec_coef_m15();
       //sc=vlc.getNBitsC(4);
       for(j=0;j<16;j++){
@@ -10640,12 +10674,12 @@ if( //iDeQDif==1 &&
             for(i=0;i<1 && xcnt[j]>0 ;i++){
                val=v[xTab[i]];
                if(val){
-                  if(0 && i==0){
-                     if(val==-2)val=-1;
-                     else if(val==-1)val=-2;
-                     else if(val==1)val=2;
-                     else if(val==2)val=1;
-                  }
+//                  if(0 && i==0){
+//                     if(val==-2)val=-1;
+//                     else if(val==-1)val=-2;
+//                     else if(val==1)val=2;
+//                     else if(val==2)val=1;
+//                  }
 
                   //const int tt4x[]={2,3,3,2};
                   //vlc.toL_Val_S(val,2);
@@ -10711,34 +10745,34 @@ if( //iDeQDif==1 &&
    }
    
    inline void enc_c_cnt4(int *c){
-      int mi=0;
-      int i;
+//      int mi=0;
+//      int i;
       enc_coef_m15(vlc,c[0]);
       enc_coef_m15(vlc,c[1]);
       enc_coef_m15(vlc,c[2]);
       enc_coef_m15(vlc,c[3]-(!(c[0]|c[1]|c[2])));
-return;
+      return;
 
-      for(i=2;i<4;i++){
-         if(i==2)mi=min(c[0],c[1]);
-         else if(i==3)mi=GET_MIN3(c[1],c[0],c[2]);
-         if(mi){
-            if(!c[i])
-               vlc.addB(1);
-            else{
-               vlc.addB(0);
-               if(mi==1)enc_coef_m15(vlc,c[i]-1);else vlc.toAC(c[i]-mi);
-            }
-         }
-         else
-         {
-            enc_coef_m15(vlc,c[i]);
-         }
-      }
+//      for(i=2;i<4;i++){
+//         if(i==2)mi=min(c[0],c[1]);
+//         else if(i==3)mi=GET_MIN3(c[1],c[0],c[2]);
+//         if(mi){
+//            if(!c[i])
+//               vlc.addB(1);
+//            else{
+//               vlc.addB(0);
+//               if(mi==1)enc_coef_m15(vlc,c[i]-1);else vlc.toAC(c[i]-mi);
+//            }
+//         }
+//         else
+//         {
+//            enc_coef_m15(vlc,c[i]);
+//         }
+//      }
    }
    inline void dec_c_cnt4(int *c){
-      int mi=0;
-      int i;
+//      int mi=0;
+//      int i;
       c[0]=dec_coef_m15();
       c[1]=dec_coef_m15();
       
@@ -10746,22 +10780,22 @@ return;
       c[3]=dec_coef_m15()+(!(c[0]|c[1]|c[2]));
       return;
       
-      for(i=2;i<4;i++){
-         if(i==2)mi=min(c[0],c[1]);
-         else if(i==3)mi=GET_MIN3(c[1],c[0],c[2]);
-         if(mi){
-            if(vlc.getB())
-               c[i]=0;
-            else{
-               vlc.addB(0);
-               if(mi==1)c[i]=dec_coef_m15()+1;else c[i]=vlc.getAC()+mi;
-            }
-         }
-         else
-         {
-            c[i]=dec_coef_m15();
-         }
-      }
+//      for(i=2;i<4;i++){
+//         if(i==2)mi=min(c[0],c[1]);
+//         else if(i==3)mi=GET_MIN3(c[1],c[0],c[2]);
+//         if(mi){
+//            if(vlc.getB())
+//               c[i]=0;
+//            else{
+//               vlc.addB(0);
+//               if(mi==1)c[i]=dec_coef_m15()+1;else c[i]=vlc.getAC()+mi;
+//            }
+//         }
+//         else
+//         {
+//            c[i]=dec_coef_m15();
+//         }
+//      }
    }
    inline int enc4x_15_pic_new2(DCT_TYPE *v, int k, int iAdd)
    {
@@ -10806,7 +10840,7 @@ return;
             cl=xcnt[j];
             if(cl && !sk[j]){
                iDecDct4x4|=tDcttxt[j];
-                  int z=0;
+//                  int z=0;
                   for(i=xcnt[j]==1?3:1;;i++){
                      //if(cl==1 && z[j]>0){i+=z[j];z[j]=0;}
                      const int i2=pr0[i]*5<pr1[i]*4;
@@ -10826,10 +10860,6 @@ return;
                         break;
                      }
                      */
-                     
-
-
-                     
                      if(i+cl==16){// || z[j]<=0){
                         if(val<0){vlc.toVLC(-val-1);vlc.addB(1);}else {vlc.toVLC(val-1);vlc.addB(0);} 
                         cl--;if(!cl)break; 
@@ -10928,7 +10958,7 @@ return;
 
       int i;
       int co=0;
-      int co1=0;
+//      int co1=0;
 #if 0
       switch(j){
          case 1: co=last[0]+(!!iCoefsLeft[0]);
@@ -10976,7 +11006,7 @@ return;
       int cl;
       int iDecDct4x4O=0;
       int val;
-      const int iLim=k?12:14;
+//      const int iLim=k?12:14;
     //  int valB1=0;
       //int bp=vlc.iBitPos;
       //int dc=0;
@@ -11011,7 +11041,7 @@ return;
                continue;
             }
 
-int bp=vlc.iBitPos;
+//int bp=vlc.iBitPos;
             
             int findScoreCntLast_def(int iCnt, int iLast, int  id);
             int sc=findScoreCntLast_def(iCoefsLeft[j],iLastT[j],tab_id+getPredX(&iCoefsLeft[0],j)*4);
@@ -11129,7 +11159,7 @@ int bp=vlc.iBitPos;
       int sk=0;
       int tid=(!!iPic)|((!!dc)<<1)|((!k)<<2);
  
-      int zbtr=0;
+//      int zbtr=0;
       for(i=1;i<16;i++){
          val=v[tabzz4x4[i]];//4771,91
          //val=v[t4x[i]];
@@ -11359,11 +11389,11 @@ xvlc.toVLC_PNZ(sc,3);
   //    int iTR=0;
       //int _iPrevCoefMax=iPrevCoefMax;
       //iPrevCoefMax=1;
-      const static int t4x[]={
-         0,   1,   4,   5,    2,   8,   6,   9,    3,   12,   7,   10,    13,   11,   14,   15,
-         //0,   5,1,   4,       2,   8,   6,   9,    3,   12,   7,   10,    13,   11,   14,   15,
-      };
-      int zbtr=0;
+//      const static int t4x[]={
+//         0,   1,   4,   5,    2,   8,   6,   9,    3,   12,   7,   10,    13,   11,   14,   15,
+//         //0,   5,1,   4,       2,   8,   6,   9,    3,   12,   7,   10,    13,   11,   14,   15,
+//      };
+//      int zbtr=0;
       int iLastCoef=0;
       for(i=1;i<16;i++){
          val=v[tabzz4x4[i]];//4771,91
@@ -11556,7 +11586,7 @@ xvlc.toVLC_PNZ(sc,3);
       int iSkStart=0;
       static int prevFirst[3]={2,2,2};
       int iFirstId=dc?0:(iPic?2:1);
-      int iPrevAV=prevFirst[iFirstId];
+//      int iPrevAV=prevFirst[iFirstId];
       int iMax1=1;
       /*
       
@@ -11568,7 +11598,7 @@ xvlc.toVLC_PNZ(sc,3);
       }
       */
       //
-      int scC=0;
+//      int scC=0;
       int iCurTab=prevFirst[iFirstId]-1;
       unsigned char skips[16];
       skips[1]=0;
@@ -11922,7 +11952,7 @@ xvlc.toVLC_PNZ(sc,3);
             cl=xcnt[j];
             if(cl){
                iDecDct4x4|=tDcttxt[j];
-                  int z=0;
+//                  int z=0;
                   for(i=1;;i++){
                      //if(cl==1 && z[j]>0){i+=z[j];z[j]=0;}
                      const int i2=pr0[i]*5<pr1[i]*4;
@@ -12034,7 +12064,7 @@ for (int i = 0; i < 256; i++)
       
       int i;
       int iCoefs;
-  int bp=vlc.iBitPos;
+//  int bp=vlc.iBitPos;
       int scRem=(j==3 && !iDecDct4x4);//(coefs[0]|coefs[1]|coefs[2]));
       _DEC_D_CODE(iCoefs,(scRem));//iCoefs+=scRem;
      // if(iBlocks8orMore && !scRem){if(iCoefs==1)iCoefs=0;else if(iCoefs==0)iCoefs=1;}
@@ -12412,7 +12442,7 @@ if(iMaxL){// && codeN[iMaxL]!=codeN[0]
       int i;
       int code=0;
       int s[15];
-      int bpt=vlc.iBitPos;
+//      int bpt=vlc.iBitPos;
       //int sr=0;
       int iCoefs=0,c;
       
@@ -12727,7 +12757,7 @@ if(iMaxL){// && codeN[iMaxL]!=codeN[0]
       int s=0;
       //int co[15];      int sz=0;
       //int sr=0;
-      int bp=vl.iBitPos;
+//      int bp=vl.iBitPos;
       int iCoefs=0,c;
       for(i=1;i<16;i++){
          c=v[tabzz4x4[i]];
@@ -12816,7 +12846,7 @@ if(iMaxL){// && codeN[iMaxL]!=codeN[0]
    }
    inline int enc4x_15(DCT_TYPE *v, short *p, int k, int iAdd)
    {
-      int i,j;
+      int j;
       int xcnt[4];
       iDecDct4x4=0;
 #ifdef _TEST_T_BITS 
@@ -12825,8 +12855,7 @@ if(iMaxL){// && codeN[iMaxL]!=codeN[0]
          enc1x_15_dif(v+(j<<4), &xcnt[0], j);
       }
       return 0;
-
-#endif
+#else
     //  int valB1=0;
       int dc=0;
       int *xTab=(int*)&tabzz4x4[0];
@@ -12875,7 +12904,7 @@ if(iMaxL){// && codeN[iMaxL]!=codeN[0]
       //}while(0);
       
       return 0;
-
+#endif
       //tabzz4x4
    }
    inline int enc4xi(DCT_TYPE *v, short *p, int k, int iAdd)
@@ -12946,6 +12975,7 @@ if(iMaxL){// && codeN[iMaxL]!=codeN[0]
    int dec(DCT_TYPE *v, int *p, int k, int &iAdd, int &coefs){
       pTab=(int*)&ZIG_ZAG_TAB[0];
       return dec7x(v, k,iAdd,coefs);
+/* unused code:
       int iMin=p[0];
       if(iMin==4){
          iAdd=2;
@@ -12962,6 +12992,7 @@ if(iMaxL){// && codeN[iMaxL]!=codeN[0]
          pTab=(int*)&tabzz4x4_second[0];
 
       return decR(v,p+1, k,iAdd)+1;
+ */
    }
    int decR(DCT_TYPE *v, int *p, int k, int &iAdd){
      
@@ -12977,11 +13008,11 @@ if(iMaxL){// && codeN[iMaxL]!=codeN[0]
       }
       */
       int iDec=0;
-      if(0){//iIsKey || iHasDifOnly){
-         if(cnt<0)cnt=(-1-cnt)*2+1;
-         else cnt*=2;
-         iAdd=iIsKey?0:1;
-      }else{
+//      if(0){//iIsKey || iHasDifOnly){
+//         if(cnt<0)cnt=(-1-cnt)*2+1;
+//         else cnt*=2;
+//         iAdd=iIsKey?0:1;
+//      }else{
 
       if(cnt>=0){
          iAdd=1;
@@ -12991,7 +13022,7 @@ if(iMaxL){// && codeN[iMaxL]!=codeN[0]
          cnt=-cnt-1;
          iAdd=0;
       }
-      }
+//      }
       
       //cnt--;
       p++;
@@ -13106,12 +13137,12 @@ if(iMaxL){// && codeN[iMaxL]!=codeN[0]
                         ||(!iLowQval && iSad>0 && ((iSad<300 && iSad<iMinPosSad) || (iSad<600 && iSad*2<iMinPosSad))))
                      //if(iSad>0 && iSad<4000 && iSad<iMinPosSad)
                      {
-                        if(0){
-                        mb->iSkip=1;
-                        mb->iDifSad=(iSad>>3)+200;
-                        mb++;
-                        continue;
-                        }
+//                        if(0){
+//                        mb->iSkip=1;
+//                        mb->iDifSad=(iSad>>3)+200;
+//                        mb++;
+//                        continue;
+//                        }
                      }
                      mb->iCanBePic=(iSad*3>iMinPosSad*8) || iSad*3>mb->iPicMean*2 || (mb->iPicMean<300 && iSad>iMinPosSad);
                      if(mb->iCanBePic && (iSad*15<mb->iPicMean || iSad<iMinPosSad))mb->iCanBePic=0;
@@ -13175,6 +13206,7 @@ if(iMaxL){// && codeN[iMaxL]!=codeN[0]
             int iAdd=mb->iIsDif?1:0;//(mb->iQuantCoefSum>0?0:2);
             int iBO=vlc.iBitPos;
             //mb->dc_quantized=q_quant[0];
+/* EA: code never executed:
             if(0&& q==84){//i==46 && j==27 && mb->iQuantCoefSum==25){
                debugss("tb3-i,j",i,j);//49,43
                debugss("tb3-m,d",mb->iIs4x4,mb->iIsDif);//49,43
@@ -13186,9 +13218,8 @@ if(iMaxL){// && codeN[iMaxL]!=codeN[0]
                   sprintf(&bufC[0],"%4d %4d %4d %4d",q_quant[tt+0],q_quant[tt+1],q_quant[tt+2],q_quant[tt+3]);
                   debugss(&bufC[0],0,vlc.iBitPos>>3);
                }
-
-
             }
+ */
             encR(&q_quant[0],NULL,k,iAdd+mb->iIs4x4);
             mb->iEncBits=vlc.iBitPos-iBO;
             if(vlc.iBitPos>100){
@@ -13322,28 +13353,28 @@ if(iMaxL){// && codeN[iMaxL]!=codeN[0]
       vlc.iCalcBitsOnly=0;
       int iMin=101-q;
       if(iMin<12)iMin=12;
-      int iMinSum=q>65?(q>85?2:1):1;
+//      int iMinSum=q>65?(q>85?2:1):1;
       iEncValues=0;
-      int qIn=q;
+//      int qIn=q;
       init(w,h,q);
       //iYLen=0;
       int i,j,k,ofs;
-      T_ALIGN_64(DCT_TYPE,q_dct,64*3);
+//      T_ALIGN_64(DCT_TYPE,q_dct,64*3);
       T_ALIGN_64(DCT_TYPE,q_quant,64*3);
-      T_ALIGN_64(DCT_TYPE,savedBlock,64*3);
+//      T_ALIGN_64(DCT_TYPE,savedBlock,64*3);
       int id=0;
       int stride=w*3;
 //      int sum;
-      int iCnt=0;
+//      int iCnt=0;
       int iLen=0;
       int iSk=0;
       int iAdd;
       int r;
       int iWasSum=0;
-      int iLastSkPos=-1;
+//      int iLastSkPos=-1;
       iCurBl=0;
       iBlStride=xc;
-      int skr=0;
+//      int skr=0;
       IMG_MB *mb=mbFirst;
       IMG_MB *mbY=mbFirst;
       int iSkStart[3]={-1,-1,-1};
@@ -13567,7 +13598,7 @@ if(iMaxL){// && codeN[iMaxL]!=codeN[0]
          iNextQ+=iQIn;
          iQIn>>=1;
       }
-      int iQStep=24;
+//      int iQStep=24;
       int iAvgLen=iMaxLen=(int)sqrt((float)w*(float)h)*8;//+((w*h*10)>>8);
       iMaxLen=((iKeyYLen/4)+iAvgLen)>>1;//(w*h)>>6;//(iPrevRefSize*3)>>2;//(w*h*12)>>8; // div 25
       if(iMaxLen*3<iAvgLen*2 || iMaxLen*3>iAvgLen*4)iMaxLen=iAvgLen;
@@ -13780,14 +13811,14 @@ if(iMaxL){// && codeN[iMaxL]!=codeN[0]
       //if(mbFirst==NULL)mbFirst=new IMG_MB[(2048*1024*3)>>6];
       int iMin=101-q;
       if(iMin<12)iMin=12;
-      int iMinSum=q>65?(q>85?2:1):1;
+//      int iMinSum=q>65?(q>85?2:1):1;
       iEncValues=0;
-      int qIn=q;
+//      int qIn=q;
       init(w,h,q);
       int i,j,k,ofs;
-      T_ALIGN_64(DCT_TYPE,q_dct,64*3);
+//      T_ALIGN_64(DCT_TYPE,q_dct,64*3);
       T_ALIGN_64(DCT_TYPE,q_quant,64*3);
-      T_ALIGN_64(DCT_TYPE,savedBlock,64*3);
+//      T_ALIGN_64(DCT_TYPE,savedBlock,64*3);
       if(iDecode==0)iPrevRefSize=0;
 
 
@@ -13800,16 +13831,16 @@ if(iMaxL){// && codeN[iMaxL]!=codeN[0]
       int iAdd;
       int r;
       int iWasSum=0;
-      int iLastSkPos=-1;
+//      int iLastSkPos=-1;
       iCurBl=0;
       iBlStride=xc;
-      int skr=0;
+//      int skr=0;
       IMG_MB *mb=mbFirst;
       IMG_MB *mbY=mbFirst;
       iHasDifOnly=1;
       DCT_TYPE dcRowtart[3]={0,0,0};
       int ch=iSkipDct||iSkipUV?1:3;
-      int iUsePrevDC=1;
+//      int iUsePrevDC=1;
       int iHasLimitFound=0;
       int mxcXyc=-xc*yc;
       if(iDecode==0 && iSkipId==0)iMaxNonDifAddCnt=xc*yc/5;
@@ -13871,7 +13902,7 @@ if(iMaxL){// && codeN[iMaxL]!=codeN[0]
             mb->iCanBePic=1;
             mb->iCanRestore=0;
             mb->iStartPsnr=0;
-         
+/* EA: code not executed:
             if(0&&(iEncPicOnly|iIsKey) && k==0 && i && j){       
                iEncPicOnly=0;
                iUsePrevDC=0;
@@ -13888,6 +13919,7 @@ if(iMaxL){// && codeN[iMaxL]!=codeN[0]
                iDecode=0;
             }
             else{
+ */
                iDecode=iDecodeIn;
                iEncPicOnly=iEncPicOnlyIn;
              /*  
@@ -13947,7 +13979,7 @@ if(iMaxL){// && codeN[iMaxL]!=codeN[0]
                
                
 
-            }
+//            }
 
             if(k){
   //             r=0;
@@ -14073,7 +14105,7 @@ if(iMaxL){// && codeN[iMaxL]!=codeN[0]
          if(v!=1024)break;
          iSk-=v;
       }
-      return p-pin;
+      return (int)(p-pin);
    }
    static inline int getSkipLen(int *p,int &iPos)
    {
@@ -14128,7 +14160,7 @@ if(iMaxL){// && codeN[iMaxL]!=codeN[0]
 
 //      if(iIsKey)return 0;
       //if(q>100){iIsB=1;q-=100;}
-      int qIn=q;
+//      int qIn=q;
       pBin+=6;
       iLen-=6;
 
@@ -14139,7 +14171,7 @@ if(iMaxL){// && codeN[iMaxL]!=codeN[0]
          vlc.pBitBuf=(unsigned char *)&pBin[0];
          int fastT_dec(TDCTX *ed, unsigned char *pCur, unsigned char *pRef,int w, int h,int  iIsB);
          int ret=fastT_dec(this,pCur,NULL,w,h, iIsB);
-         if(ret<0)debugsi("---------fastT_dec------------",ret);
+         if(ret<0)debugsi((char *)"---------fastT_dec------------",ret);
          //if(ret<0)debugsi("fastT_dec",ret);
          return ret;
       }
@@ -14238,7 +14270,7 @@ int encAritmDUC(unsigned char *in , unsigned char *out ,int iMaxLen);
             mb->dc_quantized=0;//q_quant[0];
             mb->iIsDif=1;
             mb->iSkip=1;
-
+/* EA: code not executed:
             if(0&&(iIsKey ||iEncPicOnly)&& k==0 && i && j ){
                int iFlag=MB_TOPLEFT;
                if(i+1!=xc )iFlag|=MB_TOPRIGHT;
@@ -14248,6 +14280,7 @@ int encAritmDUC(unsigned char *in , unsigned char *out ,int iMaxLen);
                fncPred[b](pCur+ofs+k,stride,iFlag);
                //mb->iDecoded=1;
             }
+ */
             if(iSk>0){iPrevCoefsCnt4x=iPrevCoefsCnt=0;mb->iCanUseAsPred=0;iPredDC=0;iSk--;continue;}
             mb->iCanUseAsPred=1;
             mb->iDecoded=1;
@@ -14425,7 +14458,7 @@ int encAritmDUC(unsigned char *in , unsigned char *out ,int iMaxLen);
          
       }
       if(iDecRet<0){
-         debugss("iDecRet len err",iDecRet,iErrs);return -1;
+         debugss((char *)"iDecRet len err",iDecRet,iErrs);return -1;
       }
       if(iIsKey && !iYIsRestored && iLastSk>=xc*yc){decRestColor(pCur,stride,0);iYIsRestored=1;}
       else if(iDecodededLast==3 && iIsKey)decRestColor(pCur,stride,1);
@@ -14437,7 +14470,7 @@ int encAritmDUC(unsigned char *in , unsigned char *out ,int iMaxLen);
   //    void tblock(unsigned char *pic, int w, int h, int a, int b);
 //      tblock(pCur,w,h,a,b);
 
-      if(iBitsRead+vlc.getBytePos()+6!=iLenIn || iErrs){debugss("d len err",iLenIn-iBitsRead-vlc.getBytePos()-6,iErrs);return -1;}
+      if(iBitsRead+vlc.getBytePos()+6!=iLenIn || iErrs){debugss((char *)"d len err",iLenIn-iBitsRead-vlc.getBytePos()-6,iErrs);return -1;}
       
 
       return 0;
@@ -14680,7 +14713,7 @@ void filterUV(unsigned char *p, int wi, int hi){
 }
 
 //int decodeDctX2(unsigned char *pBin, int iLen, unsigned char *pCur){return 0;}
-static int iTestFilter=0;
+//static int iTestFilter=0;
 
 int decodeDctX2(unsigned char *pBin, int iLen, unsigned char *pCur, int iIsB)
 {
@@ -14734,6 +14767,7 @@ int decodeDctX2(unsigned char *pBin, int iLen, unsigned char *pCur, int iIsB)
    int l=dctDec->decode(pBin,iLen,pCur);
   // pBin+=dctDec->vlc.getBytePos();iLen-=dctDec->vlc.getBytePos();
   // if(l==0 && dctDec->iIsKey && iLen>10){goto repk;}
+/* EA: code not executed:
    if(0 && dctDec->iIsKey){
       void incSize2x(unsigned char *in, unsigned char *out, int cx, int cy);
       unsigned char *tmp=new unsigned char [dctDec->xc*8*dctDec->yc*8*3];
@@ -14744,6 +14778,7 @@ int decodeDctX2(unsigned char *pBin, int iLen, unsigned char *pCur, int iIsB)
       //dctDec->decode(pBin+dctDec->vlc.getBytePos(),iLen,pCur);
       l=0;
    }
+ */
    if(iLen>6 && !dctDec->iVisDecoder){
          ::iBitGainXNZ+=8*(6);
       
@@ -14781,8 +14816,8 @@ int t_hGain(){
          int r=((iBitGainX1-iPrevGX[1])+(iBitGainXNZ-iPrevGX[2])+(iBitGainX-iPrevGX[0])+(iBitGainX1sc-iPrevGX[3]))>>3;
          
          if(iBitGainX1sc!=iPrevGX[3]){
-            debugsi("g-len-Byte-GainFrame",(iBitGainX1sc-iPrevGX[3]+4)>>3);
-            debugsi("g-len-Byte-GainTotal",iBitGainX1sc>>3);
+            debugsi((char *)"g-len-Byte-GainFrame",(iBitGainX1sc-iPrevGX[3]+4)>>3);
+            debugsi((char *)"g-len-Byte-GainTotal",iBitGainX1sc>>3);
          }
          iPrevGX[0]=iBitGainX;
          iPrevGX[1]=iBitGainX1;
@@ -14802,7 +14837,7 @@ if(iSc[4]){
 }
 */
 
-   int v=iGain;
+//   int v=iGain;
    iGain=0;
    return r;//+8;
    //return v?v+75:32;
@@ -14818,7 +14853,7 @@ float get_ssim(unsigned char *cur, unsigned char *ref, int stride, int k);
 float get_ssim(unsigned char *cur, unsigned char *ref, int stride, int k){return 0.7f;}
 #endif
 
-
+#if 0 // EA: unused function
 static int analize(unsigned char *cur, unsigned char *ref, int stride, int k,int iIsB, const int *t){
    /*
 //dc,psnr,sqerr
@@ -14853,6 +14888,7 @@ if(res>iIsB+1)return 1;
 */
    return 0;
 }
+#endif // unused function
 
 static int calcUVDC(unsigned char *cur, unsigned char *ref, int stride){
    int i,j,dc=0;
@@ -15019,11 +15055,11 @@ template  <int iDec, int iPic>
 int encMB16_DCTd2_UV(ENC_BL_CTX *ctx, TDCTX *ed, unsigned char *pCur, unsigned char *pRef, int stride,int k,int  iIsB, int i_CanRestore,int &iIsBigCost, int iBestBits=0)
 {
    int i,j;
-   const int *t=1?&ed->tab_uv[0]:&ed->tab_y[0];
+//   const int *t=1?&ed->tab_uv[0]:&ed->tab_y[0];
    int t0=16;//(t[0]+8)>>1;
    //if(ed->iIsB || iIsB){t0*=3;t0>>=1;}
    //else if(iPic){t0*=3;t0>>=2;t0+=2;}
-   int iBitPos=ed->vlc.iBitPos;
+//   int iBitPos=ed->vlc.iBitPos;
    t0=//((getDCQuant4x4<iPic>(ed,k,iIsB)*8)>>7)+1;//
    (ed->tab_y[129]*2>>3)+1;
    //int t0_0Mult=t0*3/16;
@@ -15112,7 +15148,7 @@ int encMB16_DCTd2_UV(ENC_BL_CTX *ctx, TDCTX *ed, unsigned char *pCur, unsigned c
       for(i=1;i<64;i++)dct[i]=(q_dct[i]*t0+2)>>2;//16;
    }
    else{
-      const int iDCAdd=((t0+2)/4)-((t0+3)/6);
+//      const int iDCAdd=((t0+2)/4)-((t0+3)/6);
       for(i=0;i<64;i++){
          if(!q_dct[i]){dct[i]=0;continue;}
          if(q_dct[i]<0){
@@ -15170,7 +15206,7 @@ int encMB16_DCTd24x4_UV(ENC_BL_CTX *ctx, TDCTX *ed, unsigned char *pCur, unsigne
    const int *t=&ed->tab_y[128];
   // if(ed->iIsB || iIsB || ed->iThisWasB){return 0;}
    //else if(iPic){t0*=3;t0>>=2;t0+=2;}
-   int iBitPos=ed->vlc.iBitPos;
+//   int iBitPos=ed->vlc.iBitPos;
    DCT_TYPE dctX[64];
    DCT_TYPE dct[64];
    DCT_TYPE q_dct[64];
@@ -15283,7 +15319,7 @@ int encMB16_DCTd24x4_UV(ENC_BL_CTX *ctx, TDCTX *ed, unsigned char *pCur, unsigne
    else{
       memset(q_dct,0,sizeof(q_dct));
       memset(dct,0,sizeof(dct));
-      int iAdd=0,iCoefs=0;
+//      int iAdd=0,iCoefs=0;
       dctDC[1]=dctDC[2]=dctDC[3]=0;
 
       dctDC[0]=ed->vlc.getDC();
@@ -15840,7 +15876,7 @@ static int getUVMode(ENC_BL_CTX *ctx, TDCTX *ed, unsigned char *pCur, unsigned c
   // return ed->iIsB?1:3;
   // int cur[64];
 //   T_ALIGN_64(int,dif,64);
-   int iPrevIsPic=!iIsB && !(ctx->i==0 && ctx->j==0) && (ctx->mb && ctx->mb[-1].col[k].iType==MB16_2::ePic4x4);
+//   int iPrevIsPic=!iIsB && !(ctx->i==0 && ctx->j==0) && (ctx->mb && ctx->mb[-1].col[k].iType==MB16_2::ePic4x4);
    if(k==2 && ctx->mb){
       if(ctx->mb[0].col[1].iType==MB16_2::eDif4x4)return 1;
    }
@@ -16022,7 +16058,7 @@ if(iB)t0+=6;
       if(ctx->iDCDifAbs<=iB+(iDCQ>>7))return 0;
 
       return tryEncDCOnly(iDC-iDCCur,ctx,ed,pCur,pRef,stride,k,iIsB);
-
+/* EA: code never executed:
       if(ctx->iDCDifAbs && 
          (//ctx->iDCDifAbs>((ed->tab_uv[0]+4)>>3) || 
           ctx->iDCDifAbs>((iDCQ+64)>>7)
@@ -16032,6 +16068,7 @@ if(iB)t0+=6;
      
       ctx->iMeanUV=1;
       return 1;
+ */
    }
    /*
 checkM2:
@@ -16060,6 +16097,7 @@ checkM:
    }
    if(variance<10)ctx->iMeanUV=1;
 return 1;
+/* EA: code not executed:
    if(iIsB)return 1;
 
    int iMean=10;
@@ -16099,7 +16137,7 @@ iDCQ_8x8+=8;iDCQ_8x8>>=1;
    }
    if(ctx->iMeanUV!=1)ctx->iMeanUV=m;
    return 1;
-   
+ */
 }
 
 #if 0
@@ -16537,7 +16575,8 @@ void debugT(ENC_STAT *e, int k){
    void debugsi(char *c, int a);
 #define DBG(_E)if(_E)debugsi((char*)#_E,_E);_E=0;
 #define DBGX(_E)if(_E)debugsi((char*)#_E,_E);_E=0;
-   debugsi("***k***",k);
+#if 0 // EA: code never executed:
+   debugsi((char *)"***k***",k);
 //if(k)
    /*
 DBGX(e->iMaxZ[k][0])
@@ -16550,7 +16589,7 @@ DBGX(e->iOnes[k][1])
 //return;
 */
 
-   debugss("-------------",k,k);
+   debugss((char *)"-------------",k,k);
    DBG(e->iSkip1[k])
    DBG(e->iSkip2[k])
    DBG(e->iSkip3[k])
@@ -16565,6 +16604,7 @@ DBGX(e->iOnes[k][1])
    //DBG(e->iAvgSize[k])
    DBG(e->iBlocksDifSent[k])
    DBG(e->iBlocksPicSent[k])
+#endif // never executed
 }
 static void putBl_4x4(short *bl,unsigned char *pCur, int stride){
    int  i;
@@ -16634,7 +16674,7 @@ int encMB16_NonDif(ENC_BL_CTX *ctx, TDCTX *ed, unsigned char *pCur, unsigned cha
       for(i=0;i<4;i++){
          dctDC[3]=dctDC[2]=dctDC[1]=dctDC[0]=0;
          iPredValPrev=ed->vlc.getDC()+iPredValPrev;
-         if(iPredValPrev>11 || iPredValPrev<0){debugss("err pred",i,iPredValPrev);return -5;}
+         if(iPredValPrev>11 || iPredValPrev<0){debugss((char *)"err pred",i,iPredValPrev);return -5;}
          fncPred[iPredValPrev](pCur+t_ofs[i],stride,iFlag|t_flag[i]);
 
             int dcs=ed->vlc.getVlc();
@@ -16688,7 +16728,7 @@ int encMB16_NonDif(ENC_BL_CTX *ctx, TDCTX *ed, unsigned char *pCur, unsigned cha
       if(iBestBits)TDCTX::getBlock16(&saved[0],pCur,stride);
       
       int iBits=ed->vlc.iBitPos;
-      int iPredVal,iSadPred,s;
+      int iPredVal,s; // ,iSadPred
       for(i=0;i<4;i++){
 /*
          iPredVal=ed->findSetBestPred(NULL,pCur+t_ofs[i], pRef+t_ofs[i],stride, iFlag|t_flag[i]  ,iSadPred,iPredValPrev);
@@ -16806,7 +16846,7 @@ int encMB16_NonDif(ENC_BL_CTX *ctx, TDCTX *ed, unsigned char *pCur, unsigned cha
 
 
       }
-      if(iBestBits){debugss("bbx",iBestBits,ed->vlc.iBitPos-iBits);}
+      if(iBestBits){debugss((char *)"bbx",iBestBits,ed->vlc.iBitPos-iBits);}
 
    }
    if(1){
@@ -16858,6 +16898,7 @@ int encMB16_NonDif(ENC_BL_CTX *ctx, TDCTX *ed, unsigned char *pCur, unsigned cha
 int devPicPred(unsigned char *pCur, int x, int y, int w, int h, int stride, int *sadTab, int iLim){
 
    return 100000;
+#if 0 // EA: code never executed:
    typedef struct{
       int i;
       int j;
@@ -16928,6 +16969,7 @@ int devPicPred(unsigned char *pCur, int x, int y, int w, int h, int stride, int 
    ///TDCTX::putBlock16(&saved[0],pCur,stride);
 
    return iSad;
+#endif // never executed
 }
 #if 1
 template  <int iDec>
@@ -17019,7 +17061,7 @@ int encMB16_NonDif4x4(ENC_BL_CTX *ctx, TDCTX *ed, unsigned char *pCur, unsigned 
          int iPred=get4x4PicPred(f,i,&iPredZ[0]);
          if(iPredAreZeros)iBestPred=iPred;
          else{
-            int bpp=ed->vlc.iBitPos;
+//            int bpp=ed->vlc.iBitPos;
 
             iBestPred=iPred?(ed->vlc.getAC()+iPred):ed->vlc.getVlc();
             /*
@@ -17096,7 +17138,7 @@ if(iBestBits && iBestBits<15)return 0;
       
       int iBits=ed->vlc.iBitPos;
       ed->vlc.addB(1);//
-      int iPredVal=0,iSadPred,s;
+      int s; // iPredVal=0,iSadPred,
       int sums[16];
       for(i=0;i<16;i++){
 
@@ -17337,7 +17379,7 @@ if(iBestBits && iBestBits<15)return 0;
          TDCTX::putBlock16(&saved[0],pCur,stride);
          return 0;
       }
-      if(iBestBits || !ed->iIsKey){debugss("bbx",iBestBits,ed->vlc.iBitPos-iBits);}
+      if(iBestBits || !ed->iIsKey){debugss((char *)"bbx",iBestBits,ed->vlc.iBitPos-iBits);}
 
    }
 if(((!iDec  && !g_iSkipLoop)  || ed->iFilter) && t[0]>19  &&(iDec || !iIsB )){
@@ -17965,7 +18007,7 @@ static int checkDCCoefs(int  *block,int *c, int q, int iCnt, int t0, int t1){
       d[i]=c[i];
       dcBl+=block[i];
    }
-   int dc=d[0];
+//   int dc=d[0];
    if(1){//69340,66KB
       //if(iPic)return  iCnt;
       dcBl=(dcBl+8)>>4;d[0]=0;
@@ -18062,7 +18104,7 @@ static int checkDCCoefs(int  *block,int *c, int q, int iCnt, int t0, int t1){
    for(i=0;i<16;i++){if(d[i]>iLim || d[i]<-iLim){iBigCoefs++;}}
    if(iBigCoefs<3){
       memset(&c[1],0,15*sizeof(int));
-      debugss("cnt",iCnt,t0);
+      debugss((char *)"cnt",iCnt,t0);
       //if(!iPic){if(dc>-11 && dc<11)c[0]=0;iCnt=0;}else iCnt=1;
       return c[0]?1:0;
       
@@ -18139,6 +18181,7 @@ static int encDC(TDCTX *ed, int iHasDCs, int *dctDC,int k){
    return 0;//iCanSkip;
 }
 
+#if 0 // EA: unused function
 static void encZero2b_unsign(CTVLCX &vlc, int val){
    if(val==0){vlc.addB(1); vlc.addB(1);return;}
    else if(val==1){vlc.addB(0); vlc.addB(0); }
@@ -18168,6 +18211,8 @@ static void encZero3b(CTVLCX &vlc, int val,int &tmp){
    tmp--;
 return ;
 }
+#endif // unused function
+
 int findScoreFlag_DC(int val, int tid);
 int decScoreFlag_DC(int val, int tid);
 
@@ -18245,7 +18290,7 @@ int decDCF(TDCTX *ed, CTVLCX &vlc, int *dctDC, int &iDCS,int k, int &f){
   if((f&16)==0){memset(&dctDC[1],0,15*sizeof(int));return 0;}
 
 
-int iBP=vlc.iBitPos;
+//int iBP=vlc.iBitPos;
   ed->dec1x_15_dif_dc<0,1>(vlc,dctDC,iPic,f&31);
 
   //int dccnt=0;for(int i=0;i<16;i++)if(dctDC[i])dccnt++;
@@ -18643,11 +18688,13 @@ static int analizeSkipLN(unsigned char *pCur, unsigned char *pRef, const int str
    }
    return 1;
 }
+/* EA: unused function
 static int analizeSkipN(unsigned char *pCur, unsigned char *pRef, const int stride ,int iDCQ){
    //return  0;
    if(iDCQ<=1)return 0;
    return analizeSkipLN<48,3>(pCur,pRef,stride,iDCQ);
 }
+ */
 int analizeSkip1(unsigned char *pCur, unsigned char *pRef, const int stride ,int iDCQ){
    return analizeSkipL<16,1>(pCur,pRef,stride,iDCQ);
 }
@@ -18713,15 +18760,17 @@ static int blockQ(unsigned char *cur, unsigned char *ref, int stride){
 	return getPSNRFromSQ(iSQErr,256);
 }
 #else
-static int blockQ(unsigned char *cur, unsigned char *ref, int stride){return 0;}
+// EA: unused function:
+//static int blockQ(unsigned char *cur, unsigned char *ref, int stride){return 0;}
 #endif
 static int g_iDeblock=0;
-static int iBitsG=0;
+//static int iBitsG=0;
 static int iFXTest=0;
 static int iIsUDP=1;
 void setDeblTest(int f){iFXTest=f;}
 void setUDPTest(int f){iIsUDP=f;}
 int isUDPTest(){return iIsUDP;}
+/* EA: unused function
 static int calcDCfromUL(unsigned char *pCur, int x, int y,int iDCQ,  const int stride){
    int i;
    int iPDC=0;
@@ -18742,7 +18791,7 @@ static int calcDCfromUL(unsigned char *pCur, int x, int y,int iDCQ,  const int s
    }
    return iPDC;
 }
-
+*/
 void t_fdct_2x2_8_s_d(unsigned char *src,unsigned char *src2, int stride, DCT_TYPE *d );
 void t_idct_2x2_8_s_d(DCT_TYPE *d, unsigned char *dst, int stride, int iX );
 
@@ -18800,7 +18849,7 @@ int encMB16_ok_2x2(ENC_BL_CTX *ctx, TDCTX *ed, unsigned char *pCur, unsigned cha
    const int t3=((t[0]*6+1)>>4);
    */
    //452+302
-   int iBitPos=ed->vlc.iBitPos;
+//   int iBitPos=ed->vlc.iBitPos;
    int t0=(((t[1]>>1)+t[0])*41)>>6;if(t0<24){t0+=24;t0>>=1;}t0+=4;//t0+=12;
    
    const int t1=((t0*9+1)>>5);
@@ -18912,9 +18961,9 @@ int useFastBlockType();
 #ifdef _TEST_T_BITS
       //static int iG[32*(16<<2)];//(1 2 4 8) 16
       //static int i_m_cbp[32*(1<<(2+6))];
-      static int iPrevF_16;
-      static int iPrevIJ_16;//=(ctx->i*(1<<15))|(ctx->j);
-      static int iPrevIsPic_16;
+//      static int iPrevF_16;
+//      static int iPrevIJ_16;//=(ctx->i*(1<<15))|(ctx->j);
+//      static int iPrevIsPic_16;
 #endif
 /*
 #ifdef T_USE_PRED16
@@ -19122,7 +19171,7 @@ int optim(TDCTX *ed, CTVLCX &vl,T *qc, T *c, int iDCQ, int iDcCnt){
             ed->enc1x_15_dif_dc<1,int>(vl,&blQ[0],iPic,0);
             //ed->enc1x_15_dif(&blQ[0], &xcnt[0], z);
             if((iBestDifB>vl.iBitPos-bpd) || ((iE<iErr) && iBestDifB>=vl.iBitPos-bpd)){
-               debugsi("bbb",iBestDifB-(vl.iBitPos-bpd));
+               debugsi((char *)"bbb",iBestDifB-(vl.iBitPos-bpd));
                iErr=iE;
                iBestV=zz;
                iBestCCnt=iCoefsCnt;
@@ -19208,7 +19257,7 @@ static int encMB16_okN(ENC_BL_CTX *ctx, TDCTX *ed, unsigned char *pCur, unsigned
    int iDecFlags[4]={0xff,0xff,0xff,0xff};
   // int iWasB=ed->iThisWasB;
    int b=!!(iIsB|ed->iThisWasB|ed->iThisWasBX);
-   int iCanBePic=!iDec && !ctx->iIsPic && iPic==0 && !b && !iIsB&& (!k || !ctx->iHasUVMode);
+//   int iCanBePic=!iDec && !ctx->iIsPic && iPic==0 && !b && !iIsB&& (!k || !ctx->iHasUVMode);
   // if(iIsB || iWasB)iCanRestore=0;
    //if(!iPic)ed->iPredDC=0;
 
@@ -19234,7 +19283,7 @@ iDCQ=k?ed->iDCQuantUV:ed->iDCQuant;
   // if(iPic && ed->iIsKey){iDCQ=k?ed->iDCQuantUV:ed->iDCQuant;iDCQ*=2;}
    //else if(iPic){iDCQ=k?ed->iDCQuantUV:ed->iDCQuant;iDCQ*=2;}
    }
-   int iIncKeyDCQ=0;
+//   int iIncKeyDCQ=0;
    //--if(!ed->iIsKey &&  iPic){iDCQ<<=1;iIncKeyDCQ=1;}
    //----------------------?????????????????????????----------------------<<
    ctx->iDCQ=iDCQ;
@@ -19576,7 +19625,7 @@ if(iEncodeSeperateDC){
 }//if iPic
 
 //int score=100;//iPic && !ed->iIsKey?0: 100;//iPic?0:100;// ?0:100;//iIgnoreDC?0:100;//iPic || iCanRestore?100:0;// && iStartPsnr>3500?0:100;
-int iRep=0;
+//int iRep=0;
 //#define T_USE_DEC_REP_Q
 #ifdef T_USE_DEC_REP_Q
      // int iBlockBP=ed->vlc.iBitPos;
@@ -19682,7 +19731,7 @@ LOGV(iLowDC);
         ress=0;
 //        const int iBadBLQ=!ed->iIsReferenceFrame && (iSad>iMinPosSad+(iDCQ>>2)+50 || iMaxQDC>1);
         // || iSad*3>iDev*2
-        const int iBadBLQ=((!b && t[0]>200 ) || (iDev<4000 || iMinPosSad<1500)) && (iSad>iMinPosSad+(iDCQ>>2)+50 || iMaxQDC>1);
+//        const int iBadBLQ=((!b && t[0]>200 ) || (iDev<4000 || iMinPosSad<1500)) && (iSad>iMinPosSad+(iDCQ>>2)+50 || iMaxQDC>1);
         //t_guant_fnc *qfnc=iBadBLQ?&quant_dif_badBlock:&quant_dif_goodBlock;
             int iDecim=i_CanRestore!=-2 && iLowDC &&  !ed->iIsKey && (k||iMaxQDC<2);
       
@@ -20039,8 +20088,8 @@ iBitsRem=(iBestBits>>3);
    else {//dec
       //int iNewBitsTest=0;
       //int dcBitsOld=0;
-      int iThisGain=0;
-#ifdef T_USE_DEC_REP_Q      
+//      int iThisGain=0;
+#ifdef T_USE_DEC_REP_Q
       int iRep=0;
       if(!k && !iPic)iRep=ed->vlc.getB();
 #endif
@@ -20124,7 +20173,7 @@ iBitsRem=(iBestBits>>3);
 
 
   // int iDecDif=0;
-int iDCCleared=0;
+//int iDCCleared=0;
    #undef _SET_DC
 #define _SET_DC(_A,_B,_C) dct[_B][_C]=dctDC[_A];
    int dc0=0;
@@ -20659,7 +20708,7 @@ iDCQ=k?ed->iDCQuantUV:ed->iDCQuant;
 #endif
    //iDCQ=t[0]*4;
    //----------------------?????????????????????????---------------------->>
-   int iIncKeyDCQ=0;
+//   int iIncKeyDCQ=0;
    //--if(!ed->iIsKey &&  iPic){iDCQ<<=1;iIncKeyDCQ=1;}
    //----------------------?????????????????????????----------------------<<
    ctx->iDCQ=iDCQ;
@@ -20672,14 +20721,14 @@ iDCQ=k?ed->iDCQuantUV:ed->iDCQuant;
 //   int iIncRestoreAndDecMinPsnr=0;
    int iBitX;
 //   int iEncDCOnly=0;
-   int iSkipQOnly=0;
+//   int iSkipQOnly=0;
    int iCanSkipFast=1;
    int iACTested=0;
    int iDCBitCnt=0;
    int iMaxQDC=0;
 //iDCQ=16;//+=64;iDCQ>>=2;
    int m=k?2:0,iSad=2500,iMinPosSad=2000,iTryMode=1,iDev=6000,iVecLen=4;
-      int iCanSkipX=1;
+//      int iCanSkipX=1;
 /*
       if(!iDec && iCanRestore && (k && !iIsB)){
          return 7;
@@ -20726,7 +20775,7 @@ LOGT("hada0");
    int iSkipFast=1;
    if(iHada==0 || iIsB ||ed->iThisWasB)iSkipFast=0;
    //  int iNeedGain300=0;
-   int iSkMinTested=0;
+//   int iSkMinTested=0;
    int iSadUV=-1;
    /*
    if(k && !iDec && !iPic){
@@ -21404,7 +21453,7 @@ if(iRep){
                   //if(s)
                      //s=ed->QFastLPic(&q_dct[i][0],&dct[i][0],t);
 #if defined(__SYMBIAN32__)  || defined(ANDROID_NDK) || defined(__linux__) || defined(__APPLE__)
-                  int _todo_pix_android_symb;
+//                  int _todo_pix_android_symb;
                   s=ed->QTestN<0>(&dct[i][0],iIsB,k);
 #else
                   s=ed->QFnc<&quant_pic_nonKey>(&q_dct[i][0],&dct[i][0],t,64);
@@ -21501,7 +21550,7 @@ LOGV(iLowDC);
         ress=0;
 //        const int iBadBLQ=!ed->iIsReferenceFrame && (iSad>iMinPosSad+(iDCQ>>2)+50 || iMaxQDC>1);
         // || iSad*3>iDev*2
-        const int iBadBLQ=(iDev<4000 || iMinPosSad<1500) && (iSad>iMinPosSad+(iDCQ>>2)+50 || iMaxQDC>1);
+//        const int iBadBLQ=(iDev<4000 || iMinPosSad<1500) && (iSad>iMinPosSad+(iDCQ>>2)+50 || iMaxQDC>1);
         //t_guant_fnc *qfnc=iBadBLQ?&quant_dif_badBlock:&quant_dif_goodBlock;
 
         for(i=0;i<4;i++){
@@ -21852,10 +21901,10 @@ LOGV(iLowDC);
 
    }
    else {//dec
-      int iNewBitsTest=0;
+//      int iNewBitsTest=0;
       int dcBitsOld=0;
-      int iThisGain=0;
-#ifdef T_USE_DEC_REP_Q      
+//      int iThisGain=0;
+#ifdef T_USE_DEC_REP_Q
       int iRep=0;
       if(!k && !iPic)iRep=ed->vlc.getB();
 #endif
@@ -21960,7 +22009,7 @@ LOGV(iLowDC);
    for(i=0;i<256;i++){dct[0][i]>>=1;}
       }
 #endif
-      int sc=0;
+//      int sc=0;
 
       if(ed->iSkipPutBlocks)return 0;
       if(ed->iVisDecoder){
@@ -22009,7 +22058,7 @@ LOGV(iLowDC);
 
 
   // int iDecDif=0;
-int iDCCleared=0;
+//int iDCCleared=0;
    #undef _SET_DC
 #define _SET_DC(_A,_B,_C) dct[_B][_C]=dctDC[_A];
    int dc0=0;
@@ -22042,12 +22091,12 @@ int iDCCleared=0;
       {
          //void idwt(int *p);
          //idwt(&dctDC[0]);
-            const int tma[]={
-               4,4,4,4,
-               4,4,4,5,
-               4,4,5,5,
-               4,5,5,5,
-            };
+//            const int tma[]={
+//               4,4,4,4,
+//               4,4,4,5,
+//               4,4,5,5,
+//               4,5,5,5,
+//            };
             //if(!k)for(i=0;i<16;i++){dctDC[i]*=(tma[i]);}idct4x4dc_s(&dctDC[0]);int iDQ=(iDCQ>>(k?1:3));//>>1;//<<1;//>>1;
             idct4x4dc_s(&dctDC[0]);int iDQ=iDCQ>>1;
          
@@ -22347,7 +22396,7 @@ dct[3][0]=dct[3][16]=dct[3][32]=dct[3][48]=0;
             const int wb=!!(iIsB|ed->iThisWasB);
 //break;
             int d=psnr-iStartPsnr;
-            int dr=psnr-iRStartPsnr;
+//            int dr=psnr-iRStartPsnr;
             //if(dr>200)break;
             
             int b=ed->vlc.iBitPos-iBitPos;
@@ -23115,7 +23164,7 @@ template <int iDec>
    int iHasQuant=0;
    iHasQuant=1;
    int aQ=16,bQ=32,cQ=64,uvQ=16;
-   int iLossless=0;
+//   int iLossless=0;
    int iPosBeforeSkipID=0;
   
    int iCanRestore=1;
@@ -23831,7 +23880,7 @@ if(!k)ed->iLastYBits+=(ed->vlc.iBitPos-iBPos);
                      iDev=getMBParamDev(i>>3, j>>3, w);
                   }
                   if(iUVMode!=5){
-                     int iPrevUVM=iUVMode;
+//                     int iPrevUVM=iUVMode;
                      
                      if(iUVMode==4){
                         //pRest[idc]=0;
@@ -24102,7 +24151,7 @@ if(!k)ed->iLastYBits+=(ed->vlc.iBitPos-iBPos);
       void deblock_yuv(unsigned char *p ,int w, int h, int stride, int iEnc, int iB);
       deblock_yuv(pCur,w,h,stride, !iDec,!!iIsB);
    }
-   if(iDec){int sts=stats[0]+stats[1];if(sts)debugss("stats",stats[0]*1000/sts,stats[1]*1000/sts);}
+   if(iDec){int sts=stats[0]+stats[1];if(sts)debugss((char *)"stats",stats[0]*1000/sts,stats[1]*1000/sts);}
 
    return ed->vlc.getBytePos();
 
@@ -24387,7 +24436,7 @@ template <int iDec>
 
    iResetCnt=1;
    int iEncTmp;
-   int iIsBigCost;
+   int iIsBigCost=0;
    int iBitsGain=0;
    
    int iIsHada=0;
@@ -24396,9 +24445,9 @@ template <int iDec>
    int id=0;
    int iHasQuant=0;
    iHasQuant=1;
-   int aQ=16,bQ=32,cQ=64,uvQ=16;
+     int aQ=16,bQ=32,cQ=64;//,uvQ=16;
    int aQUV=16,bQUV=32,cQUV=64;
-   int iLossless=0;
+//   int iLossless=0;
    int iPosBeforeSkipID=0;
   
    int iCanRestore=1;
@@ -25022,13 +25071,13 @@ if(ed->iDCQuant<4)ed->iDCQuant=4;
    ctx.m=0;
    ctx.mb=NULL;
    int iUseDct8x8=0;
-   static int iUse8x8=0;
-   static int iCheckPic=1;
+//   static int iUse8x8=0;
+//   static int iCheckPic=1;
 
    static int stats[3];//pic,difs,cnt
 
    int iLastNBit=0;
-   const int iBlocksPerRow=w>>4;
+//   const int iBlocksPerRow=w>>4;
    
    int iNewBLT=0;
 
@@ -25151,8 +25200,8 @@ if(!k)ed->iLastYBits+=(ed->vlc.iBitPos-iBPos);
                
                {
                   int e;
-                  int iDev=-1;
-                  int iUVMode=5;
+//                  int iDev=-1;
+//                  int iUVMode=5;
                   ctx.iHasUVMode=0;
                   
                   //ctx.iIsHada
@@ -25411,8 +25460,8 @@ void deblock_yuv(unsigned char *pCur ,int w, int h, int stride, int iEnc, int iB
 #ifdef T_USE_PRED16
    if(iIsKey)iIsKey++;
 #endif
-   const int iIsB=(ed->iIsB|ed->iThisWasB|iB);
-   const int t0=ed->tab_y[128]>>3;//((ed->tab_y[128]+8)>>3);
+//   const int iIsB=(ed->iIsB|ed->iThisWasB|iB);
+//   const int t0=ed->tab_y[128]>>3;//((ed->tab_y[128]+8)>>3);
 
    //==const int iFC=((ed->tab_y[129]>>4)+ed->tab_y[128]/9+1)>>1;//(((ed->tab_y[129]*5)>>6));
    //==const int iFC_UV=((ed->tab_uv[129]>>4)+ed->tab_uv[128]/9+1)>>1;//(((ed->tab_uv[129]*5)>>6));
@@ -25683,7 +25732,7 @@ int enc_decMB_X(TDCTX *ed, unsigned char *pCur, unsigned char *pRef,int w, int h
                   ed->vlc.iBitPos=iBitPosCol+1;
                   ed->vlc.addB(0);
                   int z=0;
-                  if(!k)debugss("bits-Y",iPicBits,iDifBits);
+                  if(!k)debugss((char *)"bits-Y",iPicBits,iDifBits);
                   for(z=0;z<iPicBits;z++){ed->vlc.addB(ed->vlc.showBit(tmp));tmp++;}
                   iDifBits=iPicBits;
                   iSendAsPic=1;
@@ -25883,18 +25932,18 @@ const int tM_TS_B[]={
    12,18,12,18,
    */
 };
-const int tM_POW[]={
-   7,6,5,3,
-   6,5,3,2,
-   5,3,2,1,
-   3,2,1,1,
-};
-const int tM_POW_B[]={
-   6,4,3,1,
-   4,3,1,0,
-   3,1,0,0,
-   1,0,0,0,
-};
+//const int tM_POW[]={
+//   7,6,5,3,
+//   6,5,3,2,
+//   5,3,2,1,
+//   3,2,1,1,
+//};
+//const int tM_POW_B[]={
+//   6,4,3,1,
+//   4,3,1,0,
+//   3,1,0,0,
+//   1,0,0,0,
+//};
 
 int encTestCanSkip8( unsigned char *pCur, unsigned char *pRef,int stride, int iIsB){
    if(!dctx)return 0;
@@ -25920,7 +25969,7 @@ int encTestCanSkip8( unsigned char *pCur, unsigned char *pRef,int stride, int iI
    
 
          
-   int iNoSkip=0;
+//   int iNoSkip=0;
    for(i=0;i<4;i++){
       trHada(pRef+t_ofs[i],pCur+t_ofs[i],stride,dct);
 
@@ -25972,12 +26021,12 @@ int encTestCanSkipF( unsigned char *pCur, unsigned char *pRef,int stride, int iI
       0+stride*8,4+stride*12, 8+stride*12,8,
    };
    */
-   static const int Fsk[]={
-      0,3,2,1,
-      0,2,3,3,
-      0,0,1,1,
-      2,2,3,1,
-   };
+//   static const int Fsk[]={
+//      0,3,2,1,
+//      0,2,3,3,
+//      0,0,1,1,
+//      2,2,3,1,
+//   };
    int i,j;
    const int *t_m=iIsB?&tM_TS_B[0]:&tM_TS[0];
 //   const int *t_p=iIsB?&tM_POW_B[0]:&tM_POW[0];
@@ -26030,7 +26079,7 @@ int encTestCanSkipF( unsigned char *pCur, unsigned char *pRef,int stride, int iI
       if(tab_b_ref2[0]<20)tab_b_ref2[0]=20;
      // if(tab[0]<mt[0]+iIsB*4)tab[0]=mt[0]+iIsB*4;
       for(i=0;i<16;i++){
-         tab_b_ref2[i]*=2;tab_b_ref2[i]+5;
+         tab_b_ref2[i]*=2;//tab_b_ref2[i]+5;
          tab_m2_ref2[i]=tab[i]*2+5;
       }
       
@@ -26040,12 +26089,12 @@ int encTestCanSkipF( unsigned char *pCur, unsigned char *pRef,int stride, int iI
 
   // int iDCF=0;
    int ret=0;
-   int iHT=0;
+//   int iHT=0;
    //const int iHada1=max(16,(tabx[0]));
    //int fskC[]={0,0,0,0,};
-   int idc=0;
+//   int idc=0;
 #define TEST_SK_DC 0
-   int dcc[16];
+//   int dcc[16];
    for(i=0;i<16;i++){
       const int ii=oi[i];
       int of=stride*((ii>>2)<<2)+((ii&3)<<2);//t_ofs[i]
@@ -26145,10 +26194,10 @@ int encTestCanSkip( unsigned char *pCur, unsigned char *pRef,int stride, int iIs
 #undef MT
 
    int iDCF=0;
-int iCoefs=0;
+//int iCoefs=0;
    const int iHada1=tabx[0]+16;//max(32,(tabx[0]*2));
    
-   int iNoSkip=0;
+//   int iNoSkip=0;
    for(i=0;i<16;i++){
       const int ii=oi[i];
       int of=stride*((ii>>2)<<2)+((ii&3)<<2);//t_ofs[i]
@@ -26486,7 +26535,7 @@ int qs=q;
          static int iHadSkipCntPrev;
          if(q>qs && iHadaSkCnt>3){
             if(iHadSkipCntPrev<iHadaSkCnt+2){
-            int qx=q;
+//            int qx=q;
             //iHadaSkCnt+=8;
             q=(qs*(iHadaSkCnt+8)+q*(16-iHadaSkCnt+8)+16)>>5;
             //if(qx!=q)debugsi("qn",qx-q);
@@ -26853,7 +26902,7 @@ debugsi("av2",szReq);
       //else if(b<3 || qn+3<dctx->iQParam )dctx->iQParam=(dctx->iQParam+qn)>>1;
    }
    static int iPrevQ2;
-   static int iPrevQTmp=dctx->iQParam;
+//   static int iPrevQTmp=dctx->iQParam;
    if(b!=1)iPrevQ2=iPrevQ;else {if(iPrevQ2<dctx->iQParam)dctx->iQParam=iPrevQ2;}
   // if(dctx->iQParam<12)dctx->iQParam=12;
    iPrevQ=dctx->iQParam;
@@ -26929,7 +26978,7 @@ debugsi("av2",szReq);
       if(b>2)iFramesAfterKey=0;else iFramesAfterKey++;
       iBytes+=ret;//(dctx->iLastYBits>>3);
       
-      debugss("iLastYBits left",(dctx->iLastYBits+7)>>3,(iBytesNeeded-iBytes)>>10);
+      debugss((char *)"iLastYBits left",(dctx->iLastYBits+7)>>3,(iBytesNeeded-iBytes)>>10);
       if(b!=1 && b!=2){
          int kid=b>2?RC::RC_key:RC::RC_dif;
          rcStruct[kid].iPrevQ=dctx->iQParam;
@@ -26987,7 +27036,9 @@ debugsi("av2",szReq);
             rcStruct[kid].qLimitMin=(av-8)>>1;
             rcStruct[kid].qLimitMax=(av+4)>>1;
             */
-         }else if(0){
+         }
+/* EA: code never executed:
+         else if(0){
             int cc=(qlmi!=rcStruct[kid].qLimitMin)+(qlma!=rcStruct[kid].qLimitMax);
             if(cc==1){
                if(qlmi!=rcStruct[kid].qLimitMin){
@@ -26998,6 +27049,7 @@ debugsi("av2",szReq);
                }
             }
          }
+ */
          if(rcStruct[kid].qLimitMin>iMaxQval)rcStruct[kid].qLimitMin=iMaxQval;
          if(rcStruct[kid].qLimitMin<iMinQval)rcStruct[kid].qLimitMin=iMinQval;
          if(rcStruct[kid].qLimitMax>iMaxQval)rcStruct[kid].qLimitMax=iMaxQval;

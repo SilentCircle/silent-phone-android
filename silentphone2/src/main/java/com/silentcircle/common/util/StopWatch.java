@@ -16,7 +16,7 @@
 
 package com.silentcircle.common.util;
 
-import android.util.Log;
+import com.silentcircle.logs.Log;
 
 import com.google.common.collect.Lists;
 

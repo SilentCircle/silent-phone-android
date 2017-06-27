@@ -25,11 +25,12 @@ Thumbs.db
 # Android Studio/IntelliJ and gradle directories
 ##################
 out/
-build/
+build*/
 .gradle/
 gradle.properties
 *.iml
 .idea/
+cmake-build-*/
 
 # Xcode
 ##################
@@ -53,3 +54,7 @@ xcuserdata
 *.ipa
 *.xcuserstate
 *.xcscmblueprint
+
+# kdev
+###################
+*.kdev*

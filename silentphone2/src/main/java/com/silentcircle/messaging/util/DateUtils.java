@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2016-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -33,6 +33,10 @@ import android.os.Build;
 import android.support.annotation.NonNull;
 import android.text.format.DateFormat;
 
+import com.google.common.base.CharMatcher;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.silentcircle.silentphone2.R;
 
 import java.text.ParseException;
@@ -40,6 +44,7 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.TimeZone;
+import java.util.concurrent.TimeUnit;
 
 public class DateUtils {
 
@@ -55,9 +60,42 @@ public class DateUtils {
 
     public static final String MESSAGE_TIME_FORMAT = "HH:mm";
     public static final String MESSAGE_TIME_FORMAT_JELLYBEAN = "kk:mm";
-
+    
     static {
         ISO8601.setTimeZone( TimeZone.getTimeZone("UTC") );
+    }
+
+    private static DateUtils mSharedInstance;
+
+    public static DateUtils getSharedInstance(Context context) {
+        if (mSharedInstance == null) {
+            mSharedInstance = new DateUtils(context);
+        }
+        return mSharedInstance;
+    }
+
+    private final Context mContext;
+    private final Resources mResources;
+    private final String mStringHeaderToday;
+    private final String mStringHeaderYesterday;
+    private final LoadingCache<Long, CharSequence> mDateCache;
+
+    public DateUtils(Context context) {
+        mContext = context;
+        mResources = mContext.getResources();
+        mStringHeaderToday = mResources.getString(R.string.call_log_header_today);
+        mStringHeaderYesterday = mResources.getString(R.string.call_log_header_yesterday);
+
+        mDateCache = CacheBuilder.newBuilder()
+            .concurrencyLevel(2)
+                .maximumSize(10)
+                .expireAfterWrite(4, TimeUnit.SECONDS)
+                .build(
+                        new CacheLoader<Long, CharSequence>() {
+                            public CharSequence load(Long key) {
+                                return getMessageGroupDateInternal(key);
+                            }
+                        });
     }
 
     public static CharSequence getRelativeTimeSpanString(Context context, long time) {
@@ -116,6 +154,7 @@ public class DateUtils {
         return Integer.valueOf(s) + "s";
     }
 
+    /*
     public static String getTimeString(Context context, long raw) {
         java.text.DateFormat dateFormat = DateFormat.getLongDateFormat(context);
         java.text.DateFormat timeFormat = DateFormat.getTimeFormat(context);
@@ -123,6 +162,38 @@ public class DateUtils {
         String date = dateFormat.format(new Date(raw));
         String time = timeFormat.format(new Date(raw));
         return now.equals(date) ? time : String.format("%s, %s", date, time);
+    }
+     */
+
+    public static String getTimeString(@NonNull Context context, long interval) {
+        Resources resources = context.getResources();
+        if (interval >= DAY) {
+            final int d = (int) (interval / DAY);
+            final int h = (int)((interval % DAY) / HOUR);
+            String dh = resources.getQuantityString(R.plurals.time_days, d, d);
+            if (h > 0)
+                dh += " " + resources.getQuantityString(R.plurals.time_hours, h, h);
+            return dh;
+        }
+        if (interval >= HOUR) {
+            final int h = (int) (interval / HOUR);
+            final int m = (int)((interval % HOUR) / MINUTE);
+            String hm = resources.getQuantityString(R.plurals.time_hours, h, h);
+            if (m > 0)
+                hm += " " + resources.getQuantityString(R.plurals.time_minutes, m, m);
+            return hm;
+        }
+        if (interval >= MINUTE) {
+            final int m = (int) (interval / MINUTE);
+            final int s = (int)((interval % MINUTE) / SECOND);
+            String ms = resources.getQuantityString(R.plurals.time_minutes, m, m);
+            if (s > 0)
+                ms += " " + resources.getQuantityString(R.plurals.time_seconds, s, s);
+            return ms;
+        }
+
+        int s = interval >= SECOND ? (int) (interval / SECOND) : 0;
+        return resources.getQuantityString(R.plurals.short_time_seconds, s, s);
     }
 
     public static String getISO8601Date( long value ) {
@@ -146,28 +217,32 @@ public class DateUtils {
      * Returns string representation of date as defined by {@link #HEADER_DATE_FORMAT}. For today's
      * date and yesterday's date returns strings "Today", "Yesterday" respectively.
      */
-    public static CharSequence getMessageGroupDate(@NonNull Context context, long time) {
+    public CharSequence getMessageGroupDate(long time) {
+        return mDateCache.getUnchecked(time);
+    }
+
+    private CharSequence getMessageGroupDateInternal(long time) {
         Calendar calendar = Calendar.getInstance();
         calendar.setTimeInMillis(time);
         Calendar now = Calendar.getInstance();
-
-        Resources resources = context.getResources();
 
         CharSequence result;
         if (now.get(Calendar.DATE) == calendar.get(Calendar.DATE)
                 && now.get(Calendar.MONTH) == calendar.get(Calendar.MONTH)
                 && now.get(Calendar.YEAR) == calendar.get(Calendar.YEAR)) {
-            result = resources.getString(R.string.call_log_header_today);
+            result = mStringHeaderToday;
         } else if (now.get(Calendar.DATE) - calendar.get(Calendar.DATE) == 1
                 && now.get(Calendar.MONTH) == calendar.get(Calendar.MONTH)
                 && now.get(Calendar.YEAR) == calendar.get(Calendar.YEAR)) {
-            result = resources.getString(R.string.call_log_header_yesterday);
+            result = mStringHeaderYesterday;
         } else {
             result = DateFormat.format(HEADER_DATE_FORMAT, calendar);
         }
 
         return result;
     }
+
+
 
     /**
      * Returns string representation of time as defined by {@link #MESSAGE_TIME_FORMAT}.

@@ -1,51 +1,50 @@
 /*
  * ASN.1 buffer writing functionality
  *
- *  Copyright (C) 2006-2014, ARM Limited, All Rights Reserved
+ *  Copyright (C) 2006-2015, ARM Limited, All Rights Reserved
+ *  SPDX-License-Identifier: Apache-2.0
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License"); you may
+ *  not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ *  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  *
  *  This file is part of mbed TLS (https://tls.mbed.org)
- *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
- *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License along
- *  with this program; if not, write to the Free Software Foundation, Inc.,
- *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#if !defined(POLARSSL_CONFIG_FILE)
-#include "polarssl/config.h"
+#if !defined(MBEDTLS_CONFIG_FILE)
+#include "mbedtls/config.h"
 #else
-#include POLARSSL_CONFIG_FILE
+#include MBEDTLS_CONFIG_FILE
 #endif
 
-#if defined(POLARSSL_ASN1_WRITE_C)
+#if defined(MBEDTLS_ASN1_WRITE_C)
 
-#include "polarssl/asn1write.h"
+#include "mbedtls/asn1write.h"
 
 #include <string.h>
 
-#if defined(POLARSSL_PLATFORM_C)
-#include "polarssl/platform.h"
+#if defined(MBEDTLS_PLATFORM_C)
+#include "mbedtls/platform.h"
 #else
 #include <stdlib.h>
-#define polarssl_malloc     malloc
-#define polarssl_free       free
+#define mbedtls_calloc    calloc
+#define mbedtls_free       free
 #endif
 
-int asn1_write_len( unsigned char **p, unsigned char *start, size_t len )
+int mbedtls_asn1_write_len( unsigned char **p, unsigned char *start, size_t len )
 {
     if( len < 0x80 )
     {
         if( *p - start < 1 )
-            return( POLARSSL_ERR_ASN1_BUF_TOO_SMALL );
+            return( MBEDTLS_ERR_ASN1_BUF_TOO_SMALL );
 
         *--(*p) = (unsigned char) len;
         return( 1 );
@@ -54,42 +53,69 @@ int asn1_write_len( unsigned char **p, unsigned char *start, size_t len )
     if( len <= 0xFF )
     {
         if( *p - start < 2 )
-            return( POLARSSL_ERR_ASN1_BUF_TOO_SMALL );
+            return( MBEDTLS_ERR_ASN1_BUF_TOO_SMALL );
 
         *--(*p) = (unsigned char) len;
         *--(*p) = 0x81;
         return( 2 );
     }
 
-    if( *p - start < 3 )
-        return( POLARSSL_ERR_ASN1_BUF_TOO_SMALL );
+    if( len <= 0xFFFF )
+    {
+        if( *p - start < 3 )
+            return( MBEDTLS_ERR_ASN1_BUF_TOO_SMALL );
 
-    // We assume we never have lengths larger than 65535 bytes
-    //
-    *--(*p) = len % 256;
-    *--(*p) = ( len / 256 ) % 256;
-    *--(*p) = 0x82;
+        *--(*p) = ( len       ) & 0xFF;
+        *--(*p) = ( len >>  8 ) & 0xFF;
+        *--(*p) = 0x82;
+        return( 3 );
+    }
 
-    return( 3 );
+    if( len <= 0xFFFFFF )
+    {
+        if( *p - start < 4 )
+            return( MBEDTLS_ERR_ASN1_BUF_TOO_SMALL );
+
+        *--(*p) = ( len       ) & 0xFF;
+        *--(*p) = ( len >>  8 ) & 0xFF;
+        *--(*p) = ( len >> 16 ) & 0xFF;
+        *--(*p) = 0x83;
+        return( 4 );
+    }
+
+    if( len <= 0xFFFFFFFF )
+    {
+        if( *p - start < 5 )
+            return( MBEDTLS_ERR_ASN1_BUF_TOO_SMALL );
+
+        *--(*p) = ( len       ) & 0xFF;
+        *--(*p) = ( len >>  8 ) & 0xFF;
+        *--(*p) = ( len >> 16 ) & 0xFF;
+        *--(*p) = ( len >> 24 ) & 0xFF;
+        *--(*p) = 0x84;
+        return( 5 );
+    }
+
+    return( MBEDTLS_ERR_ASN1_INVALID_LENGTH );
 }
 
-int asn1_write_tag( unsigned char **p, unsigned char *start, unsigned char tag )
+int mbedtls_asn1_write_tag( unsigned char **p, unsigned char *start, unsigned char tag )
 {
     if( *p - start < 1 )
-        return( POLARSSL_ERR_ASN1_BUF_TOO_SMALL );
+        return( MBEDTLS_ERR_ASN1_BUF_TOO_SMALL );
 
     *--(*p) = tag;
 
     return( 1 );
 }
 
-int asn1_write_raw_buffer( unsigned char **p, unsigned char *start,
+int mbedtls_asn1_write_raw_buffer( unsigned char **p, unsigned char *start,
                            const unsigned char *buf, size_t size )
 {
     size_t len = 0;
 
     if( *p < start || (size_t)( *p - start ) < size )
-        return( POLARSSL_ERR_ASN1_BUF_TOO_SMALL );
+        return( MBEDTLS_ERR_ASN1_BUF_TOO_SMALL );
 
     len = size;
     (*p) -= len;
@@ -98,21 +124,21 @@ int asn1_write_raw_buffer( unsigned char **p, unsigned char *start,
     return( (int) len );
 }
 
-#if defined(POLARSSL_BIGNUM_C)
-int asn1_write_mpi( unsigned char **p, unsigned char *start, mpi *X )
+#if defined(MBEDTLS_BIGNUM_C)
+int mbedtls_asn1_write_mpi( unsigned char **p, unsigned char *start, const mbedtls_mpi *X )
 {
     int ret;
     size_t len = 0;
 
     // Write the MPI
     //
-    len = mpi_size( X );
+    len = mbedtls_mpi_size( X );
 
     if( *p < start || (size_t)( *p - start ) < len )
-        return( POLARSSL_ERR_ASN1_BUF_TOO_SMALL );
+        return( MBEDTLS_ERR_ASN1_BUF_TOO_SMALL );
 
     (*p) -= len;
-    MPI_CHK( mpi_write_binary( X, *p, len ) );
+    MBEDTLS_MPI_CHK( mbedtls_mpi_write_binary( X, *p, len ) );
 
     // DER format assumes 2s complement for numbers, so the leftmost bit
     // should be 0 for positive numbers and 1 for negative numbers.
@@ -120,50 +146,50 @@ int asn1_write_mpi( unsigned char **p, unsigned char *start, mpi *X )
     if( X->s ==1 && **p & 0x80 )
     {
         if( *p - start < 1 )
-            return( POLARSSL_ERR_ASN1_BUF_TOO_SMALL );
+            return( MBEDTLS_ERR_ASN1_BUF_TOO_SMALL );
 
         *--(*p) = 0x00;
         len += 1;
     }
 
-    ASN1_CHK_ADD( len, asn1_write_len( p, start, len ) );
-    ASN1_CHK_ADD( len, asn1_write_tag( p, start, ASN1_INTEGER ) );
+    MBEDTLS_ASN1_CHK_ADD( len, mbedtls_asn1_write_len( p, start, len ) );
+    MBEDTLS_ASN1_CHK_ADD( len, mbedtls_asn1_write_tag( p, start, MBEDTLS_ASN1_INTEGER ) );
 
     ret = (int) len;
 
 cleanup:
     return( ret );
 }
-#endif /* POLARSSL_BIGNUM_C */
+#endif /* MBEDTLS_BIGNUM_C */
 
-int asn1_write_null( unsigned char **p, unsigned char *start )
+int mbedtls_asn1_write_null( unsigned char **p, unsigned char *start )
 {
     int ret;
     size_t len = 0;
 
     // Write NULL
     //
-    ASN1_CHK_ADD( len, asn1_write_len( p, start, 0) );
-    ASN1_CHK_ADD( len, asn1_write_tag( p, start, ASN1_NULL ) );
+    MBEDTLS_ASN1_CHK_ADD( len, mbedtls_asn1_write_len( p, start, 0) );
+    MBEDTLS_ASN1_CHK_ADD( len, mbedtls_asn1_write_tag( p, start, MBEDTLS_ASN1_NULL ) );
 
     return( (int) len );
 }
 
-int asn1_write_oid( unsigned char **p, unsigned char *start,
+int mbedtls_asn1_write_oid( unsigned char **p, unsigned char *start,
                     const char *oid, size_t oid_len )
 {
     int ret;
     size_t len = 0;
 
-    ASN1_CHK_ADD( len, asn1_write_raw_buffer( p, start,
+    MBEDTLS_ASN1_CHK_ADD( len, mbedtls_asn1_write_raw_buffer( p, start,
                                   (const unsigned char *) oid, oid_len ) );
-    ASN1_CHK_ADD( len , asn1_write_len( p, start, len ) );
-    ASN1_CHK_ADD( len , asn1_write_tag( p, start, ASN1_OID ) );
+    MBEDTLS_ASN1_CHK_ADD( len , mbedtls_asn1_write_len( p, start, len ) );
+    MBEDTLS_ASN1_CHK_ADD( len , mbedtls_asn1_write_tag( p, start, MBEDTLS_ASN1_OID ) );
 
     return( (int) len );
 }
 
-int asn1_write_algorithm_identifier( unsigned char **p, unsigned char *start,
+int mbedtls_asn1_write_algorithm_identifier( unsigned char **p, unsigned char *start,
                                      const char *oid, size_t oid_len,
                                      size_t par_len )
 {
@@ -171,37 +197,37 @@ int asn1_write_algorithm_identifier( unsigned char **p, unsigned char *start,
     size_t len = 0;
 
     if( par_len == 0 )
-        ASN1_CHK_ADD( len, asn1_write_null( p, start ) );
+        MBEDTLS_ASN1_CHK_ADD( len, mbedtls_asn1_write_null( p, start ) );
     else
         len += par_len;
 
-    ASN1_CHK_ADD( len, asn1_write_oid( p, start, oid, oid_len ) );
+    MBEDTLS_ASN1_CHK_ADD( len, mbedtls_asn1_write_oid( p, start, oid, oid_len ) );
 
-    ASN1_CHK_ADD( len, asn1_write_len( p, start, len ) );
-    ASN1_CHK_ADD( len, asn1_write_tag( p, start,
-                                       ASN1_CONSTRUCTED | ASN1_SEQUENCE ) );
+    MBEDTLS_ASN1_CHK_ADD( len, mbedtls_asn1_write_len( p, start, len ) );
+    MBEDTLS_ASN1_CHK_ADD( len, mbedtls_asn1_write_tag( p, start,
+                                       MBEDTLS_ASN1_CONSTRUCTED | MBEDTLS_ASN1_SEQUENCE ) );
 
     return( (int) len );
 }
 
-int asn1_write_bool( unsigned char **p, unsigned char *start, int boolean )
+int mbedtls_asn1_write_bool( unsigned char **p, unsigned char *start, int boolean )
 {
     int ret;
     size_t len = 0;
 
     if( *p - start < 1 )
-        return( POLARSSL_ERR_ASN1_BUF_TOO_SMALL );
+        return( MBEDTLS_ERR_ASN1_BUF_TOO_SMALL );
 
     *--(*p) = (boolean) ? 255 : 0;
     len++;
 
-    ASN1_CHK_ADD( len, asn1_write_len( p, start, len ) );
-    ASN1_CHK_ADD( len, asn1_write_tag( p, start, ASN1_BOOLEAN ) );
+    MBEDTLS_ASN1_CHK_ADD( len, mbedtls_asn1_write_len( p, start, len ) );
+    MBEDTLS_ASN1_CHK_ADD( len, mbedtls_asn1_write_tag( p, start, MBEDTLS_ASN1_BOOLEAN ) );
 
     return( (int) len );
 }
 
-int asn1_write_int( unsigned char **p, unsigned char *start, int val )
+int mbedtls_asn1_write_int( unsigned char **p, unsigned char *start, int val )
 {
     int ret;
     size_t len = 0;
@@ -211,7 +237,7 @@ int asn1_write_int( unsigned char **p, unsigned char *start, int val )
     // should be 0 for positive numbers and 1 for negative numbers.
     //
     if( *p - start < 1 )
-        return( POLARSSL_ERR_ASN1_BUF_TOO_SMALL );
+        return( MBEDTLS_ERR_ASN1_BUF_TOO_SMALL );
 
     len += 1;
     *--(*p) = val;
@@ -219,49 +245,49 @@ int asn1_write_int( unsigned char **p, unsigned char *start, int val )
     if( val > 0 && **p & 0x80 )
     {
         if( *p - start < 1 )
-            return( POLARSSL_ERR_ASN1_BUF_TOO_SMALL );
+            return( MBEDTLS_ERR_ASN1_BUF_TOO_SMALL );
 
         *--(*p) = 0x00;
         len += 1;
     }
 
-    ASN1_CHK_ADD( len, asn1_write_len( p, start, len ) );
-    ASN1_CHK_ADD( len, asn1_write_tag( p, start, ASN1_INTEGER ) );
+    MBEDTLS_ASN1_CHK_ADD( len, mbedtls_asn1_write_len( p, start, len ) );
+    MBEDTLS_ASN1_CHK_ADD( len, mbedtls_asn1_write_tag( p, start, MBEDTLS_ASN1_INTEGER ) );
 
     return( (int) len );
 }
 
-int asn1_write_printable_string( unsigned char **p, unsigned char *start,
+int mbedtls_asn1_write_printable_string( unsigned char **p, unsigned char *start,
                                  const char *text, size_t text_len )
 {
     int ret;
     size_t len = 0;
 
-    ASN1_CHK_ADD( len, asn1_write_raw_buffer( p, start,
+    MBEDTLS_ASN1_CHK_ADD( len, mbedtls_asn1_write_raw_buffer( p, start,
                   (const unsigned char *) text, text_len ) );
 
-    ASN1_CHK_ADD( len, asn1_write_len( p, start, len ) );
-    ASN1_CHK_ADD( len, asn1_write_tag( p, start, ASN1_PRINTABLE_STRING ) );
+    MBEDTLS_ASN1_CHK_ADD( len, mbedtls_asn1_write_len( p, start, len ) );
+    MBEDTLS_ASN1_CHK_ADD( len, mbedtls_asn1_write_tag( p, start, MBEDTLS_ASN1_PRINTABLE_STRING ) );
 
     return( (int) len );
 }
 
-int asn1_write_ia5_string( unsigned char **p, unsigned char *start,
+int mbedtls_asn1_write_ia5_string( unsigned char **p, unsigned char *start,
                            const char *text, size_t text_len )
 {
     int ret;
     size_t len = 0;
 
-    ASN1_CHK_ADD( len, asn1_write_raw_buffer( p, start,
+    MBEDTLS_ASN1_CHK_ADD( len, mbedtls_asn1_write_raw_buffer( p, start,
                   (const unsigned char *) text, text_len ) );
 
-    ASN1_CHK_ADD( len, asn1_write_len( p, start, len ) );
-    ASN1_CHK_ADD( len, asn1_write_tag( p, start, ASN1_IA5_STRING ) );
+    MBEDTLS_ASN1_CHK_ADD( len, mbedtls_asn1_write_len( p, start, len ) );
+    MBEDTLS_ASN1_CHK_ADD( len, mbedtls_asn1_write_tag( p, start, MBEDTLS_ASN1_IA5_STRING ) );
 
     return( (int) len );
 }
 
-int asn1_write_bitstring( unsigned char **p, unsigned char *start,
+int mbedtls_asn1_write_bitstring( unsigned char **p, unsigned char *start,
                           const unsigned char *buf, size_t bits )
 {
     int ret;
@@ -272,7 +298,7 @@ int asn1_write_bitstring( unsigned char **p, unsigned char *start,
     // Calculate byte length
     //
     if( *p < start || (size_t)( *p - start ) < size + 1 )
-        return( POLARSSL_ERR_ASN1_BUF_TOO_SMALL );
+        return( MBEDTLS_ERR_ASN1_BUF_TOO_SMALL );
 
     len = size + 1;
     (*p) -= size;
@@ -282,58 +308,58 @@ int asn1_write_bitstring( unsigned char **p, unsigned char *start,
     //
     *--(*p) = (unsigned char) (size * 8 - bits);
 
-    ASN1_CHK_ADD( len, asn1_write_len( p, start, len ) );
-    ASN1_CHK_ADD( len, asn1_write_tag( p, start, ASN1_BIT_STRING ) );
+    MBEDTLS_ASN1_CHK_ADD( len, mbedtls_asn1_write_len( p, start, len ) );
+    MBEDTLS_ASN1_CHK_ADD( len, mbedtls_asn1_write_tag( p, start, MBEDTLS_ASN1_BIT_STRING ) );
 
     return( (int) len );
 }
 
-int asn1_write_octet_string( unsigned char **p, unsigned char *start,
+int mbedtls_asn1_write_octet_string( unsigned char **p, unsigned char *start,
                              const unsigned char *buf, size_t size )
 {
     int ret;
     size_t len = 0;
 
-    ASN1_CHK_ADD( len, asn1_write_raw_buffer( p, start, buf, size ) );
+    MBEDTLS_ASN1_CHK_ADD( len, mbedtls_asn1_write_raw_buffer( p, start, buf, size ) );
 
-    ASN1_CHK_ADD( len, asn1_write_len( p, start, len ) );
-    ASN1_CHK_ADD( len, asn1_write_tag( p, start, ASN1_OCTET_STRING ) );
+    MBEDTLS_ASN1_CHK_ADD( len, mbedtls_asn1_write_len( p, start, len ) );
+    MBEDTLS_ASN1_CHK_ADD( len, mbedtls_asn1_write_tag( p, start, MBEDTLS_ASN1_OCTET_STRING ) );
 
     return( (int) len );
 }
 
-asn1_named_data *asn1_store_named_data( asn1_named_data **head,
+mbedtls_asn1_named_data *mbedtls_asn1_store_named_data( mbedtls_asn1_named_data **head,
                                         const char *oid, size_t oid_len,
                                         const unsigned char *val,
                                         size_t val_len )
 {
-    asn1_named_data *cur;
+    mbedtls_asn1_named_data *cur;
 
-    if( ( cur = asn1_find_named_data( *head, oid, oid_len ) ) == NULL )
+    if( ( cur = mbedtls_asn1_find_named_data( *head, oid, oid_len ) ) == NULL )
     {
         // Add new entry if not present yet based on OID
         //
-        if( ( cur = polarssl_malloc( sizeof(asn1_named_data) ) ) == NULL )
+        cur = (mbedtls_asn1_named_data*)mbedtls_calloc( 1,
+                                            sizeof(mbedtls_asn1_named_data) );
+        if( cur == NULL )
             return( NULL );
 
-        memset( cur, 0, sizeof(asn1_named_data) );
-
         cur->oid.len = oid_len;
-        cur->oid.p = polarssl_malloc( oid_len );
+        cur->oid.p = mbedtls_calloc( 1, oid_len );
         if( cur->oid.p == NULL )
         {
-            polarssl_free( cur );
+            mbedtls_free( cur );
             return( NULL );
         }
 
         memcpy( cur->oid.p, oid, oid_len );
 
         cur->val.len = val_len;
-        cur->val.p = polarssl_malloc( val_len );
+        cur->val.p = mbedtls_calloc( 1, val_len );
         if( cur->val.p == NULL )
         {
-            polarssl_free( cur->oid.p );
-            polarssl_free( cur );
+            mbedtls_free( cur->oid.p );
+            mbedtls_free( cur );
             return( NULL );
         }
 
@@ -347,11 +373,11 @@ asn1_named_data *asn1_store_named_data( asn1_named_data **head,
          * Preserve old data until the allocation succeeded, to leave list in
          * a consistent state in case allocation fails.
          */
-        void *p = polarssl_malloc( val_len );
+        void *p = mbedtls_calloc( 1, val_len );
         if( p == NULL )
             return( NULL );
 
-        polarssl_free( cur->val.p );
+        mbedtls_free( cur->val.p );
         cur->val.p = p;
         cur->val.len = val_len;
     }
@@ -361,4 +387,4 @@ asn1_named_data *asn1_store_named_data( asn1_named_data **head,
 
     return( cur );
 }
-#endif /* POLARSSL_ASN1_WRITE_C */
+#endif /* MBEDTLS_ASN1_WRITE_C */

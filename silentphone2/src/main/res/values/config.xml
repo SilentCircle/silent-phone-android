@@ -35,10 +35,14 @@
 
     <string name="sccps_directory_request" translatable="false">v2/people/?terms=</string>
     <string name="sccps_authorization_request" translatable="false">v1/auth_domain/</string>
+    <string name="sccps_avatar_action_request" translatable="false">v1/me/avatar/</string>
 
     <!-- in app billing -->
     <string name="sccps_stripe_tokens_request" translatable="false">v1/me/card/</string>
     <string name="sccps_publishable_key_request" translatable="false">v1/settings</string>
     <!-- /v1/me/card/{card_id}/charge/?api_key= -->
     <string name="sccps_process_charge_request" translatable="false">v1/me/card/%1$s/charge/?api_key=%2$s</string>
+
+    <!-- logging -->
+    <string name="sccps_send_logs_request" translatable="false">v1/feedback/?api_key=%1$s</string>
 </resources>

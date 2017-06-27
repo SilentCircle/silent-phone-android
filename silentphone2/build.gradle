@@ -1,15 +1,79 @@
+def buildTime() {
+    def date = new Date()
+    def formattedDate = date.format('yyyy-MM-dd HH:mm:ss')
+    return formattedDate
+}
+
+// Double quote a string. If the string is already double quoted,
+// it will be double-quoted yet again.
+def dquote(String s) { '"' + s + '"' }
+
+// Return a version number based on a version code and a Jenkins build number.
+def mkversion(int versionCode, String buildNumber) {
+    (versionCode << 16) | Integer.parseInt(buildNumber)
+}
+
+// Return today's UTC date and time string in ISO-8601 format.
+def iso8601() {
+    new Date().format("yyyy-MM-dd'T'HH:MM:ss'Z'", TimeZone.getTimeZone('GMT'))
+}
+
+// Helper function for buildConfigField
+def mapToJava(m, javaMapType) {
+    "\nnew ${javaMapType}()" +
+    "\n{\n  {\n" +
+    m.collect { k, v -> "    put(\"${k}\", \"${v}\");" }.join("\n") +
+    "\n  }\n}"
+}
+
+// Return map of submodule commits ['submodule': 'commitHash']
+// where submodule is the last path component of the submodule directory
+def submoduleCommits(Map commits) {
+    def fnutils = org.apache.commons.io.FilenameUtils
+    def pattern = java.util.regex.Pattern
+    commits.inject([:]) { m, dir, ss ->
+        def pathComponents = fnutils.normalizeNoEndSeparator(dir).split(pattern.quote(File.separatorChar.toString()))
+        if (pathComponents.length != 0) {
+            def submoduleName = pathComponents.last()
+            m[submoduleName] = ss.headId.name[0..7] // use short commit id
+        }
+        m
+    }
+}
+
 apply plugin: 'com.android.application'
-apply plugin: 'com.google.gms.google-services'
 
 android {
+    // Return today's UTC date and time in ISO8601 format. This is a closure to
+    // avoid repeatedly generating a date/time stamp
+    def dateToday = { iso8601() }
+
+    // Return either the property named by `propName`, or `defVal` if the
+    // property is absent. It is the caller's responsibility to ensure that the
+    // `defVal` is the same data type as the property should be.
+    // This is a closure because it relies on the `project` value.
+    def getVal = { String propName, Object defVal ->
+        project.findProperty(propName) ?: defVal
+    }
 
     compileSdkVersion rootProject.ext.compileSdkVersion
     buildToolsVersion rootProject.ext.buildToolsVersion
+
+    // See
+    // http://mrhaki.blogspot.com/2015/04/gradle-goodness-use-git-commit-id-in.html
+    ext {
+        // Open the Git repository by checking for GIT_DIR and/or walking up
+        // from the current working directory.
+        git = org.ajoberstar.grgit.Grgit.open()
+        // Get the jgit interface to the repository
+        jgit = git.repository.jgit
+    }
 
     dexOptions {
         jumboMode = true
         javaMaxHeapSize "3g"
     }
+
     defaultConfig {
         minSdkVersion 16
         targetSdkVersion rootProject.ext.targetSdkVersion
@@ -17,35 +81,30 @@ android {
         // Version string: major.minor or major.minor.bug-fix.  When
         // releasing an X.Y version, list only two digits rather than
         // X.Y.Z.
-        versionName "5.0.0"
+        versionName "6.0"
 
-        // The version code (vc) computes as follows: major*1000 + minor*100 + bug-fix.
-        // This provides up to 100 bug-fix or small feature update releases :-)
-        // To create the Android 'versionCode' the script shifts this number left by 16 and adds the
-        // Jenkins build number.
-        def vc = 5000
+        // The version code (vc) computes as follows: major*1000 + minor*100 +
+        // bug-fix.  This provides up to 100 bug-fix or small feature update
+        // releases :-)
+        // To create the Android 'versionCode' the script shifts this number
+        // left by 16 and adds the Jenkins build number.
+        // See the mkversion() function elsewhere in this file.
+        def vc = 6000
+        def version = mkversion(vc, getVal('build_version_numeric', '0'))
+        versionCode version                            // the 'versionCode' goes into the AndroidManifest
 
         applicationId "com.silentcircle.silentphone"
 
-        def version = "0"
-        if (project.hasProperty('build_version_numeric')) {version = build_version_numeric }
-        def newVersion = (vc << 16) + Integer.parseInt(version)
-        versionCode newVersion                            // the 'versionCode' goes into the AndroidManifest
+        def javaMapType = 'java.util.LinkedHashMap<String, String>'
+        def jgitSubSts = jgit.submoduleStatus().call()
 
-        def build = "DEBUG"
-        if (project.hasProperty('build_version')) {build = build_version }
-        buildConfigField "String", "SPA_BUILD_NUMBER", "\"" + build + "\""
-
-        def commit = "\"DEBUG\""
-        if (project.hasProperty('build_commit')) {commit = "\"" + build_commit + "\""}
-        buildConfigField "String", "SPA_BUILD_COMMIT", commit
-
-        def date = "\"DEBUG\""
-        if (project.hasProperty('build_date')) {date = "\"" + build_date + "\""}
-        buildConfigField "String", "SPA_BUILD_DATE", date
-
-        buildConfigField "String", "AUTHORITY_BASE", "\"com.silentcircle\""
-        buildConfigField "boolean", "MAIN_PACKAGE", "true"
+        buildConfigField 'String', 'SPA_BUILD_NUMBER', dquote(getVal('build_version', 'DEBUG'))
+        buildConfigField 'String', 'SPA_BUILD_COMMIT', dquote(getVal('build_commit', git.describe()))
+        buildConfigField 'String', 'SPA_BUILD_DATE', dquote(getVal('build_date', dateToday()))
+        buildConfigField 'String', 'AUTHORITY_BASE', dquote('com.silentcircle')
+        buildConfigField 'boolean', 'MAIN_PACKAGE', 'true'
+        buildConfigField 'boolean', 'ACRA_ENABLED', getVal('acra_enabled', 'true')
+        buildConfigField javaMapType, 'SUBMODULE_BUILD_COMMITS', mapToJava(submoduleCommits(jgitSubSts), javaMapType)
 
         manifestPlaceholders = [AUTHORITY_BASE:"com.silentcircle"]
 
@@ -108,8 +167,11 @@ android {
         debug {
             debuggable true
             minifyEnabled true
+            useProguard false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
             zipAlignEnabled true
+            // ACRA disabled by default in debug builds
+            buildConfigField "boolean", "ACRA_ENABLED", "false"
         }
         fastDebug {
             debuggable true
@@ -117,10 +179,13 @@ android {
             multiDexEnabled true
             signingConfig signingConfigs.debug
             zipAlignEnabled true
+            // ACRA disabled by default in debug builds
+            buildConfigField "boolean", "ACRA_ENABLED", "false"
         }
         develop {
             debuggable true
             minifyEnabled true
+            useProguard false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
             signingConfig signingConfigs.sc
             zipAlignEnabled true
@@ -132,6 +197,20 @@ android {
             zipAlignEnabled true
         }
     }
+//
+//    externalNativeBuild {
+//        //  If you want to link Gradle to an existing ndk-build project, use the ndkBuild {} block instead
+//        // of cmake {}, and provide a relative path to your Android.mk file. Gradle also includes the
+//        // Application.mk file if it is located in the same directory as your Android.mk file.
+//        ndkBuild {
+//            path "jni/Android.mk"
+//        }
+//    }
+//
+//    tasks.withType(ndkBuild) {
+//        compileTask -> compileTask.dependsOn ndkBuild
+//        print "+++ Huhu - ndk build"
+//    }
 }
 
 android.applicationVariants.all { variant ->
@@ -147,13 +226,19 @@ dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
     compile 'com.googlecode.libphonenumber:libphonenumber:7.2.1'
     compile 'com.googlecode.libphonenumber:geocoder:2.31'
-    compile 'com.android.support:appcompat-v7:23.2.1'
-    compile 'com.android.support:design:23.2.1'
-    compile 'com.android.support:support-v13:23.2.1'
-    compile 'com.android.support:palette-v7:23.2.1'
-    compile 'com.android.support:cardview-v7:23.2.1'
-    compile 'com.google.android.gms:play-services-gcm:8.3.0'
+    compile 'com.android.support:appcompat-v7:25.3.1'
+    compile 'com.android.support:design:25.3.1'
+    compile 'com.android.support:support-v13:25.3.1'
+    compile 'com.android.support:palette-v7:25.3.1'
+    compile 'com.android.support:cardview-v7:25.3.1'
+    compile 'com.android.support:recyclerview-v7:25.3.1'
+    compile 'com.google.android.gms:play-services-gcm:10.2.1'
 //    compile 'com.android.support:multidex:1.0.1'
     compile 'com.stripe:stripe-android:1.0.0'
     compile 'com.google.code.gson:gson:2.6.1'
+    compile 'ch.acra:acra:4.9.2'
+//    compile 'com.android.support.constraint:constraint-layout:1.0.0-beta1'
+    compile 'com.getkeepsafe.taptargetview:taptargetview:1.7.0'
 }
+
+apply plugin: 'com.google.gms.google-services'

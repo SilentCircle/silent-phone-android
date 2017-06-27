@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2014-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -38,6 +38,7 @@ import android.view.MenuItem;
 
 import com.silentcircle.messaging.fragments.RemoteDevicesFragment;
 import com.silentcircle.silentphone2.R;
+import com.silentcircle.silentphone2.passcode.AppLifecycleNotifierBaseActivity;
 import com.silentcircle.silentphone2.util.Utilities;
 
 /**
@@ -45,7 +46,7 @@ import com.silentcircle.silentphone2.util.Utilities;
  *
  * Created by werner on 20.06.15.
  */
-public class ShowRemoteDevicesActivity extends AppCompatActivity {
+public class ShowRemoteDevicesActivity extends AppLifecycleNotifierBaseActivity {
 
     @SuppressWarnings("unused")
     private static final String TAG = "ShowRemote";
@@ -56,7 +57,7 @@ public class ShowRemoteDevicesActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         Utilities.setTheme(this);
         super.onCreate(savedInstanceState);
-
+        setTitle(R.string.show_remote_dev);
         Intent intent = getIntent();
         String partner = intent.getStringExtra(PARTNER);
         if (TextUtils.isEmpty(partner)) {
@@ -81,7 +82,7 @@ public class ShowRemoteDevicesActivity extends AppCompatActivity {
             RemoteDevicesFragment remoteDevicesFragment = RemoteDevicesFragment.newInstance(arg);
 
             getFragmentManager().beginTransaction()
-                    .add(R.id.axo_devices_container, remoteDevicesFragment)
+                    .add(R.id.devices_container, remoteDevicesFragment)
                     .commit();
         }
     }

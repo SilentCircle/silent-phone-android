@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2016-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -53,7 +53,6 @@ import android.widget.ScrollView;
 import android.widget.SeekBar;
 import android.widget.Toast;
 
-import com.silentcircle.SilentPhoneApplication;
 import com.silentcircle.common.util.ExplainPermissionDialog;
 import com.silentcircle.messaging.activities.ConversationActivity;
 import com.silentcircle.messaging.activities.ShowRemoteDevicesActivity;
@@ -62,7 +61,7 @@ import com.silentcircle.messaging.location.LocationUtils;
 import com.silentcircle.messaging.model.Conversation;
 import com.silentcircle.messaging.model.event.Message;
 import com.silentcircle.messaging.repository.ConversationRepository;
-import com.silentcircle.messaging.services.AxoMessaging;
+import com.silentcircle.messaging.services.ZinaMessaging;
 import com.silentcircle.messaging.task.ComposeMessageTask;
 import com.silentcircle.messaging.task.SendMessageTask;
 import com.silentcircle.messaging.util.AsyncUtils;
@@ -76,6 +75,7 @@ public class ConversationOptionsDrawer extends ScrollView  {
     private final static String TAG = "ConversationOptions";
     private String mPartner;
     private Activity mParent;
+    private boolean mIsGroupConversation;
 
     private boolean mLocationPermissionAsked;
 
@@ -235,6 +235,18 @@ public class ConversationOptionsDrawer extends ScrollView  {
         }
     };
 
+    OnClickListener mShowGroupMembersClickListener = new OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            if (mParent == null) {
+                return;
+            }
+
+            ConversationActivity activity = (ConversationActivity) mParent;
+            activity.startGroupManagement(true);
+        }
+    };
+
     private long mLastKnownBurnDelay;
 
     public ConversationOptionsDrawer(Context context) {
@@ -253,11 +265,6 @@ public class ConversationOptionsDrawer extends ScrollView  {
 
     public void setConversationOptionsChangeListener(ConversationOptionsChangeListener listener) {
         mConversationOptionsChangeListener = listener;
-    }
-
-    private boolean isTalkingToSelf() {
-        // TODO: anru
-        return true;
     }
 
     public void onVerificationOptionsChanged() {
@@ -289,10 +296,11 @@ public class ConversationOptionsDrawer extends ScrollView  {
 
     public void setConversationOptions(final Activity parent, final String partner, boolean isConversationEmpty,
             boolean isLocationSharingEnabled, boolean isSendReceiptsEnabled, boolean hasBurnNotice,
-            long burnDelay) {
+            long burnDelay, boolean isGroupConversation) {
 
         mPartner = partner;
         mParent = parent;
+
         SeekBar seeker = (SeekBar) findViewById(R.id.burn_delay_value);
         OptionsItem burnNotice = (OptionsItem) findViewById(R.id.burn_notice);
         OptionsItem locationSharing = (OptionsItem) findViewById(R.id.location_sharing);
@@ -301,7 +309,6 @@ public class ConversationOptionsDrawer extends ScrollView  {
 
         setClearButtonEnabled(!isConversationEmpty);
         setEnabledIf(!isConversationEmpty, R.id.save);
-        setEnabledIf(locationSharingAvailable, R.id.location_sharing);
 
         seeker.setMax(BurnDelay.Defaults.numLevels() - 1);
         seeker.setProgress(hasBurnNotice ? BurnDelay.Defaults.getLevel(burnDelay) : 0);
@@ -322,6 +329,8 @@ public class ConversationOptionsDrawer extends ScrollView  {
         }
         locationSharing.setDescription(getResources().getString(R.string.dialog_message_enable_device_location)
                 + " " + locationModeDescription);
+
+        mIsGroupConversation = isGroupConversation;
 
         initializeViews();
     }
@@ -372,6 +381,11 @@ public class ConversationOptionsDrawer extends ScrollView  {
 
         OptionsItem remoteDeviceButton = (OptionsItem) findViewById(R.id.remote_devices);
         remoteDeviceButton.setOnClickListener(mRemoveDevicesClickListener);
+        remoteDeviceButton.setVisibility(mIsGroupConversation ? View.GONE : View.VISIBLE);
+
+        OptionsItem showGroupMembersButton = (OptionsItem) findViewById(R.id.group_members);
+        showGroupMembersButton.setOnClickListener(mShowGroupMembersClickListener);
+        showGroupMembersButton.setVisibility(mIsGroupConversation ? View.VISIBLE : View.GONE);
 
         boolean developer = false;
 
@@ -403,13 +417,13 @@ public class ConversationOptionsDrawer extends ScrollView  {
                     final int spamDelay = spamDelayString != null ? Integer.valueOf(spamDelayString) : 0;
 
                     final ConversationActivity activity = (ConversationActivity) mParent;
-                    String self = AxoMessaging.getInstance(SilentPhoneApplication.getAppContext()).getUserName();
-                    ConversationRepository repository = ConversationUtils.getConversations(mParent.getApplicationContext());
-                    Conversation conversation = activity.getConversation();
+                    String self = ZinaMessaging.getInstance().getUserName();
+                    ConversationRepository repository = ConversationUtils.getConversations();
+                    final Conversation conversation = activity.getConversation();
 
                     for (int i = 0; i < spamNum; i++) {
                         final ComposeMessageTask composeTask = new ComposeMessageTask(self, conversation, repository,
-                                null, true) {
+                                null, true, false) {
 
                             @Override
                             protected void onPostExecute(Message message) {
