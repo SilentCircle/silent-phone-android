@@ -63,6 +63,7 @@
                 android:layout_height="wrap_content"
                 android:layout_alignParentRight="true"
                 android:paddingRight="30dp"
+                android:gravity="right"
                 android:text="@string/sound_recording_cancel"
                 android:textColor="@color/sc_ng_text_red"
                 android:textSize="14sp"

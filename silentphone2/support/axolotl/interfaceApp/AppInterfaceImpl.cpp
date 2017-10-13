@@ -1,5 +1,5 @@
 /*
-Copyright 2016-2017 Silent Circle, LLC
+ * Copyright 2016-2017 Silent Circle, LLC
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+#include <set>
 #include "AppInterfaceImpl.h"
 
 #include "../keymanagment/PreKeys.h"
@@ -101,7 +102,7 @@ string* AppInterfaceImpl::getKnownUsers()
         return NULL;
     }
 
-    shared_ptr<list<string> > names = store_->getKnownConversations(ownUser_, &sqlCode);
+    unique_ptr<set<string> > names = store_->getKnownConversations(ownUser_, &sqlCode);
 
     if (SQL_FAIL(sqlCode) || !names) {
         LOGGER(INFO, __func__, " No known Axolotl conversations.");
@@ -116,10 +117,8 @@ string* AppInterfaceImpl::getKnownUsers()
     cJSON_AddItemToObject(root, "version", cJSON_CreateNumber(1));
     cJSON_AddItemToObject(root, "users", nameArray = cJSON_CreateArray());
 
-    for (int32_t i = 0; i < size; i++) {
-        const string& name = names->front();
-        cJSON_AddItemToArray(nameArray, cJSON_CreateString(name.c_str()));
-        names->pop_front();
+    for (auto name = names->cbegin(); name != names->cend(); ++name) {
+        cJSON_AddItemToArray(nameArray, cJSON_CreateString((*name).c_str()));
     }
     char *out = cJSON_PrintUnformatted(root);
     string* retVal = new string(out);
@@ -595,14 +594,15 @@ void AppInterfaceImpl::rescanUserDevicesCommand(const CmdQueueInfo &command)
     list<pair<string, string> > devices;
     int32_t errorCode = Provisioning::getZinaDeviceIds(userName, authorization_, devices);
 
-    if (errorCode != SUCCESS || devices.empty()) {
+    if (errorCode != SUCCESS) {
         sendActionCallback(ReScanAction);
         return;
     }
 
     // Get known devices from DB, compare with devices from provisioning server
     // and remove old devices and their data, i.e. devices not longer known to provisioning server
-    //
+    // If device list from provisioning server is empty the following loop removes _all_
+    // devices and contexts of the user.
     list<StringUnique> devicesDb;
 
     store_->getLongDeviceIds(userName, ownUser_, devicesDb);
@@ -693,7 +693,6 @@ void AppInterfaceImpl::rescanUserDevicesCommand(const CmdQueueInfo &command)
     // No new devices found, unlock/sync and return
     sendActionCallback(ReScanAction);
     LOGGER(DEBUGGING, __func__, " <-- no re-scan necessary");
-    return;
 }
 
 void AppInterfaceImpl::queueMessageToSingleUserDevice(const string &userId, const string &msgId, const string &deviceId,

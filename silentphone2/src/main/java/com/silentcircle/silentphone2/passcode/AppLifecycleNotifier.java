@@ -75,12 +75,24 @@ public class AppLifecycleNotifier {
 
     private static final String TAG = AppLifecycleNotifier.class.getSimpleName();
     private static final int ACTIVITY_STOPPED_INTERVAL = 1000;
+    private static final int EXTERNAL_ACTIVITY_TIMEOUT = 60000;
 
     private boolean mInBackground = true;
     private WeakReference<Activity> mCurrentActivity;
     private ApplifecycleCallback callback;
     private boolean mExternalActivityStarted;
     private Handler mHandler;
+
+    private Runnable mExternalActivityTimeoutRunnable = new Runnable() {
+        @Override
+        public void run() {
+            Log.d(TAG, "App has entered background due to prolonged staying in external activity.");
+            mInBackground = true;
+            if (callback != null) {
+                callback.onAppEnteredBackground(mCurrentActivity.get());
+            }
+        }
+    };
 
     //region Singleton
     //----------------------------------------------------
@@ -142,7 +154,7 @@ public class AppLifecycleNotifier {
         mHandler.removeCallbacksAndMessages(null);
 
         mCurrentActivity = new WeakReference<Activity>(activity);
-        boolean wasInBackground = (mInBackground == true);
+        boolean wasInBackground = mInBackground;
         mInBackground = false;
 
         Log.d(TAG, "Activity entered. App entered foreground: " + wasInBackground);
@@ -182,13 +194,16 @@ public class AppLifecycleNotifier {
             mHandler.postDelayed(new Runnable() {
                 @Override
                 public void run() {
+                    Log.d(TAG, "App entered background");
                     mInBackground = true;
-                    Log.d(TAG, "app entered background");
                     if (callback != null) {
                         callback.onAppEnteredBackground(activity);
                     }
                 }
             }, ACTIVITY_STOPPED_INTERVAL);
+        }
+        if (mExternalActivityStarted) {
+            mHandler.postDelayed(mExternalActivityTimeoutRunnable, EXTERNAL_ACTIVITY_TIMEOUT);
         }
         mExternalActivityStarted = false;
     }

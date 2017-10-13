@@ -31,6 +31,7 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.text.Layout;
 import android.text.SpannableStringBuilder;
+import android.text.TextUtils;
 import android.text.style.LeadingMarginSpan;
 
 public class LabelIndentSpan implements LeadingMarginSpan {
@@ -38,16 +39,22 @@ public class LabelIndentSpan implements LeadingMarginSpan {
     private final int mMargin;
     private final CharSequence mLabel;
 
-    public static void appendNumberedList(SpannableStringBuilder sb, String[] labels, String[] strings,
+    public static void appendNumberedList(SpannableStringBuilder sb, String[] labels, String[] values,
                                           int indentPixels, String spacing) {
         int position = 0;
-        for(String text : strings) {
-            sb.append(spacing);
+        for (String value : values) {
+            if (TextUtils.isEmpty(value)) {
+                value = "n/a";
+            }
+            if (position > 0) {
+                sb.append(spacing);
+            }
             int contentStart = sb.length();
-            sb.append(text);
+            sb.append(value);
             int contentEnd = sb.length();
-            sb.setSpan(new LabelIndentSpan(indentPixels, labels[position++]), contentStart,
+            sb.setSpan(new LabelIndentSpan(indentPixels, labels[position]), contentStart,
                     contentEnd, 0);
+            position++;
         }
     }
 

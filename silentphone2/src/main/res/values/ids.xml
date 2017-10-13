@@ -22,9 +22,11 @@
     <item type="id" name="sender_display_name" />
 
     <item type="id" name="view_holder" />
-    <item type="id" name="view_position" />
     <item type="id" name="view_event_id" />
     <item type="id" name="view_holder_userid" />
+    <item type="id" name="view_user_contact" />
+    <item type="id" name="view_draft" />
+    <item type="id" name="view_event_prefix" />
 
     <item type="id" name="settings_item_checked" />
 

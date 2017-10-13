@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingLeft="@dimen/conversation_log_start_margin"
+    android:paddingStart="@dimen/conversation_log_start_margin"
+    android:paddingRight="@dimen/spacing_normal"
+    android:paddingEnd="@dimen/spacing_normal"
+    android:paddingTop="@dimen/spacing_normal"
+    android:paddingBottom="@dimen/spacing_normal"
+    android:background="@drawable/bg_action"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:id="@+id/linearLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginRight="@dimen/spacing_normal"
+        android:layout_marginEnd="@dimen/spacing_normal"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <TextView
+            android:id="@+id/dev_name"
+            style="@style/Widget.Silent.SimpleText.Medium"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:ellipsize="marquee"
+            android:marqueeRepeatLimit="3"
+            android:scrollHorizontally="true"
+            android:maxLines="1"
+            tools:text="Nexus 6" />
+
+        <FrameLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical">
+
+            <LinearLayout
+                android:id="@+id/dev_buttons"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content">
+
+                <ImageButton
+                    android:id="@+id/delete"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingLeft="@dimen/spacing_normal"
+                    android:paddingStart="@dimen/spacing_normal"
+                    android:paddingRight="@dimen/spacing_normal"
+                    android:paddingEnd="@dimen/spacing_normal"
+                    android:paddingTop="@dimen/spacing_normal"
+                    android:paddingBottom="@dimen/spacing_normal"
+                    android:background="@null"
+                    android:src="@drawable/ic_delete_white_24px"
+                    android:tint="?attr/sp_activity_primary_text_color"
+                    android:contentDescription="@string/silent_phone_call"
+                    android:visibility="gone"
+                    tools:visibility="visible" />
+
+                <ImageButton
+                    android:id="@+id/call"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingLeft="@dimen/spacing_normal"
+                    android:paddingStart="@dimen/spacing_normal"
+                    android:paddingRight="@dimen/spacing_normal"
+                    android:paddingEnd="@dimen/spacing_normal"
+                    android:paddingTop="@dimen/spacing_normal"
+                    android:paddingBottom="@dimen/spacing_normal"
+                    android:background="@null"
+                    android:src="@drawable/ic_call_dark"
+                    android:tint="?attr/sp_activity_primary_text_color"
+                    android:contentDescription="@string/silent_phone_call" />
+
+                <ImageButton
+                    android:id="@+id/verify_check"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingLeft="@dimen/spacing_normal"
+                    android:paddingStart="@dimen/spacing_normal"
+                    android:paddingRight="@dimen/spacing_normal"
+                    android:paddingEnd="@dimen/spacing_normal"
+                    android:paddingTop="@dimen/spacing_normal"
+                    android:paddingBottom="@dimen/spacing_normal"
+                    android:background="@null"
+                    android:visibility="invisible"
+                    android:src="@drawable/ic_check_white_24dp"
+                    tools:visibility="visible"
+                    android:contentDescription="@string/axo_remote_dev_header_2" />
+
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/dev_current"
+                style="@style/Widget.Silent.SimpleText.Medium"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingTop="@dimen/spacing_normal"
+                android:paddingBottom="@dimen/spacing_normal"
+                android:layout_gravity="center_vertical"
+                android:maxLines="1"
+                android:text="@string/contact_info_current_device"
+                android:textColor="?attr/sp_activity_secondary_text_color"
+                android:visibility="gone"
+                tools:visibility="visible" />
+
+        </FrameLayout>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/id_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingTop="@dimen/spacing_normal"
+        android:visibility="gone"
+        android:orientation="vertical"
+        tools:visibility="visible">
+
+        <TextView
+            style="@style/Widget.Silent.SimpleText.Small"
+            android:layout_width="wrap_content"
+            android:textColor="?attr/sp_activity_secondary_text_color"
+            android:text="@string/contact_info_laber_fingerprint" />
+
+        <TextView
+            android:id="@+id/id_key"
+            style="@style/Widget.Silent.SimpleText.Small"
+            android:layout_width="wrap_content"
+            android:typeface="monospace"
+            android:textColor="?attr/sp_activity_secondary_text_color"
+            tools:text="ab:12:34:56:78:9a:89:76:\nab:12:34:56:78:9a:89:76:\nab:12:34:56:78:9a:89:76:\nab:12:34:56:78:9a:89:76" />
+
+        <TextView
+            style="@style/Widget.Silent.SimpleText.Small"
+            android:layout_width="wrap_content"
+            android:layout_marginTop="@dimen/spacing_normal"
+            android:maxLines="1"
+            android:textColor="?attr/sp_activity_primary_text_color"
+            android:text="@string/contact_info_laber_id" />
+
+        <TextView
+            android:id="@+id/dev_id"
+            style="@style/Widget.Silent.SimpleText.Small"
+            android:layout_width="wrap_content"
+            android:ellipsize="marquee"
+            android:marqueeRepeatLimit="3"
+            android:maxLines="1"
+            android:layout_marginBottom="@dimen/spacing_small"
+            android:scrollHorizontally="true"
+            android:textColor="?attr/sp_activity_primary_text_color"
+            tools:text="device id string" />
+
+    </LinearLayout>
+
+</LinearLayout>

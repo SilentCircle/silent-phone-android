@@ -31,6 +31,7 @@ import android.Manifest;
 import android.animation.LayoutTransition;
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
+import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.app.ProgressDialog;
@@ -71,6 +72,7 @@ import android.support.v7.widget.Toolbar;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
+import android.transition.Fade;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.Menu;
@@ -92,7 +94,7 @@ import android.widget.Toast;
 
 import com.fenchtose.tooltip.Tooltip;
 import com.getkeepsafe.taptargetview.TapTarget;
-import com.getkeepsafe.taptargetview.TapTargetView;
+import com.getkeepsafe.taptargetview.TapTargetSequence;
 import com.silentcircle.SilentPhoneApplication;
 import com.silentcircle.common.animation.AnimUtils;
 import com.silentcircle.common.list.ContactEntry;
@@ -114,7 +116,9 @@ import com.silentcircle.contacts.utils.Constants;
 import com.silentcircle.logs.Log;
 import com.silentcircle.messaging.fragments.CameraFragment;
 import com.silentcircle.messaging.fragments.ChatFragment;
+import com.silentcircle.messaging.fragments.ContactDetailsFragment;
 import com.silentcircle.messaging.fragments.EventInfoFragment;
+import com.silentcircle.messaging.fragments.GroupManagementFragment;
 import com.silentcircle.messaging.fragments.SearchAgainFragment;
 import com.silentcircle.messaging.listener.ClickSendOnEditorSendAction;
 import com.silentcircle.messaging.listener.LaunchConfirmDialogOnClick;
@@ -162,7 +166,7 @@ import com.silentcircle.messaging.views.UploadView;
 import com.silentcircle.messaging.views.VerticalSeekBar;
 import com.silentcircle.silentphone2.BuildConfig;
 import com.silentcircle.silentphone2.R;
-import com.silentcircle.silentphone2.activities.DialerActivity;
+import com.silentcircle.silentphone2.activities.DialerActivityInternal;
 import com.silentcircle.silentphone2.dialogs.InfoMsgDialogFragment;
 import com.silentcircle.silentphone2.fragments.SettingsFragment;
 import com.silentcircle.silentphone2.list.OnListFragmentScrolledListener;
@@ -199,6 +203,12 @@ import java.util.concurrent.TimeUnit;
 import zina.JsonStrings;
 import zina.ZinaNative;
 
+import static com.silentcircle.messaging.services.SCloudService.SCLOUD_ATTACHMENT_SHA256;
+import static com.silentcircle.messaging.services.SCloudService.SCLOUD_METADATA_FILENAME;
+import static com.silentcircle.messaging.services.SCloudService.SCLOUD_METADATA_MIMETYPE;
+import static com.silentcircle.messaging.services.SCloudService.SCLOUD_METATA_DISPLAYNAME;
+import static com.silentcircle.messaging.services.SCloudService.SCLOUD_METATA_EXPORTED_FILENAME;
+
 
 public class ConversationActivity extends AppLifecycleNotifierBaseActivity implements
         ChatFragment.Callback, OnListFragmentScrolledListener, SearchFragment.HostInterface,
@@ -216,6 +226,9 @@ public class ConversationActivity extends AppLifecycleNotifierBaseActivity imple
     /* Limit single message, non-attachment-ified text to 1000 symbols */
     private static final int MESSAGE_TEXT_LENGTH_LIMIT = 1000;
 
+    /* Limit encoded text size to 1024 bytes */
+    private static final int MESSAGE_ENCODED_TEXT_LENGTH_LIMIT = 1024;
+
     /* Limit single message input text to 5000 symbols */
     private static final int MESSAGE_TEXT_INPUT_LENGTH_LIMIT = 5000;
 
@@ -232,6 +245,9 @@ public class ConversationActivity extends AppLifecycleNotifierBaseActivity imple
     public static final int PERMISSIONS_REQUEST_LOCATION = 1;
     public static final int PERMISSIONS_REQUEST_CAMERA = 2;
     public static final int PERMISSIONS_REQUEST_CAMERA_VIDEO = 3; // Unique key to know to launch video
+    public static final int PERMISSIONS_REQUEST_STORAGE = 4;
+
+    public static final String TAG_INFO_FRAGMENT = "com.silentcircle.messaging.fragments.Info";
 
     public static final String UNREAD_MESSAGE_COUNT =
             "com.silentcircle.messaging.activities.ConversationActivity.unreadMessageCount";
@@ -243,6 +259,8 @@ public class ConversationActivity extends AppLifecycleNotifierBaseActivity imple
             "com.silentcircle.messaging.activities.ConversationActivity.isInSearchView";
     public static final String IS_IN_INFO_VIEW =
             "com.silentcircle.messaging.activities.ConversationActivity.isInInfoView";
+    public static final String PENDING_DOWNLOAD_INTENT =
+            "com.silentcircle.messaging.activities.ConversationActivity.pendingDownload";
 
     private static final int INTENT_CAPTURE_PHOTO = 0;
     private static final int INTENT_CAPTURE_VIDEO = 1;
@@ -280,11 +298,15 @@ public class ConversationActivity extends AppLifecycleNotifierBaseActivity imple
     private FrameLayout mAttachmentGridFrame;
     private GridView mAttachmentGrid;
     private boolean mCameraFragmentVisible;
+    private Intent mPendingAttachmentIntent;
+    private boolean mStorageRationaleShown;
 
     private SoundRecorderController mSoundRecorder;
 
     private Toolbar mToolbar;
     private QuickContactBadge mAvatarView;
+    private View mTitleContainer;
+    private View mTitleLayout;
     private TextView mTitle;
     private TextView mSubTitle;
     private View mHome;
@@ -439,12 +461,6 @@ public class ConversationActivity extends AppLifecycleNotifierBaseActivity imple
         mRecordingMode = mode;
     }
 
-    private Runnable mOpenActionBarRunnable = new Runnable() {
-        public void run() {
-            openActionBarQueryField();
-        }
-    };
-
     private Runnable mOpenMessageInputRunnable = new Runnable() {
         public void run() {
             if (mComposeText != null) {
@@ -465,13 +481,7 @@ public class ConversationActivity extends AppLifecycleNotifierBaseActivity imple
                 return;
             }
             setBurnContainerVisibility(View.GONE);
-
-            if (editable.length() > 0) {
-                setRecordingMode(RecordingMode.TEXT_SEND);
-            } else {
-                setRecordingMode(RecordingMode.RECORDING_IDLE);
-
-            }
+            setRecordingMode(editable.length() > 0 ? RecordingMode.TEXT_SEND : RecordingMode.RECORDING_IDLE);
 
             if (editable == mComposeText.getEditableText() && editable.length() > MESSAGE_TEXT_INPUT_LENGTH_LIMIT) {
                 Toast.makeText(ConversationActivity.this,
@@ -520,9 +530,7 @@ public class ConversationActivity extends AppLifecycleNotifierBaseActivity imple
                 }
             }
 
-            if (mSearchFragment != null && mSearchFragment.isVisible()) {
-                mSearchFragment.setQueryString(mSearchQuery, false /* delaySelection */);
-            }
+            setSearchQueryString(mSearchQuery);
         }
 
         @Override
@@ -555,18 +563,6 @@ public class ConversationActivity extends AppLifecycleNotifierBaseActivity imple
                 return true;
             }
             return false;
-        }
-    };
-
-    private View.OnFocusChangeListener mTextFocusListener = new View.OnFocusChangeListener() {
-
-        @Override
-        public void onFocusChange(View v, boolean hasFocus) {
-            /* when view receives focus, scroll to bottom of conversation */
-            if (hasFocus && !isInSearchUi()) {
-                setBurnContainerVisibility(View.GONE);
-                scrollToBottom();
-            }
         }
     };
 
@@ -756,11 +752,21 @@ public class ConversationActivity extends AppLifecycleNotifierBaseActivity imple
     private View.OnClickListener mTitleLayoutListener = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
-            if (isGroupChat()) {
-                startGroupManagement(false);
-            } else if (BuildConfig.DEBUG) {
-                MessageUtils.showPartnerInfoDialog(ConversationActivity.this, mPartnerDisplayName, getPartner());
+            if (!(isInInfoUi() || isInSearchUi())) {
+                enterInfoUi(getConversation());
             }
+        }
+    };
+
+    private View.OnLongClickListener mTitleLayoutLongClickListener = new View.OnLongClickListener() {
+        @Override
+        public boolean onLongClick(View v) {
+            ClipboardUtils.copyText(ConversationActivity.this,
+                    null,
+                    mSubTitle.getVisibility() == View.VISIBLE ? mSubTitle.getText() : mTitle.getText(),
+                    null,
+                    true);
+            return true;
         }
     };
 
@@ -798,16 +804,23 @@ public class ConversationActivity extends AppLifecycleNotifierBaseActivity imple
      */
     @Override
     public void explanationRead(final int token, final Bundle callerBundle) {
+        String permission = null;
         switch (token) {
             case PERMISSIONS_REQUEST_LOCATION:
-                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, token);
+                permission = Manifest.permission.ACCESS_COARSE_LOCATION;
                 break;
             case PERMISSIONS_REQUEST_CAMERA:
             case PERMISSIONS_REQUEST_CAMERA_VIDEO:
-                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, token);
+                permission = Manifest.permission.CAMERA;
+                break;
+            case PERMISSIONS_REQUEST_STORAGE:
+                permission = Manifest.permission.WRITE_EXTERNAL_STORAGE;
                 break;
             default:
                 break;
+        }
+        if (permission != null) {
+            ActivityCompat.requestPermissions(this, new String[]{permission}, token);
         }
     }
 
@@ -815,24 +828,33 @@ public class ConversationActivity extends AppLifecycleNotifierBaseActivity imple
     // the location enable functions
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String permissions[], @NonNull int[] grantResults) {
+        boolean permissionGranted =
+                (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED);
         switch (requestCode) {
-            case PERMISSIONS_REQUEST_LOCATION: {
-                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    getOptionsDrawer().checkLocationAfterPermission(true);
-                } else {
-                    getOptionsDrawer().checkLocationAfterPermission(false);
-                }
-            }
-            break;
+            case PERMISSIONS_REQUEST_LOCATION:
+                getOptionsDrawer().checkLocationAfterPermission(permissionGranted);
+                break;
             case PERMISSIONS_REQUEST_CAMERA:
             case PERMISSIONS_REQUEST_CAMERA_VIDEO: {
-                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                if (permissionGranted) {
                     showCameraFragment(requestCode == PERMISSIONS_REQUEST_CAMERA
                             ? CameraFragment.TYPE_PHOTO
                             : CameraFragment.TYPE_VIDEO);
                 }
             }
             break;
+            case PERMISSIONS_REQUEST_STORAGE:
+                if (permissionGranted && mPendingAttachmentIntent != null) {
+                    handleDownloadAttachment(this, mPendingAttachmentIntent);
+                }
+                else if (!ActivityCompat.shouldShowRequestPermissionRationale(ConversationActivity.this,
+                        Manifest.permission.WRITE_EXTERNAL_STORAGE) && !mStorageRationaleShown) {
+                    Log.d(TAG, "Storage permission not available");
+                    InfoMsgDialogFragment.showDialog(ConversationActivity.this,
+                            R.string.dialog_title_storage_permission_required,
+                            R.string.dialog_message_storage_permission_required, android.R.string.ok, -1);
+                }
+                break;
         }
     }
 
@@ -913,24 +935,20 @@ public class ConversationActivity extends AppLifecycleNotifierBaseActivity imple
 
         setContentView(R.layout.activity_conversation_with_drawer);
 
-        initConversationView(false);
-
         if (mSavedInstanceState != null) {
             CameraFragment cameraFragment = (CameraFragment) getFragmentManager().findFragmentByTag(CameraFragment.TAG_CAMERA_FRAGMENT);
             if (cameraFragment != null) {
                 adjustLayoutForCameraFragment();
             }
 
-            // For now leave info view and show chat content when recreating activity
-            // TODO show info view if that was the last view
-            if (mSavedInstanceState.getBoolean(IS_IN_INFO_VIEW, false)) {
-                exitInfoUI();
-            }
-            if (mSavedInstanceState.getBoolean(IS_IN_SEARCH_VIEW, false)) {
-                exitSearchUI(true);
-            }
-
+            mInInfoView = mSavedInstanceState.getBoolean(IS_IN_INFO_VIEW, false);
+            mInSearchView = mSavedInstanceState.getBoolean(IS_IN_SEARCH_VIEW, false);
+            mPendingAttachmentIntent = mSavedInstanceState.getParcelable(PENDING_DOWNLOAD_INTENT);
         }
+
+        initToolbarView();
+
+        initConversationView(false);
 
         doBindService();
 
@@ -990,12 +1008,12 @@ public class ConversationActivity extends AppLifecycleNotifierBaseActivity imple
         updateViews();
         setUnreadMessageCount();
 
-        // TODO move this to restoreActionBar
-        if (!isInSearchUi() && !isInInfoUi()) {
-            restoreActionBar();
-        }
+        restoreActionBar();
+        setComposeItemsVisibility((canMessagePartner() && !isInSearchUi() && !isInInfoUi())
+                ? View.VISIBLE : View.GONE);
 
-        Notifications.cancelMessageNotification(this, partner);
+
+        Notifications.cancelMessageNotification(this);
 
         mConversationPartnerId = partner;
         if (mCameraFragmentVisible) {
@@ -1012,6 +1030,19 @@ public class ConversationActivity extends AppLifecycleNotifierBaseActivity imple
                 mComposeText.setText(getConversation().getUnsentText());
             }
         }
+
+        restoreFocus();
+        saveNewConversationIfUnseen();
+    }
+
+    private void restoreFocus() {
+        /*
+         * If not in sub view, set focus on compose box without showing keyboard
+         */
+        if (!(isInInfoUi() || isInSearchUi())) {
+            mComposeText.requestFocus();
+            mComposeText.setSelection(mComposeText.getText().length());
+        }
     }
 
     @Override
@@ -1019,6 +1050,7 @@ public class ConversationActivity extends AppLifecycleNotifierBaseActivity imple
         super.onSaveInstanceState(outState);
         outState.putBoolean(IS_IN_INFO_VIEW, isInInfoUi());
         outState.putBoolean(IS_IN_SEARCH_VIEW, isInSearchUi());
+        outState.putParcelable(PENDING_DOWNLOAD_INTENT, mPendingAttachmentIntent);
     }
 
     @Override
@@ -1032,7 +1064,6 @@ public class ConversationActivity extends AppLifecycleNotifierBaseActivity imple
         mSoundRecorder.onPause();
 
         saveUnsentText();
-        saveNewConversationIfUnseen();
     }
 
     @Override
@@ -1044,7 +1075,6 @@ public class ConversationActivity extends AppLifecycleNotifierBaseActivity imple
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.conversation, menu);
         Conversation conversation = getConversation();
-
 
         boolean visible = (!isInSearchUi() && !isInInfoUi() && hasChatFragment());
 
@@ -1087,11 +1117,11 @@ public class ConversationActivity extends AppLifecycleNotifierBaseActivity imple
         mOptionsMenuItem.setIcon(R.drawable.ic_drawer_closed);
 
         ViewUtil.tintMenuIcons(this, menu);
-        if (canMessagePartner() && !isGroupChat()) {
+        if (canMessagePartner()) {
             new Handler().post(new Runnable() {
                 @Override
                 public void run() {
-                    featureDiscovery1();
+                    featureDiscovery();
                 }
             });
         }
@@ -1159,12 +1189,14 @@ public class ConversationActivity extends AppLifecycleNotifierBaseActivity imple
             mDrawerLayout.closeDrawer(Gravity.RIGHT);
         } else if (isInInfoUi()) {
             exitInfoUI();
+            restoreFocus();
         } else if (isInSearchUi() && !TextUtils.isEmpty(getPartner())) {
             // close search view
             if (mSearchView != null) {
                 DialerUtils.hideInputMethod(mSearchView);
             }
             exitSearchUI(true);
+            restoreFocus();
         } else if (mAttachmentGrid.getVisibility() == View.VISIBLE) {
             hideAttachmentGrid();
         } else if (mCameraFragmentVisible) {
@@ -1194,7 +1226,9 @@ public class ConversationActivity extends AppLifecycleNotifierBaseActivity imple
     @Override
     public void onUnreadEventsCounted(int unreadMessageCount, int unreadCallCount) {
         mUnreadMessageCount = unreadMessageCount + unreadCallCount;
-        MessageUtils.requestRefresh();
+        if (!isInInfoUi()) {
+            MessageUtils.requestRefresh();
+        }
     }
 
     protected boolean isAxolotlInitialised() {
@@ -1214,6 +1248,33 @@ public class ConversationActivity extends AppLifecycleNotifierBaseActivity imple
             /* if keystore is not ready, restart conversation activity through dialer activity */
         }
         return axoRegistered;
+    }
+
+    protected void initToolbarView() {
+        mToolbar = (Toolbar) findViewById(R.id.conversation_toolbar);
+        mToolbar.setContentInsetsAbsolute(0, 0);
+        // This has to be done once
+        setSupportActionBar(mToolbar);
+
+        // TODO wrap toolbar in component?
+        mTitleContainer = mToolbar.findViewById(R.id.title_container);
+        mTitleLayout = mToolbar.findViewById(R.id.title_layout);
+        mTitle = (TextView) mToolbar.findViewById(R.id.title);
+        mSubTitle = (TextView) mToolbar.findViewById(R.id.sub_title);
+        mAvatarView = (QuickContactBadge) mToolbar.findViewById(R.id.message_avatar);
+        mHome = mToolbar.findViewById(R.id.home);
+        mUnreadMessageNotification = mToolbar.findViewById(R.id.unread_message_notification);
+        mTextUnreadMessageCount = (TextView) mToolbar.findViewById(R.id.unread_message_count);
+
+        ActionBar actionBar = getSupportActionBar();
+        if (actionBar != null && actionBar.getCustomView() == null) {
+            actionBar.setCustomView(R.layout.search_edittext);
+            actionBar.setDisplayShowTitleEnabled(false);
+            actionBar.setDisplayHomeAsUpEnabled(false);
+            SearchEditTextLayout searchEditTextLayout =
+                    (SearchEditTextLayout) actionBar.getCustomView();
+            searchEditTextLayout.setPreImeKeyListener(mSearchEditTextLayoutListener);
+        }
     }
 
     protected void initConversationView(boolean fromIntent) {
@@ -1286,7 +1347,6 @@ public class ConversationActivity extends AppLifecycleNotifierBaseActivity imple
         mComposeLayout = (ViewGroup) findViewById(R.id.compose);
         mComposeText = (EditText) findViewById(R.id.compose_text);
         mComposeText.addTextChangedListener(mTextWatcher);
-        // mComposeText.setOnFocusChangeListener(mTextFocusListener);
         mComposeText.setOnEditorActionListener(new ClickSendOnEditorSendAction());
         hideSoftKeyboard(R.id.compose_text);
 
@@ -1316,19 +1376,18 @@ public class ConversationActivity extends AppLifecycleNotifierBaseActivity imple
                     }
                 });
 
-        setComposeItemsVisibility(canMessagePartner() ? View.VISIBLE : View.GONE);
-
         mProgressBar = (UploadView) findViewById(R.id.upload);
         mProgressBar.setVisibility(View.GONE);
 
         createOptionsDrawer();
-        restoreActionBar();
 
         if (mIsAxolotlRegistered) {
             if (TextUtils.isEmpty(partner)) {
                 enterSearchUI(new Bundle());
             } else {
-                getChatFragment(true);
+                if (!isInSearchUi() && !isInInfoUi()) {
+                    getChatFragment(true);
+                }
 
                 String pendingAttachmentFile = getPendingAttachmentFile();
                 String pendingAttachmentText = getPendingAttachmentText();
@@ -1427,7 +1486,7 @@ public class ConversationActivity extends AppLifecycleNotifierBaseActivity imple
                 Tooltip.Position.TOP);
     }
 
-    private void featureDiscovery1() {
+    private void featureDiscovery() {
         SharedPreferences prefs = getSharedPreferences(SHARED_PREFS_NAME, Context.MODE_PRIVATE);
         boolean startDiscovery = !prefs.getBoolean(KEY_FEATURE_DISCOVERY, BuildConfig.DEBUG);
 
@@ -1436,258 +1495,99 @@ public class ConversationActivity extends AppLifecycleNotifierBaseActivity imple
 
         if (!mFeatureDiscoveryRan && (startDiscovery || forceStartDiscovery)) {
             mFeatureDiscoveryRan = true;
-
-            TapTargetView.showFor(this, ViewUtil.applyDefTapTargetParams(
-                    TapTarget.forView(findViewById(R.id.action_silent_phone_call),
-                            getString(R.string.discovery_conversation_1_title),
-                            getString(R.string.discovery_conversation_1_desc))),
-                    new TapTargetView.Listener() {
-                        @Override
-                        public void onTargetCancel(TapTargetView view) {
-                            onTargetClick(view);
-                        }
-
-                        @Override
-                        public void onOuterCircleClick(TapTargetView view) {
-                            onTargetClick(view);
-                        }
-
-                        @Override
-                        public void onTargetClick(TapTargetView view) {
-                            super.onTargetClick(view);
-                        }
-
-                        @Override
-                        public void onTargetDismissed(TapTargetView view, boolean userInitiated) {
-                            super.onTargetDismissed(view, userInitiated);
-
-                            featureDiscovery2();
-                        }
-                    });
         }
-    }
-
-    private void featureDiscovery2() {
-        TapTargetView.showFor(this, ViewUtil.applyDefTapTargetParams(
-                TapTarget.forView(findViewById(R.id.compose_send),
-                        getString(R.string.discovery_conversation_2_title),
-                        getString(R.string.discovery_conversation_2_desc)))
-//                .targetCircleColor(android.R.color.white)
-                .targetCircleColorInt(16777215)
-                .transparentTarget(true),
-                new TapTargetView.Listener() {
-                    @Override
-                    public void onTargetCancel(TapTargetView view) {
-                        onTargetClick(view);
-                    }
-
-                    @Override
-                    public void onOuterCircleClick(TapTargetView view) {
-                        onTargetClick(view);
-                    }
-
-                    @Override
-                    public void onTargetClick(TapTargetView view) {
-                        super.onTargetClick(view);
-                    }
-
-                    @Override
-                    public void onTargetDismissed(TapTargetView view, boolean userInitiated) {
-                        super.onTargetDismissed(view, userInitiated);
-
-                        featureDiscovery3();
-                    }
-                });
-    }
-
-    private void featureDiscovery3() {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                new Handler().postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        showAttachmentGrid();
-                    }
-                }, 200);
-            }
-        });
-
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                new Handler().postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        TapTargetView.showFor(ConversationActivity.this, ViewUtil.applyDefTapTargetParams(
-                            TapTarget.forView(findViewById(R.id.compose_attach),
-                                    getString(R.string.discovery_conversation_3_title),
-                                    getString(R.string.discovery_conversation_3_desc)))
-                                    .targetCircleColor(R.color.chat_outgoing_message_color_light),
-                            new TapTargetView.Listener() {
-                                @Override
-                                public void onTargetCancel(TapTargetView view) {
-                                    onTargetClick(view);
-                                }
-
-                                @Override
-                                public void onOuterCircleClick(TapTargetView view) {
-                                    onTargetClick(view);
-                                }
-
-                                @Override
-                                public void onTargetClick(TapTargetView view) {
-                                    super.onTargetClick(view);
-
-                                    runOnUiThread(new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            new Handler().postDelayed(new Runnable() {
-                                                @Override
-                                                public void run() {
-                                                    hideAttachmentGrid();
-                                                }
-                                            }, 400);
-                                        }
-                                    });
-
-                                    runOnUiThread(new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            new Handler().postDelayed(new Runnable() {
-                                                @Override
-                                                public void run() {
-                                                    featureDiscovery4();
-                                                }
-                                            }, 800);
-                                        }
-                                    });
-                                }
-                            });
-                    }
-                }, 600);
-            }
-        });
-    }
-
-    private void featureDiscovery4() {
-        setBurnContainerVisibility(View.VISIBLE);
-
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                new Handler().postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        TapTargetView.showFor(ConversationActivity.this, ViewUtil.applyDefTapTargetParams(
-                                TapTarget.forView(findViewById(R.id.burn),
-                                        getString(R.string.discovery_conversation_4_title),
-                                        getString(R.string.discovery_conversation_4_desc)))
-//                                        .targetCircleColor(android.R.color.white)
-                                        .targetCircleColorInt(16777215)
-                                        .transparentTarget(true),
-                                new TapTargetView.Listener() {
-                                    @Override
-                                    public void onTargetCancel(TapTargetView view) {
-                                        onTargetClick(view);
-                                    }
-
-                                    @Override
-                                    public void onOuterCircleClick(TapTargetView view) {
-                                        onTargetClick(view);
-                                    }
-
-                                    @Override
-                                    public void onTargetClick(TapTargetView view) {
-                                        super.onTargetClick(view);
-                                        setBurnContainerVisibility(View.GONE);
-
-                                        runOnUiThread(new Runnable() {
-                                            @Override
-                                            public void run() {
-                                                new Handler().postDelayed(new Runnable() {
-                                                    @Override
-                                                    public void run() {
-                                                        featureDiscovery5();
-                                                    }
-                                                }, 400);
-                                            }
-                                        });
-                                    }
-                                });
-                    }
-                }, 400);
-            }
-        });
-    }
-
-    private void featureDiscovery5() {
-        // Check if they already added user to contact - don't show feature discovery in this case
-        View addContact = findViewById(R.id.action_add_contact);
-        if (addContact == null) {
-            featureDiscovery6();
-
+        else {
+            // feature discovery already shown, return
             return;
         }
 
-        TapTargetView.showFor(ConversationActivity.this, ViewUtil.applyDefTapTargetParams(
-                TapTarget.forView(addContact,
-                        getString(R.string.discovery_conversation_5_title),
-                        getString(R.string.discovery_conversation_5_desc))),
-                new TapTargetView.Listener() {
-                    @Override
-                    public void onTargetCancel(TapTargetView view) {
-                        onTargetClick(view);
-                    }
-
-                    @Override
-                    public void onOuterCircleClick(TapTargetView view) {
-                        onTargetClick(view);
-                    }
-
-                    @Override
-                    public void onTargetClick(TapTargetView view) {
-                        super.onTargetClick(view);
-                    }
-
-                    @Override
-                    public void onTargetDismissed(TapTargetView view, boolean userInitiated) {
-                        super.onTargetDismissed(view, userInitiated);
-
-                        featureDiscovery6();
-                    }
-                });
-    }
-
-    private void featureDiscovery6() {
-        TapTargetView.showFor(ConversationActivity.this, ViewUtil.applyDefTapTargetParams(
+        List<TapTarget> targets = new ArrayList<>();
+        if (isGroupChat()) {
+            /*
+             * Group conversation features.
+             */
+            targets.add(ViewUtil.applyDefTapTargetParams(
+                    TapTarget.forToolbarMenuItem(mToolbar, R.id.action_invite_user,
+                            getString(R.string.discovery_conversation_7_title),
+                            getString(R.string.discovery_conversation_7_desc))
+                            .id(1)));
+        }
+        else {
+            /*
+             * Regular conversation specific features.
+             * Add to contacts may be absent if conversation partner already is in contacts.
+             */
+            if (findViewById(R.id.action_add_contact) != null) {
+                targets.add(ViewUtil.applyDefTapTargetParams(
+                        TapTarget.forToolbarMenuItem(mToolbar, R.id.action_add_contact,
+                                getString(R.string.discovery_conversation_5_title),
+                                getString(R.string.discovery_conversation_5_desc))
+                                .id(1)));
+            }
+            targets.add(ViewUtil.applyDefTapTargetParams(
+                    TapTarget.forToolbarMenuItem(mToolbar, R.id.action_silent_phone_call,
+                            getString(R.string.discovery_conversation_1_title),
+                            getString(R.string.discovery_conversation_1_desc)))
+                    .id(2));
+        }
+        targets.add(ViewUtil.applyDefTapTargetParams(
+                TapTarget.forView(findViewById(R.id.compose_send),
+                        getString(R.string.discovery_conversation_2_title),
+                        getString(R.string.discovery_conversation_2_desc)))
+                .targetCircleColor(R.color.feature_discovery_target_circle)
+                .transparentTarget(true)
+                .id(3));
+        targets.add(ViewUtil.applyDefTapTargetParams(
+                TapTarget.forView(findViewById(R.id.compose_attach),
+                        getString(R.string.discovery_conversation_3_title),
+                        getString(R.string.discovery_conversation_3_desc)))
+                .targetCircleColor(R.color.chat_outgoing_message_color_light)
+                .id(4));
+        targets.add(ViewUtil.applyDefTapTargetParams(
+                TapTarget.forView(findViewById(R.id.burn),
+                        getString(R.string.discovery_conversation_4_title),
+                        getString(R.string.discovery_conversation_4_desc)))
+                .targetCircleColor(R.color.feature_discovery_target_circle)
+                .transparentTarget(true)
+                .id(5));
+        targets.add(ViewUtil.applyDefTapTargetParams(
                 TapTarget.forView(findViewById(R.id.options),
                         getString(R.string.discovery_conversation_6_title),
-                        getString(R.string.discovery_conversation_6_desc))),
-                new TapTargetView.Listener() {
-                    @Override
-                    public void onTargetCancel(TapTargetView view) {
-                        onTargetClick(view);
-                    }
+                        getString(R.string.discovery_conversation_6_desc)))
+                .id(6));
 
+        final TapTargetSequence sequence = new TapTargetSequence(this)
+                .targets(targets)
+                .listener(new TapTargetSequence.Listener() {
                     @Override
-                    public void onOuterCircleClick(TapTargetView view) {
-                        onTargetClick(view);
-                    }
-
-                    @Override
-                    public void onTargetClick(TapTargetView view) {
-                        super.onTargetClick(view);
-                    }
-
-                    @Override
-                    public void onTargetDismissed(TapTargetView view, boolean userInitiated) {
-                        super.onTargetDismissed(view, userInitiated);
-
+                    public void onSequenceFinish() {
                         SharedPreferences prefs = getSharedPreferences(SHARED_PREFS_NAME, Context.MODE_PRIVATE);
                         prefs.edit().putBoolean(KEY_FEATURE_DISCOVERY, true).apply();
                     }
-                });
+
+                    @Override
+                    public void onSequenceStep(TapTarget lastTarget, boolean targetClicked) {
+                        if (lastTarget.id() == 3) {
+                            showAttachmentGrid();
+                        }
+                        else if (lastTarget.id() == 4) {
+                            hideAttachmentGrid();
+                            setBurnContainerVisibility(View.VISIBLE);
+                        }
+                        else if (lastTarget.id() == 5) {
+                            setBurnContainerVisibility(View.GONE);
+                        }
+                    }
+
+                    @Override
+                    public void onSequenceCanceled(TapTarget lastTarget) {
+                        // nothing to do here
+                    }
+        });
+
+        sequence.continueOnCancel(true);
+        sequence.considerOuterCircleCanceled(true);
+        sequence.start();
     }
 
     private void handleCameraAttachmentPermission(int attachmentType) {
@@ -1779,7 +1679,7 @@ public class ConversationActivity extends AppLifecycleNotifierBaseActivity imple
 
     @Override
     public void shouldDismissFragment(boolean error) {
-        // animate if dismissing withour error
+        // animate if dismissing without error
         hideCameraFragment(!error);
     }
 
@@ -2062,10 +1962,48 @@ public class ConversationActivity extends AppLifecycleNotifierBaseActivity imple
         }
     }
 
-    protected void restoreActionBar() {
-        mToolbar = (Toolbar) findViewById(R.id.conversation_toolbar);
-        mToolbar.setContentInsetsAbsolute(0, 0);
+    @Override
+    public void setTitle(CharSequence title) {
+        if (mTitle != null) {
+            mTitle.setText(title);
+        }
+    }
 
+    public void setSubTitle(CharSequence title) {
+        if (mSubTitle != null) {
+            mSubTitle.setText(title);
+        }
+    }
+
+    protected void restoreActionBar() {
+        mHome.setOnClickListener(mHomeButtonListener);
+        mTitleLayout.setOnClickListener(mTitleLayoutListener);
+        mTitleLayout.setOnLongClickListener(mTitleLayoutLongClickListener);
+
+        if (isInSearchUi()) {
+            setUpSearchActionbar();
+        }
+        else if (isInInfoUi()) {
+            setUpInfoActionbar();
+        }
+        else {
+            setUpChatActionbar();
+        }
+    }
+
+    private void setUpSearchActionbar() {
+        mTitleContainer.setVisibility(View.GONE);
+        mUnreadMessageNotification.setVisibility(View.GONE);
+        openActionBarQueryField();
+    }
+
+    private void setUpInfoActionbar() {
+        mSubTitle.setVisibility(View.GONE);
+        mAvatarView.setVisibility(View.GONE);
+        mUnreadMessageNotification.setVisibility(View.GONE);
+    }
+
+    private void setUpChatActionbar() {
         final String partnerId = getPartner();
         refreshContactEntry(partnerId);
         if (!isGroupChat()) {
@@ -2073,27 +2011,44 @@ public class ConversationActivity extends AppLifecycleNotifierBaseActivity imple
         }
 
         Conversation conversation = getConversation();
-        mPartnerDisplayName = isGroupChat()
-                ? getGroupTitle()
-                : ConversationUtils.resolveDisplayName(mContactEntry, conversation);
-        mTitle = (TextView) mToolbar.findViewById(R.id.title);
-        if (!mPartnerDisplayName.equals(ConversationUtils.UNKNOWN_DISPLAY_NAME)) {
-            // While the contact is being created, the display name may be null when adding a contact
-            mTitle.setText(mPartnerDisplayName);
+        mPartnerDisplayName = getChatTitleString();
+        mTitle.setText(mPartnerDisplayName);
+
+        String subtitleString = getChatSubtitleString(partnerId);
+        mSubTitle.setText(subtitleString);
+        mSubTitle.setVisibility(TextUtils.isEmpty(subtitleString) ? View.GONE : View.VISIBLE);
+
+        mAvatarView.setVisibility(View.VISIBLE);
+        AvatarUtils.setPhoto(mContactPhotoManager, mAvatarView, mContactEntry,
+                /* isCircular */ conversation == null
+                        || !AvatarProvider.AVATAR_TYPE_GENERATED.equals(conversation.getAvatarUrl()));
+
+        mTitleContainer.setVisibility(View.VISIBLE);
+
+        if (mIsAxolotlRegistered) {
+            setUnreadMessageCount();
         }
+    }
 
-        mToolbar.findViewById(R.id.title_container).setVisibility(View.VISIBLE);
-        mToolbar.findViewById(R.id.title_layout).setOnClickListener(mTitleLayoutListener);
+    private String getChatTitleString() {
+        String result = isGroupChat()
+                ? getGroupTitle()
+                : ConversationUtils.resolveDisplayName(mContactEntry, getConversation());
+        if (ConversationUtils.UNKNOWN_DISPLAY_NAME.equals(result)) {
+            // While the contact is being created, the display name may be null when adding a contact
+            result = null;
+        }
+        return result;
+    }
 
-        mSubTitle = (TextView) mToolbar.findViewById(R.id.sub_title);
-        mSubTitle.setVisibility(View.GONE);
+    private String getChatSubtitleString(@NonNull final String partnerId) {
+        String result = null;
         if (mIsAxolotlRegistered && !isGroupChat()) {
             // For the subtitle, show either verification string or the primary alias
             // if it differs from the display name
             String verifyInfo = DeviceInfo.getDeviceVerificationString(getApplicationContext(), partnerId);
             if (verifyInfo != null) {
-                mSubTitle.setVisibility(View.VISIBLE);
-                mSubTitle.setText(verifyInfo);
+                result = verifyInfo;
             } else {
                 String alias = null;
 
@@ -2121,61 +2076,14 @@ public class ConversationActivity extends AppLifecycleNotifierBaseActivity imple
 
                     if (!alias.equals(mPartnerDisplayName)
                             && !Contact.UNKNOWN_USER_ID.equals(alias)) {
-                        mSubTitle.setVisibility(View.VISIBLE);
-                        mSubTitle.setText(alias);
+                        result = alias;
                     }
                 }
             }
+        } else if (isGroupChat()) {
+            result = getGroupDescription();
         }
-        if (isGroupChat()) {
-            String description = getGroupDescription();
-            mSubTitle.setText(description);
-            mSubTitle.setVisibility(TextUtils.isEmpty(description) ? View.GONE : View.VISIBLE);
-        }
-
-        mToolbar.findViewById(R.id.title_layout).setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View v) {
-                ClipboardUtils.copyText(ConversationActivity.this,
-                        null,
-                        mSubTitle.getVisibility() == View.VISIBLE ? mSubTitle.getText() : mTitle.getText(),
-                        null,
-                        true);
-                return true;
-            }
-        });
-
-        mHome = mToolbar.findViewById(R.id.home);
-        mHome.setOnClickListener(mHomeButtonListener);
-        mUnreadMessageNotification = mToolbar.findViewById(R.id.unread_message_notification);
-        mTextUnreadMessageCount = (TextView) mToolbar.findViewById(R.id.unread_message_count);
-
-        mAvatarView = (QuickContactBadge) mToolbar.findViewById(R.id.message_avatar);
-        mAvatarView.setVisibility(View.VISIBLE);
-        AvatarUtils.setPhoto(mContactPhotoManager, mAvatarView, mContactEntry,
-                /* isCircular */ conversation == null
-                        || !AvatarProvider.AVATAR_TYPE_GENERATED.equals(conversation.getAvatarUrl()));
-
-        setSupportActionBar(mToolbar);
-        ActionBar actionBar = getSupportActionBar();
-        if (actionBar != null) {
-            actionBar.setCustomView(R.layout.search_edittext);
-            actionBar.setDisplayShowTitleEnabled(false);
-            actionBar.setDisplayHomeAsUpEnabled(false);
-            SearchEditTextLayout searchEditTextLayout =
-                    (SearchEditTextLayout) actionBar.getCustomView();
-            searchEditTextLayout.setPreImeKeyListener(mSearchEditTextLayoutListener);
-
-            mSearchView = (EditText) searchEditTextLayout.findViewById(R.id.search_view);
-            mSearchView.addTextChangedListener(mPhoneSearchQueryTextListener);
-            mSearchView.setOnEditorActionListener(mPhoneSearchQueryEditorActionListener);
-            mSearchView.setHint(R.string.messaging_conversation_select_conversation_partner);
-            mSearchView.setImeOptions(EditorInfo.IME_ACTION_GO);
-        }
-
-        if (mIsAxolotlRegistered) {
-            setUnreadMessageCount();
-        }
+        return result;
     }
 
     private void refreshContactEntry(final String partnerId) {
@@ -2212,7 +2120,6 @@ public class ConversationActivity extends AppLifecycleNotifierBaseActivity imple
                         && (userInfo.rrmm | userInfo.rrmp | userInfo.rrap);
                 mIsPartnerCallDrEnabled = userInfo != null
                         && (userInfo.rrcm | userInfo.rrcp);
-
 
                 isDrEnabled |= mIsPartnerMessagingDrEnabled | mIsPartnerCallDrEnabled;
             } else {
@@ -2272,25 +2179,18 @@ public class ConversationActivity extends AppLifecycleNotifierBaseActivity imple
             AsyncUtils.execute(new ConversationUtils.UnreadEventsRunnable(getPartner(), this));
         }
         if (mUnreadMessageNotification != null) {
-            mUnreadMessageNotification.setVisibility(mUnreadMessageCount > 0 && !isInSearchUi()
+            mUnreadMessageNotification.setVisibility(mUnreadMessageCount > 0 && !(isInSearchUi() || isInInfoUi())
                     ? View.VISIBLE : View.GONE);
         }
         if (mTextUnreadMessageCount != null) {
-            mTextUnreadMessageCount.setText(mUnreadMessageCount > UNREAD_MESSAGE_COUNT_DISPLAY_LIMIT
-                    ? ">" + UNREAD_MESSAGE_COUNT_DISPLAY_LIMIT
-                    : String.valueOf(mUnreadMessageCount));
+            mTextUnreadMessageCount.setText(StringUtils.getUnreadMessagesBadge(mUnreadMessageCount));
         }
-    }
-
-    protected void invalidateActionBar(boolean hidden) {
-        mAvatarView.setVisibility(hidden ? View.GONE : View.VISIBLE);
-        mUnreadMessageNotification.setVisibility(hidden
-                ? View.GONE : ((mUnreadMessageCount > 0) ? View.VISIBLE : View.GONE));
     }
 
     protected ConversationOptionsDrawer getOptionsDrawer() {
         mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer);
-        mDrawerLayout.setDrawerListener(mDrawerListener);
+        mDrawerLayout.removeDrawerListener(mDrawerListener);
+        mDrawerLayout.addDrawerListener(mDrawerListener);
         if (!canMessagePartner()) {
             mDrawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
         }
@@ -2358,6 +2258,19 @@ public class ConversationActivity extends AppLifecycleNotifierBaseActivity imple
         return fragment != null;
     }
 
+    private void setChatFragmentVisibility(boolean visible) {
+        final ChatFragment chatFragment = getChatFragment(false);
+        final int alpha = visible ? 1 : 0;
+        if (chatFragment != null) {
+            final View view = chatFragment.getView();
+            if (view != null) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN)
+                    view.animate().alpha(alpha).withLayer();
+                else
+                    view.animate().alpha(alpha);
+            }
+        }
+    }
 
     public Conversation getConversation() {
         mConversation = getConversation(getPartner());
@@ -2486,7 +2399,8 @@ public class ConversationActivity extends AppLifecycleNotifierBaseActivity imple
                 if (text.length() <= 0) {
                     // start voice recording
                     startSelectFileActivity(createCaptureAudioIntent());
-                } else if (text.length() > MESSAGE_TEXT_LENGTH_LIMIT) {
+                } else if (text.length() > MESSAGE_TEXT_LENGTH_LIMIT
+                        || IOUtils.getLengthOfEncodedText(text) > MESSAGE_ENCODED_TEXT_LENGTH_LIMIT) {
                     // Message is too long to send itself over SIP - send it as an attachment
                     handleTextAttachment(text.toString());
 
@@ -2687,6 +2601,9 @@ public class ConversationActivity extends AppLifecycleNotifierBaseActivity imple
                 fragment.clearPagingContext();
             }
         }
+        if (mComposeText != null) {
+            mComposeText.setText(null);
+        }
     }
 
     protected void resetViews() {
@@ -2879,11 +2796,11 @@ public class ConversationActivity extends AppLifecycleNotifierBaseActivity imple
 
                     File attachmentFile;
 
-                    String mimeType = attachmentMetaDataJson.getString("MimeType");
-                    String exportedFilename = attachmentMetaDataJson.optString("ExportedFileName");
-                    String fileName = attachmentMetaDataJson.getString("FileName");
-                    String displayName = attachmentMetaDataJson.optString("DisplayName");
-                    String hash = attachmentMetaDataJson.optString("SHA256");
+                    String mimeType = attachmentMetaDataJson.getString(SCLOUD_METADATA_MIMETYPE);
+                    String exportedFilename = attachmentMetaDataJson.optString(SCLOUD_METATA_EXPORTED_FILENAME);
+                    String fileName = attachmentMetaDataJson.getString(SCLOUD_METADATA_FILENAME);
+                    String displayName = attachmentMetaDataJson.optString(SCLOUD_METATA_DISPLAYNAME);
+                    String hash = attachmentMetaDataJson.optString(SCLOUD_ATTACHMENT_SHA256);
 
                     if (!TextUtils.isEmpty(exportedFilename)) {
                         fileName = exportedFilename;
@@ -2939,7 +2856,7 @@ public class ConversationActivity extends AppLifecycleNotifierBaseActivity imple
         List<Event> items;
         if (repository != null && conversation != null) {
             items = MessageUtils.filter(repository.historyOf(conversation).list(),
-                    DialerActivity.mShowErrors);
+                    DialerActivityInternal.mShowErrors);
         }
         else {
             // return empty list if conversation is not available
@@ -3122,7 +3039,7 @@ public class ConversationActivity extends AppLifecycleNotifierBaseActivity imple
         EventRepository events = repository.historyOf(getConversation());
 
         message.setState(MessageStates.COMPOSING);
-        message.setAttachment("");
+        message.setAttachment(AttachmentUtils.getTemporaryAttachmentInfo(uri, getApplicationContext()).toString());
         events.save(message);
 
         // message has been saved, refresh view to show it
@@ -3144,6 +3061,7 @@ public class ConversationActivity extends AppLifecycleNotifierBaseActivity imple
             public void onReceive(Context context, Intent intent) {
                 String partner = intent.getStringExtra(Extra.PARTNER.getName());
                 boolean forCurrentConversation = TextUtils.equals(partner, getPartner());
+                boolean mute = Extra.MUTE.getBoolean(intent);
                 switch (Action.from(intent)) {
                     case RECEIVE_MESSAGE:
                         /*
@@ -3151,18 +3069,22 @@ public class ConversationActivity extends AppLifecycleNotifierBaseActivity imple
                          * Play sound and stop broadcast instead of showing message alarm notification.
                          */
                         if (!forCurrentConversation) {
-                            SoundNotifications.playReceiveMessageSound();
+                            if (!mute) {
+                                SoundNotifications.playReceiveMessageSound();
+                            }
                             incrementUnredMessageCount(context);
                         }
+                        else {
+                            handleUpdateNotification(Extra.FORCE.getBoolean(intent));
+                            setConsumed(isOrdered());
+                        }
+                        break;
                     case UPDATE_CONVERSATION:
                         /* update view with new message information */
                         if (forCurrentConversation) {
-                            boolean forceRefresh = Extra.FORCE.getBoolean(intent);
-                            handleUpdateNotification(forceRefresh);
-                            if (isOrdered()) {
-                                setConsumed(true);
-                            }
+                            handleUpdateNotification(Extra.FORCE.getBoolean(intent));
                         }
+                        setConsumed(isOrdered());
                         break;
                     case REFRESH_SELF:
                         invalidateOptionsMenu();
@@ -3182,7 +3104,7 @@ public class ConversationActivity extends AppLifecycleNotifierBaseActivity imple
                                     Toast.LENGTH_SHORT).show();
 
                             Log.w(TAG, "Group conversation not valid, exiting.");
-                            Intent exitIntent = new Intent(ConversationActivity.this, DialerActivity.class);
+                            Intent exitIntent = new Intent(ConversationActivity.this, DialerActivityInternal.class);
                             exitIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                             ConversationActivity.this.startActivity(exitIntent);
                             break;
@@ -3231,16 +3153,10 @@ public class ConversationActivity extends AppLifecycleNotifierBaseActivity imple
                         break;
                     }
                     case DOWNLOAD:
-                        String messageId = Extra.ID.from(intent);
-                        Intent serviceIntent = Action.DOWNLOAD.intent(context, SCloudService.class);
-                        Extra.PARTNER.to(serviceIntent, partner);
-                        Extra.ID.to(serviceIntent, messageId);
-                        startService(serviceIntent);
+                        handleDownloadAttachment(context, intent);
                         break;
                     case RECEIVE_ATTACHMENT:
-                        if (!intent.getBooleanExtra(SCloudService.FLAG_GROUP_AVATAR, false)) {
-                            onReceiveAttachment(intent);
-                        }
+                        handleReceiveAttachment(intent);
                         break;
                     default:
                         break;
@@ -3258,6 +3174,44 @@ public class ConversationActivity extends AppLifecycleNotifierBaseActivity imple
         filter = Action.filter(
                 Action.PROGRESS, Action.CANCEL, Action.ERROR, Action.DOWNLOAD, Action.RECEIVE_ATTACHMENT);
         registerMessagingReceiver(this, mAttachmentEventReceiver, filter, MESSAGE_PRIORITY);
+    }
+
+    private void handleDownloadAttachment(final @NonNull Context context, final @NonNull Intent intent) {
+        final String partner = intent.getStringExtra(Extra.PARTNER.getName());
+        /*
+         * Check storage permission before proceeding to download.
+         */
+        if (ContextCompat.checkSelfPermission(ConversationActivity.this,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            mPendingAttachmentIntent = intent;
+            if (ActivityCompat.shouldShowRequestPermissionRationale(ConversationActivity.this,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+                ExplainPermissionDialog.showExplanation(this, PERMISSIONS_REQUEST_STORAGE,
+                        getString(R.string.permission_storage_title),
+                        getString(R.string.permission_storage_explanation), null);
+                mStorageRationaleShown = true;
+            }
+            else {
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                        PERMISSIONS_REQUEST_STORAGE);
+                mStorageRationaleShown = false;
+            }
+        }
+        else {
+            mPendingAttachmentIntent = null;
+            String messageId = Extra.ID.from(intent);
+            Intent serviceIntent = Action.DOWNLOAD.intent(context, SCloudService.class);
+            Extra.PARTNER.to(serviceIntent, partner);
+            Extra.ID.to(serviceIntent, messageId);
+            startService(serviceIntent);
+        }
+    }
+
+    private void handleReceiveAttachment(final @NonNull Intent intent) {
+        if (!intent.getBooleanExtra(SCloudService.FLAG_GROUP_AVATAR, false)) {
+                onReceiveAttachment(intent);
+        }
     }
 
     private void handleUpdateNotification(boolean forceRefresh) {
@@ -3357,6 +3311,11 @@ public class ConversationActivity extends AppLifecycleNotifierBaseActivity imple
 
     @Override
     public void callStateChange(CallState call, TiviPhoneService.CT_cb_msg msg) {
+        if (msg == TiviPhoneService.CT_cb_msg.eReg
+                && TiviPhoneService.PHONE_STATE_ONLINE == TiviPhoneService.getPhoneState()) {
+            refresh(true);
+        }
+
         invalidateOptionsMenu();
     }
 
@@ -3534,11 +3493,19 @@ public class ConversationActivity extends AppLifecycleNotifierBaseActivity imple
     private void openActionBarQueryField() {
         ActionBar actionBar = getSupportActionBar();
         actionBar.setDisplayShowCustomEnabled(true);
-        mToolbar.findViewById(R.id.title_container).setVisibility(View.GONE);
-        ((SearchEditTextLayout)actionBar.getCustomView()).expand(false /* animate */, true /* requestFocus */);
-        ((SearchEditTextLayout)actionBar.getCustomView()).showBackButton(false);
-        ((SearchEditTextLayout)actionBar.getCustomView()).setIsDialpadEnabled(false);
-        ((SearchEditTextLayout)actionBar.getCustomView()).keyboardLayout(false);
+        SearchEditTextLayout searchView = ((SearchEditTextLayout) actionBar.getCustomView());
+        if (!searchView.isExpanded()) {
+            searchView.expand(false /* animate */, true /* requestFocus */);
+            searchView.showBackButton(false);
+            searchView.setIsDialpadEnabled(false);
+            searchView.keyboardLayout(false);
+
+            mSearchView = (EditText) searchView.findViewById(R.id.search_view);
+            mSearchView.addTextChangedListener(mPhoneSearchQueryTextListener);
+            mSearchView.setOnEditorActionListener(mPhoneSearchQueryEditorActionListener);
+            mSearchView.setHint(R.string.messaging_conversation_select_conversation_partner);
+            mSearchView.setImeOptions(EditorInfo.IME_ACTION_GO);
+        }
     }
 
     private void maybeExitSearchUi() {
@@ -3549,7 +3516,7 @@ public class ConversationActivity extends AppLifecycleNotifierBaseActivity imple
     }
 
     protected void enterSearchUI(@NonNull final Bundle arguments) {
-        FragmentManager manager = getFragmentManager();
+        final FragmentManager manager = getFragmentManager();
         final FragmentTransaction transaction = manager.beginTransaction();
         transaction.setCustomAnimations(android.R.animator.fade_in, 0);
         mSearchFragment =
@@ -3582,25 +3549,26 @@ public class ConversationActivity extends AppLifecycleNotifierBaseActivity imple
         }
         transaction.commitAllowingStateLoss();
 
-        ChatFragment chatFragment = getChatFragment(false);
-        if (chatFragment != null) {
-            final View view = chatFragment.getView();
-            if (view != null) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN)
-                    view.animate().alpha(0).withLayer();
-                else
-                    view.animate().alpha(0);
-            }
-        }
-
-        runOnUiThread(mOpenActionBarRunnable);
+        setChatFragmentVisibility(false);
 
         mInSearchView = true;
         setComposeItemsVisibility(View.GONE);
         hideSoftKeyboard(R.id.compose_text);
 
         mDrawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
-        invalidateActionBar(isInSearchUi());
+        setUpSearchActionbar();
+    }
+
+    protected void setSearchQueryString(@Nullable final String queryString) {
+        SearchAgainFragment searchFragment = mSearchFragment;
+        if (searchFragment == null) {
+            final FragmentManager manager = getFragmentManager();
+            searchFragment = (SearchAgainFragment) manager.findFragmentByTag(
+                    SearchAgainFragment.TAG_CONVERSATION_CONTACT_SEARCH_FRAGMENT);
+        }
+        if (searchFragment != null && searchFragment.isVisible()) {
+            searchFragment.setQueryString(queryString, false /* delaySelection */);
+        }
     }
 
     protected void exitSearchUI(final boolean transitioning) {
@@ -3619,16 +3587,7 @@ public class ConversationActivity extends AppLifecycleNotifierBaseActivity imple
                     transaction.commit();
                 }
 
-                ChatFragment chatFragment = getChatFragment(false);
-                if (chatFragment != null) {
-                    final View view = chatFragment.getView();
-                    if (view != null) {
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN)
-                            view.animate().alpha(1).withLayer();
-                        else
-                            view.animate().alpha(1);
-                    }
-                }
+                setChatFragmentVisibility(true);
 
                 if (transitioning) {
                     new Handler().postDelayed(new Runnable() {
@@ -3663,46 +3622,66 @@ public class ConversationActivity extends AppLifecycleNotifierBaseActivity imple
         return mInSearchView;
     }
 
-    private void enterInfoUI(@Nullable Event event) {
+    private void enterInfoUi(final @Nullable Conversation conversation) {
+        if (conversation == null) {
+            return;
+        }
+
+        Fragment fragment;
+        if (conversation.getPartner().isGroup()) {
+            fragment = new GroupManagementFragment();
+            ((GroupManagementFragment) fragment).setConversation(conversation);
+            ((GroupManagementFragment) fragment).setCloseOnLeaveGroup(true);
+        }
+        else {
+            fragment = new ContactDetailsFragment();
+            ((ContactDetailsFragment) fragment).setConversation(conversation);
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            fragment.setEnterTransition(new Fade());
+            fragment.setExitTransition(new Fade());
+        }
+
+        enterInfoUI(fragment);
+    }
+
+    private void enterInfoUI(final @Nullable Event event) {
         if (event == null) {
             return;
         }
 
-        FragmentManager manager = getFragmentManager();
+        EventInfoFragment fragment = new EventInfoFragment();
+        fragment.setEvent(getPartner(), event.getId(), event);
+
+        enterInfoUI(fragment);
+    }
+
+    private void enterInfoUI(final @NonNull Fragment fragment) {
+        final FragmentManager manager = getFragmentManager();
         final FragmentTransaction transaction = manager.beginTransaction();
 
-        EventInfoFragment eventInfoFragment = new EventInfoFragment();
-        transaction.add(R.id.chat, eventInfoFragment, EventInfoFragment.TAG_EVENT_INFO_FRAGMENT);
-
-        eventInfoFragment.setEvent(getPartner(), event.getId(), event);
+        transaction.add(R.id.chat, fragment, TAG_INFO_FRAGMENT);
         transaction.commitAllowingStateLoss();
 
         mInInfoView = true;
 
-        if (mTitle != null) {
-            mTitle.setText(R.string.message_info_title);
-        }
-        if (mSubTitle != null) {
-            mSubTitle.setVisibility(View.GONE);
-        }
-
+        hideAttachmentGrid();
         setComposeItemsVisibility(View.GONE);
         hideSoftKeyboard(R.id.compose_text);
 
         mDrawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
 
         invalidateOptionsMenu();
-        invalidateActionBar(isInSearchUi() | isInInfoUi());
+
+        setUpInfoActionbar();
     }
 
     private void exitInfoUI() {
         mInInfoView = false;
 
-        FragmentManager manager = getFragmentManager();
-
-        EventInfoFragment fragment =
-                (EventInfoFragment) manager.findFragmentByTag(
-                        EventInfoFragment.TAG_EVENT_INFO_FRAGMENT);
+        final FragmentManager manager = getFragmentManager();
+        final Fragment fragment = manager.findFragmentByTag(TAG_INFO_FRAGMENT);
 
         if (fragment != null) {
             final FragmentTransaction transaction = manager.beginTransaction();

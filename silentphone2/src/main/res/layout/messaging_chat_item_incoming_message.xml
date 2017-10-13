@@ -1,157 +1,152 @@
 <?xml version="1.0" encoding="utf-8"?>
 <com.silentcircle.messaging.views.IncomingMessageEventView
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:filterTouchesWhenObscured="false"
-    android:paddingTop="@dimen/messaging_message_padding_top"
-    android:paddingBottom="@dimen/messaging_message_padding_bottom">
+    android:paddingBottom="@dimen/messaging_message_padding_bottom"
+    android:paddingTop="@dimen/messaging_message_padding_top">
 
     <com.silentcircle.messaging.views.TextView
         android:id="@+id/message_avatar_name"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="center_vertical"
         android:layout_alignParentTop="true"
+        android:layout_gravity="center_vertical"
+        android:layout_marginLeft="@dimen/messaging_message_avatar_margin_left"
+        android:layout_marginStart="@dimen/messaging_message_avatar_margin_left"
+        android:maxLines="1"
+        android:minLines="1"
         android:singleLine="true"
-        android:textColor="?attr/sp_activity_secondary_text_color"
+        android:textColor="?sp_activity_secondary_text_color"
         android:textSize="@dimen/messaging_message_info_small_text_size"
         android:visibility="gone"
-        tools:visibility="visible"
-        tools:text="@string/sample_sender" />
+        app:layout_constraintLeft_toLeftOf="@+id/message_card"
+        tools:text="@string/sample_sender"
+        tools:visibility="visible" />
 
-    <com.silentcircle.messaging.views.BoundedCheckableRelativeLayout
-        android:id="@+id/message_content"
+    <com.silentcircle.messaging.views.BoundedCheckableLinearLayout
+        android:id="@+id/message_card"
+        style="@style/Widget.Layout.Card.Incoming.Message"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@id/message_avatar_name"
-        style="@style/Widget.Silence.MessageContent.Incoming">
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/message_avatar_name">
 
-        <com.silentcircle.messaging.views.CheckableLinearLayout
-            android:id="@+id/message_card"
+        <ViewStub
+            android:id="@+id/attachment_stub_import"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            style="@style/Widget.Layout.Card.Incoming.Message">
-
-            <ViewStub
-                android:id="@+id/attachment_stub_import"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout="@layout/messaging_chat_item_attachment" />
-
-            <com.silentcircle.messaging.views.TextView
-                style="@style/Widget.Text.Incoming"
-                android:id="@+id/message_attachment_text"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginLeft="@dimen/messaging_message_thumbnail_margin_left"
-                android:layout_marginStart="@dimen/messaging_message_thumbnail_margin_left"
-                android:layout_marginRight="@dimen/messaging_message_thumbnail_margin_right"
-                android:layout_marginEnd="@dimen/messaging_message_thumbnail_margin_right"
-                android:layout_centerVertical="true"
-                android:text="@string/attachment"
-                android:ellipsize="middle"
-                android:maxLines="1"
-                android:singleLine="true"
-                android:drawableLeft="@drawable/ic_action_attachment_light"
-                android:drawableStart="@drawable/ic_action_attachment_light"
-                android:drawableTint="?attr/sp_incoming_message_text_selector"
-                android:maxWidth="@dimen/messaging_message_attachment_text_width"
-                tools:ignore="UnusedAttribute" />
-
-            <com.silentcircle.messaging.views.TextView
-                style="@style/Widget.Text.Incoming"
-                android:id="@+id/message_body"
-                android:layout_width="wrap_content"
-                android:layout_height="0dp"
-                android:layout_weight="1"
-                android:layout_marginLeft="@dimen/messaging_message_thumbnail_margin_left"
-                android:layout_marginStart="@dimen/messaging_message_thumbnail_margin_left"
-                android:layout_marginRight="@dimen/messaging_incoming_message_thumbnail_margin_right"
-                android:layout_marginEnd="@dimen/messaging_incoming_message_thumbnail_margin_right"
-                android:gravity="top"
-                android:layout_gravity="right"
-                tools:text="@string/sample_message"
-                tools:ignore="RtlHardcoded" />
-
-            <com.silentcircle.messaging.views.TextView
-                android:id="@+id/message_time"
-                style="@style/Widget.Text.Secondary"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textSize="@dimen/messaging_message_info_small_text_size"
-                android:textColor="?sp_incoming_message_text_selector"
-                android:duplicateParentState="true"
-                android:visibility="visible"
-                tools:text="@string/sample_time_relative" />
-
-        </com.silentcircle.messaging.views.CheckableLinearLayout>
-
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_below="@+id/message_card"
-            android:layout_alignLeft="@+id/message_card"
-            android:layout_alignStart="@+id/message_card"
-            android:layout_marginLeft="@dimen/messaging_message_time_margin_left"
-            android:layout_marginStart="@dimen/messaging_message_time_margin_left">
-
-            <ImageView
-                android:id="@+id/message_retained_notice"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginRight="@dimen/spacing_tiny"
-                android:layout_marginEnd="@dimen/spacing_tiny"
-                android:layout_gravity="center_vertical"
-                android:src="@drawable/ic_retention_notice"
-                android:tint="@color/sc_ng_text_grey_7"
-                android:contentDescription="@string/data_retention_message_retained"
-                android:visibility="gone"
-                tools:visibility="visible" />
-
-            <com.silentcircle.messaging.views.TextView
-                android:id="@+id/message_burn_notice"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_vertical"
-                android:textColor="?sp_message_description_text_color"
-                android:textSize="@dimen/messaging_message_info_small_text_size"
-                android:drawableLeft="@drawable/ic_burn_notice"
-                android:drawableStart="@drawable/ic_burn_notice"
-                android:singleLine="true"
-                tools:text="@string/sample_burn_notice" />
-
-        </LinearLayout>
+            android:layout="@layout/messaging_chat_item_attachment" />
 
         <com.silentcircle.messaging.views.TextView
-            android:id="@+id/message_state"
+            android:id="@+id/message_attachment_text"
+            style="@style/Widget.Text.Incoming"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_marginEnd="@dimen/messaging_message_thumbnail_margin_right"
+            android:layout_marginLeft="@dimen/messaging_message_thumbnail_margin_left"
+            android:layout_marginRight="@dimen/messaging_message_thumbnail_margin_right"
+            android:layout_marginStart="@dimen/messaging_message_thumbnail_margin_left"
+            android:drawableLeft="@drawable/ic_action_attachment_light"
+            android:drawableStart="@drawable/ic_action_attachment_light"
+            android:drawableTint="?attr/sp_incoming_message_text_selector"
+            android:ellipsize="middle"
+            android:maxLines="1"
+            android:maxWidth="@dimen/messaging_message_attachment_text_width"
+            android:singleLine="true"
+            android:text="@string/attachment"
+            tools:ignore="UnusedAttribute" />
+
+        <com.silentcircle.messaging.views.TextView
+            android:id="@+id/message_body"
+            style="@style/Widget.Text.Incoming"
+            android:layout_width="wrap_content"
+            android:layout_height="0dp"
+            android:layout_gravity="right"
+            android:layout_marginEnd="@dimen/messaging_incoming_message_thumbnail_margin_right"
+            android:layout_marginLeft="@dimen/messaging_message_thumbnail_margin_left"
+            android:layout_marginRight="@dimen/messaging_incoming_message_thumbnail_margin_right"
+            android:layout_marginStart="@dimen/messaging_message_thumbnail_margin_left"
+            android:layout_weight="1"
+            android:gravity="top"
+            tools:ignore="RtlHardcoded"
+            tools:text="@string/sample_message" />
+
+        <com.silentcircle.messaging.views.TextView
+            android:id="@+id/message_time"
             style="@style/Widget.Text.Secondary"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_below="@+id/message_card"
-            android:layout_alignRight="@+id/message_card"
-            android:layout_alignEnd="@+id/message_card"
-            android:textColor="?sp_message_description_text_color"
-            android:singleLine="true"
+            android:duplicateParentState="true"
+            android:textColor="?attr/sp_incoming_message_text_selector"
             android:textSize="@dimen/messaging_message_info_small_text_size"
-            android:visibility="gone"
-            tools:visibility="visible"
-            tools:text="Received" />
+            android:visibility="visible"
+            tools:text="@string/sample_time_relative" />
 
-    </com.silentcircle.messaging.views.BoundedCheckableRelativeLayout>
+    </com.silentcircle.messaging.views.BoundedCheckableLinearLayout>
+
+    <ImageView
+        android:id="@+id/message_retained_notice"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical"
+        android:layout_marginEnd="@dimen/spacing_tiny"
+        android:layout_marginLeft="@dimen/messaging_message_retained_notice_margin_left"
+        android:layout_marginRight="@dimen/spacing_tiny"
+        android:layout_marginStart="@dimen/messaging_message_retained_notice_margin_left"
+        android:layout_marginTop="0dp"
+        android:contentDescription="@string/data_retention_message_retained"
+        android:src="@drawable/ic_retention_notice"
+        android:tint="@color/sc_ng_text_grey_7"
+        android:visibility="gone"
+        app:layout_constraintLeft_toLeftOf="@id/message_card"
+        app:layout_constraintTop_toBottomOf="@id/message_card"
+        tools:visibility="visible" />
+
+    <com.silentcircle.messaging.views.TextView
+        android:id="@+id/message_burn_notice"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:drawableLeft="@drawable/ic_burn_notice"
+        android:drawableStart="@drawable/ic_burn_notice"
+        android:singleLine="true"
+        android:textColor="?sp_message_description_text_color"
+        android:textSize="@dimen/messaging_message_info_small_text_size"
+        app:layout_constraintLeft_toRightOf="@id/message_retained_notice"
+        app:layout_constraintTop_toBottomOf="@id/message_card"
+        app:layout_goneMarginLeft="@dimen/messaging_message_burn_notice_gone_margin_left"
+        app:layout_goneMarginStart="@dimen/messaging_message_burn_notice_gone_margin_left"
+        tools:text="@string/sample_burn_notice" />
+
+    <com.silentcircle.messaging.views.TextView
+        android:id="@+id/message_state"
+        style="@style/Widget.Text.Secondary"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="@dimen/spacing_tiny"
+        android:layout_marginRight="@dimen/spacing_tiny"
+        android:singleLine="true"
+        android:textColor="?sp_message_description_text_color"
+        android:textSize="@dimen/messaging_message_info_small_text_size"
+        android:visibility="gone"
+        app:layout_constraintRight_toRightOf="@id/message_card"
+        app:layout_constraintTop_toBottomOf="@id/message_card"
+        tools:text="Received"
+        tools:visibility="visible" />
 
     <include
         android:id="@+id/message_actions"
+        style="@style/Widget.Silence.ActionTray.Incoming"
         layout="@layout/messaging_chat_incoming_message_actions"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_toRightOf="@id/message_content"
-        android:layout_toEndOf="@id/message_content"
-        android:layout_below="@id/message_avatar_name"
         android:layout_marginLeft="@dimen/messaging_message_buttons_margin"
         android:layout_marginStart="@dimen/messaging_message_buttons_margin"
-        style="@style/Widget.Silence.ActionTray.Incoming" />
+        app:layout_constraintTop_toTopOf="@id/message_card"
+        app:layout_constraintLeft_toRightOf="@id/message_card" />
 
 </com.silentcircle.messaging.views.IncomingMessageEventView>

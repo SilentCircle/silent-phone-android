@@ -31,8 +31,6 @@ import android.content.Context;
 import android.util.AttributeSet;
 import android.widget.Checkable;
 
-import com.silentcircle.silentphone2.R;
-
 public class CheckableRelativeLayout extends android.widget.RelativeLayout implements Checkable {
 
     public static final int [] STATE_CHECKED = {
@@ -70,7 +68,7 @@ public class CheckableRelativeLayout extends android.widget.RelativeLayout imple
          * on state_pressed. Cached version is drawn without applying correct tint colour for
          * state_pressed when using background tint colour selector.
          *
-         * When using drawable selector for everything works fine.
+         * When using drawable selector for background everything works fine.
          */
         invalidate();
     }

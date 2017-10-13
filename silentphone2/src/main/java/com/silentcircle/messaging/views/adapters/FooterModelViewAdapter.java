@@ -51,7 +51,6 @@ public class FooterModelViewAdapter extends AvatarModelViewAdapter {
 
         public void bind(Object item, int position) {
             itemView.setTag(item);
-            itemView.setTag(R.id.view_position, position);
         }
     }
 

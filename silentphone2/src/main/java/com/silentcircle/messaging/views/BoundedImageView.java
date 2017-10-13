@@ -28,16 +28,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package com.silentcircle.messaging.views;
 
 import android.content.Context;
-import android.content.res.ColorStateList;
 import android.graphics.Canvas;
 import android.graphics.Path;
 import android.graphics.Point;
-import android.graphics.Region;
+import android.graphics.RectF;
 import android.os.Build;
-import android.support.annotation.ColorInt;
-import android.support.v4.content.ContextCompat;
 import android.util.AttributeSet;
-import android.widget.ImageView;
 
 import com.silentcircle.common.util.ViewUtil;
 import com.silentcircle.silentphone2.R;
@@ -45,26 +41,23 @@ import com.silentcircle.silentphone2.R;
 /**
  * Image view for attachment thumbnails in chat view.
  */
-public class BoundedImageView extends ImageView {
+public class BoundedImageView extends android.support.v7.widget.AppCompatImageView {
 
     private static final int MAXIMUM_WIDTH_PERCENTAGE = 60;
     private static final int MAXIMUM_HEIGHT_PERCENTAGE = 30;
     private Point mSize;
 
-    private final Path mClipPathInner = new Path();
-    private final Path mClipPathOuter = new Path();
-
     private final int mDefaultWidth;
     private final int mDefaultHeight;
     private final float mCornerRadius;
-
-    private int mFillColor = 0x00000000;
-    private ColorStateList mColorStateList;
 
     private int mMaximumWidth;
     private int mMaximumHeight;
 
     private boolean mIsImage = false;
+
+    private Path mPath = new Path();
+    private RectF mRect = new RectF();
 
     public BoundedImageView(Context context) {
         this(context, null);
@@ -80,7 +73,6 @@ public class BoundedImageView extends ImageView {
         mDefaultWidth = (int) getResources().getDimension(R.dimen.messaging_message_thumbnail_width);
         mDefaultHeight = (int) getResources().getDimension(R.dimen.messaging_message_thumbnail_height);
         mCornerRadius = context.getResources().getDimension(R.dimen.messaging_message_thumbnail_corner_radius);
-        mFillColor = ContextCompat.getColor(context, android.R.color.transparent);
     }
 
     @Override
@@ -105,24 +97,7 @@ public class BoundedImageView extends ImageView {
             heightMeasureSpec = MeasureSpec.makeMeasureSpec(height, measureMode);
         }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            mClipPathOuter.reset();
-            mClipPathInner.reset();
-            mClipPathOuter.addRect(0.0f, 0.0f, width, height, Path.Direction.CCW);
-            mClipPathInner.addRoundRect(0.0f, 0.0f, width, height, mCornerRadius, mCornerRadius,
-                    Path.Direction.CCW);
-        }
-
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-    }
-
-    @Override
-    public void drawableStateChanged() {
-        super.drawableStateChanged();
-        if (mColorStateList != null) {
-            mFillColor = mColorStateList.getColorForState(getDrawableState(), mFillColor);
-        }
-        invalidate();
     }
 
     public void setMaximumWidth(int maximumWidth) {
@@ -135,29 +110,33 @@ public class BoundedImageView extends ImageView {
         requestLayout();
     }
 
-    public void setCornerColor(@ColorInt int color) {
-        mFillColor = color;
-    }
-
-    public void setCornerColor(ColorStateList colorList) {
-        mColorStateList = colorList;
+    @Override
+    protected void onDraw(Canvas canvas) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            int save = canvas.save();
+            canvas.clipPath(mPath);
+            super.onDraw(canvas);
+            canvas.restoreToCount(save);
+        }
+        else {
+            super.onDraw(canvas);
+        }
     }
 
     @Override
-    public void draw(Canvas canvas) {
-        super.draw(canvas);
+    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+        super.onSizeChanged(w, h, oldw, oldh);
 
-        // draw round corners with current background colour
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            canvas.save(Canvas.CLIP_SAVE_FLAG);
-            canvas.clipPath(mClipPathOuter);
-            canvas.clipPath(mClipPathInner, Region.Op.DIFFERENCE);
-            canvas.drawColor(mFillColor);
-            canvas.restore();
-        }
+        // compute the path
+        mPath.reset();
+        mRect.set(0, 0, w, h);
+        mPath.addRoundRect(mRect, mCornerRadius, mCornerRadius, Path.Direction.CW);
+        mPath.close();
+
     }
 
     public void setIsImage(boolean isImage) {
         mIsImage = isImage;
     }
+
 }

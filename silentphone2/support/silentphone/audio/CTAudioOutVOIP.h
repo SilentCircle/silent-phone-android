@@ -64,7 +64,6 @@ class CTAudioOutVOIP: public CTAudioGetDataCB, public CTAudioOutBase{
    int iAudioIsWorking;
    int iIgnoreIncomingRTP;
 public:
-   int iDebugUnderFlow;
    int iUnderflowDetected;
    int iAudioGetDataCounter;// 
    CTJit jit;
@@ -79,7 +78,6 @@ public:
    CTAudioOutVOIP(int iRate, int iCh, CTAudioOutBase *ao):iRate(iRate),ao(ao){
       iIgnoreIncomingRTP=0;
       iResetNextRecPack=0;
-      iDebugUnderFlow=0;
       iUnderflowDetected=0;
       iAudioGetDataCounter=0;
       iPrevPackIsSpeech=1;
@@ -167,19 +165,20 @@ public:
          static const int *r = (const int *)findGlobalCfgKey("iAudioUnderflow");
          
          //should i disable underflow tone if call is not active?
-         if(!iIgnoreIncomingRTP && (iDebugUnderFlow>0 || (r && *r))){
+         if(!iIgnoreIncomingRTP){
             
             int iUnderflow = T_TEST_RTP_QUEUE ? rtp_q.underflow(iRate/(iSamples+1)/2) : (bufBytes()<10);
             
             if(iUnderflow && iCanClearPlayedData && !iCNReceived && isPlaying()){
-               void createSine(double &ctx, short *s, int iSamples, float freq, int iRate, int iVol, int iIsLast);
-               createSine(dbgUnderFlowCTX,tmp,iSamples,330., iRate, 500, 0);
+               if (r && *r) {
+                  void createSine(double &ctx, short *s, int iSamples, float freq, int iRate, int iVol, int iIsLast);
+		  createSine(dbgUnderFlowCTX,tmp,iSamples,330., iRate, 500, 0);
+               }
                iUnderflowDetected=1;
             }
             else {dbgUnderFlowCTX=0;iUnderflowDetected=0;}
          }
       }
-      if(iDebugUnderFlow>0)iDebugUnderFlow-=iSamples;
       
       fifoBufConferece.add((char*)tmp,iSamples*2);
       
@@ -334,9 +333,7 @@ public:
       }
       
       if(iLen==5 && strcmp(pid,"delay")==0){
-         
-         iDebugUnderFlow=iRate*4;
-         
+
          float f=(float)bufBytes()/(float)(iRate*2);
          if(T_TEST_RTP_QUEUE){
             jit.iMaxBurst=rtp_q.maxBurst();
@@ -379,7 +376,6 @@ public:
    }
    int isPlaying(){return iNeedStop==0 || iMSecPlay>0;}
    int play(){
-      iDebugUnderFlow=0;
       iMSecPlay = -1;
       if(iNeedStop){
          reset();
@@ -415,7 +411,6 @@ public:
    void stopAfter(int iMs=-1)
    {
       if(!iAudioIsWorking)return;
-      iDebugUnderFlow=0;
 
       if(iMs>0 && !AudioManager_AudioIsInterrupted())
       {

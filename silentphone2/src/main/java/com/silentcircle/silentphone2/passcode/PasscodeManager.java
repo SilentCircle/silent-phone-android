@@ -29,6 +29,9 @@ package com.silentcircle.silentphone2.passcode;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.SystemClock;
 
 
 import com.silentcircle.SilentPhoneApplication;
@@ -53,9 +56,17 @@ public class PasscodeManager {
     private static final int MAX_ATTEMPTS_BEFORE_WIPE = 10;
     private static final boolean DEBUG_LOCKDOWN = false;
 
-    // The time the user left the app while being authorized. If "0", the user is in the app and is
-    // authorized. If -1, he is not authorized.
-    private long mTimestampAuthorized = -1;
+    private boolean mIsAuthorised = false;
+    private boolean mCanBeReauthorized = false;
+    private Handler mReauthorizeHandler;
+    private Runnable mReauthorizeTimeoutRunnable = new Runnable() {
+        @Override
+        public void run() {
+            mCanBeReauthorized = false;
+        }
+    };
+
+    private long mTimestampLocked = 0;
 
     private static final String PREF_KEY = "passcode_store";
     private static final String PREF_ENABLED = "passcode_enabled";
@@ -64,7 +75,6 @@ public class PasscodeManager {
     private static final String PREF_TIMEOUT = "passcode_timeout";
     private static final String PREF_FAILED_ATTEMPTS_COUNT = "passcode_failed_attempts_count";
     private static final String PREF_WIPE_ENABLED = "passcode_wipe_enabled";
-    private static final String PREF_TIMESTAMP_LOCKED = "passcode_lock_timestamp";
 
     private SharedPreferences prefs;
 
@@ -82,6 +92,10 @@ public class PasscodeManager {
 
     public PasscodeManager() {
         prefs = SilentPhoneApplication.getAppContext().getSharedPreferences(PREF_KEY, Context.MODE_PRIVATE);
+        mReauthorizeHandler = new Handler(Looper.getMainLooper());
+        // We need to reset the lockdown timer every time SPA starts since we don't store the
+        // timestamp in preferences, because we can't trust System's current time.
+        startLockdownTimer();
     }
 
     //region Public interface
@@ -146,7 +160,7 @@ public class PasscodeManager {
      *
      * @return the timeout in seconds
      */
-    public int getTimeout() {
+    public int getReauthorizationTimeout() {
         return prefs.getInt(PREF_TIMEOUT, 0);
     }
 
@@ -159,7 +173,7 @@ public class PasscodeManager {
      * @see #canReauthorize()
      * @param timeout the timeout in seconds
      */
-    public void setTimeout(int timeout) {
+    public void setReauthorizationTimeout(int timeout) {
         prefs.edit().putInt(PREF_TIMEOUT, timeout).commit();
     }
 
@@ -167,36 +181,23 @@ public class PasscodeManager {
      * Should be called when an authorized user leaves the app, in order to measure the time
      * interval until he gets back into the app.
      *
+     * <p>The user is set as not authorised after this call but perhaps can be re-authorized.
+     *
      * <p>The call to {@link #canReauthorize()} will measure the time interval from this call.
+     *
      */
-    public void startTimeoutTimer() {
-        /*
-         * We actually don't start a timer, but just store the timestamp, which we'll compare with
-         * the timestamp of the moment the user enters the app.
-         */
+    public void startReauthorizationTimer() {
         if (!isUserAuthorized()) {
-            throw new RuntimeException("Can't reset the passcode timeout if not authorized.");
+            throw new RuntimeException("Can't start the reauthorization timer if not authorized.");
         }
-        mTimestampAuthorized = System.currentTimeMillis();
-    }
+        mIsAuthorised = false;
 
-    public void authorize(String passcode) {
-        if (!isPasscodeCorrect(passcode)) {
-            throw new RuntimeException("Tried to authorize with wrong passcode");
+        mReauthorizeHandler.removeCallbacks(mReauthorizeTimeoutRunnable);
+        long timeout = getReauthorizationTimeout() * 1000L;
+        if (timeout != 0) {
+            mCanBeReauthorized = true;
+            mReauthorizeHandler.postDelayed(mReauthorizeTimeoutRunnable, timeout);
         }
-        mTimestampAuthorized = 0;
-    }
-
-    //TODO: use a key from Android's keystore that is protected with fingerprint
-    public void authorizeFingerprint() {
-        if (!isFingerprintAllowed()) {
-            throw new RuntimeException("Can't use fingerprint now due to lockdown");
-        }
-        mTimestampAuthorized = 0;
-    }
-
-    public void deAuthorize() {
-        mTimestampAuthorized = -1;
     }
 
     /**
@@ -205,41 +206,62 @@ public class PasscodeManager {
      * @return true if he is authorized, false otherwise
      */
     public boolean isUserAuthorized() {
-        if (mTimestampAuthorized == 0) {
-            return true;
-        }
-        return false;
+        return mIsAuthorised;
     }
 
     /**
      * Checks if the user can be re-authorized. This should be called when the user gets to the app
      * from the background.
      *
-     * <p>If the method returns true, you can call {@link #reAuthorize()}. Otherwise the passlock
+     * <p>If the method returns true, you can call {@link #reAuthorize()}. Otherwise the passcode
      * must be displayed to authorize the user.
      *
-     * <p>The method compares the time interval since an authorized user left the app until he returned
-     * to it, against the maximum allowed interval from {@link #getTimeout()}. If the user returned in
-     * the allowed timeout interval, the method returns 'true'.
+     * <p>The method compares the time interval since {@link #startReauthorizationTimer() was called},
+     * against the maximum allowed interval from {@link #getReauthorizationTimeout()}. If it is called inside the
+     * allowed timeout interval, the method returns 'true'.
      *
      * @return true if the user can be re-authorized
      */
     public boolean canReauthorize() {
-        long now = System.currentTimeMillis();
-        if (mTimestampAuthorized <= 0) {
-            return false;
-        }
-        if (now - mTimestampAuthorized < getTimeout() * 1000L ) {
-            return true;
-        }
-        return false;
+        return mCanBeReauthorized;
     }
 
+    /**
+     * Reauthorizes the user if {@link #canReauthorize()} returns 'true'.
+     */
     public void reAuthorize() {
-        if (mTimestampAuthorized <= 0) {
+        if (!mCanBeReauthorized) {
             throw new RuntimeException("Can't re-authorize at this state.");
         }
-        mTimestampAuthorized = 0;
+        mReauthorizeHandler.removeCallbacks(mReauthorizeTimeoutRunnable);
+        mCanBeReauthorized = false;
+        mIsAuthorised = true;
+    }
+
+    public void authorize(String passcode) {
+        if (getRemainingLockDownTime() != 0) {
+            throw new RuntimeException("Can't authorize now due to lockdown");
+        }
+        if (!isPasscodeCorrect(passcode)) {
+            throw new RuntimeException("Tried to authorize with wrong passcode");
+        }
+        mIsAuthorised = true;
+
+        mTimestampLocked = 0;
+    }
+
+    //TODO: use a key from Android's keystore that is protected with fingerprint
+    public void authorizeFingerprint() {
+        if (!isFingerprintAllowed()) {
+            throw new RuntimeException("Can't use fingerprint now due to lockdown");
+        }
+        mIsAuthorised = true;
+
+        mTimestampLocked = 0;
+    }
+
+    public void deAuthorize() {
+        mIsAuthorised = false;
     }
 
     /**
@@ -347,18 +369,9 @@ public class PasscodeManager {
     public int startLockdownTimer() {
         int timeInterval = getLockdownTimeInterval();
         if (timeInterval != 0) {
-            prefs.edit().putLong(PREF_TIMESTAMP_LOCKED, System.currentTimeMillis()).commit();
+            mTimestampLocked = SystemClock.uptimeMillis();
         }
         return timeInterval;
-    }
-
-    /**
-     * Resets the lockdown timer.
-     *
-     * <p>Must be called after a successful entry of the passcode.
-     */
-    public void resetLockdownTimer() {
-        prefs.edit().putLong(PREF_TIMESTAMP_LOCKED, 0).commit();
     }
 
     /**
@@ -374,13 +387,15 @@ public class PasscodeManager {
      * @return seconds left until SP can be unlocked
      */
     public long getRemainingLockDownTime() {
-        long timestamp = prefs.getLong(PREF_TIMESTAMP_LOCKED, 0);
-        if (timestamp == 0) {
+        if (mTimestampLocked == 0) {
             return 0;
         }
-        long timePassed = (System.currentTimeMillis() - timestamp) / 1000; // ms to sec
+        long timePassed = (SystemClock.uptimeMillis() - mTimestampLocked) / 1000; // ms to sec
         long remaining = getLockdownTimeInterval() - timePassed;
-        if (remaining < 0) remaining = 0;
+        if (remaining < 0) {
+            mTimestampLocked = 0;
+            remaining = 0;
+        }
         return remaining;
     }
 

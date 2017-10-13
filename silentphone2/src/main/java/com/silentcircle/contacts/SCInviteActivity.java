@@ -43,12 +43,16 @@ import android.telephony.SmsManager;
 import android.text.TextUtils;
 import android.widget.Toast;
 
+import com.silentcircle.logs.Log;
+import com.silentcircle.silentphone2.BuildConfig;
 import com.silentcircle.silentphone2.R;
 import com.silentcircle.userinfo.LoadUserInfo;
 
 import java.util.ArrayList;
 
 public class SCInviteActivity extends Activity {
+    private static final String TAG = SCInviteActivity.class.getSimpleName();
+
     final int REQUEST_PHONE_CODE = 0;
     final int REQUEST_EMAIL_CODE = 1;
     public static final String INVITE_PHONE_NUMBER = "invite_phone_number";
@@ -72,13 +76,26 @@ public class SCInviteActivity extends Activity {
         // did we get passed a contact uri ?
         Uri data = getIntent().getData();
         if (data != null) {
-            Cursor cursor = getContentResolver().query(data, null, null, null, null);
-            if (cursor != null) {
-                if (cursor.moveToFirst()) {
-                    contactId = cursor.getString(cursor.getColumnIndex("contact_id"));
-                    contactName = cursor.getString(cursor.getColumnIndex("display_name"));
+            Cursor cursor = null;
+            try {
+                cursor = getContentResolver().query(data, null, null, null, null);
+            } catch (Exception ignore) {
+                // Ignore exceptions such as CursorWindowAllocationException which occurs intermittently
+                // We should not expect a crash here
+                Log.e(TAG, "Ignoring an exception: " + ignore +
+                        ((BuildConfig.DEBUG) ? ", onCreate - uri: " + data : ""));
+            }
+            try {
+                if (cursor != null) {
+                    if (cursor.moveToFirst()) {
+                        contactId = cursor.getString(cursor.getColumnIndex("contact_id"));
+                        contactName = cursor.getString(cursor.getColumnIndex("display_name"));
+                    }
                 }
-                cursor.close();
+            } finally {
+                if (cursor != null && !cursor.isClosed()) {
+                    cursor.close();
+                }
             }
         }
 
@@ -145,17 +162,30 @@ public class SCInviteActivity extends Activity {
                             ContactsContract.CommonDataKinds.Phone.NUMBER,
                             ContactsContract.Contacts.DISPLAY_NAME
                     };
-                    Cursor cursor = getContentResolver().query(contactUri, projection,
-                            null, null, null);
-                    // If the cursor returned is valid, get the phone number
-                    if (cursor != null) {
-                        if (cursor.moveToFirst()) {
-                            String phoneNumber = cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
-                            contactName = cursor.getString(cursor.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME));
-                            // send invite via sms
-                            openSendInviteSMS(phoneNumber);
+                    Cursor cursor = null;
+                    try {
+                        cursor = getContentResolver().query(contactUri, projection,
+                                null, null, null);
+                    } catch (Exception ignore) {
+                        // Ignore exceptions such as CursorWindowAllocationException which occurs intermittently
+                        // We should not expect a crash here
+                        Log.e(TAG, "Ignoring an exception: " + ignore +
+                                ((BuildConfig.DEBUG) ? ", onActivityResult - uri: " + contactUri : ""));
+                    }
+                    try {
+                        // If the cursor returned is valid, get the phone number
+                        if (cursor != null) {
+                            if (cursor.moveToFirst()) {
+                                String phoneNumber = cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
+                                contactName = cursor.getString(cursor.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME));
+                                // send invite via sms
+                                openSendInviteSMS(phoneNumber);
+                            }
                         }
-                        cursor.close();
+                    } finally {
+                        if (cursor != null && !cursor.isClosed()) {
+                            cursor.close();
+                        }
                     }
                 } else { finish(); }
                 break;
@@ -167,17 +197,30 @@ public class SCInviteActivity extends Activity {
                             ContactsContract.CommonDataKinds.Phone.NUMBER,
                             ContactsContract.Contacts.DISPLAY_NAME
                     };
-                    Cursor cursor = getContentResolver().query(contactUri, projection,
-                            null, null, null);
-                    // If the cursor returned is valid, get the phone number
-                    if (cursor != null) {
-                        if (cursor.moveToFirst()) {
-                            String email = cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
-                            contactName = cursor.getString(cursor.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME));
-                            // send invite via email
-                            sendInviteEmail(email);
+                    Cursor cursor = null;
+                    try {
+                        cursor = getContentResolver().query(contactUri, projection,
+                                null, null, null);
+                    } catch (Exception ignore) {
+                        // Ignore exceptions such as CursorWindowAllocationException which occurs intermittently
+                        // We should not expect a crash here
+                        Log.e(TAG, "Ignoring an exception: " + ignore +
+                                ((BuildConfig.DEBUG) ? ", onActivityResult - uri: " + contactUri : ""));
+                    }
+                    try {
+                        // If the cursor returned is valid, get the phone number
+                        if (cursor != null) {
+                            if (cursor.moveToFirst()) {
+                                String email = cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
+                                contactName = cursor.getString(cursor.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME));
+                                // send invite via email
+                                sendInviteEmail(email);
+                            }
                         }
-                        cursor.close();
+                    } finally {
+                        if (cursor != null && !cursor.isClosed()) {
+                            cursor.close();
+                        }
                     }
                 } else { finish(); }
                 break;
@@ -197,22 +240,34 @@ public class SCInviteActivity extends Activity {
                 ContactsContract.CommonDataKinds.Phone.NUMBER
         };
 
-        Cursor curPhone = getContentResolver().query(uri, projection, selection, selectionArgs, null);
+        Cursor curPhone = null;
+        try {
+            curPhone = getContentResolver().query(uri, projection, selection, selectionArgs, null);
+        } catch (Exception ignore) {
+            // Ignore exceptions such as CursorWindowAllocationException which occurs intermittently
+            // We should not expect a crash here
+            Log.e(TAG, "Ignoring an exception: " + ignore +
+                    ((BuildConfig.DEBUG) ? ", pickContact - uri: " + uri + ", selection: " + selection : ""));
+        }
+        try {
+            if (curPhone != null) {
+                int indexNumber = curPhone.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER);
+                int indexName = curPhone.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME);
+                String number;
 
-        if (curPhone != null) {
-            int indexNumber = curPhone.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER);
-            int indexName = curPhone.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME);
-            String number;
-
-            if (curPhone.moveToFirst()) {
-                contactName = curPhone.getString(indexName);
-                for (int b = 0; b < curPhone.getCount(); b++) {
-                    number = curPhone.getString(indexNumber);
-                    if (!TextUtils.isEmpty(number))
-                        arrayPhoneEmail.add(number);
+                if (curPhone.moveToFirst()) {
+                    contactName = curPhone.getString(indexName);
+                    for (int b = 0; b < curPhone.getCount(); b++) {
+                        number = curPhone.getString(indexNumber);
+                        if (!TextUtils.isEmpty(number))
+                            arrayPhoneEmail.add(number);
+                    }
                 }
             }
-            curPhone.close();
+        } finally {
+            if (curPhone != null && !curPhone.isClosed()) {
+                curPhone.close();
+            }
         }
         uri = ContactsContract.CommonDataKinds.Email.CONTENT_URI;
         selection = ContactsContract.CommonDataKinds.StructuredName.CONTACT_ID + " = ?";
@@ -221,21 +276,34 @@ public class SCInviteActivity extends Activity {
                 ContactsContract.Contacts.DISPLAY_NAME,
                 ContactsContract.CommonDataKinds.Email.ADDRESS};
 
-        Cursor curEmail = getContentResolver().query(uri, projection, selection, selectionArgs, null);
-        if (curEmail != null) {
-            int indexAddress = curEmail.getColumnIndex(ContactsContract.CommonDataKinds.Email.ADDRESS);
-            int indexName = curEmail.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME);
+        Cursor curEmail = null;
+        try {
+            curEmail = getContentResolver().query(uri, projection, selection, selectionArgs, null);
+        } catch (Exception ignore) {
+            // Ignore exceptions such as CursorWindowAllocationException which occurs intermittently
+            // We should not expect a crash here
+            Log.e(TAG, "Ignoring an exception: " + ignore +
+                    ((BuildConfig.DEBUG) ? ", pickContact - uri: " + uri + ", selection: " + selection : ""));
+        }
+        try {
+            if (curEmail != null) {
+                int indexAddress = curEmail.getColumnIndex(ContactsContract.CommonDataKinds.Email.ADDRESS);
+                int indexName = curEmail.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME);
 
-            String email;
-            if (curEmail.moveToFirst()) {
-                contactName = curEmail.getString(indexName);
-                for (int b = 0; b < curEmail.getCount(); b++) {
-                    email = curEmail.getString(indexAddress);
-                    if (!TextUtils.isEmpty(email))
-                        arrayPhoneEmail.add(email);
+                String email;
+                if (curEmail.moveToFirst()) {
+                    contactName = curEmail.getString(indexName);
+                    for (int b = 0; b < curEmail.getCount(); b++) {
+                        email = curEmail.getString(indexAddress);
+                        if (!TextUtils.isEmpty(email))
+                            arrayPhoneEmail.add(email);
+                    }
                 }
             }
-            curEmail.close();
+        } finally {
+            if (curEmail != null && !curEmail.isClosed()) {
+                curEmail.close();
+            }
         }
 
         DialogInterface.OnClickListener selectItemListener = new DialogInterface.OnClickListener()

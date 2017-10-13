@@ -13,7 +13,7 @@
     android:layout_height="wrap_content"
     android:background="?attr/sp_activity_secondary_background_color"
     android:orientation="vertical"
-    tools:context=".activities.DialerActivity">
+    tools:context=".activities.DialerActivityInternal">
 
     <LinearLayout
         android:id="@+id/dial_drawer_number"

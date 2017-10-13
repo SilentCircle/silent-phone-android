@@ -3038,6 +3038,7 @@ static string  createUserInfoJson(shared_ptr<UserInfo> userInfo)
     cJSON_AddStringToObject(root, "lookup_uri", userInfo->contactLookupUri.c_str());
     cJSON_AddStringToObject(root, "avatar_url", userInfo->avatarUrl.c_str());
     cJSON_AddStringToObject(root, "display_organization", userInfo->organization.c_str());
+    cJSON_AddBoolToObject(root, "same_organization", userInfo->inSameOrganization);
     cJSON_AddStringToObject(root, RETENTION_ORG, userInfo->retainForOrg.c_str());
     cJSON_AddBoolToObject(root, "dr_enabled", userInfo->drEnabled);
 

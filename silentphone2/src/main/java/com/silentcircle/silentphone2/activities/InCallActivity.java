@@ -76,7 +76,6 @@ import com.silentcircle.common.util.AsyncTasks;
 import com.silentcircle.common.util.ExplainPermissionDialog;
 import com.silentcircle.common.util.ViewUtil;
 import com.silentcircle.logs.Log;
-import com.silentcircle.messaging.activities.ConversationActivity;
 import com.silentcircle.messaging.util.AsyncUtils;
 import com.silentcircle.messaging.util.MessagingPreferences;
 import com.silentcircle.silentphone2.R;
@@ -859,9 +858,9 @@ public class InCallActivity extends AppLifecycleNotifierBaseActivity
             TiviPhoneService.doCmd("*h" + call.iCallId);
         }
 
-        Intent intent = new Intent(this, DialerActivity.class);
+        Intent intent = new Intent(this, DialerActivityInternal.class);
         intent.setAction(ADD_CALL_ACTION);
-        intent.putExtra(DialerActivity.EXTRA_FROM_CALL, true);
+        intent.putExtra(DialerActivityInternal.EXTRA_FROM_CALL, true);
         startActivityForResult(intent, ADD_CALL_ACTIVITY);
         invalidateOptionsMenu();
     }
@@ -908,6 +907,10 @@ public class InCallActivity extends AppLifecycleNotifierBaseActivity
     }
 
     public void hideCallManagerCb() {
+        // It can happen when this is called from a different thread
+        if (mDestroyed) {
+            return;
+        }
         if (isCallManagerShown()) {
             FragmentTransaction ft = getFragmentManager().beginTransaction();
             ft.hide(mCallManagerFragment).show(mInCallMain).commitAllowingStateLoss();
@@ -915,6 +918,8 @@ public class InCallActivity extends AppLifecycleNotifierBaseActivity
             getFragmentManager().executePendingTransactions();
         }
         invalidateOptionsMenu();
+        mInCallMain.refreshSecurityFields(TiviPhoneService.calls.selectedCall);
+        mInCallMain.refreshScreen();
     }
 
     public void activeCallChangedCb(CallState oldCall, CallState newCall, boolean endOldCall) {
@@ -927,6 +932,7 @@ public class InCallActivity extends AppLifecycleNotifierBaseActivity
         if (mInCallMain != null && newCall != null) {
             mInCallMain.showCall(newCall);
             mInCallMain.refreshSecurityFields(newCall);
+            mInCallMain.refreshScreen();
         }
     }
 
@@ -1078,8 +1084,8 @@ public class InCallActivity extends AppLifecycleNotifierBaseActivity
         actionBar.setDisplayHomeAsUpEnabled(true);
         ((TextView)mToolbar.findViewById(R.id.title)).setText(getString(R.string.app_name));
 
-        if (!TextUtils.isEmpty(DialerActivity.mDisplayName)) {
-            ((TextView)mToolbar.findViewById(R.id.sub_title)).setText(DialerActivity.mDisplayName);
+        if (!TextUtils.isEmpty(DialerActivityInternal.mDisplayName)) {
+            ((TextView)mToolbar.findViewById(R.id.sub_title)).setText(DialerActivityInternal.mDisplayName);
             Utilities.setSubtitleColor(this, mToolbar);
         }
     }
@@ -1504,7 +1510,9 @@ public class InCallActivity extends AppLifecycleNotifierBaseActivity
                         }
                     }
                 }
-                mPhoneService.bluetoothHeadset(false);
+                if (mPhoneService != null) {
+                    mPhoneService.bluetoothHeadset(false);
+                }
                 InCallActivity.this.finish();
                 mSaveForRestart = null;
                 if (mMonitorStopLatch != null) {
@@ -1725,7 +1733,7 @@ public class InCallActivity extends AppLifecycleNotifierBaseActivity
             if (call == null)       // This may happen in case of eError, PhoneService handles this
                 return;
             String sipMessage = call.bufMsg.toString();
-            if (!DialerActivity.mAutoAnswerForTesting &&
+            if (!DialerActivityInternal.mAutoAnswerForTesting &&
                     !TextUtils.isEmpty(sipMessage) && sipMessage.startsWith(TiviPhoneService.ERROR_MSG_PREFIX)) {
                 sipMessage = sipMessage.substring(TiviPhoneService.ERROR_MSG_PREFIX.length(), sipMessage.length());
                 call.bufMsg.reset();

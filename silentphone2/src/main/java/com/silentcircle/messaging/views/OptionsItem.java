@@ -30,6 +30,7 @@ package com.silentcircle.messaging.views;
 import android.content.Context;
 import android.content.res.ColorStateList;
 import android.content.res.TypedArray;
+import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.text.TextUtils;
 import android.text.util.Linkify;
@@ -53,7 +54,10 @@ import com.silentcircle.silentphone2.R;
  */
 public class OptionsItem extends RelativeLayout implements Checkable {
 
-    private static final int[] ATTRIBUTES = {android.R.attr.textColor,
+    private static final int[] ATTRIBUTES = {
+            android.R.attr.textStyle,
+            android.R.attr.textAppearance,
+            android.R.attr.textColor,
             android.R.attr.text};
 
     private TextView mItemText;
@@ -79,7 +83,12 @@ public class OptionsItem extends RelativeLayout implements Checkable {
     private int mDescriptionMarginLeft;
     private int mDescriptionMarginRight;
     private int mTextSize;
+    private int mTextStyleIndex = Typeface.BOLD;
+    private int mTextAppearance;
     private int mDescriptionSize;
+    private int mDescriptionStyleIndex = Typeface.NORMAL;
+    private int mDescriptionAppearance;
+
     private boolean mTrackingGesture;
 
     private boolean mChecked;
@@ -111,8 +120,10 @@ public class OptionsItem extends RelativeLayout implements Checkable {
         super(context, attrs, defStyle);
 
         TypedArray typedArray = context.obtainStyledAttributes(attrs, ATTRIBUTES);
-        mTextColor = typedArray.getColorStateList(0);
-        mText = typedArray.getText(1);
+        mTextStyleIndex = typedArray.getInt(0, Typeface.NORMAL);
+        mTextAppearance = typedArray.getResourceId(1, 0);
+        mTextColor = typedArray.getColorStateList(2);
+        mText = typedArray.getText(3);
         typedArray.recycle();
 
         typedArray = context.obtainStyledAttributes(attrs,
@@ -131,6 +142,8 @@ public class OptionsItem extends RelativeLayout implements Checkable {
         mDescriptionMarginTop = typedArray.getDimensionPixelSize(R.styleable.OptionsItem_descriptionMarginTop, 0);
         mDescriptionMarginLeft = typedArray.getDimensionPixelSize(R.styleable.OptionsItem_descriptionMarginLeft, 0);
         mDescriptionMarginRight = typedArray.getDimensionPixelSize(R.styleable.OptionsItem_descriptionMarginRight, 0);
+        mDescriptionStyleIndex = typedArray.getInt(R.styleable.OptionsItem_descriptionStyle, Typeface.NORMAL);
+        mDescriptionAppearance = typedArray.getResourceId(R.styleable.OptionsItem_descriptionAppearance, 0);
         mTextSize = typedArray.getDimensionPixelSize(R.styleable.OptionsItem_textSize, 0);
         mDescriptionSize = typedArray.getDimensionPixelSize(R.styleable.OptionsItem_descriptionSize, 0);
         mDescriptionColor = typedArray.getColorStateList(R.styleable.OptionsItem_descriptionColor);
@@ -170,7 +183,16 @@ public class OptionsItem extends RelativeLayout implements Checkable {
         setText(mText);
         setDescription(mDescription);
 
+        if (mTextAppearance != 0) {
+            mItemText.setTextAppearance(getContext(), mTextAppearance);
+        }
+        mItemText.setTypeface(mItemText.getTypeface(), mTextStyleIndex);
         mItemText.setTextSize(TypedValue.COMPLEX_UNIT_PX, mTextSize);
+
+        if (mDescriptionAppearance != 0) {
+            mItemDescription.setTextAppearance(getContext(), mDescriptionAppearance);
+        }
+        mItemDescription.setTypeface(mItemDescription.getTypeface(), mDescriptionStyleIndex);
         mItemDescription.setTextSize(TypedValue.COMPLEX_UNIT_PX, mDescriptionSize);
 
         LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) mImage.getLayoutParams();

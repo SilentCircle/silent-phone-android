@@ -357,7 +357,6 @@ public class PasscodeEnterActivity extends AppLifecycleNotifierBaseActivity
             case STATE_PASSCODE_VERIFY: {
                 if (mPasscodeManager.isPasscodeCorrect(passcode)) {
                     mPasscodeManager.resetFailedAttemptsCount();
-                    mPasscodeManager.resetLockdownTimer();
                     switch (mAction) {
                         case ACTION_PASSCODE_UNLOCK: {
                             mPasscodeManager.authorize(passcode);
@@ -436,7 +435,6 @@ public class PasscodeEnterActivity extends AppLifecycleNotifierBaseActivity
             return;
         }
         mPasscodeManager.resetFailedAttemptsCount();
-        mPasscodeManager.resetLockdownTimer();
         mPasscodeManager.authorizeFingerprint();
         callFinish();
     }

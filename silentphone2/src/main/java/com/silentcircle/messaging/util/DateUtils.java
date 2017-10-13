@@ -33,18 +33,17 @@ import android.os.Build;
 import android.support.annotation.NonNull;
 import android.text.format.DateFormat;
 
-import com.google.common.base.CharMatcher;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
+
 import com.silentcircle.silentphone2.R;
+
+import org.joda.time.DateTime;
+import org.joda.time.LocalDate;
+import org.joda.time.format.DateTimeFormat;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.TimeZone;
-import java.util.concurrent.TimeUnit;
 
 public class DateUtils {
 
@@ -74,28 +73,13 @@ public class DateUtils {
         return mSharedInstance;
     }
 
-    private final Context mContext;
-    private final Resources mResources;
     private final String mStringHeaderToday;
     private final String mStringHeaderYesterday;
-    private final LoadingCache<Long, CharSequence> mDateCache;
 
-    public DateUtils(Context context) {
-        mContext = context;
-        mResources = mContext.getResources();
-        mStringHeaderToday = mResources.getString(R.string.call_log_header_today);
-        mStringHeaderYesterday = mResources.getString(R.string.call_log_header_yesterday);
-
-        mDateCache = CacheBuilder.newBuilder()
-            .concurrencyLevel(2)
-                .maximumSize(10)
-                .expireAfterWrite(4, TimeUnit.SECONDS)
-                .build(
-                        new CacheLoader<Long, CharSequence>() {
-                            public CharSequence load(Long key) {
-                                return getMessageGroupDateInternal(key);
-                            }
-                        });
+    public DateUtils(final @NonNull Context context) {
+        Resources resources = context.getResources();
+        mStringHeaderToday = resources.getString(R.string.call_log_header_today);
+        mStringHeaderYesterday = resources.getString(R.string.call_log_header_yesterday);
     }
 
     public static CharSequence getRelativeTimeSpanString(Context context, long time) {
@@ -196,6 +180,37 @@ public class DateUtils {
         return resources.getQuantityString(R.plurals.short_time_seconds, s, s);
     }
 
+    public static String getTimeString(@NonNull Context context, long interval, boolean withFraction) {
+        Resources resources = context.getResources();
+        if (interval >= DAY) {
+            final int d = (int) (interval / DAY);
+            final int h = (int)((interval % DAY) / HOUR);
+            String dh = resources.getQuantityString(R.plurals.time_days, d, d);
+            if (withFraction && h > 0)
+                dh += " " + resources.getQuantityString(R.plurals.time_hours, h, h);
+            return dh;
+        }
+        if (interval >= HOUR) {
+            final int h = (int) (interval / HOUR);
+            final int m = (int)((interval % HOUR) / MINUTE);
+            String hm = resources.getQuantityString(R.plurals.time_hours, h, h);
+            if (withFraction && m > 0)
+                hm += " " + resources.getQuantityString(R.plurals.time_minutes, m, m);
+            return hm;
+        }
+        if (interval >= MINUTE) {
+            final int m = (int) (interval / MINUTE);
+            final int s = (int)((interval % MINUTE) / SECOND);
+            String ms = resources.getQuantityString(R.plurals.time_minutes, m, m);
+            if (withFraction && s > 0)
+                ms += " " + resources.getQuantityString(R.plurals.time_seconds, s, s);
+            return ms;
+        }
+
+        int s = interval >= SECOND ? (int) (interval / SECOND) : 0;
+        return resources.getQuantityString(R.plurals.short_time_seconds, s, s);
+    }
+
     public static String getISO8601Date( long value ) {
         Date date = new Date( value );
         return ISO8601.format(date);
@@ -218,31 +233,20 @@ public class DateUtils {
      * date and yesterday's date returns strings "Today", "Yesterday" respectively.
      */
     public CharSequence getMessageGroupDate(long time) {
-        return mDateCache.getUnchecked(time);
-    }
-
-    private CharSequence getMessageGroupDateInternal(long time) {
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTimeInMillis(time);
-        Calendar now = Calendar.getInstance();
+        LocalDate calendar = new LocalDate(time);
+        LocalDate now = LocalDate.now();
 
         CharSequence result;
-        if (now.get(Calendar.DATE) == calendar.get(Calendar.DATE)
-                && now.get(Calendar.MONTH) == calendar.get(Calendar.MONTH)
-                && now.get(Calendar.YEAR) == calendar.get(Calendar.YEAR)) {
+        if (calendar.equals(now)) {
             result = mStringHeaderToday;
-        } else if (now.get(Calendar.DATE) - calendar.get(Calendar.DATE) == 1
-                && now.get(Calendar.MONTH) == calendar.get(Calendar.MONTH)
-                && now.get(Calendar.YEAR) == calendar.get(Calendar.YEAR)) {
+        } else if (now.minusDays(1).equals(calendar)) {
             result = mStringHeaderYesterday;
         } else {
-            result = DateFormat.format(HEADER_DATE_FORMAT, calendar);
+            result = DateTimeFormat.forPattern(HEADER_DATE_FORMAT).print(new DateTime(time));
         }
 
         return result;
     }
-
-
 
     /**
      * Returns string representation of time as defined by {@link #MESSAGE_TIME_FORMAT}.

@@ -90,11 +90,12 @@ import com.silentcircle.messaging.views.OutgoingMessageEventView;
 import com.silentcircle.messaging.views.adapters.DateHeaderView;
 import com.silentcircle.messaging.views.adapters.FooterModelViewAdapter;
 import com.silentcircle.messaging.views.adapters.GroupingModelViewAdapter;
+import com.silentcircle.messaging.views.adapters.PinnedItemDecoration;
 import com.silentcircle.messaging.views.adapters.ModelViewAdapter;
 import com.silentcircle.messaging.views.adapters.ModelViewType;
 import com.silentcircle.messaging.views.adapters.ViewType;
 import com.silentcircle.silentphone2.R;
-import com.silentcircle.silentphone2.activities.DialerActivity;
+import com.silentcircle.silentphone2.activities.DialerActivityInternal;
 import com.silentcircle.silentphone2.util.Utilities;
 import com.silentcircle.userinfo.LoadUserInfo;
 import com.silentcircle.userinfo.UserInfo;
@@ -391,6 +392,7 @@ public class ChatFragment extends BaseFragment implements MultipleChoiceSelector
         mEventsView.setClickThroughListener(ClickthroughWhenNotInChoiceMode.getInstance());
         mEventsView.setMultiChoiceModeListener(new ChatFragmentMultipleChoiceSelector(this,
                 mAdapter, R.menu.multiselect_event, getString(R.string.n_selected)));
+        mEventsView.addItemDecoration(new PinnedItemDecoration(mAdapter));
 
         /*
         mEventsView.setItemViewCacheSize(2 * PAGE_SIZE_INITIAL);
@@ -469,6 +471,9 @@ public class ChatFragment extends BaseFragment implements MultipleChoiceSelector
             mEventsView.postInvalidate();
             mEventsView.removeOnScrollListener(mOnScrollListener);
         }
+
+        ContactPhotoManagerNew.getInstance(SilentPhoneApplication.getAppContext())
+                .clearRequestsForContext(getActivity());
     }
 
     @Override
@@ -570,8 +575,13 @@ public class ChatFragment extends BaseFragment implements MultipleChoiceSelector
                  * This should be done on background thread as the paging. Currently to
                  * avoid jumps in recycler view do it on main thread before any items are set
                  * in adapter.
+                 *
+                 * Loading too much events on main thread results in black screen when entering
+                 * a conversation.
+                 *
+                 * TODO show progress while loading first page of events
                  */
-                events = MessageUtils.filter(events, DialerActivity.mShowErrors);
+                events = MessageUtils.filter(events, DialerActivityInternal.mShowErrors);
                 if (events.size() < mPagingContext.getPageSize()) {
                     events = getPageEvents(repository, conversation, events, mPagingContext);
                 }
@@ -596,6 +606,12 @@ public class ChatFragment extends BaseFragment implements MultipleChoiceSelector
             setEvents(conversationId);
         }
         else {
+            if (mPagingContext.isEndReached()) {
+                if (DEBUG) {
+                    Log.d(TAG, "loadNextPage: already loaded everything");
+                }
+                return;
+            }
             if (mIsLoading.get()) {
                 if (DEBUG) {
                     Log.d(TAG, "loadNextPage: already loading");
@@ -656,7 +672,7 @@ public class ChatFragment extends BaseFragment implements MultipleChoiceSelector
                          */
                         final int eventsCount = mEventsLoadCache.size();
                         final List<Event> filteredEvents = MessageUtils.filter(mEventsLoadCache,
-                                DialerActivity.mShowErrors);
+                                DialerActivityInternal.mShowErrors);
 
                         if (DEBUG) {
                             Log.d(TAG, "loadNextPage: loading mFirstRun " + mFirstRun
@@ -666,17 +682,26 @@ public class ChatFragment extends BaseFragment implements MultipleChoiceSelector
                         mEventsView.post(new Runnable() {
                             @Override
                             public void run() {
-                                // do this in place so data set reference in adapter does not change
-                                mEvents.clear();
-                                mEvents.addAll(filteredEvents); // retainAll seems slower
-                                int filteredEventsCount = mEvents.size();
-                                int finalAddedEventCount = addedEventCount;
-                                if (filteredEventsCount != eventsCount) {
-                                    finalAddedEventCount -= eventsCount - filteredEventsCount;
+                                int initialItemCount = 0;
+                                long[] initialIdList = null;
+                                if (mAdapter.getModels() == mEvents) {
+                                    initialItemCount = mAdapter.getCount();
+                                    initialIdList = new long[initialItemCount];
+                                    for (int i = 0; i < initialItemCount; i ++) {
+                                        initialIdList[i] = mAdapter.getItemId(i);
+                                    }
                                 }
 
+                                // do this in place so data set reference in adapter does not chang
+                                mEvents.clear();
+                                mEvents.addAll(filteredEvents); // retainAll seems slower
+
                                 if (mAdapter.getModels() == mEvents) {
-                                    mAdapter.notifyItemRangeInserted(0, finalAddedEventCount);
+                                    mAdapter.refreshSections(mEvents);
+                                    int finalItemCount = mAdapter.getItemCount();
+                                    int addedItemCount = finalItemCount - initialItemCount;
+
+                                    mAdapter.notifyItemRangeInserted(0, addedItemCount);
                                     /*
                                      * There is need to update items as with loading new page and
                                      * sorting it is possible that event from new page has to be
@@ -684,8 +709,28 @@ public class ChatFragment extends BaseFragment implements MultipleChoiceSelector
                                      * Items in DB are stored as they arrive, not by date they
                                      * should be shown by.
                                      */
-                                    mAdapter.notifyItemRangeChanged(finalAddedEventCount + 1,
-                                            mEvents.size() - 1);
+                                    int oldestPositionChanged = -1;
+                                    for (int i = 0; i < initialItemCount; i++) {
+                                        // traverse items from older fetched to newer fetched
+                                        int positionBeforeUpdate = initialItemCount - i - 1;
+                                        int positionAfterUpdate = addedItemCount + positionBeforeUpdate;
+                                        if (initialIdList[positionBeforeUpdate] != mAdapter.getItemId(positionAfterUpdate)) {
+                                            oldestPositionChanged = positionAfterUpdate;
+                                            break;
+                                        }
+
+                                    }
+                                    if (oldestPositionChanged != -1) {
+                                        // refresh old items from the newest up to the oldest changed
+                                        int refreshItemsRange = oldestPositionChanged - (addedItemCount - 1);
+                                        if (refreshItemsRange == 1) {
+                                            mAdapter.notifyItemChanged(oldestPositionChanged);
+                                        }
+                                        else if (refreshItemsRange > 1) {
+                                            mAdapter.notifyItemRangeChanged(addedItemCount,
+                                                    refreshItemsRange);
+                                        }
+                                    }
                                 }
                                 else {
                                     // if adapter's data set is not mEvents then perform full update
@@ -738,7 +783,7 @@ public class ChatFragment extends BaseFragment implements MultipleChoiceSelector
                 }
             }
             if (events != null && events.size() > 0) {
-                List<Event> filteredEvents = MessageUtils.filter(events, DialerActivity.mShowErrors);
+                List<Event> filteredEvents = MessageUtils.filter(events, DialerActivityInternal.mShowErrors);
                 if (filteredEvents.size() >= pagingContext.getPageSize()) {
                     break;
                 }
@@ -751,7 +796,7 @@ public class ChatFragment extends BaseFragment implements MultipleChoiceSelector
     }
 
     public void setEvents(List<Event> events) {
-        mEvents = MessageUtils.filter(events, DialerActivity.mShowErrors);
+        mEvents = MessageUtils.filter(events, DialerActivityInternal.mShowErrors);
         if (mAdapter != null) {
             mAdapter.setIsGroupConversation(isGroupConversation());
             mAdapter.setModels(mEvents);
@@ -1102,7 +1147,9 @@ public class ChatFragment extends BaseFragment implements MultipleChoiceSelector
 //                }
 //            }
 //        }
-        markReceivedMessagesAsRead(mEvents);
+        if (mEvents != null) {
+            markReceivedMessagesAsRead(mEvents);
+        }
     }
 
     private void markReceivedMessagesAsRead(final @NonNull List<Event> events) {
@@ -1253,39 +1300,40 @@ public class ChatFragment extends BaseFragment implements MultipleChoiceSelector
         boolean isGroupConversation = isGroupConversation();
         ContactEntry contactEntry = ContactsCache.getContactEntryFromCacheIfExists(getConversationId());
         // default avatar which to use when contact has no image
-        int imageId = isGroupConversation ? R.drawable.ic_profile_group : R.drawable.ic_profile;
+        int imageResourceId = isGroupConversation ? R.drawable.ic_profile_group : R.drawable.ic_profile;
         // for group conversations show only default avatar
+        final Context context = SilentPhoneApplication.getAppContext();
+        final Resources resources = context.getResources();
         Uri photoUri = isGroupConversation ? null : contactEntry != null ? contactEntry.photoUri : null;
         if (photoUri != null) {
-            // do not resize avatar image, use what size is stored
             photoUri = photoUri.buildUpon()
                     .appendQueryParameter(AvatarProvider.PARAM_AVATAR_SIZE,
-                            String.valueOf(AvatarProvider.LOADED_AVATAR_SIZE))
+                            String.valueOf(resources.getDimension(R.dimen.messaging_empty_chat_avatar_width)))
                     .build();
         }
         int textId = isGroupConversation ? R.string.group_chat_view_empty : isTalkingToScUser()
                 ? R.string.chat_view_empty : R.string.phone_chat_view_empty;
-        configureEmptyListView(mEmptyListView, photoUri, textId, imageId, getResources());
+        configureEmptyListView(mEmptyListView, photoUri, textId, imageResourceId, resources);
     }
 
-    public static void configureEmptyListView(View emptyListView, Uri photoUri,
-            int strResId, int imageResId, Resources res) {
+    private void configureEmptyListView(View emptyListView, Uri photoUri,
+            int strResId, int imageResourceId, Resources resources) {
         QuickContactBadge emptyListViewImage =
                 (QuickContactBadge) emptyListView.findViewById(R.id.emptyListViewImage);
         emptyListViewImage.setEnabled(false);
 
         if (photoUri == null) {
-            emptyListViewImage.setImageResource(imageResId);
+            emptyListViewImage.setImageResource(imageResourceId);
         } else {
             ContactPhotoManagerNew photoManager =
-                    ContactPhotoManagerNew.createContactPhotoManager(SilentPhoneApplication.getAppContext());
+                    ContactPhotoManagerNew.getInstance(SilentPhoneApplication.getAppContext());
             AvatarUtils.setPhoto(photoManager, emptyListViewImage, 0, photoUri, null, "", null, 0, true);
         }
-        emptyListViewImage.setContentDescription(res.getString(strResId));
+        emptyListViewImage.setContentDescription(resources.getString(strResId));
 
         TextView emptyListViewMessage =
                 (TextView) emptyListView.findViewById(R.id.emptyListViewMessage);
-        emptyListViewMessage.setText(res.getString(strResId));
+        emptyListViewMessage.setText(resources.getString(strResId));
     }
 
 }

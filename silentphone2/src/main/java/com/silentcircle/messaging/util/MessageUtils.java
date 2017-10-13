@@ -100,7 +100,14 @@ import zina.JsonStrings;
 import zina.ZinaNative;
 
 import static com.silentcircle.messaging.model.MessageStates.messageStateToStringId;
+import static com.silentcircle.messaging.model.json.JSONEventAdapter.TAG_MESSAGE_METADATA;
+import static com.silentcircle.messaging.services.SCloudService.SCLOUD_METADATA_THUMBNAIL;
 import static zina.JsonStrings.ADD_MEMBERS;
+import static zina.JsonStrings.ATTRIBUTE_CALL_DURATION;
+import static zina.JsonStrings.ATTRIBUTE_CALL_ERROR;
+import static zina.JsonStrings.ATTRIBUTE_CALL_TYPE;
+import static zina.JsonStrings.ATTRIBUTE_READ_RECEIPT;
+import static zina.JsonStrings.ATTRIBUTE_SHRED_AFTER;
 import static zina.JsonStrings.DR_STATUS_BITS;
 import static zina.JsonStrings.HELLO;
 import static zina.JsonStrings.LEAVE;
@@ -152,11 +159,11 @@ public class MessageUtils {
             message.removeAttachment();
             JSONObject attributeJson = new JSONObject();
             if (shouldRequestDeliveryNotification) {
-                attributeJson.put("r", true);                         // "request_receipt"
+                attributeJson.put(ATTRIBUTE_READ_RECEIPT, true);
             }
 
             if (conversation.hasBurnNotice()) {
-                attributeJson.put("s", conversation.getBurnDelay());  // "shred_after"
+                attributeJson.put(ATTRIBUTE_SHRED_AFTER, conversation.getBurnDelay());
             }
 
             LocationUtils.locationToJSON(attributeJson, location);
@@ -166,10 +173,10 @@ public class MessageUtils {
             }
 
             if (callData != null) {
-                attributeJson.put("ct", callData.type);
-                attributeJson.put("cd", callData.duration);
+                attributeJson.put(ATTRIBUTE_CALL_TYPE, callData.type);
+                attributeJson.put(ATTRIBUTE_CALL_DURATION, callData.duration);
                 if (!TextUtils.isEmpty(callData.errorMessage)) {
-                    attributeJson.put("errorMessage", callData.errorMessage);
+                    attributeJson.put(ATTRIBUTE_CALL_ERROR, callData.errorMessage);
                 }
             }
 
@@ -210,11 +217,11 @@ public class MessageUtils {
             JSONObject attributeJson = new JSONObject();
 
             if (shouldRequestDeliveryNotification) {
-                attributeJson.put("r", true);       // "request_receipt"
+                attributeJson.put(ATTRIBUTE_READ_RECEIPT, true);
             }
 
             if (burnDelay != 0) {
-                attributeJson.put("s", burnDelay);  // "shred_after"
+                attributeJson.put(ATTRIBUTE_SHRED_AFTER, burnDelay);
             }
 
             LocationUtils.messageLocationToJSON(attributeJson, location);
@@ -419,9 +426,9 @@ public class MessageUtils {
     public static void parseAttributes(String attributes, Message msg) {
         try {
             JSONObject attributeJson = new JSONObject(attributes);
-            msg.setRequestReceipt(attributeJson.optBoolean("r", false));
-            if (attributeJson.has("s")) {
-                msg.setBurnNotice(attributeJson.getLong("s"));
+            msg.setRequestReceipt(attributeJson.optBoolean(ATTRIBUTE_READ_RECEIPT, false));
+            if (attributeJson.has(ATTRIBUTE_SHRED_AFTER)) {
+                msg.setBurnNotice(attributeJson.getLong(ATTRIBUTE_SHRED_AFTER));
                 msg.setRequestReceipt(true);
             }
             msg.setRetained(attributeJson.optInt(DR_STATUS_BITS, 0) != 0);
@@ -440,11 +447,11 @@ public class MessageUtils {
             }
 
             if (msg.isRequestReceipt()) {
-                attributeJson.put("r", true);
+                attributeJson.put(ATTRIBUTE_READ_RECEIPT, true);
             }
 
             if (msg.hasBurnNotice()) {
-                attributeJson.put("s", msg.getBurnNotice());
+                attributeJson.put(ATTRIBUTE_SHRED_AFTER, msg.getBurnNotice());
             }
 
             if (attributeJson.length() > 0) {
@@ -470,6 +477,7 @@ public class MessageUtils {
      *         Caller has to check whether necessary fields are set.
      */
     public static ErrorEvent parseErrorMessage(final ErrorEvent event, final String errorString) {
+        Log.d(TAG, "parseErrorMessage: Parsing error: " + errorString);
         /*
          * Function expects following JSON:
          * {"version":1,"details":{"name":"sender","scClientDevId":"deviceId","otherInfo":"info", "sentToId": "deviceId"}}
@@ -496,7 +504,7 @@ public class MessageUtils {
                 UUID uuid = UUID.fromString(messageId);
                 event.setTime(uuid.timestamp());
             }
-        } catch (JSONException exception) {
+        } catch (IllegalArgumentException | JSONException exception) {
             // failure to populate event fields, caller has to handle it
         }
         return event;
@@ -609,11 +617,17 @@ public class MessageUtils {
 
                 final EventRepository history = repository.historyOf(conversation);
 
+                int unreadMessageCount = 0;
                 for (String eventId : eventIds) {
                     ids[position++] = eventId;
                     Event event = MessageUtils.getEventById(conversationId, eventId);
                     if (event instanceof Message) {
                         Message message = (Message) event;
+                        if (message.getState() == MessageStates.RECEIVED) {
+                            unreadMessageCount++;
+                        }
+
+                        // TODO use ZinaMessaging#burnPacket (?)
                         deleteEvent(context, repository, conversation, message);
                     }
                     else {
@@ -621,6 +635,11 @@ public class MessageUtils {
                             history.remove(eventId);
                         }
                     }
+                }
+                if (unreadMessageCount > 0) {
+                    unreadMessageCount = Math.max(0, conversation.getUnreadMessageCount() - unreadMessageCount);
+                    conversation.setUnreadMessageCount(unreadMessageCount);
+                    repository.save(conversation);
                 }
 
                 notifyConversationUpdated(context, conversationId, false,
@@ -718,14 +737,29 @@ public class MessageUtils {
                         }
                     }
                     if (isGroup && burnableMessageIds.size() > 0) {
+                        /*
+                         * Workaround:
+                         *
+                         * When network is not available, Zina will accept
+                         * command successfully and notify about issue in group state change callback.
+                         * At that point it currently is not possible to tie which command or message
+                         * failed.
+                         *
+                         * Do not burn messages, if network is not available. Messages
+                         * will be marked as burned and burn request will be sent when network
+                         * is available again.
+                         */
+                        final boolean isNetworkAvailable = Utilities.isNetworkConnected(context);
                         int result = ZinaNative.burnGroupMessage(conversationId,
                                 burnableMessageIds.toArray(new String[burnableMessageIds.size()]));
                         if (result == MessageErrorCodes.SUCCESS || result == MessageErrorCodes.OK) {
                             result = ZinaMessaging.applyGroupChangeSet(conversationId);
                         }
-                        if (result != MessageErrorCodes.SUCCESS) {
+                        if (result != MessageErrorCodes.SUCCESS || !isNetworkAvailable) {
                             Log.w(TAG, "Could not burn group messages "
-                                    + ZinaMessaging.getErrorInfo()
+                                    + "network available: " + isNetworkAvailable
+                                    + ", " + result
+                                    + ", " + ZinaMessaging.getErrorInfo()
                                     + " (" + ZinaMessaging.getErrorCode() + ")");
                         }
                         else {
@@ -754,7 +788,7 @@ public class MessageUtils {
      *         IncomingMessage or OutgoingMessage.
      */
     @Nullable
-    public static String getConversationId(final Event message) {
+    public static String getConversationId(final @Nullable Event message) {
         String conversationId = null;
         if (message != null) {
             if (message instanceof OutgoingMessage) {
@@ -831,7 +865,7 @@ public class MessageUtils {
     }
 
     public static void notifyMessageReceived(final Context context, final String conversationId,
-            final String alias, boolean forceRefresh, final CharSequence... messageIds) {
+            final String alias, boolean forceRefresh, boolean mute, final CharSequence... messageIds) {
         if (messageIds == null || messageIds.length == 0) {
             return;
         }
@@ -843,6 +877,15 @@ public class MessageUtils {
         }
         Extra.FORCE.to(intent, forceRefresh);
         Extra.IDS.to(intent, messageIds);
+        if (mute) {
+            Extra.MUTE.to(intent, true);
+        }
+        MessagingBroadcastManager.getInstance(context).sendOrderedBroadcast(intent);
+    }
+
+    public static void notifyContactUpdated(final Context context, final String conversationId) {
+        final Intent intent = Action.REFRESH_CONTACT.intent();
+        Extra.PARTNER.to(intent, conversationId);
         MessagingBroadcastManager.getInstance(context).sendOrderedBroadcast(intent);
     }
 
@@ -886,14 +929,6 @@ public class MessageUtils {
             Extra.ID.to(cleanupIntent, message.getId());
             context.startService(cleanupIntent);
         }
-    }
-
-    public static boolean isBurnable(final Message message) {
-        int messageState = message.getState();
-        return (MessageStates.DELIVERED == messageState
-                || MessageStates.READ == messageState
-                || MessageStates.SENT_TO_SERVER == messageState
-                || MessageStates.SYNC == messageState);
     }
 
     public static void showPartnerInfoDialog(final Context context,
@@ -945,18 +980,18 @@ public class MessageUtils {
                 Log.d(TAG, "showEventInfoDialog: " + new String(data));
             }
         }
-        if (json.has("metaData")) {
+        if (json.has(TAG_MESSAGE_METADATA)) {
             JSONObject metaDataJson;
 
             try {
-                metaDataJson = new JSONObject(json.get("metaData").toString());
+                metaDataJson = new JSONObject(json.get(TAG_MESSAGE_METADATA).toString());
 
-                if (metaDataJson.has("preview")) {
-                    metaDataJson.remove("preview");
-                    metaDataJson.put("preview", "<removed>");
+                if (metaDataJson.has(SCLOUD_METADATA_THUMBNAIL)) {
+                    metaDataJson.remove(SCLOUD_METADATA_THUMBNAIL);
+                    metaDataJson.put(SCLOUD_METADATA_THUMBNAIL, "<removed>");
 
-                    json.remove("metaData");
-                    json.put("metaData", metaDataJson);
+                    json.remove(TAG_MESSAGE_METADATA);
+                    json.put(TAG_MESSAGE_METADATA, metaDataJson);
                 }
             } catch(JSONException ignore) {}
         }
@@ -993,7 +1028,10 @@ public class MessageUtils {
         Iterator<Event> iterator = events.iterator();
         while (iterator.hasNext()) {
             Event event = iterator.next();
-            if (event instanceof Message) {
+            if (event == null) {
+                iterator.remove();
+            }
+            else if (event instanceof Message) {
                 Message message = (Message) event;
                 switch (message.getState()) {
                     case MessageStates.BURNED:
@@ -1433,6 +1471,20 @@ public class MessageUtils {
             if (dpName != null) {
                 result = new String(dpName);
             }
+        }
+
+        return result;
+    }
+
+    @Nullable
+    public static CharSequence getDisplayNameFromCache(@Nullable final CharSequence uuid) {
+        if (TextUtils.isEmpty(uuid)) {
+            return uuid;
+        }
+        CharSequence result = uuid;
+        ContactEntry contactEntry = ContactsCache.getContactEntryFromCache(uuid.toString());
+        if (contactEntry != null && !TextUtils.isEmpty(contactEntry.name)) {
+            result = contactEntry.name;
         }
 
         return result;

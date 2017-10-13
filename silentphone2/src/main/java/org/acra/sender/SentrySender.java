@@ -66,6 +66,7 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
+import java.util.concurrent.Semaphore;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -157,6 +158,8 @@ public class SentrySender implements ReportSender {
     private final ACRAConfiguration mAcraConfig;
     private final Date mReportDate;
 
+    private static final Semaphore mSenderSemaphore = new Semaphore(1, true);
+
     /**
      * Send a report to Sentry with additional detailed information for an event.
      *
@@ -166,7 +169,7 @@ public class SentrySender implements ReportSender {
      * @param errorCode Code returned by Zina (for cases when event could not be send by Zina or
      *                  could not be processed by Zina, e.g., decryption issue).
      */
-    public static void sendMessageStateReport(final Event event, final int statusCode,
+    public static void sendMessageStateReport(final @NonNull Event event, final int statusCode,
             @MessageErrorCodes.MessageErrorCode final int errorCode) {
 
         if (!ACRA.isInitialised()) {
@@ -174,15 +177,25 @@ public class SentrySender implements ReportSender {
             return;
         }
 
-        final Exception exception = new Exception(MESSAGE_FAILED_CHAT_MESSAGE);
+        final Exception exception = new Exception(MESSAGE_FAILED_CHAT_MESSAGE
+                + " (" + statusCode + ", " + errorCode + ")");
 
         // try to run off of messaging thread
         AsyncUtils.execute(new Runnable() {
             @Override
             public void run() {
-                ErrorReporter reporter = null;
                 try {
-                    reporter = ACRA.getErrorReporter();
+                    report();
+                }
+                catch (InterruptedException | IllegalStateException e) {
+                    Log.w(TAG, "Could not send message state report.");
+                }
+            }
+
+            private void report() throws InterruptedException {
+                mSenderSemaphore.acquire();
+                try {
+                    ErrorReporter reporter = ACRA.getErrorReporter();
                     String messageId = (event instanceof ErrorEvent)
                             ? ((ErrorEvent) event).getMessageId()
                             : event.getId();
@@ -210,18 +223,20 @@ public class SentrySender implements ReportSender {
                         reporter.putCustomData(SentrySender.MESSAGE_JSON_INFO, json.toString());
                     }
                     reporter.handleException(exception, false);
-                } catch (Throwable t) {
-                    Log.d(TAG, "Could not send message state report.");
-                } finally {
                     // remove custom data we have possibly added
-                    if (reporter != null) {
+                    try {
                         reporter.removeCustomData(SentrySender.MESSAGE_TRACE_INFO);
                         reporter.removeCustomData(SentrySender.MESSAGE_JSON_INFO);
                         reporter.removeCustomData(SentrySender.MESSAGE_STATUS);
                         reporter.removeCustomData(SentrySender.MESSAGE_ERROR_CODE);
                         reporter.removeCustomData(SentrySender.MESSAGE_IDENTIFIER);
                         reporter.removeCustomData(SentrySender.MESSAGE_STATUS_CODE);
+                    } catch (Throwable t) {
+                        // ignore failure to remove custom field
+                        // crash here can be caused by acra internal issue
                     }
+                } finally {
+                    mSenderSemaphore.release();
                 }
             }
         });
@@ -344,7 +359,7 @@ public class SentrySender implements ReportSender {
             }
         }
         obj.put(TAG_SENTRY_MESSAGE, (message.contains(MESSAGE_FAILED_CHAT_MESSAGE)
-                ? MESSAGE_FAILED_CHAT_MESSAGE
+                ? message
                 : message + " " + placeOfException.trim()));
 
         /*

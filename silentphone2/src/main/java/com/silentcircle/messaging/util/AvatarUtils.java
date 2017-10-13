@@ -60,7 +60,6 @@ import com.silentcircle.messaging.repository.ConversationRepository;
 import com.silentcircle.messaging.services.ZinaMessaging;
 import com.silentcircle.silentphone2.BuildConfig;
 import com.silentcircle.silentphone2.R;
-import com.silentcircle.userinfo.LoadUserInfo;
 
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
@@ -108,8 +107,35 @@ public class AvatarUtils {
             String displayName, String identifier, int contactType, boolean circular) {
 
         quickContactView.assignContactUri(contactUri);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             quickContactView.setOverlay(null);
+        }
+        setPhoto(contactPhotoManager, quickContactView, photoId, photoUri, displayName, identifier, contactType, circular);
+    }
+
+    public static void setPhoto(ContactPhotoManagerNew contactPhotoManager,
+            ImageView quickContactView, ContactEntry contactEntry, boolean isCircular) {
+
+        int contactType = ContactPhotoManagerNew.TYPE_DEFAULT;
+
+        long photoId = 0;
+        Uri photoUri = null;
+        String displayName = null;
+        String lookupKey = null;
+        if (contactEntry != null) {
+            photoId = contactEntry.photoId;
+            photoUri = contactEntry.photoUri;
+            lookupKey = contactEntry.lookupKey;
+            displayName = contactEntry.name;
+        }
+
+        setPhoto(contactPhotoManager, quickContactView, photoId, photoUri, displayName,
+                lookupKey, contactType, isCircular);
+    }
+
+    private static void setPhoto(ContactPhotoManagerNew contactPhotoManager,
+            ImageView quickContactView, long photoId, Uri photoUri, String displayName,
+            String identifier, int contactType, boolean circular) {
         ContactPhotoManagerNew.DefaultImageRequest request =
                 new ContactPhotoManagerNew.DefaultImageRequest(displayName, identifier, contactType,
                         true /* isCircular */);
@@ -144,26 +170,25 @@ public class AvatarUtils {
         }
     }
 
-    public static Uri getAvatarProviderUri(String avatarUrl, String name) {
-        return getAvatarProviderUri(avatarUrl, name, AvatarProvider.UNKNOWN_AVATAR_SIZE, 0);
+    public static Uri getAvatarProviderUri(String name, String avatarUrl) {
+        return getAvatarProviderUri(name, avatarUrl, AvatarProvider.UNKNOWN_AVATAR_SIZE, 0);
     }
 
-    public static Uri getAvatarProviderUri(String avatarUrl, String name, int size, int defaultAvatarId) {
-        if (TextUtils.isEmpty(avatarUrl) || LoadUserInfo.URL_AVATAR_NOT_SET.equals(avatarUrl)) {
-            if (!TextUtils.isEmpty(name) && PhoneNumberUtils.isGlobalPhoneNumber(name.replaceAll("\\s",""))) {
-                /* use resource as default avatar for phone numbers, photo manager will cache */
-                return Uri.parse("android.resource://" + BuildConfig.APPLICATION_ID + "/"
-                        + R.drawable.ic_profile_device_red_120dp);
-            }
-            return null;
+    public static Uri getAvatarProviderUri(String name, String avatarUrl, int size, int defaultAvatarId) {
+        if (!TextUtils.isEmpty(name) && PhoneNumberUtils.isGlobalPhoneNumber(name.replaceAll("\\s",""))) {
+            /* use resource as default avatar for phone numbers, photo manager will cache it */
+            return Uri.parse("android.resource://" + BuildConfig.APPLICATION_ID + "/"
+                    + R.drawable.ic_profile_device_red_120dp);
         }
         /* add a default icon for phone numbers */
         try {
             Uri.Builder builder = AvatarProvider.CONTENT_URI
                     .buildUpon()
-                    .appendPath(name)
-                    .appendQueryParameter(AvatarProvider.PARAM_AVATAR_URL,
-                            URLEncoder.encode(avatarUrl, "UTF-8"));
+                    .appendPath(name);
+            if (!TextUtils.isEmpty(avatarUrl)) {
+                    builder.appendQueryParameter(AvatarProvider.PARAM_AVATAR_URL,
+                        URLEncoder.encode(avatarUrl, "UTF-8"));
+            }
             if (size != AvatarProvider.UNKNOWN_AVATAR_SIZE) {
                 builder.appendQueryParameter(AvatarProvider.PARAM_AVATAR_SIZE, String.valueOf(size));
             }
@@ -177,18 +202,13 @@ public class AvatarUtils {
         }
     }
 
-    public static Uri getAvatarProviderUriGroup(String avatarUrl, String name) {
+    public static Uri getAvatarProviderUriGroup(String name) {
         return AvatarProvider.CONTENT_URI
                 .buildUpon()
                 .appendPath(name)
                 .appendQueryParameter(AvatarProvider.PARAM_AVATAR_ID,
                         String.valueOf(R.drawable.ic_profile_group))
                 .build();
-    }
-
-    public static Uri getAvatarProviderUriGroup(String name, int placeholder) {
-        // do not resize avatar image, use what size is stored
-        return getAvatarProviderUriGroup(name, placeholder, AvatarProvider.LOADED_AVATAR_SIZE);
     }
 
     public static Uri getAvatarProviderUriGroup(String name, int placeholder, int size) {
@@ -230,7 +250,6 @@ public class AvatarUtils {
                     AvatarProvider.AVATAR_TYPE_GENERATED, bitmap);
         }
     }
-
 
     @Nullable
     public static byte[] getConversationAvatarAsByteArray(Context context, @NonNull Uri photoUri) {

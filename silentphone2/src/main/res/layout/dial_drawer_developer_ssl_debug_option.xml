@@ -16,7 +16,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginTop="@dimen/spacing_normal"
-    tools:context=".activities.DialerActivity">
+    tools:context=".activities.DialerActivityInternal">
 
     <TextView
         android:id="@+id/developer_ssl_debug_title"

@@ -58,7 +58,7 @@ import com.silentcircle.common.util.ExplainPermissionDialog;
 import com.silentcircle.keymanagersupport.KeyManagerSupport;
 import com.silentcircle.logs.Log;
 import com.silentcircle.silentphone2.R;
-import com.silentcircle.silentphone2.activities.DialerActivity;
+import com.silentcircle.silentphone2.activities.DialerActivityInternal;
 import com.silentcircle.silentphone2.activities.DialogHelperActivity;
 import com.silentcircle.silentphone2.activities.ProvisioningActivity;
 import com.silentcircle.silentphone2.services.TiviPhoneService;
@@ -158,10 +158,10 @@ public class AuthenticatorActivity extends AppCompatActivity implements ExplainP
     @Override
     public void explanationRead(final int token, final Bundle callerBundle) {
         switch (token) {
-            case DialerActivity.PERMISSIONS_REQUEST_READ_PHONE_STATE:
+            case DialerActivityInternal.PERMISSIONS_REQUEST_READ_PHONE_STATE:
                 ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_PHONE_STATE}, token);
                 break;
-            case DialerActivity.PERMISSIONS_REQUEST_EXIT:
+            case DialerActivityInternal.PERMISSIONS_REQUEST_EXIT:
                 finish();
                 break;
             default:
@@ -177,12 +177,12 @@ public class AuthenticatorActivity extends AppCompatActivity implements ExplainP
         }
 
         switch (requestCode) {
-            case DialerActivity.PERMISSIONS_REQUEST_READ_PHONE_STATE: {
+            case DialerActivityInternal.PERMISSIONS_REQUEST_READ_PHONE_STATE: {
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     onCreateAfterPermission();
                 }
                 else {
-                    ExplainPermissionDialog.showExplanation(this, DialerActivity.PERMISSIONS_REQUEST_EXIT,
+                    ExplainPermissionDialog.showExplanation(this, DialerActivityInternal.PERMISSIONS_REQUEST_EXIT,
                             getString(R.string.permission_main_not_granted_title),
                             getString(R.string.permission_main_not_granted_explanation),
                             null);
@@ -200,12 +200,12 @@ public class AuthenticatorActivity extends AppCompatActivity implements ExplainP
                 (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_PHONE_STATE) != PackageManager.PERMISSION_GRANTED)) {
 
             if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.READ_PHONE_STATE)) {
-                ExplainPermissionDialog.showExplanation(this, DialerActivity.PERMISSIONS_REQUEST_READ_PHONE_STATE,
+                ExplainPermissionDialog.showExplanation(this, DialerActivityInternal.PERMISSIONS_REQUEST_READ_PHONE_STATE,
                         getString(R.string.permission_phone_title), getString(R.string.permission_phone_explanation), null);
             }
             else {
                 ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_PHONE_STATE},
-                        DialerActivity.PERMISSIONS_REQUEST_READ_PHONE_STATE);
+                        DialerActivityInternal.PERMISSIONS_REQUEST_READ_PHONE_STATE);
             }
         }
         else {

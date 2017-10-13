@@ -27,6 +27,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 package com.silentcircle.messaging.model;
 
+import android.support.annotation.Nullable;
 import android.text.TextUtils;
 
 import com.silentcircle.messaging.util.IOUtils;
@@ -56,7 +57,7 @@ public class Contact extends Burnable {
     protected boolean isValidated;
     protected boolean isGroup;
 
-    protected List<Device> devices = new ArrayList<>();
+    protected List<Device> devices;
 
     public Contact(byte[] userId) {
         this.userId = userId;
@@ -74,7 +75,7 @@ public class Contact extends Burnable {
         removeDisplayName();
         isValidated = false;
         isGroup = false;
-        devices.clear();
+        devices = null;
     }
 
     @Override
@@ -183,8 +184,9 @@ public class Contact extends Burnable {
         isGroup = group;
     }
 
+    @Nullable
     public List<Device> getDeviceInfo() {
-        return new ArrayList<>(devices);
+        return devices == null ? null : new ArrayList<>(devices);
     }
 
     public void addDeviceInfo(String name, String deviceId, String identityKey,
@@ -192,11 +194,21 @@ public class Contact extends Burnable {
         addDeviceInfo(new Device(name, deviceId, identityKey, zrtpVerificationStatus));
     }
 
+    public void setDeviceInfos(List<Device> devices) {
+        this.devices = devices;
+    }
+
     public void addDeviceInfo(Device device) {
+        if (devices == null) {
+            devices = new ArrayList<>();
+        }
         devices.add(device);
     }
 
     public void removeDeviceInfo(String deviceId) {
+        if (devices == null) {
+            return;
+        }
         Iterator<Device> iterator = devices.iterator();
         while (iterator.hasNext()) {
             Device device = iterator.next();
@@ -208,6 +220,9 @@ public class Contact extends Burnable {
 
     public void updateDeviceInfo(String name, String deviceId, String identityKey,
             String zrtpVerificationStatus) {
+        if (devices == null) {
+            return;
+        }
         for (Device device : devices) {
             if (device != null && TextUtils.equals(device.getDeviceId(), deviceId)) {
                 device.setName(name);
@@ -218,6 +233,9 @@ public class Contact extends Burnable {
     }
 
     public boolean hasDevice(String deviceId) {
+        if (devices == null) {
+            return false;
+        }
         boolean result = false;
         for (Device device : devices) {
             if (device != null && TextUtils.equals(device.getDeviceId(), deviceId)) {
@@ -229,7 +247,11 @@ public class Contact extends Burnable {
     }
 
     // A small help to just get the size, avoids getDeviceInfo().size()
+    /**
+     * @return -1 if contact has not had any device infos till now, 0 if contact has no known
+     *            devices, but has had them in the past, otherwise number of known devices.
+     */
     public int numDeviceInfos() {
-        return devices.size();
+        return devices == null ? -1 : devices.size();
     }
 }

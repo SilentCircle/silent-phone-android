@@ -46,7 +46,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Base for message event views, provides implementation for burn notice updates.
  */
-public abstract class BaseMessageEventView extends CheckableRelativeLayout implements Updatable, HasChoiceMode {
+public abstract class BaseMessageEventView extends CheckableConstraintLayout implements Updatable, HasChoiceMode {
 
     protected final Updater mUpdater;
     private boolean mInChoiceMode;

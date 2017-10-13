@@ -189,6 +189,7 @@ static float pixel_ssim_wxh(unsigned char *pix1, int stride1,
     return ssim/(float)d;
 }
 
+/* EA: unused function
 static void ssim_axb_core( const unsigned char *pix1, int stride1,
                              const unsigned char *pix2, int stride2,
                              int sums[4], int aa, int bb)
@@ -212,7 +213,6 @@ static void ssim_axb_core( const unsigned char *pix1, int stride1,
    sums[3] = s12;
 }
 
-/* EA: unused function
 static float pixel_ssim_x(unsigned char *pix1, int stride1,
                            unsigned char *pix2, int stride2, int iIs16x16)
 {

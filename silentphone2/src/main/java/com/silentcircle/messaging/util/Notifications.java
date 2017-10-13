@@ -40,14 +40,17 @@ import android.os.Build;
 import android.os.SystemClock;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.text.TextUtils;
 import android.view.View;
 
+import com.silentcircle.contacts.ContactsUtils;
 import com.silentcircle.logs.Log;
+import com.silentcircle.messaging.model.Conversation;
 import com.silentcircle.messaging.model.event.CallMessage;
 import com.silentcircle.messaging.model.event.IncomingMessage;
 import com.silentcircle.messaging.model.event.Message;
 import com.silentcircle.silentphone2.R;
-import com.silentcircle.silentphone2.activities.DialerActivity;
+import com.silentcircle.silentphone2.activities.DialerActivityInternal;
 import com.silentcircle.silentphone2.services.TiviPhoneService;
 import com.silentcircle.silentphone2.util.ConfigurationUtilities;
 
@@ -79,22 +82,27 @@ public final class Notifications {
     /*
      * Show a notification with chat message content
      */
-    public static void sendMessageNotification(Context context, Intent messagingIntent) {
+    public static void sendMessageNotification(@NonNull final Context context,
+            @Nullable final Intent messagingIntent, @Nullable final CharSequence conversationId) {
 
-        int conversationsWithUnreadMessages = ConversationUtils.getConversationsWithUnreadMessages();
-        int conversationsWithUnreadCallMessages = ConversationUtils.getConversationsWithUnreadCallMessages();
-        int groupConversationsWithUnreadMessages = ConversationUtils.getGroupConversationsWithUnreadMessages();
+        ConversationUtils.UnreadMessageStats stats = ConversationUtils.getUnreadMessageStats(conversationId);
+        int conversationsWithUnreadMessages = stats.conversationsWithUnreadMessages;
+        int conversationsWithUnreadCallMessages = stats.conversationsWithUnreadCallMessages;
+        int groupConversationsWithUnreadMessages = stats.groupConversationsWithUnreadMessages;
 
-        int unreadMessageCount = ConversationUtils.getUnreadMessageCount();
-        int unreadCallMessageCount = ConversationUtils.getUnreadCallMessageCount();
+        int unreadMessageCount = stats.unreadMessageCount;
+        int unreadCallMessageCount = stats.unreadCallMessageCount;
 
+        final Conversation conversation = TextUtils.isEmpty(conversationId)
+                ? null
+                : ConversationUtils.getConversation(conversationId.toString());
         if (conversationsWithUnreadMessages <= 0 && conversationsWithUnreadCallMessages <= 0) {
             Log.e(TAG, "Trying to show a notification when there are no unread messages.");
+            cancelMessageNotification(context);
             return;
         }
 
-        Message unreadMessage = ConversationUtils.getLastUnreadMessage();
-
+        Message unreadMessage = stats.lastUnreadMessage;
         Resources resources = context.getResources();
         String title = "";
         String subtitle = "";
@@ -130,13 +138,25 @@ public final class Notifications {
             smallIconResId = R.drawable.ic_chat_notification;
         } else {
             Log.e(TAG, "Trying to show a notification when there are no unread messages.");
+            cancelMessageNotification(context);
             return;
         }
 
         Intent activityIntent = messagingIntent;
         if (conversationsWithUnreadMessages > 1 || conversationsWithUnreadCallMessages > 1) {
             // open conversation list view instead of specific conversation
-            activityIntent = Action.VIEW_CONVERSATIONS.intent(context, DialerActivity.class);
+            activityIntent = Action.VIEW_CONVERSATIONS.intent(context, DialerActivityInternal.class);
+        }
+        else if (activityIntent == null) {
+            /*
+             * At this point there should be exactly one conversation with unread messages.
+             * Click on notification should open that conversation. If there is no intent yet,
+             * create one.
+             */
+            String id = TextUtils.isEmpty(conversationId)
+                    ? MessageUtils.getConversationId(unreadMessage)
+                    : conversationId.toString();
+            activityIntent = ContactsUtils.getMessagingIntent(id, context);
         }
 
         PendingIntent contentIntent = PendingIntent.getActivity(context, 0, activityIntent,
@@ -151,7 +171,13 @@ public final class Notifications {
                 .setPriority(Notification.PRIORITY_HIGH)
                 .setAutoCancel(true);
 
-        postNotification(context, builder, R.id.messaging_notification);
+        boolean muted = conversation != null && conversation.isMuted();
+        postNotification(context, builder, R.id.messaging_notification, muted);
+    }
+
+    public static void updateMessageNotification(@NonNull Context context) {
+        Log.d(TAG, "Updating notification");
+        sendMessageNotification(context, null, null);
     }
 
     public static void sendPolicyNotification(Context context, Intent messagingIntent, String reason) {
@@ -182,7 +208,7 @@ public final class Notifications {
                 .setPriority(Notification.PRIORITY_HIGH)
                 .setAutoCancel(true);
 
-        postNotification(context, builder, R.id.policy_notification);
+        postNotification(context, builder, R.id.policy_notification, false);
     }
 
     public static void sendInviteNotification(Context context, Intent messagingIntent) {
@@ -211,12 +237,9 @@ public final class Notifications {
         notificationManager.notify(R.id.invite_notification, notification);
     }
 
-    public static void cancelMessageNotification(@Nullable Context context, String conversationPartner) {
+    public static void cancelMessageNotification(@Nullable Context context) {
+        Log.d(TAG, "Cancel messaging notification.");
         cancelNotification(context, R.id.messaging_notification);
-    }
-
-    public static void cancelGroupCommandNotification(@Nullable Context context) {
-        cancelNotification(context, R.id.invite_notification);
     }
 
     private static void cancelNotification(@Nullable Context context, int notificationId) {
@@ -241,8 +264,8 @@ public final class Notifications {
     }
 
     private static void postNotification(Context context, Notification.Builder builder,
-            int messaging_notification) {
-        configureNotification(context, builder);
+            int messaging_notification, final boolean muted) {
+        configureNotification(context, builder, muted);
 
         Notification notification = builder.build();
 
@@ -272,15 +295,15 @@ public final class Notifications {
         sMinimumTimeOfNextNotification = SystemClock.elapsedRealtime() + NOTIFICATION_WINDOW;
     }
 
-    private static Notification.Builder configureNotification(@NonNull Context context,
-            @NonNull Notification.Builder builder) {
+    private static Notification.Builder configureNotification(final @NonNull Context context,
+            final @NonNull Notification.Builder builder, final boolean muted) {
         Resources resources = context.getResources();
 
         MessagingPreferences preferences = MessagingPreferences.getInstance(context);
-        boolean soundsEnabled = preferences.getMessageSoundsEnabled();
+        boolean soundsEnabled = !muted && preferences.getMessageSoundsEnabled();
 
         int light = preferences.getMessageLight();
-        int vibrate = preferences.getMessageVibrate();
+        int vibrate = muted ? MessagingPreferences.INDEX_VIBRATE_OFF : preferences.getMessageVibrate();
         Uri sound = preferences.getMessageRingtone();
         if (ConfigurationUtilities.mTrace) {
             Log.d(TAG, "Notification settings: light: " + light + ", vibrate pattern: " + vibrate

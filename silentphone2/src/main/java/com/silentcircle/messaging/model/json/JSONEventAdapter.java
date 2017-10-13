@@ -47,6 +47,8 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import zina.JsonStrings;
+
 public class JSONEventAdapter extends JSONAdapter {
 
     // TODO gson
@@ -113,7 +115,8 @@ public class JSONEventAdapter extends JSONAdapter {
 
         //noinspection ResourceType
         to.setTag(getInt(from, TAG_INFO_EVENT_TAG, InfoEvent.TAG_NOT_SET));
-        to.setDetails(getString(from, TAG_INFO_EVENT_DETAILS));
+        String details = getString(from, TAG_INFO_EVENT_DETAILS);
+        to.setDetails(details);
 
         if (from.has(TAG_MESSAGE_ATTACHMENT)) {
             to.setAttachment(getString(from, TAG_MESSAGE_ATTACHMENT));
@@ -170,22 +173,6 @@ public class JSONEventAdapter extends JSONAdapter {
             to.setEventDeviceInfo(eventDeviceInfo);
         }
 
-        if (from.has(TAG_DEVICE_INFO_ARRAY)) {
-            JSONArray infoArray = from.optJSONArray(TAG_DEVICE_INFO_ARRAY);
-            int length = infoArray.length();
-            EventDeviceInfo[] eventDeviceInfo = new EventDeviceInfo[length];
-            for (int i = 0; i < length; i++) {
-                JSONObject infoJson = infoArray.optJSONObject(i);
-                EventDeviceInfo info = new EventDeviceInfo();
-                info.deviceName = infoJson.optString(TAG_DEVICE_NAME);
-                info.deviceId = infoJson.optString(TAG_DEVICE_ID);
-                info.state = infoJson.optInt(TAG_DEVICE_MSG_STATE, 0);
-                info.transportId = infoJson.optLong(TAG_DEVICE_MSG_TRANSPORT, 0L);
-                eventDeviceInfo[i] = info;
-            }
-            to.setEventDeviceInfo(eventDeviceInfo);
-        }
-
         to.setFailureFlags(fromArrayOfLongs(getJSONArray(from, TAG_MESSAGE_FAILURE_FLAGS)));
 
         to.setRetained(from.optBoolean(TAG_MESSAGE_DATA_RETENTION_STATE, false));
@@ -202,7 +189,7 @@ public class JSONEventAdapter extends JSONAdapter {
         //noinspection ResourceType
         to.setState(getInt(from, TAG_MESSAGE_STATE, MessageStates.UNKNOWN));
         to.setDeliveryTime(getLong(from, TAG_MESSAGE_DELIVERY_TIME, 0));
-        to.setDeliveryTime(getLong(from, TAG_MESSAGE_READ_TIME, 0));
+        to.setReadReceiptTime(getLong(from, TAG_MESSAGE_READ_TIME, 0));
 
         return to;
     }
@@ -216,6 +203,30 @@ public class JSONEventAdapter extends JSONAdapter {
         to.setErrorMessage(getString(from, TAG_CALL_ERROR_MESSAGE, null));
 
         return to;
+    }
+
+    public static void adapt(String from, InfoEvent to) {
+        if (!TextUtils.isEmpty(from)) {
+            try {
+                JSONObject json = new JSONObject(from);
+                InfoEvent.Details eventDetails = new InfoEvent.Details();
+                eventDetails.burnTime = json.optLong(JsonStrings.GROUP_BURN_SEC, 0L);
+                eventDetails.groupName = json.optString(JsonStrings.GROUP_NAME, null);
+                eventDetails.deviceName = json.optString(JsonStrings.MSG_DEVICE_NAME, null);
+                eventDetails.userId = json.optString(JsonStrings.MEMBER_ID, null);
+                eventDetails.memberId = json.optString(JsonStrings.MSG_USER_ID, null);
+                eventDetails.userDisplayName = json.optString(JsonStrings.MSG_DISPLAY_NAME,
+                        eventDetails.userId);
+                // For now member display name is not used. But will be necessary when information
+                // who added whom will become available.
+                eventDetails.memberDisplayName = json.optString(JsonStrings.MEMBER_DISPLAY_NAME,
+                        eventDetails.userDisplayName);
+                to.setEventDetails(eventDetails);
+            }
+            catch (JSONException e) {
+                // no details for event, default text will be used
+            }
+        }
     }
 
     public JSONObject adapt(Event event) {

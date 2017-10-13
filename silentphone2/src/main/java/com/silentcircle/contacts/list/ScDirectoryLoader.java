@@ -126,19 +126,22 @@ public class ScDirectoryLoader extends AsyncTaskLoader<Cursor> {
         final String userName;
         final String uuid;
         final String organization;
+        final boolean inSameOrganization;
         String sortKey;
 
         UserData(String full, String display, String un, String uid, String sort) {
-            this(full, display, un, uid, sort, null);
+            this(full, display, un, uid, sort, null, false);
         }
 
-        UserData(String full, String display, String un, String uid, String sort, String org) {
+        UserData(String full, String display, String un, String uid, String sort, String org,
+                 boolean inSameOrg) {
             fullName = full;
             displayName = display;
             userName = un;
             uuid = uid;
             sortKey = sort;
             organization = org;
+            inSameOrganization = inSameOrg;
         }
     }
 

@@ -890,8 +890,8 @@ int CRTPA::onSendUAlawSpliter(char *p, int iLen, int iPartSize, int iCurType, vo
    
    CTAudioOutBase *cAOTmp=cAO;
    
-   int iMute = 0;//TODO read a mute state for a call - pCallStatus->iMuted;
-   
+   int iMute = pCallStatus && pCallStatus->iIsMuted;
+
    pMediaIDS->holdSounds.callState(iOnHold, sdes_or_zrtp->getStatus(0)==sdes_or_zrtp->eSecure);
    
    if(iOnHold){

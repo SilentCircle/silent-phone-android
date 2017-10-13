@@ -32,8 +32,6 @@ import android.text.TextUtils;
 
 import com.silentcircle.common.util.StringUtils;
 import com.silentcircle.contacts.utils.Hex;
-import com.silentcircle.messaging.model.event.Event;
-import com.silentcircle.messaging.util.ConversationUtils;
 import com.silentcircle.messaging.util.IOUtils;
 
 import java.util.Arrays;
@@ -81,6 +79,7 @@ public class Conversation extends Burnable implements Comparable<Conversation> {
     private String mAvatarUrl;
     private String mAvatar;
     private byte[] mAvatarIv;
+    private long mMuteDuration;
 
     @Override
     public void clear() {
@@ -95,11 +94,12 @@ public class Conversation extends Burnable implements Comparable<Conversation> {
         removePreviewEventID();
         lastModified = 0;
         failures = 0;
+        mMuteDuration = 0;
     }
 
     /**
      * Create a Conversation with a user id.
-     *
+     * <p>
      * A Conversation must have Contact data. The Contact's user id is the key into
      * the database.
      *
@@ -111,7 +111,7 @@ public class Conversation extends Burnable implements Comparable<Conversation> {
 
     /**
      * Create a Conversation with preset contact.
-     *
+     * <p>
      * A Conversation must have Contact data.
      *
      * @param contact The partner's contact data
@@ -317,6 +317,18 @@ public class Conversation extends Burnable implements Comparable<Conversation> {
 
     public void setAvatarIv(String iv) {
         setAvatarIv(TextUtils.isEmpty(iv) ? null : Hex.decodeHex(iv));
+    }
+
+    public void setMuteDuration(long duration) {
+        mMuteDuration = duration < 0 ? 0 : duration;
+    }
+
+    public long getMuteDuration() {
+        return mMuteDuration;
+    }
+
+    public boolean isMuted() {
+        return mMuteDuration > System.currentTimeMillis();
     }
 
 }

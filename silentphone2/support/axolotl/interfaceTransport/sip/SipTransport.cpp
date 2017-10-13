@@ -14,10 +14,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 #include "SipTransport.h"
-#include <stdlib.h>
 
 #include <thread>
 #include <condition_variable>
+#include <cstdlib>
 
 #ifndef MAX_TIME_WAIT_FOR_SLOTS
 #define MAX_TIME_WAIT_FOR_SLOTS 1500
@@ -54,7 +54,7 @@ typedef struct SendMsgInfo_ {
     string recipient;
     string deviceId;
     string envelope;
-    uint64_t transportMsgId;
+    uint64_t transportMsgId = 0;
 } SendMsgInfo;
 
 static mutex sendListLock;
@@ -66,6 +66,9 @@ static condition_variable sendCv;
 static thread sendThread;
 static bool runSend;
 static bool sendingActive;
+
+static string Zeros("00000000000000000000000000000000");
+static map<string, string> seenIdStringsForName;
 
 // Send queued messages, one at a time, if SIP slots are available
 // Don't use every available slot, leave some for other processing, if too few slots
@@ -98,6 +101,10 @@ static void runSendQueue(SEND_DATA_FUNC sendAxoData, SipTransport* transport)
         runSend = false;
         listLock.unlock();
     }
+}
+
+SipTransport::~SipTransport() {
+    seenIdStringsForName.clear();
 }
 
 void SipTransport::sendAxoMessage(const CmdQueueInfo &info, const string& envelope)
@@ -186,10 +193,7 @@ void SipTransport::stateReportAxo(int64_t messageIdentifier, int32_t stateCode, 
     LOGGER(DEBUGGING, __func__, " <--");
 }
 
-static string Zeros("00000000000000000000000000000000");
-static map<string, string> seenIdStringsForName;
-
-void SipTransport::notifyAxo(uint8_t* data, size_t length)
+void SipTransport::notifyAxo(const uint8_t* data, size_t length)
 {
     LOGGER(DEBUGGING, __func__, " -->");
     string info((const char*)data, length);

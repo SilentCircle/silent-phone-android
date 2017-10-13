@@ -33,9 +33,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 typedef int32_t (*RECV_FUNC)(const std::string&, const std::string&, const std::string&);
 typedef void (*STATE_FUNC)(int64_t, int32_t, const std::string&);
-//typedef void (*SEND_DATA_FUNC)(uint8_t* [], uint8_t* [], uint8_t* [], size_t [], uint64_t []);
+typedef void (*NOTIFY_FUNC)(int32_t, const std::string&, const std::string&);
 
-// bool g_sendDataFuncAxoNew(uint8_t* name, uint8_t* devId, uint8_t* envelope, size_t size, uint64_t msgId){
 typedef bool (*SEND_DATA_FUNC)(uint8_t*, uint8_t*, uint8_t*, size_t, uint64_t);
 
 typedef int32_t (*GROUP_CMD_RECV_FUNC)(const std::string& commandMessage);
@@ -45,10 +44,10 @@ typedef void (*GROUP_STATE_FUNC)(int32_t errorCode, const std::string& stateInfo
 class CTAxoInterfaceBase{
 
 public:
-   enum{eErrorNoTransportReady=-1000,
-        eErrorDBNotReady=-1001,
-        eErrorNoFunctionPointers=-1002,
-       eMustResendLastMessage=1001 //eMustResendLastMessage - we have a new device, must be larger than SIP codes
+   enum{
+       eErrorNoTransportReady=-1000,
+       eErrorDBNotReady=-1001,
+       eErrorNoFunctionPointers=-1002
    };
    //Q:  should I init this when I recv or send via network
    //A: maybe, but I have to get(find) my own username
@@ -81,7 +80,7 @@ public:
    static const char *generateMsgID(const char *msgToSend, char *dst, int iDstSize);//helper
    static time_t uuid_sz_time(const char * szUUID, struct timeval *ret_tv = NULL);
 
-   static void setCallbacks(STATE_FUNC state, RECV_FUNC msgRec);//should call this from UI before init
+   static void setCallbacks(STATE_FUNC state, RECV_FUNC msgRec, NOTIFY_FUNC notify);//should call this from UI before init
    static void setGroupCallbacks(GROUP_STATE_FUNC state, GROUP_MSG_RECV_FUNC msgRec, GROUP_CMD_RECV_FUNC cmd);//should call this from UI before init
 
    void *getAxoAppInterface();

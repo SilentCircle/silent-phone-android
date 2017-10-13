@@ -313,10 +313,23 @@ public class UpdateScContactDataService extends IntentService {
         mOperations.clear();
         mAllOperations.clear();
 
-        Cursor cursor = mResolver.query(mDataUri, mAllData, subQuery, null, ContactsContract.Data.CONTACT_ID);
-        if (cursor != null) {
-            readAllScData(cursor);
-            cursor.close();
+        Cursor cursor = null;
+        try {
+            cursor = mResolver.query(mDataUri, mAllData, subQuery, null, ContactsContract.Data.CONTACT_ID);
+
+            if (cursor != null) {
+                readAllScData(cursor);
+            }
+        } catch (Exception ignore) {
+            // Ignore exceptions such as CursorWindowAllocationException which occurs intermittently
+            // We should not expect a crash here
+            Log.e(TAG, "Ignoring an exception: " + ignore +
+                    ((BuildConfig.DEBUG) ? ", processContacts - uri: " + mDataUri + ", selection: " + subQuery : ""));
+            cursor = null;
+        } finally {
+            if (cursor != null && !cursor.isClosed()) {
+                cursor.close();
+            }
         }
         if (mForceReDiscover) {
             rediscoverContacts();
@@ -405,7 +418,17 @@ public class UpdateScContactDataService extends IntentService {
                 "'" + Website.CONTENT_ITEM_TYPE + "')";
 
         // Get all data records, sorted by contact id
-        Cursor cursor = mResolver.query(mDataUri, mAllData, query, null, ContactsContract.Data.CONTACT_ID);
+        Cursor cursor;
+        try {
+            cursor = mResolver.query(mDataUri, mAllData, query, null, ContactsContract.Data.CONTACT_ID);
+        } catch (Exception ignore) {
+            // Ignore exceptions such as CursorWindowAllocationException which occurs intermittently
+            // We should not expect a crash here
+            Log.e(TAG, "Ignoring an exception: " + ignore +
+                    ((BuildConfig.DEBUG) ? ", rediscoverContacts - uri: " + mDataUri + ", selection: " + query : ""));
+            cursor = null;
+        }
+
         if (cursor == null) {
             return;
         }
@@ -413,30 +436,35 @@ public class UpdateScContactDataService extends IntentService {
         ArrayList<String> computedHashes = new ArrayList<>();
 //        Log.d(TAG, String.format("++++ Found %d normal contact records with query '%s'", cursor.getCount(), query.toString()));
         mHashDataArray.clear();
-        if (cursor.moveToFirst()) {
-            /**
-             * @see <a href="https://code.google.com/p/android/issues/detail?id=32472">this bug</a>
-             * for reasoning for using a do...while
-             * **/
-            do {
-                try {
-                    ContactHashData chd = createHashStructure(cursor);
-                    if (chd != null) {
-                        mHashDataArray.add(chd);
-                        computedHashes.add(chd.hash);
-                        if (!mRunDiscovery)
-                            mRunDiscovery = !mKnownHashes.contains(chd.hash);
-                    }
-                } catch (Exception e) {
-                    Log.w(TAG, "Failed to read SC contact entry.");
-                    e.printStackTrace();
+        try {
+            if (cursor.moveToFirst()) {
+                /**
+                 * @see <a href="https://code.google.com/p/android/issues/detail?id=32472">this bug</a>
+                 * for reasoning for using a do...while
+                 * **/
+                do {
+                    try {
+                        ContactHashData chd = createHashStructure(cursor);
+                        if (chd != null) {
+                            mHashDataArray.add(chd);
+                            computedHashes.add(chd.hash);
+                            if (!mRunDiscovery)
+                                mRunDiscovery = !mKnownHashes.contains(chd.hash);
+                        }
+                    } catch (Exception e) {
+                        Log.w(TAG, "Failed to read SC contact entry.");
+                        e.printStackTrace();
 
-                    continue;
-                }
-            } while (cursor.moveToNext());
+                        continue;
+                    }
+                } while (cursor.moveToNext());
+            }
+            Log.d(TAG, String.format("++++ Created %d hash data structures, run discovery: %b", mHashDataArray.size(), mRunDiscovery));
+        } finally {
+            if (cursor != null && !cursor.isClosed()) {
+                cursor.close();
+            }
         }
-        Log.d(TAG, String.format("++++ Created %d hash data structures, run discovery: %b", mHashDataArray.size(), mRunDiscovery));
-        cursor.close();
         if (mRunDiscovery && mHashDataArray.size() > 0) {
             JSONObject requestData = createRequestJson(mHashDataArray);
             discoverContacts(requestData);
@@ -484,15 +512,29 @@ public class UpdateScContactDataService extends IntentService {
         // link new SC data records with a found SC Raw contact.
         final String query = RawContacts.CONTACT_ID + "=" + contactId + " AND " + RawContacts.ACCOUNT_TYPE +
                 "='" + mSelectedAccount.type + "' AND " + RawContacts.ACCOUNT_NAME + "='" + mSelectedAccount.name + "'";
-        Cursor cursor = mResolver.query(RawContacts.CONTENT_URI, new String[]{RawContacts._ID},
-                query, null, RawContacts._ID + " ASC");
+        Cursor cursor = null;
+        Uri uri = RawContacts.CONTENT_URI;
+        try {
+            cursor = mResolver.query(uri, new String[]{RawContacts._ID},
+                    query, null, RawContacts._ID + " ASC");
+        } catch (Exception ignore) {
+            // Ignore exceptions such as CursorWindowAllocationException which occurs intermittently
+            // We should not expect a crash here
+            Log.e(TAG, "Ignoring an exception: " + ignore +
+                    ((BuildConfig.DEBUG) ? ", getScRawContactForContact - uri: " + uri + ", selection: " + query : ""));
+        }
         long id = 0L;
-        if (cursor != null) {
+        try {
+            if (cursor != null) {
 //            Log.d(TAG, String.format("++++ Found %d SC Raw Contacts for contact id %d", cursor.getCount(), contactId));
-            if (cursor.moveToFirst()) {
-                id = cursor.getLong(0);
+                if (cursor.moveToFirst()) {
+                    id = cursor.getLong(0);
+                }
             }
-            cursor.close();
+        } finally {
+            if (cursor != null && !cursor.isClosed()) {
+                cursor.close();
+            }
         }
         return id;
     }
@@ -754,7 +796,7 @@ public class UpdateScContactDataService extends IntentService {
             phoneName = formatWithTags(name, chd.discovered, false);
         }
 
-        // always add a scheme to the number. The DialerActivity needs it when it gets
+        // always add a scheme to the number. The DialerActivityInternal needs it when it gets
         // the URI to setup a call/message
         if (!numberWithScheme.startsWith(scheme))
             numberWithScheme = scheme + numberWithScheme;

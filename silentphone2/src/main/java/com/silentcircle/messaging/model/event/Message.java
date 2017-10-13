@@ -27,12 +27,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 package com.silentcircle.messaging.model.event;
 
+import com.silentcircle.common.StringByteHolder;
 import com.silentcircle.messaging.model.Location;
 import com.silentcircle.messaging.model.MessageStates;
 import com.silentcircle.messaging.model.RetentionInfo;
 import com.silentcircle.messaging.util.DateUtils;
-import com.silentcircle.messaging.util.IOUtils;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
@@ -46,10 +47,11 @@ public class Message extends Event {
     // TODO better wording might be pending read/burn notification
     public static final long FAILURE_READ_NOTIFICATION = 1;
     public static final long FAILURE_BURN_NOTIFICATION = 2;
+    public static final long FAILURE_NOT_SENT = 3;
 
     @MessageStates.MessageState protected int state;
-    protected byte[] sender;
-    protected byte[] ciphertext;
+    private final StringByteHolder sender = new StringByteHolder();
+    private final StringByteHolder ciphertext = new StringByteHolder();
     protected long burnNotice;
     private long expirationTime;
     private long deliveryTime;
@@ -58,7 +60,7 @@ public class Message extends Event {
     private boolean isRetained;
     private RetentionInfo retentionInfo;
 
-    private String metaData;
+    private final StringByteHolder metaData = new StringByteHolder();
 
     private boolean mRequestReceipt;
 
@@ -88,11 +90,11 @@ public class Message extends Event {
     }
 
     public String getCiphertext() {
-        return toString(this.getCiphertextAsByteArray());
+        return this.ciphertext.getString();
     }
 
     public byte[] getCiphertextAsByteArray() {
-        return this.ciphertext;
+        return this.ciphertext.getByteArray();
     }
 
     public long getDeliveryTime() {
@@ -110,18 +112,20 @@ public class Message extends Event {
     }
 
     public String getSender() {
-        return toString(this.getSenderAsByteArray());
+        return this.sender.getString();
     }
 
     public byte[] getSenderAsByteArray() {
-        return this.sender;
+        return this.sender.getByteArray();
     }
 
     public Location getLocation() {
         return location;
     }
 
-    public String getMetaData() { return metaData; }
+    public String getMetaData() {
+        return this.metaData.getString();
+    }
 
     @MessageStates.MessageState
     public int getState() {
@@ -153,11 +157,11 @@ public class Message extends Event {
     }
 
     public boolean hasAttachment() {
-        return attachment != null;
+        return getAttachment() != null;
     }
 
     public boolean hasMetaData() {
-        return metaData != null;
+        return getMetaData() != null;
     }
 
     public void setRequestReceipt(boolean mRequestReceipt) {
@@ -165,8 +169,8 @@ public class Message extends Event {
     }
 
     public void removeCiphertext() {
-        burn(this.ciphertext);
-        this.ciphertext = null;
+        burn(getCiphertextAsByteArray());
+        this.ciphertext.set((String) null);
     }
 
     public void removeMessageState() {
@@ -174,8 +178,8 @@ public class Message extends Event {
     }
 
     public void removeSender() {
-        burn(this.sender);
-        this.sender = null;
+        burn(getSenderAsByteArray());
+        this.sender.set((String) null);
     }
 
     public void setBurnNotice(long burnNotice) {
@@ -183,11 +187,11 @@ public class Message extends Event {
     }
 
     public void setCiphertext(byte[] ciphertext) {
-        this.ciphertext = ciphertext;
+        this.ciphertext.set(ciphertext);
     }
 
-    public void setCiphertext(CharSequence ciphertext) {
-        this.setCiphertext(IOUtils.toByteArray(ciphertext));
+    public void setCiphertext(String ciphertext) {
+        this.ciphertext.set(ciphertext);
     }
 
     public void setDeliveryTime(long deliveryTime) {
@@ -199,11 +203,11 @@ public class Message extends Event {
     }
 
     public void setSender(byte[] sender) {
-        this.sender = sender;
+        this.sender.set(sender);
     }
 
-    public void setSender(CharSequence sender) {
-        this.setSender(IOUtils.toByteArray(sender));
+    public void setSender(String sender) {
+        this.sender.set(sender);
     }
 
     public void setLocation(final Location location) {
@@ -211,7 +215,7 @@ public class Message extends Event {
     }
 
     public void setMetaData(final String metaData) {
-        this.metaData = metaData;
+        this.metaData.set(metaData);
     }
 
     public void setFailureFlag(long failure) {
@@ -222,8 +226,12 @@ public class Message extends Event {
         failures.remove(failure);
     }
 
-    public Long[] getFailureFlags() {
-        return failures.toArray(new Long[failures.size()]);
+    public Long[] getFailureFlagsAsArray() {
+        return failures.size() > 0 ? failures.toArray(new Long[failures.size()]) : new Long[]{};
+    }
+
+    public Collection<Long> getFailureFlags() {
+        return failures;
     }
 
     public boolean hasFailureFlagSet(long flag) {

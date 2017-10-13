@@ -239,6 +239,7 @@
     <color name="sc_ng_text_grey_6">#80000000</color>
     <color name="sc_ng_text_grey_7">#c9c9c9</color>
     <color name="sc_ng_text_dark">#4a4947</color>
+    <color name="sc_ng_text_chat_info">#656565</color>
     <color name="sc_ng_background">#36373b</color>
     <color name="sc_ng_background_1">#f6f3eb</color>
     <color name="sc_ng_background_2">#28292c</color>
@@ -253,6 +254,10 @@
     <color name="sc_ng_text_red_button">#f84c4c</color>
     <color name="sc_ng_text_green">#6fc34b</color>
     <color name="date_header_background">#CC36373b</color>
+
+    <color name="feature_discovery_title_text">#ffffff</color>
+    <color name="feature_discovery_description_text">#ffffff</color>
+    <color name="feature_discovery_target_circle">#36373b</color>
 
     <!-- Authenticator-specific colors (new "next-gen" style) -->
     <color name="auth_active_headline_text_grey">#f6f3eb</color>
@@ -306,8 +311,8 @@
     <color name="chat_incoming_message_text_received_color">#8a4947</color>
 
     <color name="chat_call_message_disabled_color">#bb454545</color>
-    <color name="chat_call_message_color">#22f6f3eb</color>
-    <color name="chat_call_message_color_light">#225d5f66</color>
+    <color name="chat_call_message_color">#505052</color>
+    <color name="chat_call_message_color_light">#e9eaeb</color>
 
     <color name="recording_red_color">#f30e17</color>
     <color name="db_circle_color">#cffa5353</color>

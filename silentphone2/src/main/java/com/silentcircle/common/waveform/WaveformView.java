@@ -78,6 +78,8 @@ public class WaveformView extends View {
     private void init() {
         mDensityDPI = getResources().getDisplayMetrics().densityDpi;
         mLevels = DEFAULT_WAVEFORM;
+        // Rendering the waveform on a software layer dramatically increases performance
+        setLayerType(LAYER_TYPE_SOFTWARE, null);
     }
 
     /**

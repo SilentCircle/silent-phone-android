@@ -346,7 +346,12 @@ public class InCallDrawerFragment extends Fragment implements View.OnClickListen
             zrtpName.setVisibility(View.GONE);
         }
         TextView txtTls = (TextView)mDrawerView.findViewById(R.id.tls_info_data);
+        // Example: 0bits ECDHE-RSA-AES-256-GCM-SHA384
         String tlsInfo = TiviPhoneService.getInfo(call.iEngID, -1, ".sock");
+        String[] tlsSplit = tlsInfo.split(" ");
+        if (tlsSplit.length > 1 && tlsSplit[1].startsWith("ECDHE")) {
+            tlsInfo = tlsSplit[1]; // Remove the bits (in this case it will be 0)
+        }
         txtTls.setText(tlsInfo);   //socket info, tls ciphers or udp, tcp;
         txtTls.setSelected(true);
 

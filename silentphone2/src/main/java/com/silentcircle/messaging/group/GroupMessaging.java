@@ -62,6 +62,7 @@ import com.silentcircle.messaging.util.AvatarUtils;
 import com.silentcircle.messaging.util.ConversationUtils;
 import com.silentcircle.messaging.util.Extra;
 import com.silentcircle.messaging.util.MessageUtils;
+import com.silentcircle.messaging.util.Notifications;
 import com.silentcircle.messaging.util.UUIDGen;
 import com.silentcircle.silentphone2.BuildConfig;
 import com.silentcircle.silentphone2.R;
@@ -142,17 +143,21 @@ public class GroupMessaging {
 
         ConversationRepository repository = ConversationUtils.getConversations();
         if (repository == null) {
-            Log.e(TAG, "Could not save received group message");
+            Log.e(TAG, "Could not save received group message, no repository.");
             return -1;
         }
 
         final boolean isSyncMessage = getSelfUserName().equals(sender);
         final Conversation conversation =
                 ConversationUtils.getOrCreateGroupConversation(ctx, recipient);
-        final EventRepository events = repository.historyOf(conversation);
+        if (conversation == null) {
+            Log.e(TAG, "Could not save received group message, no conversation.");
+            return -1;
+        }
 
-        if (conversation == null || events == null) {
-            Log.e(TAG, "Could not save received group message, conversation not found.");
+        final EventRepository events = repository.historyOf(conversation);
+        if (events == null) {
+            Log.e(TAG, "Could not save received group message, conversation history not found.");
             return -1;
         }
 
@@ -215,7 +220,9 @@ public class GroupMessaging {
         repository.save(conversation);
 
         MessageUtils.notifyMessageReceived(ctx, recipient, null,
-                message.isRequestReceipt(), msgDescriptor.getMsgId());
+                message.isRequestReceipt(),
+                conversation.isMuted(),
+                msgDescriptor.getMsgId());
 
         if (attachmentDescriptor != null) {
             // Do an initial request to download the thumbnail
@@ -273,6 +280,9 @@ public class GroupMessaging {
 
             case ADD_MEMBERS:
                 Log.d(TAG, "ADD_MEMBERS: " + command + " Members: " + cmd.getMembers());
+                // TODO reduce number of tasks for a group (e.g., using a queue for each group)
+                // running separate tasks for each group is cause for title/avatar occasionally
+                // not being set correctly when syncing groups
                 handleGroupEvent(ctx, cmd);
                 generateGroupTitleIfNecessary(ctx, cmd);
                 /*
@@ -280,19 +290,29 @@ public class GroupMessaging {
                  * information is available.
                  */
                 generateGroupAvatarIfNecessary(ctx, cmd);
-
                 break;
 
             case NEW_GROUP:
-                // immediately create corresponding conversation and refresh conversations list
-                if (/*isGroupKnown(ctx, cmd.getGroupId()) && */createGroupConversation(ctx, command, cmd)) {
+                /*
+                 * isGroupKnown(ctx, cmd.getGroupId()) can be used to guard against messages for
+                 * groups unknown to Zina.
+                 *
+                 * Immediately create corresponding conversation and refresh conversations list.
+                 */
+                if (createGroupConversation(ctx, cmd)) {
                     intent = MessageUtils.getNotifyConversationUpdatedIntent(cmd.getGroupId(), false);
+                    generateGroupTitleIfNecessary(ctx, cmd);
                 }
                 break;
+
             case NEW_AVATAR:
             case NEW_BURN:
             case NEW_NAME:
-                if (/*isGroupKnown(ctx, cmd.getGroupId()) && */updateGroupConversation(ctx, command, cmd)) {
+                /*
+                 * isGroupKnown(ctx, cmd.getGroupId()) can be used to guard against messages for
+                 * groups unknown to Zina.
+                 */
+                if (updateGroupConversation(ctx, cmd)) {
                     intent = MessageUtils.getNotifyConversationUpdatedIntent(cmd.getGroupId(), false);
                 }
                 break;
@@ -301,6 +321,7 @@ public class GroupMessaging {
                 break;
             case READ_RECEIPT:
                 markGroupMessagesAsRead(ctx, cmd);
+                Notifications.updateMessageNotification(ctx);
             default:
                 intent = null;
                 break;
@@ -332,7 +353,7 @@ public class GroupMessaging {
         return selfUserName;
     }
 
-    private boolean createGroupConversation(Context ctx, String command, GroupCommand cmd) {
+    private boolean createGroupConversation(Context ctx, GroupCommand cmd) {
         ConversationRepository repository =
                 ConversationUtils.getConversations();
         if (repository == null) {
@@ -379,7 +400,7 @@ public class GroupMessaging {
         });
     }
 
-    private boolean updateGroupConversation(Context ctx, String command, GroupCommand cmd) {
+    private boolean updateGroupConversation(Context ctx, GroupCommand cmd) {
         final ConversationRepository repository = ConversationUtils.getConversations();
         if (repository == null) {
             Log.e(TAG, "Could not create group conversation.");
@@ -486,20 +507,19 @@ public class GroupMessaging {
                         participantIds.addAll(ConversationUtils.getGroupParticipants(groupId));
                         // add or remove participants from group command
                         List<String> members = cmd.getMembers();
+                        String command = cmd.getCommand();
                         if (members != null) {
-                            if (ADD_MEMBERS.equals(cmd.getCommand())) {
+                            if (ADD_MEMBERS.equals(command)) {
                                 participantIds.addAll(members);
                             }
-                            else {
+                            else if (RM_MEMBERS.equals(command)) {
                                 participantIds.removeAll(members);
                             }
                         }
                         ConversationUtils.setGeneratedGroupName(groupId, participantIds);
 
-                        // HACK: notify about conversation changes to refresh conversation list quicker
-                        MessageUtils.notifyConversationUpdated(ctx, groupId, true);
                         // ask views to refresh to see the changes
-                        MessageUtils.requestRefresh();
+                        MessageUtils.requestRefresh(groupId);
                     }
                 } catch (Throwable t) {
                     // Existing or default avatar will be used.
@@ -645,10 +665,8 @@ public class GroupMessaging {
     private void requestRefresh(Context ctx, String groupId) {
         // clear photo cache to see the result for updated avatar
         ContactPhotoManagerNew.getInstance(ctx).refreshCache();
-        // HACK: notify about conversation changes to refresh conversation list quicker
-        MessageUtils.notifyConversationUpdated(ctx, groupId, true);
         // ask views to refresh to see the changes
-        MessageUtils.requestRefresh();
+        MessageUtils.requestRefresh(groupId);
     }
 
     private void markGroupMessagesAsRead(@NonNull final Context ctx, @NonNull final GroupCommand cmd) {

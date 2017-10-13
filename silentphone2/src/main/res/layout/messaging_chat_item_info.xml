@@ -4,22 +4,72 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:paddingBottom="1dp"
-    android:background="@drawable/bg_error_light"
+    android:paddingTop="@dimen/spacing_small"
+    android:paddingBottom="@dimen/spacing_small"
     android:filterTouchesWhenObscured="false"
-    android:gravity="center">
+    android:background="@null">
 
-    <com.silentcircle.messaging.views.TextView
-        android:id="@+id/info_message"
-        style="@style/Widget.Text.Floating.Info"
-        android:layout_width="wrap_content"
+    <!-- TODO remove nesting when/if using item decorator to separate items in chat view -->
+    <LinearLayout
+        android:id="@+id/info_container"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginRight="@dimen/space_normal"
-        android:layout_marginEnd="@dimen/space_normal"
-        android:paddingBottom="@dimen/space_normal"
-        android:paddingTop="@dimen/space_normal"
-        android:textColor="?sp_error_message_text_selector"
+        android:filterTouchesWhenObscured="false"
+        android:background="@drawable/bg_white"
         android:gravity="center"
-        tools:text="@string/sample_error"/>
+        android:duplicateParentState="true"
+        android:orientation="horizontal">
+
+        <!-- android:backgroundTint="@color/info_message_background_selector_light" -->
+
+        <FrameLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="@dimen/messaging_info_item_drawable_margin"
+            android:layout_marginStart="@dimen/messaging_info_item_drawable_margin"
+            android:layout_marginTop="@dimen/spacing_small"
+            android:layout_marginBottom="@dimen/spacing_small"
+            android:duplicateParentState="true">
+
+            <ImageView
+                android:id="@+id/info_icon"
+                android:layout_width="@dimen/messaging_info_item_drawable_width"
+                android:layout_height="@dimen/messaging_info_item_drawable_height"
+                android:duplicateParentState="true"
+                android:scaleType="centerInside"
+                android:importantForAccessibility="no"
+                tools:src="@drawable/ic_info_users_changed" />
+
+            <QuickContactBadge
+                android:id="@+id/info_badge"
+                android:layout_width="@dimen/messaging_info_item_avatar_width"
+                android:layout_height="@dimen/messaging_info_item_avatar_height"
+                android:duplicateParentState="true"
+                android:importantForAccessibility="no"
+                android:layout_gravity="center"
+                tools:src="@drawable/ic_info_users_changed" />
+
+        </FrameLayout>
+
+        <com.silentcircle.messaging.views.TextView
+            android:id="@+id/info_message"
+            style="@style/Widget.Text.Floating.Info"
+            android:duplicateParentState="true"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginBottom="@dimen/spacing_small"
+            android:layout_marginLeft="@dimen/messaging_info_item_drawable_margin"
+            android:layout_marginStart="@dimen/messaging_info_item_drawable_margin"
+            android:layout_marginTop="@dimen/spacing_small"
+            android:layout_marginRight="@dimen/spacing_normal"
+            android:layout_marginEnd="@dimen/spacing_normal"
+            android:gravity="start|center_vertical"
+            android:paddingBottom="@dimen/space_normal"
+            android:paddingTop="@dimen/space_normal"
+            android:textSize="@dimen/text_normal"
+            tools:text="@string/sample_error" />
+
+    </LinearLayout>
 
 </com.silentcircle.messaging.views.InfoEventView>

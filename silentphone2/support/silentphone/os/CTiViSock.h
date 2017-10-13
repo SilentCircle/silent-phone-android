@@ -1036,10 +1036,8 @@ public:
             if((iErrCnt&15)==15)
                printf("[iErrCnt=%d ret=%d iIsBack=%d errno=%d--]",iErrCnt,ret,iIsBack,errno);
 #ifdef __APPLE__
-            extern int isTmpWorkingInBackGround();
-
             int iBi=iIsBinded; //ETIMEDOUT
-            if(iRecreateIfNeededNow || (iBi && !iSuspended && iErrCnt>10 && (!isInBackGround()||(iErrCnt>35 && isTmpWorkingInBackGround())))){
+            if(iRecreateIfNeededNow || (iBi && !iSuspended && iErrCnt>10 && (!isInBackGround()||(iErrCnt>35)))){
                iErrCnt=0;
                
                reStartSock();

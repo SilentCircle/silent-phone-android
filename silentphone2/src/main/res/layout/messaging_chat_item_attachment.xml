@@ -71,9 +71,8 @@
                 android:id="@+id/message_preview_progress"
                 style="?android:attr/progressBarStyleSmall"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_height="@dimen/messaging_message_attachment_progress_height"
                 android:layout_centerInParent="true"
-                android:minHeight="@dimen/messaging_message_attachment_progress_height"
                 android:minWidth="@dimen/messaging_message_attachment_progress_width"
                 android:visibility="visible" />
 

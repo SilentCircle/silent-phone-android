@@ -305,7 +305,7 @@ int CMakeSip::makeReq(int id, PHONE_CFG * cfg, ADDR *addrExt,STR_64 *str64ExtADD
          //next reg should be with greater CSeq, even app restarts, if call-id is same
          //problem was with SIP Thor on OpenSIPS XS 1.4.5, but not  with FreeSwitch
          
-         int get_time();
+         extern int get_time();
          cfg->uiSipCSeq=(unsigned int)get_time();
          cfg->uiSipCSeq-=1000000000;
       }

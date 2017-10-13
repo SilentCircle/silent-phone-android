@@ -14,7 +14,7 @@
     android:layout_height="wrap_content"
     android:layout_marginTop="@dimen/spacing_normal"
     android:visibility="visible"
-    tools:context=".activities.DialerActivity"
+    tools:context=".activities.DialerActivityInternal"
     tools:visibility="visible">
 
     <android.support.v7.widget.AppCompatCheckBox

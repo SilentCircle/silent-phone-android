@@ -121,7 +121,7 @@ public:
      * @param data optional, supplementary data for the current message state.
      * @param length length of the optional data array.
      */
-    virtual void notifyAxo(uint8_t* data, size_t length) = 0;
+    virtual void notifyAxo(const uint8_t* data, size_t length) = 0;
 
 private:
 };

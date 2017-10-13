@@ -37,6 +37,7 @@ import android.content.res.Resources;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.util.Pair;
 import android.support.v7.widget.DefaultItemAnimator;
@@ -53,6 +54,7 @@ import com.silentcircle.SilentPhoneApplication;
 import com.silentcircle.common.list.ContactEntry;
 import com.silentcircle.common.util.CallUtils;
 import com.silentcircle.common.util.DialerUtils;
+import com.silentcircle.common.util.StringUtils;
 import com.silentcircle.common.util.ViewUtil;
 import com.silentcircle.common.widget.DataRetentionBanner;
 import com.silentcircle.contacts.ContactPhotoManagerNew;
@@ -61,17 +63,21 @@ import com.silentcircle.messaging.activities.ConversationActivity;
 import com.silentcircle.messaging.listener.MessagingBroadcastReceiver;
 import com.silentcircle.messaging.model.Conversation;
 import com.silentcircle.messaging.model.event.Event;
+import com.silentcircle.messaging.model.event.IncomingMessage;
 import com.silentcircle.messaging.model.event.Message;
+import com.silentcircle.messaging.model.event.OutgoingMessage;
 import com.silentcircle.messaging.repository.ConversationRepository;
 import com.silentcircle.messaging.services.ZinaMessaging;
 import com.silentcircle.messaging.thread.Updater;
 import com.silentcircle.messaging.util.Action;
 import com.silentcircle.messaging.util.AsyncUtils;
+import com.silentcircle.messaging.util.CachedEvent;
 import com.silentcircle.messaging.util.ContactsCache;
 import com.silentcircle.messaging.util.ConversationUtils;
 import com.silentcircle.messaging.util.Extra;
 import com.silentcircle.messaging.util.MessageUtils;
 import com.silentcircle.messaging.util.Notifications;
+import com.silentcircle.messaging.util.SoundNotifications;
 import com.silentcircle.messaging.util.Updatable;
 import com.silentcircle.messaging.views.ConversationListItem;
 import com.silentcircle.messaging.views.SwipeRevealLayout;
@@ -117,26 +123,19 @@ public class ConversationsFragment extends BaseFragment implements Updatable,
 
     private static final ArrayList<Conversation> EMPTY_LIST = new ArrayList<>();
 
-    private static final String LAST_CONVERSATION =
-            "com.silentcircle.messaging.fragments.ConversationsFragment.lastConversation";
-    private static final String LAST_MESSAGE_CACHE =
-            "com.silentcircle.messaging.fragments.ConversationsFragment.lastMessageCache";
     private static final String DELETE_CONVERSATION_ID =
             "com.silentcircle.messaging.fragments.ConversationsFragment.deleteConversationId";
-    private static final String DELETE_CONVERSATION_POSITION =
-            "com.silentcircle.messaging.fragments.ConversationsFragment.deleteConversationposition";
 
     protected View mProgressBar;
 
     protected List<Conversation> mConversations = new ArrayList<>();
     protected ConversationLogAdapter mAdapter;
     protected MessagingBroadcastReceiver mViewUpdater;
-    protected String mLastConversationId;
     protected DataRetentionBanner mDataRetentionBanner;
     protected com.silentcircle.messaging.views.RecyclerView mRecyclerView;
     protected View mEmptyView;
 
-    protected ConcurrentHashMap<String, Event> mLastMessageCache = new ConcurrentHashMap<>();
+    protected ConcurrentHashMap<String, CachedEvent> mLastMessageCache = new ConcurrentHashMap<>();
     protected static final Event DUMMY_EVENT = new Event("Loading...");
     protected static final Event NO_MESSAGES_EVENT = new Event("No messages");
 
@@ -148,13 +147,19 @@ public class ConversationsFragment extends BaseFragment implements Updatable,
     private AsyncTask mConversationsRefreshTask;
     private AsyncTask mEventsRefreshTask;
 
+    private static final CachedEvent CACHED_DUMMY_EVENT = new CachedEvent();
+    private static final CachedEvent CACHED_NO_MESSAGES_EVENT = new CachedEvent();
+
+    private String mPrefixYou;
+
     private Runnable mEventUpdater = new Runnable() {
         @Override
         public void run() {
             if (mAdapter == null) {
                 return;
             }
-            for (Event event : mLastMessageCache.values()) {
+            for (CachedEvent lastEvent : mLastMessageCache.values()) {
+                Event event = lastEvent.event;
                 if (event instanceof Message && ((Message) event).isExpired()) {
                     String conversationId = MessageUtils.getConversationId(event);
                     mAdapter.doMessageLookup(getConversationPosition(conversationId), conversationId);
@@ -179,15 +184,13 @@ public class ConversationsFragment extends BaseFragment implements Updatable,
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.message_log_fragment_new, container, false);
-        if (savedInstanceState != null) {
-            mLastConversationId = savedInstanceState.getString(LAST_CONVERSATION);
-            /*
-            mLastMessageCache =
-                (HashMap<String, Message>) savedInstanceState.getSerializable(LAST_MESSAGE_CACHE);
-             */
-        }
         DUMMY_EVENT.setText(getString(R.string.messaging_conversation_list_loading));
+        DUMMY_EVENT.setId("00000000-0000-0000-0000-000000000000");
+        CACHED_DUMMY_EVENT.setEvent(getActivity(), DUMMY_EVENT);
         NO_MESSAGES_EVENT.setText(getString(R.string.messaging_conversation_list_no_messages));
+        NO_MESSAGES_EVENT.setId("00000000-0000-0000-0000-000000000001");
+        CACHED_NO_MESSAGES_EVENT.setEvent(getActivity(), NO_MESSAGES_EVENT);
+        mPrefixYou = getString(R.string.messaging_conversation_list_prefix_you);
         return view;
     }
 
@@ -245,29 +248,6 @@ public class ConversationsFragment extends BaseFragment implements Updatable,
         ViewUtil.addBottomPaddingToListViewForFab(mRecyclerView, getResources());
     }
 
-    public void onListItemClick(RecyclerView list, View v, int position, long id) {
-        Activity activity = getActivity();
-        if (activity == null) {
-            return;
-        }
-
-        Conversation conversation = getConversation(position);
-        if (conversation != null) {
-            mLastConversationId = conversation.getPartner().getUserId();
-
-            Intent intent = new Intent(activity, ConversationActivity.class);
-            Extra.PARTNER.to(intent, conversation.getPartner().getUserId());
-            Extra.ALIAS.to(intent, conversation.getPartner().getAlias());
-            // add unread message count as it is known in this view
-            intent.putExtra(ConversationActivity.UNREAD_MESSAGE_COUNT, getUnreadMessageCount()
-                - conversation.getUnreadMessageCount() - conversation.getUnreadCallMessageCount());
-            activity.startActivity(intent);
-        }
-        else {
-            Toast.makeText(activity, "Unable to start conversation", Toast.LENGTH_SHORT).show();
-        }
-    }
-
     @Override
     public void onResume() {
         super.onResume();
@@ -278,26 +258,15 @@ public class ConversationsFragment extends BaseFragment implements Updatable,
 
         updateDataRetentionBanner();
 
-        Notifications.cancelMessageNotification(SilentPhoneApplication.getAppContext(), null);
+        Notifications.cancelMessageNotification(SilentPhoneApplication.getAppContext());
     }
 
     @Override
     public void setUserVisibleHint(boolean isVisibleToUser) {
         super.setUserVisibleHint(isVisibleToUser);
         if (isVisibleToUser) {
-            Notifications.cancelMessageNotification(SilentPhoneApplication.getAppContext(), null);
+            Notifications.cancelMessageNotification(SilentPhoneApplication.getAppContext());
         }
-    }
-
-    @Override
-    public void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
-        outState.putString(LAST_CONVERSATION, mLastConversationId);
-        /* TODO: save cache in saved instance, currently it occasionally fails
-           with BadParcelableException for event
-
-           outState.putSerializable(LAST_MESSAGE_CACHE, mLastMessageCache);
-        */
     }
 
     @Override
@@ -342,7 +311,25 @@ public class ConversationsFragment extends BaseFragment implements Updatable,
 
     @Override
     public void onConversationClick(ConversationListItem view) {
-        onListItemClick(mRecyclerView, view, (Integer) view.getTag(), 0);
+        Activity activity = getActivity();
+        if (activity == null) {
+            return;
+        }
+
+        Conversation conversation = getConversation(view);
+        if (conversation != null) {
+            Intent intent = new Intent(activity, ConversationActivity.class);
+            Extra.PARTNER.to(intent, conversation.getPartner().getUserId());
+            Extra.ALIAS.to(intent, conversation.getPartner().getAlias());
+            // add unread message count as it is known in this view
+            intent.putExtra(ConversationActivity.UNREAD_MESSAGE_COUNT, getUnreadMessageCount()
+                    - conversation.getUnreadMessageCount() - conversation.getUnreadCallMessageCount());
+            activity.startActivity(intent);
+            cancelTasks();
+        }
+        else {
+            Toast.makeText(activity, "Unable to start conversation", Toast.LENGTH_SHORT).show();
+        }
     }
 
     @Override
@@ -352,18 +339,12 @@ public class ConversationsFragment extends BaseFragment implements Updatable,
         }
 
         Bundle bundle = new Bundle();
-        Integer position = (Integer) view.getTag();
-        if (position == null || position < 0 || position >= mConversations.size()) {
-            Log.w(TAG, "Trying to delete a conversation for view without position");
-            return;
-        }
-        Conversation conversation = getConversation(position);
+        Conversation conversation = getConversation(view);
         if (conversation == null) {
-            Log.w(TAG, "Invalid position for conversation: " + position);
+            Log.w(TAG, "Could not find conversation for view");
             return;
         }
         bundle.putString(DELETE_CONVERSATION_ID, conversation.getPartner().getUserId());
-        bundle.putInt(DELETE_CONVERSATION_POSITION, position);
         AlertDialogFragment dialogFragment = AlertDialogFragment.getInstance(
                 R.string.are_you_sure,
                 conversation.getPartner().isGroup()
@@ -391,7 +372,7 @@ public class ConversationsFragment extends BaseFragment implements Updatable,
             mAdapter.clearSelectedPosition();
         }
 
-        Conversation conversation = getConversation((Integer) view.getTag());
+        Conversation conversation = getConversation(view);
         if (conversation != null) {
             final String userId = conversation.getPartner().getUserId();
             CallUtils.checkAndLaunchSilentPhoneCall(getActivity(), userId);
@@ -403,10 +384,6 @@ public class ConversationsFragment extends BaseFragment implements Updatable,
             boolean saveChoice) {
         if (requestCode == DELETE_CONVERSATION && bundle != null) {
 
-            /*
-             * Passed position cannot be used here as conversation list could be updated while
-             * showing dialog.
-             */
             String conversationPartner = bundle.getString(DELETE_CONVERSATION_ID);
             if (TextUtils.isEmpty(conversationPartner)) {
                 return;
@@ -490,7 +467,9 @@ public class ConversationsFragment extends BaseFragment implements Updatable,
             mAdapter.clearSelectedPosition();
         }
 
-        cancelTasks();
+        if (mConversationsRefreshTask != null) {
+            return;
+        }
 
         /* refresh conversations list */
         mConversationsRefreshTask = AsyncUtils.execute(new RefreshConversationsList(this));
@@ -518,54 +497,55 @@ public class ConversationsFragment extends BaseFragment implements Updatable,
         if (conversations != null) {
             mConversations.clear();
             mConversations.addAll(conversations);
-            Collections.sort(mConversations);
         }
+        Collections.sort(mConversations);
 
         if (mConversations.size() > 0) {
-            if (mLastMessageCache.isEmpty()) {
-                for (Conversation conversation : mConversations) {
-                    mLastMessageCache.put(conversation.getPartner().getUserId(), DUMMY_EVENT);
+            for (Conversation conversation : mConversations) {
+                final String userId = conversation.getPartner().getUserId();
+                if (!mLastMessageCache.containsKey(userId)) {
+                    mLastMessageCache.put(userId, CACHED_DUMMY_EVENT);
                 }
             }
 
-            RefreshLastEventsCache refreshEventsCacheTask = new RefreshLastEventsCache(this);
-            Conversation[] conversationArray =
-                    mConversations.toArray(new Conversation[mConversations.size()]);
-            mEventsRefreshTask = AsyncUtils.executeSerial(refreshEventsCacheTask, conversationArray);
+            if (mEventsRefreshTask == null) {
+                RefreshLastEventsCache refreshEventsCacheTask = new RefreshLastEventsCache(this);
+                Conversation[] conversationArray =
+                        mConversations.toArray(new Conversation[mConversations.size()]);
+                mEventsRefreshTask = AsyncUtils.executeSerial(refreshEventsCacheTask, conversationArray);
+            }
         }
 
-        if (mAdapter != null) {
-            if (mAdapter.getItemCount() != mConversations.size()) {
-                mAdapter.setItems(mConversations);
-                mAdapter.notifyDataSetChanged();
-            }
-            else {
-                mAdapter.notifyItemRangeChanged(0, mConversations.size());
-            }
-        }
+        notifyConversationsChanged();
     }
 
-    protected void updateConversationCache(@Nullable final Pair<String, Event> entry) {
+    protected void sortConversations() {
+        // TODO update only when isSorted(mConversations) is false
+        Collections.sort(mConversations);
+        mRecyclerView.post(new Runnable() {
+            @Override
+            public void run() {
+                notifyConversationsChanged();
+            }
+        });
+    }
+
+    protected void updateConversationEventCache(@Nullable final Pair<String, CachedEvent> entry) {
         if (entry != null && entry.first != null && entry.second != null) {
             mLastMessageCache.put(entry.first, entry.second);
-            if (mAdapter != null) {
-                int position = getConversationPosition(entry.first);
-                if (position != ITEM_NOT_SELECTED) {
-                    mAdapter.notifyItemChanged(position);
-                }
+            if (mRecyclerView != null) {
+                mRecyclerView.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (mAdapter != null) {
+                            int position = getConversationPosition(entry.first);
+                            if (position != ITEM_NOT_SELECTED) {
+                                mAdapter.notifyItemChanged(position);
+                            }
+                        }
+                    }
+                });
             }
-        }
-    }
-
-    @SuppressWarnings("unused")
-    protected void updateConversationCache(@Nullable final Map<String, Event> lastMessageCache) {
-        if (lastMessageCache != null) {
-            mLastMessageCache.clear();
-            mLastMessageCache.putAll(lastMessageCache);
-        }
-
-        if (mAdapter != null) {
-            mAdapter.notifyItemRangeChanged(0, mAdapter.getItemCount() - 1);
         }
     }
 
@@ -578,7 +558,15 @@ public class ConversationsFragment extends BaseFragment implements Updatable,
         return conversation;
     }
 
-    private int getConversationPosition(String conversationId) {
+    @Nullable
+    private Conversation getConversation(final @NonNull View view) {
+        RecyclerView.ViewHolder viewHolder =
+                (mRecyclerView != null) ? mRecyclerView.getChildViewHolder(view) : null;
+        int position = (viewHolder != null) ? viewHolder.getLayoutPosition() : ITEM_NOT_SELECTED;
+        return getConversation(position);
+    }
+
+    private int getConversationPosition(@Nullable String conversationId) {
         if (TextUtils.isEmpty(conversationId)) {
             return ITEM_NOT_SELECTED;
         }
@@ -594,13 +582,42 @@ public class ConversationsFragment extends BaseFragment implements Updatable,
         return result;
     }
 
+    private int replaceConversationInCache(final @Nullable Conversation conversation) {
+        int result = ITEM_NOT_SELECTED;
+        if (conversation != null) {
+            final String userId = conversation.getPartner().getUserId();
+            final int position = getConversationPosition(userId);
+            if (position == ITEM_NOT_SELECTED) {
+                // conversation not yet cached, add it
+                if (mConversations.add(conversation)) {
+                    result = mConversations.size() - 1;
+                }
+                mLastMessageCache.put(userId, CACHED_DUMMY_EVENT);
+            } else if (position > ITEM_NOT_SELECTED && position < mConversations.size()) {
+                mConversations.set(position, conversation);
+                result = position;
+            }
+        }
+        return result;
+    }
+
+    private void notifyConversationsChanged() {
+        if (mAdapter != null) {
+            if (mAdapter.getItemCount() != mConversations.size()) {
+                mAdapter.setItems(mConversations);
+                mAdapter.notifyDataSetChanged();
+            }
+            else {
+                mAdapter.notifyItemRangeChanged(0, mConversations.size());
+            }
+        }
+    }
+
     private int getUnreadMessageCount() {
         int result = 0;
         for (Conversation conversation : mConversations) {
-            if (conversation != null) {
-                result += conversation.getUnreadMessageCount()
-                        + conversation.getUnreadCallMessageCount();
-            }
+            result += conversation.getUnreadMessageCount()
+                    + conversation.getUnreadCallMessageCount();
         }
         return result;
     }
@@ -615,23 +632,37 @@ public class ConversationsFragment extends BaseFragment implements Updatable,
 
             @Override
             public void onReceive(Context context, Intent intent) {
+                boolean consumeBroadcast = true;
                 CharSequence conversationId = Extra.PARTNER.getCharSequence(intent);
+                boolean mute = Extra.MUTE.getBoolean(intent);
                 switch (Action.from(intent)) {
                     case RECEIVE_MESSAGE:
-                    case UPDATE_CONVERSATION:
                         /*
-                        ConversationUtils.updateUnreadMessageCount(context, conversationId);
+                         * To have notification as banner, do not stop broadcast
+                         * and allow it to propagate to notification handler which has lower
+                         * priority.
+                         * To avoid two sound notifications, a special notification may be
+                         * necessary.
+                        consumeBroadcast = false;
                          */
-                        if (!TextUtils.isEmpty(conversationId) && mAdapter != null) {
-                            String id = conversationId.toString();
-                            mAdapter.doMessageLookup(getConversationPosition(id), id);
+                        if (!mute) {
+                            SoundNotifications.playReceiveMessageSound();
                         }
-                        refreshConversations();
-                        setConsumed(true);
+                    case UPDATE_CONVERSATION:
+                        refreshConversation(conversationId);
+                        setConsumed(consumeBroadcast);
                         break;
                     case REFRESH_SELF:
                         updateDataRetentionBanner();
-                        // TODO a good way to refresh list without flicker
+                        refreshConversation(conversationId);
+                        break;
+                    case REFRESH_CONTACT:
+                        if (mAdapter != null) {
+                            String id = TextUtils.isEmpty(conversationId) ? null : conversationId.toString();
+                            int position = getConversationPosition(id);
+                            mAdapter.notifyItemChanged(position);
+                        }
+                        setConsumed(consumeBroadcast);
                         break;
                     default:
                         break;
@@ -643,6 +674,21 @@ public class ConversationsFragment extends BaseFragment implements Updatable,
                 // message events
                 Action.RECEIVE_MESSAGE, Action.UPDATE_CONVERSATION, Action.REFRESH_SELF);
         registerMessagingReceiver(activity, mViewUpdater, filter, MESSAGE_PRIORITY);
+    }
+
+    private void refreshConversation(@Nullable CharSequence conversationId) {
+        String id = TextUtils.isEmpty(conversationId) ? null : conversationId.toString();
+        if (!TextUtils.isEmpty(id) && mAdapter != null) {
+            final Conversation conversation = ConversationUtils.getDisplayableConversation(id);
+            final int positionInCache = replaceConversationInCache(conversation);
+            if (positionInCache != ITEM_NOT_SELECTED) {
+                mAdapter.doMessageLookup(positionInCache, id);
+            }
+        }
+        else {
+            // fall back to refreshing the whole list
+            refreshConversations();
+        }
     }
 
     private void scheduleNextUpdate() {
@@ -658,27 +704,25 @@ public class ConversationsFragment extends BaseFragment implements Updatable,
         long autoRefreshTime = Long.MAX_VALUE;
 
         // next update time is when next message will expire, minimum 1 second
-        for (Event event : mLastMessageCache.values()) {
-            if (event instanceof Message) {
-                autoRefreshTime =
-                        Math.max(
-                                Math.min(autoRefreshTime, ((Message) event).getExpirationTime()),
-                                currentMillis + TimeUnit.SECONDS.toMillis(1));
+        for (CachedEvent lastEvent : mLastMessageCache.values()) {
+            if (lastEvent.event instanceof Message) {
+                autoRefreshTime = Math.min(autoRefreshTime, ((Message) lastEvent.event).getExpirationTime());
             }
         }
 
         if (autoRefreshTime < Long.MAX_VALUE) {
-            mHandler.postDelayed(mEventUpdater, (autoRefreshTime - currentMillis));
+            mHandler.postDelayed(mEventUpdater,
+                    Math.max(TimeUnit.SECONDS.toMillis(1), (autoRefreshTime - currentMillis)));
         }
     }
 
     private void cancelTasks() {
         if (mConversationsRefreshTask != null) {
-            mConversationsRefreshTask.cancel(false);
+            mConversationsRefreshTask.cancel(true);
             mConversationsRefreshTask = null;
         }
         if (mEventsRefreshTask != null) {
-            mEventsRefreshTask.cancel(false);
+            mEventsRefreshTask.cancel(true);
             mEventsRefreshTask = null;
         }
     }
@@ -714,13 +758,39 @@ public class ConversationsFragment extends BaseFragment implements Updatable,
             public void bind(Conversation conversation, int position) {
                 final String userId = conversation.getPartner().getUserId();
                 final boolean isGroup = conversation.getPartner().isGroup();
-                final Event lastEvent = TextUtils.isEmpty(userId) ? DUMMY_EVENT : mLastMessageCache.get(userId);
+                CachedEvent lastEvent = TextUtils.isEmpty(userId)
+                        ? CACHED_DUMMY_EVENT
+                        : mLastMessageCache.containsKey(userId) ? mLastMessageCache.get(userId) : CACHED_NO_MESSAGES_EVENT;
 
                 ConversationListItem conversationListItem = (ConversationListItem) itemView;
-                conversationListItem.setEvent(lastEvent);
+                final boolean conversationChanged = !TextUtils.equals(userId,
+                        (CharSequence) conversationListItem.getTag(R.id.view_holder_userid));
+                conversationListItem.setTag(R.id.view_holder_userid, userId);
+
+                // for groups add sender's name as prefix
+                final CharSequence prefix = lastEvent.event instanceof OutgoingMessage
+                        ? mPrefixYou
+                        :  (isGroup && lastEvent.event instanceof IncomingMessage)
+                            ? getSenderDisplayName(position, (IncomingMessage) lastEvent.event)
+                            : null;
+
+                final boolean eventChanged = !TextUtils.equals(lastEvent.getId(),
+                        (CharSequence) conversationListItem.getTag(R.id.view_event_id))
+                        || !TextUtils.equals(conversation.getUnsentText(),
+                        (CharSequence) conversationListItem.getTag(R.id.view_draft))
+                        || !TextUtils.equals(prefix,
+                        (CharSequence) conversationListItem.getTag(R.id.view_event_prefix));
+
+                if (conversationChanged || eventChanged) {
+                    lastEvent.setPrefix(prefix);
+                    conversationListItem.setEvent(lastEvent);
+                    conversationListItem.setTag(R.id.view_event_id, lastEvent.getId());
+                    conversationListItem.setTag(R.id.view_draft, conversation.getUnsentText());
+                    conversationListItem.setTag(R.id.view_event_prefix, prefix);
+                }
                 conversationListItem.setOnConversationItemClickListener(ConversationsFragment.this);
-                conversationListItem.setTag(position);
                 conversationListItem.setConversation(conversation);
+
                 conversationListItem.setIsCallable(
                         !conversation.getPartner().isGroup()
                         && !TiviPhoneService.calls.hasCallWith(userId));
@@ -735,8 +805,15 @@ public class ConversationsFragment extends BaseFragment implements Updatable,
                         : ContactsCache.getTemporaryGroupContactEntry(userId,
                             conversation.getPartner().getDisplayName());
 
-                conversationListItem.setAvatar(mContactPhotoManager, conversation, contactEntry);
-                conversationListItem.setContactEntry(contactEntry, conversation);
+                if (conversationChanged
+                        || isGroup
+                        || conversationListItem.getTag(R.id.view_user_contact) == null
+                        || (contactEntry != null
+                            && !contactEntry.equals(conversationListItem.getTag(R.id.view_user_contact)))) {
+                    conversationListItem.setContactEntry(contactEntry, conversation);
+                    conversationListItem.setAvatar(mContactPhotoManager, conversation, contactEntry);
+                    conversationListItem.setTag(R.id.view_user_contact, contactEntry);
+                }
 
                 if (retentionState != null) {
                     conversationListItem.setIsDataRetained(retentionState);
@@ -756,6 +833,17 @@ public class ConversationsFragment extends BaseFragment implements Updatable,
                 }
 
                 mBinderHelper.bind(swipeLayout, userId);
+            }
+
+            @Nullable
+            private CharSequence getSenderDisplayName(int position, @NonNull IncomingMessage lastEvent) {
+                String eventUserId = lastEvent.getSender();
+                ContactEntry contactEntry = ContactsCache.getContactEntryFromCacheIfExists(eventUserId);
+                if (ContactsCache.hasExpired(contactEntry)) {
+                    doContactRequest(eventUserId, position, contactEntry);
+                }
+                CharSequence displayName = ContactsCache.getDisplayName("", contactEntry);
+                return TextUtils.isEmpty(displayName) ? null : StringUtils.formatShortName(displayName.toString()) + ": ";
             }
 
             public void close() {
@@ -785,8 +873,11 @@ public class ConversationsFragment extends BaseFragment implements Updatable,
             }
 
             public boolean onRequestResult() {
-                Event event = ConversationUtils.getLastDisplayableEvent(name);
-                mLastMessageCache.put(name, event != null ? event : NO_MESSAGES_EVENT);
+                if (name != null) {
+                    Event event = ConversationUtils.getLastDisplayableEvent(name);
+                    mLastMessageCache.put(name,
+                            event != null ? new CachedEvent(mContext, event) : CACHED_NO_MESSAGES_EVENT);
+                }
                 return true;
             }
         }
@@ -830,15 +921,28 @@ public class ConversationsFragment extends BaseFragment implements Updatable,
         @Override
         public void onRequestsProcessed() {
             scheduleNextEventUpdate();
+            sortConversations();
         }
 
-        void clearSelectedPosition() {
-            mBinderHelper.closeAll();
+        @Override
+        public void onRedrawRequested(final int position) {
+            mRecyclerView.post(new Runnable() {
+                @Override
+                public void run() {
+                    if (mAdapter != null) {
+                        mAdapter.notifyItemChanged(position);
+                    }
+                }
+            });
         }
 
         void doMessageLookup(int position, String userId) {
             LookupRequest request = new LastMessageRequest(userId, position);
             addRequest(request);
+        }
+
+        void clearSelectedPosition() {
+            mBinderHelper.closeAll();
         }
 
         public void saveStates(Bundle outState) {
@@ -896,18 +1000,19 @@ public class ConversationsFragment extends BaseFragment implements Updatable,
         }
     }
 
-    private static class RefreshLastEventsCache extends AsyncTask<Conversation, Pair<String, Event>, Map<String, Event>> {
+    // TODO do not use async task, store reference to most recent event in conversation and update that
+    private static class RefreshLastEventsCache extends AsyncTask<Conversation, Pair<String, CachedEvent>, Map<String, CachedEvent>> {
 
         private final WeakReference<ConversationsFragment> mFragmentReference;
 
-        private HashMap<String, Event> mLastMessages = new HashMap<>();
+        private HashMap<String, CachedEvent> mLastMessages = new HashMap<>();
 
         RefreshLastEventsCache(final ConversationsFragment fragment) {
             mFragmentReference = new WeakReference<>(fragment);
         }
 
         @Override
-        protected Map<String, Event> doInBackground(Conversation... params) {
+        protected Map<String, CachedEvent> doInBackground(Conversation... params) {
             // build cache of last messages for conversations
 
             ZinaMessaging zinaMessaging = ZinaMessaging.getInstance();
@@ -922,17 +1027,26 @@ public class ConversationsFragment extends BaseFragment implements Updatable,
             for (Conversation conversation : params) {
                 String conversationId = conversation.getPartner().getUserId();
                 Event event = ConversationUtils.getLastDisplayableEvent(repository, conversation);
-                event = (event != null) ? event : NO_MESSAGES_EVENT;
-                mLastMessages.put(conversationId, event);
+                CachedEvent lastEvent = (event != null)
+                        ? new CachedEvent(SilentPhoneApplication.getAppContext(), conversation, event)
+                        : CACHED_NO_MESSAGES_EVENT;
+                mLastMessages.put(conversationId, lastEvent);
 
-                Pair<String, Event> progressEntry = new Pair<>(conversationId, event);
+                Pair<String, CachedEvent> progressEntry = new Pair<>(conversationId, lastEvent);
                 publishProgress(progressEntry);
+                if (isCancelled()) {
+                    break;
+                }
             }
 
+            // remove, debug version
             // update unread message count for group conversations
             for (Conversation conversation : params) {
                 if (conversation.getPartner().isGroup()) {
                     ConversationUtils.updateUnreadMessageCount(repository, conversation);
+                }
+                if (isCancelled()) {
+                    break;
                 }
             }
 
@@ -940,20 +1054,12 @@ public class ConversationsFragment extends BaseFragment implements Updatable,
         }
 
         @Override
-        public void onProgressUpdate(Pair<String, Event>... values) {
+        public void onProgressUpdate(Pair<String, CachedEvent>... values) {
             if (values != null && values.length > 0) {
                 ConversationsFragment fragment = mFragmentReference.get();
                 if (fragment != null) {
-                    fragment.updateConversationCache(values[0]);
+                    fragment.updateConversationEventCache(values[0]);
                 }
-            }
-        }
-
-        @Override
-        protected void onPostExecute(Map<String, Event> result) {
-            ConversationsFragment fragment = mFragmentReference.get();
-            if (fragment != null) {
-                fragment.updateConversationCache(result);
             }
         }
     }

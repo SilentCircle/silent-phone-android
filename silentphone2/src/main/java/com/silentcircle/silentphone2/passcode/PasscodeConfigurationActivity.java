@@ -30,29 +30,22 @@ package com.silentcircle.silentphone2.passcode;
 import android.app.DialogFragment;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.net.Uri;
-import android.opengl.Visibility;
-import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.hardware.fingerprint.FingerprintManagerCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
 
 import com.google.common.primitives.Ints;
-import com.silentcircle.messaging.fragments.CameraFragment;
-import com.silentcircle.messaging.providers.VideoProvider;
 import com.silentcircle.silentphone2.R;
 import com.silentcircle.silentphone2.fragments.SingleChoiceDialogFragment;
 import com.silentcircle.silentphone2.util.Utilities;
 import com.silentcircle.silentphone2.views.SettingsItem;
 
 import java.util.List;
-import java.util.Set;
 
 import static android.widget.Toast.LENGTH_SHORT;
 
@@ -157,7 +150,7 @@ public class PasscodeConfigurationActivity extends AppLifecycleNotifierBaseActiv
     }
 
     private int getCurrentIndexOfPasscodeTimeout() {
-        return mTimeoutSelectorValues.indexOf(mPasscodeManager.getTimeout());
+        return mTimeoutSelectorValues.indexOf(mPasscodeManager.getReauthorizationTimeout());
     }
 
     private void setPasscodeEnabledUI() {
@@ -307,8 +300,12 @@ public class PasscodeConfigurationActivity extends AppLifecycleNotifierBaseActiv
 
     @Override
     public void onSingleChoiceDialogItemSelected(DialogInterface dialog, int requestCode, int index) {
-        mPasscodeManager.setTimeout(mTimeoutSelectorValues.get(index));
+        mPasscodeManager.setReauthorizationTimeout(mTimeoutSelectorValues.get(index));
         mPasscodeTimeoutSelector.setDescription(mTimeoutSelectorStrings[index]);
+    }
+
+    @Override
+    public void onSingleChoiceDialogCanceled(DialogInterface dialog, int requestCode) {
     }
 
     private void showNoFingerprintEnrolledWarning() {

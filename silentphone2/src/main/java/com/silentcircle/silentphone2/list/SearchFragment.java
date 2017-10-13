@@ -78,14 +78,12 @@ import com.silentcircle.messaging.util.IOUtils;
 import com.silentcircle.messaging.util.MessageUtils;
 import com.silentcircle.messaging.views.CallOrConversationDialog;
 import com.silentcircle.messaging.views.ContactSelection;
-import com.silentcircle.silentphone2.BuildConfig;
 import com.silentcircle.silentphone2.R;
 import com.silentcircle.silentphone2.activities.ContactAdder;
 import com.silentcircle.silentphone2.util.Utilities;
 import com.silentcircle.silentphone2.views.SearchEditTextLayout;
 import com.silentcircle.userinfo.LoadUserInfo;
 
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.text.Format;
@@ -278,6 +276,7 @@ public class SearchFragment extends PhoneNumberPickerFragment implements
         if (mContactSelection != null) {
             mContactSelection.setItems(getSelectedItems());
         }
+
         setInviteButtonEnabled();
         setDialpadEnabled(!inUserSelectionMode());
     }
@@ -321,7 +320,7 @@ public class SearchFragment extends PhoneNumberPickerFragment implements
                         String value = (String) json.get(key);
                         mDisplayNames.put(key, value);
                     }
-                } catch (JSONException e) {
+                } catch (Throwable e) {
                     // leave display names empty
                 }
             }
@@ -1119,6 +1118,20 @@ public class SearchFragment extends PhoneNumberPickerFragment implements
         updateSelectionCounter();
     }
 
+    protected void setVisibleSearchQueryIfDifferent(@Nullable final String query) {
+        try {
+            ActionBar actionBar = ((AppCompatActivity) getActivity()).getSupportActionBar();
+            if (actionBar != null) {
+                if (!TextUtils.equals(query,
+                        ((SearchEditTextLayout) actionBar.getCustomView()).getSearchQuery())) {
+                    ((SearchEditTextLayout) actionBar.getCustomView()).setSearchQuery(query);
+                }
+            }
+        } catch (Exception e) {
+            // ignore
+        }
+    }
+
     protected void clearQuery() {
         setQueryString("", false);
         try {
@@ -1138,7 +1151,7 @@ public class SearchFragment extends PhoneNumberPickerFragment implements
                 ((SearchEditTextLayout) actionBar.getCustomView()).setIsDialpadEnabled(enabled);
             }
         } catch (Exception e) {
-            // ignore, dialpad switch button visibility won' change
+            // ignore, dialpad switch button visibility won't change
         }
     }
 

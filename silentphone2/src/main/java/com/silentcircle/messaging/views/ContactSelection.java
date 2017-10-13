@@ -87,7 +87,18 @@ public class ContactSelection extends LinearLayout implements ResolvingUserAdapt
                 ContactEntry contactEntry = ContactsCache.getContactEntryFromCacheIfExists(item);
                 String name = ConversationUtils.resolveDisplayName(contactEntry, null);
                 if (TextUtils.isEmpty(name)) {
-                    name = contactEntry == null ? item : contactEntry.name;
+                    name = item;
+                    if (contactEntry != null) {
+                        if (!TextUtils.isEmpty(contactEntry.name)) {
+                            name = contactEntry.name;
+                        }
+                        else if (!TextUtils.isEmpty(contactEntry.alias)) {
+                            name = contactEntry.alias;
+                        }
+                        else if (!TextUtils.isEmpty(contactEntry.imName)) {
+                            name = contactEntry.imName;
+                        }
+                    }
                 }
                 name = StringUtils.formatShortName(name);
                 mMemberName.setText(name);

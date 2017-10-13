@@ -30,6 +30,8 @@ package com.silentcircle.messaging.receivers;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Handler;
+import android.support.v4.util.Pair;
 
 import com.silentcircle.contacts.ContactsUtils;
 import com.silentcircle.logs.Log;
@@ -37,6 +39,8 @@ import com.silentcircle.messaging.services.ZinaMessaging;
 import com.silentcircle.messaging.util.Action;
 import com.silentcircle.messaging.util.Extra;
 import com.silentcircle.messaging.util.Notifications;
+
+import java.util.concurrent.TimeUnit;
 
 /**
  * Receiver for chat message updates.
@@ -48,8 +52,27 @@ public class ChatNotification extends BroadcastReceiver implements ZinaMessaging
 
     private static final String TAG = ChatNotification.class.getSimpleName();
 
+    public static final long MESSAGE_NOTIFICATION_DELAY = TimeUnit.SECONDS.toMillis(1);
+
     private Intent mLastNotificationIntent;
     private Context mContext;
+
+    private static long sLastNotificationTime;
+    private static Handler sHandler;
+    private static Pair<Context, Intent> sPendingNotification;
+    private static Runnable sHandleNotificationIntentRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if (sPendingNotification == null) {
+                return;
+            }
+            Context context =  sPendingNotification.first;
+            Intent intent = sPendingNotification.second;
+            if (context != null && intent != null) {
+                sendMessageNotification(context, intent);
+            }
+        }
+    };
 
     /*
      * Receive update on chat message and act on it.
@@ -89,21 +112,33 @@ public class ChatNotification extends BroadcastReceiver implements ZinaMessaging
     public static void handleNotificationIntent(Context context, Intent intent) {
         switch (Action.from(intent)) {
             case RECEIVE_MESSAGE:
-                sendMessageNotification(context, intent);
+            case UPDATE_CONVERSATION:
+                long now = System.currentTimeMillis();
+                if (sLastNotificationTime == 0 || now - sLastNotificationTime >= MESSAGE_NOTIFICATION_DELAY) {
+                    sLastNotificationTime = now;
+                    sPendingNotification = null;
+                    sendMessageNotification(context, intent);
+                }
+                else {
+                    sPendingNotification = new Pair<>(context, intent);
+                    if (sHandler == null) {
+                        sHandler = new Handler();
+                    }
+                    sHandler.removeCallbacks(sHandleNotificationIntentRunnable);
+                    sHandler.postDelayed(sHandleNotificationIntentRunnable, MESSAGE_NOTIFICATION_DELAY);
+                }
                 break;
             case DATA_RETENTION_EVENT:
                 sendPolicyErrorNotification(context, intent);
                 break;
             default:
                 break;
-//            case INVITE:
-//                sendInviteNotification(context, intent);
-//                break;
         }
     }
 
     private static void sendMessageNotification(Context context, Intent intent) {
         String conversationPartnerId = Extra.PARTNER.from(intent);
+        // CharSequence messageId = getReceivedMessageId(intent);
 
         // create intent used to launch conversation activity.
         Intent messagingIntent = ContactsUtils.getMessagingIntent(conversationPartnerId, context);
@@ -113,7 +148,7 @@ public class ChatNotification extends BroadcastReceiver implements ZinaMessaging
          * Leave message empty for now. It could be passed in intent from AxoMessaging but
          * that does not seem to be secure.
          */
-        Notifications.sendMessageNotification(context, messagingIntent);
+        Notifications.sendMessageNotification(context, messagingIntent, conversationPartnerId);
     }
 
     private static void sendPolicyErrorNotification(Context context, Intent intent) {
@@ -126,4 +161,18 @@ public class ChatNotification extends BroadcastReceiver implements ZinaMessaging
         // Show notification.
         Notifications.sendPolicyNotification(context, messagingIntent, reason);
     }
+
+    /*
+    @Nullable
+    private static CharSequence getReceivedMessageId(final @NonNull Intent intent) {
+        CharSequence result = Extra.ID.getCharSequence(intent);
+        if (TextUtils.isEmpty(result)) {
+            CharSequence[] ids = Extra.IDS.getCharSequences(intent);
+            if (ids != null && ids.length > 0) {
+                result = ids[ids.length - 1];
+            }
+        }
+        return result;
+    }
+     */
 }

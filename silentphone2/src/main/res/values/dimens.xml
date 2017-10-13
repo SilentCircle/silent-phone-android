@@ -333,15 +333,19 @@
     <dimen name="messaging_message_attachment_text_width">@dimen/messaging_message_thumbnail_width</dimen>
     <dimen name="messaging_message_time_margin_left">5dp</dimen>
     <dimen name="messaging_message_time_margin_right">7dp</dimen>
+    <dimen name="messaging_message_burn_notice_gone_margin_left">6dp</dimen>
+    <dimen name="messaging_message_retained_notice_margin_left">8dp</dimen>
     <dimen name="messaging_message_buttons_margin">-7dp</dimen>
     <dimen name="messaging_message_padding_top">4dp</dimen>
     <dimen name="messaging_message_padding_bottom">4dp</dimen>
+    <dimen name="messaging_message_avatar_margin_left">8dp</dimen>
     <dimen name="messaging_message_action_padding_left">4dp</dimen>
     <dimen name="messaging_message_action_padding_right">4dp</dimen>
     <dimen name="messaging_message_action_padding_top">0dp</dimen>
     <dimen name="messaging_message_action_padding_bottom">1dp</dimen>
     <dimen name="messaging_message_attachment_progress_width">100dp</dimen>
     <dimen name="messaging_message_attachment_progress_height">50dp</dimen>
+    <dimen name="messaging_message_attachment_progress_height_small">28dp</dimen>
     <dimen name="messaging_unread_message_notification_size">20dp</dimen>
     <dimen name="messaging_unread_message_notification_margin">6dp</dimen>
     <dimen name="messaging_burn_button_padding_bottom">7dp</dimen>
@@ -366,6 +370,12 @@
     <dimen name="messaging_empty_chat_avatar_bg_height">170dp</dimen>
     <dimen name="messaging_group_details_avatar_height">130dp</dimen>
     <dimen name="messaging_group_details_button_drawable_padding">22dp</dimen>
+
+    <dimen name="messaging_info_item_drawable_margin">30dp</dimen>
+    <dimen name="messaging_info_item_drawable_width">35dp</dimen>
+    <dimen name="messaging_info_item_drawable_height">35dp</dimen>
+    <dimen name="messaging_info_item_avatar_width">30dp</dimen>
+    <dimen name="messaging_info_item_avatar_height">30dp</dimen>
 
     <!-- file viewer dimensions -->
     <dimen name="messaging_viewer_failure_text_margin_top">70dp</dimen>
@@ -406,7 +416,8 @@
     <dimen name="conversation_log_outer_margin">8dp</dimen>
     <dimen name="conversation_log_outer_margin_left">75dp</dimen>
     <dimen name="conversation_log_start_margin">16dp</dimen>
-    <dimen name="conversation_log_name_margin_bottom">2dp</dimen>
+    <dimen name="conversation_log_name_margin_start">15dp</dimen>
+    <dimen name="conversation_log_name_margin_bottom">1dp</dimen>
     <dimen name="conversation_log_secondary_text_size">14sp</dimen>
     <dimen name="conversation_log_day_group_padding_top">15dp</dimen>
     <dimen name="conversation_log_day_group_padding_bottom">9dp</dimen>

@@ -47,7 +47,6 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.PopupMenu;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.silentcircle.common.util.API;
 import com.silentcircle.common.util.HttpUtil;
@@ -55,21 +54,16 @@ import com.silentcircle.common.widget.ProgressBar;
 import com.silentcircle.contacts.ContactsUtils;
 import com.silentcircle.logs.Log;
 import com.silentcircle.messaging.activities.AxoRegisterActivity;
-import com.silentcircle.messaging.model.MessageErrorCodes;
 import com.silentcircle.messaging.services.ZinaMessaging;
-import com.silentcircle.messaging.util.AsyncUtils;
 import com.silentcircle.messaging.util.IOUtils;
 import com.silentcircle.silentphone2.R;
-import com.silentcircle.silentphone2.activities.DialerActivity;
+import com.silentcircle.silentphone2.activities.DialerActivityInternal;
 import com.silentcircle.silentphone2.services.TiviPhoneService;
 import com.silentcircle.silentphone2.util.ConfigurationUtilities;
 import com.silentcircle.silentphone2.util.Utilities;
 
-import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
-
-import zina.ZinaNative;
 
 /**
  * Displays the device management fragment.
@@ -232,7 +226,7 @@ public class DevicesFragment extends Fragment implements View.OnClickListener {
                     return true;
                 String directDial = ZinaMessaging.getInstance().getUserName() + ";xscdevid=" + mSelectedDevData.devId;
                 Intent intent = ContactsUtils.getCallIntent(directDial);
-                intent.putExtra(DialerActivity.NO_NUMBER_CHECK, true);
+                intent.putExtra(DialerActivityInternal.NO_NUMBER_CHECK, true);
                 startActivity(intent);
                 mParent.finish();
                 return true;

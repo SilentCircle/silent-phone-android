@@ -29,6 +29,10 @@ package com.silentcircle.messaging.views.adapters;
 
 import android.content.Context;
 import android.graphics.Rect;
+import android.graphics.RectF;
+import android.os.Build;
+import android.os.Handler;
+import android.os.Looper;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
@@ -47,6 +51,9 @@ public class DateHeaderView extends FrameLayout {
 
     private TextView mText;
     private DateUtils mDateUtilsInstance;
+    private Handler mHandler;
+
+    private static final int RESTORE_LAYER_TIMEOUT_MS = 500;
 
     /*
      * These should be accessed only from UI thread.
@@ -58,12 +65,10 @@ public class DateHeaderView extends FrameLayout {
 
     public DateHeaderView(Context context) {
         this(context, null);
-        init();
     }
 
     public DateHeaderView(Context context, AttributeSet attrs) {
         this(context, attrs, 0);
-        init();
     }
 
     public DateHeaderView(Context context, AttributeSet attrs, int defStyle) {
@@ -73,7 +78,15 @@ public class DateHeaderView extends FrameLayout {
 
     private void init() {
         mDateUtilsInstance = DateUtils.getSharedInstance(getContext());
+        mHandler = new Handler(Looper.getMainLooper());
     }
+
+    private final Runnable mRestoreLayerRunnable = new Runnable() {
+        @Override
+        public void run() {
+            applyLayerType(LAYER_TYPE_NONE);
+        }
+    };
 
     @Override
     protected void onFinishInflate() {
@@ -87,6 +100,24 @@ public class DateHeaderView extends FrameLayout {
             mText.setText(text);
             mText.setContentDescription(text);
         }
+    }
+
+    // Returning `true` and using `LAYER_TYPE_HARDWARE` makes sure that we are handling transparency
+    // rendering without having Canvas#saveLayerAlpha(RectF, int) called.
+    @Override
+    protected boolean onSetAlpha(int alpha) {
+        int layerType = (alpha == 255) ? LAYER_TYPE_NONE :
+                (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) ? LAYER_TYPE_HARDWARE
+                        : LAYER_TYPE_SOFTWARE;
+        if (layerType == LAYER_TYPE_HARDWARE || layerType == LAYER_TYPE_SOFTWARE) {
+            applyLayerType(layerType);
+            mHandler.removeCallbacks(mRestoreLayerRunnable);
+        } else {
+            mHandler.removeCallbacks(mRestoreLayerRunnable);
+            mHandler.postDelayed(mRestoreLayerRunnable, RESTORE_LAYER_TIMEOUT_MS);
+        }
+        mText.setAlpha((float) alpha / 255.f);
+        return true;
     }
 
     @Override
@@ -109,5 +140,11 @@ public class DateHeaderView extends FrameLayout {
         }
         // shouldDispatch ? super.dispatchTouchEvent(event) : true;
         return !shouldDispatch || super.dispatchTouchEvent(event);
+    }
+
+    private void applyLayerType(int layerType) {
+        if (mText.getLayerType() != layerType) {
+            mText.setLayerType(layerType, null);
+        }
     }
 }

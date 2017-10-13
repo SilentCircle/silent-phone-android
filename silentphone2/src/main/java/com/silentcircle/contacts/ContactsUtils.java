@@ -30,9 +30,10 @@ import android.view.View;
 import com.silentcircle.contacts.utils.Constants;
 import com.silentcircle.contacts.utils.PhoneNumberHelper;
 import com.silentcircle.messaging.activities.ConversationActivity;
+import com.silentcircle.silentphone2.BuildConfig;
 import com.silentcircle.silentphone2.R;
 import com.silentcircle.silentphone2.activities.ContactAdder;
-import com.silentcircle.silentphone2.activities.DialerActivity;
+import com.silentcircle.silentphone2.activities.DialerActivityInternal;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -227,7 +228,7 @@ public class ContactsUtils {
      * @return the correct action string.
      */
     public static String getEditBeforeCallAction() {
-        return DialerActivity.SILENT_EDIT_BEFORE_CALL_ACTION;
+        return DialerActivityInternal.SILENT_EDIT_BEFORE_CALL_ACTION;
     }
 
     /**
@@ -263,7 +264,8 @@ public class ContactsUtils {
      * information about call origin, see comments in Phone package (PhoneApp).
      */
     public static Intent getCallIntent(Uri uri, String callOrigin) {
-        final Intent intent = new Intent(DialerActivity.SILENT_CALL_ACTION, uri);
+        final Intent intent = new Intent(DialerActivityInternal.SILENT_CALL_ACTION, uri);
+        intent.setClassName(BuildConfig.APPLICATION_ID, DialerActivityInternal.class.getName());
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         return intent;
     }

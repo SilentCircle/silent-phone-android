@@ -144,7 +144,7 @@ public class CallLogFragment extends ListFragment
     // Whether or not to show the Show call history footer view
     private boolean mHasFooterView = false;
 
-    // We can use this to call a number directly if the DialerActivity->ListFragment use this
+    // We can use this to call a number directly if the DialerActivityInternal->ListFragment use this
     // fragment. Forward this the the adapter to take action.
     private OnPhoneNumberPickerActionListener mPhoneNumberPickerActionListener;
 

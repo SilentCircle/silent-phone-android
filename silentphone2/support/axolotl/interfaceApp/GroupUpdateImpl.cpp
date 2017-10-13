@@ -58,19 +58,32 @@ static bool addNewGroupToChangeSet(const string &groupId)
 }
 
 #ifdef UNITTESTS
-PtrChangeSet getPendingGroupChangeSet(const string &groupId);
+PtrChangeSet getPendingGroupChangeSet(const string &groupId, SQLiteStoreConv &store);
+bool removeGroupFromPendingChangeSet(const string &groupId)
+{
+    return (pendingChangeSets.erase(groupId) == 1);
+}
 #else
 static
 #endif
-PtrChangeSet getPendingGroupChangeSet(const string &groupId)
+PtrChangeSet getPendingGroupChangeSet(const string &groupId, SQLiteStoreConv &store)
 {
-    auto end = pendingChangeSets.end();
-    for (auto it = pendingChangeSets.begin(); it != end; ++it) {
-        string oldGroupId = it->first.substr(UPDATE_ID_LENGTH);
-        if (oldGroupId == groupId) {
-            return it->second;
-        }
+    // Check if the group's pending change set is cached
+    auto found = pendingChangeSets.find(groupId);
+    if (found != pendingChangeSets.end()) {
+        return found->second;
     }
+
+    // Not cached, get it from persistent storage and cache it
+    string changeSetSerialized;
+    store.getGroupChangeSet(groupId, &changeSetSerialized);
+    if (!changeSetSerialized.empty()) {
+        auto changeSet = make_shared<GroupChangeSet>();
+        changeSet->ParseFromString(changeSetSerialized);
+        pendingChangeSets.insert(pair<string, PtrChangeSet >(groupId, changeSet));
+        return changeSet;
+    }
+
     return PtrChangeSet();
 }
 
@@ -199,7 +212,7 @@ static bool setGroupBurnToChangeSet(const string &groupId, uint64_t burn, GroupU
 
 // This function removes an remove member from the group update
 // Function assumes the change set is locked
-static bool removeRmNameFromChangeSet(PtrChangeSet changeSet, const string &name)
+static bool removeRmNameFromChangeSet(PtrChangeSet& changeSet, const string &name)
 {
     if (!changeSet->has_updatermmember()) {
         return true;
@@ -230,7 +243,7 @@ static bool removeRmNameFromChangeSet(const string &groupId, const string &name,
 
 // Function checks for duplicates and ignores them, otherwise adds the name to the group update
 // assumes the change set is locked
-static bool addAddNameToChangeSet(PtrChangeSet changeSet, const string &name)
+static bool addAddNameToChangeSet(PtrChangeSet& changeSet, const string &name)
 {
 
     GroupUpdateAddMember *updateAddMember = changeSet->mutable_updateaddmember();
@@ -268,7 +281,7 @@ static bool addAddNameToChangeSet(const string &groupId, const string &name, SQL
 
 // Thus function removes an add member from the change set
 // Function assumes the change set is locked
-static bool removeAddNameFromChangeSet(PtrChangeSet changeSet, const string &name)
+static bool removeAddNameFromChangeSet(PtrChangeSet& changeSet, const string &name)
 {
     // If update has no add member yet, cannot remove anything return false, done
     if (!changeSet->has_updateaddmember()) {
@@ -303,7 +316,7 @@ static bool removeAddNameFromChangeSet(const string &groupId, const string &name
 
 // Function checks for duplicates and ignores them, otherwise adds the name to the group update
 // assumes the change set is locked
-static bool addRemoveNameToChangeSet(PtrChangeSet changeSet, const string &name)
+static bool addRemoveNameToChangeSet(PtrChangeSet& changeSet, const string &name)
 {
     GroupUpdateRmMember *updateRmMember = changeSet->mutable_updatermmember();
     int32_t numberNames = updateRmMember->rmmember_size();
@@ -351,7 +364,7 @@ static bool setMsgBurnToChangeSet(const string &groupId, const vector<string>& m
     return true;
 }
 
-static int32_t prepareChangeSetClocks(const string &groupId, const string &binDeviceId, PtrChangeSet changeSet,
+static int32_t prepareChangeSetClocks(const string &groupId, const string &binDeviceId, PtrChangeSet& changeSet,
                                       GroupUpdateType type, const uint8_t *updateId, SQLiteStoreConv &store,
                                       bool updateClocks = true)
 {
@@ -400,13 +413,13 @@ static int32_t prepareChangeSetClocks(const string &groupId, const string &binDe
     return SUCCESS;
 }
 
-static int32_t serializeChangeSet(PtrChangeSet changeSet, cJSON *root, string *newAttributes)
+static int32_t serializeChangeSet(PtrChangeSet& changeSet, cJSON *root, string *newAttributes)
 {
     string serialized;
     if (!changeSet->SerializeToString(&serialized)) {
         return GENERIC_ERROR;
     }
-    size_t b64Size = static_cast<size_t>(serialized.size() * 2);
+    auto b64Size = static_cast<size_t>(serialized.size() * 2);
     unique_ptr<char[]> b64Buffer(new char[b64Size]);
     if (b64Encode(reinterpret_cast<const uint8_t *>(serialized.data()), serialized.size(), b64Buffer.get(), b64Size) == 0) {
         return GENERIC_ERROR;
@@ -441,7 +454,7 @@ static int32_t addMissingMetaData(PtrChangeSet changeSet, const string& groupId,
         }
     }
     if (!changeSet->has_updateburn()) {
-        uint64_t sec = static_cast<uint64_t>(Utilities::getJsonInt(group, GROUP_BURN_SEC, 0));
+        auto sec = static_cast<uint64_t>(Utilities::getJsonInt(group, GROUP_BURN_SEC, 0));
         int32_t mode = Utilities::getJsonInt(group, GROUP_BURN_MODE, 0);
         changeSet->mutable_updateburn()->set_burn_ttl_sec(sec);
         changeSet->mutable_updateburn()->set_burn_mode((GroupUpdateSetBurn_BurnMode)mode);
@@ -723,9 +736,11 @@ int32_t AppInterfaceImpl::prepareChangeSetSend(const string &groupId) {
 
     // Check if this change set is for a new group
     if (!store_->hasGroup(groupId)) {
-        returnCode = insertNewGroup(groupId, *changeSet, 0, nullptr);
+        struct timeval emptyTime {0};
+        returnCode = insertNewGroup(groupId, *changeSet, emptyTime, nullptr);
         if (returnCode < 0) {
             errorCode_ = returnCode;
+            updateInProgress = true;
             return returnCode;
         }
     }
@@ -737,6 +752,7 @@ int32_t AppInterfaceImpl::prepareChangeSetSend(const string &groupId) {
         returnCode = prepareChangeSetClocks(groupId, binDeviceId, changeSet, GROUP_SET_NAME, updateIdGlobal, *store_);
         if (returnCode < 0) {
             errorCode_ = returnCode;
+            updateInProgress = true;
             return returnCode;
         }
         store_->setGroupName(groupId, changeSet->updatename().name());
@@ -745,6 +761,7 @@ int32_t AppInterfaceImpl::prepareChangeSetSend(const string &groupId) {
         returnCode = prepareChangeSetClocks(groupId, binDeviceId, changeSet, GROUP_SET_AVATAR, updateIdGlobal, *store_);
         if (returnCode < 0) {
             errorCode_ = returnCode;
+            updateInProgress = true;
             return returnCode;
         }
         store_->setGroupAvatarInfo(groupId, changeSet->updateavatar().avatar());
@@ -753,6 +770,7 @@ int32_t AppInterfaceImpl::prepareChangeSetSend(const string &groupId) {
         returnCode = prepareChangeSetClocks(groupId, binDeviceId, changeSet, GROUP_SET_BURN, updateIdGlobal, *store_);
         if (returnCode < 0) {
             errorCode_ = returnCode;
+            updateInProgress = true;
             return returnCode;
         }
         store_->setGroupBurnTime(groupId, changeSet->updateburn().burn_ttl_sec(), changeSet->updateburn().burn_mode());
@@ -827,12 +845,10 @@ int32_t AppInterfaceImpl::createChangeSetDevice(const string &groupId, const str
         }
     }
     else {
-        changeSet = getPendingGroupChangeSet(groupId);
+        changeSet = getPendingGroupChangeSet(groupId, *store_);
         if (!changeSet) {
             return SUCCESS;
         }
-    }
-    if (!updateInProgress) {
         // Resend a change set only if a device has pending ACKs for this group.
         return store_->hasWaitAckGroupDevice(groupId, deviceId, nullptr) ?
                serializeChangeSet(changeSet, root, newAttributes) : SUCCESS;
@@ -843,37 +859,32 @@ int32_t AppInterfaceImpl::createChangeSetDevice(const string &groupId, const str
 
     string updateIdString(reinterpret_cast<const char*>(updateIdGlobal), UPDATE_ID_LENGTH);
 
-    auto oldEnd = pendingChangeSets.cend();
-    for (auto it = pendingChangeSets.cbegin(); it != oldEnd; ++it) {
+    auto oldChangeSet = getPendingGroupChangeSet(groupId, *store_);
+    if (oldChangeSet) {
 
-        string oldGroupId = it->first.substr(UPDATE_ID_LENGTH);
-        if (oldGroupId != groupId) {
-            continue;
-        }
-        string oldUpdateId = it->first.substr(0, UPDATE_ID_LENGTH);
-        auto oldChangeSet = it->second;
-
-        // Collapse older add/remove member group updates into the current one
-        // if the old change set has add new member _and_ the device has not ACK'd it, copy the old member into
-        // current change set
-        if (oldChangeSet->has_updateaddmember() && store_->hasWaitAck(groupId, binDeviceId, oldUpdateId, GROUP_ADD_MEMBER,
-                                                                      nullptr)) {
+        // Collapse older add/remove member group updates into the current one.
+        // If the old change set has add new member _and_ the device has not ACK'd it, copy
+        // the old member into current change set.
+        // Thus if at least one device has not ACK'ed the previous changes then the new changes
+        // get these changes as well. If all devices ACK'ed the previous changes, then the new
+        // change set will not get the old changes.
+        if (oldChangeSet->has_updateaddmember() &&
+                store_->hasWaitAck(groupId, binDeviceId, oldChangeSet->updateaddmember().update_id(), GROUP_ADD_MEMBER,
+                                   nullptr)) {
             // Use the own addAddName function: skips duplicate names, checks the remove member data
             const int32_t size = oldChangeSet->updateaddmember().addmember_size();
             for (int i = 0; i < size; i++) {
                 addAddNameToChangeSet(changeSet, oldChangeSet->updateaddmember().addmember(i).user_id());
-                // Don't need to wait for ACK of old change set, we copied the data into the new set.
-                store_->removeWaitAck(groupId, binDeviceId, oldUpdateId, GROUP_ADD_MEMBER);
             }
         }
 
-        if (oldChangeSet->has_updatermmember() && store_->hasWaitAck(groupId, binDeviceId, oldUpdateId, GROUP_REMOVE_MEMBER,
-                                                                     nullptr)) {
+        if (oldChangeSet->has_updatermmember() &&
+                store_->hasWaitAck(groupId, binDeviceId, oldChangeSet->updatermmember().update_id(), GROUP_REMOVE_MEMBER,
+                                   nullptr)) {
             // Use the own addRemoveName function: skips duplicate names, checks the add member data
             const int32_t size = oldChangeSet->updatermmember().rmmember_size();
             for (int i = 0; i < size; i++) {
                 addRemoveNameToChangeSet(changeSet, oldChangeSet->updatermmember().rmmember(i).user_id());
-                store_->removeWaitAck(groupId, binDeviceId, oldUpdateId, GROUP_REMOVE_MEMBER);
             }
         }
     }
@@ -890,8 +901,11 @@ int32_t AppInterfaceImpl::createChangeSetDevice(const string &groupId, const str
         return result;
     }
 
-    // Because we send a new group update we can remove older group updates from wait-for-ack. The
-    // recent update overwrites older updates. ZINA then ignores ACKs for the older updates.
+    // Add WaitForAck records for the enw updates, remove old WaitForAck records for
+    // attributes and data that's collapsed into the new change set.
+
+    // Because we send a new group update we can remove older group updates from wait-for-ack.
+    // The recent update overwrites older updates. ZINA ignores ACKs for the older updates.
     // Then store a new wait-for-ack record with the current update id.
     if (changeSet->has_updatename()) {
         store_->removeWaitAckWithType(groupId, binDeviceId, GROUP_SET_NAME);
@@ -912,11 +926,14 @@ int32_t AppInterfaceImpl::createChangeSetDevice(const string &groupId, const str
         store_->insertWaitAck(groupId, binDeviceId, updateIdString, GROUP_BURN_MESSSAGE);
     }
 
-    // Add wait-for-ack records for add/remove group updates
+    // Add wait-for-ack records for add/remove group updates, remove old records.
+    // Names are collapsed into new change set.
     if (changeSet->has_updateaddmember()) {
+        store_->removeWaitAckWithType(groupId, binDeviceId, GROUP_ADD_MEMBER);
         store_->insertWaitAck(groupId, binDeviceId, updateIdString, GROUP_ADD_MEMBER);
     }
     if (changeSet->has_updatermmember()) {
+        store_->removeWaitAckWithType(groupId, binDeviceId, GROUP_REMOVE_MEMBER);
         store_->insertWaitAck(groupId, binDeviceId, updateIdString, GROUP_REMOVE_MEMBER);
     }
 
@@ -933,36 +950,31 @@ void AppInterfaceImpl::groupUpdateSendDone(const string& groupId)
     if (!updateInProgress) {
         return;
     }
-    string currentKey;
-    currentKey.assign(reinterpret_cast<const char*>(updateIdGlobal), sizeof(updateIdGlobal)).append(groupId);
-
     memset(updateIdGlobal, 0, sizeof(updateIdGlobal));
 
-    // Remove old change sets of the group. This guarantees that we have at most one pending change set per group
-    auto oldEnd = pendingChangeSets.end();
-    for (auto it = pendingChangeSets.begin(); it != oldEnd; ) {
-        if (it->first == currentKey) {
-            ++it;
-            continue;
-        }
-        string oldGroupId = it->first.substr(UPDATE_ID_LENGTH);
-        if (oldGroupId != groupId) {
-            ++it;
-            continue;
-        }
-        it = pendingChangeSets.erase(it);
-    }
-
+    // We've sent out the new change set to all devices. This change set contains
+    // the current status of the group attributes (with vector clocks) and the collapsed
+    // information of new and removed members. The current change set now becomes the pending
+    // change set, waiting for ACKs
     PtrChangeSet changeSet = getGroupChangeSet(groupId);
     if (!changeSet) {
         return;
     }
-    pendingChangeSets.insert(pair<string, PtrChangeSet>(currentKey, changeSet));
+    // Remove old pending change set, makes sure we have only _one_ pending change
+    // set at a time
+    removeFromPendingChangeSets(groupId);
+
+    // Add it to pending change set cache map and save in persistent store
+    pendingChangeSets.insert(pair<string, PtrChangeSet>(groupId, changeSet));
+    changeSet->SerializeAsString();
+    store_->insertChangeSet(groupId, changeSet->SerializeAsString());
+
+    // Remove as the the current change set
     currentChangeSets.erase(groupId);
 
     updateInProgress = false;
 
-    LOGGER(DEBUGGING, __func__, " <-- ", currentKey);
+    LOGGER(DEBUGGING, __func__, " <-- ", groupId);
 }
 
 // The device_id inside then change set and vector clocks consists of the first 8 binary bytes
@@ -976,14 +988,10 @@ void AppInterfaceImpl::makeBinaryDeviceId(const string &deviceId, string *binary
 
 bool AppInterfaceImpl::removeFromPendingChangeSets(const string &key)
 {
-    auto oldEnd = pendingChangeSets.end();
-    for (auto it = pendingChangeSets.begin(); it != oldEnd; ++it) {
-        if (it->first == key) {
-            auto eraseIt = pendingChangeSets.erase(it);
-            return eraseIt != oldEnd;
-        }
-    }
-    return false;
+    // remove old pending change set
+    size_t removed = pendingChangeSets.erase(key);
+    store_->removeChangeSet(key);
+    return removed > 0;
 }
 
 int32_t AppInterfaceImpl::performGroupHellos(const string &userId, const string &deviceId, const string &deviceName)
@@ -993,8 +1001,6 @@ int32_t AppInterfaceImpl::performGroupHellos(const string &userId, const string 
     if (deviceId.empty() || userId.empty()) {
         return ILLEGAL_ARGUMENT;
     }
-
-    string devName = deviceName;
 
     // First check if the user is a member of some group
     int32_t result = 0;
@@ -1021,7 +1027,7 @@ int32_t AppInterfaceImpl::performGroupHellos(const string &userId, const string 
         const string groupId = Utilities::getJsonString(group.get(), GROUP_ID, "");
 
         if (store_->isMemberOfGroup(groupId, userId)) {
-            result = performGroupHello(groupId, userId, deviceId, devName);
+            result = performGroupHello(groupId, userId, deviceId, deviceName);
             if (result != SUCCESS) {
                 return result;
             }

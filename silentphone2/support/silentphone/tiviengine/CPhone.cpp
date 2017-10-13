@@ -1381,6 +1381,17 @@ int CTiViPhone::whispering(int iStart, int SesId){
    return 0;
 }
 
+int CTiViPhone::mute(int iMute, int SesId)
+{
+   CSesBase *spSes = findSessionByID(SesId);
+   if (!spSes) return -1;
+   if (!spSes->isMediaSession()) return -2;
+   if (spSes->cs.iCallStat == CALL_STAT::EEnding) return -3;
+
+   spSes->cs.iIsMuted = iMute;
+   return 0;
+}
+
 int CTiViPhone::hold(int iPutOnHold, int SesId){
    CSesBase *spSes=findSessionByID(SesId);
    if(!spSes)return -1;
@@ -1388,6 +1399,9 @@ int CTiViPhone::hold(int iPutOnHold, int SesId){
    if( spSes->cs.iCallStat==CALL_STAT::EEnding)return -3;
    int wasOnHold=spSes->cs.iIsOnHold;
    spSes->cs.iIsOnHold=iPutOnHold;
+   if (!iPutOnHold) {
+      spSes->cs.iIsMuted = 0;
+   }
    printf("\n[sethold %d]\n",iPutOnHold);
    //if(iPutOnHold)
    if(!iPutOnHold && wasOnHold && spSes->iReceivedVideoSDP){spSes->iReceivedVideoSDP=0; reInvite(SesId,NULL);}
@@ -1530,6 +1544,7 @@ int saveDstr(char *pToSave, unsigned int &uiOffset,DSTR *dstr,char *p,unsigned i
 }
 
 int CTiViPhone::isDstOnline(const char *dst, int *resp, CTEditBase *retMsg){
+    t_logf(log_events, __PRETTY_FUNCTION__, "dst = %s", dst);
    *resp=0;
    int ses=sendSipMsg(0,"OPTIONS",(char*)dst,NULL, NULL,NULL);
    CSesBase *spSes=findSessionByID(ses);
@@ -1739,7 +1754,9 @@ int CTiViPhone::addRegister(char *uri){
    } 
 */
    //TODO check old sip-contact-hdr and save new into file
-   if(!p_cfg.reg.bUnReg && p_cfg.iDelayRegister){
+    t_logf(log_events, __FUNCTION__,"uri = %s", uri);
+
+    if(!p_cfg.reg.bUnReg && p_cfg.iDelayRegister){
       uiNextRegTry=uiGT+T_GT_SECOND*2;
       t_logf(log_events, __FUNCTION__,"delay registration  = p_cfg.iDelayRegister");
       return 0;
@@ -1772,10 +1789,10 @@ int CTiViPhone::addRegister(char *uri){
    if(p_cfg.uiPrevExpires==0)p_cfg.uiPrevExpires=p_cfg.uiExpires;
 #ifdef __APPLE__
    //apple ios backgrouding wakes up device only every 600 sec
-   if(p_cfg.uiExpires<800 && !p_cfg.iIsInForeground){
-      p_cfg.uiPrevExpires=p_cfg.uiExpires;
-      p_cfg.uiExpires=800;
-   }
+//   if(p_cfg.uiExpires<800 && !p_cfg.iIsInForeground){
+//      p_cfg.uiPrevExpires=p_cfg.uiExpires;
+//      p_cfg.uiExpires=800;
+//   }
 #endif
 
    if(p_cfg.uiExpires<20)p_cfg.uiExpires=20;
@@ -1811,6 +1828,7 @@ int CTiViPhone::addRegister(char *uri){
    spSes = getNewSes(0,1,&p_cfg.GW,METHOD_REGISTER);
    if(spSes)
    {
+       t_logf(log_events, __PRETTY_FUNCTION__, "spSes found");
 
       if(!p_cfg.reg.bUnReg)
       {
@@ -1843,13 +1861,17 @@ int CTiViPhone::addRegister(char *uri){
 }
 int CTiViPhone::remRegister(char *uri){
 
-   
+    t_logf(log_events, __FUNCTION__,"uri = %s", uri);
+
    if(p_cfg.reg.uiRegUntil && p_cfg.iHasNetwork)
    {
       if(p_cfg.reg.uiRegUntil>uiGT){
          p_cfg.reg.bUnReg=1;
 
-         if(addRegister(uri)==0)
+          int added = addRegister(uri);
+          
+          t_logf(log_events, __PRETTY_FUNCTION__, "addRegister(): %d", added);
+         if(added==0)
          {
             p_cfg.reg.bUnReg=0;
             p_cfg.reg.uiRegUntil=0;
@@ -2088,7 +2110,8 @@ int CTiViPhone::sendSipKA(int iForce, int *respCode){
    //TODO mark as keeplive
    //TODO send KA from one session
    
-   puts("try send opt");
+   t_logf(log_events, __PRETTY_FUNCTION__, "try send opt iForce: %d", iForce);
+    
    if(!hasNetworkConnect( p_cfg.GW.ip)){
       checkServDomainName(0);
       return 0;
@@ -2110,7 +2133,7 @@ int CTiViPhone::sendSipKA(int iForce, int *respCode){
          spSes->ptrResp=respCode;
       }
    }
-   printf("[opt sent ses=%d]",s);
+    t_logf(log_events, __PRETTY_FUNCTION__, "[opt sent ses=%d]",s);
    uiSIPKeepaliveSentAt=uiGT;
    keepAlive.reset();
    
@@ -2126,23 +2149,29 @@ int CTiViPhone::recMsg(SIP_MSG *sMsg, int rec, ADDR &addr)//called from thread
   //int rec=sockSip.recvFrom((char *)&sMsg->rawDataBuffer[0],MSG_BUFFER_SIZE-100,&addr);
 //   CTCpuWakeLock wakeLock;//should it be after recv or recvfrom
    
- // printf("[rec][%.*s]",rec,sMsg->rawDataBuffer);
- 
-   if(rec<0)
-   {
-      t_logf(log_events, __FUNCTION__, "sockdebug: Something bad happened, setting sockSip.needRecreate(1)");
-      if(sockSip.needRecreate(1)){
-         verifyDomainAddress();
-         sendSipKA();
-         if(p_cfg.isOnline()){
-            //TODO rereg if ext_ip!=ext_prev_ip
-            p_cfg.iReRegisterNow=1;
-         }
-      }
-      Sleep(30);
-      return rec;
-   }
+   if(rec<0) {
+       
+       int doesNeedRecreate = sockSip.needRecreate(1);
+       
+       t_logf(log_events, __FUNCTION__, "sockdebug: Something bad happened: rec: %d doesNeedRecreate: %d sMsg: %s foreground: %d", rec, doesNeedRecreate, sMsg->rawDataBuffer, p_cfg.iIsInForeground);
+       
+       if(doesNeedRecreate){
+           
+           verifyDomainAddress();
+           sendSipKA();
+           
+           if(p_cfg.isOnline()){
 
+               t_logf(log_events, __FUNCTION__, "sockdebug: Setting iReRegisterNow=1");
+             
+               //TODO rereg if ext_ip!=ext_prev_ip
+               p_cfg.iReRegisterNow=1;
+           }
+       }
+       
+       Sleep(30);
+       return rec;
+   }
 
    iBytesRec+=rec;
 
@@ -2811,6 +2840,9 @@ void CTiViPhone::endAllCalls(){
    }
 }
 
+// FIXME: Remove unneccessary sleeps here as most of the logic
+// happens on the SCPNetworkManager (this method is only used
+// by SPi)
 const char *CTiViPhone::onPushNotification(const char *msg){
 
    void sleepForMs(int msec, int step, int *exiting);
@@ -2825,7 +2857,7 @@ const char *CTiViPhone::onPushNotification(const char *msg){
    //checkCallCnt
    int ts_recv = (int)sockSip.getLastRecvTimestamp();
    
-   printf("onPush ts((%d,%d)=%d)", ts_recv, ts, ts-ts_recv);
+    t_logf(log_events,__FUNCTION__, "1. onPush ts((%d,%d)=%d)", ts_recv, ts, ts-ts_recv);
    
    int ok = 0;
    
@@ -2838,8 +2870,7 @@ const char *CTiViPhone::onPushNotification(const char *msg){
    
    ts_recv = (int)sockSip.getLastRecvTimestamp();ts = (int)getTickCount();
    
-   printf("onPush ts((%d,%d)=%d)", ts_recv, ts, ts-ts_recv);
-   
+    t_logf(log_events,__FUNCTION__, "2. onPush ts((%d,%d)=%d)", ts_recv, ts, ts-ts_recv);
    
    if(abs(ts-ts_recv) > 2000){
       if(!sendSipKA(1))return "fail !sendSipKA(1)";
@@ -2856,7 +2887,6 @@ const char *CTiViPhone::onPushNotification(const char *msg){
       //chekc we have a call or msg
       if( abs(ts - ts_recv) < 3000 || abs(ts_recv - push_ts) < 1000){
          
-         printf("push diff %d %d", ts - ts_recv, ts_recv - push_ts);
          t_logf(log_events,__FUNCTION__, "PUSH OK, push diff %d %d", ts - ts_recv, ts_recv - push_ts);
          return "ok";
       }
@@ -3256,6 +3286,9 @@ void CTiViPhone::updateExtAddr(){
 
 void CTiViPhone::chechRereg(){
    
+    if(p_cfg.iSkipReregisterCheck)
+        return;
+    
    if(p_cfg.reg.uiRegUntil && p_cfg.reg.uiRegUntil+T_GT_MINUTE<uiGT){
       
       CTEditBuf<64>  b;
@@ -3414,7 +3447,7 @@ int CTiViPhone::parseUri(CTEngineCallBack *cPhoneCallback,PHONE_CFG& p_cfg,char 
                   if(iCheckDomain)
                   {
                      //TODO
-                     if(p_cfg.GW.ip && p_cfg.str32GWaddr.strVal && strncmp(p_cfg.str32GWaddr.strVal,p,iIpLen)==0)
+                     if(p_cfg.GW.ip && strncmp(p_cfg.str32GWaddr.strVal,p,iIpLen)==0)
                      {
                         uri->addr.ip=p_cfg.GW.ip;
                      }

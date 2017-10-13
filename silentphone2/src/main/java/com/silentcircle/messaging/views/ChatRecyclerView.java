@@ -41,6 +41,7 @@ import android.widget.Checkable;
 
 import com.silentcircle.messaging.views.adapters.FooterModelViewAdapter;
 import com.silentcircle.messaging.views.adapters.HasChoiceMode;
+import com.silentcircle.messaging.views.adapters.ModelViewAdapter;
 import com.silentcircle.messaging.views.adapters.MultiSelectModelViewAdapter;
 
 import java.util.ArrayList;
@@ -147,6 +148,7 @@ public class ChatRecyclerView extends com.silentcircle.messaging.views.RecyclerV
     protected View.OnClickListener mClickThroughListener;
     protected MultiChoiceModeCallback mMultiChoiceModeCallback;
     protected Set<String> mCheckIds = new HashSet<>();
+    protected Set<Long> mCheckAdapterIds = new HashSet<>();
     protected boolean mIsScrolling;
 
     private OnScrollListener mOnScrollListener = new OnScrollListener() {
@@ -220,9 +222,11 @@ public class ChatRecyclerView extends com.silentcircle.messaging.views.RecyclerV
         if (!isHeaderPosition(position)) {
             if (value) {
                 mCheckIds.add(itemId);
+                mCheckAdapterIds.add(mAdapter.getItemId(position));
             }
             else {
                 mCheckIds.remove(itemId);
+                mCheckAdapterIds.remove(mAdapter.getItemId(position));
             }
 
             if (mAdapter != null) {
@@ -274,8 +278,14 @@ public class ChatRecyclerView extends com.silentcircle.messaging.views.RecyclerV
     public void clearChoices() {
         mCheckIds.clear();
         if (mAdapter != null) {
-            mAdapter.notifyDataSetChanged();
+            for (long adapterId : mCheckAdapterIds) {
+                int position = mAdapter.getScreenPositionForID(adapterId);
+                if (position != ModelViewAdapter.INVALID_POSITION) {
+                    mAdapter.notifyItemChanged(position);
+                }
+            }
         }
+        mCheckAdapterIds.clear();
         invalidate();
     }
 

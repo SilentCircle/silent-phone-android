@@ -80,18 +80,13 @@ public class GetVideoDataAndDraw {
         }
     }
 
-    public void draw(Canvas c, int ox, int oy, Rect rectDestination, Paint pa) {
+    public void draw(Canvas c, Paint pa) {
         if (!mCanDraw)
             return;
 
         if (bm == null)
             return;
-        if (rectDestination != null) {
-            c.drawBitmap(bm, mRectSrc, rectDestination, pa);
-        }
-        else {
-            c.drawBitmap(bm, ox, oy, pa);
-        }
+        c.drawBitmap(bm, 0, 0, pa);
     }
 
     public boolean hasNewFrame() {

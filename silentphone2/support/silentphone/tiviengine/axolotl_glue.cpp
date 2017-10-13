@@ -57,6 +57,7 @@ static Transport *sipTransport = NULL;
 
 static STATE_FUNC _messageStateReport = NULL;
 static RECV_FUNC _receiveMessage = NULL;
+static NOTIFY_FUNC _notifyCallback = NULL;
 
 static GROUP_CMD_RECV_FUNC _groupReceiveCommand = NULL;
 static GROUP_MSG_RECV_FUNC _groupReceiveMessage = NULL;
@@ -129,6 +130,7 @@ const char *CTAxoInterfaceBase::getErrorMsg(int id){
       case REJECT_DATA_RETENTION: return "Reject data retention when sending a message";
       case PRE_KEY_HASH_WRONG   : return "Pre-key check failed during setup of new conversation or re-keying";
       case ILLEGAL_ARGUMENT     : return "Value of an argument is illegal/out of range";
+      case CONTEXT_ID_MISMATCH  : return "ZINA ratchet data is probably out of sync";
    }
 
    static char err[64];
@@ -203,39 +205,21 @@ static void messageStateReport(int64_t messageIdentfier, int32_t statusCode, con
    _messageStateReport(messageIdentfier, statusCode, stateInformation);
 }
 
-static int asyncRescanTh(void *p){
-   
-   string *str = (string*)p;
-   axoAppInterface->rescanUserDevices(*str);
-   
-   //we detected a new device we have to resend last message
-   //TODO resend last message to this user
-   
-   if(_messageStateReport){
-      _messageStateReport(0, CTAxoInterfaceBase::eMustResendLastMessage, *str);
-   }
-
-   delete str;
-   
-   return 0;
-}
-
 static void notifyCallback(int32_t notifyAction, const string& actionInformation, const string& devId){
    
-   if(notifyAction == AppInterface::DEVICE_SCAN){
-      
-      void startThX(int (cbFnc)(void *p),void *data);
-      
-      string *str = new string(actionInformation);
-      startThX(asyncRescanTh, str);
-   }
+    if(!_notifyCallback) {
+        printf("!_notifyCallback notifyAction:%d actionInformation=%s devId=%s\n", notifyAction, actionInformation.c_str(), devId.c_str());
+        return;
+    }
+        
+    _notifyCallback(notifyAction, actionInformation.c_str(), devId.c_str());
 }
 
 static int32_t receiveGroupMessage(const string& messageDescriptor, const string& attachmentDescriptor = string(), const string& messageAttributes = string())
 {
    if(!_groupReceiveMessage){
       printf("!_groupReceiveMessage=%s\n", messageDescriptor.c_str());
-      return 0;
+       return CTAxoInterfaceBase::eErrorNoFunctionPointers;
    }
 
    return _groupReceiveMessage(messageDescriptor, attachmentDescriptor, messageAttributes);
@@ -245,7 +229,7 @@ static int32_t receiveGroupCommand(const string& commandMessage)
 {
    if(!_groupReceiveCommand){
       printf("!_groupReceiveCommand=%s\n", commandMessage.c_str());
-      return 0;
+       return CTAxoInterfaceBase::eErrorNoFunctionPointers;
    }
 
    return _groupReceiveCommand(commandMessage);
@@ -654,7 +638,7 @@ static int64_t t_sendAxoMessage(const char *dstUsername, const char *msg){
    return msgIds->at(0);
 }
 */
-static int64_t t_sendMessageToEveryDevice(shared_ptr<list<shared_ptr<PreparedMessageData> > > prepMessageData)
+static int64_t t_sendMessageToEveryDevice(unique_ptr<list<unique_ptr<PreparedMessageData> > > prepMessageData)
 {
    auto idVector = make_shared<vector<uint64_t> >();
    
@@ -711,10 +695,17 @@ static int64_t t_sendJSONMessage( const char *msg,  bool toSibling, bool normalM
 
 #if 1
    //this is tmp shortcut to support old API from UI
-   int result = 0;
-   auto list = toSibling ?
-                 axoAppInterface -> prepareMessageToSiblings(message, s_attachment, s_attributes, true, &result) :
-                 axoAppInterface->prepareMessage(message, s_attachment, s_attributes, true, &result);
+   int32_t result = 0;
+    
+    unique_ptr<list<unique_ptr<PreparedMessageData> > > deviceList;
+    
+    if (toSibling)
+    {
+       deviceList = axoAppInterface->prepareMessageSiblings(message, s_attachment, s_attributes, normalMsg, &result);
+    } else
+    {
+        deviceList = axoAppInterface->prepareMessageNormal(message, s_attachment, s_attributes, normalMsg, &result);
+    }
    
    if(result != SUCCESS ){
       
@@ -723,7 +714,7 @@ static int64_t t_sendJSONMessage( const char *msg,  bool toSibling, bool normalM
       }
       return 0;
    }
-   return t_sendMessageToEveryDevice(list);
+   return t_sendMessageToEveryDevice(move(deviceList));
    
 
 #else
@@ -804,9 +795,10 @@ public:
 };
 
 #if defined(__APPLE__)
-void CTAxoInterfaceBase::setCallbacks(STATE_FUNC state, RECV_FUNC msgRec){//should call this from UI before init
-   _messageStateReport = state;
-   _receiveMessage = msgRec;
+void CTAxoInterfaceBase::setCallbacks(STATE_FUNC state, RECV_FUNC msgRec, NOTIFY_FUNC notify){//should call this from UI before init
+    _messageStateReport = state;
+    _receiveMessage = msgRec;
+    _notifyCallback = notify;
 }
 
 void CTAxoInterfaceBase::setGroupCallbacks(GROUP_STATE_FUNC state, GROUP_MSG_RECV_FUNC msgRec, GROUP_CMD_RECV_FUNC cmd){

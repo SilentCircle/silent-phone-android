@@ -270,7 +270,11 @@ AppInterfaceImpl::prepareMessageInternal(const string& messageDescriptor,
         recipient = grpRecipient;
     }
 
-    uint8_t localRetentionFlags = 0;
+    if (recipient == ownUser_ && !toSibling) {
+        LOGGER(WARNING, "Sending message to own recipient but toSibling not set, forcing toSibling.");
+        toSibling = true;
+    }
+//    uint8_t localRetentionFlags = 0;
     string msgAttributes(messageAttributes);
     if (toSibling) {
         recipient = ownUser_;
@@ -337,7 +341,7 @@ AppInterfaceImpl::prepareMessageInternal(const string& messageDescriptor,
 
     uint64_t counter = 0;
 
-    for (auto idDevInfo: *idKeys) {
+    for (const auto& idDevInfo: *idKeys) {
         // idDevInfo has the format:
         //       0           1         2        3
         // 'identityKey:deviceName:deviceId:verifyState', deviceName may be empty
@@ -381,6 +385,7 @@ AppInterfaceImpl::prepareMessageInternal(const string& messageDescriptor,
         msgInfo->queueInfo_transportMsgId = transportMsgId | (counter << 4) | messageType;
         msgInfo->queueInfo_toSibling = toSibling;
         msgInfo->queueInfo_newUserDevice = newUser;
+        msgInfo->queueInfo_callbackAction = NoAction;
         counter++;
 
         // Prepare the return data structure and fill into list
@@ -543,7 +548,12 @@ AppInterfaceImpl::sendMessageExisting(const CmdQueueInfo &sendInfo, unique_ptr<Z
         getAndMaintainRetainInfo(sendInfo.queueInfo_transportMsgId  & ~0xff, false);
         return result;
     }
-    zinaConversation->storeConversation(*store_);
+    result = zinaConversation->storeConversation(*store_);
+    if (result != SUCCESS) {
+        LOGGER(ERROR, "Storing ratchet data failed after encryption, device id: ", sendInfo.queueInfo_deviceId);
+        LOGGER(INFO, __func__, " <-- Encryption failed.");
+        return result;
+    }
     /*
      * Create the message envelope:
      {

@@ -9,7 +9,7 @@
         <intent
             android:action="com.silentcircle.messaging.action.NEW_CONVERSATION"
             android:targetPackage="com.silentcircle.silentphone"
-            android:targetClass="com.silentcircle.silentphone2.activities.DialerActivity" />
+            android:targetClass="com.silentcircle.silentphone2.activities.DialerActivityInternal" />
         <categories android:name="android.shortcut.conversation" />
     </shortcut>
 </shortcuts>

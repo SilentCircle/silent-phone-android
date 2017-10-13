@@ -149,7 +149,7 @@ typedef struct{
 
 #define MSG_BUFFER_TAIL       "\0\0\r\n\r\n\r\n"
 #define MSG_BUFFER_TAIL_SIZE  (sizeof(MSG_BUFFER_TAIL)-1)
-#define MSG_BUFFER_SIZE  (4096-MSG_BUFFER_TAIL_SIZE)
+#define MSG_BUFFER_SIZE  ((1024*8)-MSG_BUFFER_TAIL_SIZE)
 
 
 

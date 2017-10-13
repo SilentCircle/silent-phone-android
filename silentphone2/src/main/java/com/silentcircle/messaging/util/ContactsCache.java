@@ -48,16 +48,13 @@ import com.silentcircle.common.util.AsyncTasks;
 import com.silentcircle.contacts.ContactsUtils;
 import com.silentcircle.contacts.calllognew.ContactInfo;
 import com.silentcircle.contacts.calllognew.ContactInfoHelper;
-import com.silentcircle.contacts.utils.Constants;
 import com.silentcircle.logs.Log;
 import com.silentcircle.messaging.model.Contact;
+import com.silentcircle.messaging.model.Conversation;
 import com.silentcircle.messaging.services.ZinaMessaging;
 import com.silentcircle.silentphone2.util.ConfigurationUtilities;
 import com.silentcircle.silentphone2.util.Utilities;
 import com.silentcircle.userinfo.LoadUserInfo;
-
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -168,6 +165,7 @@ public final class ContactsCache {
         }
     }
 
+    @Nullable
     public static ContactEntry getContactEntryFromCacheIfExists(final String name) {
         if (DEBUG) Log.d(TAG, "getContactEntryFromCacheIfExists name: " + name);
         ContactEntry result = null;
@@ -236,7 +234,7 @@ public final class ContactsCache {
                     if (userInfo != null) {
                         AsyncTasks.UserInfo ui = AsyncTasks.parseUserInfo(userInfo);
                         if (ui != null) {
-                            result.photoUri = AvatarUtils.getAvatarProviderUri(ui.mAvatarUrl, name);
+                            result.photoUri = AvatarUtils.getAvatarProviderUri(name, ui.mAvatarUrl);
                             result.alias = ui.mAlias;
                         }
                     }
@@ -334,7 +332,7 @@ public final class ContactsCache {
                         result = createTemporaryContactEntry(ui.mDisplayName);
                         result.alias = ui.mAlias;
                         result.phoneNumber = name;
-                        result.photoUri = AvatarUtils.getAvatarProviderUri(ui.mAvatarUrl, name);
+                        result.photoUri = AvatarUtils.getAvatarProviderUri(name, ui.mAvatarUrl);
                     }
                 }
                 else {
@@ -353,7 +351,7 @@ public final class ContactsCache {
     public static ContactEntry getTemporaryGroupContactEntry(final String name, final String displayName) {
         ContactEntry result = createTemporaryContactEntry(name);
         result.timeCreated = Long.MAX_VALUE;
-        result.photoUri = AvatarUtils.getAvatarProviderUriGroup(null, name);
+        result.photoUri = AvatarUtils.getAvatarProviderUriGroup(name);
         addCacheEntry(name, result);
         return result;
     }
@@ -399,6 +397,28 @@ public final class ContactsCache {
         return result;
     }
 
+    /**
+     * Creates ContactEntry instance filling in fields name, imName, photoUri.
+     *
+     * @param conversation - Conversation for which to create contact entry
+     * @return ContactEntry instance.
+     */
+    @Nullable
+    public static ContactEntry createTemporaryContactEntry(final @Nullable Conversation conversation) {
+        if (conversation == null) {
+            return null;
+        }
+        ContactEntry contactEntry = new ContactEntry();
+        contactEntry.imName = conversation.getPartner().getUserId();
+        contactEntry.name = conversation.getPartner().getDisplayName();
+        contactEntry.lookupUri = null;
+        contactEntry.lookupKey = conversation.getPartner().getUserId();
+        contactEntry.photoUri = AvatarUtils.getAvatarProviderUri(conversation.getPartner().getUserId(),
+                conversation.getAvatarUrl());
+        contactEntry.timeCreated = System.currentTimeMillis();
+        return contactEntry;
+    }
+
     private static void loadUserDataBackground(final String name, final ContactEntry oldEntry) {
         synchronized (mLoadUserDataTaskList) {
             if (mLoadUserDataTaskList.contains(name)) {
@@ -422,7 +442,7 @@ public final class ContactsCache {
                     result = createTemporaryContactEntry(mUserInfo.mDisplayName);
                     result.alias = mUserInfo.mAlias;
                     result.phoneNumber = name;
-                    result.photoUri = AvatarUtils.getAvatarProviderUri(photoUri, name);
+                    result.photoUri = AvatarUtils.getAvatarProviderUri(name, photoUri);
                 }
                 else {
                     if (ConfigurationUtilities.mTrace) Log.d(TAG, "Scheduling timeout to get user contact data.");
@@ -435,7 +455,7 @@ public final class ContactsCache {
                 }
                 addCacheEntry(name, result);
                 mLoadUserDataTaskList.remove(name);
-                MessageUtils.notifyConversationUpdated(SilentPhoneApplication.getAppContext(), name, true);
+                MessageUtils.notifyContactUpdated(SilentPhoneApplication.getAppContext(), name);
             }
         };
         if (ConfigurationUtilities.mTrace) Log.d(TAG, "Get user data from server/lookup cache for " + name);
@@ -466,39 +486,8 @@ public final class ContactsCache {
         updatedInfo.name = name;
         updatedInfo.lookupUri = null; //createTemporaryContactUri(name);
         updatedInfo.lookupKey = name;
-        updatedInfo.photoUri = AvatarUtils.getAvatarProviderUri(null, name);
+        updatedInfo.photoUri = AvatarUtils.getAvatarProviderUri(name, null);
         return updatedInfo;
-    }
-
-    /**
-     * Adapted from ContactInfoHelper#createTemporaryContactUri
-     *
-     * Creates a JSON-encoded lookup uri for a unknown number without an associated contact
-     *
-     * @param name - Assumed SIP name
-     * @return JSON-encoded URI that can be used to perform a lookup when clicking on the quick
-     *         contact card.
-     */
-    private static Uri createTemporaryContactUri(String name) {
-        try {
-            final JSONObject contactRows = new JSONObject().put(ContactsContract.CommonDataKinds.SipAddress.CONTENT_ITEM_TYPE,
-                    new JSONObject().put(ContactsContract.CommonDataKinds.SipAddress.SIP_ADDRESS,
-                            Utilities.isUriNumber(name) ? name : name + SIP_DOMAIN_SILENTCIRCLE));
-
-            final String jsonString = new JSONObject().put(ContactsContract.Contacts.DISPLAY_NAME, name)
-                    .put(ContactsContract.Contacts.DISPLAY_NAME_SOURCE, ContactsContract.DisplayNameSources.PHONE)
-                    .put(ContactsContract.Contacts.CONTENT_ITEM_TYPE, contactRows).toString();
-
-            return ContactsContract.Contacts.CONTENT_LOOKUP_URI
-                    .buildUpon()
-                    .appendPath(Constants.LOOKUP_URI_ENCODED)
-                    .appendQueryParameter(ContactsContract.DIRECTORY_PARAM_KEY,
-                            String.valueOf(Long.MAX_VALUE))
-                    .encodedFragment(jsonString)
-                    .build();
-        } catch (JSONException e) {
-            return null;
-        }
     }
 
     @Nullable

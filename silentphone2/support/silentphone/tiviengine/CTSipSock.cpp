@@ -951,8 +951,16 @@ unsigned int CTSipSock::getLastRecvTimestamp(){
 }
 
 int CTSipSock::recvFrom(char *buf, int iLen, ADDR *address){
-   if(iExiting)return -1;
-   if(iIsSuspended){Sleep(20);return -1;}
+    
+    t_logf(log_events, __PRETTY_FUNCTION__, "iExiting: %d iIsSuspended: %d", iExiting, iIsSuspended);
+    
+   if(iExiting)
+       return -1;
+    
+   if(iIsSuspended){
+       Sleep(20);
+       return -1;
+   }
    if(iType==eUDP){
       if(!udp.iIsBinded)udp.Bind(&addr,1);
       int ret = udp.recvFrom(buf,iLen,address);
@@ -999,6 +1007,8 @@ int CTSipSock::recvFrom(char *buf, int iLen, ADDR *address){
       int rec=0;
       if(!tls || !iTlsIsSent || !tls->isConected()) {Sleep(20);return 0;}
 
+       t_logf(log_events, __PRETTY_FUNCTION__, "tls->isClosed() -> %d", tls->isClosed());
+       
       T_SOCK_CB cbTcp;
       cbTcp.sock=tls;
       cbTcp.recv=t_recvTLS;

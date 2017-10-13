@@ -28,7 +28,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package com.silentcircle.messaging.views;
 
 import android.content.Context;
-import android.content.res.Resources;
 import android.graphics.Typeface;
 import android.os.Build;
 import android.support.annotation.NonNull;
@@ -45,28 +44,16 @@ import android.widget.QuickContactBadge;
 import android.widget.TextView;
 
 import com.silentcircle.common.list.ContactEntry;
-import com.silentcircle.common.util.CallUtils;
+import com.silentcircle.common.util.StringUtils;
 import com.silentcircle.common.util.ViewUtil;
 import com.silentcircle.contacts.ContactPhotoManagerNew;
-import com.silentcircle.messaging.model.CallData;
 import com.silentcircle.messaging.model.Contact;
 import com.silentcircle.messaging.model.Conversation;
-import com.silentcircle.messaging.model.event.CallMessage;
-import com.silentcircle.messaging.model.event.Event;
-import com.silentcircle.messaging.model.event.IncomingMessage;
-import com.silentcircle.messaging.model.event.InfoEvent;
-import com.silentcircle.messaging.model.event.Message;
-import com.silentcircle.messaging.model.event.OutgoingMessage;
 import com.silentcircle.messaging.providers.AvatarProvider;
-import com.silentcircle.messaging.services.SCloudService;
 import com.silentcircle.messaging.util.AvatarUtils;
+import com.silentcircle.messaging.util.CachedEvent;
 import com.silentcircle.messaging.util.ConversationUtils;
-import com.silentcircle.messaging.util.MIME;
-import com.silentcircle.messaging.util.MessageUtils;
 import com.silentcircle.silentphone2.R;
-
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.util.concurrent.TimeUnit;
 
@@ -76,12 +63,6 @@ import java.util.concurrent.TimeUnit;
 public class ConversationListItem extends LinearLayout implements View.OnClickListener {
 
     private static final String TAG = "ConversationListItem";
-
-    /** Limit after which unread message count is displayed with greater than sign */
-    public static final int UNREAD_MESSAGE_COUNT_DISPLAY_LIMIT = 10;
-
-    public static final String CONVERSATION_UNREAD_MESSAGES_MORE_THAN = ">";
-    public static final String CONVERSATION_ATTENTION_REQUIRED = "!";
 
     /**
      *
@@ -128,9 +109,8 @@ public class ConversationListItem extends LinearLayout implements View.OnClickLi
     private SwipeRevealLayout mContainer;
 
     private String mJustNow;
-    private String mPrefixYou;
     private String mPrefixDraft;
-    private String mInvitationPending;
+    private String mNoMessages;
 
     private int mTextColor;
     private int mPrefixColor;
@@ -153,9 +133,8 @@ public class ConversationListItem extends LinearLayout implements View.OnClickLi
         super(context, attrs, defStyle);
 
         mJustNow = context.getString(R.string.just_now);
-        mPrefixYou = context.getString(R.string.messaging_conversation_list_prefix_you);
         mPrefixDraft = context.getString(R.string.messaging_conversation_list_prefix_draft);
-        mInvitationPending = context.getString(R.string.group_messaging_invitation_pending);
+        mNoMessages = context.getString(R.string.messaging_conversation_list_no_messages);
 
         mTextColor = ViewUtil.getColorFromAttributeId(context, R.attr.sp_activity_secondary_text_color);
         mPrefixColor = ViewUtil.getColorFromAttributeId(context, R.attr.sp_activity_primary_text_color);
@@ -219,10 +198,7 @@ public class ConversationListItem extends LinearLayout implements View.OnClickLi
         mNameView.setTypeface(typeFace);
         int unreadMessageCount = conversation.getUnreadMessageCount()
                 + conversation.getUnreadCallMessageCount();
-        String statusText = (unreadMessageCount > UNREAD_MESSAGE_COUNT_DISPLAY_LIMIT
-                ? CONVERSATION_UNREAD_MESSAGES_MORE_THAN + UNREAD_MESSAGE_COUNT_DISPLAY_LIMIT
-                : String.valueOf(unreadMessageCount));
-        mStatusMessageCount.setText(statusText);
+        mStatusMessageCount.setText(StringUtils.getUnreadMessagesBadge(unreadMessageCount));
         // draft text overrides last message text
         if (!TextUtils.isEmpty(conversation.getUnsentText())) {
             setMessageDecoration(0);
@@ -264,6 +240,10 @@ public class ConversationListItem extends LinearLayout implements View.OnClickLi
         }
     }
 
+    public void setAvatar(int drawableId) {
+        mContactButton.setImageResource(drawableId);
+    }
+
     public void setAvatar(@NonNull final ContactPhotoManagerNew photoManager,
             @NonNull final Conversation conversation, @Nullable final ContactEntry contactEntry) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
@@ -276,7 +256,7 @@ public class ConversationListItem extends LinearLayout implements View.OnClickLi
         }
         else {
             AvatarUtils.setPhoto(photoManager, mContactButton,
-                AvatarUtils.getAvatarProviderUri(conversation.getAvatarUrl(), conversation.getPartner().getUserId()),
+                AvatarUtils.getAvatarProviderUri(conversation.getPartner().getUserId(), conversation.getAvatarUrl()),
                 ContactPhotoManagerNew.TYPE_DEFAULT,
                 /* isCircular */ !AvatarProvider.AVATAR_TYPE_GENERATED.equals(conversation.getAvatarUrl()));
         }
@@ -291,7 +271,10 @@ public class ConversationListItem extends LinearLayout implements View.OnClickLi
             return;
         }
 
-        String displayName = ConversationUtils.resolveDisplayName(contactEntry, conversation);
+        Contact partner = conversation.getPartner();
+        String displayName = partner.isGroup()
+                ? conversation.getPartner().getDisplayName()
+                : ConversationUtils.resolveDisplayName(contactEntry, conversation);
 //        if (contactEntry != null) {
 //            displayName = contactEntry.name;        // Use name on contact entry if available
 //        }
@@ -307,25 +290,10 @@ public class ConversationListItem extends LinearLayout implements View.OnClickLi
 //            }
 //        }
 
-        Contact partner = conversation.getPartner();
-        if (partner.isGroup()) {
-            displayName = conversation.getPartner().getDisplayName();
-            if (TextUtils.isEmpty(displayName)) {
-                // FIXME this may affect conversation loading a bit
-                ConversationUtils.GroupData groupData =
-                        ConversationUtils.getGroup(partner.getUserId());
-                displayName = groupData != null ? groupData.getGroupName() : partner.getUserId();
-                if (groupData != null) {
-                    ConversationUtils.verifyConversationAvatar(getContext(), partner.getUserId(),
-                            groupData.getAvatarInfo());
-                }
-            }
-        }
-
         mNameView.setText(displayName);
     }
 
-    public void setMessageText(final String prefix, final String text) {
+    public void setMessageText(final @Nullable CharSequence prefix, final @Nullable CharSequence text) {
 
         SpannableStringBuilder builder = new SpannableStringBuilder();
 
@@ -335,9 +303,11 @@ public class ConversationListItem extends LinearLayout implements View.OnClickLi
             builder.append(prefixSpan);
         }
 
-        SpannableString textSpan = new SpannableString(text);
-        textSpan.setSpan(new ForegroundColorSpan(mTextColor), 0, textSpan.length(), 0);
-        builder.append(textSpan);
+        if (!TextUtils.isEmpty(text)) {
+            SpannableString textSpan = new SpannableString(text);
+            textSpan.setSpan(new ForegroundColorSpan(mTextColor), 0, textSpan.length(), 0);
+            builder.append(textSpan);
+        }
 
         mMessageText.setText(builder, TextView.BufferType.SPANNABLE);
     }
@@ -346,86 +316,21 @@ public class ConversationListItem extends LinearLayout implements View.OnClickLi
         mMessageText.setCompoundDrawablesWithIntrinsicBounds(drawableId, 0, 0, 0);
     }
 
-    public void setEvent(final Event event) {
-        String messageText;
-        String messagePrefix = null;
+    public void setEvent(final @Nullable CachedEvent event) {
+        CharSequence messageText = mNoMessages;
+        CharSequence messagePrefix = null;
         int messageDecoration = 0;
         if (event != null) {
-            messageText = event.getText();
-            if (event instanceof IncomingMessage) {
-                messageText = getAttachmentDescription((Message) event);
-            } else if (event instanceof OutgoingMessage) {
-                messageText = getAttachmentDescription((Message) event);
-                if (!((Message) event).hasAttachment()) {
-                    messagePrefix = mPrefixYou;
-                }
-            } else if (event instanceof CallMessage) {
-                CallMessage callMessage = ((CallMessage) event);
-                int callType = callMessage.getCallType();
-                int callDuration = callMessage.callDuration;
-                callMessage.getErrorMessage();
-
-                messageText = CallUtils.formatCallData(getContext(), callType, callDuration,
-                        CallData.translateSipErrorMsg(getContext(), callMessage.getErrorMessage()));
-                messageDecoration = CallUtils.getTypeDrawableResId(callMessage.getCallType());
-            } else if (event instanceof InfoEvent) {
-                messageText = InfoEventView.getLocalizedText(getContext(), (InfoEvent) event).toString();
+            if (!TextUtils.isEmpty(event.text)) {
+                messageText = event.text;
             }
-        }
-        else {
-            messageText = getResources().getString(R.string.messaging_conversation_list_no_messages);
+            if (!TextUtils.isEmpty(event.prefix)) {
+                messagePrefix = event.prefix;
+            }
+            messageDecoration = event.decoration;
         }
         setMessageDecoration(messageDecoration);
         setMessageText(messagePrefix, messageText);
-    }
-
-    private String getAttachmentDescription(Message message) {
-        String result = message.getText();
-
-        if (message.hasAttachment()) {
-            Resources resources = getResources();
-            SCloudService.AttachmentState state = MessageUtils.getAttachmentState(message);
-            if (state == SCloudService.AttachmentState.NOT_AVAILABLE
-                    || state == SCloudService.AttachmentState.DOWNLOADING_ERROR
-                    || state == SCloudService.AttachmentState.UPLOADING_ERROR) {
-                result = resources.getString(R.string.messaging_conversation_list_failed_attachment);
-            } else {
-                int descriptionPrefixId = getAttachmentMimeDescriptionId(message.getMetaData());
-                int description = R.string.messaging_conversation_list_file_received;
-                if (message instanceof OutgoingMessage) {
-                    description = R.string.messaging_conversation_list_file_sent;
-                }
-                String descriptionPrefix = resources.getString(descriptionPrefixId);
-
-                result = resources.getString(description, descriptionPrefix);
-            }
-        }
-
-        return result;
-    }
-
-    private int getAttachmentMimeDescriptionId(final String attachmentMetaData) {
-        int descriptionPrefixId = R.string.messaging_conversation_list_type_file;
-        try {
-            if (!TextUtils.isEmpty(attachmentMetaData)) {
-                JSONObject attachmentMetaDataJson = new JSONObject(attachmentMetaData);
-                String mimeType = attachmentMetaDataJson.getString("MimeType");
-                if (MIME.isPdf(mimeType)) {
-                    descriptionPrefixId = R.string.messaging_conversation_list_type_pdf;
-                } else if (MIME.isAudio(mimeType)) {
-                    descriptionPrefixId = R.string.messaging_conversation_list_type_audio;
-                } else if (MIME.isVideo(mimeType)) {
-                    descriptionPrefixId = R.string.messaging_conversation_list_type_video;
-                } else if (MIME.isVisual(mimeType)) {
-                    descriptionPrefixId = R.string.messaging_conversation_list_type_image;
-                } else if (MIME.isContact(mimeType)) {
-                    descriptionPrefixId = R.string.messaging_conversation_list_type_contact;
-                }
-            }
-        } catch (JSONException exception) {
-            // Leave descriptionPrefixId set to default value
-        }
-        return descriptionPrefixId;
     }
 
     @Override

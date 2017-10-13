@@ -40,7 +40,6 @@ import android.content.ClipData;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.content.res.Resources;
@@ -51,7 +50,6 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -89,9 +87,8 @@ import com.silentcircle.messaging.views.AvatarActionsDialog;
 import com.silentcircle.purchase.activities.PaymentUseStripeActivity;
 import com.silentcircle.silentphone2.BuildConfig;
 import com.silentcircle.silentphone2.R;
-import com.silentcircle.silentphone2.activities.DialerActivity;
+import com.silentcircle.silentphone2.activities.DialerActivityInternal;
 import com.silentcircle.silentphone2.dialogs.InfoMsgDialogFragment;
-import com.silentcircle.silentphone2.fragments.SettingsFragment;
 import com.silentcircle.silentphone2.passcode.AppLifecycleNotifier;
 import com.silentcircle.silentphone2.services.TiviPhoneService;
 import com.silentcircle.silentphone2.util.ConfigurationUtilities;
@@ -108,6 +105,7 @@ import java.io.IOException;
 import java.text.NumberFormat;
 import java.util.Currency;
 import java.util.Date;
+import java.util.Map;
 
 import javax.net.ssl.HttpsURLConnection;
 
@@ -152,7 +150,7 @@ public class DialDrawerFragment extends Fragment implements View.OnClickListener
     private LoadUserInfo mLoadUserInfo;
     /*
      * Used for general information refresh in fragment.
-     * As DialerActivity is not calling onUserInfo, but fragment has to show the user name
+     * As DialerActivityInternal is not calling onUserInfo, but fragment has to show the user name
      * information, it has to listen to user info availability itself.
      * But this listener is only needed when there is a slow network and drawer has been opened
      * before user information has become available).
@@ -181,10 +179,10 @@ public class DialDrawerFragment extends Fragment implements View.OnClickListener
     /**
      * Listener that receives the data if OCA minutes are available from LoadUserInfo.
      *
-     * @param userInfo A {@link UserInfo} object
-     * @param errorInfo   If not {@code null} then an error occurred, minutes data invalid,
-     *                    this shows the error reason
-     * @param silent      Should the user see anything?
+     * @param userInfo  A {@link UserInfo} object
+     * @param errorInfo If not {@code null} then an error occurred, minutes data invalid,
+     *                  this shows the error reason
+     * @param silent    Should the user see anything?
      */
     public void onUserInfo(UserInfo userInfo, String errorInfo, boolean silent) {
         if (ConfigurationUtilities.mTrace) Log.d(TAG, "onUserInfo");
@@ -218,7 +216,7 @@ public class DialDrawerFragment extends Fragment implements View.OnClickListener
         }
 
         if (errorInfo != null) {
-            if(!silent) {
+            if (!silent) {
                 showInputInfo(errorInfo);
             }
             return;
@@ -259,7 +257,7 @@ public class DialDrawerFragment extends Fragment implements View.OnClickListener
             showInputInfo(new SpannableString(getString(R.string.remaining_credit,
                     userInfo.getSubscription().getBalance().getAmount(),
                     userInfo.getSubscription().getBalance().getUnit())
-                    + mManageAccounts),
+                            + mManageAccounts),
                     R.string.remaining_oca_minutes_dialog);
         }
     }
@@ -284,6 +282,7 @@ public class DialDrawerFragment extends Fragment implements View.OnClickListener
          * Called when an item in the navigation drawer is selected.
          */
         void onDrawerItemSelected(int type, Object... params);
+
         /**
          * Called when an item in the navigation drawer is selected.
          */
@@ -302,7 +301,7 @@ public class DialDrawerFragment extends Fragment implements View.OnClickListener
     }
 
     @Override
-    public void onActivityCreated (Bundle savedInstanceState) {
+    public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
         // Indicate that this fragment would like to influence the set of actions in the action/tool bar
         // necessary for ActionBarDrawerToggle
@@ -322,11 +321,8 @@ public class DialDrawerFragment extends Fragment implements View.OnClickListener
                 new ViewUtil.MovementCheck(mParent, mDrawerView, R.string.toast_no_browser_found));
 */
 
-        boolean developer = false;
-        if(mParent != null) {
-            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mParent);
-            developer = prefs.getBoolean(SettingsFragment.DEVELOPER, false);
-        }
+        final boolean developer =
+                SPAPreferences.getInstance(SilentPhoneApplication.getAppContext()).isDeveloper();
         setDeveloperMode(developer);
         mDrawerView.findViewById(R.id.show_oca_minutes).setOnClickListener(this);
         mDrawerView.findViewById(R.id.show_in_app_purchase).setOnClickListener(this);
@@ -393,6 +389,11 @@ public class DialDrawerFragment extends Fragment implements View.OnClickListener
     }
 
     public void setDeveloperMode(boolean developer) {
+        if (mDrawerView == null) {
+            // correct state will be set in onCreate() when fragment views are recreated
+            return;
+        }
+
         mDrawerView
           .findViewById(R.id.dial_drawer_exit_application)
           .setVisibility(developer ? View.VISIBLE : View.GONE);
@@ -407,7 +408,6 @@ public class DialDrawerFragment extends Fragment implements View.OnClickListener
             setAvatarImage();
         }
     }
-
 
     private void commonOnAttach(Activity activity) {
         try {
@@ -476,7 +476,7 @@ public class DialDrawerFragment extends Fragment implements View.OnClickListener
 
         mSilentLoadUserInfo = new LoadUserInfo(true);
         mSilentLoadUserInfo.addUserInfoListener(this);
-        /* This is unnecessary(?) as DialerActivity initiates refresh itself
+        /* This is unnecessary(?) as DialerActivityInternal initiates refresh itself
         mSilentLoadUserInfo.refreshUserInfo();
         */
 
@@ -524,11 +524,6 @@ public class DialDrawerFragment extends Fragment implements View.OnClickListener
     }
 
     @Override
-    public void onConfigurationChanged(Configuration newConfig) {
-        super.onConfigurationChanged(newConfig);
-    }
-
-    @Override
     public void onClick(View view) {
         switch (view.getId()) {
             case R.id.show_oca_minutes:
@@ -573,7 +568,7 @@ public class DialDrawerFragment extends Fragment implements View.OnClickListener
 
             case R.id.dial_drawer_exit_application:
                 // exit application
-                ((DialerActivity) getActivity()).exitAndDelay();
+                ((DialerActivityInternal) getActivity()).exitAndDelay();
                 break;
 
             case R.id.dial_drawer_wipe_phone:
@@ -604,7 +599,7 @@ public class DialDrawerFragment extends Fragment implements View.OnClickListener
     @Override
     public void onAlertDialogConfirmed(DialogInterface dialog, int requestCode, Bundle bundle, boolean saveChoice) {
         if (requestCode == WIPE_PHONE) {
-            ((DialerActivity) getActivity()).wipePhone();
+            ((DialerActivityInternal) getActivity()).wipePhone();
         }
     }
 
@@ -785,7 +780,7 @@ public class DialDrawerFragment extends Fragment implements View.OnClickListener
 //                "\nDevice information:\n" +
 //                Build.MANUFACTURER + ", " + Build.BRAND + ", " + Build.MODEL + ", " + Build.DEVICE +
 //                "\nScreen density: " + metrics.densityDpi + " (" + size + ", " + swSetting + ")" +
-//                ((DialerActivity.mAutoAnswerForTesting) ? "\nAuto answered: " + DialerActivity.mAutoAnsweredTesting : "");
+//                ((DialerActivityInternal.mAutoAnswerForTesting) ? "\nAuto answered: " + DialerActivityInternal.mAutoAnsweredTesting : "");
 
         StringBuilder detailInfo = new StringBuilder();
         detailInfo.append(getString(R.string.active_configuration,
@@ -797,11 +792,15 @@ public class DialDrawerFragment extends Fragment implements View.OnClickListener
                 .append(Build.MODEL).append(", ")
                 .append(Build.DEVICE);
         detailInfo.append("\n").append(getString(R.string.screen_density, metrics.densityDpi + " (" + size + ", " + swSetting + ")"));
-        if (DialerActivity.mAutoAnswerForTesting) {
-            detailInfo.append("\n").append(getString(R.string.auto_answered, DialerActivity.mAutoAnsweredTesting));
+        if (DialerActivityInternal.mAutoAnswerForTesting) {
+            detailInfo.append("\n").append(getString(R.string.auto_answered, DialerActivityInternal.mAutoAnsweredTesting));
         }
         if (BuildConfig.DEBUG) {
             detailInfo.append("\n").append(getString(R.string.build_time, BuildConfig.SPA_BUILD_DATE));
+            detailInfo.append("\n");
+            for (Map.Entry<String, String> entry : BuildConfig.SUBMODULE_BUILD_COMMITS.entrySet()) {
+                detailInfo.append("\n").append(entry.getKey()).append(" ").append(entry.getValue());
+            }
         }
         return detailInfo.toString();
     }
@@ -910,11 +909,11 @@ public class DialDrawerFragment extends Fragment implements View.OnClickListener
         ColorFilter filter = mColorFilterUnknown;
         int text = R.string.connecting;
         switch (registerStatus) {
-            case 1:             // connecting
+            case TiviPhoneService.PHONE_STATE_CONNECTING:   // connecting
                 filter = mColorFilterUnknown;
                 text = R.string.connecting;
                 break;
-            case 2:             // online
+            case TiviPhoneService.PHONE_STATE_ONLINE:       // online
                 filter = mColorFilterOnline;
                 text = R.string.online;
                 break;
@@ -938,7 +937,7 @@ public class DialDrawerFragment extends Fragment implements View.OnClickListener
         String avatarUrl = LoadUserInfo.getAvatarUrl();
         AvatarUtils.setPhoto(mContactPhotoManager,
                 ((ImageView) mDrawerView.findViewById(R.id.self_avatar)),
-                AvatarUtils.getAvatarProviderUri(avatarUrl, LoadUserInfo.getUuid(), (int) mImageWidth,
+                AvatarUtils.getAvatarProviderUri(LoadUserInfo.getUuid(), avatarUrl, (int) mImageWidth,
                         R.drawable.ic_avatar_placeholder_circular),
                 ContactPhotoManagerNew.TYPE_DEFAULT);
     }

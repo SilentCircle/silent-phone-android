@@ -180,12 +180,26 @@ public class KeyManagerSupport {
         String[] selectionArgs = new String[1];
         selectionArgs[0] = displayName;
 
-        Cursor c = resolver.query(CONTENT_URI_REGISTER_KEY_CHAIN, null, null, selectionArgs, null);
+        Cursor c = null;
+        Uri uri = CONTENT_URI_REGISTER_KEY_CHAIN;
+        try {
+            c = resolver.query(uri, null, null, selectionArgs, null);
+        } catch (Exception ignore) {
+            // Ignore exceptions such as CursorWindowAllocationException which occurs intermittently
+            // We should not expect a crash here
+            Log.e(TAG, "Ignoring an exception: " + ignore +
+                    ((BuildConfig.DEBUG) ? ", registerWithKeyManager - uri: " + uri : ""));
+        }
         long token = 0;
-        if (c != null) {
-            c.moveToFirst();
-            token = c.getLong(0);
-            c.close();
+        try {
+            if (c != null) {
+                c.moveToFirst();
+                token = c.getLong(0);
+            }
+        } finally {
+            if (c != null && !c.isClosed()) {
+                c.close();
+            }
         }
         return token;
     }
@@ -244,21 +258,34 @@ public class KeyManagerSupport {
         String[] selectionArgs = new String[1];
         selectionArgs[0] = tag;
 
-        Cursor c = resolver.query(uri, null, null, selectionArgs, null);
+        Cursor c = null;
+        try {
+            c = resolver.query(uri, null, null, selectionArgs, null);
+        } catch (Exception ignore) {
+            // Ignore exceptions such as CursorWindowAllocationException which occurs intermittently
+            // We should not expect a crash here
+            Log.e(TAG, "Ignoring an exception: " + ignore +
+                    ((BuildConfig.DEBUG) ? ", getKeyData - uri: " + uri : ""));
+        }
         byte[] data = null;
         long token = 0;
-        if (c != null) {
-            c.moveToFirst();
-            String dataStr = c.getString(0);
-            if (dataStr == null)
-                return null;
-            try {
-                data = Base64.decode(dataStr, Base64.DEFAULT);
-            } catch (IllegalArgumentException e) {
-                data = c.getBlob(0);
+        try {
+            if (c != null) {
+                c.moveToFirst();
+                String dataStr = c.getString(0);
+                if (dataStr == null)
+                    return null;
+                try {
+                    data = Base64.decode(dataStr, Base64.DEFAULT);
+                } catch (IllegalArgumentException e) {
+                    data = c.getBlob(0);
+                }
+                token = c.getLong(1);
             }
-            token = c.getLong(1);
-            c.close();
+        } finally {
+            if (c != null && !c.isClosed()) {
+                c.close();
+            }
         }
         if (token == 0 || token != SupportProvider.getRegisterToken())
             return null;
@@ -437,18 +464,30 @@ public class KeyManagerSupport {
         String[] selectionArgs = new String[2];
         selectionArgs[0] = tag;
         selectionArgs[1] = Integer.toString(length);
-        Cursor c;
-        c = resolver.query(uri, null, null, selectionArgs, null);
+        Cursor c = null;
+        try {
+            c = resolver.query(uri, null, null, selectionArgs, null);
+        } catch (Exception ignore) {
+            // Ignore exceptions such as CursorWindowAllocationException which occurs intermittently
+            // We should not expect a crash here
+            Log.e(TAG, "Ignoring an exception: " + ignore +
+                    ((BuildConfig.DEBUG) ? ", randomKeyData - uri: " + uri : ""));
+        }
         byte[] data = null;
         long token = 0;
-        if (c != null) {
-            c.moveToFirst();
-            String dataStr = c.getString(0);
-            if (dataStr == null)
-                return null;
-            data = Base64.decode(dataStr, Base64.DEFAULT);
-            token = c.getLong(1);
-            c.close();
+        try {
+            if (c != null) {
+                c.moveToFirst();
+                String dataStr = c.getString(0);
+                if (dataStr == null)
+                    return null;
+                data = Base64.decode(dataStr, Base64.DEFAULT);
+                token = c.getLong(1);
+            }
+        } finally {
+            if (c != null && !c.isClosed()) {
+                c.close();
+            }
         }
         if (token != SupportProvider.getRegisterToken())
             return null;

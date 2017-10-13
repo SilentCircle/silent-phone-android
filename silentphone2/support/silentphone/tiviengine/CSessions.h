@@ -1013,6 +1013,8 @@ public:
    int iSocketsPaused;
    void stopSockets()
    {
+       t_logf(log_events, __FUNCTION__, "iSocketsPaused = %d", iSocketsPaused);
+       
       if(!iSocketsPaused){
          iSocketsPaused=1;
          this->sockSip.closeSocket();
@@ -1021,6 +1023,8 @@ public:
    }
    void startSockets()
    {
+       t_logf(log_events, __FUNCTION__, "iSocketsPaused = %d", iSocketsPaused);
+       
       if(iSocketsPaused){
          iSocketsPaused=0;
          this->sockSip.reCreate();
@@ -1472,3 +1476,4 @@ private:
 };
 int makeSDP(CPhSesions &ph, CSesBase *spSes, CMakeSip &ms);
 #endif //_C_TIVI_SES_H
+

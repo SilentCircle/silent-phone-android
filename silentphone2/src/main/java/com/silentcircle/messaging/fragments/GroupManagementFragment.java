@@ -31,11 +31,12 @@ import android.Manifest;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
@@ -46,9 +47,9 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.TransitionDrawable;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.provider.ContactsContract;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
@@ -100,6 +101,7 @@ import com.silentcircle.messaging.listener.OnConfirmListener;
 import com.silentcircle.messaging.model.Conversation;
 import com.silentcircle.messaging.model.MessageErrorCodes;
 import com.silentcircle.messaging.model.event.InfoEvent;
+import com.silentcircle.messaging.model.json.JSONConversationAdapter;
 import com.silentcircle.messaging.providers.AvatarProvider;
 import com.silentcircle.messaging.providers.PictureProvider;
 import com.silentcircle.messaging.repository.ConversationRepository;
@@ -121,22 +123,29 @@ import com.silentcircle.messaging.views.ViewBinderHelper;
 import com.silentcircle.messaging.views.adapters.PaddedDividerItemDecoration;
 import com.silentcircle.silentphone2.BuildConfig;
 import com.silentcircle.silentphone2.R;
-import com.silentcircle.silentphone2.activities.DialerActivity;
+import com.silentcircle.silentphone2.activities.DialerActivityInternal;
 import com.silentcircle.silentphone2.dialogs.InfoMsgDialogFragment;
-import com.silentcircle.silentphone2.fragments.SettingsFragment;
+import com.silentcircle.silentphone2.fragments.SingleChoiceDialogFragment;
 import com.silentcircle.silentphone2.passcode.AppLifecycleNotifier;
 import com.silentcircle.silentphone2.services.TiviPhoneService;
+import com.silentcircle.silentphone2.util.SPAPreferences;
 import com.silentcircle.silentphone2.util.Utilities;
+import com.silentcircle.silentphone2.views.SettingsItem;
 import com.silentcircle.userinfo.LoadUserInfo;
 import com.silentcircle.userinfo.activities.AvatarCropActivity;
+
+import org.json.JSONException;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.lang.ref.WeakReference;
 import java.net.URLEncoder;
 import java.text.Format;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
+import java.util.List;
 
 import zina.JsonStrings;
 import zina.ZinaNative;
@@ -144,10 +153,11 @@ import zina.ZinaNative;
 /**
  * Group management fragment, lists group users, allows to leave group.
  */
-public class GroupManagementFragment extends BaseFragment implements View.OnClickListener,
+public class GroupManagementFragment extends BaseConversationDetailsFragment implements View.OnClickListener,
         GroupManagementActivity.OnWizardStateChangeListener,
         com.silentcircle.messaging.views.adapters.GroupMemberAdapter.OnGroupMemberItemClickListener,
-        ObservableScrollView.OnScrollChangedListener {
+        ObservableScrollView.OnScrollChangedListener,
+        SingleChoiceDialogFragment.OnSingleChoiceDialogItemSelectedListener {
 
     private static final String TAG = GroupManagementFragment.class.getSimpleName();
 
@@ -164,6 +174,8 @@ public class GroupManagementFragment extends BaseFragment implements View.OnClic
             "com.silentcircle.messaging.fragments.GroupManagementFragment.AVATAR_SCROLLED";
     private static final String SCROLL_POSITION =
             "com.silentcircle.messaging.fragments.GroupManagementFragment.SCROLL_POSITION";
+    private static final String GROUP_ID =
+            "com.silentcircle.messaging.fragments.GroupManagementFragment.GROUP_ID";
 
     private static final Format DATE_FORMAT =
             android.text.format.DateFormat.getDateFormat(SilentPhoneApplication.getAppContext());;
@@ -177,13 +189,15 @@ public class GroupManagementFragment extends BaseFragment implements View.OnClic
 
     public static final int PERMISSION_CAMERA = 1;
 
-    protected GroupManagementActivity mParent;
+    protected Activity mParent;
 
-    protected RecyclerView mRecyclerView;
+    private com.silentcircle.common.widget.ProgressBar mProgress;
+    protected com.silentcircle.messaging.views.RecyclerView mRecyclerView;
     protected View mEmptyView;
     protected Button mButtonSync;
     protected Button mButtonLeave;
     protected TextView mGroupInformation;
+    protected TextView mConversationInformation;
     protected TextView mGroupTitle;
     protected TextView mGroupCreator;
     protected TextView mGroupDescription;
@@ -193,6 +207,7 @@ public class GroupManagementFragment extends BaseFragment implements View.OnClic
     protected View mGroupInformationEditorContainer;
     protected EditText mEditGroupName;
     // protected EditText mEditGroupMaxMembers;
+    private SettingsItem mOptionMute;
     protected Button mButtonCancel;
     protected Button mButtonSave;
     protected ImageButton mButtonEditGroupTitle;
@@ -246,8 +261,23 @@ public class GroupManagementFragment extends BaseFragment implements View.OnClic
 
                         exitToDialerActivity(mParent);
                     }
+                    setConsumed(true);
                 }
             }
+        }
+    };
+
+    private View.OnLongClickListener mCopyOnLongClick = new View.OnLongClickListener() {
+
+        @Override
+        public boolean onLongClick(View v) {
+            ClipboardManager manager =
+                    (ClipboardManager) v.getContext().getSystemService(Context.CLIPBOARD_SERVICE);
+            manager.setPrimaryClip(ClipData.newPlainText(null, ((android.widget.TextView) v).getText()));
+            Toast.makeText(v.getContext(),
+                    R.string.toast_copied_to_clipboard,
+                    Toast.LENGTH_SHORT).show();
+            return true;
         }
     };
 
@@ -265,20 +295,22 @@ public class GroupManagementFragment extends BaseFragment implements View.OnClic
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(true);
 
+        String groupId = null;
+        if (savedInstanceState != null) {
+            groupId = savedInstanceState.getString(GROUP_ID);
+        }
         Bundle args = getArguments();
-        if (args == null) {
-            mParent.finish();
-            return;
+        if (args != null) {
+            groupId = args.getString(GroupManagementActivity.GROUP_ID);
+            mCloseOnLeaveGroup = args.getBoolean(GroupManagementActivity.CLOSE_ON_LEAVE_GROUP, false);
+        }
+        if (!TextUtils.isEmpty(groupId)) {
+            setGroup(groupId);
         }
 
         Display display = mParent.getWindowManager().getDefaultDisplay();
         display.getSize(mDisplaySize);
 
-        setGroup(args.getString(GroupManagementActivity.GROUP_ID));
-        if (TextUtils.isEmpty(mGroupId)) {
-            Toast.makeText(mParent, "Group id empty", Toast.LENGTH_LONG).show();
-        }
-        mCloseOnLeaveGroup = args.getBoolean(GroupManagementActivity.CLOSE_ON_LEAVE_GROUP, false);
 
         Resources resources = getResources();
         mDetailsLabelSpacing = resources.getDimensionPixelSize(R.dimen.spacing_large);
@@ -305,17 +337,8 @@ public class GroupManagementFragment extends BaseFragment implements View.OnClic
     }
 
     private void commonOnAttach(Activity activity) {
-        try {
-            mParent = (GroupManagementActivity) activity;
-        } catch (ClassCastException e) {
-            throw new ClassCastException("Activity must be GroupManagementActivity.");
-        }
-    }
-
-    @Override
-    public void onDetach() {
-        super.onDetach();
-        mParent = null;
+        mParent = activity;
+        mParent.setTitle(getString(R.string.group_messaging_group_members));
     }
 
     @Override
@@ -337,14 +360,21 @@ public class GroupManagementFragment extends BaseFragment implements View.OnClic
         mAdapter = new GroupMemberAdapter(mParent);
         mAdapter.setOnItemClickListener(this);
 
+        mEmptyView = view.findViewById(R.id.empty_list_view);
+        DialerUtils.configureEmptyListView(mEmptyView, R.drawable.empty_call_log,
+                R.string.group_messaging_group_empty, getResources());
+
         LinearLayoutManager layoutManager = new LinearLayoutManager(getActivity());
 
-        mRecyclerView = (RecyclerView) view.findViewById(android.R.id.list);
+        mRecyclerView = (com.silentcircle.messaging.views.RecyclerView) view.findViewById(android.R.id.list);
         mRecyclerView.setLayoutManager(layoutManager);
         mRecyclerView.setAdapter(mAdapter);
         mRecyclerView.setHasFixedSize(true);
         mRecyclerView.addItemDecoration(new PaddedDividerItemDecoration(mParent));
         mRecyclerView.setNestedScrollingEnabled(false);
+        mRecyclerView.setEmptyView(mEmptyView);
+
+        mProgress = (com.silentcircle.common.widget.ProgressBar) view.findViewById(R.id.group_details_progress);
 
         mButtonSync = (Button) view.findViewById(R.id.button_sync);
         mButtonSync.setOnClickListener(this);
@@ -364,16 +394,15 @@ public class GroupManagementFragment extends BaseFragment implements View.OnClic
             mButtonLeave.setCompoundDrawablesWithIntrinsicBounds(drawable, null, null, null);
         }
 
-        boolean developer = false;
-        if(mParent != null) {
-            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mParent);
-            developer = prefs.getBoolean(SettingsFragment.DEVELOPER, false);
-        }
+        boolean developer = SPAPreferences.getInstance(mParent).isDeveloper();;
         if (developer) {
             View groupDetailsContainer = view.findViewById(R.id.group_details_container);
             groupDetailsContainer.setVisibility(View.VISIBLE);
         }
         mGroupInformation = (TextView) view.findViewById(R.id.text_group_information);
+        mGroupInformation.setOnLongClickListener(mCopyOnLongClick);
+        mConversationInformation = (TextView) view.findViewById(R.id.text_conversation_information);
+        mConversationInformation.setOnLongClickListener(mCopyOnLongClick);
 
         mGroupInformationContainer = (ObservableScrollView) view.findViewById(R.id.group_details_main_container);
         mGroupInformationContainer.setOnScrollChangedListener(this);
@@ -413,9 +442,8 @@ public class GroupManagementFragment extends BaseFragment implements View.OnClic
         mButtonCancel.setOnClickListener(this);
         mButtonSave.setOnClickListener(this);
 
-        mEmptyView = view.findViewById(R.id.empty_list_view);
-        DialerUtils.configureEmptyListView(mEmptyView, R.drawable.empty_call_log,
-                R.string.group_messaging_group_empty, getResources());
+        mOptionMute = (SettingsItem) view.findViewById(R.id.contact_details_option_mute);
+        mOptionMute.setOnClickListener(this);
 
         adjustScrollToAvatar();
     }
@@ -437,8 +465,12 @@ public class GroupManagementFragment extends BaseFragment implements View.OnClic
     @Override
     public void onResume() {
         super.onResume();
-        refreshGroupData();
+
+        mParent.setTitle(getString(R.string.group_messaging_group_members));
         registerReceiver();
+
+        // TODO in background
+        refreshGroupData();
     }
 
     @Override
@@ -447,7 +479,15 @@ public class GroupManagementFragment extends BaseFragment implements View.OnClic
             mAdapter.stopRequestProcessing();
         }
         unregisterMessagingReceiver(mViewUpdater);
+        ContactPhotoManagerNew.getInstance(SilentPhoneApplication.getAppContext())
+                .clearRequestsForContext(getActivity());
         super.onPause();
+    }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+        mParent = null;
     }
 
     @Override
@@ -465,6 +505,7 @@ public class GroupManagementFragment extends BaseFragment implements View.OnClic
         outState.putParcelable(AVATAR_IMAGE_CAPTURE_URI, mPendingImageCaptureUri);
         outState.putBoolean(FLAG_AVATAR_SCROLLED, mAvatarScrolled);
         outState.putInt(SCROLL_POSITION, mScrollPosition);
+        outState.putString(GROUP_ID, mGroupId);
     }
 
     @Override
@@ -522,6 +563,17 @@ public class GroupManagementFragment extends BaseFragment implements View.OnClic
                     showAvatarActionDialog(mParent);
                 }
                 break;
+            case R.id.contact_details_option_mute:
+                if (mOptionMute.isChecked()) {
+                    showSelectionDialog(R.string.dialog_title_mute_conversation,
+                            R.array.conversation_mute_array, mConversationMuteIndex,
+                            CONVERSATION_MUTE_SELECTION_DIALOG);
+                }
+                else {
+                    setMuteDuration(mGroupId, 0L);
+                    updateMuteStatus();
+                }
+                break;
             default:
                 break;
         }
@@ -577,6 +629,29 @@ public class GroupManagementFragment extends BaseFragment implements View.OnClic
                     mAdapter.notifyDataSetChanged();
                 }
             }
+        }
+    }
+
+    @Override
+    public void onSingleChoiceDialogItemSelected(DialogInterface dialog, int requestCode, int index) {
+        if (mParent == null) {
+            return;
+        }
+
+        switch (requestCode) {
+            case CONVERSATION_MUTE_SELECTION_DIALOG:
+                setMuteDuration(mGroupId, CONVERSATION_MUTE_DURATIONS[index]);
+                updateMuteStatus();
+                break;
+        }
+    }
+
+    @Override
+    public void onSingleChoiceDialogCanceled(DialogInterface dialog, int requestCode) {
+        switch (requestCode) {
+            case CONVERSATION_MUTE_SELECTION_DIALOG:
+                updateMuteStatus();
+                break;
         }
     }
 
@@ -690,8 +765,23 @@ public class GroupManagementFragment extends BaseFragment implements View.OnClic
         }
     }
 
+    @Override
+    public void update() {
+        updateMuteStatus();
+        scheduleNextUpdate();
+    }
+
+    @Override
+    protected String getConversationId() {
+        return mGroupId;
+    }
+
     public void setGroup(String group) {
         mGroupId = group;
+    }
+
+    public void setConversation(final @NonNull Conversation conversation) {
+        setGroup(conversation.getPartner().getUserId());
     }
 
     public void setCloseOnLeaveGroup(boolean closeOnLeaveGroup) {
@@ -714,13 +804,14 @@ public class GroupManagementFragment extends BaseFragment implements View.OnClic
         mGroupData = ConversationUtils.getGroup(mGroupId);
 
         if (mGroupData != null) {
-            formatGroupData(mGroupData);
+            if (BuildConfig.DEBUG) {
+                formatGroupData(mGroupData);
+            }
 
             mGroupDisplayName = conversation != null
                     ? conversation.getPartner().getDisplayName()
                     : mGroupData.getGroupName();
-            mParent.setTitle(R.string.group_messaging_group_members);
-            mParent.setSubtitle(mGroupData.getGroupDescription());
+            /* When supported, set subtitle with mGroupData.getGroupDescription() */
 
             mGroupTitle.setText(mGroupDisplayName);
             mGroupDescription.setText(mGroupData.getGroupDescription());
@@ -734,32 +825,39 @@ public class GroupManagementFragment extends BaseFragment implements View.OnClic
             if (!mAvatarLoaded) {
                 loadGroupAvatar();
             }
-
-            ConversationUtils.verifyConversationAvatar(SilentPhoneApplication.getAppContext(),
-                    mGroupId, mGroupData.getAvatarInfo());
         }
 
-        final int[] code = new int[1];
-        byte[][] groupMembers = ZinaMessaging.getAllGroupMembers(mGroupId, code);
-        if (groupMembers != null) {
-            Gson gson = new Gson();
-            mGroupMembers.clear();
-            for (byte[] member : groupMembers) {
-                ConversationUtils.MemberData memberData = gson.fromJson(new String(member),
-                        ConversationUtils.MemberData.class);
-                mGroupMembers.add(memberData);
-            }
+        updateMuteStatus();
+
+        LoadGroupParticipants task = new LoadGroupParticipants(this);
+        task.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, mGroupId);
+
+        if (mParent != null) {
+            mParent.invalidateOptionsMenu();
+            mParent.setTitle(R.string.group_messaging_group_members);
         }
+    }
 
-        mEmptyView.setVisibility(mGroupMembers.size() > 0 ? View.GONE : View.VISIBLE);
-        mRecyclerView.setVisibility(mGroupMembers.size() > 0 ? View.VISIBLE : View.GONE);
+    private void updateMuteStatus() {
+        if (mOptionMute == null) {
+            return;
+        }
+        Conversation conversation = ConversationUtils.getConversation(mGroupId);
+        CharSequence muteDescription = getMuteStatusDescription(conversation);
+        mOptionMute.setChecked(conversation != null && conversation.isMuted());
+        mOptionMute.setDescription(muteDescription);
+    }
 
+    private void setGroupMembers(final @NonNull Collection<ConversationUtils.MemberData> participants) {
+        mProgress.setVisibility(View.GONE);
+
+        mGroupMembers.clear();
+        mGroupMembers.addAll(participants);
+
+        // TODO all items are inflated at once which slows down opening of this view
         if (mAdapter != null) {
             mAdapter.setItems(mGroupMembers);
             mAdapter.notifyDataSetChanged();
-        }
-        if (mParent != null) {
-            mParent.invalidateOptionsMenu();
         }
     }
 
@@ -767,7 +865,6 @@ public class GroupManagementFragment extends BaseFragment implements View.OnClic
         if (show) {
             mParent.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
             mParent.setTitle(R.string.group_messaging_edit_group_details);
-            mParent.setSubtitle("");
             mEditGroupName.selectAll();
             mEditGroupName.requestFocus();
             mEditGroupName.post(new Runnable() {
@@ -790,7 +887,7 @@ public class GroupManagementFragment extends BaseFragment implements View.OnClic
             mScrollPosition = mGroupInformationContainer.getScrollY();
         }
         else {
-            mParent.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
+            mParent.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
             DialerUtils.hideInputMethod(mEditGroupName);
             refreshGroupData();
             mGroupInformationContainer.post(new Runnable() {
@@ -989,18 +1086,19 @@ public class GroupManagementFragment extends BaseFragment implements View.OnClic
                 mParent.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        Toast.makeText(mParent,
-                                mParent.getString(R.string.group_messaging_leaving_group,
-                                        mGroupDisplayName),
-                                Toast.LENGTH_SHORT).show();
-
-                        if (mCloseOnLeaveGroup) {
-                            // try to return to dialer activity and clear conversation and group management screens
-                            exitToDialerActivity(mParent);
-                        }
-                        else {
-                            // return to previous view
-                            mParent.onBackPressed();
+                        if (mParent != null) {
+                            Toast.makeText(mParent,
+                                    mParent.getString(R.string.group_messaging_leaving_group,
+                                            mGroupDisplayName),
+                                    Toast.LENGTH_SHORT).show();
+                            if (mCloseOnLeaveGroup) {
+                                // try to return to dialer activity and clear conversation and group management screens
+                                exitToDialerActivity(mParent);
+                            }
+                            else {
+                                // return to previous view
+                                mParent.onBackPressed();
+                            }
                         }
 
                         // refresh conversations list so removed conversation does not appear
@@ -1012,7 +1110,7 @@ public class GroupManagementFragment extends BaseFragment implements View.OnClic
     }
 
     private void exitToDialerActivity(@NonNull Context context) {
-        Intent intent = new Intent(context, DialerActivity.class);
+        Intent intent = new Intent(context, DialerActivityInternal.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         context.startActivity(intent);
     }
@@ -1047,6 +1145,17 @@ public class GroupManagementFragment extends BaseFragment implements View.OnClic
         int indent = bounds.width() + mDetailsLabelSpacing;
         LabelIndentSpan.appendNumberedList(sb, labels, steps, indent, "\n");
         mGroupInformation.setText(sb, TextView.BufferType.SPANNABLE);
+
+        // Add conversation's json representation
+        Conversation conversation = ConversationUtils.getConversation(mGroupId);
+        if (conversation != null) {
+            try {
+                mConversationInformation.setText(new JSONConversationAdapter().adapt(conversation).toString(3));
+            }
+            catch (JSONException e) {
+                // could not format conversation's json, ignore as here it is debug information
+            }
+        }
     }
 
     private void showAvatarActionDialog(final Context context) {
@@ -1130,6 +1239,11 @@ public class GroupManagementFragment extends BaseFragment implements View.OnClic
         AsyncUtils.execute(new Runnable() {
             @Override
             public void run() {
+                final ConversationUtils.GroupData groupData = ConversationUtils.getGroup(mGroupId);
+                final String avatarInfo = groupData != null ? groupData.getAvatarInfo() : null;
+                ConversationUtils.verifyConversationAvatar(SilentPhoneApplication.getAppContext(),
+                        mGroupId, avatarInfo);
+
                 final Activity activity = getActivity();
                 final int dimension = Math.min(mDisplaySize.x, mDisplaySize.y) / 2;
                 final Bitmap bitmap = AvatarUtils.getConversationAvatar(getActivity(),
@@ -1140,8 +1254,6 @@ public class GroupManagementFragment extends BaseFragment implements View.OnClic
                     activity.runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            final ConversationUtils.GroupData groupData = ConversationUtils.getGroup(mGroupId);
-                            final String avatarInfo = groupData != null ? groupData.getAvatarInfo() : null;
                             final boolean isGeneratedAvatar = TextUtils.isEmpty(avatarInfo)
                                     || AvatarProvider.AVATAR_TYPE_GENERATED.equals(avatarInfo);
 
@@ -1193,6 +1305,46 @@ public class GroupManagementFragment extends BaseFragment implements View.OnClic
         }
     }
 
+    private static class LoadGroupParticipants extends AsyncTask<String, Void, Void> {
+
+        private String mCommand;
+        private final WeakReference<GroupManagementFragment> mFragmentReference;
+        private final List<ConversationUtils.MemberData> mParticipants = new ArrayList<>();
+
+        LoadGroupParticipants(final GroupManagementFragment fragment) {
+            mFragmentReference = new WeakReference<>(fragment);
+        }
+
+        @Override
+        protected Void doInBackground(String... commands) {
+            final String groupId = commands != null && commands.length > 0 ? commands[0] : null;
+            if (TextUtils.isEmpty(groupId)) {
+                return null;
+            }
+            long startTime = System.currentTimeMillis();
+            final int[] code = new int[1];
+            byte[][] groupMembers = ZinaMessaging.getAllGroupMembers(groupId, code);
+            Gson groupMemberGson = new Gson();
+            if (groupMembers != null) {
+                mParticipants.clear();
+                for (byte[] member : groupMembers) {
+                    ConversationUtils.MemberData memberData = groupMemberGson.fromJson(new String(member),
+                            ConversationUtils.MemberData.class);
+                    mParticipants.add(memberData);
+                }
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void result) {
+            GroupManagementFragment fragment = mFragmentReference.get();
+            if (fragment != null) {
+                fragment.setGroupMembers(mParticipants);
+            }
+        }
+    }
+
     private static class GroupMemberAdapter extends com.silentcircle.messaging.views.adapters.GroupMemberAdapter<ConversationUtils.MemberData> {
 
         class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
@@ -1225,7 +1377,7 @@ public class GroupManagementFragment extends BaseFragment implements View.OnClic
                 mButtonCall.setOnClickListener(this);
                 itemView.findViewById(R.id.call_layout).setOnClickListener(this);
 
-                mSwipeLayout = (SwipeRevealLayout) itemView.findViewById(R.id.swipeable_item);;
+                mSwipeLayout = (SwipeRevealLayout) itemView.findViewById(R.id.swipeable_item);
             }
 
             public void bind(ConversationUtils.MemberData groupMember, int position) {
@@ -1244,12 +1396,14 @@ public class GroupManagementFragment extends BaseFragment implements View.OnClic
                         && !memberId.equals(LoadUserInfo.getUuid())
                         ? View.VISIBLE : View.GONE);
                 mButtonRemove.setVisibility(View.GONE);
+                /*
                 mLastModified.setText(android.text.format.DateUtils.getRelativeTimeSpanString(
                         groupMember.getLastModified(),
                         System.currentTimeMillis(),
                         android.text.format.DateUtils.MINUTE_IN_MILLIS,
                         android.text.format.DateUtils.FORMAT_ABBREV_RELATIVE));
                 mLastModified.setVisibility(View.GONE);
+                 */
 
                 /* Allow call button only if there are no calls with that user currently */
                 mSwipeLayout.setSectLeftEnabled(!TiviPhoneService.calls.hasCallWith(memberId));
@@ -1261,6 +1415,7 @@ public class GroupManagementFragment extends BaseFragment implements View.OnClic
                     mMemberAlias.setVisibility(View.GONE);
                 } else {
                     mMemberName.setText(contactEntry.name);
+                    mMemberName.setVisibility(TextUtils.isEmpty(contactEntry.name) ? View.GONE : View.VISIBLE);
 
                     String alias = memberId;
                     if (TextUtils.isEmpty(alias) || Utilities.isUuid(alias)) {

@@ -132,6 +132,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <arpa/inet.h>
 #endif
 
+int hasActiveCalls();
+
 void tivi_log1(const char *p, int val);
 void tmp_log(const char *p);
 void add_tz_random(void *p, int iLen);
@@ -150,6 +152,12 @@ void tivi_log1(const char *p, int val)
 #endif 
 
 #define INFO_MSG_ROW_CNT 20
+
+/*
+ * Constant taken from SipTransport.cpp in Zina.
+ * Maximum size of envelope is allowed to be up to this value
+ */
+static const int MAX_ENCODED_MSG_LENGTH = 7 * 1024; //!< We silently ignore messages bigger than this (b64 encoded)
 
 class CTBMsg{
    CTEditBuf<128> m[INFO_MSG_ROW_CNT];
@@ -1147,9 +1155,9 @@ class CPhoneCons: public CTEngineCallBack, public CTZrtpCb
 #endif
 #endif
       if(!p)return;
-#ifndef _WIN32
-#warning fix, can be mem leak if audio is stoped before this ends
-#endif
+//#ifndef _WIN32
+//#warning fix, can be mem leak if audio is stoped before this ends
+//#endif
       new CTUtilDataPlayer(iRate,iPlayAfterPrev,ao,(unsigned char*)p,iLen,iCanDelete);
    }
    
@@ -1474,14 +1482,27 @@ public:
                  int findChar(const char *p, char c);
                  int pos = findChar(p,';');
 
-                 if(pos>0){
-                     ph->endCall(cid,0,p+pos+1);
+                 if(pos > 0){
+                     int iReasonCode = 0;
+                     int pos2 = findChar(p+pos+1, ';');
+                     if (pos2 > 0) {
+                         char *p2 = (char *)(p+pos+1+pos2);
+                         *p2 = 0;
+                         iReasonCode = atoi(p2+1);
+                     }
+                     ph->endCall(cid,iReasonCode,p+pos+1);
                  }else{
                      ph->endCall(cid);
                  }
                  return 0;
-             }
-            case 'm':puts("TODO mute");return 0;
+            }
+            // try to mute/unmute call
+            case 'm':
+                ph->mute(1, cid);
+                return 0;
+            case 'M':
+                ph->mute(0, cid);
+                return 0;
             case 'h':ph->hold(1,cid);return 0;
             case 'u':ph->hold(0,cid);return 0;
                
@@ -1790,23 +1811,53 @@ public:
                return T_TRY_OTHER_ENG;
                
             }
+            else if(iLen==15 && strcmp(p+1, "setexpireszero")==0) {
+                
+                t_logf(log_events, __FUNCTION__, "setexpireszero");
+                
+                if(ph && !hasActiveCalls()) {
+                    
+                    p_cfg.iSkipReregisterCheck = 1;
+                    
+                    ph->remRegister();
+                }
+            }
+            else if(iLen==12 && strcmp(p+1, "stopsockets")==0) {
+
+                t_logf(log_events, __FUNCTION__, "stopsockets");
+
+                if(ph && !hasActiveCalls())
+                    ph->stopSockets();
+            }
             else if(iLen==13 && strcmp(p+1,"onbackground")==0){
-               p_cfg.iIsInForeground=0;
+                
+                t_logf(log_events, __FUNCTION__, "onbackground");
+
+                p_cfg.iIsInForeground=0;
+                
+                iIsInBackground = 1;
             }
             else if(iLen==13 && strcmp(p+1,"onforeground")==0){
-               p_cfg.iIsInForeground=1;
-               iIsInBackground=0;
-               if(p_cfg.uiPrevExpires<800 && p_cfg.uiPrevExpires>0)p_cfg.uiExpires=p_cfg.uiPrevExpires;
-               p_cfg.uiPrevExpires=0;
-               static int iCollected=0;
-               if(!iCollected){
-                  iCollected=1;
-                  //--test-- CTEntropyColector::colect();
-               }
-               
-               if(ph && !p_cfg.isOnline())ph->goOnline(1);
-               
-               return T_TRY_OTHER_ENG;
+                
+                t_logf(log_events, __FUNCTION__, "onforeground");
+
+                p_cfg.iSkipReregisterCheck = 0;
+                p_cfg.iIsInForeground=1;
+
+                iIsInBackground = 0;
+
+                if(p_cfg.uiPrevExpires<800 && p_cfg.uiPrevExpires>0)
+                    p_cfg.uiExpires=p_cfg.uiPrevExpires;
+
+                p_cfg.uiPrevExpires=0;
+
+                if(ph && !p_cfg.isOnline())
+                    ph->goOnline(1);
+
+                if(ph)
+                    ph->startSockets();
+
+                return T_TRY_OTHER_ENG;
             }
             else if(iLen==4 && strcmp(p+1,"reg")==0)
             {
@@ -3065,30 +3116,43 @@ public:
    }
    
    const char *onPushNotification(const char *msg){
-#if 0
-      if(!iExiting && getPhoneState()!=2 && !hasActiveCalls()){
 
-         void sleepForMs(int msec, int step, int *exiting);
-         sleepForMs(3000,100, &iExiting);
-         
-         if(!iExiting && getPhoneState()!=2 && !hasActiveCalls()){
-            sendCommandToAllEngines(":force.network_reset");
-         }
-         
-      }
+#ifndef __APPLE__
+       // SPA logic
+       if(iExiting)return "ok";
+       
+       checkIPNow();
+       
+       CPhoneCons *ret=getAccountByID(0,1);
+       if(!ret)return "fail no_account";
+       if(!ret->ph)Sleep(100);//should not happen
+       if(!ret->ph)return "fail !ret->ph";
+       return ret->ph->onPushNotification(msg);
 #else
-      if(iExiting)return "ok";
+      if(iExiting)
+          return "ok";
       
       checkIPNow();
       
-      CPhoneCons *ret=getAccountByID(0,1);
-      if(!ret)return "fail no_account";
-      if(!ret->ph)Sleep(100);//should not happen
-      if(!ret->ph)return "fail !ret->ph";
+      CPhoneCons *ret = getAccountByID(0,1);
+       
+      if(!ret)
+          return "fail no_account";
+       
+      if(!ret->ph)
+          return "fail !ret->ph";
+       
+       // Reset the flags that prevent
+       // reregistration, sending keep alive
+       // and tracking ip changes
+       ret->p_cfg.iSkipReregisterCheck = 0;
+       ret->p_cfg.reg.bUnReg = 0;
+       ret->p_cfg.reg.uiRegUntil = 0;
+       
+       ret->ph->startSockets();
+       
       return ret->ph->onPushNotification(msg);
 #endif
-      
-      return "ok";
    }
    
    void *findEngByServ(CTEditBase *b){
@@ -3143,7 +3207,7 @@ public:
          
 #define STRN_STARTS_WITH(_str, _l, _val) (_l + 1>= sizeof(_val) && strncmp(_str, _val, sizeof(_val) - 1)==0)
          
-         if(STRN_STARTS_WITH(p, l, ":onPushNotifcation")){
+         if(STRN_STARTS_WITH(p, l, ":onpushnotification")){
             
             return onPushNotification(p);
          }
@@ -3918,7 +3982,8 @@ void g_sendDataFuncAxo(uint8_t* names[], uint8_t* devIds[], uint8_t* envelopes[]
 bool g_sendDataFuncAxoNew(uint8_t* name, uint8_t* devId, uint8_t* envelope, size_t size, uint64_t msgId){
    void bin2Hex(unsigned char *Bin, char * Hex ,int iBinLen);
 
-   CTEditBuf<3*1024+128> b;//should be less then 4K - sizeof(SIP MESSAGE)
+   // TODO dynamic, depending on size
+   CTEditBuf<MAX_ENCODED_MSG_LENGTH + 128> editBuf;
 
    char bufMsgId[64];
    char hex[32];
@@ -3943,9 +4008,9 @@ bool g_sendDataFuncAxoNew(uint8_t* name, uint8_t* devId, uint8_t* envelope, size
       log_events(__FUNCTION__,"FAIL to send: !ret || !ret->p_cfg.isOnline()");
       return false;            //we have to set all msg id's to 0
    }
-   b.setText((const char *)envelope, (int)size ,0);
+   editBuf.setText((const char *)envelope, (int)size ,0);
 
-   int ses_id = ret->ph->sendSipMsg(0, "MESSAGE", (char *)name, &bufDevIdAdd[0], "application/x-sc-axolotl", &b, &bufMsgId[0]);
+   int ses_id = ret->ph->sendSipMsg(0, "MESSAGE", (char *)name, &bufDevIdAdd[0], "application/x-sc-axolotl", &editBuf, &bufMsgId[0]);
    t_logf(log_events, __FUNCTION__, "Called sendSipMsg [name: %s devid: %s return: %d]", (char *)name, bufDevIdAdd, ses_id);
 
    CSesBase *spSes = ses_id ? ret->ph->findSessionByID(ses_id) : NULL;

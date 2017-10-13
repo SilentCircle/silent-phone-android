@@ -165,7 +165,7 @@ void AppInterfaceImpl::processMessageRaw(const CmdQueueInfo &msgInfo) {
     }
 
     // Cleanup old message hashes
-    time_t timestamp = time(0) - MK_STORE_TIME;
+    time_t timestamp = time(nullptr) - MK_STORE_TIME;
     store_->deleteMsgHashes(timestamp);
 
     if (messageEnvelope.size() > tempBufferSize_) {
@@ -220,12 +220,12 @@ void AppInterfaceImpl::processMessageRaw(const CmdQueueInfo &msgInfo) {
         errorCode_ = CORRUPT_DATA;
         goto errorMessage_;
     }
-    msgTime = uuid_time(uu, NULL);
-    currentTime = time(NULL);
+    msgTime = uuid_time(uu, nullptr);
+    currentTime = time(nullptr);
     timeDiff = currentTime - msgTime;
 
     // We can't process very old messages, the keys are already gone
-    if (timeDiff > 0 && timeDiff >= MK_STORE_TIME) {
+    if (timeDiff >= MK_STORE_TIME) {
         errorCode_ = OLD_MESSAGE;
         goto errorMessage_;
     }
@@ -456,14 +456,14 @@ void AppInterfaceImpl::processMessagePlain(const CmdQueueInfo &msgInfo)
         cJSON* jsSupplement = sharedRoot.get();
 
         cJSON* cjTemp = cJSON_GetObjectItem(jsSupplement, "a");
-        char* jsString = (cjTemp != NULL) ? cjTemp->valuestring : NULL;
-        if (jsString != NULL) {
+        char* jsString = (cjTemp != nullptr) ? cjTemp->valuestring : nullptr;
+        if (jsString != nullptr) {
             attachmentDescr = jsString;
         }
 
         cjTemp = cJSON_GetObjectItem(jsSupplement, "m");
-        jsString = (cjTemp != NULL) ? cjTemp->valuestring : NULL;
-        if (jsString != NULL) {
+        jsString = (cjTemp != nullptr) ? cjTemp->valuestring : nullptr;
+        if (jsString != nullptr) {
             attributesDescr = jsString;
         }
     }

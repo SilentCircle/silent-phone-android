@@ -60,6 +60,7 @@ const string NameLookup::getUid(const string &alias, const string& authorization
 
 {"display_alias": <string>,
  "display_organization": <string>,
+ "same_organization": <bool>
  "avatar_url": <string>,
  "display_name": <string>,
  "dr_enabled": <bool>,          // Will be removed?
@@ -123,6 +124,8 @@ int32_t NameLookup::parseUserInfo(const string& json, UserInfo &userInfo)
     if (tmpData != NULL && tmpData->valuestring != NULL) {
         userInfo.organization.assign(tmpData->valuestring);
     }
+
+    userInfo.inSameOrganization = Utilities::getJsonBool(tmpData, "same_organization", false);
 
     tmpData = cJSON_GetObjectItem(root, "data_retention");
 
@@ -273,6 +276,7 @@ shared_ptr<UserInfo> NameLookup::refreshUserData(const string& aliasUuid, const 
     it->second->alias0.assign(userInfo.alias0);
     it->second->avatarUrl.assign(userInfo.avatarUrl);
     it->second->organization.assign(userInfo.organization);
+    it->second->inSameOrganization= userInfo.inSameOrganization;
     it->second->drEnabled = userInfo.drEnabled;
 
     it->second->drRrmm = userInfo.drRrmm;

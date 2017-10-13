@@ -166,7 +166,7 @@ public:
 
       g_Settings.iEnableSHA384=1;
       g_Settings.iSASConfirmClickCount=10;
-      g_Settings.iAudioUnderflow = 1;
+      g_Settings.iAudioUnderflow = 0;
       g_Settings.iShowRXLed = 1;
 #ifdef __APPLE__
       int isTablet(void);

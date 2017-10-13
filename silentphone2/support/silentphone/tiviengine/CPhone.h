@@ -84,6 +84,7 @@ public:
    int answerCall(int SesId);
    int endCall(int SesId, int iReasonCode = 0, const char *reason = NULL);
    int reInvite(int SesId, const char *media, int force = 0);
+   int mute(int iMute, int SesId);
    int hold(int iPutOnHold, int SesId);
    int whispering(int iStart, int SesId);
    

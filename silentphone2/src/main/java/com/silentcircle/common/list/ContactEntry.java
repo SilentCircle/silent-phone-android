@@ -19,6 +19,7 @@ package com.silentcircle.common.list;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.provider.ContactsContract.PinnedPositions;
+import android.text.TextUtils;
 
 /**
  * Class to hold contact information
@@ -43,4 +44,36 @@ public class ContactEntry {
     public long timeCreated;
 
     public static final ContactEntry BLANK_ENTRY = new ContactEntry();
+
+    @Override
+    public String toString() {
+        return "name: " + name + ", status: " + status + ", phoneLabel: " + phoneLabel
+                + ", phoneNumber: " + phoneNumber + ", imName: " + imName + ", alias: " + alias
+                + ", photoUri: " + photoUri + ", lookupUri: " + lookupUri
+                + ", thumbnailUri: " + thumbnailUri + ", id: " + id + ", photoId: " + photoId
+                + ", pinned: " + pinned + ", timeCreated: " + timeCreated;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj == null) return false;
+        if (!(obj instanceof ContactEntry)) return false;
+
+        ContactEntry entry = (ContactEntry) obj;
+        return id == entry.id
+                && photoId == entry.photoId
+                && timeCreated == entry.timeCreated
+                && TextUtils.equals(name, entry.name)
+                && TextUtils.equals(status, entry.status)
+                && TextUtils.equals(phoneLabel, entry.phoneLabel)
+                && TextUtils.equals(phoneNumber, entry.phoneNumber)
+                && TextUtils.equals(imName, entry.imName)
+                && TextUtils.equals(alias, entry.alias)
+                && TextUtils.equals(lookupKey, entry.lookupKey)
+                && TextUtils.equals(photoUri == null ? null : photoUri.toString(),
+                    entry.photoUri == null ? null : entry.photoUri.toString())
+                && TextUtils.equals(lookupUri == null ? null : lookupUri.toString(),
+                    entry.lookupUri == null ? null : entry.lookupUri.toString());
+    }
 }

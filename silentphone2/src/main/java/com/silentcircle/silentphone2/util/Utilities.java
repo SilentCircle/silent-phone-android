@@ -52,6 +52,7 @@ import android.os.Build;
 import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.support.v4.content.ContextCompat;
+import android.support.v7.widget.Toolbar;
 import android.telephony.PhoneNumberUtils;
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
@@ -69,17 +70,17 @@ import com.google.i18n.phonenumbers.Phonenumber;
 import com.silentcircle.SilentPhoneApplication;
 import com.silentcircle.accounts.AccountConstants;
 import com.silentcircle.common.list.ContactEntry;
-import com.silentcircle.common.util.API;
-import com.silentcircle.common.util.HttpUtil;
 import com.silentcircle.contacts.ContactPhotoManagerNew;
 import com.silentcircle.logs.Log;
 import com.silentcircle.messaging.providers.AvatarProvider;
+import com.silentcircle.messaging.util.AsyncUtils;
 import com.silentcircle.messaging.util.AvatarUtils;
 import com.silentcircle.messaging.util.ContactsCache;
 import com.silentcircle.messaging.util.IOUtils;
+import com.silentcircle.messaging.util.MessageUtils;
 import com.silentcircle.messaging.util.MessagingPreferences;
 import com.silentcircle.silentphone2.R;
-import com.silentcircle.silentphone2.activities.DialerActivity;
+import com.silentcircle.silentphone2.activities.DialerActivityInternal;
 import com.silentcircle.silentphone2.dialhelpers.FindDialHelper;
 import com.silentcircle.silentphone2.services.TiviPhoneService;
 import com.silentcircle.silentphone2.views.BlurrableImageView;
@@ -131,15 +132,15 @@ public class Utilities {
      * @param call
      *            the call information
      */
-    static public void setCallerImage(CallState call, ImageView iw) {
-        if (call == null)
+    static public void setCallerImage(final @Nullable CallState call, final @Nullable ImageView iw) {
+        if (call == null || iw == null)
             return;
 
         if (call.image != null) {
             iw.setImageBitmap(call.image);
         }
         else {
-            String uuid = call.iIsIncoming ? getPeerName(call) : call.bufDialed.toString();
+            final String uuid = call.iIsIncoming ? getPeerName(call) : call.bufDialed.toString();
             ContactEntry contactEntry = ContactsCache.getContactEntryFromCacheIfExists(uuid);
             Uri photoUri = null;
             if (contactEntry != null) {
@@ -152,6 +153,17 @@ public class Utilities {
                                     String.valueOf(R.drawable.ic_contact_picture_holo_dark))
                             .build();
                 }
+            }
+            else {
+                AsyncUtils.execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        ContactEntry entry = ContactsCache.getContactEntry(uuid);
+                        if (entry != null) {
+                            MessageUtils.requestRefresh();
+                        }
+                    }
+                });
             }
             AvatarUtils.setPhoto(
                     ContactPhotoManagerNew.getInstance(SilentPhoneApplication.getAppContext()),
@@ -326,7 +338,7 @@ public class Utilities {
      * @see isUriNumber
      */
     public static String getUsernameFromUriNumberSelective(String number) {
-        if (DialerActivity.mDomainsToRemove == null)
+        if (DialerActivityInternal.mDomainsToRemove == null)
             return number;
 
         // The delimiter between username and domain name can be
@@ -339,7 +351,7 @@ public class Utilities {
             return number;
         }
         final String domain = number.substring(delimiterIndex);
-        if (!isAnyOf(domain, DialerActivity.mDomainsToRemove))
+        if (!isAnyOf(domain, DialerActivityInternal.mDomainsToRemove))
             return number;
 
         return number.substring(0, delimiterIndex);
@@ -757,22 +769,24 @@ public class Utilities {
                 TextUtils.getLayoutDirectionFromLocale(Locale.getDefault()) == View.LAYOUT_DIRECTION_RTL;
     }
 
-    public static void setSubtitleColor(final Context ctx, @Nullable final View toolbar) {
+    public static void setSubtitleColor(final Context ctx, @Nullable final Toolbar toolbar) {
         if (toolbar == null) {
             return;
         }
         int registerStatus = TiviPhoneService.getPhoneState();
-        TextView tv = (TextView)toolbar.findViewById(R.id.sub_title);
+        int style;
         switch (registerStatus) {
-            case 1:             // connecting
-                tv.setTextColor(ContextCompat.getColor(ctx, R.color.sc_ng_background_3));
+            case TiviPhoneService.PHONE_STATE_CONNECTING:         // connecting
+                style = R.style.ActionBarSubTitleConnecting;
                 break;
-            case 2:             // online
-                tv.setTextColor(ContextCompat.getColor(ctx, R.color.black_green_dark_1));
+            case TiviPhoneService.PHONE_STATE_ONLINE:             // online
+                style = R.style.ActionBarSubTitleOnline;
                 break;
             default:            // offline
-                tv.setTextColor(ContextCompat.getColor(ctx, R.color.sc_ng_text_red));
+                style = R.style.ActionBarSubTitleOffline;
         }
+
+        toolbar.setSubtitleTextAppearance(ctx, style);
     }
 
     public static boolean isAnyOf(String input, String... possibleValues) {

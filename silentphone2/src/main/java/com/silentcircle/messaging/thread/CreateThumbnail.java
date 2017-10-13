@@ -60,6 +60,7 @@ import com.silentcircle.messaging.util.AttachmentUtils;
 import com.silentcircle.messaging.util.IOUtils;
 import com.silentcircle.messaging.util.MIME;
 import com.silentcircle.messaging.util.UUIDGen;
+import com.silentcircle.silentphone2.BuildConfig;
 import com.silentcircle.silentphone2.R;
 
 import java.io.File;
@@ -302,26 +303,39 @@ public class CreateThumbnail  {
                 return decorateAudioThumbnail(resize(bitmap));
             }
 
-            Cursor cursor = resolver.query(uri, new String[]{
-                    AudioColumns.ALBUM_ID
-            }, null, null, null);
+            Cursor cursor = null;
+            try {
+                cursor = resolver.query(uri, new String[]{
+                        AudioColumns.ALBUM_ID
+                }, null, null, null);
+            } catch (Exception ignore) {
+                // Ignore exceptions such as CursorWindowAllocationException which occurs intermittently
+                // We should not expect a crash here
+                Log.e(TAG, "Ignoring an exception: " + ignore +
+                        ((BuildConfig.DEBUG) ? ", getAudioThumbnail - uri: " + uri : ""));
+            }
 
             if (cursor == null) {
                 return decorateAudioThumbnail(resize(bitmap));
             }
 
-            if (cursor.moveToNext()) {
-                try {
-                    long albumID = cursor.getLong(cursor.getColumnIndexOrThrow(AudioColumns.ALBUM_ID));
-                    Uri albumArtURI = ContentUris.withAppendedId(ALBUM_ART_URI, albumID);
-                    bitmap = MediaStore.Images.Media.getBitmap(resolver, albumArtURI);
-                } catch (IOException exception) {
-                    bitmap = getUnknownThumbnail();
-                } catch (IllegalArgumentException exception) {
-                    bitmap = getUnknownThumbnail();
+            try {
+                if (cursor.moveToNext()) {
+                    try {
+                        long albumID = cursor.getLong(cursor.getColumnIndexOrThrow(AudioColumns.ALBUM_ID));
+                        Uri albumArtURI = ContentUris.withAppendedId(ALBUM_ART_URI, albumID);
+                        bitmap = MediaStore.Images.Media.getBitmap(resolver, albumArtURI);
+                    } catch (IOException exception) {
+                        bitmap = getUnknownThumbnail();
+                    } catch (IllegalArgumentException exception) {
+                        bitmap = getUnknownThumbnail();
+                    }
+                }
+            } finally {
+                if (cursor != null && !cursor.isClosed()) {
+                    cursor.close();
                 }
             }
-            cursor.close();
 
             return decorateAudioThumbnail(resize(bitmap));
         }
@@ -457,22 +471,33 @@ public class CreateThumbnail  {
             if (!hasMediaPermission()) {
                 bitmap = createVideoThumbnail( mContext, uri );
             } else {
-                Cursor cursor = MediaStore.Video.query(resolver, uri, new String[]{
-                        BaseColumns._ID
-                });
-
-                if (cursor != null) {
-                    if (cursor.moveToNext()) {
-                        BitmapFactory.Options options = new BitmapFactory.Options();
-                        options.inMutable = true;
-                        bitmap = MediaStore.Video.Thumbnails.getThumbnail(resolver, cursor.getInt(0), MediaStore.Video.Thumbnails.MINI_KIND, options);
-                    } else {
-                        bitmap = getVideoThumbnailFroyo();
-                    }
-
-                    cursor.close();
+                Cursor cursor = null;
+                try {
+                    cursor = MediaStore.Video.query(resolver, uri, new String[]{
+                            BaseColumns._ID
+                    });
+                } catch (Exception ignore) {
+                    // Ignore exceptions such as CursorWindowAllocationException which occurs intermittently
+                    // We should not expect a crash here
+                    Log.e(TAG, "Ignoring an exception: " + ignore +
+                            ((BuildConfig.DEBUG) ? ", getVideoThumbnail - uri: " + uri : ""));
                 }
 
+                try {
+                    if (cursor != null) {
+                        if (cursor.moveToNext()) {
+                            BitmapFactory.Options options = new BitmapFactory.Options();
+                            options.inMutable = true;
+                            bitmap = MediaStore.Video.Thumbnails.getThumbnail(resolver, cursor.getInt(0), MediaStore.Video.Thumbnails.MINI_KIND, options);
+                        } else {
+                            bitmap = getVideoThumbnailFroyo();
+                        }
+                    }
+                } finally {
+                    if (cursor != null && !cursor.isClosed()) {
+                        cursor.close();
+                    }
+                }
                 if (bitmap == null) {
                     bitmap = createVideoThumbnail(mContext, uri);
                 }

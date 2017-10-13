@@ -33,9 +33,9 @@ import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AlertDialog;
-import com.silentcircle.logs.Log;
 import android.widget.ArrayAdapter;
 
+import com.silentcircle.logs.Log;
 import com.silentcircle.silentphone2.R;
 
 /**
@@ -66,6 +66,8 @@ public class SingleChoiceDialogFragment extends DialogFragment {
     public interface OnSingleChoiceDialogItemSelectedListener {
 
         void onSingleChoiceDialogItemSelected(DialogInterface dialog, int requestCode, int index);
+
+        void onSingleChoiceDialogCanceled(DialogInterface dialog, int requestCode);
     }
 
     public static SingleChoiceDialogFragment getInstance(int titleId, @NonNull CharSequence[] items,
@@ -103,7 +105,29 @@ public class SingleChoiceDialogFragment extends DialogFragment {
 
         AlertDialog.Builder alertDialog = new AlertDialog.Builder(getActivity());
         alertDialog.setTitle(titleId);
-        alertDialog.setNegativeButton(R.string.dialog_button_cancel, null);
+        alertDialog.setNegativeButton(R.string.dialog_button_cancel, new DialogInterface.OnClickListener() {
+
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                try {
+                    OnSingleChoiceDialogItemSelectedListener listener;
+                    int requestCode;
+                    if (mListener != null) {
+                        listener = mListener;
+                        requestCode = mRequestCode;
+                    }
+                    else {
+                        listener = (OnSingleChoiceDialogItemSelectedListener) getTargetFragment();
+                        requestCode = getTargetRequestCode();
+                    }
+                    listener.onSingleChoiceDialogCanceled(dialog, requestCode);
+                }
+                catch (ClassCastException e) {
+                    throw new ClassCastException(
+                            "Calling fragment must implement interface OnSingleChoiceDialogItemSelectedListener");
+                }
+            }
+        });
 
         ArrayAdapter<CharSequence> adapter = new ArrayAdapter<>(getActivity(),
                 R.layout.dialog_item_single_choice_light, items);

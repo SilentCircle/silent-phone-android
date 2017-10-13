@@ -354,7 +354,8 @@ typedef struct{
    
    int iSendS;//move it to spSes
    int iWaitS;//move it to spSes
-   
+
+   int iIsMuted;
    int iIsOnHold;
    int iIsInConference;
    int iWhisperingTo;

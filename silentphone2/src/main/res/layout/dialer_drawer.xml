@@ -12,7 +12,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/drawer_scroll"
     style="@style/DrawerScrollStyle"
-    tools:context=".activities.DialerActivity">
+    tools:context=".activities.DialerActivityInternal">
 
     <LinearLayout
         android:id="@+id/drawer_content"

@@ -142,14 +142,11 @@
                 android:exported="false" />
 
         <!-- android:launchMode="singleTask"  android:screenOrientation="portrait"> -->
-        <activity android:name=".activities.DialerActivity"
-                  android:windowSoftInputMode="stateAlwaysHidden|adjustNothing">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-            <intent-filter android:priority="999" >
+        <activity
+            android:name=".activities.DialerActivityInternal"
+            android:exported="false"
+            android:windowSoftInputMode="stateAlwaysHidden|adjustNothing">
+            <intent-filter android:priority="999">
                 <action android:name="com.silentcircle.silentphone.action.NEW_OUTGOING_CALL" />
 
                 <category android:name="android.intent.category.DEFAULT" />
@@ -158,7 +155,7 @@
                 <data android:scheme="silentsip" />
                 <data android:scheme="sip" />
             </intent-filter>
-            <intent-filter android:priority="999" >
+            <intent-filter android:priority="999">
                 <action android:name="com.silentcircle.silentphone.action.EDIT_BEFORE_CALL" />
 
                 <category android:name="android.intent.category.DEFAULT" />
@@ -168,65 +165,79 @@
                 <data android:scheme="sip" />
             </intent-filter>
             <intent-filter>
-                <action android:name="android.intent.action.SENDTO"/>
-                <category android:name="android.intent.category.DEFAULT"/>
-                <data android:scheme="imto" android:host="sip.silentcircle.com"/>
+                <action android:name="com.silentcircle.messaging.action.VIEW_CONVERSATIONS" />
+
+                <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
 
-            <intent-filter>
-                <action android:name="com.silentcircle.messaging.action.VIEW_CONVERSATIONS" />
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
-            <intent-filter>
-                <action android:name="com.silentcircle.messaging.action.NEW_CONVERSATION" />
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW"/>
-                <category android:name="android.intent.category.DEFAULT"/>
-                <data android:mimeType="vnd.android.cursor.item/com.silentcircle.phone"/>
-            </intent-filter>
-            <intent-filter>
-                <action android:name="android.intent.action.DIAL" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <data android:scheme="tel" />
-            </intent-filter>
-            <intent-filter>
-                <action android:name="android.intent.action.CALL" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <data android:scheme="tel" />
-            </intent-filter>
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <data android:scheme="tel" />
-            </intent-filter>
-            <intent-filter android:icon="@drawable/ic_launcher_st">
-                <action android:name="android.intent.action.VIEW"/>
-                <category android:name="android.intent.category.DEFAULT"/>
-                <data android:mimeType="vnd.android.cursor.item/com.silentcircle.message"/>
-            </intent-filter>
-            <intent-filter>
-                <action android:name="com.silentcircle.messaging.action.WIPE" />
-                <category android:name="android.intent.category.DEFAULT"/>
-            </intent-filter>
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="silentphone"/>
-            </intent-filter>
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="http"
-                    android:host="silentphone"/>
-            </intent-filter>
-            <meta-data android:name="android.app.shortcuts"
+            <meta-data
+                android:name="android.app.shortcuts"
                 android:resource="@xml/dialer_activity_shortcuts" />
         </activity>
+
+        <activity android:name=".activities.DialerActivity"
+            android:theme="@android:style/Theme.NoDisplay"
+            android:noHistory="true">
+            <!--Incoming intents are checked in the activity to match the intent-filters below -->
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <!--A "tel:" link in a browser-->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.BROWSABLE" />
+                <category android:name="android.intent.category.DEFAULT" />
+
+                <data android:scheme="tel" />
+            </intent-filter>
+            <!--Clicking on a contact website entry of the form "silentphone:username"-->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data
+                    android:host="silentphone"
+                    android:scheme="http" />
+            </intent-filter>
+            <!--Dialing from a 3rd party-->
+            <intent-filter>
+                <action android:name="android.intent.action.DIAL" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+
+                <data android:scheme="tel" />
+            </intent-filter>
+            <!--Calling from a 3rd party-->
+            <intent-filter>
+                <action android:name="android.intent.action.CALL" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+
+                <data android:scheme="tel" />
+            </intent-filter>
+            <!--Calling using SC icon in contact-->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+
+                <data android:mimeType="vnd.android.cursor.item/com.silentcircle.phone" />
+            </intent-filter>
+            <!--Messaging using SC message icon in discovered contact-->
+            <intent-filter android:icon="@drawable/ic_launcher_st">
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+
+                <data android:mimeType="vnd.android.cursor.item/com.silentcircle.message" />
+            </intent-filter>
+        </activity>
+
         <activity android:name=".activities.InCallActivity"
                   android:taskAffinity=".Calling"
                   android:exported="false"
@@ -307,6 +318,7 @@
         -->
         <activity
                 android:name="com.silentcircle.keystore.KeyStoreActivity"
+                android:exported="false"
                 android:windowSoftInputMode="adjustUnspecified"
                 android:theme="@style/SilentPhoneTheme">
             <intent-filter>
@@ -485,6 +497,7 @@
 
         <!-- Main conversation activity -->
         <activity android:name="com.silentcircle.messaging.activities.ConversationActivity"
+            android:exported="false"
             android:screenOrientation="sensorPortrait"
             android:windowSoftInputMode="adjustResize|stateHidden"
             android:theme="@style/SilentPhoneTheme"
@@ -496,6 +509,14 @@
                 <category android:name="android.intent.category.DEFAULT"/>
                 <data android:scheme="imto" android:host="silentcircle"/>
             </intent-filter>
+        </activity>
+
+        <activity android:name="com.silentcircle.messaging.activities.ConversationActivityExported"
+            android:theme="@android:style/Theme.NoDisplay"
+            android:noHistory="true"
+            android:icon="@drawable/ic_launcher_st"
+            android:label="@string/activity_conversation_voiceover">
+            <!--Sharing a file-->
             <intent-filter>
                 <action android:name="android.intent.action.SEND"/>
                 <category android:name="android.intent.category.DEFAULT"/>
@@ -508,7 +529,6 @@
                 <data android:mimeType="plain/*"/>
                 <data android:mimeType="video/*"/>
             </intent-filter>
-
         </activity>
 
         <!-- Activity to view multimedia content from conversation messages -->
@@ -586,7 +606,7 @@
         <!-- in app billing -->
         <activity android:name="com.silentcircle.purchase.activities.PaymentUseStripeActivity"
             android:theme="@style/SilentPhoneTheme"
-            android:parentActivityName=".activities.DialerActivity"/>
+            android:parentActivityName=".activities.DialerActivityInternal"/>
 
         <activity android:name="com.silentcircle.purchase.activities.SelectPurchaseCardActivity"
             android:theme="@style/InAppPaymentTheme"
@@ -608,7 +628,7 @@
         <!-- debug logging -->
         <activity android:name="com.silentcircle.logs.activities.DebugLoggingActivity"
             android:theme="@style/SilentPhoneTheme"
-            android:parentActivityName=".activities.DialerActivity"/>
+            android:parentActivityName=".activities.DialerActivityInternal"/>
         <service android:name="com.silentcircle.logs.LogsService" />
 
         <!-- Unwanted things added to the merged manifest by our GMS dependency - set them to not be enabled -->

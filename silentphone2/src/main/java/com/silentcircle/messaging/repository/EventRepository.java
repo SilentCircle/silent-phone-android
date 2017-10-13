@@ -54,17 +54,20 @@ public interface EventRepository extends Repository<Event> {
         private int mLastPosition;
         private int mStartPosition;
         private int mPageSize;
+        private boolean mIsEndReached;
 
         public PagingContext(int startPosition, int pageSize) {
             mStartPosition = startPosition;
             mLastPosition = startPosition;
             mPageSize = pageSize;
+            mIsEndReached = false;
         }
 
         public PagingContext(int startPosition, int lastPosition, int pageSize) {
             mStartPosition = startPosition;
             mLastPosition = lastPosition;
             mPageSize = pageSize;
+            mIsEndReached = false;
         }
 
         public int getNextOffset() {
@@ -90,7 +93,12 @@ public interface EventRepository extends Repository<Event> {
         }
 
         public boolean isEndReached(int lastPosition) {
-            return (mLastPosition == lastPosition);
+            mIsEndReached = (mLastPosition == lastPosition);
+            return mIsEndReached;
+        }
+
+        public boolean isEndReached() {
+            return mIsEndReached;
         }
 
         public int getStartPosition() {

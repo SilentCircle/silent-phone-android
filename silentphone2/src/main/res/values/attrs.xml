@@ -135,6 +135,7 @@
         <attr name="sp_outgoing_message_text_selector" format="reference|color"/>
         <attr name="sp_message_description_text_color" format="reference|color"/>
         <attr name="sp_error_message_text_selector" format="reference|color"/>
+        <attr name="sp_info_message_text_selector" format="reference|color"/>
         <attr name="sp_date_header_text_color" format="reference|color"/>
         <attr name="sp_date_header_background_tint_color" format="reference|color"/>
         <attr name="sp_message_send_tint_color" format="reference|color"/>
@@ -304,6 +305,8 @@
         <attr name="description" format="reference|string" />
         <attr name="textSize" format="reference|dimension" />
         <attr name="descriptionSize" format="reference|dimension" />
+        <attr name="descriptionAppearance" format="reference" />
+        <attr name="descriptionStyle" format="reference|enum" />
         <attr name="isCheckable" format="boolean" />
         <attr name="imageMarginLeft" format="reference|dimension" />
         <attr name="imageMarginRight" format="reference|dimension" />

@@ -22,7 +22,7 @@ the FrameLayout that wraps the button construction.
         android:background="?attr/sp_diaplad_background_color"
         tools:visibility="visible"
         tools:ignore="DuplicateIncludedIds"
-        tools:context=".activities.DialerActivity">
+        tools:context=".activities.DialerActivityInternal">
     <!-- android:stretchColumns="0,1,2" - this should go together with changes
          in RowStyle -->
     <TableRow

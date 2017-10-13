@@ -41,13 +41,14 @@ import com.silentcircle.messaging.model.event.CallMessage;
 import com.silentcircle.messaging.model.event.Event;
 import com.silentcircle.messaging.model.event.IncomingMessage;
 import com.silentcircle.messaging.model.event.Message;
+import com.silentcircle.messaging.model.event.OutgoingMessage;
 import com.silentcircle.messaging.repository.ConversationRepository;
 import com.silentcircle.messaging.repository.EventRepository;
 import com.silentcircle.messaging.services.SCloudService;
 import com.silentcircle.messaging.services.ZinaMessaging;
 import com.silentcircle.messaging.util.AttachmentUtils;
 import com.silentcircle.messaging.util.MessageUtils;
-import com.silentcircle.silentphone2.activities.DialerActivity;
+import com.silentcircle.silentphone2.activities.DialerActivityInternal;
 import com.silentcircle.silentphone2.util.ConfigurationUtilities;
 
 import java.util.ArrayList;
@@ -99,7 +100,8 @@ public class RefreshTask extends AsyncTask<String, Void, List<Event>> {
             if (event instanceof Message) {
                 Message message = (Message) event;
                 boolean save = false;
-                if (event instanceof IncomingMessage || event instanceof CallMessage) {
+                if (event instanceof IncomingMessage || event instanceof CallMessage
+                        || event instanceof OutgoingMessage) {
                     save = handleMessageByState(message);
 
                     if (message.hasAttachment() && !AttachmentUtils.hasThumbnail(message)) {
@@ -133,7 +135,7 @@ public class RefreshTask extends AsyncTask<String, Void, List<Event>> {
         // attempt to correct unread message count for conversation
         checkUnreadMessageCounts(partner);
 
-        return MessageUtils.filter(events, DialerActivity.mShowErrors);
+        return MessageUtils.filter(events, DialerActivityInternal.mShowErrors);
     }
 
     protected void onScheduleNext(long next) {

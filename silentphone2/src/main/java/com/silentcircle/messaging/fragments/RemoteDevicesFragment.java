@@ -59,15 +59,18 @@ import com.silentcircle.common.widget.ProgressBar;
 import com.silentcircle.contacts.ContactsUtils;
 import com.silentcircle.logs.Log;
 import com.silentcircle.messaging.activities.ShowRemoteDevicesActivity;
+import com.silentcircle.messaging.repository.ConversationRepository;
 import com.silentcircle.messaging.services.ZinaMessaging;
+import com.silentcircle.messaging.util.ConversationUtils;
 import com.silentcircle.messaging.util.DeviceInfo;
 import com.silentcircle.messaging.util.IOUtils;
 import com.silentcircle.silentphone2.BuildConfig;
 import com.silentcircle.silentphone2.R;
-import com.silentcircle.silentphone2.activities.DialerActivity;
+import com.silentcircle.silentphone2.activities.DialerActivityInternal;
 import com.silentcircle.silentphone2.services.TiviPhoneService;
 import com.silentcircle.silentphone2.util.ConfigurationUtilities;
 import com.silentcircle.silentphone2.util.Utilities;
+import com.silentcircle.userinfo.LoadUserInfo;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -184,7 +187,7 @@ public class RemoteDevicesFragment extends Fragment implements View.OnClickListe
                 DeviceInfo.DeviceData devData = (DeviceInfo.DeviceData)view.getTag();
                 String directDial = mPartner + ";xscdevid=" + devData.devId;
                 Intent intent = ContactsUtils.getCallIntent(directDial);
-                intent.putExtra(DialerActivity.NO_NUMBER_CHECK, true);
+                intent.putExtra(DialerActivityInternal.NO_NUMBER_CHECK, true);
                 startActivity(intent);
                 mParent.finish();
                 break;
@@ -233,7 +236,31 @@ public class RemoteDevicesFragment extends Fragment implements View.OnClickListe
 
     private void doRescan() {
         setProgressBarVisibility();
-        AxoCommandInBackground aib = new AxoCommandInBackground();
+        AxoCommandInBackground aib = new AxoCommandInBackground() {
+            @Override
+            protected Integer doInBackground(String... commands) {
+                byte[] data = IOUtils.encode(mPartner);
+
+                byte[][] devices = ZinaMessaging.getIdentityKeys(data);
+                final int deviceCount = devices != null ? devices.length : 0;
+
+                Integer result = super.doInBackground(commands);
+
+                devices = ZinaMessaging.getIdentityKeys(data);
+                final int updatedDeviceCount = devices != null ? devices.length : 0;
+
+                if (!TextUtils.equals(mPartner, LoadUserInfo.getUuid())
+                        && deviceCount != updatedDeviceCount) {
+                    final List<String> conversations = ConversationUtils.getConversationsWithParticipant(mPartner);
+                    final ConversationRepository repository = ConversationUtils.getConversations();
+                    if (repository != null) {
+                        ConversationUtils.updateDeviceData(repository, conversations,
+                                IOUtils.encode(mPartner));
+                    }
+                }
+                return result;
+            }
+        };
         aib.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, "rescanUserDevices", mPartner);
     }
 

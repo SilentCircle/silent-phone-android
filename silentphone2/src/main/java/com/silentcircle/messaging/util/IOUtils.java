@@ -598,4 +598,12 @@ public class IOUtils {
         }
         file.delete();
     }
+
+    public static int getLengthOfEncodedText(final @Nullable CharSequence text) {
+        if (TextUtils.isEmpty(text)) {
+            return 0;
+        }
+        byte[] buf = IOUtils.encode(text.toString());
+        return buf.length;
+    }
 }

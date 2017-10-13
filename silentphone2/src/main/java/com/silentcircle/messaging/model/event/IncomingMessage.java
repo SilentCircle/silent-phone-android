@@ -34,23 +34,15 @@ public class IncomingMessage extends Message {
     public IncomingMessage() {
     }
 
-    public IncomingMessage(byte[] sender, byte[] text) {
+    public IncomingMessage(String sender, String text) {
         setSender(sender);
         setText(text);
         setTime(System.currentTimeMillis());
         setState(MessageStates.RECEIVED);
     }
 
-    public IncomingMessage(byte[] sender, byte[] id, byte[] text) {
+    public IncomingMessage(String sender, String id, String text) {
         this(sender, text);
         setId(id);
-    }
-
-    public IncomingMessage(CharSequence sender, CharSequence text) {
-        this(IOUtils.toByteArray(sender), IOUtils.toByteArray(text));
-    }
-
-    public IncomingMessage(CharSequence sender, CharSequence id, CharSequence text) {
-        this(IOUtils.toByteArray(sender), IOUtils.toByteArray(id), IOUtils.toByteArray(text));
     }
 }

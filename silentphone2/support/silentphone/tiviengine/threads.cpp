@@ -178,10 +178,12 @@ int CTiViPhone::TimerProc(void *f)
 #endif
   //    printf("new GT %u\n",ph->uiGT);
 
-      
       if(ph->p_cfg.iAccountIsDisabled)continue;
       
-      if(ph->bRun==1){
+        // Do not track IP changes or issue
+        // keep alives if the setexpireszero
+        // command is issued
+      if(!ph->p_cfg.iSkipReregisterCheck && ph->bRun==1){
          
          
          if(iWasSuspended || (iSecondsSinceStart&1) || (ph->ipBinded==0 && ph->p_cfg.GW.ip==0))
@@ -246,7 +248,7 @@ int CTiViPhone::TimerProc(void *f)
          }
       }
       
-      if(ph->p_cfg.iUserRegister==2 && ph->p_cfg.GW.ip)
+      if(!ph->p_cfg.iSkipReregisterCheck && ph->p_cfg.iUserRegister==2 && ph->p_cfg.GW.ip)
       {
          ph->p_cfg.iUserRegister=1;
       }
@@ -254,15 +256,29 @@ int CTiViPhone::TimerProc(void *f)
       ph->handleSessions();
       T_SLEEP_INC_TIME(60);
       
-      if(ph->bRun==1){ph->onTimer(); T_SLEEP_INC_TIME(60);if(ph->bRun==0)break;}
+      if(ph->bRun==1){
+          
+          ph->onTimer();
+          
+          T_SLEEP_INC_TIME(60);
+          
+          if(ph->bRun==0)
+              break;
+      }
       
       ph->sockSip.sendQueue(0);
-      if(ph->bRun==0)break;
+       
+      if(ph->bRun==0)
+          break;
       
       T_SLEEP_INC_TIME(60);
-      if(ph->bRun==0)break;
+       
+      if(ph->bRun==0)
+          break;
       
-      if(ph->bRun==1)ph->cPhoneCallback->onTimer();
+      if(ph->bRun==1)
+          ph->cPhoneCallback->onTimer();
+
 #ifdef T_TEST_SYNC_TIMER
       pthread_mutex_lock(&ph->timerDoneMutex);
       pthread_cond_signal(&ph->timerDoneConditional);
@@ -289,41 +305,49 @@ public:
    ~CTCpuWakeLock(){if(iLocked)wakeCallback(0);}
 };
 
-int CTiViPhone::thSipRec(void *f)
-{
-   CTiViPhone *ph=(CTiViPhone *)f;
-   SIP_MSG *sMsg = new SIP_MSG ;
-   int iResetParam=0;
-   
-   //int t_AttachCurrentThread();
-   //t_AttachCurrentThread();
-   
-   ph->onNewIp(ph->cPhoneCallback->getLocalIp(),0);
-   
-   strcpy(ph->thTimer.thName,"_t_r_timer");
-   
-   ph->thTimer.create(&CTiViPhone::TimerProc,(void *)ph);
-   
-   ph->sockSip.sendQueue(1);
-   
-   while(ph->bRun)
-   {
-      //ph->sockSip.sendQuve();if(!ph->bRun)break;
-      
-      if(iResetParam!=10)
-         memset(sMsg,0,sizeof(SIP_MSG));
-      
-      ADDR addr;
-      int rec = ph->sockSip.recvFrom((char *)&sMsg->rawDataBuffer[0],MSG_BUFFER_SIZE-100,&addr);
-      
-      CTCpuWakeLock wakeLock(rec>100);//should it be after recv or recvfrom
-      iResetParam=ph->recMsg(sMsg, rec, addr);
-      if(!ph->bRun)break;
-      ph->sockSip.sendQueue(1);
-      
-   }
-   
-   delete sMsg;
-   
-   return 0;
+int CTiViPhone::thSipRec(void *f) {
+    
+    CTiViPhone *ph = (CTiViPhone *)f;
+    
+    SIP_MSG *sMsg = new SIP_MSG;
+
+    int iResetParam=0;
+
+    ph->onNewIp(ph->cPhoneCallback->getLocalIp(),0);
+
+    strcpy(ph->thTimer.thName,"_t_r_timer");
+
+    ph->thTimer.create(&CTiViPhone::TimerProc,(void *)ph);
+
+    ph->sockSip.sendQueue(1);
+
+    while(ph->bRun) {
+
+        if(ph->iSocketsPaused) {
+            usleep(100*1e3); // 100 millisecond sleep avoids thread going crazy and using 100% CPU
+            continue;
+        }
+
+        if(iResetParam!=10)
+            memset(sMsg,0,sizeof(SIP_MSG));
+
+        ADDR addr;
+        int rec = ph->sockSip.recvFrom((char *)&sMsg->rawDataBuffer[0],MSG_BUFFER_SIZE-100,&addr);
+    
+        if(ph->iSocketsPaused)
+            continue;
+        
+        CTCpuWakeLock wakeLock(rec>100);//should it be after recv or recvfrom
+    
+        iResetParam=ph->recMsg(sMsg, rec, addr);
+    
+        if(!ph->bRun)
+            break;
+
+        ph->sockSip.sendQueue(1);
+    }
+
+    delete sMsg;
+
+    return 0;
 }

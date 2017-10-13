@@ -22,6 +22,7 @@ import android.annotation.TargetApi;
 import android.content.Context;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
+import android.support.annotation.Nullable;
 import android.text.Editable;
 import android.text.InputType;
 import android.text.TextUtils;
@@ -129,6 +130,8 @@ public class SearchEditTextLayout extends FrameLayout {
 //        mCollapsed = findViewById(R.id.search_box_collapsed);
         mExpanded = findViewById(R.id.search_box_expanded);
         mSearchView = (EditText) mExpanded.findViewById(R.id.search_view);
+        mSearchView.setFocusable(true);
+        mSearchView.setFocusableInTouchMode(true);
 
 //        mSearchIcon = findViewById(R.id.search_magnifying_glass);
 //        mCollapsedSearchBox = findViewById(R.id.search_box_start_search);
@@ -372,9 +375,20 @@ public class SearchEditTextLayout extends FrameLayout {
     }
 
     public void clearSearchQuery() {
+        setSearchQuery("");
+    }
+
+    public void setSearchQuery(@Nullable final String query) {
         if (mSearchView != null) {
-            mSearchView.setText("");
+            mSearchView.setText(query);
+            mSearchView.setSelection(mSearchView.getText().length());
         }
+    }
+
+    @Nullable
+    public String getSearchQuery() {
+        CharSequence query = (mSearchView != null) ? mSearchView.getText() : null;
+        return query != null ? query.toString() : null;
     }
 
     public void showInputMethod() {

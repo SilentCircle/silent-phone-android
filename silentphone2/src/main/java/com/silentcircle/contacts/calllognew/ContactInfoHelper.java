@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2013-2017, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2014-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -65,6 +65,7 @@ import android.support.annotation.WorkerThread;
 import android.support.v4.content.ContextCompat;
 import android.telephony.PhoneNumberUtils;
 import android.text.TextUtils;
+import com.silentcircle.logs.Log;
 
 import com.silentcircle.SilentPhoneApplication;
 import com.silentcircle.common.util.AsyncTasks;
@@ -73,6 +74,7 @@ import com.silentcircle.contacts.utils.Constants;
 import com.silentcircle.contacts.utils.PhoneNumberHelper;
 import com.silentcircle.contacts.utils.UriUtils;
 import com.silentcircle.messaging.services.ZinaMessaging;
+import com.silentcircle.silentphone2.BuildConfig;
 import com.silentcircle.silentphone2.R;
 import com.silentcircle.silentphone2.util.ConfigurationUtilities;
 import com.silentcircle.silentphone2.util.Utilities;
@@ -295,8 +297,17 @@ public class ContactInfoHelper {
         }
 
         final ContactInfo info;
-        Cursor phonesCursor =
-                mContext.getContentResolver().query(uri, PhoneQuery._PROJECTION, null, null, null);
+        Cursor phonesCursor;
+
+        try {
+            phonesCursor = context.getContentResolver().query(uri, PhoneQuery._PROJECTION, null, null, null);
+        } catch (Exception ignore) {
+            // Ignore exceptions such as CursorWindowAllocationException which occurs intermittently
+            // We should not expect a crash here
+            Log.e(TAG, "Ignoring an exception: " + ignore +
+                    ((BuildConfig.DEBUG) ? ", lookupContactFromUri - uri: " + uri : ""));
+            phonesCursor = null;
+        }
 
         if (phonesCursor != null) {
             try {
@@ -389,8 +400,17 @@ public class ContactInfoHelper {
         }
 
         final ContactInfo info;
-        Cursor phonesCursor =
-                context.getContentResolver().query(uri, PhoneQuery._PROJECTION_SIP, selection, null, null);
+        Cursor phonesCursor;
+
+        try {
+            phonesCursor = context.getContentResolver().query(uri, PhoneQuery._PROJECTION_SIP, selection, null, null);
+        } catch (Exception ignore) {
+            // Ignore exceptions such as CursorWindowAllocationException which occurs intermittently
+            // We should not expect a crash here
+            Log.e(TAG, "Ignoring an exception: " + ignore +
+                    ((BuildConfig.DEBUG) ? ", lookupContactFromUriSip16 - uri: " + uri + ", selection: " + selection : ""));
+            phonesCursor = null;
+        }
 
         if (phonesCursor != null) {
             try {
@@ -453,8 +473,17 @@ public class ContactInfoHelper {
         }
 
         ContactInfo info = ContactInfo.EMPTY;
-        Cursor phonesCursor =
-                context.getContentResolver().query(uri, PhoneQuery._PROJECTION_WEB, selection, null, null);
+        Cursor phonesCursor;
+
+        try {
+            phonesCursor = context.getContentResolver().query(uri, PhoneQuery._PROJECTION_WEB, selection, null, null);
+        } catch (Exception ignore) {
+            // Ignore exceptions such as CursorWindowAllocationException which occurs intermittently
+            // We should not expect a crash here
+            Log.e(TAG, "Ignoring an exception: " + ignore +
+                    ((BuildConfig.DEBUG) ? ", lookupContactFromUriWeb - uri: " + uri + ", selection: " + selection : ""));
+            phonesCursor = null;
+        }
 
         if (phonesCursor != null) {
             try {
@@ -528,10 +557,20 @@ public class ContactInfoHelper {
     }
 
     private ContactInfo queryContactInfoForEmailAddress(String address) {
+        Uri lookupUri = ContactsContract.Data.CONTENT_URI;
         final ContactInfo info;
         String selection = createEmailLookupClause(address);
-        Cursor emailCursor =
-                mContext.getContentResolver().query(ContactsContract.Data.CONTENT_URI, PhoneQuery._PROJECTION_EMAIL, selection, null, null);
+        Cursor emailCursor;
+
+        try {
+            emailCursor = mContext.getContentResolver().query(lookupUri, PhoneQuery._PROJECTION_EMAIL, selection, null, null);
+        } catch (Exception ignore) {
+            // Ignore exceptions such as CursorWindowAllocationException which occurs intermittently
+            // We should not expect a crash here
+            Log.e(TAG, "Ignoring an exception: " + ignore +
+                    ((BuildConfig.DEBUG) ? ", queryContactInfoForEmailAddress - uri: " + lookupUri + ", selection: " + selection : ""));
+            emailCursor = null;
+        }
 
         if (emailCursor != null) {
             try {

@@ -73,7 +73,6 @@ import com.silentcircle.common.util.RingtoneUtils;
 import com.silentcircle.common.util.ViewUtil;
 import com.silentcircle.keystore.KeyStoreActivity;
 import com.silentcircle.keystore.KeyStoreHelper;
-import com.silentcircle.keystore.ProviderDbBackend;
 import com.silentcircle.logs.Log;
 import com.silentcircle.logs.LogsService;
 import com.silentcircle.logs.activities.DebugLoggingActivity;
@@ -86,7 +85,7 @@ import com.silentcircle.messaging.util.MessageUtils;
 import com.silentcircle.messaging.util.MessagingPreferences;
 import com.silentcircle.silentphone2.BuildConfig;
 import com.silentcircle.silentphone2.R;
-import com.silentcircle.silentphone2.activities.DialerActivity;
+import com.silentcircle.silentphone2.activities.DialerActivityInternal;
 import com.silentcircle.silentphone2.dialhelpers.FindDialHelper;
 import com.silentcircle.silentphone2.dialogs.InfoMsgDialogFragment;
 import com.silentcircle.silentphone2.fragments.DialDrawerFragment.DrawerCallbacks;
@@ -220,6 +219,8 @@ public class SettingsFragment extends UserInfoListenerFragment implements View.O
 
         //DebugLogging
         prepareDebugLoggingSettings();
+
+        setTitleAndSubtitle();
     }
 
     /*
@@ -240,14 +241,14 @@ public class SettingsFragment extends UserInfoListenerFragment implements View.O
             mParent = (AppCompatActivity) activity;
             mCallbacks = (DrawerCallbacks) activity;
 
-            ActionBar actionBar = ((AppCompatActivity) activity).getSupportActionBar();
+            ActionBar actionBar = mParent.getSupportActionBar();
             if (actionBar != null) {
                 actionBar.setDisplayHomeAsUpEnabled(true);
                 actionBar.setDisplayShowHomeEnabled(true);
                 actionBar.setHomeButtonEnabled(true);
             }
 
-            activity.invalidateOptionsMenu();
+            mParent.invalidateOptionsMenu();
         } catch (ClassCastException e) {
             throw new ClassCastException("Activity must implement DrawerCallbacks.");
         }
@@ -562,6 +563,14 @@ public class SettingsFragment extends UserInfoListenerFragment implements View.O
         }
     }
 
+    private void setTitleAndSubtitle() {
+        ActionBar actionBar = mParent.getSupportActionBar();
+        if (actionBar != null) {
+            actionBar.setTitle(mParent.getString(R.string.settings));
+            actionBar.setSubtitle(null);
+        }
+    }
+
     private String createDetailInfo() {
         Display display = mParent.getWindowManager().getDefaultDisplay();
         DisplayMetrics metrics = new DisplayMetrics();
@@ -580,8 +589,8 @@ public class SettingsFragment extends UserInfoListenerFragment implements View.O
                 .append(Build.MODEL).append(", ")
                 .append(Build.DEVICE);
         detailInfo.append("\n").append(getString(R.string.screen_density, metrics.densityDpi + " (" + size + ", " + swSetting + ")"));
-        if (DialerActivity.mAutoAnswerForTesting) {
-            detailInfo.append("\n").append(getString(R.string.auto_answered, DialerActivity.mAutoAnsweredTesting));
+        if (DialerActivityInternal.mAutoAnswerForTesting) {
+            detailInfo.append("\n").append(getString(R.string.auto_answered, DialerActivityInternal.mAutoAnsweredTesting));
         }
         if (BuildConfig.DEBUG) {
             detailInfo.append("\n").append(getString(R.string.build_time, BuildConfig.SPA_BUILD_DATE));
@@ -856,11 +865,11 @@ public class SettingsFragment extends UserInfoListenerFragment implements View.O
         prefs1.edit().putBoolean(ConversationActivity.KEY_FEATURE_DISCOVERY, false).apply();
         ConversationActivity.mFeatureDiscoveryRan = false;
 
-        SharedPreferences prefs2 = getActivity().getSharedPreferences(DialerActivity.SHARED_PREFS_NAME, Context.MODE_PRIVATE);
-        prefs2.edit().putBoolean(DialerActivity.KEY_FEATURE_DISCOVERY_ONBOARDING, false).apply();
-        DialerActivity.mOnboardingFeatureDiscoveryRan = false;
-        prefs2.edit().putBoolean(DialerActivity.KEY_FEATURE_DISCOVERY_NEW_CONVERSATION, false).apply();
-        DialerActivity.mNewConversationFeatureDiscoveryRan = false;
+        SharedPreferences prefs2 = getActivity().getSharedPreferences(DialerActivityInternal.SHARED_PREFS_NAME, Context.MODE_PRIVATE);
+        prefs2.edit().putBoolean(DialerActivityInternal.KEY_FEATURE_DISCOVERY_ONBOARDING, false).apply();
+        DialerActivityInternal.mOnboardingFeatureDiscoveryRan = false;
+        prefs2.edit().putBoolean(DialerActivityInternal.KEY_FEATURE_DISCOVERY_NEW_CONVERSATION, false).apply();
+        DialerActivityInternal.mNewConversationFeatureDiscoveryRan = false;
 
         Toast.makeText(mParent, R.string.info_feature_discovery_reset, Toast.LENGTH_LONG).show();
     }
@@ -965,7 +974,7 @@ public class SettingsFragment extends UserInfoListenerFragment implements View.O
         mShowErrors = !mShowErrors;
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mParent);
         prefs.edit().putBoolean(SHOW_ERRORS, mShowErrors).apply();
-        DialerActivity.mShowErrors = mShowErrors;
+        DialerActivityInternal.mShowErrors = mShowErrors;
         mErrorsOptionBox.setChecked(mShowErrors);
     }
 
@@ -1012,10 +1021,14 @@ public class SettingsFragment extends UserInfoListenerFragment implements View.O
                          .isRegistered() && mDeveloper ? View.VISIBLE : View.GONE);
         mDrawerView.findViewById(R.id.settings_force_feature_discovery)
           .setVisibility(mDeveloper ? View.VISIBLE : View.GONE);
-        DialerActivity.setDeveloperMode(mDeveloper);
 
         if (!mDeveloper) {
             changePwToDefaultOrSecure();
+
+            // Disable underflow
+            TiviPhoneService.doCmd("set cfg.iAudioUnderflow=0");
+            TiviPhoneService.doCmd(":s");
+            prefs.edit().putBoolean(ENABLE_UNDERFLOW_TONE, false).apply();
         }
 
         prepareSasOptions();
@@ -1431,7 +1444,7 @@ public class SettingsFragment extends UserInfoListenerFragment implements View.O
         }
 
         startRingtoneSelection(selected, RingtoneManager.TYPE_RINGTONE,
-                Settings.System.DEFAULT_RINGTONE_URI, DialerActivity.RINGTONE_SELECTED);
+                Settings.System.DEFAULT_RINGTONE_URI, DialerActivityInternal.RINGTONE_SELECTED);
     }
 
     private void startRingtoneSelection(Uri selected, int typeRingtone, Uri defaultRingtoneUri, int ringtoneSelected) {
@@ -1452,11 +1465,11 @@ public class SettingsFragment extends UserInfoListenerFragment implements View.O
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == DialerActivity.RINGTONE_SELECTED && data != null) {
+        if (requestCode == DialerActivityInternal.RINGTONE_SELECTED && data != null) {
             Uri tone = data.getParcelableExtra(RingtoneManager.EXTRA_RINGTONE_PICKED_URI);
             updateRingtone(tone);
         }
-        else if (requestCode == DialerActivity.MESSAGE_RINGTONE_SELECTED && data != null) {
+        else if (requestCode == DialerActivityInternal.MESSAGE_RINGTONE_SELECTED && data != null) {
             Uri tone = data.getParcelableExtra(RingtoneManager.EXTRA_RINGTONE_PICKED_URI);
             updateMessageRingtone(tone);
         }
@@ -1535,7 +1548,7 @@ public class SettingsFragment extends UserInfoListenerFragment implements View.O
         // Setup underflow check box
         mUnderflowBox = (SettingsItem) mDrawerView.findViewById(R.id.underflow_check);
         mUnderflowBox.setOnClickListener(this);
-        mUseUnderflow = prefs.getBoolean(ENABLE_UNDERFLOW_TONE, true);
+        mUseUnderflow = prefs.getBoolean(ENABLE_UNDERFLOW_TONE, false);
         mUnderflowBox.setChecked(mUseUnderflow);
 
         // Enable FW traversal
@@ -1765,10 +1778,14 @@ public class SettingsFragment extends UserInfoListenerFragment implements View.O
         }
 
         startRingtoneSelection(selected, RingtoneManager.TYPE_NOTIFICATION,
-                Settings.System.DEFAULT_NOTIFICATION_URI, DialerActivity.MESSAGE_RINGTONE_SELECTED);
+                Settings.System.DEFAULT_NOTIFICATION_URI, DialerActivityInternal.MESSAGE_RINGTONE_SELECTED);
     }
 
     private void showSelectionDialog(int titleId, int itemArrayId, int selectedItemIndex, int requestCode) {
+        if (!isAdded()) {
+            return;
+        }
+
         SingleChoiceDialogFragment fragment = SingleChoiceDialogFragment.getInstance(
                 titleId,
                 getResources().getTextArray(itemArrayId),
@@ -1789,9 +1806,6 @@ public class SettingsFragment extends UserInfoListenerFragment implements View.O
         mUnderflowBox.setChecked(mUseUnderflow);
         mUnderflowBox
             .setVisibility(mDeveloper ? View.VISIBLE : View.GONE);
-        if (!mUseUnderflow) { // upgrade handling
-            toggleUnderflowCheckbox();
-        }
 
         if (mDeveloper) {
             result = TiviPhoneService.getInfo(0, -1, "cfg.iCanUseP2Pmedia");
@@ -1864,6 +1878,10 @@ public class SettingsFragment extends UserInfoListenerFragment implements View.O
         }
     }
 
+    @Override
+    public void onSingleChoiceDialogCanceled(DialogInterface dialog, int requestCode) {
+    }
+
     public static void applyDefaultDeprecatedSettings(Context ctx) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(ctx);
         boolean developer = prefs.getBoolean(DEVELOPER, false);
@@ -1902,9 +1920,9 @@ public class SettingsFragment extends UserInfoListenerFragment implements View.O
         // Do not block screenshots
         prefs.edit().putBoolean(BLOCK_SCREENSHOTS, false).apply();
 
-        // Enable underflow
-        TiviPhoneService.doCmd("set cfg.iAudioUnderflow=1");
+        // Disable underflow
+        TiviPhoneService.doCmd("set cfg.iAudioUnderflow=0");
         TiviPhoneService.doCmd(":s");
-        prefs.edit().putBoolean(ENABLE_UNDERFLOW_TONE, true).apply();
+        prefs.edit().putBoolean(ENABLE_UNDERFLOW_TONE, false).apply();
     }
 }

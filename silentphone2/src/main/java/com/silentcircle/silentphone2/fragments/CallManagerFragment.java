@@ -33,6 +33,8 @@ import android.app.Activity;
 import android.content.ClipData;
 import android.content.ClipDescription;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.graphics.drawable.Drawable;
@@ -52,6 +54,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
@@ -61,9 +64,12 @@ import com.silentcircle.common.util.DRUtils;
 import com.silentcircle.common.util.ViewUtil;
 import com.silentcircle.common.widget.DataRetentionBanner;
 import com.silentcircle.logs.Log;
-import com.silentcircle.messaging.fragments.UserInfoListenerFragment;
+import com.silentcircle.messaging.fragments.BaseFragment;
+import com.silentcircle.messaging.listener.MessagingBroadcastReceiver;
 import com.silentcircle.messaging.model.Contact;
+import com.silentcircle.messaging.util.Action;
 import com.silentcircle.messaging.util.AsyncUtils;
+import com.silentcircle.silentphone2.BuildConfig;
 import com.silentcircle.silentphone2.R;
 import com.silentcircle.silentphone2.activities.InCallCallback;
 import com.silentcircle.silentphone2.services.TiviPhoneService;
@@ -84,9 +90,12 @@ import zina.ZinaNative;
  *
  * Created by werner on 28.02.14.
  */
-public class CallManagerFragment extends UserInfoListenerFragment implements TiviPhoneService.ServiceStateChangeListener {
+public class CallManagerFragment extends BaseFragment implements TiviPhoneService.ServiceStateChangeListener {
 
     private static final String TAG = CallManagerFragment.class.getSimpleName();
+
+    /* Priority for this view to handle message broadcasts. */
+    private static final int BROADCAST_PRIORITY = 1;
 
     private Activity mParent;
     private InCallCallback mCallback;
@@ -123,6 +132,8 @@ public class CallManagerFragment extends UserInfoListenerFragment implements Tiv
 
     private boolean mIsSelfDrEnabled;
     private RedrawHandler mHandler;
+
+    private MessagingBroadcastReceiver mViewUpdater;
 
     private final View.OnDragListener mCallViewDragListener = new View.OnDragListener() {
         @Override
@@ -231,11 +242,14 @@ public class CallManagerFragment extends UserInfoListenerFragment implements Tiv
         createAndBindViews(R.id.private_header, mPrivateArray);
         createAndBindViews(R.id.in_out_header, mInOutArray);
 //        updateDataRetentionBanner();
+        registerViewUpdater();
     }
 
     @Override
     public void onPause() {
         super.onPause();
+
+        unregisterMessagingReceiver(mViewUpdater);
     }
 
 
@@ -298,6 +312,8 @@ public class CallManagerFragment extends UserInfoListenerFragment implements Tiv
             final boolean speaker = Utilities.isSpeakerOn(mParent);
             item = menu.findItem(R.id.call_manager_speaker);
             item.setIcon(speaker ? mSpeakerOn : mSpeakerOff);
+
+            updateCallMuteStatus();
         }
     }
 
@@ -452,8 +468,42 @@ public class CallManagerFragment extends UserInfoListenerFragment implements Tiv
 //        if (retentionState != call.mPeerDisclosureFlag) {
 //            updateDataRetentionBanner();
 //        }
+
+        updateCallMuteStatus(rowView, call, mCallback.getMuteStateCb());
+
         return rowView;
     }
+
+    private void updateCallMuteStatus() {
+        final boolean micMuteStatus = mCallback.getMuteStateCb();
+        for (CallState call : mConfArray) {
+            final CardView rowView = findViewForCall(call);
+            if (rowView != null) {
+                updateCallMuteStatus(rowView, call, micMuteStatus);
+            }
+        }
+        for (CallState call : mPrivateArray) {
+            final CardView rowView = findViewForCall(call);
+            if (rowView != null) {
+                updateCallMuteStatus(rowView, call, micMuteStatus);
+            }
+        }
+        for (CallState call : mInOutArray) {
+            final CardView rowView = findViewForCall(call);
+            if (rowView != null) {
+                updateCallMuteStatus(rowView, call, micMuteStatus);
+            }
+        }
+    }
+
+    private void updateCallMuteStatus(final @NonNull CardView rowView,
+            final @NonNull CallState call, boolean micMuteStatus) {
+        ImageView callStatusMuted = (ImageView) rowView.findViewById(R.id.call_status_muted);
+        callStatusMuted.setVisibility(BuildConfig.DEBUG ? View.VISIBLE : View.GONE);
+        callStatusMuted.setImageResource(micMuteStatus || call.iMuted || call.iIsOnHold
+                ? R.drawable.ic_mic_off_white_24dp : R.drawable.ic_mic_white_24dp);
+    }
+
 
     /* ****************************************************************************
      * Public functions used by InCallActivity
@@ -734,6 +784,10 @@ public class CallManagerFragment extends UserInfoListenerFragment implements Tiv
             mLastCallUnHold = call;
         }
         call.iIsOnHold = setToHold;
+        // if call is not on hold, call is also not muted
+        if (!call.iIsOnHold) {
+            call.iMuted = false;
+        }
     }
 
     private void toggleHoldState(CallState call) {
@@ -1252,5 +1306,28 @@ public class CallManagerFragment extends UserInfoListenerFragment implements Tiv
         });
     }
 
-}
+    private void registerViewUpdater() {
+        Activity activity = getActivity();
+        if (activity == null) {
+            return;
+        }
 
+        mViewUpdater = new MessagingBroadcastReceiver() {
+
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                if (!isAdded()) {
+                    return;
+                }
+                setupCallLists();
+                createAndBindViews(R.id.conf_header, mConfArray);
+                createAndBindViews(R.id.private_header, mPrivateArray);
+                createAndBindViews(R.id.in_out_header, mInOutArray);
+            }
+        };
+
+        IntentFilter filter = Action.filter(Action.REFRESH_SELF);
+        registerMessagingReceiver(activity, mViewUpdater, filter, BROADCAST_PRIORITY);
+    }
+
+}

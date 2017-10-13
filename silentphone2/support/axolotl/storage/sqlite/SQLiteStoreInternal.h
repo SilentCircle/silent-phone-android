@@ -56,7 +56,7 @@ limitations under the License.
 
 #define SQLITE_PREPARE sqlite3_prepare_v2
 
-#define DB_VERSION 7
+#define DB_VERSION 8
 
 
 /**

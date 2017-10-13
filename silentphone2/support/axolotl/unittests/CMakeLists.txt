@@ -1,4 +1,4 @@
-# Copyright 2016 Silent Circle, LLC
+# Copyright 2016-2017 Silent Circle, LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -58,6 +58,9 @@ target_link_libraries(changesetsend_test gtest_main ${zinaLibName})
 
 add_executable(changesetrecv_test ChangesetRecvTests.cpp)
 target_link_libraries(changesetrecv_test gtest_main ${zinaLibName})
+
+add_executable(transport_test transportTest.cpp)
+target_link_libraries(transport_test gtest_main ${zinaLibName})
 
 # 
 # ############## Java testing #####################

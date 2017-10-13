@@ -50,7 +50,7 @@ import com.silentcircle.logs.activities.DebugLoggingActivity;
 import com.silentcircle.logs.fragments.DebugLoggingFragment;
 import com.silentcircle.silentphone2.BuildConfig;
 import com.silentcircle.silentphone2.R;
-import com.silentcircle.silentphone2.activities.DialerActivity;
+import com.silentcircle.silentphone2.activities.DialerActivityInternal;
 import com.silentcircle.silentphone2.services.TiviPhoneService;
 import com.silentcircle.silentphone2.util.ConfigurationUtilities;
 
@@ -409,7 +409,7 @@ public class HandleDebugLoggingTask extends AsyncTask<String, Integer, String> {
         return  activity.getResources().getString(R.string.device_information)+":\n" +
                 Build.MANUFACTURER + ", " + Build.BRAND + ", " + Build.MODEL + ", " + Build.DEVICE +
                 "\n"+activity.getResources().getString(R.string.screen_density)+": " + metrics.densityDpi + " (" + size + ", " + swSetting + ")" +
-                ((DialerActivity.mAutoAnswerForTesting) ? "\n"+activity.getResources().getString(R.string.auto_answered) + DialerActivity.mAutoAnsweredTesting : "");
+                ((DialerActivityInternal.mAutoAnswerForTesting) ? "\n"+activity.getResources().getString(R.string.auto_answered) + DialerActivityInternal.mAutoAnsweredTesting : "");
 
     }
 }

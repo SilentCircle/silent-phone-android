@@ -23,7 +23,6 @@
     <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="?sp_activity_background_color"
             android:orientation="vertical">
 
         <!-- We use a Toolbar so that our drawer can be displayed

@@ -38,6 +38,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
+import android.os.SystemClock;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
@@ -49,7 +50,6 @@ import com.silentcircle.logs.Log;
 import com.silentcircle.messaging.listener.MessagingBroadcastManager;
 import com.silentcircle.messaging.location.LocationObserver;
 import com.silentcircle.messaging.location.OnLocationReceivedListener;
-import com.silentcircle.messaging.model.Attachment;
 import com.silentcircle.messaging.model.Conversation;
 import com.silentcircle.messaging.model.MessageStates;
 import com.silentcircle.messaging.model.SCloudObject;
@@ -73,6 +73,7 @@ import com.silentcircle.messaging.util.Extra;
 import com.silentcircle.messaging.util.IOUtils;
 import com.silentcircle.messaging.util.MIME;
 import com.silentcircle.messaging.util.MessageUtils;
+import com.silentcircle.messaging.util.PresentationType;
 import com.silentcircle.messaging.util.UTI;
 import com.silentcircle.messaging.util.UUIDGen;
 import com.silentcircle.silentphone2.BuildConfig;
@@ -104,6 +105,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.net.ssl.HttpsURLConnection;
@@ -113,6 +119,8 @@ import javax.net.ssl.SSLSocketFactory;
 import zina.ZinaNative;
 
 import static com.silentcircle.messaging.services.SCloudService.AttachmentState.fromState;
+import static zina.JsonStrings.ATTRIBUTE_READ_RECEIPT;
+import static zina.JsonStrings.ATTRIBUTE_SHRED_AFTER;
 
 /**
  Everything TODO regarding attachments
@@ -124,14 +132,37 @@ import static com.silentcircle.messaging.services.SCloudService.AttachmentState.
 public class SCloudService extends Service {
     private static final String TAG = SCloudService.class.getSimpleName();
 
+    private static final boolean LOG_TRANSFER_TIME = BuildConfig.DEBUG;
+
+    private static final int TRANSFER_THREADS_NUM = 4;
+
     public static final String ATTACHMENT_INFO =
             "com.silentcircle.messaging.services.attachmentInfo";
     public static final String FLAG_GROUP_AVATAR =
             "com.silentcircle.messaging.services.flagGroupAvatar";
 
+    public static final String SCLOUD_ATTACHMENT_CLOUD_URL = "cloud_url";
+    public static final String SCLOUD_ATTACHMENT_CLOUD_KEY = "cloud_key";
+    public static final String SCLOUD_ATTACHMENT_FILENAME = "filename";
+    public static final String SCLOUD_ATTACHMENT_EXPORTED_FILENAME = "exported_filename";
+    public static final String SCLOUD_ATTACHMENT_DISPLAYNAME = "display_name";
+    public static final String SCLOUD_ATTACHMENT_SHA256 = "SHA256";
+    public static final String SCLOUD_ATTACHMENT_FILESIZE = "file_size";
+    public static final String SCLOUD_ATTACHMENT_MIMETYPE = "content_type";
+    public static final String SCLOUD_ATTACHMENT_PRESENTATION_TYPE = "presentation_type";
+
     public static final String SCLOUD_METADATA_THUMBNAIL = "preview";
     public static final String SCLOUD_METADATA_WAVEFORM = "Waveform";
     public static final String SCLOUD_METADATA_DURATION = "Duration";
+    public static final String SCLOUD_METADATA_MIMETYPE = "MimeType";
+    public static final String SCLOUD_METADATA_MEDIATYPE = "MediaType";
+    public static final String SCLOUD_METADATA_FILENAME = "FileName";
+    public static final String SCLOUD_METADATA_FILESIZE = "FileSize";
+    public static final String SCLOUD_METATA_DISPLAYNAME = "DisplayName";
+    public static final String SCLOUD_METATA_EXPORTED_FILENAME = "ExportedFileName";
+
+    private static final ExecutorService sParallelTransferExecutor =
+            Executors.newFixedThreadPool(TRANSFER_THREADS_NUM);
 
     private Handler mRecoveryHandler = new Handler();
 
@@ -196,7 +227,13 @@ public class SCloudService extends Service {
 
                     SCloudDownloadThumbnailTask thumbnailDownloadTask = new SCloudDownloadThumbnailTask(partner, messageId, extras, this);
 
-                    thumbnailDownloadTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+                    try {
+                        thumbnailDownloadTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+                    } catch (RejectedExecutionException e) {
+                        // Do nothing for now. RefreshTask executed by either ConversationActivity or GroupMessaging
+                        // will pick up the rejected message later
+                        Log.e(TAG, "Failed to submit a task for execution", e);
+                    }
 
                     break;
                 }
@@ -521,7 +558,12 @@ public class SCloudService extends Service {
 
         // Populates presigned urls, uploads, and saves SCloudObjects
         private class Uploader {
+
             public void upload(boolean isUnique) {
+                long startTime = 0;
+                if (LOG_TRANSFER_TIME) {
+                    startTime = SystemClock.elapsedRealtime();
+                }
                 DbObjectRepository scloudObjectRepository = getScloudObjectRepository();
 
                 if(scloudObjectRepository == null) {
@@ -541,27 +583,44 @@ public class SCloudService extends Service {
                 // Filter out already uploaded chunks
                 int count = 0;
 
-                Iterator<SCloudObject> i = scloudObjects.iterator();
-                while (i.hasNext()) {
-                    SCloudObject scloudObject = i.next();
+                ArrayList<Future<Boolean>> alreadyUploadedFutures = new ArrayList<>(scloudObjects.size());
+                ArrayList<SCloudObject> futureObjects = new ArrayList<>(scloudObjects.size());
+                Iterator<SCloudObject> it = scloudObjects.iterator();
+                while (it.hasNext()) {
+                    final SCloudObject scloudObject = it.next();
 
                     if (scloudObject.isUploaded()) {
                         // Local chunk already flagged as uploaded
-                        i.remove();
+                        it.remove();
 
                         onProgressUpdate(R.string.optimizing, count + 1, scloudObjects.size());
                     } else if(!isUnique) {
-                        HttpResponse<String> amazonExistsResponse = AmazonS3.exists(scloudObject.getLocator().toString());
-
-                        if(!amazonExistsResponse.hasError()) {
-                            // Server already has the chunk
-                            i.remove();
-
-                            onProgressUpdate(R.string.optimizing, count + 1, scloudObjects.size());
-                        }
+                        // Check asynchronously if chunk is already uploaded using futures
+                        Callable<Boolean> callable = new Callable<Boolean>() {
+                            @Override
+                            public Boolean call() throws Exception {
+                                HttpResponse<String> amazonExistsResponse = AmazonS3.exists(scloudObject.getLocator().toString());
+                                return !amazonExistsResponse.hasError();
+                            }
+                        };
+                        Future<Boolean> alreadyUploadedFuture = sParallelTransferExecutor.submit(callable);
+                        alreadyUploadedFutures.add(alreadyUploadedFuture);
+                        futureObjects.add(scloudObject);
                     }
 
                     count++;
+                }
+                // Block until submitted futures have finished
+                for (int i = 0; i < alreadyUploadedFutures.size(); i++) {
+                    try {
+                        if (alreadyUploadedFutures.get(i).get()) {
+                            scloudObjects.remove(futureObjects.get(i));
+                            onProgressUpdate(R.string.optimizing, count + 1, scloudObjects.size());
+                            count++;
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
                 }
 
                 if(scloudObjects.isEmpty()) {
@@ -643,56 +702,83 @@ public class SCloudService extends Service {
 
                     onProgressCancel(R.string.uploading);
                 }
+
+                if (LOG_TRANSFER_TIME) {
+                    long duration = SystemClock.elapsedRealtime() - startTime;
+                    String optimizing = (!isUnique) ? "optimizing and " : "";
+                    Log.d(TAG, String.format(Locale.US, "Finished " + optimizing + "uploading %d chunks in %d ms",
+                            scloudObjects.size(), duration));
+                }
             }
 
-            boolean uploadScloudObjects(List<SCloudObject> scloudObjects, Map<String, String> presignedUrls) {
+            boolean uploadScloudObjects(final List<SCloudObject> scloudObjects, final Map<String, String> presignedUrls) {
                 boolean fullyUploaded = true;
 
-                DbObjectRepository scloudObjectRepository = getScloudObjectRepository();
+                final DbObjectRepository scloudObjectRepository = getScloudObjectRepository();
 
                 if(scloudObjectRepository == null) {
                     return false;
                 }
 
+                ArrayList<Future<Boolean>> futures = new ArrayList<>(scloudObjects.size());
+
+                // Parallelized loop
                 for(int i = 0; i < scloudObjects.size(); i++) {
-                    SCloudObject scloudObject = scloudObjects.get(i);
+                    final SCloudObject scloudObject = scloudObjects.get(i);
+                    Callable<Boolean> callable = new Callable<Boolean>() {
 
-                    if(scloudObject == null) {
-                        return false;
-                    }
+                        @Override
+                        public Boolean call() throws Exception {
+                            if(scloudObject == null) {
+                                return false;
+                            }
 
-                    onProgressUpdate(R.string.uploading, i + 1, scloudObjects.size());
+                            HttpResponse<String> presignedUrlUploadResponse = null;
+                            FileInputStream fis = null;
+                            try {
+                                fis = new FileInputStream(scloudObjectRepository.getDataFile(scloudObject));
+                                presignedUrlUploadResponse = AmazonS3.presignedUrlUpload(presignedUrls.get(scloudObject.getLocator().toString()), fis);
+                            } catch (FileNotFoundException exception) {
+                                Log.e(TAG, "Error in reading SCloudObject data", exception);
 
-                    HttpResponse<String> presignedUrlUploadResponse = null;
-                    FileInputStream fis = null;
-                    try {
-                        fis = new FileInputStream(scloudObjectRepository.getDataFile(scloudObject));
-                        presignedUrlUploadResponse = AmazonS3.presignedUrlUpload(presignedUrls.get(scloudObject.getLocator().toString()), fis);
-                    } catch (FileNotFoundException exception) {
-                        Log.e(TAG, "Error in reading SCloudObject data", exception);
+                                return false;
+                            } finally {
+                                IOUtils.close(fis);
+                            }
 
-                        return false;
-                    } finally {
-                        IOUtils.close(fis);
-                    }
+                            if (presignedUrlUploadResponse == null) {
+                                return false;
+                            }
 
-                    if (presignedUrlUploadResponse == null) {
-                        return false;
-                    }
+                            if(!presignedUrlUploadResponse.hasError()) {
+                                scloudObject.setUploaded(true);
+                                scloudObjectRepository.save(scloudObject);
+                            } else {
+                                if(!TextUtils.isEmpty(presignedUrlUploadResponse.error)) {
+                                    Log.i(TAG, "Presigned upload error: " + presignedUrlUploadResponse.error +  " code: " + presignedUrlUploadResponse.responseCode);
+                                } else {
+                                    Log.i(TAG, "Presigned upload error code: " + presignedUrlUploadResponse.responseCode);
+                                }
 
-                    if(!presignedUrlUploadResponse.hasError()) {
-                        scloudObject.setUploaded(true);
-                        scloudObjectRepository.save(scloudObject);
-                    } else {
-                        if(!TextUtils.isEmpty(presignedUrlUploadResponse.error)) {
-                            Log.i(TAG, "Presigned upload error: " + presignedUrlUploadResponse.error +  " code: " + presignedUrlUploadResponse.responseCode);
-                        } else {
-                            Log.i(TAG, "Presigned upload error code: " + presignedUrlUploadResponse.responseCode);
+                                return false;
+                            }
+
+                            return true;
                         }
+                    };
 
+                    Future<Boolean> future = sParallelTransferExecutor.submit(callable);
+                    futures.add(future);
+                }
+
+                // Block until all futures have finished
+                for (int i = 0; i < futures.size(); i++) {
+                    try {
+                        fullyUploaded &= futures.get(i).get();
+                        onProgressUpdate(R.string.uploading, i + 1, scloudObjects.size());
+                    } catch (Exception e) {
+                        e.printStackTrace();
                         fullyUploaded = false;
-
-                        break;
                     }
                 }
 
@@ -950,8 +1036,8 @@ public class SCloudService extends Service {
                     List<SCloudObject> scloudObjects = scloudObjectRepository.list();
 
                     try {
-                        CreateThumbnail createThumbnail = new CreateThumbnail(mContext, new Intent().setDataAndType(file, metaData.getString("MimeType")), 240, 320);
-                        String encodedThumbnail = Util.encodeThumbnail(createThumbnail.getThumbnail(), metaData.getString("MimeType"));
+                        CreateThumbnail createThumbnail = new CreateThumbnail(mContext, new Intent().setDataAndType(file, metaData.getString(SCLOUD_METADATA_MIMETYPE)), 240, 320);
+                        String encodedThumbnail = Util.encodeThumbnail(createThumbnail.getThumbnail(), metaData.getString(SCLOUD_METADATA_MIMETYPE));
 
                         if (file.equals(AudioProvider.CONTENT_URI)) {
                             SoundFile soundFile = SoundFile.create(mContext, file, 80);
@@ -969,7 +1055,7 @@ public class SCloudService extends Service {
 
                         metaData.put("Scloud_Segments", scloudObjects.size());
                         metaData.put(SCLOUD_METADATA_THUMBNAIL, encodedThumbnail);
-                        metaData.put("SHA256", Utilities.hash(getContentResolver().openInputStream(file), "SHA256"));
+                        metaData.put(SCLOUD_ATTACHMENT_SHA256, Utilities.hash(getContentResolver().openInputStream(file), "SHA256"));
 
                         onMetaDataAvailable(metaData);
 
@@ -1130,15 +1216,44 @@ public class SCloudService extends Service {
                 return scloudObject;
             }
 
-            private boolean createDownloadAndSaveScloudObjects(List<SCloudObject> tocScloudObjects) {
+            private boolean createDownloadAndSaveScloudObjects(final List<SCloudObject> tocScloudObjects) {
+                long startTime = 0;
+                if (LOG_TRANSFER_TIME) {
+                    startTime = SystemClock.elapsedRealtime();
+                }
+
                 boolean fullyDownloaded = true;
+                ArrayList<Future<Boolean>> futures = new ArrayList<>(tocScloudObjects.size());
 
+                // Parallelized loop
                 for(int i = 0; i < tocScloudObjects.size(); i++) {
-                    onProgressUpdate(R.string.downloading, i + 1, tocScloudObjects.size() );
+                    final int index = i;
+                    Callable<Boolean> callable = new Callable<Boolean>() {
+                        @Override
+                        public Boolean call() throws Exception {
+                            return createDownloadAndSaveScloudObject(tocScloudObjects.get(index).getLocator().toString()) != null;
+                        }
+                    };
 
-                    if(createDownloadAndSaveScloudObject(tocScloudObjects.get(i).getLocator().toString()) == null) {
+                    Future<Boolean> future = sParallelTransferExecutor.submit(callable);
+                    futures.add(future);
+                }
+
+                // Block until all futures have finished
+                for (int i = 0; i < futures.size(); i++) {
+                    try {
+                        fullyDownloaded &= futures.get(i).get();
+                        onProgressUpdate(R.string.downloading, i + 1, tocScloudObjects.size() );
+                    } catch (Exception e) {
+                        e.printStackTrace();
                         fullyDownloaded = false;
                     }
+                }
+
+                if (LOG_TRANSFER_TIME) {
+                    long duration = SystemClock.elapsedRealtime() - startTime;
+                    Log.d(TAG, String.format(Locale.US, "Finished downloading %d chunks in %d ms",
+                            tocScloudObjects.size(), duration));
                 }
 
                 return fullyDownloaded;
@@ -1172,13 +1287,13 @@ public class SCloudService extends Service {
                     String tocScloudLocator;
                     String tocScloudKey;
 
-                    if(!attachment.has("cloud_url") || !attachment.has("cloud_key")) {
+                    if(!attachment.has(SCLOUD_ATTACHMENT_CLOUD_URL) || !attachment.has(SCLOUD_ATTACHMENT_CLOUD_KEY)) {
                         return null;
                     }
 
                     try {
-                        tocScloudLocator = attachment.getString("cloud_url");
-                        tocScloudKey = attachment.getString("cloud_key");
+                        tocScloudLocator = attachment.getString(SCLOUD_ATTACHMENT_CLOUD_URL);
+                        tocScloudKey = attachment.getString(SCLOUD_ATTACHMENT_CLOUD_KEY);
                     } catch (JSONException exception) {
                         Log.e(TAG, "Download process JSON exception", exception);
 
@@ -1204,9 +1319,9 @@ public class SCloudService extends Service {
                         JSONObject metaData = getMetaData();
 
                         if(metaData != null) {
-                            String exportedFileName = metaData.optString("ExportedFileName");
-                            String fileName = metaData.optString("FileName");
-                            String hash = metaData.optString("SHA256");
+                            String exportedFileName = metaData.optString(SCLOUD_METATA_EXPORTED_FILENAME);
+                            String fileName = metaData.optString(SCLOUD_METADATA_FILENAME);
+                            String hash = metaData.optString(SCLOUD_ATTACHMENT_SHA256);
 
                             if (!TextUtils.isEmpty(exportedFileName)) {
                                 fileName = exportedFileName;
@@ -1360,13 +1475,13 @@ public class SCloudService extends Service {
                     String tocScloudLocator;
                     String tocScloudKey;
 
-                    if(!attachment.has("cloud_url") || !attachment.has("cloud_key")) {
+                    if(!attachment.has(SCLOUD_ATTACHMENT_CLOUD_URL) || !attachment.has(SCLOUD_ATTACHMENT_CLOUD_KEY)) {
                         return null;
                     }
 
                     try {
-                        tocScloudLocator = attachment.getString("cloud_url");
-                        tocScloudKey = attachment.getString("cloud_key");
+                        tocScloudLocator = attachment.getString(SCLOUD_ATTACHMENT_CLOUD_URL);
+                        tocScloudKey = attachment.getString(SCLOUD_ATTACHMENT_CLOUD_KEY);
                     } catch (JSONException exception) {
                         Log.e(TAG, "Download process JSON exception", exception);
 
@@ -1623,12 +1738,12 @@ public class SCloudService extends Service {
                 try {
                     if (!isGroup) {
                         // "request_receipt" - currently always true for non-group messages
-                        attributeJson.put("r", true);
+                        attributeJson.put(ATTRIBUTE_READ_RECEIPT, true);
                     }
 
                     if (conversation.hasBurnNotice()) {
                         // use message's burn time as conversation can be updated already
-                        attributeJson.put("s", message.getBurnNotice());  // "shred_after"
+                        attributeJson.put(ATTRIBUTE_SHRED_AFTER, message.getBurnNotice());
                     }
                 } catch (JSONException exception) {
                     Log.e(TAG, "Send ToC Message JSON exception (ignoring)", exception);
@@ -1688,8 +1803,8 @@ public class SCloudService extends Service {
 
                 JSONObject attachmentJson = new JSONObject();
                 try {
-                    attachmentJson.put("cloud_url", tocScloudLocator);
-                    attachmentJson.put("cloud_key", tocScloudKey);
+                    attachmentJson.put(SCLOUD_ATTACHMENT_CLOUD_URL, tocScloudLocator);
+                    attachmentJson.put(SCLOUD_ATTACHMENT_CLOUD_KEY, tocScloudKey);
                     JSONObject attachmentMetaDataJson = new JSONObject();
 
                     if (event instanceof OutgoingMessage && ((OutgoingMessage) event).hasMetaData()) {
@@ -1701,26 +1816,30 @@ public class SCloudService extends Service {
                     }
 
                     try {
-                        String mimeType = attachmentMetaDataJson.getString("MimeType");
-                        String exportedFilename = attachmentMetaDataJson.optString("ExportedFileName");
-                        String fileName = attachmentMetaDataJson.getString("FileName");
-                        String displayName = attachmentMetaDataJson.optString("DisplayName");
-                        String hash = attachmentMetaDataJson.optString("SHA256");
-                        long size = attachmentMetaDataJson.optLong("FileSize", -1);
+                        String mimeType = attachmentMetaDataJson.getString(SCLOUD_METADATA_MIMETYPE);
+                        String presentationType = attachmentMetaDataJson.optString(SCLOUD_ATTACHMENT_PRESENTATION_TYPE, null);
+                        String exportedFilename = attachmentMetaDataJson.optString(SCLOUD_METATA_EXPORTED_FILENAME);
+                        String fileName = attachmentMetaDataJson.getString(SCLOUD_METADATA_FILENAME);
+                        String displayName = attachmentMetaDataJson.optString(SCLOUD_METATA_DISPLAYNAME);
+                        String hash = attachmentMetaDataJson.optString(SCLOUD_ATTACHMENT_SHA256);
+                        long size = attachmentMetaDataJson.optLong(SCLOUD_METADATA_FILESIZE, -1);
 
-                        attachmentJson.put("content_type", mimeType);
-                        attachmentJson.put("filename", fileName);
+                        attachmentJson.put(SCLOUD_ATTACHMENT_MIMETYPE, mimeType);
+                        if (presentationType != null) {
+                            attachmentJson.put(SCLOUD_ATTACHMENT_PRESENTATION_TYPE, presentationType);
+                        }
+                        attachmentJson.put(SCLOUD_ATTACHMENT_FILENAME, fileName);
                         if (!TextUtils.isEmpty(exportedFilename)) {
-                            attachmentJson.put("exported_filename", exportedFilename);
+                            attachmentJson.put(SCLOUD_ATTACHMENT_EXPORTED_FILENAME, exportedFilename);
                         }
                         if (!TextUtils.isEmpty(displayName)) {
-                            attachmentJson.put("display_name", displayName);
+                            attachmentJson.put(SCLOUD_ATTACHMENT_DISPLAYNAME, displayName);
                         }
                         if (!TextUtils.isEmpty(hash)) {
-                            attachmentJson.put("sha256", hash);
+                            attachmentJson.put(SCLOUD_ATTACHMENT_SHA256, hash);
                         }
                         if (size >= 0) {
-                            attachmentJson.put("file_size", size);
+                            attachmentJson.put(SCLOUD_ATTACHMENT_FILESIZE, size);
                         }
                     } catch (JSONException exception) {
                         Log.e(TAG, "SCloud TOC attachment JSON exception (rare)", exception);
@@ -1810,12 +1929,12 @@ public class SCloudService extends Service {
             try {
                 JSONObject metaDataJsonObject = new JSONObject(IOUtils.toString(metaData));
 
-                if (metaDataJsonObject.has("preview")) {
-                    metaDataJsonObject.remove("preview");
+                if (metaDataJsonObject.has(SCLOUD_METADATA_THUMBNAIL)) {
+                    metaDataJsonObject.remove(SCLOUD_METADATA_THUMBNAIL);
                 }
 
-                if (!metaDataJsonObject.has("SHA256")) {
-                    metaDataJsonObject.put("SHA256", Utilities.hash(new FileInputStream(attachment), "SHA256"));
+                if (!metaDataJsonObject.has(SCLOUD_ATTACHMENT_SHA256)) {
+                    metaDataJsonObject.put(SCLOUD_ATTACHMENT_SHA256, Utilities.hash(new FileInputStream(attachment), "SHA256"));
                 }
 
                 Extra.TEXT.to(intent, metaDataJsonObject.toString());
@@ -2433,7 +2552,7 @@ public class SCloudService extends Service {
         }
     }
 
-    private static class Util {
+    public static class Util {
         private static DbObjectRepository createDbObjectRepository(String partner, String messageId) {
             if(partner == null || messageId == null) {
                 return null;
@@ -2594,7 +2713,7 @@ public class SCloudService extends Service {
         }
 
         @Nullable
-        private static JSONObject getMetaData( Uri uri, Context context ) {
+        public static JSONObject getMetaData(Uri uri, Context context ) {
             if(uri == null) {
                 return null;
             }
@@ -2602,13 +2721,15 @@ public class SCloudService extends Service {
             JSONObject metaData = new JSONObject();
 
             String mimeType = AttachmentUtils.getMIMEType(context, uri);
+            String presentationType = PresentationType.getType(uri);
             String fileName = AttachmentUtils.getFileName(context, uri);
 
             try {
-                metaData.put("MediaType", UTI.fromMIMEType(mimeType) );
-                metaData.put("MimeType", AttachmentUtils.getMIMEType(context, uri));
-                metaData.put("FileName", !TextUtils.isEmpty(fileName) ? fileName : "");
-                metaData.put("FileSize", AttachmentUtils.getFileSize(context, uri));
+                metaData.put(SCLOUD_METADATA_MEDIATYPE, UTI.fromMIMEType(mimeType) );
+                metaData.put(SCLOUD_METADATA_MIMETYPE, AttachmentUtils.getMIMEType(context, uri));
+                metaData.put(SCLOUD_ATTACHMENT_PRESENTATION_TYPE, presentationType);
+                metaData.put(SCLOUD_METADATA_FILENAME, !TextUtils.isEmpty(fileName) ? fileName : "");
+                metaData.put(SCLOUD_METADATA_FILESIZE, AttachmentUtils.getFileSize(context, uri));
             } catch( JSONException exception ) {
                 Log.e(TAG, "SCloud meta data building JSON error (rare)", exception);
             }

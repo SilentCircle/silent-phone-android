@@ -34,6 +34,8 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
+import java.util.List;
 
 public class JSONContactAdapter extends JSONAdapter {
 
@@ -56,7 +58,10 @@ public class JSONContactAdapter extends JSONAdapter {
             json.put(TAG_CONTACT_DISPLAY_NAME, contact.getDisplayName());
             json.put(TAG_CONTACT_IS_VALIDATED, contact.isValidated());
             json.put(TAG_CONTACT_IS_GROUP, contact.isGroup());
-            json.put(TAG_CONTACT_DEVICES, deviceAdapter.adapt(contact.getDeviceInfo()));
+            List<Device> devices = contact.getDeviceInfo();
+            if (devices != null) {
+                json.put(TAG_CONTACT_DEVICES, deviceAdapter.adapt(devices));
+            }
         } catch (JSONException exception) {
             // This should never happen because we control all of the keys.
         }
@@ -71,15 +76,21 @@ public class JSONContactAdapter extends JSONAdapter {
         contact.setDisplayName(getString(json, TAG_CONTACT_DISPLAY_NAME));
         contact.setValidated(getBoolean(json, TAG_CONTACT_IS_VALIDATED));
         contact.setGroup(getBoolean(json, TAG_CONTACT_IS_GROUP, false));
-        JSONArray devicesJson = getJSONArray(json, TAG_CONTACT_DEVICES);
-        if (devicesJson != null && devicesJson.length() > 0) {
-            for (int i = 0; i < devicesJson.length(); i++) {
-                try {
-                    JSONObject deviceJson = devicesJson.getJSONObject(i);
-                    Device device = deviceAdapter.adapt(deviceJson);
-                    contact.addDeviceInfo(device);
-                } catch (JSONException exception) {
+        if (json.has(TAG_CONTACT_DEVICES)) {
+            JSONArray devicesJson = getJSONArray(json, TAG_CONTACT_DEVICES);
+            if (devicesJson != null && devicesJson.length() > 0) {
+                for (int i = 0; i < devicesJson.length(); i++) {
+                    try {
+                        JSONObject deviceJson = devicesJson.getJSONObject(i);
+                        Device device = deviceAdapter.adapt(deviceJson);
+                        contact.addDeviceInfo(device);
+                    } catch (JSONException exception) {
+                        // Will have no device list in conversation
+                    }
                 }
+            }
+            else {
+                contact.setDeviceInfos(new ArrayList<Device>());
             }
         }
         return contact;

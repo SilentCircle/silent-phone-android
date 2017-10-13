@@ -78,12 +78,24 @@ public class VCardProviderUtils {
         }
 
         if (contactUri != null) {
-            Cursor cursor = context.getContentResolver().query(contactUri, null, null, null, null);
-            if (cursor != null && cursor.moveToFirst()) {
-                displayName = cursor.getString(cursor.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME));
-                cursor.close();
+            Cursor cursor = null;
+            try {
+                cursor = context.getContentResolver().query(contactUri, null, null, null, null);
+            } catch (Exception ignore) {
+                // Ignore exceptions such as CursorWindowAllocationException which occurs intermittently
+                // We should not expect a crash here
+                Log.e(TAG, "Ignoring an exception: " + ignore +
+                        ((ConfigurationUtilities.mNativeLog) ? ", getVCardPreviewForContact - uri: " + contactUri : ""));
             }
-
+            try {
+                if (cursor != null && cursor.moveToFirst()) {
+                    displayName = cursor.getString(cursor.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME));
+                }
+            } finally {
+                if (cursor != null && !cursor.isClosed()) {
+                    cursor.close();
+                }
+            }
             InputStream inputStream = openPhoto(context, contactUri);
             if (inputStream != null) {
                 Bitmap photo = BitmapFactory.decodeStream(inputStream);

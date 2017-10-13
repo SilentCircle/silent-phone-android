@@ -382,8 +382,9 @@ void CPhSesions::onDataSend(char *buf, int iLen, unsigned int uiPos, int iDataTy
       if(!mb || !spSes->isMediaSession() || !spSes->isSesActive()  )continue;
       
       if(mb->isSesActive()){
-         int iMuteThis = spSes->cs.iCallStat!=CALL_STAT::EOk || (iWhisperingDetected && !spSes->cs.iWhisperingTo);
-         mb->onSend(iMuteThis? NULL : buf, iLen, iDataType, (void*)uiPos, !iMuteThis && iIsVoice);
+         int iMuteThis = spSes->cs.iCallStat!=CALL_STAT::EOk
+                || (iWhisperingDetected && !spSes->cs.iWhisperingTo);
+         mb->onSend(iMuteThis ? NULL : buf, iLen, iDataType, (void*)uiPos, !iMuteThis && iIsVoice);
       }
    }
 }

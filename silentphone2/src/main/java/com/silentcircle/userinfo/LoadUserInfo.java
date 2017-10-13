@@ -30,9 +30,7 @@ package com.silentcircle.userinfo;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
-import android.content.ComponentName;
 import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.AsyncTask;
@@ -47,11 +45,9 @@ import com.silentcircle.common.util.AsyncTasks;
 import com.silentcircle.keymanagersupport.KeyManagerSupport;
 import com.silentcircle.logs.Log;
 import com.silentcircle.messaging.services.ZinaMessaging;
-import com.silentcircle.messaging.util.Action;
 import com.silentcircle.messaging.util.AsyncUtils;
 import com.silentcircle.messaging.util.BurnDelay;
 import com.silentcircle.silentphone2.R;
-import com.silentcircle.silentphone2.activities.DialerActivity;
 import com.silentcircle.silentphone2.activities.ProvisioningActivity;
 import com.silentcircle.silentphone2.services.TiviPhoneService;
 import com.silentcircle.silentphone2.util.ConfigurationUtilities;
@@ -395,7 +391,7 @@ public class LoadUserInfo {
     }
 
     @SuppressLint("SimpleDateFormat")
-    public static boolean checkExpirationDateValid(String expirationString) {
+    public static boolean checkExpirationDateValid(final @Nullable String expirationString) {
         if (!TextUtils.isEmpty(expirationString)) {
             try {
                 // any expiration dates before 2000 are presumed invalid
@@ -407,7 +403,7 @@ public class LoadUserInfo {
                 Calendar expiry = Calendar.getInstance();
                 expiry.setTime(expirationDate);
                 return expiry.after(noSubscriptionDate);
-            } catch (ParseException e) {
+            } catch (NullPointerException | ParseException e) {
                 Log.e(TAG, "Date parsing failed: " + e.getMessage());
                 return false;
             }
@@ -871,13 +867,7 @@ public class LoadUserInfo {
                         handled = true;
                         callUserInfo(null, errorInfo.errorId, false);
 
-                        final Intent intent = new Intent(Action.WIPE.getName());
-                        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-                        ComponentName component = new ComponentName(
-                                SilentPhoneApplication.getAppContext().getPackageName(),
-                                DialerActivity.class.getName());
-                        intent.setComponent(component);
-                        SilentPhoneApplication.getAppContext().startActivity(intent);
+                        Utilities.wipePhone(SilentPhoneApplication.getAppContext());
                     }
                 }
                 if (!handled) {

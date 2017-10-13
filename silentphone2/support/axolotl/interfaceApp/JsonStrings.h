@@ -85,7 +85,8 @@ namespace zina {
     static const char* MEMBERS = "mbrs";
     static const char* INITIAL_LIST = "ini";
     static const char* DELIVERY_TIME = "dr_time";
-    static const char* COMMAND_TIME = "cmd_time"; //!< Time at client (ZULU) when it created the command
+    static const char* COMMAND_TIME = "cmd_time"; //!< Time at client (ZULU) when it created the command, seconds
+    static const char* COMMAND_TIME_U = "cmd_time_u"; //!< Time at client (ZULU) when it created the command, micro-sec
 
     // JSON keys for local messaging retention flags
     static const char* LRMM = "lrmm";           //!< local client retains message metadata

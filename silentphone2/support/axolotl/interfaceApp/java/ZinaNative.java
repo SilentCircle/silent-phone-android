@@ -1,5 +1,5 @@
 /*
-Copyright 2016 Silent Circle, LLC
+Copyright 2016-2017 Silent Circle, LLC
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package zina;
 
 // This file uses annotations.
 //
-// The directory contains a jar file that defines the annoations that are in use in Android  .
+// The directory contains a jar file that defines the annotations that are in use in Android.
 //
 // To create the JNI interface file:
 // - cd to the ZinaNative.java directory
@@ -650,6 +650,7 @@ public abstract class ZinaNative { //  extends Service {  -- depends on the impl
      * @param groupId Apply current change set for this group
      * @return {@code SUCCESS} if function could send invitation, error code (<0) otherwise
      */
+    @WorkerThread
     public static native int applyGroupChangeSet(@NonNull String groupId);
 
     /**
@@ -750,7 +751,7 @@ public abstract class ZinaNative { //  extends Service {  -- depends on the impl
     public static native int removeUser(@NonNull String groupId, @NonNull byte[] userId);
 
     /**
-     * @brief Remove a user's name from the remove member update change set.
+     * Remove a user's name from the remove member update change set.
      *
      * Just remove the user's uid from the remove (remove group) member update change set, no other
      * actions or side effects, thus this function is the opposite of `removeUser`
@@ -1394,9 +1395,11 @@ public abstract class ZinaNative { //  extends Service {  -- depends on the impl
      * {
      *   "uid":          "<string>"
      *   "display_name": "<string>"
+     *   "display_organization": "<string>"
      *   "alias0":       "<string>"
      *   "lookup_uri":   "<string>"
      *   "avatar_url":   "<string>"
+     *   "same_organization": "<bool>"
      *   "dr_enabled":   "<bool>"
      * }
      * </pre>

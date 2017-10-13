@@ -731,6 +731,53 @@ TEST_F(StoreTestFixture, WaitForAck)
     ASSERT_FALSE(pks->hasWaitAckGroupUpdate(groupId_1, updateId_1, nullptr));
 }
 
+TEST_F(StoreTestFixture, ChangeSets) {
+    string testdata_1("test-data-1");
+    string testdata_2("test-data-2");
+    string changes;
+
+    int32_t result = pks->getGroupChangeSet(groupId_1, &changes);
+    ASSERT_FALSE(SQL_FAIL(result)) << pks->getLastError();
+    ASSERT_TRUE(changes.empty());
+
+    result = pks->insertChangeSet(groupId_1, testdata_1);
+    ASSERT_FALSE(SQL_FAIL(result)) << pks->getLastError();
+
+    result = pks->getGroupChangeSet(groupId_1, &changes);
+    ASSERT_FALSE(SQL_FAIL(result)) << pks->getLastError();
+    ASSERT_EQ(testdata_1, changes);
+
+    // Add second change set: must fail - group id is primary key, unique
+    result = pks->insertChangeSet(groupId_1, testdata_2);
+    ASSERT_TRUE(SQL_FAIL(result)) << pks->getLastError();
+
+    // Add a change set of another group, group 2
+    result = pks->insertChangeSet(groupId_2, testdata_1);
+    ASSERT_FALSE(SQL_FAIL(result)) << pks->getLastError();
+
+    // Change set of group id 1 is still available
+    changes.clear();
+    result = pks->getGroupChangeSet(groupId_1, &changes);
+    ASSERT_FALSE(SQL_FAIL(result)) << pks->getLastError();
+    EXPECT_EQ(testdata_1, changes);
+
+    // Remove change set of group 1
+    result = pks->removeChangeSet(groupId_1);
+    ASSERT_FALSE(SQL_FAIL(result)) << pks->getLastError();
+
+    // no change sets of group 1 anymore
+    changes.clear();
+    result = pks->getGroupChangeSet(groupId_1, &changes);
+    ASSERT_FALSE(SQL_FAIL(result)) << pks->getLastError();
+    ASSERT_TRUE(changes.empty());
+
+    // Change set of group 2 must be available
+    changes.clear();
+    result = pks->getGroupChangeSet(groupId_2, &changes);
+    ASSERT_FALSE(SQL_FAIL(result)) << pks->getLastError();
+    EXPECT_EQ(testdata_1, changes);
+}
+
 class NameLookTestFixture: public ::testing::Test {
 public:
     NameLookTestFixture( ) {

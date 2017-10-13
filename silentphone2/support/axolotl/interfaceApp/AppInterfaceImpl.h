@@ -385,7 +385,7 @@ private:
                                 const std::string &attachmentDescr, std::string *attributesDescr);
 
     int32_t processReceivedChangeSet(const GroupChangeSet &changeSet, const std::string &groupId, const std::string &sender,
-                                     const std::string &deviceId, bool hasGroup, time_t stamp, GroupChangeSet *ackRmSet);
+                                     const std::string &deviceId, bool hasGroup, struct timeval& stamp, GroupChangeSet *ackRmSet);
 
     /**
      *
@@ -678,7 +678,7 @@ private:
 
     int32_t deleteGroupAndMembers(const std::string& groupId);
 
-    int32_t insertNewGroup(const std::string &groupId, const GroupChangeSet &changeSet, time_t stamp, std::string *callbackCmd);
+    int32_t insertNewGroup(const std::string &groupId, const GroupChangeSet &changeSet, const struct timeval& stamp, std::string *callbackCmd);
 
     /**
      * @brief Send a message to a specific device of a group member.
@@ -709,15 +709,15 @@ private:
 
     int32_t processAcks(const GroupChangeSet &changeSet, const std::string &groupId, const std::string &deviceId);
 
-    int32_t processUpdateName(const GroupUpdateSetName &changeSet, const std::string &groupId, time_t stamp, GroupChangeSet *ackSet);
+    int32_t processUpdateName(const GroupUpdateSetName &changeSet, const std::string &groupId, const struct timeval& stamp, GroupChangeSet *ackSet);
 
-    int32_t processUpdateAvatar(const GroupUpdateSetAvatar &changeSet, const std::string &groupId, time_t stamp, GroupChangeSet *ackSet);
+    int32_t processUpdateAvatar(const GroupUpdateSetAvatar &changeSet, const std::string &groupId, const struct timeval& stamp, GroupChangeSet *ackSet);
 
-    int32_t processUpdateBurn(const GroupUpdateSetBurn &changeSet, const std::string &groupId, time_t stamp, GroupChangeSet *ackSet);
+    int32_t processUpdateBurn(const GroupUpdateSetBurn &changeSet, const std::string &groupId, const struct timeval& stamp, GroupChangeSet *ackSet);
 
-    int32_t processBurnMessage(const GroupBurnMessage &changeSet, const std::string &groupId, time_t stamp, GroupChangeSet *ackSet);
+    int32_t processBurnMessage(const GroupBurnMessage &changeSet, const std::string &groupId, const struct timeval& stamp, GroupChangeSet *ackSet);
 
-    int32_t processUpdateMembers(const GroupChangeSet &changeSet, const std::string &groupId, time_t stamp, GroupChangeSet *ackSet);
+    int32_t processUpdateMembers(const GroupChangeSet &changeSet, const std::string &groupId, const struct timeval& stamp, GroupChangeSet *ackSet);
 
     /**
      * @brief Helper function to create the JSON formatted supplementary message data.

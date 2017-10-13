@@ -34,7 +34,7 @@ import android.content.Intent;
 import android.text.TextUtils;
 
 import com.silentcircle.logs.Log;
-import com.silentcircle.silentphone2.activities.DialerActivity;
+import com.silentcircle.silentphone2.activities.DialerActivityInternal;
 import com.silentcircle.silentphone2.util.ConfigurationUtilities;
 
 /**
@@ -72,8 +72,8 @@ public class AccountChangeReceiver extends BroadcastReceiver {
         if (AccountManager.LOGIN_ACCOUNTS_CHANGED_ACTION.equals(action) && mRemoveAccountRequested) {
             mRemoveAccountRequested = false;
             if (ConfigurationUtilities.mTrace) Log.d(TAG, "remove SC account");
-            Intent i = new Intent(context, DialerActivity.class);
-            i.setAction(DialerActivity.ACTION_REMOVE_ACCOUNT);
+            Intent i = new Intent(context, DialerActivityInternal.class);
+            i.setAction(DialerActivityInternal.ACTION_REMOVE_ACCOUNT);
             i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             context.startActivity(i);
         }

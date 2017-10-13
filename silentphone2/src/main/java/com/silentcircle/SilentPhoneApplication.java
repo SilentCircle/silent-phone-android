@@ -50,17 +50,20 @@ import com.silentcircle.messaging.listener.MessagingBroadcastReceiver;
 import com.silentcircle.messaging.receivers.AttachmentEventReceiver;
 import com.silentcircle.messaging.receivers.ChatNotification;
 import com.silentcircle.messaging.util.Action;
+import com.silentcircle.messaging.util.AsyncUtils;
 import com.silentcircle.messaging.util.ContactsCache;
 import com.silentcircle.messaging.util.SoundNotifications;
 import com.silentcircle.silentphone2.BuildConfig;
 import com.silentcircle.silentphone2.R;
-import com.silentcircle.silentphone2.activities.DialerActivity;
+import com.silentcircle.silentphone2.activities.DialerActivityInternal;
 import com.silentcircle.silentphone2.activities.ProvisioningActivity;
 import com.silentcircle.silentphone2.fragments.SettingsFragment;
 import com.silentcircle.silentphone2.passcode.PasscodeController;
 import com.silentcircle.silentphone2.receivers.AutoStart;
 import com.silentcircle.silentphone2.services.TiviPhoneService;
 import com.silentcircle.userinfo.LoadUserInfo;
+
+import net.danlew.android.joda.JodaTimeAndroid;
 
 import org.acra.ACRA;
 import org.acra.annotation.ReportsCrashes;
@@ -118,7 +121,7 @@ public class SilentPhoneApplication extends Application {
                 case Intent.ACTION_USER_FOREGROUND:
                     if (userBackgrounded()) {
                         setUserBackgrounded(false);
-                        Intent i = new Intent(context, DialerActivity.class);
+                        Intent i = new Intent(context, DialerActivityInternal.class);
                         i.setAction(AutoStart.ON_BOOT); // So it is visibly hidden
                         i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                         context.startActivity(i);
@@ -133,8 +136,15 @@ public class SilentPhoneApplication extends Application {
         super.onCreate();
         mThisApplication = this;
 
+        if (ACRA.isACRASenderServiceProcess()) {
+            return;
+        }
+
         /* set-up passcode */
         PasscodeController.getSharedController();
+
+        /* initialize Joda Time */
+        JodaTimeAndroid.init(this);
 
         /* initialize static variables for en/de-cryption */
         TiviPhoneService.initLoggingStaticVariables();
@@ -149,9 +159,6 @@ public class SilentPhoneApplication extends Application {
 
         /* initialize contacts cache */
         ContactsCache.getInstance();
-
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED)
-            updateRingTones();
 
         /* initialize sound notification pool here */
         SoundNotifications.getSoundPool();
@@ -173,6 +180,16 @@ public class SilentPhoneApplication extends Application {
 
         registerReceiver(mUserReceiver, new IntentFilter(Intent.ACTION_USER_FOREGROUND));
         registerReceiver(mUserReceiver, new IntentFilter(Intent.ACTION_USER_BACKGROUND));
+
+        AsyncUtils.execute(new Runnable() {
+            @Override
+            public void run() {
+                if (ContextCompat.checkSelfPermission(SilentPhoneApplication.getAppContext(),
+                        Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
+                    updateRingTones();
+                }
+            }
+        });
     }
 
     @Override
@@ -319,6 +336,7 @@ public class SilentPhoneApplication extends Application {
             public void onReceive(Context context, Intent intent) {
                 switch (Action.from(intent)) {
                     case RECEIVE_MESSAGE:
+                    case UPDATE_CONVERSATION:
                         ChatNotification.handleNotificationIntent(context, intent);
                         break;
                     case PROGRESS:
@@ -331,7 +349,8 @@ public class SilentPhoneApplication extends Application {
             }
         };
 
-        IntentFilter filter = Action.filter(Action.RECEIVE_MESSAGE/*, Action.DATA_RETENTION_EVENT*/,
+        IntentFilter filter = Action.filter(Action.RECEIVE_MESSAGE, Action.UPDATE_CONVERSATION
+                /*, Action.DATA_RETENTION_EVENT*/,
                 Action.PROGRESS, Action.UPLOAD, Action.ERROR, Action.RECEIVE_ATTACHMENT);
         filter.setPriority(0);
         MessagingBroadcastManager.getInstance(getAppContext()).registerReceiver(mViewUpdater, filter);

@@ -13,7 +13,7 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     style="@style/DialpadButtonStyle"
-    tools:context=".activities.DialerActivity">
+    tools:context=".activities.DialerActivityInternal">
 
 <!--    <RelativeLayout
             style="@style/DialButtonRelative">

@@ -79,8 +79,7 @@
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1"
-        android:background="?sp_activity_background_color">
+        android:layout_weight="1">
         <view
             class="com.silentcircle.common.list.PinnedHeaderListView"
             android:id="@android:id/list"

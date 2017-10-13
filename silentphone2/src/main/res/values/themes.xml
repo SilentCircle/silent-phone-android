@@ -231,6 +231,7 @@
         <item name="sp_outgoing_message_text_selector">@color/outgoing_message_text_selector_dark</item>
         <item name="sp_message_description_text_color">@color/sc_ng_text_grey</item>
         <item name="sp_error_message_text_selector">@color/error_message_text_selector_dark</item>
+        <item name="sp_info_message_text_selector">@color/error_message_text_selector_dark</item>
         <item name="sp_date_header_text_color">@color/sc_ng_text_dark</item>
         <item name="sp_date_header_background_tint_color">@color/sc_ng_background_1</item>
         <item name="sp_message_send_tint_color">@color/sc_ng_background_1</item>
@@ -263,7 +264,7 @@
         <item name="list_item_padding_right">32dip</item>
         <item name="list_item_padding_bottom">12dip</item>
         <item name="list_item_padding_left">16dip</item>
-        <item name="list_item_gap_between_image_and_text">8dip</item>
+        <item name="list_item_gap_between_image_and_text">14dip</item>
         <item name="list_item_gap_between_label_and_data">5dip</item>
         <item name="list_item_presence_icon_margin">4dip</item>
         <item name="list_item_presence_icon_size">16dip</item>
@@ -312,7 +313,7 @@
         <item name="favorites_padding_bottom">?android:attr/actionBarSize</item>
     </style>
 
-    <style name="SilentPhoneThemeLight"  parent="SilentPhoneThemeBlack">
+    <style name="SilentPhoneThemeLight" parent="SilentPhoneThemeBlack">
 
         <item name="android:windowBackground">?attr/sp_activity_background_color</item>
         <item name="colorPrimary">@color/sc_ng_text_dark</item>
@@ -377,6 +378,7 @@
         <item name="sp_outgoing_message_text_selector">@color/outgoing_message_text_selector_light</item>
         <item name="sp_message_description_text_color">@color/sc_ng_text_dark</item>
         <item name="sp_error_message_text_selector">@color/error_message_text_selector_light</item>
+        <item name="sp_info_message_text_selector">@color/error_message_text_selector_light</item>
         <item name="sp_date_header_text_color">@color/sc_ng_text_grey</item>
         <item name="sp_date_header_background_tint_color">@color/date_header_background</item>
         <item name="sp_message_send_tint_color">@color/sc_ng_background</item>
@@ -420,6 +422,18 @@
     <style name="ActionBarBlackTitle"
            parent="android:TextAppearance.Medium">
         <item name="android:textColor">?sp_actionbar_title_text_color</item>
+    </style>
+
+    <style name="ActionBarSubTitleOnline" parent="android:TextAppearance.Small">
+        <item name="android:textColor">@color/black_green_dark_1</item>
+    </style>
+
+    <style name="ActionBarSubTitleOffline" parent="android:TextAppearance.Small">
+        <item name="android:textColor">@color/sc_ng_text_red</item>
+    </style>
+
+    <style name="ActionBarSubTitleConnecting" parent="android:TextAppearance.Small">
+        <item name="android:textColor">@color/sc_ng_background_3</item>
     </style>
 
     <style name="ActionBarLightTitle"

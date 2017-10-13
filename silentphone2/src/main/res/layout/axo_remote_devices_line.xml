@@ -39,13 +39,30 @@ http://code.google.com/p/android/issues/detail?id=3414, comments 56 and 57
                         android:scrollHorizontally="true"
                         tools:text="Nexus 6"
                         tools:context="com.silentcircle.messaging.activities.ShowRemoteDevicesActivity"/>
+
+                <TextView
+                    style="@style/Widget.Silent.SimpleText.Small"
+                    android:layout_width="wrap_content"
+                    android:textColor="?attr/sp_activity_primary_text_color"
+                    android:text="@string/contact_info_laber_fingerprint" />
+
                 <TextView
                         android:id="@+id/id_key"
                         style="@style/Widget.Silent.SimpleText.Small"
                         android:layout_width="wrap_content"
                         android:typeface="monospace"
+                        android:textColor="?attr/sp_activity_primary_text_color"
                         tools:text="ab:12:34:56:78:9a:89:76:\nab:12:34:56:78:9a:89:76:\nab:12:34:56:78:9a:89:76:\nab:12:34:56:78:9a:89:76"
                         tools:context="com.silentcircle.messaging.activities.ShowRemoteDevicesActivity"/>
+
+                <TextView
+                    style="@style/Widget.Silent.SimpleText.Small"
+                    android:layout_width="wrap_content"
+                    android:layout_marginTop="@dimen/spacing_normal"
+                    android:maxLines="1"
+                    android:textColor="?attr/sp_activity_secondary_text_color"
+                    android:text="@string/contact_info_laber_id" />
+
                 <TextView
                         android:id="@+id/dev_id"
                         style="@style/Widget.Silent.SimpleText.Small"

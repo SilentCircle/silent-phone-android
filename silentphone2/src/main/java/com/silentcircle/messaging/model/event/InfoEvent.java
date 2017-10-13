@@ -27,7 +27,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 package com.silentcircle.messaging.model.event;
 
-import com.silentcircle.messaging.util.IOUtils;
+import android.support.annotation.Nullable;
+
+import com.silentcircle.common.StringByteHolder;
+import com.silentcircle.messaging.model.json.JSONEventAdapter;
 
 /**
  * Event type for various information events.
@@ -56,13 +59,25 @@ public class InfoEvent extends Event {
 
     private int mTag;
 
+    public static class Details {
+        public long burnTime;
+        public String groupName;
+        public String deviceName;
+        public String userId;
+        public String userDisplayName;
+        public String memberId;
+        public String memberDisplayName;
+    }
+
     // can be json
-    private byte[] mDetails;
+    private final StringByteHolder mDetails = new StringByteHolder();
+    private Details mEventDetails;
 
     // default text is un-internationalizable plaintext
 
     public InfoEvent() {
         mTag = TAG_NOT_SET;
+        mEventDetails = null;
     }
 
     public int getTag() {
@@ -74,18 +89,28 @@ public class InfoEvent extends Event {
     }
 
     public byte[] getDetailsAsByteArray() {
-        return mDetails;
+        return mDetails.getByteArray();
     }
 
     public String getDetails() {
-        return toString(getDetailsAsByteArray());
+        return mDetails.getString();
     }
 
     public void setDetails(byte[] details) {
-        mDetails = details;
+        mDetails.set(details);
     }
 
-    public void setDetails(CharSequence details) {
-        setDetails(IOUtils.toByteArray(details));
+    public void setDetails(String details) {
+        mDetails.set(details);
+        JSONEventAdapter.adapt(details, this);
+    }
+
+    @Nullable
+    public Details getEventDetails() {
+        return mEventDetails;
+    }
+
+    public void setEventDetails(final @Nullable Details details) {
+        mEventDetails = details;
     }
 }

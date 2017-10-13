@@ -87,6 +87,8 @@ static int predDC(unsigned char *p, int stride, int f){
    return 1;
    
 }
+
+/* EA: unused function warnings
 static int predDCT(unsigned char *p, int stride, int f){
   // return 0;
    if(!(f&T_4FT))return 0;
@@ -113,7 +115,7 @@ static int predDCL(unsigned char *p, int stride, int f){
    predDCX(p,stride,dc);
    return 1;
 }      
-
+*/
 
 static int predTR(unsigned char *p, int stride, int f){
    if(!(f&T_4FT) || !(f&T_4FR))return 0;

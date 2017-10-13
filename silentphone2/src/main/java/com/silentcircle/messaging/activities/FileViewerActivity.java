@@ -47,7 +47,6 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
-import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -69,19 +68,16 @@ import com.silentcircle.messaging.listener.MessagingBroadcastReceiver;
 import com.silentcircle.messaging.listener.OnConfirmNoRepeatListener;
 import com.silentcircle.messaging.model.listener.OnProgressUpdateListener;
 import com.silentcircle.messaging.services.SCloudCleanupService;
-import com.silentcircle.messaging.services.SCloudService;
 import com.silentcircle.messaging.util.Action;
 import com.silentcircle.messaging.util.AsyncUtils;
 import com.silentcircle.messaging.util.AttachmentUtils;
-import com.silentcircle.messaging.util.ConversationUtils;
 import com.silentcircle.messaging.util.Extra;
 import com.silentcircle.messaging.util.IOUtils;
 import com.silentcircle.messaging.util.MIME;
 import com.silentcircle.messaging.util.MessagingPreferences;
-import com.silentcircle.messaging.util.SoundNotifications;
 import com.silentcircle.messaging.views.UploadView;
 import com.silentcircle.silentphone2.R;
-import com.silentcircle.silentphone2.activities.DialerActivity;
+import com.silentcircle.silentphone2.activities.DialerActivityInternal;
 import com.silentcircle.silentphone2.passcode.AppLifecycleNotifierBaseActivity;
 import com.silentcircle.silentphone2.util.Utilities;
 
@@ -122,6 +118,7 @@ public class FileViewerActivity extends AppLifecycleNotifierBaseActivity impleme
     // Identifiers and flags for permission handling
     public static final int PERMISSIONS_REQUEST_STORAGE = 1;
     private boolean mStoragePermissionAsked;
+    private boolean mRationaleShown;
 
     private MessagingBroadcastReceiver mViewUpdater;
 
@@ -341,18 +338,22 @@ public class FileViewerActivity extends AppLifecycleNotifierBaseActivity impleme
     }
 
     private void checkStoragePermissions() {
-
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-            if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+            if (mStoragePermissionAsked && mRationaleShown) {
+                finish();
+            }
+            else if (!mStoragePermissionAsked) {
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                        PERMISSIONS_REQUEST_STORAGE);
+                mStoragePermissionAsked = true;     // Avoid a possible third, ..., permission request if user set "don't ask anymore"
+            }
+            else if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) && !mRationaleShown) {
                 ExplainPermissionDialog.showExplanation(this, PERMISSIONS_REQUEST_STORAGE,
                         getString(R.string.permission_storage_title), getString(R.string.permission_storage_explanation), null);
+                mRationaleShown = true;
             }
             else {
-                if (!mStoragePermissionAsked) {
-                    ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
-                            PERMISSIONS_REQUEST_STORAGE);
-                    mStoragePermissionAsked = true;     // Avoid a possible third, ..., permission request if user set "don't ask anymore"
-                }
+                finish();
             }
         }
         else {
@@ -796,7 +797,7 @@ public class FileViewerActivity extends AppLifecycleNotifierBaseActivity impleme
                             Toast.LENGTH_SHORT).show();
 
                     Log.w(TAG, "Group conversation not valid, exiting.");
-                    Intent exitIntent = new Intent(FileViewerActivity.this, DialerActivity.class);
+                    Intent exitIntent = new Intent(FileViewerActivity.this, DialerActivityInternal.class);
                     exitIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                     FileViewerActivity.this.startActivity(exitIntent);
                 }

@@ -42,6 +42,7 @@ import android.provider.ContactsContract.Data;
 import com.silentcircle.logs.Log;
 
 import com.silentcircle.contacts.utils.ScCursorFilterWrapper;
+import com.silentcircle.silentphone2.BuildConfig;
 
 import java.io.FileDescriptor;
 import java.io.PrintWriter;
@@ -133,14 +134,28 @@ public class CursorLoaderSc extends CursorLoader {
     }
 
     private void preSelect() {
-        Cursor cursor = getContext().getContentResolver().query(Data.CONTENT_URI, mAllData, mPreSelector, mPreSelectorArgs,
-                Data.CONTACT_ID + " ASC");
-        if (cursor != null && cursor.getCount() > 0) {
-            mPreSelectedIds = new long[cursor.getCount()];
-            for (int index = 0; cursor.moveToNext(); ) {
-                mPreSelectedIds[index] = cursor.getLong(CONTACT_ID);
+        Cursor cursor = null;
+        Uri uri = Data.CONTENT_URI;
+        try {
+            cursor = getContext().getContentResolver().query(uri, mAllData, mPreSelector, mPreSelectorArgs,
+                    Data.CONTACT_ID + " ASC");
+        } catch (Exception ignore) {
+            // Ignore exceptions such as CursorWindowAllocationException which occurs intermittently
+            // We should not expect a crash here
+            Log.e(TAG, "Ignoring an exception: " + ignore +
+                    ((BuildConfig.DEBUG) ? ", preSelect - uri: " + uri + ", selection: " + mPreSelector : ""));
+        }
+        try {
+            if (cursor != null && cursor.getCount() > 0) {
+                mPreSelectedIds = new long[cursor.getCount()];
+                for (int index = 0; cursor.moveToNext(); ) {
+                    mPreSelectedIds[index] = cursor.getLong(CONTACT_ID);
+                }
             }
-            cursor.close();
+        } finally {
+            if (cursor != null && !cursor.isClosed()) {
+                cursor.close();
+            }
         }
     }
 

@@ -101,7 +101,7 @@ public class AvatarProvider extends ContentProvider {
     public static final String AVATAR_TYPE_DOWNLOADED = "downloaded";
 
     public static int DEFAULT_AVATAR_SIZE = 50;
-    public static int UNKNOWN_AVATAR_SIZE = -1;
+    public static int UNKNOWN_AVATAR_SIZE = 0;
 
     /* server will never give us images larger than 512x512 as well */
     public static int MAX_AVATAR_SIZE = 512;
@@ -152,12 +152,14 @@ public class AvatarProvider extends ContentProvider {
 
         try {
             final ParcelFileDescriptor[] pipe = ParcelFileDescriptor.createPipe();
-            new Thread(new Runnable() {
+            Thread thread = new Thread(new Runnable() {
                 @Override
                 public void run() {
                     fetchAvatar(uri, pipe[1]);
                 }
-            }).start();
+            });
+            thread.setPriority(Math.max(Thread.NORM_PRIORITY - 1, Thread.MIN_PRIORITY));
+            thread.start();
 
             return pipe[0];
         } catch (IOException e) {
@@ -186,7 +188,7 @@ public class AvatarProvider extends ContentProvider {
 
             Bitmap bitmap = null;
 
-            Conversation conversation = ConversationUtils.getConversation(conversationId);
+            Conversation conversation = ConversationUtils.getOrCreateConversation(conversationId);
             if (conversation != null) {
                 boolean isGroup = conversation.getPartner().isGroup();
                 String url = conversation.getAvatarUrl();
@@ -196,12 +198,17 @@ public class AvatarProvider extends ContentProvider {
                  * For regular conversations check that avatar url has not changed,
                  * trigger download of new avatar if it has
                  */
-                if (isGroup || (!TextUtils.isEmpty(avatarUrl) && avatarUrl.equals(url))) {
-                    if (size <= getDefaultAvatarSize()) {
+                if (isGroup || TextUtils.isEmpty(avatarUrl)
+                        || (!TextUtils.isEmpty(avatarUrl) && avatarUrl.equals(url))) {
+                    if (size == LOADED_AVATAR_SIZE || size <= getDefaultAvatarSize()) {
                         is = getConversationAvatarStream(conversation, size);
                     }
                     if (is == null) {
                         bitmap = getConversationAvatar(conversation, size);
+                        // fall back to stream, bitmap may not be loaded due to OOM
+                        if (bitmap == null) {
+                            is = getConversationAvatarStream(conversation, LOADED_AVATAR_SIZE);
+                        }
                     }
                 }
             }
@@ -218,7 +225,7 @@ public class AvatarProvider extends ContentProvider {
                 if (conversation == null) {
                     conversation = ConversationUtils.getConversation(conversationId);
                 }
-                // download avatar from web
+                // download avatar from server
                 bitmap = downloadAvatar(Uri.parse(
                         ConfigurationUtilities.getProvisioningBaseUrl(context) + avatarUrl));
                 updateConversationAvatar(context, conversation, avatarUrl, bitmap);
@@ -241,12 +248,11 @@ public class AvatarProvider extends ContentProvider {
 
             if (is != null) {
                 if (DEBUG) {
-                    Log.e(TAG, "Got stream for " + uri);
-
-
+                    Log.e(TAG, "Using stream for " + uri);
                 }
                 os = new ParcelFileDescriptor.AutoCloseOutputStream(pipe);
                 IOUtils.pipe(is, os, new byte [16 * 1024]);
+                IOUtils.flush(os);
             } else if (bitmap != null) {
 
                 if (DEBUG) {
@@ -256,9 +262,11 @@ public class AvatarProvider extends ContentProvider {
                 }
                 os = new ParcelFileDescriptor.AutoCloseOutputStream(pipe);
                 bitmap.compress(Bitmap.CompressFormat.PNG, 100, os);
+                bitmap.recycle();
             }
         } catch (IOException e) {
-            Log.e(TAG, "Could not load avatar from " + uri);
+            Log.e(TAG, "Could not load avatar from " + uri + ": " + e.getMessage());
+            e.printStackTrace();
         } finally {
             IOUtils.close(is, os, pipe);
         }
@@ -296,7 +304,7 @@ public class AvatarProvider extends ContentProvider {
     }
 
     @Nullable
-    private String getAvatarUrl(@Nullable Uri uri) {
+    public static String getAvatarUrl(@Nullable Uri uri) {
         String result = null;
         try {
             String avatarUrl = uri != null ? uri.getQueryParameter(PARAM_AVATAR_URL) : null;
@@ -551,12 +559,7 @@ public class AvatarProvider extends ContentProvider {
     }
 
     private int getDefaultAvatarSize() {
-        int result = DEFAULT_AVATAR_SIZE;
-        Context context = getContext();
-        if (context != null) {
-            result = (int) context.getResources().getDimension(R.dimen.default_avatar_size);
-        }
-        return result;
+        return getDefaultAvatarSize(getContext());
     }
 
     private static int getDefaultAvatarSize(@Nullable Context context) {
@@ -643,9 +646,7 @@ public class AvatarProvider extends ContentProvider {
                 // save small version if avatar as well
                 int defaultSize = getDefaultAvatarSize(context);
                 bitmap = Bitmap.createScaledBitmap(bitmap, defaultSize, defaultSize, false);
-                fos = CryptoUtil.getCipherOutputStream(fileSmall, key, iv);
-                bitmap.compress(Bitmap.CompressFormat.PNG, 100, fos);
-                fos.flush();
+                ensureSmallConversationAvatar(context, conversation, bitmap);
             }
         } catch (Exception e) {
             Log.d(TAG, "Failed to save avatar to file " + e.getMessage());

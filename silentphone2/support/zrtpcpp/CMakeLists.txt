@@ -14,9 +14,9 @@ PROJECT(libzrtpcpp)
 
 SET(CPACK_PACKAGE_VERSION_MAJOR 4)
 SET(CPACK_PACKAGE_VERSION_MINOR 6)
-SET(CPACK_PACKAGE_VERSION_PATCH 4)
+SET(CPACK_PACKAGE_VERSION_PATCH 6)
 
-set (VERSION 4.6.4)
+set (VERSION 4.6.6)
 set (SOVERSION 4)
 
 # Define supported command line parameters.
@@ -186,13 +186,10 @@ configure_file(config.h.cmake ${CMAKE_BINARY_DIR}/config.h)
 
 add_definitions(-g -O2 -fno-strict-aliasing)
 if(CMAKE_COMPILER_IS_GNUCXX)
-#    add_definitions(-Wno-long-long -Wno-char-subscripts)
-#    add_definitions(-Wall -ansi -pedantic)
-#    add_definitions(-Wall -pedantic)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -pedantic -std=c99")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -pedantic -std=c++11")
     add_definitions(-DNEW_STDCPP)
 endif()
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -pedantic -std=c++11")
 
 if (AXO)
     add_definitions(-DAXO_SUPPORT)

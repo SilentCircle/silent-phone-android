@@ -39,7 +39,7 @@ import com.silentcircle.logs.Log;
 
 import com.silentcircle.messaging.services.SCloudCleanupService;
 import com.silentcircle.messaging.util.Action;
-import com.silentcircle.silentphone2.activities.DialerActivity;
+import com.silentcircle.silentphone2.activities.DialerActivityInternal;
 import com.silentcircle.silentphone2.fragments.SettingsFragment;
 import com.silentcircle.silentphone2.util.ConfigurationUtilities;
 
@@ -77,7 +77,7 @@ public class AutoStart extends BroadcastReceiver {
             if (fromUserSwitch) {
                 SilentPhoneApplication.setUserBackgrounded(false);
             }
-            Intent i = new Intent(context, DialerActivity.class);
+            Intent i = new Intent(context, DialerActivityInternal.class);
             i.setAction(ON_BOOT);
             i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             context.startActivity(i);

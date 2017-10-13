@@ -105,6 +105,21 @@
                 android:src="?sp_ic_call"
                 android:visibility="invisible"
                 tools:visibility="visible"/>
+
+        <ImageView
+            android:id="@+id/call_status_muted"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="false"
+            android:importantForAccessibility="no"
+            android:layout_alignBottom="@id/CallMngImage"
+            android:layout_alignLeft="@id/CallMngEndCall"
+            android:layout_alignStart="@id/CallMngEndCall"
+            android:background="@drawable/button_rnd_small_null_white"
+            android:scaleType="center"
+            android:src="@drawable/ic_mic_white_24dp"
+            android:tint="?attr/sp_activity_secondary_text_color" />
+
     </RelativeLayout>
 
     <LinearLayout

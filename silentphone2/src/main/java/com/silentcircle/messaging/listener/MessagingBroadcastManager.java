@@ -328,6 +328,7 @@ public class MessagingBroadcastManager {
                 for (int j = 0; j < br.receivers.size(); j++) {
                     MessagingBroadcastReceiver receiver = br.receivers.get(j).receiver;
                     receiver.setOrdered(br.isOrdered);
+                    receiver.setConsumed(false);
                     br.receivers.get(j).receiver.onReceive(SilentPhoneApplication.getAppContext(),
                             br.intent);
                     if (br.isOrdered && receiver.isConsumed()) {

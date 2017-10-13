@@ -88,8 +88,23 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
+import static com.silentcircle.messaging.services.SCloudService.SCLOUD_ATTACHMENT_CLOUD_KEY;
+import static com.silentcircle.messaging.services.SCloudService.SCLOUD_ATTACHMENT_CLOUD_URL;
+import static com.silentcircle.messaging.services.SCloudService.SCLOUD_ATTACHMENT_DISPLAYNAME;
+import static com.silentcircle.messaging.services.SCloudService.SCLOUD_ATTACHMENT_EXPORTED_FILENAME;
+import static com.silentcircle.messaging.services.SCloudService.SCLOUD_ATTACHMENT_FILENAME;
+import static com.silentcircle.messaging.services.SCloudService.SCLOUD_ATTACHMENT_FILESIZE;
+import static com.silentcircle.messaging.services.SCloudService.SCLOUD_ATTACHMENT_MIMETYPE;
+import static com.silentcircle.messaging.services.SCloudService.SCLOUD_ATTACHMENT_SHA256;
 import static com.silentcircle.messaging.services.SCloudService.SCLOUD_METADATA_DURATION;
+import static com.silentcircle.messaging.services.SCloudService.SCLOUD_ATTACHMENT_PRESENTATION_TYPE;
+import static com.silentcircle.messaging.services.SCloudService.SCLOUD_METADATA_FILENAME;
+import static com.silentcircle.messaging.services.SCloudService.SCLOUD_METADATA_FILESIZE;
+import static com.silentcircle.messaging.services.SCloudService.SCLOUD_METADATA_THUMBNAIL;
 import static com.silentcircle.messaging.services.SCloudService.SCLOUD_METADATA_WAVEFORM;
+import static com.silentcircle.messaging.services.SCloudService.SCLOUD_METADATA_MIMETYPE;
+import static com.silentcircle.messaging.services.SCloudService.SCLOUD_METATA_DISPLAYNAME;
+import static com.silentcircle.messaging.services.SCloudService.SCLOUD_METATA_EXPORTED_FILENAME;
 
 /**
  * Utilities for attachment handling.
@@ -135,7 +150,7 @@ public class AttachmentUtils {
                 mContext.startService(cleanupIntent);
             }
         }
-    };
+    }
 
     public static class MetaData {
 
@@ -145,6 +160,7 @@ public class AttachmentUtils {
         public String displayName = null;
         public String waveform = null;
         public String duration = null;
+        public String presentationType = null;
 
         @NonNull
         public static MetaData parse(final String metaData) {
@@ -153,10 +169,11 @@ public class AttachmentUtils {
             try {
                 JSONObject metaDataJson = new JSONObject(metaData);
 
-                result.preview = metaDataJson.optString("preview", null);
-                result.fileName = metaDataJson.optString("FileName", null);
-                result.mimeType = metaDataJson.optString("MimeType", null);
-                result.displayName = metaDataJson.optString("DisplayName", null);
+                result.preview = metaDataJson.optString(SCLOUD_METADATA_THUMBNAIL, null);
+                result.fileName = metaDataJson.optString(SCLOUD_METADATA_FILENAME, null);
+                result.mimeType = metaDataJson.optString(SCLOUD_METADATA_MIMETYPE, null);
+                result.presentationType = metaDataJson.optString(SCLOUD_ATTACHMENT_PRESENTATION_TYPE, null);
+                result.displayName = metaDataJson.optString(SCLOUD_METATA_DISPLAYNAME, null);
 
                 result.waveform = metaDataJson.optString(SCLOUD_METADATA_WAVEFORM, null);
                 result.duration = metaDataJson.optString(SCLOUD_METADATA_DURATION, null);
@@ -166,6 +183,143 @@ public class AttachmentUtils {
 
             return result;
         }
+    }
+
+    public static class AttachmentInfo {
+
+        public String cloudUrl = null;
+        public String cloudKey = null;
+        public String mimeType = null;
+        public String filename = null;
+        public String exported_filename = null;
+        public String display_name = null;
+        public String sha256 = null;
+        public String file_size = null;
+        public String presentationType = null;
+
+        @NonNull
+        public static AttachmentInfo parse(final String attachment) {
+            AttachmentInfo result = new AttachmentInfo();
+            if (attachment == null) {
+                return result;
+            }
+            try {
+                JSONObject attachmentJson = new JSONObject(attachment);
+                result.cloudUrl = attachmentJson.optString(SCLOUD_ATTACHMENT_CLOUD_URL, null);
+                result.cloudKey = attachmentJson.optString(SCLOUD_ATTACHMENT_CLOUD_KEY, null);
+                result.mimeType = attachmentJson.optString(SCLOUD_ATTACHMENT_MIMETYPE, null);
+                result.filename = attachmentJson.optString(SCLOUD_ATTACHMENT_FILENAME, null);
+                result.exported_filename = attachmentJson.optString(SCLOUD_ATTACHMENT_EXPORTED_FILENAME, null);
+                result.display_name = attachmentJson.optString(SCLOUD_ATTACHMENT_DISPLAYNAME, null);
+                result.sha256 = attachmentJson.optString(SCLOUD_ATTACHMENT_SHA256, null);
+                result.file_size = attachmentJson.optString(SCLOUD_ATTACHMENT_FILESIZE, null);
+                result.presentationType = attachmentJson.optString(SCLOUD_ATTACHMENT_PRESENTATION_TYPE, null);
+            }
+            catch (JSONException ignore) {
+                return result;
+            }
+
+            return result;
+        }
+
+        @Nullable
+        public String toJsonString() {
+            try {
+                JSONObject attachmentInfoJson = new JSONObject();
+                if (cloudUrl != null) {
+                    attachmentInfoJson.put(SCLOUD_ATTACHMENT_CLOUD_URL, cloudUrl);
+                }
+                if (cloudKey != null) {
+                    attachmentInfoJson.put(SCLOUD_ATTACHMENT_CLOUD_KEY, cloudKey);
+                }
+                if (mimeType != null) {
+                    attachmentInfoJson.put(SCLOUD_ATTACHMENT_MIMETYPE, mimeType);
+                }
+                if (filename != null) {
+                    attachmentInfoJson.put(SCLOUD_ATTACHMENT_FILENAME, filename);
+                }
+                if (exported_filename != null) {
+                    attachmentInfoJson.put(SCLOUD_ATTACHMENT_EXPORTED_FILENAME, exported_filename);
+                }
+                if (display_name != null) {
+                    attachmentInfoJson.put(SCLOUD_ATTACHMENT_DISPLAYNAME, display_name);
+                }
+                if (sha256 != null) {
+                    attachmentInfoJson.put(SCLOUD_ATTACHMENT_SHA256, sha256);
+                }
+                if (file_size != null) {
+                    attachmentInfoJson.put(SCLOUD_ATTACHMENT_FILESIZE, file_size);
+                }
+                if (presentationType != null) {
+                    attachmentInfoJson.put(SCLOUD_ATTACHMENT_PRESENTATION_TYPE, presentationType);
+                }
+
+                return attachmentInfoJson.toString();
+            }
+            catch (JSONException ignore) {
+                return null;
+            }
+        }
+
+    }
+
+    /**
+     * Generates a JSON object similar to the one created by {@link SCloudService} for the
+     * {@link com.silentcircle.messaging.model.json.JSONEventAdapter#TAG_MESSAGE_ATTACHMENT} field,
+     * containing a subset of an actual attachment's fields.
+     *
+     * The method can be used to create a temporary attachment info file using information readily
+     * available from the file to be processed and attached.
+     *
+     * @param uri the uri of the attached file
+     * @param context a context
+     * @return a JSON object containing attachment info for the provided uri
+     */
+    @Nullable
+    public static JSONObject getTemporaryAttachmentInfo(Uri uri, Context context) {
+        JSONObject attachmentMetaDataJson = SCloudService.Util.getMetaData(uri, context);
+        JSONObject attachmentJson = new JSONObject();
+
+        if (attachmentMetaDataJson == null) {
+            return null;
+        }
+
+        try {
+            String mimeType = attachmentMetaDataJson.getString(SCLOUD_METADATA_MIMETYPE);
+            String presentationType = attachmentMetaDataJson.optString(SCLOUD_ATTACHMENT_PRESENTATION_TYPE, null);
+            String exportedFilename = attachmentMetaDataJson.optString(SCLOUD_METATA_EXPORTED_FILENAME);
+            String fileName = attachmentMetaDataJson.getString(SCLOUD_METADATA_FILENAME);
+            String displayName = attachmentMetaDataJson.optString(SCLOUD_METATA_DISPLAYNAME);
+            String hash = attachmentMetaDataJson.optString(SCLOUD_ATTACHMENT_SHA256);
+            long size = attachmentMetaDataJson.optLong(SCLOUD_METADATA_FILESIZE, -1);
+
+            if (mimeType != null) {
+                attachmentJson.put(SCLOUD_ATTACHMENT_MIMETYPE, mimeType);
+            }
+            if (presentationType != null) {
+                attachmentJson.put(SCLOUD_ATTACHMENT_PRESENTATION_TYPE, presentationType);
+            }
+            if (fileName != null) {
+                attachmentJson.put(SCLOUD_ATTACHMENT_FILENAME, fileName);
+            }
+            if (!TextUtils.isEmpty(exportedFilename)) {
+                attachmentJson.put(SCLOUD_ATTACHMENT_EXPORTED_FILENAME, exportedFilename);
+            }
+            if (!TextUtils.isEmpty(displayName)) {
+                attachmentJson.put(SCLOUD_ATTACHMENT_DISPLAYNAME, displayName);
+            }
+            if (!TextUtils.isEmpty(hash)) {
+                attachmentJson.put(SCLOUD_ATTACHMENT_SHA256, hash);
+            }
+            if (size >= 0) {
+                attachmentJson.put(SCLOUD_ATTACHMENT_FILESIZE, size);
+            }
+
+        } catch (JSONException exception) {
+            return null;
+        }
+
+        return attachmentJson;
     }
 
     private static final UriMatcher CONTENT_URI_MATCHER = new UriMatcher(UriMatcher.NO_MATCH);
@@ -454,10 +608,15 @@ public class AttachmentUtils {
         if( cursor == null ) {
             return path;
         }
-        if( cursor.moveToFirst() ) {
-            path = cursor.getString( cursor.getColumnIndex( MediaStore.MediaColumns.DATA ) );
+        try {
+            if (cursor.moveToFirst()) {
+                path = cursor.getString(cursor.getColumnIndex(MediaStore.MediaColumns.DATA));
+            }
+        } finally {
+            if (cursor != null && !cursor.isClosed()) {
+                cursor.close();
+            }
         }
-        cursor.close();
         return path;
     }
 
@@ -711,7 +870,7 @@ public class AttachmentUtils {
         if (!TextUtils.isEmpty(metaData)) {
             try {
                 JSONObject metaDataJson = new JSONObject(metaData);
-                if (metaDataJson.has(SCloudService.SCLOUD_METADATA_THUMBNAIL)) {
+                if (metaDataJson.has(SCLOUD_METADATA_THUMBNAIL)) {
                     return true;
                 }
             } catch (JSONException e) {
@@ -725,8 +884,11 @@ public class AttachmentUtils {
     public static void removeAttachments(Context context) {
         File tempDir = getDir(context);
 
-        for(File file : tempDir.listFiles()) {
-            file.delete();
+        File[] fileList = tempDir.listFiles();
+        if (fileList != null) {
+            for (File file : fileList) {
+                file.delete();
+            }
         }
     }
 
@@ -749,7 +911,7 @@ public class AttachmentUtils {
             JSONObject metaDataJson;
             try {
                 metaDataJson = new JSONObject(((Message) event).getMetaData());
-                metaDataJson.put("ExportedFileName", exportedFilename);
+                metaDataJson.put(SCLOUD_METATA_EXPORTED_FILENAME, exportedFilename);
 
                 ((Message) event).setMetaData(metaDataJson.toString());
             } catch (JSONException e) {
@@ -894,5 +1056,6 @@ public class AttachmentUtils {
         long durationMS = (long) (durationSec * 1000);
         return durationMS;
     }
+
 }
 

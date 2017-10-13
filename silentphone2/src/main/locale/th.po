@@ -1,0 +1,5232 @@
+# Thai translations for PROJECT.
+# Copyright (C) 2017 ORGANIZATION
+# This file is distributed under the same license as the PROJECT project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2017.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2017-07-05 22:42+0000\n"
+"PO-Revision-Date: 2017-07-04 17:26+0700\n"
+"Last-Translator: \n"
+"Language: th\n"
+"Language-Team: th <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=(0)\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.4.0\n"
+
+msgctxt "next"
+msgid "Next"
+msgstr "ถัดไป"
+
+msgctxt "back"
+msgid "Back"
+msgstr "กลับ"
+
+msgctxt "dismiss_call"
+msgid "Decline"
+msgstr "ปฏิเสธ"
+
+msgctxt "answer_call"
+msgid "Answer"
+msgstr "ตอบกลับ"
+
+msgctxt "verify_infotext_top"
+msgid "Compare with partner"
+msgstr "เปรียบเทียบกับคู่สนทนา"
+
+msgctxt "verify_infotext_bottom"
+msgid "and enter partner’s name here"
+msgstr "ใส่ชื่อคู่สนทนาตรงนี้"
+
+msgctxt "accept_video"
+msgid "Accept"
+msgstr "ยอมรับ"
+
+msgctxt "close_dialog"
+msgid "Close"
+msgstr "ปิด"
+
+msgctxt "cancel_dialog"
+msgid "Cancel"
+msgstr "ยกเลิก"
+
+msgctxt "confirm_dialog"
+msgid "Confirm"
+msgstr "ตกลง"
+
+msgctxt "record_dialog"
+msgid "Record"
+msgstr "บันทึก"
+
+msgctxt "stop_dialog"
+msgid "Stop"
+msgstr "หยุด"
+
+msgctxt "provision_later"
+msgid "Later"
+msgstr "ภายหลัง"
+
+msgctxt "crypto_padlock"
+msgid "Padlock to show security state"
+msgstr "กุญแจเพื่อแสดงขั้นตอนความปลอดภัย"
+
+msgctxt "error_code"
+msgid "Error code:"
+msgstr "รหัสผิดพลาด:"
+
+msgctxt "go_offline"
+msgid "Go offline"
+msgstr "เข้าสู่ออฟไลน์"
+
+msgctxt "wipe_phone"
+msgid "Wipe Silent Phone"
+msgstr "ล้างSilent Phone"
+
+#. Enable translation of server provided SIP message.
+msgctxt "sip_state_calling"
+msgid "Calling…"
+msgstr "กำลังโทร..."
+
+msgctxt "sip_state_connecting"
+msgid "Connecting…"
+msgstr "กำลังเชื่อมต่อ..."
+
+msgctxt "sip_state_ringing"
+msgid "Ringing"
+msgstr "เสียงเตือน"
+
+msgctxt "sip_state_ended"
+msgid "Call ended"
+msgstr "สิ้นสุดการโทร"
+
+msgctxt "sip_state_online"
+msgid "Online"
+msgstr "ออนไลน์"
+
+msgctxt "sip_state_offline"
+msgid "Offline"
+msgstr "ออฟไลน์"
+
+msgctxt "sip_error_register"
+msgid "Cannot register"
+msgstr "ไม่สามารถลงทะเบียนได้"
+
+msgctxt "sip_error_generic"
+msgid "Cannot connect"
+msgstr "ไม่สามารถเชื่อมต่อได้"
+
+msgctxt "sip_error_decline"
+msgid "Call declined"
+msgstr "ยกเลิกการโทร"
+
+msgctxt "sip_error_no_user"
+msgid "User not found"
+msgstr "ไม่พบผู้ใช้"
+
+msgctxt "sip_error_no_cover"
+msgid "No radio coverage"
+msgstr "ไม่มีสัญญาณ"
+
+msgctxt "sip_error_no_server"
+msgid "Could not reach server"
+msgstr "ไม่สามารถเชื่อมต่อระบบได้"
+
+msgctxt "sip_error_call_answered_elsewhere"
+msgid "Call answered elsewhere"
+msgstr "รับสายที่อื่น"
+
+msgctxt "sip_error_call_declined_elsewhere"
+msgid "Call declined elsewhere"
+msgstr "Call declined elsewhere"
+
+msgctxt "sip_error_call_decline_dr_blocked_errblk"
+msgid ""
+"User not available\n"
+"\n"
+"The user/device you are trying to reach is not available at this time."
+msgstr ""
+"User not available\n"
+"\n"
+"The user/device you are trying to reach is not available at this time."
+
+msgctxt "sip_error_call_decline_dr_rejected_errdrj_log"
+msgid ""
+"Call declined\n"
+"\n"
+"The remote party declined to communicate with users subject to data "
+"retention."
+msgstr "Call declined: data retention rejected"
+
+msgctxt "sip_error_call_decline_dr_blocked_errblk_log"
+msgid "User not available"
+msgstr "User not available"
+
+msgctxt "sip_error_call_decline_dr_rejected_errdrj"
+msgid "Call declined: data retention rejected"
+msgstr ""
+"Call declined\n"
+"\n"
+"The remote party declined to communicate with users subject to data "
+"retention."
+
+#. incoming call type message
+msgctxt "call_error"
+msgid "Error"
+msgstr "ผิดพลาด"
+
+msgctxt "call_unavailable"
+msgid "Unavailable"
+msgstr "ใช้งานไม่ได้"
+
+#. Strings to display security status, handle with care during translations
+msgctxt "secstate_secure"
+msgid "SECURE"
+msgstr "ปลอดภัย"
+
+msgctxt "secstate_secure_question"
+msgid "SECURE?"
+msgstr "ปลอดภัย?"
+
+msgctxt "secstate_not_secure"
+msgid "Not SECURE"
+msgstr "ไม่ปลอดภัย"
+
+msgctxt "secstate_looking"
+msgid "Looking for peer"
+msgstr "กำลังมองหาผู้ใช้งาน"
+
+msgctxt "secstate_going_sec"
+msgid "Going secure"
+msgstr "เปิดความปลอดภัย"
+
+msgctxt "secstate_sec_disabled"
+msgid "Not SECURE - not enabled"
+msgstr "ไม่ปลอดภัย- ไม่เปิดใช้งาน"
+
+msgctxt "to_server_only"
+msgid "to server"
+msgstr "ไปที่ระบบ"
+
+#. Strings for the crypto panel
+msgctxt "crypto_peer_name"
+msgid "Peer name"
+msgstr "ชื่อผู้ใช้งาน"
+
+msgctxt "crypto_peer_client"
+msgid "ZRTP Peer client"
+msgstr "ZRTP ลูกค้าที่ใช้งาน"
+
+msgctxt "crypto_peer_client_id"
+msgid "ZRTP client ID"
+msgstr "ZRTP รหัสลูกค้า"
+
+msgctxt "crypto_peer_client_proto"
+msgid "Protocol version"
+msgstr "เวอร์ชั่นโปรโตคอล"
+
+msgctxt "crypto_secure_since"
+msgid "Secure since"
+msgstr "ปกป้องตั้งแต่"
+
+msgctxt "crypto_crypto_components"
+msgid "Crypto Components"
+msgstr "ส่วนประกอบการเข้ารหัสลับ"
+
+msgctxt "crypto_crypto_components_tls"
+msgid "TLS Ciphers:"
+msgstr "TLS Ciphers:"
+
+msgctxt "crypto_crypto_components_zhash"
+msgid "ZRTP Hash:"
+msgstr "ZRTP Hash:"
+
+msgctxt "crypto_crypto_components_pk"
+msgid "Key Exchange:"
+msgstr "เปลี่ยนรหัส:"
+
+msgctxt "crypto_crypto_components_cipher"
+msgid "Cipher:"
+msgstr "ตัวเลข:"
+
+msgctxt "crypto_crypto_components_hash"
+msgid "Hash:"
+msgstr "Hash:"
+
+msgctxt "crypto_crypto_components_sauth"
+msgid "SRTP Auth Tag:"
+msgstr "SRTP Auth Tag:"
+
+msgctxt "crypto_shared_secrets"
+msgid "Shared Secrets"
+msgstr "แบ่งปันความลับ"
+
+#. strings for the call manager section headers
+msgctxt "call_mng_conference"
+msgid "Conference"
+msgstr "การประชุม"
+
+msgctxt "call_mng_private"
+msgid "Private"
+msgstr "ส่วนตัว"
+
+msgctxt "call_mng_in_out"
+msgid "Incoming, outgoing"
+msgstr "กำลังเข้า, กำลังออก"
+
+#. strings for the ZRTP warning/error panel
+msgctxt "zrtp_we_error"
+msgid "ZRTP Error"
+msgstr "ผิดพลาดบนZRTP"
+
+msgctxt "zrtp_we_warn"
+msgid "ZRTP Warning"
+msgstr "กำลังเตือนZRTP"
+
+msgctxt "srtp_we_warn"
+msgid "SRTP Warning"
+msgstr "กำลังเตือนSRTP"
+
+msgctxt "zrtp_show_details"
+msgid "Show details"
+msgstr "แสดงรายละเอียด"
+
+msgctxt "zrtp_hide_details"
+msgid "Hide details"
+msgstr "ซ่อนรายละเอียด"
+
+#. Strings for the provisioning activity and messages
+msgctxt "provisioning_welcome"
+msgid "Welcome to Silent Circle"
+msgstr "ต้อนรับสู่Silent Circle"
+
+msgctxt "provisioning_vertu_welcome"
+msgid "Welcome to Silent Circle in partnership with Vertu"
+msgstr "ต้อนรับสู่Silent Circle ร่วมกันหุ้นส่วน Vertu"
+
+msgctxt "provisioning_username_hint"
+msgid "Username"
+msgstr "ชื่อผู้ใช้"
+
+msgctxt "provisioning_password_hint"
+msgid "Password"
+msgstr "รหัสผ่าน"
+
+msgctxt "provisioning_firstname_hint"
+msgid "Enter first name"
+msgstr "ใส่ชื่อ"
+
+msgctxt "provisioning_lastname_hint"
+msgid "Enter last name"
+msgstr "ใส่นามสกุล"
+
+msgctxt "provisioning_email_hint"
+msgid "E-mail address"
+msgstr "ที่อยู่อีเมลล์"
+
+msgctxt "provisioning_no_network"
+msgid "Network not available:"
+msgstr "เครือข่ายไม่พร้อมใช้งาน"
+
+msgctxt "provisioning_no_data"
+msgid "No provisioning data available"
+msgstr "ไม่มีการจัดเตรียมข้อมูลให้พร้อมใช้งาน"
+
+msgctxt "provisioning_wrong_format"
+msgid "Wrong data format:"
+msgstr "รูปแบบข้อมูลผิดพลาด:"
+
+msgctxt "provisioning_error"
+msgid "Provisioning Error"
+msgstr "การเตรียมการผิดพลาด"
+
+msgctxt "provisioning_info"
+msgid "Information"
+msgstr "ข้อมูล"
+
+msgctxt "provisioning_user_req"
+msgid "Username is required. Please check."
+msgstr "ต้องการชื่อผู้ใช้, โปรดตรวจสอบ"
+
+msgctxt "provisioning_user_invalid"
+msgid "Username must be lowercase alphanumeric (a–z,0–9) and start with a letter."
+msgstr "ชื่อผู้ใช้ต้องเริ่มด้วยตัวอักษรพิมพ์เล็กหรือตัวเลข"
+
+msgctxt "provisioning_psn_invalid"
+msgid "No valid serial number found!"
+msgstr "ไม่พบเลขซีเรียลที่ใช้งานได้"
+
+msgctxt "provisioning_password_req"
+msgid "Password is required. Please check."
+msgstr "ต้องใส่รหัสผ่าน. โปรดตรวจสอบ"
+
+msgctxt "provisioning_firstname_req"
+msgid "A first name is required. Please check."
+msgstr "ต้องใส่ชื่อจริง. โปรดตรวจสอบ"
+
+msgctxt "provisioning_lastname_req"
+msgid "A last name is required. Please check."
+msgstr "ต้องใส่นามสกุล. โปรดตรวจสอบ"
+
+msgctxt "provisioning_email_req"
+msgid "An email address is required. Please check."
+msgstr "ต้องใส่ที่อยู่อีเมลล์. โปรดตรวจสอบ"
+
+msgctxt "provisioning_email_invalid"
+msgid "Email address invalid. Please check."
+msgstr "ที่อยู่อีเมลล์สามารถใช้ได้. โปรดตรวจสอบ"
+
+msgctxt "provisioning_already_registered"
+msgid "Device already registered."
+msgstr "อุปกรณ์ได้รับการลงทะเบียนแล้ว"
+
+msgctxt "provisioning_agreement"
+msgid "By logging in, you are agreeing to our"
+msgstr "ด้วยการเข้าใช้งาน, คุณกำลังยอมรับเรา"
+
+msgctxt "provisioning_manage_accounts"
+msgid ""
+"<a href=\"https://accounts.silentcircle.com/\">Create new account or "
+"manage existing account</a>"
+msgstr ""
+"<a href=\"https://accounts.silentcircle.com/\">Create new account or "
+"manage existing account</a>"
+
+msgctxt "provisioning_manage_accounts_dev"
+msgid ""
+"<a href=\"https://accounts-dev.silentcircle.com/\">Create new account or "
+"manage existing account</a>"
+msgstr ""
+"<a href=\"https://accounts-dev.silentcircle.com/\">Create new account or "
+"manage existing account</a>"
+
+msgctxt "pwstrength_weak"
+msgid "Password strength: WEAK"
+msgstr "ระดับของรหัสผ่าน : ง่าย"
+
+msgctxt "pwstrength_good"
+msgid "Password strength: GOOD"
+msgstr "ระดับของรหัสผ่าน : พอใช้"
+
+msgctxt "pwstrength_strong"
+msgid "Password strength: STRONG"
+msgstr "ระดับของรหัสผ่าน : ยาก"
+
+msgctxt "provisioning_show_pw"
+msgid "Show password"
+msgstr "แสดงรหัสผ่าน"
+
+msgctxt "provisioning_privacy_tc"
+msgid ""
+"I have read and accepted the privacy policy and terms and conditions from"
+" <a href=\"https://accounts.silentcircle.com/terms/\">Silent Circle</a>"
+msgstr ""
+"ฉันได้อ่านและยอมรับเงื่อนไขต่างๆจาก <a "
+"href=\"https://accounts.silentcircle.com/terms/\">Silent Circle</a>"
+
+msgctxt "provisioning_terms"
+msgid "terms of service"
+msgstr "ส่วนของการบริการ"
+
+msgctxt "provisioning_privacy"
+msgid "privacy policy"
+msgstr "นโยบายความเป็นส่วนตัว"
+
+msgctxt "provisioning_get_news"
+msgid "I would like to receive exclusive news and invitations from Services"
+msgstr "ฉันต้องการรับข่าวสารพิเศษต่างๆจากทางระบบ"
+
+msgctxt "provisioning_new_account"
+msgid "Create new account"
+msgstr "สร้างบัญชีใหม่"
+
+msgctxt "provisioning_existing_account"
+msgid "Login to existing account"
+msgstr "เข้าใช้บัญชีที่มีอยู่แล้ว"
+
+msgctxt "provisioning_existing_account_bp"
+msgid "Login"
+msgstr "เข้าใช้"
+
+msgctxt "provisioning_sso"
+msgid "Login SSO"
+msgstr "เข้าใช้ SSO"
+
+msgctxt "provisioning_create"
+msgid "Create"
+msgstr "สร้าง"
+
+msgctxt "provisioning_forgot_pwd"
+msgid "I forgot my password."
+msgstr "ฉันลืมรหัสผ่านของตัวเอง"
+
+msgctxt "provisioning_auth_token_hint"
+msgid "Enter authentication token"
+msgstr "Enter authentication token"
+
+msgctxt "provisioning_auth_token_text"
+msgid ""
+"Two-factor authentication is enabled. Please enter an authentication "
+"token below."
+msgstr ""
+"Two-factor authentication is enabled. Please enter an authentication "
+"token below."
+
+msgctxt "provisioning_auth_token_error"
+msgid "Provisioning Error: You have specified an incorrect authentication token."
+msgstr "Provisioning Error: You have specified an incorrect authentication token."
+
+msgctxt "provisioning_all_fields_required"
+msgid "All fields are required"
+msgstr "ต้องใส่ข้อมูลให้ครบถ้วน"
+
+#, c-format
+msgctxt "provisioning_domain_error"
+msgid ""
+"An enterprise server could not be located, or could not be authenticated,"
+" for the %s domain"
+msgstr ""
+"An enterprise server could not be located, or could not be authenticated,"
+" for the %s domain"
+
+msgctxt "provisioning_ssl_date_invalid"
+msgid "The date of the certificate is invalid"
+msgstr "วันที่ในใบรับรองหมดอายุ"
+
+msgctxt "provisioning_ssl_expired"
+msgid "The certificate has expired"
+msgstr "ใบรับรองหมดอายุ"
+
+msgctxt "provisioning_ssl_idmismatch"
+msgid "Hostname mismatch"
+msgstr "รายชื่อโฮสไม่ตรงกัน"
+
+msgctxt "provisioning_ssl_notyetvalid"
+msgid "The certificate is not yet valid"
+msgstr "ใบรับรองยังไม่สามารถใช้งานได้"
+
+msgctxt "provisioning_ssl_untrusted"
+msgid "The certificate authority is not trusted"
+msgstr "ใบรับรองไม่น่าเชื่อถือ"
+
+msgctxt "provisioning_version"
+msgid "version"
+msgstr "เวอร์ชั่น"
+
+msgctxt "thanks_number"
+msgid "Phone:"
+msgstr "โทรศัพท์:"
+
+msgctxt "thanks_name"
+msgid "Name:"
+msgstr "ชื่อ:"
+
+msgctxt "thanks_organization"
+msgid "Organization:"
+msgstr "การจัดการ:"
+
+msgctxt "thanks_data_retention"
+msgid "Data retention:"
+msgstr "การเก็บข้อมูล:"
+
+msgctxt "thanks_data_retention_on"
+msgid "ON ⓘ"
+msgstr "เปิด ⓘ"
+
+msgctxt "thanks_plan"
+msgid "Plan:"
+msgstr "แผน:"
+
+msgctxt "thanks_minutes"
+msgid "Remaining minutes:"
+msgstr "นาทีคงเหลือ:"
+
+msgctxt "thanks_credit"
+msgid "Remaining credit:"
+msgstr "เครดิตคงเหลือ:"
+
+msgctxt "preferred_sas_type"
+msgid "Preferred SAS type"
+msgstr "รูปแบบ SAS ที่แนะนำ"
+
+msgctxt "sas_char_mode"
+msgid "SAS displayed as four characters"
+msgstr "SAS ถูกแสดงแบบ 4 ตัวอักษร"
+
+msgctxt "sas_word_mode"
+msgid "SAS displayed as two words"
+msgstr "SAS ถูกแสดงแบบ 2 คำ"
+
+msgctxt "sas_emoji_mode"
+msgid "SAS displayed as four emojis"
+msgstr "SAS ถูกแสดงแบบ 4 รูปภาพ"
+
+msgctxt "sp_ringtone"
+msgid "Ringtone"
+msgstr "ริงโทน"
+
+msgctxt "no_ringtone"
+msgid "Default"
+msgstr "พื้นฐาน"
+
+msgctxt "preferred_algorithms"
+msgid "Prefer non-NIST suite"
+msgstr "Prefer non-NIST suite"
+
+msgctxt "nist_preferred"
+msgid ""
+"Always prefer non-NIST algorithms if available: Twofish, Skein, and "
+"Bernstein curves."
+msgstr ""
+"Always prefer non-NIST algorithms if available: Twofish, Skein, and "
+"Bernstein curves."
+
+msgctxt "block_screenshots_title"
+msgid "Enhance local screen security"
+msgstr "Enhance local screen security"
+
+msgctxt "block_screenshots_description"
+msgid ""
+"Prefer maximum security over a nicer UI; prevent Android from saving "
+"screen images for multitasking, and disable screenshots."
+msgstr ""
+"Prefer maximum security over a nicer UI; prevent Android from saving "
+"screen images for multitasking, and disable screenshots."
+
+msgctxt "block_dr_title"
+msgid "Block data retention"
+msgstr "บล๊อคการใช้ข้อมูล"
+
+msgctxt "block_dr_description"
+msgid ""
+"Never allow detailed metadata, messages, attachments, or call audio to be"
+" retained by your organization or by other organizations."
+msgstr ""
+"Never allow detailed metadata, messages, attachments, or call audio to be"
+" retained by your organization or by other organizations."
+
+msgctxt "block_local_dr_title"
+msgid "Block local data retention"
+msgstr "หยุดการเก็บข้อมูลพื้นฐาน"
+
+msgctxt "block_local_dr_description"
+msgid ""
+"Never allow detailed metadata, messages, attachments, or call audio to be"
+" retained by this device and uploaded to a server for retention"
+msgstr ""
+"Never allow detailed metadata, messages, attachments, or call audio to be"
+" retained by this device and uploaded to a server for retention"
+
+msgctxt "block_remote_dr_title"
+msgid "Block remote data retention"
+msgstr "หยุดการควบคุมการเก็บข้อมูล"
+
+msgctxt "block_remote_dr_description"
+msgid ""
+"Refuse to communicate with other users who are subject to data retention "
+"and whose devices are retaining detailed metadata, messages, attachments,"
+" or call audio for upload to a retention server."
+msgstr ""
+"Refuse to communicate with other users who are subject to data retention "
+"and whose devices are retaining detailed metadata, messages, attachments,"
+" or call audio for upload to a retention server."
+
+msgctxt "block_local_data_retention"
+msgid "Block local data retention"
+msgstr "หยุดการเก็บข้อมูลพื้นฐาน"
+
+msgctxt "block_local_metadata_retention"
+msgid "Block local metadata retention"
+msgstr "หยุดการเก็บข้อมูลพื้นฐานหลัก"
+
+msgctxt "block_remote_data_retention"
+msgid "Block remote data retention"
+msgstr "หยุดการควบคุมการเก็บข้อมูล"
+
+msgctxt "block_remote_metadata_retention"
+msgid "Block remote metadata retention"
+msgstr "หยุดการควบคุมการเก็บข้อมูลหลัก"
+
+#. String describing the Dial ImageButton            Used by
+#. AccessibilityService to announce the purpose of the button.
+msgctxt "description_dial_button"
+msgid "Dial"
+msgstr "โทร"
+
+#. String describing the Delete/Backspace ImageButton       Used by
+#. AccessibilityService to announce the purpose of the button.
+msgctxt "description_delete_button"
+msgid "backspace"
+msgstr "backspace"
+
+msgctxt "description_pick_contact_button"
+msgid "Pick contact"
+msgstr "เลือกรายชื่อติดต่อ"
+
+msgctxt "zrtp_common_cmp"
+msgid ""
+"You should verbally compare the authentication code with the person you "
+"are calling. If it doesn’t match, it indicates that someone may have "
+"intercepted the call."
+msgstr ""
+"You should verbally compare the authentication code with the person you "
+"are calling. If it doesn’t match, it indicates that someone may have "
+"intercepted the call."
+
+msgctxt "zrtp_common_cls"
+msgid "Connection Error. Please close and call again."
+msgstr "การเชื่อมต่อผิดพลาด โปรดปิดและโทรใหม่อีกครั้ง"
+
+msgctxt "zrtp_common_upd"
+msgid ""
+"The person you are calling needs to update their Silent Phone application"
+" to the latest version."
+msgstr ""
+"บุคคลที่คุณโทรหาตอนนี้จำเป็นต้องอัพเดทเวอร์ชั่นของ Silent phone "
+"เป็นเวอร์ชั่นล่าสุด"
+
+msgctxt "zrtp_common_app"
+msgid "Application Error. Please re-install Silent Phone."
+msgstr "แอพพลิเคชั่นเกิดการผิดพลาด โปรดลองติดตั้ง Silent Phone อีกครั้ง"
+
+#. Permissions
+msgctxt "permission_read"
+msgid "Read secure contacts"
+msgstr "อ่านรายชื่อที่ปลอดภัย"
+
+msgctxt "permission_write"
+msgid "Write secure contacts"
+msgstr "เขียนรายชื่อที่ปลอดภัย"
+
+#. Permissions key manager
+msgctxt "permission_read_km"
+msgid "Read access to Silent Circle key manager"
+msgstr "อ่านตัวจัดการรหัสผ่าน Silent Circle"
+
+msgctxt "permission_write_km"
+msgid "Write access to Silent Circle key manager"
+msgstr "เขียนตัวจัดการรหัสผ่าน Silent Circle"
+
+#. Only TAG names changed, copy existing translations
+msgctxt "provisioning_stepInfo_1"
+msgid "Step 1 of 3"
+msgstr "ขั้นที่ 1 จาก 3"
+
+msgctxt "provisioning_stepInfo_2"
+msgid "Step 2 of 3"
+msgstr "ขั้นที่ 2 จาก 3"
+
+msgctxt "provisioning_stepInfo_3"
+msgid "Step 3 of 3"
+msgstr "ขั้นที่ 3 จาก 3"
+
+msgctxt "provisioning_vertu_email_info"
+msgid ""
+"An alternate email address is necessary to receive important updates and "
+"benefits regarding your account."
+msgstr ""
+"An alternate email address is necessary to receive important updates and "
+"benefits regarding your account."
+
+msgctxt "provisioning_vertu_welcome_long"
+msgid ""
+"As a Vertu Customer you enjoy 12 months of complimentary access to Silent"
+" Circle’s encrypted communications services."
+msgstr ""
+"As a Vertu Customer you enjoy 12 months of complimentary access to Silent"
+" Circle’s encrypted communications services."
+
+msgctxt "video_audio_mute"
+msgid "Toggle mute audio"
+msgstr "Toggle mute audio"
+
+#. The following until end are MISSING translations in SPA2 for languages
+#. other than English
+msgctxt "provisioning_infoText"
+msgid "Account Creation"
+msgstr "สร้างบัญชี"
+
+msgctxt "provisioning_bp_email_info"
+msgid ""
+"An email address is necessary to receive important updates and "
+"information regarding your account."
+msgstr "ที่อยู่อีเมลล์เป็นสิ่งจำเป็นในการรับข้อมูลข่าวสารต่างๆของบัญชีการใช้งานของคุณ"
+
+msgctxt "mute_button"
+msgid "Mute"
+msgstr "เงียบ"
+
+msgctxt "video_button"
+msgid "Video"
+msgstr "วิดิโอ"
+
+msgctxt "add_call"
+msgid "Add call"
+msgstr "เพิ่มสาย"
+
+msgctxt "audio_options_button"
+msgid "Audio options"
+msgstr "ตัวเลือกเสียง"
+
+msgctxt "verify_label"
+msgid "Touch and verify"
+msgstr "สัมผัสและตรวจสอบ"
+
+msgctxt "verify_question"
+msgid "Verify ?"
+msgstr "ตรวจสอบ ?"
+
+msgctxt "compare_with"
+msgid "Compare with"
+msgstr "เปรียบเทียบกับ"
+
+msgctxt "stop_video"
+msgid "Audio only"
+msgstr "เสียงเท่านั้น"
+
+msgctxt "pause_video"
+msgid "Pause video"
+msgstr "หยุดวิดิโอ"
+
+msgctxt "send_video"
+msgid "Send video"
+msgstr "ส่งวิดิโอ"
+
+msgctxt "prepare"
+msgid "Preparing …"
+msgstr "กำลังเตรียมการ…"
+
+msgctxt "call_manager"
+msgid "Call Manager"
+msgstr "จัดการการโทร"
+
+msgctxt "dtmf_dialer"
+msgid "Tone dialer"
+msgstr "เสียงโทรออก"
+
+msgctxt "security_options_header"
+msgid "Security options"
+msgstr "ตัวเลือกความปลอดภัย"
+
+msgctxt "call_info_generic"
+msgid "Call information"
+msgstr "ข้อมูลการโทร"
+
+msgctxt "call_info_security"
+msgid "Call security information"
+msgstr "ข้อมูลความปลอดภัยการโทร"
+
+msgctxt "call_info_security_detail"
+msgid "More details"
+msgstr "รายละเอียดอื่นๆ"
+
+msgctxt "build_info_header"
+msgid "Silent Phone Build"
+msgstr "Silent Phone Build"
+
+#, c-format
+msgctxt "dial_drawer_build_flavor"
+msgid "Build configuration: %s"
+msgstr "Build configuration: %s"
+
+msgctxt "account_creation_error"
+msgid "Account creation - error"
+msgstr "การสร้างบัญชี - ผิดพลาด"
+
+msgctxt "account_creation_wrong_format"
+msgid "Account creation - server sent wrong data format:"
+msgstr "การสร้างบัญชี - ระบบส่งรูปแบบข้อมูลผิดพลาด"
+
+msgctxt "account_creation_no_data"
+msgid "Account creation - server returned wrong data."
+msgstr "การสร้างบัญชี - ระบบส่งข้อมูลกลับผิดพลาด"
+
+msgctxt "other_settings"
+msgid "Other options"
+msgstr "ตัวเลือกอื่นๆ"
+
+msgctxt "call_settings"
+msgid "Call options"
+msgstr "ตัวเลือการโทร"
+
+msgctxt "theme_black"
+msgid "Black"
+msgstr "ดำ"
+
+#. Strings for BlackPhone integration
+msgctxt "bp_is_online"
+msgid "Silent Phone online"
+msgstr "Silent Phone ออนไลน์"
+
+msgctxt "bp_is_offline"
+msgid "Silent Phone currently offline"
+msgstr "Silent Phone ออฟไลน์ในขณะนี้"
+
+msgctxt "bp_not_started"
+msgid "Silent Phone not started"
+msgstr "Silent Phone ยังไม่ได้เริ่ม"
+
+msgctxt "bp_registering"
+msgid "Silent Phone registering"
+msgstr "กำลังลงทะเบียน Silent Phone"
+
+msgctxt "bp_status_unknown"
+msgid "Unknown status"
+msgstr "ไม่ทราบสถานะ"
+
+#. Audio options
+msgctxt "audio_bt"
+msgid "BlueTooth headset"
+msgstr "หูฟังบลูทูธ"
+
+msgctxt "audio_speaker"
+msgid "Speaker"
+msgstr "ลำโพง"
+
+msgctxt "audio_ear_phone"
+msgid "Earpiece"
+msgstr "หูฟัง"
+
+msgctxt "end_call_button"
+msgid "End call"
+msgstr "วางสาย"
+
+msgctxt "call_quality"
+msgid "Quality"
+msgstr "คุณภาพ"
+
+msgctxt "call_quality_bad"
+msgid "bad"
+msgstr "แย่"
+
+msgctxt "call_quality_weak"
+msgid "weak"
+msgstr "แย่"
+
+msgctxt "call_quality_acceptable"
+msgid "acceptable"
+msgstr "ยอมรับได้"
+
+msgctxt "call_quality_good"
+msgid "good"
+msgstr "ดี"
+
+msgctxt "call_quality_very_good"
+msgid "very good"
+msgstr "ดีมาก"
+
+msgctxt "in_call_drawer_zrtp_confirmed"
+msgid "yes, verified"
+msgstr "ใช่ ตรวจสอบแล้ว"
+
+msgctxt "in_call_drawer_zrtp_not_confirmed"
+msgid "yes, not verified"
+msgstr "ใช่ ยังไม่ได้ตรวจสอบ"
+
+msgctxt "in_call_drawer_sdes_active"
+msgid "active"
+msgstr "เริ่มทำงาน"
+
+msgctxt "navigation_drawer_open"
+msgid "Open navigation drawer"
+msgstr "เปิดการนำทาง"
+
+msgctxt "navigation_drawer_close"
+msgid "Close navigation drawer"
+msgstr "ปิดการนำทาง"
+
+msgctxt "valid_until"
+msgid "Valid until:"
+msgstr "ใช้ได้จนถึง:"
+
+msgctxt "subscription_expired"
+msgid "Your Silent Circle subscription is expired."
+msgstr "การสมัคร Silent Circel ของคุณหมดอายุแล้ว"
+
+msgctxt "sip_error_not_online"
+msgid "User not online"
+msgstr "ผู้ใช้งานไม่ได้ออนไลน์"
+
+msgctxt "license_code_invalid"
+msgid ""
+"This license code doesn't appear to be valid. If you are having trouble "
+"with activating your Blackphone and Silent Circle accounts, please "
+"contact customer support at support@blackphone.ch"
+msgstr ""
+"This license code doesn't appear to be valid. If you are having trouble "
+"with activating your Blackphone and Silent Circle accounts, please "
+"contact customer support at support@blackphone.ch"
+
+msgctxt "license_code_duplicate"
+msgid ""
+"This license code appears to have been activated already. If you are "
+"resetting your phone, simply log into your Silent Circle account "
+"normally. If you are having trouble activating your Blackphone and Silent"
+" Circle accounts, please contact customer support at "
+"support@blackphone.ch"
+msgstr ""
+"This license code appears to have been activated already. If you are "
+"resetting your phone, simply log into your Silent Circle account "
+"normally. If you are having trouble activating your Blackphone and Silent"
+" Circle accounts, please contact customer support at "
+"support@blackphone.ch"
+
+#. ************************** String for the Contacts part
+#. ******************************
+#. Menu item used to add a number from the call log to contacts
+msgctxt "recentCalls_addToContact"
+msgid "Add to contacts"
+msgstr "เพิ่มลงไปที่ผู้ติดต่อ"
+
+#. Text displayed when the call log is empty
+msgctxt "recentCalls_empty"
+msgid "Call log is empty."
+msgstr "ไม่มีบันทึกการโทร"
+
+#. Menu item used to remove all calls from the call log
+msgctxt "recentCalls_deleteAll"
+msgid "Clear call log"
+msgstr "ล้างบันทึกการโทร"
+
+#. Menu item used to copy a number from the call log to the dialer so it can
+#. be edited before calling it
+msgctxt "recentCalls_editNumberBeforeCall"
+msgid "Edit number before call"
+msgstr "แก้ไขเบอร์โทรก่อนการโทร"
+
+#. Menu item used to remove a single call from the call log
+msgctxt "recentCalls_removeFromRecentList"
+msgid "Remove from call log"
+msgstr "ลบออกจากบันทึกการโทร"
+
+#. Menu item used to remove related call entries from the call log
+msgctxt "recentCalls_removeSameFromRecentList"
+msgid "Remove related entries"
+msgstr "ลบออกจากที่เกียวข้องทั้งหมด"
+
+#. Title for incoming call details screen
+msgctxt "type_incoming"
+msgid "Incoming call"
+msgstr "กำลังมีสายเข้า"
+
+#. Title for outgoing call details screen
+msgctxt "type_outgoing"
+msgid "Outgoing call"
+msgstr "กำลังโทรออก"
+
+#. Title for missed call details screen
+msgctxt "type_missed"
+msgid "Missed call"
+msgstr "สายที่ไม่ได้รับ"
+
+#. Title bar for call history screen
+msgctxt "callHistoryTitle"
+msgid "Call history"
+msgstr "ประวัติการโทร"
+
+#. Title bar for call detail screen
+msgctxt "callDetailTitle"
+msgid "Call details"
+msgstr "รายละเอียดการโทร"
+
+#. String used to display calls from unknown numbers in the call log
+msgctxt "unknown"
+msgid "Unknown"
+msgstr "ไม่รู้ที่มา"
+
+#. String used to display calls from private numbers in the call log
+msgctxt "private_num"
+msgid "Private number"
+msgstr "เบอร์ส่วนตัว"
+
+#. String used to display calls from pay phone in the call log
+msgctxt "payphone"
+msgid "Pay phone"
+msgstr "ตู้โทรศัพท์"
+
+#, c-format
+msgctxt "call_log_item_count_and_date"
+msgid "(%1$d) %2$s"
+msgstr "(%1$d) %2$s"
+
+#. A nicely formatted call duration displayed when viewing call details. For
+#. example "42 mins 28 secs"
+#, c-format
+msgctxt "callDetailsDurationFormat"
+msgid "%1$s mins %2$s secs"
+msgstr "%1$s mins %2$s secs"
+
+#. Toast for call detail screen when couldn't read the requested details
+msgctxt "toast_call_detail_error"
+msgid "Couldn't read details for the requested call."
+msgstr "ไม่สามารถอ่านข้อมูลการร้องขอการโทร"
+
+#. Title of the confirmation dialog for clearing the call log. [CHAR LIMIT=37]
+msgctxt "clearCallLogConfirmation_title"
+msgid "Clear call log?"
+msgstr "ล้างบันทึกการโทร?"
+
+#. Confirmation dialog for clearing the call log. [CHAR LIMIT=NONE]
+msgctxt "clearCallLogConfirmation"
+msgid "All your call records will be deleted."
+msgstr "บันทึกการโทรทั้งหมดจะถูกลบ"
+
+#. Silent phone number type
+msgctxt "phoneTypeSilent"
+msgid "Silent Phone"
+msgstr "Silent Phone"
+
+#. Directory partition name
+msgctxt "contactsList"
+msgid "Contacts"
+msgstr "ผู้ติดต่อ"
+
+msgctxt "scContactsList"
+msgid "Silent Circle contacts"
+msgstr "ผู้ติดต่อ Silent Circle"
+
+msgctxt "scRemoteContactsList"
+msgid "Silent Circle"
+msgstr "Silent Circle directory"
+
+#, fuzzy
+msgctxt "scExistingConversationsList"
+msgid "Silent Circle groups"
+msgstr "บทสนทนา"
+
+msgctxt "scV1UserList"
+msgid "Exact match outside your organization"
+msgstr ""
+
+#. The name of the invisible local contact directory
+msgctxt "local_invisible_directory"
+msgid "Other"
+msgstr "อื่นๆ"
+
+#. The label in section header in the contact list for a local contacts [CHAR
+#. LIMIT=128]
+msgctxt "local_search_label"
+msgid "Phone contacts"
+msgstr "ผู้ติดต่อ"
+
+#. String describing the text on the header of the profile contact in the
+#. contacts list          This may be programatically capitalized. [CHAR
+#. LIMIT=20]
+msgctxt "user_profile_contacts_list_header"
+msgid "Me"
+msgstr "ฉัน"
+
+#. The label in section header in the contact list for a contact directory
+#. [CHAR LIMIT=128]
+msgctxt "directory_search_label"
+msgid "Directory"
+msgstr "ไดเรคทอรี"
+
+#. Displayed at the top of search results indicating that more contacts were
+#. found than shown [CHAR LIMIT=64]
+#, c-format
+msgctxt "foundTooManyContacts"
+msgid "More than %d found."
+msgstr "More than %d found."
+
+#. Displayed at the top of the contacts showing the zero total number of
+#. contacts found when "Only contacts with phones" not selected. [CHAR
+#. LIMIT=30]
+msgctxt "listFoundAllContactsZero"
+msgid "No contacts"
+msgstr "ไม่มีผู้ติดต่อ"
+
+#. Displayed at the top of the results showing the zero total number of
+#. results found when "Only contacts with phones" not selected. [CHAR LIMIT=30]
+msgctxt "listFoundAllResultsZero"
+msgid "No results"
+msgstr "ไม่พบ"
+
+#. Displayed at the top of the contacts showing the total number of contacts
+#. found when typing search query
+#, c-format
+msgctxt "searchFoundContacts"
+msgid "1 found"
+msgid_plural "%d found"
+msgstr[0] "%d พบ"
+
+#. Shown as the display name for a person when the name is missing or unknown.
+#. [CHAR LIMIT=18]
+msgctxt "missing_name"
+msgid "(No name)"
+msgstr "(ไม่มีชื่อ)"
+
+#. Menu item to indicate you are done editing a contact and want to save the
+#. changes you've made
+msgctxt "menu_done"
+msgid "Done"
+msgstr "สำเร็จ"
+
+#. Menu item to indicate you want to cancel the current editing process and
+#. NOT save the changes you've made [CHAR LIMIT=12]
+msgctxt "menu_doNotSave"
+msgid "Cancel"
+msgstr "ยกเลิก"
+
+#. Menu item to search contacts
+msgctxt "menu_search"
+msgid "Search"
+msgstr "ค้นหา"
+
+#. Action string for calling a custom phone number
+#, c-format
+msgctxt "call_custom"
+msgid "Call %s"
+msgstr "โทร %s"
+
+#. Action string for calling a home phone number
+msgctxt "call_home"
+msgid "Call home"
+msgstr "โทรกลับบ้าน"
+
+#. Action string for calling a mobile phone number
+msgctxt "call_mobile"
+msgid "Call mobile"
+msgstr "โทรเคลื่อนที่"
+
+#. Action string for calling a work phone number
+msgctxt "call_work"
+msgid "Call work"
+msgstr "โทรที่ทำงาน"
+
+#. Action string for calling a work fax phone number
+msgctxt "call_fax_work"
+msgid "Call work fax"
+msgstr "โทรแฟกซ์ที่ทำงาน"
+
+#. Action string for calling a home fax phone number
+msgctxt "call_fax_home"
+msgid "Call home fax"
+msgstr "โทรแฟกซ์บ้าน"
+
+#. Action string for calling a pager phone number
+msgctxt "call_pager"
+msgid "Call pager"
+msgstr "โทรเพจเจอร์"
+
+#. Action string for calling an other phone number
+msgctxt "call_other"
+msgid "Call"
+msgstr "โทร"
+
+#. Action string for calling a callback number
+msgctxt "call_callback"
+msgid "Call callback"
+msgstr "โทรกลับ"
+
+#. Action string for calling a car phone number
+msgctxt "call_car"
+msgid "Call car"
+msgstr "โทรในรถ"
+
+#. Action string for calling a company main phone number
+msgctxt "call_company_main"
+msgid "Call company main"
+msgstr "โทรเบอร์หลักบริษัท"
+
+#. Action string for calling a ISDN phone number
+msgctxt "call_isdn"
+msgid "Call ISDN"
+msgstr "โทร ISDN"
+
+#. Action string for calling a main phone number
+msgctxt "call_main"
+msgid "Call main"
+msgstr "โทรหลัก"
+
+#. Action string for calling an other fax phone number
+msgctxt "call_other_fax"
+msgid "Call fax"
+msgstr "โทรแฟกซ์"
+
+#. Action string for calling a radio phone number
+msgctxt "call_radio"
+msgid "Call radio"
+msgstr "โทรวิทยุ"
+
+#. Action string for calling a Telex phone number
+msgctxt "call_telex"
+msgid "Call telex"
+msgstr "โทรสาร"
+
+#. Action string for calling a TTY/TDD phone number
+msgctxt "call_tty_tdd"
+msgid "Call TTY/TDD"
+msgstr "โทร TTY/TDDD"
+
+#. Action string for calling a work mobile phone number
+msgctxt "call_work_mobile"
+msgid "Call work mobile"
+msgstr "โทรโทรศัพท์ที่ทำงาน"
+
+#. Action string for calling a work pager phone number
+msgctxt "call_work_pager"
+msgid "Call work pager"
+msgstr "โทรเพจเจอร์"
+
+#. Action string for calling an assistant phone number
+#, c-format
+msgctxt "call_assistant"
+msgid "Call %s"
+msgstr "โทร %s"
+
+#. Action string for calling a MMS phone number
+msgctxt "call_mms"
+msgid "Call MMS"
+msgstr "โทร MMSS"
+
+#. Generic action string for starting an IM chat
+msgctxt "chat"
+msgid "Text"
+msgstr "ข้อความ"
+
+#. Toast shown when text is copied to the clipboard [CHAR LIMIT=64]
+msgctxt "toast_text_copied"
+msgid "Text copied"
+msgstr "คัดลอกข้อความ"
+
+msgctxt "toast_copied_to_clipboard"
+msgid "Copied to clipboard"
+msgstr "คัดลอกไปยังคลิปบอร์ด"
+
+#. Contact list filter selection indicating that the list shows all contacts
+#. with phone numbers [CHAR LIMIT=64]
+msgctxt "list_filter_phones"
+msgid "All contacts with phone numbers"
+msgstr "รายชื่อติดต่อทั้งหมดพร้อมเบอร์โทรศัพท์"
+
+#. An allowable value for the "view names as" contact display option
+msgctxt "display_options_view_given_name_first"
+msgid "Given name first"
+msgstr "ชื่อจริงก่อน"
+
+#. An allowable value for the "view names as" contact display option
+msgctxt "display_options_view_family_name_first"
+msgid "Family name first"
+msgstr "นามสกุลก่อน"
+
+#. String describing a contact picture that introduces users to the contact
+#. detail screen.           Used by AccessibilityService to announce the
+#. purpose of the button.           [CHAR LIMIT=NONE]
+#. String describing the text for photo of a contact in a contacts list.
+#. Note: AccessibilityServices use this attribute to announce what the view
+#. represents.               This is especially valuable for views without
+#. textual representation like ImageView.
+#, c-format
+msgctxt "description_quick_contact_for"
+msgid "Quick contact for %1$s"
+msgstr "ติดต่อด่วนสำหรับ %1$s"
+
+#. ****************  Strings for Key store part ******************
+msgctxt "cannot_load_store"
+msgid ""
+"Cannot open key store. The password or PIN you entered is incorrect, "
+"please try again."
+msgstr ""
+"ไม่สามารถเปิด Key Store ได้ รหัสผ่านหรือ PIN ของคุณไม่ถูกต้อง "
+"โปรดลองใหม่อีกครั้ง"
+
+msgctxt "password_hint"
+msgid "Enter Password"
+msgstr "ใส่รหัสผ่าน"
+
+msgctxt "password_hint_old"
+msgid "Enter old password"
+msgstr "ใส่รหัสผ่านเดิม"
+
+msgctxt "password_hint_new"
+msgid "Enter new password"
+msgstr "ใส่รหัสผ่านใหม่"
+
+msgctxt "password_hint2"
+msgid "Enter password (verify)"
+msgstr "ใส่รหัสผ่าน (ตรวจสอบ)"
+
+msgctxt "cannot_change_password"
+msgid "Password change failed. Using existing password."
+msgstr "การเปลี่ยนรหัสผ่านผิดพลาด. ใช้รหัสผ่านที่มีอยู่"
+
+msgctxt "old_password_wrong"
+msgid "Old password is wrong. Locking key store."
+msgstr "รหัสผ่านเก่าผิดพลาด"
+
+msgctxt "old_pin_wrong"
+msgid "Old pin is wrong. Locking key store."
+msgstr "รหัส PIN ผิดพลาด"
+
+msgctxt "key_store_change_pw"
+msgid "Change password"
+msgstr "เปลี่ยนรหัสผ่าน"
+
+msgctxt "no_password"
+msgid "Missing password."
+msgstr "ลืมรหัสผ่าน"
+
+msgctxt "information_dialog"
+msgid "Information"
+msgstr "ข้อมูล"
+
+msgctxt "show_pw"
+msgid "Show password"
+msgstr "แสดงรหัสผ่าน"
+
+msgctxt "password_match"
+msgid "Passwords do not match. Please check."
+msgstr "รหัสผ่านไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง"
+
+#. ******************** New or modified ***********************
+#. Strings new after 2.0.1 release
+msgctxt "video_control_explanation"
+msgid ""
+"Tap on screen to toggle video control buttons. \n"
+"\n"
+"Touch small preview window to move it."
+msgstr ""
+"Tap on screen to toggle video control buttons. \n"
+"\n"
+"Touch small preview window to move it."
+
+msgctxt "start_on_boot"
+msgid "Start Silent Phone on boot"
+msgstr "เริ่มต้น Silent Phone"
+
+msgctxt "start_on_boot_explanation"
+msgid "Start Silent Phone during the device's startup procedure."
+msgstr "เริ่มต้น Silent Phone ในขณะที่เริ่มต้นกระบวนการของเครื่อง"
+
+msgctxt "reset_feature_discovery"
+msgid "Reset tutorial screens"
+msgstr ""
+
+msgctxt "reset_feature_discovery_explanation"
+msgid "Show the tutorial screens again in case you missed them."
+msgstr ""
+
+msgctxt "reset_warnings"
+msgid "Reset warnings"
+msgstr ""
+
+msgctxt "reset_warnings_explanation"
+msgid "Show all previously dismissed warnings again."
+msgstr ""
+
+msgctxt "enable_traversal"
+msgid "Enable firewall traversal"
+msgstr "Enable firewall traversal"
+
+msgctxt "enable_traversal_explanation"
+msgid ""
+"If Silent Phone detects a restrictive firewall, try extra hard to "
+"complete your call."
+msgstr ""
+"If Silent Phone detects a restrictive firewall, try extra hard to "
+"complete your call."
+
+msgctxt "force_traversal"
+msgid "Force firewall traversal"
+msgstr "Force firewall traversal"
+
+msgctxt "force_traversal_explanation"
+msgid ""
+"Use a more reliable but lower-quality method of connecting the call "
+"audio, which may be needed on particularly bad networks."
+msgstr ""
+"มีความน่าเชื่อถือแต่คุณภาพเสียงของการโทรมีคุณภาพต่ำ "
+"อาจจะเกิดจากสัญญาณขัดข้อง"
+
+msgctxt "setting_underflow"
+msgid "Dropout tone"
+msgstr "Dropout tone"
+
+msgctxt "setting_underflow_summary"
+msgid ""
+"Play low tone if no media packets are arriving. If heard often, you or "
+"your partner may want to change networks."
+msgstr "การเล่นเสียงต่ำ หากได้ยินบ่อยครั้ง คุณหรือคู่สนทนาอาจต้องเปลี่ยนสัญญาณ"
+
+msgctxt "setting_echo_option"
+msgid "Echo canceler"
+msgstr "Echo canceler"
+
+msgctxt "setting_echo_option_summary"
+msgid ""
+"Automatic control of echo canceler. If not selected the echo canceler is "
+"always active"
+msgstr ""
+"การควบคุมอัตโนมัติของการยกเลิกเสียงสะท้อน "
+"หากเลือกการยกเลิกเสียงสะท้อนจะเปิดใช้งานตลอด"
+
+msgctxt "setting_errors_option"
+msgid "Show all errors"
+msgstr "แสดงข้อผิดพลาดทั้งหมด"
+
+msgctxt "setting_errors_option_summary"
+msgid ""
+"Minor software errors that don't affect your experience are hidden by "
+"default."
+msgstr "ซอฟแวร์มีความผิดพลาดแต่จะไม่ส่งผลกระทบต่อการป้องกันข้อมูลของคุณ"
+
+#. ******* Strings for the dial assist activity
+msgctxt "sp_dial_helper_title"
+msgid "Dial assist"
+msgstr "ตัวช่วยการโทร"
+
+msgctxt "sp_dial_helper_select_explanation"
+msgid ""
+"To simplify dialing, turn on Dial Assist and select a country. The number"
+" will automatically be formatted with your country code. Otherwise, dial "
+"'+' and the country code."
+msgstr ""
+"To simplify dialing, turn on Dial Assist and select a country. The number"
+" will automatically be formatted with your country code. Otherwise, dial "
+"'+' and the country code."
+
+msgctxt "sp_dial_helper_select_explanation_1"
+msgid ""
+"To call other Silent Circle subscribers, simply dial their Silent Circle "
+"subscriber name."
+msgstr ""
+"To call other Silent Circle subscribers, simply dial their Silent Circle "
+"subscriber name."
+
+msgctxt "sp_dial_helper_select"
+msgid "Select your country"
+msgstr "เลือกประเทศของคุณ"
+
+msgctxt "sp_dial_helper_none"
+msgid "No dial assist"
+msgstr "ไม่มีตัวช่วยการโทร"
+
+msgctxt "sp_dial_helper_simple"
+msgid "Simple dial assist"
+msgstr "ตัวช่วยการโทรอย่างง่าย"
+
+#. Explain specific dial support functions
+msgctxt "sp_dial_helper_null_explanation"
+msgid "Dial assist disabled."
+msgstr "ตัวช่วยการโทรปิดการใช้ง่าย"
+
+msgctxt "sp_dial_helper_simple_explanation"
+msgid "Adds '+' to form an international phone number."
+msgstr "เพิ่ม '+' ลงในฟอร์มเบอร์โทรระหว่างประเทศ"
+
+msgctxt "sp_dial_helper_nanp_explanation"
+msgid "Adds '+' or '+1' or replaces a leading '011' with a '+' sign."
+msgstr "Adds '+' or '+1' or replaces a leading '011' with a '+' sign."
+
+#, c-format
+msgctxt "sp_dial_helper_00_0_explanation"
+msgid ""
+"Replaces a leading '%1$s' with country code %2$s and a leading '%3$s' "
+"with the '+' sign."
+msgstr ""
+"Replaces a leading '%1$s' with country code %2$s and a leading '%3$s' "
+"with the '+' sign."
+
+#, c-format
+msgctxt "sp_dial_helper_00_x_explanation"
+msgid ""
+"Adds '%2$s' to dialed digits and replaces a leading '%3$s' with the '+' "
+"sign."
+msgstr ""
+"Adds '%2$s' to dialed digits and replaces a leading '%3$s' with the '+' "
+"sign."
+
+#. ******* Strings for the key store management activity
+msgctxt "key_store_set_pw_explanation"
+msgid ""
+"Set this password to encrypt Silent Phone. You will need to enter this "
+"password to start the application. Silent Circle cannot reset this "
+"password for you."
+msgstr ""
+"ตั้งรหัสผ่านเข้าสู่ Silent Phone "
+"คุณจำเป็นต้องใส่รหัสผ่านนี้เพื่อเริ่มแอปพลิเคชั่น. Silent Circle "
+"ไม่สามารถรีเซ็ทรหัสผ่านนี้ให้คุณได้"
+
+msgctxt "key_store_change_pw_explanation"
+msgid "Change your encryption password."
+msgstr "เปลี่ยนรหัสผ่านลับของคุณ"
+
+msgctxt "key_store_reset_pw_explanation"
+msgid "Stop using password encryption of Silent Phone."
+msgstr "หยุดการใช้รหัสผ่านลับของ Silent Phone"
+
+msgctxt "key_store_enter_pw_explanation"
+msgid "Enter your encryption password."
+msgstr "ใส่รหัสผ่านลับของคุณ"
+
+msgctxt "key_store_set_pin_explanation"
+msgid ""
+"Set this PIN to encrypt Silent Phone. You will need to enter this PIN to "
+"start the application. Silent Circle cannot reset this PIN for you."
+msgstr ""
+"ตั้งรหัส PIN เข้าสู่ Silent Phone คุณจำเป็นต้องใส่รหัส PIN "
+"นี้เพื่อเริ่มแอปพลิเคชั่น. Silent Circle ไม่สามารถรีเซ็ทรหัส PIN "
+"นี้ให้คุณได้"
+
+msgctxt "key_store_change_pin_explanation"
+msgid "Change your encryption PIN."
+msgstr "เปลี่ยนรหัส PIN ลับของคุณ"
+
+msgctxt "key_store_reset_pin_explanation"
+msgid "Stop using PIN encryption of Silent Phone."
+msgstr "หยุดการใช้ PIN ลับของ Silent Phone"
+
+msgctxt "key_store_enter_pin_explanation"
+msgid "Enter your encryption PIN."
+msgstr "ใส่รหัส PIN ลับของคุณ"
+
+msgctxt "pin_hint"
+msgid "Enter PIN"
+msgstr "ใส่ PIN"
+
+msgctxt "pin_hint_old"
+msgid "Enter old PIN"
+msgstr "ใส่รหัส PIN เก่า"
+
+msgctxt "pin_hint_new"
+msgid "Enter new PIN"
+msgstr "ใส่รหัส PIN ใหม่"
+
+msgctxt "pin_hint2"
+msgid "Enter PIN (verify)"
+msgstr "ใส่รหัส PIN (ตรวจสอบ)"
+
+msgctxt "no_pin"
+msgid "Missing PIN."
+msgstr "ลืมรหัส PIN"
+
+msgctxt "show_pin"
+msgid "Show PIN"
+msgstr "แสดงรหัส PIN"
+
+msgctxt "pin_match"
+msgid "PINs do not match. Please check."
+msgstr "รหัส PIN ไม่ตรงกัน กรุณาตรวจสอบใหม่"
+
+#, c-format
+msgctxt "pin_short"
+msgid "PIN is too short. Enter at least %d digits"
+msgstr "รหัส PIN สั้นเกินไป ต้องใส่อย่างต่ำ %d หลัก"
+
+msgctxt "passcode_title"
+msgid "Passcode"
+msgstr "รหัสผ่าน"
+
+msgctxt "passcode_change"
+msgid "Change passcode"
+msgstr "เปลี่ยนรหัสผ่าน"
+
+msgctxt "passcode_enable"
+msgid "Turn passcode on"
+msgstr "เปิดรหัสผ่าน"
+
+msgctxt "passcode_disable"
+msgid "Turn passcode off"
+msgstr "ปิดรหัสผ่าน"
+
+msgctxt "passcode_timeout"
+msgid "Require passcode"
+msgstr "ต้องการรหัสผ่าน"
+
+msgctxt "passcode_set"
+msgid "Passcode set."
+msgstr "ติดตั้งรหัสผ่านเรียบร้อยแล้ว"
+
+msgctxt "passcode_disabled"
+msgid "Passcode disabled."
+msgstr "รหัสผ่านปิดการใช้งาน"
+
+msgctxt "passcode_wipe"
+msgid "Wipe data"
+msgstr "Wipe data"
+
+msgctxt "passcode_wipe_description"
+msgid "Wipe all data on Silent Phone after 10 failed passcode attempts"
+msgstr "Wipe all data on Silent Phone after 10 failed passcode attempts"
+
+msgctxt "fingerprint_unlock"
+msgid "Fingerprint unlock"
+msgstr "ปลดล็อคด้วยลายนิ้วมือ"
+
+msgctxt "fingerprint_unlock_description"
+msgid "Unlock Silent Phone with your fingerprint"
+msgstr "ปลดล็อค Silent Phone ด้วยลายนิ้วมือ"
+
+msgctxt "fingerprint_enroll_title"
+msgid "Enroll fingerprints"
+msgstr ""
+
+msgctxt "fingerprint_enroll_message"
+msgid ""
+"In order to use Fingerprint unlock, you need to first enroll at least one"
+" fingerprint."
+msgstr ""
+
+msgctxt "fingerprint_enroll_action"
+msgid "Enroll"
+msgstr ""
+
+msgctxt "fingerprint_changed_title"
+msgid "Fingerprint unlock unavailable"
+msgstr ""
+
+msgctxt "fingerprint_changed_message"
+msgid ""
+"If you have recently enrolled a new fingerprint, you will need to re-"
+"enable Fingerprint unlock in Silent Phone's passcode settings."
+msgstr ""
+
+msgctxt "fingerprint_dialog_unlock_title"
+msgid "Use fingerprint to unlock"
+msgstr "สแกนลายนิ้วมือเพื่อปลดล็อค"
+
+msgctxt "fingerprint_dialog_enroll_title"
+msgid "Enable fingerprint"
+msgstr "เปิดใช้งานสแกนลายนิ้วมือ"
+
+msgctxt "fingerprint_touch"
+msgid "Touch sensor"
+msgstr ""
+
+msgctxt "fingerprint_not_recognized"
+msgid "Fingerprint not recognized. Try again"
+msgstr "ไม่สามารถจดจำลายนิ้วมือ กรุณาลองใหม่"
+
+msgctxt "fingerprint_recognized"
+msgid "Fingerprint recognized."
+msgstr "จดจำลายนิ้วมือแล้ว"
+
+msgctxt "fingerprint_use_passcode"
+msgid "Use passcode"
+msgstr "ใช้รหัสผ่าน"
+
+msgctxt "passcode_enter_any"
+msgid "Enter a passcode"
+msgstr "ใส่รหัสผ่าน"
+
+msgctxt "passcode_enter_your"
+msgid "Enter your passcode"
+msgstr "ใส่รหัสผ่านของคุณ"
+
+msgctxt "passcode_enter_old"
+msgid "Enter your old passcode"
+msgstr "ใส่รหัสผ่านเก่า"
+
+msgctxt "passcode_enter_new"
+msgid "Enter your new passcode"
+msgstr "ใส่รหัสผ่านใหม่"
+
+msgctxt "passcode_reenter"
+msgid "Re-enter your new passcode"
+msgstr "ใส่รหัสผ่านใหม่อีกครั้ง"
+
+msgctxt "passcode_mismatch"
+msgid "The passcodes didn't match."
+msgstr "รหัสผ่านไม่ตรงกัน กรุณาลองใหม่อีกครั้ง"
+
+msgctxt "passcode_wrong"
+msgid "Wrong passcode."
+msgstr "รหัสผ่านไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง"
+
+msgctxt "passcode_try_again"
+msgid "Try again."
+msgstr "ลองใหม่"
+
+#, c-format
+msgctxt "passcode_try_left"
+msgid "You have %1$d try left."
+msgstr "You have %1$d try left."
+
+#, c-format
+msgctxt "passcode_tries_left"
+msgid "You have %1$d tries left."
+msgstr "You have %1$d tries left."
+
+msgctxt "passcode_data_wiped_warn"
+msgid "Data will be wiped."
+msgstr "Data will be wiped."
+
+msgctxt "passcode_sp_locked"
+msgid "Silent Phone is locked"
+msgstr "Silent Phone is locked"
+
+msgctxt "passcode_locked_try_again"
+msgid "try again in"
+msgstr "try again in"
+
+#, c-format
+msgctxt "passcode_minute"
+msgid "%1$d minute"
+msgstr "%1$d นาที"
+
+#, c-format
+msgctxt "passcode_minutes"
+msgid "%1$d minutes"
+msgstr "%1$d นาที"
+
+msgctxt "passcode_timeout_immediately"
+msgid "Immediately"
+msgstr "ทันที"
+
+msgctxt "in"
+msgid "in"
+msgstr "ใน"
+
+msgctxt "seconds"
+msgid "seconds"
+msgstr "วินาที"
+
+msgctxt "minute"
+msgid "minute"
+msgstr "นาที"
+
+msgctxt "minutes"
+msgid "minutes"
+msgstr "นาที"
+
+msgctxt "enabled"
+msgid "Enabled"
+msgstr "เปิดใช้งานแล้ว"
+
+msgctxt "not_enabled"
+msgid "Not enabled"
+msgstr "ไม่ได้เปิดใช้งาน"
+
+msgctxt "key_store_title"
+msgid "Encrypt local app data"
+msgstr "เข้าสู่ข้อมูลแอปพลิเคชั่น"
+
+msgctxt "key_store_type_default"
+msgid "Not encrypted"
+msgstr "ไม่ได้เข้ารหัส"
+
+msgctxt "key_store_type_pw"
+msgid "Password set"
+msgstr "ติดตั้งรหัสผ่านเรียบร้อยแล้ว"
+
+msgctxt "key_store_type_pin"
+msgid "PIN set"
+msgstr "ติดตั้งรหัส PIN เรีนบร้อยแล้ว"
+
+msgctxt "key_store_set_pw"
+msgid "Set password"
+msgstr "ตั้งค่ารหัสผ่าน"
+
+msgctxt "key_store_set_pin"
+msgid "Set PIN"
+msgstr "ตั้งค่ารหัส PIN"
+
+msgctxt "key_store_change_pin"
+msgid "Change PIN"
+msgstr "เปลี่ยนรหัส PIN"
+
+msgctxt "key_store_reset_default"
+msgid "Clear password/PIN"
+msgstr "ล้างรหัสผ่าน/PIN"
+
+msgctxt "re_provision"
+msgid "Reload account data"
+msgstr "ใส่ข้อมูลบัญชีเพิ่มเติม"
+
+msgctxt "re_provision_explanation"
+msgid "Reload Silent Phone's account and configuration data."
+msgstr "เพิ่มบัญชีและข้อมูลของ Silent Phone"
+
+#. ******** String for DID selection activity
+msgctxt "did_title"
+msgid "Phone number selection"
+msgstr "การเลือกหมายเลขโทรศัพท์"
+
+msgctxt "did_region_area_explanation"
+msgid "Select your phone number from a region and area"
+msgstr "เลือกหมายเลขโทรศัพท์ของคุณจากภูมิภาคและพื้นที่"
+
+msgctxt "did_currently_selected"
+msgid "Currently selected"
+msgstr "ตัวเลือกปัจจุบัน"
+
+msgctxt "did_region"
+msgid "Region:"
+msgstr "ภูมิภาค:"
+
+msgctxt "did_area"
+msgid "Area:"
+msgstr "พื้นที่:"
+
+msgctxt "did_number"
+msgid "Number:"
+msgstr "หมายเลข:"
+
+msgctxt "did_region_list"
+msgid "Select region"
+msgstr "เลือกภูมิภาค"
+
+msgctxt "did_area_list"
+msgid "Select area"
+msgstr "เลือกพื้นที่"
+
+msgctxt "did_number_list"
+msgid "Select number"
+msgstr "เลือกหมายเลข"
+
+msgctxt "did_selection_wrong_format"
+msgid "Phone number selection - server sent wrong data format:"
+msgstr "การเลือกหมายเลขโทรศัพท์ - เซิฟเวอร์ส่งข้อมูลผิดพลาด:"
+
+msgctxt "did_no_area"
+msgid "Currently no area available in this region. Select another region."
+msgstr "ไม่มีพื้นที่สำหรับภูมิภาคนี้ กรุณาเลือกภูมิภาคใหม่"
+
+msgctxt "did_no_number"
+msgid "Currently no phone number available, select another region or area."
+msgstr "ไม่มีหมายเลขนี้ เลิกภูมิภาคหรือพื้นที่อื่นๆ"
+
+msgctxt "did_ask_to_complete"
+msgid "Complete the phone number selection."
+msgstr "การเลือกหมายเลขโทรศัพท์สำเร็จ"
+
+msgctxt "no_internet"
+msgid "No Internet connection"
+msgstr "ไม่มีการเชื่อมต่ออินเตอร์เน็ต"
+
+msgctxt "mobile_internet_available"
+msgid "Mobile Internet available"
+msgstr "อินเตอร์เน็ตใช้งานได้"
+
+msgctxt "directory_use_sc"
+msgid "Search Silent Circle Global Directory"
+msgstr "ค้นหา"
+
+#. <string name="directory_use_sc">Search Silent Circle Directory</string>
+msgctxt "directory_own_org_only"
+msgid "Members of my own organization"
+msgstr "สมาชิกขององค์กรของฉัน"
+
+msgctxt "network_trouble_detected"
+msgid "Network trouble detected"
+msgstr ""
+
+msgctxt "network_not_available_title"
+msgid "Network not available"
+msgstr ""
+
+msgctxt "network_not_available_description"
+msgid ""
+"Creating a new conversation requires network access so we can search for "
+"the other party. Try connecting to a network or disabling airplane mode."
+msgstr ""
+"การสร้างบทสนทนาใหม่ต้องการเชื่อมต่ออินเทอร์เน็ต "
+"กรุณาเชื่อมต่ออินเทอร์เน็ตหรือปิดโหมดเครื่องบิน"
+
+msgctxt "sign_in"
+msgid "Sign in"
+msgstr "ลงชื่อเข้าใช้"
+
+msgctxt "sign_in_to_sc"
+msgid "Sign in to your Silent Circle account"
+msgstr "ลงชื่อเข้าใช้บัญชี Silent Circle ของคุณ"
+
+msgctxt "sc_help"
+msgid "Help & Support"
+msgstr "ช่วยเหลือ"
+
+msgctxt "sc_privacy"
+msgid "Privacy Statement"
+msgstr "นโยบายความเป็นส่วนตัว"
+
+msgctxt "sc_tos"
+msgid "Terms of Service"
+msgstr "เงื่อนไขการให้บริการ"
+
+msgctxt "sc_manage_account"
+msgid "Manage Account"
+msgstr "จัดการบัญชี"
+
+msgctxt "sc_privacy_link"
+msgid ""
+"<a href=\"https://accounts.silentcircle.com/privacy-policy/\">Privacy "
+"Statement</a>"
+msgstr ""
+"<a href=\"https://accounts.silentcircle.com/privacy-"
+"policy/\">นโยบายความเป็นส่วนตัว</a>"
+
+msgctxt "sc_tos_link"
+msgid "<a href=\"https://accounts.silentcircle.com/terms/\">Terms of Service</a>"
+msgstr ""
+"<a "
+"href=\"https://accounts.silentcircle.com/terms/\">เงื่อนไขการให้บริการ</a>"
+
+#, c-format
+msgctxt "number_missed_calls"
+msgid "Missed call"
+msgid_plural "%d missed calls"
+msgstr[0] "%dสายที่ไม่ได้รับ"
+
+msgctxt "no_video_available"
+msgid "Video is not available for this call."
+msgstr "วิดิโอไม่สามารถใช้งานได้สำหรับการโทรนี้"
+
+msgctxt "call_in_progress"
+msgid "Call in progress"
+msgstr "กำลังใช้สาย"
+
+msgctxt "network_trouble_title"
+msgid "Network trouble detected"
+msgstr ""
+
+msgctxt "network_trouble_underflow_description"
+msgid ""
+"The tone you heard or are hearing indicates that no audio is being "
+"received from the other party. This is called dropout tone and indicates "
+"the silence is not intentional. This may be caused by your network "
+"environment or that of the remote party. To improve the quality of your "
+"call, you or the other party may try moving closer to your wireless base "
+"station, moving to a place with more signal bars, changing networks or "
+"internet service providers, or contacting your organization's networking "
+"staff."
+msgstr ""
+
+msgctxt "server_cert_failure"
+msgid "Certificate check failed - retrying"
+msgstr "การตรวจสอบผิดพลาด – กำลังลองอีกครั้ง"
+
+msgctxt "remaining_oca_minutes"
+msgid "Account info"
+msgstr "ข้อมูลบัญชี"
+
+msgctxt "remaining_oca_minutes_fail"
+msgid "No Silent World information available"
+msgstr "ไม่มีข้อมูล Silent World"
+
+#, c-format
+msgctxt "remaining_oca_minutes_zero"
+msgid "No call minutes used. Monthly plan: %1$d minutes."
+msgstr "ไม่มีการใช้สาย. วางแผนประจำเดือน %1$d นาที"
+
+msgctxt "remaining_oca_minutes_dialog"
+msgid "Silent Circle account"
+msgstr "บัญชี Silent Circle"
+
+msgctxt "remaining_oca_minutes_loading_dialog"
+msgid "Retrieving account information…"
+msgstr "กำลังเรียกข้อมูลบัญชี"
+
+msgctxt "avatar_upload_loading_dialog"
+msgid "Uploading avatar…"
+msgstr "กำลังอัพโหลด avatar…"
+
+msgctxt "avatar_delete_loading_dialog"
+msgid "Deleting avatar…"
+msgstr "กำลังลบ avatar…"
+
+msgctxt "avatar_fetch_loading_dialog"
+msgid "Fetching avatar…"
+msgstr ""
+
+#, c-format
+msgctxt "remaining_oca_minutes_info"
+msgid "You used one minute of your %1$d minutes."
+msgid_plural ""
+"Plan: %1$d minutes\n"
+"Remaining: %2$d minutes"
+msgstr[0] ""
+
+msgctxt "manage_account"
+msgid ""
+"&lt;br&gt;&lt;br&gt;&lt;a "
+"href=https://accounts.silentcircle.com/&gt;Manage account&lt;/a&gt;"
+msgstr ""
+"&lt;br&gt;&lt;br&gt;&lt;a "
+"href=https://accounts.silentcircle.com/&gt;จัดการบัญชี&lt;/a&gt;"
+
+msgctxt "manage_account_dev"
+msgid ""
+"&lt;br&gt;&lt;br&gt;&lt;a href=https://accounts-"
+"dev.silentcircle.com/&gt;Manage account&lt;/a&gt;"
+msgstr ""
+"&lt;br&gt;&lt;br&gt;&lt;a href=https://accounts-"
+"dev.silentcircle.com/&gt;จัดการบัญชี&lt;/a&gt;"
+
+#, c-format
+msgctxt "remaining_credit"
+msgid "Remaining credit: %1$.2f %2$s"
+msgstr "เครดิตคงเหลือ: %1$.2f %2$s"
+
+msgctxt "setting_p2p"
+msgid "Use media relay"
+msgstr "Use media relay"
+
+msgctxt "setting_p2p_summary"
+msgid ""
+"Always use media relay server to conceal remote party's location. Adds "
+"latency."
+msgstr ""
+"Always use media relay server to conceal remote party's location. Adds "
+"latency."
+
+#. SPA-259 added string
+msgctxt "connected_to_network"
+msgid ""
+"Network unavailable. \n"
+"\n"
+"Ensure your device can connect to the Internet and try again."
+msgstr ""
+"สัญญาณไม่ว่าง "
+"ตรวจสอบอีกครั้งโทรศัพท์ของคุณได้เชื่อมต่ออินเตอร์เน็ตและลองอีกครั้ง"
+
+msgctxt "provisioning_error_message"
+msgid "Please re-launch the app and login again."
+msgstr "กรุณาเปิดแอปพลิเคชั่นใหม่และลงชื่อเข้าใช้งานอีกครั้ง"
+
+#. end SPA-259
+msgctxt "re_provisioning_device_not_found"
+msgid ""
+"This device is not known to the provisioning server. To re-provision this"
+" device you need to enter your Silent Circle username and password. \n"
+"\n"
+"To continue press OK."
+msgstr ""
+"โทรศัพท์เครื่องนี้ไม่รู้จักกับเซิฟเวอร์ "
+"คุณจำเป็นต้องใส่ชื่อผู้ใช้งานและรหัสผ่านของ Silent Circle \n"
+"\n"
+" ถัดไปกดตกลง"
+
+#. **************************  New Dialer layout
+#. *************************
+msgctxt "tab_recents"
+msgid "CALLS"
+msgstr "โทร"
+
+msgctxt "tab_all_contacts"
+msgid "CONTACTS"
+msgstr "รายชื่อ"
+
+msgctxt "tab_chat"
+msgid "CHATS"
+msgstr "สนทนา"
+
+#. Button text for the "call back" button displayed underneath an entry in the
+#. call log.      Tapping causes a call to be placed to the caller represented
+#. by the call log entry.      [CHAR LIMIT=30]
+msgctxt "call_log_action_call_back"
+msgid "CALL BACK"
+msgstr "โทรกลับ"
+
+#. Button text for the "DETAILS" button displayed underneath an entry in the
+#. call log.          Tapping navigates the user to the call details screen
+#. where the user can view details for          the call log entry.
+#. [CHAR LIMIT=30]
+msgctxt "call_log_action_details"
+msgid "DETAILS"
+msgstr "รายละเอียด"
+
+#. Button text for the "report" button displayed underneath an entry in the
+#. call log.          Tapping causes the call log entry to be reported as a bad
+#. id.          [CHAR LIMIT=30]
+msgctxt "call_log_action_report"
+msgid "REPORT"
+msgstr "รายงาน"
+
+#. Button text for the "write back" button displayed underneath an entry in
+#. the call log.      Tapping causes a conversation to be started with the
+#. caller represented by the call log entry.      [CHAR LIMIT=30]
+msgctxt "call_log_action_write_back"
+msgid "WRITE BACK"
+msgstr "เขียนกลับ"
+
+#. Button text for the "invite" button displayed underneath an entry in the
+#. call log.      Tapping causes an invitation to Silent Circle to be sent via
+#. SMS or email.      [CHAR LIMIT=30]
+msgctxt "call_log_action_invite"
+msgid "INVITE TO SILENT CIRCLE"
+msgstr "เชิญเข้าสู่ SILENT CIRCLE"
+
+#. Content description for dismiss button on badge. [CHAR LIMIT=NONE]
+msgctxt "description_dismiss"
+msgid "Dismiss"
+msgstr "ยกเลิก"
+
+#. Message displayed when there is no application available to handle a
+#. particular action.      [CHAR LIMIT=NONE]
+msgctxt "activity_not_available"
+msgid "No installed activity available to handle selected action."
+msgstr "ไม่ได้ติดตั้งกิจกรรมสำหรับสิ่งที่เลือกอยู่"
+
+#. Note: AccessibilityServices use this attribute to announce what the view
+#. represents.     This is especially valuable for views without textual
+#. representation like ImageView.
+#, c-format
+msgctxt "description_num_calls"
+msgid "<xliff:g id=\"numberOfCalls\">%1$s</xliff:g> calls."
+msgstr "<xliff:g id=\"numberOfCalls\">%1$s</xliff:g> โทร."
+
+#. String describing the "call back" action for an entry in the call log.  The
+#. call back      action triggers a return call to the named user.      Note:
+#. AccessibilityServices uses this attribute to announce the purpose of the
+#. button.      [CHAR LIMIT=NONE]
+#, c-format
+msgctxt "description_call_back_action"
+msgid ""
+"Call back <xliff:g id=\"nameOrNumber\" example=\"John "
+"Smith\">%1$s</xliff:g>"
+msgstr "โทรกลับ <xliff:g id=\"nameOrNumber\" example=\"John Smith\">%1$s</xliff:g>"
+
+#. String describing the "details" action for an entry in the call log.  The
+#. details action          displays the call details screen for an entry in the
+#. call log.  This shows the calls to          and from the specified number
+#. associated with the call log entry.          [CHAR LIMIT=NONE]
+#, c-format
+msgctxt "description_details_action"
+msgid ""
+"Call details for <xliff:g id=\"nameOrNumber\" example=\"John "
+"Smith\">%1$s</xliff:g>"
+msgstr ""
+"รายละเอียดการโทรสำหรับ <xliff:g id=\"nameOrNumber\" example=\"John "
+"Smith\">%1$s</xliff:g>"
+
+#. String describing the button to access the contact details for a name or
+#. number.          Note: AccessibilityServices use this attribute to announce
+#. what the view represents.               This is especially valuable for
+#. views without textual representation like ImageView.
+#, c-format
+msgctxt "description_contact_details"
+msgid "Contact details for <xliff:g id=\"nameOrNumber\">%1$s</xliff:g>"
+msgstr "รายละเอียดรายชื่อสำหรับ <xliff:g id=\"nameOrNumber\">%1$s</xliff:g>"
+
+#. String describing an incoming missed call entry in the call log.      Note:
+#. AccessibilityServices uses this attribute to announce what the view
+#. represents.      [CHAR LIMIT=NONE]
+#, c-format
+msgctxt "description_incoming_missed_call"
+msgid ""
+"Missed call from <xliff:g id=\"nameOrNumber\" example=\"John "
+"Smith\">%1$s</xliff:g>, <xliff:g id=\"typeOrLocation\" "
+"example=\"Mobile\">%2$s</xliff:g>, <xliff:g id=\"timeOfCall\" example=\"2"
+" min ago\">%3$s</xliff:g>."
+msgstr ""
+"สายที่ไม่ได้รับจาก <xliff:g id=\"nameOrNumber\" example=\"John "
+"Smith\">%1$s</xliff:g>, <xliff:g id=\"typeOrLocation\" "
+"example=\"Mobile\">%2$s</xliff:g>, <xliff:g id=\"timeOfCall\" example=\"2"
+" min ago\">%3$s</xliff:g>."
+
+#. String describing an incoming answered call entry in the call log.
+#. Note: AccessibilityServices uses this attribute to announce what the view
+#. represents.          [CHAR LIMIT=NONE]
+#, c-format
+msgctxt "description_incoming_answered_call"
+msgid ""
+"Answered call from <xliff:g id=\"nameOrNumber\" example=\"John "
+"Smith\">%1$s</xliff:g>, <xliff:g id=\"typeOrLocation\" "
+"example=\"Mobile\">%2$s</xliff:g>, <xliff:g id=\"timeOfCall\" example=\"2"
+" min ago\">%3$s</xliff:g>."
+msgstr ""
+"สายที่ได้รับจาก <xliff:g id=\"nameOrNumber\" example=\"John "
+"Smith\">%1$s</xliff:g>, <xliff:g id=\"typeOrLocation\" "
+"example=\"Mobile\">%2$s</xliff:g>, <xliff:g id=\"timeOfCall\" example=\"2"
+" min ago\">%3$s</xliff:g>."
+
+#. String describing an outgoing call entry in the call log.          Note:
+#. AccessibilityServices uses this attribute to announce what the view
+#. represents.          [CHAR LIMIT=NONE]
+#, c-format
+msgctxt "description_outgoing_call"
+msgid ""
+"Call to <xliff:g id=\"nameOrNumber\" example=\"John "
+"Smith\">%1$s</xliff:g>, <xliff:g id=\"typeOrLocation\" "
+"example=\"Mobile\">%2$s</xliff:g>, <xliff:g id=\"timeOfCall\" example=\"2"
+" min ago\">%3$s</xliff:g>."
+msgstr ""
+"โทรหา <xliff:g id=\"nameOrNumber\" example=\"John Smith\">%1$s</xliff:g>,"
+" <xliff:g id=\"typeOrLocation\" example=\"Mobile\">%2$s</xliff:g>, "
+"<xliff:g id=\"timeOfCall\" example=\"2 min ago\">%3$s</xliff:g>."
+
+#. Delimiter used between each item in a textual list; for example "Alpha,
+#. Beta".      [CHAR LIMIT=3]
+msgctxt "list_delimeter"
+msgid ", "
+msgstr ", "
+
+#. String used as a header in the call log above calls which occurred today.
+#. [CHAR LIMIT=65]
+msgctxt "call_log_header_today"
+msgid "Today"
+msgstr "วันนี้"
+
+#. String used as a header in the call log above calls which occurred
+#. yesterday.          [CHAR LIMIT=65]
+msgctxt "call_log_header_yesterday"
+msgid "Yesterday"
+msgstr "เมื่อวานนี้"
+
+#. String used as a header in the call log above calls which occurred two days
+#. or more ago.          [CHAR LIMIT=65]
+msgctxt "call_log_header_other"
+msgid "Older"
+msgstr "เก่ากว่า"
+
+#. Text displayed when the list of missed calls is empty
+msgctxt "recentMissed_empty"
+msgid "You have no recent missed calls."
+msgstr "คุณไม่มีสายที่ไม่ได้รับล่าสุด"
+
+#. Title for the recent calls footer that brings users to the full call
+#. history when clicked
+msgctxt "recents_footer_text"
+msgid "View full call history"
+msgstr "ดูประวัติการโทร"
+
+#. Shown when there are no contacts in the all contacts list.
+msgctxt "all_contacts_empty"
+msgid "You have no contacts."
+msgstr "คุณไม่มีรายชื่อผู้ติดต่อ"
+
+#. Title for the call log tab containing the list of all voicemails and calls
+#. [CHAR LIMIT=30]
+msgctxt "call_log_all_title"
+msgid "ALL"
+msgstr "ทั้งหมด"
+
+#. Title for the call log tab containing the list of all missed calls only
+#. [CHAR LIMIT=30]
+msgctxt "call_log_missed_title"
+msgid "MISSED"
+msgstr "ไม่ได้รับ"
+
+#. *****
+#. Shortcut item used to call a number directly from search
+#, c-format
+msgctxt "search_shortcut_call_number"
+msgid "Call <xliff:g id=\"number\">%s</xliff:g> "
+msgstr "โทร <xliff:g id=\"number\">%s</xliff:g> "
+
+#. Shortcut item used to add a number directly from search
+msgctxt "search_shortcut_add_to_contacts"
+msgid "Add to contacts"
+msgstr "เพิ่มรายชื่อ"
+
+#. Shortcut item to start conversation from search
+#, c-format
+msgctxt "search_shortcut_write_to"
+msgid "Write to <xliff:g id=\"number\">%s</xliff:g>"
+msgstr "เขียนถึง <xliff:g id=\"number\">%s</xliff:g>"
+
+msgctxt "search_shortcut_group_chat"
+msgid "New group conversation"
+msgstr ""
+
+#, c-format
+msgctxt "search_shortcut_add_to_group_chat"
+msgid "Add <xliff:g id=\"number\">%s</xliff:g> to selection"
+msgstr ""
+
+#. Message displayed when there is no application available to handle the add
+#. contact menu option. [CHAR LIMIT=NONE]
+msgctxt "add_contact_not_available"
+msgid "Re-enable the Contacts application to use this feature."
+msgstr "เปิดใช้งานให้ผู้ติดต่อได้ใช้รูปแบบนี้"
+
+#. Content description for the fake action menu up button as used      inside
+#. search. [CHAR LIMIT=NONE]
+msgctxt "action_menu_back_from_search"
+msgid "stop searching"
+msgstr "ยกเลิกการค้นหา"
+
+#. String describing the icons used in conversation starter
+msgctxt "description_clear_search"
+msgid "Clear search"
+msgstr "ล้างประวัติการค้นหา"
+
+msgctxt "description_dial_pad_toggle"
+msgid "Dial pad toggle"
+msgstr "Dial pad toggle"
+
+msgctxt "description_keyboard_toggle"
+msgid "Keyboard toggle"
+msgstr "Keyboard toggle"
+
+#. Hint displayed in dialer search box when there is no query that is
+#. currently typed.      [CHAR LIMIT=30]
+msgctxt "dialer_hint_find_contact"
+msgid "Enter name or number"
+msgstr "ใส่ชื่อหรือหมายเลข"
+
+msgctxt "dialer_hint_find_messaging_contact"
+msgid "Enter name"
+msgstr "ใส่ชื่อ"
+
+#. Title for the sms disambiguation dialog
+msgctxt "sms_disambig_title"
+msgid "Choose number"
+msgstr "เลือกหมายเลข"
+
+#. Title for the call disambiguation dialog
+msgctxt "call_disambig_title"
+msgid "Choose number"
+msgstr "เลือกหมายเลข"
+
+#. Message next to disambiguation dialog check box
+msgctxt "make_primary"
+msgid "Remember this choice"
+msgstr "จำตัวเลือกนี้"
+
+msgctxt "low_volume"
+msgid "Volume may be too low."
+msgstr "ระดับเสียงอาจจะเบาไป"
+
+msgctxt "urgent_call"
+msgid "Urgent"
+msgstr "ด่วน"
+
+msgctxt "emergency_call"
+msgid "Emergency"
+msgstr "ฉุกเฉิน"
+
+msgctxt "call_mng_conference_explanation"
+msgid "Drag call into conference"
+msgstr "ลากการโทรเข้าสู่การประชุมสาย"
+
+msgctxt "call_mng_private_explanation"
+msgid "Drag here to remove from conference"
+msgstr "ลากที่นี่เพื่อลบการประชุมสาย"
+
+msgctxt "account_manager_label"
+msgid "Silent Circle account"
+msgstr "บัญชี Silent Circle"
+
+msgctxt "account_access_label"
+msgid "Access account"
+msgstr "เข้าสู่บัญชี"
+
+msgctxt "account_exists"
+msgid ""
+"An account exists already - cannot create an additional account on this "
+"device."
+msgstr "มีบัญชีอยู่แล้ว – ไม่สามารถสร้างบัญชีได้อีก"
+
+msgctxt "account_missing_name"
+msgid "Missing username for this account."
+msgstr "ลืมชื่อของบัญชีนี้"
+
+#. Used to display as default status when the contact is available for chat
+#. [CHAR LIMIT=19]
+msgctxt "status_available"
+msgid "Available"
+msgstr "ออนไลน์"
+
+#. Used to display as default status when the contact is away or idle for
+#. chat [CHAR LIMIT=19]
+msgctxt "status_away"
+msgid "Away"
+msgstr "ไม่อยู่"
+
+#. Used to display as default status when the contact is busy or Do not
+#. disturb for chat [CHAR LIMIT=19]
+msgctxt "status_busy"
+msgid "Busy"
+msgstr "ไม่ว่าง"
+
+#. String a header on the call details screen.  Appears above the list calls
+#. to or from a          particular number.          [CHAR LIMIT=65]
+msgctxt "call_detail_list_header"
+msgid "Calls list"
+msgstr "รายการโทร"
+
+#. String resources for messaging functionality
+#. ********************************************
+msgctxt "messaging_send_message"
+msgid "Send"
+msgstr "ส่ง"
+
+msgctxt "messaging_attach_file"
+msgid "Attach"
+msgstr "แนบ"
+
+msgctxt "messaging_compose_hint"
+msgid "Type message…"
+msgstr "พิมพ์ข้อความ..."
+
+msgctxt "undisclosed_location"
+msgid "(undisclosed location)"
+msgstr "(ไม่เปิดเผยสถานที่)"
+
+msgctxt "optimizing"
+msgid "Optimizing…"
+msgstr "Optimizing…"
+
+msgctxt "processing"
+msgid "Processing…"
+msgstr "กำลังดำเนินการ..."
+
+msgctxt "loading"
+msgid "Loading…"
+msgstr "กำลังโหลด..."
+
+msgctxt "uploading"
+msgid "Uploading…"
+msgstr "อัพโหลด..."
+
+msgctxt "encrypting"
+msgid "Encrypting…"
+msgstr "เข้ารหัส..."
+
+msgctxt "decrypting"
+msgid "Decrypting…"
+msgstr "ถอดรหัส..."
+
+msgctxt "downloading"
+msgid "Downloading…"
+msgstr "ดาวน์โหลด..."
+
+msgctxt "exporting"
+msgid "Exporting…"
+msgstr "ส่ง..."
+
+msgctxt "thumbnail"
+msgid "Thumbnail"
+msgstr "Thumbnail"
+
+msgctxt "attachment"
+msgid "Attachment"
+msgstr "แนบ"
+
+msgctxt "delivered"
+msgid "Delivered"
+msgstr "ส่งแล้ว"
+
+msgctxt "notify_resend_request"
+msgid "The recipient has requested that this message be sent again."
+msgstr "ผู้รับขอให้ส่งข้อความนี้ซ้ำ"
+
+msgctxt "location"
+msgid "Location"
+msgstr "ตำแหน่ง"
+
+msgctxt "share_location"
+msgid "Share location"
+msgstr "แชร์ตำแหน่งที่ตั้ง"
+
+msgctxt "silent_phone_call"
+msgid "Call using Silent Phone"
+msgstr "โทร ใช้Silent Phone"
+
+msgctxt "burn_notice"
+msgid "Burn Notice"
+msgstr "เบิร์น"
+
+msgctxt "autolock"
+msgid "Automatic Lock"
+msgstr "ล๊อคอัตโนมัติ"
+
+msgctxt "send_receipts"
+msgid "Send read receipts"
+msgstr "ส่งรายงานการอ่าน"
+
+msgctxt "clear_conversation"
+msgid "Clear conversation"
+msgstr "ลบบทสนทนา"
+
+msgctxt "clear_conversation_exp"
+msgid "Clears all messages"
+msgstr "ลบข้อความทั้งหมด"
+
+msgctxt "save_conversation"
+msgid "Save Conversation"
+msgstr "บันทึกข้อความ"
+
+msgctxt "verify_description_verified"
+msgid "For added security, you have verified this message with the recipient."
+msgstr "เพื่อความปลอดภัยที่เพิ่มขึ้น คุณได้ตรวจสอบข้อความนี้กับผู้รับ"
+
+msgctxt "verify_description_unverified"
+msgid "For added security, verify this message with the recipient."
+msgstr "เพื่อความปลอดภัยที่เพิ่มขึ้น ตรวจสอบข้อความนี้กับผู้รับ"
+
+msgctxt "reset_keys"
+msgid "Reset Keys"
+msgstr "ปุ่มรีเซต"
+
+msgctxt "no_expiration"
+msgid "Messages do not expire"
+msgstr "ข้อความไม่หมดอายุ"
+
+#, c-format
+msgctxt "messages_expire"
+msgid ""
+"Messages expire <xliff:g id=\"expire_timeout\" example=\"in 1 "
+"minute\">%1$s</xliff:g>"
+msgstr ""
+"ข้อความหมดอายุ <xliff:g id=\"expire_timeout\" example=\"in 1 "
+"minute\">%1$s</xliff:g>"
+
+msgctxt "are_you_sure"
+msgid "Are you sure?"
+msgstr "คุณแน่ใจ?"
+
+msgctxt "rekey_messaging_sessions"
+msgid "Re-key messaging sessions"
+msgstr "เปลี่ยนการเข้ารหัสข้อความ"
+
+msgctxt "cannot_be_undone"
+msgid "This action cannot be undone."
+msgstr "ยืนยันการทำรายการ"
+
+msgctxt "save_will_expose_data"
+msgid ""
+"Saving this conversation will expose all of its messages to another "
+"application of your choice. Messages with an attachment or a burn notice "
+"will NOT be exported."
+msgstr ""
+"การบันทึกการสนทนานี้จะแสดงทุกข้อความไปยังอีกแอปลิเคชั่นที่เลือก "
+"ข้อความกับไฟล์แนบหรือถูกเบิร์นแล้วจะไม่ถูกส่ง"
+
+msgctxt "error_attachment_unavailable"
+msgid "File no longer available. Please contact sender."
+msgstr "ไม่มีไฟล์นี้แล้ว โปรดติดต่อผู้ส่งไฟล์อีกครั้ง"
+
+msgctxt "warning_delete_conversation"
+msgid "Deleting the conversation will destroy all of its data."
+msgstr "การลบจะทำลายข้อมูล"
+
+msgctxt "warning_leave_group_conversation"
+msgid ""
+"Leaving the group will destroy all its data on this device. To join the "
+"group again, you'll need to be added by another member."
+msgstr ""
+"การออกจากกลุ่มข้อมูลทั้งหมดจะหายไป หากต้องการเข้าร่วมกลุ่มอีกครั้ง "
+"คุณจะต้องถูกเพิ่มเข้ากลุ่มโดยสมาชิกในกลุ่ม"
+
+msgctxt "warning_media_to_be_exported"
+msgid ""
+"This media is currently private. In order to proceed, <xliff:g "
+"id=\"application_name\">Silent Phone</xliff:g> must grant other "
+"applications access to the decrypted file."
+msgstr ""
+"รายการนี้ถูกตั้งค่าความเป็นส่วนตัว เพื่อที่จะใช้, <xliff:g "
+"id=\"application_name\">Silent Phone</xliff:g> "
+"ต้องอนุญาตให้ไฟล์อื่นเข้าถึงการถอดรหัส"
+
+msgctxt "warning_rekey_conversation"
+msgid "Are you sure you want to establish new keys for messaging sessions?"
+msgstr "ยืนยันการสร้างคีย์ใหม่"
+
+msgctxt "warning_ringtone_picked_unavailable"
+msgid "Unable to launch system's ringtone picker activity."
+msgstr "ไม่สามารถใช้ริงโทนของระบบ"
+
+msgctxt "warning_selected_action_unavailable"
+msgid "Unable to launch selected action."
+msgstr "ไม่สามารถทำรายการที่เลือก"
+
+msgctxt "info_feature_discovery_reset"
+msgid "Tutorial screens reset"
+msgstr ""
+
+msgctxt "info_warnings_reset"
+msgid "Warnings reset"
+msgstr ""
+
+msgctxt "share_from"
+msgid "Share securely"
+msgstr "แชร์อย่างปลอดภัย"
+
+#, c-format
+msgctxt "n_selected"
+msgid "<xliff:g id=\"count\">%1$d</xliff:g> selected"
+msgstr "<xliff:g id=\"count\">%1$d</xliff:g> เลือกแล้ว"
+
+msgctxt "delete"
+msgid "Delete"
+msgstr "ลบ"
+
+msgctxt "sync"
+msgid "Synchronize"
+msgstr ""
+
+msgctxt "view"
+msgid "View"
+msgstr "ดู"
+
+msgctxt "share"
+msgid "Share"
+msgstr "แชร์"
+
+msgctxt "save"
+msgid "Save"
+msgstr "บันทึก"
+
+msgctxt "copy"
+msgid "Copy"
+msgstr "คัดลอก"
+
+msgctxt "info"
+msgid "Info"
+msgstr "ข้อมูล"
+
+msgctxt "burn"
+msgid "Burn"
+msgstr "เบิร์น"
+
+msgctxt "resend"
+msgid "Resend"
+msgstr "ส่งอีกครั้ง"
+
+msgctxt "options"
+msgid "Options"
+msgstr "ตัวเลือก"
+
+msgctxt "forward"
+msgid "Forward"
+msgstr "ส่งต่อ"
+
+msgctxt "import_contact"
+msgid "Import contact"
+msgstr "นำเข้ารายชื่อ"
+
+#, c-format
+msgctxt "import_contacts"
+msgid "Import %d contacts"
+msgstr "นำเข้ารายชื่อ %d"
+
+msgctxt "search"
+msgid "Search"
+msgstr "ค้นหา"
+
+msgctxt "submit"
+msgid "Submit"
+msgstr "ส่ง"
+
+msgctxt "status_on"
+msgid "On"
+msgstr "เปิด"
+
+msgctxt "status_off"
+msgid "Off"
+msgstr "ปิด"
+
+msgctxt "settings"
+msgid "Settings"
+msgstr "ตั้งค่า"
+
+msgctxt "wipe"
+msgid "Wipe"
+msgstr "ลบ"
+
+msgctxt "immediately"
+msgid "Immediately"
+msgstr "ทันที"
+
+msgctxt "got_it"
+msgid "Got it"
+msgstr "ได้รับ"
+
+msgctxt "just_now"
+msgid "just now"
+msgstr "ขณะนี้"
+
+msgctxt "remove"
+msgid "Remove"
+msgstr "ลบ"
+
+msgctxt "connecting"
+msgid "connecting"
+msgstr "กำลังเชื่อมต่อ"
+
+msgctxt "online"
+msgid "online"
+msgstr "ออนไลน์"
+
+msgctxt "offline"
+msgid "offline"
+msgstr "ออฟไลน์"
+
+msgctxt "you"
+msgid "You"
+msgstr "คุณ"
+
+#. Attachement grid
+msgctxt "take_photo"
+msgid "Take Photo"
+msgstr "ถ่ายรูป"
+
+msgctxt "gallery"
+msgid "Gallery"
+msgstr "แกลลอรี่"
+
+msgctxt "take_video"
+msgid "Take Video"
+msgstr "ถ่ายวีดีโอ"
+
+msgctxt "record_audio"
+msgid "Record Audio"
+msgstr "บันทึกเสียง"
+
+msgctxt "send_file"
+msgid "Send File"
+msgstr "ส่งไฟล์"
+
+msgctxt "share_contact"
+msgid "Share Contact"
+msgstr "ส่งรายชื่อ"
+
+#. voiceovers for conversation view
+msgctxt "messaging_back_button_voiceover"
+msgid "Back to conversations"
+msgstr "กลับสู่การสนทนา"
+
+msgctxt "messaging_avatar_voiceover"
+msgid "Avatar"
+msgstr "รูป"
+
+msgctxt "messaging_burn_button_voiceover"
+msgid "Burn"
+msgstr "เบิร์น"
+
+msgctxt "messaging_location_button_voiceover"
+msgid "Location"
+msgstr "ตำแหน่ง"
+
+msgctxt "messaging_start_conversation_voiceover"
+msgid "Start conversation"
+msgstr "เริ่มการสนทนา"
+
+msgctxt "messaging_burn_delay_voiceover"
+msgid "Set burn delay"
+msgstr "ตั้งค่าการเบิร์น"
+
+msgctxt "activity_conversation_voiceover"
+msgid "Conversation"
+msgstr "การสนทนา"
+
+msgctxt "capture_audio_label"
+msgid "Record audio with Silent Phone"
+msgstr "บันทึกเสียงด้วยSilent Phone"
+
+msgctxt "capture_video_label"
+msgid "Capture video with Silent Phone"
+msgstr "บันทึกวีดีโอด้วยSilent Phone"
+
+msgctxt "capture_picture_error"
+msgid "There was a problem taking a picture. Please try again."
+msgstr "การถ่ายภาพมีปัญหา โปรดลองอีกครั้ง"
+
+msgctxt "record_currently_on_call"
+msgid "Recording is not supported during a call"
+msgstr "ไม่สามารถบันทึกระหว่างการโทร"
+
+msgctxt "attachment_wait_until_complete"
+msgid "Please wait until attachments are complete"
+msgstr ""
+
+msgctxt "dialog_title_cannot_enable_location_sharing"
+msgid "Cannot enable location sharing"
+msgstr "ไม่สามารถแชร์ตำแหน่งที่ตั้ง"
+
+msgctxt "dialog_title_failed_to_send_message"
+msgid "Failed to send message"
+msgstr "ส่งข้อความล้มเหลว"
+
+msgctxt "dialog_title_unable_to_send_messages"
+msgid "Unable to send messages"
+msgstr "ไม่สามารถส่งข้อความ"
+
+msgctxt "dialog_title_unable_to_call"
+msgid "Unable to call"
+msgstr "ไม่สามารถโทร"
+
+msgctxt "dialog_title_choose_action"
+msgid "Choose action"
+msgstr "เลือกรายการ"
+
+msgctxt "dialog_title_error"
+msgid "Error"
+msgstr "ผิดพลาด"
+
+msgctxt "dialog_title_select_notification_light"
+msgid "Select notification light"
+msgstr "เลือกแสงการแจ้งเตือน"
+
+msgctxt "dialog_title_select_notification_vibrate"
+msgid "Select vibrate pattern"
+msgstr "เลือกรูปแบบการสั่น"
+
+msgctxt "dialog_title_select_messaging_theme"
+msgid "Select chat theme"
+msgstr "เลือธีม"
+
+msgctxt "dialog_title_choose_avatar_action"
+msgid "Choose avatar action"
+msgstr "เลือกรูป"
+
+msgctxt "dialog_title_device_deleted"
+msgid "This device has been deleted"
+msgstr "อุปกรณ์นี้ถูกลบแล้ว"
+
+msgctxt "dialog_title_data_retention"
+msgid "Data retention"
+msgstr "การรักษาข้อมูล"
+
+msgctxt "dialog_title_data_retention_blocking_cannot_be_disabled"
+msgid "Blocking cannot be disabled"
+msgstr "Blocking cannot be disabled"
+
+msgctxt "dialog_title_group_invitation"
+msgid "Group invitation"
+msgstr "คำเชิญเข้าร่วมกลุ่ม"
+
+msgctxt "dialog_title_storage_permission_required"
+msgid "Storage permission required"
+msgstr ""
+
+msgctxt "dialog_message_enable_device_location"
+msgid ""
+"To use this option, enable Location under device Settings. Location may "
+"be empty if only GPS is used."
+msgstr "การเมนูนี้ต้องเปิด เมนูตำแหน่งที่ตั้ง ที่การตั้งค่าโทรศัพท์ก่อน"
+
+#, c-format
+msgctxt "dialog_message_current_location_mode"
+msgid "Current location mode is \"%s\"."
+msgstr "โหมดการระบุตำแหน่ง \"%s\"."
+
+#, c-format
+msgctxt "dialog_message_failed_to_send_to"
+msgid ""
+"Failed to write to user %1$s.\n"
+"\n"
+"%2$s"
+msgstr ""
+"ผิดพลาด การส่งข้อความไป %1$s.\n"
+"\n"
+"%2$s"
+
+#, c-format
+msgctxt "dialog_call_failed_to_send_to"
+msgid ""
+"Failed to call %1$s.\n"
+"\n"
+"%2$s"
+msgstr ""
+"ผิดพลาด การโทรไป %1$s.\n"
+"\n"
+"%2$s"
+
+msgctxt "dialog_message_file_too_large"
+msgid "The file you have selected is too large."
+msgstr "ขนาดไฟล์ใหญ่เกินไป"
+
+msgctxt "dialog_message_wipe_phone"
+msgid ""
+"This will clear conversations, call history, and other Silent Phone data."
+" The application will exit. You will need to log back in when you restart"
+" Silent Phone."
+msgstr ""
+"จากนี้จะลบบทสนทนา ประวัติการโทรและ ข้อมูลSilent Phone จะออกจากแอปลิเคชั่น"
+" และเมื่อเข้าใหม่อีกครั้งต้องใส่รหัสผ่าน"
+
+#, c-format
+msgctxt "dialog_message_wipe_after_timer"
+msgid ""
+"This device has been removed from the list of authorized devices so it "
+"will close in %s and all of the application data will be cleared."
+msgstr "อุปกรณ์นี้ถูกลบออกโดยผู้มีอำนาจ จะถูกปิดภายใน%s. และข้อมูลทั้งหมดจะถูกลบ"
+
+#, c-format
+msgctxt "dialog_message_close_after_timer"
+msgid ""
+"This device has been removed from the list of authorized devices so it "
+"will close in %s. Please clear application data manually."
+msgstr "อุปกรณ์นี้ถูกลบออกโดยผู้มีอำนาจ จะถูกปิดภายใน%s. โปรดลบข้อมูลแอปลิเคชั่น"
+
+#, c-format
+msgctxt "dialog_message_invited_to_group_conversation"
+msgid ""
+"You have been invited to group conversation %1$s by %2$s.\n"
+"Please accept or decline the invitation."
+msgstr ""
+"คุณถูกเชิญเข้ากลุ่มสนทนา %1$s ดดย %2$s.\n"
+" โปรดตอบรับหรือปฎิเสธการเชิญ"
+
+msgctxt "dialog_message_group_conversation_burn_change_expires_messages"
+msgid ""
+"Changing burn time for group conversation will remove messages which are "
+"expired with new burn value."
+msgstr ""
+
+msgctxt "dialog_message_storage_permission_required"
+msgid ""
+"Storage permission is required to view attachments and has been denied "
+"previously. Enable Storage permission in application's preferences under "
+"Settings &gt; Apps &gt; Silent Phone"
+msgstr ""
+
+msgctxt "dialog_message_dr_enabled"
+msgid ""
+"Your organization imposes a policy of retaining data about your "
+"communication, however you have blocked Silent Phone from retaining this "
+"data. Communication is now prohibited. To restore communication either "
+"unset \"Block local data retention\" in Silent Phone settings or ask your"
+" organization's administrator to remove your data retention policy."
+msgstr ""
+"องค์กรณ์ของคุณตั้งการสนทนาโหมดรักษาข้อมูล การติดต่อระหว่างคุณถูกบล๊อก "
+"คุณสามารถแก้ไขได้จากเมนู \"บล๊อคการใช้ข้อมูล\" ในการตั้งค่าของ Silent "
+"Phone หรือติดต่อผู้ดูและระบบของคุณ"
+
+msgctxt "dialog_message_remote_dr_enabled"
+msgid ""
+"Conversation partner's organization imposes a policy of retaining data "
+"about your communication, however you have blocked Silent Phone from "
+"retaining this data. Communication is now prohibited. To restore "
+"communication unset \"Block remote data retention\" in Silent Phone "
+"settings."
+msgstr ""
+"องค์กรณ์ของคู่สนทนาตั้งการสนทนาโหมดรักษาข้อมูล "
+"การติดต่อระหว่างคุณถูกบล๊อก คุณสามารถแก้ไขได้จากเมนู "
+"\"บล๊อคการใช้ข้อมูล\" ในการตั้งค่าของ Silent Phone"
+
+#, c-format
+msgctxt "dialog_message_communication_dr_blocked"
+msgid ""
+"The user to whom you sent this message has declined to communicate with "
+"other users who are subject to data retention. As your organization %1$s "
+"imposes a policy of retaining data there's no way to respect both of your"
+" wishes. Communication between you is blocked. To allow communication, "
+"you could ask that user to deselect \"Block remote data retention\" in "
+"his or her Silent Phone settings or you could ask your organization to "
+"disable data retention on your account."
+msgstr ""
+"ผู้ใช้ที่คุณส่งข้อความนี้ไม่สามารถรับข้อมูล คุณถูกจำกัดสิทธิ์ในการสื่อสาร"
+" เนื่องจากองค์กรณ์ของคุณ%1$sใช้โหมดรักษาข้อมูล "
+"คุณสามารถขอให้คู่สนทนาปลดล๊อคได้จากเมนู \"บล๊อคการใช้ข้อมูล\" "
+"ในการตั้งค่าของ Silent Phone หรือติดต่อผู้ดูและระบบของคุณ"
+
+msgctxt "dialog_message_communication_dr_required"
+msgid ""
+"The user to whom you sent this message is subject to data retention and "
+"you have declined to communicate with other users who are subject to data"
+" retention. Communication between you is blocked. To allow communication,"
+" you could deselect \"Block remote data retention\" in your Silent Phone "
+"settings."
+msgstr ""
+"ผู้ใช้ที่คุณส่งข้อความนี้ไม่สามารถรับข้อมูล คุณถูกจำกัดสิทธิ์ในการสื่อสาร"
+" คุณสามารถปลดล๊อคได้จากเมนู \"บล๊อคการใช้ข้อมูล\" ในการตั้งค่าของ Silent "
+"Phone"
+
+msgctxt "dialog_message_communication_blocked_remote"
+msgid ""
+"The user to whom you sent this message is subject to data retention, "
+"however the user blocked the data retention functions on the client. "
+"Communication is blocked."
+msgstr ""
+"The user to whom you sent this message is subject to data retention, "
+"however the user blocked the data retention functions on the client. "
+"Communication is blocked."
+
+msgctxt "dialog_message_dr_blocked_by_default"
+msgid ""
+"For your protection, we've enabled blocking of data retention. If you are"
+" a non-organizational user this blocking is enabled by default. If you "
+"are part of an organization, your organization has blocked the use of "
+"data retention."
+msgstr ""
+"For your protection, we've enabled blocking of data retention. If you are"
+" a non-organizational user this blocking is enabled by default. If you "
+"are part of an organization, your organization has blocked the use of "
+"data retention."
+
+msgctxt "dialog_button_ok"
+msgid "OK"
+msgstr "ตกลง"
+
+msgctxt "dialog_button_yes"
+msgid "Yes"
+msgstr "ใช่"
+
+msgctxt "dialog_button_no"
+msgid "No"
+msgstr "ไม่"
+
+msgctxt "dialog_button_save"
+msgid "Save"
+msgstr "บันทึก"
+
+msgctxt "dialog_button_cancel"
+msgid "Cancel"
+msgstr "ยกเลิก"
+
+msgctxt "dialog_button_accept"
+msgid "Accept"
+msgstr "ยอมรับ"
+
+msgctxt "dialog_button_decline"
+msgid "Decline"
+msgstr "ปฎิเสธ"
+
+msgctxt "dialog_button_create"
+msgid "Create"
+msgstr "สร้าง"
+
+msgctxt "dialog_button_invite"
+msgid "Add to conversation"
+msgstr "เพิ่มไปยังบทสนทนา"
+
+msgctxt "location_mode_off"
+msgid "Location services not enabled"
+msgstr "ไม่ได้เปิดตำแหน่งที่ตั้ง"
+
+msgctxt "location_mode_device"
+msgid "Device only (GPS)"
+msgstr "อุปกรณ์เท่านั้น(GPS)"
+
+msgctxt "location_mode_battery_saving"
+msgid "Battery saving"
+msgstr "ประหยัดแบตเตอรี่"
+
+msgctxt "location_mode_high_accuracy"
+msgid "High accuracy"
+msgstr "ความแม่นยำสูง"
+
+msgctxt "chats_view_empty_header"
+msgid "Start a conversation"
+msgstr "เริ่มบทสนทนา"
+
+msgctxt "chats_view_empty"
+msgid "Tap the plus icon to call, text, send files, & more"
+msgstr ""
+"ยังไม่มีการสนทนา\n"
+"แตะไอคอนเครื่องหมายบวกเพื่อเพิ่มลือการสนทนา"
+
+msgctxt "chat_view_empty"
+msgid ""
+"Conversation is empty\n"
+"Type below to send a message\n"
+"Touch phone icon above to call"
+msgstr ""
+"ยังไม่มีการสนทนา\n"
+"แตะด้านล่างเพื่อส่งข้อความ\n"
+"แตะไอคอนโทรศัพทืด้านบนเพื่อโทร"
+
+msgctxt "phone_chat_view_empty"
+msgid ""
+"Conversation is empty\n"
+"Touch phone icon above to call"
+msgstr ""
+
+msgctxt "group_chat_view_empty"
+msgid ""
+"Conversation is empty\n"
+"Type below to send a message"
+msgstr ""
+
+#, c-format
+msgctxt "conversation_with"
+msgid "Conversation with %1$s"
+msgstr "สนทนากับ %1$s"
+
+msgctxt "username_unknown"
+msgid "Unknown"
+msgstr "ไม่รู้"
+
+#, c-format
+msgctxt "toast_saved_to"
+msgid "Saved to <xliff:g id=\"file_path\">%1$s</xliff:g>"
+msgstr "ถูกบันทึกไปยัง <xliff:g id=\"file_path\">%1$s</xliff:g>"
+
+#, c-format
+msgctxt "toast_deleted_from"
+msgid "Deleted from <xliff:g id=\"file_path\">%1$s</xliff:g>"
+msgstr "ถูกลบจาก <xliff:g id=\"file_path\">%1$s</xliff:g>"
+
+#, c-format
+msgctxt "unable_to_display_file"
+msgid "Unable to display file <xliff:g id=\"file_path\">%1$s</xliff:g>"
+msgstr "ไม่สามารถแสดงไฟล์ <xliff:g id=\"file_path\">%1$s</xliff:g>"
+
+#, c-format
+msgctxt "toast_failed_to_export_file"
+msgid "Failed to export file <xliff:g id=\"file_path\">%1$s</xliff:g>"
+msgstr "การส่งไฟล์ล้มเหลว <xliff:g id=\"file_path\">%1$s</xliff:g>"
+
+msgctxt "toast_no_browser_found"
+msgid "Could not open the link. No browser application found."
+msgstr "ไม่สามารถเปิดลิงค์ ไม่พบbrowser"
+
+msgctxt "show_remote_dev"
+msgid "Status of devices"
+msgstr "สถานะอุปกรณ์"
+
+msgctxt "show_remote_dev_exp"
+msgid "Shows status of the conversation partner's devices"
+msgstr "แสดงสถานะอุปกรณ์ของคู่สนทนา"
+
+msgctxt "show_group_members"
+msgid "Group members"
+msgstr "สมาชิกกลุ่ม"
+
+msgctxt "show_group_members_exp"
+msgid "Shows the current group members in the conversation"
+msgstr "แสดงสมาชิกกลุ่มปัจจุบันในบทสนทนา"
+
+msgctxt "no_axo_device"
+msgid "No device available for messaging"
+msgstr "ไม่มีอุปกรณ์สำหรับการส่งข้อความ"
+
+msgctxt "axo_ask_register"
+msgid "Register this device for messaging?"
+msgstr "ลงทะเบียนอุปกรณ์สำหรับการส่งข้อความ?"
+
+msgctxt "axo_menu_register"
+msgid "Chat feature"
+msgstr "ฟังก์ชั่นแชต"
+
+msgctxt "menu_devices"
+msgid "Devices"
+msgstr "การจัดการอุปกรณ์"
+
+msgctxt "axo_local_device"
+msgid "Fingerprint of local device:"
+msgstr "บันทึกการใช้อุปกรณ์:"
+
+msgctxt "axo_local_device_id_empty"
+msgid "Local device id empty"
+msgstr "idอุปกรณ์ว่าง"
+
+msgctxt "axo_devices"
+msgid "Available devices"
+msgstr "อุปกรณ์ที่ใช้ได้"
+
+#, c-format
+msgctxt "axo_devices_n"
+msgid "One device available"
+msgid_plural "%d devices available"
+msgstr[0] "%d เครื่องที่ใช้ได้"
+
+msgctxt "axo_remote_devices"
+msgid "Remote devices"
+msgstr "อุปกรณ์"
+
+#, c-format
+msgctxt "axo_remote_devices_n"
+msgid "One remote device"
+msgid_plural "%d remote devices"
+msgstr[0] "%d อุปกรณ์"
+
+msgctxt "axo_remote_dev_header_1"
+msgid "Device name/fingerprint/device id"
+msgstr "ชื่ออุปกรณ์/บันทึกการใช้/id"
+
+msgctxt "axo_remote_dev_header_2"
+msgid "Verified"
+msgstr "ตรวสอบ"
+
+msgctxt "axo_remote_dev_rescan"
+msgid "Check for new devices"
+msgstr "เช็คอุปกรณ์ใหม่"
+
+msgctxt "axo_remote_dev_renew"
+msgid "Rekey messaging sessions"
+msgstr "เปลี่ยนการเข้ารหัสข้อความ"
+
+msgctxt "axo_device_explanation"
+msgid ""
+"The list may show a device more than once if the app was removed and "
+"installed again. To enhance security a new installation creates a new "
+"security setup. \n"
+"\n"
+"Click on the remove button to delete an old device."
+msgstr ""
+"อาจแสดงมากว่าหนึ่งรายการ ถ้าคู่สนทนาลบแอปและติดตั้งใหม่ "
+"เพื่อเพิ่มความปลอดภัยให้ตั้งค่าความปลอดภัยในการติดตั้งใหม่ \n"
+"\n"
+" คลิ๊กปุ่มลบเพื่อลบอุปกรณ์เก่า"
+
+msgctxt "axo_device_explanation_remote"
+msgid ""
+"The list may show a device more than once if the app was removed and "
+"installed again on the partner's device."
+msgstr "อาจแสดงมากว่าหนึ่งรายการ ถ้าคู่สนทนาลบแอปและติดตั้งใหม่"
+
+msgctxt "axo_device_options_voiceover"
+msgid "Action"
+msgstr "Action"
+
+msgctxt "axo_force_re_register"
+msgid "Force ZINA re-register"
+msgstr "Force ZINA re-register"
+
+msgctxt "message_state_unknown"
+msgid "Unknown"
+msgstr "ไม่รู้"
+
+msgctxt "message_state_resend_requested"
+msgid "Resend requested"
+msgstr "ส่งคำขออีกครั้ง"
+
+msgctxt "message_state_composing"
+msgid "Composing"
+msgstr "Composing"
+
+msgctxt "message_state_composed"
+msgid "Composed"
+msgstr "Composed"
+
+msgctxt "message_state_sent"
+msgid "Sent"
+msgstr "ส่งแล้ว"
+
+msgctxt "message_state_sent_to_server"
+msgid "Sent to server"
+msgstr "ส่งไปยังเซิร์ฟเวอร์"
+
+msgctxt "message_state_delivered"
+msgid "Delivered"
+msgstr "ส่งแล้ว"
+
+msgctxt "message_state_received"
+msgid "Received"
+msgstr "รับแล้ว"
+
+msgctxt "message_state_read"
+msgid "Read"
+msgstr "อ่าน"
+
+msgctxt "message_state_burned"
+msgid "Burned"
+msgstr "เบิร์นแล้ว"
+
+msgctxt "message_state_sync"
+msgid "Sync"
+msgstr "เชื่อมต่อ"
+
+msgctxt "message_state_unused"
+msgid "Unused"
+msgstr "ไม่ถูกใช้"
+
+msgctxt "message_state_failed"
+msgid "Failed"
+msgstr "ล้มเหลว"
+
+#, c-format
+msgctxt "message_info_user_added_new_device"
+msgid "%1$s added device '%2$s'"
+msgstr "%1$s เพิ่มอุปกรณ์ '%2$s'"
+
+#, c-format
+msgctxt "message_info_user_removed_device"
+msgid "%1$s removed device '%2$s'"
+msgstr "%1$s ลบอุปกรณ์ '%2$s'"
+
+msgctxt "message_error_no_error"
+msgid "No error"
+msgstr "ไม่เออเรอร์"
+
+msgctxt "message_error_unknown"
+msgid "Unknown error code"
+msgstr "ไม่เออเรอร์โค๊ดที่ไม่รู้จัก"
+
+msgctxt "message_error_msg_generic"
+msgid "Generic error code, unspecified error"
+msgstr "เออเรอร์โค๊ดทั่วไป"
+
+msgctxt "message_error_msg_version"
+msgid "Unsupported protocol version"
+msgstr "ไม่รองรับ protocol version"
+
+msgctxt "message_error_msg_buffer"
+msgid "Buffer too small to store some data"
+msgstr "บัฟเฟอร์เหลือน้อยเกินกว่าจะเก็บข้อมูล"
+
+msgctxt "message_error_msg_not_dec"
+msgid "Could not decrypt a received message"
+msgstr "ไม่สามารถถอดรหัสข้อความ"
+
+msgctxt "message_error_msg_own_id"
+msgid "Found no own identity for registration"
+msgstr "ไม่พบIDสำหรับลงทะเบียน"
+
+msgctxt "message_error_msg_no_js"
+msgid "Missing a required JSON field"
+msgstr "Missing a required JSON field"
+
+msgctxt "message_error_msg_no_dev"
+msgid "No registered messaging devices found for the user"
+msgstr "ไม่พบอุปกรณ์ส่งข้อความที่ลงทะเบียน"
+
+msgctxt "message_error_msg_no_key"
+msgid "Offered pre-key not found - unknown pre-key id"
+msgstr "Offered pre-key not found - unknown pre-key id"
+
+msgctxt "message_error_msg_no_session"
+msgid "No session data for this user found"
+msgstr "No session for this user found"
+
+msgctxt "message_error_msg_not_init"
+msgid "Session not initialized"
+msgstr "Session not initialized"
+
+msgctxt "message_error_msg_old"
+msgid "Message too old to decrypt"
+msgstr "ข้อความเก่าเกินกว่าจะถอดรหัส"
+
+msgctxt "message_error_msg_corrupt"
+msgid "Incoming data corrupt"
+msgstr "ข้อมูลนำเข้าลุ้มเหลว"
+
+msgctxt "message_error_axo_conv_exists"
+msgid "ZINA conversation exists while trying to setup new one"
+msgstr "ZINA conversation exists while trying to setup new one"
+
+msgctxt "message_error_mac_check_failed"
+msgid "HMAC check of encrypted message failed"
+msgstr "HMAC check of encrypted message failed"
+
+msgctxt "message_error_msg_padding_failed"
+msgid "Incorrect padding of decrypted message"
+msgstr "Incorrect padding of decrypted message"
+
+msgctxt "message_error_sup_padding_failed"
+msgid "Incorrect padding of decrypted supplementary data"
+msgstr "Incorrect padding of decrypted supplementary data"
+
+msgctxt "message_error_no_staged_keys"
+msgid "Not a real error, just to report that no staged keys available"
+msgstr "Not a real error, just to report that no staged keys available"
+
+msgctxt "message_error_recv_id_mismatch"
+msgid "Mismatch of receiver's long term identity"
+msgstr "จับคู่IDผู้รับไม่ได้"
+
+msgctxt "message_error_sender_id_mismatch"
+msgid "Mismatch of sender's long term identity"
+msgstr "จับคู่IDผู้ส่งไม่ได้"
+
+msgctxt "message_error_recv_data_length"
+msgid "Expected length of data does not match received length"
+msgstr "ความยาวข้อมูลไม่ตรง"
+
+msgctxt "message_error_wrong_recv_dev_id"
+msgid "Expected device id does not match actual device id"
+msgstr "Idของอุปกรณ์ไม่ตรง"
+
+msgctxt "message_error_network_error"
+msgid "Network error or server request failed"
+msgstr "เครือข่ายผิดพลาด"
+
+msgctxt "message_error_data_missing"
+msgid "Some data is missing for this function"
+msgstr "ข้อมูลบางอย่างของฟังก์ชั่นนี้สูญหาย"
+
+msgctxt "message_error_database_error"
+msgid "Database access failed"
+msgstr "ไม่สามารถเข้าฐานข้อมูล"
+
+msgctxt "message_error_reject_data_retention"
+msgid "Rejected due to retention policy"
+msgstr ""
+
+msgctxt "message_error_pre_key_hash_wrong"
+msgid "Pre-key check failed"
+msgstr ""
+
+msgctxt "message_error_illegal_argument"
+msgid "Value of an argument is illegal/out of range (internal error)"
+msgstr ""
+
+msgctxt "message_error_context_id_mismatch"
+msgid "ZINA ratchet data is probably out of sync"
+msgstr ""
+
+msgctxt "message_error_remote_decrypt_failed"
+msgid "Recipient failed to process message"
+msgstr "Recipient failed to decrypt message"
+
+msgctxt "message_error_pub_no_curve"
+msgid "Curve not supported"
+msgstr "Curve not supported"
+
+msgctxt "message_error_pub_key_type"
+msgid "Private and public key use different curves"
+msgstr "Private and public key use different curves"
+
+msgctxt "message_error_rat_key_type"
+msgid "Their identity key and our identity key use different curve types"
+msgstr "Their identity key and our identity key use different curve types"
+
+msgctxt "message_error_enc_block"
+msgid "The IV or other data length did not match the cipher's block size"
+msgstr "The IV or other data length did not match the cipher's block size"
+
+msgctxt "message_error_enc_key"
+msgid "Key size not supported for this cipher"
+msgstr "Key size not supported for this cipher"
+
+#, c-format
+msgctxt "message_error_group_400"
+msgid "Group database error code: %1$d"
+msgstr ""
+
+msgctxt "message_error_group_450"
+msgid "Maximum members for this group reached."
+msgstr ""
+
+msgctxt "message_error_group_451"
+msgid "Message has type group command but no data."
+msgstr ""
+
+msgctxt "message_error_group_452"
+msgid "Message is group command but has no command."
+msgstr ""
+
+msgctxt "message_error_group_453"
+msgid "Message is normal group message command but has no data."
+msgstr ""
+
+msgctxt "message_error_group_454"
+msgid "Cannot store a new member data in database."
+msgstr ""
+
+msgctxt "message_error_group_455"
+msgid "Group does not exist or is not active."
+msgstr ""
+
+msgctxt "message_error_group_456"
+msgid "Group update type not known."
+msgstr ""
+
+msgctxt "message_error_group_457"
+msgid "No vector clock for group/event pair."
+msgstr ""
+
+msgctxt "message_error_group_458"
+msgid "Currently preparing and sending group updates."
+msgstr ""
+
+msgctxt "message_error_group_459"
+msgid "A prepared change set is not available."
+msgstr ""
+
+#. Texts for message attachment viewer
+msgctxt "messaging_compose_length_error"
+msgid "Sorry, you have hit the maximum character limit"
+msgstr "ข้อความมีปริมาณอักษรสูงสุดที่รองรับแล้ว"
+
+#, c-format
+msgctxt "messaging_file_viewer_view_with"
+msgid "Open <xliff:g id=\"file_name\">%1$s</xliff:g>"
+msgstr "เปิด <xliff:g id=\"file_name\">%1$s</xliff:g>"
+
+msgctxt "messaging_image_viewer_unable_to_display_image"
+msgid "Unable to display image"
+msgstr "ไม่สามารถแสดงภาพได้"
+
+msgctxt "messaging_file_viewer_failure"
+msgid ""
+"Cannot open this file. It may be saved, shared, or viewed with another "
+"application."
+msgstr "ไม่สามารถเปิดไฟล์"
+
+#, c-format
+msgctxt "messaging_pdf_viewer_showing_page_voiceover"
+msgid "Showing page %1$d of %2$d"
+msgstr "แสดงหน้า %1$d of %2$d"
+
+msgctxt "messaging_pdf_viewer_button_previous_page_voiceover"
+msgid "Go to previous page"
+msgstr "ไปหน้าก่อน"
+
+msgctxt "messaging_pdf_viewer_button_next_page_voiceover"
+msgid "Go to next page"
+msgstr "ไปหน้าถัดไป"
+
+msgctxt "messaging_could_not_view_link"
+msgid "Could not open link."
+msgstr "ไม่สามารถเปิดลิงค์"
+
+#. Texts for messaging options in main drawer menu
+msgctxt "messaging_options"
+msgid "Messaging options"
+msgstr "ตัวเลือกข้อความ"
+
+msgctxt "messaging_burn_animation_text"
+msgid "Animate message burn"
+msgstr "เบิร์นข้อความเคลื่อนไหว"
+
+msgctxt "messaging_burn_animation_explanation"
+msgid "Show animation when burning messages."
+msgstr "แสดงข้อความเคลื่อนไหวเมื่อเบิร์น"
+
+msgctxt "messaging_attachment_export_warning"
+msgid "Warn when exporting"
+msgstr "เตือนเมื่อส่งออก"
+
+msgctxt "messaging_attachment_export_warn_explanation"
+msgid "Warn when exporting message attachments."
+msgstr "เตือนเมื่อส่งออกข้อความที่มีไฟล์แนบ"
+
+msgctxt "messaging_sounds"
+msgid "Play sound for messages"
+msgstr "เปิดใช้เสียงสำหรับข้อความ"
+
+msgctxt "messaging_sounds_explanation"
+msgid "Play sound when a new message arrives or a message is removed."
+msgstr "เปิดใช้เสียงเมื่อมีข้อความใหม่หรือลบข้อความ"
+
+msgctxt "messaging_ringtone_title"
+msgid "Notification tone"
+msgstr "เสียงแจ้งเตือน"
+
+msgctxt "messaging_light_title"
+msgid "Notification light"
+msgstr "ไฟแจ้งเตือน"
+
+msgctxt "messaging_vibrate_title"
+msgid "Vibrate pattern"
+msgstr "รูปแบบการสั่น"
+
+msgctxt "messaging_vibrate_off"
+msgid "Off"
+msgstr "ปิด"
+
+msgctxt "messaging_vibrate_default"
+msgid "Default"
+msgstr "ค่าเริ่มต้น"
+
+msgctxt "messaging_vibrate_short"
+msgid "Short"
+msgstr "สั้น"
+
+msgctxt "messaging_vibrate_long"
+msgid "Long"
+msgstr "ยาว"
+
+msgctxt "messaging_light_off"
+msgid "Off"
+msgstr "ปิด"
+
+msgctxt "messaging_light_default"
+msgid "Default"
+msgstr "ค่าเริ่มต้น"
+
+msgctxt "messaging_light_red"
+msgid "Red"
+msgstr "แดง"
+
+msgctxt "messaging_light_blue"
+msgid "Blue"
+msgstr "น้ำเงิน"
+
+msgctxt "messaging_light_green"
+msgid "Green"
+msgstr "เขียว"
+
+msgctxt "messaging_light_white"
+msgid "White"
+msgstr "ขาว"
+
+msgctxt "messaging_light_purple"
+msgid "Purple"
+msgstr "ม่วง"
+
+msgctxt "messaging_theme_title"
+msgid "Application theme"
+msgstr "ธีมแอพพลิเคชั่น"
+
+msgctxt "messaging_theme_dark"
+msgid "Dark theme"
+msgstr "ธีมโทนเข้ม"
+
+msgctxt "messaging_theme_light"
+msgid "Light theme"
+msgstr "ธีมโทนสว่าง"
+
+msgctxt "messaging_group_management"
+msgid "Group management"
+msgstr "การจัดการกลุ่ม"
+
+msgctxt "contact_adder_title"
+msgid "Add to contacts"
+msgstr "เพิ่มรายชื่อ"
+
+msgctxt "contact_save_existing"
+msgid "Add to contact"
+msgstr "เพิ่มรายชื่อ"
+
+msgctxt "contact_create_new"
+msgid "Create new contact"
+msgstr "สร้างรายชื่อ"
+
+msgctxt "contactCreationFailure"
+msgid "Contact creation failed, check logs."
+msgstr "สร้างรายชื่อล้มเหลว โปรดตรวจสอบ Logs"
+
+msgctxt "contactNameLabel"
+msgid "Contact Name"
+msgstr "รายชื่อ"
+
+#. Dialog title when importing contacts from an external source. [CHAR
+#. LIMIT=36]
+msgctxt "dialog_auto_import"
+msgid "Start to import saved contacts?"
+msgstr "เริ่มนำเข้ารายชื่อบันทึก"
+
+#, c-format
+msgctxt "dialog_auto_import_text"
+msgid ""
+"You may import the saved contacts at a later time. Use the contact's "
+"import functions and select the file <b>%s</b>"
+msgstr ""
+"คุณสามารถนำเข้ารายชื่อที่บันทึกที่หลัง "
+"ใช้ฟังก์ชั่นนำเข้ารายชื่อเพื่อเลือกไฟล์ <b>%s</b>"
+
+msgctxt "messaging_vcard_section_phone"
+msgid "Phone"
+msgstr "โทรศัพท์"
+
+msgctxt "messaging_vcard_section_birthday"
+msgid "Birthday"
+msgstr "วันเกิด"
+
+msgctxt "messaging_vcard_section_email"
+msgid "Email"
+msgstr "อีเมล"
+
+msgctxt "messaging_vcard_section_im"
+msgid "IM"
+msgstr "IM"
+
+msgctxt "messaging_vcard_section_address"
+msgid "Address"
+msgstr "ที่อยู่"
+
+msgctxt "messaging_vcard_section_organization"
+msgid "Organization"
+msgstr "องค์กร"
+
+msgctxt "messaging_vcard_section_notes"
+msgid "Notes"
+msgstr "หมายเหตุ"
+
+msgctxt "messaging_vcard_address_type_home"
+msgid "Home"
+msgstr "บ้าน"
+
+msgctxt "messaging_vcard_address_type_work"
+msgid "Work"
+msgstr "ที่ทำงาน"
+
+msgctxt "messaging_vcard_address_type_other"
+msgid "Other"
+msgstr "อื่นๆ"
+
+msgctxt "messaging_vcard_im_type_aim"
+msgid "AIM"
+msgstr "AIM"
+
+msgctxt "messaging_vcard_im_type_msn"
+msgid "Windows Live"
+msgstr "Windows Live"
+
+msgctxt "messaging_vcard_im_type_yahoo"
+msgid "Yahoo"
+msgstr "Yahoo"
+
+msgctxt "messaging_vcard_im_type_skype"
+msgid "Skype"
+msgstr "Skype"
+
+msgctxt "messaging_vcard_im_type_qq"
+msgid "QQ"
+msgstr "QQ"
+
+msgctxt "messaging_vcard_im_type_hangouts"
+msgid "Hangouts"
+msgstr "Hangouts"
+
+msgctxt "messaging_vcard_im_type_icq"
+msgid "ICQ"
+msgstr "ICQ"
+
+msgctxt "messaging_vcard_im_type_jabber"
+msgid "Jabber"
+msgstr "Jabber"
+
+msgctxt "messaging_vcard_im_type_other"
+msgid "Other"
+msgstr "อื่นๆ"
+
+msgctxt "messaging_vcard_phone_type_home"
+msgid "Home"
+msgstr "บ้าน"
+
+msgctxt "messaging_vcard_phone_type_mobile"
+msgid "Mobile"
+msgstr "มือถือ"
+
+msgctxt "messaging_vcard_phone_type_work"
+msgid "Work"
+msgstr "ที่ทำงาน"
+
+msgctxt "messaging_vcard_phone_type_silent"
+msgid "Silent Circle"
+msgstr "Silent Circle"
+
+msgctxt "messaging_vcard_phone_type_other"
+msgid "Other"
+msgstr "อื่นๆ"
+
+#, c-format
+msgctxt "messaging_vcard_importing_contact"
+msgid "Importing contact for %s"
+msgstr "นำเข้ารายชื่อสำหรับ%s"
+
+msgctxt "messaging_vcard_cannot_show_selected_contact"
+msgid "Cannot show selected contact!"
+msgstr "ไม่สามารถแสดงรายชื่อ!"
+
+msgctxt "messaging_conversation_list_loading"
+msgid "Loading…"
+msgstr "กำลังโหลด"
+
+msgctxt "messaging_conversation_list_no_messages"
+msgid "No messages"
+msgstr "ไม่มีข้อความ"
+
+msgctxt "messaging_conversation_list_prefix_you"
+msgid "You: "
+msgstr "You: "
+
+msgctxt "messaging_conversation_list_prefix_draft"
+msgid "Draft: "
+msgstr "แบบร่าง:"
+
+msgctxt "messaging_conversation_select_recipient_hint"
+msgid "Enter recipient's username"
+msgstr "ใส่ User name ผู้รับ"
+
+msgctxt "messaging_conversation_select_conversation_partner"
+msgid "Recipient's username"
+msgstr "ผู้รับ username"
+
+#, c-format
+msgctxt "messaging_conversation_list_file_sent"
+msgid "%1$s sent"
+msgstr "%1$s ส่งแล้ว"
+
+#, c-format
+msgctxt "messaging_conversation_list_file_received"
+msgid "%1$s received"
+msgstr "%1$s รับแล้ว"
+
+msgctxt "messaging_conversation_list_type_file"
+msgid "File"
+msgstr "ไฟล์"
+
+msgctxt "messaging_conversation_list_type_audio"
+msgid "Audio"
+msgstr "เสียง"
+
+msgctxt "messaging_conversation_list_type_video"
+msgid "Video"
+msgstr "วีดีโอ"
+
+msgctxt "messaging_conversation_list_type_image"
+msgid "Image"
+msgstr "ภาพ"
+
+msgctxt "messaging_conversation_list_type_contact"
+msgid "Contact"
+msgstr "รายชื่อ"
+
+msgctxt "messaging_conversation_list_failed_attachment"
+msgid "Failed attachment"
+msgstr "แนบไฟล์ล้มเหลว"
+
+msgctxt "messaging_conversation_list_call_voiceover"
+msgid "Make a call"
+msgstr "โทรออก"
+
+msgctxt "messaging_conversation_list_delete_conversation_voiceover"
+msgid "Delete conversation"
+msgstr "ลบบทสนทนา"
+
+msgctxt "user_validation_generic_error"
+msgid "Check whether entered user name is correct."
+msgstr "ตรวจสอบว่า User name ถูกต้องไหม"
+
+msgctxt "user_validation_username_empty"
+msgid "Provided user name is empty."
+msgstr "ไม่ได้ใส่ User name"
+
+msgctxt "user_validation_no_connection"
+msgid "Ensure your device can connect to the Internet and try again."
+msgstr "โปรดตรวจสอบว่าอุปกรณ์ได้เชื่อมต่อกับอินเทอร์เน็ต แล้วลองอีกครั้ง"
+
+msgctxt "debug_information_title"
+msgid "Debug information"
+msgstr "ข้อมูล Debug"
+
+msgctxt "debug_information_toggle_json_view"
+msgid "Toggle JSON view"
+msgstr "Toggle JSON view"
+
+msgctxt "invite_sms_not_setup"
+msgid ""
+"Sorry, this device doesn't appear to support SMS, so we can't send out an"
+" invitation."
+msgstr "ขออภัย อุปกรณ์ไม่รองรับ SMS ดังนั้นไม่สามารถส่งคำเชิญออกไปได้"
+
+msgctxt "invite_email_not_setup"
+msgid ""
+"Sorry, you need to setup an email account before we can send out "
+"invitations by email."
+msgstr "Sขออภัย คุณต้องตั้งค่าอีเมลก่อนส่งอีเมลคำเชิญ"
+
+msgctxt "invite_no_phone_or_email"
+msgid ""
+"Sorry, the contact appears to have no phone or email, so we can't send "
+"out an invitation."
+msgstr "ขออภัย รายชื่อไม่มีเบอร์โทรหรืออีเม ไม่สามารถส่งคำเชิญออกไปได้"
+
+msgctxt "basic_account_info"
+msgid ""
+"You are limited in your usage of Silent Phone. Visit the <a "
+"href=\"https://accounts.silentcircle.com/\">Silent Circle website</a> and"
+" upgrade your account."
+msgstr ""
+"คุณถูกลิมิตการใช้งานของ Silent Phone โปรดเข้า <a "
+"href=\"https://accounts.silentcircle.com/\">เว็บไซต์ Silent Circle</a> "
+"และอัพเกรดแอคเค้าท์ของคุณ"
+
+msgctxt "basic_account_info_free"
+msgid ""
+"You are limited in your usage of Silent Phone. Visit the <a "
+"href=\"https://accounts.silentcircle.com/\">Silent Circle website</a> and"
+" upgrade your account. \n"
+"\n"
+"In the meantime, you can still receive secure calls and messages."
+msgstr ""
+"คุณถูกลิมิตการใช้งานของ Silent Phone โปรดเข้า <a "
+"href=\"https://accounts.silentcircle.com/\">เว็บไซต์ Silent Circle</a> "
+"และอัพเกรดแอคเค้าท์ของคุณ \n"
+"\n"
+" ในขณะนี้คุณสามารถรับส่ายและข้อความ"
+
+msgctxt "expired_account_info"
+msgid ""
+"Your account has expired. Visit the <a "
+"href=\"https://accounts.silentcircle.com/\">Silent Circle website</a> and"
+" renew your account to make secure calls."
+msgstr ""
+"แอคเค้าท์ของคุณหมดอายุ โปรดเข้า <a "
+"href=\"https://accounts.silentcircle.com/\">เว็บไซต์ Silent Circle</a> "
+"และต่ออายุแอคเค้าท์เพื่อใช้งานการโทรออก"
+
+msgctxt "minutes_gone_info"
+msgid ""
+"You have run out of minutes. Visit the <a "
+"href=\"https://accounts.silentcircle.com/\">Silent Circle website</a> and"
+" add credit to your account to make secure calls."
+msgstr ""
+"นาทีของคุณหมด โปรดเข้า <a "
+"href=\"https://accounts.silentcircle.com/\">เว็บไซต์ Silent Circle</a> "
+"และเพิ่มเครดิตเพื่อใช้งานการโทรออก"
+
+msgctxt "credit_gone_info"
+msgid ""
+"You have run out of credit. Visit the <a "
+"href=\"https://accounts.silentcircle.com/\">Silent Circle website</a> and"
+" add credit to your account to make secure calls."
+msgstr ""
+"เครดิตของคุณหมด โปรดเข้า <a "
+"href=\"https://accounts.silentcircle.com/\">เว็บไซต์ Silent Circle</a> "
+"และเพิ่มเครดิตเพื่อใช้งานการโทรออก"
+
+msgctxt "minutes_low_info"
+msgid ""
+"You are running low on minutes. Visit the <a "
+"href=\"https://accounts.silentcircle.com/\">Silent Circle website</a> and"
+" add credit to your account to make secure calls."
+msgstr ""
+"นาทีของคุณใกล้หมด โปรดเข้า <a "
+"href=\"https://accounts.silentcircle.com/\">เว็บไซต์ Silent Circle</a> "
+"และเพิ่มเครดิตเพื่อใช้งานการโทรออก"
+
+msgctxt "credit_low_info"
+msgid ""
+"You are running low on credit. Visit the <a "
+"href=\"https://accounts.silentcircle.com/\">Silent Circle website</a> and"
+" add credit to your account to make secure calls."
+msgstr ""
+"เครดิตของคุณใกล้หมด โปรดเข้า <a "
+"href=\"https://accounts.silentcircle.com/\">เว็บไซต์ Silent Circle</a> "
+"และเพิ่มเครดิตเพื่อใช้งานการโทรออก"
+
+msgctxt "dialog_title_need_funding"
+msgid "Funding required"
+msgstr "จำเป็นต้องเติมเงิน"
+
+msgctxt "dialog_message_need_funding"
+msgid ""
+"To use Silent Circle's services, you must fund your account with a "
+"minimum of $5.00 USD. \n"
+"\n"
+"Click below to begin."
+msgstr ""
+"เพื่อใช้บริการ Silent Circle คุณต้องมียอดขั้นต่ำ 5 ดอลล่าร์ \n"
+"\n"
+"คลิ้กเพื่อเริ่มต้น"
+
+msgctxt "dialog_positive_need_funding"
+msgid "Fund account"
+msgstr "Fund account"
+
+msgctxt "dialog_title_pstn_disabled"
+msgid "No Silent World service"
+msgstr "No Silent World service"
+
+msgctxt "dialog_message_pstn_disabled"
+msgid ""
+"This call to an outside number cannot be placed because your account does"
+" not include Silent World service."
+msgstr ""
+"This call to an outside number cannot be placed because your account does"
+" not include Silent World service."
+
+msgctxt "silent_world_contact_info"
+msgid "Silent World call"
+msgstr "Silent World call"
+
+msgctxt "battery_info"
+msgid ""
+"Please acknowledge the request in the next dialog to keep SilentPhone "
+"connected. If SilentPhone is not connect then you cannot receive calls or"
+" text messages. SilentPhone has an advanced power management if in "
+"standby mode and the impacts on battery lifetime are negligible."
+msgstr ""
+"Please acknowledge the request in the next dialog to keep SilentPhone "
+"connected. If SilentPhone is not connect then you cannot receive calls or"
+" text messages. SilentPhone has an advanced power management if in "
+"standby mode and the impacts on battery lifetime are negligible."
+
+msgctxt "provisioning_corp_email_hint"
+msgid "Corporate email address"
+msgstr "อีเมลบริษัท"
+
+#. in-app purchase
+msgctxt "in_app_purchase"
+msgid "In App Purchase"
+msgstr "ชำระเงินในแอพลิเคชั่น"
+
+msgctxt "select_amount"
+msgid "Please provide an amount to purchase"
+msgstr "โปรดใส่จำนวนที่ต้องการชำระ"
+
+msgctxt "select"
+msgid "SELECT"
+msgstr "เลือก"
+
+msgctxt "purchase"
+msgid "PURCHASE"
+msgstr "ซื้อ"
+
+msgctxt "select_a_card"
+msgid "Select a card"
+msgstr "เลือกการ์ด"
+
+msgctxt "select_card"
+msgid "Please select a card to purchase"
+msgstr "โปรดเลือกการ์ดเพื่อชำระ"
+
+msgctxt "specified_amount"
+msgid "Please provide an amount to purchase"
+msgstr "โปรดใส่จำนวนที่ต้องการชำระ"
+
+msgctxt "amount"
+msgid "Amount"
+msgstr "จำนวน"
+
+msgctxt "new_card"
+msgid "New card"
+msgstr "การ์ดใหม่"
+
+#. <string name="auto_refill_payment">Automatically make $10.00 payment when
+#. account balance is lower $10.00.</string>
+msgctxt "make_payment"
+msgid "Make payment for secure calls"
+msgstr "ชำระเงินสำหรับ Secure calls"
+
+msgctxt "creating_token"
+msgid "Creating Token…"
+msgstr "กำลังสร้าง Token…"
+
+msgctxt "validationErrors"
+msgid "Validation Errors"
+msgstr "การตรวจสอบล้มเหลว"
+
+msgctxt "cardNumber"
+msgid "Card Number"
+msgstr "หมายเลขการ์ด"
+
+msgctxt "invalid_card_info"
+msgid "Please provide correct credit card information"
+msgstr "โปรดใส่รายละเอียดเครดิตดาร์ดที่ถูกต้อง"
+
+msgctxt "invalid_card_number"
+msgid "The card number that you entered is invalid"
+msgstr "หมายเลขการ์ดผิด"
+
+msgctxt "invalid_expiration_date"
+msgid "The expiration date that you entered is invalid"
+msgstr "วันที่หมดอายุผิด"
+
+msgctxt "invalid_cvc"
+msgid "The CVC code that you entered is invalid"
+msgstr "รหัส CVC ที่ใส่ผิด"
+
+msgctxt "minimum_payment"
+msgid "The minimum amount is $5"
+msgstr "จำนวนขั้นต่ำ 5 $"
+
+msgctxt "getting_cc_info"
+msgid "Getting Credit Cards…"
+msgstr "กำลังดำเนินการ...…"
+
+msgctxt "processing_payment"
+msgid "Processing Payment…"
+msgstr "กำลังดำเนินการชำระเงิน...…"
+
+msgctxt "payment_successful"
+msgid "Thanks for your payment."
+msgstr "ขอบคุณสำหรับการชำระเงิน"
+
+msgctxt "exception_occur"
+msgid "Please try it again. If it still exists, Please contact app provider."
+msgstr "ลองอีกครั้ง ถ้ายังเป็นอยู่ โปรดติดต่อ App Provider"
+
+msgctxt "confirm_payment_title"
+msgid "Confirm Payment"
+msgstr "ยืนยันการชำระ"
+
+#, c-format
+msgctxt "confirm_payment_message"
+msgid "%1$s will be charged to the credit card ending with %2$s"
+msgstr "%1$s จะถูกชาร์จไปยังเครดิตการ์ดที่สิ้นสุดด้วย %2$s"
+
+msgctxt "amount_level_4"
+msgid "Other"
+msgstr "อื่นๆ"
+
+msgctxt "card_ending_with"
+msgid "Ending:"
+msgstr "สิ้นสุด:"
+
+#. android:description
+msgctxt "click_to_purchase"
+msgid "Click this button to continue purchasing"
+msgstr "คลิ้กที่ปุ่มเพื่อชำระเงิน"
+
+msgctxt "input_card_number"
+msgid "Please provide your card number into the text edit"
+msgstr "โปรดใส่หมายเลขการ์ดใน"
+
+msgctxt "expiration_year"
+msgid "Please select expiration year from drop down"
+msgstr "เลือกปีที่หมดอายุจากรายการ"
+
+msgctxt "expiration_month"
+msgid "Please select expiration month from drop down"
+msgstr "เลือกเดือนที่หมดอายุจากรายการ"
+
+msgctxt "cvc_number"
+msgid "Please provide cvc number on the back of your card into the text edit"
+msgstr "โปรดใส่หมายเลข cvc ที่อยู่บนหลังการ์ด"
+
+msgctxt "click_register_card_stripe"
+msgid ""
+"Please click the save button to register your card to Stripe and save "
+"this Stripe token"
+msgstr ""
+"คลิ้กที่ปุ่มบันทึกเพื่อลงทะเบียนการ์ดของคุณลง Stripe และบันทึก Stripe "
+"token"
+
+#. payment menu
+msgctxt "payment_history"
+msgid "Payment History"
+msgstr "ประวัติการชำระเงิน"
+
+#. Miscellaneous
+msgctxt "dialer_activity_conversation_button"
+msgid "Start new conversation"
+msgstr "เริ่มบทสนทนาใหม่"
+
+msgctxt "dialer_activity_conversation_shortcut"
+msgid "New conversation"
+msgstr ""
+
+#. Error when wiping data (dev devices only)
+msgctxt "wipe_data_failed"
+msgid "Wiping data has failed - please uninstall manually!"
+msgstr "การล้างข้อมูลล้มเหลว-กรุณายกเลิกการติดตั้งด้วยตนเอง"
+
+msgctxt "dial_drawer_remaining_oca_minutes_description"
+msgid "Show account status"
+msgstr "แสดงสถานะแอคเค้าท์"
+
+msgctxt "dial_drawer_settings_description"
+msgid "Configure the application"
+msgstr "ตั้งค่าแอพพลิเคชั่น"
+
+msgctxt "dial_drawer_go_offline_description"
+msgid "Shut down the application"
+msgstr "ปิดแอพพลิเคชั่น"
+
+msgctxt "dial_drawer_wipe_phone_description"
+msgid "Clear application data and log out"
+msgstr "ลบข้อมูลแอพพลิเคชั่นและออกจากระบบ"
+
+msgctxt "dial_drawer_avatar_voiceover"
+msgid "Avatar"
+msgstr "Avatar"
+
+msgctxt "data_retention_on"
+msgid "Data retention ON ⓘ"
+msgstr "เปิดการเก็บรักษาข้อมูล ⓘ"
+
+msgctxt "data_retention_communication_blocked"
+msgid "Communication blocked ⓘ"
+msgstr "บล็อคการติดต่อสื้อสาร ⓘ"
+
+msgctxt "data_retention_calls_blocked"
+msgid "Calls blocked ⓘ"
+msgstr "Calls blocked ⓘ"
+
+msgctxt "data_retention_messaging_blocked"
+msgid "Messaging blocked ⓘ"
+msgstr "Messaging blocked ⓘ"
+
+msgctxt "data_retention_your_organization"
+msgid "Your organization"
+msgstr "organization ของคุณ"
+
+msgctxt "data_retention_remote_organization"
+msgid "Remote organization"
+msgstr "Remote organization"
+
+#, c-format
+msgctxt "data_retention_data_retained_by"
+msgid "%1$s imposes a data retention policy"
+msgstr "%1$s บังคับใช้นโยบายการเก็บรักษาข้อมูล"
+
+msgctxt "data_retention_data_retains"
+msgid " and retains"
+msgstr " และ เก็บรักษาข้อมูล"
+
+msgctxt "data_retention_message_plaintext"
+msgid "message contents"
+msgstr "เนื้อหาข้อความ"
+
+msgctxt "data_retention_message_metadata"
+msgid "message metadata"
+msgstr "ข้อความ metadata"
+
+msgctxt "data_retention_calls"
+msgid "call audio"
+msgstr "โทรเสียง"
+
+msgctxt "data_retention_call_metadata"
+msgid "call metadata"
+msgstr "โทร metadata"
+
+msgctxt "data_retention_message_attachments"
+msgid "attachment contents"
+msgstr "เนื้อหาไฟล์แนบ"
+
+msgctxt "data_retention_for_user"
+msgid "For user"
+msgstr "สำหรับผู้ใช้"
+
+msgctxt "data_retention_retaining_organization"
+msgid "Retaining organization"
+msgstr "จัดเก็บข้อมูล organization"
+
+msgctxt "data_retention_retaining_organizations"
+msgid "Retaining organizations"
+msgstr "จัดเก็บข้อมูล organization"
+
+msgctxt "data_retention_data_retained"
+msgid "Data being retained:"
+msgstr "ข้อมูลถูกเก็บรักษา:"
+
+msgctxt "data_retention_data_retention_description_remote"
+msgid ""
+"Recipient's organization has a policy retaining conversation data. Silent"
+" Phone is retaining this data and uploading it to recipient's "
+"organization."
+msgstr ""
+"Organization ของผู้รับมีนโยบายการเก็บรักษาข้อมูลสนทนา Silent Phone "
+"กำลังจัดเก็บข้อมูลนี้ไปยัง Organization ของผู้รับ"
+
+msgctxt "data_retention_data_retention_description_both"
+msgid ""
+"Your organization and recipient's organization have a policy of retaining"
+" conversation data. Silent Phone is retaining this data and uploading it "
+"to your organization and recipient's organization"
+msgstr ""
+"Organization ของคุณและผู้รับมีนโยบายการเก็บรักษาข้อมูลสนทนา Silent Phone "
+"กำลังจัดเก็บข้อมูลนี้ไปยัง Organization ของคุณและผู้รับ"
+
+msgctxt "data_retention_data_retention_description_local"
+msgid ""
+"Your organization has a policy of retaining conversation data. Silent "
+"Phone is retaining this data and uploading it to your organization."
+msgstr ""
+"Organization ของคุณมีนโยบายการเก็บรักษาข้อมูลสนทนา Silent Phone "
+"กำลังจัดเก็บข้อมูลนี้ไปยัง Organization ของคุณ"
+
+msgctxt "data_retention_policy_error"
+msgid "Policy error"
+msgstr "นโยบายขัดข้อง"
+
+msgctxt "data_retention_call_retained"
+msgid "Call retained"
+msgstr "การโทรถูกเก็บรักษา"
+
+msgctxt "data_retention_message_retained"
+msgid "Message retained"
+msgstr "ข้อความถูกเก็บรักษา"
+
+msgctxt "data_retention_message_not_delivered"
+msgid "Message not delivered!"
+msgstr "ข้อความไม่ถูกจัดส่ง!"
+
+msgctxt "data_retention_communication_dr_blocked"
+msgid "Message not delivered due to your organization's data retention policy"
+msgstr "ข้อความไม่ถูกจัดส่ง เนื่องด้วยนโยบายการเก็บรักษาข้อมูลของ Organization"
+
+msgctxt "data_retention_communication_dr_required"
+msgid "Message not delivered due to recipient's data retention policy"
+msgstr "ข้อความไม่ถูกจัดส่ง เนื่องด้วยนโยบายการเก็บรักษาข้อมูลของผู้รับ"
+
+msgctxt "data_retention_communication_blocked_remote"
+msgid ""
+"Message not delivered due to recipient's data retention settings (blocked"
+" data retention)"
+msgstr ""
+"Message not delivered due to recipient's data retention settings (blocked"
+" data retention)"
+
+msgctxt "messaging_checked_verified"
+msgid "Verified"
+msgstr "ตรวจสอบแล้ว"
+
+#, c-format
+msgctxt "redirect_uri_mismatch"
+msgid "Redirect URI does not match: %s"
+msgstr "Redirect URI ไม่ถูก: %s"
+
+#, c-format
+msgctxt "redirect_uri_query_missing"
+msgid "Redirect URI does not contain a query string: %s."
+msgstr ""
+
+msgctxt "redirect_uri_malformed"
+msgid "Redirect URI does not contain necessary data."
+msgstr "Redirect URI ไม่มีข้อมูลพอ"
+
+#, c-format
+msgctxt "redirect_uri_error"
+msgid "Redirect URI error. Error code: %s."
+msgstr "Redirect URI ขัดข้อง. Error code: %s."
+
+#, c-format
+msgctxt "redirect_ssl_error"
+msgid "Got a SSL Error: %s"
+msgstr "Got a SSL Error: %s"
+
+#, c-format
+msgctxt "redirect_wrong_uri"
+msgid "Server provided a wrong redirect URI: %s"
+msgstr "Server ให้ redirect URI ผิด: %s"
+
+#, c-format
+msgctxt "hw_device_id_mismatch"
+msgid ""
+"HW device identifiers do not match: \n"
+"Stored: %1$s\n"
+"Actual: %2$s \n"
+"\n"
+"Please uninstall and install the application."
+msgstr ""
+"HW device identifiers ผิด: \n"
+"จัดเก็บแล้ว: %1$s\n"
+"Actual: %2$s \n"
+"\n"
+" โปรดยกเลิกการติดตั้งและติดตั้งแอพพลิเคชั่น"
+
+#. The percentage, used for expressing progress.
+#, c-format
+msgctxt "percentage"
+msgid "%s%%"
+msgstr "%s%%"
+
+msgctxt "permission_phone_title"
+msgid "Why access to Phone?"
+msgstr "ทำไมถึงเข้าใช้ตัวเครื่อง ?"
+
+msgctxt "permission_phone_explanation"
+msgid ""
+"Silent Phone does not initiate phone calls that require the device's "
+"phone application. \n"
+"\n"
+"However, Silent Phone monitors if you have an active call or if you "
+"receive a call while you are using Silent Phone. In these cases Silent "
+"Phone either manages the Silent Phone call or informs you about the "
+"incoming call using a notification tone."
+msgstr ""
+"Silent Phone ไม่ได้ใช้แอพพลิเคชั่นการโทรในอุปกรณ์มือถือ \n"
+"อย่างไรก็ตาม Silent Phone สามารถแจ้งเตือนเมื่อมีสายโทรเข้าหรือข้อความ "
+"โดยใช้เสียงเตือนระหว่างการใช้งาน Silent Phone"
+
+msgctxt "permission_sp_main_title"
+msgid "Required Silent Phone Permissions"
+msgstr "ต้องการ Silent Phone Permissions"
+
+msgctxt "permission_sp_main_explanation"
+msgid ""
+"&lt;b&gt;Audio&lt;/b&gt;: to setup calls or to record audio attachments "
+"(if enabled)."
+msgstr ""
+"&lt;b&gt;Audio&lt;/b&gt;: เพื่อตั้งค่าการโทรหรือการอัดเสียงไฟล์แนบ "
+"(ถ้าเปิดใช้งาน) &lt;br/&gt;&lt;br/&gt;&lt;b&gt;Camera:&lt;/b&gt; "
+"เปิดใช้งาน โทรแบบวีดีโอ และ ไฟล์แนบวีดีโอ"
+
+msgctxt "permission_main_not_granted_title"
+msgid "Silent Phone permissions missing"
+msgstr "Silent Phone permissions หาย"
+
+msgctxt "permission_main_not_granted_explanation"
+msgid ""
+"Silent Phone cannot work without the required permissions, exiting. You "
+"may start Silent Phone again and grant the required permissions."
+msgstr ""
+"Silent Phone ไม่สามารถทำงานหากไม่ได้รับ permissions คุณอาจเริ่ม Silent "
+"Phone อีกครั้ง และรับ permissions"
+
+msgctxt "permission_location_title"
+msgid "Why access to Location?"
+msgstr "ทำไมถึงเข้าใช้ Location ?"
+
+msgctxt "permission_location_explanation"
+msgid ""
+"Silent Phone accesses the location to attach location information to a "
+"message if you enable this feature."
+msgstr ""
+"Silent Phone เข้าใช้ Location และส่งแนบข้อมูลLocation "
+"ไปยังข้อความที่เปิดใช้งานฟังก์ชั่น"
+
+msgctxt "permission_storage_title"
+msgid "Why access to Storage?"
+msgstr "ทำไมถึงเข้าใช้ พื้นที่จัดเก็บข้อมูล ?"
+
+msgctxt "permission_storage_explanation"
+msgid ""
+"On user request Silent Phone can store or share attachments. This "
+"requires permission to access external storage."
+msgstr ""
+"คำร้องของผู้ใช้ Silent Phone สามารถจัดเก็บและแชร์ไฟล์แนบ "
+"โดยจำเป็นต้องได้รับ Permission เพื่อใช้งานพื้นที่จัดเก็บข้อมูลภายนอก"
+
+msgctxt "permission_camera_title"
+msgid "Why access to Camera?"
+msgstr "ทำไมถึงเข้าใช้กล้อง ?"
+
+msgctxt "permission_camera_explanation"
+msgid ""
+"Silent Phone accesses the camera to allow for capturing photo and video "
+"attachments. The camera is also used to access the video chat feature."
+msgstr "อนุญาตให้ Silent Phone เข้าถึงกล้อง เพื่อให้สามารถถ่ายภาพและวิดีโอ"
+
+#. Texts for avatar action dialog
+msgctxt "avatar_choose_image_from_gallery_voiceover"
+msgid "Choose image from gallery"
+msgstr "เลือกภาพจากแกลอรี่"
+
+msgctxt "avatar_take_a_photo_voiceover"
+msgid "Take a photo"
+msgstr "ถ่ายรูป"
+
+msgctxt "avatar_delete_photo_voiceover"
+msgid "Delete avatar photo"
+msgstr "ลบภาพ Avatar"
+
+msgctxt "avatar_show_as_square"
+msgid "Show square"
+msgstr "แสดงสี่เหลี่ยม"
+
+msgctxt "avatar_show_as_circle"
+msgid "Show circle"
+msgstr "แสดงวงกลม"
+
+msgctxt "avatar_could_not_show_image"
+msgid "Could not show image"
+msgstr "ไม่สามารถแสดงภาพ"
+
+msgctxt "avatar_action_select_from_gallery"
+msgid "Select an image"
+msgstr "เลือกภาพ"
+
+msgctxt "avatar_action_take_a_photo"
+msgid "Take a photo"
+msgstr "ถ่ายรูป"
+
+msgctxt "avatar_action_delete"
+msgid "Delete avatar"
+msgstr "ลบภาพ Avatar"
+
+msgctxt "navigation_drawer_expand_details_voiceover"
+msgid "show account details"
+msgstr "แสดงรายละเอียดบัญชี"
+
+msgctxt "navigation_drawer_collapse_details_voiceover"
+msgid "hide account details"
+msgstr "ซ่อนรายละเอียดบัญชี"
+
+#. debug logging
+msgctxt "setting_debug_logging"
+msgid "Enable debug mode"
+msgstr "เปิดใช้งานโหมด Debug"
+
+msgctxt "setting_debug_logging_summary"
+msgid "Store on your device certain details that can help when reporting issues."
+msgstr ""
+"ตามคำร้องขอ Silent Phone สามารถจัดเก็บรายละเอียด Debug "
+"เพื่อรายงานปัญหาที่ต้องการร้องขอการอนุญาตเพื่อบันทึก Encrypted Log "
+"ที่พื้นที่จัดเก็บภายนอก"
+
+msgctxt "setting_send_logs"
+msgid "Report issue and send logs"
+msgstr "รายงานปัญหาและส่ง Log"
+
+msgctxt "setting_debug_logging_config"
+msgid "Select debug lookback interval"
+msgstr "เลือก debug lookback interval"
+
+msgctxt "description_of_problem"
+msgid "Description of issue"
+msgstr "คำอธิบายปัญหา"
+
+msgctxt "send_logs"
+msgid "Report issue and send logs"
+msgstr "รายงานปัญหาและส่ง Log"
+
+msgctxt "logging_error"
+msgid "Error"
+msgstr "ขัดข้อง"
+
+msgctxt "logging_net_work_connection_error"
+msgid "Please connect to the internet and try again."
+msgstr "โปรดเชื่อมต่ออินเทอร์เน็ตและลองอีกครั้ง"
+
+msgctxt "logging_no_api_key_error"
+msgid "Error code #307477."
+msgstr "Error code #307477."
+
+msgctxt "logging_io_error"
+msgid "Error code #199607."
+msgstr "Error code #199607."
+
+msgctxt "failed_to_send_logs"
+msgid "Failed to report issue."
+msgstr "ส่งรายงานล้มเหลว"
+
+msgctxt "upload_logs_successfully"
+msgid "Issue reported successfully."
+msgstr "ส่งรายงานเรียบร้อย"
+
+msgctxt "error_read_logs"
+msgid "Error while reading encrypted log files."
+msgstr "ขัดข้องขณะอ่านไฟล์ encrypted log"
+
+msgctxt "can_not_store_decrypted_logs"
+msgid "Could not create temporary directory for decrypted logs."
+msgstr "ไม่สามารถสร้างไดเร็คทอรี่"
+
+msgctxt "permission_storage_explanation_1"
+msgid ""
+"On your request Silent Phone can store debugging information for "
+"reporting issues which requires your permission for saving these "
+"encrypted logs to external storage."
+msgstr ""
+"ตามคำร้องขอ Silent Phone สามารถจัดเก็บรายละเอียด Debug "
+"เพื่อรายงานปัญหาที่ต้องการร้องขอการอนุญาตเพื่อบันทึก Encrypted Log "
+"ที่พื้นที่จัดเก็บภายนอก"
+
+msgctxt "no_decrypted_log_files"
+msgid "No decrypted log files."
+msgstr "ไม่มีไฟล์ decrypted Log"
+
+msgctxt "one_day"
+msgid "One day"
+msgstr "1 วัน"
+
+msgctxt "two_day"
+msgid "Two days"
+msgstr "2 วัน"
+
+msgctxt "three_day"
+msgid "Three days"
+msgstr "3 วัน"
+
+#. end debug logging
+msgctxt "onboarding_enterprise_privacy_platform"
+msgid "Enterprise privacy platform"
+msgstr "Enterprise privacy platform"
+
+msgctxt "onboarding_connect_with_people"
+msgid "Connect with people"
+msgstr "เชื่อมต่อกับคนอื่น"
+
+msgctxt "onboarding_lets_get_started"
+msgid "Let's get started"
+msgstr "เริ่มต้นใช้งาน"
+
+msgctxt "onboarding_silent_circle_is"
+msgid ""
+"Silent Circle is a secure communications company offering mobile devices,"
+" software applications, and communication management services to the "
+"Enterprise."
+msgstr ""
+"Silent Circle เป็นธุรกิจที่ให้บริการเกี่ยวกับการติดต่อสื่อสารที่ปลอดภัย "
+"ที่มีทั้ง โทรศัพท์มือถือ, แอพพลิเคชั่นซอฟต์แวร์ "
+"และการบริกการการจัดการการสื่อสารให้องค์กร"
+
+msgctxt "onboarding_private_encrypted"
+msgid ""
+"Private, encrypted communication and secure file transfer to any device, "
+"for everyone in your enterprise."
+msgstr "เอกชน, การสื่อสารแบบ encrypted และการส่งไฟล์แบบปลอดภัยสำหรับทุกคนในองค์กร"
+
+msgctxt "onboarding_search_for"
+msgid "Search for partners in your contact list, by email address or full name."
+msgstr "ค้นหาชื่อในรายชื่อด้วยอีเมล หรือชื่อเต็ม"
+
+msgctxt "title_activity_simple_chat_ui"
+msgid "SimpleChatUi"
+msgstr ""
+
+msgctxt "discovery_onboarding_1_title"
+msgid "Settings and account information"
+msgstr ""
+
+msgctxt "discovery_onboarding_1_desc"
+msgid ""
+"Tap the menu icon to access your Silent Phone settings, manage your "
+"account, & more."
+msgstr "แตะที่เมนูเพื่อตั้งค่า Silent Phone จัดการบัญชีของคุณและอื่นๆ"
+
+msgctxt "discovery_onboarding_2_title"
+msgid "Call, text, or send photos, videos, & more"
+msgstr "โทร ข้อความ หรือส่งรูป วิดีโอ และอื่นๆ"
+
+msgctxt "discovery_onboarding_2_desc"
+msgid ""
+"Touch the plus icon to create new conversations, make calls, or search "
+"your contacts. In a conversation you can send audio recordings, photos, "
+"videos, file attachments, your location, & more."
+msgstr ""
+"แตะที่ปุ่ม + เพื่อสร้างบทสนทนาใหม่ โทรออก หรือค้นหาผู้ติดต่อของคุณ "
+"ในหน้าสนทนาคุณสามารถส่งไฟล์เสียง รูป วิดีโอ ไฟล์แนบ ที่อยู่ของคุณและอื่นๆ"
+
+msgctxt "discovery_conversation_1_title"
+msgid "Call securely"
+msgstr "โทรอย่างปลอดภัย"
+
+msgctxt "discovery_conversation_1_desc"
+msgid "Tap the call icon to make a secure call or video call to this person."
+msgstr "แตะที่ปุ่มโทรเพื่อโทรออกอย่างปลอดภัยหรือโทรออกด้วยวิดีโอไปยังบุคคลนี้"
+
+msgctxt "discovery_conversation_2_title"
+msgid "Send voice messages"
+msgstr "ส่งข้อความเสียง"
+
+msgctxt "discovery_conversation_2_desc"
+msgid ""
+"Hold the record icon and start talking to record a voice message. Release"
+" to send it immediately."
+msgstr "กดค้างที่ปุ่มบันทึกและเริ่มพูดเพื่อบันทึกเสียง ปล่อยปุ่มเพื่อส่งทันที"
+
+msgctxt "discovery_conversation_3_title"
+msgid "More options to communicate"
+msgstr "ทางเลือกอื่นๆ"
+
+msgctxt "discovery_conversation_3_desc"
+msgid ""
+"Tap here to send pictures, take pictures, record video, share contacts, "
+"and send files."
+msgstr "แตะที่นี่เพื่อส่งภาพ ถ่ายรูป บันทึกวิดีโอ แชร์ผู้ติดต่อ และส่งไฟล์"
+
+msgctxt "discovery_conversation_4_title"
+msgid "Set burn time"
+msgstr "ตั้งเบิร์นไทม์"
+
+msgctxt "discovery_conversation_4_desc"
+msgid ""
+"Tap the burn icon to adjust the burn time. This sets how long your "
+"messages can be read by the other person."
+msgstr ""
+
+msgctxt "discovery_conversation_5_title"
+msgid "Add to contacts"
+msgstr "เพิ่มลงไปที่ผู้ติดต่อ"
+
+msgctxt "discovery_conversation_5_desc"
+msgid ""
+"Tap the add to contacts button to add this person as a new entry to your "
+"address book or to associate this person's Silent Phone information with "
+"an existing contact."
+msgstr ""
+
+msgctxt "discovery_conversation_6_title"
+msgid "Share location & more"
+msgstr "แชร์ตำแหน่งที่ตั้งและอื่นๆ"
+
+msgctxt "discovery_conversation_6_desc"
+msgid ""
+"Touch this menu icon to enable sharing your location with each message, "
+"to clear the conversation, and to see security information for the "
+"devices in this conversation."
+msgstr ""
+
+msgctxt "discovery_search_1_title"
+msgid "Select a contact"
+msgstr "เลือกผู้ติดต่อ"
+
+msgctxt "discovery_search_1_desc"
+msgid ""
+"Everyone in your contacts who can be reached securely with Silent Phone "
+"is shown right at the top. Contacts are matched by email and by Silent "
+"World phone numbers."
+msgstr ""
+
+msgctxt "discovery_search_2_title"
+msgid "Call anyone with Silent World"
+msgstr "โทรออกด้วย Silent World"
+
+msgctxt "discovery_search_2_desc"
+msgid ""
+"You have Silent World on your account. Select any contact with a phone "
+"number and you can make a non-secure traditional call."
+msgstr ""
+
+msgctxt "discovery_search_3_title"
+msgid "Search for contacts"
+msgstr "ค้นหา"
+
+#, c-format
+msgctxt "discovery_search_3_desc"
+msgid ""
+"Enter a name, phone number, email, or Silent Circle username and we'll "
+"try to find the contact. We search your device contacts and the %1$s "
+"directory."
+msgstr ""
+"ใส่ชื่อ หมายเลขโทรศัพท์ อีเมล์ หรือ ชื่อผู้ใช้ Silent Circle "
+"เราจะหาผู้ติดต่อให้คุณ  "
+
+msgctxt "discovery_search_4_title"
+msgid "Dial numbers"
+msgstr "หมายเลข"
+
+msgctxt "discovery_search_4_desc"
+msgid ""
+"Touch the dialpad to search for a number or to call a phone number "
+"directly."
+msgstr "แตะที่ปุ่มกดเพื่อค้นหาหมายเลขหรือโทรทันที"
+
+msgctxt "message_info_title"
+msgid "Event information"
+msgstr "ข้อมูลเหตุการ์ณ"
+
+msgctxt "message_info_id"
+msgid "Id"
+msgstr "Id"
+
+msgctxt "message_info_message_composed_at"
+msgid "Message composed at"
+msgstr "สร้างข้อความเมื่อ"
+
+msgctxt "message_info_message_sent_to"
+msgid "Message sent to"
+msgstr "ส่งข้อความถึง"
+
+msgctxt "message_info_message_read_at"
+msgid "Message read at"
+msgstr "อ่านข้อความเมื่อ"
+
+msgctxt "message_info_message_delivered_at"
+msgid "Message delivered at"
+msgstr "ส่งข้อความเมื่อ"
+
+msgctxt "message_info_message_expires_in"
+msgid "Message expires in"
+msgstr "ข้อความหมดอายุ"
+
+msgctxt "message_info_text"
+msgid "Text"
+msgstr "ข้อความ"
+
+msgctxt "message_info_sender"
+msgid "Sender"
+msgstr "ผู้ส่ง"
+
+msgctxt "message_info_burn_delay"
+msgid "Burn delay"
+msgstr "เบิร์นล่าช้า"
+
+msgctxt "message_info_has_attachments"
+msgid "Has attachments"
+msgstr "มีไฟล์แนบ"
+
+msgctxt "message_info_is_retained"
+msgid "Is retained"
+msgstr "ถูกเก็บรักษา"
+
+msgctxt "message_info_trace"
+msgid "Trace"
+msgstr "Trace"
+
+msgctxt "message_info_local_retention_info"
+msgid "Local retention info"
+msgstr "ข้อมูลถูกเก็บรักษา Local:"
+
+msgctxt "message_info_remote_retention_info"
+msgid "Remote retention info"
+msgstr "ข้อมูลถูกเก็บรักษา Remote:"
+
+msgctxt "message_info_retaining_organization"
+msgid "Retaining organization"
+msgstr "องค์กรเก็บรักษา"
+
+msgctxt "message_info_call_type"
+msgid "Call type"
+msgstr "ประเภทการโทร"
+
+msgctxt "message_info_call_time"
+msgid "Call started at"
+msgstr "โทรเริ่มต้นเมื่อ"
+
+msgctxt "message_info_call_duration"
+msgid "Call duration"
+msgstr "เวลาการโทร"
+
+msgctxt "message_info_call_error"
+msgid "Error"
+msgstr "ขัดข้อง"
+
+msgctxt "message_info_error_device_id"
+msgid "Device id"
+msgstr "หมายเลขอุปกรณ์"
+
+msgctxt "message_info_error_number"
+msgid "Error code"
+msgstr "ขัดข้อง"
+
+msgctxt "message_info_error_text"
+msgid "Error"
+msgstr "ขัดข้อง"
+
+msgctxt "message_info_error_message_id"
+msgid "Message id"
+msgstr "หมายเลขข้อความ"
+
+msgctxt "message_info_error_recipient_device_id"
+msgid "Recipient's device"
+msgstr "อุปกรณ์ผู้รับ"
+
+msgctxt "message_info_error_is_duplicate"
+msgid "Is duplicate"
+msgstr "Is duplicate"
+
+msgctxt "message_info_tab_info"
+msgid "Info"
+msgstr "ข้อมูล"
+
+msgctxt "message_info_tab_json"
+msgid "Json"
+msgstr "Json"
+
+msgctxt "message_info_tab_trace"
+msgid "Trace"
+msgstr "Trace"
+
+msgctxt "message_info_tab_no_trace_available"
+msgid "No trace information available"
+msgstr "ไม่มีข้อมูล Trace"
+
+msgctxt "group_messaging_create_group"
+msgid "Create a group"
+msgstr "สร้างกลุ่ม"
+
+msgctxt "group_messaging_invite_user"
+msgid "Invite participant"
+msgstr ""
+
+msgctxt "group_messaging_invite_notification"
+msgid "You have a new group conversation invitation"
+msgstr "คุณมีคำเชิญการสนทนากลุ่มใหม่"
+
+msgctxt "group_messaging_group_empty"
+msgid ""
+"No members in group yet\n"
+"To invite someone into conversation tap the plus icon"
+msgstr ""
+"ยังไม่มีสมาชิกในกลุ่ม\n"
+"สามารถเพิ่มสมาชิกได้โดยการกดปุ่ม +"
+
+msgctxt "group_messaging_no_known_groups"
+msgid "No groups known on this device"
+msgstr ""
+
+#, c-format
+msgctxt "group_messaging_member_count"
+msgid "Member count: %1$d/%2$d"
+msgstr ""
+
+msgctxt "group_messaging_group_details"
+msgid "Group details"
+msgstr "รายละเอียดกลุ่ม"
+
+msgctxt "group_messaging_group_members"
+msgid "Group members"
+msgstr "สมาชิกกลุ่ม"
+
+msgctxt "group_messaging_group_title"
+msgid "Group name"
+msgstr "ชื่อกลุ่ม"
+
+msgctxt "group_messaging_group_description"
+msgid "Description"
+msgstr "คำอธิบาย"
+
+msgctxt "group_messaging_group_creator"
+msgid "Creator"
+msgstr "ผู้สร้าง"
+
+msgctxt "group_messaging_group_participants"
+msgid "People"
+msgstr "บุคคล"
+
+msgctxt "group_messaging_leave_group"
+msgid "Leave group"
+msgstr "ออกจากกลุ่ม"
+
+msgctxt "group_messaging_sync_group"
+msgid "Synchronize group"
+msgstr "ซิงก์กลุ่ม"
+
+#, c-format
+msgctxt "group_messaging_invite"
+msgid "You added %1$s"
+msgstr "คุณได้เพิ่ม %1$s"
+
+#, c-format
+msgctxt "group_messaging_invite_failed"
+msgid "Failed to add %1$s"
+msgstr "ไม่สามารถเพิ่ม %1$s"
+
+#, c-format
+msgctxt "group_messaging_invite_answer_accepted"
+msgid "%1$s accepted invitation!"
+msgstr "%1$s ยอมรับคำเชิญ!"
+
+#, c-format
+msgctxt "group_messaging_invite_answer_declined"
+msgid "%1$s declined invitation!"
+msgstr "%1$s ปฎิเสธคำเชิญ!"
+
+msgctxt "group_messaging_invite_answer_self_accepted"
+msgid "You accepted invitation!"
+msgstr "คุณยอมรับคำเชิญ!"
+
+msgctxt "group_messaging_invite_answer_self_declined"
+msgid "You declined invitation!"
+msgstr "คุณปฎิเสธคำเชิญ!"
+
+#, c-format
+msgctxt "group_messaging_leave_notification"
+msgid "%1$s left"
+msgstr "%1$s ได้ออกจากกลุ่ม"
+
+#, c-format
+msgctxt "group_messaging_hello_received"
+msgid "%1$s joined"
+msgstr "%1$s ได้เข้าร่วมกลุ่ม"
+
+msgctxt "group_messaging_title_known_groups"
+msgid "Messaging groups"
+msgstr ""
+
+msgctxt "group_messaging_title_create_group"
+msgid "Create group"
+msgstr "สร้างกลุ่ม"
+
+msgctxt "group_messaging_group_created"
+msgid "Group created"
+msgstr "สร้างกลุ่มแล้ว"
+
+#, c-format
+msgctxt "group_messaging_group_created_by"
+msgid "Group created by %1$s on %2$s"
+msgstr "กลุ่มถูกสร้างโดย %1$s เมื่อ %2$s"
+
+#, c-format
+msgctxt "group_messaging_group_created_this"
+msgid "Group created by you on %1$s"
+msgstr "กลุ่มถูกสร้างโดยคุณเมื่อ %1$s"
+
+#, c-format
+msgctxt "group_messaging_no_devices_for_user"
+msgid "%1$s has no registered devices"
+msgstr ""
+
+#, c-format
+msgctxt "group_messaging_group_id"
+msgid "Group id: %1$s"
+msgstr "ไอดีกลุ่ม: %1$s"
+
+#, c-format
+msgctxt "group_messaging_new_burn_by"
+msgid "%1$s changed burn time to %2$s"
+msgstr "%1$s เปลี่ยนเบิร์นไทม์เป็น %2$s"
+
+#. Have an extra string if this reads: You changed group name to ... , in some
+#. languages we need to          change the verb
+#, c-format
+msgctxt "group_messaging_new_burn_this"
+msgid "You changed burn time to %1$s"
+msgstr "คุณเปลี่ยนเบิร์นไทม์เป็น %1$s"
+
+#, c-format
+msgctxt "group_messaging_new_burn"
+msgid "Burn time set to %1$s"
+msgstr ""
+
+#, c-format
+msgctxt "group_messaging_new_name_by"
+msgid "%1$s changed group name to '%2$s'"
+msgstr "%1$s ได้เปลี่ยนชื่อกลุ่มเป็น '%2$s'"
+
+#. Have an extra string if this reads: You changed group name to ... , in some
+#. languages we need to          change the verb
+#, c-format
+msgctxt "group_messaging_new_name_this"
+msgid "You changed group name to '%1$s'"
+msgstr "คุณได้เปลี่ยนชื่อกลุ่มเป็น '%1$s'"
+
+#, c-format
+msgctxt "group_messaging_new_name"
+msgid "Group name changed to '%1$s'"
+msgstr "ชื่อกลุ่มถูกเปลี่ยนเป็น '%1$s'"
+
+msgctxt "group_messaging_new_avatar_this"
+msgid "You changed group avatar"
+msgstr "คุณได้เปลี่ยน avatar กลุ่ม"
+
+msgctxt "group_messaging_new_avatar"
+msgid "Group avatar updated"
+msgstr "อัพเดท avatar กลุ่มแล้ว"
+
+#, c-format
+msgctxt "group_messaging_new_avatar_by"
+msgid "%1$s changed group avatar"
+msgstr "%1$s ได้เปลี่ยน avatar กลุ่ม"
+
+msgctxt "group_messaging_avatar_removed"
+msgid "Group avatar removed"
+msgstr "ลบ avatar กลุ่มแล้ว"
+
+msgctxt "group_messaging_avatar_removed_this"
+msgid "You removed group avatar"
+msgstr "คุณลบ avatar กลุ่ม"
+
+#, c-format
+msgctxt "group_messaging_avatar_removed_by"
+msgid "%1$s removed group avatar"
+msgstr "%1$s ลบ avatar กลุ่ม"
+
+#, c-format
+msgctxt "group_messaging_group_maximum_members"
+msgid "Maximum members in group: %1$d"
+msgstr "จำนวนสูงสุดในกลุ่ม: %1$d"
+
+msgctxt "group_messaging_edit_group_details"
+msgid "Edit group"
+msgstr "แก้ไขกลุ่ม"
+
+msgctxt "group_messaging_edit_group_maximum_members"
+msgid "Maximum number of members:"
+msgstr "จำนวนสูงสุดของสมาชิก:"
+
+msgctxt "group_messaging_edit_group_members_failed_already_more"
+msgid "Group already has more members than desired maximum"
+msgstr ""
+
+msgctxt "group_messaging_edit_group_name_voiceover"
+msgid "Edit group name"
+msgstr "แก้ไขชื่อกลุ่ม"
+
+msgctxt "group_messaging_edit_group_name_empty"
+msgid "Group name cannot be empty"
+msgstr "กรุณาใส่ชื่อกลุ่ม"
+
+msgctxt "group_messaging_edit_group_name_failed"
+msgid "Could not update group name"
+msgstr "ไม่สามารถอัพเดทชื่อกลุ่ม"
+
+msgctxt "group_messaging_edit_group_members_failed"
+msgid "Could not update maximum number of group members"
+msgstr "ไม่สามารถอัพเดทจำนวนสูงสุดของสมาชิกกลุ่ม"
+
+msgctxt "group_messaging_edit_group_members_updated"
+msgid "Maximum number of group members updated"
+msgstr "จำนวนสูงสุดของสมาชิกกลุ่มได้ถูกอัพเดท"
+
+msgctxt "group_messaging_edit_group_members_failed_maximum"
+msgid "Maximum number of group participants is 30"
+msgstr "จำนวนผู้เข้าร่วมกลุ่มสูงสุด คือ 30 คน"
+
+msgctxt "group_messaging_edit_group_members_failed_minimum"
+msgid "Minimum number of group participants is 3"
+msgstr "จำนวนผู้เข้าร่วมกลุ่มขั้นต่ำ คือ 3 คน"
+
+msgctxt "group_messaging_edit_group_avatar_failed"
+msgid "Could not update group avatar"
+msgstr "ไม่สามารถอัพเดท Avatar"
+
+msgctxt "group_messaging_edit_group_burn_failed"
+msgid "Could not update group burn delay"
+msgstr ""
+
+msgctxt "group_messaging_create_group_name"
+msgid "Group name"
+msgstr "ชื่อกลุ่ม"
+
+msgctxt "group_messaging_create_group_description"
+msgid "Group description"
+msgstr "คำอธิบายกลุ่ม"
+
+msgctxt "group_messaging_create_group_maximum_members_default"
+msgid "30"
+msgstr "30"
+
+msgctxt "group_messaging_create_group_name_not_empty"
+msgid "Group name should not be empty"
+msgstr "กรุณาใส่ชื่อกลุ่ม"
+
+msgctxt "group_messaging_create_group_description_not_empty"
+msgid "Group description should not be empty"
+msgstr "กรุณาใส่คำอธิบายกลุ่ม"
+
+msgctxt "group_messaging_create_group_name_already_used"
+msgid "Group with this name already exists"
+msgstr "มีชื่อกลุ่มนี้แล้ว"
+
+msgctxt "group_messaging_create_group_failed"
+msgid "Failed to create group conversation"
+msgstr "สร้างกลุ่มไม่สำเร็จ"
+
+#, c-format
+msgctxt "group_messaging_create_group_member_count_limits"
+msgid "Maximum member count must be between %1$d and %2$d"
+msgstr "จำนวนสมาชิกสูงสุดต้องอยู่ระหว่าง %1$d และ %2$d"
+
+msgctxt "group_messaging_create_group_select_participants_hint"
+msgid "Select group participants by clicking on contact items"
+msgstr ""
+
+#, c-format
+msgctxt "group_messaging_create_group_selection_counter"
+msgid "%1$d of %2$d selected"
+msgstr ""
+
+msgctxt "group_messaging_invitation_pending"
+msgid "Invitation pending"
+msgstr ""
+
+msgctxt "group_messaging_maximum_number_of_participants_selected"
+msgid "Maximum number or participants selected"
+msgstr ""
+
+#, c-format
+msgctxt "group_messaging_could_not_validate_user"
+msgid "Could not validate user %1$s"
+msgstr ""
+
+msgctxt "group_messaging_add_participants"
+msgid "Add participants"
+msgstr "เพิ่มรายชื่อ"
+
+msgctxt "group_messaging_add_participants_voiceover"
+msgid "add participants"
+msgstr "เพิ่มรายชื่อ"
+
+msgctxt "group_messaging_new_group_conversation"
+msgid "New group conversation"
+msgstr "คุณมีการสนทนากลุ่มใหม่"
+
+msgctxt "group_messaging_conversation_with"
+msgid "Conversation with"
+msgstr "สนทนากับ"
+
+msgctxt "group_messaging_group_conversation_created"
+msgid "Created on"
+msgstr "สร้างกลุ่มแล้ว"
+
+msgctxt "group_messaging_group_conversation_advanced_details"
+msgid "Extended configuration"
+msgstr ""
+
+msgctxt "group_messaging_group_sync_successful"
+msgid "Device synchronization successful"
+msgstr "Sync สำเร็จ"
+
+msgctxt "group_messaging_group_sync_failed"
+msgid "Device synchronization failed"
+msgstr "Sync ไม่สำเร็จ"
+
+#, c-format
+msgctxt "group_messaging_leaving_group"
+msgid "Leaving group %1$s"
+msgstr "ออกจากกลุ่ม %1$s"
+
+msgctxt "group_messaging_leaving_group_unknown"
+msgid "Leaving group"
+msgstr ""
+
+msgctxt "fab_action_new_conversation"
+msgid "New conversation"
+msgstr "เริ่มบทสนทนาใหม่"
+
+msgctxt "fab_action_new_group_conversation"
+msgid "New group conversation"
+msgstr "คุณมีการสนทนากลุ่มใหม่"
+
+msgctxt "tooltip_record_button"
+msgid "Hold to record, release to send"
+msgstr "กดค้างเพื่อบันทึก ปล่อยเพื่อส่ง"
+
+msgctxt "sound_recording_error"
+msgid "An error occurred while recording"
+msgstr "เกิดข้อผิดพลาดในขณะบันทึก"
+
+msgctxt "sound_recording_cancel"
+msgid "&lt; Slide to cancel"
+msgstr "&lt; สไลด์เพื่อยกเลิก"
+

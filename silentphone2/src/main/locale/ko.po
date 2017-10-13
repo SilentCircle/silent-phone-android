@@ -481,7 +481,7 @@ msgctxt "provisioning_domain_error"
 msgid ""
 "An enterprise server could not be located, or could not be authenticated,"
 " for the %s domain"
-msgstr "%의 도메인에 대하여 기업용 서버가 없음, 또는 인증되지 않음"
+msgstr "%s의 도메인에 대하여 기업용 서버가 없음, 또는 인증되지 않음"
 
 msgctxt "provisioning_ssl_date_invalid"
 msgid "The date of the certificate is invalid"

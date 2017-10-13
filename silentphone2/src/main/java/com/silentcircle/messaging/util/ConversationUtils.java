@@ -88,6 +88,7 @@ import java.util.concurrent.TimeUnit;
 import zina.JsonStrings;
 import zina.ZinaNative;
 
+import static com.silentcircle.messaging.services.SCloudService.SCLOUD_ATTACHMENT_CLOUD_URL;
 import static zina.JsonStrings.GROUP_ATTRIBUTE;
 import static zina.JsonStrings.GROUP_AVATAR;
 import static zina.JsonStrings.GROUP_BURN_MODE;
@@ -190,6 +191,16 @@ public class ConversationUtils {
         }
     }
 
+    @SuppressWarnings("WeakerAccess")
+    public static class UnreadMessageStats {
+        int conversationsWithUnreadMessages;
+        int conversationsWithUnreadCallMessages;
+        int groupConversationsWithUnreadMessages;
+        int unreadMessageCount;
+        int unreadCallMessageCount;
+
+        Message lastUnreadMessage;
+    }
 
     /**
      * Helper class to support the group data JSON parsing
@@ -245,7 +256,11 @@ public class ConversationUtils {
             int unreadCallCount = 0;
             ConversationRepository repository = getConversations();
             if (repository != null) {
-                for (Conversation conversation : repository.list()) {
+                List<Conversation> conversations = repository.listCached();
+                if (conversations == null || conversations.isEmpty()) {
+                    conversations = repository.list();
+                }
+                for (Conversation conversation : conversations) {
                     if (conversation == null) {
                         continue;
                     }
@@ -386,22 +401,119 @@ public class ConversationUtils {
         return result;
     }
 
+    @SuppressWarnings("WeakerAccess")
+    @NonNull
+    public static UnreadMessageStats getUnreadMessageStats(final @Nullable CharSequence conversationId) {
+        final UnreadMessageStats stats = new UnreadMessageStats();
+        final boolean axoRegistered = ZinaMessaging.getInstance().isRegistered();
+
+        if (!axoRegistered) {
+            return stats;
+        }
+
+        final ConversationRepository repository = ZinaMessaging.getInstance().getConversations();
+        final List<Conversation> conversations = repository.list();
+        for (Conversation conversation : conversations) {
+            if (conversation == null
+                    || conversation.getLastModified() == 0L
+                    || conversation.getPartner().getUserId() == null) {
+                continue;
+            }
+            if (conversation.containsUnreadMessages()) {
+                stats.conversationsWithUnreadMessages++;
+                if (conversation.getPartner().isGroup()) {
+                    stats.groupConversationsWithUnreadMessages++;
+                }
+            }
+            if (conversation.containsUnreadCallMessages()) {
+                stats.conversationsWithUnreadCallMessages++;
+            }
+            stats.unreadMessageCount += conversation.getUnreadMessageCount();
+            stats.unreadCallMessageCount += conversation.getUnreadCallMessageCount();
+            if (conversationId != null
+                    && TextUtils.equals(conversationId, conversation.getPartner().getUserId())) {
+                stats.lastUnreadMessage = getLastUnreadMessage(repository, conversation);
+            }
+        }
+        if (TextUtils.isEmpty(conversationId)) {
+            Conversation conversation =
+                    getLastModifiedConversationWithUnreadMessages(repository, conversations);
+            if (conversation != null) {
+                stats.lastUnreadMessage = getLastUnreadMessage(repository, conversation);
+            }
+        }
+        return stats;
+    }
+
+    @Nullable
+    @SuppressWarnings("WeakerAccess")
     // TODO: Consolidate all the unread logic
     public static Message getLastUnreadMessage() {
-        ZinaMessaging axoMessaging = ZinaMessaging.getInstance();
-        boolean axoRegistered = axoMessaging.isRegistered();
+        ZinaMessaging zinaMessaging = ZinaMessaging.getInstance();
+        boolean axoRegistered = zinaMessaging.isRegistered();
 
         if (!axoRegistered) {
             return null;
         }
 
-        ConversationRepository repository = axoMessaging.getConversations();
+        Message result = null;
+        ConversationRepository repository = zinaMessaging.getConversations();
+        Conversation conversation = getLastModifiedConversationWithUnreadMessages(repository);
+        if (conversation != null) {
+            result = getLastUnreadMessage(repository, conversation);
+        }
+
+        return result;
+    }
+
+    private static Message getLastUnreadMessage(final @NonNull ConversationRepository repository,
+            final @NonNull Conversation conversation) {
+        Message result = null;
+        EventRepository eventRepository = repository.historyOf(conversation);
+        EventRepository.PagingContext pagingContext =
+                new EventRepository.PagingContext(
+                        EventRepository.PagingContext.START_FROM_YOUNGEST, 10);
+        int eventCount;
+    pagingLoop:
+        do {
+            List<Event> events = eventRepository.list(pagingContext);
+            eventCount = 0;
+            if (events != null && events.size() > 0) {
+                eventCount = events.size();
+                for (Event event : events) {
+                    if (event instanceof IncomingMessage
+                            || (event instanceof CallMessage
+                            && ((CallMessage) event).getCallType() != ScCallLog.ScCalls.OUTGOING_TYPE)) {
+                        if (((Message) event).getState() != MessageStates.READ) {
+                            result = (Message) event;
+                            break pagingLoop;
+                        }
+                    }
+                }
+            }
+        } while (eventCount > 0);
+        return result;
+    }
+
+    @Nullable
+    @SuppressWarnings("WeakerAccess")
+    public static Conversation getLastModifiedConversationWithUnreadMessages(
+            @NonNull final ConversationRepository repository) {
         List<Conversation> conversations = repository.list();
+        return getLastModifiedConversationWithUnreadMessages(repository, conversations);
+    }
+
+    @Nullable
+    @SuppressWarnings("WeakerAccess")
+    public static Conversation getLastModifiedConversationWithUnreadMessages(
+            @NonNull final ConversationRepository repository,
+            @NonNull final List<Conversation> conversations) {
         Iterator<Conversation> conversationIterator = conversations.iterator();
         while (conversationIterator.hasNext()) {
             Conversation conversation = conversationIterator.next();
 
-            if (conversation == null || conversation.getLastModified() == 0
+            if (conversation == null
+                    || conversation.getLastModified() == 0
                     || !repository.historyOf(conversation).exists()
                     || conversation.getPartner().getUserId() == null
                     || (!conversation.containsUnreadCallMessages()
@@ -415,23 +527,7 @@ public class ConversationUtils {
         }
 
         Collections.sort(conversations);
-
-        Conversation unreadConversation = conversations.get(0);
-        List<Event> events = repository.historyOf(unreadConversation).list();
-        Iterator<Event> eventIterator = events.iterator();
-        while (eventIterator.hasNext()) {
-            Event event = eventIterator.next();
-
-            // We only care about incoming messages and non-outgoing calls
-            if (event instanceof IncomingMessage || (event instanceof CallMessage
-                    && ((CallMessage) event).getCallType() != ScCallLog.ScCalls.OUTGOING_TYPE)) {
-                if (((Message) event).getState() != MessageStates.READ) {
-                    return (Message) event;
-                }
-            }
-        }
-
-        return null;
+        return conversations.get(0);
     }
 
     @Nullable
@@ -550,8 +646,17 @@ public class ConversationUtils {
         return axoMessaging.getConversations();
     }
 
+    public static boolean canMessage(@Nullable Conversation conversation) {
+        if (conversation == null) {
+            return false;
+        }
+        Contact partner = conversation.getPartner();
+        return Utilities.canMessage(partner.getUserId()) || partner.isGroup();
+    }
+
     @NonNull
-    public static String resolveDisplayName(ContactEntry contactEntry, Conversation conversation) {
+    public static String resolveDisplayName(@Nullable ContactEntry contactEntry,
+            @Nullable Conversation conversation) {
 
         String displayName = null;
         if (contactEntry != null && conversation != null) {
@@ -591,7 +696,7 @@ public class ConversationUtils {
     }
 
     @Nullable
-    public static Conversation getConversation(@Nullable String partner) {
+    public static Conversation getConversation(final @Nullable String partner) {
         if (TextUtils.isEmpty(partner)) {
             return null;
         }
@@ -604,6 +709,30 @@ public class ConversationUtils {
         ConversationRepository repository = axoMessaging.getConversations();
         return repository.findByPartner(partner);
     }
+
+    @Nullable
+    public static Conversation getDisplayableConversation(final @Nullable String partner) {
+        if (TextUtils.isEmpty(partner)) {
+            return null;
+        }
+
+        ZinaMessaging axoMessaging = ZinaMessaging.getInstance();
+        if (!axoMessaging.isRegistered()) {
+            return null;
+        }
+
+        ConversationRepository repository = axoMessaging.getConversations();
+        Conversation conversation = repository.findByPartner(partner);
+        if (conversation == null
+                || ((conversation.getLastModified() == 0
+                    || !repository.historyOf(conversation).exists()
+                    || conversation.getPartner().getUserId() == null))) {
+            conversation = null;
+        }
+
+        return conversation;
+    }
+
 
     @Nullable
     public static Conversation getOrCreateConversation(@Nullable String partner) {
@@ -728,7 +857,7 @@ public class ConversationUtils {
                 String cloudUrl = null;
                 try {
                     JSONObject json = new JSONObject(avatarInfo);
-                    cloudUrl = json.optString("cloud_url");
+                    cloudUrl = json.optString(SCLOUD_ATTACHMENT_CLOUD_URL);
                 } catch (JSONException exception) {
                     // cloud url stays empty, no download
                 }
@@ -789,95 +918,142 @@ public class ConversationUtils {
         return conversation;
     }
 
-    public static void fillDeviceData(Contact partner, String device) {
-        DeviceInfo.DeviceData devInfo = DeviceInfo.parseDeviceInfo(device);
+    public static void fillDeviceData(@NonNull final ConversationRepository repository,
+            final @NonNull Contact partner, String device, boolean hasHadDevices) {
+        final DeviceInfo.DeviceData devInfo = DeviceInfo.parseDeviceInfo(device);
         if (devInfo != null) {
-            if (ConfigurationUtilities.mTrace) Log.d(TAG, "Fill in device device for " + partner.getUserId() + " " + device);
-            partner.addDeviceInfo(devInfo.name, devInfo.devId, devInfo.identityKey, devInfo.zrtpVerificationState);
+            final Conversation conversation = repository.findByPartner(partner.getUserId());
+            List<Device> knownDevices = partner.getDeviceInfo();
+            if (knownDevices == null || !hasHadDevices) {
+                if (ConfigurationUtilities.mTrace) Log.d(TAG, "Fill in device device for "
+                        + partner.getUserId() + " " + device);
+                // there have been no known devices for this user, add without creating info event
+                partner.addDeviceInfo(devInfo.name, devInfo.devId, devInfo.identityKey, devInfo.zrtpVerificationState);
+                if (conversation != null) {
+                    repository.save(conversation);
+                }
+            }
+            else if (!partner.hasDevice(devInfo.devId)) {
+                final List<DeviceInfo.DeviceData> devInfos = new ArrayList<>();
+                final List<String> conversations = getConversationsWithParticipant(partner.getUserId());
+                devInfos.add(devInfo);
+                if (conversation != null) {
+                    updateDeviceData(repository, conversation, conversations, devInfos, false);
+                }
+            }
         }
     }
 
     public static void updateDeviceData(@NonNull final ConversationRepository repository,
-            @NonNull final Collection<String> conversations, @Nullable final byte[] userId,
-            @Nullable final byte[] deviceId) {
+            @NonNull final Collection<String> conversations, @Nullable final byte[] userId) {
         final String user = (userId != null) ? new String(userId) : null;
-        final String deviceIds = (deviceId != null) ? new String(deviceId) : "";
-        byte[][] devices = ZinaMessaging.getIdentityKeys(userId);
-        if (devices == null || devices.length == 0) {
-            Log.d(TAG, "No known devices for " + user);
+        Conversation conversation = repository.findByPartner(user);
+        if (conversation == null) {
+            return;
         }
-        else {
-            Conversation conversation = repository.findByPartner(user);
-            if (conversation != null) {
-                ContactEntry contactEntry = ContactsCache.getContactEntry(user);
-                String displayName = resolveDisplayName(contactEntry, conversation);
-                boolean hasDeviceInfos = conversation.getPartner().numDeviceInfos() > 0;
-                List<Event> eventsToSave = new ArrayList<>();
-                // remove device infos for no longer known/unknown devices
-                List<Device> knownDevices = conversation.getPartner().getDeviceInfo();
-                for (Device device : knownDevices) {
-                    if (!deviceIds.contains(device.getDeviceId())) {
-                        Log.d(TAG, "Removed device for " + user + " " + device.getName());
-                        conversation.getPartner().removeDeviceInfo(device.getDeviceId());
-                        String details = StringUtils.jsonFromPairs(
-                                new Pair<String, Object>(JsonStrings.MSG_DEVICE_NAME, device.getName()),
-                                new Pair<String, Object>(JsonStrings.MSG_USER_ID, user),
-                                new Pair<String, Object>(JsonStrings.MSG_DISPLAY_NAME, displayName));
-                        Event event = MessageUtils.createInfoEvent(
-                                conversation.getPartner().getUserId(),
-                                InfoEvent.INFO_DEVICE_REMOVED,
-                                displayName + " removed device " + device.getName(),
-                                details);
-                        eventsToSave.add(event);
+        final List<DeviceInfo.DeviceData> devInfos = new ArrayList<>();
+        byte[][] devices = ZinaMessaging.getIdentityKeys(userId);
+        if (devices != null) {
+            for (byte[] device : devices) {
+                DeviceInfo.DeviceData devInfo = DeviceInfo.parseDeviceInfo(new String(device));
+                if (devInfo != null) {
+                    devInfos.add(devInfo);
+                }
+            }
+        }
+        updateDeviceData(repository, conversation, conversations, devInfos, true);
+    }
+
+    private static void updateDeviceData(@NonNull final ConversationRepository repository,
+            final @NonNull Conversation conversation,
+            final @NonNull Collection<String> conversations,
+            final @NonNull Collection<DeviceInfo.DeviceData> devInfos,
+            final boolean canRemove) {
+        final String user = conversation.getPartner().getUserId();
+        ContactEntry contactEntry = ContactsCache.getContactEntry(user);
+        String displayName = resolveDisplayName(contactEntry, conversation);
+        boolean hasHadDeviceInfos = conversation.getPartner().numDeviceInfos() >= 0;
+        List<Event> eventsToSave = new ArrayList<>();
+        // remove device infos for no longer known/unknown devices
+        List<Device> knownDevices = conversation.getPartner().getDeviceInfo();
+        if (canRemove && knownDevices != null) {
+            for (Device device : knownDevices) {
+                boolean hasDevice = false;
+                for (DeviceInfo.DeviceData devInfo : devInfos) {
+                    if (TextUtils.equals(devInfo.devId, device.getDeviceId())) {
+                        hasDevice = true;
+                        break;
                     }
                 }
-                // add or update device infos for known devices
-                for (byte[] device : devices) {
-                    DeviceInfo.DeviceData devInfo = DeviceInfo.parseDeviceInfo(new String(device));
-                    if (devInfo != null) {
-                        if (!conversation.getPartner().hasDevice(devInfo.devId)) {
-                            Log.d(TAG, "New device for " + user + " " + new String(device));
-                            conversation.getPartner().addDeviceInfo(devInfo.name, devInfo.devId,
-                                    devInfo.identityKey, devInfo.zrtpVerificationState);
-                            String details = StringUtils.jsonFromPairs(
-                                    new Pair<String, Object>(JsonStrings.MSG_DEVICE_NAME, devInfo.name),
-                                    new Pair<String, Object>(JsonStrings.MSG_USER_ID, user),
-                                    new Pair<String, Object>(JsonStrings.MSG_DISPLAY_NAME, displayName));
-                            Event event = MessageUtils.createInfoEvent(
-                                    conversation.getPartner().getUserId(),
-                                    InfoEvent.INFO_DEVICE_ADDED,
-                                    displayName + " added new device " + devInfo.name,
-                                    details);
-                            eventsToSave.add(event);
-                        }
-                        else {
-                            conversation.getPartner().updateDeviceInfo(devInfo.name, devInfo.devId,
-                                    devInfo.identityKey, devInfo.zrtpVerificationState);
-                        }
-                    }
+                if (!hasDevice) {
+                    Log.d(TAG, "Removed device for " + user + " " + device.getName());
+                    conversation.getPartner().removeDeviceInfo(device.getDeviceId());
+                    String details = StringUtils.jsonFromPairs(
+                            new Pair<String, Object>(JsonStrings.MSG_DEVICE_NAME, device.getName()),
+                            new Pair<String, Object>(JsonStrings.MSG_USER_ID, user),
+                            new Pair<String, Object>(JsonStrings.MSG_DISPLAY_NAME, displayName));
+                    Event event = MessageUtils.createInfoEvent(
+                            conversation.getPartner().getUserId(),
+                            InfoEvent.INFO_DEVICE_REMOVED,
+                            displayName + " removed device " + device.getName(),
+                            details);
+                    eventsToSave.add(event);
                 }
+            }
+        }
+        // add or update device infos for known devices
+        for (DeviceInfo.DeviceData devInfo : devInfos) {
+            if (!conversation.getPartner().hasDevice(devInfo.devId)) {
+                Log.d(TAG, "New device for " + user + " " + devInfo.name);
+                conversation.getPartner().addDeviceInfo(devInfo.name, devInfo.devId,
+                        devInfo.identityKey, devInfo.zrtpVerificationState);
+                String details = StringUtils.jsonFromPairs(
+                        new Pair<String, Object>(JsonStrings.MSG_DEVICE_NAME, devInfo.name),
+                        new Pair<String, Object>(JsonStrings.MSG_USER_ID, user),
+                        new Pair<String, Object>(JsonStrings.MSG_DISPLAY_NAME, displayName));
+                Event event = MessageUtils.createInfoEvent(
+                        conversation.getPartner().getUserId(),
+                        InfoEvent.INFO_DEVICE_ADDED,
+                        displayName + " added device " + devInfo.name,
+                        details);
+                eventsToSave.add(event);
+            }
+            else {
+                conversation.getPartner().updateDeviceInfo(devInfo.name, devInfo.devId,
+                        devInfo.identityKey, devInfo.zrtpVerificationState);
+            }
+        }
+        if (devInfos.isEmpty()) {
+            String text = SilentPhoneApplication.getAppContext().getResources().getString(
+                    R.string.group_messaging_no_devices_for_user, displayName);
+            int tag = InfoEvent.INFO_NO_DEVICES_FOR_USER;
+            String details = StringUtils.jsonFromPairs(
+                    new Pair<String, Object>(JsonStrings.MSG_DISPLAY_NAME, displayName),
+                    new Pair<String, Object>(JsonStrings.MSG_USER_ID, user));
+            InfoEvent event = MessageUtils.createInfoEvent(conversation.getPartner().getUserId(),
+                    tag, text, details);
+            eventsToSave.add(event);
+        }
 
-                repository.save(conversation);
+        repository.save(conversation);
 
-                /*
-                 * Do not add device info events if user did not have any known devices up to now.
-                 * This is to avoid having all his devices listed in regular conversation when
-                 * any message exchange was in a group conversation.
-                 */
-                if (hasDeviceInfos) {
-                    for (String conversationId : conversations) {
-                        conversation = repository.findByPartner(conversationId);
-                        if (conversation == null) {
-                            continue;
-                        }
-                        for (Event event : eventsToSave) {
-                            event.setConversationID(conversationId);
-                            repository.historyOf(conversation).save(event);
-                            MessageUtils.notifyConversationUpdated(
-                                    SilentPhoneApplication.getAppContext(), user, true,
-                                    ZinaMessaging.UPDATE_ACTION_MESSAGE_SEND, event.getId());
-                        }
-                    }
+        /*
+         * Do not add device info events if user did not have any known devices up to now.
+         * This is to avoid having all his devices listed in regular conversation when
+         * any message exchange was in a group conversation.
+         */
+        if (hasHadDeviceInfos) {
+            for (String conversationId : conversations) {
+                Conversation conversationToNotify = repository.findByPartner(conversationId);
+                if (conversationToNotify == null) {
+                    continue;
+                }
+                for (Event event : eventsToSave) {
+                    event.setConversationID(conversationId);
+                    repository.historyOf(conversationToNotify).save(event);
+                    MessageUtils.notifyConversationUpdated(
+                            SilentPhoneApplication.getAppContext(), user, true,
+                            ZinaMessaging.UPDATE_ACTION_MESSAGE_SEND, event.getId());
                 }
             }
         }
@@ -1139,8 +1315,8 @@ public class ConversationUtils {
                         ? InfoEvent.INFO_INVITE_USER
                         : InfoEvent.INFO_INVITE_USER_FAILED;
                 String details = StringUtils.jsonFromPairs(
-                        new Pair<String, Object>(JsonStrings.MSG_DISPLAY_NAME, displayName),
-                        new Pair<String, Object>(JsonStrings.MSG_USER_ID, userId));
+                        new Pair<String, Object>(JsonStrings.MEMBER_DISPLAY_NAME, displayName),
+                        new Pair<String, Object>(JsonStrings.MEMBER_ID, userId));
                 InfoEvent event = MessageUtils.createInfoEvent(groupId, tag, text, details);
 
                 events.save(event);

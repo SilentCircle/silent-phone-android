@@ -32,10 +32,7 @@ import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.Fragment;
 import android.app.FragmentManager;
-import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.os.Build;
@@ -45,6 +42,8 @@ import android.support.annotation.Nullable;
 import android.support.v13.app.FragmentPagerAdapter;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewPager;
+
+import com.silentcircle.SilentPhoneApplication;
 import com.silentcircle.logs.Log;
 
 import android.view.LayoutInflater;
@@ -64,12 +63,9 @@ import com.silentcircle.contacts.calllognew.ContactInfoHelper;
 import com.silentcircle.contacts.widget.SlidingTabLayout;
 import com.silentcircle.messaging.fragments.ConversationsFragment;
 import com.silentcircle.messaging.services.ZinaMessaging;
-import com.silentcircle.messaging.util.Action;
 import com.silentcircle.messaging.util.AsyncUtils;
-import com.silentcircle.messaging.util.ConversationUtils;
-import com.silentcircle.messaging.util.SoundNotifications;
 import com.silentcircle.silentphone2.R;
-import com.silentcircle.silentphone2.activities.DialerActivity;
+import com.silentcircle.silentphone2.activities.DialerActivityInternal;
 import com.silentcircle.silentphone2.list.ShortcutCardsAdapter.SwipeableShortcutCard;
 import com.silentcircle.silentphone2.services.TiviPhoneService;
 import com.silentcircle.silentphone2.util.CallState;
@@ -148,9 +144,8 @@ public class ListsFragment extends Fragment implements CallLogQueryHandler.Liste
     private AllContactsFragment mAllContactsFragment;
 
     private boolean mAxoRegistered;
-    protected BroadcastReceiver mViewUpdater;
     /* handler for failed messages runnable */
-    protected Handler mMessageHandler;
+    private Handler mMessageHandler;
 
     protected final Runnable mRunMessageFailureHandling = new Runnable() {
         @Override
@@ -282,50 +277,18 @@ public class ListsFragment extends Fragment implements CallLogQueryHandler.Liste
     @Override
     public void onResume() {
         super.onResume();
-        final SharedPreferences prefs = getActivity().getSharedPreferences(DialerActivity.SHARED_PREFS_NAME, Context.MODE_PRIVATE);
+        final SharedPreferences prefs = getActivity().getSharedPreferences(DialerActivityInternal.SHARED_PREFS_NAME, Context.MODE_PRIVATE);
         mLastCallShortcutDate = prefs.getLong(KEY_LAST_DISMISSED_CALL_SHORTCUT_DATE, 0);
         fetchCalls();
         mCallLogAdapter.setLoading(true);
-        registerViewUpdater();
-        refreshTabView();
         handleMessageFailures();
     }
 
     @Override
     public void onPause() {
         super.onPause();
-        getActivity().unregisterReceiver(mViewUpdater);
         mMessageHandler.removeCallbacks(mRunMessageFailureHandling);
         mCallLogAdapter.stopRequestProcessing();
-    }
-
-    private void registerViewUpdater() {
-
-        mViewUpdater = new BroadcastReceiver() {
-
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                switch (Action.from(intent)) {
-                    case RECEIVE_MESSAGE:
-                        refreshTabView();
-                        SoundNotifications.playReceiveMessageSound();
-                        if (isOrderedBroadcast()) {
-                            abortBroadcast();
-                        }
-                        break;
-                    default:
-                        break;
-                }
-            }
-        };
-
-        IntentFilter filter = Action.RECEIVE_MESSAGE.filter();
-        filter.setPriority(MESSAGE_PRIORITY);
-
-        Context context = getActivity();
-        if (context != null) {
-            context.registerReceiver(mViewUpdater, filter);
-        }
     }
 
     private void setTabViewNotificationVisibility(int position, boolean visible) {
@@ -345,7 +308,12 @@ public class ListsFragment extends Fragment implements CallLogQueryHandler.Liste
         }
 
         if (mAxoRegistered) {
-            AsyncUtils.execute(new HandleMessageFailuresTask(activity.getApplicationContext(), this));
+            if (!HandleMessageFailuresTask.isRunning()) {
+                HandleMessageFailuresTask.execute(this);
+            }
+            else {
+                HandleMessageFailuresTask.updateRunningFragment(this);
+            }
         }
         else {
             scheduleMessageFailuresTask();
@@ -359,6 +327,12 @@ public class ListsFragment extends Fragment implements CallLogQueryHandler.Liste
         }
     }
 
+    private void onMessageFailuresHandled(Integer count) {
+        if (count != 0) {
+            scheduleMessageFailuresTask();
+        }
+    }
+
     public void setPagerItem(int position) {
         if(mViewPager != null) {
             mViewPager.setCurrentItem(getRtlPosition(mappedPosition(position)));
@@ -369,15 +343,6 @@ public class ListsFragment extends Fragment implements CallLogQueryHandler.Liste
     public void setPagerItem(int position, boolean smoothScroll) {
         if(mViewPager != null) {
             mViewPager.setCurrentItem(getRtlPosition(mappedPosition(position)), smoothScroll);
-        }
-    }
-
-    private void refreshTabView() {
-        if (mAxoRegistered) {
-            int conversationsWithUnreadMessages =
-                    ConversationUtils.getConversationsWithUnreadMessages();
-            setTabViewNotificationVisibility(mTabIndexMap[TAB_INDEX_CHAT],
-                    conversationsWithUnreadMessages > 0);
         }
     }
 
@@ -466,7 +431,8 @@ public class ListsFragment extends Fragment implements CallLogQueryHandler.Liste
 
     private static class HandleMessageFailuresTask extends com.silentcircle.messaging.task.HandleMessageFailuresTask {
 
-        private final WeakReference<ListsFragment> mFragmentReference;
+        private WeakReference<ListsFragment> mFragmentReference;
+        private static HandleMessageFailuresTask sHandlerTask;
 
         public HandleMessageFailuresTask(Context context, ListsFragment fragment) {
             super(context);
@@ -476,9 +442,27 @@ public class ListsFragment extends Fragment implements CallLogQueryHandler.Liste
         @Override
         protected void onPostExecute(Integer count) {
             ListsFragment fragment = mFragmentReference.get();
-            if (count != 0 && fragment != null) {
-                fragment.scheduleMessageFailuresTask();
+            if (fragment != null) {
+                fragment.onMessageFailuresHandled(count);
             }
+            sHandlerTask = null;
+        }
+
+        void setFragment(ListsFragment fragment) {
+            mFragmentReference = new WeakReference<>(fragment);
+        }
+
+        static void execute(ListsFragment fragment) {
+            sHandlerTask = new HandleMessageFailuresTask(SilentPhoneApplication.getAppContext(), fragment);
+            AsyncUtils.execute(sHandlerTask);
+        }
+
+        static boolean isRunning() {
+            return sHandlerTask != null && sHandlerTask.getStatus() != Status.FINISHED;
+        }
+
+        static void updateRunningFragment(ListsFragment fragment) {
+            sHandlerTask.setFragment(fragment);
         }
     }
 
@@ -497,7 +481,6 @@ public class ListsFragment extends Fragment implements CallLogQueryHandler.Liste
             ViewPagerAdapter viewPagerAdapter = new ViewPagerAdapter(getFragmentManager());
             mViewPager.setAdapter(viewPagerAdapter);
 //            mSlidingTabLayout.setViewPager(mViewPager);
-            refreshTabView();
             handleMessageFailures();
         }
     }
@@ -591,7 +574,7 @@ public class ListsFragment extends Fragment implements CallLogQueryHandler.Liste
     public void dismissShortcut(View view) {
         mLastCallShortcutDate = mCurrentCallShortcutDate;
         final SharedPreferences prefs = view.getContext().getSharedPreferences(
-                DialerActivity.SHARED_PREFS_NAME, Context.MODE_PRIVATE);
+                DialerActivityInternal.SHARED_PREFS_NAME, Context.MODE_PRIVATE);
         prefs.edit().putLong(KEY_LAST_DISMISSED_CALL_SHORTCUT_DATE, mLastCallShortcutDate).apply();
         fetchCalls();
     }
@@ -599,6 +582,10 @@ public class ListsFragment extends Fragment implements CallLogQueryHandler.Liste
     public void onCallStateChanged(@Nullable CallState call, TiviPhoneService.CT_cb_msg msg) {
         if (mConversationsFragment != null) {
             mConversationsFragment.onCallStateChanged(call, msg);
+        }
+        if (msg == TiviPhoneService.CT_cb_msg.eReg
+                && TiviPhoneService.PHONE_STATE_ONLINE == TiviPhoneService.getPhoneState()) {
+            handleMessageFailures();
         }
     }
 }

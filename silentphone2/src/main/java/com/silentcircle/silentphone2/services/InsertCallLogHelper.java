@@ -202,7 +202,7 @@ public class InsertCallLogHelper extends AsyncTask<Uri, Void, Cursor> {
          * some unanswered calls (variable count larger than 0).
          *
          * TODO
-         * Notifications are immediately dismissed when DialerActivity (ConversationsFragment)
+         * Notifications are immediately dismissed when DialerActivityInternal (ConversationsFragment)
          * becomes visible after InCallActivity when unread messages notification is dismissed
          * as a badge of unread messages/missed calls is shown affected for conversation.
          * This worked for messages, calls may need additional handling.
@@ -212,7 +212,7 @@ public class InsertCallLogHelper extends AsyncTask<Uri, Void, Cursor> {
          */
         if (callType == ScCallLog.ScCalls.MISSED_TYPE) {
             Intent messagingIntent = ContactsUtils.getMessagingIntent(conversationPartnerId, mCtx);
-            Notifications.sendMessageNotification(mCtx, messagingIntent);
+            Notifications.sendMessageNotification(mCtx, messagingIntent, conversationPartnerId);
         }
 
 //        NotificationManager notificationManager = (NotificationManager)mCtx.getSystemService(Context.NOTIFICATION_SERVICE);
@@ -221,7 +221,7 @@ public class InsertCallLogHelper extends AsyncTask<Uri, Void, Cursor> {
 ////        showCallLog.setAction(Intent.ACTION_VIEW);
 ////        showCallLog.setType(ScCallLog.ScCalls.CONTENT_TYPE);
 //
-//        Intent showCallLog = Action.VIEW_CONVERSATIONS.intent(mCtx, DialerActivity.class);
+//        Intent showCallLog = Action.VIEW_CONVERSATIONS.intent(mCtx, DialerActivityInternal.class);
 //
 //        // The PendingIntent to launch our activity if the user selects this notification
 //        PendingIntent contentIntent = PendingIntent.getActivity(mCtx, 0, showCallLog, 0);

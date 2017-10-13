@@ -37,7 +37,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #if defined(__APPLE__)
-//#include "/Users/eturner/Programming/SilentCircle/SPi3/spi3/Logging/DevLogging/SCSPLog_private.h"
 #import "SCSPLog_private.h"
 #endif
 

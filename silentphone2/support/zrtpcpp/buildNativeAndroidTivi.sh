@@ -6,6 +6,8 @@
 # The script requires some environment variables which are either set by the
 # build system (Jenkins for example) or by a shell script that call this script.
 
+set -x
+
 if [ ! -d "${WORKSPACE}/silentphone2" ]; then
     echo '***** Variable WORKSPACE does not point to correct directory *****'
     exit 1

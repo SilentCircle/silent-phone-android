@@ -13,7 +13,7 @@
     style="@style/DrawerScrollStyle"
     android:id="@+id/drawer_scroll"
     android:overScrollMode="never"
-    tools:context=".activities.DialerActivity"
+    tools:context=".activities.DialerActivityInternal"
     >
 
     <LinearLayout

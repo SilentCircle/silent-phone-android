@@ -21,14 +21,13 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="@color/sc_ng_background"
     android:animateLayoutChanges="true">
 
     <ListView
             android:id="@+id/shortcut_card_list"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:filterTouchesWhenObscured="false"
+            android:background="@color/background_dialer_list_items"
             android:paddingTop="0.0000001dp"
             android:clipToPadding="false"
             android:fadingEdge="none"

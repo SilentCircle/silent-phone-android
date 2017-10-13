@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2013-2017, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2014-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -50,7 +50,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.database.Cursor;
-import android.database.DatabaseUtils;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
@@ -90,7 +89,9 @@ import com.silentcircle.contacts.utils.AsyncTaskExecutor;
 import com.silentcircle.contacts.utils.AsyncTaskExecutors;
 import com.silentcircle.contacts.utils.Constants;
 import com.silentcircle.contacts.ScCallLog.ScCalls;
+import com.silentcircle.silentphone2.BuildConfig;
 import com.silentcircle.silentphone2.R;
+import com.silentcircle.silentphone2.activities.DialerActivityInternal;
 import com.silentcircle.silentphone2.util.Utilities;
 
 /**
@@ -824,6 +825,7 @@ public class ScCallDetailActivity extends AppCompatActivity /*implements Proximi
 
     public void onMenuEditNumberBeforeCall(MenuItem menuItem) {
         Intent intent = new Intent(ContactsUtils.getEditBeforeCallAction(), ContactsUtils.getCallUri(mNumber));
+        intent.setClassName(BuildConfig.APPLICATION_ID, DialerActivityInternal.class.getName());
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
 
         startActivity(intent);

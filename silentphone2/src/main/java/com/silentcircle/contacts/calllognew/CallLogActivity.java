@@ -37,7 +37,7 @@ import com.silentcircle.common.util.ViewUtil;
 import com.silentcircle.contacts.ScCallLog.ScCalls;
 import com.silentcircle.contacts.widget.SlidingTabLayout;
 import com.silentcircle.silentphone2.R;
-import com.silentcircle.silentphone2.activities.DialerActivity;
+import com.silentcircle.silentphone2.activities.DialerActivityInternal;
 import com.silentcircle.silentphone2.util.Utilities;
 
 public class CallLogActivity extends AppCompatActivity implements CallLogQueryHandler.Listener {
@@ -219,7 +219,7 @@ public class CallLogActivity extends AppCompatActivity implements CallLogQueryHa
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case android.R.id.home:
-                final Intent intent = new Intent(this, DialerActivity.class);
+                final Intent intent = new Intent(this, DialerActivityInternal.class);
                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                 startActivity(intent);
                 return true;

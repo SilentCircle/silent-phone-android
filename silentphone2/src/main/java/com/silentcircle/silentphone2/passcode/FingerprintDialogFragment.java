@@ -92,6 +92,8 @@ public class FingerprintDialogFragment extends DialogFragment{
     private boolean mDismissed;
     private boolean mFinished;
 
+    private Handler mHandlerUI;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -110,6 +112,7 @@ public class FingerprintDialogFragment extends DialogFragment{
         mAuthenticationCallback = new MyAuthenticationCallback();
 
         mHandler = new Handler(Looper.getMainLooper());
+        mHandlerUI = new Handler(Looper.getMainLooper());
     }
 
     @Override
@@ -124,6 +127,7 @@ public class FingerprintDialogFragment extends DialogFragment{
         if (getDialog() != null && getRetainInstance()) {
             getDialog().setDismissMessage(null);
         }
+        mHandlerUI.removeCallbacks(mResetErrorTextRunnable);
         super.onDestroyView();
     }
 
@@ -200,7 +204,7 @@ public class FingerprintDialogFragment extends DialogFragment{
         }
 
         public void onAuthenticationError(int errMsgId, CharSequence errString) {
-//            Log.d(TAG, "onError " + errString + " " + errMsgId + " " + mSelfCancelled);
+//            Log.d(TAG, "onAuthenticationError " + errString + " " + errMsgId + " " + mSelfCancelled);
             /*
              * This can be called when an unrecoverable error occurs or when we stop listening. In the
              * first case, we show the error and call the callback. If we stop listening on purpose,
@@ -268,9 +272,12 @@ public class FingerprintDialogFragment extends DialogFragment{
                 getResources().getColor(R.color.fingerprint_hint_color, null));
     }
 
-    Runnable mResetErrorTextRunnable = new Runnable() {
+    final Runnable mResetErrorTextRunnable = new Runnable() {
         @Override
         public void run() {
+            if (getActivity() == null) {
+                return;
+            }
             setDefaultStateUI();
         }
     };
@@ -283,20 +290,18 @@ public class FingerprintDialogFragment extends DialogFragment{
                 getResources().getColor(R.color.fingerprint_warning_color, null));
         runErrorAnimation();
 
-        mFingerprintStatusView.removeCallbacks(mResetErrorTextRunnable);
+        mHandlerUI.removeCallbacks(mResetErrorTextRunnable);
         if (reset) {
-            mFingerprintStatusView.postDelayed(mResetErrorTextRunnable, ERROR_TIMEOUT_MILLIS);
+            mHandlerUI.postDelayed(mResetErrorTextRunnable, ERROR_TIMEOUT_MILLIS);
         }
     }
 
     private void showSuccess() {
-        mFingerprintStatusView.removeCallbacks(mResetErrorTextRunnable);
-
         mIcon.setImageResource(R.drawable.ic_fingerprint_success);
         mFingerprintStatusView.setText(getString(R.string.fingerprint_recognized));
         mFingerprintStatusView.setTextColor(
                 getResources().getColor(R.color.fingerprint_success_color, null));
-        mFingerprintStatusView.removeCallbacks(mResetErrorTextRunnable);
+        mHandlerUI.removeCallbacks(mResetErrorTextRunnable);
 
         runSuccessAnimation();
     }

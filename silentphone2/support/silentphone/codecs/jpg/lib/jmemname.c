@@ -67,7 +67,11 @@ extern void free JPP((void *ptr));
  */
 
 #ifndef TEMP_DIRECTORY		/* can override from jconfig.h or Makefile */
-#define TEMP_DIRECTORY  "/usr/tmp/" /* recommended setting for Unix */
+	#ifdef ANDROID_NDK
+		#define TEMP_DIRECTORY  "/data/data/com.silentcircle.silentphone/files/" /* TODO: Use getFileStorePath() to set this during runtime */
+	#else
+		#define TEMP_DIRECTORY  "/usr/tmp/" /* recommended setting for Unix */
+	#endif
 #endif
 
 #ifndef __SYMBIAN32__
@@ -128,11 +132,9 @@ select_file_name (char * fname)
 LOCAL(void)
 select_file_name (char * fname)
 {
-#if !defined(__SYMBIAN32__) && !defined(_WIN32_WCE) && !defined(__linux__) && !defined(ARM) && !defined(ANDROID_NDK)&& !defined(__APPLE__)
   next_file_num++;		/* advance counter */
   sprintf(fname, TEMP_FILE_NAME, TEMP_DIRECTORY, next_file_num);
   mktemp(fname);		/* make sure file name is unique */
-#endif
   /* mktemp replaces the trailing XXXXXX with a unique string of characters */
 }
 

@@ -34,6 +34,7 @@
 
 #include <list>
 #include <stdint.h>
+#include <memory>
 
 #include <common/Thread.h>
 #include <common/osSpecifics.h>
@@ -124,11 +125,9 @@ public:
 
 private:
     TOSubscriber subscriber;
-    uint64_t when_ms;     // Time since Epoch in ms when the timeout
-    // will happen
+    uint64_t when_ms;       // Time since Epoch in ms when the timeout will happen
 
-    TOCommand command;      // Command that will be delivered to the
-    // receiver (subscriber) of the timeout.
+    TOCommand command;      // Command that will be delivered to the receiver (subscriber) of the timeout.
 };
 
 /**
@@ -144,7 +143,7 @@ private:
 
     // The timeouts are ordered in the order of which they
     // will expire. Nearest in future is first in list.
-    std::list<TPRequest<TOCommand, TOSubscriber> *> requests;
+    std::list<std::unique_ptr<TPRequest<TOCommand, TOSubscriber> > > requests;
 
     CMutexClass synchLock;
     CEventClass timeEvent;
@@ -157,7 +156,7 @@ private:
 public:
 
     /**
-     * Timeout Provide Constructor
+     * Timeout Provider Constructor
      */
     TimeoutProvider(): requests(), stop(false)  { }
 
@@ -167,6 +166,15 @@ public:
     ~TimeoutProvider() {
         stop = true;
         timeEvent.Set();
+    }
+
+    /**
+     * @brief Reset the timeout provider, used in case if the provider is static before re-use
+     */
+    void reset() {
+        stop = false;
+        timeEvent.Reset();
+        requests.clear();
     }
 
     /**
@@ -190,34 +198,33 @@ public:
      */
     void requestTimeout(int32_t time_ms, TOSubscriber subscriber, const TOCommand &command)
     {
-        TPRequest<TOCommand, TOSubscriber>* request =
-            new TPRequest<TOCommand, TOSubscriber>(subscriber, time_ms, command);
+        std::unique_ptr<TPRequest<TOCommand, TOSubscriber> > request(
+                new TPRequest<TOCommand, TOSubscriber>(subscriber, time_ms, command));
 
         synchLock.Lock();
 
         if (requests.size()==0) {
-            requests.push_front(request);
+            requests.push_front(move(request));
             timeEvent.Set();
             synchLock.Unlock();
             return;
         }
-        if (request->happensBefore(requests.front())) {
-            requests.push_front(request);
+        if (request->happensBefore(requests.front().get())) {
+            requests.push_front(move(request));
             timeEvent.Set();
             synchLock.Unlock();
             return;
         }
-        if (requests.back()->happensBefore(request)){
-            requests.push_back(request);
+        if (requests.back()->happensBefore(request.get())){
+            requests.push_back(move(request));
             timeEvent.Set();
             synchLock.Unlock();
             return;
         }
 
-        typename std::list<TPRequest<TOCommand, TOSubscriber>* >::iterator i;
-        for(i = requests.begin(); i != requests.end(); i++ ) {
-            if( request->happensBefore(*i)) {
-                requests.insert(i, request);
+        for(auto i = requests.begin(); i != requests.end(); i++ ) {
+            if( request->happensBefore((*i).get())) {
+                requests.insert(i, move(request));
                 break;
             }
         }
@@ -233,8 +240,7 @@ public:
     void cancelRequest(TOSubscriber subscriber, const TOCommand &command)
     {
         synchLock.Lock();
-        typename std::list<TPRequest<TOCommand, TOSubscriber>* >::iterator i;
-        for(i = requests.begin(); i != requests.end(); ) {
+        for(auto i = requests.begin(); i != requests.end(); ) {
             if( (*i)->getCommand() == command &&
                 (*i)->getSubscriber() == subscriber) {
                 i = requests.erase(i);
@@ -256,7 +262,7 @@ public:
                 time = requests.front()->getMsToTimeout();
             }
             if (time == 0 && size > 0) {
-                TPRequest<TOCommand, TOSubscriber>* req = requests.front();
+                std::unique_ptr<TPRequest<TOCommand, TOSubscriber> >& req = requests.front();
                 TOSubscriber subs = req->getSubscriber();
                 TOCommand command = req->getCommand();
 

@@ -111,7 +111,7 @@
   <string name="provisioning_auth_token_text">두 단계 인증이 가능합니다. 아래의 인증번호를 입력하세요.</string>
   <string name="provisioning_auth_token_error">입력 에러: 잘못된 인증번호를 입력 하였습니다.</string>
   <string name="provisioning_all_fields_required">모든 공란을 채우세요.</string>
-  <string name="provisioning_domain_error">%의 도메인에 대하여 기업용 서버가 없음, 또는 인증되지 않음</string>
+  <string name="provisioning_domain_error">%s의 도메인에 대하여 기업용 서버가 없음, 또는 인증되지 않음</string>
   <string name="provisioning_ssl_date_invalid">인증된 날짜가 유효하지 않음</string>
   <string name="provisioning_ssl_expired">인증서가 만료되었음</string>
   <string name="provisioning_ssl_idmismatch">서버 인증이 올바르지 않음</string>

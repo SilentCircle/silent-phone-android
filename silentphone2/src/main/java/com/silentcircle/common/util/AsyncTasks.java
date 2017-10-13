@@ -31,7 +31,6 @@ package com.silentcircle.common.util;
 import android.os.AsyncTask;
 import android.support.annotation.Nullable;
 import android.support.annotation.WorkerThread;
-import android.text.TextUtils;
 
 import com.silentcircle.logs.Log;
 import com.silentcircle.messaging.services.ZinaMessaging;
@@ -187,6 +186,7 @@ public class AsyncTasks {
         public boolean rrcm;
         public boolean rrcp;
         public boolean rrap;
+        public boolean isInSameOrganization;
     }
 
     @Nullable
@@ -209,6 +209,7 @@ public class AsyncTasks {
             ui.rrcm = data.optBoolean(RRCM, false);
             ui.rrcp = data.optBoolean(RRCP, false);
             ui.rrap = data.optBoolean(RRAP, false);
+            ui.isInSameOrganization = data.optBoolean("same_organization", false);
         } catch (JSONException ex) {
             Log.d("parseUserInfo", "JSON exception", ex);
             ui = null;

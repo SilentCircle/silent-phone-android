@@ -38,6 +38,7 @@ import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.constraint.ConstraintLayout;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.graphics.drawable.DrawableCompat;
 import android.text.TextUtils;
@@ -49,7 +50,6 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewStub;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 
@@ -69,10 +69,11 @@ import com.silentcircle.messaging.util.DateUtils;
 import com.silentcircle.messaging.util.Extra;
 import com.silentcircle.messaging.util.MIME;
 import com.silentcircle.messaging.util.MessageUtils;
+import com.silentcircle.messaging.util.PresentationType;
 import com.silentcircle.messaging.util.SoundNotifications;
 import com.silentcircle.silentphone2.BuildConfig;
 import com.silentcircle.silentphone2.R;
-import com.silentcircle.silentphone2.activities.DialerActivity;
+import com.silentcircle.silentphone2.activities.DialerActivityInternal;
 
 import java.text.SimpleDateFormat;
 import java.util.Locale;
@@ -107,7 +108,7 @@ public abstract class MessageEventView extends BaseMessageEventView implements O
 
     static class Views {
 
-        public final LinearLayout card;
+        public final BoundedCheckableLinearLayout card;
 
         public final TextView text;
         public final TextView time;
@@ -115,7 +116,6 @@ public abstract class MessageEventView extends BaseMessageEventView implements O
         public final View retention_notice;
         public final View action_location;
         public final View action_burn;
-        public final View action_send;
         public final TextView message_state;
         public final RelativeLayout message_actions;
         public final TextView message_avatar_name;
@@ -128,7 +128,7 @@ public abstract class MessageEventView extends BaseMessageEventView implements O
         public final View[] clickable_views;
 
         public Views(MessageEventView parent) {
-            card = (LinearLayout) parent.findViewById(R.id.message_card);
+            card = (BoundedCheckableLinearLayout) parent.findViewById(R.id.message_card);
             text = (TextView) parent.findViewById(R.id.message_body);
             time = (TextView) parent.findViewById(R.id.message_time);
             burn_notice = (TextView) parent.findViewById(R.id.message_burn_notice);
@@ -143,15 +143,10 @@ public abstract class MessageEventView extends BaseMessageEventView implements O
             action_burn.setOnClickListener(parent);
             action_burn.setVisibility(View.GONE);
 
-            action_send = parent.findViewById(R.id.message_action_send);
-            if (action_send != null) {
-                action_send.setOnClickListener(parent);
-            }
-
             message_state = (TextView) parent.findViewById(R.id.message_state);
             message_avatar_name = (TextView) parent.findViewById(R.id.message_avatar_name);
 
-            clickable_views = new View[]{card, action_burn, action_location, action_send};
+            clickable_views = new View[]{card, action_burn, action_location};
         }
 
         public void loadAttachmentViews() {
@@ -206,6 +201,9 @@ public abstract class MessageEventView extends BaseMessageEventView implements O
     protected int mIncomingGroupMessageAvatarStart;
     protected int mIncomingMessageAvatarStart;
 
+    protected int mProgressBarHeight;
+    protected int mProgressBarHeightSmall;
+
     protected int mLoadedBackgroundId;
 
     /* array to hold drawable state change */
@@ -227,6 +225,8 @@ public abstract class MessageEventView extends BaseMessageEventView implements O
         mIncomingMessageMarginStart = (int) resources.getDimension(R.dimen.messaging_incoming_message_margin_left);
         mIncomingGroupMessageAvatarStart = (int) resources.getDimension(R.dimen.messaging_group_incoming_message_avatar_margin_left);
         mIncomingMessageAvatarStart = (int) resources.getDimension(R.dimen.messaging_incoming_message_avatar_margin_left);
+        mProgressBarHeight = (int) getResources().getDimension(R.dimen.messaging_message_attachment_progress_height);
+        mProgressBarHeightSmall = (int) getResources().getDimension(R.dimen.messaging_message_attachment_progress_height_small);
 
         int backgroundColorSelectorId = R.attr.sp_incoming_message_background_selector;
         TypedValue typedValue = new TypedValue();
@@ -387,7 +387,7 @@ public abstract class MessageEventView extends BaseMessageEventView implements O
         if (inChoiceMode != isInChoiceMode()) {
             super.setInChoiceMode(inChoiceMode);
             Views v = getViews();
-            setClickable(!inChoiceMode, v.action_location, v.action_send, v.action_burn);
+            setClickable(!inChoiceMode, v.action_location, v.action_burn);
             v.action_burn.setEnabled(!inChoiceMode);
             v.action_location.setEnabled(!inChoiceMode);
             refreshDrawableState();
@@ -431,7 +431,8 @@ public abstract class MessageEventView extends BaseMessageEventView implements O
 
         // set text or attachment preview only if it won't be immediately replaced by burn animation
         if (message.hasAttachment() || message.hasMetaData()) {
-            setAttachmentInfo(message.getMetaData());
+            SCloudService.AttachmentState state = MessageUtils.getAttachmentState(message);
+            setAttachmentInfo(message.getMetaData(), message.getAttachment(), state, isIncomingMessage);
         } else {
             setText(v, message.getText());
         }
@@ -471,11 +472,18 @@ public abstract class MessageEventView extends BaseMessageEventView implements O
         setAttachmentIndicator(isIncoming, v);
 
         if (isIncoming) {
-            RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams) v.card.getLayoutParams();
+            ConstraintLayout.LayoutParams params = (ConstraintLayout.LayoutParams) v.card.getLayoutParams();
             params.leftMargin = isGroupMessage ? mIncomingGroupMessageMarginStart : mIncomingMessageMarginStart;
-
-            params = (RelativeLayout.LayoutParams) v.message_avatar_name.getLayoutParams();
-            params.leftMargin = isGroupMessage ? mIncomingGroupMessageAvatarStart : mIncomingMessageAvatarStart;
+            /*
+             * Avoid pushing location button outside of screen for group messages by limiting
+             * message width.
+             * Currently with constraint layout v.card would push the location button outside the
+             * screen, ignoring parent's width and not sizing down as with relative layout as parent.
+             */
+            // TODO a better way with ConstraintLayout
+            v.card.setMaximumWidthPercentage(isGroupMessage
+                    ? BoundedCheckableLinearLayout.MAXIMUM_WIDTH_GROUP_PERCENTAGE
+                    : BoundedCheckableLinearLayout.MAXIMUM_WIDTH_PERCENTAGE);
         }
         v.retention_notice.setVisibility(isRetained ? View.VISIBLE : View.GONE);
         v.message_avatar_name.setVisibility((isIncoming && isFirstMessage && isGroupMessage) ? View.VISIBLE : View.GONE);
@@ -497,24 +505,25 @@ public abstract class MessageEventView extends BaseMessageEventView implements O
                  */
                 views.text.setText(text);
             }
-
-            views.attachment_text.setVisibility(GONE);
-
-            if (views.isAttachmentViewStubLoaded) {
-                views.attachmentViews.preview.setVisibility(GONE);
-                views.attachmentViews.preview_icon.setVisibility(GONE);
-                views.attachmentViews.preview_progress.setVisibility(GONE);
-                views.attachmentViews.preview_play.setVisibility(GONE);
-                views.attachmentViews.sound_preview.setVisibility(GONE);
-            }
-
-            views.text.setMovementMethod(null);
-            views.text.setVisibility(VISIBLE);
-            ViewUtil.setDrawableStart(views.text, 0);
         }
+
+        views.attachment_text.setVisibility(GONE);
+
+        if (views.isAttachmentViewStubLoaded) {
+            views.attachmentViews.preview.setVisibility(GONE);
+            views.attachmentViews.preview_icon.setVisibility(GONE);
+            views.attachmentViews.preview_progress.setVisibility(GONE);
+            views.attachmentViews.preview_play.setVisibility(GONE);
+            views.attachmentViews.sound_preview.setVisibility(GONE);
+        }
+
+        views.text.setMovementMethod(null);
+        views.text.setVisibility(VISIBLE);
+        ViewUtil.setDrawableStart(views.text, 0);
     }
 
-    public void setAttachmentInfo(String metaData) {
+    protected void setAttachmentInfo(final @Nullable String metaData, final @Nullable String attachment,
+            @Nullable final SCloudService.AttachmentState state, final boolean isIncomingMessage) {
 
         if (isInEditMode()) {
             return;
@@ -526,6 +535,8 @@ public abstract class MessageEventView extends BaseMessageEventView implements O
             v.loadAttachmentViews();
         }
 
+        int progressBarHeight = mProgressBarHeight;
+
         v.attachmentViews.sound_preview.setVisibility(GONE);
         v.attachmentViews.preview.setVisibility(GONE);
         v.attachmentViews.preview.setIsImage(false);
@@ -535,15 +546,50 @@ public abstract class MessageEventView extends BaseMessageEventView implements O
         v.text.setVisibility(GONE);
 
         if (metaData == null) {
-            v.attachmentViews.preview_icon.setVisibility(GONE);
-            v.attachment_text.setVisibility(GONE);
+            boolean didParseAttachmentInfo = true;
+            if (attachment == null) {
+                didParseAttachmentInfo = false;
+            }
+            else {
+                // Use information from the attachment, since metadata aren't available yet
+                AttachmentUtils.AttachmentInfo parsedAttachment = AttachmentUtils.AttachmentInfo
+                        .parse(attachment);
+                String mimeType = parsedAttachment.mimeType;
+                String presentationType = parsedAttachment.presentationType;
+
+                if (mimeType != null) {
+                    int iconResource = AttachmentUtils.getPreviewIcon(mimeType);
+                    if (MIME.isContact(mimeType)) {
+                        v.attachmentViews.preview_icon.setVisibility(INVISIBLE);
+                        v.attachmentViews.preview.setVisibility(GONE);
+                    } else if (PresentationType.isSoundRecordingLegacy(presentationType, mimeType)) {
+                        v.attachmentViews.sound_preview.setVisibility(INVISIBLE);
+                        v.attachmentViews.preview.setVisibility(GONE);
+                        v.attachmentViews.preview_icon.setVisibility(GONE);
+                        progressBarHeight = mProgressBarHeightSmall;
+                    } else if (iconResource != 0) {
+                        v.attachmentViews.preview_icon.setImageResource(iconResource);
+                        v.attachmentViews.preview_icon.setVisibility(INVISIBLE);
+                    } else if (MIME.isVideo(mimeType) || MIME.isImage(mimeType)) {
+                        v.attachmentViews.preview.setVisibility(INVISIBLE);
+                        v.attachmentViews.preview.setIsImage(true);
+                    }
+                    boolean isVisualOrAudio = (MIME.isAudio(mimeType) || MIME.isVideo(mimeType) || MIME.isImage(mimeType));
+                    v.attachment_text.setVisibility(isVisualOrAudio ? View.GONE : View.VISIBLE);
+                }
+                else {
+                    didParseAttachmentInfo = false;
+                }
+            }
+            if (!didParseAttachmentInfo) {
+                v.attachmentViews.preview_icon.setVisibility(GONE);
+                v.attachment_text.setVisibility(GONE);
+            }
         }
 
         String fileName = null; // Used as the name of the attachment
         String displayName = null; // Sometimes used to replace displaying fileName
 
-        Message message = getMessage();
-        SCloudService.AttachmentState state = MessageUtils.getAttachmentState(message);
         boolean isAttachmentFailed = (state == SCloudService.AttachmentState.NOT_AVAILABLE
                 || state == SCloudService.AttachmentState.DOWNLOADING_ERROR
                 || state == SCloudService.AttachmentState.UPLOADING_ERROR);
@@ -596,7 +642,6 @@ public abstract class MessageEventView extends BaseMessageEventView implements O
                 v.attachmentViews.preview.setVisibility(VISIBLE);
                 v.attachmentViews.preview.setImageBitmap(previewBitmap);
                 v.attachmentViews.preview.setIsImage(MIME.isImage(mimeType) || MIME.isVideo(mimeType));
-                v.attachmentViews.preview.setCornerColor(mColorStateList);
                 v.attachmentViews.preview_progress.setVisibility(GONE);
                 v.attachmentViews.attachment_status.setVisibility(attachmentStatusVisibility);
                 if (MIME.isAudio(mimeType) || MIME.isVideo(mimeType)) {
@@ -608,7 +653,7 @@ public abstract class MessageEventView extends BaseMessageEventView implements O
                 v.attachmentViews.preview_progress.setVisibility(GONE);
             }
         } else if (isAttachmentFailed) {
-            v.attachmentViews.preview_icon.setImageResource((message instanceof IncomingMessage)
+            v.attachmentViews.preview_icon.setImageResource(isIncomingMessage
                     ? R.drawable.ic_received_attachment_failed
                     : R.drawable.ic_sent_attachment_failed);
             v.attachmentViews.preview_icon.setVisibility(VISIBLE);
@@ -626,6 +671,15 @@ public abstract class MessageEventView extends BaseMessageEventView implements O
         if(metaData != null) {
             v.attachment_text.setVisibility(isVisualOrAudio ? View.GONE : View.VISIBLE);
         }
+
+
+        if (v.attachmentViews.preview_progress.getVisibility() != GONE) {
+            if (v.attachmentViews.preview_progress.getLayoutParams().height != progressBarHeight) {
+                v.attachmentViews.preview_progress.getLayoutParams().height = progressBarHeight;
+                v.attachmentViews.preview_progress.requestLayout();
+            }
+        }
+
     }
 
     @Override
@@ -652,7 +706,7 @@ public abstract class MessageEventView extends BaseMessageEventView implements O
          * There is no status for group conversation messages.
          */
         views.message_state.setVisibility(isGroupMessage ? View.GONE : View.VISIBLE);
-        if (message instanceof OutgoingMessage || (BuildConfig.DEBUG && DialerActivity.mShowErrors)) {
+        if (message instanceof OutgoingMessage || (BuildConfig.DEBUG && DialerActivityInternal.mShowErrors)) {
             views.message_state.setText(MessageStates.messageStateToStringId(message.getState()));
         }
         else if (!"".equals(views.message_state.getText())) {
@@ -675,7 +729,7 @@ public abstract class MessageEventView extends BaseMessageEventView implements O
                 || MessageStates.READ == state;
 
         // TODO: handle MessageStates.RESEND_REQUESTED
-        ViewUtil.setAlpha(getViews().card, enabled ? 1.0f : 0.65f);
+        ViewUtil.setAlphaOptimized(getViews().card, enabled ? 1.0f : 0.65f);
     }
 
     private void setLocation(final com.silentcircle.messaging.model.Location location) {
@@ -734,6 +788,11 @@ public abstract class MessageEventView extends BaseMessageEventView implements O
     private boolean isNewDate() {
         Boolean newGroup = (Boolean) getTag(R.id.new_date_flag);
         return newGroup != null && newGroup;
+    }
+
+    private boolean hasLocation() {
+        Message message = getMessage();
+        return message != null && message.hasLocation();
     }
 
     private CharSequence getSenderName() {

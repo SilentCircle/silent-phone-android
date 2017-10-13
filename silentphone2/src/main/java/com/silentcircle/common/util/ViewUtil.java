@@ -68,6 +68,7 @@ import android.widget.Toast;
 import com.fenchtose.tooltip.Tooltip;
 import com.fenchtose.tooltip.TooltipAnimation;
 import com.getkeepsafe.taptargetview.TapTarget;
+import com.silentcircle.SilentPhoneApplication;
 import com.silentcircle.logs.Log;
 import com.silentcircle.messaging.activities.ChooserBuilder;
 import com.silentcircle.messaging.util.IOUtils;
@@ -241,6 +242,22 @@ public class ViewUtil {
     @TargetApi(Build.VERSION_CODES.HONEYCOMB)
     public static void setAlpha(View view, float alpha) {
         if (view != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+            view.setAlpha(alpha);
+        }
+    }
+
+    public static void setAlphaOptimized(View view, float alpha) {
+        if (view != null) {
+
+            if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.LOLLIPOP_MR1) {
+                if (!(alpha == 1 || alpha == 0)) {
+                    view.setLayerType(View.LAYER_TYPE_HARDWARE, null);
+                }
+                else {
+                    view.setLayerType(View.LAYER_TYPE_NONE, null);
+                }
+            }
+
             view.setAlpha(alpha);
         }
     }
@@ -847,14 +864,11 @@ public class ViewUtil {
     public static TapTarget applyDefTapTargetParams(TapTarget tapTargetView) {
         return tapTargetView
                 .outerCircleColor(R.color.onboarding_decoration_red)
-//                .targetCircleColor(R.color.sc_ng_background)
-                .targetCircleColorInt(3553083)
+                .targetCircleColor(R.color.feature_discovery_target_circle)
                 .titleTextSize(22)
-//                .titleTextColor(R.color.feature_discovery_title_color)
-                .titleTextColorInt(16777215)
+                .titleTextColor(R.color.feature_discovery_title_text)
                 .descriptionTextSize(18)
-//                .descriptionTextColor(R.color.feature_discovery_description_color)
-                .descriptionTextColorInt(16777215)
+                .descriptionTextColor(R.color.feature_discovery_description_text)
                 .cancelable(true)
                 .tintTarget(false)
                 .transparentTarget(false)

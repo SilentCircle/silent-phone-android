@@ -35,23 +35,26 @@ import android.support.annotation.Nullable;
 import com.silentcircle.logs.Log;
 import com.silentcircle.messaging.model.Conversation;
 import com.silentcircle.messaging.model.MessageErrorCodes;
+import com.silentcircle.messaging.model.MessageStates;
 import com.silentcircle.messaging.model.event.Event;
 import com.silentcircle.messaging.model.event.Message;
 import com.silentcircle.messaging.providers.AvatarProvider;
 import com.silentcircle.messaging.repository.ConversationRepository;
+import com.silentcircle.messaging.repository.EventRepository;
 import com.silentcircle.messaging.services.ZinaMessaging;
+import com.silentcircle.messaging.util.ConversationUtils;
 import com.silentcircle.messaging.util.MessageUtils;
 import com.silentcircle.silentphone2.util.ConfigurationUtilities;
 import com.silentcircle.silentphone2.util.Utilities;
 
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import zina.ZinaNative;
 
 /**
- * .
+ * Task to handle message read and burn failures by resending requests.
  */
 public class HandleMessageFailuresTask extends AsyncTask<String, Void, Integer> {
 
@@ -62,6 +65,10 @@ public class HandleMessageFailuresTask extends AsyncTask<String, Void, Integer> 
     private static final int SAVE_ACTION_NONE = 0;
     private static final int SAVE_ACTION_UPDATE = 1;
     private static final int SAVE_ACTION_REMOVE = 2;
+
+    private static final long ITERATION_DELAY = TimeUnit.MILLISECONDS.toMillis(500);
+    private static final long PAGING_DELAY = TimeUnit.MILLISECONDS.toMillis(100);
+    private static final int PAGE_SIZE = 50;
 
     public HandleMessageFailuresTask(final Context context) {
         mContext = context;
@@ -89,22 +96,33 @@ public class HandleMessageFailuresTask extends AsyncTask<String, Void, Integer> 
         }
 
         // loop through all conversations and find all failed messages
+        // TODO use a persisted list to avoid need to loop through all messages
         ConversationRepository repository = axoMessaging.getConversations();
         List<Conversation> conversations = repository.list();
-        Iterator<Conversation> iterator = conversations.iterator();
-        while (iterator.hasNext()) {
-            Conversation conversation = iterator.next();
-
+        for (Conversation conversation : conversations) {
             correctConversationAvatar(repository, conversation);
 
-            if (conversation == null || !repository.historyOf(conversation).exists()) {
+            if (conversation == null || !ConversationUtils.canMessage(conversation)
+                    || !repository.historyOf(conversation).exists()) {
                 continue;
             }
 
-            List<Event> events = repository.historyOf(conversation).list();
-            if (events != null && events.size() > 0) {
-                count += searchFailedMessages(repository, conversation, events);
-            }
+            EventRepository eventRepository = repository.historyOf(conversation);
+            EventRepository.PagingContext pagingContext =
+                    new EventRepository.PagingContext(
+                            EventRepository.PagingContext.START_FROM_YOUNGEST, PAGE_SIZE);
+            int eventCount;
+            do {
+                List<Event> events = eventRepository.list(pagingContext);
+                eventCount = 0;
+                if (events != null && events.size() > 0) {
+                    eventCount = events.size();
+                    count += searchFailedMessages(repository, conversation, events);
+                    Utilities.Sleep(PAGING_DELAY);
+                }
+            } while (eventCount > 0);
+
+            Utilities.Sleep(ITERATION_DELAY);
         }
 
         if (ConfigurationUtilities.mTrace) {
@@ -121,16 +139,17 @@ public class HandleMessageFailuresTask extends AsyncTask<String, Void, Integer> 
                 Message message = (Message) event;
                 int saveAction = SAVE_ACTION_NONE;
 
-                Long[] flags = message.getFailureFlags();
+                Long[] flags = message.getFailureFlagsAsArray();
                 if (flags.length != 0 && conversation.getPartner().isGroup())  {
                     message.clearFailureFlag(Message.FAILURE_READ_NOTIFICATION);
                     message.clearFailureFlag(Message.FAILURE_BURN_NOTIFICATION);
                     saveAction = SAVE_ACTION_UPDATE;
                 }
 
-                flags = message.getFailureFlags();
+                flags = message.getFailureFlagsAsArray();
                 if (flags.length != 0
-                        && Utilities.canMessage(conversation.getPartner().getUserId())) {
+                        && (Utilities.canMessage(conversation.getPartner().getUserId())
+                            || conversation.getPartner().isGroup())) {
                     saveAction = handleFailure(conversation, message);
                 }
 
@@ -141,7 +160,7 @@ public class HandleMessageFailuresTask extends AsyncTask<String, Void, Integer> 
                     repository.historyOf(conversation).save(message);
                 }
 
-                flags = message.getFailureFlags();
+                flags = message.getFailureFlagsAsArray();
                 if (flags.length != 0) {
                     count += 1;
                 }
@@ -157,7 +176,8 @@ public class HandleMessageFailuresTask extends AsyncTask<String, Void, Integer> 
         final String conversationId = conversation.getPartner().getUserId();
 
         if (ConfigurationUtilities.mTrace) {
-            Log.d(TAG, "handleFailure: " + message.getId() + " " + Arrays.toString(message.getFailureFlags()));
+            Log.d(TAG, "handleFailure: " + message.getId()
+                    + " " + Arrays.toString(message.getFailureFlagsAsArray()));
         }
         ZinaMessaging zinaMessaging = ZinaMessaging.getInstance();
 
@@ -185,6 +205,32 @@ public class HandleMessageFailuresTask extends AsyncTask<String, Void, Integer> 
                 save = SAVE_ACTION_REMOVE;
             }
         }
+        if (message.hasFailureFlagSet(Message.FAILURE_NOT_SENT)) {
+            boolean sent = false;
+            message.setAttributes(
+                    MessageUtils.getMessageAttributesJSON(message.getBurnNotice(),
+                            message.isRequestReceipt(), message.getLocation()));
+            if (isGroup) {
+                if (Utilities.isNetworkConnected(mContext)) {
+                    int result = zinaMessaging.sendGroupMessage(message, null, null);
+                    sent = (result == MessageErrorCodes.OK);
+                    if (sent) {
+                        message.clearFailureFlag(Message.FAILURE_NOT_SENT);
+                        message.setExpirationTime(System.currentTimeMillis()
+                                + TimeUnit.SECONDS.toMillis(message.getBurnNotice()));
+                    }
+                }
+            }
+            else {
+                sent = zinaMessaging.sendMessage(message, conversation);
+            }
+            if (sent) {
+                message.setState(isGroup ? MessageStates.READ : MessageStates.SENT);
+                MessageUtils.notifyConversationUpdated(mContext, conversationId, false,
+                        ZinaMessaging.UPDATE_ACTION_MESSAGE_STATE_CHANGE, message.getId());
+            }
+            save = SAVE_ACTION_UPDATE;
+        }
         return save;
     }
 
@@ -192,7 +238,8 @@ public class HandleMessageFailuresTask extends AsyncTask<String, Void, Integer> 
             @Nullable Conversation conversation) {
         if (conversation != null && conversation.getAvatar() != null
                 && conversation.getAvatarIvAsByteArray() == null) {
-            Log.d(TAG, "Removing old avatar from conversation structure: " + conversation.getPartner().getUserId());
+            Log.d(TAG, "Removing old avatar from conversation structure: "
+                    + conversation.getPartner().getUserId());
             AvatarProvider.deleteConversationAvatar(mContext, conversation.getAvatar());
             conversation.setAvatar(null);
             repository.save(conversation);

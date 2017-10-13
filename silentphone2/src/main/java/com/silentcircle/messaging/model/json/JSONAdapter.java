@@ -32,6 +32,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 class JSONAdapter {
@@ -125,6 +126,16 @@ class JSONAdapter {
         JSONArray array = new JSONArray();
         for (T item : items) {
             array.put(item);
+        }
+        return array;
+    }
+
+    protected static <T> JSONArray toArray(Collection<T> items) {
+        JSONArray array = new JSONArray();
+        if (items != null) {
+            for (T item : items) {
+                array.put(item);
+            }
         }
         return array;
     }

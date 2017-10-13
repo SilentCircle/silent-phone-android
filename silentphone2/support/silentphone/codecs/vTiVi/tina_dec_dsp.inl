@@ -849,10 +849,10 @@ int amoveVectorsRefMB4(int iMBSize2, MB_4 *mb4, unsigned char *p, REFPIC *pic, i
                   iMBSize2,stride);
             }
 
-               if(iDrawVec&1){
-                  drawVec(i*iMBSize2,j*iMBSize2+1,mb4->mv2[0].x,mb4->mv2[0].y,iMBSize2,w,h,800);
-                  drawVec(i*iMBSize2,j*iMBSize2-1,mb4->vrefs[_rid].x,mb4->vrefs[_rid].y,iMBSize2,w,h,800);
-               }
+               //if(iDrawVec&1){
+               //   drawVec(i*iMBSize2,j*iMBSize2+1,mb4->mv2[0].x,mb4->mv2[0].y,iMBSize2,w,h,800);
+               //   drawVec(i*iMBSize2,j*iMBSize2-1,mb4->vrefs[_rid].x,mb4->vrefs[_rid].y,iMBSize2,w,h,800);
+               //}
                //if(i && j) filter_borders_16(p+ofs,  stride, 64);
 
             continue;

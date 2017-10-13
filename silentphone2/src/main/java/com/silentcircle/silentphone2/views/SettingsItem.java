@@ -59,6 +59,7 @@ public class SettingsItem extends RelativeLayout implements Checkable {
 
     private static final int[] ATTRIBUTES = {
             android.R.attr.textStyle,
+            android.R.attr.textAppearance,
             android.R.attr.textColor,
             android.R.attr.checked,
             android.R.attr.text};
@@ -83,6 +84,9 @@ public class SettingsItem extends RelativeLayout implements Checkable {
     private int mTextSize;
     private int mDescriptionSize;
     private int mTextStyleIndex = Typeface.BOLD;
+    private int mTextAppearance;
+    private int mDescriptionStyleIndex = Typeface.NORMAL;
+    private int mDescriptionAppearance;
     private boolean mTrackingGesture;
 
     private boolean mChecked;
@@ -114,9 +118,10 @@ public class SettingsItem extends RelativeLayout implements Checkable {
 
         TypedArray typedArray = context.obtainStyledAttributes(attrs, ATTRIBUTES);
         mTextStyleIndex = typedArray.getInt(0, Typeface.NORMAL);
-        mTextColor = typedArray.getColorStateList(1);
-        mChecked = typedArray.getBoolean(2, false);
-        mText = typedArray.getText(3);
+        mTextAppearance = typedArray.getResourceId(1, 0);
+        mTextColor = typedArray.getColorStateList(2);
+        mChecked = typedArray.getBoolean(3, false);
+        mText = typedArray.getText(4);
         typedArray.recycle();
 
         typedArray = context.obtainStyledAttributes(attrs,
@@ -135,6 +140,8 @@ public class SettingsItem extends RelativeLayout implements Checkable {
         mDescriptionMarginTop = typedArray.getDimensionPixelSize(R.styleable.OptionsItem_descriptionMarginTop, 0);
         mDescriptionMarginLeft = typedArray.getDimensionPixelSize(R.styleable.OptionsItem_descriptionMarginLeft, 0);
         mDescriptionMarginRight = typedArray.getDimensionPixelSize(R.styleable.OptionsItem_descriptionMarginRight, 0);
+        mDescriptionStyleIndex = typedArray.getInt(R.styleable.OptionsItem_descriptionStyle, Typeface.NORMAL);
+        mDescriptionAppearance = typedArray.getResourceId(R.styleable.OptionsItem_descriptionAppearance, 0);
         mTextSize = typedArray.getDimensionPixelSize(R.styleable.OptionsItem_textSize, 0);
         mDescriptionSize = typedArray.getDimensionPixelSize(R.styleable.OptionsItem_descriptionSize, 0);
         mDescriptionColor = typedArray.getColorStateList(R.styleable.OptionsItem_descriptionColor);
@@ -164,8 +171,16 @@ public class SettingsItem extends RelativeLayout implements Checkable {
         setText(mText);
         setDescription(mDescription);
 
-        mItemText.setTextSize(TypedValue.COMPLEX_UNIT_PX, mTextSize);
+        if (mTextAppearance != 0) {
+            mItemText.setTextAppearance(getContext(), mTextAppearance);
+        }
         mItemText.setTypeface(mItemText.getTypeface(), mTextStyleIndex);
+        mItemText.setTextSize(TypedValue.COMPLEX_UNIT_PX, mTextSize);
+
+        if (mDescriptionAppearance != 0) {
+            mItemDescription.setTextAppearance(getContext(), mDescriptionAppearance);
+        }
+        mItemDescription.setTypeface(mItemDescription.getTypeface(), mDescriptionStyleIndex);
         mItemDescription.setTextSize(TypedValue.COMPLEX_UNIT_PX, mDescriptionSize);
 
         LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) mImage.getLayoutParams();

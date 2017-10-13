@@ -430,7 +430,7 @@ public:
      *
      * @see setMultiStrParams()
      */
-    DEPRECATED std::string getMultiStrParams() {return getMultiStrParams(NULL); }
+    DEPRECATED_ZRTP std::string getMultiStrParams() {return getMultiStrParams(NULL); }
 
     /**
      * Set Multi-stream parameters.
@@ -450,7 +450,7 @@ public:
      *
      * @see getMultiStrParams()
      */
-    DEPRECATED void setMultiStrParams(std::string parameters) { setMultiStrParams(parameters, NULL);}
+    DEPRECATED_ZRTP void setMultiStrParams(std::string parameters) { setMultiStrParams(parameters, NULL);}
 
     /**
      * Get Multi-stream parameters.

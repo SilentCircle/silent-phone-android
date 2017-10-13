@@ -57,6 +57,10 @@ static void Decoding_of_the_coded_Log_Area_Ratios P2((LARc,LARpp),
 //NEED TO FIX THIS!!!!
 #endif
 
+// ignore clang error about shifting negative values
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wshift-negative-value"
+
 #undef	STEP
 #define STEP( B, MIC, INVA )    \
                 temp1    = (word) (GSM_ADD( (long) *LARc++, (long) MIC ) << 10);       \
@@ -78,6 +82,8 @@ static void Decoding_of_the_coded_Log_Area_Ratios P2((LARc,LARpp),
 		 *		 the sign of *LARc.
 		 */
 }
+
+#pragma clang diagnostic pop
 
 /* 4.2.9 */
 /* Computation of the quantized reflection coefficients 

@@ -498,11 +498,16 @@ public class ProviderDbBackend extends ContentProvider {
             return null;
         }
         byte[] data = null;
-        if (c != null) {
-            c.moveToFirst();
-            String dataStr = c.getString(0);
-            data = Base64.decode(dataStr, Base64.DEFAULT);
-            c.close();
+        try {
+            if (c != null) {
+                c.moveToFirst();
+                String dataStr = c.getString(0);
+                data = Base64.decode(dataStr, Base64.DEFAULT);
+            }
+        } finally {
+            if (c != null && !c.isClosed()) {
+                c.close();
+            }
         }
         return data;
     }

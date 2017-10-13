@@ -738,7 +738,12 @@ public class AccountStep3 extends Fragment implements View.OnClickListener {
                 if(!Utilities.isNetworkConnected(SilentPhoneApplication.getAppContext())){
                     return Constants.NO_NETWORK_CONNECTION;
                 }
-                errorMessage = getString(R.string.provisioning_no_network) + e.getLocalizedMessage();
+                if (isAdded()) {
+                    // It requires the host Activity to retrieve a string from the resources.
+                    // If the Activity is destroyed, errorMessage would not show up.
+                    // See onPostExecute()
+                    errorMessage = getString(R.string.provisioning_no_network) + e.getLocalizedMessage();
+                }
                 Log.e(TAG, "Network not available: " + e.getMessage());
                 return -1;
             } catch (Exception e) {

@@ -222,7 +222,7 @@
     </style>
 
     <style name="Widget.Text.Floating.Info">
-        <item name="android:textColor">?sp_error_message_text_selector</item>
+        <item name="android:textColor">?sp_info_message_text_selector</item>
         <item name="android:duplicateParentState">true</item>
     </style>
 
@@ -328,15 +328,16 @@
     </style>
 
     <style name="Widget.Layout.Card.Incoming.Message">
-        <!--
-        <item name="android:layout_toRightOf">@+id/message_avatar</item>
-        <item name="android:layout_marginLeft">-5dp</item>
-        -->
+        <item name="android:layout_marginLeft">8dp</item>
+        <item name="android:layout_marginStart" tools:ignore="NewApi">8dp</item>
+        <item name="android:layout_marginTop">0dp</item>
         <item name="android:layout_alignParentLeft">true</item>
     </style>
 
     <style name="Widget.Layout.Card.Outgoing.Message">
-        <item name="android:layout_toLeftOf">@+id/message_avatar</item>
+        <item name="android:layout_marginRight">8dp</item>
+        <item name="android:layout_marginEnd" tools:ignore="NewApi">8dp</item>
+        <item name="android:layout_marginTop">0dp</item>
     </style>
 
     <style name="Widget.Silence.__ActionTray" parent="Widget.Silence.LinearLayout.Horizontal">
@@ -484,6 +485,27 @@
         <item name="android:paddingLeft">16dip</item>
         <item name="android:paddingRight">16dip</item>
         <item name="android:filterTouchesWhenObscured">true</item>
+    </style>
+
+    <style name="Widget.ContactInfoItem">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginLeft">0dp</item>
+        <item name="android:layout_marginRight">0dp</item>
+        <item name="android:layout_marginTop">@dimen/spacing_large</item>
+        <item name="android:layout_marginBottom">@dimen/spacing_large</item>
+        <item name="android:filterTouchesWhenObscured">true</item>
+        <item name="android:textColor">?attr/sp_drawer_text_color</item>
+        <item name="imageMarginLeft">0dp</item>
+        <item name="imageMarginRight">14dp</item>
+        <item name="descriptionMarginLeft">0dp</item>
+        <item name="descriptionMarginTop">0dp</item>
+        <item name="textSize">@dimen/text_xlarge</item>
+        <!--<item name="android:textAppearance">?android:attr/textAppearanceSmall</item>-->
+        <item name="android:textStyle">normal</item>
+        <item name="tintColor">?attr/sp_drawer_text_color</item>
+        <item name="descriptionSize">@dimen/text_large</item>
+        <item name="descriptionColor">?attr/sp_drawer_secondary_text_color</item>
     </style>
 
     <style name="Widget.Layout.FileUpload" parent="Widget.Silence.ProgressLayout">

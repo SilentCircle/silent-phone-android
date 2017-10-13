@@ -7,14 +7,13 @@ rendered behind system UI like status & navigation bar and the keyboard-->
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_height="match_parent"
-    android:layout_width="match_parent"
-    android:background="?sp_activity_background_color">
+    android:layout_width="match_parent">
 
-    <!-- Makes sure that the area behind the status bar has the same color as
+    <!-- Makes sure that the area behind the status bar has the same color as the status bar:
     "android:colorPrimaryDark"-->
     <View
         android:layout_width="match_parent"
-        android:layout_height="100dp"
+        android:layout_height="25dp"
         android:background="@color/black_background"/>
 
 
@@ -42,8 +41,7 @@ rendered behind system UI like status & navigation bar and the keyboard-->
             <FrameLayout
                 android:id="@+id/container"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:background="?sp_activity_background_color">
+                android:layout_height="match_parent">
 
                 <android.support.v4.widget.DrawerLayout
                     android:id="@+id/drawer"

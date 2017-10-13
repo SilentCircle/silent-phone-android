@@ -52,7 +52,8 @@ public enum Extra {
     IS_GROUP("IS_GROUP"),
     GROUP("GROUP"),
     TASK("TASK"),
-    PARTICIPANTS("PARTICIPANTS");
+    PARTICIPANTS("PARTICIPANTS"),
+    MUTE("MUTE");
 
     public final String INTENT_EXTRA_NAME_FORMAT = "com.silentcircle.messaging.extra.%s";
 

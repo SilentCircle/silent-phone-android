@@ -188,6 +188,16 @@ public class ProvisioningUserPassword extends Fragment implements ProvisioningAc
                 startLoading();
             }
         });
+
+        userPasswordView.findViewById(R.id.UsernamePasswordCancel).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (mParent != null) {
+                    mParent.provisioningCancel();
+                }
+            }
+        });
+
         userPasswordView.findViewById(R.id.PasswordShow).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

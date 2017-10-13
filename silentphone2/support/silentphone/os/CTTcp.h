@@ -174,7 +174,6 @@ class CTSockTcp: public CTSockBase{
    ADDR addrConnected;
    int iConnected;
    int iSending;
-   void *p_apple_backgr;
    int iPrevRec;
    int iNeedCallCloseSocket;
    int sockToCloseWhileTryingToConnect;
@@ -198,7 +197,6 @@ public:
       iIsRTPSock=0;
       iNeedCallCloseSocket=0;
       iPrevRec=-100;
-      p_apple_backgr=NULL;
       sock=0;
       iIsBinded=0;
       iNeedClose=0;
@@ -361,13 +359,6 @@ public:
       iIsBinded=0;
       addrConnected.clear();
       shutdown(sock,SD_BOTH);
-#ifdef __APPLE__
-      if(!iIsRTPSock){
-         void relTcpBGSock (void *prt) ;
-         if(p_apple_backgr)relTcpBGSock(p_apple_backgr);
-         p_apple_backgr=NULL;
-      }
-#endif
      
       closesocket(sock);
       iNeedCallCloseSocket=0;
@@ -458,17 +449,7 @@ public:
        */
       printf("connected=%d\n",iConnected);;
       if(!iConnected){addrConnected.clear();}
-      
-#ifdef __APPLE__
-      if(iConnected && !iIsRTPSock){
-         void relTcpBGSock (void *prt) ;
-         if(p_apple_backgr)relTcpBGSock(p_apple_backgr);
-         p_apple_backgr=NULL;
-         void *prepareTcpSocketForBg (int s) ;
-         p_apple_backgr=prepareTcpSocketForBg(sock);
-      }
-#endif
-     
+
       return r;
    }  
    
@@ -576,17 +557,7 @@ public:
           if( errno == EPIPE || errno == ECONNRESET )addrConnected.clear();
           
           */
-         //??????????
-         if(p_apple_backgr && ret==-1){
-            Sleep(30);
-            if(iNeedClose)return -1;
-           //-- if( errno == EPIPE || errno == ECONNRESET)return -1;
-            ret=0;//TODO return app_back_tryAgain;
-            //apple errno ==ETIMEDOUT
-           // printf("[apple recv %d %d]\n",errno,EINTR);
-            //EINTR
-            continue;
-         }
+
          if(ret==0 && iPrevRec==0){
             Sleep(30);
          }

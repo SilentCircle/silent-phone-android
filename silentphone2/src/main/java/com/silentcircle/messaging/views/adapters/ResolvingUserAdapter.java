@@ -73,7 +73,9 @@ public abstract class ResolvingUserAdapter<T> extends RecyclerView.Adapter imple
     public static final int REDRAW_ITEM = 2;
 
     public abstract static class LookupRequest {
-        /** The number to look-up. */
+        /**
+         * The number to look-up.
+         */
         public final String name;
         public final int position;
 
@@ -87,7 +89,9 @@ public abstract class ResolvingUserAdapter<T> extends RecyclerView.Adapter imple
 
     @SuppressWarnings("WeakerAccess")
     public static class ContactEntryRequest extends LookupRequest {
-        /** The cached contact information stored in the call log. */
+        /**
+         * The cached contact information stored in the call log.
+         */
         public final ContactEntry contactEntry;
 
         public ContactEntryRequest(String number, ContactEntry contactEntry, int position) {
@@ -111,6 +115,7 @@ public abstract class ResolvingUserAdapter<T> extends RecyclerView.Adapter imple
         }
 
         public boolean onRequestResult() {
+            // ensure contact entry is cached
             ContactsCache.getContactEntry(name);
             return true;
         }
@@ -139,7 +144,7 @@ public abstract class ResolvingUserAdapter<T> extends RecyclerView.Adapter imple
                     adapter.notifyDataSetChanged();
                     break;
                 case REDRAW_ITEM:
-                    adapter.notifyItemChanged(msg.arg1);
+                    adapter.onRedrawRequested(msg.arg1);
                     break;
             }
         }
@@ -153,7 +158,7 @@ public abstract class ResolvingUserAdapter<T> extends RecyclerView.Adapter imple
         private volatile boolean mDone = false;
 
         public QueryThread() {
-            super("CallLogAdapter.QueryThread");
+            super("ResolvingUserAdapter.QueryThread");
         }
 
         public void stopProcessing() {
@@ -186,10 +191,9 @@ public abstract class ResolvingUserAdapter<T> extends RecyclerView.Adapter imple
                             message.what = REDRAW_ITEM;
                             mRedrawHandler.sendMessage(message);
                         }
-
-                        if (mRequests.size() == 0) {
-                            mRedrawHandler.sendEmptyMessage(REQUESTS_PROCESSED);
-                        }
+                    }
+                    if (mRequests.size() == 0) {
+                        mRedrawHandler.sendEmptyMessage(REQUESTS_PROCESSED);
                     }
                     /*
                     if (needRedraw) {
@@ -204,7 +208,6 @@ public abstract class ResolvingUserAdapter<T> extends RecyclerView.Adapter imple
         }
     }
 
-    private final Context mContext;
     private final LayoutInflater mInflater;
     private final ContactPhotoManagerNew mContactPhotoManager;
     private final LinkedBlockingQueue<LookupRequest> mRequests;
@@ -214,11 +217,10 @@ public abstract class ResolvingUserAdapter<T> extends RecyclerView.Adapter imple
 
     private OnItemClickListener mListener;
 
-    public ResolvingUserAdapter(Context context) {
-        mContext = context;
+    public ResolvingUserAdapter(final @NonNull Context context) {
         mInflater = LayoutInflater.from(context);
         mContactPhotoManager =
-                ContactPhotoManagerNew.getInstance(mContext.getApplicationContext());
+                ContactPhotoManagerNew.getInstance(context.getApplicationContext());
         mRequests = new LinkedBlockingQueue<>();
         mRedrawHandler = new RedrawHandler(this);
     }
@@ -278,6 +280,10 @@ public abstract class ResolvingUserAdapter<T> extends RecyclerView.Adapter imple
     }
 
     public void onRequestsProcessed() {
+    }
+
+    public void onRedrawRequested(int position) {
+        notifyItemChanged(position);
     }
 
     protected QueryThread createQueryThread() {

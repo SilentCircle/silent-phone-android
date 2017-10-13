@@ -30,20 +30,17 @@ package com.silentcircle.messaging.model.event;
 
 import android.text.TextUtils;
 
+import com.silentcircle.common.StringByteHolder;
 import com.silentcircle.logs.Log;
 import com.silentcircle.messaging.model.Burnable;
-import com.silentcircle.messaging.model.MessageStates;
 import com.silentcircle.messaging.util.IOUtils;
 import com.silentcircle.messaging.util.UUIDGen;
 
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.Locale;
 import java.util.UUID;
-
-import static android.os.Build.VERSION_CODES.M;
 
 public class Event extends Burnable implements Comparable<Event> {
 
@@ -51,13 +48,13 @@ public class Event extends Burnable implements Comparable<Event> {
             new SimpleDateFormat("dd/MM/yy hh:mm:ss.SSS", Locale.getDefault());
 
     public static final Event NONE = new Event();
-    private byte[] conversationID;
-    protected byte[] id;
-    protected long time = System.currentTimeMillis();
-    protected byte[] text;
+    private final StringByteHolder conversationID = new StringByteHolder();
+    private final StringByteHolder id = new StringByteHolder();
+    private long time = System.currentTimeMillis();
+    private final StringByteHolder text = new StringByteHolder();
 
-    protected byte[] attributes;
-    protected byte[] attachment;
+    private final StringByteHolder attributes = new StringByteHolder();
+    private final StringByteHolder attachment = new StringByteHolder();
 
     protected EventDeviceInfo[] eventDeviceInfo;
 
@@ -124,27 +121,27 @@ public class Event extends Burnable implements Comparable<Event> {
     }
 
     public String getConversationID() {
-        return toString(this.getConversationIDAsByteArray());
+        return this.conversationID.getString();
     }
 
     public byte[] getConversationIDAsByteArray() {
-        return this.conversationID;
+        return this.conversationID.getByteArray();
     }
 
     public String getId() {
-        return toString(this.getIDAsByteArray());
+        return this.id.getString();
     }
 
     public byte[] getIDAsByteArray() {
-        return this.id;
+        return this.id.getByteArray();
     }
 
     public String getText() {
-        return toString(this.getTextAsByteArray());
+        return this.text.getString();
     }
 
     public byte[] getTextAsByteArray() {
-        return this.text;
+        return this.text.getByteArray();
     }
 
     public long getTime() {
@@ -164,7 +161,8 @@ public class Event extends Burnable implements Comparable<Event> {
     }
 
     public int hashCode() {
-        return this.id == null ? (this.time == 0L ? 0 : (int) this.time) : Arrays.hashCode(this.id);
+        return this.id.getString() == null ? (this.time == 0L ? 0 : (int) this.time)
+                : this.id.getString().hashCode();
     }
 
     public boolean hasText() {
@@ -172,89 +170,85 @@ public class Event extends Burnable implements Comparable<Event> {
     }
 
     public void removeConversationID() {
-        burn(this.conversationID);
-        this.conversationID = null;
+        burn(getConversationIDAsByteArray());
+        this.conversationID.set((String) null);
     }
 
     public void removeID() {
-        burn(this.id);
-        this.id = null;
+        burn(getIDAsByteArray());
+        this.id.set((String) null);
     }
 
     public void removeText() {
-        burn(this.text);
-        this.text = null;
+        burn(getTextAsByteArray());
+        this.text.set((String) null);
     }
 
     public void setConversationID(byte[] conversationID) {
-        this.conversationID = conversationID;
+        this.conversationID.set(conversationID);
     }
 
-    public void setConversationID(CharSequence conversationID) {
-        this.setConversationID(IOUtils.toByteArray(conversationID));
+    public void setConversationID(String conversationID) {
+        this.conversationID.set(conversationID);
     }
 
     public void setId(byte[] id) {
-        this.id = id;
+        this.id.set(id);
     }
 
-    public void setId(CharSequence id) {
-        this.setId(IOUtils.toByteArray(id));
+    public void setId(String id) {
+        this.id.set(id);
     }
 
     public void setText(byte[] text) {
-        this.text = text;
+        this.text.set(text);
     }
 
-    public void setText(CharSequence text) {
-        this.setText(IOUtils.toByteArray(text));
+    public void setText(String text) {
+        this.text.set(text);
     }
 
-    public void setAttributes(byte[] text) {
-        this.attributes = text;
+    public void setAttributes(byte[] attributes) {
+        this.attributes.set(attributes);
     }
 
-    public void setAttributes(String text) {
-        this.setAttributes(IOUtils.encode(text));
+    public void setAttributes(String attributes) {
+        this.attributes.set(attributes);
     }
 
     public String getAttributes() {
-        byte[] attributes = this.getAttributesAsByteArray();
-        if (attributes == null) {
-            attributes = new byte[0];
-        }
-        return new String(attributes);
+        String attributes = this.attributes.getString();
+        return (attributes == null) ? "" : attributes;
     }
 
     public byte[] getAttributesAsByteArray() {
-        return this.attributes;
+        return this.attributes.getByteArray();
     }
 
     public void removeAttribute() {
-        burn(this.attributes);
-        this.attributes = null;
+        burn(getAttributesAsByteArray());
+        this.attributes.set((String) null);
     }
 
-    public void setAttachment(byte[] text) {
-        this.attachment = text;
+    public void setAttachment(byte[] attachment) {
+        this.attachment.set(attachment);
     }
 
-    public void setAttachment(String text) {
-        this.setAttachment(IOUtils.encode(text));
+    public void setAttachment(String attachment) {
+        this.attachment.set(attachment);
     }
 
     public String getAttachment() {
-        byte[] attachment = getAttachmentAsByteArray();
-        return attachment != null ? new String(attachment) : null;
+        return this.attachment.getString();
     }
 
     public byte[] getAttachmentAsByteArray() {
-        return this.attachment;
+        return this.attachment.getByteArray();
     }
 
     public void removeAttachment() {
-        burn(this.attachment);
-        this.attachment = null;
+        burn(getAttachmentAsByteArray());
+        this.attachment.set((String) null);
     }
 
     public void setTime(long time) {

@@ -228,8 +228,12 @@ public:
     /**
      * @brief Receive a Message from transport
      *
-     * The function creates stores the received encrypted message raw data in a databse table,
-     * creates a message information structure for this message and puts it into the tun-Q.
+     * The function creates stores the received encrypted message raw data in a database table,
+     * creates a message information structure for this message and puts it into the run-Q and
+     * returns immediately.
+     *
+     * The network transport uses this function to hand over received data. Applications should not
+     * use this function.
      *
      * @param messageEnvelope The proto-buffer message envelope, encoded as a base64 string
      * @param uid   The SIP receiver callback sets this to the sender's UID if available, an

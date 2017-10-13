@@ -67,10 +67,13 @@ public class RegularSearchListAdapter extends DialerPhoneNumberListAdapter {
 
     @Override
     public void setQueryString(String queryString) {
-        final boolean showNumberShortcuts =
-                PhoneNumberUtils.isGlobalPhoneNumber(queryString.replaceAll("\\s","")
-                        .replaceAll("[()]", ""))
-                || queryString.startsWith("*");
+        boolean showNumberShortcuts = false;
+        if (queryString != null) {
+            showNumberShortcuts =
+                    PhoneNumberUtils.isGlobalPhoneNumber(queryString.replaceAll("\\s", "")
+                            .replaceAll("[()]", ""))
+                            || queryString.startsWith("*");
+        }
         final boolean noExactMatch = isDirectoryEmpty(SC_EXACT_MATCH_ON_V1_USER);
         boolean changed = setShortcutEnabled(SHORTCUT_DIRECT_CALL,
                 showNumberShortcuts && !isCheckable() && noExactMatch);

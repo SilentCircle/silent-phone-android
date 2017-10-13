@@ -26,7 +26,7 @@
             android:paddingStart="@dimen/dialpad_horizontal_margin"
             android:paddingEnd="@dimen/dialpad_horizontal_margin"
             android:layoutDirection="ltr"
-            tools:context=".activities.DialerActivity"
+            tools:context=".activities.DialerActivityInternal"
             tools:ignore="RtlHardcoded">
         <!-- Check for RTL layout, may need specific adaptations -->
 

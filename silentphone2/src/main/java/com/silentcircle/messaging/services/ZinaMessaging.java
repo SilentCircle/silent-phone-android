@@ -70,6 +70,7 @@ import com.silentcircle.messaging.util.ConversationUtils;
 import com.silentcircle.messaging.util.Extra;
 import com.silentcircle.messaging.util.IOUtils;
 import com.silentcircle.messaging.util.MessageUtils;
+import com.silentcircle.messaging.util.Notifications;
 import com.silentcircle.messaging.util.UUIDGen;
 import com.silentcircle.silentphone2.BuildConfig;
 import com.silentcircle.silentphone2.Manifest;
@@ -95,9 +96,11 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
+
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -114,7 +117,6 @@ import zina.ZinaNative;
 
 import static com.silentcircle.messaging.model.MessageErrorCodes.OK;
 import static com.silentcircle.messaging.model.MessageStates.DELIVERED;
-import static com.silentcircle.messaging.util.ConversationUtils.fillDeviceData;
 import static zina.JsonStrings.BURN;
 import static zina.JsonStrings.DECRYPTION_FAILED;
 import static zina.JsonStrings.DELIVERY_RECEIPT;
@@ -173,9 +175,12 @@ public class ZinaMessaging extends ZinaNative {
 
     public static final int SIP_OK = 200;
     public static final int SIP_ACCEPTED = 202;
+    public static final int SIP_BAD_REQUEST = 400;
     public static final int SIP_FORBIDDEN = 403;
     public static final int SIP_NOT_FOUND = 404;
+    public static final int SIP_PAYLOAD_TOO_LARGE = 413;
     public static final int SERVICE_NOT_AVAILABLE = 503;
+    public static final int SIP_NETWORK_TIMEOUT = 599;
 
     public static final int TIVI_TIMEOUT = -1;
     public static final int TIVI_SLOW_NETWORK = -2;
@@ -469,7 +474,7 @@ public class ZinaMessaging extends ZinaNative {
             return false;
         }
         Contact contact = conversation.getPartner();
-        boolean hasDeviceInfos = contact.numDeviceInfos() > 0;
+        boolean hasHadDeviceInfos = contact.numDeviceInfos() >= 0;
 
         // NOTE: we could enhance the app/UI to offer a selection of devices before sending out the message, together
         // with above enhancement of Message class.
@@ -484,9 +489,7 @@ public class ZinaMessaging extends ZinaNative {
             transportIds[idx++] = msgD.transportId;
             // This conversation had no device info, fill in the first set. Usually happens when we send the first
             // message to a new conversation (or fill in on old conversation -> migration)
-            if (!hasDeviceInfos) {
-                fillDeviceData(contact, msgD.receiverInfo);
-            }
+            ConversationUtils.fillDeviceData(getConversations(), contact, msgD.receiverInfo, hasHadDeviceInfos);
         }
         msg.setEventDeviceInfo(deviceInfos);
         createSendSyncOutgoing(messageBytes, msg, preparedMessageData);
@@ -660,7 +663,9 @@ public class ZinaMessaging extends ZinaNative {
                     conversations.save(conversation);
 
                     MessageUtils.notifyMessageReceived(ctx, sender, aliasName,
-                            message.isRequestReceipt(), message.getId());
+                            message.isRequestReceipt(),
+                            conversation.isMuted(),
+                            message.getId());
 
                     if (attachmentDescriptor != null) {
                         // Do an initial request to download the thumbnail
@@ -723,16 +728,24 @@ public class ZinaMessaging extends ZinaNative {
                     markMessageSent(networkMessageId, MessageStates.SENT_TO_SERVER);
                     markNotificationSent(networkMessageId);
                     return;
-                case SIP_FORBIDDEN:
-                case SIP_NOT_FOUND:
-                case SERVICE_NOT_AVAILABLE:
                 case TIVI_TIMEOUT:
                 case TIVI_SLOW_NETWORK:
                     Log.w(TAG, "Message state report with status code: " + statusCode);
                     markMessageFailed(networkMessageId, statusCode, MessageStates.FAILED);
                     return;
                 default:
-                    Log.e(TAG, "Message state report, unknown status code: " + statusCode);
+                    if (statusCode >= SIP_BAD_REQUEST && statusCode <= SIP_NETWORK_TIMEOUT) {
+                        Log.w(TAG, "Message state report with status code: " + statusCode);
+                        markMessageFailed(networkMessageId, statusCode, MessageStates.FAILED);
+                    }
+                    else {
+                        Log.e(TAG, "Message state report, unknown status code: " + statusCode);
+                        Event event = getMessageFromEventStates(networkMessageId);
+                        if (event != null) {
+                            SentrySender.sendMessageStateReport(event, statusCode,
+                                    MessageErrorCodes.GENERIC_ERROR);
+                        }
+                    }
                     return;
             }
         }
@@ -851,10 +864,10 @@ public class ZinaMessaging extends ZinaNative {
                     // Because partner devices changed, we resend the last outgoing message
                     // (heuristic taken from Janis)
                     final Context ctx = SilentPhoneApplication.getAppContext();
-                    final List<String> conversations =
-                            ConversationUtils.getConversationsWithParticipant(actionInfo);
+                    final ConversationRepository repository = getConversations();
+                    final List<String> conversations = ConversationUtils.getConversationsWithParticipant(actionInfo);
                     final Collection<String> newDevices = ConversationUtils.getNewDeviceIds(
-                            getConversations(), actionInformation);
+                            repository, actionInformation);
 
                     Handler uiHandler = null;
                     for (String conversationId : conversations) {
@@ -865,6 +878,23 @@ public class ZinaMessaging extends ZinaNative {
                         for (final Message messageToResend : messagesToResend) {
                             if (messageToResend.getState() == MessageStates.BURNED
                                     || messageToResend.getState() == MessageStates.SYNC) {
+                                continue;
+                            }
+
+                            if (newDevices.isEmpty()) {
+                                /*
+                                 * If there are no devices for recipient, mark message as failed.
+                                 * This is done only for one-to-one conversations.
+                                 */
+                                final Conversation conversation =
+                                        repository.findByPartner(conversationId);
+                                if (conversation != null
+                                        && !conversation.getPartner().isGroup()
+                                        && !(messageToResend.getState() == MessageStates.DELIVERED
+                                            || messageToResend.getState() == MessageStates.READ)) {
+                                    messageToResend.setState(MessageStates.FAILED);
+                                    repository.historyOf(conversation).save(messageToResend);
+                                }
                                 continue;
                             }
 
@@ -896,8 +926,8 @@ public class ZinaMessaging extends ZinaNative {
                      * It may be desirable to add info events to conversation which had last message
                      * which was re-sent.
                      */
-                    ConversationUtils.updateDeviceData(getConversations(), conversations,
-                            actionInformation, deviceId);
+                    ConversationUtils.updateDeviceData(repository, conversations,
+                            actionInformation);
                 }
             };
             AsyncUtils.execute(aib);
@@ -1091,7 +1121,7 @@ public class ZinaMessaging extends ZinaNative {
 
         // Construct a dummy outgoing message
         String msgId = UUIDGen.makeType1UUID().toString();
-        OutgoingMessage message = new OutgoingMessage(IOUtils.encode(getUserName()), IOUtils.encode(""));
+        OutgoingMessage message = new OutgoingMessage(getUserName(), "");
         message.setId(IOUtils.encode(msgId));
         message.setConversationID(getUserName());
 
@@ -1177,6 +1207,7 @@ public class ZinaMessaging extends ZinaNative {
         return obj;
     }
 
+    @Nullable
     private EventDeviceInfo createEventDeviceInfo(PreparedMessageData msgData) {
         //identityKey:device name:device id:verify state
         String elements[] = msgData.receiverInfo.split(":");
@@ -1306,6 +1337,20 @@ public class ZinaMessaging extends ZinaNative {
 //        }
 //    }
 
+    @Nullable
+    private Message getMessageFromEventStates(long netMsgId) {
+        Message message;
+        try {
+            synchronized (eventStateSync) {
+                netMsgId >>>= 4;            // Shift away status bits
+                message = eventState.get(netMsgId);
+            }
+        } catch (Exception e) {
+            message = null;
+        }
+        return message;
+    }
+
     private void handleMessageDecryptFailureNotification(@NonNull Conversation conversation,
             @NonNull EventRepository events, String msgId, String senderDeviceId) {
         final Context ctx = SilentPhoneApplication.getAppContext();
@@ -1350,6 +1395,7 @@ public class ZinaMessaging extends ZinaNative {
             // - if the client recorded at least one DELIVERED (200) or SENT_TO_SERVER (202) state then don't overwrite
             //   it with a weaker state (FAILED (for -1 or -2))
             if (msg != null) {
+                msg.setFailureFlag(Message.FAILURE_NOT_SENT);
                 int currentState = msg.getState();
                 if (currentState != messageState && currentState != DELIVERED
                         && currentState != MessageStates.SENT_TO_SERVER) {
@@ -1376,6 +1422,8 @@ public class ZinaMessaging extends ZinaNative {
             // - if the client recorded at least one DELIVERED state then don't overwrite
             //   it with a weaker state (DELIVERED (200) is stronger than SENT_TO_SERVER (202))
             if (msg != null) {
+                // Message successfully sent, clear failure flag
+                msg.clearFailureFlag(Message.FAILURE_NOT_SENT);
                 // Always update device specific message state, for message in general don't overwrite stronger states
                 updateEventDeviceInfoState(msg, originalNetMsgId, messageState);
                 if (msg.getState() < DELIVERED)
@@ -1451,6 +1499,9 @@ public class ZinaMessaging extends ZinaNative {
             return;
 
         for (EventDeviceInfo deviceInfo : infos) {
+            if (deviceInfo == null) {
+                continue;
+            }
             if (deviceInfo.transportId == transportId) {
                 deviceInfo.state = state;
                 break;
@@ -1467,6 +1518,9 @@ public class ZinaMessaging extends ZinaNative {
             return;
 
         for (EventDeviceInfo deviceInfo : infos) {
+            if (deviceInfo == null) {
+                continue;
+            }
             if (deviceInfo.deviceId.equals(devId)) {
                 deviceInfo.state = state;
             }
@@ -1645,6 +1699,7 @@ public class ZinaMessaging extends ZinaNative {
 
         final Conversation conversation = getOrCreateConversation(sender);
         final EventRepository events = getConversations().historyOf(conversation);
+        final long now = System.currentTimeMillis();
 
         // Check if the message with event.getMessageId() already exists. if yes and if error code is
         // NOT_DECRYPTABLE (-13) or MAC_CHECK_FAILED (-23) the this a error because of "duplicate"
@@ -1657,8 +1712,11 @@ public class ZinaMessaging extends ZinaNative {
             event.setDuplicate(true);
         }
         event.setId(UUIDGen.makeType1UUID().toString());
-        event.setTime(System.currentTimeMillis());
+        event.setTime(now);
         events.save(event);
+
+        conversation.setLastModified(now);
+        getConversations().save(conversation);
 
         MessageUtils.notifyConversationUpdated(SilentPhoneApplication.getAppContext(), sender,
                 true, UPDATE_ACTION_MESSAGE_SEND, event.getId());
@@ -2024,7 +2082,7 @@ public class ZinaMessaging extends ZinaNative {
 
         int idx = 0;
         for (PreparedMessageData msgD : preparedMessageData) {
-            deviceInfos[idx] = createEventDeviceInfo(msgD);
+            deviceInfos[idx++] = createEventDeviceInfo(msgD);
         }
         message.setEventDeviceInfo(deviceInfos);
 
@@ -2057,6 +2115,7 @@ public class ZinaMessaging extends ZinaNative {
         EventRepository events = conversations.historyOf(conversation);
 
         markPacketAsRead(conversation, events, msgId, dt, senderDeviceId);
+        Notifications.updateMessageNotification(SilentPhoneApplication.getAppContext());
     }
 
     /*

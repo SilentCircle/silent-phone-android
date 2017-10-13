@@ -538,12 +538,25 @@ public class ProvisioningActivity extends AppCompatActivity {
         public void beforeTextChanged(CharSequence s, int start, int count, int after) {
         }
 
+        /**
+         * Any changes on 's' will cause this method to be called again recursively.
+         * For example, using methods such as s.replace(), s.delete(), and etc. will call this again.
+         * Therefore, 'return' after the first deletion is necessary in this filtering logic.
+         * <p>
+         * Without the 'return' statement, copying texts including continuous multiple new lines
+         * in a specific app like the Goolgle Chrome browser and pasting them
+         * in the username input of the SP login screen cause the IndexOutOfBoundsException
+         * although 'android:singleLine' is enabled.
+         * <p>
+         * https://developer.android.com/reference/android/text/TextWatcher.html#afterTextChanged(android.text.Editable)
+         */
         public void afterTextChanged(Editable s) {
             for (int i = s.length(); i > 0; i--) {
 
                 if (s.subSequence(i - 1, i).toString().equals("\n")) {
-                    Log.d("LOG_TAG", "filtered a ENTER code");
+                    Log.d(LOG_TAG, "filtered a ENTER code");
                     s.replace(i - 1, i, "");
+                    return;
                 }
             }
         }

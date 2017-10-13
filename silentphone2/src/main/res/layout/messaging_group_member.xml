@@ -5,8 +5,8 @@
     android:layout_height="@dimen/conversation_log_action_button_size"
     android:paddingTop="@dimen/spacing_normal"
     android:paddingBottom="@dimen/spacing_normal"
-    android:paddingLeft="@dimen/activity_horizontal_margin_large"
-    android:paddingStart="@dimen/activity_horizontal_margin_large"
+    android:paddingLeft="@dimen/conversation_log_start_margin"
+    android:paddingStart="@dimen/conversation_log_start_margin"
     android:paddingRight="@dimen/activity_horizontal_margin_small"
     android:paddingEnd="@dimen/activity_horizontal_margin_small"
     android:orientation="horizontal"
@@ -104,7 +104,7 @@
             android:layout_marginStart="@dimen/conversation_log_name_margin_left"
             android:maxLines="1"
             android:singleLine="true"
-            android:textColor="?attr/sp_activity_primary_text_color"
+            android:textColor="?attr/sp_activity_secondary_text_color"
             android:textSize="@dimen/conversation_log_name_text_size"
             tools:text="alias" />
 

@@ -29,9 +29,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package com.silentcircle.silentphone2.util.tests;
 
 import android.test.InstrumentationTestCase;
-import android.util.Log;
 
-import com.silentcircle.silentphone2.activities.DialerActivity;
+import com.silentcircle.silentphone2.activities.DialerActivityInternal;
 import com.silentcircle.silentphone2.util.Utilities;
 
 /**
@@ -44,7 +43,7 @@ public class SimpleTests extends InstrumentationTestCase {
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        DialerActivity.mDomainsToRemove = new String[] {"@domain.net", "%40domain.net"};
+        DialerActivityInternal.mDomainsToRemove = new String[] {"@domain.net", "%40domain.net"};
     }
 
     @Override

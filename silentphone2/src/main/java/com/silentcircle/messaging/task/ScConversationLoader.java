@@ -199,8 +199,8 @@ public class ScConversationLoader extends AsyncTaskLoader<Cursor> {
             alias = uuid;
         }
         Uri photoUri = conversation.getPartner().isGroup()
-                ? AvatarUtils.getAvatarProviderUriGroup(null, uuid)
-                : AvatarUtils.getAvatarProviderUri(conversation.getAvatarUrl(), uuid);
+                ? AvatarUtils.getAvatarProviderUriGroup(uuid)
+                : AvatarUtils.getAvatarProviderUri(uuid, conversation.getAvatarUrl());
         // hack to override circular avatar for generated group images
         if (conversation.getPartner().isGroup() && photoUri != null) {
             String avatarUrl = conversation.getAvatarUrl();

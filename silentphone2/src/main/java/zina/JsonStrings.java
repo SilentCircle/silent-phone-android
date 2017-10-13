@@ -51,6 +51,7 @@ public class JsonStrings {
     public static final String MEMBER_ID = "mbrId";
     public static final String MEMBER_ATTRIBUTE = "mbrA";
     public static final String MEMBER_MOD_TIME = "mbrMT";
+    public static final String MEMBER_DISPLAY_NAME = "mbr_display_name";
 
     public static final String GROUP_COMMAND = "grp";
 
@@ -93,7 +94,13 @@ public class JsonStrings {
     public static final String ORIGINAL_RECEIVER = "or";
     public static final String ORIGINAL_MESSAGE = "om";
     public static final String COMMAND_TIME = "cmd_time";
+    public static final String COMMAND_TIME_U = "cmd_time_u"; //!< Time at client (ZULU) when it created the command, micro-sec
 
+    public static final String ATTRIBUTE_SHRED_AFTER = "s";
+    public static final String ATTRIBUTE_READ_RECEIPT = "r";
+    public static final String ATTRIBUTE_CALL_TYPE = "ct";
+    public static final String ATTRIBUTE_CALL_DURATION = "cd";
+    public static final String ATTRIBUTE_CALL_ERROR = "errorMessage";
     public static final String DR_STATUS_BITS = "dr_status"; //!< Status bits for the set R* flags
 
     public static final String EXTRA_GROUP_CMD_MESSAGE = "cmdMessage";
@@ -122,4 +129,5 @@ public class JsonStrings {
     public static final String RRCM = "rrcm";       // remote user retains call meta data
     public static final String RRCP = "rrcp";       // remote user retains call plaintext data
     public static final String RRAP = "rrap";       // remote user retains attachment plaintext data
+
 }

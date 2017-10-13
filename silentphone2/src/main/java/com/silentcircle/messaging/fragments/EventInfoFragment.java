@@ -44,6 +44,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
+import android.widget.LinearLayout;
 import android.widget.ScrollView;
 
 import com.silentcircle.common.util.CallUtils;
@@ -85,6 +86,7 @@ import zina.ZinaNative;
 
 import static com.silentcircle.messaging.model.MessageStates.messageStateToStringId;
 import static com.silentcircle.messaging.model.event.Message.DEFAULT_EXPIRATION_TIME;
+import static com.silentcircle.messaging.model.json.JSONEventAdapter.TAG_MESSAGE_METADATA;
 
 /**
  * Fragment to show detailed/debug information about a message.
@@ -185,6 +187,7 @@ public class EventInfoFragment extends Fragment {
     public void onResume() {
         super.onResume();
 
+        mParent.setTitle(getString(R.string.message_info_title));
         if (mEventView instanceof BaseMessageEventView) {
             ((BaseMessageEventView) mEventView).update();
         }
@@ -452,7 +455,7 @@ public class EventInfoFragment extends Fragment {
         try {
             JSONObject json = new JSONEventAdapter().adapt(event);
             if (!BuildConfig.DEBUG) {
-                json.remove("metaData");
+                json.remove(TAG_MESSAGE_METADATA);
             }
             result = json.toString(2);
         } catch (JSONException e) {

@@ -44,19 +44,18 @@ ZinaConversation::loadConversation(const string& localUser, const string& user, 
         return conv;            // SUCCESS, however return an empty conversation
     }
 
-    string* data = store.loadConversation(user, deviceId, localUser, &result);
+    StringUnique data = store.loadConversation(user, deviceId, localUser, &result);
     if (SQL_FAIL(result)) {
         conv->errorCode_ = DATABASE_ERROR;
         return conv;
     }
-    if (data == NULL || data->empty()) {   // Illegal state, should not happen
+    if (!data || data->empty()) {   // Illegal state, should not happen
         LOGGER(ERROR, __func__, " <-- Cannot load conversation data: ", user, ", ", deviceId);
         conv->errorCode_ = NO_SESSION_DATA;
         return conv;
     }
 
     conv->deserialize(*data);
-    delete data;
     conv->valid_ = true;
     LOGGER(DEBUGGING, __func__, " <--");
     return conv;
@@ -72,7 +71,6 @@ int32_t ZinaConversation::storeConversation(SQLiteStoreConv &store)
     Utilities::wipeMemory((void*)data->data(), data->size());
 
     delete data;
-    errorCode_ = SUCCESS;
     if (SQL_FAIL(result)) {
         errorCode_ = DATABASE_ERROR;
         sqlErrorCode_ = result;
@@ -119,8 +117,6 @@ int32_t ZinaConversation::renameConversation(const string& localUserOld, const s
 
 int32_t ZinaConversation::storeStagedMks(SQLiteStoreConv &store) {
     LOGGER(DEBUGGING, __func__, " -->");
-
-    errorCode_ = SUCCESS;
 
     for (; !stagedMk.empty(); stagedMk.pop_front()) {
         string& mkIvMac = stagedMk.front();

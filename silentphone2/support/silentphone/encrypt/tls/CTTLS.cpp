@@ -21,18 +21,11 @@
 #include <mbedtls/entropy.h>
 #include <mbedtls/ctr_drbg.h>
 #include <mbedtls/error.h>
+#include <mbedtls/debug.h>
 
 static void * (*volatile memset_volatile)(void *, int, size_t) = memset;
 
 #define DEBUG_LEVEL 2
-
-#ifdef __APPLE__
-void relTcpBGSock(void *ptr);
-void *prepareTcpSocketForBg(int s);
-#else
-void relTcpBGSock(void *ptr){}
-void *prepareTcpSocketForBg(int s){return (void*)1;}
-#endif
 
 int mustCheckTLSCert();
 
@@ -105,7 +98,6 @@ typedef struct{
 	mbedtls_entropy_context entropy;
 	mbedtls_ctr_drbg_context ctr_drbg;
     mbedtls_net_context sock;
-   void *voipBCKGR;
 } T_SSL;
 
 CTTLS::CTTLS(CTSockCB &c):addrConnected(){
@@ -671,10 +663,6 @@ int CTTLS::_connect(ADDR *address, ADDR *preferedAddr){
         setsockopt((((T_SSL*)pSSL)->sock.fd), SOL_SOCKET, SO_KEEPALIVE, &on, sizeof(on));//new 05052012
         //TODO set this if need backgr only
 #endif
-        relTcpBGSock(((T_SSL*)pSSL)->voipBCKGR);
-        if(bIsVoipSock){
-           ((T_SSL*)pSSL)->voipBCKGR=prepareTcpSocketForBg(((T_SSL*)pSSL)->sock.fd);//ios sets to non-blocking socket here.
-        }
         //make sure to have blocking socket, the iOS defualts to non-blocking for voip
         mbedtls_net_set_block(&((T_SSL*)pSSL)->sock);//
 
@@ -703,6 +691,15 @@ int CTTLS::_connect(ADDR *address, ADDR *preferedAddr){
         //mbedtls_ssl_set_session( ssl, 1, 600, &((T_SSL*)pSSL)->ssn );//will  timeout after 600, and will be resumed
         //mbedtls_ssl_set_session( ssl, 1, 0, &((T_SSL*)pSSL)->ssn );//will never timeout, and will be resumed
 
+#if defined(__APPLE__) && DEBUG
+        //
+        // Set the logging threshold for
+        // mbedtls in order to log any errors
+        // from the library using CocoaLumberjack
+        //
+        //mbedtls_debug_set_threshold(2);
+#endif
+        
         mbedtls_ssl_conf_dbg(conf, my_ssl_debug, NULL);                   // *** SSLDEBUG
         mbedtls_ssl_conf_ca_chain( conf, ca, NULL);
 
@@ -886,11 +883,15 @@ int CTTLS::_recv(char *buf, int iMaxSize){
    int iPOLARSSL_ERR_NET_WANT_cnt=0;
    
 	while(!iClosed){
+        
+        t_logf(log_events, __PRETTY_FUNCTION__, "1. iConnected: %d iPeerClosed: %d", iConnected, iPeerClosed);
+        
       //  puts("read sock");
       iWaitForRead=0;
 	   ret = mbedtls_ssl_read( ssl, (unsigned char *)buf, iMaxSize );
       //   void wakeCallback(int iLock);wakeCallback(1);
       
+        t_logf(log_events, __PRETTY_FUNCTION__, "2. iConnected: %d iPeerClosed: %d", iConnected, iPeerClosed);
       
       if(!iConnected)break;
       

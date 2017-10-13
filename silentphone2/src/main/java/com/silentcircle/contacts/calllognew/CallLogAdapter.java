@@ -251,7 +251,7 @@ public class CallLogAdapter extends GroupingListAdapter
 
     private CallItemExpandedListener mCallItemExpandedListener;
 
-    // We can use this to call a number directly if the DialerActivity->ListFragment use this
+    // We can use this to call a number directly if the DialerActivityInternal->ListFragment use this
     // fragment/adapter.
     private OnPhoneNumberPickerActionListener mPhoneNumberPickerActionListener;
 

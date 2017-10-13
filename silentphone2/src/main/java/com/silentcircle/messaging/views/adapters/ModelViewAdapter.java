@@ -55,6 +55,10 @@ public class ModelViewAdapter extends RecyclerView.Adapter<EventViewHolder> {
 
     public static final Boolean NEW_GROUP = true;
 
+    protected RecyclerView mRecyclerView = null;
+
+    public static final int INVALID_POSITION = -1;
+
     public class ViewHolder extends EventViewHolder {
 
         public ViewHolder(View itemView) {
@@ -72,7 +76,6 @@ public class ModelViewAdapter extends RecyclerView.Adapter<EventViewHolder> {
                     view.setTag(R.id.sender_display_name, getSenderName(item));
                 }
             }
-            view.setTag(R.id.view_position, position);
             view.setTag(item);
             if (item instanceof Event) {
                 view.setTag(R.id.view_event_id, ((Event) item).getId());
@@ -161,6 +164,7 @@ public class ModelViewAdapter extends RecyclerView.Adapter<EventViewHolder> {
         }
     }
 
+    @Override
     public void onViewRecycled(EventViewHolder holder) {
         View view = holder.getView();
         if (view instanceof BaseMessageEventView) {
@@ -168,7 +172,6 @@ public class ModelViewAdapter extends RecyclerView.Adapter<EventViewHolder> {
         }
         view.setTag(R.id.new_group_flag, null);
         view.setTag(R.id.sender_display_name, null);
-        view.setTag(R.id.view_position, null);
         view.setTag(R.id.group_conversation_flag, null);
         view.setTag(null);
 
@@ -178,6 +181,19 @@ public class ModelViewAdapter extends RecyclerView.Adapter<EventViewHolder> {
     @Override
     public int getItemCount() {
         return getCount();
+    }
+
+    @Override
+    public void onAttachedToRecyclerView(RecyclerView recyclerView) {
+        mRecyclerView = recyclerView;
+    }
+
+    @Override
+    public void onDetachedFromRecyclerView(RecyclerView recyclerView) {
+        if (mRecyclerView != recyclerView) {
+            return;
+        }
+        mRecyclerView = null;
     }
 
     // -----------------------------------
@@ -193,6 +209,13 @@ public class ModelViewAdapter extends RecyclerView.Adapter<EventViewHolder> {
     @Override
     public long getItemId(int position) {
         return modelProvider.getItemId(position);
+    }
+
+    public int getAdapterPosition(View view) {
+        if (mRecyclerView == null) {
+            return INVALID_POSITION;
+        }
+        return mRecyclerView.getChildViewHolder(view).getAdapterPosition();
     }
 
     public int getViewTypeCount() {
@@ -285,6 +308,25 @@ public class ModelViewAdapter extends RecyclerView.Adapter<EventViewHolder> {
         return position;
     }
 
+    /**
+     * Returns the screen position of the item having the provided id.
+     *
+     * Returns {@link #INVALID_POSITION} if the item was not found.
+     * @param itemID the id of the item to search
+     * @return the screen position of the item
+     */
+    public int getScreenPositionForID(long itemID) {
+        int itemCount = getItemCount();
+        // search backwards as it's more probable that we get requests for the latest items
+        for (int i = 0; i < itemCount; i++) {
+            int reverseIndex = itemCount - i - 1;
+            if (getItemId(reverseIndex) == itemID) {
+                return reverseIndex;
+            }
+        }
+        return INVALID_POSITION;
+    }
+
     public boolean isNewGroup(int position) {
         return isNewGroup(position, getItem(position));
     }
@@ -307,7 +349,7 @@ public class ModelViewAdapter extends RecyclerView.Adapter<EventViewHolder> {
                 if (previousItem instanceof Message) {
                     boolean sameGroup = item.getClass().equals(previousItem.getClass());
                     if (sameGroup) {
-                        sameGroup = ((Message) item).getSender().equals(((Message) previousItem).getSender());
+                        sameGroup = TextUtils.equals(((Message) item).getSender(), ((Message) previousItem).getSender());
                     }
                     if (!sameGroup) {
                         result = true;

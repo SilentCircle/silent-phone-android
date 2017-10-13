@@ -276,9 +276,12 @@ int32_t ZrtpDH::computeSecretKey(uint8_t *pubKeyBytes, uint8_t *secret) {
         return DH_compute_key(secret, tmpCtx->pub_key, tmpCtx);
     }
     if (pkType == EC25 || pkType == EC38) {
-        uint8_t buffer[100];
+        uint8_t buffer[200];
         int32_t ret;
         int32_t len = getPubKeySize();
+        if (len+1 > sizeof(buffer)) {
+            return -1;
+        }
 
         buffer[0] = POINT_CONVERSION_UNCOMPRESSED;
         memcpy(buffer+1, pubKeyBytes, len);
@@ -341,11 +344,11 @@ int32_t ZrtpDH::getPubKeyBytes(uint8_t *buf) const
         return BN_bn2bin(static_cast<DH*>(ctx)->pub_key, buf + prepend);
     }
     if (pkType == EC25 || pkType == EC38) {
-        uint8_t buffer[100];
+        uint8_t buffer[200];
 
         int len = EC_POINT_point2oct(EC_KEY_get0_group(static_cast<EC_KEY*>(ctx)),
                                      EC_KEY_get0_public_key(static_cast<EC_KEY*>(ctx)),
-                                     POINT_CONVERSION_UNCOMPRESSED, buffer, 100, NULL);
+                                     POINT_CONVERSION_UNCOMPRESSED, buffer, 200, NULL);
         memcpy(buf, buffer+1, len-1);
         return len-1;
     }
@@ -355,10 +358,13 @@ int32_t ZrtpDH::getPubKeyBytes(uint8_t *buf) const
 int32_t ZrtpDH::checkPubKey(uint8_t *pubKeyBytes) const
 {
     if (pkType == EC25 || pkType == EC38) {
-        uint8_t buffer[100];
+        uint8_t buffer[200];
         int32_t ret;
         int32_t len = getPubKeySize();
 
+        if (len+1 > sizeof(buffer)) {
+            return 0;
+        }
         buffer[0] = POINT_CONVERSION_UNCOMPRESSED;
         memcpy(buffer+1, pubKeyBytes, len);
 

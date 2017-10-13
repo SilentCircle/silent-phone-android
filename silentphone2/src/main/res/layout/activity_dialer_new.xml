@@ -6,7 +6,7 @@
         android:id="@+id/drawer_layout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        tools:context="com.silentcircle.silentphone2.activities.DialerActivity">
+        tools:context="com.silentcircle.silentphone2.activities.DialerActivityInternal">
 
     <!-- Currently used for processing time on slow networks when initiating a call -->
     <com.silentcircle.common.widget.ProgressBar
@@ -31,27 +31,7 @@
                     android:id="@+id/dialer_toolbar"
                     android:layout_height="wrap_content"
                     android:layout_width="match_parent"
-                    style="@style/Toolbar">
-                <LinearLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical">
-                    <TextView android:id="@+id/title"
-                              android:layout_width="wrap_content"
-                              android:layout_height="wrap_content"
-                              android:textAppearance="?android:attr/textAppearanceMedium"
-                              android:textColor="?attr/sp_actionbar_title_text_color"
-                              android:singleLine="true"/>
-
-                    <TextView android:id="@+id/sub_title"
-                              android:layout_width="wrap_content"
-                              android:layout_height="wrap_content"
-                              android:textAppearance="?android:attr/textAppearanceSmall"
-                              android:textColor="?attr/sp_drawer_header_text_color"
-                              android:singleLine="true"/>
-
-                </LinearLayout>
-            </android.support.v7.widget.Toolbar>
+                    style="@style/Toolbar" />
 <!--
             <TextView
                     style="?sp_ab_subtitle_style"

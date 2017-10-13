@@ -677,7 +677,7 @@
     <string name="call_in_progress">Call in progress</string>
 
     <string name="network_trouble_title">Network trouble detected</string>
-    <string name="network_trouble_underflow_description">The tone you heard or are hearing indicates that no audio is being received from the other party. This is called dropout tone and indicates the silence is not intentional. This may be caused by your network environment or that of the remote party. To improve the quality of your call, you or the other party may try moving closer to your wireless base station, moving to a place with more signal bars, changing networks or internet service providers, or contacting your organization\'s networking staff.</string>
+    <string name="network_trouble_underflow_description">Silent Phone has detected network trouble. This may affect your call quality. Try changing networks or internet service providers, moving to a place with more signal bars or closer to your wireless base station, or contacting your organization\'s network staff.</string>
 
     <string name="server_cert_failure">Certificate check failed - retrying</string>
 
@@ -1018,6 +1018,8 @@
     <string name="dialog_title_data_retention">Data retention</string>
     <string name="dialog_title_data_retention_blocking_cannot_be_disabled">Blocking cannot be disabled</string>
     <string name="dialog_title_group_invitation">Group invitation</string>
+    <string name="dialog_title_storage_permission_required">Storage permission required</string>
+    <string name="dialog_title_mute_conversation">Mute conversation</string>
 
     <string name="dialog_message_enable_device_location">To use this option, enable Location under device Settings. Location may be empty if only GPS is used.</string>
     <string name="dialog_message_current_location_mode">Current location mode is \"%s\".</string>
@@ -1029,6 +1031,9 @@
     <string name="dialog_message_close_after_timer">This device has been removed from the list of authorized devices so it will close in %s. Please clear application data manually.</string>
     <string name="dialog_message_invited_to_group_conversation">You have been invited to group conversation %1$s by %2$s.\nPlease accept or decline the invitation.</string>
     <string name="dialog_message_group_conversation_burn_change_expires_messages">Changing burn time for group conversation will remove messages which are expired with new burn value.</string>
+    <string name="dialog_message_storage_permission_required">Storage permission is required to view
+        attachments and has been denied previously. It will be required to enable Storage permission
+        in application\'s preferences under Settings > Apps > Silent Phone</string>
 
     <string name="dialog_message_dr_enabled">Your organization imposes a policy of retaining data about your communication,
         however you have blocked Silent Phone from retaining this data. Communication is now prohibited. To restore
@@ -1235,6 +1240,11 @@
     <string name="messaging_theme_dark">Dark theme</string>
     <string name="messaging_theme_light">Light theme</string>
     <string name="messaging_group_management">Group management</string>
+    <string name="messaging_mute_5m">5 minutes</string>
+    <string name="messaging_mute_1h">1 hour</string>
+    <string name="messaging_mute_8h">8 hours</string>
+    <string name="messaging_mute_24h">1 day</string>
+    <string name="messaging_mute_1w">1 week</string>
 
     <string name="contact_adder_title">Add to contacts</string>
     <string name="contact_save_existing">Add to contact</string>
@@ -1536,6 +1546,8 @@
     <string name="discovery_conversation_5_desc">Tap the add to contacts button to add this person as a new entry to your address book or to associate this person\'s Silent Phone information with an existing contact.</string>
     <string name="discovery_conversation_6_title">Share location &amp; more</string>
     <string name="discovery_conversation_6_desc">Touch this menu icon to enable sharing your location with each message, to clear the conversation, and to see security information for the devices in this conversation.</string>
+    <string name="discovery_conversation_7_title">Add participants</string>
+    <string name="discovery_conversation_7_desc">Tap the add participants button to add participants to this group conversation.</string>
 
     <string name="discovery_search_1_title">Select a contact</string>
     <string name="discovery_search_1_desc">Everyone in your contacts who can be reached securely with Silent Phone is shown right at the top. Contacts are matched by email and by Silent World phone numbers.</string>
@@ -1576,6 +1588,20 @@
     <string name="message_info_tab_json">Json</string>
     <string name="message_info_tab_trace">Trace</string>
     <string name="message_info_tab_no_trace_available">No trace information available</string>
+
+    <string name="contact_info_title">Contact details</string>
+    <string name="contact_info_display_name">Name</string>
+    <string name="contact_info_alias">Alias</string>
+    <string name="contact_info_organization">Organization</string>
+    <string name="contact_info_phone_number">Phone number</string>
+    <string name="contact_info_device_list">Device list</string>
+    <string name="contact_info_device_list_empty">Contact has no registered devices</string>
+    <string name="contact_info_current_device">Current device</string>
+    <string name="contact_info_laber_id">ID</string>
+    <string name="contact_info_laber_fingerprint">Fingerprint</string>
+    <string name="contact_info_label_mute_conversation">Mute conversation</string>
+    <string name="contact_info_description_mute_conversation">Suppress notification sound for this conversation</string>
+    <string name="contact_info_description_conversation_muted_till">Conversation muted till %1$s</string>
 
     <string name="group_messaging_create_group">Create a group</string>
     <string name="group_messaging_invite_user">Invite participant</string>

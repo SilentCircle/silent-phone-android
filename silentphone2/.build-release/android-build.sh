@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # symbols set by build host:
-# 
+#
 # export JAVA_JDK=/opt/jdk1.7.0_45/bin
 #
 # export ANDROID_ADT=/opt/adt-bundle-linux-x86_64
@@ -10,16 +10,51 @@
 # export ANDROID_NDK=/opt/android-ndk-r9c
 #
 # export PATH=$JAVA_JDK:$ANDROID_NDK:$ANDROID_ADT:$ANDROID_ANT:$ANDROID_SDK/tools:$PATH
-# 
+#
 # export GRADLE_USER_HOME="$WORKSPACE"
 # export SRC_ROOT=$WORKSPACE
 # export AUTOMATED_BUILD=1
 # export JNI_ROOT=$WORKSPACE/support
 #
 # export BUILD_NUMBER_PREFIX="alpha-"
-# which varies depending on build dev-, alpha-, 17-Apr-2014: <- last is release 
+# which varies depending on build dev-, alpha-, 17-Apr-2014: <- last is release
 
 set -e
+
+die() {
+    echo $* >&2
+    exit 1
+}
+
+assert_nonempty_var() {
+    local var_name="$1"; shift
+    [[ -n "$(eval echo \$$var_name)" ]] || die "$var_name must not be empty"
+}
+
+iso8601_timestamp() {
+    date -u +'%FT%TZ'
+}
+
+set_gradle_properties() {
+    local build_number="$1"; shift
+    local build_id="$1"; shift
+    local build_number_prefix="$1"; shift
+
+    cat <<end_set_gradle_properties > gradle.properties
+org.gradle.jvmargs=-Xmx3584M
+build_environment=silentcircle.com
+build_version=$build_number_prefix$build_number
+build_version_numeric=$build_number
+build_commit=$(git log -n 1 --pretty=format:'%h')
+build_date=$build_id
+build_debug=true
+build_partners=Vertu
+
+## Next is required for gradle plugin 1.3.0 to support the old way to handle
+## NDK builds. Maybe we can update/remove it once gradle fully supports NDK
+android.useDeprecatedNdk=true
+end_set_gradle_properties
+}
 
 export SC_BUILD_TYPE="$1"
 
@@ -38,13 +73,20 @@ else
    echo "*** building release configuration"
 fi
 
+# Show environment for debug purposes
+env
 
 git submodule init
 git submodule update --recursive
 git submodule status
 
-echo "sdk.dir=$ANDROID_SDK" > local.properties
-echo "ndk.dir=$ANDROID_NDK" >> local.properties
+cat <<END_LOCAL_PROPERTIES > local.properties
+sdk.dir=$ANDROID_SDK
+ndk.dir=$ANDROID_NDK
+END_LOCAL_PROPERTIES
+
+echo "local.properties:"
+cat local.properties
 
 # build static and shared libs and dependencies, copy resulting libs to
 # correct place (silentphone2/jni/armeabi-v7a), then run top level ndk-build
@@ -91,25 +133,38 @@ ndk-build clean
 
 # ndk jni builds
 # ndk-build -d -B V=1 NDK_LOG=1
-if ! ndk-build; then
+if ! ndk-build NDK_DEBUG=0; then
     echo "Build of native silentphone library failed"
     exit 1
 fi
 
 popd
 
+## See which build system we are using
+## and set env vars accordingly
+if [ -n "$AUTOMATED_BUILD" ]; then
+    if [ -n "$GITLAB_CI" ]; then
+        # BUILD_NUMBER_PREFIX is (should be) set by gitlab-ci.yml
+        # It is allowed to be empty.
+        BUILD_NUMBER="$CI_JOB_ID"
+        BUILD_ID=$(iso8601_timestamp)
+    elif [ -n "$JENKINS_HOME" ]; then
+        # The required build variables should already be set
+        assert_nonempty_var BUILD_NUMBER
+        assert_nonempty_var BUILD_ID
+    else
+        echo "AUTOMATED_BUILD set but I don't know which CI system this is."
+        exit 1
+    fi
+else # Manual build
+    BUILD_NUMBER_PREFIX='manual-'
+    BUILD_NUMBER=$$ # This should be monotonically increasing, but not worth it
+    BUILD_ID=$(iso8601_timestamp)
+fi
 
-echo "build_environment=silentcircle.com"                  > gradle.properties
-echo "build_version=$BUILD_NUMBER_PREFIX$BUILD_NUMBER"    >> gradle.properties
-echo "build_version_numeric=$BUILD_NUMBER"                >> gradle.properties
-echo "build_commit=$(git log -n 1 --pretty=format:'%h')"  >> gradle.properties
-echo "build_date=$BUILD_ID"                               >> gradle.properties
-echo "build_debug=true"                                   >> gradle.properties
-echo "build_partners=Vertu"                               >> gradle.properties
-
-## Next is required for gradle plugin 1.3.0 to support the old way to
-## handle NDK builds. Maybe we can update/remove it once gradle fulls supports NDK
-echo "android.useDeprecatedNdk=true"                      >> gradle.properties
+set_gradle_properties "$BUILD_NUMBER" "$BUILD_ID" "$BUILD_NUMBER_PREFIX"
+echo "gradle.properties:"
+cat gradle.properties
 
 # for more information on what gradlew is doing consider using --info
 # ./gradlew --info clean $BUILD_GRADLE_TASK
@@ -140,5 +195,5 @@ SymlinkAPK() {
 
 SymlinkAPK "bin"   $BUILD_APK_NAME
 
-# Jenkins build variable - has format of timestamp
-echo $BUILD_ID > ../build-id.txt
+# CI build variable - has format of timestamp
+echo $BUILD_ID > ${WORKSPACE}/build-id.txt

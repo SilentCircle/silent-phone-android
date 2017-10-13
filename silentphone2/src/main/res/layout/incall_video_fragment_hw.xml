@@ -15,7 +15,8 @@
                 android:keepScreenOn="true"
                 android:orientation="horizontal"
                 tools:context=".activities.InCallActivity"
-                tools:ignore="RtlHardcoded">
+                tools:ignore="RtlHardcoded"
+                android:background="@color/black_background">
     <!-- Check for RTL layout, may need specific adaptations -->
 
 

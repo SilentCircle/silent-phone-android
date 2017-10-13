@@ -53,6 +53,13 @@ public class StringUtils {
 
     private static final int MAX_SHORTENED_NAME_LENGTH = 4;
 
+    /** Limit after which unread message count is displayed with greater than sign */
+    public static final int UNREAD_MESSAGE_COUNT_DISPLAY_LIMIT = 99;
+
+    public static final String CONVERSATION_UNREAD_MESSAGES_MORE_THAN = "+";
+
+    public static final String CONVERSATION_ATTENTION_REQUIRED = "!";
+
     private static final Collator STRING_COLLATOR = Collator.getInstance(Locale.getDefault());
 
     private static class NameComparator implements Comparator<CharSequence> {
@@ -212,5 +219,11 @@ public class StringUtils {
             builder.appendQueryParameter(param, value);
         }
         return builder.build();
+    }
+
+    public static CharSequence getUnreadMessagesBadge(int unreadMessageCount) {
+        return (unreadMessageCount > UNREAD_MESSAGE_COUNT_DISPLAY_LIMIT
+                ? UNREAD_MESSAGE_COUNT_DISPLAY_LIMIT + CONVERSATION_UNREAD_MESSAGES_MORE_THAN
+                : String.valueOf(unreadMessageCount));
     }
 }

@@ -29,7 +29,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #define T_BUILD_NR "15299"
-#pragma message("build nr")
+//#pragma message("build nr")
 const char *getBuildDate()
 {
    return __DATE__;

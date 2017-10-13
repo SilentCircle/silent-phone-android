@@ -52,6 +52,7 @@ namespace zina {
         bool   drRrcm;                //!< RRCM: "remote retains call metadata"
         bool   drRrcp;                //!< RRCP: "remote retains call plaintext (audio)"
         bool   drRrap;                //!< RRAP: "remote retains attachment plaintext"
+        bool   inSameOrganization;    //!< User in same organization as requester
     };
 
     class NameLookup {

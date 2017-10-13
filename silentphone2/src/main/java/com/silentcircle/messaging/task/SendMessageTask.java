@@ -38,6 +38,7 @@ import com.silentcircle.messaging.repository.ConversationRepository;
 import com.silentcircle.messaging.services.ZinaMessaging;
 import com.silentcircle.messaging.util.MessageUtils;
 import com.silentcircle.messaging.util.SoundNotifications;
+import com.silentcircle.silentphone2.util.Utilities;
 
 import org.acra.sender.SentrySender;
 
@@ -88,9 +89,14 @@ public class SendMessageTask extends AsyncTask<Message, Void, Message> {
 
             /* mark message as read immediately for group messages to start burn countdown */
             if (isGroupMessage) {
-                message.setExpirationTime(System.currentTimeMillis()
-                        + TimeUnit.SECONDS.toMillis(message.getBurnNotice()));
-                message.setState(MessageStates.READ);
+                if (!Utilities.isNetworkConnected(mContext)) {
+                    message.setFailureFlag(Message.FAILURE_NOT_SENT);
+                }
+                else {
+                    message.setExpirationTime(System.currentTimeMillis()
+                            + TimeUnit.SECONDS.toMillis(message.getBurnNotice()));
+                    message.setState(MessageStates.READ);
+                }
                 repository.historyOf(conversation).save(message);
             }
 

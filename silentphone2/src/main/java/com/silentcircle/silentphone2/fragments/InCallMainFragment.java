@@ -33,6 +33,7 @@ import android.app.Activity;
 import android.app.FragmentManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.graphics.Rect;
@@ -61,13 +62,13 @@ import com.silentcircle.common.util.DRUtils;
 import com.silentcircle.common.widget.DataRetentionBanner;
 import com.silentcircle.common.widget.SignalQualityIndicator;
 import com.silentcircle.logs.Log;
-import com.silentcircle.messaging.fragments.UserInfoListenerFragment;
+import com.silentcircle.messaging.fragments.BaseFragment;
+import com.silentcircle.messaging.listener.MessagingBroadcastReceiver;
 import com.silentcircle.messaging.model.Contact;
 import com.silentcircle.messaging.util.Action;
 import com.silentcircle.messaging.util.AsyncUtils;
-import com.silentcircle.silentphone2.BuildConfig;
 import com.silentcircle.silentphone2.R;
-import com.silentcircle.silentphone2.activities.DialerActivity;
+import com.silentcircle.silentphone2.activities.DialerActivityInternal;
 import com.silentcircle.silentphone2.activities.InCallCallback;
 import com.silentcircle.silentphone2.dialogs.InfoMsgDialogFragment;
 import com.silentcircle.silentphone2.services.TiviPhoneService;
@@ -88,18 +89,19 @@ import java.util.concurrent.TimeUnit;
 
 import zina.ZinaNative;
 
-import static com.silentcircle.silentphone2.R.id.call;
-
 /**
  * This Fragment handles the in call screen and triggers actions.
  *
  * Created by werner on 16.02.14.
  */
-public class InCallMainFragment extends UserInfoListenerFragment implements View.OnClickListener,
+public class InCallMainFragment extends BaseFragment implements View.OnClickListener,
         TiviPhoneService.ServiceStateChangeListener, TiviPhoneService.DeviceStateChangeListener, 
         GlowPadView.OnTriggerListener, VerifySasWidget.OnSasVerifyClickListener {
 
     private static final String TAG = InCallMainFragment.class.getSimpleName();
+
+    /* Priority for this view to handle message broadcasts. */
+    private static final int BROADCAST_PRIORITY = 1;
 
     private Activity mParent;
     private InCallCallback mCallback;
@@ -227,6 +229,8 @@ public class InCallMainFragment extends UserInfoListenerFragment implements View
     private String mCallTypeOutgoing;
     private String mCallTypeUrgent;
     private String mCallTypeEmergency;
+
+    private MessagingBroadcastReceiver mViewUpdater;
 
     private class RefreshDrStateRunnable implements Runnable {
 
@@ -470,6 +474,7 @@ public class InCallMainFragment extends UserInfoListenerFragment implements View
             mDataRetentionBanner.setVisibility(mIsSelfDrEnabled ? View.VISIBLE : View.GONE);
             updateDataRetentionBanner(false);
         }
+        registerViewUpdater();
     }
 
     @Override
@@ -479,6 +484,8 @@ public class InCallMainFragment extends UserInfoListenerFragment implements View
         mRxLedHandler.removeCallbacks(mRxLedUpdater);
         mSignalQualityHandler.removeCallbacks(mSignalQualityUpdater);
         mVolumeIndicatorHandler.removeCallbacks(mVolumeIndicatorUpdater);
+
+        unregisterMessagingReceiver(mViewUpdater);
     }
 
     @TargetApi(Build.VERSION_CODES.M)
@@ -563,8 +570,8 @@ public class InCallMainFragment extends UserInfoListenerFragment implements View
                 break;
 
             case R.id.start_chat_image:
-                Intent intent = Action.VIEW_CONVERSATIONS.intent(getActivity(), DialerActivity.class);
-                intent.putExtra(DialerActivity.EXTRA_FROM_CALL, true);
+                Intent intent = Action.VIEW_CONVERSATIONS.intent(getActivity(), DialerActivityInternal.class);
+                intent.putExtra(DialerActivityInternal.EXTRA_FROM_CALL, true);
                 startActivity(intent);
                 break;
 
@@ -721,7 +728,9 @@ public class InCallMainFragment extends UserInfoListenerFragment implements View
     public void refreshScreen() {
         if (mCallback == null)
             return;
-        final boolean isMute = mCallback.getMuteStateCb();
+
+        final boolean isMute = getMuteState();
+
         mMute.setImageDrawable(isMute ? mMicMute : mMicOpen);
         mMute.setPressed(isMute);
 
@@ -982,7 +991,7 @@ public class InCallMainFragment extends UserInfoListenerFragment implements View
         boolean isOcaCall = bundle.getBoolean(TiviPhoneService.IS_OCA_CALL);
 
         if(isOcaCall) {
-            DialerActivity.mShowCreditDialog = true;
+            DialerActivityInternal.mShowCreditDialog = true;
         }
 
         // On outgoing call, we may not yet have a selected call, we take care of this later
@@ -1146,10 +1155,10 @@ public class InCallMainFragment extends UserInfoListenerFragment implements View
         }
         mAudioOptions.setPressed(isSpeaker);
 
-        boolean isMute = mCallback != null && mCallback.getMuteStateCb();
+        final boolean isMute = getMuteState();
+
         mMute.setPressed(isMute);
         mMute.setImageDrawable(isMute ? mMicMute : mMicOpen);
-
     }
 
     private PopupMenu mPopupMenu;
@@ -1249,12 +1258,25 @@ public class InCallMainFragment extends UserInfoListenerFragment implements View
                 if (event.getAction() != MotionEvent.ACTION_UP)
                     return false;
 
+                CallState call = TiviPhoneService.calls.selectedCall;
                 // get global state, may have changed by other actions
-                boolean isMute = !mCallback.getMuteStateCb();
+                boolean isGlobalMute = mCallback.getMuteStateCb();
+                boolean isCallMute = (call != null && call.iMuted);
+                boolean isMute = !(isGlobalMute || isCallMute);
                 mMute.setPressed(isMute);
-                TiviPhoneService.doCmd(isMute ? ":mute 1" : ":mute 0");
+
+                if (isGlobalMute) {
+                    // if un-muting and mic is muted globally, un-mute
+                    TiviPhoneService.doCmd(":mute 0");
+                    mCallback.setMuteStatusCb(false);
+                }
                 mMute.setImageDrawable(isMute ? mMicMute : mMicOpen);
-                mCallback.setMuteStatusCb(isMute);
+
+                if (call != null) {
+                    TiviPhoneService.doCmd((isMute ? "*m" : "*M") + call.iCallId);
+                    call.iMuted = isMute;
+                }
+
                 return true;
             }
         });
@@ -1287,7 +1309,7 @@ public class InCallMainFragment extends UserInfoListenerFragment implements View
         public void run() {
             if (mCallback != null) {
                 mCallback.answerCallCb();
-                DialerActivity.mAutoAnsweredTesting++;
+                DialerActivityInternal.mAutoAnsweredTesting++;
                 mCallerNumberName.postDelayed(mTerminator, 15 * 1000);
             }
         }
@@ -1315,7 +1337,7 @@ public class InCallMainFragment extends UserInfoListenerFragment implements View
         if (!ConfigurationUtilities.mEnableDevDebOptions)
             return;
         // Check for auto-answer on incoming call
-        if (DialerActivity.mAutoAnswerForTesting && TiviPhoneService.calls.selectedCall != null &&
+        if (DialerActivityInternal.mAutoAnswerForTesting && TiviPhoneService.calls.selectedCall != null &&
                 TiviPhoneService.calls.selectedCall.mustShowAnswerBT()) {
                 mCallerNumberName.postDelayed(mAnswerer, 1000);
         }
@@ -1460,6 +1482,34 @@ public class InCallMainFragment extends UserInfoListenerFragment implements View
         mDataRetentionBanner.addConversationPartner(peerName);
         mDataRetentionBanner.refreshBannerTitle();
         AsyncUtils.execute(new RefreshDrStateRunnable(peerName, refreshUserInfo));
+    }
+
+    private boolean getMuteState() {
+        final CallState call = TiviPhoneService.calls.selectedCall;
+        final boolean isGlobalMute = mCallback.getMuteStateCb();
+        final boolean isCallMute = (call != null && call.iMuted);
+        return isGlobalMute || isCallMute;
+    }
+
+    private void registerViewUpdater() {
+        Activity activity = getActivity();
+        if (activity == null) {
+            return;
+        }
+
+        mViewUpdater = new MessagingBroadcastReceiver() {
+
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                if (!isAdded()) {
+                    return;
+                }
+                Utilities.setCallerImage(TiviPhoneService.calls.selectedCall, mCallerImage);
+            }
+        };
+
+        IntentFilter filter = Action.filter(Action.REFRESH_SELF);
+        registerMessagingReceiver(activity, mViewUpdater, filter, BROADCAST_PRIORITY);
     }
 
 }

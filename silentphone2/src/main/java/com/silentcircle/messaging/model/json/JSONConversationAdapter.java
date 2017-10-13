@@ -50,6 +50,7 @@ public class JSONConversationAdapter extends JSONAdapter {
     public static final String TAG_CONVERSATION_AVATAR = "avatar";
     public static final String TAG_CONVERSATION_AVATAR_URL = "avatar_url";
     public static final String TAG_CONVERSATION_AVATAR_IV = "avatar_iv";
+    public static final String TAG_CONVERSATION_MUTE_DURATION = "mute_duration";
 
     private final JSONContactAdapter contactAdapter = new JSONContactAdapter();
 
@@ -74,6 +75,9 @@ public class JSONConversationAdapter extends JSONAdapter {
             json.put(TAG_CONVERSATION_AVATAR, conversation.getAvatar());
             json.put(TAG_CONVERSATION_AVATAR_URL, conversation.getAvatarUrl());
             json.put(TAG_CONVERSATION_AVATAR_IV, conversation.getAvatarIv());
+            if (conversation.isMuted()) {
+                json.put(TAG_CONVERSATION_MUTE_DURATION, conversation.getMuteDuration());
+            }
 
         } catch (JSONException exception) {
             // This should never happen because we are hard-coding all of the keys.
@@ -102,6 +106,13 @@ public class JSONConversationAdapter extends JSONAdapter {
         conversation.setAvatar(getString(json, TAG_CONVERSATION_AVATAR, null));
         conversation.setAvatarUrl(getString(json, TAG_CONVERSATION_AVATAR_URL, null));
         conversation.setAvatarIv(getString(json, TAG_CONVERSATION_AVATAR_IV, null));
+        if (json.has(TAG_CONVERSATION_MUTE_DURATION)) {
+            final long now = System.currentTimeMillis();
+            long muteDuration = getLong(json, TAG_CONVERSATION_MUTE_DURATION);
+            if (muteDuration > now) {
+                conversation.setMuteDuration(muteDuration);
+            }
+        }
 
         return conversation;
 

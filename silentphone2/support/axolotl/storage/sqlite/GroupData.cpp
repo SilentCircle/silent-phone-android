@@ -84,6 +84,17 @@ static const char* selectAllGroupsWithParticipant = "SELECT g.groupId, g.name, g
         "g.maxMembers, g.memberCount, g.attributes, g.lastModified, g.burnTime, g.burnMode, g.avatarInfo "
         "FROM groups g INNER JOIN members m ON g.groupId=m.groupId WHERE m.memberId=?1;";
 
+/* *****************************************************************************
+ * SQL statements to process persistent pending change sets
+ *
+ */
+static const char* dropChangeSets = "DROP TABLE changesets;";
+static const char* createChangeSets =
+        "CREATE TABLE changesets (groupid VARCHAR NOT NULL, changes BLOB, PRIMARY KEY(groupid));";
+static const char* insertChangeSetSql = "INSERT INTO changesets (groupid, changes) VALUES (?1, ?2);";
+static const char* removeChangeSetSql = "DELETE FROM changesets WHERE groupid=?1;";
+static const char* selectChangeSet = "SELECT groupid, changes FROM changesets WHERE groupid=?1;";
+
 using namespace zina;
 
 int32_t SQLiteStoreConv::createGroupTables()
@@ -92,6 +103,7 @@ int32_t SQLiteStoreConv::createGroupTables()
     sqlite3_stmt* stmt;
     int32_t sqlResult;
 
+    // Create Group table
     SQLITE_PREPARE(db, dropGroups, -1, &stmt, NULL);
     sqlite3_step(stmt);
     sqlite3_finalize(stmt);
@@ -104,11 +116,25 @@ int32_t SQLiteStoreConv::createGroupTables()
     }
     sqlite3_finalize(stmt);
 
+    // Create member table
     SQLITE_PREPARE(db, dropMembers, -1, &stmt, NULL);
     sqlite3_step(stmt);
     sqlite3_finalize(stmt);
 
     SQLITE_CHK(SQLITE_PREPARE(db, createMembers, -1, &stmt, NULL));
+    sqlResult = sqlite3_step(stmt);
+    if (sqlResult != SQLITE_DONE) {
+        ERRMSG;
+        goto cleanup;
+    }
+    sqlite3_finalize(stmt);
+
+    // Create persistent pending change set table
+    SQLITE_PREPARE(db, dropChangeSets, -1, &stmt, NULL);
+    sqlite3_step(stmt);
+    sqlite3_finalize(stmt);
+
+    SQLITE_CHK(SQLITE_PREPARE(db, createChangeSets, -1, &stmt, NULL));
     sqlResult = sqlite3_step(stmt);
     if (sqlResult != SQLITE_DONE) {
         ERRMSG;
@@ -171,6 +197,17 @@ int32_t SQLiteStoreConv::updateGroupDataDb(int32_t oldVersion)
         sqlite3_finalize(stmt);
         if (sqlCode_ != SQLITE_DONE) {
             LOGGER(ERROR, __func__, ", SQL error adding avatarInfo column: ", sqlCode_);
+            return sqlCode_;
+        }
+        return SQLITE_OK;
+    }
+
+    if (oldVersion == 7) {
+        SQLITE_PREPARE(db, createChangeSets, -1, &stmt, NULL);
+        sqlCode_ = sqlite3_step(stmt);
+        sqlite3_finalize(stmt);
+        if (sqlCode_ != SQLITE_DONE) {
+            LOGGER(ERROR, __func__, ", SQL error adding createChangeSets table: ", sqlCode_);
             return sqlCode_;
         }
         return SQLITE_OK;
@@ -964,4 +1001,76 @@ cleanup:
     LOGGER(DEBUGGING, __func__, " <-- ", sqlResult);
 
     return exists == 1;
+}
+
+int32_t SQLiteStoreConv::insertChangeSet(const string &groupId, const string& changeSet)
+{
+    sqlite3_stmt *stmt;
+    int32_t sqlResult, sqlResultIncrement;
+
+    // char* insertChangeSetSql = "INSERT INTO changesets (groupid, changes) VALUES (?1, ?2);";
+    SQLITE_CHK(SQLITE_PREPARE(db, insertChangeSetSql, -1, &stmt, NULL));
+    SQLITE_CHK(sqlite3_bind_text(stmt, 1, groupId.data(), static_cast<int32_t>(groupId.size()), SQLITE_STATIC));
+    SQLITE_CHK(sqlite3_bind_blob(stmt, 2, changeSet.data(), static_cast<int32_t>(changeSet.size()), SQLITE_STATIC));
+
+    sqlResult = sqlite3_step(stmt);
+
+    if (sqlResult != SQLITE_DONE) {
+        ERRMSG;
+    }
+
+cleanup:
+    sqlite3_finalize(stmt);
+    sqlCode_ = sqlResult;
+    LOGGER(DEBUGGING, __func__, " <-- ", sqlResult);
+    return sqlResult;
+}
+
+int32_t SQLiteStoreConv::removeChangeSet(const string &groupId)
+{
+    sqlite3_stmt *stmt;
+    int32_t sqlResult, sqlResultIncrement;
+
+    // char* removeChangeSetSql = "DELETE FROM changesets WHERE groupid=?1;";
+    SQLITE_CHK(SQLITE_PREPARE(db, removeChangeSetSql, -1, &stmt, NULL));
+    SQLITE_CHK(sqlite3_bind_text(stmt, 1, groupId.data(), static_cast<int32_t>(groupId.size()), SQLITE_STATIC));
+
+    sqlResult = sqlite3_step(stmt);
+
+    if (sqlResult != SQLITE_DONE) {
+        ERRMSG;
+    }
+
+cleanup:
+    sqlite3_finalize(stmt);
+    sqlCode_ = sqlResult;
+    LOGGER(DEBUGGING, __func__, " <-- ", sqlResult);
+    return sqlResult;
+}
+
+int32_t SQLiteStoreConv::getGroupChangeSet(const string &groupId, string* changeSet)
+{
+    sqlite3_stmt *stmt;
+    int32_t sqlResult, sqlResultIncrement;
+
+    // char* selectChangeSet = "SELECT groupid, changes FROM changesets WHERE groupid=?1;";
+    SQLITE_CHK(SQLITE_PREPARE(db, selectChangeSet, -1, &stmt, NULL));
+    SQLITE_CHK(sqlite3_bind_text(stmt, 1, groupId.data(), static_cast<int32_t>(groupId.size()), SQLITE_STATIC));
+
+    sqlResult = sqlite3_step(stmt);
+
+    while (sqlResult == SQLITE_ROW) {
+        string grpId(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0)));
+
+        size_t len = static_cast<size_t>(sqlite3_column_bytes(stmt, 1));
+        changeSet->assign(static_cast<const char*>(sqlite3_column_blob(stmt, 1)), len);
+
+        sqlResult = sqlite3_step(stmt);
+    }
+
+cleanup:
+    sqlite3_finalize(stmt);
+    sqlCode_ = sqlResult;
+    LOGGER(DEBUGGING, __func__, " <-- ", sqlResult);
+    return sqlResult;
 }

@@ -21,6 +21,7 @@ import android.annotation.TargetApi;
 import android.app.ActivityManager;
 import android.content.ComponentCallbacks2;
 import android.content.ContentResolver;
+import android.content.ContentUris;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
@@ -50,6 +51,7 @@ import android.provider.ContactsContract.Contacts.Photo;
 import android.provider.ContactsContract.Data;
 import android.provider.ContactsContract.Directory;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.graphics.drawable.RoundedBitmapDrawable;
 import android.support.v4.graphics.drawable.RoundedBitmapDrawableFactory;
@@ -76,8 +78,10 @@ import java.io.InputStream;
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -122,6 +126,8 @@ public abstract class ContactPhotoManagerNew implements ComponentCallbacks2 {
     // Static field used to cache the default letter avatar drawable that is created
     // using a null {@link DefaultImageRequest}
     private static Drawable sDefaultLetterAvatar = null;
+
+    private static ContactPhotoManagerNew sInstance;
 
     /**
      * Given a {@link com.silentcircle.contacts.ContactPhotoManager.DefaultImageRequest}, returns a {@link android.graphics.drawable.Drawable}, that when drawn, will
@@ -438,16 +444,20 @@ public abstract class ContactPhotoManagerNew implements ComponentCallbacks2 {
 
     public static final DefaultImageProvider DEFAULT_BLANK = new BlankDefaultImageProvider();
 
-    private static ContactPhotoManagerNew service;
-
-    public static ContactPhotoManagerNew getInstance(Context context) {
-        if (service == null) {
-            service = createContactPhotoManager(context.getApplicationContext());
+    public static synchronized ContactPhotoManagerNew getInstance(Context context) {
+        if (sInstance == null) {
+            Context applicationContext = context.getApplicationContext();
+            sInstance = createContactPhotoManager(applicationContext);
+            applicationContext.registerComponentCallbacks(sInstance);
+            if (ContextCompat.checkSelfPermission(context, Manifest.permission.READ_CONTACTS)
+                    == PackageManager.PERMISSION_GRANTED) {
+                sInstance.preloadPhotosInBackground();
+            }
         }
-        return service;
+        return sInstance;
     }
 
-    public static synchronized ContactPhotoManagerNew createContactPhotoManager(Context context) {
+    private static synchronized ContactPhotoManagerNew createContactPhotoManager(Context context) {
         return new ContactPhotoManagerImplNew(context);
     }
 
@@ -561,6 +571,8 @@ public abstract class ContactPhotoManagerNew implements ComponentCallbacks2 {
      */
     public abstract void preloadPhotosInBackground();
 
+    public abstract void clearRequestsForContext(Context context);
+
     // ComponentCallbacks2
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
@@ -589,7 +601,6 @@ class ContactPhotoManagerImplNew extends ContactPhotoManagerNew implements Callb
     private static final int MESSAGE_REQUEST_LOADING = 1;
 
     /**
-    /**
      * Type of message sent by the loader thread to indicate that some photos have
      * been loaded.
      */
@@ -598,6 +609,17 @@ class ContactPhotoManagerImplNew extends ContactPhotoManagerNew implements Callb
     private static final String[] EMPTY_STRING_ARRAY = new String[0];
 
     private static final String[] COLUMNS = new String[] { Photo._ID, Photo.PHOTO };
+
+    /**
+     * Dummy object used to indicate that a bitmap for a given key could not be stored in the
+     * cache.
+     */
+    private static final BitmapHolder BITMAP_UNAVAILABLE;
+
+    static {
+        BITMAP_UNAVAILABLE = new BitmapHolder(new byte[0], 0);
+        BITMAP_UNAVAILABLE.bitmapRef = new SoftReference<Bitmap>(null);
+    }
 
     /**
      * Maintains the state of a particular photo.
@@ -719,8 +741,8 @@ class ContactPhotoManagerImplNew extends ContactPhotoManagerNew implements Callb
             }
         };
         mBitmapHolderCacheRedZoneBytes = (int) (holderCacheSize * 0.75);
+        Log.i(TAG, "Cache adj: " + cacheSizeAdjustment);
         if (DEBUG) {
-            Log.i(TAG, "Cache adj: " + cacheSizeAdjustment);
             Log.d(TAG, "Cache size: " + btk(mBitmapHolderCache.maxSize())
                     + " + " + btk(mBitmapCache.maxSize()));
         }
@@ -798,6 +820,20 @@ class ContactPhotoManagerImplNew extends ContactPhotoManagerNew implements Callb
     }
 
     @Override
+    public void clearRequestsForContext(final @Nullable Context context) {
+        if (context == null) {
+            return;
+        }
+        Set<Map.Entry<ImageView, Request>> entries = mPendingRequests.entrySet();
+        for (Map.Entry<ImageView, Request> entry : entries) {
+            ImageView imageView = entry.getKey();
+            if (imageView != null && imageView.getContext() == context) {
+                mPendingRequests.remove(imageView);
+            }
+        }
+    }
+
+    @Override
     public void loadThumbnail(ImageView view, long photoId, boolean darkTheme, boolean isCircular,
             DefaultImageRequest defaultImageRequest, DefaultImageProvider defaultProvider) {
         if (photoId == 0) {
@@ -869,13 +905,13 @@ class ContactPhotoManagerImplNew extends ContactPhotoManagerNew implements Callb
             mPendingRequests.clear();
             return;
         }
-        ImageView[] requestSetCopy = mPendingRequests.keySet().toArray(new ImageView[
-                mPendingRequests.size()]);
-        for (ImageView imageView : requestSetCopy) {
+        final Iterator<Map.Entry<ImageView, Request>> iterator = mPendingRequests.entrySet().iterator();
+        while (iterator.hasNext()) {
+            final ImageView imageView = iterator.next().getKey();
             // If an ImageView is orphaned (currently scrap) or a child of fragmentRootView, then
             // we can safely remove its request.
             if (imageView.getParent() == null || isChildView(fragmentRootView, imageView)) {
-                mPendingRequests.remove(imageView);
+                iterator.remove();
             }
         }
     }
@@ -895,7 +931,9 @@ class ContactPhotoManagerImplNew extends ContactPhotoManagerNew implements Callb
         if (DEBUG) Log.d(TAG, "refreshCache");
         mBitmapHolderCacheAllUnfresh = true;
         for (BitmapHolder holder : mBitmapHolderCache.snapshot().values()) {
-            holder.fresh = false;
+            if (holder != BITMAP_UNAVAILABLE) {
+                holder.fresh = false;
+            }
         }
     }
 
@@ -957,15 +995,6 @@ class ContactPhotoManagerImplNew extends ContactPhotoManagerNew implements Callb
         // (we require that at least six of those can be cached at the same time)
         if (cachedBitmap.getByteCount() < mBitmapCache.maxSize() / 6) {
             mBitmapCache.put(request.getKey(), cachedBitmap);
-        }
-
-        // hack: Don't allow resources from external requests to expire easily
-        Uri uri = request.getUri();
-        if (uri != null) {
-            final String scheme = uri.getScheme();
-            if (scheme.equals("http") || scheme.equals("https")) {
-                holder.fresh = true;
-            }
         }
 
         // Soften the reference
@@ -1055,7 +1084,7 @@ class ContactPhotoManagerImplNew extends ContactPhotoManagerNew implements Callb
                         + bitmap.getWidth() + "x" + bitmap.getHeight()
                         + ", " + btk(bitmap.getByteCount()));
             }
-        } catch (OutOfMemoryError e) {
+        } catch (NullPointerException | OutOfMemoryError e) {
             // Do nothing - the photo will appear to be missing
         }
     }
@@ -1132,13 +1161,12 @@ class ContactPhotoManagerImplNew extends ContactPhotoManagerNew implements Callb
      * photos still haven't been loaded, sends another request for image loading.
      */
     private void processLoadedImages() {
-        Iterator<ImageView> iterator = mPendingRequests.keySet().iterator();
+        final Iterator<Map.Entry<ImageView, Request>> iterator = mPendingRequests.entrySet().iterator();
         while (iterator.hasNext()) {
-            ImageView view = iterator.next();
-            Request key = mPendingRequests.get(view);
+            final Map.Entry<ImageView, Request> entry = iterator.next();
             // TODO: Temporarily disable contact photo fading in, until issues with
             // RoundedBitmapDrawables overlapping the default image drawables are resolved.
-            boolean loaded = loadCachedPhoto(view, key, false);
+            final boolean loaded = loadCachedPhoto(entry.getKey(), entry.getValue(), false);
             if (loaded) {
                 iterator.remove();
             }
@@ -1187,7 +1215,17 @@ class ContactPhotoManagerImplNew extends ContactPhotoManagerNew implements Callb
             inflateBitmap(holder, requestedExtent);
         }
 
-        mBitmapHolderCache.put(key, holder);
+        // TODO holder.bitmap would be null if decoding failed
+        if (bytes != null && bytes.length > 0) {
+            mBitmapHolderCache.put(key, holder);
+            if (mBitmapHolderCache.get(key) != holder) {
+                Log.w(TAG, "Bitmap too big to fit in cache.");
+                mBitmapHolderCache.put(key, BITMAP_UNAVAILABLE);
+            }
+        } else {
+            mBitmapHolderCache.put(key, BITMAP_UNAVAILABLE);
+        }
+
         mBitmapHolderCacheAllUnfresh = false;
     }
 
@@ -1229,6 +1267,9 @@ class ContactPhotoManagerImplNew extends ContactPhotoManagerNew implements Callb
         while (iterator.hasNext()) {
             Request request = iterator.next();
             final BitmapHolder holder = mBitmapHolderCache.get(request.getKey());
+            if (holder == BITMAP_UNAVAILABLE) {
+                continue;
+            }
             if (holder != null && holder.bytes != null && holder.fresh &&
                     (holder.bitmapRef == null || holder.bitmapRef.get() == null)) {
                 // This was previously loaded but we don't currently have the inflated Bitmap
@@ -1256,6 +1297,11 @@ class ContactPhotoManagerImplNew extends ContactPhotoManagerNew implements Callb
         private static final int BUFFER_SIZE = 1024*16;
         private static final int MESSAGE_PRELOAD_PHOTOS = 0;
         private static final int MESSAGE_LOAD_PHOTOS = 1;
+
+        // If the number of a wild card, '?' in a query exceeds this, an SQLiteException is thrown.
+        // It is defined as SQLITE_MAX_VARIABLE_NUMBER in
+        // https://raw.githubusercontent.com/android/platform_external_sqlite/master/dist/sqlite3.c
+        private static final int SQLITE_MAX_VARS = 999;
 
         /**
          * A pause between preload batches that yields to the UI thread.
@@ -1407,14 +1453,15 @@ class ContactPhotoManagerImplNew extends ContactPhotoManagerNew implements Callb
                 return;
             }
 
+            Uri uri = null;
             Cursor cursor = null;
             try {
-                Uri uri = Contacts.CONTENT_URI.buildUpon().appendQueryParameter(
+                uri = Contacts.CONTENT_URI.buildUpon().appendQueryParameter(
                         ContactsContract.DIRECTORY_PARAM_KEY, String.valueOf(Directory.DEFAULT))
                         .appendQueryParameter(ContactsContract.LIMIT_PARAM_KEY,
                                 String.valueOf(MAX_PHOTOS_TO_PRELOAD))
                         .build();
-                cursor = mResolver.query(uri, new String[] { Contacts.PHOTO_ID },
+                cursor = mResolver.query(uri, new String[]{Contacts.PHOTO_ID},
                         Contacts.PHOTO_ID + " NOT NULL AND " + Contacts.PHOTO_ID + "!=0",
                         null,
                         Contacts.STARRED + " DESC, " + Contacts.LAST_TIME_CONTACTED + " DESC");
@@ -1426,6 +1473,14 @@ class ContactPhotoManagerImplNew extends ContactPhotoManagerNew implements Callb
                         mPreloadPhotoIds.add(0, cursor.getLong(0));
                     }
                 }
+            } catch (Exception ignore) {
+                // Ignore exceptions such as CursorWindowAllocationException which occurs intermittently
+                // We should not expect a crash here
+                Log.e(TAG, "Ignoring an exception: " + ignore +
+                        ((DEBUG) ? ", queryPhotosForPreload - uri: " + uri : ""));
+
+                // Failed to fetch the data, ignore this request
+                cursor = null;
             } finally {
                 if (cursor != null) {
                     cursor.close();
@@ -1434,6 +1489,10 @@ class ContactPhotoManagerImplNew extends ContactPhotoManagerNew implements Callb
         }
 
         private void loadPhotosInBackground() {
+            if (ContextCompat.checkSelfPermission(mContext, Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED) {
+                return;
+            }
+
             obtainPhotoIdsAndUrisToLoad(mPhotoIds, mPhotoIdsAsStrings, mPhotoUris);
             loadThumbnails(false);
             loadUriBasedPhotos();
@@ -1457,43 +1516,42 @@ class ContactPhotoManagerImplNew extends ContactPhotoManagerNew implements Callb
                 }
             }
 
-            mStringBuilder.setLength(0);
-            mStringBuilder.append(Photo._ID + " IN(");
-            for (int i = 0; i < mPhotoIds.size(); i++) {
-                if (i != 0) {
-                    mStringBuilder.append(',');
-                }
-                mStringBuilder.append('?');
-            }
-            mStringBuilder.append(')');
-
-            Cursor cursor = null;
-            try {
-                if (DEBUG) Log.d(TAG, "Loading " + TextUtils.join(",", mPhotoIdsAsStrings));
-                cursor = mResolver.query(Data.CONTENT_URI,
-                        COLUMNS,
-                        mStringBuilder.toString(),
-                        mPhotoIdsAsStrings.toArray(EMPTY_STRING_ARRAY),
-                        null);
-
-                if (cursor != null) {
-                    while (cursor.moveToNext()) {
-                        Long id = cursor.getLong(0);
-                        byte[] bytes = cursor.getBlob(1);
-                        cacheBitmap(id, bytes, preloading, -1);
-                        mPhotoIds.remove(id);
-                    }
-                }
-            } finally {
-                if (cursor != null) {
-                    cursor.close();
-                }
+            // Assume that mPhotoIds.size() == mPhotoIdsAsStrings.size() in this moment
+            if (DEBUG) Log.d(TAG, "mPhotoIds.size(): " + mPhotoIds.size() +
+                    ", mPhotoIdsAsStrings.size(): " + mPhotoIdsAsStrings.size());
+            String[] photoIds = mPhotoIdsAsStrings.toArray(EMPTY_STRING_ARRAY);
+            int photoIdsLength = photoIds.length;
+            // Split a query having over 999 (SQLITE_MAX_VARS) wild cards
+            // into pieces with their wild cards length of less than or equal to 999
+            for (int i = 0; i < photoIdsLength; i += SQLITE_MAX_VARS) {
+                int upperBound = Math.min(photoIdsLength, i + SQLITE_MAX_VARS);
+                loadThumbnailsFromContacts(photoIds, i, upperBound, preloading);
             }
 
             // Remaining photos were not found in the contacts database (but might be in profile).
             for (Long id : mPhotoIds) {
-                // Not a profile photo and not found - mark the cache accordingly
-                cacheBitmap(id, null, preloading, -1);
+                if (ContactsContract.isProfileId(id)) {
+                    Cursor profileCursor = null;
+                    try {
+                        profileCursor = mResolver.query(
+                                ContentUris.withAppendedId(Data.CONTENT_URI, id),
+                                COLUMNS, null, null, null);
+                        if (profileCursor != null && profileCursor.moveToFirst()) {
+                            cacheBitmap(profileCursor.getLong(0), profileCursor.getBlob(1),
+                                    preloading, -1);
+                        } else {
+                            // Couldn't load a photo this way either.
+                            cacheBitmap(id, null, preloading, -1);
+                        }
+                    } finally {
+                        if (profileCursor != null) {
+                            profileCursor.close();
+                        }
+                    }
+                } else {
+                    // Not a profile photo and not found - mark the cache accordingly
+                    cacheBitmap(id, null, preloading, -1);
+                }
             }
 
             mMainThreadHandler.sendEmptyMessage(MESSAGE_PHOTOS_LOADED);
@@ -1587,6 +1645,58 @@ class ContactPhotoManagerImplNew extends ContactPhotoManagerNew implements Callb
                 bitmap.recycle();
             }
             return baos;
+        }
+
+        /**
+         * Called by {@link LoaderThread#loadThumbnails(boolean)} to make a query with
+         * the limited number of wild cards
+         * It loads thumbnails from the contacts database with photo ids. It creates a sub array from
+         * the array of photo ids converted from {@link LoaderThread#mPhotoIdsAsStrings} by
+         * retrieving the ids from the given index ranges (lowerBound to upperBound) so that
+         * it makes a query with the sub array as a selectionArgs
+         */
+        private void loadThumbnailsFromContacts(String[] photoIds, int lowerBound, int upperBound, boolean preloading) {
+            String[] subPhotoIds = new String[upperBound - lowerBound];
+            mStringBuilder.setLength(0);
+            mStringBuilder.append(Photo._ID + " IN(");
+            for (int i = 0; i < subPhotoIds.length; i++) {
+                if (i != 0) {
+                    mStringBuilder.append(',');
+                }
+                mStringBuilder.append('?');
+                subPhotoIds[i] = photoIds[i + lowerBound];
+            }
+            mStringBuilder.append(')');
+
+            Cursor cursor = null;
+            try {
+                if (DEBUG) Log.d(TAG, "Loading " + Arrays.toString(subPhotoIds));
+                cursor = mResolver.query(Data.CONTENT_URI,
+                        COLUMNS,
+                        mStringBuilder.toString(),
+                        subPhotoIds,
+                        null);
+
+                if (cursor != null) {
+                    while (cursor.moveToNext()) {
+                        Long id = cursor.getLong(0);
+                        byte[] bytes = cursor.getBlob(1);
+                        cacheBitmap(id, bytes, preloading, -1);
+                        mPhotoIds.remove(id);
+                    }
+                }
+            } catch (Exception ignore) {
+                // Ignore exceptions such as CursorWindowAllocationException which occurs intermittently
+                // We should not expect a crash here
+                Log.e(TAG, "Ignoring an exception: " + ignore +
+                        ((DEBUG) ? ", loadThumbnailsFromContacts - selection: " + mStringBuilder.toString() +
+                                ", selectionArgs: " + Arrays.toString(subPhotoIds) : ""));
+                cursor = null;
+            } finally {
+                if (cursor != null) {
+                    cursor.close();
+                }
+            }
         }
     }
 

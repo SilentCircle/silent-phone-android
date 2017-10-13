@@ -208,6 +208,9 @@ public class SearchAgainFragment extends com.silentcircle.silentphone2.list.Sear
         super.onResume();
 
         setDialpadEnabled(false);
+
+        // restore query string in action bar if known (saved) query string is different
+        setVisibleSearchQueryIfDifferent(getQueryString());
     }
 
     @Override

@@ -30,9 +30,7 @@ package com.silentcircle.silentphone2.passcode;
 import android.app.Activity;
 import android.content.Intent;
 
-import com.silentcircle.logs.Log;
-import com.silentcircle.messaging.util.Action;
-import com.silentcircle.silentphone2.activities.DialerActivity;
+import com.silentcircle.silentphone2.activities.DialerActivityInternal;
 import com.silentcircle.silentphone2.activities.InCallActivity;
 import com.silentcircle.silentphone2.receivers.AutoStart;
 
@@ -42,7 +40,7 @@ import com.silentcircle.silentphone2.receivers.AutoStart;
  *
  * <p>By default, all activities that inherit the {@link AppLifecycleNotifierBaseActivity} will be
  * monitored by the controller and ask the passcode when needed. Special cases, like {@link
- * DialerActivity} where a passcode is needed under specific criteria, must be handled in {@link
+ * DialerActivityInternal} where a passcode is needed under specific criteria, must be handled in {@link
  * #isPasscodeRequired(Activity)}. You can also add the activity name in {@link #mNoPasscodeRequiredActivities}
  * array, to disable the passcode requirement.
  *
@@ -94,12 +92,10 @@ public class PasscodeController implements AppLifecycleNotifier.ApplifecycleCall
     private boolean isPasscodeRequired(Activity activity) {
         Intent intent = activity.getIntent();
         String action = (intent != null) ? intent.getAction() : null;
-        String type = (intent != null) ? intent.getType() : null;
-        if (DialerActivity.class.isInstance(activity)) {
+//        String type = (intent != null) ? intent.getType() : null;
+        if (DialerActivityInternal.class.isInstance(activity)) {
 //            Log.d(TAG, activity.getClass().getSimpleName() + " " + action + " " + type);
-            boolean notRequired =
-                    AutoStart.ON_BOOT.equals(action)
-                            || Action.WIPE.equals(Action.from(intent));
+            boolean notRequired = AutoStart.ON_BOOT.equals(action);
             return !notRequired;
         }
         else if (PasscodeEnterActivity.class.isInstance(activity)) {
@@ -159,7 +155,7 @@ public class PasscodeController implements AppLifecycleNotifier.ApplifecycleCall
             return;
         }
         if (mPasscodeManager.isUserAuthorized()) {
-            mPasscodeManager.startTimeoutTimer();
+            mPasscodeManager.startReauthorizationTimer();
         }
     }
     //----------------------------------------------------

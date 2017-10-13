@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2013-2017, Silent Circle, LLC.  All rights reserved.
+Copyright (C) 2014-2017, Silent Circle, LLC.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -304,6 +304,7 @@ public abstract class ScContactEntryListFragment<T extends ScContactEntryListAda
         return mView;
     }
 
+    @Nullable
     public ListView getListView() {
         return mListView;
     }

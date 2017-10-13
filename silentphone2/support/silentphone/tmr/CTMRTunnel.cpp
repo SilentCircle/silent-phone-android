@@ -1100,8 +1100,6 @@ int main(int argc, const char * argv[]){
 
 void *initARPool(){return (void*)1;}
 void relARPool(void *p){};
-void *prepareTcpSocketForBg(int s){return NULL;}
-void relTcpBGSock(void *ptr){}
 
 #endif
 

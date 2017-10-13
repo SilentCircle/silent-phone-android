@@ -31,6 +31,10 @@ import android.annotation.TargetApi;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.support.annotation.MainThread;
+import android.support.annotation.NonNull;
+import android.util.Log;
+
+import com.silentcircle.silentphone2.BuildConfig;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executor;
@@ -42,6 +46,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class AsyncUtils {
 
+    private static final String TAG = AsyncUtils.class.getSimpleName();
+
     private static final int CPU_COUNT = Runtime.getRuntime().availableProcessors();
     private static final int CORE_POOL_SIZE = CPU_COUNT + 1;
     private static final int MAXIMUM_POOL_SIZE = CPU_COUNT * 2 + 1;
@@ -50,7 +56,7 @@ public class AsyncUtils {
     private static final ThreadFactory sThreadFactory = new ThreadFactory() {
         private final AtomicInteger mCount = new AtomicInteger(1);
 
-        public Thread newThread(Runnable r) {
+        public Thread newThread(@NonNull Runnable r) {
             return new Thread(r, "AsyncTask #" + mCount.getAndIncrement());
         }
     };
@@ -64,24 +70,36 @@ public class AsyncUtils {
 
 
     @MainThread
+    @SafeVarargs
     public static <A, B, C> AsyncTask<A, B, C> execute(AsyncTask<A, B, C> task, A... args) {
         return Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB ? executeHoneycomb(task, args) : task.execute(args);
     }
 
     @TargetApi(Build.VERSION_CODES.HONEYCOMB)
+    @SafeVarargs
     private static <A, B, C> AsyncTask<A, B, C> executeHoneycomb(AsyncTask<A, B, C> task, A... args) {
+        if (BuildConfig.DEBUG && (MAXIMUM_POOL_SIZE * 2 < sOwnPoolWorkQueue.size())) {
+            Log.d(TAG, "Adding task to queue, size: " + sOwnPoolWorkQueue.size());
+        }
         return task.executeOnExecutor(THREAD_POOL_EXECUTOR, args);
     }
 
+    @SafeVarargs
     public static <A, B, C> AsyncTask<A, B, C> executeSerial(AsyncTask<A, B, C> task, A... args) {
         return task.executeOnExecutor(AsyncTask.SERIAL_EXECUTOR, args);
     }
 
     public static void execute(Runnable task) {
+        if (BuildConfig.DEBUG && (MAXIMUM_POOL_SIZE * 2 < sOwnPoolWorkQueue.size())) {
+            Log.d(TAG, "Adding runnable to queue, size: " + sOwnPoolWorkQueue.size());
+        }
         THREAD_POOL_EXECUTOR.execute(task);
     }
 
     public static void executeSerial(Runnable task) {
+        if (BuildConfig.DEBUG && (MAXIMUM_POOL_SIZE * 2 < sOwnPoolWorkQueue.size())) {
+            Log.d(TAG, "Adding serial task to queue, size: " + sOwnPoolWorkQueue.size());
+        }
         AsyncTask.SERIAL_EXECUTOR.execute(task);
     }
 }

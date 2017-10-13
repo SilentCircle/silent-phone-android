@@ -81,11 +81,24 @@ public class VCardProvider extends ContentProvider {
      */
     public static Uri getVCardUriForContact(final Context context, final Uri uri) {
         Uri vCardUri = null;
-        Cursor cursor = context.getContentResolver().query(uri, null, null, null, null);
-        if (cursor != null && cursor.moveToFirst()) {
-            String lookupKey = cursor.getString(cursor.getColumnIndex(ContactsContract.Contacts.LOOKUP_KEY));
-            vCardUri = Uri.withAppendedPath(VCardProvider.CONTENT_URI, lookupKey);
-            cursor.close();
+        Cursor cursor = null;
+        try {
+            cursor = context.getContentResolver().query(uri, null, null, null, null);
+        } catch (Exception ignore) {
+            // Ignore exceptions such as CursorWindowAllocationException which occurs intermittently
+            // We should not expect a crash here
+            Log.e(TAG, "Ignoring an exception: " + ignore +
+                    ((BuildConfig.DEBUG) ? ", getVCardUriForContact - uri: " + uri : ""));
+        }
+        try {
+            if (cursor != null && cursor.moveToFirst()) {
+                String lookupKey = cursor.getString(cursor.getColumnIndex(ContactsContract.Contacts.LOOKUP_KEY));
+                vCardUri = Uri.withAppendedPath(VCardProvider.CONTENT_URI, lookupKey);
+            }
+        } finally {
+            if (cursor != null && !cursor.isClosed()) {
+                cursor.close();
+            }
         }
         return vCardUri;
     }
@@ -183,10 +196,23 @@ public class VCardProvider extends ContentProvider {
         ContentResolver resolver = mContext.getContentResolver();
         Uri lookupUri = Uri.withAppendedPath(ContactsContract.Contacts.CONTENT_LOOKUP_URI, lookupKey);
         Uri contactUri = ContactsContract.Contacts.lookupContact(resolver, lookupUri);
-        Cursor cursor =  resolver.query(contactUri, null, null, null, null);
-        if (cursor != null && cursor.moveToFirst()) {
-            name = cursor.getString(cursor.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME));
-            cursor.close();
+        Cursor cursor = null;
+        try {
+            cursor = resolver.query(contactUri, null, null, null, null);
+        } catch (Exception ignore) {
+            // Ignore exceptions such as CursorWindowAllocationException which occurs intermittently
+            // We should not expect a crash here
+            Log.e(TAG, "Ignoring an exception: " + ignore +
+                    ((BuildConfig.DEBUG) ? ", getContactName - uri: " + contactUri : ""));
+        }
+        try {
+            if (cursor != null && cursor.moveToFirst()) {
+                name = cursor.getString(cursor.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME));
+            }
+        } finally {
+            if (cursor != null && !cursor.isClosed()) {
+                cursor.close();
+            }
         }
         if (TextUtils.isEmpty(name)) {
             name = VCARD_NAME;

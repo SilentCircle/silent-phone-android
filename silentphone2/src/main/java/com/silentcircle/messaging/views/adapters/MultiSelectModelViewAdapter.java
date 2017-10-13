@@ -131,7 +131,7 @@ public class MultiSelectModelViewAdapter extends ModelViewAdapter implements Has
     @Override
     public void onClick(View view) {
         if (mListener != null && view != null) {
-            mListener.onItemClick(view, (Integer) view.getTag(R.id.view_position), view.getTag(),
+            mListener.onItemClick(view, getAdapterPosition(view), view.getTag(),
                     (String) view.getTag(R.id.view_event_id));
         }
     }
@@ -140,7 +140,7 @@ public class MultiSelectModelViewAdapter extends ModelViewAdapter implements Has
     public boolean onLongClick(View view) {
         boolean result = false;
         if (mListener != null && view != null) {
-            mListener.onItemLongClick(view, (Integer) view.getTag(R.id.view_position), view.getTag(),
+            mListener.onItemLongClick(view, getAdapterPosition(view), view.getTag(),
                     (String) view.getTag(R.id.view_event_id));
             result = true;
         }

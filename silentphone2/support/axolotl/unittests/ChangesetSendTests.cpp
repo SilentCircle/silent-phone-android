@@ -27,6 +27,8 @@ limitations under the License.
 #include "../util/Utilities.h"
 #include "../util/b64helper.h"
 
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "ClangTidyInspection"
 using namespace std;
 using namespace zina;
 
@@ -67,14 +69,15 @@ string avatar_2("avatar_2--");
 
 typedef shared_ptr<GroupChangeSet> PtrChangeSet;
 PtrChangeSet getCurrentGroupChangeSet(const string &groupId, SQLiteStoreConv &store);
-PtrChangeSet getPendingGroupChangeSet(const string &groupId);
+PtrChangeSet getPendingGroupChangeSet(const string &groupId, SQLiteStoreConv &store);
+bool removeGroupFromPendingChangeSet(const string &groupId);
 
 extern void setTestIfObj_(AppInterfaceImpl* obj);
 
 class ChangeSetTestsFixtureSimple: public ::testing::Test {
 public:
     ChangeSetTestsFixtureSimple( ) {
-        LOGGER_INSTANCE setLogLevel(ERROR);
+        LOGGER_INSTANCE setLogLevel(WARNING);
         store = SQLiteStoreConv::getStore();
         store->setKey(std::string((const char*)keyInData, 32));
         store->openStore(std::string());
@@ -179,7 +182,7 @@ TEST_F(ChangeSetTestsFixtureSimple, ExistingGroupTests) {
 class ChangeSetTestsFixtureMembers: public ::testing::Test {
 public:
     ChangeSetTestsFixtureMembers( ) {
-        LOGGER_INSTANCE setLogLevel(ERROR);
+        LOGGER_INSTANCE setLogLevel(WARNING);
         // initialization code here
         store = SQLiteStoreConv::getStore();
         store->setKey(std::string((const char*)keyInData, 32));
@@ -428,10 +431,10 @@ TEST_F(ChangeSetTestsFixtureMembers, CreateChangeSetTests) {
 
     // Get the now pending change set, check if it has the expected data
     // Return no change set if no change set for a group id.
-    PtrChangeSet pendingChangeSet = getPendingGroupChangeSet(groupId_1);
+    PtrChangeSet pendingChangeSet = getPendingGroupChangeSet(groupId_1, *store);
     ASSERT_FALSE((bool)pendingChangeSet);
 
-    pendingChangeSet = getPendingGroupChangeSet(groupId);
+    pendingChangeSet = getPendingGroupChangeSet(groupId, *store);
     ASSERT_TRUE((bool)pendingChangeSet);
 
     ASSERT_TRUE(pendingChangeSet->has_updatename());
@@ -547,9 +550,11 @@ TEST_F(ChangeSetTestsFixtureMembers, CreateChangeSetTests) {
     // Finish creation of change set, manage pending change sets
     appInterface_1->groupUpdateSendDone(groupId);
 
+    // This clears the cache, simulating a fresh start
+    ASSERT_TRUE(removeGroupFromPendingChangeSet(groupId));
 
     // Get the pending change set, check if it has the expected data
-    pendingChangeSet = getPendingGroupChangeSet(groupId);
+    pendingChangeSet = getPendingGroupChangeSet(groupId, *store);
     ASSERT_TRUE((bool)pendingChangeSet);
 
     // Because we haven't changed the group's metadata the clocks still have value 1
@@ -575,3 +580,4 @@ TEST_F(ChangeSetTestsFixtureMembers, CreateChangeSetTests) {
     ASSERT_EQ(1, pendingChangeSet->updatermmember().rmmember_size());
 
 }
+#pragma clang diagnostic pop

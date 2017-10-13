@@ -31,7 +31,6 @@
             android:id="@+id/chat_events"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="?attr/sp_activity_background_color"
             android:divider="@drawable/none"
             android:dividerHeight="@dimen/messaging_chat_item_divider_height"
             android:filterTouchesWhenObscured="false"

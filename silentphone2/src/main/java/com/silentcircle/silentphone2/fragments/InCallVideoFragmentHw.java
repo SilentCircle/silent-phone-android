@@ -394,7 +394,7 @@ public class InCallVideoFragmentHw extends Fragment implements View.OnClickListe
     @Override
     public void onResume() {
         super.onResume();
-        switchMicMute(mCallback.getMuteStateCb());
+        switchMicMute(getMuteState());
         activateVideoScreen();
     }
 
@@ -474,9 +474,7 @@ public class InCallVideoFragmentHw extends Fragment implements View.OnClickListe
 
             case R.id.mute:
                 // get global state, may have changed by other actions
-                boolean isMute = !mCallback.getMuteStateCb();
-                TiviPhoneService.doCmd(isMute ? ":mute 1" : ":mute 0");
-                switchMicMute(isMute);
+                toggleMicMute();
                 break;
 
             case R.id.switch_camera:
@@ -713,7 +711,7 @@ public class InCallVideoFragmentHw extends Fragment implements View.OnClickListe
     }
 
     private void setControlButtonsActive(boolean suppressAutoRemove) {
-        switchMicMute(mCallback.getMuteStateCb());
+        switchMicMute(getMuteState());
         switchVideoPause(mPauseVideo);
         mAccept.setVisibility(View.GONE);
 
@@ -743,8 +741,35 @@ public class InCallVideoFragmentHw extends Fragment implements View.OnClickListe
         mPreviewSecureState.setVisibility(isVideoPause ? View.INVISIBLE : View.VISIBLE);
     }
 
+    private boolean getMuteState() {
+        CallState call = TiviPhoneService.calls.selectedCall;
+        boolean isGlobalMute = mCallback.getMuteStateCb();
+        boolean isCallMute = (call != null && call.iMuted);
+        return (isGlobalMute || isCallMute);
+    }
+
+    private void toggleMicMute() {
+        CallState call = TiviPhoneService.calls.selectedCall;
+        // get global state, may have changed by other actions
+        boolean isGlobalMute = mCallback.getMuteStateCb();
+        boolean isCallMute = (call != null && call.iMuted);
+        boolean isMute = !(isGlobalMute || isCallMute);
+
+        if (isGlobalMute) {
+            // if un-muting and mic is muted globally, un-mute
+            TiviPhoneService.doCmd(":mute 0");
+            mCallback.setMuteStatusCb(false);
+        }
+
+        if (call != null) {
+            TiviPhoneService.doCmd((isMute ? "*m" : "*M") + call.iCallId);
+            call.iMuted = isMute;
+        }
+
+        switchMicMute(isMute);
+    }
+
     private void switchMicMute(boolean isMute) {
-        mCallback.setMuteStatusCb(isMute);
         mMuteButton.setImageDrawable(isMute ? mMicMute : mMicOpen);
         if (isMute)
             mMuteButton.setBackgroundColor(ContextCompat.getColor(mParent, R.color.black_blue));
@@ -778,7 +803,12 @@ public class InCallVideoFragmentHw extends Fragment implements View.OnClickListe
             return;
 
         boolean isSpeaker = Utilities.isSpeakerOn(mParent.getBaseContext());
-        if (!isSpeaker && !mParent.getPhoneService().isHeadsetPlugged() && !mParent.getPhoneService().btHeadsetScoActive()) {
+        boolean usingHeadset = false;
+        TiviPhoneService phoneService = mParent.getPhoneService();
+        if(phoneService != null) {
+            usingHeadset = phoneService.isHeadsetPlugged() || phoneService.btHeadsetScoActive();
+        }
+        if (!isSpeaker && !usingHeadset) {
             Utilities.turnOnSpeaker(mParent.getBaseContext(), true, false);
         }
         if (!mPauseVideo && mVideoAccepted) {
@@ -812,7 +842,12 @@ public class InCallVideoFragmentHw extends Fragment implements View.OnClickListe
         }
         if (mParent == null || mCallback == null)
             return;
-        if (!mParent.getPhoneService().isHeadsetPlugged() && !mParent.getPhoneService().btHeadsetScoActive()) {
+        boolean usingHeadset = false;
+        TiviPhoneService phoneService = mParent.getPhoneService();
+        if (phoneService != null) {
+            usingHeadset = phoneService.isHeadsetPlugged() || phoneService.btHeadsetScoActive();
+        }
+        if (!usingHeadset) {
             Utilities.restoreSpeakerMode(mParent.getBaseContext());
         }
         mCallback.updateProximityCb(true);

@@ -188,7 +188,7 @@ public class ScV1UserLoader extends AsyncTaskLoader<Cursor> {
         row.add(ud.displayName);
         row.add(null);                              // Phone.PHOTO_THUMBNAIL_URI
         /* populate private field with organization only if organization differs */
-        row.add(!isInSameOrganization(ud.organization)
+        row.add(!ud.inSameOrganization
                 ? ud.organization
                 : null);                            // SC_PRIVATE_FIELD
         row.add(ud.uuid);                           // SC_UUID_FIELD
@@ -211,14 +211,10 @@ public class ScV1UserLoader extends AsyncTaskLoader<Cursor> {
                 && (PhoneNumberUtils.isGlobalPhoneNumber(query.replaceAll("\\s", ""))
                     || !TextUtils.equals(LoadUserInfo.getDisplayOrg(), userInfo.organization))) {
             result = new ScDirectoryLoader.UserData(userInfo.mDisplayName, userInfo.mDisplayName,
-                    userInfo.mAlias, userInfo.mUuid, userInfo.mDisplayName, userInfo.organization);
+                    userInfo.mAlias, userInfo.mUuid, userInfo.mDisplayName, userInfo.organization,
+                    userInfo.isInSameOrganization);
         }
         return result;
-    }
-
-    private boolean isInSameOrganization(String organization) {
-        return TextUtils.equals(LoadUserInfo.getDisplayOrg(), organization)
-                || (TextUtils.isEmpty(LoadUserInfo.getDisplayOrg()) && TextUtils.isEmpty(organization));
     }
 
 }

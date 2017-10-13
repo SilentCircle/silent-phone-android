@@ -35,7 +35,8 @@ import android.widget.SectionIndexer;
 
 import com.silentcircle.messaging.model.event.Event;
 import com.silentcircle.messaging.views.PinnedHeaderChatRecyclerView;
-import com.silentcircle.silentphone2.R;
+
+import org.joda.time.LocalDate;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -46,15 +47,9 @@ import java.util.List;
  * Adapter to group events on conversation view by date. To be used with {@link PinnedHeaderChatRecyclerView}.
  */
 public class GroupingModelViewAdapter extends MultiSelectModelViewAdapter implements SectionIndexer,
-        PinnedHeaderChatRecyclerView.PinnedHeaderAdapter {
-
-    public static final Boolean NEW_DATE = true;
-
-    protected static final Integer VALUE_NO_DRAW = 1;
-    protected static final int INVALID_POSITION = -1;
+        PinnedItemDecoration.PinnedHeaderAdapter {
 
     private SectionIndexer mIndexer;
-    private boolean mHeaderVisibility[];
 
     public static class Section {
 
@@ -126,14 +121,12 @@ public class GroupingModelViewAdapter extends MultiSelectModelViewAdapter implem
                 return sections.toArray(new Section[sections.size()]);
             }
 
-            Calendar previousDay = getDatePart(new Date());
+            LocalDate previousDay = LocalDate.now();
             long previousTime = -1;
             int position = 0;
             int previousHeaderPosition = 0;
             int previousDataPosition = 0;
             int length = 0;
-
-            Date date = new Date();
 
             for (Object model : models) {
                 if (model instanceof Event) {
@@ -143,9 +136,8 @@ public class GroupingModelViewAdapter extends MultiSelectModelViewAdapter implem
                         previousTime = time;
                     }
 
-                    date.setTime(time);
-                    Calendar day = getDatePart(date);
-                    if (day.compareTo(previousDay) != 0) {
+                    LocalDate day = new LocalDate(time);
+                    if (!day.equals(previousDay)) {
                         // create a new section;
                         if (position > 0) {
                             sections.add(
@@ -281,6 +273,21 @@ public class GroupingModelViewAdapter extends MultiSelectModelViewAdapter implem
     }
 
     @Override
+    public boolean isHeaderPosition(int position) {
+        // TODO use a set of header positions?
+        boolean result = false;
+        if (mIndexer != null) {
+            for (Object item : mIndexer.getSections()) {
+                if (((Section) item).position == position) {
+                    result = true;
+                    break;
+                }
+            }
+        }
+        return result;
+    }
+
+    @Override
     public int getPinnedHeaderCount() {
         if (mIndexer == null) {
             return 0;
@@ -290,80 +297,70 @@ public class GroupingModelViewAdapter extends MultiSelectModelViewAdapter implem
     }
 
     @Override
-    public View getPinnedHeaderView(int position, View convertView, ViewGroup parent) {
+    public boolean isSectionHeaderVisible(int headerPosition, int firstVisiblePosition,
+            int lastVisiblePosition) {
         if (mIndexer == null) {
-            return null;
+            return false;
         }
 
-        Section section = (Section) mIndexer.getSections()[position];
-        convertView = getHeaderView(convertView, parent, section.date, section.position);
+        Section section = null;
+        for (Object item : mIndexer.getSections()) {
+            if (((Section) item).position == headerPosition) {
+                section = (Section) item;
+                break;
+            }
+        }
+
+        boolean visible = false;
+        if (section != null) {
+            visible = !((section.position + section.length) < firstVisiblePosition
+                    || section.position > lastVisiblePosition);
+        }
+        return visible;
+    }
+
+    @Override
+    public View getHeaderView(View convertView, ViewGroup parent, Object data) {
+        if (convertView == null) {
+            ViewType viewType = getItemViewType(data);
+            convertView = viewType.get(convertView, parent);
+            convertView.requestLayout();
+        }
+
+        convertView.setTag(data);
 
         return convertView;
     }
 
     @Override
-    public void configurePinnedHeaders(PinnedHeaderChatRecyclerView listView) {
-        if (mIndexer == null) {
-            return;
-        }
-
-        int size = mIndexer.getSections().length;
-
-        // Cache visibility bits
-        if (mHeaderVisibility == null || mHeaderVisibility.length != size) {
-            mHeaderVisibility = new boolean[size];
-        }
-        for (int i = 0; i < size; i++) {
-            boolean visible = isSectionHeaderVisible(i, listView.getFirstVisiblePosition(),
-                    listView.getLastVisiblePosition());
-            mHeaderVisibility[i] = visible;
-            if (!visible) {
-                listView.setHeaderInvisible(i, true);
+    public int getHeaderPositionForItem(int position) {
+        int headerPosition = INVALID_POSITION;
+        for (Object item : mIndexer.getSections()) {
+            Section section = (Section) item;
+            if (section.position == position) {
+                headerPosition = section.position;
+                break;
+            }
+            else if (section.position <= position && position <= (section.position + section.length)) {
+                headerPosition = section.position;
+                break;
             }
         }
+        return headerPosition;
+    }
 
-        // Starting at the top, find and pin headers for partitions preceding the visible one(s)
-        int maxTopHeader = -1;
-        int topHeaderHeight = 0;
-        for (int i = 0; i < size; i++) {
-            if (mHeaderVisibility[i]) {
-                int position = listView.getPositionAt(topHeaderHeight);
-                int sectionPosition = getSectionForPosition(position);
-
-                if (i > sectionPosition) {
+    @Override
+    public Object getHeaderData(int headerPosition) {
+        Object result = null;
+        if (mIndexer != null) {
+            for (Object item : mIndexer.getSections()) {
+                if (((Section) item).position == headerPosition) {
+                    result = ((Section) item).date;
                     break;
                 }
-
-                Object[] sections = getSections();
-                if (sectionPosition < 0 || sectionPosition >= sections.length) {
-                    break;
-                }
-
-                Section section = (Section) sections[sectionPosition];
-                if (section == null) {
-                    break;
-                }
-
-                boolean isLastDataPosition = isLastDataPosition(sectionPosition, position);
-
-                if (isLastDataPosition) {
-                    listView.setFadingHeader(i, position, true);
-                }
-                else {
-                    if (section.position <= listView.getFirstVisiblePosition()) {
-                        listView.setHeaderPinnedAtTop(i, topHeaderHeight, false);
-                        topHeaderHeight += listView.getPinnedHeaderHeight(i);
-                    }
-                }
-
-                maxTopHeader = i;
             }
         }
-
-        // Headers in between the top-pinned and bottom-pinned should be hidden
-        for (int i = maxTopHeader + 1; i < size; i++) {
-            listView.setHeaderInvisible(i, true);
-        }
+        return result;
     }
 
     public void refreshSections(List<?> models) {
@@ -377,19 +374,6 @@ public class GroupingModelViewAdapter extends MultiSelectModelViewAdapter implem
 
         Section section = (Section) mIndexer.getSections()[sectionPosition];
         return position == (section.position + section.length);
-    }
-
-    @Override
-    public int getScrollPositionForHeader(int viewIndex) {
-        if (mIndexer == null) {
-            return 0;
-        }
-
-        Section section = null;
-        if (viewIndex < mIndexer.getSections().length) {
-            section = (Section) mIndexer.getSections()[viewIndex];
-        }
-        return section != null ? section.position : 0;
     }
 
     @Override
@@ -446,32 +430,6 @@ public class GroupingModelViewAdapter extends MultiSelectModelViewAdapter implem
         return getSectionPosition(position);
     }
 
-    protected boolean isSectionHeaderVisible(int sectionIndex, int firstVisiblePosition,
-            int lastVisiblePosition) {
-        if (mIndexer == null) {
-            return false;
-        }
-
-        Section section = (Section) mIndexer.getSections()[sectionIndex];
-        boolean visible = !((section.position + section.length) < firstVisiblePosition
-                || section.position > lastVisiblePosition);
-
-        return visible;
-    }
-
-    private boolean isHeaderPosition(int position) {
-        boolean result = false;
-        if (mIndexer != null) {
-            for (Object item : mIndexer.getSections()) {
-                if (((Section) item).position == position) {
-                    result = true;
-                    break;
-                }
-            }
-        }
-        return result;
-    }
-
     private int getItemPosition(int position) {
         int headerPosition = INVALID_POSITION;
         int dataItemPosition = INVALID_POSITION;
@@ -491,7 +449,6 @@ public class GroupingModelViewAdapter extends MultiSelectModelViewAdapter implem
 
     /*
      * Translate data item's position to a position taking into account header counts
-     *
      */
     private int getSectionPosition(int position) {
         int sectionPosition = INVALID_POSITION;
@@ -503,19 +460,6 @@ public class GroupingModelViewAdapter extends MultiSelectModelViewAdapter implem
             }
         }
         return sectionPosition;
-    }
-
-    private View getHeaderView(View convertView, ViewGroup parent, Date date, int position) {
-        if (convertView == null || !(convertView.getTag() instanceof Date)) {
-            ViewType viewType = getItemViewType(date);
-            convertView = viewType.get(convertView, parent);
-            convertView.requestLayout();
-        }
-
-        convertView.setTag(date);
-        convertView.setTag(R.id.view_position, position);
-
-        return convertView;
     }
 
 }

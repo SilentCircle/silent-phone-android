@@ -121,9 +121,15 @@ public class DialerUtils {
         ImageView emptyListViewImage =
                 (ImageView) emptyListView.findViewById(R.id.emptyListViewImage);
 
-        emptyListViewImage.setImageDrawable(
-                ContextCompat.getDrawable(SilentPhoneApplication.getAppContext(), imageResId));
-        emptyListViewImage.setContentDescription(res.getString(strResId));
+        if (imageResId != -1) {
+            emptyListViewImage.setImageDrawable(
+                    ContextCompat.getDrawable(SilentPhoneApplication.getAppContext(), imageResId));
+            emptyListViewImage.setContentDescription(res.getString(strResId));
+            emptyListViewImage.setVisibility(View.VISIBLE);
+        }
+        else {
+            emptyListViewImage.setVisibility(View.GONE);
+        }
 
         if (headerResId != -1) {
             TextView emptyListViewHeader =

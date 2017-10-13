@@ -1,5 +1,5 @@
 /*
-Copyright 2016-2017 Silent Circle, LLC
+ * Copyright 2016-2017 Silent Circle, LLC
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -108,11 +108,11 @@ public:
 TEST_F(RatchetTestFixture, ConversationTest)
 {
     int32_t sqlCode = -1;
-    shared_ptr<list<string> > p1Conversation = store->getKnownConversations(p1Name, &sqlCode);
+    unique_ptr<set<string> > p1Conversation = store->getKnownConversations(p1Name, &sqlCode);
     ASSERT_FALSE(SQL_FAIL(sqlCode));
     ASSERT_TRUE(p1Conversation.get() != NULL);
     ASSERT_EQ(1, p1Conversation->size());
-    ASSERT_EQ(p1Name, p1Conversation->front());
+    ASSERT_NE(p1Conversation->end(), p1Conversation->find(p1Name));
 }
 
 TEST_F(RatchetTestFixture, RatchetTest)

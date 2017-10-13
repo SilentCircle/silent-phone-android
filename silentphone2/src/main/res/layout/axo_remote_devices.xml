@@ -25,19 +25,38 @@
             android:text="@string/axo_local_device" />
 
     <TextView
+        android:id="@+id/AxoLocalDeviceKeyLabel"
+        style="@style/Widget.Silent.SimpleText.Small"
+        android:layout_width="wrap_content"
+        android:layout_below="@+id/AxoLocalDevice"
+        android:layout_marginTop="@dimen/activity_vertical_margin_small"
+        android:textColor="?attr/sp_activity_primary_text_color"
+        android:text="@string/contact_info_laber_fingerprint" />
+
+    <TextView
             style="@style/Widget.Silent.SimpleText.Small"
             android:id="@+id/AxoLocalDeviceKey"
-            android:layout_marginTop="@dimen/activity_vertical_margin_small"
-            android:layout_below="@+id/AxoLocalDevice"
+            android:layout_below="@id/AxoLocalDeviceKeyLabel"
             android:typeface="monospace"
             tools:text="ab:12:34:56:78:9a:89:76:\nab:12:34:56:78:9a:89:76:\nab:12:34:56:78:9a:89:76:\nab:12:34:56:78:9a:89:76"
             tools:context="com.silentcircle.messaging.activities.ShowRemoteDevicesActivity"/>
 
     <TextView
+        android:id="@+id/AxoLocalDeviceIdLabel"
+        style="@style/Widget.Silent.SimpleText.Small"
+        android:layout_width="wrap_content"
+        android:layout_marginTop="@dimen/spacing_normal"
+        android:layout_below="@id/AxoLocalDeviceKey"
+        android:maxLines="1"
+        android:scrollHorizontally="true"
+        android:textColor="?attr/sp_activity_secondary_text_color"
+        android:text="@string/contact_info_laber_id" />
+
+    <TextView
             android:id="@+id/AxoLocalDeviceId"
             style="@style/Widget.Silent.SimpleText.Small"
             android:layout_width="wrap_content"
-            android:layout_below="@+id/AxoLocalDeviceKey"
+            android:layout_below="@id/AxoLocalDeviceIdLabel"
             android:singleLine="true"
             android:ellipsize="marquee"
             android:marqueeRepeatLimit ="3"

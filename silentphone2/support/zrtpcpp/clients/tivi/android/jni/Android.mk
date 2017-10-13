@@ -28,7 +28,10 @@ LOCAL_C_INCLUDES += $(ROOT_SRC_PATH) $(ROOT_SRC_PATH)/srtp $(ROOT_SRC_PATH)/zrtp
                     $(ROOT_SRC_PATH)/clients/tivi $(ROOT_SRC_PATH)/clients/tivi/android/jni/@sql_include@
 
 LOCAL_CFLAGS := -DSUPPORT_NON_NIST @sql_cipher_define@
-LOCAL_CFLAGS += @axo_support@
+
+# For this Android build we can set the visibility to hidden. Access to ZRTP is only inside
+# the shared lib that we build later for Silent Phone.
+LOCAL_CFLAGS += @axo_support@ -fvisibility=hidden -fvisibility-inlines-hidden
 
 LOCAL_SRC_FILES := buildinfo_$(TARGET_ARCH_ABI).c
 LOCAL_SRC_FILES += @sqlite_src@

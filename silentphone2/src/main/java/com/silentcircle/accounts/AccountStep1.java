@@ -69,7 +69,7 @@ import com.silentcircle.common.util.ViewUtil;
 import com.silentcircle.common.widget.PageIndicator;
 import com.silentcircle.silentphone2.BuildConfig;
 import com.silentcircle.silentphone2.R;
-import com.silentcircle.silentphone2.activities.DialerActivity;
+import com.silentcircle.silentphone2.activities.DialerActivityInternal;
 import com.silentcircle.silentphone2.activities.ProvisioningActivity;
 import com.silentcircle.silentphone2.services.TiviPhoneService;
 import com.silentcircle.silentphone2.util.ConfigurationUtilities;
@@ -427,7 +427,7 @@ public class AccountStep1 extends Fragment implements View.OnClickListener {
                 TiviPhoneService.doCmd(".exit");
 
                 // Restart flow
-                Intent intent = new Intent(getActivity(), DialerActivity.class);
+                Intent intent = new Intent(getActivity(), DialerActivityInternal.class);
                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                 startActivity(intent);
 

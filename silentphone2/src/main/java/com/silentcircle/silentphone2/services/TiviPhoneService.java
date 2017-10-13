@@ -93,7 +93,7 @@ import com.silentcircle.messaging.util.AsyncUtils;
 import com.silentcircle.messaging.util.IOUtils;
 import com.silentcircle.silentphone2.BuildConfig;
 import com.silentcircle.silentphone2.R;
-import com.silentcircle.silentphone2.activities.DialerActivity;
+import com.silentcircle.silentphone2.activities.DialerActivityInternal;
 import com.silentcircle.silentphone2.activities.InCallActivity;
 import com.silentcircle.silentphone2.fragments.SettingsFragment;
 import com.silentcircle.silentphone2.receivers.AutoStart;
@@ -151,6 +151,10 @@ public class TiviPhoneService extends PhoneServiceNative {
     public static final String ERROR_USER_UNKNOWN = "Cannot register. User does not exist";
     public static final String ERROR_USERNAME_PASSWORD = "Enter username and password";
 
+    public static final int PHONE_STATE_OFFLINE = 0;
+    public static final int PHONE_STATE_CONNECTING = 1;
+    public static final int PHONE_STATE_ONLINE = 2;
+
     static public final int CALL_TYPE_OUTGOING = 0;
     static public final int CALL_TYPE_INCOMING = 1;
     static public final int CALL_TYPE_RESTART = 2;
@@ -200,6 +204,10 @@ public class TiviPhoneService extends PhoneServiceNative {
     public static final String DECLINE_REASON_RETENTION_REJECTED = "Data Retention Rejected";
 //    public static final String DECLINE_REASON_POLICY_CONFLICT = "Policy Conflict #1984";
 
+    // Minimum length of IMEI for comparing device ids
+    // For GSM, a 14-digit or 15-digit version of the same IMEI
+    private static final int IMEI_MIN_LENGTH = 14;
+
     private Ringtone ringtone;
     private Vibrator vibrator;
     private SharedPreferences prefs;
@@ -216,7 +224,7 @@ public class TiviPhoneService extends PhoneServiceNative {
     private final Collection<DeviceStateChangeListener> deviceStateListeners = new LinkedList<>();
     private GracefulEndCallListener gracefulEndCallListener;
 
-    private Class notificationReceiver = DialerActivity.class;
+    private Class notificationReceiver = DialerActivityInternal.class;
     /*
      * Some counters to get statistics about partial wakelock usage
      */
@@ -576,11 +584,11 @@ public class TiviPhoneService extends PhoneServiceNative {
         // version before Lollipop, Android issue #53313 . If necessary we can
         // send this Intent even on M and above, it doesn't do any harm, just
         // doing the normal ON_BOOT processing which is sort of a reduced "launch"
-        // and does not even bind DialerActivity to the service. Looks like just
-        // sending the Intent and starting the DialerActivity again prevents the
+        // and does not even bind DialerActivityInternal to the service. Looks like just
+        // sending the Intent and starting the DialerActivityInternal again prevents the
         // erroneous behavior of Android L and below.
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-            final Intent i = new Intent(this, DialerActivity.class);
+            final Intent i = new Intent(this, DialerActivityInternal.class);
             i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             i.setAction(AutoStart.ON_BOOT);
             startActivity(i);
@@ -618,9 +626,9 @@ public class TiviPhoneService extends PhoneServiceNative {
         }
 
         // If this is a restart then send an start intent to our main activity and stop this service.
-        // DialerActivity performs all necessary actions to perform the re-start
+        // DialerActivityInternal performs all necessary actions to perform the re-start
         if (intent == null) {
-            final Intent i = new Intent(this, DialerActivity.class);
+            final Intent i = new Intent(this, DialerActivityInternal.class);
             i.setAction(AutoStart.ON_BOOT); // So the activity is not visible to the user
             i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             Log.w(LOG_TAG, "Restarting phone service due to unknown reasons");
@@ -635,7 +643,7 @@ public class TiviPhoneService extends PhoneServiceNative {
         doInit(BuildConfig.DEBUG ? 1 : 0);
         initJNI(getBaseContext());
         checkNet(getBaseContext());
-        notificationReceiver = DialerActivity.class;
+        notificationReceiver = DialerActivityInternal.class;
         if (!mIsReady)
             startForeground(R.drawable.ic_launcher_sp, setNewInfo());
         getPhoneState();
@@ -871,7 +879,7 @@ public class TiviPhoneService extends PhoneServiceNative {
 //                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
 //                ComponentName component = new ComponentName(
 //                        SilentPhoneApplication.getAppContext().getPackageName(),
-//                        DialerActivity.class.getName());
+//                        DialerActivityInternal.class.getName());
 //                intent.setComponent(component);
 //                startActivity(intent);
 //            }
@@ -1241,13 +1249,18 @@ public class TiviPhoneService extends PhoneServiceNative {
 
         String idData = (hasPhone) ? tm.getDeviceId() : null;
 
-        if (idData == null) {
+        if (TextUtils.isEmpty(idData)) {
+            // The device id can be modified by a user, a corrupted firmware, or other problems.
+            // In that case, idData will be created like one from a device without a telephony feature.
+            if (hasPhone) {
+                Log.w(LOG_TAG, "The device id (IMEI for GSM / MEID or ESN for CDMA) is empty.");
+            }
+
             idData = Build.SERIAL
                     + " "
                     + android.provider.Settings.Secure.getString(ctx.getContentResolver(),
                     android.provider.Settings.Secure.ANDROID_ID);
-        }
-        else {
+        } else {
             final String add = Build.SERIAL
                     + " "
                     + android.provider.Settings.Secure.getString(ctx.getContentResolver(),
@@ -1258,8 +1271,7 @@ public class TiviPhoneService extends PhoneServiceNative {
         if (devIdSaved == null) {
             devIdSaved = idData;
             pref.edit().putString(ConfigurationUtilities.getHwDevIdSaveKey(), devIdSaved).apply();
-        }
-        else if (!devIdSaved.equals(idData)) {
+        } else if (!devIdSaved.equals(idData)) {
             // TODO: Functionally, we do nothing if there is an ID mismatch
             /* For GSM phones, {@link TelephonyManager#getDeviceId()} either
              * returns a 14-digit or 15-digit version of the same IMEI
@@ -1270,26 +1282,36 @@ public class TiviPhoneService extends PhoneServiceNative {
                 String[] idSplit = idData.split(" "); // Current ID
                 String[] idSavedSplit = devIdSaved.split(" "); // Saved ID
                 if (idSplit.length == 3 && idSavedSplit.length == 3) {
-                    // The current ID is an IMEI (either a 14 or 15 digit IMEI)
-                    // The saved ID is possibly an IMEI
-                    if (idSplit[0].substring(0, 14)
-                            .equals(idSavedSplit[0].substring(0, 14))) {
-                        // Both IDs are probably the same IMEI (first 14 digits match)
-                        // Turn both into 15 digit IMEIs
-                        String imei = idSplit[0];
-                        String imeiSaved = idSavedSplit[0];
-                        if (imei.length() == 14) {
-                            int checkDigit = NumberUtils.checkDigitIMEI(imei);
-                            imei += checkDigit;
-                        }
-                        if (imeiSaved.length() == 14) {
-                            int checkDigit = NumberUtils.checkDigitIMEI(imeiSaved);
-                            imeiSaved += checkDigit;
-                        }
+                    if (idSplit[0].length() == 0 || idSavedSplit[0].length() == 0) {
+                        Log.w(LOG_TAG, "The device id (current or saved) is empty and cannot be compared."
+                                + ((ConfigurationUtilities.mTrace) ? " Current device id: "
+                                + idSplit[0] + ", saved device id: " + idSavedSplit[0] : ""));
+                    } else if(idSplit[0].length() < IMEI_MIN_LENGTH || idSavedSplit[0].length() < IMEI_MIN_LENGTH) {
+                        Log.w(LOG_TAG, "The length of device id (current or saved) is too short to be compared."
+                                + ((ConfigurationUtilities.mTrace) ? " It should be at least 14. Current device id: "
+                                + idSplit[0] + ", saved device id: " + idSavedSplit[0] : ""));
+                    } else {
+                        // The current ID is an IMEI (either a 14 or 15 digit IMEI)
+                        // The saved ID is possibly an IMEI
+                        if (idSplit[0].substring(0, IMEI_MIN_LENGTH)
+                                .equals(idSavedSplit[0].substring(0, IMEI_MIN_LENGTH))) {
+                            // Both IDs are probably the same IMEI (first 14 digits match)
+                            // Turn both into 15 digit IMEIs
+                            String imei = idSplit[0];
+                            String imeiSaved = idSavedSplit[0];
+                            if (imei.length() == IMEI_MIN_LENGTH) {
+                                int checkDigit = NumberUtils.checkDigitIMEI(imei);
+                                imei += checkDigit;
+                            }
+                            if (imeiSaved.length() == IMEI_MIN_LENGTH) {
+                                int checkDigit = NumberUtils.checkDigitIMEI(imeiSaved);
+                                imeiSaved += checkDigit;
+                            }
 
-                        if (imei.equals(imeiSaved)) {
-                            // There was an IMEI length mismatch, but of the same IMEI
-                            return devIdSaved;
+                            if (imei.equals(imeiSaved)) {
+                                // There was an IMEI length mismatch, but of the same IMEI
+                                return devIdSaved;
+                            }
                         }
                     }
                 }
@@ -1302,7 +1324,7 @@ public class TiviPhoneService extends PhoneServiceNative {
     }
 
     public void setNotificationToDialer() {
-        notificationReceiver = DialerActivity.class;
+        notificationReceiver = DialerActivityInternal.class;
         setNewInfo();
     }
 

@@ -35,8 +35,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../encrypt/tls/CTTLS.h"
 #include "ratchet/../util/cJSON.h"
 #include <stdlib.h>
+#include "tivi_log.h"
 
-    
 #ifdef ANDROID
 void androidLog(const char* format, ...);
 #endif
@@ -629,8 +629,9 @@ static int getToken(const char *pLink, char *resp, int iMaxLen, void (*cb)(void 
 
 
    char *p=download_page2Loc(pLink, &bufResp[0], sizeof(bufResp)-50, iRespContentLen,cb,cbRet, pReq, pContent);
-
+    
    if(!p){
+       t_logf(log_events, "prov.cpp_getToken() ", "NULL returned from download_page2Loc() (Error Code: 302)");
       cb(cbRet,0,"Please check network connection.\n(Error Code: 302)");//download json fail
       return -1;
    }
@@ -648,9 +649,11 @@ static int getToken(const char *pLink, char *resp, int iMaxLen, void (*cb)(void 
     cJSON* root = cJSON_Parse(p);
 
     if(!root) {
-
+        
+        t_logf(log_events, "prov.cpp_getToken() ", "Bad JSON. (Malformed response. Error Code: 401) -> %s", p);
+        
         cb(cbRet, 0, "Malformed response.\n(Error Code: 401)");
-
+        
         cJSON_Delete(root);
 
         return -1;
@@ -660,9 +663,9 @@ static int getToken(const char *pLink, char *resp, int iMaxLen, void (*cb)(void 
 
     if(!result) {
 
+        t_logf(log_events, "prov.cpp_getToken() ", "No 'result' in JSON. (Malformed response. Error Code: 402) -> %s", p);        
         // Result is not found
         cb(cbRet, 0, "Malformed response.\n(Error Code: 402)");
-
 
         cJSON_Delete(root);
 
@@ -683,10 +686,12 @@ static int getToken(const char *pLink, char *resp, int iMaxLen, void (*cb)(void 
             if(error_code != NULL && error_code->valueint == 4)
                 code = -4;
 
+            t_logf(log_events, "prov.cpp_getToken() ", "Error Code: %i) -> %s", code, error_msg->valuestring);
             cb(cbRet, code, error_msg->valuestring);
         }
         else {
-
+            
+            t_logf(log_events, "prov.cpp_getToken() ", "Could not download configuration. (Malformed response. Error Code: 101) -> %s", p);
             cb(cbRet, -1, "Could not download configuration.\n(Error Code: 101)");
         }
 
@@ -699,6 +704,7 @@ static int getToken(const char *pLink, char *resp, int iMaxLen, void (*cb)(void 
 
     if(!apiKey) {
 
+        t_logf(log_events, "prov.cpp_getToken() ", "API key not found. (Malformed response. Error Code: 403) -> %s", p);        
         // API key not found
         cb(cbRet, 0, "Malformed response.\n(Error Code: 403)");
 
@@ -711,6 +717,7 @@ static int getToken(const char *pLink, char *resp, int iMaxLen, void (*cb)(void 
 
     if(strlen(apiKeyStr) <= 0 || strlen(apiKeyStr) > 256 || strlen(apiKeyStr) > iMaxLen) {
 
+        t_logf(log_events, "prov.cpp_getToken() ", "Find api_key failed. (Malformed response. Error Code: 404) -> %s", p);
         // Find api_key failed
         cb(cbRet, 0, "Malformed response.\n(Error Code: 404)");
 
@@ -726,13 +733,12 @@ static int getToken(const char *pLink, char *resp, int iMaxLen, void (*cb)(void 
 
 #if defined(__APPLE__)
 #ifndef PROV_TEST
-//   int storeAPIKeyToKC(const char *p);
-//   storeAPIKeyToKC(resp);
     int storeProvAPIKey(const char *p);
     storeProvAPIKey(resp);
 #endif
 #endif
 
+   t_logf(log_events, "prov.cpp_getToken() ", "Success"); 
    return ret;
 }
 

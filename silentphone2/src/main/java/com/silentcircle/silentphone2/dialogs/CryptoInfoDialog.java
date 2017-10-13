@@ -164,7 +164,12 @@ public class CryptoInfoDialog extends DialogFragment implements View.OnClickList
         txtView.setText(TiviPhoneService.getInfo(call.iEngID, call.iCallId, lbVersion));
 
         txtView = (TextView) view.findViewById(R.id.CryptoCryptoComponentsTlsInfo);
+        // Example: 0bits ECDHE-RSA-AES-256-GCM-SHA384
         String tls = TiviPhoneService.getInfo(call.iEngID, -1, socket);
+        String[] tlsSplit = tls.split(" ");
+        if (tlsSplit.length > 1 && tlsSplit[1].startsWith("ECDHE")) {
+            tls = tlsSplit[1]; // Remove the bits (in this case it will be 0)
+        }
         txtView.setText(tls);
         txtView.setSelected(true);
 
@@ -239,7 +244,7 @@ public class CryptoInfoDialog extends DialogFragment implements View.OnClickList
         String cmd = "media.zrtp." + secret;
 
         CallState call = TiviPhoneService.calls.selectedCall;
-        String res = TiviPhoneService.getInfo(call.iEngID, call.iCallId, cmd);
+        String res = call == null ? null : TiviPhoneService.getInfo(call.iEngID, call.iCallId, cmd);
 
         if (TextUtils.isEmpty(res))
             return null;

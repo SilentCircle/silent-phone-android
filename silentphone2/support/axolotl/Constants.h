@@ -115,7 +115,7 @@ namespace zina {
     static const int32_t REJECT_DATA_RETENTION = -34; //!< Reject data retention when sending a message
     static const int32_t PRE_KEY_HASH_WRONG = -35;    //!< Pre-key check failed during setup of new conversation or re-keying
     static const int32_t ILLEGAL_ARGUMENT = -36;      //!< Value of an argument is illegal/out of range
-    static const int32_t CONTEXT_ID_MISMATCH = -37;   //!< Ratchet data is probably out of sync
+    static const int32_t CONTEXT_ID_MISMATCH = -37;   //!< ZINA ratchet data is probably out of sync
 
     // Error codes for public key modules, between -100 and -199
     static const int32_t NO_SUCH_CURVE     = -100;    //!< Curve not supported

@@ -40,7 +40,7 @@ import com.silentcircle.logs.Log;
 import com.google.android.gms.gcm.GcmListenerService;
 import com.silentcircle.silentphone2.BuildConfig;
 import com.silentcircle.silentphone2.R;
-import com.silentcircle.silentphone2.activities.DialerActivity;
+import com.silentcircle.silentphone2.activities.DialerActivityInternal;
 import com.silentcircle.silentphone2.fragments.SettingsFragment;
 import com.silentcircle.silentphone2.receivers.AutoStart;
 import com.silentcircle.silentphone2.services.TiviPhoneService;
@@ -70,16 +70,15 @@ public class C2DMReceiver extends GcmListenerService {
     public static void onRegisterPush(Context context, String message) {
         // Try to either send a register or get back into a working state
         if (!TiviPhoneService.isInitialized()) {
-            Intent i = new Intent(context, DialerActivity.class);
+            Intent i = new Intent(context, DialerActivityInternal.class);
             i.setAction(AutoStart.ON_BOOT); // So it is visibly silent
             i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             context.startActivity(i);
         } else {
             if (Utilities.isNetworkConnected(context)) {
                 // perform on-push-notification specific code
-                // spelling "onPushNotifcation" is intentional
                 if (TiviPhoneService.isInitialized()) {
-                    TiviPhoneService.getInfo(-1, -1, ":onPushNotifcation");
+                    TiviPhoneService.getInfo(-1, -1, ":onpushnotification");
                 }
 
                 int phoneState = TiviPhoneService.getPhoneState();

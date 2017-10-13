@@ -75,7 +75,7 @@ import com.silentcircle.contacts.utils.PhoneNumberHelper;
 import com.silentcircle.logs.Log;
 import com.silentcircle.messaging.util.AsyncUtils;
 import com.silentcircle.silentphone2.R;
-import com.silentcircle.silentphone2.activities.DialerActivity;
+import com.silentcircle.silentphone2.activities.DialerActivityInternal;
 import com.silentcircle.silentphone2.activities.DialogHelperActivity;
 import com.silentcircle.silentphone2.dialhelpers.FindDialHelper;
 import com.silentcircle.silentphone2.dialogs.InfoMsgDialogFragment;
@@ -268,7 +268,7 @@ public class DialpadFragment extends Fragment implements View.OnClickListener,
         mDestination.setFilters(new InputFilter[]{SearchUtil.LOWER_CASE_INPUT_FILTER});
         /**
          * This async task is no longer used, because it will not format numbers added instantly
-         * using {@link #setDestination} from the {@link DialerActivity}. Instead, we will set
+         * using {@link #setDestination} from the {@link DialerActivityInternal}. Instead, we will set
          * the {@link PhoneNumberFormattingTextWatcher} sequentially.
          */
         // PhoneNumberFormatter.setPhoneNumberFormattingTextWatcher(mDestination);
@@ -326,10 +326,10 @@ public class DialpadFragment extends Fragment implements View.OnClickListener,
             @Override
             public boolean onTouch(View v, MotionEvent event) {
                 if (mDestination.length() == 0) {
-                    if (mParent instanceof DialerActivity) {
+                    if (mParent instanceof DialerActivityInternal) {
                         if (mDestination.hasFocus())
                             mRequestHelper.requestFocus();
-                        ((DialerActivity) mParent).hideDialpadFragment(true, true);
+                        ((DialerActivityInternal) mParent).hideDialpadFragment(true, true);
                         return true;
                     }
                 }
@@ -558,17 +558,31 @@ public class DialpadFragment extends Fragment implements View.OnClickListener,
                             ContactsContract.CommonDataKinds.Phone.NUMBER
                     };
 
-                    Cursor cursor = mParent.getContentResolver().query(contactUri, projection, null, null, null);
+                    Cursor cursor = null;
+                    try {
+                        cursor = mParent.getContentResolver().query(contactUri, projection, null, null, null);
+                    } catch (Exception ignore) {
+                        // Ignore exceptions such as CursorWindowAllocationException which occurs intermittently
+                        // We should not expect a crash here
+                        Log.e(TAG, "Ignoring an exception: " + ignore +
+                                ((ConfigurationUtilities.mNativeLog) ? ", onActivityResult - uri: " + contactUri : ""));
+                    }
                     if (cursor == null)
                         break;
-                    cursor.moveToFirst();
+                    String number = null;
+                    try {
+                        cursor.moveToFirst();
 
-                    int column = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER);
-                    String number = cursor.getString(column);
-                    cursor.close();
+                        int column = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER);
+                        number = cursor.getString(column);
+                    } finally {
+                        if (cursor != null && !cursor.isClosed()) {
+                            cursor.close();
+                        }
+                    }
 
                     // Apply the dial helper and format the number if necessary
-                    boolean wasModified = DialerActivity.checkCallToNr(number, this);
+                    boolean wasModified = DialerActivityInternal.checkCallToNr(number, this);
 
                     if (!wasModified) {
                         // Automatically call if the number was not modified, which basically

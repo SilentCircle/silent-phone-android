@@ -59,6 +59,8 @@ import java.io.File;
 
 import zina.ZinaNative;
 
+import static com.silentcircle.messaging.services.SCloudService.SCLOUD_ATTACHMENT_CLOUD_URL;
+
 /**
  * Receiver for attachment events.
  */
@@ -154,7 +156,7 @@ public class AttachmentEventReceiver extends BroadcastReceiver implements ZinaMe
                     String cloudUrl = null;
                     try {
                         JSONObject json = new JSONObject(attachment);
-                        cloudUrl = json.optString("cloud_url");
+                        cloudUrl = json.optString(SCLOUD_ATTACHMENT_CLOUD_URL);
                     } catch (JSONException | NullPointerException exception) {
                         // id stays empty
                     }

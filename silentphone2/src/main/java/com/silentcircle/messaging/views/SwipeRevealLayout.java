@@ -951,6 +951,10 @@ public class SwipeRevealLayout extends ViewGroup {
 
                 case DRAG_EDGE_LEFT:
                     if (mSectLeftEnabled) {
+                        if (Math.abs(Math.abs(mRectMainClose.left) - Math.abs(left)) < DRAG_THRESHOLD
+                                && Math.abs(dx) < DRAG_THRESHOLD) {
+                            return child.getLeft();
+                        }
                         return Math.max(
                                 Math.min(left, mRectMainClose.left + mSecondaryViewRight.getWidth()),
                                 mRectMainClose.left

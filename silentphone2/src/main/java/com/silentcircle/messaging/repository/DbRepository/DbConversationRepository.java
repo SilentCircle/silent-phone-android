@@ -178,6 +178,7 @@ public class DbConversationRepository /*extends BaseFileRepository<Conversation>
      * @return List of conversations or EMPTY_CONVERSATION_LIST if no conversations found.
      */
     @Override
+    @NonNull
     public List<Conversation> list() {
         Set<String> conversationPartners = new HashSet<>();
         byte[][] conversationsArray = ZinaNative.listConversations();
@@ -222,7 +223,7 @@ public class DbConversationRepository /*extends BaseFileRepository<Conversation>
         if (CACHED_CONVERSATION_LIST.isEmpty()) {
             CACHED_CONVERSATION_LIST.addAll(list());
         }
-        return CACHED_CONVERSATION_LIST;
+        return new ArrayList<>(CACHED_CONVERSATION_LIST);
     }
 
     private Conversation deserialize(String serial) {

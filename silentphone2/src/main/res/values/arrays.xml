@@ -90,4 +90,13 @@
         <item>@string/three_day</item>
     </array>
 
+    <!-- mute duration labels -->
+    <array name="conversation_mute_array">
+        <item>@string/messaging_mute_5m</item>
+        <item>@string/messaging_mute_1h</item>
+        <item>@string/messaging_mute_8h</item>
+        <item>@string/messaging_mute_24h</item>
+        <item>@string/messaging_mute_1w</item>
+    </array>
+
 </resources>

@@ -30,10 +30,12 @@ package com.silentcircle.messaging.views;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
+import android.content.res.Resources;
 import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.view.View;
-import android.widget.*;
+import android.widget.LinearLayout;
+import android.widget.Toast;
 
 import com.silentcircle.silentphone2.R;
 
@@ -65,6 +67,13 @@ public class EventInfoField extends LinearLayout {
                 return true;
             }
         });
+
+        setOrientation(VERTICAL);
+        Resources resources = getResources();
+        setPadding((int) resources.getDimension(R.dimen.messaging_viewer_vcard_item_margin_left),
+                (int) resources.getDimension(R.dimen.messaging_viewer_vcard_item_margin_top),
+                (int) resources.getDimension(R.dimen.messaging_viewer_vcard_item_margin_right),
+                (int) resources.getDimension(R.dimen.messaging_viewer_vcard_item_margin_bottom));
     }
 
     public EventInfoField(Context context, AttributeSet attrs) {
@@ -80,4 +89,5 @@ public class EventInfoField extends LinearLayout {
         mLabel.setVisibility(TextUtils.isEmpty(label) ? View.GONE : View.VISIBLE);
         mInfo.setText(info);
     }
+
 }

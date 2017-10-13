@@ -31,6 +31,7 @@ package com.silentcircle.silentphone2.video;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
@@ -50,13 +51,12 @@ public class SpVideoViewHw extends TextureView implements TextureView.SurfaceTex
 
     private boolean mSurfaceOk;
     private int mSurfaceWidth, mSurfaceHeight;
+    private int mPreviousSurfaceWidth, mPreviousSurfaceHeight;
     private int mPreviousWidth, mPreviousHeight;
-
-    private Rect rectFS = new Rect(0, 0, 720, 480);
 
     private boolean firstPack = true;
 
-    private static Paint paL = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private static Paint mPaint = new Paint();
 
     // The framework usually calls the constructors
     @SuppressWarnings("unused")
@@ -80,9 +80,9 @@ public class SpVideoViewHw extends TextureView implements TextureView.SurfaceTex
     private void init() {
         // Install a Callback so we get notified when the underlying surface is created and destroyed.
         setSurfaceTextureListener(this);
-        paL.setTextSize(15);
-        paL.setTextAlign(Paint.Align.LEFT);
-        paL.setARGB(255, 200, 200, 200);
+        mPaint.setTextSize(15);
+        mPaint.setTextAlign(Paint.Align.LEFT);
+        mPaint.setARGB(255, 200, 200, 200);
     }
 
     @Override
@@ -160,6 +160,7 @@ public class SpVideoViewHw extends TextureView implements TextureView.SurfaceTex
         if (GetVideoDataAndDraw.sxy[2] != iPrevID) {
             videoDraw.fillNewBuf();
             iPrevID = GetVideoDataAndDraw.sxy[2];
+            prepareForDraw();
             try {
                 Canvas c = lockCanvas();
                 if (c != null) {
@@ -171,6 +172,67 @@ public class SpVideoViewHw extends TextureView implements TextureView.SurfaceTex
             }
             catch (IllegalArgumentException ex) {
                 Log.w(TAG, "Cannot update video", ex);
+            }
+        }
+    }
+
+    private void prepareForDraw() {
+        if (!mSurfaceOk || mSurfaceHeight <= 0 || mSurfaceWidth <= 0 || videoDraw.mWidth <= 0 || videoDraw.mHeight <= 0)
+            return;
+
+        if (bCallIsActive) {
+            boolean videoSizeChanged = false;
+            if (GetVideoDataAndDraw.videoData != null) {
+                if (mPreviousWidth != videoDraw.mWidth || mPreviousHeight != videoDraw.mHeight) {
+                    mPreviousWidth = videoDraw.mWidth;
+                    mPreviousHeight = videoDraw.mHeight;
+                    videoSizeChanged = true;
+
+                    // We set the texture size of the TextureView's SurfaceTexture same size as the
+                    // video. Upscaling will be handled by TextureView and the transformation matrix.
+                    SurfaceTexture st = getSurfaceTexture();
+                    if (st != null) {
+                        st.setDefaultBufferSize(videoDraw.mWidth, videoDraw.mHeight);
+                    }
+                    else {
+                        mPreviousWidth = -1;
+                        mPreviousHeight = - 1;
+                        return;
+                    }
+                }
+
+                boolean mSurfaceSizeChanged = mPreviousSurfaceWidth != mSurfaceWidth ||
+                        mPreviousSurfaceWidth != mSurfaceHeight;
+                if (videoSizeChanged || mSurfaceSizeChanged) {
+                    mPreviousSurfaceWidth = mSurfaceWidth;
+                    mPreviousSurfaceHeight = mSurfaceHeight;
+
+                    // The transformation matrix will render the SurfaceTexture (having the size of
+                    // the video) on a centered area with size [frameWidth frameHeight] inside the
+                    // TextureView which has a size of [mSurfaceWidth, mSurfaceHeight].
+                    float frameWidth;
+                    float frameHeight;
+                    float textureViewAR = (float) mSurfaceWidth / mSurfaceHeight;
+                    float videoAR = (float) videoDraw.mWidth / videoDraw.mHeight;
+                    if (textureViewAR > videoAR) {
+                        frameHeight = mSurfaceHeight;
+                        frameWidth = videoAR * frameHeight;
+                    }
+                    else {
+                        frameWidth = mSurfaceWidth;
+                        frameHeight = frameWidth / videoAR;
+                    }
+
+                    final Matrix matrix = new Matrix();
+                    matrix.setScale(frameWidth / mSurfaceWidth, frameHeight / mSurfaceHeight, mSurfaceWidth / 2, mSurfaceHeight / 2);
+                    this.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            setTransform(matrix);
+                        }
+                    });
+
+                }
             }
         }
     }
@@ -188,41 +250,9 @@ public class SpVideoViewHw extends TextureView implements TextureView.SurfaceTex
                 // According to Android documentation we must draw every pixel on surface canvas.
                 // Thus we fill it with background first, then draw the video rectangle inside the
                 // letterbox
-                canvas.drawColor(Color.BLACK);
+                canvas.drawColor(Color.TRANSPARENT);
 
-                // Compute new letterbox if width or height of received video changed
-                if (mPreviousWidth != videoDraw.mWidth || mPreviousHeight != videoDraw.mHeight) {
-                    mPreviousWidth = videoDraw.mWidth;
-                    mPreviousHeight = videoDraw.mHeight;
-
-                    int ox, oy, wShow, hShow;
-
-                    float fw = (float) mSurfaceWidth / (float) videoDraw.mWidth;
-                    float fh = (float) mSurfaceHeight / (float) videoDraw.mHeight;
-
-                    boolean landscape = mSurfaceWidth > mSurfaceHeight;
-
-                    float multiplier = fw < fh ? fw : fh;
-
-                    wShow = (int) ((float) videoDraw.mWidth * multiplier);
-                    hShow = (int) ((float) videoDraw.mHeight * multiplier);
-
-                    // Compute letter box offsets
-                    if (!landscape) {
-                        ox = (mSurfaceWidth - wShow) >> 1;
-                        ox = (ox < 0) ? 0 : ox;
-                    }
-                    else
-                        ox = 0;
-                    if (landscape) {
-                        oy = (mSurfaceHeight - hShow) >> 1;
-                        oy = (oy < 0) ? 0 : oy;
-                    }
-                    else
-                        oy = 0;
-                    rectFS.set(ox, oy, ox + wShow, oy + hShow);
-                }
-                videoDraw.draw(canvas, rectFS.left, rectFS.top, rectFS, paL);         // slow?
+                videoDraw.draw(canvas, mPaint);         // slow?
             }
         }
     }

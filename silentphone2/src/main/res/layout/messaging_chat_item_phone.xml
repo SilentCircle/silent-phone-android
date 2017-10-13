@@ -66,6 +66,8 @@
         android:layout_below="@+id/phone_message_container"
         android:layout_alignLeft="@+id/phone_message_container"
         android:layout_alignStart="@+id/phone_message_container"
+        app:layout_constraintLeft_toLeftOf="@id/phone_message_container"
+        app:layout_constraintTop_toBottomOf="@id/phone_message_container"
         android:layout_gravity="start">
 
         <ImageView

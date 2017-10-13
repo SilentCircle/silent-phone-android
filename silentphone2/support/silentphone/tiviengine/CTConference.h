@@ -173,11 +173,12 @@ public:
       for(int i=0;i<eMaxCC;i++){
          if(c && s[i]==c){c->cs.iIsInConference=0; cnt--;s[i]=NULL;  break;}
       }
-      if(c<0)puts("[err conf---------------]");
-      
+       // JN orig:
+//      if(c<0)puts("[err conf---------------]"); 
+       // ET: guessing 'cnt' was intended rather than 'c'
+       if(cnt<0) 
+           t_logf(log_events, __FUNCTION__, "ERROR: CTConference.h: call count < 0 at line %d", __LINE__);       
    }
-   
-   
 };
 
 #endif

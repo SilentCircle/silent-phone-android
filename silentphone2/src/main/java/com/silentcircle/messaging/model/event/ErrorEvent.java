@@ -27,6 +27,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 package com.silentcircle.messaging.model.event;
 
+import com.silentcircle.common.StringByteHolder;
 import com.silentcircle.messaging.model.MessageErrorCodes;
 import com.silentcircle.messaging.util.IOUtils;
 import com.silentcircle.messaging.util.UUIDGen;
@@ -49,7 +50,7 @@ public class ErrorEvent extends Event {
     private String mMessageId;
     private String mSendToDevId;
     private boolean mDuplicate;
-    private byte[] mMessageText;
+    private final StringByteHolder mMessageText = new StringByteHolder();
 
     protected long messageComposeTime;
 
@@ -103,19 +104,19 @@ public class ErrorEvent extends Event {
     }
 
     public void setMessageText(byte[] text) {
-        mMessageText = text;
+        mMessageText.set(text);
     }
 
-    public void setMessageText(CharSequence text) {
-        this.setMessageText(IOUtils.toByteArray(text));
+    public void setMessageText(String text) {
+        mMessageText.set(text);
     }
 
     public String getMessageText() {
-        return toString(this.getMessageTextAsByteArray());
+        return mMessageText.getString();
     }
 
     public byte[] getMessageTextAsByteArray() {
-        return mMessageText;
+        return mMessageText.getByteArray();
     }
 
     public void setSentToDevId(final String devId) {

@@ -218,6 +218,8 @@ typedef struct {
    int iNetworkIsMobile;
    int iDelayRegister;//we have to set this if ui needs to load DB for example
    
+    int iSkipReregisterCheck;
+    
    int iTinaFakeID;
    
    int iDisableAdvCfg;

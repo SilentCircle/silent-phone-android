@@ -31,37 +31,26 @@ import com.silentcircle.messaging.model.MessageStates;
 import com.silentcircle.messaging.util.IOUtils;
 
 public class OutgoingMessage extends Message {
-    private static final byte[] ME = IOUtils.toByteArray("Me");
+    private static final String ME = "Me";
 
     public OutgoingMessage() {
     }
 
-    public OutgoingMessage(byte[] text) {
-        this(ME, text);
-    }
-
-    public OutgoingMessage(byte[] sender, byte[] text) {
+    public OutgoingMessage(String sender, String text) {
         setSender(sender);
         setText(text);
         setTime(System.currentTimeMillis());
         setState(MessageStates.COMPOSED);
     }
 
-    public OutgoingMessage(CharSequence text) {
-        this(IOUtils.toByteArray(text));
-    }
 
-    public OutgoingMessage(CharSequence sender, CharSequence text) {
-        this(IOUtils.toByteArray(sender), IOUtils.toByteArray(text));
-    }
-
-    public OutgoingMessage(byte[] sender, byte[] id, byte[] text) {
+    public OutgoingMessage(String sender, String id, String text) {
         this(sender, text);
         setId(id);
     }
 
-    public OutgoingMessage(CharSequence sender, CharSequence id, CharSequence text) {
-        this(IOUtils.toByteArray(sender), IOUtils.toByteArray(id), IOUtils.toByteArray(text));
+    public OutgoingMessage(String text) {
+        this(ME, text);
     }
 
 }
